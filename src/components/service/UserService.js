@@ -22,12 +22,17 @@ export default {
     localStorage.removeItem("wvp-user");
   },
 
-  // 以下方法保留兼容性，但实际认证由Python后端处理
+  // 登录状态管理 - 用于前端页面刷新状态保持
   getToken(){
-    return null; // 不再使用前端token
+    return localStorage.getItem("wvp-login-status");
   },
 
   setToken(token) {
-    // 空实现，保持兼容性
+    localStorage.setItem("wvp-login-status", token || "logged-in");
+  },
+
+  // 清理登录状态
+  clearLoginStatus(){
+    localStorage.removeItem("wvp-login-status");
   }
 }

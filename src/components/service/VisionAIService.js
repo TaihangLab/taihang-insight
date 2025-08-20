@@ -1,8 +1,9 @@
 import axios from 'axios';
+import apiConfig from '../../config/api.js';
 
 // 创建专用于visionAI模块的axios实例
 const visionAIAxios = axios.create({
-  baseURL: 'http://192.168.1.106:8000',
+  baseURL: apiConfig.API_BASE_URL,
   timeout: 15000,
   withCredentials: false,  // 将withCredentials设置为false，避免CORS错误
 });

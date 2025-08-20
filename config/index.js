@@ -4,28 +4,15 @@
 
 const path = require('path')
 
+// 导入API配置
+const { API_BASE_URL, PROXY_CONFIG } = require('../src/config/api.js')
+
 module.exports = {
   dev: {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {
-      '/debug': {
-        target: 'http://192.168.1.106:8000',
-        changeOrigin: true,
-        pathRewrite: {
-          '^/debug': '/api/v1/wvp'
-        }
-      },
-      '/static/snap': {
-        target: 'http://192.168.1.106:8000',
-        changeOrigin: true,
-        pathRewrite: {
-          '^/static/snap': '/api/v1/wvp/static/snap'
-        }
-      },
-
-    },
+    proxyTable: PROXY_CONFIG,
 
     // Various Dev Server settings
     host:"0.0.0.0",

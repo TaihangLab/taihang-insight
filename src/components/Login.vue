@@ -133,6 +133,8 @@
 </template>
 
 <script>
+import userService from './service/UserService'
+
 export default {
   name: 'Login',
   data(){
@@ -144,8 +146,7 @@ export default {
       password: '',
       selectedTenant: '',
       tenantSelectFocused: false,
-      tenantList: [],
-      loadingTenants: false
+      tenantList: []
     }
   },
   created(){
@@ -172,28 +173,9 @@ export default {
 
     // 获取租户列表
     getTenantList() {
-      this.loadingTenants = true;
-      this.$axios({
-        method: 'get',
-        url: '/api/tenant/list',
-        params: {
-          status: true // 只获取启用的租户
-        }
-      }).then((res) => {
-        if (res.data.code === 0) {
-          // 从租户管理模块的数据结构来看，租户列表应该在res.data.data中
-          this.tenantList = res.data.data || [];
-        } else {
-          // 如果API不存在或返回错误，使用模拟数据
-          this.tenantList = this.getMockTenantList();
-        }
-      }).catch((error) => {
-        console.log('获取租户列表失败，使用模拟数据:', error);
-        // API调用失败时使用模拟数据
-        this.tenantList = this.getMockTenantList();
-      }).finally(() => {
-        this.loadingTenants = false;
-      });
+      // 直接使用写死的租户数据
+      this.tenantList = this.getMockTenantList();
+      this.loadingTenants = false;
     },
 
     // 模拟租户数据（从租户管理模块提取）
@@ -264,7 +246,7 @@ export default {
       }
     },
 
-    //登录逻辑 - 由Python后端统一处理
+    //登录逻辑 - 模拟登录并保持登录状态
     login(){
       if(this.selectedTenant === '') {
         this.$message({
@@ -275,14 +257,29 @@ export default {
         return;
       }
       if(this.username!='' && this.password!=''){
-        // 简单的表单验证后直接跳转到主页
-        // 实际的登录认证由Python后端处理
-        this.$message({
-          showClose: true,
-          message: '登录功能由后端统一处理',
-          type: 'info'
-        });
-        this.$router.push('/');
+        this.isLoging = true;
+        
+        // 模拟登录延迟
+        setTimeout(() => {
+          // 保存用户信息和登录状态
+          const userInfo = {
+            username: this.username,
+            tenantNumber: this.selectedTenant,
+            loginTime: new Date().toISOString()
+          };
+          
+          userService.setUser(userInfo);
+          userService.setToken('mock-login-token');
+          
+          this.$message({
+            showClose: true,
+            message: '登录成功',
+            type: 'success'
+          });
+          
+          this.isLoging = false;
+          this.$router.push('/');
+        }, 800);
       } else {
         this.$message({
           showClose: true,
@@ -639,6 +636,8 @@ export default {
 .tech-select option:hover {
   background-color: rgba(0, 212, 255, 0.2);
 }
+
+
 
 .select-arrow {
   position: absolute;

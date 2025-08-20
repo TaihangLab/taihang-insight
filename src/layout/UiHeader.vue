@@ -178,8 +178,16 @@ export default {
   },
   methods: {
     loginout() {
-      // 简化登出逻辑 - 由Python后端统一处理认证
-      userService.clearUserInfo()
+      // 清除所有用户信息和登录状态
+      userService.clearUserInfo();
+      userService.clearLoginStatus();
+      
+      this.$message({
+        showClose: true,
+        message: '已安全退出登录',
+        type: 'success'
+      });
+      
       this.$router.push('/login');
       // 刷新页面，确保登录界面布局正常
       setTimeout(() => {
