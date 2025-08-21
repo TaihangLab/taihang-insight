@@ -4165,6 +4165,7 @@ body .el-dialog__wrapper .skill-config-dialog {
   overflow: hidden !important;
   border: 1px solid #e4e7ed !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
+  z-index: 3000 !important;
 }
 
 /* 使用更高优先级确保圆角生效 */
@@ -4576,6 +4577,11 @@ body .camera-management .el-dialog.skill-params-dialog {
 .el-dialog[class*="skill-params-dialog"] {
   border-radius: 12px !important;
   overflow: hidden !important;
+}
+
+/* 技能参数对话框的z-index设置 */
+.el-dialog[class*="skill-params-dialog"] {
+  z-index: 2500 !important;
 }
 
 /* 使用属性选择器确保生效 */

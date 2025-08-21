@@ -538,6 +538,7 @@
         width="40%"
         :close-on-click-modal="false"
         custom-class="skill-params-dialog"
+        :append-to-body="true"
         center>
         <div slot="title" class="dialog-header">
           <div class="dialog-header-content">

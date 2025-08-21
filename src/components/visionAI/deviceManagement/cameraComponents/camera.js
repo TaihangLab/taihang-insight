@@ -104,8 +104,8 @@ export default {
         { value: '四级预警', label: '四级预警', color: '#67C23A', level: 4, description: '四级预警' }
       ],
       
-      // 当前技能的预警定义
-      currentSkillAlertDefinitions: [],
+      // 当前技能的预警定义（现在是字符串描述）
+      currentSkillAlertDefinitions: '',
 
       // 表单验证规则
       rules: {
@@ -664,7 +664,7 @@ export default {
         skillAPI.getAITaskSkillDetail(skillInfo.id)
           .then(response => {
             let params = {};
-            let alertDefinitions = [];
+            let alertDefinitions = '';
             if (response.data && (response.data.code === 0 || response.data.success)) {
               const skillDetail = response.data.data;
               if (skillDetail && skillDetail.default_config && skillDetail.default_config.params) {
@@ -1607,18 +1607,7 @@ export default {
     
     // 根据预警等级获取数值
     getWarningLevelValue(levelName) {
-      // 首先尝试从当前技能的预警定义中查找
-      if (this.currentSkillAlertDefinitions && this.currentSkillAlertDefinitions.length > 0) {
-        const alertDef = this.currentSkillAlertDefinitions.find(def => {
-          const levelLabel = this.getLevelLabel(def.level);
-          return levelLabel === levelName;
-        });
-        if (alertDef) {
-          return alertDef.level;
-        }
-      }
-      
-      // 如果没有找到，使用默认映射
+      // 使用统一的预警等级映射
       const levelMap = {
         '一级预警': 1,
         '二级预警': 2,
@@ -1641,40 +1630,32 @@ export default {
     
     // 根据alert_definitions更新预警等级选项
     updateAlarmLevelOptions(alertDefinitions) {
-      if (!alertDefinitions || alertDefinitions.length === 0) {
+      if (!alertDefinitions) {
         // 如果没有预警定义，设置为空数组，表示该技能不支持预警功能
         this.alarmLevelOptions = [];
-        this.currentSkillAlertDefinitions = [];
+        this.currentSkillAlertDefinitions = '';
         console.log('该技能没有预警功能');
         return;
       }
       
-      // 预警等级颜色映射（最多4个等级）
-      const levelColors = {
-        1: '#F56C6C', // 红色 - 最高等级
-        2: '#E6A23C', // 橙色
-        3: '#409EFF', // 蓝色  
-        4: '#67C23A'  // 绿色 - 最低等级
-      };
+      // 保存技能的预警描述（现在是字符串）
+      this.currentSkillAlertDefinitions = alertDefinitions;
       
-      // 根据alert_definitions生成新的选项
-      this.alarmLevelOptions = alertDefinitions.map(def => {
-        const levelLabel = this.getLevelLabel(def.level);
-        return {
-          value: levelLabel,
-          label: levelLabel,
-          color: levelColors[def.level] || '#909399',
-          level: def.level,
-          description: def.description || `${levelLabel}预警`
-        };
-      }).sort((a, b) => a.level - b.level); // 按level排序
+      // 始终使用统一的四级预警选项，但描述使用技能返回的内容
+      this.alarmLevelOptions = [
+        { value: '一级预警', label: '一级预警', color: '#F56C6C', level: 1, description: alertDefinitions },
+        { value: '二级预警', label: '二级预警', color: '#E6A23C', level: 2, description: alertDefinitions },
+        { value: '三级预警', label: '三级预警', color: '#409EFF', level: 3, description: alertDefinitions },
+        { value: '四级预警', label: '四级预警', color: '#67C23A', level: 4, description: alertDefinitions }
+      ];
       
       console.log('更新后的预警等级选项:', this.alarmLevelOptions);
+      console.log('技能预警描述:', alertDefinitions);
     },
     
     // 重置为默认预警等级
     resetToDefaultAlarmLevels() {
-      this.currentSkillAlertDefinitions = [];
+      this.currentSkillAlertDefinitions = '';
       this.alarmLevelOptions = [
         { value: '一级预警', label: '一级预警', color: '#F56C6C', level: 1, description: '一级预警' },
         { value: '二级预警', label: '二级预警', color: '#E6A23C', level: 2, description: '二级预警' },
@@ -2311,7 +2292,7 @@ export default {
                     console.log('从编辑任务中加载预警定义:', skillData.default_config.alert_definitions);
                   } else {
                     // 如果没有预警定义，清空预警选项（表示该技能不支持预警功能）
-                    this.currentSkillAlertDefinitions = [];
+                    this.currentSkillAlertDefinitions = '';
                     this.alarmLevelOptions = [];
                     console.log('该技能不支持预警功能');
                   }
