@@ -628,7 +628,7 @@ export default {
           draggedPointIndex: -1,
           isDragging: false,
             currentPolygon: [],
-            imageLoading: false
+            imageLoading: true // 默认显示加载状态
         },
           rtspStreaming: {
             enabled: false
@@ -702,13 +702,13 @@ export default {
             };
           });
 
-        // 打开配置技能对话框
-        this.skillDialogVisible = true;
-        
-        // 获取摄像头截图作为电子围栏背景 - 移到这里确保对话框已经打开再获取截图
+        // 提前开始获取摄像头截图，在对话框打开前就开始加载
         if (this.currentDeviceId) {
           this.getAndSetCameraSnapForFence(this.currentDeviceId);
         }
+
+        // 打开配置技能对话框
+        this.skillDialogVisible = true;
       }, 100);
     },
 
@@ -799,9 +799,8 @@ export default {
         .finally(() => {
           // 只有当对话框仍然打开时才更新UI状态
           if (this.skillDialogVisible) {
-            setTimeout(() => {
-              this.skillForm.electronicFence.imageLoading = false;
-            }, 500);
+            // 减少延迟，立即更新加载状态
+            this.skillForm.electronicFence.imageLoading = false;
           }
         });
     },

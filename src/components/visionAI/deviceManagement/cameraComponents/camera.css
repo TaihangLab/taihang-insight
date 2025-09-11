@@ -2852,6 +2852,37 @@
   margin-right: 5px;
 }
 
+/* 占位图样式 */
+.fence-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  color: #8c92a4;
+  z-index: 5;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+}
+
+.fence-placeholder i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.fence-placeholder p {
+  font-size: 14px;
+  margin: 0;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
 .fence-image-loading {
   position: absolute;
   top: 0;

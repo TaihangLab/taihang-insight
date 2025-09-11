@@ -378,14 +378,25 @@
               <div class="fence-wrapper">
                 <div class="fence-preview">
                   <div class="image-editor">
-                    <img :src="skillForm.electronicFence.image" alt="围栏图片"
-                      :class="['fence-image', {'loading': skillForm.electronicFence.imageLoading}]"
-                      @click="handleImageClick" @load="handleImageLoad" @error="handleImageError">
+                    <!-- 默认占位图 -->
+                    <div v-if="!skillForm.electronicFence.image || skillForm.electronicFence.image.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=')" 
+                         class="fence-placeholder">
+                      <i class="el-icon-video-camera"></i>
+                      <p>摄像头预览</p>
+                    </div>
+                    
+                    <img v-else 
+                         :src="skillForm.electronicFence.image" 
+                         alt="围栏图片"
+                         :class="['fence-image', {'loading': skillForm.electronicFence.imageLoading}]"
+                         @click="handleImageClick" 
+                         @load="handleImageLoad" 
+                         @error="handleImageError">
 
                     <!-- 图像加载中的状态显示 -->
                     <div v-if="skillForm.electronicFence.imageLoading" class="fence-image-loading">
                       <i class="el-icon-loading"></i>
-                      <p>正在加载图像...</p>
+                      <p>正在加载摄像头画面...</p>
                     </div>
 
                     <div class="fence-polygon"
