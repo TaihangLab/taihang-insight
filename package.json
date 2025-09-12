@@ -18,7 +18,7 @@
     "axios": "^0.24.0",
     "byte-weektime-picker": "^1.1.1",
     "chart.js": "^3.9.1",
-    "core-js": "^2.6.5",
+    "core-js": "^3.44.0",
     "date-fns": "^4.1.0",
     "echarts": "4.9.0",
     "element-ui": "^2.15.14",

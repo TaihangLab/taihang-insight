@@ -865,26 +865,43 @@ export default {
       try {
         this.loading = true;
         
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // 调用后端API更新预警状态为处理中
+        const apiAlertId = this.warning._apiData ? this.warning._apiData.alert_id : this.warning.id;
+        const updateData = {
+          status: 2, // 处理中状态
+          processing_notes: this.remarkForm.remark,
+          processed_by: this.getCurrentUserName()
+        };
         
-        // 添加新的处理中记录
-        this.addOperationRecord({
-          status: 'completed',
-          statusText: '处理中',
-          time: this.getCurrentTime(),
-          description: `处理意见：${this.remarkForm.remark}`,
-          operationType: 'processing',
-          operator: this.getCurrentUserName()
-        });
+        console.log('确认处理 - 调用API:', apiAlertId, updateData);
         
-        this.$message.success('处理记录已添加');
-        // 发出处理记录添加事件，传递action标识
-        this.$emit('handle-warning', { ...this.warning, action: 'record-added' });
-        this.closeRemarkDialog();
+        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        
+        if (response.data && response.data.code === 0) {
+          // API调用成功，添加本地操作记录
+          this.addOperationRecord({
+            status: 'completed',
+            statusText: '处理中',
+            time: this.getCurrentTime(),
+            description: `处理意见：${this.remarkForm.remark}`,
+            operationType: 'processing',
+            operator: this.getCurrentUserName()
+          });
+          
+          this.$message.success('确认处理成功，状态已更新为处理中');
+          // 发出处理记录添加事件，传递action标识和API响应数据
+          this.$emit('handle-warning', { 
+            ...this.warning, 
+            action: 'record-added',
+            apiResponse: response.data.data
+          });
+          this.closeRemarkDialog();
+        } else {
+          throw new Error(response.data ? response.data.msg : '更新失败');
+        }
       } catch (error) {
-        console.error('处理失败:', error);
-        this.$message.error('处理失败');
+        console.error('确认处理失败:', error);
+        this.$message.error(`确认处理失败: ${error.message || error}`);
       } finally {
         this.loading = false;
       }
@@ -895,26 +912,43 @@ export default {
       try {
         this.loading = true;
         
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // 调用后端API更新预警状态为已处理
+        const apiAlertId = this.warning._apiData ? this.warning._apiData.alert_id : this.warning.id;
+        const updateData = {
+          status: 3, // 已处理状态
+          processing_notes: this.remarkForm.remark ? `${this.remarkForm.remark}\n处理已完成` : '处理已完成',
+          processed_by: this.getCurrentUserName()
+        };
         
-        // 添加新的已处理记录，而不是修改现有记录
-        this.addOperationRecord({
-          status: 'completed',
-          statusText: '已处理',
-          time: this.getCurrentTime(),
-          description: '预警处理已完成，可以进行后续操作',
-          operationType: 'completed',
-          operator: this.getCurrentUserName()
-        });
+        console.log('结束处理 - 调用API:', apiAlertId, updateData);
         
-        this.$message.success('处理已完成，现在可以进行归档等操作');
-        // 发出完成处理事件，不再触发处理流程
-        this.$emit('handle-warning', { ...this.warning, action: 'finished' });
-        this.closeRemarkDialog();
+        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        
+        if (response.data && response.data.code === 0) {
+          // API调用成功，添加本地操作记录
+          this.addOperationRecord({
+            status: 'completed',
+            statusText: '已处理',
+            time: this.getCurrentTime(),
+            description: '预警处理已完成，可以进行后续操作',
+            operationType: 'completed',
+            operator: this.getCurrentUserName()
+          });
+          
+          this.$message.success('处理已完成，现在可以进行归档等操作');
+          // 发出完成处理事件，传递API响应数据
+          this.$emit('handle-warning', { 
+            ...this.warning, 
+            action: 'finished',
+            apiResponse: response.data.data
+          });
+          this.closeRemarkDialog();
+        } else {
+          throw new Error(response.data ? response.data.msg : '更新失败');
+        }
       } catch (error) {
         console.error('结束处理失败:', error);
-        this.$message.error('结束处理失败');
+        this.$message.error(`结束处理失败: ${error.message || error}`);
       } finally {
         this.loading = false;
       }
