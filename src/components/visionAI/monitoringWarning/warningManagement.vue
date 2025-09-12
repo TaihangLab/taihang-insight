@@ -610,18 +610,6 @@ export default {
       }
     },
     
-    // 全选/取消全选
-    handleSelectAll() {
-      if (this.selectedWarnings.length === this.warningList.length) {
-        // 如果已经全选，则取消全选
-        this.selectedWarnings = []
-        this.$message.info('已取消全选')
-      } else {
-        // 全选当前页的预警
-        this.selectedWarnings = this.warningList.map(item => item.id)
-        this.$message.success(`已选择 ${this.selectedWarnings.length} 项预警`)
-      }
-    },
     
     // 选择当前页
     handleSelectPage() {
@@ -689,26 +677,40 @@ export default {
         const response = await alertAPI.batchUpdateAlertStatus(apiAlertIds, updateData)
         
         if (response.data && response.data.code === 0) {
-          // API调用成功，更新本地数据
+          // API调用成功，更新本地数据（与单个处理逻辑一致）
           for (const id of this.selectedWarnings) {
             const index = this.warningList.findIndex(item => item.id === id)
             if (index !== -1) {
-              // 添加处理记录到操作历史
+              // 确保有操作历史数组
               if (!this.warningList[index].operationHistory) {
                 this.$set(this.warningList[index], 'operationHistory', [])
               }
               
-              const newRecord = {
+              // 更新待处理记录为已完成状态
+              this.warningList[index].operationHistory = this.warningList[index].operationHistory.map(record => {
+                if (record.operationType === 'pending' && record.status === 'active') {
+                  return {
+                    ...record,
+                    status: 'completed',
+                    description: '预警已确认，开始处理'
+                  };
+                }
+                return record;
+              });
+              
+              // 添加处理中记录（与单个处理一致）
+              const processingRecord = {
                 id: Date.now() + Math.random(),
-                status: 'completed',
-                statusText: '批量处理记录',
+                status: 'active',
+                statusText: '处理中',
                 time: this.getCurrentTime(),
-                description: `批量处理意见：${this.batchRemarkForm.remark}`,
-                operationType: 'process',
+                description: `批量处理开始：${this.batchRemarkForm.remark}`,
+                operationType: 'processing',
                 operator: this.getCurrentUserName()
               }
               
-              this.warningList[index].operationHistory.unshift(newRecord)
+              this.warningList[index].operationHistory.unshift(processingRecord)
+              
               // 更新状态为处理中
               this.warningList[index].status = 'processing'
             }
@@ -1916,10 +1918,6 @@ export default {
         
         <div class="filter-actions">
           <div class="filter-buttons">
-            <el-button 
-              size="small" 
-              @click="handleSelectAll"
-            >全选</el-button>
             <el-button 
               size="small" 
               @click="handleSelectPage"
