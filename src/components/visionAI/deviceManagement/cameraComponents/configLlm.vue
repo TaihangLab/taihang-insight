@@ -190,6 +190,92 @@
           </div>
         </div>
 
+        <!-- 技能详细信息展示 -->
+        <div class="skill-info-section">
+          <div class="skill-info-grid">
+            <!-- 技能描述 -->
+            <div class="info-card description-card">
+              <div class="card-header">
+                <i class="el-icon-document"></i>
+                <span class="card-title">技能描述</span>
+              </div>
+              <div class="card-content">
+                <p class="description-text">{{ skillDetail.skill_description || skillDetail.description || '暂无描述' }}</p>
+              </div>
+            </div>
+
+            <!-- 输出参数 -->
+            <div class="info-card params-card" v-if="skillDetail.output_parameters && skillDetail.output_parameters.length > 0">
+              <div class="card-header">
+                <i class="el-icon-data-line"></i>
+                <span class="card-title">输出参数</span>
+              </div>
+              <div class="card-content">
+                <div class="params-list">
+                  <div v-for="(param, index) in skillDetail.output_parameters" :key="index" class="param-item">
+                    <div class="param-name">{{ param.name }}</div>
+                    <div class="param-meta">
+                      <span class="param-type">{{ param.type }}</span>
+                      <span class="param-required" :class="{ required: param.required }">
+                        {{ param.required ? '必填' : '可选' }}
+                      </span>
+                    </div>
+                    <div class="param-desc">{{ param.description || '暂无描述' }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 提示词模板 -->
+            <div class="info-card prompt-card full-width" v-if="skillDetail.prompt_template">
+              <div class="card-header">
+                <i class="el-icon-chat-line-square"></i>
+                <span class="card-title">提示词模板</span>
+              </div>
+              <div class="card-content">
+                <div class="prompt-container">
+                  <pre class="prompt-text">{{ skillDetail.prompt_template }}</pre>
+                </div>
+              </div>
+            </div>
+
+            <!-- 预警条件 -->
+            <div class="info-card alert-card full-width" v-if="skillDetail.alert_conditions">
+              <div class="card-header">
+                <i class="el-icon-warning"></i>
+                <span class="card-title">预警条件</span>
+              </div>
+              <div class="card-content">
+                <div class="alert-summary">
+                  <span>当满足</span>
+                  <el-tag size="small" type="primary">
+                    {{ getRelationDisplayName(skillDetail.alert_conditions.global_relation) }}
+                  </el-tag>
+                  <span>条件组时触发预警</span>
+                </div>
+                <div class="alert-groups" v-if="skillDetail.alert_conditions.condition_groups">
+                  <div v-for="(group, index) in skillDetail.alert_conditions.condition_groups" 
+                       :key="index" 
+                       class="alert-group">
+                    <div class="group-title">
+                      条件组 {{ index + 1 }} ({{ getRelationDisplayName(group.relation) }})
+                    </div>
+                    <div class="group-conditions">
+                      <div v-for="(condition, condIndex) in group.conditions" 
+                           :key="condIndex" 
+                           class="condition-row">
+                        <span class="condition-field">{{ condition.field }}</span>
+                        <span class="condition-operator">{{ getOperatorDisplayName(condition.operator) }}</span>
+                        <span class="condition-value" v-if="condition.value !== undefined && condition.value !== ''">{{ condition.value }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 配置表单 -->
         <el-form :model="configForm" :rules="configRules" ref="configForm" label-width="100px">
           <el-form-item label="任务名称" prop="taskName">
@@ -358,7 +444,7 @@ export default {
             seconds: 30,
             frames: 1
           },
-          alertLevel: 0,
+          alertLevel: 1,
           timeRanges: [
             {
               start: '00:00',
@@ -392,8 +478,7 @@ export default {
          { value: 1, label: '一级预警', color: '#F53F3F', desc: '紧急情况，立即响应' },
          { value: 2, label: '二级预警', color: '#F56C6C', desc: '严重异常，立即处理' },
          { value: 3, label: '三级预警', color: '#E6A23C', desc: '一般异常，需要处理' },
-         { value: 4, label: '四级预警', color: '#67C23A', desc: '轻微异常，建议关注' },
-         { value: 0, label: '默认等级', color: '#909399', desc: '系统默认预警等级' }
+         { value: 4, label: '四级预警', color: '#67C23A', desc: '轻微异常，建议关注' }
        ]
     };
   },
@@ -411,13 +496,13 @@ export default {
       if (level) {
         // 根据预警等级生成对应的背景色
         const color = level.color;
-        // 将颜色转换为rgba格式，透明度为0.1
+        // 将颜色转换为rgba格式，透明度为0.05
         const r = parseInt(color.slice(1, 3), 16);
         const g = parseInt(color.slice(3, 5), 16);
         const b = parseInt(color.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, 0.1)`;
+        return `rgba(${r}, ${g}, ${b}, 0.05)`;
       }
-      return 'rgba(103, 194, 58, 0.1)';
+      return 'rgba(103, 194, 58, 0.05)';
     }
   },
       // 移除 watch，不再监听外部状态
@@ -602,11 +687,47 @@ export default {
       
       this.skillConfigVisible = true;
       
-      // 直接使用技能列表中的数据
-      this.skillDetail = skill;
+      // 确保对话框在最前面
+      this.$nextTick(() => {
+        this.ensureDialogOnTop();
+      });
+      
+      // 调用API获取技能详情
+      await this.loadSkillDetailById(skill.skill_id || skill.id);
       
       // 初始化配置表单
       this.initConfigForm(skill);
+    },
+
+    // 根据技能ID加载详情
+    async loadSkillDetailById(skillId) {
+      if (!skillId) {
+        console.warn('技能ID为空，使用默认数据');
+        this.skillDetail = this.selectedSkillData;
+        return;
+      }
+
+      this.skillDetailLoading = true;
+      try {
+        console.log('加载技能详情，技能ID:', skillId);
+        const response = await visionAIService.skillAPI.getLlmSkillDetail(skillId);
+        console.log('技能详情API响应:', response.data);
+        
+        if (response.data && response.data.success) {
+          // 技能详情API格式: {success: true, data: {...}}
+          this.skillDetail = response.data.data;
+          console.log('技能详情加载成功:', this.skillDetail);
+        } else {
+          throw new Error('获取技能详情失败');
+        }
+      } catch (error) {
+        console.error('获取技能详情失败:', error);
+        // 失败时使用原有数据
+        this.skillDetail = this.selectedSkillData;
+        this.$message.warning('获取技能详情失败，使用基础信息');
+      } finally {
+        this.skillDetailLoading = false;
+      }
     },
 
     // 加载关联任务
@@ -643,7 +764,8 @@ export default {
 
         // 过滤出与当前摄像头相关的大模型任务
         this.relatedTasks = allTasks.filter(task => {
-          return task.camera_id === this.selectedCamera.id;
+          // 使用宽松比较，支持字符串和数字类型
+          return task.camera_id == this.selectedCamera.id;
         });
 
         console.log('关联的大模型任务:', this.relatedTasks);
@@ -699,7 +821,7 @@ export default {
             seconds: 30,
             frames: 1
           },
-          alertLevel: 0,
+          alertLevel: 1,
           timeRanges: [
             {
               start: '00:00',
@@ -740,7 +862,7 @@ export default {
            description: this.configForm.taskDescription,
            skill_id: this.selectedSkillData.skill_id || this.selectedSkillData.id,
            camera_id: this.selectedCamera.id,
-           frame_rate: this.configForm.frequency.seconds,  // 每多少秒处理一次
+           frame_rate: 1.0 / this.configForm.frequency.seconds,  // FPS：每秒执行次数
            status: this.configForm.enabled,
            alert_level: this.configForm.alertLevel,
            running_period: {
@@ -795,6 +917,9 @@ export default {
 
     // 任务操作方法
     editTask(task) {
+      // 编辑任务前，先清理可能的高z-index元素
+      this.resetHighZIndex();
+      
       // 编辑任务 - 可以复用现有的配置对话框
       this.selectedSkillData = {
         skill_id: task.skill_id,  // LLM任务使用skill_id字段
@@ -817,10 +942,10 @@ export default {
          taskName: task.name,
          taskDescription: task.description,
          frequency: {
-           seconds: Math.max(30, task.frame_rate || 30), // 使用frame_rate字段，确保最少30秒
+           seconds: Math.max(30, Math.round(1.0 / (task.frame_rate || 1/30))), // 从FPS转换回间隔秒数
            frames: 1  // 固定为1帧，30秒内最多只能抽取1次
          },
-         alertLevel: task.alert_level !== undefined ? task.alert_level : 0, // 使用任务的预警等级
+         alertLevel: task.alert_level !== undefined ? task.alert_level : 1, // 使用任务的预警等级
          timeRanges: timeRanges,
          enabled: task.status
        };
@@ -830,16 +955,26 @@ export default {
       this.editingTaskId = task.id;
       
       this.skillConfigVisible = true;
+      
+      // 确保编辑对话框在最前面 - 多次尝试确保成功
+      this.$nextTick(() => {
+        this.ensureDialogOnTop();
+        // 再次延迟确保对话框正确置顶
+        setTimeout(() => {
+          this.ensureDialogOnTop();
+        }, 200);
+      });
     },
 
          viewTask(task) {
-       // 查看任务详情
+       // 查看任务详情前，先清理可能的高z-index元素
+       this.resetHighZIndex();
+       
        const alertLevelNames = {
          1: '一级预警',
          2: '二级预警', 
          3: '三级预警',
-         4: '四级预警',
-         0: '默认等级'
+         4: '四级预警'
        };
        const alertLevelName = alertLevelNames[task.alert_level] || task.alert_level || '未设置';
        
@@ -850,12 +985,18 @@ export default {
            <p><strong>任务描述：</strong>${task.description || '无'}</p>
            <p><strong>任务状态：</strong>${task.status ? '运行中' : '已停止'}</p>
            <p><strong>预警等级：</strong>${alertLevelName}</p>
-           <p><strong>抽帧频率：</strong>每${task.frame_rate || 30}秒处理一次</p>
+           <p><strong>抽帧频率：</strong>每${Math.round(1.0 / (task.frame_rate || 1/30))}秒处理一次</p>
            <p><strong>创建时间：</strong>${this.formatTime(task.created_at)}</p>
          </div>
        `, '任务详情', {
          dangerouslyUseHTMLString: true,
-         confirmButtonText: '确定'
+         confirmButtonText: '确定',
+         callback: () => {
+           // 对话框关闭后，延迟清理z-index，为后续对话框让路
+           setTimeout(() => {
+             this.resetHighZIndex();
+           }, 100);
+         }
        });
      },
 
@@ -894,17 +1035,90 @@ export default {
       }
     },
 
-    // 获取预警等级名称
-    getAlertLevelName(level) {
-      const alertLevelNames = {
-        1: '一级预警',
-        2: '二级预警', 
-        3: '三级预警',
-        4: '四级预警',
-        0: '默认等级'
-      };
-      return alertLevelNames[level] || '未设置';
-    },
+     // 获取预警等级名称
+     getAlertLevelName(level) {
+       const alertLevelNames = {
+         1: '一级预警',
+         2: '二级预警', 
+         3: '三级预警',
+         4: '四级预警'
+       };
+       return alertLevelNames[level] || '未设置';
+     },
+
+     // 获取应用场景显示名称
+     getScenarioDisplayName(scenario) {
+       const nameMap = {
+         'video_analysis': '视频分析',
+         'image_processing': '图片处理', 
+         'real_time_monitoring': '实时监控',
+         'batch_processing': '批量处理'
+       };
+       return nameMap[scenario] || scenario || '未知场景';
+     },
+
+     // 获取关系类型显示名称
+     getRelationDisplayName(relation) {
+       const nameMap = {
+         'and': '且（全部满足）',
+         'or': '或（任意满足）',
+         'not': '非（全不满足）',
+         'all': '且（全部满足）',
+         'any': '或（任意满足）'
+       };
+       return nameMap[relation] || relation;
+     },
+
+     // 获取操作符显示名称
+     getOperatorDisplayName(operator) {
+       const nameMap = {
+         'eq': '等于',
+         'ne': '不等于',
+         'gt': '大于',
+         'lt': '小于',
+         'gte': '大于等于',
+         'lte': '小于等于',
+         'contains': '包含',
+         'not_contains': '不包含',
+         'is_empty': '为空',
+         'is_not_empty': '不为空'
+       };
+       return nameMap[operator] || operator;
+     },
+
+     // 解析输出参数
+     parseOutputParameters(outputParams) {
+       if (!outputParams) return [];
+       
+       try {
+         // 如果是字符串，尝试解析为JSON
+         if (typeof outputParams === 'string') {
+           outputParams = JSON.parse(outputParams);
+         }
+         
+         // 如果是数组，直接返回
+         if (Array.isArray(outputParams)) {
+           return outputParams.map(param => ({
+             name: param.name || param.key || '未知参数',
+             type: param.type || param.dataType || 'string',
+             description: param.description || param.desc || '无描述'
+           }));
+         }
+         
+         // 如果是对象，转换为数组格式
+         if (typeof outputParams === 'object') {
+           return Object.keys(outputParams).map(key => ({
+             name: key,
+             type: outputParams[key].type || 'string',
+             description: outputParams[key].description || outputParams[key].desc || '无描述'
+           }));
+         }
+       } catch (error) {
+         console.warn('解析输出参数失败:', error);
+       }
+       
+       return [];
+     },
 
      // 关闭配置对话框
      handleConfigClose() {
@@ -990,6 +1204,73 @@ export default {
        // 确保配置弹窗也关闭
        if (this.skillConfigVisible) {
          this.closeConfigDialog();
+       }
+     },
+
+     // 确保对话框在最前面
+     ensureDialogOnTop() {
+       try {
+         setTimeout(() => {
+           // 先清理可能的高z-index元素
+           this.resetHighZIndex();
+           
+           // 查找配置对话框
+           const configDialog = document.querySelector('.llm-skill-config-dialog .el-dialog__wrapper');
+           if (configDialog) {
+             // 获取当前最高的z-index，但排除过高的异常值
+             let maxZIndex = Math.max(
+               ...Array.from(document.querySelectorAll('*'))
+                 .map(el => {
+                   const zIndex = parseInt(window.getComputedStyle(el).zIndex) || 0;
+                   // 过滤掉异常高的z-index，避免层级爆炸
+                   return zIndex > 5000 ? 0 : zIndex;
+                 })
+                 .filter(z => !isNaN(z) && z > 0)
+             );
+             
+             // 设置配置对话框为最高层级，但限制最大值
+             const targetZIndex = Math.min(Math.max(maxZIndex + 10, 3000), 4000);
+             configDialog.style.zIndex = targetZIndex;
+             
+             // 同时确保遮罩层也在正确层级
+             const dialogMask = configDialog.querySelector('.v-modal');
+             if (dialogMask) {
+               dialogMask.style.zIndex = targetZIndex - 1;
+             }
+             
+             console.log(`配置对话框层级设置为: ${targetZIndex}`);
+           }
+         }, 100);
+       } catch (error) {
+         console.warn('设置对话框层级失败:', error);
+       }
+     },
+
+     // 重置过高的z-index，避免影响后续对话框
+     resetHighZIndex() {
+       try {
+         // 更精确地只重置MessageBox相关的元素
+         const messageBoxElements = document.querySelectorAll('.el-message-box__wrapper');
+         messageBoxElements.forEach(el => {
+           const zIndex = parseInt(window.getComputedStyle(el).zIndex) || 0;
+           // 只重置确实过高的MessageBox z-index
+           if (zIndex > 3000) {
+             el.style.zIndex = '2000';
+           }
+         });
+         
+         // 清理可能残留的遮罩层
+         const overlays = document.querySelectorAll('.v-modal');
+         overlays.forEach(overlay => {
+           const zIndex = parseInt(window.getComputedStyle(overlay).zIndex) || 0;
+           if (zIndex > 3000) {
+             overlay.style.zIndex = '2000';
+           }
+         });
+         
+         console.log('过高z-index元素已安全重置');
+       } catch (error) {
+         console.warn('重置z-index失败:', error);
        }
      }
   }
@@ -1504,6 +1785,238 @@ export default {
   opacity: 0.6;
 }
 
+/* 技能信息区域 - 简约设计 */
+.skill-info-section {
+  margin-bottom: 24px;
+}
+
+.skill-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.info-card {
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.info-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.card-header {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-header i {
+  font-size: 16px;
+  color: #6b7280;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.card-content {
+  padding: 16px;
+}
+
+/* 技能描述 */
+.description-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0;
+}
+
+/* 输出参数 */
+.params-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.param-item {
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.param-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 6px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.param-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.param-type {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.param-required {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.param-required.required {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.param-desc {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* 提示词模板 */
+.prompt-container {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.prompt-text {
+  margin: 0;
+  padding: 16px;
+  color: #374151;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background: transparent;
+}
+
+.prompt-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.prompt-container::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+.prompt-container::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.prompt-container::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* 预警条件 */
+.alert-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #374151;
+}
+
+.alert-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alert-group {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.group-title {
+  background: #f3f4f6;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.group-conditions {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.condition-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+.condition-field {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.condition-operator {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.condition-value {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+  font-size: 11px;
+}
+
 /* 表单样式 */
 .frequency-config {
   display: flex;
@@ -1613,6 +2126,58 @@ export default {
    
    .tasks-list {
      grid-template-columns: 1fr;
+   }
+
+   /* 技能信息响应式 */
+   .skill-info-grid {
+     grid-template-columns: 1fr !important;
+     gap: 16px;
+   }
+   
+   .info-card.full-width {
+     grid-column: 1;
+   }
+   
+   .card-header {
+     padding: 12px 16px;
+   }
+   
+   .card-title {
+     font-size: 14px;
+   }
+   
+   .card-content {
+     padding: 16px;
+   }
+   
+   .param-item {
+     padding: 12px;
+   }
+   
+   .param-name {
+     font-size: 14px;
+   }
+   
+   .param-meta {
+     flex-direction: column;
+     gap: 8px;
+   }
+   
+   .prompt-text {
+     font-size: 12px;
+     padding: 16px;
+   }
+   
+   .condition-row {
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 8px;
+   }
+   
+   .alert-summary {
+     flex-direction: column;
+     gap: 8px;
+     text-align: center;
    }
  }
 </style>

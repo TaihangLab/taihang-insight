@@ -385,12 +385,15 @@
                             <el-select 
                               v-model="condition.field" 
                               placeholder="请选择参数" 
-                              size="small">
+                              size="small"
+                              @change="handleFieldChange(condition, $event)">
                               <el-option 
                                 v-for="param in outputParams.filter(p => p.name.trim())" 
                                 :key="param.name" 
                                 :label="param.name" 
                                 :value="param.name">
+                                <span style="float: left">{{ param.name }}</span>
+                                <span style="float: right; color: #8492a6; font-size: 13px">{{ param.type }}</span>
                               </el-option>
                             </el-select>
                           </div>
@@ -398,23 +401,43 @@
                             <el-select 
                               v-model="condition.operator" 
                               placeholder="请选择" 
-                              size="small">
-                              <el-option label="等于" value="eq"></el-option>
-                              <el-option label="不等于" value="ne"></el-option>
-                              <el-option label="大于" value="gt"></el-option>
-                              <el-option label="小于" value="lt"></el-option>
-                              <el-option label="大于等于" value="gte"></el-option>
-                              <el-option label="小于等于" value="lte"></el-option>
-                              <el-option label="包含" value="contains"></el-option>
-                              <el-option label="不包含" value="not_contains"></el-option>
-                              <el-option label="为空" value="is_empty"></el-option>
-                              <el-option label="不为空" value="is_not_empty"></el-option>
+                              size="small"
+                              @change="handleOperatorChange(condition, $event)">
+                              <el-option 
+                                v-for="op in getAvailableOperators(condition.field)" 
+                                :key="op.value" 
+                                :label="op.label" 
+                                :value="op.value">
+                              </el-option>
                             </el-select>
                           </div>
                           <div class="condition-field">
-                            <el-input 
+                            <!-- 布尔值类型使用下拉选择器 -->
+                            <el-select 
+                              v-if="getSelectedParamType(condition.field) === 'boolean'"
                               v-model="condition.value" 
-                              :placeholder="getValuePlaceholder(condition.operator)" 
+                              placeholder="请选择布尔值" 
+                              size="small"
+                              :disabled="condition.operator === 'is_empty' || condition.operator === 'is_not_empty'">
+                              <el-option label="true (真)" value="true"></el-option>
+                              <el-option label="false (假)" value="false"></el-option>
+                            </el-select>
+                            <!-- 数值类型使用数值输入框 -->
+                            <el-input-number 
+                              v-else-if="(getSelectedParamType(condition.field) === 'int' || getSelectedParamType(condition.field) === 'float') && ['gt', 'gte', 'lt', 'lte', 'eq', 'ne'].includes(condition.operator)"
+                              v-model="condition.value" 
+                              size="small"
+                              :precision="getSelectedParamType(condition.field) === 'float' ? 2 : 0"
+                              :step="getSelectedParamType(condition.field) === 'float' ? 0.1 : 1"
+                              controls-position="right"
+                              style="width: 100%"
+                              :disabled="condition.operator === 'is_empty' || condition.operator === 'is_not_empty'">
+                            </el-input-number>
+                            <!-- 其他类型使用文本输入框 -->
+                            <el-input 
+                              v-else
+                              v-model="condition.value" 
+                              :placeholder="getValuePlaceholder(condition.operator, getSelectedParamType(condition.field))" 
                               size="small"
                               :disabled="condition.operator === 'is_empty' || condition.operator === 'is_not_empty'">
                             </el-input>
@@ -1802,8 +1825,79 @@
         }, 10)
       },
       
+      // 获取选中参数的类型
+      getSelectedParamType(paramName) {
+        if (!paramName) return 'string'
+        
+        const param = this.outputParams.find(p => p.name === paramName)
+        return param ? param.type : 'string'
+      },
+      
+      // 处理字段改变事件
+      handleFieldChange(condition, newField) {
+        // 当字段改变时，重置条件值
+        condition.value = ''
+        
+        // 根据新字段的类型，检查当前操作符是否仍然有效
+        const availableOperators = this.getAvailableOperators(newField)
+        const isCurrentOperatorValid = availableOperators.some(op => op.value === condition.operator)
+        
+        // 如果当前操作符无效，则重置为第一个可用的操作符
+        if (!isCurrentOperatorValid && availableOperators.length > 0) {
+          condition.operator = availableOperators[0].value
+        }
+      },
+      
+      // 处理操作符改变事件
+      handleOperatorChange(condition, newOperator) {
+        // 当操作符改变为is_empty或is_not_empty时，清空条件值
+        if (newOperator === 'is_empty' || newOperator === 'is_not_empty') {
+          condition.value = ''
+        }
+      },
+      
+      // 获取可用的操作符选项
+      getAvailableOperators(paramName) {
+        const paramType = this.getSelectedParamType(paramName)
+        
+        // 通用操作符
+        const commonOperators = [
+          { label: '等于', value: 'eq' },
+          { label: '不等于', value: 'ne' },
+          { label: '为空', value: 'is_empty' },
+          { label: '不为空', value: 'is_not_empty' }
+        ]
+        
+        // 根据参数类型添加特定操作符
+        switch (paramType) {
+          case 'boolean':
+            // 布尔值只支持基本比较
+            return commonOperators
+          
+          case 'int':
+          case 'float':
+            // 数值类型支持大小比较
+            return [
+              ...commonOperators,
+              { label: '大于', value: 'gt' },
+              { label: '小于', value: 'lt' },
+              { label: '大于等于', value: 'gte' },
+              { label: '小于等于', value: 'lte' }
+            ]
+          
+          case 'string':
+          default:
+            // 字符串类型支持包含操作
+            return [
+              ...commonOperators,
+              { label: '包含', value: 'contains' },
+              { label: '不包含', value: 'not_contains' }
+            ]
+        }
+      },
+      
       // 获取条件值输入框的提示文本
-      getValuePlaceholder(operator) {
+      getValuePlaceholder(operator, paramType = 'string') {
         switch(operator) {
           case 'is_empty':
             return '无需输入值'
@@ -1811,10 +1905,15 @@
             return '无需输入值'
           case 'eq':
           case 'ne':
-            return '请输入比较值'
+            if (paramType === 'boolean') {
+              return '请选择布尔值'
+            } else if (paramType === 'int' || paramType === 'float') {
+              return '请输入数值'
+            } else {
+              return '请输入比较值'
+            }
           case 'gt':
           case 'gte':
-            return '请输入数值'
           case 'lt':
           case 'lte':
             return '请输入数值'
@@ -1822,7 +1921,13 @@
           case 'not_contains':
             return '请输入包含的内容'
           default:
-            return '请输入'
+            if (paramType === 'boolean') {
+              return '请选择布尔值'
+            } else if (paramType === 'int' || paramType === 'float') {
+              return '请输入数值'
+            } else {
+              return '请输入'
+            }
         }
       }
     }
@@ -2936,6 +3041,33 @@
   .add-group-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  }
+
+  /* 条件值输入控件统一样式 */
+  .condition-field .el-input-number {
+    width: 100%;
+  }
+
+  .condition-field .el-input-number >>> .el-input__inner {
+    text-align: left;
+  }
+
+  .condition-field .el-select {
+    width: 100%;
+  }
+
+  /* 参数选择器中类型显示样式 */
+  .condition-field .el-select-dropdown__item {
+    padding: 8px 20px;
+  }
+  
+  /* 布尔值选择器特殊样式 */
+  .condition-field .el-select >>> .el-input.is-focus .el-input__inner {
+    border-color: #67c23a;
+  }
+  
+  .condition-field .el-input-number >>> .el-input.is-focus .el-input__inner {
+    border-color: #409eff;
   }
   
   /* 响应式设计 */
