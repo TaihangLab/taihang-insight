@@ -796,6 +796,8 @@ export default {
     
     // 从预警列表处理预警 - 使用统一的处理逻辑
     handleWarningFromList(warning) {
+      console.log('🖱️ 点击处理按钮, 预警ID:', warning && warning.id, '预警数据:', warning);
+      
       if (warning && warning.id) {
         // 检查当前是否已经在处理中
         const hasProcessingRecord = warning.operationHistory && 
@@ -804,53 +806,84 @@ export default {
           );
         
         if (hasProcessingRecord) {
+          console.log('📝 预警已在处理中，直接打开处理对话框');
           // 如果已经有处理中记录，直接弹出处理意见对话框
           this.currentProcessingWarningId = warning.id;
           this.remarkDialogVisible = true;
         } else {
+          console.log('🆕 开始新的处理流程');
           // 如果没有处理中记录，先添加"处理中"状态
           this.startProcessingWarning(warning);
         }
+      } else {
+        console.error('❌ 无效的预警数据:', warning);
+        this.$message.error('预警数据无效，无法处理');
       }
     },
     
     // 开始处理预警
-    startProcessingWarning(warning) {
-      const index = this.warningList.findIndex(item => item.id === warning.id);
-      if (index !== -1) {
-        // 确保有操作历史数组
-        if (!this.warningList[index].operationHistory) {
-          this.$set(this.warningList[index], 'operationHistory', []);
-        }
+    async startProcessingWarning(warning) {
+      try {
+        this.loading = true;
         
-        // 更新待处理记录为已完成状态
-        this.warningList[index].operationHistory = this.warningList[index].operationHistory.map(record => {
-          if (record.operationType === 'pending' && record.status === 'active') {
-            return {
-              ...record,
-              status: 'completed',
-              description: '预警已确认，开始处理'
-            };
-          }
-          return record;
-        });
+        console.log('🔄 开始处理预警:', warning.id);
         
-        // 添加处理中记录
-        const newRecord = {
-          id: Date.now() + Math.random(),
-          status: 'active',
-          statusText: '处理中',
-          time: this.getCurrentTime(),
-          description: '处理人员正在处理此预警，可添加处理记录',
-          operationType: 'processing',
-          operator: this.getCurrentUserName()
+        // 1. 先调用后端API更新状态为"处理中"
+        const updateData = {
+          status: 2, // 处理中状态
+          processing_notes: '开始处理预警',
+          processed_by: this.getCurrentUserName()
         };
         
-        this.warningList[index].operationHistory.unshift(newRecord);
+        // 发送真实的API请求
+        const response = await alertAPI.updateAlertStatus(warning.id, updateData);
+        console.log('✅ 后端状态更新成功:', response);
         
-        // 弹出处理意见对话框
+        // 2. 后端更新成功后，更新本地状态
+        const index = this.warningList.findIndex(item => item.id === warning.id);
+        if (index !== -1) {
+          // 确保有操作历史数组
+          if (!this.warningList[index].operationHistory) {
+            this.$set(this.warningList[index], 'operationHistory', []);
+          }
+          
+          // 更新待处理记录为已完成状态
+          this.warningList[index].operationHistory = this.warningList[index].operationHistory.map(record => {
+            if (record.operationType === 'pending' && record.status === 'active') {
+              return {
+                ...record,
+                status: 'completed',
+                description: '预警已确认，开始处理'
+              };
+            }
+            return record;
+          });
+          
+          // 添加处理中记录
+          const newRecord = {
+            id: Date.now() + Math.random(),
+            status: 'active',
+            statusText: '处理中',
+            time: this.getCurrentTime(),
+            description: '处理人员正在处理此预警，可添加处理记录',
+            operationType: 'processing',
+            operator: this.getCurrentUserName()
+          };
+          
+          this.warningList[index].operationHistory.unshift(newRecord);
+        }
+        
+        // 3. 弹出处理意见对话框
         this.currentProcessingWarningId = warning.id;
         this.remarkDialogVisible = true;
+        
+        this.$message.success('预警已开始处理');
+        
+      } catch (error) {
+        console.error('❌ 开始处理预警失败:', error);
+        this.$message.error('开始处理失败: ' + (error.message || (error.response && error.response.data && error.response.data.message) || '未知错误'));
+      } finally {
+        this.loading = false;
       }
     },
     
@@ -864,8 +897,18 @@ export default {
       try {
         this.loading = true;
         
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log('📝 保存处理意见:', this.currentProcessingWarningId, this.remarkForm.remark);
+        
+        // 真实的API调用 - 添加处理记录
+        const updateData = {
+          status: 2, // 保持处理中状态
+          processing_notes: this.remarkForm.remark,
+          processed_by: this.getCurrentUserName(),
+          operation_type: 'add_processing_note'
+        };
+        
+        const response = await alertAPI.updateAlertStatus(this.currentProcessingWarningId, updateData);
+        console.log('✅ 处理意见保存成功:', response);
         
         // 更新本地数据状态 - 添加新的处理记录
         const index = this.warningList.findIndex(item => item.id === this.currentProcessingWarningId);
@@ -889,8 +932,10 @@ export default {
         
         this.$message.success('处理记录已添加');
         this.closeRemarkDialog();
+        
       } catch (error) {
-        this.$message.error('处理失败');
+        console.error('❌ 保存处理意见失败:', error);
+        this.$message.error('处理失败: ' + (error.message || (error.response && error.response.data && error.response.data.message) || '未知错误'));
       } finally {
         this.loading = false;
       }
@@ -901,8 +946,18 @@ export default {
       try {
         this.loading = true;
         
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log('🏁 结束处理预警:', this.currentProcessingWarningId);
+        
+        // 真实的API调用 - 完成处理
+        const updateData = {
+          status: 3, // 已处理状态
+          processing_notes: this.remarkForm.remark || '预警处理已完成',
+          processed_by: this.getCurrentUserName(),
+          operation_type: 'complete_processing'
+        };
+        
+        const response = await alertAPI.updateAlertStatus(this.currentProcessingWarningId, updateData);
+        console.log('✅ 处理完成状态更新成功:', response);
         
         // 更新本地数据状态
         const index = this.warningList.findIndex(item => item.id === this.currentProcessingWarningId);
@@ -927,8 +982,10 @@ export default {
         
         this.$message.success('处理已完成，现在可以进行归档等操作');
         this.closeRemarkDialog();
+        
       } catch (error) {
-        this.$message.error('结束处理失败');
+        console.error('❌ 结束处理失败:', error);
+        this.$message.error('结束处理失败: ' + (error.message || (error.response && error.response.data && error.response.data.message) || '未知错误'));
       } finally {
         this.loading = false;
       }
@@ -1905,6 +1962,8 @@ export default {
       try {
         const operationHistory = []
         
+        console.log('🔄 转换处理历史, API状态:', apiStatus, '处理数据:', processData);
+        
         // 处理API返回的步骤（如果存在）
         if (processData && processData.steps && Array.isArray(processData.steps)) {
           processData.steps.forEach((step, index) => {
@@ -1920,22 +1979,72 @@ export default {
           })
         }
         
-        // 为新预警（待处理状态）添加待处理记录
-        // 只有当API状态为待处理且没有现有记录时才添加
-        if ((apiStatus === 1 || apiStatus === undefined || apiStatus === null) && operationHistory.length === 0) {
+        // 根据API状态添加相应的操作记录
+        if (apiStatus === 1 || apiStatus === undefined || apiStatus === null) {
+          // 待处理状态 - 添加待处理记录
+          if (operationHistory.length === 0) {
+            operationHistory.push({
+              id: Date.now() + Math.random(),
+              status: 'active',
+              statusText: '待处理',
+              time: alertTime || this.getCurrentTime(),
+              description: '系统检测到异常情况，等待处理人员确认并开始处理',
+              operationType: 'pending',
+              operator: '系统'
+            });
+          }
+        } else if (apiStatus === 2) {
+          // 处理中状态 - 添加处理中记录
           operationHistory.push({
             id: Date.now() + Math.random(),
             status: 'active',
-            statusText: '待处理',
+            statusText: '处理中',
             time: alertTime || this.getCurrentTime(),
-            description: '系统检测到异常情况，等待处理人员确认并开始处理',
-            operationType: 'pending',
-            operator: '系统'
-          })
+            description: '预警正在处理中',
+            operationType: 'processing',
+            operator: '处理人员'
+          });
+        } else if (apiStatus === 3) {
+          // 已处理状态 - 添加已完成记录（关键修复）
+          operationHistory.push({
+            id: Date.now() + Math.random(),
+            status: 'completed',
+            statusText: '已处理',
+            time: alertTime || this.getCurrentTime(),
+            description: '预警处理已完成',
+            operationType: 'completed', // 这是按钮状态判断的关键
+            operator: '处理人员'
+          });
+          console.log('✅ 已添加已处理状态记录');
+        } else if (apiStatus === 4) {
+          // 已归档状态 - 添加归档记录
+          operationHistory.push({
+            id: Date.now() + Math.random(),
+            status: 'completed',
+            statusText: '已归档',
+            time: alertTime || this.getCurrentTime(),
+            description: '预警已归档',
+            operationType: 'archive',
+            operator: '管理员'
+          });
+        } else if (apiStatus === 5) {
+          // 误报状态 - 添加误报记录
+          operationHistory.push({
+            id: Date.now() + Math.random(),
+            status: 'completed',
+            statusText: '误报',
+            time: alertTime || this.getCurrentTime(),
+            description: '预警已标记为误报',
+            operationType: 'falseAlarm',
+            operator: '管理员'
+          });
         }
         
-        return operationHistory
+        console.log('📋 最终操作历史:', operationHistory);
+        return operationHistory;
+        
       } catch (error) {
+        console.error('❌ 转换处理历史出错:', error);
         // 即使出错也要返回基本的历史记录
         return [{
           id: Date.now() + Math.random(),

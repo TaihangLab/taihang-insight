@@ -5,13 +5,14 @@
  */
 
 // 后端API基础地址
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = 'http://192.168.26.213:8000';
+// const API_BASE_URL = 'http://127.0.0.1:8000';
 
 // 各个服务的完整地址（如果需要不同的服务地址）
 const API_ENDPOINTS = {
   // 主要API服务
   MAIN_API: API_BASE_URL,
-  
+
   // 如果有其他服务，可以在这里添加
   // AUTH_API: 'http://192.168.26.213:8001',
   // FILE_API: 'http://192.168.26.213:8002',
@@ -19,6 +20,13 @@ const API_ENDPOINTS = {
 
 // 代理配置（用于webpack开发环境）
 const PROXY_CONFIG = {
+  '/api': {
+    target: API_BASE_URL,
+    changeOrigin: true,
+    ws: true,
+    secure: false,
+    logLevel: 'debug'
+  },
   '/debug': {
     target: API_BASE_URL,
     changeOrigin: true,

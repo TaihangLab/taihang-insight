@@ -63,7 +63,7 @@ visionAIAxios.interceptors.response.use(
 // 通用响应处理函数
 const handleSimpleResponse = (response, apiName) => {
   const originalData = response.data;
-  
+
   // 如果已经是期望的格式，直接返回
   if (originalData && originalData.code !== undefined) {
     return response;
@@ -89,7 +89,7 @@ const handleSimpleResponse = (response, apiName) => {
 
   // 替换原始响应数据
   response.data = transformedData;
-  
+
   console.log(`${apiName}响应转换完成:`, response.data);
   return response;
 };
@@ -117,7 +117,7 @@ export const modelAPI = {
       .then(response => {
         // 单独处理模型列表接口的响应数据转换
         const originalData = response.data;
-        
+
         // 如果已经是期望的格式，直接返回
         if (originalData && originalData.code !== undefined) {
           return response;
@@ -155,7 +155,7 @@ export const modelAPI = {
 
         // 替换原始响应数据
         response.data = transformedData;
-        
+
         console.log('模型列表响应转换完成:', response.data);
         return response;
       })
@@ -171,7 +171,7 @@ export const modelAPI = {
       .then(response => {
         // 单独处理模型详情接口的响应数据转换
         const originalData = response.data;
-        
+
         // 如果已经是期望的格式，直接返回
         if (originalData && originalData.code !== undefined) {
           return response;
@@ -221,7 +221,7 @@ export const modelAPI = {
 
         // 替换原始响应数据
         response.data = transformedData;
-        
+
         console.log('模型详情响应转换完成:', response.data);
         return response;
       })
@@ -257,12 +257,12 @@ export const modelAPI = {
       .then(response => {
         // 单独处理批量删除模型接口的响应数据转换
         const originalData = response.data;
-        
+
         // 如果是批量删除模型的响应（包含detail字段），直接返回不进行转换
         if (originalData && originalData.detail && originalData.success !== undefined) {
           return response;
         }
-        
+
         // 如果已经是期望的格式，直接返回
         if (originalData && originalData.code !== undefined) {
           return response;
@@ -288,7 +288,7 @@ export const modelAPI = {
 
         // 替换原始响应数据
         response.data = transformedData;
-        
+
         console.log('批量删除模型响应转换完成:', response.data);
         return response;
       })
@@ -361,7 +361,7 @@ export const skillAPI = {
       .then(response => {
         // 单独处理技能列表接口的响应数据转换
         const originalData = response.data;
-        
+
         // 如果已经是期望的格式，直接返回
         if (originalData && originalData.code !== undefined) {
           return response;
@@ -391,7 +391,7 @@ export const skillAPI = {
 
         // 替换原始响应数据
         response.data = transformedData;
-        
+
         console.log('技能列表响应转换完成:', response.data);
         return response;
       })
@@ -441,7 +441,7 @@ export const skillAPI = {
       .then(response => {
         // 单独处理AI任务技能类列表接口的响应数据转换
         const originalData = response.data;
-        
+
         // 如果已经是期望的格式，直接返回
         if (originalData && originalData.code !== undefined) {
           return response;
@@ -471,7 +471,7 @@ export const skillAPI = {
 
         // 替换原始响应数据
         response.data = transformedData;
-        
+
         console.log('AI任务技能类列表响应转换完成:', response.data);
         return response;
       })
@@ -551,12 +551,12 @@ export const skillAPI = {
       .then(response => {
         // 单独处理批量删除技能接口的响应数据转换
         const originalData = response.data;
-        
+
         // 如果是批量删除技能的响应（包含detail字段），直接返回不进行转换
         if (originalData && originalData.detail && originalData.success !== undefined) {
           return response;
         }
-        
+
         // 如果已经是期望的格式，直接返回
         if (originalData && originalData.code !== undefined) {
           return response;
@@ -582,7 +582,7 @@ export const skillAPI = {
 
         // 替换原始响应数据
         response.data = transformedData;
-        
+
         console.log('批量删除技能响应转换完成:', response.data);
         return response;
       })
@@ -829,11 +829,11 @@ export const skillAPI = {
     const formData = new FormData();
     formData.append('test_image', testImage);
     formData.append('prompt_template', promptTemplate);
-    
+
     if (systemPrompt) {
       formData.append('system_prompt', systemPrompt);
     }
-    
+
     if (outputParameters && outputParameters.length > 0) {
       formData.append('output_parameters', JSON.stringify(outputParameters));
     }
@@ -1240,7 +1240,7 @@ export const cameraAPI = {
       .then(response => {
         // 单独处理摄像头列表接口的响应数据转换
         const originalData = response.data;
-        
+
         // 如果已经是期望的格式，直接返回
         if (originalData && originalData.code !== undefined) {
           return response;
@@ -1306,7 +1306,7 @@ export const cameraAPI = {
 
         // 替换原始响应数据
         response.data = transformedData;
-        
+
         console.log('摄像头列表响应转换完成:', response.data);
         return response;
       })
@@ -1463,7 +1463,7 @@ export const alertAPI = {
       .then(response => {
         // 单独处理实时预警接口的响应数据转换
         const originalData = response.data;
-        
+
         // 如果已经是期望的格式，直接返回
         if (originalData && originalData.code !== undefined) {
           return response;
@@ -1496,7 +1496,7 @@ export const alertAPI = {
 
         // 替换原始响应数据
         response.data = transformedData;
-        
+
         console.log('实时预警列表响应转换完成:', response.data);
         return response;
       })
@@ -1606,28 +1606,28 @@ export const alertAPI = {
   createAlertSSEConnection(onMessage, onError, onClose) {
     const sseUrl = `${visionAIAxios.defaults.baseURL}/api/v1/alerts/stream`;
     console.log('创建SSE连接:', sseUrl);
-    
+
     const eventSource = new EventSource(sseUrl);
-    
+
     eventSource.onopen = function() {
       console.log('SSE连接已建立');
     };
-    
+
     eventSource.onmessage = function(event) {
       console.log('收到SSE消息:', event.data);
-      
+
       if (!event.data || event.data.trim() === '') {
         return;
       }
-      
+
       try {
         let jsonData = event.data;
-        
+
         // 如果消息包含 "data: " 前缀，去掉它
         if (jsonData.startsWith('data: ')) {
           jsonData = jsonData.substring(6);
         }
-        
+
         const data = JSON.parse(jsonData);
         if (onMessage) {
           onMessage(data);
@@ -1639,14 +1639,14 @@ export const alertAPI = {
         }
       }
     };
-    
+
     eventSource.onerror = function(event) {
       console.log('SSE连接错误:', event);
       if (onError) {
         onError(event);
       }
     };
-    
+
     // 添加关闭方法
     const originalClose = eventSource.close;
     eventSource.close = function() {
@@ -1656,7 +1656,7 @@ export const alertAPI = {
         onClose();
       }
     };
-    
+
     return eventSource;
   },
 
@@ -1694,8 +1694,8 @@ export const alertAPI = {
    */
   getAlertStatistics(days = 7) {
     console.log('获取预警统计信息，天数:', days);
-    return visionAIAxios.get('/api/v1/alerts/statistics', { 
-      params: { days } 
+    return visionAIAxios.get('/api/v1/alerts/statistics', {
+      params: { days }
     });
   }
 };
@@ -2147,10 +2147,10 @@ const chatAssistantAPI = {
   async createChatStream(chatData, onMessage, onError, onComplete) {
     try {
       console.log('创建流式聊天连接:', chatData);
-      
+
       // 创建AbortController用于取消请求
       const abortController = new AbortController();
-      
+
       // 构建JSON请求体（只传入必要的参数）
       const requestBody = {
         message: chatData.message,
@@ -2200,7 +2200,7 @@ const chatAssistantAPI = {
         try {
           while (true) {
             const { done, value } = await reader.read();
-            
+
             if (done) {
               if (onComplete) onComplete(fullResponse, conversationId);
               break;
@@ -2216,10 +2216,10 @@ const chatAssistantAPI = {
 
             for (const line of lines) {
               if (line.trim() === '') continue;
-              
+
               if (line.startsWith('data: ')) {
                 const data = line.slice(6); // 去掉 "data: " 前缀
-                
+
                 if (data === '[DONE]') {
                   if (onComplete) onComplete(fullResponse, conversationId);
                   return;
@@ -2227,13 +2227,13 @@ const chatAssistantAPI = {
 
                 try {
                   const parsed = JSON.parse(data);
-                  
+
                   // 提取会话ID（如果存在）
                   if (parsed.conversation_id && !conversationId) {
                     conversationId = parsed.conversation_id;
                     console.log('获取到新的会话ID:', conversationId);
                   }
-                  
+
                   // 提取消息内容
                   if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
                     const content = parsed.choices[0].delta.content;
@@ -2260,7 +2260,7 @@ const chatAssistantAPI = {
       readStream();
 
       return controller;
-      
+
     } catch (error) {
       console.error('创建流式聊天连接失败:', error);
       if (onError) onError(error);
@@ -2276,7 +2276,7 @@ const chatAssistantAPI = {
    */
   getChatConversations(params = {}) {
     console.log('获取会话列表:', params);
-    return visionAIAxios.get('/api/v1/chat/conversations', { 
+    return visionAIAxios.get('/api/v1/chat/conversations', {
       params: {
         limit: params.limit || 20
       }
@@ -2334,7 +2334,7 @@ const chatAssistantAPI = {
     if (chatData.system_prompt) {
       formData.append('system_prompt', chatData.system_prompt);
     }
-    
+
     return visionAIAxios.post('/api/v1/chat/quick', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
@@ -2361,19 +2361,19 @@ const chatAssistantAPI = {
   },
 
   // ==================== 分组管理 ====================
-  
+
   /**
    * 创建分组
-   * @param {string} name - 分组名称 
+   * @param {string} name - 分组名称
    * @returns {Promise}
    */
   createGroup(name) {
     const formData = new FormData();
     formData.append('name', name);
-    
+
     return visionAIAxios.post('/api/v1/chat/groups', formData);
   },
-  
+
   /**
    * 获取分组列表
    * @returns {Promise}
@@ -2381,16 +2381,16 @@ const chatAssistantAPI = {
   getGroups() {
     return visionAIAxios.get('/api/v1/chat/groups');
   },
-  
+
   /**
    * 删除分组
    * @param {string} groupId - 分组ID
-   * @returns {Promise} 
+   * @returns {Promise}
    */
   deleteGroup(groupId) {
     return visionAIAxios.delete(`/api/v1/chat/groups/${groupId}`);
   },
-  
+
   /**
    * 更新会话分组
    * @param {string} conversationId - 会话ID
@@ -2402,10 +2402,10 @@ const chatAssistantAPI = {
     if (groupId) {
       formData.append('group_id', groupId);
     }
-    
+
     return visionAIAxios.put(`/api/v1/chat/conversations/${conversationId}/group`, formData);
   },
-  
+
   /**
    * 获取分组内的对话列表
    * @param {string} groupId - 分组ID
@@ -2415,7 +2415,7 @@ const chatAssistantAPI = {
   getGroupConversations(groupId, params = {}) {
     return visionAIAxios.get(`/api/v1/chat/groups/${groupId}/conversations`, { params });
   },
-  
+
   /**
    * 自动生成对话标题
    * @param {string} conversationId - 会话ID
@@ -2424,7 +2424,7 @@ const chatAssistantAPI = {
   autoGenerateTitle(conversationId) {
     return visionAIAxios.post(`/api/v1/chat/conversations/${conversationId}/auto-title`);
   },
-  
+
   /**
    * 更新会话标题
    * @param {string} conversationId - 会话ID
@@ -2452,7 +2452,7 @@ const chatAssistantAPI = {
     if (messageId) {
       formData.append('message_id', messageId);
     }
-    
+
     return visionAIAxios.post(`/api/v1/chat/conversations/${conversationId}/save-message`, formData);
   },
 
@@ -2468,7 +2468,7 @@ const chatAssistantAPI = {
     const formData = new FormData();
     formData.append('message_id', messageId);
     formData.append('partial_content', partialContent);
-    
+
     return visionAIAxios.post(`/api/v1/chat/conversations/${conversationId}/stop-generation`, formData);
   }
 };

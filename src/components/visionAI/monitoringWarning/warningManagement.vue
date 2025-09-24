@@ -56,6 +56,7 @@ export default {
       // 添加备注对话框
       remarkDialogVisible: false,
       currentWarningId: '',
+      currentProcessingWarningId: '', // 统一变量名（与realtime页面一致）
       remarkForm: {
         remark: ''
       },
@@ -242,9 +243,11 @@ export default {
 
         // 状态映射
         const statusMap = {
-          1: 'pending',
-          2: 'processing',
-          3: 'completed'
+          1: 'pending',    // 待处理
+          2: 'processing', // 处理中
+          3: 'completed',  // 已处理
+          4: 'archived',   // 已归档
+          5: 'falseAlarm'  // 误报
         }
 
         // 处理操作历史，将API的process数据转换为operationHistory格式
@@ -263,7 +266,7 @@ export default {
           })
         }
 
-        // 如果没有操作历史，创建默认的
+        // 如果没有基础记录，先添加预警产生记录
         if (operationHistory.length === 0) {
           operationHistory.push({
             id: Date.now() + Math.random(),
@@ -274,9 +277,11 @@ export default {
             operationType: 'create',
             operator: '系统'
           })
-          
-          // 如果状态是待处理，添加待处理记录
-          if (item.status === 1) {
+        }
+        
+        // 根据API状态添加相应的操作记录（与realtime页面逻辑一致）
+        if (item.status === 1 || item.status === undefined || item.status === null) {
+            // 待处理状态 - 添加待处理记录
             operationHistory.push({
               id: Date.now() + Math.random() + 1,
               status: 'active',
@@ -286,7 +291,51 @@ export default {
               operationType: 'pending',
               operator: ''
             })
-          }
+          } else if (item.status === 2) {
+            // 处理中状态 - 添加处理中记录
+            operationHistory.push({
+              id: Date.now() + Math.random() + 1,
+              status: 'active',
+              statusText: '处理中',
+              time: item.created_at || item.alert_time,
+              description: '预警正在处理中',
+              operationType: 'processing',
+              operator: '处理人员'
+            })
+          } else if (item.status === 3) {
+            // 已处理状态 - 添加已完成记录（关键修复）
+            operationHistory.push({
+              id: Date.now() + Math.random() + 1,
+              status: 'completed',
+              statusText: '已处理',
+              time: item.created_at || item.alert_time,
+              description: '预警处理已完成',
+              operationType: 'completed', // 这是按钮状态判断的关键
+              operator: '处理人员'
+            })
+            console.log('✅ warningManagement: 已添加已处理状态记录，预警ID:', item.alert_id);
+          } else if (item.status === 4) {
+            // 已归档状态 - 添加归档记录
+            operationHistory.push({
+              id: Date.now() + Math.random() + 1,
+              status: 'completed',
+              statusText: '已归档',
+              time: item.created_at || item.alert_time,
+              description: '预警已归档',
+              operationType: 'archive',
+              operator: '管理员'
+            })
+          } else if (item.status === 5) {
+            // 误报状态 - 添加误报记录
+            operationHistory.push({
+              id: Date.now() + Math.random() + 1,
+              status: 'completed',
+              statusText: '误报',
+              time: item.created_at || item.alert_time,
+              description: '预警已标记为误报',
+            operationType: 'falseAlarm',
+            operator: '管理员'
+          })
         }
 
         return {
@@ -358,15 +407,15 @@ export default {
     async handleWarning(id, action) {
       try {
         this.loading = true
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        console.log('🎯 warningManagement处理预警:', id, action);
         
         // 更新本地数据状态
         const index = this.warningList.findIndex(item => item.id === id)
         if (index !== -1) {
           if (action === 'markProcessed') {
-            // 处理预警 - 使用和预警详情对话框一致的逻辑
-            this.startProcessingWarning(this.warningList[index])
+            // 处理预警 - 统一使用realtime页面的处理逻辑
+            this.handleWarningFromList(this.warningList[index])
             this.loading = false // 在弹框前先关闭loading
             return // 等处理意见填写完成后再继续
           } else if (action === 'report') {
@@ -437,8 +486,17 @@ export default {
           return
         }
         
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500))
+        // 真实的API调用 - 归档预警
+        const warning = this.warningList.find(item => item.id === this.archiveWarningId);
+        const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(this.archiveWarningId);
+        const updateData = {
+          status: 4, // 已归档状态
+          processing_notes: `预警已归档到：${archiveName}`,
+          processed_by: this.getCurrentUserName()
+        };
+        
+        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        console.log('✅ 归档API调用成功:', response);
         
         // 获取当前预警并添加归档记录到操作历史
         const index = this.warningList.findIndex(item => item.id === this.archiveWarningId)
@@ -489,8 +547,8 @@ export default {
     // 自动创建默认档案
     async createDefaultArchive() {
       try {
-        // 模拟API调用创建默认档案
-        await new Promise(resolve => setTimeout(resolve, 300))
+        // 这里是创建本地默认档案，通常不需要后端API
+        console.log('📁 创建默认档案');
         
         const newArchive = {
           id: `archive_${Date.now()}`,
@@ -552,18 +610,6 @@ export default {
       }
     },
     
-    // 全选/取消全选
-    handleSelectAll() {
-      if (this.selectedWarnings.length === this.warningList.length) {
-        // 如果已经全选，则取消全选
-        this.selectedWarnings = []
-        this.$message.info('已取消全选')
-      } else {
-        // 全选当前页的预警
-        this.selectedWarnings = this.warningList.map(item => item.id)
-        this.$message.success(`已选择 ${this.selectedWarnings.length} 项预警`)
-      }
-    },
     
     // 选择当前页
     handleSelectPage() {
@@ -631,26 +677,40 @@ export default {
         const response = await alertAPI.batchUpdateAlertStatus(apiAlertIds, updateData)
         
         if (response.data && response.data.code === 0) {
-          // API调用成功，更新本地数据
+          // API调用成功，更新本地数据（与单个处理逻辑一致）
           for (const id of this.selectedWarnings) {
             const index = this.warningList.findIndex(item => item.id === id)
             if (index !== -1) {
-              // 添加处理记录到操作历史
+              // 确保有操作历史数组
               if (!this.warningList[index].operationHistory) {
                 this.$set(this.warningList[index], 'operationHistory', [])
               }
               
-              const newRecord = {
+              // 更新待处理记录为已完成状态
+              this.warningList[index].operationHistory = this.warningList[index].operationHistory.map(record => {
+                if (record.operationType === 'pending' && record.status === 'active') {
+                  return {
+                    ...record,
+                    status: 'completed',
+                    description: '预警已确认，开始处理'
+                  };
+                }
+                return record;
+              });
+              
+              // 添加处理中记录（与单个处理一致）
+              const processingRecord = {
                 id: Date.now() + Math.random(),
-                status: 'completed',
-                statusText: '批量处理记录',
+                status: 'active',
+                statusText: '处理中',
                 time: this.getCurrentTime(),
-                description: `批量处理意见：${this.batchRemarkForm.remark}`,
-                operationType: 'process',
+                description: `批量处理开始：${this.batchRemarkForm.remark}`,
+                operationType: 'processing',
                 operator: this.getCurrentUserName()
               }
               
-              this.warningList[index].operationHistory.unshift(newRecord)
+              this.warningList[index].operationHistory.unshift(processingRecord)
+              
               // 更新状态为处理中
               this.warningList[index].status = 'processing'
             }
@@ -815,15 +875,16 @@ export default {
       try {
         this.loading = true
         
-        // 获取当前预警信息
-        const warning = this.warningList.find(item => item.id === this.currentWarningId)
+        // 获取当前预警信息（优先使用新的统一变量名）
+        const warningId = this.currentProcessingWarningId || this.currentWarningId;
+        const warning = this.warningList.find(item => item.id === warningId)
         if (!warning) {
           this.$message.error('未找到预警信息')
           return
         }
 
         // 准备API更新数据
-        const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(this.currentWarningId)
+        const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(warningId)
         const updateData = {
           status: 2, // 处理中状态
           processing_notes: this.remarkForm.remark,
@@ -837,7 +898,7 @@ export default {
         
         if (response.data && response.data.code === 0) {
           // API调用成功，更新本地数据状态 - 添加新的处理记录
-          const index = this.warningList.findIndex(item => item.id === this.currentWarningId)
+          const index = this.warningList.findIndex(item => item.id === warningId)
           if (index !== -1) {
             // 确保有操作历史数组
             if (!this.warningList[index].operationHistory) {
@@ -879,6 +940,7 @@ export default {
     closeRemarkDialog() {
       this.remarkDialogVisible = false
       this.currentWarningId = ''
+      this.currentProcessingWarningId = '' // 同时清空新变量
       this.remarkForm = {
         remark: ''
       }
@@ -887,8 +949,17 @@ export default {
     // 确认上报
     async confirmReport() {
       try {
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500))
+        // 真实的API调用 - 上报预警
+        const warning = this.warningList.find(item => item.id === this.reportWarningId);
+        const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(this.reportWarningId);
+        const updateData = {
+          status: 2, // 保持处理中状态，但添加上报标记
+          processing_notes: '预警已上报给上级部门',
+          processed_by: this.getCurrentUserName()
+        };
+        
+        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        console.log('✅ 上报API调用成功:', response);
         
         // 获取当前预警
         const index = this.warningList.findIndex(item => item.id === this.reportWarningId)
@@ -1035,8 +1106,55 @@ export default {
     
     // 处理预警详情对话框中的事件
     handleWarningFromDetail(warning) {
-      if (warning && warning.id) {
-        this.handleWarning(warning.id, 'markProcessed')
+      if (!warning || !warning.id) {
+        return;
+      }
+      
+      // 根据action类型处理不同的操作
+      if (warning.action === 'record-added') {
+        // 确认处理 - 更新本地状态为处理中
+        console.log('处理DetailDialog的确认处理事件:', warning);
+        
+        // 如果有API响应数据，更新本地预警状态
+        if (warning.apiResponse) {
+          const index = this.warningList.findIndex(item => 
+            (item._apiData && item._apiData.alert_id === warning.apiResponse.alert_id) ||
+            item.id === warning.id
+          );
+          
+          if (index !== -1) {
+            // 更新状态相关字段
+            this.$set(this.warningList[index], 'status', 'processing');
+            this.$set(this.warningList[index], 'processed_by', warning.apiResponse.processed_by);
+            this.$set(this.warningList[index], 'processing_notes', warning.apiResponse.processing_notes);
+            
+            console.log('本地状态已更新为处理中:', this.warningList[index]);
+          }
+        }
+      } else if (warning.action === 'finished') {
+        // 结束处理 - 更新本地状态为已处理
+        console.log('处理DetailDialog的结束处理事件:', warning);
+        
+        // 如果有API响应数据，更新本地预警状态
+        if (warning.apiResponse) {
+          const index = this.warningList.findIndex(item => 
+            (item._apiData && item._apiData.alert_id === warning.apiResponse.alert_id) ||
+            item.id === warning.id
+          );
+          
+          if (index !== -1) {
+            // 更新状态相关字段
+            this.$set(this.warningList[index], 'status', 'resolved');
+            this.$set(this.warningList[index], 'processed_by', warning.apiResponse.processed_by);
+            this.$set(this.warningList[index], 'processing_notes', warning.apiResponse.processing_notes);
+            this.$set(this.warningList[index], 'processed_at', warning.apiResponse.processed_at);
+            
+            console.log('本地状态已更新为已处理:', this.warningList[index]);
+          }
+        }
+      } else {
+        // 兼容原有逻辑
+        this.handleWarning(warning.id, 'markProcessed');
       }
     },
     
@@ -1122,8 +1240,16 @@ export default {
         // 保存到智能复判记录
         await this.saveToReviewRecords(warningInfo)
         
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 300))
+        // 真实的API调用 - 标记误报
+        const apiAlertId = warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId);
+        const updateData = {
+          status: 5, // 误报状态
+          processing_notes: '预警已标记为误报',
+          processed_by: this.getCurrentUserName()
+        };
+        
+        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        console.log('✅ 误报API调用成功:', response);
         
         // 添加误报记录到操作历史
         if (!this.warningList[warningIndex].operationHistory) {
@@ -1204,8 +1330,8 @@ export default {
         
         localStorage.setItem('intelligentReviewRecords', JSON.stringify(reviewRecords))
         
-        // 模拟API调用保存时间
-        await new Promise(resolve => setTimeout(resolve, 200))
+        // 这里是本地存储操作，不需要额外的API调用
+        console.log('📝 智能复判记录已保存到本地存储');
         
         console.log('误报记录已保存到智能复判:', reviewRecord)
         
@@ -1226,28 +1352,98 @@ export default {
       return iconMap[level] || 'el-icon-warning';
     },
     
-    // 开始处理预警 - 与预警详情对话框保持一致
-    startProcessingWarning(warning) {
-      // 初始化操作历史（如果没有）
-      this.initOperationHistory(warning)
+    // 从预警列表处理预警 - 使用统一的处理逻辑（与realtime页面一致）
+    handleWarningFromList(warning) {
+      console.log('🖱️ warningManagement点击处理按钮, 预警ID:', warning && warning.id, '预警数据:', warning);
       
-      // 更新待处理记录为已完成状态
-      if (warning.operationHistory) {
-        warning.operationHistory = warning.operationHistory.map(record => {
-          if (record.operationType === 'pending' && record.status === 'active') {
-            return {
-              ...record,
-              status: 'completed',
-              description: '预警已确认，开始处理'
-            }
-          }
-          return record
-        })
+      if (warning && warning.id) {
+        // 检查当前是否已经在处理中
+        const hasProcessingRecord = warning.operationHistory && 
+          warning.operationHistory.some(record => 
+            record.operationType === 'processing' && record.status === 'active'
+          );
+        
+        if (hasProcessingRecord) {
+          console.log('📝 预警已在处理中，直接打开处理对话框');
+          // 如果已经有处理中记录，直接弹出处理意见对话框
+          this.currentProcessingWarningId = warning.id;
+          this.remarkDialogVisible = true;
+        } else {
+          console.log('🆕 开始新的处理流程');
+          // 如果没有处理中记录，先添加"处理中"状态
+          this.startProcessingWarning(warning);
+        }
+      } else {
+        console.error('❌ 无效的预警数据:', warning);
+        this.$message.error('预警数据无效，无法处理');
       }
-      
-      // 弹出处理意见对话框
-      this.currentWarningId = warning.id
-      this.remarkDialogVisible = true
+    },
+    
+    // 开始处理预警 - 与realtime页面逻辑完全一致
+    async startProcessingWarning(warning) {
+      try {
+        this.loading = true;
+        
+        console.log('🔄 开始处理预警:', warning.id);
+        
+        // 1. 先调用后端API更新状态为"处理中"
+        const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(warning.id);
+        const updateData = {
+          status: 2, // 处理中状态
+          processing_notes: '开始处理预警',
+          processed_by: this.getCurrentUserName()
+        };
+        
+        // 发送真实的API请求
+        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        console.log('✅ 后端状态更新成功:', response);
+        
+        // 2. 后端更新成功后，更新本地状态
+        const index = this.warningList.findIndex(item => item.id === warning.id);
+        if (index !== -1) {
+          // 确保有操作历史数组
+          if (!this.warningList[index].operationHistory) {
+            this.$set(this.warningList[index], 'operationHistory', []);
+          }
+          
+          // 更新待处理记录为已完成状态
+          this.warningList[index].operationHistory = this.warningList[index].operationHistory.map(record => {
+            if (record.operationType === 'pending' && record.status === 'active') {
+              return {
+                ...record,
+                status: 'completed',
+                description: '预警已确认，开始处理'
+              };
+            }
+            return record;
+          });
+          
+          // 添加处理中记录
+          const newRecord = {
+            id: Date.now() + Math.random(),
+            status: 'active',
+            statusText: '处理中',
+            time: this.getCurrentTime(),
+            description: '处理人员正在处理此预警，可添加处理记录',
+            operationType: 'processing',
+            operator: this.getCurrentUserName()
+          };
+          
+          this.warningList[index].operationHistory.unshift(newRecord);
+        }
+        
+        // 3. 弹出处理意见对话框
+        this.currentProcessingWarningId = warning.id;
+        this.remarkDialogVisible = true;
+        
+        this.$message.success('预警已开始处理');
+        
+      } catch (error) {
+        console.error('❌ 开始处理预警失败:', error);
+        this.$message.error('开始处理失败: ' + (error.message || (error.response && error.response.data && error.response.data.message) || '未知错误'));
+      } finally {
+        this.loading = false;
+      }
     },
     
     // 初始化操作历史 - 与预警详情对话框保持一致
@@ -1304,7 +1500,7 @@ export default {
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(this.currentWarningId)
         const updateData = {
           status: 3, // 已处理状态
-          processing_notes: (warning.remark || '') + '\n处理已完成',
+          processing_notes: this.remarkForm.remark ? `${this.remarkForm.remark}\n处理已完成` : '处理已完成',
           processed_by: this.getCurrentUserName()
         }
 
@@ -1359,25 +1555,42 @@ export default {
         return false // 没有历史记录，可以处理
       }
       
+      console.log('🔒 检查处理按钮状态:', warning.id, 'status:', warning.status);
+      
+      // 优先检查API状态
+      if (warning.status === 'archived' || warning.status === 'falseAlarm' || warning.status === 'completed') {
+        console.log('✅ 按API状态禁用按钮:', warning.status);
+        return true;
+      }
+      
       // 如果已归档，禁用处理按钮
       const hasArchived = warning.operationHistory.some(record => 
         record.operationType === 'archive' || record.operationType === 'falseAlarm'
-      ) || warning.status === 'archived'
+      );
       
       if (hasArchived) {
-        return true
+        console.log('✅ 按操作历史禁用按钮: 已归档');
+        return true;
       }
       
       // 如果已完成处理，禁用处理按钮
       const hasCompletedProcessing = warning.operationHistory.some(record => 
         record.operationType === 'completed'
-      )
+      );
       
-      return hasCompletedProcessing
+      if (hasCompletedProcessing) {
+        console.log('✅ 按操作历史禁用按钮: 已完成处理');
+        return true;
+      }
+      
+      console.log('🔓 按钮可用');
+      return false;
     },
     
     // 获取当前预警状态
     getCurrentWarningStatus(warning) {
+      console.log('🔍 检查预警状态:', warning.id, 'status:', warning.status, 'operationHistory:', warning.operationHistory);
+      
       if (!warning.operationHistory || warning.operationHistory.length === 0) {
         return {
           text: '待处理',
@@ -1385,10 +1598,32 @@ export default {
         }
       }
       
-      // 检查是否已归档
+      // 优先检查API状态
+      if (warning.status === 'archived') {
+        return {
+          text: '已归档',
+          class: 'status-archived'
+        }
+      }
+      
+      if (warning.status === 'falseAlarm') {
+        return {
+          text: '误报',
+          class: 'status-false-alarm'
+        }
+      }
+      
+      if (warning.status === 'completed') {
+        return {
+          text: '已处理',
+          class: 'status-completed'
+        }
+      }
+      
+      // 检查操作历史中的归档和误报状态
       const hasArchived = warning.operationHistory.some(record => 
         record.operationType === 'archive' || record.operationType === 'falseAlarm'
-      ) || warning.status === 'archived'
+      );
       
       if (hasArchived) {
         return {
@@ -1400,7 +1635,7 @@ export default {
       // 检查是否有已处理状态
       const hasCompletedProcessing = warning.operationHistory.some(record => 
         record.operationType === 'completed'
-      )
+      );
       
       if (hasCompletedProcessing) {
         return {
@@ -1683,10 +1918,6 @@ export default {
         
         <div class="filter-actions">
           <div class="filter-buttons">
-            <el-button 
-              size="small" 
-              @click="handleSelectAll"
-            >全选</el-button>
             <el-button 
               size="small" 
               @click="handleSelectPage"
