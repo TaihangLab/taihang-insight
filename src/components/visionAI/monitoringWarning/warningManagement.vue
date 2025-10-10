@@ -69,6 +69,12 @@ export default {
       archiveDialogVisible: false,
       archiveWarningId: '',
       
+      // 误报对话框
+      falseAlarmDialogVisible: false,
+      falseAlarmForm: {
+        reviewNotes: ''
+      },
+      
       // 批量处理对话框
       batchProcessDialogVisible: false,
       batchRemarkForm: {
@@ -173,6 +179,7 @@ export default {
           warningType: this.searchForm.warningType,
           warningSkill: this.searchForm.warningSkill,
           warningName: this.searchForm.warningName,
+          warningId: this.searchForm.warningId,
           location: this.searchForm.location,
           statusFilter: this.searchForm.status
         }
@@ -432,12 +439,11 @@ export default {
             this.archiveDialogVisible = true
             return // 不关闭loading，等确认后再关闭
           } else if (action === 'falseAlarm') {
-            // 误报 - 自动归档到默认档案
+            // 误报 - 显示输入对话框
             this.archiveWarningId = id
-            // 获取当前预警的摄像头信息
             this.currentCameraId = this.warningList[index].cameraId || ''
-            await this.handleFalseAlarmArchive()
-            return // 不关闭loading，等归档完成后再关闭
+            this.falseAlarmDialogVisible = true
+            return // 不关闭loading，等用户输入完成后再关闭
           }
         }
         
@@ -754,38 +760,87 @@ export default {
         return '您将导出当前筛选条件下的所有记录'
       }
     },
+
+    // 检查是否有激活的筛选条件
+    hasActiveFilters() {
+      return !!(
+        this.searchForm.deviceName ||
+        this.searchForm.warningType ||
+        this.searchForm.warningLevel ||
+        this.searchForm.warningSkill ||
+        this.searchForm.warningName ||
+        this.searchForm.warningId ||
+        this.searchForm.status ||
+        this.searchForm.location ||
+        this.searchForm.startDate ||
+        this.searchForm.endDate
+      );
+    },
     
     // 确认导出
-    confirmExport() {
-      // 显示加载状态
-      this.exportLoading = true
-      
-      // 获取要导出的数据
-      const data = this.selectedWarnings.length > 0
-        ? this.warningList.filter(item => this.selectedWarnings.includes(item.id))
-        : this.warningList
-      
-      // 转换数据为导出格式
-      const exportData = data.map(item => ({
-        预警名称: item.deviceName,
-        设备名称: item.deviceInfo.name,
-        预警位置: item.deviceInfo.position,
-        预警等级: item.level,
-        预警时间: item.time,
-        状态: item.status === 'pending' ? '待处理' : 
-              item.status === 'processing' ? '处理中' : '已完成'
-      }))
-      
+    async confirmExport() {
       try {
-        // 直接导出为CSV
-        this.exportToCSV(exportData)
-        this.$message.success('CSV文件导出成功')
+        // 显示加载状态
+        this.exportLoading = true
+        
+        // 准备导出参数
+        const exportParams = {
+          ...this.searchForm,  // 包含所有筛选条件
+          format: this.exportFormat
+        };
+        
+        // 如果有选中的预警，添加指定的预警ID列表
+        if (this.selectedWarnings.length > 0) {
+          // 转换为API格式的ID
+          const apiAlertIds = this.selectedWarnings.map(id => {
+            const warning = this.warningList.find(item => item.id === id)
+            return warning && warning._apiData ? warning._apiData.alert_id : parseInt(id)
+          }).filter(id => !isNaN(id));
+          
+          if (apiAlertIds.length > 0) {
+            exportParams.alert_ids = apiAlertIds;
+          }
+        }
+        
+        console.log('📤 导出预警数据，参数:', exportParams);
+        
+        // 调用后端导出接口
+        const response = await alertAPI.exportAlerts(exportParams);
+        
+        if (response && response.data) {
+          // 创建下载链接
+          const blob = new Blob([response.data], { 
+            type: this.exportFormat === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv;charset=utf-8;' 
+          });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          
+          // 生成文件名
+          const now = new Date();
+          const timestamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '');
+          const extension = this.exportFormat === 'excel' ? 'xlsx' : 'csv';
+          const selectedInfo = this.selectedWarnings.length > 0 ? `_已选择${this.selectedWarnings.length}项` : '';
+          link.download = `预警数据导出_${timestamp}${selectedInfo}.${extension}`;
+          
+          // 触发下载
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          
+          this.$message.success(`${this.exportFormat.toUpperCase()}文件导出成功`);
+        } else {
+          throw new Error('导出数据为空');
+        }
+        
       } catch (error) {
-        console.error('导出失败:', error)
-        this.$message.error('导出失败，请稍后重试')
+        console.error('❌ 导出失败:', error);
+        const errorMsg = (error.response && error.response.data && error.response.data.message) || error.message || '导出失败，请稍后重试';
+        this.$message.error(`导出失败: ${errorMsg}`);
       } finally {
-        this.exportLoading = false
-        this.exportDialogVisible = false
+        this.exportLoading = false;
+        this.exportDialogVisible = false;
       }
     },
     
@@ -1209,22 +1264,8 @@ export default {
     // 处理误报事件
     async handleFalseAlarmArchive() {
       try {
-        let targetArchiveId = null
-        let archiveName = ''
-        
-        // 查找或创建默认档案
-        const existingDefaultArchive = this.availableArchives.find(archive => archive.isDefault)
-        if (existingDefaultArchive) {
-          targetArchiveId = existingDefaultArchive.id
-          archiveName = existingDefaultArchive.name
-        } else {
-          // 如果没有默认档案，自动创建
-          targetArchiveId = await this.createDefaultArchive()
-          archiveName = '默认档案'
-        }
-        
-        if (!targetArchiveId) {
-          this.$message.error('无法创建默认档案')
+        if (!this.falseAlarmForm.reviewNotes.trim()) {
+          this.$message.warning('请输入复判意见')
           return
         }
         
@@ -1237,58 +1278,54 @@ export default {
         
         const warningInfo = this.warningList[warningIndex]
         
-        // 保存到智能复判记录
-        await this.saveToReviewRecords(warningInfo)
+        // 调用后端API标记误报
+        const { alertAPI } = await import('../../service/VisionAIService.js')
+        const response = await alertAPI.markAlertAsFalseAlarm(
+          warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId),
+          this.falseAlarmForm.reviewNotes,
+          this.getCurrentUserName()
+        )
         
-        // 真实的API调用 - 标记误报
-        const apiAlertId = warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId);
-        const updateData = {
-          status: 5, // 误报状态
-          processing_notes: '预警已标记为误报',
-          processed_by: this.getCurrentUserName()
-        };
-        
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
-        console.log('✅ 误报API调用成功:', response);
-        
-        // 添加误报记录到操作历史
-        if (!this.warningList[warningIndex].operationHistory) {
-          this.$set(this.warningList[warningIndex], 'operationHistory', [])
-        }
-        
-        const newRecord = {
-          id: Date.now() + Math.random(),
-          status: 'completed',
-          statusText: '误报处理',
-          time: this.getCurrentTime(),
-          description: `预警被标记为误报并自动归档到：${archiveName}，已保存到智能复判记录`,
-          operationType: 'falseAlarm',
-          operator: this.getCurrentUserName(),
-          archiveInfo: {
-            archiveId: targetArchiveId,
-            archiveName: archiveName
+        if (response.data && response.data.code === 0) {
+          // 添加误报记录到操作历史
+          if (!this.warningList[warningIndex].operationHistory) {
+            this.$set(this.warningList[warningIndex], 'operationHistory', [])
           }
+          
+          const newRecord = {
+            id: Date.now() + Math.random(),
+            status: 'completed',
+            statusText: '误报处理',
+            time: this.getCurrentTime(),
+            description: `预警被标记为误报：${this.falseAlarmForm.reviewNotes}`,
+            operationType: 'falseAlarm',
+            operator: this.getCurrentUserName()
+          }
+          
+          this.warningList[warningIndex].operationHistory.unshift(newRecord)
+          this.warningList[warningIndex].status = 'archived'
+          this.warningList[warningIndex].isFalseAlarm = true
+          this.warningList[warningIndex].archiveTime = new Date().toLocaleString()
+          
+          // 如果在选中列表中，也移除
+          const selectedIndex = this.selectedWarnings.indexOf(this.archiveWarningId)
+          if (selectedIndex !== -1) {
+            this.selectedWarnings.splice(selectedIndex, 1)
+          }
+          
+          this.$message.success('预警已标记为误报，复判记录已保存')
+        } else {
+          this.$message.error((response.data && response.data.msg) || '标记误报失败')
         }
         
-        this.warningList[warningIndex].operationHistory.unshift(newRecord)
-        
-        // 更新本地数据
-        this.warningList[warningIndex].status = 'archived'
-        this.warningList[warningIndex].archiveId = targetArchiveId
-        this.warningList[warningIndex].archiveTime = new Date().toLocaleString()
-        this.warningList[warningIndex].isFalseAlarm = true // 标记为误报
-        
-        // 如果在选中列表中，也移除
-        const selectedIndex = this.selectedWarnings.indexOf(this.archiveWarningId)
-        if (selectedIndex !== -1) {
-          this.selectedWarnings.splice(selectedIndex, 1)
-        }
-        
-        this.$message.success('误报事件已保存到智能复判')
+        // 关闭对话框并重置表单
+        this.falseAlarmDialogVisible = false
+        this.falseAlarmForm.reviewNotes = ''
         this.archiveWarningId = ''
+        
       } catch (error) {
-        console.error('误报归档失败:', error)
-        this.$message.error('误报归档失败')
+        console.error('标记误报失败:', error)
+        this.$message.error('标记误报失败: ' + (error.message || '未知错误'))
       } finally {
         this.loading = false
       }
@@ -2101,20 +2138,89 @@ export default {
     <el-dialog
       title="导出数据"
       :visible.sync="exportDialogVisible"
-      width="25%"
+      width="35%"
       center
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
       <div class="export-dialog-content">
-        <p class="export-tip">确认要导出CSV格式的预警数据吗？</p>
-        <p class="export-selection-info">
-          {{ getExportSelectionText() }}
-        </p>
+        <div class="export-info-section">
+          <div class="export-data-info">
+            <i class="el-icon-download" style="color: #409EFF; font-size: 20px; margin-right: 8px;"></i>
+            <span style="font-size: 16px; font-weight: 500;">数据导出</span>
+          </div>
+          <p class="export-selection-info">
+            {{ getExportSelectionText() }}
+          </p>
+        </div>
+        
+        <div class="export-format-section">
+          <el-form :model="{ exportFormat }" label-width="80px">
+            <el-form-item label="导出格式:">
+              <el-radio-group v-model="exportFormat">
+                <el-radio label="csv">
+                  <i class="el-icon-document"></i>
+                  CSV格式
+                  <span class="format-desc">（逗号分隔值，适合Excel打开）</span>
+                </el-radio>
+                <el-radio label="excel">
+                  <i class="el-icon-s-grid"></i>
+                  Excel格式
+                  <span class="format-desc">（XLSX文件，包含格式化）</span>
+                </el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-form>
+        </div>
+        
+        <div class="export-filter-info">
+          <div class="filter-info-title">
+            <i class="el-icon-info" style="color: #909399; margin-right: 4px;"></i>
+            <span>当前筛选条件：</span>
+          </div>
+          <div class="filter-summary">
+            <template v-if="hasActiveFilters()">
+              <el-tag 
+                v-if="searchForm.deviceName" 
+                size="mini" 
+                type="info" 
+                style="margin: 2px;"
+              >设备: {{ searchForm.deviceName }}</el-tag>
+              <el-tag 
+                v-if="searchForm.warningType" 
+                size="mini" 
+                type="info" 
+                style="margin: 2px;"
+              >类型: {{ searchForm.warningType }}</el-tag>
+              <el-tag 
+                v-if="searchForm.warningLevel" 
+                size="mini" 
+                type="info" 
+                style="margin: 2px;"
+              >等级: {{ searchForm.warningLevel }}</el-tag>
+              <el-tag 
+                v-if="searchForm.status" 
+                size="mini" 
+                type="info" 
+                style="margin: 2px;"
+              >状态: {{ searchForm.status }}</el-tag>
+              <el-tag 
+                v-if="searchForm.startDate || searchForm.endDate" 
+                size="mini" 
+                type="info" 
+                style="margin: 2px;"
+              >时间范围</el-tag>
+            </template>
+            <span v-else style="color: #909399; font-size: 12px;">无筛选条件，将导出所有数据</span>
+          </div>
+        </div>
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="exportDialogVisible = false" :disabled="exportLoading">取 消</el-button>
-        <el-button type="primary" @click="confirmExport" :loading="exportLoading">确认导出</el-button>
+        <el-button type="primary" @click="confirmExport" :loading="exportLoading">
+          <i class="el-icon-download"></i>
+          确认导出
+        </el-button>
       </span>
     </el-dialog>
     
@@ -2286,6 +2392,37 @@ export default {
       @handle-false-alarm="handleFalseAlarmFromDetail"
     />
     
+    <!-- 误报输入对话框 -->
+    <el-dialog
+      title="标记误报"
+      :visible.sync="falseAlarmDialogVisible"
+      width="30%"
+      center
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
+      <el-form :model="falseAlarmForm" label-width="80px">
+        <el-form-item label="复判意见" required>
+          <el-input
+            v-model="falseAlarmForm.reviewNotes"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入复判意见，说明为什么判定为误报"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <div class="process-tip">
+        <i class="el-icon-warning" style="color: #E6A23C; margin-right: 4px;"></i>
+        <span style="color: #E6A23C; font-size: 13px;">标记为误报后，该预警将被移出预警管理列表，并保存到复判记录中</span>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="falseAlarmDialogVisible = false; falseAlarmForm.reviewNotes = ''; archiveWarningId = ''">取消</el-button>
+        <el-button type="warning" @click="handleFalseAlarmArchive">确认误报</el-button>
+      </span>
+    </el-dialog>
+
     <!-- 删除确认对话框 -->
     <el-dialog
       title="删除预警"
@@ -2792,22 +2929,71 @@ export default {
 
 /* 导出对话框样式 */
 .export-dialog-content {
-  padding: 10px 20px;
+  padding: 15px 20px;
 }
 
-.export-tip {
-  margin-bottom: 15px;
-  font-size: 14px;
-  color: #606266;
+.export-info-section {
+  margin-bottom: 20px;
+}
+
+.export-data-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .export-selection-info {
-  margin-top: 15px;
-  padding: 8px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
-  font-size: 13px;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #f0f9ff;
+  border: 1px solid #b3d8ff;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #606266;
+  font-weight: 500;
+}
+
+.export-format-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #fafafa;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+}
+
+.export-format-section .el-radio {
+  display: block;
+  margin-bottom: 10px;
+  padding: 8px 0;
+}
+
+.format-desc {
   color: #909399;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.export-filter-info {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.filter-info-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #606266;
+}
+
+.filter-summary {
+  min-height: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 /* 响应式调整 */

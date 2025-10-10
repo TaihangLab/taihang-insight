@@ -34,19 +34,25 @@
                 <div class="info-grid">
                   <div class="info-row">
                     <div class="info-cell">
-                      <span class="label">设备名称</span>
-                      <span class="value">{{ internalWarning.device }}</span>
+                      <span class="label">预警ID</span>
+                      <span class="value alert-id">{{ getAlertId(internalWarning) }}</span>
                     </div>
                     <div class="info-cell">
-                      <span class="label">违规位置</span>
-                      <span class="value">{{ internalWarning.location || (internalWarning.deviceInfo && internalWarning.deviceInfo.position) || '未知位置' }}</span>
+                      <span class="label">设备名称</span>
+                      <span class="value">{{ internalWarning.device }}</span>
                     </div>
                   </div>
                   <div class="info-row">
                     <div class="info-cell">
+                      <span class="label">违规位置</span>
+                      <span class="value">{{ internalWarning.location || (internalWarning.deviceInfo && internalWarning.deviceInfo.position) || '未知位置' }}</span>
+                    </div>
+                    <div class="info-cell">
                       <span class="label">预警名称</span>
                       <span class="value">{{ internalWarning.type }}</span>
                     </div>
+                  </div>
+                  <div class="info-row">
                     <div class="info-cell">
                       <span class="label">预警类型</span>
                       <span class="value">{{ getWarningTypeText(internalWarning.type) }}</span>
@@ -693,6 +699,28 @@ export default {
           createTime: '2023-02-20 14:20:00'
         }
       ];
+    },
+    
+    // 获取预警ID
+    getAlertId(warning) {
+      if (!warning) return '未知';
+      
+      // 优先从API原始数据中获取alert_id
+      if (warning._apiData && warning._apiData.alert_id) {
+        return warning._apiData.alert_id;
+      }
+      
+      // 其次从id字段获取（warningManagement中已映射）
+      if (warning.id) {
+        return warning.id;
+      }
+      
+      // 最后从其他可能的字段获取
+      if (warning.alert_id) {
+        return warning.alert_id;
+      }
+      
+      return '未知';
     },
     
     // 关闭对话框
@@ -1951,6 +1979,25 @@ export default {
 .info-cell .value:hover {
   background: #ecf5ff;
   border-color: #c6e2ff;
+}
+
+/* 预警ID特殊样式 */
+.info-cell .value.alert-id {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  color: white;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+  border: none;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  text-align: center;
+  font-size: 13px;
+}
+
+.info-cell .value.alert-id:hover {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
 }
 
 /* 复判分类科技感样式 - 渐变字体颜色，统一背景 */

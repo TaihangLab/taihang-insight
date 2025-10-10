@@ -1446,16 +1446,24 @@ export const alertAPI = {
       delete apiParams.warningName;
     }
 
-    // 处理状态映射
-    if (apiParams.statusFilter) {
-      const statusMap = {
-        'pending': 1,
-        'processing': 2,
-        'completed': 3
-      };
-      apiParams.status = statusMap[apiParams.statusFilter];
-      delete apiParams.statusFilter;
-    }
+      // 处理预警ID
+      if (apiParams.warningId) {
+        apiParams.alert_id = parseInt(apiParams.warningId);
+        delete apiParams.warningId;
+      }
+
+      // 处理状态映射
+      if (apiParams.statusFilter) {
+        const statusMap = {
+          'pending': '待处理',
+          'processing': '处理中',
+          'completed': '已处理',
+          'archived': '已归档',
+          'falseAlarm': '误报'
+        };
+        apiParams.status = statusMap[apiParams.statusFilter];
+        delete apiParams.statusFilter;
+      }
 
     console.log('获取实时预警列表 - API调用参数:', apiParams);
 
@@ -1575,8 +1583,8 @@ export const alertAPI = {
 
     console.log('批量删除预警:', alertIds);
 
-    return visionAIAxios.delete('/api/v1/alerts/batch-delete', {
-      data: { alert_ids: alertIds }
+    return visionAIAxios.post('/api/v1/alerts/batch-delete', {
+      alert_ids: alertIds
     });
   },
 
@@ -1697,6 +1705,75 @@ export const alertAPI = {
     return visionAIAxios.get('/api/v1/alerts/statistics', {
       params: { days }
     });
+  },
+
+  /**
+   * 标记预警为误报
+   * @param {number} alertId - 预警ID
+   * @param {string} reviewNotes - 复判意见
+   * @param {string} reviewerName - 复判人员姓名
+   * @returns {Promise} 包含误报处理结果的Promise对象
+   */
+  markAlertAsFalseAlarm(alertId, reviewNotes, reviewerName) {
+    if (!alertId || !reviewNotes || !reviewerName) {
+      console.error('标记误报失败: 缺少必要参数');
+      return Promise.reject(new Error('缺少必要参数：预警ID、复判意见和复判人员姓名必须提供'));
+    }
+
+    console.log('标记预警为误报:', { alertId, reviewNotes, reviewerName });
+
+    return visionAIAxios.post(`/api/v1/alerts/${alertId}/false-alarm`, null, {
+      params: {
+        review_notes: reviewNotes,
+        reviewer_name: reviewerName
+      }
+    })
+      .then(response => {
+        console.log('标记误报成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('标记误报失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 批量标记预警为误报
+   * @param {Array} alertIds - 预警ID数组
+   * @param {string} reviewNotes - 复判意见
+   * @param {string} reviewerName - 复判人员姓名
+   * @returns {Promise} 包含批量误报处理结果的Promise对象
+   */
+  batchMarkAlertsAsFalseAlarm(alertIds, reviewNotes, reviewerName) {
+    if (!alertIds || !Array.isArray(alertIds) || alertIds.length === 0) {
+      console.error('批量标记误报失败: 缺少预警ID数组');
+      return Promise.reject(new Error('缺少预警ID数组'));
+    }
+
+    if (!reviewNotes || !reviewerName) {
+      console.error('批量标记误报失败: 缺少复判意见或复判人员姓名');
+      return Promise.reject(new Error('缺少复判意见或复判人员姓名'));
+    }
+
+    console.log('批量标记预警为误报:', { alertIds, reviewNotes, reviewerName });
+
+    return visionAIAxios.post('/api/v1/alerts/batch-false-alarm', {
+      alert_ids: alertIds
+    }, {
+      params: {
+        review_notes: reviewNotes,
+        reviewer_name: reviewerName
+      }
+    })
+      .then(response => {
+        console.log('批量标记误报成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('批量标记误报失败:', error);
+        throw error;
+      });
   }
 };
 
@@ -2473,11 +2550,770 @@ const chatAssistantAPI = {
   }
 };
 
+// 预警档案管理API
+export const archiveAPI = {
+  /**
+   * 获取预警档案列表
+   * @param {Object} params - 查询参数
+   * @param {number} [params.page=1] - 当前页码，从1开始
+   * @param {number} [params.limit=20] - 每页记录数
+   * @param {string} [params.name] - 档案名称过滤（模糊匹配）
+   * @param {string} [params.location] - 位置过滤（模糊匹配）
+   * @param {number} [params.status] - 档案状态过滤（1=正常，2=归档，3=删除）
+   * @param {string} [params.start_time] - 开始时间过滤
+   * @param {string} [params.end_time] - 结束时间过滤
+   * @returns {Promise} 包含档案列表的Promise对象
+   */
+  getArchiveList(params = {}) {
+    // 处理查询和分页参数
+    const apiParams = { ...params };
+
+    // 处理分页参数
+    if (!apiParams.page) {
+      apiParams.page = 1; // 默认第1页
+    }
+
+    if (!apiParams.limit) {
+      apiParams.limit = 20; // 默认每页20条
+    }
+
+    console.log('获取预警档案列表 - API调用参数:', apiParams);
+
+    return visionAIAxios.get('/api/v1/alert-archives', { params: apiParams })
+      .then(response => {
+        console.log('获取预警档案列表成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取预警档案列表失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取预警档案详情
+   * @param {number} archiveId - 档案ID
+   * @returns {Promise} 包含档案详情的Promise对象
+   */
+  getArchiveDetail(archiveId) {
+    if (!archiveId) {
+      console.error('获取档案详情失败: 缺少档案ID');
+      return Promise.reject(new Error('缺少档案ID'));
+    }
+
+    console.log('获取预警档案详情:', archiveId);
+
+    return visionAIAxios.get(`/api/v1/alert-archives/${archiveId}`)
+      .then(response => {
+        console.log('获取预警档案详情成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取预警档案详情失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 创建预警档案
+   * @param {Object} archiveData - 档案数据
+   * @param {string} archiveData.name - 档案名称
+   * @param {string} archiveData.location - 所属位置
+   * @param {string} [archiveData.description] - 档案描述
+   * @param {string} archiveData.start_time - 档案开始时间
+   * @param {string} archiveData.end_time - 档案结束时间
+   * @param {string} [archiveData.image_url] - 档案图片URL
+   * @param {string} [archiveData.created_by] - 创建人
+   * @returns {Promise} 包含创建结果的Promise对象
+   */
+  createArchive(archiveData) {
+    if (!archiveData.name || !archiveData.location || !archiveData.start_time || !archiveData.end_time) {
+      console.error('创建档案失败: 缺少必要参数');
+      return Promise.reject(new Error('缺少必要参数：档案名称、位置、开始时间和结束时间必须提供'));
+    }
+
+    console.log('创建预警档案:', archiveData);
+
+    return visionAIAxios.post('/api/v1/alert-archives', archiveData)
+      .then(response => {
+        console.log('创建预警档案成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('创建预警档案失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 更新预警档案
+   * @param {number} archiveId - 档案ID
+   * @param {Object} archiveData - 档案数据
+   * @returns {Promise} 包含更新结果的Promise对象
+   */
+  updateArchive(archiveId, archiveData) {
+    if (!archiveId) {
+      console.error('更新档案失败: 缺少档案ID');
+      return Promise.reject(new Error('缺少档案ID'));
+    }
+
+    console.log('更新预警档案:', archiveId, archiveData);
+
+    return visionAIAxios.put(`/api/v1/alert-archives/${archiveId}`, archiveData)
+      .then(response => {
+        console.log('更新预警档案成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('更新预警档案失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 删除预警档案
+   * @param {number} archiveId - 档案ID
+   * @returns {Promise} 包含删除结果的Promise对象
+   */
+  deleteArchive(archiveId) {
+    if (!archiveId) {
+      console.error('删除档案失败: 缺少档案ID');
+      return Promise.reject(new Error('缺少档案ID'));
+    }
+
+    console.log('删除预警档案:', archiveId);
+
+    return visionAIAxios.delete(`/api/v1/alert-archives/${archiveId}`)
+      .then(response => {
+        console.log('删除预警档案成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('删除预警档案失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 批量删除预警档案
+   * @param {Array} archiveIds - 档案ID数组
+   * @returns {Promise} 包含批量删除结果的Promise对象
+   */
+  batchDeleteArchives(archiveIds) {
+    if (!archiveIds || !Array.isArray(archiveIds) || archiveIds.length === 0) {
+      console.error('批量删除档案失败: 缺少档案ID数组');
+      return Promise.reject(new Error('缺少档案ID数组'));
+    }
+
+    console.log('批量删除预警档案:', archiveIds);
+
+    return visionAIAxios.delete('/api/v1/alert-archives/batch', {
+      data: { archive_ids: archiveIds }
+    })
+      .then(response => {
+        console.log('批量删除预警档案成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('批量删除预警档案失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取档案下的预警记录列表
+   * @param {number} archiveId - 档案ID
+   * @param {Object} params - 查询参数
+   * @param {number} [params.page=1] - 当前页码
+   * @param {number} [params.limit=20] - 每页记录数
+   * @param {string} [params.name] - 预警名称过滤
+   * @param {string} [params.device_name] - 设备名称过滤
+   * @param {number} [params.alert_level] - 预警等级过滤（1-4级）
+   * @param {string} [params.alert_type] - 预警类型过滤
+   * @param {number} [params.status] - 处理状态过滤
+   * @param {string} [params.start_time] - 开始时间过滤
+   * @param {string} [params.end_time] - 结束时间过滤
+   * @returns {Promise} 包含预警记录列表的Promise对象
+   */
+  getArchiveAlerts(archiveId, params = {}) {
+    if (!archiveId) {
+      console.error('获取档案预警记录失败: 缺少档案ID');
+      return Promise.reject(new Error('缺少档案ID'));
+    }
+
+    // 处理查询和分页参数
+    const apiParams = { ...params };
+
+    // 处理分页参数
+    if (!apiParams.page) {
+      apiParams.page = 1;
+    }
+
+    if (!apiParams.limit) {
+      apiParams.limit = 20;
+    }
+
+    console.log('获取档案预警记录列表 - API调用参数:', archiveId, apiParams);
+
+    return visionAIAxios.get(`/api/v1/alert-archives/${archiveId}/alerts`, { params: apiParams })
+      .then(response => {
+        console.log('获取档案预警记录列表成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取档案预警记录列表失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 添加预警记录到档案
+   * @param {Object} recordData - 预警记录数据
+   * @param {number} recordData.archive_id - 档案ID
+   * @param {string} recordData.name - 预警名称
+   * @param {string} recordData.device_name - 设备名称
+   * @param {string} recordData.alert_time - 预警时间
+   * @param {number} recordData.alert_level - 预警等级（1-4级）
+   * @param {string} [recordData.alert_type] - 预警类型
+   * @param {string} [recordData.location] - 违规位置
+   * @param {string} [recordData.description] - 预警描述
+   * @param {string} [recordData.remark] - 处理备注
+   * @param {string} [recordData.violation_image_url] - 违规截图URL
+   * @param {string} [recordData.violation_video_url] - 视频片段URL
+   * @param {Object} [recordData.extra_data] - 扩展信息
+   * @param {string} [recordData.created_by] - 创建人
+   * @returns {Promise} 包含创建结果的Promise对象
+   */
+  addAlertRecord(recordData) {
+    if (!recordData.archive_id || !recordData.name || !recordData.device_name || !recordData.alert_time || !recordData.alert_level) {
+      console.error('添加预警记录失败: 缺少必要参数');
+      return Promise.reject(new Error('缺少必要参数：档案ID、预警名称、设备名称、预警时间和预警等级必须提供'));
+    }
+
+    console.log('添加预警记录:', recordData);
+
+    return visionAIAxios.post('/api/v1/alert-archives/alerts', recordData)
+      .then(response => {
+        console.log('添加预警记录成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('添加预警记录失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取预警记录详情
+   * @param {number} recordId - 记录ID
+   * @returns {Promise} 包含记录详情的Promise对象
+   */
+  getAlertRecordDetail(recordId) {
+    if (!recordId) {
+      console.error('获取预警记录详情失败: 缺少记录ID');
+      return Promise.reject(new Error('缺少记录ID'));
+    }
+
+    console.log('获取预警记录详情:', recordId);
+
+    return visionAIAxios.get(`/api/v1/alert-archives/alerts/${recordId}`)
+      .then(response => {
+        console.log('获取预警记录详情成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取预警记录详情失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 更新预警记录
+   * @param {number} recordId - 记录ID
+   * @param {Object} recordData - 记录数据
+   * @returns {Promise} 包含更新结果的Promise对象
+   */
+  updateAlertRecord(recordId, recordData) {
+    if (!recordId) {
+      console.error('更新预警记录失败: 缺少记录ID');
+      return Promise.reject(new Error('缺少记录ID'));
+    }
+
+    console.log('更新预警记录:', recordId, recordData);
+
+    return visionAIAxios.put(`/api/v1/alert-archives/alerts/${recordId}`, recordData)
+      .then(response => {
+        console.log('更新预警记录成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('更新预警记录失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 删除预警记录
+   * @param {number} recordId - 记录ID（可能是alert_id或record_id）
+   * @param {number|null} archiveId - 档案ID（可选，用于智能ID处理）
+   * @returns {Promise} 包含删除结果的Promise对象
+   */
+  deleteAlertRecord(recordId, archiveId = null) {
+    if (!recordId) {
+      console.error('删除预警记录失败: 缺少记录ID');
+      return Promise.reject(new Error('缺少记录ID'));
+    }
+
+    console.log('删除预警记录:', recordId, '档案ID:', archiveId);
+
+    // 构建URL，如果有archiveId则添加作为查询参数
+    let url = `/api/v1/alert-archives/alerts/${recordId}`;
+    if (archiveId) {
+      url += `?archive_id=${archiveId}`;
+    }
+
+    return visionAIAxios.delete(url)
+      .then(response => {
+        console.log('删除预警记录成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('删除预警记录失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 批量删除预警记录
+   * @param {Array} recordIds - 记录ID数组
+   * @returns {Promise} 包含批量删除结果的Promise对象
+   */
+  batchDeleteAlertRecords(recordIds) {
+    if (!recordIds || !Array.isArray(recordIds) || recordIds.length === 0) {
+      console.error('批量删除预警记录失败: 缺少记录ID数组');
+      return Promise.reject(new Error('缺少记录ID数组'));
+    }
+
+    console.log('批量删除预警记录:', recordIds);
+
+    return visionAIAxios.post('/api/v1/alert-archives/alerts/batch-delete', {
+      record_ids: recordIds
+    })
+      .then(response => {
+        console.log('批量删除预警记录成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('批量删除预警记录失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 上传档案图片
+   * @param {number} archiveId - 档案ID
+   * @param {File} imageFile - 图片文件
+   * @returns {Promise} 包含上传结果的Promise对象
+   */
+  uploadArchiveImage(archiveId, imageFile) {
+    if (!archiveId || !imageFile) {
+      console.error('上传档案图片失败: 缺少必要参数');
+      return Promise.reject(new Error('缺少档案ID或图片文件'));
+    }
+
+    console.log('准备上传档案图片:', archiveId, imageFile.name, imageFile.type, imageFile.size);
+
+    // 创建FormData对象
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    // 设置请求头
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      // 添加上传进度事件
+      onUploadProgress: progressEvent => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        console.log('档案图片上传进度:', percentCompleted + '%');
+      }
+    };
+
+    return visionAIAxios.post(`/api/v1/alert-archives/${archiveId}/upload/image`, formData, config)
+      .then(response => {
+        console.log('档案图片上传成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('档案图片上传失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 上传预警记录图片
+   * @param {number} recordId - 记录ID
+   * @param {File} imageFile - 图片文件
+   * @returns {Promise} 包含上传结果的Promise对象
+   */
+  uploadRecordImage(recordId, imageFile) {
+    if (!recordId || !imageFile) {
+      console.error('上传预警记录图片失败: 缺少必要参数');
+      return Promise.reject(new Error('缺少记录ID或图片文件'));
+    }
+
+    console.log('准备上传预警记录图片:', recordId, imageFile.name, imageFile.type, imageFile.size);
+
+    // 创建FormData对象
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    // 设置请求头
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      // 添加上传进度事件
+      onUploadProgress: progressEvent => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        console.log('预警记录图片上传进度:', percentCompleted + '%');
+      }
+    };
+
+    return visionAIAxios.post(`/api/v1/alert-archives/alerts/${recordId}/upload/image`, formData, config)
+      .then(response => {
+        console.log('预警记录图片上传成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('预警记录图片上传失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 上传预警记录视频
+   * @param {number} recordId - 记录ID
+   * @param {File} videoFile - 视频文件
+   * @returns {Promise} 包含上传结果的Promise对象
+   */
+  uploadRecordVideo(recordId, videoFile) {
+    if (!recordId || !videoFile) {
+      console.error('上传预警记录视频失败: 缺少必要参数');
+      return Promise.reject(new Error('缺少记录ID或视频文件'));
+    }
+
+    console.log('准备上传预警记录视频:', recordId, videoFile.name, videoFile.type, videoFile.size);
+
+    // 创建FormData对象
+    const formData = new FormData();
+    formData.append('video', videoFile);
+
+    // 设置请求头
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      // 添加上传进度事件
+      onUploadProgress: progressEvent => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        console.log('预警记录视频上传进度:', percentCompleted + '%');
+      }
+    };
+
+    return visionAIAxios.post(`/api/v1/alert-archives/alerts/${recordId}/upload/video`, formData, config)
+      .then(response => {
+        console.log('预警记录视频上传成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('预警记录视频上传失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取档案统计信息
+   * @returns {Promise} 包含统计信息的Promise对象
+   */
+  getArchiveStatistics() {
+    console.log('获取档案统计信息');
+
+    return visionAIAxios.get('/api/v1/alert-archives/statistics')
+      .then(response => {
+        console.log('获取档案统计信息成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取档案统计信息失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 搜索档案
+   * @param {Object} params - 搜索参数
+   * @param {string} [params.keyword] - 关键词搜索（档案名称、位置等）
+   * @param {number} [params.page=1] - 当前页码
+   * @param {number} [params.limit=20] - 每页记录数
+   * @returns {Promise} 包含搜索结果的Promise对象
+   */
+  searchArchives(params = {}) {
+    // 处理查询和分页参数
+    const apiParams = { ...params };
+
+    // 处理分页参数
+    if (!apiParams.page) {
+      apiParams.page = 1;
+    }
+
+    if (!apiParams.limit) {
+      apiParams.limit = 20;
+    }
+
+    console.log('搜索档案 - API调用参数:', apiParams);
+
+    return visionAIAxios.get('/api/v1/alert-archives/search', { params: apiParams })
+      .then(response => {
+        console.log('搜索档案成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('搜索档案失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取可用于添加到档案的预警列表
+   * @param {Object} params - 查询参数
+   * @param {number} [params.page=1] - 页码
+   * @param {number} [params.limit=20] - 每页条数
+   * @param {string} [params.start_time] - 开始时间
+   * @param {string} [params.end_time] - 结束时间
+   * @param {number} [params.alert_level] - 预警等级(1-4)
+   * @param {string} [params.alert_type] - 预警类型
+   * @param {string} [params.camera_name] - 摄像头名称
+   * @param {number} [params.status] - 处理状态
+   * @param {boolean} [params.exclude_archived=true] - 排除已归档的预警
+   * @param {string} [params.skill_name] - 技能名称
+   * @param {string} [params.location] - 位置
+   * @returns {Promise} 包含可用预警列表的Promise对象
+   */
+  getAvailableAlerts(params = {}) {
+    const apiParams = {
+      page: 1,
+      limit: 20,
+      exclude_archived: true,
+      ...params
+    };
+
+    console.log('获取可用预警列表 - API调用参数:', apiParams);
+
+    return visionAIAxios.get('/api/v1/alert-archives/available-alerts', { params: apiParams })
+      .then(response => {
+        console.log('获取可用预警列表成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取可用预警列表失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 将预警关联到档案
+   * @param {number} archiveId - 档案ID
+   * @param {Array<number>} alertIds - 预警ID列表
+   * @param {string} [linkReason] - 关联原因
+   * @returns {Promise} 包含关联结果的Promise对象
+   */
+  linkAlertsToArchive(archiveId, alertIds, linkReason = '批量关联预警到档案') {
+    const requestData = {
+      alert_ids: alertIds,
+      link_reason: linkReason
+    };
+
+    console.log('关联预警到档案 - API调用参数:', { archiveId, ...requestData });
+
+    return visionAIAxios.post(`/api/v1/alert-archives/link-alerts/${archiveId}`, requestData)
+      .then(response => {
+        console.log('关联预警到档案成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('关联预警到档案失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 从档案中移除预警关联
+   * @param {number} archiveId - 档案ID
+   * @param {number} alertId - 预警ID
+   * @returns {Promise} 包含移除结果的Promise对象
+   */
+  unlinkAlertFromArchive(archiveId, alertId) {
+    console.log('移除预警关联 - API调用参数:', { archiveId, alertId });
+
+    return visionAIAxios.delete(`/api/v1/alert-archives/unlink-alert/${archiveId}/${alertId}`)
+      .then(response => {
+        console.log('移除预警关联成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('移除预警关联失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取档案关联的预警列表
+   * @param {number} archiveId - 档案ID
+   * @param {Object} params - 查询参数
+   * @param {number} [params.page=1] - 页码
+   * @param {number} [params.limit=20] - 每页条数
+   * @param {number} [params.alert_level] - 预警等级筛选
+   * @param {string} [params.alert_type] - 预警类型筛选
+   * @param {number} [params.status] - 处理状态筛选
+   * @param {string} [params.start_time] - 开始时间筛选
+   * @param {string} [params.end_time] - 结束时间筛选
+   * @returns {Promise} 包含档案预警列表的Promise对象
+   */
+  getArchiveLinkedAlerts(archiveId, params = {}) {
+    const apiParams = {
+      page: 1,
+      limit: 20,
+      ...params
+    };
+
+    console.log('获取档案关联预警列表 - API调用参数:', { archiveId, ...apiParams });
+
+    return visionAIAxios.get(`/api/v1/alert-archives/linked-alerts/${archiveId}`, { params: apiParams })
+      .then(response => {
+        console.log('获取档案关联预警列表成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取档案关联预警列表失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取档案统计信息
+   * @param {number} archiveId - 档案ID
+   * @returns {Promise} 包含档案统计信息的Promise对象
+   */
+  getArchiveStatistics(archiveId) {
+    console.log('获取档案统计信息 - API调用参数:', { archiveId });
+
+    return visionAIAxios.get(`/api/v1/alert-archives/statistics/${archiveId}`)
+      .then(response => {
+        console.log('获取档案统计信息成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取档案统计信息失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 检查预警归档状态
+   * @param {number} alertId - 预警ID
+   * @returns {Promise} 包含预警归档状态的Promise对象
+   */
+  checkAlertArchiveStatus(alertId) {
+    console.log('检查预警归档状态 - API调用参数:', { alertId });
+
+    return visionAIAxios.get(`/api/v1/alert-archives/check-alert/${alertId}`)
+      .then(response => {
+        console.log('检查预警归档状态成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('检查预警归档状态失败:', error);
+        throw error;
+      });
+  }
+};
+
+// 复判记录API
+export const reviewRecordAPI = {
+  /**
+   * 获取复判记录列表
+   * @param {Object} params - 查询参数
+   * @returns {Promise} 包含复判记录列表的Promise对象
+   */
+  getReviewRecords(params = {}) {
+    return visionAIAxios.get('/review-records/', { params });
+  },
+
+  /**
+   * 根据ID获取复判记录详情
+   * @param {number} reviewId - 复判记录ID
+   * @returns {Promise} 包含复判记录详情的Promise对象
+   */
+  getReviewRecordById(reviewId) {
+    return visionAIAxios.get(`/review-records/${reviewId}`);
+  },
+
+  /**
+   * 根据预警ID获取复判记录列表
+   * @param {number} alertId - 预警ID
+   * @returns {Promise} 包含复判记录列表的Promise对象
+   */
+  getReviewRecordsByAlertId(alertId) {
+    return visionAIAxios.get(`/review-records/alert/${alertId}`);
+  },
+
+  /**
+   * 创建复判记录
+   * @param {Object} reviewData - 复判记录数据
+   * @returns {Promise} 包含创建结果的Promise对象
+   */
+  createReviewRecord(reviewData) {
+    return visionAIAxios.post('/review-records/', reviewData);
+  },
+
+  /**
+   * 更新复判记录
+   * @param {number} reviewId - 复判记录ID
+   * @param {Object} updateData - 更新数据
+   * @returns {Promise} 包含更新结果的Promise对象
+   */
+  updateReviewRecord(reviewId, updateData) {
+    return visionAIAxios.put(`/review-records/${reviewId}`, updateData);
+  },
+
+  /**
+   * 删除复判记录
+   * @param {number} reviewId - 复判记录ID
+   * @returns {Promise} 包含删除结果的Promise对象
+   */
+  deleteReviewRecord(reviewId) {
+    return visionAIAxios.delete(`/review-records/${reviewId}`);
+  },
+
+  /**
+   * 获取复判记录统计信息
+   * @param {Object} params - 查询参数
+   * @returns {Promise} 包含统计信息的Promise对象
+   */
+  getReviewRecordStatistics(params = {}) {
+    return visionAIAxios.get('/review-records/statistics', { params });
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
   cameraAPI,
   alertAPI,
   reviewSkillAPI,
-  chatAssistantAPI
+  chatAssistantAPI,
+  archiveAPI,
+  reviewRecordAPI,
+  visionAIAxios
 };
