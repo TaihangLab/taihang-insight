@@ -3247,7 +3247,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含复判记录列表的Promise对象
    */
   getReviewRecords(params = {}) {
-    return visionAIAxios.get('/review-records/', { params });
+    return visionAIAxios.get('/api/v1/review-records/', { params });
   },
 
   /**
@@ -3256,7 +3256,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含复判记录详情的Promise对象
    */
   getReviewRecordById(reviewId) {
-    return visionAIAxios.get(`/review-records/${reviewId}`);
+    return visionAIAxios.get(`/api/v1/review-records/${reviewId}`);
   },
 
   /**
@@ -3265,7 +3265,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含复判记录列表的Promise对象
    */
   getReviewRecordsByAlertId(alertId) {
-    return visionAIAxios.get(`/review-records/alert/${alertId}`);
+    return visionAIAxios.get(`/api/v1/review-records/alert/${alertId}`);
   },
 
   /**
@@ -3274,7 +3274,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含创建结果的Promise对象
    */
   createReviewRecord(reviewData) {
-    return visionAIAxios.post('/review-records/', reviewData);
+    return visionAIAxios.post('/api/v1/review-records/', reviewData);
   },
 
   /**
@@ -3284,7 +3284,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含更新结果的Promise对象
    */
   updateReviewRecord(reviewId, updateData) {
-    return visionAIAxios.put(`/review-records/${reviewId}`, updateData);
+    return visionAIAxios.put(`/api/v1/review-records/${reviewId}`, updateData);
   },
 
   /**
@@ -3293,7 +3293,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含删除结果的Promise对象
    */
   deleteReviewRecord(reviewId) {
-    return visionAIAxios.delete(`/review-records/${reviewId}`);
+    return visionAIAxios.delete(`/api/v1/review-records/${reviewId}`);
   },
 
   /**
@@ -3302,7 +3302,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含统计信息的Promise对象
    */
   getReviewRecordStatistics(params = {}) {
-    return visionAIAxios.get('/review-records/statistics', { params });
+    return visionAIAxios.get('/api/v1/review-records/statistics', { params });
   }
 };
 

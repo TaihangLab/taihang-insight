@@ -1278,6 +1278,21 @@ export default {
         
         const warningInfo = this.warningList[warningIndex]
         
+        // 检查预警状态，只有待处理状态才能标记为误报
+        if (warningInfo._apiData && warningInfo._apiData.status !== 1) {
+          const statusNames = {
+            2: '处理中',
+            3: '已处理',
+            4: '已归档',
+            5: '误报'
+          }
+          const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态'
+          this.$message.warning(`只有待处理状态的预警才能标记为误报，当前状态为：${currentStatusName}`)
+          this.falseAlarmDialogVisible = false
+          this.falseAlarmForm.reviewNotes = ''
+          return
+        }
+        
         // 调用后端API标记误报
         const { alertAPI } = await import('../../service/VisionAIService.js')
         const response = await alertAPI.markAlertAsFalseAlarm(
@@ -1622,6 +1637,28 @@ export default {
       
       console.log('🔓 按钮可用');
       return false;
+    },
+    
+    // 检查误报按钮是否应该禁用（只有待处理状态才能标记为误报）
+    isFalseAlarmDisabled(warning) {
+      // 检查 _apiData 中的原始状态
+      if (warning._apiData && warning._apiData.status !== undefined) {
+        // status === 1 表示待处理状态，只有待处理状态才能标记误报
+        const isDisabled = warning._apiData.status !== 1;
+        console.log('🚫 检查误报按钮状态:', warning.id, 'API status:', warning._apiData.status, 'disabled:', isDisabled);
+        return isDisabled;
+      }
+      
+      // 检查字符串状态
+      if (warning.status) {
+        const isDisabled = warning.status !== 'pending';
+        console.log('🚫 检查误报按钮状态:', warning.id, 'status:', warning.status, 'disabled:', isDisabled);
+        return isDisabled;
+      }
+      
+      // 默认禁用（安全起见）
+      console.log('🚫 误报按钮默认禁用:', warning.id);
+      return true;
     },
     
     // 获取当前预警状态
@@ -2089,6 +2126,7 @@ export default {
                       size="mini" 
                       class="action-btn false-alarm-btn"
                       @click.stop="handleWarning(item.id, 'falseAlarm')"
+                      :disabled="isFalseAlarmDisabled(item)"
                     >
                       误报
                     </el-button>

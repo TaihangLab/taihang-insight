@@ -423,12 +423,12 @@ export default {
         
         if (response.data && response.data.code === 0) {
           // 转换API数据格式为前端需要的格式
-          this.reviewList = response.data.data.records.map(record => ({
+          this.reviewList = response.data.data.map(record => ({
             id: record.review_id.toString(),
-            title: (record.alert && record.alert.alert_name) || '未知预警',
-            image: (record.alert && record.alert.image_url) || require('./images/5.jpg'),
-            cameraName: (record.alert && record.alert.camera_name) || '未知摄像头',
-            location: (record.alert && record.alert.location) || '未知位置',
+            title: record.alert_name || '未知预警',
+            image: record.image_url || require('./images/5.jpg'),
+            cameraName: record.camera_name || '未知摄像头',
+            location: record.location || '未知位置',
             startTime: record.created_at ? new Date(record.created_at).toLocaleString('zh-CN', {
               year: 'numeric',
               month: '2-digit',
@@ -703,6 +703,7 @@ export default {
       
       return {
         id: reviewItem.id,
+        alert_id: reviewItem.alertId, // 添加预警ID（用于在详情中显示）
         type: reviewItem.title,
         device: reviewItem.cameraName,
         deviceInfo: {
@@ -716,6 +717,8 @@ export default {
         description: `复判记录：${reviewItem.title}`,
         reviewType: reviewItem.reviewType, // 添加复判类型
         reviewTypeText: this.getReviewTypeText(reviewItem.reviewType), // 添加复判类型文本
+        reviewNotes: reviewItem.reviewNotes, // 添加复判意见
+        reviewerName: reviewItem.reviewerName, // 添加复判人员
         status: 'completed',
         // 添加操作历史（按时间倒序）
         operationHistory: [

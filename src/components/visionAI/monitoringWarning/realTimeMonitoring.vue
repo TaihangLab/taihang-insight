@@ -1132,17 +1132,11 @@ export default {
       }
     },
     
-    // 处理误报事件 - 预警详情组件已经处理了误报逻辑，这里只需要更新本地状态
+    // 处理预警详情对话框中的误报事件 - 与预警管理页面保持完全一致
     handleFalseAlarmFromDialog(warning) {
       if (warning && warning.id) {
-        // 只更新本地预警列表状态，不显示提示（预警详情组件已经显示了）
-        const index = this.warningList.findIndex(item => item.id === warning.id);
-        if (index !== -1) {
-          this.warningList[index].status = 'archived';
-          this.warningList[index].isFalseAlarm = true;
-          // 从实时预警列表中移除误报预警
-          this.warningList.splice(index, 1);
-        }
+        // 调用统一的误报处理流程（弹出误报输入对话框）
+        this.handleWarning(warning.id, 'falseAlarm');
       }
     },
     
@@ -1202,6 +1196,21 @@ export default {
         
         const warningInfo = this.warningList[warningIndex];
         
+        // 检查预警状态，只有待处理状态才能标记为误报
+        if (warningInfo._apiData && warningInfo._apiData.status !== 1) {
+          const statusNames = {
+            2: '处理中',
+            3: '已处理',
+            4: '已归档',
+            5: '误报'
+          };
+          const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态';
+          this.$message.warning(`只有待处理状态的预警才能标记为误报，当前状态为：${currentStatusName}`);
+          this.falseAlarmDialogVisible = false;
+          this.falseAlarmForm.reviewNotes = '';
+          return;
+        }
+        
         // 调用后端API标记误报
         const { alertAPI } = await import('../../service/VisionAIService.js');
         const response = await alertAPI.markAlertAsFalseAlarm(
@@ -1211,10 +1220,29 @@ export default {
         );
         
         if (response.data && response.data.code === 0) {
-          // 更新预警状态
+          // 添加误报记录到操作历史
+          if (!this.warningList[warningIndex].operationHistory) {
+            this.$set(this.warningList[warningIndex], 'operationHistory', []);
+          }
+          
+          const newRecord = {
+            id: Date.now() + Math.random(),
+            status: 'completed',
+            statusText: '误报处理',
+            time: this.getCurrentTime(),
+            description: `预警被标记为误报：${this.falseAlarmForm.reviewNotes}`,
+            operationType: 'falseAlarm',
+            operator: this.getCurrentUserName()
+          };
+          
+          this.warningList[warningIndex].operationHistory.unshift(newRecord);
           this.warningList[warningIndex].status = 'archived';
           this.warningList[warningIndex].isFalseAlarm = true;
           this.warningList[warningIndex].archiveTime = new Date().toLocaleString();
+          
+          // 保存到智能复判记录
+          await this.saveToReviewRecords(warningInfo);
+          console.log('📝 实时监控页面-误报记录已保存到智能复判');
           
           // 从实时预警列表中移除误报预警
           this.warningList.splice(warningIndex, 1);
@@ -1232,6 +1260,8 @@ export default {
       } catch (error) {
         console.error('标记误报失败:', error);
         this.$message.error('标记误报失败: ' + (error.message || '未知错误'));
+      } finally {
+        this.loading = false;
       }
     },
     
@@ -1271,9 +1301,13 @@ export default {
         
         localStorage.setItem('intelligentReviewRecords', JSON.stringify(reviewRecords));
         
-        // 模拟API调用保存时间
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // 这里是本地存储操作，不需要额外的API调用
+        console.log('📝 智能复判记录已保存到本地存储');
+        
+        console.log('误报记录已保存到智能复判:', reviewRecord);
+        
       } catch (error) {
+        console.error('保存到智能复判记录失败:', error);
         throw error;
       }
     },
@@ -1391,8 +1425,23 @@ export default {
       return iconMap[level] || 'el-icon-warning';
     },
     
-    // 获取当前预警状态 - 与预警管理页面保持完全一致
+    // 获取当前预警状态 - 优先使用API返回的status字段
     getCurrentWarningStatus(warning) {
+      // 优先使用API返回的status字段（与后端alerts表的status字段对应）
+      if (warning._apiData && typeof warning._apiData.status !== 'undefined') {
+        const statusMap = {
+          1: { text: '待处理', class: 'status-pending' },      // PENDING
+          2: { text: '处理中', class: 'status-processing' },   // PROCESSING
+          3: { text: '已处理', class: 'status-completed' },    // RESOLVED
+          4: { text: '已归档', class: 'status-archived' },     // ARCHIVED
+          5: { text: '误报', class: 'status-false-alarm' }     // FALSE_ALARM
+        };
+        const result = statusMap[warning._apiData.status] || { text: '未知', class: 'status-pending' };
+        console.log('📊 预警状态显示 - API status:', warning._apiData.status, '显示:', result);
+        return result;
+      }
+      
+      // 如果没有API数据，使用operationHistory判断（向后兼容）
       if (!warning.operationHistory || warning.operationHistory.length === 0) {
         return {
           text: '待处理',
@@ -1583,11 +1632,24 @@ export default {
           // 添加额外的API数据字段
           taskId: apiWarning.task_id || null,
           electronicFence: apiWarning.electronic_fence || null,
-          result: apiWarning.result || null
+          result: apiWarning.result || null,
+          // 保存原始API数据，用于状态判断和其他功能
+          _apiData: {
+            alert_id: apiWarning.alert_id,
+            status: apiWarning.status,  // 保存原始status数字（1-5）
+            status_display: apiWarning.status_display,
+            alert_time: apiWarning.alert_time,
+            camera_id: apiWarning.camera_id,
+            task_id: apiWarning.task_id,
+            process: apiWarning.process
+          }
         };
+        
+        console.log('🔄 转换API预警数据 - alert_id:', apiWarning.alert_id, 'status:', apiWarning.status, '→ 前端格式');
         
         return convertedWarning;
       } catch (error) {
+        console.error('❌ 转换API预警数据失败:', error);
         return null;
       }
     },
@@ -3001,6 +3063,13 @@ export default {
   background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%) !important;
   color: #374151 !important;
   border-color: #9ca3af !important;
+}
+
+/* 误报状态 - 橙色渐变 */
+.warning-list .list-content .warning-item .warning-status-badge.status-false-alarm {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%) !important;
+  color: #9a3412 !important;
+  border-color: #fdba74 !important;
 }
 
 
