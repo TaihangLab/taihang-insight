@@ -1774,6 +1774,60 @@ export const alertAPI = {
         console.error('批量标记误报失败:', error);
         throw error;
       });
+  },
+
+  /**
+   * 导出预警数据
+   * @param {Object} params - 导出参数
+   * @param {string} [params.format='csv'] - 导出格式（csv 或 excel）
+   * @param {Array} [params.alert_ids] - 指定导出的预警ID数组（可选，不传则导出筛选条件下的所有数据）
+   * @param {number} [params.camera_id] - 摄像头ID过滤
+   * @param {string} [params.camera_name] - 摄像头名称过滤
+   * @param {string} [params.alert_type] - 预警类型过滤
+   * @param {number} [params.alert_level] - 预警等级过滤
+   * @param {string} [params.alert_name] - 预警名称过滤
+   * @param {string} [params.location] - 位置过滤
+   * @param {string} [params.status] - 状态过滤
+   * @param {string} [params.start_date] - 开始日期
+   * @param {string} [params.end_date] - 结束日期
+   * @param {string} [params.warningSkill] - 技能类型过滤
+   * @returns {Promise} 包含导出文件数据的Promise对象
+   */
+  exportAlerts(params = {}) {
+    console.log('导出预警数据，参数:', params);
+
+    // 处理导出参数
+    const exportParams = { ...params };
+    
+    // 设置默认导出格式
+    if (!exportParams.format) {
+      exportParams.format = 'csv';
+    }
+
+    // 处理技能类型映射
+    if (exportParams.warningSkill) {
+      exportParams.alert_type = exportParams.warningSkill;
+      delete exportParams.warningSkill;
+    }
+
+    // 如果没有指定alert_ids，删除该参数以导出所有筛选数据
+    if (!exportParams.alert_ids || exportParams.alert_ids.length === 0) {
+      delete exportParams.alert_ids;
+    }
+
+    return visionAIAxios.get('/api/v1/alerts/export', {
+      params: exportParams,
+      responseType: 'blob', // 重要：设置响应类型为blob以处理文件下载
+      timeout: 60000 // 导出可能需要较长时间，设置60秒超时
+    })
+      .then(response => {
+        console.log('导出预警数据成功');
+        return response;
+      })
+      .catch(error => {
+        console.error('导出预警数据失败:', error);
+        throw error;
+      });
   }
 };
 
