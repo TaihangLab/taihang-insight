@@ -2462,6 +2462,11 @@ export default {
 
     // 更新AI任务
     updateAITask(taskData, deviceIndex, skillKey, config) {
+      // 如果当前任务ID已被清空（例如删除后），直接忽略更新
+      if (!this.currentTaskId) {
+        console.warn('当前无有效任务ID，忽略更新调用');
+        return;
+      }
       console.log('准备更新AI任务:', taskData);
       console.log('设备索引:', deviceIndex, '技能键:', skillKey);
       
@@ -2555,13 +2560,23 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        skillAPI.deleteAITask(this.currentTaskId).then(response => {
-          if (response.data.success) {
+        const deletedTaskId = this.currentTaskId;
+        skillAPI.deleteAITask(deletedTaskId).then(response => {
+          // 兼容多种返回结构（经由handleSimpleResponse转换后为{code, msg, data:{success}}）
+          const ok = (response && response.data && response.data.code === 0)
+            || (response && response.data && response.data.data && response.data.data.success === true)
+            || (response && (response.status === 200 || response.status === 204));
+          if (ok) {
             this.$message.success('删除成功');
-            this.handleClose();
+            // 先重置更新态与任务ID，避免后续误触发更新接口
+            this.isUpdateMode = false;
+            this.currentTaskId = null;
+            // 关闭对话框并刷新关联任务
+            this.closeSkillDialog();
             this.fetchCameraRelatedTasks(this.currentDeviceId);
           } else {
-            this.$message.error(response.data.message || '删除失败');
+            const msg = (response && response.data && (response.data.msg || response.data.message)) || '删除失败';
+            this.$message.error(msg);
           }
         }).catch(error => {
           console.error('删除AI任务失败:', error);
