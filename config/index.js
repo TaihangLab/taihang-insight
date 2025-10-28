@@ -4,15 +4,20 @@
 
 const path = require('path')
 
-// 导入API配置
-const { API_BASE_URL, PROXY_CONFIG } = require('../src/config/api.js')
-
 module.exports = {
   dev: {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: PROXY_CONFIG,
+    proxyTable: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/api': '/api/v1'
+        }
+      }
+    },
 
     // Various Dev Server settings
     host:"0.0.0.0",

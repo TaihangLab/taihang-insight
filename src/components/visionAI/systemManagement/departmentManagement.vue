@@ -10,17 +10,10 @@
             clearable
           ></el-input>
         </el-form-item>
-        <el-form-item label="类别编码">
-          <el-input
-            v-model="searchForm.categoryCode"
-            placeholder="请输入类别编码"
-            clearable
-          ></el-input>
-        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
-            <el-option label="正常" value="1"></el-option>
-            <el-option label="停用" value="0"></el-option>
+            <el-option label="正常" value="0"></el-option>
+            <el-option label="停用" value="1"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -54,8 +47,10 @@
             <span :style="{ paddingLeft: (scope.row.level * 20) + 'px' }">{{ scope.row.deptName }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="categoryCode" label="类别编码" min-width="140" align="center"></el-table-column>
         <el-table-column prop="orderNum" label="排序" width="80" align="center"></el-table-column>
+        <el-table-column prop="leader" label="负责人" min-width="100" align="center"></el-table-column>
+        <el-table-column prop="phone" label="联系电话" min-width="120" align="center"></el-table-column>
+        <el-table-column prop="email" label="邮箱" min-width="150" align="center"></el-table-column>
         <el-table-column prop="status" label="状态" width="80" align="center">
           <template slot-scope="scope">
             <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="mini">
@@ -106,18 +101,13 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="类别编码" prop="categoryCode" required>
-              <el-input v-model="deptForm.categoryCode" placeholder="请输入类别编码"></el-input>
+            <el-form-item label="显示排序" prop="orderNum" required>
+              <el-input-number v-model="deptForm.orderNum" :min="0" :max="999" controls-position="right" style="width: 100%"></el-input-number>
             </el-form-item>
           </el-col>
         </el-row>
         
         <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="显示排序" prop="orderNum" required>
-              <el-input-number v-model="deptForm.orderNum" :min="0" :max="999" controls-position="right" style="width: 100%"></el-input-number>
-            </el-form-item>
-          </el-col>
           <el-col :span="12">
             <el-form-item label="负责人">
               <el-select v-model="deptForm.leader" placeholder="请选择负责人" style="width: 100%">
@@ -130,9 +120,6 @@
               </el-select>
             </el-form-item>
           </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="联系电话">
               <el-input v-model="deptForm.phone" placeholder="请输入联系电话"></el-input>
@@ -149,8 +136,8 @@
           <el-col :span="24">
             <el-form-item label="部门状态">
               <el-radio-group v-model="deptForm.status">
-                <el-radio :label="1">正常</el-radio>
-                <el-radio :label="0">停用</el-radio>
+                <el-radio label="0">正常</el-radio>
+                <el-radio label="1">停用</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -181,6 +168,16 @@
 </template>
 
 <script>
+import { 
+  listDept, 
+  getDept, 
+  addDept, 
+  updateDept, 
+  delDept, 
+  listDeptExcludeChild 
+} from '@/api/system/dept'
+import { listUser } from '@/api/system/user'
+
 export default {
   name: 'DepartmentManagement',
   
@@ -189,7 +186,6 @@ export default {
       // 搜索表单
       searchForm: {
         deptName: '',
-        categoryCode: '',
         status: ''
       },
       
@@ -200,13 +196,11 @@ export default {
       
       // 部门表单
       deptForm: {
-        id: null,
+        deptId: null,
         parentId: 0,
-        parentName: '',
         deptName: '',
-        categoryCode: '',
-        orderNum: 1,
-        status: 1,
+        orderNum: 0,
+        status: '0',
         leader: '',
         phone: '',
         email: ''
@@ -224,10 +218,6 @@ export default {
           { required: true, message: '请输入部门名称', trigger: 'blur' },
           { min: 2, max: 30, message: '部门名称长度在2到30个字符', trigger: 'blur' }
         ],
-        categoryCode: [
-          { required: true, message: '请输入类别编码', trigger: 'blur' },
-          { min: 1, max: 20, message: '类别编码长度在1到20个字符', trigger: 'blur' }
-        ],
         orderNum: [
           { required: true, message: '请输入显示排序', trigger: 'blur' }
         ]
@@ -241,145 +231,64 @@ export default {
     }
   },
   
-  mounted() {
+  created() {
     this.getDeptList()
-    this.getParentDeptOptions()
     this.getUserOptions()
   },
   
   methods: {
     // 获取部门列表
-    getDeptList() {
+    async getDeptList() {
       this.loading = true
-      // 模拟API调用
-      setTimeout(() => {
-        this.tableData = [
-          {
-            id: 1,
-            deptName: 'XXX科技',
-            categoryCode: '0',
-            orderNum: 0,
-            status: 1,
-            createTime: '2025-06-06 16:28:45',
-            level: 0,
-            children: [
-              {
-                id: 2,
-                deptName: '深圳公司',
-                categoryCode: '1',
-                orderNum: 1,
-                status: 1,
-                createTime: '2025-06-06 16:28:45',
-                level: 1,
-                children: [
-                  {
-                    id: 3,
-                    deptName: '研发部门',
-                    categoryCode: '1',
-                    orderNum: 1,
-                    status: 1,
-                    createTime: '2025-06-06 16:28:45',
-                    level: 2,
-                    children: [
-                      {
-                        id: 4,
-                        deptName: '测试研发部门',
-                        categoryCode: '7',
-                        orderNum: 7,
-                        status: 1,
-                        createTime: '2025-07-07 15:16:34',
-                        level: 3,
-                        children: []
-                      }
-                    ]
-                  },
-                  {
-                    id: 5,
-                    deptName: '市场部门',
-                    categoryCode: '2',
-                    orderNum: 2,
-                    status: 1,
-                    createTime: '2025-06-06 16:28:45',
-                    level: 2,
-                    children: []
-                  },
-                  {
-                    id: 6,
-                    deptName: '测试部门',
-                    categoryCode: '3',
-                    orderNum: 3,
-                    status: 1,
-                    createTime: '2025-06-06 16:28:45',
-                    level: 2,
-                    children: []
-                  },
-                  {
-                    id: 7,
-                    deptName: '财务部门',
-                    categoryCode: '4',
-                    orderNum: 4,
-                    status: 1,
-                    createTime: '2025-06-06 16:28:45',
-                    level: 2,
-                    children: []
-                  },
-                  {
-                    id: 8,
-                    deptName: '运维部门',
-                    categoryCode: '5',
-                    orderNum: 5,
-                    status: 1,
-                    createTime: '2025-06-06 16:28:45',
-                    level: 2,
-                    children: []
-                  }
-                ]
-              },
-              {
-                id: 9,
-                deptName: '长沙分公司',
-                categoryCode: '2',
-                orderNum: 2,
-                status: 1,
-                createTime: '2025-06-06 16:28:45',
-                level: 1,
-                children: [
-                  {
-                    id: 10,
-                    deptName: '市场部门',
-                    categoryCode: '1',
-                    orderNum: 1,
-                    status: 1,
-                    createTime: '2025-06-06 16:28:45',
-                    level: 2,
-                    children: []
-                  },
-                  {
-                    id: 11,
-                    deptName: '财务部门',
-                    categoryCode: '2',
-                    orderNum: 2,
-                    status: 1,
-                    createTime: '2025-06-06 16:28:45',
-                    level: 2,
-                    children: []
-                  }
-                ]
-              }
-            ]
-          }
-        ]
+      try {
+        const params = {
+          dept_name: this.searchForm.deptName || undefined,
+          status: this.searchForm.status || undefined
+        }
+        
+        const response = await listDept(params)
+        if (response.code === 200) {
+          // 后端已经返回树形结构，直接转换字段格式
+          this.tableData = this.convertDeptData(response.data || [])
+          
+          // 加载完成后展开所有节点
+          this.$nextTick(() => {
+            this.setTableExpandState(this.tableData, true)
+          })
+        } else {
+          this.$message.error(response.msg || '获取部门列表失败')
+        }
+      } catch (error) {
+        console.error('获取部门列表失败:', error)
+        this.$message.error('获取部门列表失败')
+      } finally {
         this.loading = false
-        // 加载完成后展开所有节点，需要延时确保表格渲染完成
-        setTimeout(() => {
-          this.setTableExpandState(this.tableData, true)
-        }, 100)
-      }, 500)
+      }
+    },
+    
+    // 转换部门数据格式（后端已经是树形结构）
+    convertDeptData(deptList) {
+      return deptList.map(dept => {
+        const deptNode = {
+          id: dept.deptId,
+          deptId: dept.deptId,
+          parentId: dept.parentId,
+          deptName: dept.deptName,
+          orderNum: dept.orderNum,
+          status: dept.status === '0' ? 1 : 0, // 转换状态显示
+          leader: dept.leader,
+          phone: dept.phone,
+          email: dept.email,
+          createTime: dept.createTime ? new Date(dept.createTime).toLocaleString() : '',
+          children: dept.children ? this.convertDeptData(dept.children) : []
+        }
+        return deptNode
+      }).sort((a, b) => a.orderNum - b.orderNum)
     },
     
     // 搜索部门
-    searchDepts() {
-      this.getDeptList()
+    async searchDepts() {
+      await this.getDeptList()
       this.$message.success('搜索成功')
     },
     
@@ -387,7 +296,6 @@ export default {
     resetSearch() {
       this.searchForm = {
         deptName: '',
-        categoryCode: '',
         status: ''
       }
       this.getDeptList()
@@ -397,7 +305,6 @@ export default {
     toggleExpandAll() {
       this.expandAll = !this.expandAll
       this.$nextTick(() => {
-        // 遍历表格的所有行，设置展开状态
         this.setTableExpandState(this.tableData, this.expandAll)
       })
     },
@@ -405,10 +312,8 @@ export default {
     // 递归设置表格展开状态
     setTableExpandState(data, expand) {
       data.forEach(item => {
-        // 如果有子节点，则设置展开状态
         if (item.children && item.children.length > 0) {
           this.$refs.customTable.toggleRowExpansion(item, expand)
-          // 递归处理子节点
           this.setTableExpandState(item.children, expand)
         }
       })
@@ -418,19 +323,18 @@ export default {
     addDept() {
       this.dialogTitle = '添加部门'
       this.deptForm = {
-        id: null,
+        deptId: null,
         parentId: 0,
-        parentName: '',
         deptName: '',
-        categoryCode: '',
         orderNum: 0,
-        status: 1,
+        status: '0',
         leader: '',
         phone: '',
         email: ''
       }
+      this.getParentDeptOptions()
       this.deptDialogVisible = true
-      // 清除表单验证
+      
       this.$nextTick(() => {
         this.$refs.deptForm && this.$refs.deptForm.clearValidate()
       })
@@ -440,42 +344,55 @@ export default {
     addSubDept(row) {
       this.dialogTitle = '添加子部门'
       this.deptForm = {
-        id: null,
-        parentId: row.id,
-        parentName: row.deptName,
+        deptId: null,
+        parentId: row.deptId,
         deptName: '',
-        categoryCode: '',
         orderNum: 0,
-        status: 1,
+        status: '0',
         leader: '',
         phone: '',
         email: ''
       }
+      this.getParentDeptOptions()
       this.deptDialogVisible = true
-      // 清除表单验证
+      
       this.$nextTick(() => {
         this.$refs.deptForm && this.$refs.deptForm.clearValidate()
       })
     },
     
     // 编辑部门
-    editDept(row) {
+    async editDept(row) {
       this.dialogTitle = '编辑部门'
-      this.deptForm = {
-        id: row.id,
-        parentId: row.parentId || 0,
-        parentName: row.parentName || '',
-        deptName: row.deptName,
-        categoryCode: row.categoryCode,
-        orderNum: row.orderNum,
-        status: row.status,
-        leader: row.leader || '',
-        phone: row.phone || '',
-        email: row.email || ''
-      }
       this.currentDept = row
+      
+      try {
+        const response = await getDept(row.deptId)
+        if (response.code === 200) {
+          const deptData = response.data
+          this.deptForm = {
+            deptId: deptData.deptId,
+            parentId: deptData.parentId,
+            deptName: deptData.deptName,
+            orderNum: deptData.orderNum,
+            status: deptData.status,
+            leader: deptData.leader || '',
+            phone: deptData.phone || '',
+            email: deptData.email || ''
+          }
+        } else {
+          this.$message.error(response.msg || '获取部门详情失败')
+          return
+        }
+      } catch (error) {
+        console.error('获取部门详情失败:', error)
+        this.$message.error('获取部门详情失败')
+        return
+      }
+      
+      this.getParentDeptOptions(row.deptId)
       this.deptDialogVisible = true
-      // 清除表单验证
+      
       this.$nextTick(() => {
         this.$refs.deptForm && this.$refs.deptForm.clearValidate()
       })
@@ -488,62 +405,113 @@ export default {
     },
     
     // 确认删除
-    confirmDelete() {
-      // 模拟删除API
-      this.$message.success('删除成功')
-      this.deleteDialogVisible = false
-      this.getDeptList()
+    async confirmDelete() {
+      try {
+        this.loading = true
+        const response = await delDept(this.currentDept.deptId)
+        
+        if (response.code === 200) {
+          this.$message.success('删除成功')
+          this.deleteDialogVisible = false
+          this.getDeptList()
+        } else {
+          this.$message.error(response.msg || '删除失败')
+        }
+      } catch (error) {
+        console.error('删除部门失败:', error)
+        this.$message.error('删除部门失败')
+      } finally {
+        this.loading = false
+      }
     },
     
     // 保存部门
-    saveDept() {
-      this.$refs.deptForm.validate((valid) => {
-        if (valid) {
-          // 模拟保存API
-          if (this.deptForm.id) {
-            this.$message.success('修改成功')
-          } else {
-            this.$message.success('新增成功')
-          }
+    async saveDept() {
+      try {
+        await this.$refs.deptForm.validate()
+        
+        this.loading = true
+        
+        // 转换字段名格式，从驼峰转为下划线
+        const deptData = {
+          dept_id: this.deptForm.deptId,
+          parent_id: this.deptForm.parentId,
+          dept_name: this.deptForm.deptName,
+          order_num: this.deptForm.orderNum,
+          status: this.deptForm.status,
+          leader: this.deptForm.leader || '',
+          phone: this.deptForm.phone || '',
+          email: this.deptForm.email || ''
+        }
+        
+        let response
+        if (this.deptForm.deptId) {
+          // 编辑部门
+          response = await updateDept(deptData)
+        } else {
+          // 新增部门
+          response = await addDept(deptData)
+        }
+        
+        if (response.code === 200) {
+          this.$message.success(this.deptForm.deptId ? '修改成功' : '新增成功')
           this.deptDialogVisible = false
           this.getDeptList()
+        } else {
+          this.$message.error(response.msg || '操作失败')
         }
-      })
+      } catch (error) {
+        if (error !== false) { // 不是表单验证错误
+          console.error('保存部门失败:', error)
+          this.$message.error('保存部门失败')
+        }
+      } finally {
+        this.loading = false
+      }
     },
     
     // 获取上级部门选项
-    getParentDeptOptions() {
-      // 模拟API调用获取上级部门列表
-      setTimeout(() => {
-        this.parentDeptOptions = [
-          { id: 0, deptName: '无上级部门' },
-          { id: 1, deptName: 'XXX科技' },
-          { id: 2, deptName: '深圳公司' },
-          { id: 9, deptName: '长沙分公司' },
-          { id: 3, deptName: '研发部门' },
-          { id: 5, deptName: '市场部门' },
-          { id: 6, deptName: '测试部门' },
-          { id: 7, deptName: '财务部门' },
-          { id: 8, deptName: '运维部门' }
-        ]
-      }, 100)
+    async getParentDeptOptions(excludeDeptId = null) {
+      try {
+        let response
+        if (excludeDeptId) {
+          // 编辑时排除当前部门及其子部门
+          response = await listDeptExcludeChild(excludeDeptId)
+        } else {
+          // 新增时获取所有部门
+          response = await listDept({})
+        }
+        
+        if (response.code === 200) {
+          const deptList = response.data || []
+          this.parentDeptOptions = [
+            { id: 0, deptName: '无上级部门' },
+            ...deptList.map(dept => ({
+              id: dept.deptId,
+              deptName: dept.deptName
+            }))
+          ]
+        }
+      } catch (error) {
+        console.error('获取上级部门选项失败:', error)
+      }
     },
     
     // 获取用户选项
-    getUserOptions() {
-      // 模拟API调用获取用户列表
-      setTimeout(() => {
-        this.userOptions = [
-          { id: 1, name: '张三' },
-          { id: 2, name: '李四' },
-          { id: 3, name: '王五' },
-          { id: 4, name: '赵六' },
-          { id: 5, name: '孙七' },
-          { id: 6, name: '周八' },
-          { id: 7, name: '吴九' },
-          { id: 8, name: '郑十' }
-        ]
-      }, 100)
+    async getUserOptions() {
+      try {
+        const response = await listUser({ pageNum: 1, pageSize: 1000 })
+        if (response.code === 200) {
+          const users = response.data.rows || []
+          this.userOptions = users.map(user => ({
+            id: user.user_id,
+            name: user.nick_name || user.user_name
+          }))
+        }
+      } catch (error) {
+        console.error('获取用户选项失败:', error)
+        // 用户选项获取失败不影响主要功能，只记录错误
+      }
     }
   }
 }

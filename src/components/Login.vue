@@ -4,7 +4,7 @@
   <div class="particles-background">
     <div class="particle" v-for="n in 50" :key="n" :style="getParticleStyle()"></div>
   </div>
-  
+
   <!-- 主要登录区域 -->
   <div class="login-main-area">
     <!-- 左侧装饰区域 -->
@@ -18,7 +18,7 @@
         <div class="inner-circle"></div>
       </div>
     </div>
-    
+
     <!-- 登录表单区域 -->
     <div class="login-form-container">
       <div class="login-form-wrapper">
@@ -40,21 +40,21 @@
 
         <!-- 登录表单 -->
         <div class="login-form">
-          <!-- 租户选择框 -->
-          <div class="input-group">
+          <!-- 租户选择框 - 暂时隐藏 -->
+          <!-- <div class="input-group">
             <div class="input-wrapper" :class="{'focused': tenantSelectFocused}">
               <i class="input-icon fa fa-building"></i>
-              <select 
-                v-model="selectedTenant" 
+              <select
+                v-model="selectedTenant"
                 class="tech-select"
                 @focus="tenantSelectFocused = true"
                 @blur="tenantSelectFocused = false"
                 @change="onTenantChange"
               >
                 <option value="" disabled>请选择租户</option>
-                <option 
-                  v-for="tenant in tenantList" 
-                  :key="tenant.tenantNumber" 
+                <option
+                  v-for="tenant in tenantList"
+                  :key="tenant.tenantNumber"
                   :value="tenant.tenantNumber"
                 >
                   {{ tenant.companyName }}
@@ -63,15 +63,15 @@
               <i class="select-arrow fa fa-chevron-down"></i>
               <div class="input-border"></div>
             </div>
-          </div>
+          </div> -->
 
           <!-- 用户名输入框 -->
           <div class="input-group">
             <div class="input-wrapper">
               <i class="input-icon fa fa-user"></i>
-              <input 
-                type="text" 
-                v-model="username" 
+              <input
+                type="text"
+                v-model="username"
                 placeholder="请输入用户名"
                 class="tech-input"
                 @focus="focusInput"
@@ -85,15 +85,15 @@
           <div class="input-group">
             <div class="input-wrapper">
               <i class="input-icon fa fa-lock"></i>
-              <input 
+              <input
                 :type="showPassword ? 'text' : 'password'"
-                v-model="password" 
+                v-model="password"
                 placeholder="请输入密码"
                 class="tech-input"
                 @focus="focusInput"
                 @blur="blurInput"
               >
-              <i 
+              <i
                 :class="'password-toggle fa ' + (showPassword ? 'fa-eye-slash' : 'fa-eye')"
                 @click="showPassword = !showPassword"
               ></i>
@@ -101,10 +101,41 @@
             </div>
           </div>
 
+          <!-- 验证码输入框 -->
+          <div class="input-group">
+            <div class="captcha-container">
+              <div class="captcha-input-wrapper">
+                <i class="input-icon fa fa-shield-alt"></i>
+                <input
+                  type="text"
+                  v-model="captchaCode"
+                  placeholder="请输入验证码"
+                  class="tech-input captcha-input"
+                  @focus="focusInput"
+                  @blur="blurInput"
+                  maxlength="4"
+                >
+                <div class="input-border"></div>
+              </div>
+              <div class="captcha-image-wrapper" @click="refreshCaptcha">
+                <img
+                  v-if="captchaImg"
+                  :src="captchaImg"
+                  alt="验证码"
+                  class="captcha-image"
+                  title="点击刷新验证码"
+                >
+                <div v-else class="captcha-loading">
+                  <i class="fa fa-spinner fa-spin"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- 登录按钮 -->
           <div class="login-btn-container">
-            <button 
-              class="tech-login-btn" 
+            <button
+              class="tech-login-btn"
               :class="{'loading': isLoging}"
               @click="login"
               :disabled="isLoging"
@@ -118,6 +149,7 @@
             </button>
           </div>
         </div>
+
 
         <!-- 底部装饰 -->
         <div class="login-footer">
@@ -133,6 +165,8 @@
 </template>
 
 <script>
+import { login, getCodeImg } from '@/api/login'
+import { setToken } from '@/utils/request'
 import userService from './service/UserService'
 
 export default {
@@ -142,8 +176,11 @@ export default {
       isLoging: false,
       showPassword: false,
       loginLoading: false,
-      username: '',
-      password: '',
+      username: '', // 清空默认用户名
+      password: '', // 清空默认密码
+      captchaCode: '', // 验证码输入
+      captchaImg: '', // 验证码图片base64
+      captchaUuid: '', // 验证码UUID
       selectedTenant: '',
       tenantSelectFocused: false,
       tenantList: []
@@ -159,6 +196,8 @@ export default {
     }
     // 页面加载时获取租户列表
     this.getTenantList();
+    // 页面加载时获取验证码
+    this.getCaptcha();
   },
   methods:{
     // 获取粒子样式
@@ -175,7 +214,6 @@ export default {
     getTenantList() {
       // 直接使用写死的租户数据
       this.tenantList = this.getMockTenantList();
-      this.loadingTenants = false;
     },
 
     // 模拟租户数据（从租户管理模块提取）
@@ -246,57 +284,115 @@ export default {
       }
     },
 
-    //登录逻辑 - 模拟登录并保持登录状态
-    login(){
-      if(this.selectedTenant === '') {
-        this.$message({
-          showClose: true,
-          message: '请选择租户',
-          type: 'warning'
-        });
-        return;
+    // 获取验证码
+    async getCaptcha() {
+      try {
+        const response = await getCodeImg();
+        console.log('验证码响应:', response); // 添加调试日志
+        if (response.captcha_enabled) {
+          this.captchaImg = response.img;
+          this.captchaUuid = response.uuid;
+          console.log('验证码设置成功'); // 添加调试日志
+        } else {
+          console.log('验证码未启用或响应格式错误'); // 添加调试日志
+        }
+      } catch (error) {
+        console.error('获取验证码失败:', error);
       }
-      if(this.username!='' && this.password!=''){
-        this.isLoging = true;
-        
-        // 模拟登录延迟
-        setTimeout(() => {
-          // 保存用户信息和登录状态
-          const userInfo = {
-            username: this.username,
-            tenantNumber: this.selectedTenant,
-            loginTime: new Date().toISOString()
-          };
-          
-          userService.setUser(userInfo);
-          userService.setToken('mock-login-token');
-          
-          this.$message({
-            showClose: true,
-            message: '登录成功',
-            type: 'success'
-          });
-          
-          this.isLoging = false;
-          this.$router.push('/');
-        }, 800);
-      } else {
+    },
+
+    // 刷新验证码
+    refreshCaptcha() {
+      this.captchaCode = '';
+      this.getCaptcha();
+    },
+
+    //登录逻辑 - 调用真实登录接口
+    async login(){
+      if(this.username === '' || this.password === ''){
         this.$message({
           showClose: true,
           message: '请输入用户名和密码',
           type: 'warning'
         });
+        return;
+      }
+
+      if(this.captchaCode === ''){
+        this.$message({
+          showClose: true,
+          message: '请输入验证码',
+          type: 'warning'
+        });
+        return;
+      }
+
+      this.isLoging = true;
+
+      try {
+        // 调用登录接口，使用真实的验证码
+        const response = await login(this.username, this.password, this.captchaCode, this.captchaUuid);
+
+        if(response.code === 200) {
+          // 登录成功，保存token和用户信息
+          const token = response.token; // 修正：直接从response获取token
+          const userInfo = {
+            username: this.username,
+            loginTime: new Date().toISOString(),
+            token: token
+          };
+
+          // 保存到本地存储
+          userService.setUser(userInfo);
+          setToken(token); // 使用request工具的setToken方法
+
+          this.$message({
+            showClose: true,
+            message: '登录成功',
+            type: 'success'
+          });
+
+          // 跳转到首页或用户原本想访问的页面
+          const redirect = this.$route.query.redirect || '/'
+          this.$router.push(redirect);
+        } else {
+          this.$message({
+            showClose: true,
+            message: response.msg || '登录失败',
+            type: 'error'
+          });
+          // 登录失败时刷新验证码
+          this.refreshCaptcha();
+        }
+      } catch (error) {
+        console.error('登录错误:', error);
+        let errorMessage = '登录失败，请检查网络连接';
+
+        if (error.response) {
+          // 服务器返回错误状态码
+          if (error.response.status === 401) {
+            errorMessage = '用户名或密码错误';
+          } else if (error.response.status === 404) {
+            errorMessage = '登录接口不存在，请检查服务器配置';
+          } else if (error.response.data && error.response.data.detail) {
+            errorMessage = error.response.data.detail;
+          }
+        } else if (error.request) {
+          // 网络错误
+          errorMessage = '网络连接失败，请检查网络设置';
+        }
+
+        this.$message({
+          showClose: true,
+          message: errorMessage,
+          type: 'error'
+        });
+        // 登录失败时刷新验证码
+        this.refreshCaptcha();
+      } finally {
+        this.isLoging = false;
       }
     },
-    
-    cancelEnterkeyDefaultAction: function() {
-        document.onkeydown = function(e) {
-        var key = window.event.keyCode;
-        if (key == 13) {
-          return false;
-        }
-      }
-    }
   }
 }
 </script>
@@ -742,9 +838,74 @@ export default {
   gap: 10px;
 }
 
+/* 验证码容器 */
+.captcha-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.captcha-input-wrapper {
+  flex: 1;
+  position: relative;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.captcha-input-wrapper:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+.captcha-input-wrapper.focused {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #00d4ff;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+.captcha-input {
+  width: 100% !important;
+  padding-right: 15px !important;
+}
+
+.captcha-image-wrapper {
+  width: 100px;
+  height: 55px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.captcha-image-wrapper:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(0, 212, 255, 0.3);
+  transform: scale(1.02);
+}
+
+.captcha-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.captcha-loading {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+}
+
 /* 底部信息 */
 .login-footer {
-  margin-top: 30px;
+  margin-top: 20px;
   text-align: center;
 }
 
@@ -769,20 +930,20 @@ export default {
     height: auto;
     min-height: 600px;
   }
-  
+
   .login-decoration {
     display: none;
   }
-  
+
   .login-form-container {
     padding: 30px 20px;
   }
-  
+
   .title-container {
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .brand-name {
     flex-direction: row;
     border-right: none;
@@ -794,22 +955,22 @@ export default {
     justify-content: center;
     gap: 6px;
   }
-  
+
   .brand-logo {
     width: 40px;
     height: 40px;
     margin-right: 6px;
   }
-  
+
   .platform-title {
     font-size: 24px;
   }
-  
+
   .tech-circle {
     width: 200px;
     height: 200px;
   }
-  
+
   .inner-circle {
     width: 120px;
     height: 120px;
@@ -821,11 +982,11 @@ export default {
     margin: 20px;
     width: calc(100% - 40px);
   }
-  
+
   .platform-title {
     font-size: 20px;
   }
-  
+
   .login-form-container {
     padding: 20px 15px;
   }

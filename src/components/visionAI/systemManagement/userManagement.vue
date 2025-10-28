@@ -23,6 +23,7 @@
             @node-click="handleNodeClick">
             <span class="custom-tree-node" slot-scope="{ node, data }">
               <span class="tree-label">{{ node.label }}</span>
+              <span class="tree-count" v-if="data.deptId !== 0">({{ getUserCountByDept(data.deptId) }})</span>
             </span>
           </el-tree>
         </div>
@@ -43,7 +44,7 @@
             </el-form-item>
             <el-form-item label="用户昵称">
               <el-input
-                v-model="searchForm.userNickname"
+                v-model="searchForm.nickName"
                 placeholder="请输入用户昵称"
                 clearable
                 style="width: 200px;">
@@ -51,7 +52,7 @@
             </el-form-item>
             <el-form-item label="手机号码">
               <el-input
-                v-model="searchForm.phoneNumber"
+                v-model="searchForm.phonenumber"
                 placeholder="请输入手机号码"
                 clearable
                 style="width: 200px;">
@@ -170,26 +171,31 @@
       <el-form :model="userForm" :rules="userRules" ref="userForm" label-width="80px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="用户昵称" prop="userNickname" required>
-              <el-input v-model="userForm.userNickname" placeholder="请输入用户昵称"></el-input>
+            <el-form-item label="用户昵称" prop="nickName" required>
+              <el-input v-model="userForm.nickName" placeholder="请输入用户昵称"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="归属部门" prop="departmentId">
-              <el-cascader
-                v-model="userForm.departmentId"
-                :options="departmentOptions"
-                :props="cascaderProps"
+            <el-form-item label="归属部门" prop="deptId">
+              <el-select
+                v-model="userForm.deptId"
                 placeholder="请选择归属部门"
-                style="width: 100%">
-              </el-cascader>
+                style="width: 100%"
+                filterable>
+                <el-option
+                  v-for="dept in flatDepartmentOptions"
+                  :key="dept.value"
+                  :label="dept.label"
+                  :value="dept.value">
+                </el-option>
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="手机号码" prop="phoneNumber">
-              <el-input v-model="userForm.phoneNumber" placeholder="请输入手机号码"></el-input>
+            <el-form-item label="手机号码" prop="phonenumber">
+              <el-input v-model="userForm.phonenumber" placeholder="请输入手机号码"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -217,40 +223,45 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="用户性别" prop="gender">
-              <el-select v-model="userForm.gender" placeholder="请选择" style="width: 100%;">
-                <el-option label="男" value="male"></el-option>
-                <el-option label="女" value="female"></el-option>
+            <el-form-item label="用户性别" prop="sex">
+              <el-select v-model="userForm.sex" placeholder="请选择" style="width: 100%;">
+                <el-option label="男" value="0"></el-option>
+                <el-option label="女" value="1"></el-option>
+                <el-option label="未知" value="2"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="状态" prop="status">
               <el-radio-group v-model="userForm.status">
-                <el-radio :label="true">正常</el-radio>
-                <el-radio :label="false">停用</el-radio>
+                <el-radio label="0">正常</el-radio>
+                <el-radio label="1">停用</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="岗位" prop="position">
-              <el-select v-model="userForm.position" placeholder="请选择" style="width: 100%;">
-                <el-option label="开发工程师" value="developer"></el-option>
-                <el-option label="测试工程师" value="tester"></el-option>
-                <el-option label="产品经理" value="pm"></el-option>
-                <el-option label="UI设计师" value="designer"></el-option>
-                <el-option label="运维工程师" value="ops"></el-option>
+            <el-form-item label="岗位" prop="postIds">
+              <el-select v-model="userForm.postIds" placeholder="请选择" style="width: 100%;" multiple>
+                <el-option 
+                  v-for="post in postList" 
+                  :key="post.postId" 
+                  :label="post.postName" 
+                  :value="post.postId">
+                </el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="角色" prop="role" required>
-              <el-select v-model="userForm.role" placeholder="请选择" style="width: 100%;">
-                <el-option label="管理员" value="admin"></el-option>
-                <el-option label="普通用户" value="user"></el-option>
-                <el-option label="访客" value="guest"></el-option>
+            <el-form-item label="角色" prop="roleIds">
+              <el-select v-model="userForm.roleIds" placeholder="请选择" style="width: 100%;" multiple>
+                <el-option 
+                  v-for="role in roleList" 
+                  :key="role.roleId" 
+                  :label="role.roleName" 
+                  :value="role.roleId">
+                </el-option>
               </el-select>
             </el-form-item>
           </el-col>
@@ -311,10 +322,54 @@
         <el-button type="primary" @click="confirmResetPassword">确定</el-button>
       </span>
     </el-dialog>
+
+    <!-- 角色分配对话框 -->
+    <el-dialog
+      title="分配角色"
+      :visible.sync="roleDialogVisible"
+      width="600px">
+      <el-form label-width="80px">
+        <el-form-item label="用户名称">
+          <el-input :value="currentUser ? currentUser.userName : ''" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="用户昵称">
+          <el-input :value="currentUser ? currentUser.userNickname : ''" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="角色">
+          <el-checkbox-group v-model="selectedRoles">
+            <el-checkbox 
+              v-for="role in roleList" 
+              :key="role.roleId" 
+              :label="role.roleId"
+              :disabled="role.status === '1'">
+              {{ role.roleName }}
+            </el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="roleDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveRoleAssignment">确定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
+import { 
+  listUser, 
+  getUser, 
+  addUser, 
+  updateUser, 
+  delUser, 
+  resetUserPwd, 
+  changeUserStatus,
+  getAuthRole,
+  updateAuthRole
+} from '@/api/system/user'
+import { listAllRoles } from '@/api/system/role' // 修改：使用listAllRoles
+import { listDept } from '@/api/system/dept' // 修改：使用正确的部门API
+
 export default {
   name: 'UserManagement',
   
@@ -327,14 +382,17 @@ export default {
       // 搜索表单
       searchForm: {
         userName: '',
-        userNickname: '',
-        phoneNumber: '',
+        nickName: '', // 修改为后端期望的字段名
+        phonenumber: '', // 修改为后端期望的字段名
         status: '',
-        createTimeRange: []
+        deptId: null, // 添加部门ID字段
+        beginTime: '', // 修改为后端期望的字段名
+        endTime: '' // 修改为后端期望的字段名
       },
       
       // 表格数据
       tableData: [],
+      allUsersData: [], // 添加：存储所有用户数据，用于部门用户数量统计
       selectedRows: [],
       
       // 分页
@@ -345,70 +403,48 @@ export default {
       },
       
       // 组织架构树数据
-      treeData: [
-        {
-          id: 1,
-          label: 'XXX科技',
-          children: [
-            {
-              id: 2,
-              label: '深圳总公司',
-              children: [
-                { id: 3, label: '研发部门' },
-                { id: 4, label: '市场部门' },
-                { id: 5, label: '测试部门' },
-                { id: 6, label: '财务部门' },
-                { id: 7, label: '运维部门' }
-              ]
-            },
-            {
-              id: 8,
-              label: '长沙分公司',
-              children: [
-                { id: 9, label: '市场部门' },
-                { id: 10, label: '财务部门' }
-              ]
-            }
-          ]
-        }
-      ],
+      treeData: [],
       
       defaultProps: {
         children: 'children',
-        label: 'label'
+        label: 'deptName',
+        value: 'deptId'
       },
       
       // 用户表单
       userForm: {
+        userId: null,
         userName: '',
-        userNickname: '',
-        phoneNumber: '',
+        nickName: '', // 修改为后端期望的字段名
+        phonenumber: '', // 修改为后端期望的字段名
         email: '',
-        departmentId: [],
+        deptId: null, // 修改为后端期望的字段名
         password: '',
-        gender: '',
-        status: true,
-        position: '',
-        role: '',
+        sex: '0', // 修改为后端期望的字段名和默认值
+        status: '0', // 修改为后端期望的字段名和默认值
+        postIds: [], // 修改为后端期望的字段名
+        roleIds: [], // 修改为后端期望的字段名
         remark: ''
       },
       
       // 表单验证规则
       userRules: {
         userName: [
-          { required: true, message: '请输入用户名称', trigger: 'blur' }
+          { required: true, message: '请输入用户名称', trigger: 'blur' },
+          { min: 2, max: 20, message: '用户名称长度必须介于 2 和 20 之间', trigger: 'blur' }
         ],
-        userNickname: [
+        nickName: [
           { required: true, message: '请输入用户昵称', trigger: 'blur' }
         ],
-        phoneNumber: [
-          { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
+        password: [
+          { required: true, message: '请输入用户密码', trigger: 'blur' },
+          { min: 5, max: 20, message: '用户密码长度必须介于 5 和 20 之间', trigger: 'blur' }
         ],
         email: [
           { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
         ],
-        role: [
-          { required: true, message: '请选择角色', trigger: 'change' }
+        phonenumber: [
+          { pattern: /^1[3|4|5|6|7|8|9][0-9]\d{8}$/, message: '请输入正确的手机号码', trigger: 'blur' }
         ]
       },
       
@@ -416,264 +452,364 @@ export default {
       userDialogVisible: false,
       deleteDialogVisible: false,
       resetPasswordDialogVisible: false,
+      roleDialogVisible: false, // 添加角色分配对话框
       dialogTitle: '新增用户',
       currentUser: null,
       resetPasswordUser: null,
       newPassword: '',
       
-      // 级联选择器配置
-      cascaderProps: {
-        value: 'id',
-        label: 'label',
-        children: 'children',
-        checkStrictly: true
-      }
+      // 角色相关
+      roleList: [],
+      selectedRoles: [],
+      
+      // 岗位相关
+      postList: []
     }
   },
   
   computed: {
     departmentOptions() {
-      return this.treeData
+      // 过滤掉"全部"选项，只返回真实的部门数据用于表单选择
+      const realDepts = this.treeData.filter(dept => dept.deptId !== 0)
+      // 确保级联选择器能正确显示树形结构
+      return this.buildCascaderOptions(realDepts)
+    },
+    
+    // 扁平化的部门选项，用于普通选择器
+    flatDepartmentOptions() {
+      const options = []
+      const flatten = (depts, level = 0) => {
+        depts.forEach(dept => {
+          if (dept.deptId !== 0) { // 排除"全部"选项
+            const prefix = '　'.repeat(level) // 使用全角空格表示层级
+            options.push({
+              value: dept.deptId,
+              label: prefix + dept.deptName
+            })
+            if (dept.children && dept.children.length > 0) {
+              flatten(dept.children, level + 1)
+            }
+          }
+        })
+      }
+      flatten(this.treeData)
+      return options
+    },
+    
+    // 检查数据是否准备就绪
+    isDataReady() {
+      return this.allUsersData && this.allUsersData.length > 0
     }
   },
   
   watch: {
     filterText(val) {
       this.$refs.tree.filter(val)
+    },
+    
+    'searchForm.createTimeRange'(val) {
+      if (val && val.length === 2) {
+        this.searchForm.beginTime = val[0]
+        this.searchForm.endTime = val[1]
+      } else {
+        this.searchForm.beginTime = ''
+        this.searchForm.endTime = ''
+      }
     }
   },
   
   created() {
-    this.fetchUsers()
+    this.initializeData()
   },
   
   methods: {
+    // 初始化数据
+    async initializeData() {
+      try {
+        // 并行加载基础数据
+        await Promise.all([
+          this.fetchUsers(),
+          this.fetchAllUsersForCount(),
+          this.loadRoles(),
+          this.loadPosts()
+        ])
+        
+        // 在用户数据加载完成后再加载部门树
+        await this.loadDeptTree()
+      } catch (error) {
+        console.error('初始化数据失败:', error)
+      }
+    },
+    
     // 过滤树节点
     filterNode(value, data) {
       if (!value) return true
-      return data.label.indexOf(value) !== -1
+      return data.deptName.indexOf(value) !== -1
     },
     
     // 点击树节点
     handleNodeClick(data) {
       this.selectedDepartment = data
+      // 如果选择"全部"，则不设置部门ID筛选
+      if (data.deptId === 0) {
+        this.searchForm.deptId = null
+      } else {
+        this.searchForm.deptId = data.deptId
+      }
       this.pagination.currentPage = 1
       this.fetchUsers()
     },
     
     // 获取用户数据
-    fetchUsers() {
+    async fetchUsers() {
       this.loading = true
-      
-      setTimeout(() => {
-        const allMockData = this.generateAllMockUsers()
+      try {
+        // 如果选择了特定部门，获取所有用户后在前端进行层级筛选
+        const needHierarchicalFilter = this.searchForm.deptId && this.searchForm.deptId !== null
         
-        // 根据搜索条件和选中部门筛选
-        let filteredData = [...allMockData]
-        
-        if (this.selectedDepartment && this.selectedDepartment.id !== 1) {
-          filteredData = filteredData.filter(item => 
-            item.departmentId === this.selectedDepartment.id ||
-            item.department === this.selectedDepartment.label
-          )
+        const params = {
+          page_num: needHierarchicalFilter ? 1 : this.pagination.currentPage,
+          page_size: needHierarchicalFilter ? 100 : this.pagination.pageSize,
+          user_name: this.searchForm.userName || undefined,
+          nick_name: this.searchForm.nickName || undefined,
+          phonenumber: this.searchForm.phonenumber || undefined,
+          status: this.searchForm.status || undefined,
+          dept_id: needHierarchicalFilter ? undefined : (this.searchForm.deptId || undefined),
+          begin_time: this.searchForm.beginTime || undefined,
+          end_time: this.searchForm.endTime || undefined
         }
         
-        if (this.searchForm.userName) {
-          filteredData = filteredData.filter(item => 
-            item.userName.includes(this.searchForm.userName)
-          )
+        const response = await listUser(params)
+        if (response.code === 200) {
+          const data = response.data
+          let users = data.rows || []
+          
+          // 如果需要层级筛选，在前端进行筛选
+          if (needHierarchicalFilter) {
+            const deptIds = this.getAllChildDeptIds(this.searchForm.deptId)
+            users = users.filter(user => {
+              return deptIds.includes(parseInt(user.dept_id))
+            })
+            
+            // 重新计算分页
+            const startIndex = (this.pagination.currentPage - 1) * this.pagination.pageSize
+            const endIndex = startIndex + this.pagination.pageSize
+            this.pagination.total = users.length
+            users = users.slice(startIndex, endIndex)
+          } else {
+            this.pagination.total = data.total || 0
+          }
+          
+          this.tableData = users
+          
+          // 转换数据格式以适配前端显示
+          this.tableData = this.tableData.map(item => ({
+            ...item,
+            userName: item.user_name, // 添加用户名映射
+            userNickname: item.nick_name,
+            phoneNumber: item.phonenumber,
+            department: item.dept_name || '',
+            departmentId: item.dept_id,
+            createTime: item.create_time,
+            status: item.status === '0', // 转换为boolean
+            role: item.role_display || (item.admin ? '管理员' : '普通用户') // 使用后端返回的角色显示名称
+          }))
         }
-        
-        if (this.searchForm.userNickname) {
-          filteredData = filteredData.filter(item => 
-            item.userNickname.includes(this.searchForm.userNickname)
-          )
-        }
-        
-        if (this.searchForm.phoneNumber) {
-          filteredData = filteredData.filter(item => 
-            item.phoneNumber.includes(this.searchForm.phoneNumber)
-          )
-        }
-        
-        if (this.searchForm.status !== '') {
-          filteredData = filteredData.filter(item => 
-            item.status === (this.searchForm.status === '1')
-          )
-        }
-        
-        if (this.searchForm.createTimeRange && this.searchForm.createTimeRange.length === 2) {
-          filteredData = filteredData.filter(item => {
-            const itemDate = item.createTime.split(' ')[0]
-            return itemDate >= this.searchForm.createTimeRange[0] && 
-                   itemDate <= this.searchForm.createTimeRange[1]
-          })
-        }
-        
-        this.pagination.total = filteredData.length
-        
-        const startIndex = (this.pagination.currentPage - 1) * this.pagination.pageSize
-        const endIndex = startIndex + this.pagination.pageSize
-        
-        this.tableData = filteredData.slice(startIndex, endIndex)
+      } catch (error) {
+        console.error('获取用户列表失败:', error)
+        this.$message.error('获取用户列表失败')
+      } finally {
         this.loading = false
-      }, 500)
+      }
     },
     
-    // 生成模拟用户数据
-    generateAllMockUsers() {
-      return [
-        {
-          id: 1,
-          userName: 'admin',
-          userNickname: '疯狂的狮子Li',
-          department: '研发部门',
-          departmentId: 3,
-          phoneNumber: '15888888888',
-          email: 'admin@xxx.com',
-          gender: 'male',
-          status: true,
-          position: 'developer',
-          role: 'admin',
-          createTime: '2025-06-06 16:28:45',
-          remark: '管理员账户'
-        },
-        {
-          id: 2,
-          userName: 'test',
-          userNickname: '本部门）以上 密码6',
-          department: '市场部门',
-          departmentId: 4,
-          phoneNumber: '',
-          email: 'test@xxx.com',
-          gender: 'female',
-          status: true,
-          position: 'pm',
-          role: 'user',
-          createTime: '2025-06-06 16:28:45',
-          remark: ''
-        },
-        {
-          id: 3,
-          userName: 'test1',
-          userNickname: '仅本人 密码66666',
-          department: '长沙分公司',
-          departmentId: 8,
-          phoneNumber: '',
-          email: '',
-          gender: 'male',
-          status: true,
-          position: 'tester',
-          role: 'guest',
-          createTime: '2025-06-06 16:28:45',
-          remark: ''
-        },
-        {
-          id: 4,
-          userName: 'testLoginOut',
-          userNickname: 'testLoginOut',
-          department: '',
-          departmentId: null,
-          phoneNumber: '',
-          email: '',
-          gender: '',
-          status: true,
-          position: '',
-          role: 'user',
-          createTime: '2025-07-02 15:04:32',
-          remark: ''
-        },
-        {
-          id: 5,
-          userName: 'te',
-          userNickname: 'fy',
-          department: '',
-          departmentId: null,
-          phoneNumber: '',
-          email: '',
-          gender: '',
-          status: true,
-          position: '',
-          role: 'user',
-          createTime: '2025-07-03 17:46:32',
-          remark: ''
-        },
-        {
-          id: 6,
-          userName: '用户名称',
-          userNickname: '用户昵称',
-          department: '',
-          departmentId: null,
-          phoneNumber: '',
-          email: '',
-          gender: '',
-          status: true,
-          position: '',
-          role: 'user',
-          createTime: '2025-07-03 17:48:21',
-          remark: ''
-        },
-        {
-          id: 7,
-          userName: '用户名',
-          userNickname: '昵称',
-          department: '',
-          departmentId: null,
-          phoneNumber: '',
-          email: '',
-          gender: '',
-          status: true,
-          position: '',
-          role: 'user',
-          createTime: '2025-07-03 18:06:22',
-          remark: ''
-        },
-        {
-          id: 8,
-          userName: '名称',
-          userNickname: 'yonghu11',
-          department: '',
-          departmentId: null,
-          phoneNumber: '',
-          email: '',
-          gender: '',
-          status: true,
-          position: '',
-          role: 'user',
-          createTime: '2025-07-03 18:30:12',
-          remark: ''
-        },
-        {
-          id: 9,
-          userName: '2222',
-          userNickname: '2222',
-          department: '',
-          departmentId: null,
-          phoneNumber: '',
-          email: '',
-          gender: '',
-          status: true,
-          position: '',
-          role: 'user',
-          createTime: '2025-07-03 18:32:54',
-          remark: ''
-        },
-        {
-          id: 10,
-          userName: '123用户名称',
-          userNickname: '123用户昵称',
-          department: '',
-          departmentId: null,
-          phoneNumber: '',
-          email: '',
-          gender: '',
-          status: true,
-          position: '',
-          role: 'user',
-          createTime: '2025-07-03 18:36:14',
-          remark: ''
+    // 获取所有用户数据用于部门用户数量统计
+    async fetchAllUsersForCount() {
+      try {
+        // 获取所有用户数据，使用最大允许的分页大小
+        const params = {
+          page_num: 1,
+          page_size: 100 // 后端限制最大值为100
         }
-      ]
+        
+        const response = await listUser(params)
+        if (response.code === 200) {
+          const data = response.data
+          // 转换数据格式并存储
+          this.allUsersData = (data.rows || []).map(item => ({
+            ...item,
+            departmentId: item.dept_id,
+            department: item.dept_name || ''
+          }))
+          
+          // 强制触发Vue的响应式更新
+          this.$nextTick(() => {
+            this.$forceUpdate()
+          })
+        }
+      } catch (error) {
+        console.error('获取所有用户数据失败:', error)
+      }
+    },
+    
+    // 加载部门树
+    async loadDeptTree() {
+      try {
+        const response = await listDept({}) // 使用部门列表API
+        if (response.code === 200) {
+          // 后端返回的是树形结构，直接转换字段格式
+          this.treeData = this.convertDeptTreeData(response.data || [])
+          
+          // 默认选中"全部"节点并展开所有节点
+          this.$nextTick(() => {
+            if (this.$refs.tree && this.treeData.length > 0) {
+              this.$refs.tree.setCurrentKey(0) // 选中"全部"节点
+              this.expandAllNodes() // 展开所有节点
+            }
+          })
+        }
+      } catch (error) {
+        console.error('获取部门树失败:', error)
+      }
+    },
+    
+    // 展开所有节点
+    expandAllNodes() {
+      if (this.$refs.tree) {
+        const expandKeys = []
+        const collectKeys = (nodes) => {
+          nodes.forEach(node => {
+            if (node.children && node.children.length > 0) {
+              expandKeys.push(node.id)
+              collectKeys(node.children)
+            }
+          })
+        }
+        collectKeys(this.treeData)
+        expandKeys.forEach(key => {
+          this.$refs.tree.store.nodesMap[key] && this.$refs.tree.store.nodesMap[key].expand()
+        })
+      }
+    },
+    
+    // 获取指定部门的用户数量（包含子部门）
+    getUserCountByDept(deptId) {
+      if (!this.allUsersData || this.allUsersData.length === 0) {
+        return 0
+      }
+      
+      // 获取当前部门及其所有子部门的ID列表
+      const deptIds = this.getAllChildDeptIds(deptId)
+      
+      // 统计所有相关部门的用户数量
+      return this.allUsersData.filter(user => {
+        const userDeptId = parseInt(user.departmentId)
+        return deptIds.includes(userDeptId)
+      }).length
+    },
+    
+    // 递归获取部门及其所有子部门的ID
+    getAllChildDeptIds(deptId) {
+      const targetDeptId = parseInt(deptId)
+      const deptIds = [targetDeptId] // 包含当前部门
+      
+      // 递归查找子部门
+      const findChildren = (dept) => {
+        if (dept.children && dept.children.length > 0) {
+          dept.children.forEach(child => {
+            deptIds.push(child.deptId)
+            findChildren(child) // 递归查找子部门的子部门
+          })
+        }
+      }
+      
+      // 从部门树中找到目标部门并递归查找其子部门
+      const findDeptInTree = (depts) => {
+        for (const dept of depts) {
+          if (dept.deptId === targetDeptId) {
+            findChildren(dept)
+            return true
+          }
+          if (dept.children && dept.children.length > 0) {
+            if (findDeptInTree(dept.children)) {
+              return true
+            }
+          }
+        }
+        return false
+      }
+      
+      findDeptInTree(this.treeData)
+      return deptIds
+    },
+    
+    // 构建级联选择器选项（保留以备后用）
+    buildCascaderOptions(deptList) {
+      return deptList.map(dept => {
+        const option = {
+          value: dept.deptId,
+          label: dept.deptName,
+          deptId: dept.deptId,
+          deptName: dept.deptName
+        }
+        
+        if (dept.children && dept.children.length > 0) {
+          option.children = this.buildCascaderOptions(dept.children)
+        }
+        
+        return option
+      })
+    },
+    
+    // 转换部门树数据格式
+    convertDeptTreeData(deptList) {
+      const convertedList = deptList.map(dept => {
+        const deptNode = {
+          id: dept.deptId,
+          deptId: dept.deptId,
+          deptName: dept.deptName,
+          parentId: dept.parentId,
+          orderNum: dept.orderNum,
+          children: dept.children ? this.convertDeptTreeData(dept.children) : []
+        }
+        return deptNode
+      }).sort((a, b) => a.orderNum - b.orderNum)
+      
+      // 在顶部添加"全部"选项
+      if (convertedList.length > 0) {
+        convertedList.unshift({
+          id: 0,
+          deptId: 0,
+          deptName: '全部',
+          parentId: -1,
+          orderNum: -1,
+          children: []
+        })
+      }
+      
+      return convertedList
+    },
+    
+    // 加载角色列表
+    async loadRoles() {
+      try {
+        const response = await listAllRoles() // 修改：使用listAllRoles API
+        if (response.code === 200) {
+          this.roleList = response.data || [] // 修改：直接使用data数组
+        }
+      } catch (error) {
+        console.error('获取角色列表失败:', error)
+      }
+    },
+    
+    // 加载岗位列表
+    async loadPosts() {
+      try {
+        // 这里暂时使用空数组，等后端岗位接口完善后再实现
+        this.postList = []
+      } catch (error) {
+        console.error('获取岗位列表失败:', error)
+      }
     },
     
     // 搜索用户
@@ -686,11 +822,20 @@ export default {
     resetSearch() {
       this.searchForm = {
         userName: '',
-        userNickname: '',
-        phoneNumber: '',
+        nickName: '',
+        phonenumber: '',
         status: '',
-        createTimeRange: []
+        deptId: null,
+        beginTime: '',
+        endTime: ''
       }
+      this.selectedDepartment = null
+      // 重置树的选中状态到"全部"
+      this.$nextTick(() => {
+        if (this.$refs.tree && this.treeData.length > 0) {
+          this.$refs.tree.setCurrentKey(0) // 选中"全部"节点
+        }
+      })
       this.pagination.currentPage = 1
       this.fetchUsers()
     },
@@ -737,69 +882,139 @@ export default {
       this.dialogTitle = '新增用户'
       this.currentUser = null
       this.userForm = {
+        userId: null,
         userName: '',
-        userNickname: '',
-        phoneNumber: '',
+        nickName: '',
+        phonenumber: '',
         email: '',
-        departmentId: [],
+        deptId: null,
         password: '',
-        gender: '',
-        status: true,
-        position: '',
-        role: '',
+        sex: '0',
+        status: '0',
+        postIds: [],
+        roleIds: [],
         remark: ''
       }
+      // 重置表单验证
+      this.$nextTick(() => {
+        if (this.$refs.userForm) {
+          this.$refs.userForm.clearValidate()
+        }
+      })
       this.userDialogVisible = true
     },
     
     // 编辑用户
-    editUser(row) {
+    async editUser(row) {
       this.dialogTitle = '编辑用户'
       this.currentUser = row
-      this.userForm = {
-        ...row,
-        departmentId: row.departmentId ? [row.departmentId] : [],
-        password: '',
-        gender: row.gender || '',
-        position: row.position || '',
-        role: row.role || ''
+      
+      try {
+        const response = await getUser(row.user_id) // 修正：使用row.user_id
+        if (response.code === 200) {
+          const userData = response.data.user // 修正：访问user字段
+          this.userForm = {
+            userId: userData.user_id, // 修正：使用后端返回的字段名
+            userName: userData.user_name, // 修正：使用后端返回的字段名
+            nickName: userData.nick_name, // 修正：使用后端返回的字段名
+            phonenumber: userData.phonenumber || '',
+            email: userData.email || '',
+            deptId: userData.dept_id, // 修正：使用后端返回的字段名
+            password: '',
+            sex: userData.sex || '0',
+            status: userData.status || '0',
+            postIds: userData.post_ids || [], // 修正：使用后端返回的字段名
+            roleIds: userData.role_ids || [], // 修正：使用后端返回的字段名
+            remark: userData.remark || ''
+          }
+        }
+      } catch (error) {
+        console.error('获取用户详情失败:', error)
+        this.$message.error('获取用户详情失败')
+        return
       }
+      
+      // 重置表单验证
+      this.$nextTick(() => {
+        if (this.$refs.userForm) {
+          this.$refs.userForm.clearValidate()
+        }
+      })
       this.userDialogVisible = true
     },
     
     // 保存用户
-    saveUser() {
-      if (!this.currentUser && !this.userForm.password) {
-        this.$message({
-          message: '请输入用户密码',
-          type: 'warning'
-        })
-        return
-      }
-      
-      this.$refs.userForm.validate((valid) => {
-        if (valid) {
-          this.loading = true
-          
-          setTimeout(() => {
-            if (this.currentUser) {
-              this.$message({
-                message: '用户信息修改成功',
-                type: 'success'
-              })
-            } else {
-              this.$message({
-                message: '用户添加成功',
-                type: 'success'
-              })
-            }
-            
-            this.userDialogVisible = false
-            this.fetchUsers()
-            this.loading = false
-          }, 800)
+    async saveUser() {
+      try {
+        await this.$refs.userForm.validate()
+        
+        this.loading = true
+        
+        // 转换字段名格式，从驼峰转为下划线
+        const userData = {
+          user_id: this.userForm.userId,
+          dept_id: this.userForm.deptId,
+          user_name: this.userForm.userName,
+          nick_name: this.userForm.nickName,
+          user_type: this.userForm.userType || '00',
+          email: this.userForm.email || '',
+          phonenumber: this.userForm.phonenumber || '',
+          sex: this.userForm.sex || '0',
+          avatar: this.userForm.avatar || '',
+          status: this.userForm.status || '0',
+          remark: this.userForm.remark || '',
+          role_ids: this.userForm.roleIds || [],
+          post_ids: this.userForm.postIds || []
         }
-      })
+        
+        // 记录是否需要更新密码
+        const needUpdatePassword = this.userForm.password && this.userForm.password.trim().length > 0
+        const newPassword = this.userForm.password
+        
+        // 编辑用户时不传密码字段，我们会单独处理密码更新
+        // 新增用户时需要传密码字段
+        if (!this.currentUser && this.userForm.password) {
+          userData.password = this.userForm.password
+        }
+        
+        let response
+        if (this.currentUser) {
+          response = await updateUser(userData)
+        } else {
+          response = await addUser(userData)
+        }
+        
+        if (response.code === 200) {
+          // 如果是编辑用户且需要更新密码，单独调用密码重置接口
+          if (this.currentUser && needUpdatePassword) {
+            try {
+              const resetResponse = await resetUserPwd(this.userForm.userId, newPassword)
+              if (resetResponse.code !== 200) {
+                this.$message.error(resetResponse.msg || '密码更新失败')
+                return
+              }
+            } catch (error) {
+              console.error('密码更新失败:', error)
+              this.$message.error('密码更新失败')
+              return
+            }
+          }
+          
+          this.$message.success(this.currentUser ? '用户信息修改成功' : '用户添加成功')
+          this.userDialogVisible = false
+          this.fetchUsers()
+          this.fetchAllUsersForCount() // 更新用户统计数据
+        } else {
+          this.$message.error(response.msg || '操作失败')
+        }
+      } catch (error) {
+        if (error !== false) { // 不是表单验证错误
+          console.error('保存用户失败:', error)
+          this.$message.error('保存用户失败')
+        }
+      } finally {
+        this.loading = false
+      }
     },
     
     // 删除用户
@@ -809,41 +1024,60 @@ export default {
     },
     
     // 确认删除
-    confirmDelete() {
-      this.deleteDialogVisible = false
-      this.loading = true
-      
-      setTimeout(() => {
-        this.$message({
-          message: '用户删除成功',
-          type: 'success'
-        })
-        this.fetchUsers()
+    async confirmDelete() {
+      try {
+        this.loading = true
+        const response = await delUser(this.currentUser.user_id) // 修正：使用user_id
+        
+        if (response.code === 200) {
+          this.$message.success('用户删除成功')
+          this.deleteDialogVisible = false
+          this.fetchUsers()
+          this.fetchAllUsersForCount() // 更新用户统计数据
+        } else {
+          this.$message.error(response.msg || '删除失败')
+        }
+      } catch (error) {
+        console.error('删除用户失败:', error)
+        this.$message.error('删除用户失败')
+      } finally {
         this.loading = false
-      }, 800)
+      }
     },
     
     // 批量删除
-    batchDelete() {
+    async batchDelete() {
       if (this.selectedRows.length === 0) {
-        this.$message({
-          message: '请选择要删除的用户',
-          type: 'warning'
-        })
+        this.$message.warning('请选择要删除的用户')
         return
       }
       
-      this.$confirm(`确定要删除选中的 ${this.selectedRows.length} 个用户吗？`, '确认删除', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.$message({
-          message: '批量删除成功',
-          type: 'success'
+      try {
+        await this.$confirm(`确定要删除选中的 ${this.selectedRows.length} 个用户吗？`, '确认删除', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
         })
-        this.fetchUsers()
-      }).catch(() => {})
+        
+        this.loading = true
+        const userIds = this.selectedRows.map(row => row.user_id).join(',') // 修正：使用user_id
+        const response = await delUser(userIds)
+        
+        if (response.code === 200) {
+          this.$message.success('批量删除成功')
+          this.fetchUsers()
+          this.fetchAllUsersForCount() // 更新用户统计数据
+        } else {
+          this.$message.error(response.msg || '批量删除失败')
+        }
+      } catch (error) {
+        if (error !== 'cancel') {
+          console.error('批量删除失败:', error)
+          this.$message.error('批量删除失败')
+        }
+      } finally {
+        this.loading = false
+      }
     },
     
     // 处理更多操作
@@ -893,52 +1127,105 @@ export default {
     },
 
     // 确认重置密码
-    confirmResetPassword() {
+    async confirmResetPassword() {
       if (!this.newPassword || this.newPassword.trim() === '') {
-        this.$message({
-          message: '请输入新密码',
-          type: 'warning'
-        })
+        this.$message.warning('请输入新密码')
         return
       }
       
-      this.loading = true
-      setTimeout(() => {
-        this.$message({
-          message: '密码重置成功',
-          type: 'success'
-        })
-        this.resetPasswordDialogVisible = false
-        this.newPassword = ''
-        this.resetPasswordUser = null
+      if (this.newPassword.length < 5 || this.newPassword.length > 20) {
+        this.$message.warning('密码长度必须介于 5 和 20 之间')
+        return
+      }
+      
+      try {
+        this.loading = true
+        const response = await resetUserPwd(this.resetPasswordUser.user_id, this.newPassword) // 修正：使用user_id
+        
+        if (response.code === 200) {
+          this.$message.success('密码重置成功')
+          this.resetPasswordDialogVisible = false
+          this.newPassword = ''
+          this.resetPasswordUser = null
+        } else {
+          this.$message.error(response.msg || '密码重置失败')
+        }
+      } catch (error) {
+        console.error('密码重置失败:', error)
+        this.$message.error('密码重置失败')
+      } finally {
         this.loading = false
-      }, 800)
+      }
     },
     
     // 分配角色
-    assignRole(row) {
-      // 跳转到分配角色页面，传递用户信息
-      this.$router.push({
-        name: 'RoleAssignment',
-        params: {
-          userId: row.id,
-          userName: row.userName
+    async assignRole(row) {
+      try {
+        // 获取用户已分配的角色
+        const response = await getAuthRole(row.user_id) // 修正：使用user_id
+        if (response.code === 200) {
+          this.currentUser = row
+          this.selectedRoles = response.user.roleIds || []
+          this.roleDialogVisible = true
+        } else {
+          this.$message.error('获取用户角色信息失败')
         }
-      })
+      } catch (error) {
+        console.error('获取用户角色失败:', error)
+        this.$message.error('获取用户角色信息失败')
+      }
+    },
+    
+    // 保存角色分配
+    async saveRoleAssignment() {
+      try {
+        this.loading = true
+        const data = {
+          userId: this.currentUser.user_id, // 修正：使用user_id
+          roleIds: this.selectedRoles.join(',')
+        }
+        
+        const response = await updateAuthRole(data)
+        if (response.code === 200) {
+          this.$message.success('角色分配成功')
+          this.roleDialogVisible = false
+          this.fetchUsers()
+        } else {
+          this.$message.error(response.msg || '角色分配失败')
+        }
+      } catch (error) {
+        console.error('角色分配失败:', error)
+        this.$message.error('角色分配失败')
+      } finally {
+        this.loading = false
+      }
     },
     
     // 处理状态变化
-    handleStatusChange(row) {
-      this.loading = true
-      
-      setTimeout(() => {
-        const status = row.status ? '启用' : '禁用'
-        this.$message({
-          message: `用户状态已${status}`,
-          type: 'success'
-        })
+    async handleStatusChange(row) {
+      try {
+        this.loading = true
+        const status = row.status ? '0' : '1' // 转换为后端期望的格式
+        const response = await changeUserStatus(row.user_id, status) // 修正：使用row.user_id
+        
+        if (response.code === 200) {
+          const statusText = row.status ? '启用' : '停用'
+          this.$message.success(`用户状态已${statusText}`)
+          // 更新本地状态
+          row.status = status === '0'
+        } else {
+          // 恢复原状态
+          row.status = !row.status
+          this.$message.error(response.msg || '状态修改失败')
+        }
+      } catch (error) {
+        // 恢复原状态
+        row.status = !row.status
+        console.error('状态修改失败:', error)
+        this.$message.error('状态修改失败')
+      } finally {
         this.loading = false
-      }, 500)
+      }
     }
   }
 }
@@ -1033,6 +1320,12 @@ export default {
 
 .tree-label {
   font-weight: 500;
+}
+
+.tree-count {
+  color: #909399;
+  font-size: 12px;
+  margin-left: 6px;
 }
 
 /* 右侧面板 */
