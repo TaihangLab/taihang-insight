@@ -410,13 +410,48 @@ export default {
     async getReviewList() {
       this.loading = true
       try {
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500))
-        // 实际项目中，这里应该是API调用
-        // this.reviewList = await getReviewListAPI(this.searchForm)
+        // 调用后端API获取复判记录
+        const { reviewRecordAPI } = await import('../../service/VisionAIService.js')
+        const response = await reviewRecordAPI.getReviewRecords({
+          page: 1,
+          limit: 1000, // 获取所有记录
+          review_type: this.activeSearchForm.reviewType || undefined,
+          reviewer_name: this.activeSearchForm.warningName || undefined,
+          start_date: this.activeSearchForm.startDate || undefined,
+          end_date: this.activeSearchForm.endDate || undefined
+        })
+        
+        if (response.data && response.data.code === 0) {
+          // 转换API数据格式为前端需要的格式
+          this.reviewList = response.data.data.map(record => ({
+            id: record.review_id.toString(),
+            title: record.alert_name || '未知预警',
+            image: record.image_url || require('./images/5.jpg'),
+            cameraName: record.camera_name || '未知摄像头',
+            location: record.location || '未知位置',
+            startTime: record.created_at ? new Date(record.created_at).toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit'
+            }).replace(/\//g, '-') : '未知时间',
+            duration: '2秒', // 默认值，实际项目中可以从alert数据获取
+            reviewType: record.review_type,
+            reviewNotes: record.review_notes,
+            reviewerName: record.reviewer_name,
+            alertId: record.alert_id
+          }))
+        } else {
+          console.error('获取复判记录失败:', response.data && response.data.msg)
+          this.$message.error('获取复判记录失败: ' + ((response.data && response.data.msg) || '未知错误'))
+        }
         
         // 清空悬停状态
         this.cardHoverStates = {}
+      } catch (error) {
+        console.error('获取复判记录异常:', error)
+        this.$message.error('获取复判记录失败: ' + (error.message || '网络错误'))
       } finally {
         this.loading = false
       }
@@ -668,6 +703,7 @@ export default {
       
       return {
         id: reviewItem.id,
+        alert_id: reviewItem.alertId, // 添加预警ID（用于在详情中显示）
         type: reviewItem.title,
         device: reviewItem.cameraName,
         deviceInfo: {
@@ -681,6 +717,8 @@ export default {
         description: `复判记录：${reviewItem.title}`,
         reviewType: reviewItem.reviewType, // 添加复判类型
         reviewTypeText: this.getReviewTypeText(reviewItem.reviewType), // 添加复判类型文本
+        reviewNotes: reviewItem.reviewNotes, // 添加复判意见
+        reviewerName: reviewItem.reviewerName, // 添加复判人员
         status: 'completed',
         // 添加操作历史（按时间倒序）
         operationHistory: [

@@ -34,19 +34,25 @@
                 <div class="info-grid">
                   <div class="info-row">
                     <div class="info-cell">
-                      <span class="label">设备名称</span>
-                      <span class="value">{{ internalWarning.device }}</span>
+                      <span class="label">预警ID</span>
+                      <span class="value alert-id">{{ getAlertId(internalWarning) }}</span>
                     </div>
                     <div class="info-cell">
-                      <span class="label">违规位置</span>
-                      <span class="value">{{ internalWarning.location || (internalWarning.deviceInfo && internalWarning.deviceInfo.position) || '未知位置' }}</span>
+                      <span class="label">设备名称</span>
+                      <span class="value">{{ internalWarning.device }}</span>
                     </div>
                   </div>
                   <div class="info-row">
                     <div class="info-cell">
+                      <span class="label">违规位置</span>
+                      <span class="value">{{ internalWarning.location || (internalWarning.deviceInfo && internalWarning.deviceInfo.position) || '未知位置' }}</span>
+                    </div>
+                    <div class="info-cell">
                       <span class="label">预警名称</span>
                       <span class="value">{{ internalWarning.type }}</span>
                     </div>
+                  </div>
+                  <div class="info-row">
                     <div class="info-cell">
                       <span class="label">预警类型</span>
                       <span class="value">{{ getWarningTypeText(internalWarning.type) }}</span>
@@ -72,6 +78,17 @@
                           </span>
                         </el-tooltip>
                       </span>
+                    </div>
+                    <div class="info-cell" v-if="internalWarning.reviewerName">
+                      <span class="label">复判人员</span>
+                      <span class="value">{{ internalWarning.reviewerName }}</span>
+                    </div>
+                  </div>
+                  <!-- 复判意见行 (仅在复判记录页面且有复判意见时显示) -->
+                  <div class="info-row" v-if="internalWarning.reviewNotes && source === 'reviewRecords'">
+                    <div class="info-cell full-width">
+                      <span class="label">复判意见</span>
+                      <span class="value review-notes">{{ internalWarning.reviewNotes }}</span>
                     </div>
                   </div>
                 </div>
@@ -141,8 +158,8 @@
             </div>
           </div>
           
-          <!-- 右侧：处理进展时间线 -->
-          <div class="warning-right-content">
+          <!-- 右侧：处理进展时间线 (复判记录页面不显示) -->
+          <div class="warning-right-content" v-if="source !== 'reviewRecords'">
             <div class="process-timeline">
               <h4 class="timeline-title">
                 <i class="el-icon-time"></i>
@@ -187,7 +204,12 @@
             <i class="el-icon-folder"></i>
             归档
           </el-button>
-          <el-button plain @click="handleFalseAlarm" class="action-btn false-alarm-btn">
+          <!-- 误报按钮根据状态禁用（只有待处理状态才能点击） -->
+          <el-button 
+            plain 
+            :disabled="isFalseAlarmDisabled()"
+            @click="handleFalseAlarm" 
+            class="action-btn false-alarm-btn">
             <i class="el-icon-close"></i>
             误报
           </el-button>
@@ -695,6 +717,28 @@ export default {
       ];
     },
     
+    // 获取预警ID
+    getAlertId(warning) {
+      if (!warning) return '未知';
+      
+      // 优先从API原始数据中获取alert_id
+      if (warning._apiData && warning._apiData.alert_id) {
+        return warning._apiData.alert_id;
+      }
+      
+      // 其次检查alert_id字段（复判记录页面使用）
+      if (warning.alert_id) {
+        return warning.alert_id;
+      }
+      
+      // 最后从id字段获取（warningManagement中已映射）
+      if (warning.id) {
+        return warning.id;
+      }
+      
+      return '未知';
+    },
+    
     // 关闭对话框
     closeDialog() {
       this.dialogVisible = false;
@@ -794,10 +838,9 @@ export default {
           this.archiveDialogVisible = true;
           return; // 不关闭loading，等确认后再关闭
         } else if (action === 'falseAlarm') {
-          // 误报 - 不需要检查处理状态，可以直接归档
-          this.currentCameraId = this.warning.cameraId || 'camera_1';
-          await this.handleFalseAlarmArchive();
-          return; // 不关闭loading，等归档完成后再关闭
+          // 误报 - 已改为由父组件统一处理，这个分支不应该被执行
+          console.warn('⚠️ handleWarningAction中的falseAlarm分支不应该被调用，请使用handleFalseAlarm方法');
+          return;
         }
       } catch (error) {
         console.error('处理失败:', error);
@@ -980,9 +1023,13 @@ export default {
       
       this.handleWarningAction('archive');
     },
-    // 误报处理
+    // 误报处理 - 直接交给父组件处理（统一的误报流程）
     handleFalseAlarm() {
-      this.handleWarningAction('falseAlarm');
+      // 不在详情组件内部处理，直接emit给父组件
+      // 父组件会弹出输入对话框，走完整的误报流程
+      this.$emit('handle-false-alarm', this.warning);
+      // 关闭详情对话框
+      this.closeDialog();
     },
     
     // 初始化归档选择
@@ -1231,105 +1278,10 @@ export default {
       }
     },
     
-    // 处理误报事件 - 与预警管理页面保持完全一致
-    async handleFalseAlarmArchive() {
-      try {
-        let targetArchiveId = null;
-        let archiveName = '';
-        
-        // 查找或创建默认档案
-        const existingDefaultArchive = this.availableArchives.find(archive => archive.isDefault);
-        if (existingDefaultArchive) {
-          targetArchiveId = existingDefaultArchive.id;
-          archiveName = existingDefaultArchive.name;
-        } else {
-          // 如果没有默认档案，自动创建
-          targetArchiveId = await this.createDefaultArchive();
-          archiveName = '默认档案';
-        }
-        
-        if (!targetArchiveId) {
-          this.$message.error('无法创建默认档案');
-          return;
-        }
-        
-        // 保存到智能复判记录
-        await this.saveToReviewRecords(this.warning);
-        
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // 记录误报操作到历史
-        this.addOperationRecord({
-          status: 'completed',
-          statusText: '误报处理',
-          time: this.getCurrentTime(),
-          description: `预警被标记为误报并自动归档到：${archiveName}，已保存到智能复判记录`,
-          operationType: 'falseAlarm',
-          operator: this.getCurrentUserName(),
-          archiveInfo: {
-            archiveId: targetArchiveId,
-            archiveName: archiveName
-          }
-        });
-        
-        this.$message.success('误报事件已保存到智能复判');
-        this.$emit('handle-false-alarm', this.warning);
-        // 不关闭详情对话框，让用户可以继续查看操作历史
-      } catch (error) {
-        console.error('误报归档失败:', error);
-        this.$message.error('误报归档失败');
-      } finally {
-        this.loading = false;
-      }
-    },
+    // 注意：误报处理已统一由父组件处理
+    // handleFalseAlarmArchive 和 saveToReviewRecords 方法已删除
+    // 误报流程：点击误报按钮 → emit事件给父组件 → 父组件弹出输入对话框 → 完整的误报处理流程
     
-    // 保存到智能复判记录 - 与预警管理页面保持完全一致
-    async saveToReviewRecords(warningInfo) {
-      try {
-        // 创建复判记录数据
-        const reviewRecord = {
-          id: `review_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          originalWarningId: warningInfo.id,
-          warningType: warningInfo.type || warningInfo.deviceName,
-          deviceName: warningInfo.device || (warningInfo.deviceInfo && warningInfo.deviceInfo.name),
-          location: warningInfo.location || (warningInfo.deviceInfo && warningInfo.deviceInfo.position),
-          originalTime: warningInfo.time,
-          imageUrl: warningInfo.imageUrl,
-          level: warningInfo.level,
-          description: warningInfo.description,
-          reviewResult: 'false_alarm', // 复判结果：误报
-          reviewTime: this.getCurrentTime(),
-          reviewer: this.getCurrentUserName(),
-          reviewReason: '人工标记为误报',
-          confidence: 100, // 人工复判置信度100%
-          aiReviewResult: null, // AI复判结果（如果有的话）
-          aiConfidence: null,
-          status: 'completed',
-          createTime: this.getCurrentTime()
-        };
-        
-        // 保存到本地存储（实际项目中应该调用API保存到数据库）
-        let reviewRecords = JSON.parse(localStorage.getItem('intelligentReviewRecords') || '[]');
-        reviewRecords.unshift(reviewRecord);
-        
-        // 限制记录数量，避免本地存储过大
-        if (reviewRecords.length > 1000) {
-          reviewRecords = reviewRecords.slice(0, 1000);
-        }
-        
-        localStorage.setItem('intelligentReviewRecords', JSON.stringify(reviewRecords));
-        
-        // 模拟API调用保存时间
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        console.log('误报记录已保存到智能复判:', reviewRecord);
-        
-      } catch (error) {
-        console.error('保存到智能复判记录失败:', error);
-        throw error;
-      }
-    },
     // 获取预警等级文字
     getWarningLevelText(level) {
       // 如果已经是中文格式，直接返回等级部分
@@ -1583,6 +1535,51 @@ export default {
       
       return hasCompletedProcessing;
     },
+    
+    // 检查误报按钮是否应该禁用（只有待处理状态才能点击误报）
+    isFalseAlarmDisabled() {
+      // 如果没有预警数据，禁用
+      if (!this.internalWarning) {
+        return true;
+      }
+      
+      // 检查是否有API数据和状态信息
+      if (this.internalWarning._apiData && typeof this.internalWarning._apiData.status !== 'undefined') {
+        // 只有状态为1（待处理）时才能点击误报
+        // 状态定义：1-待处理(允许) 2-处理中(禁用) 3-已处理(禁用) 4-已归档(禁用) 5-误报(禁用)
+        const status = this.internalWarning._apiData.status;
+        console.log('🔍 检查误报按钮状态 - API status:', status, '是否禁用:', status !== 1);
+        return status !== 1;
+      }
+      
+      // 如果没有API数据，检查operationHistory
+      // 如果已经有误报或归档记录，也禁用
+      if (this.internalWarning.operationHistory && this.internalWarning.operationHistory.length > 0) {
+        const hasArchived = this.internalWarning.operationHistory.some(record => 
+          record.operationType === 'archive' || record.operationType === 'falseAlarm'
+        ) || this.internalWarning.status === 'archived';
+        
+        if (hasArchived) {
+          console.log('🔍 检查误报按钮状态 - 已归档或误报，禁用按钮');
+          return true;
+        }
+        
+        // 如果有处理中或已处理记录，也禁用
+        const hasProcessing = this.internalWarning.operationHistory.some(record => 
+          record.operationType === 'processing' || record.operationType === 'completed'
+        );
+        
+        if (hasProcessing) {
+          console.log('🔍 检查误报按钮状态 - 处理中或已完成，禁用按钮');
+          return true;
+        }
+      }
+      
+      // 默认不禁用（允许操作）
+      console.log('🔍 检查误报按钮状态 - 待处理状态，允许点击');
+      return false;
+    },
+    
     // 格式化时间
     formatTime(timeString) {
       try {
@@ -1866,6 +1863,12 @@ export default {
   flex-direction: column;
 }
 
+/* 复判记录页面：左侧内容占据全部宽度 */
+.warning-detail-main:not(:has(.warning-right-content)) .warning-left-content {
+  flex: 1;
+  max-width: 100%;
+}
+
 /* 预警信息样式 */
 .warning-detail-info {
   display: flex;
@@ -1951,6 +1954,53 @@ export default {
 .info-cell .value:hover {
   background: #ecf5ff;
   border-color: #c6e2ff;
+}
+
+/* 全宽单元格 */
+.info-cell.full-width {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+/* 预警ID特殊样式 */
+.info-cell .value.alert-id {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  color: white;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+  border: none;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  text-align: center;
+  font-size: 13px;
+}
+
+.info-cell .value.alert-id:hover {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+/* 复判意见样式 */
+.info-cell .value.review-notes {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #fbbf24;
+  color: #78350f;
+  font-weight: 500;
+  padding: 12px 16px;
+  border-radius: 8px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15);
+  font-size: 13px;
+  min-height: 40px;
+}
+
+.info-cell .value.review-notes:hover {
+  background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+  border-color: #f59e0b;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25);
 }
 
 /* 复判分类科技感样式 - 渐变字体颜色，统一背景 */
