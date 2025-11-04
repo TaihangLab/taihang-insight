@@ -1005,21 +1005,26 @@ export default {
     async confirmDelete() {
       try {
         if (this.deleteType === 'single') {
-          // 单条删除 - 使用增强的deleteAlertRecord方法，支持archive_id参数
-          const response = await archiveAPI.deleteAlertRecord(this.deleteId, this.currentArchiveId);
+          // 单条删除 - 从档案中移除预警关联
+          console.log('🗑️ 移除预警关联:', {
+            archiveId: this.currentArchiveId,
+            alertId: this.deleteId
+          });
+          
+          const response = await archiveAPI.unlinkAlertFromArchive(this.currentArchiveId, this.deleteId);
           
           // 适配API响应格式
           if (response.data.code !== undefined) {
             if (response.data.code === 0) {
-              this.$message.success('删除成功');
+              this.$message.success('已从档案中移除该预警');
             } else {
-              throw new Error(response.data.msg || '删除失败');
+              throw new Error(response.data.msg || '移除失败');
             }
           } else {
-            this.$message.success('删除成功');
+            this.$message.success('已从档案中移除该预警');
           }
         } else {
-          // 批量删除 - 提取ID数组
+          // 批量删除 - 提取ID数组并逐个解除关联
           const recordIds = this.selectedRows.map(row => row.id);
           
           console.log('选中的行对象:', this.selectedRows);
@@ -1032,17 +1037,33 @@ export default {
             return;
           }
           
-          const response = await archiveAPI.batchDeleteAlertRecords(recordIds);
+          // 批量解除关联
+          console.log('🗑️ 批量移除预警关联:', {
+            archiveId: this.currentArchiveId,
+            alertIds: recordIds
+          });
           
-          // 适配API响应格式
-          if (response.data.code !== undefined) {
-            if (response.data.code === 0) {
-              this.$message.success('批量删除成功');
-            } else {
-              throw new Error(response.data.msg || '批量删除失败');
+          let successCount = 0;
+          let failCount = 0;
+          
+          for (const alertId of recordIds) {
+            try {
+              const response = await archiveAPI.unlinkAlertFromArchive(this.currentArchiveId, alertId);
+              if (!response.data || response.data.code === 0) {
+                successCount++;
+              } else {
+                failCount++;
+              }
+            } catch (error) {
+              console.error(`移除预警 ${alertId} 失败:`, error);
+              failCount++;
             }
+          }
+          
+          if (failCount > 0) {
+            this.$message.warning(`已成功移除 ${successCount} 条，失败 ${failCount} 条`);
           } else {
-            this.$message.success('批量删除成功');
+            this.$message.success(`已成功从档案中移除 ${successCount} 条预警`);
           }
           
           this.selectedRows = [];
