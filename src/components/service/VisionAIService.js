@@ -3293,6 +3293,222 @@ export const archiveAPI = {
   }
 };
 
+// 智能复判配置API
+export const taskReviewAPI = {
+  /**
+   * 获取任务复判配置
+   * @param {string} taskType - 任务类型 ('ai_task' 或 'llm_task')
+   * @param {number} taskId - 任务ID
+   * @returns {Promise} 包含复判配置的Promise对象
+   */
+  getTaskReviewConfig(taskType, taskId) {
+    if (!taskType || !taskId) {
+      console.error('获取任务复判配置失败: 缺少必要参数');
+      return Promise.reject(new Error('缺少任务类型或任务ID'));
+    }
+
+    console.log('获取任务复判配置:', { taskType, taskId });
+
+    return visionAIAxios.get(`/api/v1/tasks/${taskType}/${taskId}/review-config`)
+      .then(response => {
+        console.log('获取任务复判配置成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取任务复判配置失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 更新任务复判配置
+   * @param {string} taskType - 任务类型 ('ai_task' 或 'llm_task')
+   * @param {number} taskId - 任务ID
+   * @param {Object} config - 复判配置
+   * @param {boolean} config.review_enabled - 是否启用复判
+   * @param {number} [config.review_skill_class_id] - 复判技能ID
+   * @param {number} [config.review_confidence_threshold] - 置信度阈值 (0-100)
+   * @param {Object} [config.review_conditions] - 复判触发条件
+   * @returns {Promise} 包含更新结果的Promise对象
+   */
+  updateTaskReviewConfig(taskType, taskId, config) {
+    if (!taskType || !taskId) {
+      console.error('更新任务复判配置失败: 缺少必要参数');
+      return Promise.reject(new Error('缺少任务类型或任务ID'));
+    }
+
+    console.log('更新任务复判配置:', { taskType, taskId, config });
+
+    return visionAIAxios.put(`/api/v1/tasks/${taskType}/${taskId}/review-config`, config)
+      .then(response => {
+        console.log('更新任务复判配置成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('更新任务复判配置失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 删除任务复判配置
+   * @param {string} taskType - 任务类型 ('ai_task' 或 'llm_task')
+   * @param {number} taskId - 任务ID
+   * @returns {Promise} 包含删除结果的Promise对象
+   */
+  deleteTaskReviewConfig(taskType, taskId) {
+    if (!taskType || !taskId) {
+      console.error('删除任务复判配置失败: 缺少必要参数');
+      return Promise.reject(new Error('缺少任务类型或任务ID'));
+    }
+
+    console.log('删除任务复判配置:', { taskType, taskId });
+
+    return visionAIAxios.delete(`/api/v1/tasks/${taskType}/${taskId}/review-config`)
+      .then(response => {
+        console.log('删除任务复判配置成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('删除任务复判配置失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取可用的复判技能列表
+   * @returns {Promise} 包含复判技能列表的Promise对象
+   */
+  getAvailableReviewSkills() {
+    console.log('获取可用的复判技能列表');
+
+    return visionAIAxios.get('/api/v1/review-skills/available')
+      .then(response => {
+        console.log('获取可用复判技能成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取可用复判技能失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取启用复判的任务列表
+   * @returns {Promise} 包含任务列表的Promise对象
+   */
+  getReviewEnabledTasks() {
+    console.log('获取启用复判的任务列表');
+
+    return visionAIAxios.get('/api/v1/tasks/review-enabled')
+      .then(response => {
+        console.log('获取启用复判的任务成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取启用复判的任务失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 手动触发预警复判
+   * @param {number} alertId - 预警ID
+   * @returns {Promise} 包含复判结果的Promise对象
+   */
+  triggerAlertReview(alertId) {
+    if (!alertId) {
+      console.error('触发预警复判失败: 缺少预警ID');
+      return Promise.reject(new Error('缺少预警ID'));
+    }
+
+    console.log('手动触发预警复判:', alertId);
+
+    return visionAIAxios.post('/api/v1/alerts/review', { alert_id: alertId })
+      .then(response => {
+        console.log('触发预警复判成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('触发预警复判失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取复判服务状态
+   * @returns {Promise} 包含服务状态的Promise对象
+   */
+  getReviewServiceStatus() {
+    console.log('获取复判服务状态');
+
+    return visionAIAxios.get('/api/v1/review-service/status')
+      .then(response => {
+        console.log('获取复判服务状态成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取复判服务状态失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 启动复判服务
+   * @returns {Promise} 包含启动结果的Promise对象
+   */
+  startReviewService() {
+    console.log('启动复判服务');
+
+    return visionAIAxios.post('/api/v1/review-service/start')
+      .then(response => {
+        console.log('启动复判服务成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('启动复判服务失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 停止复判服务
+   * @returns {Promise} 包含停止结果的Promise对象
+   */
+  stopReviewService() {
+    console.log('停止复判服务');
+
+    return visionAIAxios.post('/api/v1/review-service/stop')
+      .then(response => {
+        console.log('停止复判服务成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('停止复判服务失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取AI任务列表（用于复判配置）
+   * @param {Object} params - 查询参数
+   * @returns {Promise} 包含AI任务列表的Promise对象
+   */
+  getAITasksForReview(params = {}) {
+    console.log('获取AI任务列表（用于复判配置）');
+
+    return visionAIAxios.get('/api/v1/ai-tasks', { params })
+      .then(response => {
+        console.log('获取AI任务列表成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取AI任务列表失败:', error);
+        throw error;
+      });
+  }
+};
+
 // 复判记录API
 export const reviewRecordAPI = {
   /**
@@ -3369,5 +3585,6 @@ export default {
   chatAssistantAPI,
   archiveAPI,
   reviewRecordAPI,
+  taskReviewAPI,
   visionAIAxios
 };
