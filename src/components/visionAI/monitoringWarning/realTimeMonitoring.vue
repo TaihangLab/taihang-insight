@@ -27,7 +27,7 @@
           </div>
         </div>
       </el-aside>
-      
+
       <!-- 中间监控容器 - 科技感设计 -->
       <el-container class="video-main-container">
         <!-- 顶部工具栏 - 科技感设计 -->
@@ -36,7 +36,7 @@
             <span class="header-label">分屏:</span>
             <div class="view-mode-buttons">
               <i class="iconfont icon-a-mti-1fenpingshi btn" :class="{active: viewMode === 'single'}" @click="switchViewMode('single')"/>
-              <i class="iconfont icon-a-mti-4fenpingshi btn" :class="{active: viewMode === 'four'}" @click="switchViewMode('four')"/>  
+              <i class="iconfont icon-a-mti-4fenpingshi btn" :class="{active: viewMode === 'four'}" @click="switchViewMode('four')"/>
               <i class="iconfont icon-a-mti-9fenpingshi btn" :class="{active: viewMode === 'nine'}" @click="switchViewMode('nine')"/>
             </div>
           </div>
@@ -53,11 +53,11 @@
 
       <!-- 视频网格区域 - 科技感设计 -->
         <el-main class="video-main">
-          <div ref="videoGrid" 
+          <div ref="videoGrid"
                :class="['video-grid', viewMode, { fullscreen: isFullscreen }]">
         <template v-if="!isFullscreen">
-          <div 
-            v-for="index in generateGrids()" 
+          <div
+            v-for="index in generateGrids()"
             :key="index"
             class="video-cell"
             :class="{ selected: selectedCamera === index }"
@@ -71,7 +71,7 @@
                     <span class="status-text">{{ getVideoStatusText(index-1) }}</span>
             </div>
                 </div>
-                
+
             <div class="video-content">
               <div class="video-placeholder" :data-timestamp="currentDateTime" :data-camera="formatCameraName(index)">
                     <div v-if="!videoUrl[index-1]" class="no-signal">
@@ -85,8 +85,8 @@
           </div>
         </template>
         <template v-else>
-          <div 
-            v-for="index in generateGrids()" 
+          <div
+            v-for="index in generateGrids()"
             :key="index"
             class="video-cell"
             :class="{ selected: selectedCamera === index }"
@@ -100,7 +100,7 @@
                 <span class="status-text">{{ getVideoStatusText(index-1) }}</span>
               </div>
             </div>
-                
+
             <div class="video-content">
               <div class="video-placeholder" :data-timestamp="currentDateTime" :data-camera="formatCameraName(index)">
                     <div v-if="!videoUrl[index-1]" class="no-signal">
@@ -136,17 +136,17 @@
           <i class="el-icon-loading"></i>
           <span>正在加载预警数据...</span>
         </div>
-        
+
         <!-- 空状态 -->
         <div v-else-if="!apiDataLoading && warningList.length === 0" class="empty-state">
           <i class="el-icon-warning-outline"></i>
           <span>暂无预警数据</span>
           <el-button type="text" @click="refreshWarningData">点击刷新</el-button>
         </div>
-        
+
         <!-- 预警列表 -->
-        <div v-for="warning in warningList" 
-             :key="warning.id" 
+        <div v-for="warning in warningList"
+             :key="warning.id"
              class="warning-item">
           <div class="warning-video">
             <div class="warning-status-container">
@@ -175,8 +175,8 @@
             <div class="warning-actions">
               <el-button size="mini" plain class="report-btn" @click="viewWarningDetail(warning)">查看详情</el-button>
               <!-- 处理按钮根据状态禁用，使用与上报按钮相同的样式 -->
-              <el-button 
-                size="mini" 
+              <el-button
+                size="mini"
                 plain
                 class="process-btn"
                 :disabled="isProcessingDisabled(warning)"
@@ -192,7 +192,7 @@
     </el-container>
 
     <!-- 引入预警详情组件 -->
-    <WarningDetail 
+    <WarningDetail
       :visible.sync="warningDetailVisible"
       :warning="currentWarning"
       source="realTimeMonitoring"
@@ -201,7 +201,7 @@
       @handle-archive="handleArchiveFromDialog"
       @handle-false-alarm="handleFalseAlarmFromDialog"
     />
-    
+
     <!-- 处理意见对话框 -->
     <el-dialog
       title="处理预警"
@@ -210,6 +210,7 @@
       center
       :close-on-click-modal="false"
       :close-on-press-escape="false"
+      append-to-body
     >
       <el-form :model="remarkForm" label-width="80px">
         <el-form-item label="处理意见" required>
@@ -232,17 +233,18 @@
         <el-button type="success" @click="finishProcessing">结束处理</el-button>
       </span>
     </el-dialog>
-    
+
     <!-- 误报输入对话框 -->
     <el-dialog
       title="标记误报"
       :visible.sync="falseAlarmDialogVisible"
-      width="30%"
+      width="35%"
       center
       :close-on-click-modal="false"
       :close-on-press-escape="false"
+      append-to-body
     >
-      <el-form :model="falseAlarmForm" label-width="80px">
+      <el-form :model="falseAlarmForm" label-width="100px">
         <el-form-item label="复判意见" required>
           <el-input
             v-model="falseAlarmForm.reviewNotes"
@@ -253,14 +255,132 @@
             show-word-limit
           />
         </el-form-item>
+        <el-form-item label="同时归档">
+          <el-switch
+            v-model="falseAlarmForm.needArchive"
+            active-text="是"
+            inactive-text="否"
+          />
+        </el-form-item>
+        <el-form-item label="选择档案" v-if="falseAlarmForm.needArchive">
+          <el-select
+            v-model="falseAlarmForm.archiveId"
+            placeholder="请选择档案"
+            style="width: 100%"
+            filterable
+          >
+            <el-option
+              v-for="archive in availableArchivesList"
+              :key="archive.archive_id"
+              :label="archive.name"
+              :value="archive.archive_id"
+            >
+              <span style="float: left">{{ archive.name }}</span>
+              <span style="float: right; color: #8492a6; font-size: 13px">{{ archive.location }}</span>
+            </el-option>
+          </el-select>
+          <el-button
+            type="text"
+            size="small"
+            @click="createNewArchiveForFalseAlarm"
+            style="margin-top: 5px"
+          >
+            <i class="el-icon-plus"></i> 创建新档案
+          </el-button>
+        </el-form-item>
       </el-form>
       <div class="process-tip">
         <i class="el-icon-warning" style="color: #E6A23C; margin-right: 4px;"></i>
-        <span style="color: #E6A23C; font-size: 13px;">标记为误报后，该预警将被移出实时监控列表，并保存到复判记录中</span>
+        <span style="color: #E6A23C; font-size: 13px;">标记为误报后，该预警将被移出实时监控列表，并保存到复判记录中{{ falseAlarmForm.needArchive ? '，同时归档到选定的档案' : '' }}</span>
       </div>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="falseAlarmDialogVisible = false; falseAlarmForm.reviewNotes = ''; archiveWarningId = ''">取消</el-button>
+        <el-button @click="closeFalseAlarmDialog">取消</el-button>
         <el-button type="warning" @click="handleFalseAlarmArchive">确认误报</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 归档选择对话框 -->
+    <el-dialog
+      title="归档预警"
+      :visible.sync="archiveDialogVisible"
+      width="40%"
+      center
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      append-to-body
+      :modal-append-to-body="true"
+      custom-class="realtime-archive-dialog"
+      @opened="onArchiveDialogOpened"
+    >
+      <div class="archive-dialog-content">
+        <div class="archive-info">
+          <i class="el-icon-folder" style="color: #E6A23C; font-size: 24px; margin-right: 8px;"></i>
+          <span>请选择要归档到的档案：</span>
+        </div>
+
+        <div class="archive-selection">
+          <el-form label-width="100px">
+            <el-form-item label="选择档案">
+              <el-select
+                v-model="selectedArchiveId"
+                placeholder="请选择档案"
+                style="width: 100%"
+                filterable
+                :loading="archiveListLoading"
+                @visible-change="handleArchiveSelectVisibleChange"
+                popper-append-to-body
+                :popper-class="'archive-select-dropdown'"
+              >
+                <el-option
+                  v-for="archive in availableArchivesList"
+                  :key="archive.archive_id"
+                  :label="archive.name"
+                  :value="archive.archive_id"
+                >
+                  <span style="float: left">{{ archive.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ archive.location }}</span>
+                </el-option>
+              </el-select>
+              <el-button
+                type="text"
+                size="small"
+                @click="createNewArchiveForArchiveDialog"
+                style="margin-top: 5px"
+              >
+                <i class="el-icon-plus"></i> 创建新档案
+              </el-button>
+            </el-form-item>
+
+            <el-form-item v-if="availableArchivesList.length === 0 && !archiveListLoading">
+              <el-alert
+                title="暂无可用档案"
+                description='点击上方"创建新档案"按钮快速创建，或前往"预警档案"页面管理档案'
+                type="info"
+                :closable="false"
+                show-icon
+              />
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <div class="archive-tip">
+          <el-alert
+            title="归档说明"
+            description="归档后，预警将从实时预警列表中移除，可在预警档案页面查看。"
+            type="warning"
+            :closable="false"
+            show-icon
+          />
+        </div>
+      </div>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="closeArchiveDialog">取 消</el-button>
+        <el-button
+          type="danger"
+          @click="confirmArchive"
+          :disabled="!selectedArchiveId"
+        >确认归档</el-button>
       </span>
     </el-dialog>
   </div>
@@ -302,37 +422,47 @@ export default {
       loading: false,
       // 显示行政区划或业务分组
       showRegion: true,
-      
+
       // 预警列表数据 - 从API获取
       warningList: [],
       warningDetailVisible: false,
       currentWarning: null,
-      
+
       // 添加预警管理相关的数据属性
-      archivesList: [],
+      // archivesList: [],  // 已废弃，使用 availableArchivesList
       currentCameraId: '',
       archiveWarningId: '',
       reportWarningId: '',
-      
+
       // 处理意见对话框
       remarkDialogVisible: false,
       remarkForm: {
         remark: ''
       },
       currentProcessingWarningId: '',
-      
+
       // 误报对话框
       falseAlarmDialogVisible: false,
       falseAlarmForm: {
-        reviewNotes: ''
+        reviewNotes: '',
+        needArchive: false,
+        archiveId: null
       },
-      
+
+      // 可用档案列表
+      availableArchivesList: [],
+      archiveListLoading: false,
+
+      // 归档对话框
+      archiveDialogVisible: false,
+      selectedArchiveId: null,
+
             // SSE连接相关
       sseConnection: null,
       sseStatus: {
         connected: false
       },
-        
+
       // API数据加载相关
       apiDataLoading: false,
       totalWarnings: 0,
@@ -347,44 +477,44 @@ export default {
         .map(group => {
           // 创建一个新的组对象，避免修改原始数据
           const newGroup = { ...group };
-          
+
           // 根据行政区划过滤
           if (this.selectedRegion && group.region !== this.selectedRegion) {
             return null;
           }
-          
+
           // 过滤设备
           newGroup.devices = group.devices.filter(device => {
             // 按业务分组过滤
             if (this.selectedIndustry && device.industry !== this.selectedIndustry) {
               return false;
             }
-            
+
             // 按关键词搜索过滤
             if (this.searchKeyword && !device.name.toLowerCase().includes(this.searchKeyword.toLowerCase())) {
               return false;
             }
-            
+
             return true;
           });
-          
+
           // 如果组内没有设备，则不显示该组
           if (newGroup.devices.length === 0) {
             return null;
           }
-          
+
           return newGroup;
         })
         .filter(group => group !== null);
     },
-    
+
     // 可用档案列表
     availableArchives() {
-      return this.archivesList.filter(archive => 
+      return this.archivesList.filter(archive =>
         archive.cameraId === this.currentCameraId || archive.isDefault
       );
     },
-    
+
     // 默认档案
     defaultArchive() {
       return this.availableArchives.find(archive => archive.isDefault);
@@ -394,31 +524,32 @@ export default {
     // 启动时间更新定时器
     this.updateDateTime();
     this.timer = setInterval(this.updateDateTime, 1000);
-    
+
     // 添加键盘事件监听器，用于ESC键退出全屏
     document.addEventListener('keydown', this.handleKeyDown);
-    
+
     // 添加全屏变化事件监听器
     document.addEventListener('fullscreenchange', this.handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', this.handleFullscreenChange);
     document.addEventListener('mozfullscreenchange', this.handleFullscreenChange);
     document.addEventListener('MSFullscreenChange', this.handleFullscreenChange);
-    
+
     // 添加窗口大小变化监听器，用于重新计算四分屏布局
     window.addEventListener('resize', this.handleResize);
-    
+
     // 初始化视频URL和提示信息数组
     this.initVideoArrays();
-    
-    // 初始化档案列表
-    this.initArchivesList();
-    
+
+    // 加载真实档案列表（页面加载时预加载，提升用户体验）
+    console.log('🚀 实时监控页面 - 开始预加载档案列表');
+    this.loadAvailableArchives();
+
     // 加载真实预警数据
     this.loadWarningData();
-    
+
     // 初始化SSE连接
     this.initSSEConnection();
-    
+
     // 初始化后延迟刷新布局
     this.$nextTick(() => {
       setTimeout(() => {
@@ -431,17 +562,17 @@ export default {
     this.exitFullscreen();
     document.body.classList.remove('camera-fullscreen-mode');
     clearInterval(this.timer);
-    
+
     // 清理SSE连接
     this.cleanupSSEConnection();
-    
+
     // 移除事件监听器
     document.removeEventListener('keydown', this.handleKeyDown);
     document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
     document.removeEventListener('webkitfullscreenchange', this.handleFullscreenChange);
     document.removeEventListener('mozfullscreenchange', this.handleFullscreenChange);
     document.removeEventListener('MSFullscreenChange', this.handleFullscreenChange);
-    
+
     // 移除窗口大小变化监听器
     window.removeEventListener('resize', this.handleResize);
   },
@@ -450,12 +581,12 @@ export default {
     toggleGroup(groupIndex) {
       this.$set(this.deviceGroups[groupIndex], 'expanded', !this.deviceGroups[groupIndex].expanded);
     },
-    
+
     // 选择设备
     selectDevice(groupIndex, deviceIndex, device) {
       const deviceKey = 'device-' + groupIndex + '-' + deviceIndex;
       this.selectedDevice = this.selectedDevice === deviceKey ? null : deviceKey;
-      
+
       if (this.selectedDevice) {
         // 发送设备推流请求
         this.sendDevicePush(device.channelId);
@@ -468,37 +599,11 @@ export default {
       this.videoUrl = Array(9).fill('');
       this.videoTip = Array(9).fill('');
     },
-    
-    // 初始化档案列表
-    initArchivesList() {
-      // 模拟一些档案数据
-      this.archivesList = [
-        {
-          id: 'archive_default_1',
-          name: '可燃气体监控点默认档案',
-          cameraId: 'camera_1',
-          cameraName: '可燃气体监控点',
-          isDefault: true,
-          createTime: '2023-01-15 10:30:00'
-        },
-        {
-          id: 'archive_default_2',
-          name: '储罐区监控点默认档案',
-          cameraId: 'camera_2',
-          cameraName: '储罐区监控点',
-          isDefault: true,
-          createTime: '2023-01-15 10:30:00'
-        },
-        {
-          id: 'archive_custom_1',
-          name: '重要预警专用档案',
-          cameraId: 'camera_1',
-          cameraName: '可燃气体监控点',
-          isDefault: false,
-          createTime: '2023-02-20 14:20:00'
-        }
-      ];
-    },
+
+    // 初始化档案列表 - 已废弃，使用 loadAvailableArchives() 从API加载真实数据
+    // initArchivesList() {
+    //   // 此方法已不再使用，所有档案数据通过API获取
+    // },
     // 生成网格数量
     generateGrids() {
       if (this.viewMode === 'single') return [1]
@@ -524,7 +629,7 @@ export default {
         this.exitFullscreen(); // 切换视图模式时退出全屏
       }
       this.selectedCamera = null
-      
+
       // 如果切换到四分屏，等待DOM更新后刷新布局
       if (mode === 'four') {
         this.$nextTick(() => {
@@ -538,7 +643,7 @@ export default {
     selectCamera(index) {
       this.selectedCamera = this.selectedCamera === index ? null : index
       this.playerIdx = index - 1;
-      
+
       // 在切换摄像头后，添加强制更新视图的逻辑
       if (this.viewMode === 'four') {
         this.$nextTick(() => {
@@ -559,12 +664,12 @@ export default {
     enterFullscreen() {
       // 先加上样式类以便切换后立即显示全屏效果
       document.body.classList.add('camera-fullscreen-mode');
-      
+
       this.isFullscreen = true;
-      
+
       // 获取视频网格元素
       const element = this.$refs.videoGrid;
-      
+
       try {
         // 请求全屏
         if (element.requestFullscreen) {
@@ -586,12 +691,12 @@ export default {
       // 移除样式类
       document.body.classList.remove('camera-fullscreen-mode');
       this.isFullscreen = false;
-      
+
       try {
         // 判断当前是否在全屏模式
         if (
-          document.fullscreenElement || 
-          document.webkitFullscreenElement || 
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
           document.mozFullScreenElement ||
           document.msFullscreenElement
         ) {
@@ -618,12 +723,12 @@ export default {
     },
     // 处理全屏状态变化事件
     handleFullscreenChange() {
-      const fullscreenElement = 
-        document.fullscreenElement || 
-        document.webkitFullscreenElement || 
+      const fullscreenElement =
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
         document.mozFullScreenElement ||
         document.msFullscreenElement;
-        
+
       // 如果没有全屏元素但我们的状态是全屏，那么退出全屏
       if (!fullscreenElement && this.isFullscreen) {
         this.exitFullscreen();
@@ -638,10 +743,10 @@ export default {
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
-      
+
       // 获取星期几
       const weekDay = ['日', '一', '二', '三', '四', '五', '六'][now.getDay()];
-      
+
       this.currentDateTime = `${year}年${month}月${day}日 星期${weekDay} ${hours}:${minutes}:${seconds}`;
     },
     // 格式化摄像头名称
@@ -700,7 +805,7 @@ export default {
       this.setPlayUrl("", idxTmp);
       this.$set(this.videoTip, idxTmp, "正在拉流...");
       this.loading = true;
-      
+
       this.$axios({
         method: 'get',
         url: '/api/common/channel/play',
@@ -716,7 +821,7 @@ export default {
             videoUrl = res.data.data.ws_flv;
           }
           this.setPlayUrl(videoUrl, idxTmp);
-          
+
           // 视频加载后刷新布局
           setTimeout(() => {
             this.refreshFourScreenLayout();
@@ -756,26 +861,26 @@ export default {
     // 添加一个方法来重新计算和更新四分屏布局
     refreshFourScreenLayout() {
       if (this.viewMode !== 'four') return;
-      
+
       // 强制更新视图
       this.$forceUpdate();
-      
+
       // 延迟后检查并修正尺寸
       this.$nextTick(() => {
         // 获取视频网格元素
         const gridElement = this.$refs.videoGrid;
         if (!gridElement) return;
-        
+
         // 确保网格完全填充容器
         gridElement.style.width = '100%';
         gridElement.style.height = '100%';
-        
+
         // 处理每个视频单元格
         const cells = gridElement.querySelectorAll('.video-cell');
         cells.forEach(cell => {
           // 确保盒模型计算正确
           cell.style.boxSizing = 'border-box';
-          
+
           // 确保内容区域正确
           const contentElement = cell.querySelector('.video-content');
           if (contentElement) {
@@ -783,7 +888,7 @@ export default {
             contentElement.style.height = 'calc(100% - 26px)';
           }
         });
-        
+
         // 调整所有播放器组件尺寸
         if (this.viewMode === 'four') {
           for (let i = 0; i < 4; i++) {
@@ -797,10 +902,10 @@ export default {
       // 获取player对象
       const playerKey = 'player' + index;
       if (!this.$refs[playerKey]) return;
-      
+
       // 获取player组件实例
       let playerRef = this.$refs[playerKey];
-      
+
       // 确保playerRef不为空且有resize方法
       if (playerRef && typeof playerRef.resize === 'function') {
         // 触发resize方法调整播放器尺寸
@@ -830,18 +935,18 @@ export default {
       });
       // 这里可以添加处理预警的逻辑
     },
-    
+
     // 从预警列表处理预警 - 使用统一的处理逻辑
     handleWarningFromList(warning) {
       console.log('🖱️ 点击处理按钮, 预警ID:', warning && warning.id, '预警数据:', warning);
-      
+
       if (warning && warning.id) {
         // 检查当前是否已经在处理中
-        const hasProcessingRecord = warning.operationHistory && 
-          warning.operationHistory.some(record => 
+        const hasProcessingRecord = warning.operationHistory &&
+          warning.operationHistory.some(record =>
             record.operationType === 'processing' && record.status === 'active'
           );
-        
+
         if (hasProcessingRecord) {
           console.log('📝 预警已在处理中，直接打开处理对话框');
           // 如果已经有处理中记录，直接弹出处理意见对话框
@@ -857,25 +962,25 @@ export default {
         this.$message.error('预警数据无效，无法处理');
       }
     },
-    
+
     // 开始处理预警
     async startProcessingWarning(warning) {
       try {
         this.loading = true;
-        
+
         console.log('🔄 开始处理预警:', warning.id);
-        
+
         // 1. 先调用后端API更新状态为"处理中"
         const updateData = {
           status: 2, // 处理中状态
           processing_notes: '开始处理预警',
           processed_by: this.getCurrentUserName()
         };
-        
+
         // 发送真实的API请求
         const response = await alertAPI.updateAlertStatus(warning.id, updateData);
         console.log('✅ 后端状态更新成功:', response);
-        
+
         // 2. 后端更新成功后，更新本地状态
         const index = this.warningList.findIndex(item => item.id === warning.id);
         if (index !== -1) {
@@ -883,7 +988,7 @@ export default {
           if (!this.warningList[index].operationHistory) {
             this.$set(this.warningList[index], 'operationHistory', []);
           }
-          
+
           // 更新待处理记录为已完成状态
           this.warningList[index].operationHistory = this.warningList[index].operationHistory.map(record => {
             if (record.operationType === 'pending' && record.status === 'active') {
@@ -895,7 +1000,7 @@ export default {
             }
             return record;
           });
-          
+
           // 添加处理中记录
           const newRecord = {
             id: Date.now() + Math.random(),
@@ -906,16 +1011,26 @@ export default {
             operationType: 'processing',
             operator: this.getCurrentUserName()
           };
-          
+
           this.warningList[index].operationHistory.unshift(newRecord);
+
+          // 🔧 关键修复：更新 _apiData.status 字段为处理中
+          if (this.warningList[index]._apiData) {
+            this.warningList[index]._apiData.status = 2; // 处理中状态
+          }
+
+          // 🔧 同时更新前端使用的 status 字段
+          this.$set(this.warningList[index], 'status', 'processing');
+
+          console.log('✅ 开始处理，本地状态已更新为处理中:', this.warningList[index]);
         }
-        
+
         // 3. 弹出处理意见对话框
         this.currentProcessingWarningId = warning.id;
         this.remarkDialogVisible = true;
-        
+
         this.$message.success('预警已开始处理');
-        
+
       } catch (error) {
         console.error('❌ 开始处理预警失败:', error);
         this.$message.error('开始处理失败: ' + (error.message || (error.response && error.response.data && error.response.data.message) || '未知错误'));
@@ -923,19 +1038,19 @@ export default {
         this.loading = false;
       }
     },
-    
+
     // 保存处理意见（添加处理中记录）
     async saveRemark() {
       if (!this.remarkForm.remark.trim()) {
         this.$message.warning('请输入处理意见');
         return;
       }
-      
+
       try {
         this.loading = true;
-        
+
         console.log('📝 保存处理意见:', this.currentProcessingWarningId, this.remarkForm.remark);
-        
+
         // 真实的API调用 - 添加处理记录
         const updateData = {
           status: 2, // 保持处理中状态
@@ -943,17 +1058,17 @@ export default {
           processed_by: this.getCurrentUserName(),
           operation_type: 'add_processing_note'
         };
-        
+
         const response = await alertAPI.updateAlertStatus(this.currentProcessingWarningId, updateData);
         console.log('✅ 处理意见保存成功:', response);
-        
+
         // 更新本地数据状态 - 添加新的处理记录
         const index = this.warningList.findIndex(item => item.id === this.currentProcessingWarningId);
         if (index !== -1) {
           if (!this.warningList[index].operationHistory) {
             this.$set(this.warningList[index], 'operationHistory', []);
           }
-          
+
           const newRecord = {
             id: Date.now() + Math.random(),
             status: 'completed',
@@ -963,13 +1078,13 @@ export default {
             operationType: 'processing-action',
             operator: this.getCurrentUserName()
           };
-          
+
           this.warningList[index].operationHistory.unshift(newRecord);
         }
-        
+
         this.$message.success('处理记录已添加');
         this.closeRemarkDialog();
-        
+
       } catch (error) {
         console.error('❌ 保存处理意见失败:', error);
         this.$message.error('处理失败: ' + (error.message || (error.response && error.response.data && error.response.data.message) || '未知错误'));
@@ -977,14 +1092,14 @@ export default {
         this.loading = false;
       }
     },
-    
+
     // 结束处理
     async finishProcessing() {
       try {
         this.loading = true;
-        
+
         console.log('🏁 结束处理预警:', this.currentProcessingWarningId);
-        
+
         // 真实的API调用 - 完成处理
         const updateData = {
           status: 3, // 已处理状态
@@ -992,17 +1107,17 @@ export default {
           processed_by: this.getCurrentUserName(),
           operation_type: 'complete_processing'
         };
-        
+
         const response = await alertAPI.updateAlertStatus(this.currentProcessingWarningId, updateData);
         console.log('✅ 处理完成状态更新成功:', response);
-        
+
         // 更新本地数据状态
         const index = this.warningList.findIndex(item => item.id === this.currentProcessingWarningId);
         if (index !== -1) {
           if (!this.warningList[index].operationHistory) {
             this.$set(this.warningList[index], 'operationHistory', []);
           }
-          
+
           // 添加已处理记录 - 这是状态判断的关键
           const completedRecord = {
             id: Date.now() + Math.random(),
@@ -1013,13 +1128,25 @@ export default {
             operationType: 'completed',
             operator: this.getCurrentUserName()
           };
-          
+
           this.warningList[index].operationHistory.unshift(completedRecord);
+
+          // 🔧 关键修复：更新 _apiData.status 字段
+          if (this.warningList[index]._apiData) {
+            this.warningList[index]._apiData.status = 3; // 已处理状态
+            this.warningList[index]._apiData.processed_at = new Date().toISOString();
+            this.warningList[index]._apiData.processed_by = this.getCurrentUserName();
+          }
+
+          // 🔧 同时更新前端使用的 status 字段
+          this.$set(this.warningList[index], 'status', 'completed');
+
+          console.log('✅ 本地状态已更新为已处理:', this.warningList[index]);
         }
-        
+
         this.$message.success('处理已完成，现在可以进行归档等操作');
         this.closeRemarkDialog();
-        
+
       } catch (error) {
         console.error('❌ 结束处理失败:', error);
         this.$message.error('结束处理失败: ' + (error.message || (error.response && error.response.data && error.response.data.message) || '未知错误'));
@@ -1027,7 +1154,7 @@ export default {
         this.loading = false;
       }
     },
-    
+
     // 关闭处理意见对话框
     closeRemarkDialog() {
       this.remarkDialogVisible = false;
@@ -1036,7 +1163,7 @@ export default {
       };
       this.currentProcessingWarningId = '';
     },
-    
+
     // 从对话框处理预警 - 也使用处理意见流程
     handleWarningFromDialog(warning) {
       if (warning && warning.id) {
@@ -1046,26 +1173,47 @@ export default {
           const index = this.warningList.findIndex(item => item.id === warning.id);
           if (index !== -1) {
             this.warningList[index].operationHistory = warning.operationHistory;
+
+            // 🔧 关键修复：更新状态字段
+            if (this.warningList[index]._apiData) {
+              this.warningList[index]._apiData.status = 3; // 已处理状态
+            }
+            this.$set(this.warningList[index], 'status', 'completed');
+
+            console.log('✅ 从详情对话框完成处理，状态已更新:', this.warningList[index]);
           }
           return;
         }
-        
+
         // 如果是添加处理记录的事件，只更新状态，不再弹出对话框
         if (warning.action === 'record-added') {
           // 更新本地预警列表的状态
           const index = this.warningList.findIndex(item => item.id === warning.id);
           if (index !== -1) {
             this.warningList[index].operationHistory = warning.operationHistory;
+
+            // 🔧 如果记录中包含开始处理，更新状态为处理中
+            const hasProcessingRecord = warning.operationHistory &&
+              warning.operationHistory.some(record =>
+                record.operationType === 'processing' && record.status === 'active'
+              );
+
+            if (hasProcessingRecord && this.warningList[index]._apiData) {
+              this.warningList[index]._apiData.status = 2; // 处理中状态
+              this.$set(this.warningList[index], 'status', 'processing');
+            }
+
+            console.log('✅ 从详情对话框添加处理记录，状态已更新:', this.warningList[index]);
           }
           return;
         }
-        
+
         // 检查当前是否已经在处理中
-        const hasProcessingRecord = warning.operationHistory && 
-          warning.operationHistory.some(record => 
+        const hasProcessingRecord = warning.operationHistory &&
+          warning.operationHistory.some(record =>
             record.operationType === 'processing' && record.status === 'active'
           );
-        
+
         if (hasProcessingRecord) {
           // 如果已经有处理中记录，直接弹出处理意见对话框
           this.currentProcessingWarningId = warning.id;
@@ -1076,14 +1224,14 @@ export default {
         }
       }
     },
-    
+
     // 处理预警事件 - 复制预警管理页面的核心逻辑
     async handleWarning(id, action) {
       try {
         this.loading = true;
         // 模拟API调用
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         // 更新本地数据状态
         const index = this.warningList.findIndex(item => item.id === id);
         if (index !== -1) {
@@ -1117,21 +1265,21 @@ export default {
         this.loading = false;
       }
     },
-    
+
     // 处理上报事件
     handleReportFromDialog(warning) {
       if (warning && warning.id) {
         this.handleWarning(warning.id, 'report');
       }
     },
-    
+
     // 处理归档事件
     handleArchiveFromDialog(warning) {
       if (warning && warning.id) {
         this.handleWarning(warning.id, 'archive');
       }
     },
-    
+
     // 处理预警详情对话框中的误报事件 - 与预警管理页面保持完全一致
     handleFalseAlarmFromDialog(warning) {
       if (warning && warning.id) {
@@ -1139,63 +1287,308 @@ export default {
         this.handleWarning(warning.id, 'falseAlarm');
       }
     },
-    
-    // 处理归档流程
+
+    // 处理归档流程 - 显示档案选择对话框
     async handleArchiveProcess() {
       try {
-        let targetArchiveId = null;
-        
-        // 查找默认档案
-        const existingDefaultArchive = this.availableArchives.find(archive => archive.isDefault);
-        if (existingDefaultArchive) {
-          targetArchiveId = existingDefaultArchive.id;
-        } else {
-          // 如果没有默认档案，自动创建
-          targetArchiveId = await this.createDefaultArchive();
-        }
-        
-        if (!targetArchiveId) {
-          this.$message.error('无法创建默认档案');
+        // 获取当前预警信息
+        const index = this.warningList.findIndex(item => item.id === this.archiveWarningId);
+        if (index === -1) {
+          this.$message.error('未找到预警信息');
           return;
         }
-        
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // 更新预警状态为已归档
-        const index = this.warningList.findIndex(item => item.id === this.archiveWarningId);
-        if (index !== -1) {
-          this.warningList[index].status = 'archived';
-          this.warningList[index].archiveId = targetArchiveId;
-          this.warningList[index].archiveTime = new Date().toLocaleString();
-          // 从实时预警列表中移除已归档的预警
-          this.warningList.splice(index, 1);
+
+        const warningInfo = this.warningList[index];
+
+        // 检查预警状态，只有已处理状态（status=3）才能归档
+        if (warningInfo._apiData && warningInfo._apiData.status !== 3) {
+          const statusNames = {
+            1: '待处理',
+            2: '处理中',
+            3: '已处理',
+            4: '已归档',
+            5: '误报'
+          };
+          const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态';
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${currentStatusName}`);
+          this.loading = false;
+          return;
         }
-        
-        this.$message.success('预警已成功归档');
-        this.archiveWarningId = '';
+
+        console.log('📁 开始归档流程，当前档案列表长度:', this.availableArchivesList.length);
+
+        // 刷新档案列表
+        await this.loadAvailableArchives();
+
+        console.log('📁 刷新后档案列表长度:', this.availableArchivesList.length);
+        console.log('📁 档案列表数据:', JSON.stringify(this.availableArchivesList, null, 2));
+
+        // 显示档案选择对话框（即使没有档案也显示，让用户可以创建）
+        this.archiveDialogVisible = true;
+        this.selectedArchiveId = null; // 重置选择
+
+        // 确保对话框在最上层（DOM 更新后设置）
+        this.$nextTick(() => {
+          this.ensureArchiveDialogOnTop();
+        });
+
+        console.log('📁 显示档案选择对话框，可用档案数:', this.availableArchivesList.length);
+
+        // 如果没有档案，提示用户但不阻止对话框显示
+        if (this.availableArchivesList.length === 0) {
+          this.$message.warning('当前没有可用档案，请点击"创建新档案"按钮创建');
+        }
       } catch (error) {
-        this.$message.error('归档失败');
+        console.error('❌ 打开归档对话框失败:', error);
+        this.$message.error('打开归档对话框失败: ' + (error.message || '未知错误'));
       }
     },
-    
-    // 处理误报事件 - 与预警管理页面保持完全一致
+
+    // 确认归档
+    async confirmArchive() {
+      if (!this.selectedArchiveId) {
+        this.$message.warning('请选择要归档到的档案');
+        return;
+      }
+
+      try {
+        this.loading = true;
+
+        // 获取当前预警信息
+        const index = this.warningList.findIndex(item => item.id === this.archiveWarningId);
+        if (index === -1) {
+          this.$message.error('未找到预警信息');
+          return;
+        }
+
+        const warningInfo = this.warningList[index];
+
+        // 再次检查预警状态，只有已处理状态（status=3）才能归档
+        if (warningInfo._apiData && warningInfo._apiData.status !== 3) {
+          const statusNames = {
+            1: '待处理',
+            2: '处理中',
+            3: '已处理',
+            4: '已归档',
+            5: '误报'
+          };
+          const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态';
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${currentStatusName}`);
+          this.closeArchiveDialog();
+          return;
+        }
+
+        const alertId = warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId);
+        
+        // 获取选中档案的名称
+        const selectedArchive = this.availableArchivesList.find(archive => archive.id === this.selectedArchiveId);
+        const archiveName = selectedArchive ? selectedArchive.name : '未知档案';
+
+        // 1. 先调用updateAlertStatus更新预警状态为已归档
+        const updateData = {
+          status: 4, // 已归档状态
+          processing_notes: `预警已归档到：${archiveName}`,
+          processed_by: this.getCurrentUserName()
+        };
+
+        console.log('📤 更新预警状态为已归档:', alertId, updateData);
+        const updateResponse = await alertAPI.updateAlertStatus(alertId, updateData);
+        console.log('✅ 预警状态更新成功:', updateResponse);
+
+        // 2. 更新本地的_apiData.status字段
+        if (this.warningList[index]._apiData) {
+          this.$set(this.warningList[index]._apiData, 'status', 4);
+        }
+        this.$set(this.warningList[index], 'status', 'archived');
+        this.$set(this.warningList[index], 'archiveId', this.selectedArchiveId);
+        this.$set(this.warningList[index], 'archiveTime', new Date().toLocaleString());
+
+        // 添加归档记录到操作历史
+        if (!this.warningList[index].operationHistory) {
+          this.$set(this.warningList[index], 'operationHistory', []);
+        }
+
+        const archiveRecord = {
+          id: Date.now() + Math.random(),
+          status: 'completed',
+          statusText: '预警归档',
+          time: this.getCurrentTime(),
+          description: `预警已归档到：${archiveName}，可在预警档案中查看`,
+          operationType: 'archive',
+          operator: this.getCurrentUserName(),
+          archiveInfo: {
+            archiveId: this.selectedArchiveId,
+            archiveName: archiveName
+          }
+        };
+
+        this.warningList[index].operationHistory.unshift(archiveRecord);
+
+        console.log('✅ 本地状态已更新为已归档');
+
+        // 3. 调用归档API关联预警到档案
+        const { archiveAPI } = await import('../../service/VisionAIService.js');
+        const response = await archiveAPI.linkAlertsToArchive(
+          this.selectedArchiveId,
+          [alertId],
+          `实时监控归档 - 预警类型: ${warningInfo.type}`
+        );
+
+        console.log('📤 归档API响应:', response.data);
+
+        if (response.data && response.data.code === 0) {
+          // 4. 延迟移除记录，让用户能看到状态变化
+          setTimeout(() => {
+            const currentIndex = this.warningList.findIndex(item => item.id === this.archiveWarningId);
+            if (currentIndex !== -1) {
+              // 从实时预警列表中移除已归档的预警
+              this.warningList.splice(currentIndex, 1);
+            }
+          }, 500);
+
+          this.$message.success('预警已成功归档');
+          console.log('✅ 实时监控 - 预警归档成功:', alertId, '档案ID:', this.selectedArchiveId);
+
+          // 关闭对话框
+          this.closeArchiveDialog();
+        } else {
+          const errorMessage = (response.data && response.data.message) || '归档失败';
+          this.$message.error(errorMessage);
+          console.warn('⚠️ 实时监控 - 预警归档失败:', response.data);
+        }
+      } catch (error) {
+        console.error('❌ 实时监控 - 预警归档异常:', error);
+        this.$message.error('归档失败: ' + (error.message || '未知错误'));
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // 关闭归档对话框
+    closeArchiveDialog() {
+      this.archiveDialogVisible = false;
+      this.selectedArchiveId = null;
+      this.archiveWarningId = '';
+    },
+
+    // 确保归档对话框在最上层
+    ensureArchiveDialogOnTop() {
+      try {
+        // 查找所有的对话框包裹层和弹出层
+        const dialogWrappers = document.querySelectorAll('.el-dialog__wrapper');
+        const poppers = document.querySelectorAll('.el-select-dropdown, .el-picker-panel');
+        let maxZIndex = 2000; // Element UI 默认起始值
+
+        // 找到当前最大的 z-index（包括对话框和其他弹出层）
+        dialogWrappers.forEach(wrapper => {
+          const zIndex = parseInt(window.getComputedStyle(wrapper).zIndex || 0);
+          if (zIndex > maxZIndex) {
+            maxZIndex = zIndex;
+          }
+        });
+
+        poppers.forEach(popper => {
+          const zIndex = parseInt(window.getComputedStyle(popper).zIndex || 0);
+          if (zIndex > maxZIndex) {
+            maxZIndex = zIndex;
+          }
+        });
+
+        // 设置归档对话框为最大值 + 10，留出空间给 select 下拉框
+        const targetZIndex = maxZIndex + 10;
+
+        // 查找归档对话框的包裹层
+        dialogWrappers.forEach(wrapper => {
+          const archiveDialog = wrapper.querySelector('.realtime-archive-dialog');
+          if (archiveDialog) {
+            // 设置对话框包裹层的 z-index
+            wrapper.style.zIndex = targetZIndex.toString();
+            console.log('✅ 归档对话框 z-index 已设置为:', targetZIndex);
+
+            // 查找对应的遮罩层（紧邻在对话框前面的 v-modal）
+            const previousSibling = wrapper.previousElementSibling;
+            if (previousSibling && previousSibling.classList.contains('v-modal')) {
+              previousSibling.style.zIndex = (targetZIndex - 1).toString();
+              console.log('✅ 遮罩层 z-index 已设置为:', targetZIndex - 1);
+            }
+          }
+        });
+
+        // 确保归档对话框中的 select 下拉框也有足够高的 z-index
+        const archiveSelectDropdown = document.querySelector('.archive-select-dropdown');
+        if (archiveSelectDropdown) {
+          archiveSelectDropdown.style.zIndex = (targetZIndex + 1).toString();
+          console.log('✅ Select 下拉框 z-index 已设置为:', targetZIndex + 1);
+        }
+      } catch (error) {
+        console.warn('⚠️ 设置归档对话框层级失败:', error);
+        // 静默失败，不影响主要功能
+      }
+    },
+
+    // 对话框完全打开后的回调
+    onArchiveDialogOpened() {
+      // 在对话框打开后再次确保 z-index 正确
+      this.ensureArchiveDialogOnTop();
+
+      // 监听 select 下拉框的打开，确保其 z-index 正确
+      this.$nextTick(() => {
+        const selectElement = this.$el.querySelector('.archive-select-dropdown');
+        if (selectElement) {
+          const observer = new MutationObserver(() => {
+            this.ensureArchiveDialogOnTop();
+          });
+
+          observer.observe(document.body, {
+            childList: true,
+            subtree: false
+          });
+
+          // 组件销毁时断开观察
+          this.$once('hook:beforeDestroy', () => {
+            observer.disconnect();
+          });
+        }
+      });
+    },
+
+    // 处理档案选择器显示变化
+    handleArchiveSelectVisibleChange(visible) {
+      if (visible) {
+        if (this.availableArchivesList.length === 0) {
+          // 当下拉框打开且没有数据时，重新加载
+          this.loadAvailableArchives();
+        }
+        // 当下拉框打开时，确保对话框和下拉框的层级正确
+        this.$nextTick(() => {
+          this.ensureArchiveDialogOnTop();
+        });
+      }
+    },
+
+    // 处理误报事件 - 支持同时归档
     async handleFalseAlarmArchive() {
       try {
         if (!this.falseAlarmForm.reviewNotes.trim()) {
           this.$message.warning('请输入复判意见');
           return;
         }
-        
+
+        // 如果选择了归档，检查是否选择了档案
+        if (this.falseAlarmForm.needArchive && !this.falseAlarmForm.archiveId) {
+          this.$message.warning('请选择要归档的档案');
+          return;
+        }
+
         // 获取当前预警信息
         const warningIndex = this.warningList.findIndex(item => item.id === this.archiveWarningId);
         if (warningIndex === -1) {
           this.$message.error('未找到预警信息');
           return;
         }
-        
+
         const warningInfo = this.warningList[warningIndex];
-        
+
         // 检查预警状态，只有待处理状态才能标记为误报
         if (warningInfo._apiData && warningInfo._apiData.status !== 1) {
           const statusNames = {
@@ -1206,25 +1599,25 @@ export default {
           };
           const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态';
           this.$message.warning(`只有待处理状态的预警才能标记为误报，当前状态为：${currentStatusName}`);
-          this.falseAlarmDialogVisible = false;
-          this.falseAlarmForm.reviewNotes = '';
+          this.closeFalseAlarmDialog();
           return;
         }
-        
+
         // 调用后端API标记误报
-        const { alertAPI } = await import('../../service/VisionAIService.js');
+        const { alertAPI, archiveAPI } = await import('../../service/VisionAIService.js');
+        const alertId = warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId);
         const response = await alertAPI.markAlertAsFalseAlarm(
-          warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId),
+          alertId,
           this.falseAlarmForm.reviewNotes,
           this.getCurrentUserName()
         );
-        
+
         if (response.data && response.data.code === 0) {
           // 添加误报记录到操作历史
           if (!this.warningList[warningIndex].operationHistory) {
             this.$set(this.warningList[warningIndex], 'operationHistory', []);
           }
-          
+
           const newRecord = {
             id: Date.now() + Math.random(),
             status: 'completed',
@@ -1234,29 +1627,50 @@ export default {
             operationType: 'falseAlarm',
             operator: this.getCurrentUserName()
           };
-          
+
           this.warningList[warningIndex].operationHistory.unshift(newRecord);
           this.warningList[warningIndex].status = 'archived';
           this.warningList[warningIndex].isFalseAlarm = true;
           this.warningList[warningIndex].archiveTime = new Date().toLocaleString();
-          
+
           // 保存到智能复判记录
           await this.saveToReviewRecords(warningInfo);
           console.log('📝 实时监控页面-误报记录已保存到智能复判');
-          
+
+          // 如果选择了归档，调用归档API
+          if (this.falseAlarmForm.needArchive && this.falseAlarmForm.archiveId) {
+            try {
+              const archiveResponse = await archiveAPI.linkAlertsToArchive(
+                this.falseAlarmForm.archiveId,
+                [alertId],
+                `误报记录归档：${this.falseAlarmForm.reviewNotes}`
+              );
+
+              if (archiveResponse.data && archiveResponse.data.code === 0) {
+                console.log('✅ 误报记录已成功归档到档案');
+                this.$message.success('预警已标记为误报，复判记录已保存并归档');
+              } else {
+                console.warn('⚠️ 误报记录归档失败:', archiveResponse.data);
+                const errorMessage = (archiveResponse.data && archiveResponse.data.message) || '未知错误';
+                this.$message.warning('预警已标记为误报，但归档失败: ' + errorMessage);
+              }
+            } catch (archiveError) {
+              console.error('❌ 误报记录归档异常:', archiveError);
+              this.$message.warning('预警已标记为误报，但归档时发生异常');
+            }
+          } else {
+            this.$message.success('预警已标记为误报，复判记录已保存');
+          }
+
           // 从实时预警列表中移除误报预警
           this.warningList.splice(warningIndex, 1);
-          
-          this.$message.success('预警已标记为误报，复判记录已保存');
         } else {
           this.$message.error((response.data && response.data.msg) || '标记误报失败');
         }
-        
+
         // 关闭对话框并重置表单
-        this.falseAlarmDialogVisible = false;
-        this.falseAlarmForm.reviewNotes = '';
-        this.archiveWarningId = '';
-        
+        this.closeFalseAlarmDialog();
+
       } catch (error) {
         console.error('标记误报失败:', error);
         this.$message.error('标记误报失败: ' + (error.message || '未知错误'));
@@ -1264,7 +1678,7 @@ export default {
         this.loading = false;
       }
     },
-    
+
     // 保存到智能复判记录 - 与预警管理页面保持完全一致
     async saveToReviewRecords(warningInfo) {
       try {
@@ -1289,35 +1703,35 @@ export default {
           status: 'completed',
           createTime: this.getCurrentTime()
         };
-        
+
         // 保存到本地存储（实际项目中应该调用API保存到数据库）
         let reviewRecords = JSON.parse(localStorage.getItem('intelligentReviewRecords') || '[]');
         reviewRecords.unshift(reviewRecord);
-        
+
         // 限制记录数量，避免本地存储过大
         if (reviewRecords.length > 1000) {
           reviewRecords = reviewRecords.slice(0, 1000);
         }
-        
+
         localStorage.setItem('intelligentReviewRecords', JSON.stringify(reviewRecords));
-        
+
         // 这里是本地存储操作，不需要额外的API调用
         console.log('📝 智能复判记录已保存到本地存储');
-        
+
         console.log('误报记录已保存到智能复判:', reviewRecord);
-        
+
       } catch (error) {
         console.error('保存到智能复判记录失败:', error);
         throw error;
       }
     },
-    
+
     // 自动创建默认档案
     async createDefaultArchive() {
       try {
         // 模拟API调用创建默认档案
         await new Promise(resolve => setTimeout(resolve, 300));
-        
+
         const newArchive = {
           id: `archive_${Date.now()}`,
           name: `${this.getCurrentCameraName()}默认档案`,
@@ -1326,16 +1740,179 @@ export default {
           isDefault: true,
           createTime: new Date().toLocaleString()
         };
-        
+
         this.archivesList.push(newArchive);
-        
+
         return newArchive.id;
       } catch (error) {
         this.$message.error('创建默认档案失败');
         return null;
       }
     },
-    
+
+    // 加载可用档案列表 - 与 warningArchives 页面使用相同的接口
+    async loadAvailableArchives() {
+      try {
+        this.archiveListLoading = true;
+        const { archiveAPI } = await import('../../service/VisionAIService.js');
+
+        const response = await archiveAPI.getArchiveList({
+          page: 1,
+          limit: 100,
+          status: 1 // 只获取正常状态的档案
+        });
+
+        console.log('📥 实时监控 - 获取档案列表响应:', response.data);
+
+        // 后端返回格式：{ code: 0, msg: "获取成功", data: [...], pagination: {...} }
+        if (response.data && response.data.code === 0 && response.data.data) {
+          this.availableArchivesList = response.data.data;
+          console.log('✅ 实时监控 - 加载档案列表成功:', this.availableArchivesList.length, '个档案', this.availableArchivesList);
+        } else if (response.data && response.data.archives) {
+          // 兼容其他可能的返回格式
+          this.availableArchivesList = response.data.archives;
+          console.log('✅ 实时监控 - 加载档案列表成功(archives):', this.availableArchivesList.length, '个档案');
+        } else if (response.data && Array.isArray(response.data)) {
+          // 兼容直接返回数组的格式
+          this.availableArchivesList = response.data;
+          console.log('✅ 实时监控 - 加载档案列表成功(数组):', this.availableArchivesList.length, '个档案');
+        } else {
+          console.warn('⚠️ 实时监控 - 获取档案列表格式异常:', response.data);
+          this.availableArchivesList = [];
+        }
+
+        // 如果没有档案，提示用户
+        if (this.availableArchivesList.length === 0) {
+          console.warn('⚠️ 实时监控 - 当前没有可用档案，请先在预警档案页面创建档案');
+        }
+      } catch (error) {
+        console.error('❌ 实时监控 - 加载档案列表失败:', error);
+        this.availableArchivesList = [];
+        // 显示错误提示，帮助用户了解问题
+        this.$message.warning('加载档案列表失败，请检查网络连接或联系管理员');
+      } finally {
+        this.archiveListLoading = false;
+      }
+    },
+
+    // 为误报创建新档案
+    async createNewArchiveForFalseAlarm() {
+      this.$prompt('请输入新档案名称', '创建档案', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPattern: /\S+/,
+        inputErrorMessage: '档案名称不能为空',
+        inputPlaceholder: '例如：误报记录档案'
+      }).then(async ({ value }) => {
+        try {
+          const { archiveAPI } = await import('../../service/VisionAIService.js');
+          const now = new Date();
+          const startTime = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+          const endTime = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+
+          const response = await archiveAPI.createArchive({
+            name: value,
+            location: '误报记录档案',
+            description: '用于存储误报预警记录',
+            start_time: startTime,
+            end_time: endTime,
+            created_by: this.getCurrentUserName()
+          });
+
+          console.log('📤 实时监控 - 为误报创建档案响应:', response.data);
+
+          // 后端直接返回档案对象
+          if (response.data && response.data.archive_id) {
+            const newArchive = {
+              archive_id: response.data.archive_id,
+              name: response.data.name,
+              location: response.data.location,
+              status: response.data.status || 1,
+              total_alerts: response.data.total_alerts || 0,
+              created_at: response.data.created_at
+            };
+            this.availableArchivesList.push(newArchive);
+            this.falseAlarmForm.archiveId = newArchive.archive_id;
+            this.$message.success('档案创建成功');
+            console.log('✅ 实时监控 - 误报档案已创建:', newArchive);
+          } else {
+            console.error('❌ 实时监控 - 创建误报档案响应格式异常:', response.data);
+            this.$message.error('创建档案失败：响应格式异常');
+          }
+        } catch (error) {
+          console.error('❌ 实时监控 - 创建误报档案失败:', error);
+          this.$message.error('创建档案失败: ' + (error.message || '未知错误'));
+        }
+      }).catch(() => {
+        // 用户取消
+      });
+    },
+
+    // 为归档对话框创建新档案
+    async createNewArchiveForArchiveDialog() {
+      this.$prompt('请输入新档案名称', '创建档案', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPattern: /\S+/,
+        inputErrorMessage: '档案名称不能为空',
+        inputPlaceholder: '例如：2024年1月安全预警档案'
+      }).then(async ({ value }) => {
+        try {
+          this.archiveListLoading = true;
+          const { archiveAPI } = await import('../../service/VisionAIService.js');
+          const now = new Date();
+          const startTime = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+          const endTime = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+
+          const response = await archiveAPI.createArchive({
+            name: value,
+            location: '实时预警归档',
+            description: '从实时监控页面创建的预警档案',
+            start_time: startTime,
+            end_time: endTime,
+            created_by: this.getCurrentUserName()
+          });
+
+          console.log('📤 实时监控 - 创建档案响应:', response.data);
+
+          // 后端直接返回档案对象，不是包装格式
+          if (response.data && response.data.archive_id) {
+            const newArchive = {
+              archive_id: response.data.archive_id,
+              name: response.data.name,
+              location: response.data.location,
+              status: response.data.status || 1,
+              total_alerts: response.data.total_alerts || 0,
+              created_at: response.data.created_at
+            };
+            this.availableArchivesList.push(newArchive);
+            this.selectedArchiveId = newArchive.archive_id;
+            this.$message.success('档案创建成功，已自动选择');
+            console.log('✅ 实时监控 - 新档案已创建并选中:', newArchive);
+          } else {
+            console.error('❌ 实时监控 - 创建档案响应格式异常:', response.data);
+            this.$message.error('创建档案失败：响应格式异常');
+          }
+        } catch (error) {
+          console.error('❌ 实时监控 - 创建档案失败:', error);
+          this.$message.error('创建档案失败: ' + (error.message || '未知错误'));
+        } finally {
+          this.archiveListLoading = false;
+        }
+      }).catch(() => {
+        // 用户取消
+      });
+    },
+
+    // 关闭误报对话框
+    closeFalseAlarmDialog() {
+      this.falseAlarmDialogVisible = false;
+      this.falseAlarmForm.reviewNotes = '';
+      this.falseAlarmForm.needArchive = false;
+      this.falseAlarmForm.archiveId = null;
+      this.archiveWarningId = '';
+    },
+
     // 获取当前摄像头名称
     getCurrentCameraName() {
       // 实际项目中应该从摄像头数据中获取
@@ -1346,7 +1923,7 @@ export default {
       };
       return cameraNames[this.currentCameraId] || '监控点';
     },
-    
+
     // 获取当前时间
     getCurrentTime() {
       const now = new Date();
@@ -1356,10 +1933,10 @@ export default {
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
-      
+
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     },
-    
+
     // 给时间添加指定秒数
     addSecondsToTime(timeString, seconds) {
       try {
@@ -1371,33 +1948,33 @@ export default {
         } else {
           date = new Date();
         }
-        
+
         if (isNaN(date.getTime())) {
           return timeString;
         }
-        
+
         date.setSeconds(date.getSeconds() + seconds);
-        
+
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
         const secs = String(date.getSeconds()).padStart(2, '0');
-        
+
         return `${year}-${month}-${day} ${hours}:${minutes}:${secs}`;
       } catch (error) {
         return timeString;
       }
     },
-    
+
     // 获取当前用户昵称
     getCurrentUserName() {
       // 实际项目中应该从用户登录信息或Vuex store中获取
       // 这里模拟一些用户昵称
       const userNames = ['张工程师', '李主管', '王安全员', '赵技术员', '陈操作员'];
       const savedUserName = localStorage.getItem('currentUserName');
-      
+
       if (savedUserName) {
         return savedUserName;
       } else {
@@ -1424,7 +2001,7 @@ export default {
       };
       return iconMap[level] || 'el-icon-warning';
     },
-    
+
     // 获取当前预警状态 - 优先使用API返回的status字段
     getCurrentWarningStatus(warning) {
       // 优先使用API返回的status字段（与后端alerts表的status字段对应）
@@ -1440,7 +2017,7 @@ export default {
         console.log('📊 预警状态显示 - API status:', warning._apiData.status, '显示:', result);
         return result;
       }
-      
+
       // 如果没有API数据，使用operationHistory判断（向后兼容）
       if (!warning.operationHistory || warning.operationHistory.length === 0) {
         return {
@@ -1448,95 +2025,95 @@ export default {
           class: 'status-pending'
         };
       }
-      
+
       // 检查是否已归档
-      const hasArchived = warning.operationHistory.some(record => 
+      const hasArchived = warning.operationHistory.some(record =>
         record.operationType === 'archive' || record.operationType === 'falseAlarm'
       ) || warning.status === 'archived';
-      
+
       if (hasArchived) {
         return {
           text: '已归档',
           class: 'status-archived'
         };
       }
-      
+
       // 检查是否有已处理状态
-      const hasCompletedProcessing = warning.operationHistory.some(record => 
+      const hasCompletedProcessing = warning.operationHistory.some(record =>
         record.operationType === 'completed'
       );
-      
+
       if (hasCompletedProcessing) {
         return {
           text: '已处理',
           class: 'status-completed'
         };
       }
-      
+
       // 检查是否有处理中状态（包括processing和processing-action）
-      const hasActiveProcessing = warning.operationHistory.some(record => 
+      const hasActiveProcessing = warning.operationHistory.some(record =>
         record.operationType === 'processing' || record.operationType === 'processing-action'
       );
-      
+
       if (hasActiveProcessing) {
         return {
           text: '处理中',
           class: 'status-processing'
         };
       }
-      
+
       // 检查是否已经确认开始处理（待处理状态完成）
-      const hasPendingCompleted = warning.operationHistory.some(record => 
+      const hasPendingCompleted = warning.operationHistory.some(record =>
         record.operationType === 'pending' && record.status === 'completed'
       );
-      
+
       if (hasPendingCompleted) {
         return {
           text: '处理中',
           class: 'status-processing'
         };
       }
-      
+
       // 默认为待处理
       return {
         text: '待处理',
         class: 'status-pending'
       };
     },
-    
+
     // 检查处理按钮是否应该禁用
     isProcessingDisabled(warning) {
       if (!warning.operationHistory || warning.operationHistory.length === 0) {
         return false; // 没有历史记录，可以处理
       }
-      
+
       // 如果已归档，禁用处理按钮
-      const hasArchived = warning.operationHistory.some(record => 
+      const hasArchived = warning.operationHistory.some(record =>
         record.operationType === 'archive' || record.operationType === 'falseAlarm'
       ) || warning.status === 'archived';
-      
+
       if (hasArchived) {
         return true;
       }
-      
+
       // 如果已完成处理，禁用处理按钮
-      const hasCompletedProcessing = warning.operationHistory.some(record => 
+      const hasCompletedProcessing = warning.operationHistory.some(record =>
         record.operationType === 'completed'
       );
-      
+
       return hasCompletedProcessing;
     },
-    
+
     // 格式化时间显示
     formatTime(timeString) {
       try {
         if (!timeString) {
           return '时间未知';
         }
-        
+
         // 处理不同的时间格式
         if (timeString.includes('/') && timeString.includes(' ')) {
-          // 本地化格式: "2025/06/30 17:05:35"  
+          // 本地化格式: "2025/06/30 17:05:35"
           const [date, time] = timeString.split(' ');
           const [year, month, day] = date.split('/');
           return `${month}-${day} ${time}`;
@@ -1557,30 +2134,30 @@ export default {
             return `${month}-${day} ${hours}:${minutes}:${seconds}`;
           }
         }
-        
+
         // 如果无法识别格式，直接返回
         return timeString;
       } catch (error) {
         return timeString || '时间解析失败';
       }
     },
-    
+
     // =================== API数据加载相关方法 ===================
-    
+
     // 加载预警数据
     async loadWarningData() {
       try {
         this.apiDataLoading = true;
-        
+
         // 调用API获取预警列表
         const params = {
           page: this.currentPage,
           limit: this.pageSize,
           // 默认只获取最近的预警，按时间倒序
         };
-        
+
         const response = await alertAPI.getRealTimeAlerts(params);
-        
+
         if (response.data && response.data.code === 0) {
           // 修正数据结构 - 数据直接在data字段中（是一个数组）
           let apiWarnings = [];
@@ -1594,11 +2171,11 @@ export default {
             // 数据在alerts字段中
             apiWarnings = response.data.alerts;
           }
-          
-          const convertedWarnings = apiWarnings.map(warning => 
+
+          const convertedWarnings = apiWarnings.map(warning =>
             this.convertAPIWarningToFrontend(warning)
           ).filter(warning => warning !== null);
-          
+
           // 更新预警列表
           this.warningList = convertedWarnings;
           this.totalWarnings = response.data.total || apiWarnings.length;
@@ -1613,7 +2190,7 @@ export default {
         this.apiDataLoading = false;
       }
     },
-    
+
     // 将API预警数据转换为前端格式
     convertAPIWarningToFrontend(apiWarning) {
       try {
@@ -1644,22 +2221,22 @@ export default {
             process: apiWarning.process
           }
         };
-        
+
         console.log('🔄 转换API预警数据 - alert_id:', apiWarning.alert_id, 'status:', apiWarning.status, '→ 前端格式');
-        
+
         return convertedWarning;
       } catch (error) {
         console.error('❌ 转换API预警数据失败:', error);
         return null;
       }
     },
-    
+
     // 转换预警类型到显示名称
     convertAlertTypeToDisplayName(alertType) {
       const typeMap = {
         'product_area_detection': '商品区域检测报警',
         'safety_helmet_detection': '未戴安全帽',
-        'safety_belt_detection': '未系安全带', 
+        'safety_belt_detection': '未系安全带',
         'protective_clothing_detection': '未穿工作服',
         'personnel_intrusion_detection': '闲杂人员入侵',
         'smoke_fire_detection': '吸烟检测',
@@ -1669,17 +2246,17 @@ export default {
         'vehicle_detection': '车辆检测',
         'abnormal_behavior_detection': '异常行为检测'
       };
-      
+
       return typeMap[alertType] || alertType || '未知预警类型';
     },
-    
+
     // 格式化API时间
     formatAPITime(timeString) {
       try {
         if (!timeString) {
           return new Date().toLocaleString();
         }
-        
+
         // 处理不同的时间格式
         let date;
         if (timeString.includes('T')) {
@@ -1692,11 +2269,11 @@ export default {
           // 其他格式
           date = new Date(timeString);
         }
-        
+
         if (isNaN(date.getTime())) {
           return timeString; // 如果解析失败，返回原字符串
         }
-        
+
         const formattedTime = date.toLocaleString('zh-CN', {
           year: 'numeric',
           month: '2-digit',
@@ -1710,20 +2287,20 @@ export default {
         return timeString || new Date().toLocaleString();
       }
     },
-    
+
     // 获取预警图片URL
     getWarningImageUrl(apiWarning) {
       try {
         // 优先使用常见的图片字段
         const imageFields = [
           'minio_frame_url',
-          'alert_image_url', 
+          'alert_image_url',
           'image_url',
           'frame_url',
           'snapshot_url',
           'picture_url'
         ];
-        
+
         for (const field of imageFields) {
           if (apiWarning[field]) {
             const imageUrl = apiWarning[field];
@@ -1734,48 +2311,48 @@ export default {
             return imageUrl;
           }
         }
-        
+
         // 如果没有直接的图片URL，但有result数据，可能可以生成预览图或使用占位符
         if (apiWarning.result && apiWarning.result.length > 0) {
           // 暂时返回null，后续可以考虑生成预览图
         }
-        
+
         // 如果没有图片，返回null
         return null;
       } catch (error) {
         return null;
       }
     },
-    
+
     // 刷新预警数据
     async refreshWarningData() {
       try {
         this.$message.info('正在刷新预警数据...');
-        
+
         // 重置分页状态
         this.currentPage = 1;
-        
+
         await this.loadWarningData();
-        
+
         this.$message.success('预警数据刷新成功');
       } catch (error) {
         this.$message.error('刷新预警数据失败');
       }
     },
-    
+
     // 加载更多预警数据（分页）
     async loadMoreWarnings() {
       try {
         this.apiDataLoading = true;
         this.currentPage++;
-        
+
         const params = {
           page: this.currentPage,
           limit: this.pageSize,
         };
-        
+
         const response = await alertAPI.getRealTimeAlerts(params);
-        
+
         if (response.data && response.data.code === 0) {
           // 修正数据结构 - 数据直接在data字段中（是一个数组）
           let apiWarnings = [];
@@ -1789,11 +2366,11 @@ export default {
             // 数据在alerts字段中
             apiWarnings = response.data.alerts;
           }
-          
-          const convertedWarnings = apiWarnings.map(warning => 
+
+          const convertedWarnings = apiWarnings.map(warning =>
             this.convertAPIWarningToFrontend(warning)
           ).filter(warning => warning !== null);
-          
+
           // 追加到现有列表
           this.warningList.push(...convertedWarnings);
         }
@@ -1804,31 +2381,31 @@ export default {
         this.apiDataLoading = false;
       }
     },
-    
+
     // =================== SSE连接相关方法 ===================
-    
+
     // 初始化SSE连接
     initSSEConnection() {
       // 初始化SSE连接
-      
+
       // 如果已有连接，先关闭
       if (this.sseConnection) {
         this.sseConnection.close();
         this.sseConnection = null;
       }
-      
+
       // 创建新的SSE连接
       this.sseConnection = alertAPI.createAlertSSEConnection(
         this.handleSSEMessage.bind(this),   // 消息处理
         this.handleSSEError.bind(this),     // 错误处理
         this.handleSSEClose.bind(this)      // 连接关闭处理
       );
-      
+
       if (this.sseConnection) {
         this.sseStatus.connected = true;
       }
     },
-    
+
     // 处理SSE消息
     handleSSEMessage(messageData) {
       // 如果是AI预警消息
@@ -1836,30 +2413,30 @@ export default {
         this.handleNewAlert(messageData);
       }
     },
-    
+
     // 判断是否是传统报警消息格式
     isTraditionalAlarmMessage(messageData) {
       return messageData.deviceName && messageData.deviceId && messageData.alarmTime;
     },
-    
+
     // 处理传统报警消息（参考UiHeader.vue的处理方式）
     handleTraditionalAlarm(alarmData) {
       try {
         // 将传统报警数据转换为预警列表格式
         const newWarning = this.convertTraditionalAlarmToWarning(alarmData);
-        
+
         if (!newWarning) {
           return;
         }
-        
+
         // 添加到预警列表顶部
         this.warningList.unshift(newWarning);
-        
+
         // 限制列表长度，只保留最新的10条预警
         if (this.warningList.length > 10) {
           this.warningList = this.warningList.slice(0, 10);
         }
-        
+
         // 显示新预警提示
         this.$message({
           message: `收到新报警：${newWarning.type} - ${newWarning.device}`,
@@ -1870,16 +2447,16 @@ export default {
         // 静默处理错误
       }
     },
-    
+
     // 将传统报警数据转换为前端预警格式
     convertTraditionalAlarmToWarning(alarmData) {
       try {
         // 生成唯一ID
         const id = `alarm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+
         // 根据报警级别映射预警等级
         const level = this.mapAlarmPriorityToLevel(alarmData.alarmPriorityDescription);
-        
+
         return {
           id: id,
           time: this.formatAlarmTime(alarmData.alarmTime),
@@ -1904,12 +2481,12 @@ export default {
         return null;
       }
     },
-    
+
     // 映射报警级别到预警等级
     mapAlarmPriorityToLevel(priorityDescription) {
       const priorityMap = {
         '一级': 'level1',
-        '紧急': 'level1', 
+        '紧急': 'level1',
         '高': 'level1',
         '二级': 'level2',
         '重要': 'level2',
@@ -1921,34 +2498,34 @@ export default {
         '低': 'level4',
         '一般': 'level4'
       };
-      
+
       // 查找匹配的级别
       for (const [key, value] of Object.entries(priorityMap)) {
         if (priorityDescription && priorityDescription.includes(key)) {
           return value;
         }
       }
-      
+
       // 默认返回四级
       return 'level4';
     },
-    
+
     // 格式化报警时间
     formatAlarmTime(alarmTime) {
       try {
         if (!alarmTime) return this.getCurrentTime();
-        
+
         // 如果已经是标准格式，直接返回
         if (alarmTime.includes('-') && alarmTime.includes(':')) {
           return alarmTime;
         }
-        
+
         // 处理其他格式
         const date = new Date(alarmTime);
         if (isNaN(date.getTime())) {
           return alarmTime; // 如果解析失败，返回原字符串
         }
-        
+
         return date.toLocaleString('zh-CN', {
           year: 'numeric',
           month: '2-digit',
@@ -1961,82 +2538,82 @@ export default {
         return alarmTime || this.getCurrentTime();
       }
     },
-    
+
     // 处理新预警
     handleNewAlert(alertData) {
       try {
         // 将后端预警数据转换为前端格式 - 统一使用API转换方法
         const newWarning = this.convertAPIWarningToFrontend(alertData);
-        
+
         if (!newWarning) {
           return;
         }
-        
+
         // 添加到预警列表顶部
         this.warningList.unshift(newWarning);
-        
+
         // 限制列表长度，只保留最新的10条预警
         if (this.warningList.length > 10) {
           this.warningList = this.warningList.slice(0, 10);
         }
-        
+
         // 新预警已添加到列表
       } catch (error) {
         // 静默处理错误
       }
     },
-    
+
     // 处理预警更新
     handleAlertUpdate(alertData) {
       try {
         // 查找现有预警并更新
-        const index = this.warningList.findIndex(warning => 
+        const index = this.warningList.findIndex(warning =>
           warning.id === alertData.alert_id || warning.id === alertData.id
         );
-        
+
         if (index !== -1) {
           // 更新现有预警 - 统一使用API转换方法
           const updatedWarning = this.convertAPIWarningToFrontend(alertData);
-          
+
           if (!updatedWarning) {
             return;
           }
-          
+
           this.$set(this.warningList, index, updatedWarning);
         }
       } catch (error) {
         // 静默处理错误
       }
     },
-    
 
 
-    
+
+
     // 转换预警等级
     convertAlertLevel(backendLevel) {
       const levelMap = {
         1: 'level1',
-        2: 'level2', 
+        2: 'level2',
         3: 'level3',
         4: 'level4'
       };
       return levelMap[backendLevel] || 'level4';
     },
-    
+
     // 转换预警状态
     convertAlertStatus(statusNumber, statusDisplay) {
       // 如果有显示文本，优先使用显示文本进行映射
       if (statusDisplay) {
         const statusMap = {
           '待处理': 'pending',
-          '处理中': 'processing', 
+          '处理中': 'processing',
           '已处理': 'completed',
           '已忽略': 'ignored',
           '已过期': 'expired'
         };
         return statusMap[statusDisplay] || 'pending';
       }
-      
+
       // 如果没有显示文本，根据数字状态映射
       if (statusNumber !== undefined && statusNumber !== null) {
         const numberStatusMap = {
@@ -2048,18 +2625,18 @@ export default {
         };
         return numberStatusMap[statusNumber] || 'pending';
       }
-      
+
       // 对于新的API数据，如果没有状态信息，默认为待处理
       return 'pending';
     },
-    
+
     // 转换处理历史 - 确保与状态判断逻辑一致
     convertProcessHistory(processData, apiStatus, alertTime) {
       try {
         const operationHistory = []
-        
+
         console.log('🔄 转换处理历史, API状态:', apiStatus, '处理数据:', processData);
-        
+
         // 处理API返回的步骤（如果存在）
         if (processData && processData.steps && Array.isArray(processData.steps)) {
           processData.steps.forEach((step, index) => {
@@ -2074,7 +2651,7 @@ export default {
             })
           })
         }
-        
+
         // 根据API状态添加相应的操作记录
         if (apiStatus === 1 || apiStatus === undefined || apiStatus === null) {
           // 待处理状态 - 添加待处理记录
@@ -2135,10 +2712,10 @@ export default {
             operator: '管理员'
           });
         }
-        
+
         console.log('📋 最终操作历史:', operationHistory);
         return operationHistory;
-        
+
       } catch (error) {
         console.error('❌ 转换处理历史出错:', error);
         // 即使出错也要返回基本的历史记录
@@ -2153,50 +2730,50 @@ export default {
         }];
       }
     },
-    
+
     // 处理SSE错误
     handleSSEError(error) {
       this.sseStatus.connected = false;
     },
-    
+
     // 处理SSE连接关闭
     handleSSEClose() {
       console.log('SSE连接已关闭');
       this.sseStatus.connected = false;
     },
-    
+
     // 清理SSE连接
     cleanupSSEConnection() {
       console.log('清理SSE连接');
-      
+
       if (this.sseConnection) {
         this.sseConnection.close();
         this.sseConnection = null;
       }
-      
+
       this.sseStatus.connected = false;
     },
-    
+
     // 手动重连SSE
     reconnectSSE() {
       console.log('手动重连SSE');
       this.cleanupSSEConnection();
-      
+
       setTimeout(() => {
         this.initSSEConnection();
       }, 1000);
     },
-    
+
     // 获取SSE状态样式类
     getSSSStatusClass() {
       return this.sseStatus.connected ? 'status-connected' : 'status-disconnected';
     },
-    
+
     // 获取SSE状态文本
     getSSEStatusText() {
       return this.sseStatus.connected ? '已连接' : '未连接';
     },
-    
+
 
   }
 }
@@ -2332,8 +2909,8 @@ export default {
 
 /* 简单修复树节点样式 */
 .device-tree-aside /deep/ .el-tree-node__content {
-  height: auto !important; 
-  min-height: 34px !important; 
+  height: auto !important;
+  min-height: 34px !important;
   transition: all 0.2s ease !important;
   border-radius: 0 !important;
   margin: 2px 0 !important;
@@ -2343,16 +2920,16 @@ export default {
 /* 修正文字显示不全问题 */
 .device-tree-aside /deep/ .custom-tree-node {
   font-size: 14px !important;
-  line-height: 20px !important; 
+  line-height: 20px !important;
   transition: all 0.3s ease !important;
   font-weight: 500 !important;
   width: 100% !important;
-  overflow: hidden !important; 
+  overflow: hidden !important;
   text-overflow: ellipsis !important;
-  white-space: nowrap !important; 
+  white-space: nowrap !important;
   display: flex !important;
   align-items: center !important;
-  padding: 0 !important; 
+  padding: 0 !important;
 }
 
 .device-tree-aside /deep/ .flow-tree {
@@ -3373,7 +3950,7 @@ body.camera-fullscreen-mode .video-cell .video-slim-header {
   margin: 0;
   overflow: hidden;
   background-color: #2c3e50;
-  width: 100%; 
+  width: 100%;
   height: calc(100% - 5vh);
   display: flex;
   align-items: center;
@@ -3442,22 +4019,22 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
 /* 修复文本只显示一半的问题 */
 .device-tree-aside /deep/ .custom-tree-node {
   font-size: 14px !important;
-  line-height: 20px !important; 
+  line-height: 20px !important;
   transition: all 0.3s ease !important;
   font-weight: 500 !important;
   width: 100% !important;
-  overflow: hidden !important; 
+  overflow: hidden !important;
   text-overflow: ellipsis !important;
-  white-space: nowrap !important; 
+  white-space: nowrap !important;
   display: flex !important;
   align-items: center !important;
-  padding: 0 !important; 
+  padding: 0 !important;
 }
 
 /* 调整树节点高度，确保文本显示完整 */
 .device-tree-aside /deep/ .el-tree-node__content {
-  height: auto !important; 
-  min-height: 34px !important; 
+  height: auto !important;
+  min-height: 34px !important;
   transition: all 0.2s ease !important;
   border-radius: 0 !important;
   margin: 2px 0 !important;
@@ -3620,6 +4197,27 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
   display: flex;
   align-items: center;
   border-left: 3px solid #909399;
+}
+
+/* 归档对话框样式 */
+.archive-dialog-content {
+  padding: 10px 0;
+}
+
+.archive-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #333;
+}
+
+.archive-selection {
+  margin-bottom: 20px;
+}
+
+.archive-tip {
+  margin-top: 20px;
 }
 
 /* 对话框样式优化 - 科技感设计 */
@@ -3821,6 +4419,42 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
 
 <!-- 全局样式，处理全屏模式 -->
 <style>
+/* 归档对话框层级控制 - 确保始终在最上层 */
+/* 方案1: 直接设置对话框类的 z-index */
+.realtime-archive-dialog {
+  z-index: 3000 !important;
+}
+
+/* 方案2: 设置对话框包裹层的 z-index（Element UI 的实际结构） */
+.el-dialog__wrapper .realtime-archive-dialog {
+  z-index: 3001 !important;
+}
+
+/* 方案3: 针对归档对话框的包裹层（使用属性选择器作为备用） */
+div[aria-label="归档预警"] {
+  z-index: 3001 !important;
+}
+
+/* 方案4: 使用 :has 选择器（现代浏览器支持） */
+.el-dialog__wrapper:has(.realtime-archive-dialog) {
+  z-index: 3001 !important;
+}
+
+/* 归档对话框对应的遮罩层 */
+.v-modal[style*="z-index: 3000"] {
+  z-index: 3000 !important;
+}
+
+/* 归档对话框中的 select 下拉框层级控制 */
+.archive-select-dropdown {
+  z-index: 3002 !important;
+}
+
+/* 确保 select 下拉框在对话框之上 */
+.el-select-dropdown.archive-select-dropdown {
+  z-index: 3002 !important;
+}
+
 /* 全屏状态下的页面容器 */
 body.camera-fullscreen-mode #realTimeMonitoring {
   position: fixed !important;
