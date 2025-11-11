@@ -46,6 +46,7 @@
           <span>设备配置</span>
         </template>
         <el-menu-item index="/deviceManage/camera">摄像头</el-menu-item>
+        <el-menu-item index="/deviceManage/localVideo">本地视频</el-menu-item>
         <el-menu-item index="/deviceManage/sensor">传感器设备</el-menu-item>
         <el-menu-item index="/deviceManage/network">网络设备</el-menu-item>
         <el-menu-item index="/deviceManage/storage">存储设备</el-menu-item>

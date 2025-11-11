@@ -37,6 +37,7 @@ import reviewRecords from '../components/visionAI/monitoringWarning/reviewRecord
 import intelligentReview from '../components/visionAI/monitoringWarning/intelligentReview.vue'
 import camera from '../components/visionAI/deviceManagement/camera.vue'
 import CameraManagementMain from '../components/visionAI/deviceManagement/CameraManagementMain.vue'
+import localVideo from '../components/visionAI/deviceManagement/localVideo.vue'
 import modelList from '../components/visionAI/modelManagement/modelList.vue'
 import deviceSkills from '../components/visionAI/skillManagement/deviceSkills.vue'
 import multimodalLlmSkills from '../components/visionAI/skillManagement/multimodalLlmSkills.vue'
@@ -138,6 +139,11 @@ export default new VueRouter({
         {
           path: '/device/camera',
           redirect: '/deviceManage/camera'
+        },
+        {
+          path: '/deviceManage/localVideo',
+          name: 'localVideo',
+          component: localVideo,
         },
         {
           path: '/modelManage/modelList',
