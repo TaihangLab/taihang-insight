@@ -47,9 +47,6 @@
         </template>
         <el-menu-item index="/deviceManage/camera">摄像头</el-menu-item>
         <el-menu-item index="/deviceManage/localVideo">本地视频</el-menu-item>
-        <el-menu-item index="/deviceManage/sensor">传感器设备</el-menu-item>
-        <el-menu-item index="/deviceManage/network">网络设备</el-menu-item>
-        <el-menu-item index="/deviceManage/storage">存储设备</el-menu-item>
       </el-submenu>
 
       <!-- 模型管理菜单 -->
@@ -59,8 +56,6 @@
           <span>模型管理</span>
         </template>
         <el-menu-item index="/modelManage/modelList">模型列表</el-menu-item>
-        <el-menu-item index="/modelManage/modelTrain">模型训练</el-menu-item>
-        <el-menu-item index="/modelManage/modelDeploy">模型部署</el-menu-item>
       </el-submenu>
 
       <!-- 技能管理菜单 -->
@@ -72,17 +67,6 @@
         <el-menu-item index="/skillManage/deviceSkills">视觉模型技能</el-menu-item>
         <el-menu-item index="/skillManage/multimodalLlmSkills">多模态大模型技能</el-menu-item>
         <el-menu-item index="/skillManage/multimodalReview">多模态大模型复判</el-menu-item>
-      </el-submenu>
-
-      <!-- 智能管控菜单 -->
-      <el-submenu index="/intelligentControl" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-monitor"></i>
-          <span>智能管控</span>
-        </template>
-        <el-menu-item index="/intelligentControl/logRecord">日志记录</el-menu-item>
-        <el-menu-item index="/edgeManage/edgeServer">边缘服务器</el-menu-item>
-        <el-menu-item index="/edgeManage/edgeBox">边缘盒子</el-menu-item>
       </el-submenu>
 
       <!-- 系统管理菜单 -->
@@ -182,13 +166,13 @@ export default {
       // 清除所有用户信息和登录状态
       userService.clearUserInfo();
       userService.clearLoginStatus();
-      
+
       this.$message({
         showClose: true,
         message: '已安全退出登录',
         type: 'success'
       });
-      
+
       this.$router.push('/login');
       // 刷新页面，确保登录界面布局正常
       setTimeout(() => {
@@ -245,9 +229,9 @@ export default {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(75, 216, 255, 0.1) 50%, 
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(75, 216, 255, 0.1) 50%,
     transparent 100%);
   animation: shimmer 8s infinite;
 }
@@ -448,8 +432,8 @@ export default {
 
 .modern-menu .el-menu-item:hover,
 .modern-menu .el-submenu__title:hover {
-  background: linear-gradient(135deg, 
-    rgba(75, 216, 255, 0.1) 0%, 
+  background: linear-gradient(135deg,
+    rgba(75, 216, 255, 0.1) 0%,
     rgba(75, 216, 255, 0.05) 100%) !important;
   color: #4BD8FF !important;
   box-shadow: 0 4px 15px rgba(75, 216, 255, 0.2);
@@ -476,7 +460,7 @@ export default {
   border: 1px solid rgba(75, 216, 255, 0.2) !important;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
               0 0 20px rgba(75, 216, 255, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -505,8 +489,8 @@ export default {
 }
 
 .modern-submenu .el-menu-item:hover {
-  background: linear-gradient(135deg, 
-    rgba(75, 216, 255, 0.15) 0%, 
+  background: linear-gradient(135deg,
+    rgba(75, 216, 255, 0.15) 0%,
     rgba(75, 216, 255, 0.08) 100%) !important;
   color: #4BD8FF !important;
   transform: translateX(4px);
@@ -514,8 +498,8 @@ export default {
 }
 
 .modern-submenu .el-menu-item.is-active {
-  background: linear-gradient(135deg, 
-    rgba(75, 216, 255, 0.2) 0%, 
+  background: linear-gradient(135deg,
+    rgba(75, 216, 255, 0.2) 0%,
     rgba(75, 216, 255, 0.1) 100%) !important;
   color: #4BD8FF !important;
   border-left: 3px solid #4BD8FF;
@@ -529,8 +513,8 @@ export default {
 /* 活动状态样式 */
 #UiHeader .el-menu-item.is-active {
   color: #4BD8FF !important;
-  background: linear-gradient(135deg, 
-    rgba(75, 216, 255, 0.15) 0%, 
+  background: linear-gradient(135deg,
+    rgba(75, 216, 255, 0.15) 0%,
     rgba(75, 216, 255, 0.08) 100%) !important;
   border-bottom: 3px solid #4BD8FF;
   box-shadow: 0 4px 15px rgba(75, 216, 255, 0.3);
@@ -544,9 +528,9 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(75, 216, 255, 0.1) 50%, 
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(75, 216, 255, 0.1) 50%,
     transparent 100%);
   animation: pulse 2s infinite;
 }
@@ -558,8 +542,8 @@ export default {
 
 #UiHeader .el-submenu.is-active .el-submenu__title {
   color: #4BD8FF !important;
-  background: linear-gradient(135deg, 
-    rgba(75, 216, 255, 0.15) 0%, 
+  background: linear-gradient(135deg,
+    rgba(75, 216, 255, 0.15) 0%,
     rgba(75, 216, 255, 0.08) 100%) !important;
   border-bottom: 3px solid #4BD8FF;
   box-shadow: 0 4px 15px rgba(75, 216, 255, 0.3);
@@ -621,12 +605,12 @@ export default {
     min-width: auto;
     padding: 0 15px;
   }
-  
+
   .logo-text-container {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .logo-brand-name {
     flex-direction: row;
     border-right: none;
@@ -638,12 +622,12 @@ export default {
     justify-content: center;
     gap: 4px;
   }
-  
+
   .logo-text {
     font-size: 14px;
     display: block;
   }
-  
+
   .logo-subtitle-highlight {
     font-size: 11px;
   }
