@@ -1380,14 +1380,17 @@ export default {
 
         const alertId = warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId);
         
-        // 获取选中档案的名称
-        const selectedArchive = this.availableArchivesList.find(archive => archive.id === this.selectedArchiveId);
+        // 🔧 修复：使用 archive_id 字段查找档案（不是 id）
+        const selectedArchive = this.availableArchivesList.find(archive => archive.archive_id === this.selectedArchiveId);
         const archiveName = selectedArchive ? selectedArchive.name : '未知档案';
+        const archiveLocation = selectedArchive ? selectedArchive.location : '未知位置';
+
+        console.log('📍 选中的档案信息:', { selectedArchive, archiveName, archiveLocation });
 
         // 1. 先调用updateAlertStatus更新预警状态为已归档
         const updateData = {
           status: 4, // 已归档状态
-          processing_notes: `预警已归档到：${archiveName}`,
+          processing_notes: `预警已归档到：${archiveName}（${archiveLocation}）`,
           processed_by: this.getCurrentUserName()
         };
 
@@ -1408,17 +1411,19 @@ export default {
           this.$set(this.warningList[index], 'operationHistory', []);
         }
 
+        // 🔧 修复：在归档记录中包含位置信息
         const archiveRecord = {
           id: Date.now() + Math.random(),
           status: 'completed',
           statusText: '预警归档',
           time: this.getCurrentTime(),
-          description: `预警已归档到：${archiveName}，可在预警档案中查看`,
+          description: `预警已归档到：${archiveName}（${archiveLocation}），可在预警档案中查看`,
           operationType: 'archive',
           operator: this.getCurrentUserName(),
           archiveInfo: {
             archiveId: this.selectedArchiveId,
-            archiveName: archiveName
+            archiveName: archiveName,
+            location: archiveLocation // 🔧 添加位置信息
           }
         };
 

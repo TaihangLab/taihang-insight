@@ -1150,16 +1150,21 @@ export default {
 
         let targetArchiveId = this.selectedArchiveId;
         let archiveName = '';
+        let archiveLocation = '';
 
         // 如果没有选择档案，自动创建默认档案
         if (!targetArchiveId) {
           targetArchiveId = await this.createDefaultArchive();
           archiveName = '默认档案';
+          archiveLocation = this.getCurrentCameraName();
         } else {
-          // 获取选中档案的名称
+          // 🔧 修复：获取选中档案的名称和位置
           const selectedArchive = this.availableArchives.find(archive => archive.id === targetArchiveId);
           archiveName = selectedArchive ? selectedArchive.name : '未知档案';
+          archiveLocation = selectedArchive ? selectedArchive.cameraName : '未知位置';
         }
+
+        console.log('📍 选中的档案信息:', { targetArchiveId, archiveName, archiveLocation });
 
         if (!targetArchiveId) {
           this.$message.error('无法创建默认档案');
@@ -1180,17 +1185,18 @@ export default {
         console.log('📤 归档API响应:', response.data);
 
         if (response.data && response.data.code === 0) {
-          // 记录归档操作到历史
+          // 🔧 修复：记录归档操作到历史，包含位置信息
           this.addOperationRecord({
             status: 'completed',
             statusText: '预警归档',
             time: this.getCurrentTime(),
-            description: `预警已归档到：${archiveName}，可在预警档案中查看`,
+            description: `预警已归档到：${archiveName}（${archiveLocation}），可在预警档案中查看`,
             operationType: 'archive',
             operator: this.getCurrentUserName(),
             archiveInfo: {
               archiveId: targetArchiveId,
-              archiveName: archiveName
+              archiveName: archiveName,
+              location: archiveLocation // 🔧 添加位置信息
             }
           });
 

@@ -46,9 +46,6 @@
           <span>设备配置</span>
         </template>
         <el-menu-item index="/deviceManage/camera">摄像头</el-menu-item>
-        <el-menu-item index="/deviceManage/sensor">传感器设备</el-menu-item>
-        <el-menu-item index="/deviceManage/network">网络设备</el-menu-item>
-        <el-menu-item index="/deviceManage/storage">存储设备</el-menu-item>
       </el-submenu>
 
       <!-- 模型管理菜单 -->
@@ -58,8 +55,6 @@
           <span>模型管理</span>
         </template>
         <el-menu-item index="/modelManage/modelList">模型列表</el-menu-item>
-        <el-menu-item index="/modelManage/modelTrain">模型训练</el-menu-item>
-        <el-menu-item index="/modelManage/modelDeploy">模型部署</el-menu-item>
       </el-submenu>
 
       <!-- 技能管理菜单 -->
@@ -71,17 +66,6 @@
         <el-menu-item index="/skillManage/deviceSkills">视觉模型技能</el-menu-item>
         <el-menu-item index="/skillManage/multimodalLlmSkills">多模态大模型技能</el-menu-item>
         <el-menu-item index="/skillManage/multimodalReview">多模态大模型复判</el-menu-item>
-      </el-submenu>
-
-      <!-- 智能管控菜单 -->
-      <el-submenu index="/intelligentControl" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-monitor"></i>
-          <span>智能管控</span>
-        </template>
-        <el-menu-item index="/intelligentControl/logRecord">日志记录</el-menu-item>
-        <el-menu-item index="/edgeManage/edgeServer">边缘服务器</el-menu-item>
-        <el-menu-item index="/edgeManage/edgeBox">边缘盒子</el-menu-item>
       </el-submenu>
 
       <!-- 系统管理菜单 -->
