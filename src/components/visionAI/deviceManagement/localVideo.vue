@@ -144,9 +144,11 @@
                 type="success"
                 size="mini"
                 icon="el-icon-video-play"
+                :loading="streamingOperations.has(scope.row.id)"
+                :disabled="streamingOperations.has(scope.row.id)"
                 @click="startStream(scope.row)"
               >
-                开始推流
+                {{ streamingOperations.has(scope.row.id) ? '启动中...' : '开始推流' }}
               </el-button>
               <el-button
                 v-else
@@ -391,7 +393,10 @@ export default {
       streamForm: {
         stream_id: '',
         stream_fps: null
-      }
+      },
+      
+      // 推流操作中的视频ID集合（防止重复点击）
+      streamingOperations: new Set()
     };
   },
   mounted() {
@@ -630,6 +635,15 @@ export default {
     
     // 确认开始推流
     async confirmStartStream() {
+      // 防止重复提交
+      if (this.streamingOperations.has(this.currentVideo.id)) {
+        this.$message.warning('推流操作正在进行中，请稍候...');
+        return;
+      }
+      
+      // 添加到操作集合中
+      this.streamingOperations.add(this.currentVideo.id);
+      
       try {
         const payload = {};
         if (this.streamForm.stream_id) {
@@ -660,6 +674,9 @@ export default {
          this.loadVideos();
        } catch (error) {
          this.$message.error('启动推流失败: ' + ((error.response && error.response.data && error.response.data.detail) ? error.response.data.detail : error.message));
+       } finally {
+         // 从操作集合中移除
+         this.streamingOperations.delete(this.currentVideo.id);
        }
      },
     
