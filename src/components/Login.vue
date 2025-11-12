@@ -311,11 +311,11 @@ export default {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+  background: linear-gradient(135deg, #0c1929 0%, #1a2f47 50%, #2d4563 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Microsoft YaHei', Arial, sans-serif;
+  font-family: var(--font-family-base);
 }
 
 /* 粒子背景效果 */
@@ -333,9 +333,9 @@ export default {
   position: absolute;
   width: 2px;
   height: 2px;
-  background: #00d4ff;
+  background: var(--primary-color);
   border-radius: 50%;
-  box-shadow: 0 0 10px #00d4ff;
+  box-shadow: 0 0 10px var(--primary-color);
   animation: float 3s ease-in-out infinite;
 }
 
@@ -370,7 +370,7 @@ export default {
 .login-decoration {
   flex: 1;
   position: relative;
-  background: linear-gradient(45deg, rgba(0, 212, 255, 0.1), rgba(183, 33, 255, 0.1));
+  background: linear-gradient(45deg, rgba(65, 133, 247, 0.1), rgba(90, 150, 248, 0.1));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -385,7 +385,7 @@ export default {
 
 .line {
   position: absolute;
-  background: linear-gradient(90deg, transparent, #00d4ff, transparent);
+  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
   opacity: 0.6;
 }
 
@@ -428,7 +428,7 @@ export default {
 .tech-circle {
   width: 300px;
   height: 300px;
-  border: 2px solid rgba(0, 212, 255, 0.3);
+  border: 2px solid rgba(65, 133, 247, 0.3);
   border-radius: 50%;
   position: relative;
   animation: rotate 20s linear infinite;
@@ -437,7 +437,7 @@ export default {
 .inner-circle {
   width: 200px;
   height: 200px;
-  border: 1px solid rgba(183, 33, 255, 0.3);
+  border: 1px solid rgba(90, 150, 248, 0.3);
   border-radius: 50%;
   position: absolute;
   top: 50%;
@@ -486,12 +486,12 @@ export default {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  color: #00d4ff;
-  font-size: 18px;
-  font-weight: 600;
-  text-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
-  border-right: 3px solid rgba(0, 212, 255, 0.4);
-  padding-right: 12px;
+  color: var(--primary-color);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  text-shadow: 0 0 15px rgba(65, 133, 247, 0.6);
+  border-right: 3px solid rgba(65, 133, 247, 0.4);
+  padding-right: var(--spacing-sm);
   height: 70px;
   gap: 4px;
 }
@@ -500,13 +500,13 @@ export default {
   width: 50px;
   height: 50px;
   object-fit: contain;
-  margin-right: 8px;
-  filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
-  transition: all 0.3s ease;
+  margin-right: var(--spacing-xs);
+  filter: drop-shadow(0 0 10px rgba(65, 133, 247, 0.5));
+  transition: all var(--transition-base);
 }
 
 .brand-logo:hover {
-  filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.8));
+  filter: drop-shadow(0 0 15px rgba(65, 133, 247, 0.8));
   transform: scale(1.05);
 }
 
@@ -518,9 +518,9 @@ export default {
 }
 
 .brand-name .brand-dot {
-  font-size: 12px;
-  color: #00BFFF;
-  text-shadow: 0 0 15px rgba(0, 191, 255, 0.8);
+  font-size: var(--font-size-xs);
+  color: var(--primary-color);
+  text-shadow: 0 0 15px rgba(65, 133, 247, 0.8);
   margin: 0;
   line-height: 1;
   align-self: center;
@@ -537,26 +537,26 @@ export default {
 
 .platform-title {
   font-size: 28px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: #ffffff;
   margin: 0;
   letter-spacing: 2px;
-  text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+  text-shadow: 0 0 20px rgba(65, 133, 247, 0.5);
 }
 
 .platform-subtitle {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.7);
   margin: 0;
   letter-spacing: 0.5px;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+  text-shadow: 0 0 10px rgba(65, 133, 247, 0.3);
 }
 
 .subtitle-highlight {
-  font-size: 16px;
-  font-weight: 500;
-  color: #00d4ff;
-  text-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--primary-color);
+  text-shadow: 0 0 15px rgba(65, 133, 247, 0.6);
 }
 
 /* 表单样式 */
@@ -565,54 +565,54 @@ export default {
 }
 
 .input-group {
-  margin-bottom: 25px;
+  margin-bottom: var(--spacing-lg);
 }
 
 .input-wrapper {
   position: relative;
   background: rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  border-radius: var(--input-border-radius);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
+  transition: all var(--transition-base);
   overflow: hidden;
 }
 
 .input-wrapper:hover {
   background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(0, 212, 255, 0.3);
+  border-color: rgba(65, 133, 247, 0.3);
 }
 
 .input-wrapper.focused {
   background: rgba(255, 255, 255, 0.15);
-  border-color: #00d4ff;
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 20px rgba(65, 133, 247, 0.3);
 }
 
 .input-icon {
   position: absolute;
-  left: 15px;
+  left: var(--spacing-base);
   top: 50%;
   transform: translateY(-50%);
   color: rgba(255, 255, 255, 0.6);
-  font-size: 16px;
-  transition: color 0.3s ease;
+  font-size: var(--font-size-base);
+  transition: color var(--transition-base);
   z-index: 2;
 }
 
 .input-wrapper.focused .input-icon {
-  color: #00d4ff;
+  color: var(--primary-color);
 }
 
 .tech-input, .tech-select {
   width: 100%;
-  height: 55px;
+  height: var(--button-height-md);
   padding: 0 50px 0 45px;
   background: transparent;
   border: none;
   outline: none;
   color: #ffffff;
-  font-size: 16px;
-  font-family: inherit;
+  font-size: var(--font-size-base);
+  font-family: var(--font-family-base);
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -641,35 +641,35 @@ export default {
 
 .select-arrow {
   position: absolute;
-  right: 15px;
+  right: var(--spacing-base);
   top: 50%;
   transform: translateY(-50%);
   color: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   pointer-events: none;
-  transition: color 0.3s ease, transform 0.3s ease;
+  transition: color var(--transition-base), transform var(--transition-base);
   z-index: 2;
 }
 
 .input-wrapper.focused .select-arrow {
-  color: #00d4ff;
+  color: var(--primary-color);
   transform: translateY(-50%) rotate(180deg);
 }
 
 .password-toggle {
   position: absolute;
-  right: 15px;
+  right: var(--spacing-base);
   top: 50%;
   transform: translateY(-50%);
   color: rgba(255, 255, 255, 0.6);
-  font-size: 16px;
+  font-size: var(--font-size-base);
   cursor: pointer;
-  transition: color 0.3s ease;
+  transition: color var(--transition-base);
   z-index: 2;
 }
 
 .password-toggle:hover {
-  color: #00d4ff;
+  color: var(--primary-color);
 }
 
 .input-border {
@@ -678,8 +678,8 @@ export default {
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, #00d4ff, #b721ff);
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-color-hover));
+  transition: width var(--transition-base);
 }
 
 .input-wrapper.focused .input-border {
@@ -688,28 +688,28 @@ export default {
 
 /* 登录按钮 */
 .login-btn-container {
-  margin-top: 35px;
+  margin-top: var(--spacing-xl);
 }
 
 .tech-login-btn {
   position: relative;
   width: 100%;
-  height: 55px;
-  background: linear-gradient(45deg, #00d4ff, #b721ff);
+  height: var(--button-height-lg);
+  background: linear-gradient(45deg, var(--primary-color), var(--primary-color-hover));
   border: none;
-  border-radius: 12px;
+  border-radius: var(--button-border-radius);
   color: #ffffff;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+  transition: all var(--transition-base);
+  box-shadow: 0 10px 30px rgba(65, 133, 247, 0.3);
 }
 
 .tech-login-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 40px rgba(0, 212, 255, 0.4);
+  box-shadow: 0 15px 40px rgba(65, 133, 247, 0.4);
 }
 
 .tech-login-btn:active {
@@ -728,7 +728,7 @@ export default {
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s ease;
+  transition: left var(--transition-slow);
 }
 
 .tech-login-btn:hover .btn-glow {
@@ -752,13 +752,13 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--spacing-xs);
   color: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .security-info i {
-  color: #00d4ff;
+  color: var(--primary-color);
 }
 
 /* 响应式设计 */
@@ -786,9 +786,9 @@ export default {
   .brand-name {
     flex-direction: row;
     border-right: none;
-    border-bottom: 3px solid rgba(0, 212, 255, 0.4);
+    border-bottom: 3px solid rgba(65, 133, 247, 0.4);
     padding-right: 0;
-    padding-bottom: 8px;
+    padding-bottom: var(--spacing-xs);
     height: auto;
     width: 100%;
     justify-content: center;

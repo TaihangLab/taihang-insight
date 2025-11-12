@@ -51,54 +51,62 @@ export default {
 </script>
 
 <style>
+/* 全局样式重置 */
 html,
 body,
 #app {
   margin: 0;
   padding: 0;
-  background-color: #e9eef3;
   height: 100%;
   width: 100%;
   overflow-x: hidden;
+  background-color: var(--bg-secondary);
+  font-family: var(--font-family-base);
+  color: var(--text-primary);
 }
+
+/* Element UI 组件全局样式调整 */
 .el-header,
 .el-footer {
-  /* background-color: #b3c0d1; */
-  color: #333;
+  color: var(--text-primary);
   text-align: center;
-  line-height: 60px;
   width: 100%;
   padding: 0;
 }
+
 .el-main {
-  background-color: #f0f2f5;
-  color: #333;
-  text-align: center;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
   padding: 0;
   width: 100%;
 }
 
-/*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/
+/* 全局滚动条样式 */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-/*定义滚动条轨道 内阴影+圆角*/
 ::-webkit-scrollbar-track {
   border-radius: 4px;
-  background-color: #F5F5F5;
+  background-color: var(--bg-tertiary);
 }
 
-/*定义滑块 内阴影+圆角*/
 ::-webkit-scrollbar-thumb {
   border-radius: 4px;
-  background-color: #c8c8c8;
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, .1);
-  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .1);
+  background-color: var(--border-color);
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
 }
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-tertiary);
+}
+
+/* 表格表头通用样式 */
 .table-header {
-  color: #727272;
-  font-weight: 600;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
 }
 </style>

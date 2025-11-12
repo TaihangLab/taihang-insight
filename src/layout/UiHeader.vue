@@ -1,122 +1,47 @@
 <template>
-  <div id="UiHeader">
-    <el-menu router
-      :default-active="activeIndex"
-      menu-trigger="click"
-      background-color="#001F3F"
-      text-color="#CCD6F6"
-      active-text-color="#4BD8FF"
-      mode="horizontal"
-      :unique-opened="true"
-      class="modern-menu">
+  <div class="ui-header">
+    <!-- 左侧面包屑导航 -->
+    <div class="header-left">
+      <el-breadcrumb separator="/">
+        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+        <el-breadcrumb-item v-if="currentMenuName">{{ currentMenuName }}</el-breadcrumb-item>
+        <el-breadcrumb-item v-if="currentPageName">{{ currentPageName }}</el-breadcrumb-item>
+      </el-breadcrumb>
+    </div>
 
-      <!-- Logo区域 -->
-      <div class="logo-container">
-        <img src="static/logo.png" alt="Logo" class="logo-image"/>
-        <div class="logo-text-container">
-          <div class="logo-brand-name">
-            <span class="brand-group">太行</span>
-            <span class="brand-dot">·</span>
-            <span class="brand-group">慧眼</span>
-          </div>
-          <div class="logo-text-right">
-            <span class="logo-text">太行视觉AI平台</span>
-            <span class="logo-subtitle"><span class="logo-subtitle-highlight">洞察万象，识图于微</span></span>
-          </div>
-        </div>
+    <!-- 右侧用户操作区 -->
+    <div class="header-right">
+      <!-- 系统时间 -->
+      <div class="system-time">
+        <i class="el-icon-time"></i>
+        <span>{{ currentTime }}</span>
       </div>
 
-      <!-- 监控预警菜单 -->
-      <el-submenu index="/monitoring" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-video-camera"></i>
-          <span>监控预警</span>
-        </template>
-        <el-menu-item index="/monitoring/realtime">实时监控</el-menu-item>
-        <el-menu-item index="/monitoring/statistics">统计分析</el-menu-item>
-        <el-menu-item index="/monitoring/warningArchive">预警档案</el-menu-item>
-        <el-menu-item index="/monitoring/warningManage">预警管理</el-menu-item>
-        <el-menu-item index="/monitoring/intelligentReview">智能复判</el-menu-item>
-      </el-submenu>
+      <!-- 用户信息 -->
+      <el-dropdown trigger="click" @command="handleCommand">
+        <div class="user-info">
+          <el-avatar :size="32" icon="el-icon-user" class="user-avatar"></el-avatar>
+          <span class="username">{{ username }}</span>
+          <i class="el-icon-arrow-down"></i>
+        </div>
+        <el-dropdown-menu slot="dropdown" class="user-dropdown">
+          <el-dropdown-item command="profile">
+            <i class="el-icon-user-solid"></i>
+            <span>个人中心</span>
+          </el-dropdown-item>
+          <el-dropdown-item command="password">
+            <i class="el-icon-key"></i>
+            <span>修改密码</span>
+          </el-dropdown-item>
+          <el-dropdown-item divided command="logout">
+            <i class="el-icon-switch-button"></i>
+            <span>退出登录</span>
+          </el-dropdown-item>
+        </el-dropdown-menu>
+      </el-dropdown>
+    </div>
 
-      <!-- 设备管理菜单 -->
-      <el-submenu index="/deviceManage" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-cpu"></i>
-          <span>设备配置</span>
-        </template>
-        <el-menu-item index="/deviceManage/camera">摄像头</el-menu-item>
-        <el-menu-item index="/deviceManage/localVideo">本地视频</el-menu-item>
-      </el-submenu>
-
-      <!-- 模型管理菜单 -->
-      <el-submenu index="/modelManage" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-data-analysis"></i>
-          <span>模型管理</span>
-        </template>
-        <el-menu-item index="/modelManage/modelList">模型列表</el-menu-item>
-      </el-submenu>
-
-      <!-- 技能管理菜单 -->
-      <el-submenu index="/skillManage" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-magic-stick"></i>
-          <span>技能管理</span>
-        </template>
-        <el-menu-item index="/skillManage/deviceSkills">视觉模型技能</el-menu-item>
-        <el-menu-item index="/skillManage/multimodalLlmSkills">多模态大模型技能</el-menu-item>
-        <el-menu-item index="/skillManage/multimodalReview">多模态大模型复判</el-menu-item>
-      </el-submenu>
-
-      <!-- 系统管理菜单 -->
-      <el-submenu index="/systemManage" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-setting"></i>
-          <span>系统管理</span>
-        </template>
-        <el-menu-item index="/systemManage/appSettings">应用设置</el-menu-item>
-        <el-menu-item index="/systemManage/userManagement">用户管理</el-menu-item>
-        <el-menu-item index="/systemManage/roleManagement">角色管理</el-menu-item>
-        <el-menu-item index="/systemManage/tenantManagement">租户管理</el-menu-item>
-        <el-menu-item index="/systemManage/departmentManagement">部门管理</el-menu-item>
-        <el-menu-item index="/systemManage/positionManagement">岗位管理</el-menu-item>
-        <el-menu-item index="/systemManage/knowledgeBase">知识库管理</el-menu-item>
-      </el-submenu>
-
-      <!-- 可视中心菜单 -->
-      <el-submenu index="/visualAI" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-view"></i>
-          <span>可视中心</span>
-        </template>
-        <el-menu-item index="/visualCenter">可视中心首页</el-menu-item>
-        <el-menu-item index="/algorithmInference">算法推理平台</el-menu-item>
-        <el-menu-item index="/visualCenter/parkManagement">园区封闭管理平台</el-menu-item>
-      </el-submenu>
-
-
-
-      <!-- 用户菜单 -->
-      <el-submenu index="" class="user-menu" popper-class="modern-submenu">
-        <template slot="title">
-          <el-avatar :size="28" icon="el-icon-user" class="user-avatar"></el-avatar>
-          <span>{{ username }}</span>
-        </template>
-        <el-menu-item @click="goToProfile">
-          <i class="el-icon-user-solid"></i>
-          <span>个人中心</span>
-        </el-menu-item>
-        <el-menu-item @click="changePassword">
-          <i class="el-icon-key"></i>
-          <span>修改密码</span>
-        </el-menu-item>
-        <el-menu-item @click="loginout">
-          <i class="el-icon-switch-button"></i>
-          <span>注销</span>
-        </el-menu-item>
-      </el-submenu>
-    </el-menu>
+    <!-- 修改密码对话框 -->
     <changePasswordDialog ref="changePasswordDialog"></changePasswordDialog>
   </div>
 </template>
@@ -124,45 +49,90 @@
 <script>
 import changePasswordDialog from '../components/dialog/changePassword.vue'
 import userService from '../components/service/UserService'
-import {Notification} from 'element-ui';
 
 export default {
   name: "UiHeader",
-  components: {Notification, changePasswordDialog},
+  components: { changePasswordDialog },
   data() {
     return {
       username: userService.getUser().username,
-      activeIndex: this.$route.path.indexOf("/", 1)>0?this.$route.path.substring(0, this.$route.path.indexOf("/", 1)):this.$route.path,
-      editUser: userService.getUser() ? userService.getUser().role.id === 1 : false
+      currentTime: '',
+      currentMenuName: '',
+      currentPageName: ''
     };
   },
   created() {
-    console.log(34334)
-    console.log(this.$route.path)
-    console.log(this.$route.path.indexOf("/", 1))
-    console.log(this.activeIndex)
-    if (this.$route.path.startsWith("/channelList")) {
-      this.activeIndex = "/deviceList"
+    this.updateTime();
+    this.updateBreadcrumb();
+    // 每秒更新时间
+    setInterval(this.updateTime, 1000);
+  },
+  watch: {
+    $route() {
+      this.updateBreadcrumb();
     }
   },
-  mounted() {
-    // 添加通道管理菜单的特殊处理
-    this.$nextTick(() => {
-      // 获取到通道管理的菜单项
-      const channelSubmenu = document.querySelector('.el-submenu[index="/channel"]');
-      if (channelSubmenu) {
-        const channelTitle = channelSubmenu.querySelector('.el-submenu__title');
-        if (channelTitle) {
-          // 阻止点击通道管理时的冒泡，防止触发父菜单的关闭
-          channelTitle.addEventListener('click', (e) => {
-            e.stopPropagation();
-          });
-        }
-      }
-    });
-  },
   methods: {
-    loginout() {
+    updateTime() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      this.currentTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+    updateBreadcrumb() {
+      const path = this.$route.path;
+      const routeMap = {
+        '/monitoring': { menu: '监控预警', page: '' },
+        '/monitoring/realtime': { menu: '监控预警', page: '实时监控' },
+        '/monitoring/statistics': { menu: '监控预警', page: '统计分析' },
+        '/monitoring/warningArchive': { menu: '监控预警', page: '预警档案' },
+        '/monitoring/warningManage': { menu: '监控预警', page: '预警管理' },
+        '/monitoring/intelligentReview': { menu: '监控预警', page: '智能复判' },
+        '/deviceManage/camera': { menu: '设备配置', page: '摄像头' },
+        '/deviceManage/localVideo': { menu: '设备配置', page: '本地视频' },
+        '/modelManage/modelList': { menu: '模型管理', page: '模型列表' },
+        '/skillManage/deviceSkills': { menu: '技能管理', page: '视觉模型技能' },
+        '/skillManage/multimodalLlmSkills': { menu: '技能管理', page: '多模态大模型技能' },
+        '/skillManage/multimodalReview': { menu: '技能管理', page: '多模态大模型复判' },
+        '/systemManage/appSettings': { menu: '系统管理', page: '应用设置' },
+        '/systemManage/userManagement': { menu: '系统管理', page: '用户管理' },
+        '/systemManage/roleManagement': { menu: '系统管理', page: '角色管理' },
+        '/systemManage/tenantManagement': { menu: '系统管理', page: '租户管理' },
+        '/systemManage/departmentManagement': { menu: '系统管理', page: '部门管理' },
+        '/systemManage/positionManagement': { menu: '系统管理', page: '岗位管理' },
+        '/systemManage/knowledgeBase': { menu: '系统管理', page: '知识库管理' },
+        '/visualCenter': { menu: '可视中心', page: '可视中心首页' },
+        '/algorithmInference': { menu: '可视中心', page: '算法推理平台' },
+        '/visualCenter/parkManagement': { menu: '可视中心', page: '园区封闭管理平台' }
+      };
+      
+      const route = routeMap[path];
+      if (route) {
+        this.currentMenuName = route.menu;
+        this.currentPageName = route.page;
+      } else {
+        this.currentMenuName = '';
+        this.currentPageName = '';
+      }
+    },
+    handleCommand(command) {
+      switch (command) {
+        case 'profile':
+          this.$router.push('/systemManage/profile');
+          break;
+        case 'password':
+          this.$refs.changePasswordDialog.openDialog();
+          break;
+        case 'logout':
+          this.logout();
+          break;
+      }
+    },
+    logout() {
       // 清除所有用户信息和登录状态
       userService.clearUserInfo();
       userService.clearLoginStatus();
@@ -178,470 +148,140 @@ export default {
       setTimeout(() => {
         window.location.reload();
       }, 100);
-    },
-    changePassword() {
-      this.$refs.changePasswordDialog.openDialog()
-    },
-    goToProfile() {
-      this.$router.push('/systemManage/profile');
-    },
-    openDoc() {
-      console.log(process.env.BASE_API)
-      window.open(!!process.env.BASE_API ? process.env.BASE_API + "/doc.html" : "/doc.html")
     }
-  },
-  destroyed() {
-    // 组件销毁时的清理工作
-  },
-
+  }
 }
-
 </script>
-<style>
-#UiHeader {
-  width: 100%;
-  padding: 0;
-  margin: 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
 
-/* 现代化菜单 */
-.modern-menu {
+<style scoped>
+/* 顶部导航栏容器 */
+.ui-header {
   width: 100%;
-  padding: 0;
-  margin: 0;
-  border-right: none;
-  border-bottom: none;
+  height: var(--header-height);
   display: flex;
   align-items: center;
-  height: 60px;
-  /* 保持原来的深蓝色背景 */
-  background-color: #001F3F;
-  position: relative;
-  overflow: hidden;
+  justify-content: space-between;
+  padding: 0 var(--spacing-lg);
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
 }
 
-/* 添加科技感光效 */
-.modern-menu::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(75, 216, 255, 0.1) 50%,
-    transparent 100%);
-  animation: shimmer 8s infinite;
+/* 左侧面包屑导航 */
+.header-left {
+  flex: 1;
 }
 
-@keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
+.header-left >>> .el-breadcrumb {
+  font-size: var(--font-size-sm);
+  line-height: var(--header-height);
 }
 
-/* Logo样式 */
-.logo-container {
+.header-left >>> .el-breadcrumb__item {
+  font-size: var(--font-size-sm);
+}
+
+.header-left >>> .el-breadcrumb__inner {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-normal);
+}
+
+.header-left >>> .el-breadcrumb__item:last-child .el-breadcrumb__inner {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 右侧操作区 */
+.header-right {
   display: flex;
   align-items: center;
-  padding: 0 20px;
-  margin-right: 20px;
-  height: 60px;
-  border-right: 1px solid rgba(75, 216, 255, 0.2);
-  position: relative;
-  z-index: 2;
-  min-width: 280px;
+  gap: var(--spacing-lg);
 }
 
-.logo-image {
-  height: 36px;
-  width: auto;
-  margin-right: 10px;
-  object-fit: contain;
-  transition: all 0.3s ease;
-}
-
-.logo-container:hover .logo-image {
-  transform: scale(1.05);
-  filter: drop-shadow(0 0 10px rgba(75, 216, 255, 0.6));
-}
-
-.logo-text-container {
+/* 系统时间 */
+.system-time {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  line-height: 1.2;
-  gap: 12px;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  padding: 0 var(--spacing-base);
 }
 
-.logo-brand-name {
+.system-time i {
+  font-size: var(--font-size-base);
+}
+
+/* 用户信息 */
+.user-info {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  color: #4BD8FF;
-  font-size: 14px;
-  font-weight: 600;
-  text-shadow: 0 0 12px rgba(75, 216, 255, 0.6);
-  border-right: 2px solid rgba(75, 216, 255, 0.3);
-  padding-right: 8px;
-  height: 42px;
-  gap: 3px;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-base);
+  cursor: pointer;
+  border-radius: var(--border-radius-base);
+  transition: all var(--transition-base);
 }
 
-.brand-group {
-  writing-mode: vertical-lr;
-  text-orientation: upright;
-  letter-spacing: 0.5px;
-  line-height: 1;
-}
-
-.brand-dot {
-  font-size: 8px;
-  color: #00BFFF;
-  text-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
-  margin: 0;
-  line-height: 1;
-  align-self: center;
-  width: 8px;
-  text-align: center;
-}
-
-.logo-text-right {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-}
-
-.logo-text {
-  color: #4BD8FF;
-  font-size: 18px;
-  font-weight: bold;
-  white-space: nowrap;
-  letter-spacing: 0.5px;
-  text-shadow: 0 0 15px rgba(75, 216, 255, 0.6);
-  position: relative;
-  margin-bottom: 2px;
-}
-
-.logo-subtitle {
-  color: #CCD6F6;
-  font-size: 11px;
-  font-weight: 400;
-  white-space: nowrap;
-  letter-spacing: 0.3px;
-  text-shadow: 0 0 8px rgba(204, 214, 246, 0.4);
-  opacity: 0.8;
-  transition: all 0.3s ease;
-}
-
-.logo-subtitle-highlight {
-  font-size: 13px;
-  font-weight: 500;
-  color: #4BD8FF;
-  text-shadow: 0 0 12px rgba(75, 216, 255, 0.6);
-  opacity: 1;
-}
-
-.logo-container:hover .logo-brand-name {
-  color: #00BFFF;
-  text-shadow: 0 0 15px rgba(0, 191, 255, 0.8);
-  border-right-color: rgba(0, 191, 255, 0.6);
-}
-
-.logo-container:hover .brand-group {
-  color: #00BFFF;
-  text-shadow: 0 0 15px rgba(0, 191, 255, 0.8);
-}
-
-.logo-container:hover .brand-dot {
-  color: #FFFFFF;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
-}
-
-.logo-container:hover .logo-subtitle {
-  opacity: 1;
-  color: #4BD8FF;
-  text-shadow: 0 0 10px rgba(75, 216, 255, 0.5);
-}
-
-.logo-container:hover .logo-subtitle-highlight {
-  color: #00BFFF;
-  text-shadow: 0 0 15px rgba(0, 191, 255, 0.8);
-}
-
-.logo-text::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #4BD8FF, #06b6d4);
-  transition: width 0.3s ease;
-}
-
-.logo-container:hover .logo-text::after {
-  width: 100%;
-}
-
-/* 用户菜单 */
-.user-menu {
-  margin-left: auto !important;
-  position: relative;
-  z-index: 2;
-}
-
-.user-menu .el-submenu__title {
-  padding: 0 20px;
-  position: relative;
-  transition: all 0.3s ease;
+.user-info:hover {
+  background-color: var(--bg-secondary);
 }
 
 .user-avatar {
-  margin-right: 8px;
-  background: linear-gradient(135deg, #4BD8FF 0%, #06b6d4 100%);
-  border: 2px solid rgba(75, 216, 255, 0.3);
-  transition: all 0.3s ease;
-  box-shadow: 0 0 10px rgba(75, 216, 255, 0.3);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #5a96f8 100%);
+  border: 2px solid var(--primary-color-light);
 }
 
-.user-menu:hover .user-avatar {
-  transform: scale(1.05);
-  box-shadow: 0 0 20px rgba(75, 216, 255, 0.8);
-  border-color: rgba(75, 216, 255, 0.8);
-}
-
-/* 样式已移除，不再需要switch-label */
-
-/* 菜单项样式 */
-.modern-menu .el-menu-item,
-.modern-menu .el-submenu__title {
-  height: 60px;
-  line-height: 60px;
-  padding: 0 15px;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 2;
-  border-radius: 4px;
-  margin: 0 2px;
-}
-
-.modern-menu .el-menu-item:hover,
-.modern-menu .el-submenu__title:hover {
-  background: linear-gradient(135deg,
-    rgba(75, 216, 255, 0.1) 0%,
-    rgba(75, 216, 255, 0.05) 100%) !important;
-  color: #4BD8FF !important;
-  box-shadow: 0 4px 15px rgba(75, 216, 255, 0.2);
-  transform: translateY(-1px);
-}
-
-.modern-menu .el-menu-item i,
-.modern-menu .el-submenu__title i {
-  margin-right: 5px;
-  font-size: 18px;
-  vertical-align: middle;
-  transition: all 0.3s ease;
-}
-
-.modern-menu .el-menu-item:hover i,
-.modern-menu .el-submenu__title:hover i {
-  transform: translateY(-2px) scale(1.1);
-  text-shadow: 0 0 10px rgba(75, 216, 255, 0.8);
-}
-
-/* 子菜单样式 */
-.modern-submenu {
-  background: linear-gradient(135deg, #002B56 0%, #003B76 100%) !important;
-  border: 1px solid rgba(75, 216, 255, 0.2) !important;
-  border-radius: 8px;
+.username {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  max-width: 120px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
-              0 0 20px rgba(75, 216, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  animation: slideDown 0.3s ease;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.modern-submenu .el-menu-item {
-  color: #CCD6F6 !important;
-  height: 40px;
-  line-height: 40px;
-  padding: 0 15px;
-  transition: all 0.3s ease;
-  border-radius: 4px;
-  margin: 2px 4px;
-}
-
-.modern-submenu .el-menu-item:hover {
-  background: linear-gradient(135deg,
-    rgba(75, 216, 255, 0.15) 0%,
-    rgba(75, 216, 255, 0.08) 100%) !important;
-  color: #4BD8FF !important;
-  transform: translateX(4px);
-  box-shadow: 0 2px 8px rgba(75, 216, 255, 0.2);
-}
-
-.modern-submenu .el-menu-item.is-active {
-  background: linear-gradient(135deg,
-    rgba(75, 216, 255, 0.2) 0%,
-    rgba(75, 216, 255, 0.1) 100%) !important;
-  color: #4BD8FF !important;
-  border-left: 3px solid #4BD8FF;
-}
-
-/* 嵌套子菜单 */
-.nested-submenu {
-  min-width: 150px;
-}
-
-/* 活动状态样式 */
-#UiHeader .el-menu-item.is-active {
-  color: #4BD8FF !important;
-  background: linear-gradient(135deg,
-    rgba(75, 216, 255, 0.15) 0%,
-    rgba(75, 216, 255, 0.08) 100%) !important;
-  border-bottom: 3px solid #4BD8FF;
-  box-shadow: 0 4px 15px rgba(75, 216, 255, 0.3);
-  position: relative;
-}
-
-#UiHeader .el-menu-item.is-active::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(75, 216, 255, 0.1) 50%,
-    transparent 100%);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
-#UiHeader .el-submenu.is-active .el-submenu__title {
-  color: #4BD8FF !important;
-  background: linear-gradient(135deg,
-    rgba(75, 216, 255, 0.15) 0%,
-    rgba(75, 216, 255, 0.08) 100%) !important;
-  border-bottom: 3px solid #4BD8FF;
-  box-shadow: 0 4px 15px rgba(75, 216, 255, 0.3);
-}
-
-#UiHeader .el-submenu.is-active .el-submenu__icon-arrow {
-  color: #4BD8FF !important;
-  text-shadow: 0 0 10px rgba(75, 216, 255, 0.8);
-}
-
-/* 箭头图标位置调整 */
-.el-submenu__icon-arrow {
-  margin-top: 0;
+.user-info i.el-icon-arrow-down {
   font-size: 12px;
-  margin-left: 5px;
-  transition: all 0.3s ease;
+  color: var(--text-tertiary);
+  transition: transform var(--transition-base);
 }
 
-.el-submenu:hover .el-submenu__icon-arrow {
+.user-info:hover i.el-icon-arrow-down {
   transform: rotate(180deg);
 }
 
-/* 调整菜单响应式行为 */
-@media screen and (max-width: 1200px) {
-  .modern-menu .el-menu-item,
-  .modern-menu .el-submenu__title {
-    padding: 0 10px;
-  }
-
-  .logo-container {
-    padding: 0 10px;
-    margin-right: 10px;
-  }
-
-  .logo-text {
-    font-size: 16px;
-  }
+/* 用户下拉菜单 */
+.user-dropdown {
+  margin-top: var(--spacing-xs);
 }
 
-@media screen and (max-width: 992px) {
-  .modern-menu .el-menu-item span,
-  .modern-menu .el-submenu__title span {
-    display: none;
-  }
-
-  .modern-menu .el-menu-item i,
-  .modern-menu .el-submenu__title i {
-    margin-right: 0;
-    font-size: 20px;
-  }
-
-  .logo-text {
-    display: none;
-  }
+.user-dropdown >>> .el-dropdown-menu__item {
+  padding: 0 var(--spacing-base);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
 }
 
-@media screen and (max-width: 768px) {
-  .logo-container {
-    min-width: auto;
-    padding: 0 15px;
-  }
-
-  .logo-text-container {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .logo-brand-name {
-    flex-direction: row;
-    border-right: none;
-    border-bottom: 2px solid rgba(75, 216, 255, 0.3);
-    padding-right: 0;
-    padding-bottom: 4px;
-    height: auto;
-    width: 100%;
-    justify-content: center;
-    gap: 4px;
-  }
-
-  .logo-text {
-    font-size: 14px;
-    display: block;
-  }
-
-  .logo-subtitle-highlight {
-    font-size: 11px;
-  }
+.user-dropdown >>> .el-dropdown-menu__item i {
+  margin-right: var(--spacing-xs);
+  color: var(--text-secondary);
 }
 
-/* 动画定义 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.user-dropdown >>> .el-dropdown-menu__item:hover {
+  background-color: var(--bg-secondary);
+  color: var(--primary-color);
+}
+
+.user-dropdown >>> .el-dropdown-menu__item:hover i {
+  color: var(--primary-color);
+}
+
+/* 分割线 */
+.user-dropdown >>> .el-dropdown-menu__item--divided {
+  border-top: 1px solid var(--border-color);
+}
+
+.user-dropdown >>> .el-dropdown-menu__item--divided:before {
+  display: none;
 }
 </style>
