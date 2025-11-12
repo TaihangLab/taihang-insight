@@ -815,7 +815,6 @@ export default {
 .upload-text {
   font-size: 12px;
   font-weight: 500;
-  line-height: 14px;
 }
 
 .upload-tip {

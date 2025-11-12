@@ -2157,10 +2157,10 @@ export default {
     <el-dialog title="添加新档案" :visible.sync="addArchiveDialogVisible" width="30%" custom-class="add-archive-dialog">
       <el-form :model="newArchiveForm" label-width="100px" class="add-form">
         <el-form-item label="档案名称" required>
-          <el-input v-model="newArchiveForm.name" placeholder="请输入档案名称"></el-input>
+          <el-input v-model="newArchiveForm.name"></el-input>
         </el-form-item>
         <el-form-item label="所属位置" required>
-          <el-input v-model="newArchiveForm.location" placeholder="请输入所属位置"></el-input>
+          <el-input v-model="newArchiveForm.location"></el-input>
         </el-form-item>
         <el-form-item label="时间范围">
           <el-date-picker
