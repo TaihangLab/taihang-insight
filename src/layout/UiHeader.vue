@@ -17,14 +17,8 @@
         <span>{{ currentTime }}</span>
       </div>
 
-      <!-- 用户信息 - 支持访客模式 -->
-      <div v-if="!isLoggedIn" class="guest-actions">
-        <el-button type="primary" size="small" @click="goToLogin" icon="el-icon-user">
-          登录
-        </el-button>
-      </div>
-      
-      <el-dropdown v-else trigger="click" @command="handleCommand">
+      <!-- 用户信息 - 仅在已登录时显示 -->
+      <el-dropdown v-if="isLoggedIn" trigger="click" @command="handleCommand">
         <div class="user-info">
           <el-avatar :size="32" icon="el-icon-user" class="user-avatar"></el-avatar>
           <span class="username">{{ username }}</span>
@@ -126,9 +120,6 @@ export default {
         this.currentPageName = '';
       }
     },
-    goToLogin() {
-      this.$router.push('/login');
-    },
     handleCommand(command) {
       switch (command) {
         case 'profile':
@@ -222,18 +213,6 @@ export default {
 
 .system-time i {
   font-size: var(--font-size-base);
-}
-
-/* 访客操作区 */
-.guest-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.guest-actions >>> .el-button {
-  font-size: var(--font-size-sm);
-  padding: var(--spacing-xs) var(--spacing-base);
 }
 
 /* 用户信息 */
