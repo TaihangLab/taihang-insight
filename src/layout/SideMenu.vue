@@ -4,9 +4,12 @@
     <div class="logo-section">
       <img src="/static/logo.png" alt="Logo" class="logo-img" v-if="!isCollapsed"/>
       <img src="/static/logo.png" alt="Logo" class="logo-img-small" v-else/>
-      <div class="system-name" v-if="!isCollapsed">
-        <div class="system-title">铜矿峪矿</div>
-        <div class="system-subtitle">综合管控平台</div>
+      <div class="logo-text-container" v-if="!isCollapsed">
+        <div class="brand-row">
+          <span class="brand-name-text">太行·慧眼</span>
+        </div>
+        <div class="system-title">太行视觉AI平台</div>
+        <div class="system-subtitle">洞察万象，识图于微</div>
       </div>
     </div>
 
@@ -187,19 +190,21 @@ export default {
 
 /* Logo 区域 */
 .logo-section {
-  height: var(--header-height);
+  min-height: 88px;
+  height: auto;
   display: flex;
   align-items: center;
-  padding: 0 var(--spacing-base);
+  padding: var(--spacing-base);
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-primary);
+  gap: var(--spacing-base);
 }
 
 .logo-img {
-  height: 36px;
+  height: 52px;
   width: auto;
-  margin-right: var(--spacing-sm);
   transition: all var(--transition-base);
+  flex-shrink: 0;
 }
 
 .logo-img-small {
@@ -208,22 +213,42 @@ export default {
   margin: 0 auto;
 }
 
-.system-name {
+/* Logo文字容器 */
+.logo-text-container {
   display: flex;
   flex-direction: column;
-  line-height: 1.2;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 太行·慧眼横排文字 */
+.brand-row {
+  display: flex;
+  align-items: center;
+}
+
+.brand-name-text {
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary-color);
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(65, 133, 247, 0.3);
+  white-space: nowrap;
 }
 
 .system-title {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
-  color: var(--primary-color);
+  color: var(--text-primary);
+  line-height: 1.3;
   white-space: nowrap;
 }
 
 .system-subtitle {
-  font-size: var(--font-size-xs);
+  font-size: 11px;
   color: var(--text-secondary);
+  line-height: 1.3;
   white-space: nowrap;
 }
 

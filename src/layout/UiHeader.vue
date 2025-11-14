@@ -17,8 +17,8 @@
         <span>{{ currentTime }}</span>
       </div>
 
-      <!-- 用户信息 -->
-      <el-dropdown trigger="click" @command="handleCommand">
+      <!-- 用户信息 - 仅在已登录时显示 -->
+      <el-dropdown v-if="isLoggedIn" trigger="click" @command="handleCommand">
         <div class="user-info">
           <el-avatar :size="32" icon="el-icon-user" class="user-avatar"></el-avatar>
           <span class="username">{{ username }}</span>
@@ -55,7 +55,8 @@ export default {
   components: { changePasswordDialog },
   data() {
     return {
-      username: userService.getUser().username,
+      username: userService.getUser().username || '访客',
+      isLoggedIn: userService.getToken() != null,
       currentTime: '',
       currentMenuName: '',
       currentPageName: ''
@@ -143,11 +144,14 @@ export default {
         type: 'success'
       });
 
-      this.$router.push('/login');
-      // 刷新页面，确保登录界面布局正常
+      // 更新登录状态
+      this.isLoggedIn = false;
+      this.username = '访客';
+
+      // 刷新页面以重置所有组件状态
       setTimeout(() => {
         window.location.reload();
-      }, 100);
+      }, 500);
     }
   }
 }
