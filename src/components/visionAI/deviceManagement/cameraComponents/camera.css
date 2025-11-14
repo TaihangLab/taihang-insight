@@ -86,10 +86,10 @@
   justify-content: center;
 }
 
-.left-operations .el-button:hover {
+/* .left-operations .el-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
+} */
 
 .left-operations .el-button i {
   margin-right: 5px;
@@ -3348,7 +3348,7 @@
 }
 
 /* 主要按钮样式 - 科技蓝渐变 */
-.camera-management >>> .el-button--primary {
+/* .camera-management >>> .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3) !important;
@@ -3380,10 +3380,10 @@
 
 .camera-management >>> .el-button--primary:hover::before {
   left: 100%;
-}
+} */
 
 /* 成功按钮样式 */
-.camera-management >>> .el-button--success {
+/* .camera-management >>> .el-button--success {
   background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4), 0 2px 4px rgba(5, 150, 105, 0.3) !important;
@@ -3415,7 +3415,7 @@
 
 .camera-management >>> .el-button--success:hover::before {
   left: 100%;
-}
+} */
 
 /* 危险按钮样式 */
 .camera-management >>> .el-button--danger {
@@ -3620,14 +3620,14 @@
 /* 分页样式 */
 .camera-management >>> .el-pagination .el-pager li {
   background: white !important;
-  border: 1px solid #dcdfe6 !important;
+  /* border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
-  margin: 0 2px !important;
+  margin: 0 2px !important; */
 }
 
-.camera-management >>> .el-pagination .el-pager li:hover {
+/* .camera-management >>> .el-pagination .el-pager li:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -3656,7 +3656,7 @@
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
+} */
 
 /* 标签样式 */
 .camera-management >>> .el-tag {
@@ -3833,20 +3833,21 @@
   cursor: pointer;
   transition: all 0.3s ease;
   border: 1px solid rgba(59, 130, 246, 0.2);
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255);
   font-size: 14px;
   font-weight: 500;
 }
 
 .filter-item:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.03) 100%);
+  /* background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.03) 100%); */
   border-color: rgba(59, 130, 246, 0.4);
   transform: translateX(2px);
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
 }
 
 .filter-item.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  /* background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); */
+  background: #4185F7;
   border-color: #3b82f6;
   color: white;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
@@ -3900,7 +3901,7 @@
 }
 
 /* 刷新列表按钮样式 */
-.operation-left .el-button--primary {
+/* .operation-left .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3) !important;
@@ -3931,10 +3932,10 @@
 
 .operation-left .el-button--primary:hover::before {
   left: 100% !important;
-}
+} */
 
 /* 摄像头管理按钮样式 - 保持绿色主题 */
-.operation-left .el-button--success {
+/* .operation-left .el-button--success {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4), 0 2px 4px rgba(5, 150, 105, 0.3) !important;
@@ -3961,15 +3962,20 @@
   background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5), 0 4px 8px rgba(5, 150, 105, 0.4) !important;
   transform: translateY(-2px) !important;
-}
+} */
 
-.operation-left .el-button--success:hover::before {
+/* .operation-left .el-button--success:hover::before {
   left: 100% !important;
-}
+} */
 
 .operation-right {
   display: flex;
   align-items: center;
+}
+
+.operation-right >>> .el-input__prefix {
+  top:8px;
+  left:5px;
 }
 
 /* 表格卡片 */
@@ -4469,7 +4475,7 @@ body .el-dialog__wrapper .skill-params-dialog {
    ======================================== */
 
 /* 类型标签 - 灰底灰字 */
-.table-card >>> .el-table .el-tag--plain,
+/* .table-card >>> .el-table .el-tag--plain,
 .table-card >>> .el-table .el-tag[type=""] {
   background: #f3f4f6 !important;
   color: #6b7280 !important;
@@ -4483,7 +4489,7 @@ body .el-dialog__wrapper .skill-params-dialog {
 }
 
 /* 状态标签 - 科技感浅色 */
-.table-card >>> .el-table .el-tag--success {
+/* .table-card >>> .el-table .el-tag--success {
   background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
   color: #065f46 !important;
   border: 1px solid #a7f3d0 !important;
@@ -4529,7 +4535,7 @@ body .el-dialog__wrapper .skill-params-dialog {
   padding: 0 8px !important;
   height: 24px !important;
   line-height: 22px !important;
-}
+} */
 
 /* 统一表格内所有标签样式 */
 .table-card >>> .el-table .el-tag {

@@ -84,7 +84,7 @@ export default {
 .layout-content {
   flex: 1;
   background-color: var(--bg-secondary);
-  padding: var(--spacing-lg);
+  /* padding: var(--spacing-lg); */
   overflow-y: auto;
   overflow-x: hidden;
 }

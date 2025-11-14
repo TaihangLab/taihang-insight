@@ -2888,7 +2888,7 @@ export default {
   flex: 1;
   overflow: auto;
   height: calc(100% - 80px);
-  padding: 16px;
+  /* padding: 16px;  */
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
 }
 

@@ -177,7 +177,7 @@ export default {
 }
 
 .header-left >>> .el-breadcrumb__item {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
 }
 
 .header-left >>> .el-breadcrumb__inner {
@@ -202,7 +202,7 @@ export default {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   color: var(--text-secondary);
   padding: 0 var(--spacing-base);
 }
@@ -232,7 +232,7 @@ export default {
 }
 
 .username {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   color: var(--text-primary);
   font-weight: var(--font-weight-medium);
   max-width: 120px;
@@ -258,7 +258,7 @@ export default {
 
 .user-dropdown >>> .el-dropdown-menu__item {
   padding: 0 var(--spacing-base);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   color: var(--text-primary);
 }
 

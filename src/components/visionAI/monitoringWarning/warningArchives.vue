@@ -1825,13 +1825,14 @@ export default {
         </div>
         
         <!-- 档案列表分页区域 -->
+         <!-- layout="total, sizes, prev, pager, next, jumper" -->
         <div class="archives-pagination">
           <el-pagination
             :current-page.sync="archivesPagination.currentPage"
             :page-size.sync="archivesPagination.pageSize"
             :total="archivesPagination.total"
             :page-sizes="[10, 20, 50, 100]"
-            layout="total, sizes, prev, pager, next, jumper"
+            layout="total, prev, pager, next"
             @size-change="handleArchivesSizeChange"
             @current-change="handleArchivesCurrentChange"
           />
@@ -2127,7 +2128,7 @@ export default {
       </el-table>
 
       <!-- 分页 -->
-      <div class="alert-pagination">
+      <div class="pagination">
         <el-pagination
           :current-page.sync="availableAlertsPagination.currentPage"
           :page-size.sync="availableAlertsPagination.pageSize"
@@ -2572,8 +2573,8 @@ export default {
 
 /* 档案分页样式 */
 .archives-pagination {
-  padding: 10px;
-  border-top: 1px solid rgba(59, 130, 246, 0.2);
+  /* padding: 10px; */
+  /* border-top: 1px solid rgba(59, 130, 246, 0.2); */
   background: rgba(255, 255, 255, 0.8);
 }
 
@@ -2596,11 +2597,11 @@ export default {
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.archives-pagination >>> .el-pagination .el-pager li.active {
+/* .archives-pagination >>> .el-pagination .el-pager li.active {
   background-color: #3b82f6;
   border-color: #3b82f6;
   color: white;
-}
+} */
 
 .archives-pagination >>> .el-pagination button {
   background-color: rgba(255, 255, 255, 0.8);
@@ -2940,14 +2941,14 @@ export default {
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: -20px;
-  padding: 20px 0;
+  /* margin-top: -20px;
+  padding: 20px 0; */
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  /* border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); */
 }
 
-.pagination >>> .el-pagination {
+/* .pagination >>> .el-pagination {
   justify-content: center;
 }
 
@@ -2958,9 +2959,9 @@ export default {
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
   margin: 0 2px !important;
-}
+} */
 
-.pagination >>> .el-pagination .el-pager li:hover {
+/* .pagination >>> .el-pagination .el-pager li:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -2989,7 +2990,7 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
+} */
 
 /* 详情弹窗 */
 ::v-deep .warning-detail-dialog .el-dialog {
@@ -3266,7 +3267,7 @@ export default {
   gap: 12px;
 }
 
-.overlay-actions .el-button {
+/* .overlay-actions .el-button {
   background-color: rgba(255, 255, 255, 0.9);
   border: none;
   border-radius: 6px;
@@ -3282,7 +3283,7 @@ export default {
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(64, 158, 255, 0.3);
-}
+} */
 
 .overlay-actions .el-button i {
   margin-right: 4px;
@@ -3364,11 +3365,11 @@ export default {
   font-size: 14px;
   border-radius: 6px;
   font-weight: 500;
-  transition: all 0.3s ease;
+  /* transition: all 0.3s ease; */
   margin-right: 0;
 }
 
-.page-container >>> .el-button--primary,
+/* .page-container >>> .el-button--primary,
 .page-container >>> .add-btn,
 .page-container >>> .edit-archive-btn {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
@@ -3381,17 +3382,17 @@ export default {
   font-weight: 600 !important;
   letter-spacing: 0.3px !important;
   border-radius: 6px !important;
-}
+} */
 
 
 
-.page-container >>> .el-button--primary:hover,
+/* .page-container >>> .el-button--primary:hover,
 .page-container >>> .add-btn:hover,
 .page-container >>> .edit-archive-btn:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%) !important;
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4) !important;
   transform: translateY(-2px) !important;
-}
+} */
 
 
 
@@ -3430,7 +3431,7 @@ export default {
 }
 
 /* 保持其他危险按钮的红色样式 */
-.page-container >>> .el-button--danger:not(.batch-delete-btn) {
+/* .page-container >>> .el-button--danger:not(.batch-delete-btn) {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4), 0 2px 4px rgba(185, 28, 28, 0.3) !important;
@@ -3441,19 +3442,19 @@ export default {
   font-weight: 600 !important;
   letter-spacing: 0.3px !important;
   border-radius: 6px !important;
-}
+} */
 
 
 
-.page-container >>> .el-button--danger:not(.batch-delete-btn):hover {
+/* .page-container >>> .el-button--danger:not(.batch-delete-btn):hover {
   background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
   box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5), 0 4px 8px rgba(185, 28, 28, 0.4) !important;
   transform: translateY(-2px) !important;
-}
+} */
 
 
 
-.page-container >>> .el-button:not(.el-button--primary):not(.el-button--danger):not(.add-btn):not(.edit-archive-btn):not(.batch-delete-btn) {
+/* .page-container >>> .el-button:not(.el-button--primary):not(.el-button--danger):not(.add-btn):not(.edit-archive-btn):not(.batch-delete-btn) {
   background: #f5f7fa !important;
   border-color: #e4e7ed !important;
   color: #606266 !important;
@@ -3466,10 +3467,10 @@ export default {
   color: #1e3a8a !important;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 /* 弹框按钮统一样式 */
-.page-container >>> .el-dialog .el-button--primary {
+/* .page-container >>> .el-dialog .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -3477,9 +3478,9 @@ export default {
   font-weight: 500 !important;
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
-}
+} */
 
-.page-container >>> .el-dialog .el-button--primary:hover {
+/* .page-container >>> .el-dialog .el-button--primary:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
@@ -3491,14 +3492,14 @@ export default {
   color: #4b5563 !important;
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
-}
+} */
 
-.page-container >>> .el-dialog .el-button--default:hover {
+/* .page-container >>> .el-dialog .el-button--default:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-}
+} */
 
 /* 修复时间选择器z-index层级问题 - 确保弹出层显示在弹框上方 */
 .page-container >>> .el-date-picker {
@@ -3772,12 +3773,13 @@ body .el-time-picker.el-popper {
 
 /* 分页区域 */
 .alert-pagination {
-  margin-top: 20px;
+  /* margin-top: 20px; */
   display: flex;
   justify-content: center;
-  padding: 20px 0;
-  border-top: 1px solid #f0f2f5;
-  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  background: white;
+  /* padding: 20px 0; */
+  /* border-top: 1px solid #f0f2f5;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%); */
 }
 
 /* 弹框底部样式 */
@@ -3806,21 +3808,21 @@ body .el-time-picker.el-popper {
   gap: 12px;
 }
 
-.cancel-btn {
+/* .cancel-btn {
   background: #f3f4f6;
   border-color: #d1d5db;
   color: #374151;
   padding: 8px 20px;
   border-radius: 6px;
   font-weight: 500;
-}
+} */
 
-.cancel-btn:hover {
+/* .cancel-btn:hover {
   background: #e5e7eb;
   border-color: #9ca3af;
-}
+} */
 
-.confirm-btn {
+/* .confirm-btn {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   border-color: #3b82f6;
   color: white;
@@ -3828,9 +3830,9 @@ body .el-time-picker.el-popper {
   border-radius: 6px;
   font-weight: 500;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-}
+} */
 
-.confirm-btn:hover {
+/* .confirm-btn:hover {
   background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
   border-color: #2563eb;
   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
@@ -3841,7 +3843,7 @@ body .el-time-picker.el-popper {
   border-color: #d1d5db;
   color: #9ca3af;
   box-shadow: none;
-}
+} */
 
 /* 表格样式增强 */
 .select-alert-dialog >>> .el-table {

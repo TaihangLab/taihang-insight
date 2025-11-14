@@ -2127,7 +2127,7 @@ export default {
 
 /* 预警ID特殊样式 */
 .info-cell .value.alert-id {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: #3b82f6;
   color: white;
   font-weight: 600;
   font-family: 'Courier New', monospace;

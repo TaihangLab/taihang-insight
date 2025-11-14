@@ -2144,7 +2144,7 @@ export default {
       <!-- 搜索和筛选区域 -->
       <div class="search-filter-area">
         <div class="search-row">
-          <div class="date-picker-wrapper">
+          <div class="date-picker-wrapper" style="margin-right: 24px;">
             <el-date-picker
               v-model="dateRange"
               type="daterange"
@@ -2156,8 +2156,6 @@ export default {
               @change="handleSearch"
             />
           </div>
-          
-
           
           <div class="select-wrapper">
             <el-select 
@@ -2285,7 +2283,6 @@ export default {
           
           <div class="action-buttons">
             <el-button 
-              class="export-data-btn"
               size="small" 
               icon="el-icon-download"
               @click="exportData"
@@ -2769,7 +2766,7 @@ export default {
 <style scoped>
 .warning-management-container {
   height: calc(100vh - 80px); /* 减去顶部导航栏高度，增加缓冲空间 */
-  background: #f5f5f5;
+  background: #fff;
   padding: 0;
   overflow: hidden; /* 防止出现外部滚动条 */
 }
@@ -2853,7 +2850,7 @@ export default {
   border-radius: 6px;
 }
 
-.filter-buttons .el-button:hover {
+/* .filter-buttons .el-button:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e3a8a;
@@ -2866,7 +2863,7 @@ export default {
   color: #fff;
   border-color: #3b82f6;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
+} */
 
 .action-buttons {
   display: flex;
@@ -2881,7 +2878,7 @@ export default {
   border-radius: 6px;
 }
 
-.action-buttons .el-button--primary {
+/* .action-buttons .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -2891,9 +2888,9 @@ export default {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   font-weight: 600;
   letter-spacing: 0.3px;
-}
+} */
 
-.action-buttons .el-button--primary::before {
+/* .action-buttons .el-button--primary::before {
   content: '';
   position: absolute;
   top: 0;
@@ -2902,13 +2899,13 @@ export default {
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left 0.6s ease;
-}
+} */
 
-.action-buttons .el-button--primary:hover {
+/* .action-buttons .el-button--primary:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4);
   transform: translateY(-2px);
-}
+} */
 
 .action-buttons .el-button--primary:hover::before {
   left: 100%;
@@ -2920,7 +2917,7 @@ export default {
   height: calc(100vh - 200px); /* 进一步减少预留空间，让分页栏紧贴底部 */
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 20px;
+  /* padding: 20px; */
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
   border-radius: 16px;
   margin: 1px;
@@ -3641,7 +3638,7 @@ export default {
 }
 
 /* 科技感导出数据按钮样式 */
-.export-data-btn {
+/* .export-data-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   color: white;
@@ -3679,7 +3676,7 @@ export default {
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left 0.5s;
-}
+} */
 
 .export-data-btn:hover::before {
   left: 100%;
@@ -3717,7 +3714,7 @@ export default {
   background: #ffffff;
 }
 
-.warning-management-container >>> .el-button--primary {
+/* .warning-management-container >>> .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
@@ -3731,7 +3728,7 @@ export default {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
   transform: translateY(-1px);
-}
+} */
 
 .warning-management-container >>> .el-button--success {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -3836,35 +3833,32 @@ export default {
 .pagination-section {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 16px;
   background: white;
-  padding: 8px 24px; /* 减少上下内边距 */
-  margin-top: 8px; /* 减少上边距 */
-  margin-bottom: 0; /* 取消底边距 */
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  flex-shrink: 0; /* 不允许收缩 */
-  height: 60px; /* 减少固定高度 */
-  box-sizing: border-box;
+  margin-top: 0!important;
+  padding-bottom: 10px!important;
+}
+
+.pagination-section >>> .el-pagination .el-pager li.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
 /* 覆盖Element UI分页组件样式 */
-.pagination-section >>> .el-pagination .el-pager li {
-  background: white !important;
-  border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
-  margin: 0 2px !important;
+/* .pagination-section >>> .el-pagination .el-pager li {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: #3b82f6;
+  margin: 0 2px;
 }
 
 .pagination-section >>> .el-pagination .el-pager li:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
+  color: #1d4ed8;
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.05);
 }
 
 .pagination-section >>> .el-pagination .el-pager li.active {
@@ -3889,10 +3883,10 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
+} */
 
 /* 更强的Element UI样式覆盖 */
-.pagination-section >>> .el-pagination .el-pager li.number {
+/* .pagination-section >>> .el-pagination .el-pager li.number {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -3910,7 +3904,7 @@ export default {
   border-color: #3b82f6 !important;
   color: white !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-}
+} */
 
 .pagination-section >>> .el-pagination .btn-prev,
 .pagination-section >>> .el-pagination .btn-next {
@@ -3920,12 +3914,12 @@ export default {
 }
 
 .pagination-section >>> .el-pagination .btn-prev:hover,
-.pagination-section >>> .el-pagination .btn-next:hover {
+/* .pagination-section >>> .el-pagination .btn-next:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
+} */
 
 .pagination-section >>> .el-pagination .el-select .el-input .el-input__inner {
   border-color: #dcdfe6 !important;
