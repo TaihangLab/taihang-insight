@@ -436,7 +436,7 @@ body {
 
 /* 输入框样式覆盖 */
 .el-input__inner {
-  height: var(--input-height) !important;
+  height: 34px !important;
   line-height: var(--input-height) !important;
   border-radius: var(--input-border-radius) !important;
   border-color: var(--border-color) !important;
@@ -487,14 +487,14 @@ body {
 }
 
 .el-card__header {
-  padding: var(--spacing-lg) var(--card-padding) !important;
+  padding: var(--spacing-lg) var(--card-padding) ;
   border-bottom-color: var(--border-color) !important;
   font-size: var(--font-size-base) !important;
   font-weight: var(--font-weight-semibold) !important;
 }
 
 .el-card__body {
-  padding: var(--card-padding) !important;
+  padding: var(--card-padding) ;
 }
 
 /* 对话框样式覆盖 */

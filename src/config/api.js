@@ -6,7 +6,8 @@
 
 // 后端API基础地址
 // const API_BASE_URL = 'http://192.168.26.213:8000';
-const API_BASE_URL = 'http://127.0.0.1:8000';
+// const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = 'http://192.168.26.193:8000';//本地测试地址
 
 // 各个服务的完整地址（如果需要不同的服务地址）
 const API_ENDPOINTS = {

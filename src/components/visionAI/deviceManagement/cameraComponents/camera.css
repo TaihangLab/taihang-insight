@@ -3973,8 +3973,9 @@
   align-items: center;
 }
 
+/* 搜索框布局混乱 */
 .operation-right >>> .el-input__prefix {
-  top:8px;
+  top:7px;
   left:5px;
 }
 

@@ -1475,7 +1475,7 @@ export default {
   gap: 8px;
 }
 
-.left-controls .el-button {
+/* .left-controls .el-button {
   height: 32px;
   padding: 6px 16px;
   font-size: 14px;
@@ -1530,12 +1530,18 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 .right-controls {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* 搜索框布局混乱 */
+.right-controls  >>> .el-input__prefix {
+  top:6px;
+  left:10px;
 }
 
 .filter-item {
@@ -1809,7 +1815,7 @@ export default {
   font-size: 11px;
 }
 
-.status-mini-tag.el-tag--success {
+/* .status-mini-tag.el-tag--success {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border-color: #10b981;
   color: white;
@@ -1821,7 +1827,7 @@ export default {
   border-color: #6b7280;
   color: white;
   box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3);
-}
+} */
 
 .version-text {
   font-size: 12px;
@@ -1865,16 +1871,62 @@ export default {
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: -20px;
-  padding: 20px 0;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  flex-shrink: 0; /* 防止收缩 */
+  margin-top: 0!important;
+  padding-bottom: 10px!important;
+}
+
+.pagination >>> .el-pagination__total {
+  padding-top: 3px;
+}
+
+.pagination >>> .el-pagination {
+  display: flex;
+  justify-content: center;
+}
+
+.pagination >>> .el-pagination .el-pager li {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: #3b82f6;
+  margin: 0 2px;
+}
+
+.pagination >>> .el-pagination .el-pager li:hover {
+  color: #1d4ed8;
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.pagination >>> .el-pagination .el-pager li.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.pagination >>> .el-pagination button {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.pagination >>> .el-pagination button:hover {
+  color: #1d4ed8;
+  border-color: #3b82f6;
+}
+
+.pagination >>> .el-pagination .btn-prev,
+.pagination >>> .el-pagination .btn-next {
+  background-color: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
 }
 
 /* 深度选择器 */
-.pagination >>> .el-pagination {
+/* .pagination >>> .el-pagination {
   justify-content: center;
 }
 
@@ -1916,7 +1968,7 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
+} */
 
 /* 技能详情样式 */
 .skill-details {
@@ -2085,7 +2137,7 @@ export default {
 }
 
 /* 技能卡片详情状态标签样式 */
-.status-tag.el-tag--success {
+/* .status-tag.el-tag--success {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
   border-color: #10b981 !important;
   color: white !important;
@@ -2097,7 +2149,7 @@ export default {
   border-color: #6b7280 !important;
   color: white !important;
   box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3) !important;
-}
+} */
 
 /* 导入表单中的状态单选按钮样式 */
 .status-radio.published {
@@ -2431,7 +2483,7 @@ export default {
   font-weight: 500;
 }
 
-.status-inline-tag.el-tag--success {
+/* .status-inline-tag.el-tag--success {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
   border-color: #10b981 !important;
   color: white !important;
@@ -2443,7 +2495,7 @@ export default {
   border-color: #6b7280 !important;
   color: white !important;
   box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3) !important;
-}
+} */
 
 .no-data {
   color: #909399;
@@ -2523,7 +2575,7 @@ export default {
 }
 
 /* 弹框按钮统一样式 */
-.device-skills-container >>> .el-dialog .el-button--primary {
+/* .device-skills-container >>> .el-dialog .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -2552,7 +2604,7 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-}
+} */
 
 /* 弹框样式 - 与 warningManagement.vue 一致 */
 .device-skills-container >>> .el-dialog {

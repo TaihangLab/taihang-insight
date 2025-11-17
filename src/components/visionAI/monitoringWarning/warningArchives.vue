@@ -1939,7 +1939,7 @@ export default {
         </div>
         
         <!-- 分页区域 - 改为与 deviceSkills.vue 一致的样式 -->
-        <div class="pagination">
+        <div class="archives-pagination">
           <el-pagination
             :current-page.sync="pagination.currentPage"
             :page-size.sync="pagination.pageSize"
@@ -2128,7 +2128,7 @@ export default {
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination">
+        <div class="archives-pagination">
         <el-pagination
           :current-page.sync="availableAlertsPagination.currentPage"
           :page-size.sync="availableAlertsPagination.pageSize"
@@ -2573,9 +2573,15 @@ export default {
 
 /* 档案分页样式 */
 .archives-pagination {
-  /* padding: 10px; */
-  /* border-top: 1px solid rgba(59, 130, 246, 0.2); */
-  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  background: white;
+  margin-top: 0!important;
+  padding-bottom: 10px!important;
+}
+
+.archives-pagination >>> .el-pagination__total {
+  padding-top: 3px;
 }
 
 .archives-pagination >>> .el-pagination {
@@ -2597,11 +2603,13 @@ export default {
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-/* .archives-pagination >>> .el-pagination .el-pager li.active {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
-} */
+.archives-pagination >>> .el-pagination .el-pager li.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
 
 .archives-pagination >>> .el-pagination button {
   background-color: rgba(255, 255, 255, 0.8);
@@ -2612,6 +2620,13 @@ export default {
 .archives-pagination >>> .el-pagination button:hover {
   color: #1d4ed8;
   border-color: #3b82f6;
+}
+
+.archives-pagination >>> .el-pagination .btn-prev,
+.archives-pagination >>> .el-pagination .btn-next {
+  background-color: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
 }
 
 .archive-item {

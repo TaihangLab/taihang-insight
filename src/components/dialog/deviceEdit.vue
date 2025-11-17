@@ -13,17 +13,17 @@
         <el-form ref="form" :rules="rules" :model="form" label-width="200px" >
           <el-form-item label="设备编号" prop="deviceId">
             <el-input v-if="isEdit" v-model="form.deviceId" disabled></el-input>
-            <el-input v-if="!isEdit" v-model="form.deviceId" clearable></el-input>
+            <el-input v-if="!isEdit" v-model="form.deviceId" placeholder="请输入设备编号" clearable></el-input>
           </el-form-item>
 
           <el-form-item label="设备名称" prop="name">
-            <el-input v-model="form.name" clearable></el-input>
+            <el-input v-model="form.name" clearable  placeholder="请输入设备名称"></el-input>
           </el-form-item>
           <el-form-item label="密码" prop="password">
-            <el-input v-model="form.password" clearable></el-input>
+            <el-input v-model="form.password" clearable placeholder="请输入密码"></el-input>
           </el-form-item>
           <el-form-item label="收流IP" prop="sdpIp">
-            <el-input type="sdpIp" v-model="form.sdpIp" clearable></el-input>
+            <el-input type="sdpIp" v-model="form.sdpIp" clearable placeholder="请输入收流IP"></el-input>
           </el-form-item>
           <el-form-item label="流媒体ID" prop="mediaServerId">
             <el-select v-model="form.mediaServerId" style="float: left; width: 100%" >

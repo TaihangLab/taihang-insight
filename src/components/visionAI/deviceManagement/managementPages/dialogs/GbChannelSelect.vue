@@ -10,7 +10,7 @@
       append-to-body
       @close="close()"
     >
-      <div class="page-header" style="width: 100%">
+      <div class="page-header" style="width: 100%; margin-bottom: 20px;">
         <div class="page-header-btn" style="width: 100%; text-align: left">
           搜索:
           <el-input @input="getChannelList" style="margin-right: 1rem; width: auto;" size="mini" placeholder="关键字"

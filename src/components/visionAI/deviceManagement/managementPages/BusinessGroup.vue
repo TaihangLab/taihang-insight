@@ -469,16 +469,16 @@ export default {
 
 .header-right .el-button {
   margin-left: 12px;
-  border: 2px solid rgba(59, 130, 246, 0.3);
+  /* border: 2px solid rgba(59, 130, 246, 0.3);
   background: rgba(59, 130, 246, 0.1);
-  color: #1e40af;
+  color: #1e40af; */
   font-weight: 600;
 }
 
 .header-right .el-button:hover {
-  background: rgba(59, 130, 246, 0.2);
+  /* background: rgba(59, 130, 246, 0.2);
   border-color: rgba(59, 130, 246, 0.5);
-  color: #1e3a8a;
+  color: #1e3a8a; */
 }
 
 
@@ -599,7 +599,11 @@ export default {
   min-width: max-content;
 }
 
-
+/* 搜索框布局混乱 */
+.search-item >>> .el-input__prefix {
+  top:7px;
+  left:5px;
+}
 
 /* 表格卡片 */
 .table-card {

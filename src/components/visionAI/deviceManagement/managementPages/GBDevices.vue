@@ -794,10 +794,10 @@ export default {
   align-items: center;
   margin-bottom: 16px;
   padding: 24px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  /* background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); */
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  /* box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.1); */
   color: #1e40af;
 }
 
@@ -823,7 +823,7 @@ export default {
   color: #6b7280;
 }
 
-.header-right .el-button {
+/* .header-right .el-button {
   margin-left: 12px;
   height: 36px;
   padding: 8px 20px;
@@ -841,7 +841,7 @@ export default {
   color: white;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   transform: translateY(-2px);
-}
+} */
 
 /* 搜索卡片 - 科技感优化 */
 .search-card {
@@ -869,6 +869,12 @@ export default {
   font-weight: 600;
   color: #374151;
   white-space: nowrap;
+}
+
+/* 搜索框布局混乱 */
+.search-item >>> .el-input__prefix {
+  top:7px;
+  left:5px;
 }
 
 .search-actions {
@@ -1145,7 +1151,7 @@ export default {
 }
 
 /* 科技感按钮样式 - 与 camera.vue 一致 */
-.gb-devices-container >>> .el-button {
+/* .gb-devices-container >>> .el-button {
   height: 32px;
   padding: 6px 16px;
   font-size: 14px;
@@ -1237,10 +1243,10 @@ export default {
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 /* 输入框样式 */
-.gb-devices-container >>> .el-input__inner {
+/* .gb-devices-container >>> .el-input__inner {
   border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
@@ -1269,7 +1275,7 @@ export default {
 .gb-devices-container >>> .el-select .el-input__inner:focus {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
-}
+} */
 
 /* 深色主题支持 */
 @media (prefers-color-scheme: dark) {
