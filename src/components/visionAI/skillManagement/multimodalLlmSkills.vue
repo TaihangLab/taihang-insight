@@ -213,7 +213,7 @@
             </template>
           </el-pagination>
 
-          <el-button type="primary" class="go-button" @click="goToPage">GO</el-button>
+          <!-- <el-button type="primary" class="go-button" @click="goToPage">GO</el-button> -->
         </div>
       </div>
     </div>
@@ -1864,7 +1864,7 @@ export default {
   font-weight: 500;
 }
 
-.header-left .el-button--primary {
+/* .header-left .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -1916,7 +1916,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 .header-right {
   display: flex;
@@ -1999,7 +1999,7 @@ export default {
   transition: all 0.3s ease;
 }
 
-.filter-tabs .el-button--primary {
+/* .filter-tabs .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   color: white;
   font-weight: 500;
@@ -2021,7 +2021,7 @@ export default {
 .filter-tabs .el-button--primary:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
-}
+} */
 
 .sort-section {
   display: flex;
@@ -2108,7 +2108,7 @@ export default {
   line-height: 1.5;
 }
 
-.empty-action {
+/* .empty-action {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   padding: 10px 24px;
@@ -2121,7 +2121,7 @@ export default {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
   transform: translateY(-2px);
-}
+} */
 
 .skills-grid {
   display: grid;
@@ -2437,15 +2437,61 @@ export default {
 .pagination-section {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 16px;
   background: white;
-  padding: 8px 24px;
-  flex-shrink: 0;
-  min-height: 48px;
+  margin-top: 0!important;
+  padding-bottom: 10px!important;
 }
 
-.go-button {
+.pagination-section >>> .el-pagination__total {
+  padding-top: 3px;
+}
+
+.pagination-section >>> .el-pagination {
+  display: flex;
+  justify-content: center;
+}
+
+.pagination-section >>> .el-pagination .el-pager li {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: #3b82f6;
+  margin: 0 2px;
+}
+
+.pagination-section >>> .el-pagination .el-pager li:hover {
+  color: #1d4ed8;
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.pagination-section >>> .el-pagination .el-pager li.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.pagination-section >>> .el-pagination button {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.pagination-section >>> .el-pagination button:hover {
+  color: #1d4ed8;
+  border-color: #3b82f6;
+}
+
+.pagination-section >>> .el-pagination .btn-prev,
+.pagination-section >>> .el-pagination .btn-next {
+  background-color: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
+}
+
+/* .go-button {
   min-width: 60px;
   background: white;
   border: 1px solid #dcdfe6;
@@ -2458,10 +2504,10 @@ export default {
   color: #1e40af;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-}
+} */
 
 /* 覆盖Element UI分页组件样式 */
-.pagination-section >>> .el-pagination .el-pager li {
+/* .pagination-section >>> .el-pagination .el-pager li {
   background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -2499,10 +2545,10 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
+} */
 
 /* 更强的Element UI样式覆盖 */
-.pagination-section >>> .el-pagination .el-pager li.number {
+/* .pagination-section >>> .el-pagination .el-pager li.number {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -2544,7 +2590,7 @@ export default {
 
 .pagination-section >>> .el-pagination .el-select .el-input .el-input__inner:hover {
   border-color: #3b82f6 !important;
-}
+} */
 
 /* tooltip */
 .skill-tooltip {
@@ -2576,7 +2622,7 @@ export default {
 }
 
 /* 弹框按钮统一样式 */
-.multimodal-llm-skills-wrapper >>> .el-dialog .el-button--primary {
+/* .multimodal-llm-skills-wrapper >>> .el-dialog .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -2611,7 +2657,7 @@ export default {
   border-radius: 6px !important;
   font-weight: 500 !important;
   padding: 8px 20px !important;
-}
+} */
 
 /* 弹框标题样式 */
 .multimodal-llm-skills-wrapper >>> .el-dialog__header {
@@ -3471,7 +3517,7 @@ export default {
   margin-left: 12px !important;
 }
 
-.el-message-box__btns .el-button--primary {
+/* .el-message-box__btns .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -3497,5 +3543,5 @@ export default {
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
   transform: translateY(-1px) !important;
-}
+} */
 </style>

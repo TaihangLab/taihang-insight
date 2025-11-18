@@ -2180,7 +2180,7 @@
     gap: 12px;
   }
 
-  .header-actions .el-button {
+  /* .header-actions .el-button {
     padding: 10px 20px;
     font-weight: 500;
     border-radius: 8px;
@@ -2193,7 +2193,7 @@
   }
 
   /* 保存并发布按钮特殊样式 */
-  .header-actions .el-button--success {
+  /* .header-actions .el-button--success {
     background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
     border: none;
     box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
@@ -2211,7 +2211,7 @@
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
     transition: all 0.6s ease;
-  }
+  } 
 
   .header-actions .el-button--success:hover {
     background: linear-gradient(135deg, #85ce61 0%, #67c23a 100%);
@@ -2226,7 +2226,7 @@
   .header-actions .el-button--success.is-loading {
     background: linear-gradient(135deg, #a0cfff 0%, #c0c4cc 100%);
     box-shadow: 0 2px 8px rgba(160, 207, 255, 0.3);
-  }
+  }  */
   
   /* 内容布局 */
   .content-layout {
@@ -2875,6 +2875,12 @@
     font-size: 13px;
     border-radius: 6px;
     transition: all 0.3s ease;
+    color: #fff;
+  }
+
+  .add-param-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
   }
 
   /* 参数帮助图标样式 */
@@ -3036,6 +3042,7 @@
     font-size: 13px;
     border-radius: 6px;
     transition: all 0.3s ease;
+    color: #fff;
   }
 
   .add-group-btn:hover {

@@ -593,7 +593,7 @@ export default {
 }
 
 /* 搜索按钮 */
-.filter-section >>> .el-button--primary {
+/* .filter-section >>> .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -620,7 +620,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 /* 主卡片样式 */
 .table-container {
@@ -639,7 +639,7 @@ export default {
   text-align: left;
   border-bottom: none;
 }
-.table-operations >>> .el-button {
+/* .table-operations >>> .el-button {
   margin-right: 8px;
   border-radius: 8px;
   font-weight: 600;
@@ -667,7 +667,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 /* 表格样式 */
 .custom-table {
@@ -934,7 +934,7 @@ export default {
 }
 
 /* 弹框内按钮样式 */
-.department-management-container >>> .el-dialog .el-button--primary {
+/* .department-management-container >>> .el-dialog .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -979,7 +979,7 @@ export default {
   background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%) !important;
   box-shadow: 0 4px 10px rgba(245, 108, 108, 0.4) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 /* 表单样式美化 */
 .department-management-container >>> .el-form-item__label {

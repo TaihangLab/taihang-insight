@@ -625,7 +625,7 @@ export default {
 }
 
 /* 分页器样式 */
-.pagination-container {
+/* .pagination-container {
   display: flex;
   justify-content: center;
   margin-top: 10px;
@@ -633,10 +633,67 @@ export default {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 12px;
   border: 1px solid rgba(59, 130, 246, 0.1);
+} */
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  background: white;
+  margin-top: 0!important;
+  padding-bottom: 10px!important;
+}
+
+.pagination-container >>> .el-pagination__total {
+  padding-top: 3px;
+}
+
+.pagination-container >>> .el-pagination {
+  display: flex;
+  justify-content: center;
+}
+
+.pagination-container >>> .el-pagination .el-pager li {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: #3b82f6;
+  margin: 0 2px;
+}
+
+.pagination-container >>> .el-pagination .el-pager li:hover {
+  color: #1d4ed8;
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.pagination-container >>> .el-pagination .el-pager li.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.pagination-container >>> .el-pagination button {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.pagination-container >>> .el-pagination button:hover {
+  color: #1d4ed8;
+  border-color: #3b82f6;
+}
+
+.pagination-container >>> .el-pagination .btn-prev,
+.pagination-container >>> .el-pagination .btn-next {
+  background-color: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
 }
 
 /* 分页器科技感蓝色样式 */
-.pagination-container >>> .el-pagination {
+/* .pagination-container >>> .el-pagination {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -694,7 +751,7 @@ export default {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
-}
+} */
 
 /* 标签页样式 */
 .custom-tabs {
@@ -737,7 +794,7 @@ export default {
   margin-top: 20px;
 }
 
-.warning-tabs >>> .el-tabs__header {
+/* .warning-tabs >>> .el-tabs__header {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 8px;
   padding: 8px;
@@ -760,7 +817,6 @@ export default {
   font-weight: 500;
   box-sizing: border-box;
   align-items: center;
-  /* 不设置display:flex，保持横向排列 */
 }
 
 .warning-tabs >>> .el-tabs__item:hover {
@@ -772,7 +828,7 @@ export default {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   color: white;
   border-color: #3b82f6;
-}
+} */
 
 /* 设置区域样式 */
 .warning-level-settings,
@@ -823,7 +879,7 @@ export default {
 }
 
 /* 按钮样式 */
-.app-settings-container >>> .el-button--primary {
+/* .app-settings-container >>> .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -857,7 +913,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 /* 输入框样式 */
 .app-settings-container >>> .el-input__inner {
@@ -892,27 +948,27 @@ export default {
 }
 
 /* 复选框样式 */
-.app-settings-container >>> .el-checkbox__input.is-checked .el-checkbox__inner {
+/* .app-settings-container >>> .el-checkbox__input.is-checked .el-checkbox__inner {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border-color: #3b82f6;
 }
 
 .app-settings-container >>> .el-checkbox__input.is-checked + .el-checkbox__label {
   color: #1e40af;
-}
+} */
 
 /* 单选框样式 */
-.app-settings-container >>> .el-radio__input.is-checked .el-radio__inner {
+/* .app-settings-container >>> .el-radio__input.is-checked .el-radio__inner {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border-color: #3b82f6;
 }
 
 .app-settings-container >>> .el-radio__input.is-checked + .el-radio__label {
   color: #1e40af;
-}
+} */
 
 /* 滑块样式 */
-.app-settings-container >>> .el-slider__runway {
+/* .app-settings-container >>> .el-slider__runway {
   border-radius: 10px;
   background-color: #e5e7eb;
 }
@@ -925,7 +981,7 @@ export default {
 .app-settings-container >>> .el-slider__button {
   border: 2px solid #3b82f6;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-}
+} */
 
 /* 对话框样式 */
 .config-dialog >>> .el-dialog {
@@ -996,7 +1052,7 @@ export default {
   transition: all 0.3s ease;
 }
 
-.dialog-footer .el-button--primary {
+/* .dialog-footer .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
@@ -1021,7 +1077,7 @@ export default {
   border-color: #3b82f6;
   color: #1e40af;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-}
+} */
 
 /* 响应式设计 */
 @media screen and (max-width: 768px) {

@@ -73,7 +73,7 @@
       </el-table>
       
       <!-- 分页 -->
-      <div class="pagination-container">
+      <div class="user-pagination">
         <el-pagination
           :current-page.sync="pagination.currentPage"
           :page-sizes="[10, 20, 50, 100]"
@@ -691,7 +691,7 @@ export default {
 }
 
 /* 搜索按钮 */
-.filter-section >>> .el-button--primary {
+/* .filter-section >>> .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -718,7 +718,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 /* 操作按钮区 */
 .table-operations {
@@ -726,7 +726,7 @@ export default {
   text-align: left;
   border-bottom: none;
 }
-.table-operations >>> .el-button {
+/* .table-operations >>> .el-button {
   margin-right: 8px;
   border-radius: 8px;
   font-weight: 600;
@@ -754,7 +754,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 /* 表格样式 */
 .custom-table {
@@ -824,68 +824,61 @@ export default {
 }
 
 /* 分页器样式 */
-.pagination-container {
+.user-pagination {
   display: flex;
   justify-content: center;
-  margin-top: 10px;
-  padding: 10px 0 20px 0;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  background: white;
+  margin-top: 0!important;
+  padding-bottom: 10px!important;
 }
-.pagination-container >>> .el-pagination {
+
+.user-pagination >>> .el-pagination__total {
+  padding-top: 3px;
+}
+
+.user-pagination >>> .el-pagination {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  justify-content: center;
 }
-.pagination-container >>> .el-pagination .el-pager li {
-  min-width: 32px;
-  height: 32px;
-  line-height: 30px;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  color: #4b5563;
-  margin: 0 3px;
-  transition: all 0.3s ease;
-  font-size: 13px;
-  font-weight: 500;
-  position: relative;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+
+.user-pagination >>> .el-pagination .el-pager li {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: #3b82f6;
+  margin: 0 2px;
 }
-.pagination-container >>> .el-pagination .el-pager li.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+
+.user-pagination >>> .el-pagination .el-pager li:hover {
+  color: #1d4ed8;
   border-color: #3b82f6;
-  color: #ffffff;
-  font-weight: 600;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  background-color: rgba(59, 130, 246, 0.05);
 }
-.pagination-container >>> .el-pagination .el-pager li:hover {
+
+.user-pagination >>> .el-pagination .el-pager li.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.user-pagination >>> .el-pagination button {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.user-pagination >>> .el-pagination button:hover {
+  color: #1d4ed8;
   border-color: #3b82f6;
-  color: #1e40af;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
-.pagination-container >>> .el-pagination button {
-  min-width: 32px;
-  height: 32px;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  color: #4b5563;
-  margin: 0 3px;
-  transition: all 0.3s ease;
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
-}
-.pagination-container >>> .el-pagination button:hover {
-  border-color: #3b82f6;
-  color: #1e40af;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+
+.user-pagination >>> .el-pagination .btn-prev,
+.user-pagination >>> .el-pagination .btn-next {
+  background-color: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
 }
 
 /* 添加用户弹框样式 */
@@ -956,7 +949,7 @@ export default {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-.user-search-section >>> .el-button--primary {
+/* .user-search-section >>> .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -986,7 +979,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 /* 用户选择表格样式 */
 .user-select-table {
@@ -1030,6 +1023,62 @@ export default {
 
 /* 弹框内分页器样式 */
 .user-pagination {
+  display: flex;
+  justify-content: center;
+  background: white;
+  margin-top: 0!important;
+  padding-bottom: 10px!important;
+}
+
+.user-pagination >>> .el-pagination__total {
+  padding-top: 3px;
+}
+
+.user-pagination >>> .el-pagination {
+  display: flex;
+  justify-content: center;
+}
+
+.user-pagination >>> .el-pagination .el-pager li {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: #3b82f6;
+  margin: 0 2px;
+}
+
+.user-pagination >>> .el-pagination .el-pager li:hover {
+  color: #1d4ed8;
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.user-pagination >>> .el-pagination .el-pager li.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.user-pagination >>> .el-pagination button {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.user-pagination >>> .el-pagination button:hover {
+  color: #1d4ed8;
+  border-color: #3b82f6;
+}
+
+.user-pagination >>> .el-pagination .btn-prev,
+.user-pagination >>> .el-pagination .btn-next {
+  background-color: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
+}
+/* .user-pagination {
   display: flex;
   justify-content: center;
   padding: 15px;
@@ -1127,7 +1176,7 @@ export default {
 
 .user-pagination >>> .el-pagination .el-pagination__jump .el-input__inner:hover {
   border-color: #3b82f6;
-}
+} */
 
 /* 科技感标签样式 - 完全参照logRecords.vue设计 */
 .role-user-assignment-container >>> .el-table .el-tag--success,
@@ -1207,7 +1256,7 @@ export default {
 }
 
 /* 弹框内按钮样式 */
-.role-user-assignment-container >>> .el-dialog .el-button--primary {
+/* .role-user-assignment-container >>> .el-dialog .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -1236,7 +1285,7 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-}
+} */
 
 /* 适配小屏幕 */
 @media screen and (max-width: 768px) {
@@ -1248,7 +1297,7 @@ export default {
     border-radius: 8px;
     padding: 12px 8px;
   }
-  .pagination-container {
+  .user-pagination {
     border-radius: 8px;
     padding: 8px 2px;
   }

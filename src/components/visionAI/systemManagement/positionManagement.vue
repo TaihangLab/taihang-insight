@@ -800,7 +800,7 @@ export default {
   transition: all 0.3s ease;
 }
 
-.department-tree>>>.el-tree-node__content:hover {
+/* .department-tree>>>.el-tree-node__content:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   color: #1e40af;
 }
@@ -808,7 +808,7 @@ export default {
 .department-tree>>>.el-tree-node.is-current>.el-tree-node__content {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   color: white;
-}
+} */
 
 .custom-tree-node {
   flex: 1;
@@ -908,7 +908,7 @@ export default {
 }
 
 /* 搜索按钮 */
-.filter-section>>>.el-button--primary {
+/* .filter-section>>>.el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -965,7 +965,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 /* 表格样式改进 */
 .custom-table {
@@ -1098,7 +1098,7 @@ export default {
 }
 
 /* 通用按钮样式 */
-.position-management-container>>>.el-button--primary {
+/* .position-management-container>>>.el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -1127,7 +1127,7 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-}
+} */
 
 /* 表格样式 */
 .position-management-container>>>.el-table {
@@ -1294,7 +1294,7 @@ export default {
 }
 
 /* 弹框内按钮样式 */
-.position-management-container>>>.el-dialog .el-button--primary {
+/* .position-management-container>>>.el-dialog .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -1339,7 +1339,7 @@ export default {
   background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%) !important;
   box-shadow: 0 4px 10px rgba(245, 108, 108, 0.4) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 /* 表单样式美化 */
 .position-management-container>>>.el-form-item__label {

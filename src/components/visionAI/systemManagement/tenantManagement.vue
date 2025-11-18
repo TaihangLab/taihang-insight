@@ -775,7 +775,7 @@ export default {
 }
 
 /* 搜索按钮 */
-.filter-section >>> .el-button--primary {
+/* .filter-section >>> .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -802,7 +802,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 /* 操作按钮区 */
 .table-operations {
@@ -810,7 +810,7 @@ export default {
   text-align: left;
   border-bottom: none;
 }
-.table-operations >>> .el-button {
+/* .table-operations >>> .el-button {
   margin-right: 8px;
   border-radius: 8px;
   font-weight: 600;
@@ -838,7 +838,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 /* 表格样式 */
 .custom-table {
@@ -911,65 +911,58 @@ export default {
 .pagination-container {
   display: flex;
   justify-content: center;
-  margin-top: 10px;
-  padding: 10px 0 20px 0;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  background: white;
+  margin-top: 0!important;
+  padding-bottom: 10px!important;
 }
+
+.pagination-container >>> .el-pagination__total {
+  padding-top: 3px;
+}
+
 .pagination-container >>> .el-pagination {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  justify-content: center;
 }
+
 .pagination-container >>> .el-pagination .el-pager li {
-  min-width: 32px;
-  height: 32px;
-  line-height: 30px;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  color: #4b5563;
-  margin: 0 3px;
-  transition: all 0.3s ease;
-  font-size: 13px;
-  font-weight: 500;
-  position: relative;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: #3b82f6;
+  margin: 0 2px;
 }
-.pagination-container >>> .el-pagination .el-pager li.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border-color: #3b82f6;
-  color: #ffffff;
-  font-weight: 600;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
+
 .pagination-container >>> .el-pagination .el-pager li:hover {
+  color: #1d4ed8;
   border-color: #3b82f6;
-  color: #1e40af;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  background-color: rgba(59, 130, 246, 0.05);
 }
+
+.pagination-container >>> .el-pagination .el-pager li.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
 .pagination-container >>> .el-pagination button {
-  min-width: 32px;
-  height: 32px;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  color: #4b5563;
-  margin: 0 3px;
-  transition: all 0.3s ease;
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
 }
+
 .pagination-container >>> .el-pagination button:hover {
+  color: #1d4ed8;
   border-color: #3b82f6;
-  color: #1e40af;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.pagination-container >>> .el-pagination .btn-prev,
+.pagination-container >>> .el-pagination .btn-next {
+  background-color: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
 }
 
 /* 弹框样式 */
@@ -1012,7 +1005,7 @@ export default {
 }
 
 /* 弹框内按钮样式 */
-.tenant-management-container >>> .el-dialog .el-button--primary {
+/* .tenant-management-container >>> .el-dialog .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -1057,7 +1050,7 @@ export default {
   background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%) !important;
   box-shadow: 0 4px 10px rgba(245, 108, 108, 0.4) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 /* 确认消息样式 */
 .confirm-message {

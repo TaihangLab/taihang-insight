@@ -699,7 +699,7 @@ export default {
   align-items: center;
 }
 
-.header-left .el-button {
+/* .header-left .el-button {
   height: 32px;
   padding: 6px 16px;
   font-size: 14px;
@@ -759,7 +759,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 .header-right {
   display: flex;
@@ -828,7 +828,7 @@ export default {
   transition: all 0.2s ease;
 }
 
-.filter-tabs .el-button--primary {
+/* .filter-tabs .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   color: white;
   font-weight: 500;
@@ -850,7 +850,7 @@ export default {
 .filter-tabs .el-button--primary:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
-}
+} */
 
 .sort-section {
   display: flex;
@@ -1114,7 +1114,7 @@ export default {
   color: #606266 !important;
 }
 
-.card-actions .el-button:hover {
+/* .card-actions .el-button:hover {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
@@ -1132,36 +1132,42 @@ export default {
   background: #f5f7fa !important;
   border-color: #e4e7ed !important;
   color: #c0c4cc !important;
-}
+} */
 
 /* 分页样式 */
 .pagination-section {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 16px;
   background: white;
-  padding: 8px 24px;
-  flex-shrink: 0;
-  min-height: 48px;
+  margin-top: 0!important;
+  padding-bottom: 10px!important;
 }
 
-/* 覆盖Element UI分页组件样式 */
+.pagination-section >>> .el-pagination__total {
+  padding-top: 3px;
+}
+
+.pagination-section >>> .el-pagination {
+  display: flex;
+  justify-content: center;
+}
+
 .pagination-section >>> .el-pagination .el-pager li {
-  background: white !important;
-  border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: #3b82f6;
+  margin: 0 2px;
 }
 
 .pagination-section >>> .el-pagination .el-pager li:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
+  color: #1d4ed8;
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.05);
 }
 
 .pagination-section >>> .el-pagination .el-pager li.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+  background: #3b82f6 !important;
   border-color: #3b82f6 !important;
   color: white !important;
   font-weight: 600 !important;
@@ -1169,37 +1175,14 @@ export default {
 }
 
 .pagination-section >>> .el-pagination button {
-  background: white !important;
-  border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
 }
 
 .pagination-section >>> .el-pagination button:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
-
-/* 更强的Element UI样式覆盖 */
-.pagination-section >>> .el-pagination .el-pager li.number {
-  background-color: white !important;
-  border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
-}
-
-.pagination-section >>> .el-pagination .el-pager li.number:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
-
-.pagination-section >>> .el-pagination .el-pager li.number.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
-  border-color: #3b82f6 !important;
-  color: white !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  color: #1d4ed8;
+  border-color: #3b82f6;
 }
 
 .pagination-section >>> .el-pagination .btn-prev,
@@ -1208,23 +1191,6 @@ export default {
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
 }
-
-.pagination-section >>> .el-pagination .btn-prev:hover,
-.pagination-section >>> .el-pagination .btn-next:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
-
-.pagination-section >>> .el-pagination .el-select .el-input .el-input__inner {
-  border-color: #dcdfe6 !important;
-  color: #606266 !important;
-}
-
-  .pagination-section >>> .el-pagination .el-select .el-input .el-input__inner:hover {
-    border-color: #3b82f6 !important;
-  }
 
   /* 编辑弹窗样式 - 参照 tenantManagement.vue */
   .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog {
@@ -1327,7 +1293,7 @@ export default {
   }
 
   /* 弹框内按钮样式 - 与 tenantManagement.vue 完全一致 */
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-button--primary {
+  /* .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-button--primary {
     background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
     border: none !important;
     box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -1356,7 +1322,7 @@ export default {
     border-color: #3b82f6 !important;
     color: #1e40af !important;
     box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-  }
+  } */
 
 /* 加载状态和空状态样式 */
 .loading-container {

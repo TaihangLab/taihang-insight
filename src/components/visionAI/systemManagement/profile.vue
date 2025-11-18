@@ -210,10 +210,10 @@ export default {
 }
 
 .avatar {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: #3b82f6;
   border: 3px solid rgba(59, 130, 246, 0.3);
   margin-bottom: 15px;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  /* box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3); */
 }
 
 .username {
@@ -297,7 +297,7 @@ export default {
   flex-shrink: 0;
 }
 
-.edit-btn {
+/* .edit-btn {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -311,7 +311,7 @@ export default {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 .profile-form {
   padding: 20px;
@@ -369,21 +369,21 @@ export default {
 }
 
 .save-btn {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+  /* background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
-  color: white !important;
+  color: white !important; */
   font-weight: 500 !important;
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
   padding: 8px 20px !important;
 }
 
-.save-btn:hover {
+/* .save-btn:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 .cancel-btn {
   background: white !important;
@@ -394,12 +394,12 @@ export default {
   padding: 8px 20px !important;
 }
 
-.cancel-btn:hover {
+/* .cancel-btn:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-}
+} */
 
 .security-options {
   padding: 20px;

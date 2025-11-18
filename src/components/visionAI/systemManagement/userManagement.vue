@@ -71,8 +71,7 @@
                 start-placeholder="开始日期"
                 end-placeholder="结束日期"
                 format="yyyy-MM-dd"
-                value-format="yyyy-MM-dd"
-                style="width: 240px;">
+                value-format="yyyy-MM-dd">
               </el-date-picker>
             </el-form-item>
             <el-form-item>
@@ -1012,7 +1011,7 @@ export default {
   transition: all 0.3s ease;
 }
 
-.department-tree >>> .el-tree-node__content:hover {
+/* .department-tree >>> .el-tree-node__content:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   color: #1e40af;
 }
@@ -1020,7 +1019,7 @@ export default {
 .department-tree >>> .el-tree-node.is-current > .el-tree-node__content {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   color: white;
-}
+} */
 
 .custom-tree-node {
   flex: 1;
@@ -1085,7 +1084,7 @@ export default {
 }
 
 /* 搜索按钮 */
-.filter-section >>> .el-button--primary {
+/* .filter-section >>> .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -1115,7 +1114,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 /* 表格容器 */
 .table-container {
@@ -1151,7 +1150,7 @@ export default {
   gap: 8px;
 }
 
-.table-operations >>> .el-button {
+/* .table-operations >>> .el-button {
   border-radius: 8px;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -1182,7 +1181,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 .table-operations >>> .el-button.is-circle {
   width: 32px;
@@ -1409,7 +1408,7 @@ export default {
 }
 
 /* 弹框内按钮样式 */
-.user-management-container >>> .el-dialog .el-button--primary {
+/* .user-management-container >>> .el-dialog .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -1454,7 +1453,7 @@ export default {
   background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%) !important;
   box-shadow: 0 4px 10px rgba(245, 108, 108, 0.4) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 /* 表单样式美化 */
 .user-management-container >>> .el-form-item__label {
