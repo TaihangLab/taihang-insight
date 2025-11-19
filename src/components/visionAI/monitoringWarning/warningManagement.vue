@@ -2783,7 +2783,7 @@ export default {
 
 /* 搜索和筛选区域 - 科技感样式 */
 .search-filter-area {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-radius: 16px;
   padding: 16px;
   margin-bottom: 16px;

@@ -686,7 +686,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   padding: 12px 24px;
   flex-shrink: 0;
   min-height: 30px;
@@ -873,7 +873,7 @@ export default {
   flex: 1;
   overflow-y: auto;
   padding: 20px 24px 24px 24px;
-  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
+  background: #fff;
 }
 
 .knowledge-grid {
@@ -905,13 +905,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg,
-      rgba(30, 64, 175, 0.08) 0%,
-      rgba(59, 130, 246, 0.06) 15%,
-      rgba(6, 182, 212, 0.07) 33%,
-      rgba(30, 64, 175, 0.03) 50%,
-      rgba(255, 255, 255, 0.01) 70%,
-      rgba(255, 255, 255, 0) 100%);
+  background: #fff;
   border-radius: 12px;
   pointer-events: none;
   z-index: 1;
@@ -1049,7 +1043,7 @@ export default {
   width: 300px !important;
   max-width: 300px !important;
   padding: 12px 16px !important;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  background: #fff;
   border: 2px solid #3b82f6 !important;
   border-radius: 8px !important;
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3), 0 2px 8px rgba(30, 64, 175, 0.2) !important;

@@ -67,7 +67,8 @@
               <span>内存/CPU</span>
               <div class="watermark">TSINGSEE</div>
             </div>
-            <dv-charts :option="cpuOption" />
+            <!-- <dv-charts :option="cpuOption" /> -->
+            <div id="cpuChart" style="width: 90%; height: 90%;"></div>
           </dv-border-box-12>
           
           <!-- 存储使用 -->
@@ -76,7 +77,8 @@
               <span>存储使用</span>
               <div class="watermark">TSINGSEE</div>
             </div>
-            <dv-charts :option="storageOption" />
+            <!-- <dv-charts :option="storageOption" /> -->
+            <div id="storageChart" style="width: 90%; height: 90%;"></div>
           </dv-border-box-12>
         </div>
 
@@ -214,7 +216,8 @@
               <div class="watermark">TSINGSEE</div>
             </div>
             <div class="bandwidth-content">
-              <dv-charts :option="bandwidthOption" />
+              <!-- <dv-charts :option="bandwidthOption" /> -->
+              <div id="bandwidthChart" style="width: 90%; height: 90%;"></div>
             </div>
           </dv-border-box-12>
         </div>
@@ -252,6 +255,7 @@
 </template>
 
 <script>
+import * as echarts from "echarts";
 export default {
   name: 'ParkManagement',
   components: {
@@ -310,7 +314,7 @@ export default {
           left: '5%',
           right: '5%',
           top: '10%',
-          bottom: '10%',
+          bottom: '20%',
           containLabel: true
         },
         xAxis: {
@@ -325,7 +329,11 @@ export default {
           axisLabel: {
             style: {
               fill: '#fff'
-            }
+            },
+            textStyle: {
+                color: '#fff' //更改坐标轴文字颜色
+                //  fontSize : 10      //更改坐标轴文字大小
+              }
           }
         },
         yAxis: {
@@ -344,7 +352,11 @@ export default {
           axisLabel: {
             style: {
               fill: '#fff'
-            }
+            },
+            textStyle: {
+                color: '#fff' //更改坐标轴文字颜色
+                // fontSize : 8      //更改坐标轴文字大小
+              }
           }
         },
         series: [{
@@ -365,7 +377,7 @@ export default {
           left: '5%',
           right: '5%',
           top: '10%',
-          bottom: '10%',
+          bottom: '20%',
           containLabel: true
         },
         xAxis: {
@@ -379,7 +391,11 @@ export default {
           axisLabel: {
             style: {
               fill: '#fff'
-            }
+            },
+            textStyle: {
+                color: '#fff' //更改坐标轴文字颜色
+                // fontSize : 8      //更改坐标轴文字大小
+              }
           }
         },
         yAxis: {
@@ -398,7 +414,11 @@ export default {
           axisLabel: {
             style: {
               fill: '#fff'
-            }
+            },
+            textStyle: {
+                color: '#fff' //更改坐标轴文字颜色
+                // fontSize : 8      //更改坐标轴文字大小
+              }
           }
         },
         series: [{
@@ -421,8 +441,8 @@ export default {
         grid: {
           left: '5%',
           right: '5%',
-          top: '15%',
-          bottom: '10%',
+          top: '5%',
+          bottom: '20%',
           containLabel: true
         },
         legend: {
@@ -445,7 +465,11 @@ export default {
           axisLabel: {
             style: {
               fill: '#fff'
-            }
+            },
+            textStyle: {
+                color: '#fff' //更改坐标轴文字颜色
+                // fontSize : 8      //更改坐标轴文字大小
+              }
           }
         },
         yAxis: {
@@ -464,7 +488,11 @@ export default {
           axisLabel: {
             style: {
               fill: '#fff'
-            }
+            },
+            textStyle: {
+                color: '#fff' //更改坐标轴文字颜色
+                // fontSize : 8      //更改坐标轴文字大小
+              }
           }
         },
         series: [{
@@ -507,9 +535,60 @@ export default {
       largeImage: '',
       modalTitle: '',
       modalType: '',
+
+      // 图表实例
+      charts: {
+        cpuChart: null
+      }
     }
   },
   methods: {
+    // 初始化所有图表
+    initCharts() {
+      this.$nextTick(() => {
+        this.initCpuChart();
+        this.initStorageChart();
+        this.initBandwidthChart();
+      });
+    },
+
+    // 初始化内存CPU图表
+    initCpuChart() {
+      const cpuChart = document.getElementById("cpuChart");
+      if (!cpuChart) return;
+
+      this.charts.cpuChart = echarts.init(cpuChart);
+      this.charts.cpuChart.setOption(this.cpuOption);
+    },
+
+    // 初始化存储使用图表
+    initStorageChart() {
+      const storageChart = document.getElementById("storageChart");
+      if (!storageChart) return;
+
+      this.charts.storageChart = echarts.init(storageChart);
+      this.charts.storageChart.setOption(this.storageOption);
+    },
+
+    // 初始化带宽使用图表
+    initBandwidthChart() {
+      const bandwidthChart = document.getElementById("bandwidthChart");
+      if (!bandwidthChart) return;
+
+      this.charts.bandwidthChart = echarts.init(bandwidthChart);
+      this.charts.bandwidthChart.setOption(this.bandwidthOption);
+    },
+
+    // 销毁所有图表实例
+    disposeCharts() {
+      Object.keys(this.charts).forEach((key) => {
+        if (this.charts[key]) {
+          this.charts[key].dispose();
+          this.charts[key] = null;
+        }
+      });
+    },
+
     getRandomImage(index) {
       // 根据索引返回不同类型的工业场景图片
       const industrialImages = [
@@ -609,12 +688,15 @@ export default {
     }
   },
   mounted() {
+    this.initCharts();
     // 添加窗口大小变化监听
     window.addEventListener('resize', this.handleResize);
   },
   beforeDestroy() {
     // 移除监听器避免内存泄漏
     window.removeEventListener('resize', this.handleResize);
+
+    this.disposeCharts();
   }
 }
 </script>

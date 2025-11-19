@@ -2268,7 +2268,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -2290,7 +2290,7 @@ export default {
 
 /* 表格区域 */
 .table-section {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -2525,7 +2525,7 @@ export default {
 /* 左侧详情部分 */
 .detail-section {
   width: 330px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-radius: 16px;
   display: flex;
   flex-direction: column;

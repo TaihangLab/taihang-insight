@@ -375,7 +375,7 @@ body {
 
 /* 内容区域 */
 .content-wrapper {
-  background: var(--bg-primary);
+  /* background: var(--bg-primary); */
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-lg);
 }
@@ -458,8 +458,8 @@ body {
 }
 
 .el-table th {
-  background-color: var(--bg-tertiary) !important;
-  color: var(--text-primary) !important;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary) ;
   font-weight: var(--font-weight-bold) !important;
   font-size: var(--font-size-sm) !important;
   height: var(--table-header-height) !important;

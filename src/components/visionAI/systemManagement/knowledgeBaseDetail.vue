@@ -854,12 +854,12 @@ export default {
 }
 
 .menu-item:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  color: #1e40af;
+  background: #3b82f6;
+  color: white;
 }
 
 .menu-item.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: #3b82f6;
   color: white;
   font-weight: 500;
 }
@@ -897,7 +897,7 @@ export default {
   gap: 8px;
 }
 
-.toolbar >>> .el-button {
+/* .toolbar >>> .el-button {
   border-radius: 8px;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -928,7 +928,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 .right-info {
   display: flex;
@@ -1088,7 +1088,7 @@ export default {
   flex-wrap: nowrap;
 }
 
-.operation-buttons .el-button {
+/* .operation-buttons .el-button {
   padding: 2px !important;
   font-size: 13px !important;
   border-radius: 4px !important;
@@ -1108,75 +1108,64 @@ export default {
   color: #1e3a8a !important;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 /* 分页样式 */
 .pagination-container {
   display: flex;
   justify-content: center;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-top: 1px solid #ebeef5;
-  margin-top: auto;
-  flex-shrink: 0;
+  background: white;
+  margin-top: 0!important;
+  padding-bottom: 10px!important;
+}
+
+.pagination-container >>> .el-pagination__total {
+  padding-top: 3px;
 }
 
 .pagination-container >>> .el-pagination {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  justify-content: center;
 }
 
 .pagination-container >>> .el-pagination .el-pager li {
-  min-width: 32px;
-  height: 32px;
-  line-height: 30px;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  color: #4b5563;
-  margin: 0 3px;
-  transition: all 0.3s ease;
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
-}
-
-.pagination-container >>> .el-pagination .el-pager li.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border-color: #3b82f6;
-  color: #ffffff;
-  font-weight: 600;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: #3b82f6;
+  margin: 0 2px;
 }
 
 .pagination-container >>> .el-pagination .el-pager li:hover {
+  color: #1d4ed8;
   border-color: #3b82f6;
-  color: #1e40af;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.pagination-container >>> .el-pagination .el-pager li.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
 .pagination-container >>> .el-pagination button {
-  min-width: 32px;
-  height: 32px;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  color: #4b5563;
-  margin: 0 3px;
-  transition: all 0.3s ease;
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
 }
 
 .pagination-container >>> .el-pagination button:hover {
+  color: #1d4ed8;
   border-color: #3b82f6;
-  color: #1e40af;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.pagination-container >>> .el-pagination .btn-prev,
+.pagination-container >>> .el-pagination .btn-next {
+  background-color: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
 }
 
 /* 占位页面 */

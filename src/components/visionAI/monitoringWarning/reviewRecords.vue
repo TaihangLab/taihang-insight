@@ -1299,7 +1299,7 @@ export default {
 
 /* 页面头部 - 科技感样式 */
 .page-header {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   padding: 12px 24px;
   border-radius: 12px;
   display: flex;
@@ -1327,7 +1327,7 @@ export default {
 
 /* 上半部分：数据统计卡片 - 科技感样式 */
 .statistics-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -1526,7 +1526,7 @@ export default {
 
 /* 下半部分：内容卡片 - 科技感样式 */
 .content-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);

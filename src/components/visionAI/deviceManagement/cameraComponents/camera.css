@@ -3797,7 +3797,7 @@
 
 .card-header {
   padding: 20px;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: #fff;
   border-bottom: 1px solid rgba(59, 130, 246, 0.15);
 }
 
@@ -3878,7 +3878,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.06);
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -3998,7 +3998,7 @@
 }
 
 .table-card >>> .el-table__header-wrapper {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+  background: #fff;
 }
 
 .table-card >>> .el-table th {
@@ -4034,7 +4034,7 @@
   padding: 16px 20px;
   display: flex;
   justify-content: center;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: #fff;
   border-top: 1px solid rgba(59, 130, 246, 0.15);
 }
 
@@ -4342,7 +4342,7 @@ body .el-dialog__wrapper .skill-params-dialog {
 
 /* 当前技能头部优化 */
 .current-skill-header {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: #fff;
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 12px;
   padding: 20px;

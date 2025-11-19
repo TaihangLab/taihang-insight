@@ -174,7 +174,7 @@ export default {
 
 .page-header {
   margin-bottom: 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   padding: 16px 24px;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -195,7 +195,7 @@ export default {
 }
 
 .profile-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -267,7 +267,7 @@ export default {
 }
 
 .info-card, .security-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);

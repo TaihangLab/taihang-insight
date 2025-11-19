@@ -1227,7 +1227,7 @@ export default {
 }
 
 .map-panel {
-  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height) + 0px); /* 精确对齐：上面板 + 间距 + 下面板 */
+  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height) - 30px); /* 精确对齐：上面板 + 间距 + 下面板 */
   margin-bottom: 20px; /* 确保与其他面板保持一致的底部间距 */
   display: flex;
   flex-direction: column;
@@ -1235,7 +1235,7 @@ export default {
 
 /* 全屏模式下的中间面板 */
 .visual-center:fullscreen .map-panel {
-  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height) + 0px); /* 全屏下使用相同的52px间距 */
+  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height) - 30px); /* 全屏下使用相同的52px间距 */
 }
 
 .map-container {

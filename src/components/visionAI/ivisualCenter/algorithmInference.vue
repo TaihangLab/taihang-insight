@@ -4808,7 +4808,7 @@ export default {
 }
 
 .date-btn.active {
-  background-color: #1e90ff;
+  /* background-color: #1e90ff; */
   color: #ffffff;
   box-shadow: 0 0 8px rgba(30, 144, 255, 0.5);
 }
@@ -4922,7 +4922,7 @@ export default {
 }
 
 .tab.active {
-  background-color: #1e90ff;
+  /* background-color: #1e90ff; */
   color: #ffffff;
   box-shadow: 0 0 8px rgba(30, 144, 255, 0.5);
 }

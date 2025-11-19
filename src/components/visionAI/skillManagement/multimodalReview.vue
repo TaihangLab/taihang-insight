@@ -1111,7 +1111,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   padding: 12px 24px;
   flex-shrink: 0;
   min-height: 30px;
@@ -1517,7 +1517,7 @@ export default {
   width: 300px !important;
   max-width: 300px !important;
   padding: 12px 16px !important;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  background: #fff;
   border: 2px solid #3b82f6 !important;
   border-radius: 8px !important;
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3), 0 2px 8px rgba(30, 64, 175, 0.2) !important;

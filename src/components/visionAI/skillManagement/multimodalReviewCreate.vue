@@ -1865,7 +1865,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   flex-shrink: 0;
 }
 

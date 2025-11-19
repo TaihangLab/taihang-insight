@@ -2811,7 +2811,7 @@ export default {
 
 /* 设备树容器 - 科技感设计 */
 .device-tree-aside {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-right: 1px solid rgba(59, 130, 246, 0.1);
   height: 100%;
   overflow: hidden;
@@ -2944,7 +2944,7 @@ export default {
 /* 视频主容器 - 科技感设计 */
 .video-main-container {
   flex: 1;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   position: relative;
   margin: 0 16px;
   border-radius: 16px;
@@ -2962,7 +2962,7 @@ export default {
 
 /* 视频工具栏 - 科技感设计 */
 .video-toolbar {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
   display: flex;
   align-items: center;
@@ -3005,7 +3005,7 @@ export default {
 .warning-list {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-radius: 16px;
   display: flex;
   flex-direction: column;

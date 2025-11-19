@@ -1447,7 +1447,7 @@ export default {
 }
 
 .filter-section {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #ffffff;
   padding: 12px 24px;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);

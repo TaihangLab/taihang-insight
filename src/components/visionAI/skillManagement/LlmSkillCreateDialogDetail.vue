@@ -2115,7 +2115,7 @@
     border-color: #9ca3af;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     transform: translateY(-1px);
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    background: #fff;
   }
 
   .id-label {

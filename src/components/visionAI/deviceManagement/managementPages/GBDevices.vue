@@ -848,7 +848,7 @@ export default {
   margin-bottom: 16px;
   border-radius: 16px;
   border: 1px solid rgba(59, 130, 246, 0.1);
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
 }
 
@@ -892,7 +892,7 @@ export default {
 .stat-card {
   border-radius: 16px;
   border: 1px solid rgba(59, 130, 246, 0.1);
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   overflow: hidden;
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
@@ -955,7 +955,7 @@ export default {
 .table-card {
   border-radius: 16px;
   border: 1px solid rgba(59, 130, 246, 0.1);
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
 }
 

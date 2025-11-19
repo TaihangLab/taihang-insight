@@ -841,7 +841,7 @@ export default {
 
 /* 科技感蓝色主题的过滤区域 */
 .filter-section {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   padding: 12px 24px;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);

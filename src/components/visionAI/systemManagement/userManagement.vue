@@ -1322,7 +1322,7 @@ export default {
   line-height: 30px;
   border: 1px solid rgba(59, 130, 246, 0.3);
   border-radius: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   color: #4b5563;
   margin: 0 3px;
   transition: all 0.3s ease;
@@ -1351,7 +1351,7 @@ export default {
   height: 32px;
   border: 1px solid rgba(59, 130, 246, 0.3);
   border-radius: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   color: #4b5563;
   margin: 0 3px;
   transition: all 0.3s ease;
