@@ -221,6 +221,7 @@
 import channelCode from './../dialog/channelCode'
 import ChooseCivilCode from "../dialog/chooseCivilCode.vue";
 import ChooseGroup from "../visionAI/deviceManagement/managementPages/dialogs/chooseGroup.vue";
+import { getChannelInfo, addChannel, updateChannel, resetChannel } from '@/api/channel'
 
 export default {
   name: "CommonChannelEdit",
@@ -255,20 +256,17 @@ export default {
         this.form.gbDownloadSpeed = this.form.gbDownloadSpeedArray.join("/")
       }
       if (this.form.gbId) {
-        this.$axios({
-          method: 'post',
-          url: "/api/common/channel/update",
-          data: this.form
-        }).then((res) => {
+        // 更新通道
+        updateChannel(this.form).then((res) => {
           if (res.data.code === 0) {
             this.$message.success({
-            showClose: true,
-            message: "保存成功"
-          });
+              showClose: true,
+              message: "保存成功"
+            });
             if (this.saveSuccess) {
               this.saveSuccess()
             }
-          }else {
+          } else {
             this.$message.error({
               showClose: true,
               message: res.data.msg
@@ -277,17 +275,14 @@ export default {
         }).catch((error) => {
           this.$message.error({
             showClose: true,
-            message: error
+            message: error.message || '保存失败'
           });
-        }).finally(()=>{
+        }).finally(() => {
           this.locading = false
         })
-      }else {
-        this.$axios({
-          method: 'post',
-          url: "/api/common/channel/add",
-          data: this.form
-        }).then((res) => {
+      } else {
+        // 添加通道
+        addChannel(this.form).then((res) => {
           if (res.data.code === 0) {
             this.$message.success({
               showClose: true,
@@ -297,7 +292,7 @@ export default {
             if (this.saveSuccess) {
               this.saveSuccess()
             }
-          }else {
+          } else {
             this.$message.error({
               showClose: true,
               message: res.data.msg
@@ -306,9 +301,9 @@ export default {
         }).catch((error) => {
           this.$message.error({
             showClose: true,
-            message: error
+            message: error.message || '保存失败'
           });
-        }).finally(()=>{
+        }).finally(() => {
           this.locading = false
         })
       }
@@ -322,13 +317,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.locading = true
-        this.$axios({
-          method: 'post',
-          url: "/api/common/channel/reset",
-          params: {
-            id: this.form.gbId
-          }
-        }).then((res) => {
+        resetChannel(this.form.gbId).then((res) => {
           if (res.data.code === 0) {
             this.$message.success({
               showClose: true,
@@ -338,7 +327,7 @@ export default {
           }
         }).catch((error) => {
           console.error(error)
-        }).finally(()=>{
+        }).finally(() => {
           this.locading = false
         })
       }).catch(() => {
@@ -346,15 +335,9 @@ export default {
       });
 
     },
-    getCommonChannel:function () {
+    getCommonChannel: function () {
       this.locading = true
-      this.$axios({
-        method: 'get',
-        url: "/api/common/channel/one",
-        params: {
-          id: this.id
-        }
-      }).then((res) => {
+      getChannelInfo(this.id).then((res) => {
         if (res.data.code === 0) {
           if (res.data.data.gbDownloadSpeed) {
             res.data.data.gbDownloadSpeedArray = res.data.data.gbDownloadSpeed.split("/")
@@ -363,7 +346,7 @@ export default {
         }
       }).catch((error) => {
         console.error(error)
-      }).finally(()=>{
+      }).finally(() => {
         this.locading = false
       })
     },

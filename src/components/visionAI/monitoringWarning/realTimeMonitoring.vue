@@ -394,6 +394,7 @@ import GroupTree from '../../common/GroupTree.vue'
 import WarningDetail from './warningDetail.vue'
 import screenfull from "screenfull";
 import { alertAPI } from '../../service/VisionAIService.js';
+import ChannelService from '../deviceManagement/managementPages/service/ChannelService';
 
 export default {
   name: "RealTimeMonitoring",
@@ -519,6 +520,10 @@ export default {
     defaultArchive() {
       return this.availableArchives.find(archive => archive.isDefault);
     }
+  },
+  created() {
+    // 初始化服务实例
+    this.channelService = new ChannelService();
   },
   mounted() {
     // 启动时间更新定时器
@@ -806,19 +811,13 @@ export default {
       this.$set(this.videoTip, idxTmp, "正在拉流...");
       this.loading = true;
 
-      this.$axios({
-        method: 'get',
-        url: '/api/common/channel/play',
-        params: {
-          channelId: channelId
-        }
-      }).then((res) => {
-        if (res.data.code === 0 && res.data.data) {
+      this.channelService.getChannelPlayUrl(channelId, (res) => {
+        if (res.code === 0 && res.data) {
           let videoUrl;
           if (location.protocol === "https:") {
-            videoUrl = res.data.data.wss_flv;
+            videoUrl = res.data.wss_flv;
           } else {
-            videoUrl = res.data.data.ws_flv;
+            videoUrl = res.data.ws_flv;
           }
           this.setPlayUrl(videoUrl, idxTmp);
 
@@ -829,11 +828,8 @@ export default {
             this.adjustPlayerSize(idxTmp);
           }, 200);
         } else {
-          this.$set(this.videoTip, idxTmp, "播放失败: " + res.data.msg);
+          this.$set(this.videoTip, idxTmp, "播放失败: " + (res.msg || '未知错误'));
         }
-      }).catch(function (e) {
-        // 静默处理网络错误
-      }).finally(() => {
         this.loading = false;
       });
     },

@@ -300,6 +300,30 @@ class MediaServer{
       }
     });
   }
+
+  /**
+   * 检查平台设备国标ID是否存在
+   * @param {string} deviceGbId 设备国标ID
+   * @param {Function} callback 回调函数
+   */
+  async checkPlatformDeviceGBIdExist(deviceGbId, callback) {
+    try {
+      const res = await this.$axios({
+        method: 'get',
+        url: `/api/platform/exit/${deviceGbId}`
+      });
+      if (typeof callback === 'function') {
+        callback(res.data);
+      }
+      return res.data;
+    } catch (error) {
+      console.error('检查设备国标ID错误:', error);
+      if (typeof callback === 'function') {
+        callback(false);
+      }
+      return false;
+    }
+  }
 }
 
 export default MediaServer;

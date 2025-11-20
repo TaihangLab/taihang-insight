@@ -40,11 +40,11 @@
           <el-col :span="12">
             <el-form v-if="currentStep === 2 || currentStep === 3" ref="mediaServerForm1" :rules="rules" :model="mediaServerForm" label-width="140px" >
               <el-form-item label="IP" prop="ip">
-                <el-input  v-if="currentStep === 2" v-model="mediaServerForm.ip" disabled :disabled="mediaServerForm.defaultServer"></el-input>
+                <el-input  v-if="currentStep === 2" v-model="mediaServerForm.ip" :disabled="true"></el-input>
                 <el-input  v-if="currentStep === 3"  v-model="mediaServerForm.ip" :disabled="mediaServerForm.defaultServer"></el-input>
               </el-form-item>
               <el-form-item label="HTTP端口" prop="httpPort">
-                <el-input  v-if="currentStep === 2"  v-model="mediaServerForm.httpPort" disabled :disabled="mediaServerForm.defaultServer"></el-input>
+                <el-input  v-if="currentStep === 2"  v-model="mediaServerForm.httpPort" :disabled="true"></el-input>
                 <el-input  v-if="currentStep === 3"  v-model="mediaServerForm.httpPort" :disabled="mediaServerForm.defaultServer"></el-input>
               </el-form-item>
               <el-form-item label="HOOK IP" prop="ip">
@@ -77,7 +77,7 @@
                 <el-input v-model="mediaServerForm.rtmpSSlPort" placeholder="媒体服务RTMPS_PORT" clearable :disabled="mediaServerForm.defaultServer"></el-input>
               </el-form-item>
               <el-form-item label="SECRET" prop="secret">
-                <el-input v-if="currentStep === 2"  v-model="mediaServerForm.secret" disabled :disabled="mediaServerForm.defaultServer"></el-input>
+                <el-input v-if="currentStep === 2"  v-model="mediaServerForm.secret" :disabled="true"></el-input>
                 <el-input v-if="currentStep === 3"  v-model="mediaServerForm.secret" :disabled="mediaServerForm.defaultServer"></el-input>
               </el-form-item>
               <el-form-item label="自动配置媒体服务" >
@@ -358,17 +358,7 @@ export default {
       this.currentStep = 1;
     },
     deviceGBIdExit: async function (deviceGbId) {
-      var result = false;
-      var that = this;
-      await that.$axios({
-        method: 'get',
-        url:`/api/platform/exit/${deviceGbId}`
-      }).then(function (res) {
-        result = res.data;
-      }).catch(function (error) {
-        console.log(error);
-      });
-      return result;
+      return await this.mediaServer.checkPlatformDeviceGBIdExist(deviceGbId);
     },
     checkExpires: function() {
       if (this.platform.enable && this.platform.expires == "0") {
