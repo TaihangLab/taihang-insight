@@ -182,7 +182,32 @@
               </div>
             </div>
             <div class="message-content">
-              <div class="message-bubble">
+              <!-- 思考块（如果有思考内容） -->
+              <div v-if="message.hasThinkCompleted && message.thinkingContent" 
+                   class="think-block-wrapper"
+                   v-html="formatThinkBlock(message.thinkingContent, true)">
+              </div>
+              
+              <!-- 正在思考提示 -->
+              <div v-if="message.isThinking" class="thinking-status">
+                <div class="thinking-indicator">
+                  <svg class="thinking-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span class="thinking-text">正在思考</span>
+                  <span class="thinking-dots">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                  </span>
+                </div>
+                <div class="thinking-content-preview" v-if="message.thinkingContent">
+                  {{ message.thinkingContent }}
+                </div>
+              </div>
+              
+              <!-- 正常消息气泡 -->
+              <div class="message-bubble" v-if="!message.isThinking">
                 <span v-if="message.isTyping" class="typing-indicator">
                   <span class="dot"></span>
                   <span class="dot"></span>
@@ -428,7 +453,32 @@
                   </div>
                 </div>
                 <div class="message-content">
-                  <div class="message-bubble">
+                  <!-- 思考块（如果有思考内容） -->
+                  <div v-if="message.hasThinkCompleted && message.thinkingContent" 
+                       class="think-block-wrapper"
+                       v-html="formatThinkBlock(message.thinkingContent, true)">
+                  </div>
+                  
+                  <!-- 正在思考提示 -->
+                  <div v-if="message.isThinking" class="thinking-status">
+                    <div class="thinking-indicator">
+                      <svg class="thinking-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      <span class="thinking-text">正在思考</span>
+                      <span class="thinking-dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                      </span>
+                    </div>
+                    <div class="thinking-content-preview" v-if="message.thinkingContent">
+                      {{ message.thinkingContent }}
+                    </div>
+                  </div>
+                  
+                  <!-- 正常消息气泡 -->
+                  <div class="message-bubble" v-if="!message.isThinking">
                     <span v-if="message.isTyping" class="typing-indicator">
                       <span class="dot"></span>
                       <span class="dot"></span>
