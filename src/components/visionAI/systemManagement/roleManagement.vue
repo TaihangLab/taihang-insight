@@ -882,7 +882,7 @@ export default {
 .filter-section {
   margin-bottom: 20px;
   padding: 18px 24px;
-  background: #f5f7fa;
+  background: #fff;
   border-radius: 12px;
   border: 1px solid #ebeef5;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.05);

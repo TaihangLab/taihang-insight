@@ -529,9 +529,8 @@ export default {
 .search-form {
   margin: 0;
   padding: 12px 16px;
-  background: #f5f7fa;
+  background: #fff;
   border-radius: 12px;
-  border: 1px solid #ebeef5;
   position: relative;
 }
 
@@ -765,9 +764,9 @@ export default {
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
 }
 
-.custom-tabs >>> .el-tabs__nav-wrap {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-}
+/* .custom-tabs >>> .el-tabs__nav-wrap {
+  background: fff;
+} */
 
 .custom-tabs >>> .el-tabs__item {
   color: #4b5563;
@@ -780,7 +779,7 @@ export default {
 }
 
 .custom-tabs >>> .el-tabs__item.is-active {
-  color: #1e40af;
+  color: #3b82f6;
   font-weight: 600;
 }
 

@@ -1044,8 +1044,8 @@ export default {
 /* 搜索区卡片 */
 .filter-section {
   margin-bottom: 12px;
-  padding: 14px 18px;
-  background: #f5f7fa;
+  /* padding: 14px 18px; */
+  background: #fff;
   border-radius: 12px;
   border: 1px solid #ebeef5;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.05);
@@ -1053,7 +1053,7 @@ export default {
 }
 
 .search-form .el-form-item {
-  margin-bottom: 12px;
+  /* margin-bottom: 12px; */
 }
 
 .search-form .el-form-item__label {

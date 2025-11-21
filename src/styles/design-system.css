@@ -274,7 +274,7 @@ body {
   background: var(--bg-primary);
   padding: var(--spacing-lg);
   border-radius: var(--border-radius-lg);
-  margin-bottom: var(--spacing-base);
+  /* margin-bottom: var(--spacing-base); */
 }
 
 .search-form .form-label {
