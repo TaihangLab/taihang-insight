@@ -71,7 +71,7 @@
 </template>
 
 <script>
-import { getGbDeviceList } from '@/api'
+import { getGbDeviceList } from '@/api/dialog'
 
 export default {
   name: "gbDeviceSelect",

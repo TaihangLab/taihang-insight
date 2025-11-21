@@ -17,7 +17,7 @@
 
 <script>
 import shareChannelAdd from "./shareChannelAdd.vue";
-import { updatePlatformChannelForGb } from '@/api'
+import { updatePlatformChannelForGb } from '@/api/dialog'
 
 export default {
     name: 'chooseChannel',

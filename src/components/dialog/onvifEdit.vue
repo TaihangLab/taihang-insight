@@ -42,7 +42,7 @@
 </template>
 
 <script>
-import { getOnvifRtsp } from '@/api'
+import { getOnvifRtsp } from '@/api/dialog'
 
 export default {
   name: "onvifEdit",

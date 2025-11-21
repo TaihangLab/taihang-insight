@@ -34,9 +34,12 @@ visionAIAxios.interceptors.request.use(
   config => {
     // 这里可以添加token等通用请求头
     const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['access-token'] = token;
-    }
+    // if (token) {
+    //   config.headers['access-token'] = token;
+    // }
+
+    // 模拟接收token
+    config.headers['access-token'] = 'Bearer token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111';
     return config;
   },
   error => {

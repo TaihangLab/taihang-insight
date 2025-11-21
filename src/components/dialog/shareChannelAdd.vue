@@ -109,7 +109,7 @@ import {
   removePlatformChannel, 
   removePlatformChannelByDevice, 
   updatePlatformChannelCustom 
-} from '@/api'
+} from '@/api/dialog'
 
 export default {
   name: 'shareChannelAdd',

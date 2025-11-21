@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import { getDeviceSyncStatus } from '@/api'
+import { getDeviceSyncStatus } from '@/api/dialog'
 
 export default {
   name: "SyncChannelProgress",

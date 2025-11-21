@@ -33,7 +33,7 @@
 </template>
 
 <script>
-import { saveCatalog } from '@/api'
+import { saveCatalog } from '@/api/dialog'
 
 export default {
   name: "catalogEdit",

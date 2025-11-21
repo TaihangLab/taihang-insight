@@ -612,7 +612,7 @@ export default {
             type: 'success'
           })
         } else {
-          throw new Error(response.data?.msg || '清空失败')
+          throw new Error(response.data.msg || '清空失败')
         }
       } catch (error) {
         console.error('清空日志失败:', error)

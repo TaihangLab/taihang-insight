@@ -22,7 +22,7 @@
 
 <script>
 import devicePlayer from '../dialog/devicePlayer.vue'
-import { startPlay } from '@/api'
+import { startPlay } from '@/api/dialog'
 
 export default {
   name: "channelMapInfobox",

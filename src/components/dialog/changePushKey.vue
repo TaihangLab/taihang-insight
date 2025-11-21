@@ -27,7 +27,7 @@
 </template>
 
 <script>
-import { changePushKey } from '@/api'
+import { changePushKey } from '@/api/dialog'
 
 export default {
   name: "changePushKey",

@@ -21,7 +21,7 @@
 
 <script>
 import DeviceService from '../service/DeviceService'
-import { getPositionHistory } from '@/api'
+import { getPositionHistory } from '@/api/dialog'
 
 export default {
   name: "deviceEdit",

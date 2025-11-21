@@ -333,15 +333,15 @@
 </template>
 
 <script>
-import {
-  getLocalVideoList,
-  uploadLocalVideo,
-  updateLocalVideo,
-  deleteLocalVideo,
-  startVideoStream,
-  stopVideoStream,
-  getVideoStreamStatus
-} from '@/api/localVideo'
+import axios from 'axios';
+import apiConfig from '../../../config/api.js';
+
+// 创建专用axios实例，避免CORS错误
+const localVideoAxios = axios.create({
+  baseURL: apiConfig.API_BASE_URL,
+  timeout: 15000,
+  withCredentials: false  // 避免CORS错误
+});
 
 export default {
   name: 'LocalVideo',
@@ -427,7 +427,10 @@ export default {
           params.is_streaming = this.filterStreaming;
         }
         
-        const response = await getLocalVideoList(params);
+         const response = await localVideoAxios.get(
+           '/api/v1/local-videos/list',
+           { params }
+         );
         
         this.videoList = response.data;
         this.totalVideos = this.videoList.length;
@@ -447,7 +450,9 @@ export default {
        for (const video of this.videoList) {
          if (video.is_streaming) {
            try {
-             const response = await getVideoStreamStatus(video.id);
+             const response = await localVideoAxios.get(
+               `/api/v1/local-videos/${video.id}/stream-status`
+             );
              if (response.data) {
                // 使用 $set 确保Vue能追踪新属性的变化
                this.$set(video, 'rtsp_url', response.data.rtsp_url);
@@ -467,7 +472,9 @@ export default {
        const streamingVideos = this.videoList.filter(v => v.is_streaming);
        for (const video of streamingVideos) {
          try {
-           const response = await getVideoStreamStatus(video.id);
+           const response = await localVideoAxios.get(
+             `/api/v1/local-videos/${video.id}/stream-status`
+           );
            if (response.data) {
              // 使用 $set 确保Vue能追踪新属性的变化
              this.$set(video, 'rtsp_url', response.data.rtsp_url);
@@ -539,12 +546,21 @@ export default {
            }
           
           try {
-            await uploadLocalVideo(formData, (progressEvent) => {
-              // 计算上传进度
-              if (progressEvent.total) {
-                this.uploadProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              }
-            });
+             await localVideoAxios.post(
+               '/api/v1/local-videos/upload',
+               formData,
+               {
+                 headers: {
+                   'Content-Type': 'multipart/form-data'
+                 },
+                 onUploadProgress: (progressEvent) => {
+                   // 计算上传进度
+                   if (progressEvent.total) {
+                     this.uploadProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                   }
+                 }
+               }
+             );
             
             this.$message.success('视频上传成功');
             this.uploadDialogVisible = false;
@@ -592,7 +608,10 @@ export default {
               updateData.stream_fps = this.editForm.stream_fps;
             }
             
-            await updateLocalVideo(this.currentVideo.id, updateData);
+             await localVideoAxios.put(
+               `/api/v1/local-videos/${this.currentVideo.id}`,
+               updateData
+             );
             
             this.$message.success('视频信息已更新');
             this.editDialogVisible = false;
@@ -635,7 +654,10 @@ export default {
           payload.stream_fps = this.streamForm.stream_fps;
         }
         
-        const response = await startVideoStream(this.currentVideo.id, payload);
+         const response = await localVideoAxios.post(
+           `/api/v1/local-videos/${this.currentVideo.id}/start-stream`,
+           payload
+         );
         
         this.$message.success('推流已启动');
         this.streamDialogVisible = false;
@@ -666,7 +688,9 @@ export default {
         type: 'warning'
       }).then(async () => {
         try {
-          await stopVideoStream(video.id);
+           await localVideoAxios.post(
+             `/api/v1/local-videos/${video.id}/stop-stream`
+           );
           
            this.$message.success('推流已停止');
            this.loadVideos();
@@ -689,7 +713,9 @@ export default {
         type: 'error'
       }).then(async () => {
         try {
-          await deleteLocalVideo(video.id);
+           await localVideoAxios.delete(
+             `/api/v1/local-videos/${video.id}`
+           );
           
            this.$message.success('视频已删除');
            this.loadVideos();

@@ -86,7 +86,7 @@
 
 <script>
 import gbDeviceSelect from "./GbDeviceSelect.vue";
-import { getRecordPlanChannelList, linkRecordPlan } from '@/api'
+import { getRecordPlanChannelList, linkRecordPlan } from '@/api/dialog'
 
 export default {
   name: 'linkChannelRecord',

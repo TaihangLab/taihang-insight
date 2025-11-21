@@ -16,7 +16,7 @@
 
 <script>
 import moment from "moment";
-import { getDownloadProgress, stopDownloadRecord } from '@/api'
+import { getDownloadProgress, stopDownloadRecord } from '@/api/dialog'
 
 export default {
     name: 'recordDownload',

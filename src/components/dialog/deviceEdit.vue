@@ -63,7 +63,7 @@
 
 <script>
 import MediaServer from '../service/MediaServer'
-import { saveDevice } from '@/api'
+import { saveDevice } from '@/api/dialog'
 
 export default {
   name: "deviceEdit",

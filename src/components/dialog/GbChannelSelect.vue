@@ -81,7 +81,7 @@
 </template>
 
 <script>
-import { getChannelByCivilCode, getChannelByParent } from '@/api'
+import { getChannelByCivilCode, getChannelByParent } from '@/api/dialog'
 
 export default {
   name: "gbChannelSelect",

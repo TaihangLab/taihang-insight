@@ -92,7 +92,7 @@ import {
   clearUnusualParentChannel, 
   getRegionDescription, 
   addRegionByCivilCode 
-} from '@/api'
+} from '@/api/dialog'
 
 export default {
   name: "UnusualGroupChannelSelect",

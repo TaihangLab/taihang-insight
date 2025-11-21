@@ -31,7 +31,7 @@
 </template>
 
 <script>
-import { changePasswordForAdmin } from '@/api'
+import { changePasswordForAdmin } from '@/api/dialog'
 
 export default {
   name: "changePasswordForAdmin",

@@ -243,14 +243,7 @@
 
 <script>
 import * as echarts from 'echarts';
-import { 
-  getSystemStatus, 
-  getWarningRecordList, 
-  getDeviceWarningTop,
-  getWarningHandleStatus,
-  getWarningImageList,
-  getWeatherInfo
-} from '@/api/visualCenter'
+import axios from 'axios';
 
 export default {
   name: 'VisualCenter',
@@ -551,8 +544,19 @@ export default {
     // 获取系统状态数据
     async fetchSystemStatus() {
       try {
-        // 调用封装的API
-        const response = await getSystemStatus().catch(() => null);
+        // 使用模拟数据代替真实API调用
+        // const response = await this.$axios.get('/api/system/status').catch(() => null);
+        
+        // 模拟API响应
+        const response = {
+          data: {
+            todayWarnings: 25,
+            deviceCount: 120,
+            totalDevices: 150,
+            currentEvent: '未戴安全帽',
+            currentDevice: '生产车间A区监控'
+          }
+        };
         
         if (response && response.data) {
           const { data } = response;
@@ -561,20 +565,9 @@ export default {
           this.totalDevices = data.totalDevices || 0;
           this.currentEvent = data.currentEvent || '';
           this.currentDevice = data.currentDevice || '';
-        } else {
-          // 如果API调用失败，使用模拟数据
-          this.todayWarnings = 25;
-          this.deviceCount = 120;
-          this.totalDevices = 150;
-          this.currentEvent = '未戴安全帽';
-          this.currentDevice = '生产车间A区监控';
         }
       } catch (error) {
         console.error('获取系统状态失败:', error);
-        // 使用模拟数据作为降级方案
-        this.todayWarnings = 25;
-        this.deviceCount = 120;
-        this.totalDevices = 150;
       }
     },
     
@@ -583,6 +576,8 @@ export default {
       try {
         this.locationInfo.loading = true;
         
+        // 模拟天气数据，避免跨域和API密钥问题
+        /*
         // 首先尝试获取用户位置
         let position;
         try {
@@ -592,22 +587,41 @@ export default {
           position = { latitude: 38.0428, longitude: 114.5149 }; // 石家庄默认坐标
         }
         
-        // 使用封装的天气API
-        const response = await getWeatherInfo({
-          latitude: position.latitude,
-          longitude: position.longitude,
-          apiKey: 'f0245b8d45c94ca58ba24440251703'
-        }).catch(() => null);
+        // 使用获取到的位置请求天气信息
+        const response = await axios.get('https://api.weatherapi.com/v1/current.json', {
+          params: {
+            key: 'f0245b8d45c94ca58ba24440251703',
+            q: `${position.latitude},${position.longitude}`,
+            lang: 'zh',
+            aqi: 'yes'
+          }
+        });
+        */
+        
+        // 使用模拟数据
+        const response = {
+          data: {
+            location: {
+              name: '太行工业园区'
+            },
+            current: {
+              condition: {
+                text: '晴'
+              },
+              temp_c: 26,
+              air_quality: {
+                'us-epa-index': 2 // 良
+              }
+            }
+          }
+        };
         
         if (response && response.data && response.data.location && response.data.current) {
           const { location, current } = response.data;
           this.locationInfo.location = location.name;
           // 天气和温度合并显示
           this.locationInfo.weather = `${current.condition.text} ${current.temp_c}°C`;
-        } else {
-          // 使用默认值
-          this.locationInfo.location = '太行工业园区';
-          this.locationInfo.weather = '晴 26°C';
+          
         }
       } catch (error) {
         console.error('获取天气数据失败:', error);

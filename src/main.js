@@ -66,17 +66,19 @@ new Vue({
     // 获取本平台的服务ID
     console.log("获取本平台的服务ID")
     if (!this.$myServerId) {
-      // 使用封装的API方法
-      getSystemConfig().then((res) => {
+      axios({
+        method: 'get',
+        url: `/api/server/system/configInfo`,
+      }).then( (res)=> {
         if (res.data.code === 0) {
           console.log(res.data)
           console.log("当前服务ID： " + res.data.data.addOn.serverId)
           Vue.prototype.$myServerId = res.data.data.addOn.serverId;
         }
-      }).catch((error) => {
-        console.error("获取系统配置失败:", error);
+      }).catch( (error)=> {
       });
     }
+
   },
   router: router,
   render: h => h(App),

@@ -540,16 +540,6 @@
 <script>
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { 
-  getResourceStatistics, 
-  getResourceDetails,
-  getMyAlgorithms,
-  getRealtimeEvents,
-  getAlarmStatistics,
-  getDeviceStatistics,
-  getAlarmInfoList,
-  getAlarmForwardingData
-} from '@/api/algorithm'
 
 export default {
   name: 'AlgorithmInference',
@@ -646,12 +636,10 @@ export default {
     // 添加全屏变化事件监听器
     document.addEventListener('fullscreenchange', this.handleFullscreenChange);
 
-    // 加载数据
-    this.loadAllData();
-
     this.$nextTick(() => {
       this.initCubeScene();
       this.initAlgorithmSphere(); // 添加初始化算法球体
+      this.initResourceChart();
 
       // 添加窗口大小变化监听
       window.addEventListener('resize', this.handleResize);
@@ -694,97 +682,6 @@ export default {
     }
   },
   methods: {
-    // 加载所有数据
-    async loadAllData() {
-      await Promise.all([
-        this.loadResourceData(),
-        this.loadAlgorithmData(),
-        this.loadEventData(),
-        this.loadAlarmData(),
-        this.loadDeviceData()
-      ]);
-    },
-
-    // 加载资源统计数据
-    async loadResourceData() {
-      try {
-        const response = await getResourceStatistics().catch(() => null);
-        if (response && response.data) {
-          this.cpuUsage = response.data.cpuUsage || this.cpuUsage;
-          this.memoryUsage = response.data.memoryUsage || this.memoryUsage;
-          this.diskUsage = response.data.diskUsage || this.diskUsage;
-          this.networkUsage = response.data.networkUsage || this.networkUsage;
-        }
-      } catch (error) {
-        console.error('加载资源数据失败:', error);
-      }
-    },
-
-    // 加载算法列表
-    async loadAlgorithmData() {
-      try {
-        const response = await getMyAlgorithms().catch(() => null);
-        if (response && response.data) {
-          this.myAlgorithms = response.data;
-        }
-      } catch (error) {
-        console.error('加载算法列表失败:', error);
-      }
-    },
-
-    // 加载实时事件
-    async loadEventData() {
-      try {
-        const response = await getRealtimeEvents().catch(() => null);
-        if (response && response.data) {
-          // 处理实时事件数据
-          console.log('实时事件数据:', response.data);
-        }
-      } catch (error) {
-        console.error('加载实时事件失败:', error);
-      }
-    },
-
-    // 加载报警统计
-    async loadAlarmData() {
-      try {
-        const response = await getAlarmStatistics({
-          startTime: this.getStartTime(),
-          endTime: this.getCurrentTime()
-        }).catch(() => null);
-        if (response && response.data) {
-          // 处理报警统计数据
-          console.log('报警统计数据:', response.data);
-        }
-      } catch (error) {
-        console.error('加载报警统计失败:', error);
-      }
-    },
-
-    // 加载设备统计
-    async loadDeviceData() {
-      try {
-        const response = await getDeviceStatistics().catch(() => null);
-        if (response && response.data) {
-          this.deviceStatistics = response.data;
-        }
-      } catch (error) {
-        console.error('加载设备统计失败:', error);
-      }
-    },
-
-    // 获取当前时间
-    getCurrentTime() {
-      const now = new Date();
-      return now.toISOString();
-    },
-
-    // 获取开始时间（本月第一天）
-    getStartTime() {
-      const now = new Date();
-      return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    },
-
     updateTime() {
       const now = new Date();
       const year = now.getFullYear();

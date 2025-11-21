@@ -18,10 +18,13 @@ const service = axios.create({
 service.interceptors.request.use(
   config => {
     // 从userService获取token（如果存在）
-    const token = userService.getToken()
-    if (token) {
-      config.headers['Authorization'] = 'Bearer ' + token
-    }
+    // const token = userService.getToken()
+    // if (token) {
+    //   config.headers['Authorization'] = 'Bearer ' + token
+    // }
+
+    //  模拟接收token
+    config.headers['Authorization'] = 'Bearer token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111'
     
     // 可以根据需要添加其他请求头
     // config.headers['X-Requested-With'] = 'XMLHttpRequest'

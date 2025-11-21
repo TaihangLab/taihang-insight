@@ -127,7 +127,7 @@ import {
   getIndustryCodeList, 
   getDeviceTypeList, 
   getNetworkIdentificationList 
-} from '@/api'
+} from '@/api/dialog'
 
 export default {
   props: {},
