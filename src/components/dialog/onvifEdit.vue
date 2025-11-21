@@ -42,6 +42,8 @@
 </template>
 
 <script>
+import { getOnvifRtsp } from '@/api'
+
 export default {
   name: "onvifEdit",
   props: {},
@@ -79,15 +81,11 @@ export default {
     onSubmit: function () {
       console.log("onSubmit");
       console.log(this.form);
-      this.$axios({
-        method: 'get',
-        url:`/api/onvif/rtsp`,
-        params: {
-          hostname: this.form.hostName,
-          timeout: 3000,
-          username: this.form.username,
-          password: this.form.password,
-        }
+      getOnvifRtsp({
+        hostname: this.form.hostName,
+        timeout: 3000,
+        username: this.form.username,
+        password: this.form.password,
       }).then((res) => {
         console.log(res.data)
         if (res.data.code === 0) {

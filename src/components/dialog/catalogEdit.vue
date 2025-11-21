@@ -33,6 +33,7 @@
 </template>
 
 <script>
+import { saveCatalog } from '@/api'
 
 export default {
   name: "catalogEdit",
@@ -119,11 +120,7 @@ export default {
     onSubmit: function () {
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          this.$axios({
-            method:"post",
-            url:`/api/platform/catalog/${!this.isEdit? "add":"edit"}`,
-            data: this.form
-          }).then((res)=> {
+          saveCatalog(this.form, this.isEdit).then((res)=> {
             if (res.data.code === 0) {
               if (this.submitCallback)this.submitCallback(this.form)
             }else {

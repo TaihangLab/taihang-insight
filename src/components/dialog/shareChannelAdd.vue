@@ -101,8 +101,15 @@
 </template>
 
 <script>
-
 import gbDeviceSelect from "./GbDeviceSelect.vue";
+import { 
+  getPlatformChannelList, 
+  addPlatformChannel, 
+  addPlatformChannelByDevice, 
+  removePlatformChannel, 
+  removePlatformChannelByDevice, 
+  updatePlatformChannelCustom 
+} from '@/api'
 
 export default {
   name: 'shareChannelAdd',
@@ -142,18 +149,14 @@ export default {
       this.getChannelList();
     },
     getChannelList: function () {
-      this.$axios({
-        method: 'get',
-        url: `/api/platform/channel/list`,
-        params: {
-          page: this.currentPage,
-          count: this.count,
-          query: this.searchSrt,
-          online: this.online,
-          channelType: this.channelType,
-          platformId: this.platformId,
-          hasShare: this.hasShare
-        }
+      getPlatformChannelList({
+        page: this.currentPage,
+        count: this.count,
+        query: this.searchSrt,
+        online: this.online,
+        channelType: this.channelType,
+        platformId: this.platformId,
+        hasShare: this.hasShare
       }).then((res)=> {
         if (res.data.code === 0) {
           this.total = res.data.data.total;
@@ -197,13 +200,9 @@ export default {
       }
       this.loading = true
 
-      this.$axios({
-        method: 'post',
-        url: `/api/platform/channel/add`,
-        data: {
-          platformId: this.platformId,
-          channelIds: channels
-        }
+      addPlatformChannel({
+        platformId: this.platformId,
+        channelIds: channels
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message.success({
@@ -235,13 +234,9 @@ export default {
       }).then(() => {
         this.loading = true
 
-        this.$axios({
-          method: 'post',
-          url: `/api/platform/channel/add`,
-          data: {
-            platformId: this.platformId,
-            all: true
-          }
+        addPlatformChannel({
+          platformId: this.platformId,
+          all: true
         }).then((res)=> {
           if (res.data.code === 0) {
             this.$message.success({
@@ -273,13 +268,9 @@ export default {
         for (let i = 0; i < rows.length; i++) {
           deviceIds.push(rows[i].id)
         }
-        this.$axios({
-          method: 'post',
-          url: `/api/platform/channel/device/add`,
-          data: {
-            platformId: this.platformId,
-            deviceIds: deviceIds,
-          }
+        addPlatformChannelByDevice({
+          platformId: this.platformId,
+          deviceIds: deviceIds,
         }).then((res)=> {
           if (res.data.code === 0) {
             this.$message.success({
@@ -309,13 +300,9 @@ export default {
         for (let i = 0; i < rows.length; i++) {
           deviceIds.push(rows[i].id)
         }
-        this.$axios({
-          method: 'post',
-          url: `/api/platform/channel/device/remove`,
-          data: {
-            platformId: this.platformId,
-            deviceIds: deviceIds,
-          }
+        removePlatformChannelByDevice({
+          platformId: this.platformId,
+          deviceIds: deviceIds,
         }).then((res)=> {
           if (res.data.code === 0) {
             this.$message.success({
@@ -352,13 +339,9 @@ export default {
       }
       this.loading = true
 
-      this.$axios({
-        method: 'delete',
-        url: `/api/platform/channel/remove`,
-        data: {
-          platformId: this.platformId,
-          channelIds: channels
-        }
+      removePlatformChannel({
+        platformId: this.platformId,
+        channelIds: channels
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message.success({
@@ -390,13 +373,9 @@ export default {
         type: 'warning'
       }).then(() => {
         this.loading = true
-        this.$axios({
-          method: 'delete',
-          url: `/api/platform/channel/remove`,
-          data: {
-            platformId: this.platformId,
-            all: true
-          }
+        removePlatformChannel({
+          platformId: this.platformId,
+          all: true
         }).then((res)=> {
           if (res.data.code === 0) {
             this.$message.success({
@@ -423,11 +402,7 @@ export default {
 
     },
     saveCustom: function (row) {
-      this.$axios({
-        method: 'post',
-        url: `/api/platform/channel/custom/update`,
-        data: row
-      }).then((res)=> {
+      updatePlatformChannelCustom(row).then((res)=> {
         if (res.data.code === 0) {
           this.$message.success({
             showClose: true,

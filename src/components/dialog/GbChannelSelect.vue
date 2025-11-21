@@ -81,7 +81,7 @@
 </template>
 
 <script>
-
+import { getChannelByCivilCode, getChannelByParent } from '@/api'
 
 export default {
   name: "gbChannelSelect",
@@ -123,50 +123,28 @@ export default {
     },
     getChannelList: function () {
       this.getChannelListLoading = true;
-      if (this.dataType === "civilCode") {
-        this.$axios({
-          method: 'get',
-          url: `/api/common/channel/civilcode/list`,
-          params: {
-            page: this.currentPage,
-            count: this.count,
-            channelType: this.channelType,
-            query: this.searchSrt,
-            online: this.online,
-          }
-        }).then( (res)=> {
-          if (res.data.code === 0) {
-            this.total = res.data.data.total;
-            this.channelList = res.data.data.list;
-          }
-          this.getChannelListLoading = false;
-        }).catch( (error)=> {
-          console.error(error);
-          this.getChannelListLoading = false;
-        });
-      }else {
-        this.$axios({
-          method: 'get',
-          url: `/api/common/channel/parent/list`,
-          params: {
-            page: this.currentPage,
-            count: this.count,
-            query: this.searchSrt,
-            channelType: this.channelType,
-            online: this.online,
-          }
-        }).then( (res)=> {
-          if (res.data.code === 0) {
-            this.total = res.data.data.total;
-            this.channelList = res.data.data.list;
-          }
-          this.getChannelListLoading = false;
-        }).catch( (error)=> {
-          console.error(error);
-          this.getChannelListLoading = false;
-        });
+      const params = {
+        page: this.currentPage,
+        count: this.count,
+        channelType: this.channelType,
+        query: this.searchSrt,
+        online: this.online,
       }
-
+      
+      const apiCall = this.dataType === "civilCode" 
+        ? getChannelByCivilCode(params)
+        : getChannelByParent(params)
+      
+      apiCall.then( (res)=> {
+        if (res.data.code === 0) {
+          this.total = res.data.data.total;
+          this.channelList = res.data.data.list;
+        }
+        this.getChannelListLoading = false;
+      }).catch( (error)=> {
+        console.error(error);
+        this.getChannelListLoading = false;
+      });
     },
     openDialog: function (callback) {
       this.listChangeCallback = callback;

@@ -85,8 +85,8 @@
 </template>
 
 <script>
-
 import gbDeviceSelect from "./GbDeviceSelect.vue";
+import { getRecordPlanChannelList, linkRecordPlan } from '@/api'
 
 export default {
   name: 'linkChannelRecord',
@@ -136,18 +136,14 @@ export default {
       this.getChannelList();
     },
     getChannelList: function () {
-      this.$axios({
-        method: 'get',
-        url: `/api/record/plan/channel/list`,
-        params: {
-          page: this.currentPage,
-          count: this.count,
-          query: this.searchSrt,
-          online: this.online,
-          channelType: this.channelType,
-          planId: this.planId,
-          hasLink: this.hasLink
-        }
+      getRecordPlanChannelList({
+        page: this.currentPage,
+        count: this.count,
+        query: this.searchSrt,
+        online: this.online,
+        channelType: this.channelType,
+        planId: this.planId,
+        hasLink: this.hasLink
       }).then((res)=> {
         if (res.data.code === 0) {
           this.total = res.data.data.total;
@@ -169,11 +165,7 @@ export default {
 
     linkPlan: function (data){
       this.loading = true
-      return this.$axios({
-        method: 'post',
-        url: `/api/record/plan/link`,
-        data: data
-      }).then((res)=> {
+      return linkRecordPlan(data).then((res)=> {
         if (res.data.code === 0) {
           this.$message.success({
             showClose: true,

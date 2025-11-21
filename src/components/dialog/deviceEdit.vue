@@ -63,6 +63,8 @@
 
 <script>
 import MediaServer from '../service/MediaServer'
+import { saveDevice } from '@/api'
+
 export default {
   name: "deviceEdit",
   props: {},
@@ -107,11 +109,7 @@ export default {
     onSubmit: function () {
       console.log("onSubmit");
       console.log(this.form);
-      this.$axios({
-        method: 'post',
-        url:`/api/device/query/device/${this.isEdit?'update':'add'}`,
-        data: this.form
-      }).then((res) => {
+      saveDevice(this.form, this.isEdit).then((res) => {
         console.log(res.data)
         if (res.data.code === 0) {
           this.listChangeCallback()

@@ -19,6 +19,7 @@
 </template>
 
 <script>
+import { getDeviceSyncStatus } from '@/api'
 
 export default {
   name: "SyncChannelProgress",
@@ -55,10 +56,7 @@ export default {
       this.getProgress()
     },
     getProgress(){
-      this.$axios({
-        method: 'get',
-        url:`/api/device/query/${this.deviceId}/sync_status/`,
-      }).then((res) => {
+      getDeviceSyncStatus(this.deviceId).then((res) => {
         if (res.data.code === 0) {
 
           if (res.data.data != null) {

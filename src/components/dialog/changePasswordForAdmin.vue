@@ -31,6 +31,8 @@
 </template>
 
 <script>
+import { changePasswordForAdmin } from '@/api'
+
 export default {
   name: "changePasswordForAdmin",
   props: {},
@@ -83,14 +85,7 @@ export default {
       }
     },
     onSubmit: function () {
-      this.$axios({
-        method: 'post',
-        url:"/api/user/changePasswordForAdmin",
-        params: {
-          password: this.newPassword,
-          userId: this.form.id,
-        }
-      }).then((res)=> {
+      changePasswordForAdmin(this.newPassword, this.form.id).then((res)=> {
         if (res.data.code === 0) {
           this.$message({
             showClose: true,

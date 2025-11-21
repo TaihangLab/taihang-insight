@@ -33,3 +33,6 @@ export * from './user'
 // 云台控制相关API
 export * from './ptz'
 
+// Dialog组件相关API
+export * from './dialog'
+

@@ -21,6 +21,7 @@
 
 <script>
 import DeviceService from '../service/DeviceService'
+import { getPositionHistory } from '@/api'
 
 export default {
   name: "deviceEdit",
@@ -72,12 +73,12 @@ export default {
     onSubmit: function () {
       console.log("onSubmit");
       this.isLoging = true;
-      let url = `/api/position/history/${this.channel.deviceId}?start=${this.searchFrom}&end=${this.searchTo}`;
-      if (this.channel.channelId) {
-        url+="&channelId=${this.channel.channelId}"
-      }
-      this.$axios.get(url, {
-      }).then((res)=> {
+      getPositionHistory(
+        this.channel.deviceId,
+        this.channel.channelId,
+        this.searchFrom,
+        this.searchTo
+      ).then((res)=> {
         this.isLoging = false;
         if (typeof this.callback == "function") {
           if (res.data.code == 0) {
@@ -91,7 +92,7 @@ export default {
           }
 
         }
-      }).catch(function (error) {
+      }).catch((error) => {
           this.isLoging = false;
           console.error(error);
         })

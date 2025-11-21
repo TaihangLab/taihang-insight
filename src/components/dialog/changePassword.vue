@@ -36,6 +36,8 @@
 <script>
 import crypto from 'crypto'
 import userService from "../service/UserService";
+import { changePassword } from '@/api'
+
 export default {
   name: "changePassword",
   props: {},
@@ -89,14 +91,10 @@ export default {
       this.showDialog = true;
     },
     onSubmit: function () {
-      this.$axios({
-        method: 'post',
-        url:"/api/user/changePassword",
-        params: {
-          oldPassword: crypto.createHash('md5').update(this.oldPassword, "utf8").digest('hex'),
-          password: this.newPassword
-        }
-      }).then((res)=> {
+      changePassword(
+        crypto.createHash('md5').update(this.oldPassword, "utf8").digest('hex'),
+        this.newPassword
+      ).then((res)=> {
         if (res.data.code === 0) {
           this.$message({
             showClose: true,

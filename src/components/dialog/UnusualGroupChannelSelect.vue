@@ -87,7 +87,12 @@
 </template>
 
 <script>
-
+import { 
+  getUnusualParentChannelList, 
+  clearUnusualParentChannel, 
+  getRegionDescription, 
+  addRegionByCivilCode 
+} from '@/api'
 
 export default {
   name: "UnusualGroupChannelSelect",
@@ -125,16 +130,12 @@ export default {
     },
     getChannelList: function () {
       this.getChannelListLoading = true;
-      this.$axios({
-        method: 'get',
-        url: `/api/common/channel/parent/unusual/list`,
-        params: {
-          page: this.currentPage,
-          count: this.count,
-          channelType: this.channelType,
-          query: this.searchSrt,
-          online: this.online,
-        }
+      getUnusualParentChannelList({
+        page: this.currentPage,
+        count: this.count,
+        channelType: this.channelType,
+        query: this.searchSrt,
+        online: this.online,
       }).then( (res)=> {
         if (res.data.code === 0) {
           this.total = res.data.data.total;
@@ -165,13 +166,9 @@ export default {
           channels.push(this.multipleSelection[i].gbId)
         }
       }
-      this.$axios({
-        method: 'post',
-        url: `/api/common/channel/parent/unusual/clear`,
-        data: {
-          all: all,
-          channelIds: channels
-        }
+      clearUnusualParentChannel({
+        all: all,
+        channelIds: channels
       }).then((res) => {
         if (res.data.code === 0) {
           this.$message.success({
@@ -197,26 +194,14 @@ export default {
     },
     addRegion: function (row) {
       row.addRegionLoading = true;
-      this.$axios({
-        method: 'get',
-        url: `/api/region/description`,
-        params: {
-          civilCode: row.gbCivilCode,
-        }
-      }).then((res) => {
+      getRegionDescription(row.gbCivilCode).then((res) => {
         if (res.data.code === 0) {
           this.$confirm(`确定添加： ${res.data.data}`, '提示', {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
             type: 'info'
           }).then(() => {
-            this.$axios({
-              method: 'get',
-              url: `/api/region/addByCivilCode`,
-              params: {
-                civilCode: row.gbCivilCode,
-              }
-            }).then((res) => {
+            addRegionByCivilCode(row.gbCivilCode).then((res) => {
               if (res.data.code === 0) {
                 this.$message.success({
                   showClose: true,

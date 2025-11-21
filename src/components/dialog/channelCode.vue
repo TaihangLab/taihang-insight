@@ -122,6 +122,12 @@
 </template>
 
 <script>
+import { 
+  getRegionChildList, 
+  getIndustryCodeList, 
+  getDeviceTypeList, 
+  getNetworkIdentificationList 
+} from '@/api'
 
 export default {
   props: {},
@@ -248,13 +254,7 @@ export default {
     },
     queryChildList: function(parent){
       this.regionList = []
-      this.$axios({
-        method: 'get',
-        url: "/api/region/base/child/list",
-        params: {
-          parent: parent,
-        }
-      }).then((res) => {
+      getRegionChildList(parent).then((res) => {
         if (res.data.code === 0) {
           this.regionList = res.data.data
         } else {
@@ -272,10 +272,7 @@ export default {
     },
     queryIndustryCodeList: function(){
       this.industryCodeTypeList = []
-      this.$axios({
-        method: 'get',
-        url: "/api/common/channel/industry/list",
-      }).then((res) => {
+      getIndustryCodeList().then((res) => {
         if (res.data.code === 0) {
           this.industryCodeTypeList = res.data.data
         } else {
@@ -293,10 +290,7 @@ export default {
     },
     queryDeviceTypeList: function(){
       this.deviceTypeList = []
-      this.$axios({
-        method: 'get',
-        url: "/api/common/channel/type/list",
-      }).then((res) => {
+      getDeviceTypeList().then((res) => {
         if (res.data.code === 0) {
           this.deviceTypeList = res.data.data
         } else {
@@ -314,10 +308,7 @@ export default {
     },
     queryNetworkIdentificationTypeList: function(){
       this.networkIdentificationTypeList = []
-      this.$axios({
-        method: 'get',
-        url: "/api/common/channel/network/identification/list",
-      }).then((res) => {
+      getNetworkIdentificationList().then((res) => {
         if (res.data.code === 0) {
           this.networkIdentificationTypeList = res.data.data
         } else {

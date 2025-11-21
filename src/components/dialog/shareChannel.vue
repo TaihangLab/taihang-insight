@@ -17,6 +17,7 @@
 
 <script>
 import shareChannelAdd from "./shareChannelAdd.vue";
+import { updatePlatformChannelForGb } from '@/api'
 
 export default {
     name: 'chooseChannel',
@@ -52,13 +53,9 @@ export default {
         },
         save: function() {
 
-            this.$axios({
-                method:"post",
-                url:"/api/platform/update_channel_for_gb",
-                data:{
-                    platformId:  this.platformId,
-                    channelReduces:  this.chooseData
-                }
+            updatePlatformChannelForGb({
+                platformId:  this.platformId,
+                channelReduces:  this.chooseData
             }).then((res)=>{
               if (res.data.code === 0) {
                 this.$message({

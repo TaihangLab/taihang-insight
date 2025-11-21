@@ -15,8 +15,8 @@
 
 
 <script>
-
 import moment from "moment";
+import { getDownloadProgress, stopDownloadRecord } from '@/api'
 
 export default {
     name: 'recordDownload',
@@ -68,10 +68,7 @@ export default {
           }, 5000)
         },
         getProgress: function (callback){
-          this.$axios({
-            method: 'get',
-            url: `/api/gb_record/download/progress/${this.deviceId}/${this.channelId}/${this.stream}`
-          }).then((res)=> {
+          getDownloadProgress(this.deviceId, this.channelId, this.stream).then((res)=> {
               if (res.data.code === 0) {
                 this.streamInfo = res.data.data;
                 if (parseFloat(res.data.progress) === 1) {
@@ -121,10 +118,7 @@ export default {
 
         stopDownloadRecord: function (callback) {
           if (this.deviceId && this.channelId && this.stream) {
-            this.$axios({
-              method: 'get',
-              url: '/api/gb_record/download/stop/' + this.deviceId + "/" + this.channelId+ "/" + this.stream
-            }).then((res)=> {
+            stopDownloadRecord(this.deviceId, this.channelId, this.stream).then((res)=> {
               if (callback) callback(res)
             });
           }

@@ -27,6 +27,8 @@
 </template>
 
 <script>
+import { changePushKey } from '@/api'
+
 export default {
   name: "changePushKey",
   props: {},
@@ -63,14 +65,7 @@ export default {
       }
     },
     onSubmit: function () {
-      this.$axios({
-        method: 'post',
-        url:"/api/user/changePushKey",
-        params: {
-          pushKey: this.newPushKey,
-          userId: this.form.id,
-        }
-      }).then((res)=> {
+      changePushKey(this.newPushKey, this.form.id).then((res)=> {
         if (res.data.code === 0) {
           this.$message({
             showClose: true,

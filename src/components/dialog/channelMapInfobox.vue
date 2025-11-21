@@ -22,6 +22,7 @@
 
 <script>
 import devicePlayer from '../dialog/devicePlayer.vue'
+import { startPlay } from '@/api'
 
 export default {
   name: "channelMapInfobox",
@@ -42,10 +43,7 @@ export default {
       let channelId = this.channel.channelId;
       console.log("通知设备推流1：" + deviceId + " : " + channelId);
       let that = this;
-      this.$axios({
-        method: 'get',
-        url: '/api/play/start/' + deviceId + '/' + channelId
-      }).then(function (res) {
+      startPlay(deviceId, channelId).then(function (res) {
         that.isLoging = false;
         if (res.data.code === 0) {
           that.$refs.devicePlayer.openDialog("media", deviceId, channelId, {

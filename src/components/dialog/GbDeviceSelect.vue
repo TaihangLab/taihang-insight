@@ -71,6 +71,7 @@
 </template>
 
 <script>
+import { getGbDeviceList } from '@/api'
 
 export default {
   name: "gbDeviceSelect",
@@ -114,15 +115,11 @@ export default {
     },
     getDeviceList: function () {
       this.getDeviceListLoading = true;
-      this.$axios({
-        method: 'get',
-        url: `/api/device/query/devices`,
-        params: {
-          page: this.currentPage,
-          count: this.count,
-          query: this.searchSrt,
-          status: this.online,
-        }
+      getGbDeviceList({
+        page: this.currentPage,
+        count: this.count,
+        query: this.searchSrt,
+        status: this.online,
       }).then( (res)=> {
         if (res.data.code === 0) {
           this.total = res.data.data.total;
