@@ -1,4 +1,22 @@
 import VisionAIService from '../../service/VisionAIService.js'
+import marked from 'marked'
+
+// 配置 marked 选项
+if (typeof marked === 'function') {
+  try {
+    marked.setOptions({
+      breaks: true, // 支持 GitHub 风格的换行
+      gfm: true, // 启用 GitHub 风格的 Markdown
+      headerIds: false, // 禁用标题 ID
+      mangle: false // 禁用邮箱混淆
+    })
+    console.log('✅ Marked 配置成功')
+  } catch (error) {
+    console.error('❌ Marked 配置失败:', error)
+  }
+} else {
+  console.error('❌ Marked 导入失败，marked 类型:', typeof marked)
+}
 
 export default {
     name: 'IntelligentAssistant',
@@ -257,20 +275,44 @@ export default {
           }
           
           // 转换API返回的消息格式为前端格式
-          this.messages = messagesData.map(msg => ({
-            type: msg.role === 'user' ? 'user' : 'assistant',
-            content: msg.content,
-            time: this.formatTimestamp(msg.timestamp || new Date().toISOString()),
-            displayContent: msg.content,
-            isTyping: false,
-            message_id: msg.message_id || this.generateMessageId() // 保持消息ID一致性
-          }));
+          this.messages = messagesData.map(msg => {
+            const message = {
+              type: msg.role === 'user' ? 'user' : 'assistant',
+              content: msg.content,
+              time: this.formatTimestamp(msg.timestamp || new Date().toISOString()),
+              displayContent: msg.content,
+              isTyping: false,
+              message_id: msg.message_id || this.generateMessageId() // 保持消息ID一致性
+            };
+            
+            // 如果是助手消息，检查是否包含think标签并解析
+            if (msg.role === 'assistant' && msg.content) {
+              // 创建临时消息对象进行解析
+              const tempMsg = { displayContent: '' };
+              this.parseThinkingState(tempMsg, msg.content);
+              
+              // 应用解析结果
+              if (tempMsg.hasThinkCompleted) {
+                message.hasThinkCompleted = true;
+                message.thinkingContent = tempMsg.thinkingContent;
+                message.normalContent = tempMsg.normalContent;
+                message.displayContent = tempMsg.normalContent; // 只显示正常内容
+              }
+            }
+            
+            return message;
+          });
           
           this.currentChatId = chatId;
           this.currentChatIndex = this.chatHistories.findIndex(c => c.conversation_id === chatId);
           this.showWelcomeMessage = this.messages.length === 0;
           this.inputMessage = '';
           this.scrollToBottom();
+          
+          // 加载完历史消息后，重新绑定思考块事件
+          this.$nextTick(() => {
+            this.bindThinkBlockEvents();
+          });
           
           console.log('会话历史加载成功:', this.messages.length, '条消息');
           
@@ -547,7 +589,12 @@ export default {
             time: this.getCurrentTime(),
             displayContent: '',
             isTyping: false,
-            message_id: this.generateMessageId()
+            message_id: this.generateMessageId(),
+            // 思考状态相关
+            isThinking: false,
+            thinkingContent: '',
+            hasThinkCompleted: false,
+            normalContent: ''
           };
           
           // 移除打字指示器
@@ -578,8 +625,14 @@ export default {
                 this.updateCurrentChatSelection();
               }
               
-              assistantMessage.displayContent = fullResponse;
+              // 实时解析思考状态
+              this.parseThinkingState(assistantMessage, fullResponse);
               this.scrollToBottom();
+              
+              // 重新绑定事件（特别是当思考完成时）
+              this.$nextTick(() => {
+                this.bindThinkBlockEvents();
+              });
             },
             // onError回调 - 处理错误
             (error) => {
@@ -594,8 +647,19 @@ export default {
                 console.log('完成时设置会话ID:', this.currentChatId);
               }
               
+              // 最后一次解析，确保所有状态正确
+              this.parseThinkingState(assistantMessage, fullResponse);
+              
+              // 保存完整内容（包含think标签，用于后续重新加载）
               assistantMessage.content = fullResponse;
-              assistantMessage.displayContent = fullResponse;
+              
+              // 确保事件绑定生效
+              this.$nextTick(() => {
+                this.bindThinkBlockEvents();
+              });
+              // 显示内容只包含正常内容（不含think标签）
+              assistantMessage.displayContent = assistantMessage.normalContent || fullResponse;
+              
               this.isTypingResponse = false;
               this.isConnecting = false;
               this.isGenerating = false; // 生成完成
@@ -934,10 +998,217 @@ export default {
         
         type();
       },
+      /**
+       * 实时解析思考状态（在流式传输过程中调用）
+       * @param {Object} message 消息对象
+       * @param {string} fullResponse 完整响应内容
+       */
+      parseThinkingState(message, fullResponse) {
+        // 检测是否包含 <think> 标签
+        const thinkStartIndex = fullResponse.indexOf('<think>');
+        const thinkEndIndex = fullResponse.indexOf('</think>');
+        
+        if (thinkStartIndex !== -1) {
+          // 发现思考标签开始
+          message.isThinking = true;
+          
+          if (thinkEndIndex !== -1) {
+            // 思考已完成
+            message.isThinking = false;
+            message.hasThinkCompleted = true;
+            // 提取思考内容（<think> 和 </think> 之间的内容）
+            message.thinkingContent = fullResponse.substring(thinkStartIndex + 7, thinkEndIndex).trim();
+            
+            // 提取正常内容：移除整个 <think>...</think> 部分
+            // 前面部分（如果有） + 后面部分
+            const beforeThink = fullResponse.substring(0, thinkStartIndex).trim();
+            const afterThink = fullResponse.substring(thinkEndIndex + 8).trim();
+            message.normalContent = (beforeThink + (beforeThink && afterThink ? '\n\n' : '') + afterThink).trim();
+            message.displayContent = message.normalContent;
+            
+            console.log('思考完成，解析结果:', {
+              thinkingContentLength: message.thinkingContent.length,
+              normalContentLength: message.normalContent.length,
+              normalContentPreview: message.normalContent.substring(0, 50)
+            });
+          } else {
+            // 正在思考中
+            message.thinkingContent = fullResponse.substring(thinkStartIndex + 7).trim();
+            message.displayContent = ''; // 思考时不显示正常内容
+          }
+        } else {
+          // 没有思考标签，直接显示内容
+          message.isThinking = false;
+          message.hasThinkCompleted = false;
+          message.normalContent = fullResponse;
+          message.displayContent = fullResponse;
+        }
+      },
+      
       formatMessage(content) {
         if (!content) return '';
-        // 处理换行符
-        return content.replace(/\n/g, '<br>');
+        
+        // 检查 marked 是否可用 - 兼容多种导出方式
+        const markedFn = typeof marked === 'function' ? marked : (marked && marked.marked);
+        
+        if (!markedFn) {
+          if (!this._markedErrorShown) {
+            console.error('❌ marked 未正确加载，类型:', typeof marked);
+            console.error('marked 对象:', marked);
+            this._markedErrorShown = true;
+          }
+          // 降级处理：只处理换行符
+          return content.replace(/\n/g, '<br>');
+        }
+        
+        try {
+          // 使用 marked 渲染 Markdown
+          const html = markedFn(content);
+          
+          // 调试：只在第一次调用时打印
+          if (!this._markedDebugPrinted) {
+            console.log('✅ Marked 渲染成功示例:');
+            console.log('  输入:', content.substring(0, 100));
+            console.log('  输出:', html.substring(0, 100));
+            this._markedDebugPrinted = true;
+          }
+          
+          return html;
+        } catch (error) {
+          console.error('❌ Markdown 渲染失败:', error);
+          // 降级处理：只处理换行符
+          return content.replace(/\n/g, '<br>');
+        }
+      },
+      
+      /**
+       * 格式化思考内容为折叠块
+       * @param {string} thinkContent 思考内容
+       * @param {boolean} collapsed 是否默认折叠
+       * @returns {string} HTML字符串
+       */
+      formatThinkBlock(thinkContent, collapsed = true) {
+        if (!thinkContent) {
+          console.log('formatThinkBlock: 思考内容为空');
+          return '';
+        }
+        
+        const collapseId = 'think-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        const collapsedClass = collapsed ? 'collapsed' : '';
+        
+        console.log('formatThinkBlock 被调用:', {
+          contentLength: thinkContent.length,
+          collapsed: collapsed,
+          collapseId: collapseId
+        });
+        
+        // 构建内联样式 - 根据collapsed状态
+        const contentStyle = collapsed 
+          ? 'padding: 0 40px 0 40px !important; font-size: 12px !important; line-height: 1.6 !important; color: #6b7280 !important; background: rgba(255, 255, 255, 0.5) !important; max-height: 0 !important; opacity: 0 !important; overflow: hidden !important; border-top: none !important; transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) !important;'
+          : 'padding: 14px 40px 14px 40px !important; font-size: 12px !important; line-height: 1.6 !important; color: #6b7280 !important; background: rgba(255, 255, 255, 0.5) !important; border-top: 1px solid rgba(102, 126, 234, 0.1) !important; max-height: 400px !important; overflow: auto !important; opacity: 0.85 !important; transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) !important;';
+        
+        const arrowStyle = collapsed
+          ? 'width: 20px !important; height: 20px !important; min-width: 20px !important; flex-shrink: 0 !important; color: #667eea !important; transition: transform 0.2s ease !important; transform: rotate(-90deg) !important;'
+          : 'width: 20px !important; height: 20px !important; min-width: 20px !important; flex-shrink: 0 !important; color: #667eea !important; transition: transform 0.2s ease !important;';
+        
+        const html = `<div class="think-block ${collapsedClass}" data-think-id="${collapseId}" data-collapsed="${collapsed}" style="border: 1px solid rgba(102, 126, 234, 0.2) !important; border-radius: 12px !important; background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%) !important; overflow: hidden !important; display: block !important; margin: 8px 0 !important;">
+  <div class="think-header" data-think-toggle="${collapseId}" style="display: flex !important; align-items: center !important; padding: 10px 14px !important; cursor: pointer !important; background: rgba(102, 126, 234, 0.04) !important;">
+    <svg class="think-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 18px !important; height: 18px !important; min-width: 18px !important; flex-shrink: 0 !important; margin-right: 8px !important; color: #667eea !important;">
+      <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="think-title" style="flex: 1 !important; font-size: 14px !important; font-weight: 600 !important; color: #667eea !important;">思考过程</span>
+    <svg class="think-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="${arrowStyle}">
+      <path d="M19 9l-7 7-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="think-content" style="${contentStyle}">${thinkContent.replace(/\n/g, '<br>')}</div>
+</div>`;
+        
+        console.log('formatThinkBlock 返回的HTML:', html.substring(0, 200) + '...');
+        return html;
+      },
+      
+      /**
+       * 绑定思考块的点击事件（使用事件委托）
+       */
+      bindThinkBlockEvents() {
+        // 使用事件委托在消息容器上监听点击
+        this.$nextTick(() => {
+          let boundCount = 0;
+          
+          // 为小窗口模式绑定
+          if (this.$refs.messagesContainer) {
+            this.$refs.messagesContainer.removeEventListener('click', this.handleThinkToggle);
+            this.$refs.messagesContainer.addEventListener('click', this.handleThinkToggle);
+            boundCount++;
+          }
+          
+          // 为全屏模式绑定
+          if (this.$refs.fullscreenMessagesContainer) {
+            this.$refs.fullscreenMessagesContainer.removeEventListener('click', this.handleThinkToggle);
+            this.$refs.fullscreenMessagesContainer.addEventListener('click', this.handleThinkToggle);
+            boundCount++;
+          }
+          
+          if (boundCount > 0) {
+            console.log('思考块事件绑定成功, 绑定了', boundCount, '个容器');
+          }
+        });
+      },
+      
+      /**
+       * 处理思考块的展开/折叠
+       */
+      handleThinkToggle(event) {
+        const target = event.target;
+        
+        // 查找最近的 think-header 元素
+        const header = target.closest('[data-think-toggle]');
+        if (!header) return;
+        
+        const thinkId = header.getAttribute('data-think-toggle');
+        console.log('点击思考块:', thinkId);
+        
+        const thinkBlock = document.querySelector(`[data-think-id="${thinkId}"]`);
+        
+        if (thinkBlock) {
+          const wasCollapsed = thinkBlock.classList.contains('collapsed');
+          const nowCollapsed = !wasCollapsed;
+          
+          // 切换class
+          thinkBlock.classList.toggle('collapsed');
+          thinkBlock.setAttribute('data-collapsed', nowCollapsed);
+          
+          // 获取内容元素和箭头元素
+          const content = thinkBlock.querySelector('.think-content');
+          const arrow = thinkBlock.querySelector('.think-arrow');
+          
+          console.log('思考块状态切换:', wasCollapsed ? '展开' : '折叠');
+          
+          if (content) {
+            // 直接修改内联样式
+            if (nowCollapsed) {
+              // 折叠状态
+              content.style.cssText = 'padding: 0 40px 0 40px !important; font-size: 12px !important; line-height: 1.6 !important; color: #6b7280 !important; background: rgba(255, 255, 255, 0.5) !important; max-height: 0 !important; opacity: 0 !important; overflow: hidden !important; border-top: none !important; transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) !important;';
+            } else {
+              // 展开状态
+              content.style.cssText = 'padding: 14px 40px 14px 40px !important; font-size: 12px !important; line-height: 1.6 !important; color: #6b7280 !important; background: rgba(255, 255, 255, 0.5) !important; border-top: 1px solid rgba(102, 126, 234, 0.1) !important; max-height: 400px !important; overflow: auto !important; opacity: 0.85 !important; transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) !important;';
+            }
+          }
+          
+          if (arrow) {
+            // 修改箭头旋转
+            if (nowCollapsed) {
+              arrow.style.transform = 'rotate(-90deg)';
+            } else {
+              arrow.style.transform = 'rotate(0deg)';
+            }
+          }
+          
+          console.log('切换完成，新状态:', nowCollapsed ? '折叠' : '展开');
+        } else {
+          console.warn('未找到思考块元素:', thinkId);
+        }
       },
       generateResponse(userInput) {
         // 简单的关键词匹配回复逻辑
@@ -974,6 +1245,9 @@ export default {
           if (this.$refs.fullscreenMessagesContainer) {
             this.$refs.fullscreenMessagesContainer.scrollTop = this.$refs.fullscreenMessagesContainer.scrollHeight;
           }
+          
+          // 绑定思考块事件
+          this.bindThinkBlockEvents();
         });
       },
       getDialogPosition() {
@@ -1816,16 +2090,9 @@ export default {
       },
       // 过滤的聊天列表（用于搜索）
       filteredChats() {
-        if (!this.searchQuery.trim()) {
-          return this.chatHistories;
-        }
-        
-        const query = this.searchQuery.toLowerCase();
-        return this.chatHistories.filter(chat => 
-          chat.title.toLowerCase().includes(query) ||
-          chat.messages.some(msg => msg.content.toLowerCase().includes(query))
-        );
-              }
+        // 调用 getFilteredChats 方法，确保分组和搜索过滤都生效
+        return this.getFilteredChats();
+      }
           },
     watch: {
       // 监听移动对话框的关闭，确保状态重置
@@ -1839,6 +2106,29 @@ export default {
     },
     async mounted() {
       console.log('=== 智能助手组件初始化 ===');
+      
+      // 检查 Markdown 渲染库是否加载
+      console.log('Marked 类型检查:', typeof marked);
+      console.log('Marked 对象:', marked);
+      
+      const markedFn = typeof marked === 'function' ? marked : (marked && marked.marked);
+      
+      if (markedFn) {
+        console.log('✅ Marked 函数可用');
+        try {
+          // 测试 Markdown 渲染
+          const testMd = '**加粗测试** 和 *斜体测试*\n\n- 列表项1\n- 列表项2';
+          const testHtml = markedFn(testMd);
+          console.log('Markdown 渲染测试:');
+          console.log('  输入:', testMd);
+          console.log('  输出:', testHtml);
+        } catch (err) {
+          console.error('❌ Markdown 测试失败:', err);
+        }
+      } else {
+        console.error('❌ Marked 函数不可用！');
+        console.error('请检查 marked 包是否正确安装：npm install marked@4.3.0');
+      }
       
       // 初始化位置到右侧
       this.initializePosition();
@@ -1866,6 +2156,7 @@ export default {
       // 初始化时强制设置Element UI组件z-index
       this.$nextTick(() => {
         this.forceElementUIZIndex();
+        this.bindThinkBlockEvents(); // 绑定思考块点击事件
         console.log('组件初始化完成 - 已连接后端API');
         console.log('当前侧边栏状态:', this.sidebarCollapsed ? '收起' : '展开');
         console.log('当前分组数量:', this.userGroups.length);
@@ -1880,6 +2171,14 @@ export default {
       document.removeEventListener('mousemove', this.onDrag);
       document.removeEventListener('mouseup', this.stopDrag);
       document.removeEventListener('click', this.handleGlobalClick);
+      
+      // 清理思考块事件监听器
+      if (this.$refs.messagesContainer) {
+        this.$refs.messagesContainer.removeEventListener('click', this.handleThinkToggle);
+      }
+      if (this.$refs.fullscreenMessagesContainer) {
+        this.$refs.fullscreenMessagesContainer.removeEventListener('click', this.handleThinkToggle);
+      }
       
       // 清理隐藏计时器
       this.clearHideTimer();
