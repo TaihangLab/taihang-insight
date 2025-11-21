@@ -96,3 +96,52 @@ export function refreshDevice(deviceId) {
   })
 }
 
+/**
+ * 订阅设备目录
+ * @param {string} deviceId - 设备ID
+ * @returns {Promise}
+ */
+export function subscribeCatalog(deviceId) {
+  return request({
+    url: '/api/device/query/subscribe/catalog',
+    method: 'get',
+    params: { id: deviceId }
+  })
+}
+
+/**
+ * 订阅设备移动位置
+ * @param {string} deviceId - 设备ID
+ * @param {number} expires - 过期时间（秒）
+ * @param {number} interval - 间隔时间（秒）
+ * @returns {Promise}
+ */
+export function subscribeMobilePosition(deviceId, expires, interval) {
+  return request({
+    url: '/api/device/query/subscribe/mobile-position',
+    method: 'get',
+    params: { 
+      id: deviceId,
+      expires: expires,
+      interval: interval
+    }
+  })
+}
+
+/**
+ * 订阅设备报警
+ * @param {string} deviceId - 设备ID
+ * @param {number} expires - 过期时间（秒）
+ * @returns {Promise}
+ */
+export function subscribeAlarm(deviceId, expires) {
+  return request({
+    url: '/api/device/query/subscribe/alarm',
+    method: 'get',
+    params: { 
+      id: deviceId,
+      expires: expires
+    }
+  })
+}
+

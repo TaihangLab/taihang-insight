@@ -289,6 +289,7 @@
 </template>
 
 <script>
+import { deleteStreamProxyById, startStreamProxyById, stopStreamProxyById } from '@/api/stream'
 import StreamProxyEdit from './dialogs/StreamProxyEdit.vue'
 import onvifEdit from './dialogs/onvifEdit.vue'
 import devicePlayer from './dialogs/devicePlayer.vue'
@@ -454,13 +455,7 @@ export default {
     
     play(row) {
       row.playLoading = true;
-      this.$axios({
-        method: 'get',
-        url: `/api/proxy/start`,
-        params: {
-          id: row.id,
-        }
-      }).then((res) => {
+      startStreamProxyById(row.id, this.mediaServerId).then((res) => {
         if (res.data.code === 0) {
           this.$refs.devicePlayer.openDialog("streamPlay", null, null, {
             streamInfo: res.data.data,
@@ -481,13 +476,7 @@ export default {
     },
     
     stopPlay(row) {
-      this.$axios({
-        method: 'get',
-        url: `/api/proxy/stop`,
-        params: {
-          id: row.id,
-        }
-      }).then((res) => {
+      stopStreamProxyById(row.id, this.mediaServerId).then((res) => {
         if (res.data.code === 0) {
           this.$message.success('停止成功');
         } else {
@@ -508,13 +497,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.$axios({
-          method: "delete",
-          url: "/api/proxy/delete",
-          params: {
-            id: row.id,
-          }
-        }).then((res) => {
+        deleteStreamProxyById(row.id, this.mediaServerId).then((res) => {
           this.$message.success({
             showClose: true,
             message: "删除成功"

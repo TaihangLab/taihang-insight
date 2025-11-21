@@ -127,4 +127,114 @@ export function disableStreamProxy(app, stream) {
   })
 }
 
+/**
+ * 启动推流
+ * @param {number} id - 推流ID
+ * @returns {Promise}
+ */
+export function startPushStream(id) {
+  return request({
+    url: '/api/push/start',
+    method: 'get',
+    params: { id }
+  })
+}
+
+/**
+ * 停止推流
+ * @param {number} id - 推流ID
+ * @returns {Promise}
+ */
+export function stopPushStream(id) {
+  return request({
+    url: '/api/push/stop',
+    method: 'get',
+    params: { id }
+  })
+}
+
+/**
+ * 删除推流（通过ID）
+ * @param {number} id - 推流ID
+ * @param {string} mediaServerId - 流媒体服务器ID
+ * @returns {Promise}
+ */
+export function removePushStream(id, mediaServerId) {
+  return request({
+    url: '/api/push/remove',
+    method: 'delete',
+    params: { id, mediaServerId }
+  })
+}
+
+/**
+ * 批量删除推流
+ * @param {Array<number>} ids - 推流ID数组
+ * @param {string} mediaServerId - 流媒体服务器ID
+ * @returns {Promise}
+ */
+export function batchRemovePushStream(ids, mediaServerId) {
+  return request({
+    url: '/api/push/batchRemove',
+    method: 'post',
+    data: { ids, mediaServerId }
+  })
+}
+
+/**
+ * 删除拉流代理（通过ID）
+ * @param {number} id - 代理ID
+ * @param {string} mediaServerId - 流媒体服务器ID
+ * @returns {Promise}
+ */
+export function deleteStreamProxyById(id, mediaServerId) {
+  return request({
+    url: '/api/proxy/delete',
+    method: 'delete',
+    params: { id, mediaServerId }
+  })
+}
+
+/**
+ * 批量删除拉流代理
+ * @param {Array<number>} ids - 代理ID数组
+ * @param {string} mediaServerId - 流媒体服务器ID
+ * @returns {Promise}
+ */
+export function batchRemoveStreamProxy(ids, mediaServerId) {
+  return request({
+    url: '/api/proxy/batchRemove',
+    method: 'post',
+    data: { ids, mediaServerId }
+  })
+}
+
+/**
+ * 启动拉流代理（通过ID）
+ * @param {number} id - 代理ID
+ * @param {string} mediaServerId - 流媒体服务器ID
+ * @returns {Promise}
+ */
+export function startStreamProxyById(id, mediaServerId) {
+  return request({
+    url: '/api/proxy/start',
+    method: 'get',
+    params: { id, mediaServerId }
+  })
+}
+
+/**
+ * 停止拉流代理（通过ID）
+ * @param {number} id - 代理ID
+ * @param {string} mediaServerId - 流媒体服务器ID
+ * @returns {Promise}
+ */
+export function stopStreamProxyById(id, mediaServerId) {
+  return request({
+    url: '/api/proxy/stop',
+    method: 'get',
+    params: { id, mediaServerId }
+  })
+}
+
 

@@ -354,6 +354,7 @@
 </template>
 
 <script>
+import { getDeviceList, subscribeCatalog, subscribeMobilePosition } from '@/api/device'
 import deviceEdit from '../../../dialog/deviceEdit.vue'
 import GBDeviceChannels from './dialogs/GBDeviceChannels.vue'
 import SyncChannelProgress from './dialogs/SyncChannelProgress.vue'
@@ -465,13 +466,7 @@ export default {
         status: this.searchForm.status
       };
       
-
-      
-      this.$axios({
-        method: 'get',
-        url: '/api/device/query/devices',
-        params: params
-      }).then((res) => {
+      getDeviceList(params).then((res) => {
         if (res.data.code === 0) {
           this.total = res.data.data.total;
           this.deviceList = res.data.data.list;
@@ -619,14 +614,7 @@ export default {
     
     // 订阅目录
     handleSubscribeForCatalog(deviceId, value) {
-      this.$axios({
-        method: 'get',
-        url: '/api/device/query/subscribe/catalog',
-        params: {
-          id: deviceId,
-          cycle: value ? 60 : 0
-        }
-      }).then((res) => {
+      subscribeCatalog(deviceId).then((res) => {
         if (res.data.code === 0) {
           this.$message.success(value ? '订阅成功' : '取消订阅成功');
         } else {
@@ -639,14 +627,7 @@ export default {
     
     // 订阅位置
     handleSubscribeForMobilePosition(deviceId, value) {
-      this.$axios({
-        method: 'get',
-        url: '/api/device/query/subscribe/mobile-position',
-        params: {
-          id: deviceId,
-          cycle: value ? 60 : 0,
-          interval: value ? 5 : 0
-        }
+      subscribeMobilePosition(deviceId, value ? 60 : 0, value ? 5 : 0).then((res) => {
       }).then((res) => {
         if (res.data.code === 0) {
           this.$message.success(value ? '订阅成功' : '取消订阅成功');

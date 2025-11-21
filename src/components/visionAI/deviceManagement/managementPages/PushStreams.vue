@@ -326,6 +326,7 @@
 </template>
 
 <script>
+import { startPushStream, removePushStream, batchRemovePushStream } from '@/api/stream'
 import devicePlayer from './dialogs/devicePlayer.vue'
 import importChannel from './dialogs/importChannel.vue'
 import MediaServer from './service/MediaServer'
@@ -450,13 +451,7 @@ export default {
 
     playPush: function (row) {
       row.playLoading = true;
-      this.$axios({
-        method: 'get',
-        url: '/api/push/start',
-        params: {
-          id: row.id
-        }
-      }).then((res) =>{
+      startPushStream(row.id).then((res) =>{
         if (res.data.code === 0 ) {
           this.$refs.devicePlayer.openDialog("streamPlay", null, null, {
             streamInfo: res.data.data,
@@ -479,13 +474,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.loading = true;
-        this.$axios({
-          method: "post",
-          url: "/api/push/remove",
-          params: {
-            id: id,
-          }
-        }).then((res) => {
+        removePushStream(id, this.mediaServerId).then((res) => {
           if (res.data.code === 0) {
             this.initData()
           }
@@ -532,13 +521,7 @@ export default {
           ids.push(this.multipleSelection[i].id)
         }
         let that = this;
-        that.$axios({
-          method: "delete",
-          url: "/api/push/batchRemove",
-          data: {
-            ids: ids
-          }
-        }).then((res) => {
+        batchRemovePushStream(ids, that.mediaServerId).then((res) => {
           this.initData();
           this.$refs.pushListTable.clearSelection();
         }).catch(function (error) {
