@@ -322,6 +322,10 @@
 <script>
 import CommonChannelEdit from './CommonChannelEdit.vue'
 import devicePlayer from './devicePlayer.vue'
+import { getDeviceChannels } from '@/api/channel'
+import { startPlay, stopPlay } from '@/api/play'
+import { updateChannelAudio, updateChannelStreamIdentification } from '@/api/channel'
+import { controlRecord } from '@/api/device'
 
 export default {
   name: 'GBDeviceChannels',
@@ -449,25 +453,20 @@ export default {
       itemData.playLoading = true;
       console.log("通知设备推流：" + deviceId + " : " + channelId);
       
-      this.$axios({
-        method: 'get',
-        url: '/api/play/start/' + deviceId + '/' + channelId
-      }).then((res) => {
-        if (res.data.code === 0) {
-          itemData.streamId = res.data.data.stream;
+      startPlay(deviceId, channelId).then((res) => {
+        if (res.code === 0) {
+          itemData.streamId = res.data.stream;
           
-          // 打开播放器对话框 - 关键部分
           this.$refs.devicePlayer.openDialog("media", deviceId, channelId, {
-            streamInfo: res.data.data,
+            streamInfo: res.data,
             hasAudio: itemData.hasAudio
           });
           
-          // 延时刷新通道列表以更新状态
           setTimeout(() => {
             this.getDeviceChannelList();
           }, 1000);
         } else {
-          this.$message.error('播放失败：' + res.data.msg);
+          this.$message.error('播放失败：' + res.msg);
         }
       }).catch((error) => {
         console.error('播放失败:', error);
@@ -479,21 +478,16 @@ export default {
     
     // 停止设备推流 - 与channelList.vue一致
     stopDevicePush(itemData) {
-      this.$axios({
-        method: 'get',
-        url: '/api/play/stop/' + this.currentDevice.deviceId + "/" + itemData.deviceId
-      }).then((res) => {
-        if (res.data.code === 0) {
+      stopPlay(this.currentDevice.deviceId, itemData.deviceId).then((res) => {
+        if (res.code === 0) {
           itemData.streamId = null;
           this.$message.success('停止播放');
-          // 刷新通道列表
           this.getDeviceChannelList();
         } else {
-          this.$message.error('停止播放失败：' + res.data.msg);
+          this.$message.error('停止播放失败：' + res.msg);
         }
       }).catch((error) => {
         if (error.response && error.response.status === 402) {
-          // 已经停止过
           itemData.streamId = null;
           this.getDeviceChannelList();
         } else {
@@ -505,13 +499,9 @@ export default {
     
     // 更新通道信息 - 与channelList.vue一致
     updateChannel(channel) {
-      this.$axios({
-        method: 'post',
-        url: `/api/device/query/channel/audio`,
-        params: {
-          channelId: channel.id,
-          audio: channel.hasAudio
-        }
+      updateChannelAudio({
+        channelId: channel.id,
+        audio: channel.hasAudio
       }).then((res) => {
         console.log(JSON.stringify(res));
       }).catch((error) => {
@@ -522,14 +512,10 @@ export default {
     
     // 码流类型切换
     channelSubStreamChange(channel) {
-      this.$axios({
-        method: 'post',
-        url: `/api/device/query/channel/stream/identification/update/`,
-        params: {
-          deviceDbId: channel.deviceDbId,
-          id: channel.id,
-          streamIdentification: channel.streamIdentification
-        }
+      updateChannelStreamIdentification({
+        deviceDbId: channel.deviceDbId,
+        id: channel.id,
+        streamIdentification: channel.streamIdentification
       }).then((res) => {
         console.log(JSON.stringify(res));
       }).catch((error) => {
@@ -587,19 +573,15 @@ export default {
     
     // 开始录像 - 与channelList.vue一致
     startRecord(itemData) {
-      this.$axios({
-        method: 'get',
-        url: `/api/device/control/record`,
-        params: {
-          deviceId: this.currentDevice.deviceId,
-          channelId: itemData.deviceId,
-          recordCmdStr: "Record"
-        }
+      controlRecord({
+        deviceId: this.currentDevice.deviceId,
+        channelId: itemData.deviceId,
+        recordCmdStr: "Record"
       }).then((res) => {
-        if (res.data.code === 0) {
+        if (res.code === 0) {
           this.$message.success('开始录像成功');
         } else {
-          this.$message.error('开始录像失败：' + res.data.msg);
+          this.$message.error('开始录像失败：' + res.msg);
         }
       }).catch((error) => {
         this.$message.error('开始录像失败：' + error.message);
@@ -608,19 +590,15 @@ export default {
     
     // 停止录像 - 与channelList.vue一致
     stopRecord(itemData) {
-      this.$axios({
-        method: 'get',
-        url: `/api/device/control/record`,
-        params: {
-          deviceId: this.currentDevice.deviceId,
-          channelId: itemData.deviceId,
-          recordCmdStr: "StopRecord"
-        }
+      controlRecord({
+        deviceId: this.currentDevice.deviceId,
+        channelId: itemData.deviceId,
+        recordCmdStr: "StopRecord"
       }).then((res) => {
-        if (res.data.code === 0) {
+        if (res.code === 0) {
           this.$message.success('停止录像成功');
         } else {
-          this.$message.error('停止录像失败：' + res.data.msg);
+          this.$message.error('停止录像失败：' + res.msg);
         }
       }).catch((error) => {
         this.$message.error('停止录像失败：' + error.message);
@@ -648,13 +626,9 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.$axios({
-          method: 'post',
-          url: `/api/device/query/channel/stream/identification/update/`,
-          params: {
-            deviceDbId: this.currentDevice.id,
-            streamIdentification: this.subStream
-          }
+        updateChannelStreamIdentification({
+          deviceDbId: this.currentDevice.id,
+          streamIdentification: this.subStream
         }).then((res) => {
           console.log(JSON.stringify(res));
           this.getDeviceChannelList();
@@ -693,23 +667,18 @@ export default {
       
       this.loading = true;
       
-      // 调用API获取通道列表
-      this.$axios({
-        method: 'get',
-        url: `/api/device/query/devices/${this.currentDevice.deviceId}/channels`,
-        params: {
-          page: this.currentPage,
-          count: this.pageSize,
-          query: this.searchSrt,
-          online: this.online,
-          channelType: this.channelType
-        }
+      getDeviceChannels(this.currentDevice.deviceId, {
+        page: this.currentPage,
+        count: this.pageSize,
+        query: this.searchSrt,
+        online: this.online,
+        channelType: this.channelType
       }).then((res) => {
-        console.log('API响应数据:', res.data); // 添加调试日志
+        console.log('API响应数据:', res); // 添加调试日志
         
-        if (res.data.code === 0) {
-          this.total = res.data.data.total || 0;
-          let channelData = res.data.data.list || [];
+        if (res.code === 0) {
+          this.total = res.data.total || 0;
+          let channelData = res.data.list || [];
           
           console.log('原始通道数据:', channelData); // 添加调试日志
           
@@ -740,8 +709,8 @@ export default {
           this.filteredChannelList = [...this.channelList]; // 使用展开运算符确保数组的响应性
           console.log('最终通道列表:', this.channelList); // 添加调试日志
         } else {
-          console.log('API返回错误:', res.data.msg);
-          this.$message.error('获取通道列表失败：' + res.data.msg);
+          console.log('API返回错误:', res.msg);
+          this.$message.error('获取通道列表失败：' + res.msg);
           // 使用模拟数据作为备选
           this.loadMockChannelData();
         }

@@ -110,7 +110,6 @@
         </el-tab-pane>
     </el-tabs>
     <el-form style="">
-
       <el-form-item style="margin-top: 22px; margin-bottom: 0;">
         <div style="float:right;">
           <el-button type="primary" @click="handleOk">保存</el-button>
@@ -122,6 +121,8 @@
 </template>
 
 <script>
+import { getRegionChildList } from '@/api/region'
+import { getIndustryCodeList, getDeviceTypeList, getNetworkIdentificationList } from '@/api/channel'
 
 export default {
   props: {},
@@ -234,7 +235,6 @@ export default {
             showClose: true,
             message: '请先选择上级行政区划'
           })
-
         }
         this.queryChildList(parent);
       } else if (this.activeKey === '4') {
@@ -248,89 +248,74 @@ export default {
     },
     queryChildList: function(parent){
       this.regionList = []
-      this.$axios({
-        method: 'get',
-        url: "/api/region/base/child/list",
-        params: {
-          parent: parent,
-        }
-      }).then((res) => {
-        if (res.data.code === 0) {
-          this.regionList = res.data.data
+      getRegionChildList({ parent: parent }).then((res) => {
+        if (res.code === 0) {
+          this.regionList = res.data
         } else {
           this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
+            showClose: true,
+            message: res.msg
+          })
         }
       }).catch((error) => {
         this.$message.error({
-            showClose: true,
-            message: error
-          });
+          showClose: true,
+          message: error
+        });
       });
     },
     queryIndustryCodeList: function(){
       this.industryCodeTypeList = []
-      this.$axios({
-        method: 'get',
-        url: "/api/common/channel/industry/list",
-      }).then((res) => {
-        if (res.data.code === 0) {
-          this.industryCodeTypeList = res.data.data
+      getIndustryCodeList().then((res) => {
+        if (res.code === 0) {
+          this.industryCodeTypeList = res.data
         } else {
           this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
+            showClose: true,
+            message: res.msg
+          })
         }
       }).catch((error) => {
         this.$message.error({
-            showClose: true,
-            message: error
-          });
+          showClose: true,
+          message: error
+        });
       });
     },
     queryDeviceTypeList: function(){
       this.deviceTypeList = []
-      this.$axios({
-        method: 'get',
-        url: "/api/common/channel/type/list",
-      }).then((res) => {
-        if (res.data.code === 0) {
-          this.deviceTypeList = res.data.data
+      getDeviceTypeList().then((res) => {
+        if (res.code === 0) {
+          this.deviceTypeList = res.data
         } else {
           this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
+            showClose: true,
+            message: res.msg
+          })
         }
       }).catch((error) => {
         this.$message.error({
-            showClose: true,
-            message: error
-          });
+          showClose: true,
+          message: error
+        });
       });
     },
     queryNetworkIdentificationTypeList: function(){
       this.networkIdentificationTypeList = []
-      this.$axios({
-        method: 'get',
-        url: "/api/common/channel/network/identification/list",
-      }).then((res) => {
-        if (res.data.code === 0) {
-          this.networkIdentificationTypeList = res.data.data
+      getNetworkIdentificationList().then((res) => {
+        if (res.code === 0) {
+          this.networkIdentificationTypeList = res.data
         } else {
           this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
+            showClose: true,
+            message: res.msg
+          })
         }
       }).catch((error) => {
         this.$message.error({
-            showClose: true,
-            message: error
-          });
+          showClose: true,
+          message: error
+        });
       });
     },
     closeModel: function (){

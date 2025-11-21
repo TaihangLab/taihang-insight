@@ -152,3 +152,62 @@ export function getChannelSnap(channelId) {
   })
 }
 
+/**
+ * 更新通道音频设置
+ * @param {Object} params - 参数
+ * @param {number} params.channelId - 通道ID
+ * @param {boolean} params.audio - 是否开启音频
+ */
+export function updateChannelAudio(params) {
+  return request({
+    url: '/api/device/query/channel/audio',
+    method: 'post',
+    params: params
+  })
+}
+
+/**
+ * 更新通道码流标识
+ * @param {Object} params - 参数
+ * @param {number} params.deviceDbId - 设备数据库ID
+ * @param {number} params.id - 通道ID
+ * @param {string} params.streamIdentification - 码流标识
+ */
+export function updateChannelStreamIdentification(params) {
+  return request({
+    url: '/api/device/query/channel/stream/identification/update/',
+    method: 'post',
+    params: params
+  })
+}
+
+/**
+ * 获取行业编码列表
+ */
+export function getIndustryCodeList() {
+  return request({
+    url: '/api/common/channel/industry/list',
+    method: 'get'
+  })
+}
+
+/**
+ * 获取设备类型列表
+ */
+export function getDeviceTypeList() {
+  return request({
+    url: '/api/common/channel/type/list',
+    method: 'get'
+  })
+}
+
+/**
+ * 获取网络标识列表
+ */
+export function getNetworkIdentificationList() {
+  return request({
+    url: '/api/common/channel/network/identification/list',
+    method: 'get'
+  })
+}
+

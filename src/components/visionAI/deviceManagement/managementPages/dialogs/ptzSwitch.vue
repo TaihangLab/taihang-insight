@@ -1,5 +1,5 @@
 <template>
-  <div id="ptzScan">
+  <div id="ptzSwitch">
     <el-form size="mini" :inline="true" >
       <el-form-item >
         <el-input
@@ -18,14 +18,14 @@
         <el-button size="mini" @click="open('off')">关闭</el-button>
       </el-form-item>
     </el-form>
-
   </div>
 </template>
 
 <script>
+import { controlAuxiliary } from '@/api/ptz'
 
 export default {
-  name: "ptzScan",
+  name: "ptzSwitch",
   props: [ 'channelDeviceId', 'deviceId'],
   components: {},
   created() {
@@ -44,15 +44,11 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/auxiliary/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          command: command,
-          switchId: this.switchId,
-        }
+      controlAuxiliary(this.deviceId, this.channelDeviceId, {
+        command: command,
+        switchId: this.switchId,
       }).then((res)=> {
-        if (res.data.code === 0) {
+        if (res.code === 0) {
           this.$message({
             showClose: true,
             message: "保存成功",
@@ -61,7 +57,7 @@ export default {
         }else {
           this.$message({
             showClose: true,
-            message: res.data.msg,
+            message: res.msg,
             type: 'error'
           });
         }

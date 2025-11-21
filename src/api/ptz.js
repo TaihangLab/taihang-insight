@@ -18,6 +18,56 @@ export function ptzControl(deviceId, channelId, params) {
 }
 
 /**
+ * 前端云台控制
+ * @param {string} deviceId - 设备ID
+ * @param {string} channelId - 通道ID
+ * @param {Object} params - 控制参数
+ * @param {string} params.command - 控制命令
+ * @param {number} params.horizonSpeed - 水平速度
+ * @param {number} params.verticalSpeed - 垂直速度
+ * @param {number} params.zoomSpeed - 变倍速度
+ */
+export function frontEndPtzControl(deviceId, channelId, params) {
+  return request({
+    url: `/api/front-end/ptz/${deviceId}/${channelId}`,
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 光圈控制
+ * @param {string} deviceId - 设备ID
+ * @param {string} channelId - 通道ID
+ * @param {Object} params - 控制参数
+ * @param {string} params.command - 控制命令（in/out/stop）
+ * @param {number} params.speed - 速度
+ */
+export function irisControl(deviceId, channelId, params) {
+  return request({
+    url: `/api/front-end/fi/iris/${deviceId}/${channelId}`,
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 聚焦控制
+ * @param {string} deviceId - 设备ID
+ * @param {string} channelId - 通道ID
+ * @param {Object} params - 控制参数
+ * @param {string} params.command - 控制命令（near/far/stop）
+ * @param {number} params.speed - 速度
+ */
+export function focusControl(deviceId, channelId, params) {
+  return request({
+    url: `/api/front-end/fi/focus/${deviceId}/${channelId}`,
+    method: 'get',
+    params: params
+  })
+}
+
+/**
  * 获取预置位列表
  * @param {string} deviceId - 设备ID
  * @param {string} channelId - 通道ID

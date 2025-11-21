@@ -105,3 +105,13 @@ export function resetPassword(userId) {
   })
 }
 
+/**
+ * 获取用户详细信息（包含推流密钥）
+ */
+export function getUserDetailInfo() {
+  return request({
+    url: '/api/user/userInfo',
+    method: 'post'
+  })
+}
+

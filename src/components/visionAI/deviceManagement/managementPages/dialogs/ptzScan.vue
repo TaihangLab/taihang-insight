@@ -44,6 +44,13 @@
 </template>
 
 <script>
+import { 
+  setScanLeft as apiSetScanLeft, 
+  setScanRight as apiSetScanRight, 
+  setScanSpeed, 
+  startFrontEndScan, 
+  stopFrontEndScan 
+} from '@/api/ptz'
 
 export default {
   name: "ptzScan",
@@ -67,15 +74,11 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/scan/set/speed/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          scanId: this.scanId,
-          speed: this.speed
-        }
+      setScanSpeed(this.deviceId, this.channelDeviceId, {
+        scanId: this.scanId,
+        speed: this.speed
       }).then((res)=> {
-        if (res.data.code === 0) {
+        if (res.code === 0) {
           this.$message({
             showClose: true,
             message: "保存成功",
@@ -84,7 +87,7 @@ export default {
         }else {
           this.$message({
             showClose: true,
-            message: res.data.msg,
+            message: res.msg,
             type: 'error'
           });
         }
@@ -100,7 +103,7 @@ export default {
         loading.close()
       })
     },
-    cancelSetSpeed: function (){
+    cancelSetSpeed: function () {
       this.speed = ""
       this.setSpeedVisible = false
     },
@@ -112,14 +115,10 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/scan/set/left/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          scanId: this.scanId,
-        }
+      apiSetScanLeft(this.deviceId, this.channelDeviceId, {
+        scanId: this.scanId
       }).then((res)=> {
-        if (res.data.code === 0) {
+        if (res.code === 0) {
           this.$message({
             showClose: true,
             message: "保存成功",
@@ -128,7 +127,7 @@ export default {
         }else {
           this.$message({
             showClose: true,
-            message: res.data.msg,
+            message: res.msg,
             type: 'error'
           });
         }
@@ -150,14 +149,10 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/scan/set/right/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          scanId: this.scanId,
-        }
+      apiSetScanRight(this.deviceId, this.channelDeviceId, {
+        scanId: this.scanId
       }).then((res)=> {
-        if (res.data.code === 0) {
+        if (res.code === 0) {
           this.$message({
             showClose: true,
             message: "保存成功",
@@ -166,7 +161,7 @@ export default {
         }else {
           this.$message({
             showClose: true,
-            message: res.data.msg,
+            message: res.msg,
             type: 'error'
           });
         }
@@ -177,8 +172,6 @@ export default {
           type: 'error'
         });
       }).finally(()=>{
-        this.setSpeedVisible = false;
-        this.speed = "";
         loading.close()
       })
     },
@@ -190,23 +183,19 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/scan/start/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          scanId: this.scanId
-        }
+      startFrontEndScan(this.deviceId, this.channelDeviceId, {
+        scanId: this.scanId
       }).then((res)=> {
-        if (res.data.code === 0) {
+        if (res.code === 0) {
           this.$message({
             showClose: true,
-            message: "发送成功",
+            message: "开始扫描",
             type: 'success'
           });
         }else {
           this.$message({
             showClose: true,
-            message: res.data.msg,
+            message: res.msg,
             type: 'error'
           });
         }
@@ -228,23 +217,19 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/scan/stop/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          scanId: this.scanId
-        }
+      stopFrontEndScan(this.deviceId, this.channelDeviceId, {
+        scanId: this.scanId
       }).then((res)=> {
-        if (res.data.code === 0) {
+        if (res.code === 0) {
           this.$message({
             showClose: true,
-            message: "发送成功",
+            message: "停止扫描",
             type: 'success'
           });
         }else {
           this.$message({
             showClose: true,
-            message: res.data.msg,
+            message: res.msg,
             type: 'error'
           });
         }
@@ -269,5 +254,4 @@ export default {
   grid-template-columns: 1fr 1fr 1fr;
   gap: 1rem;
 }
-
 </style>

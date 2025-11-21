@@ -221,6 +221,8 @@
 </template>
 
 <script>
+import { addGBDevice, updateGBDevice } from '@/api/device'
+
 export default {
   name: 'GBDeviceEdit',
   data() {
@@ -348,32 +350,24 @@ export default {
         if (valid) {
           this.saving = true;
           
-          // 准备提交的数据
           const submitData = { ...this.deviceForm };
           
-          // 如果经纬度为空，设置为null
           if (!submitData.longitude) submitData.longitude = null;
           if (!submitData.latitude) submitData.latitude = null;
           
-          // 调用API
-          const apiMethod = this.editMode ? 'put' : 'post';
-          const apiUrl = this.editMode 
-            ? `/api/device/query/devices/${submitData.deviceId}/edit`
-            : '/api/device/query/devices/add';
+          const apiCall = this.editMode 
+            ? updateGBDevice(submitData.deviceId, submitData)
+            : addGBDevice(submitData);
           
-          this.$axios({
-            method: apiMethod,
-            url: apiUrl,
-            data: submitData
-          }).then((res) => {
-            if (res.data.code === 0) {
+          apiCall.then((res) => {
+            if (res.code === 0) {
               this.$message.success(this.editMode ? '设备修改成功' : '设备添加成功');
               this.handleClose();
               if (this.callback) {
                 this.callback();
               }
             } else {
-              this.$message.error((this.editMode ? '设备修改失败：' : '设备添加失败：') + res.data.msg);
+              this.$message.error((this.editMode ? '设备修改失败：' : '设备添加失败：') + res.msg);
             }
           }).catch((error) => {
             console.error('设备操作失败:', error);

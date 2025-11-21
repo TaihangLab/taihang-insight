@@ -105,3 +105,16 @@ export function removeDeviceFromRegion(data) {
   })
 }
 
+/**
+ * 获取行政区域子列表
+ * @param {Object} params - 查询参数
+ * @param {string} params.parent - 父节点编码
+ */
+export function getRegionChildList(params) {
+  return request({
+    url: '/api/region/base/child/list',
+    method: 'get',
+    params: params
+  })
+}
+

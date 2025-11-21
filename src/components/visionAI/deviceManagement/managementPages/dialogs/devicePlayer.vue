@@ -282,6 +282,9 @@ import ptzWiper from "./ptzWiper.vue";
 import ptzSwitch from "./ptzSwitch.vue";
 import mediaInfo from "./mediaInfo.vue";
 import H265web from "./h265web.vue";
+import { frontEndPtzControl, irisControl, focusControl } from '@/api/ptz'
+import { startBroadcast, stopBroadcast } from '@/api/play'
+import { getUserDetailInfo } from '@/api/user'
 
 export default {
   name: 'devicePlayer',
@@ -471,25 +474,26 @@ export default {
     },
     ptzCamera: function (command) {
       console.log('云台控制：' + command);
-      let that = this;
-      this.$axios({
-        method: 'get',
-        url: '/api/front-end/ptz/' + this.deviceId + '/' + this.channelId + '?command=' + command + '&horizonSpeed=' + parseInt(this.controSpeed * 255/100) + '&verticalSpeed=' + parseInt(this.controSpeed * 255/100) + '&zoomSpeed=' + parseInt(this.controSpeed * 16/100)
-      }).then(function (res) {
+      frontEndPtzControl(this.deviceId, this.channelId, {
+        command: command,
+        horizonSpeed: parseInt(this.controSpeed * 255/100),
+        verticalSpeed: parseInt(this.controSpeed * 255/100),
+        zoomSpeed: parseInt(this.controSpeed * 16/100)
+      }).then(() => {
       });
     },
     irisCamera: function (command) {
-      this.$axios({
-        method: 'get',
-        url: '/api/front-end/fi/iris/' + this.deviceId + '/' + this.channelId + '?command=' + command + '&speed=' + parseInt(this.controSpeed * 255/100)
-      }).then(function (res) {
+      irisControl(this.deviceId, this.channelId, {
+        command: command,
+        speed: parseInt(this.controSpeed * 255/100)
+      }).then(() => {
       });
     },
     focusCamera: function (command) {
-      this.$axios({
-        method: 'get',
-        url: '/api/front-end/fi/focus/' + this.deviceId + '/' + this.channelId + '?command=' + command + '&speed=' + parseInt(this.controSpeed * 255/100)
-      }).then(function (res) {
+      focusControl(this.deviceId, this.channelId, {
+        command: command,
+        speed: parseInt(this.controSpeed * 255/100)
+      }).then(() => {
       });
     },
     //////////////////////播放器事件处理//////////////////////////
@@ -524,15 +528,13 @@ export default {
     },
     broadcastStatusClick() {
       if (this.broadcastStatus == -1) {
-        // 默认状态， 开始
         this.broadcastStatus = 0
-        // 发起语音对讲
-        this.$axios({
-          method: 'get',
-          url: '/api/play/broadcast/' + this.deviceId + '/' + this.channelId + "?timeout=30&broadcastMode=" + this.broadcastMode
+        startBroadcast(this.deviceId, this.channelId, {
+          timeout: 30,
+          broadcastMode: this.broadcastMode
         }).then((res) => {
-          if (res.data.code === 0) {
-            let streamInfo = res.data.data.streamInfo;
+          if (res.code === 0) {
+            let streamInfo = res.data.streamInfo;
             if (document.location.protocol.includes("https")) {
               this.startBroadcast(streamInfo.rtcs)
             } else {
@@ -541,7 +543,7 @@ export default {
           } else {
             this.$message({
               showClose: true,
-              message: res.data.msg,
+              message: res.msg,
               type: "error",
             });
           }
@@ -552,12 +554,8 @@ export default {
       }
     },
     startBroadcast(url) {
-      // 获取推流鉴权Key
-      this.$axios({
-        method: 'post',
-        url: '/api/user/userInfo',
-      }).then((res) => {
-        if (res.data.code !== 0) {
+      getUserDetailInfo().then((res) => {
+        if (res.code !== 0) {
           this.$message({
             showClose: true,
             message: "获取推流鉴权Key失败",
@@ -565,7 +563,7 @@ export default {
           });
           this.broadcastStatus = -1;
         } else {
-          let pushKey = res.data.data.pushKey;
+          let pushKey = res.data.pushKey;
           // 获取推流鉴权KEY
           url += "&sign=" + crypto.createHash('md5').update(pushKey, "utf8").digest('hex')
           console.log("开始语音喊话： " + url)
@@ -642,17 +640,11 @@ export default {
     stopBroadcast() {
       this.broadcastRtc.close();
       this.broadcastStatus = -1;
-      this.$axios({
-        method: 'get',
-        url: '/api/play/broadcast/stop/' + this.deviceId + '/' + this.channelId
-      }).then((res) => {
-        if (res.data.code == 0) {
-          // this.broadcastStatus = -1;
-          // this.broadcastRtc.close()
-        } else {
+      stopBroadcast(this.deviceId, this.channelId).then((res) => {
+        if (res.code != 0) {
           this.$message({
             showClose: true,
-            message: res.data.msg,
+            message: res.msg,
             type: "error",
           });
         }

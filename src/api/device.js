@@ -145,3 +145,56 @@ export function subscribeAlarm(deviceId, expires) {
   })
 }
 
+/**
+ * 添加国标设备
+ * @param {Object} data - 设备数据
+ */
+export function addGBDevice(data) {
+  return request({
+    url: '/api/device/query/devices/add',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 编辑国标设备
+ * @param {string} deviceId - 设备ID
+ * @param {Object} data - 设备数据
+ */
+export function updateGBDevice(deviceId, data) {
+  return request({
+    url: `/api/device/query/devices/${deviceId}/edit`,
+    method: 'put',
+    data: data
+  })
+}
+
+/**
+ * 录像控制
+ * @param {Object} params - 控制参数
+ * @param {string} params.deviceId - 设备ID
+ * @param {string} params.channelId - 通道ID
+ * @param {string} params.recordCmdStr - 录像命令（Record/StopRecord）
+ */
+export function controlRecord(params) {
+  return request({
+    url: '/api/device/control/record',
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 获取设备快照
+ * @param {string} deviceId - 设备ID
+ * @param {string} channelId - 通道ID
+ */
+export function getDeviceSnap(deviceId, channelId) {
+  return request({
+    url: `/api/device/query/snap/${deviceId}/${channelId}`,
+    method: 'get',
+    responseType: 'blob'
+  })
+}
+
