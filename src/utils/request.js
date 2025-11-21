@@ -20,6 +20,8 @@ service.interceptors.request.use(
     // if (store.getters.token) {
     //   config.headers['Authorization'] = 'Bearer ' + store.getters.token
     // }
+
+    config.headers['Authorization'] = 'Bearer ' + 'jklfsdoi3213kjl321gkfds'
     return config
   },
   error => {

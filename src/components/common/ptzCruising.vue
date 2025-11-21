@@ -15,7 +15,7 @@
     </div>
     <p>
       <el-tag v-for="(item, index) in presetList"
-              key="item.presetId"
+              :key="item.presetId"
               closable
               @close="delPreset(item, index)"
               style="margin-right: 1rem; cursor: pointer"
@@ -91,6 +91,15 @@
 </template>
 
 <script>
+import { 
+  getPresetListForCruise,
+  addCruisePoint,
+  deleteCruisePoint,
+  setCruiseSpeed,
+  setCruiseTime,
+  startCruiseFrontend,
+  stopCruiseFrontend
+} from '@/api/ptz'
 
 export default {
   name: "ptzCruising",
@@ -115,18 +124,15 @@ export default {
   },
   methods: {
     getPresetList: function () {
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/preset/query/${this.deviceId}/${this.channelDeviceId}`,
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.allPresetList = res.data.data;
-        }
-
-      }).catch((error)=> {
-
-        console.log(error);
-      });
+      getPresetListForCruise(this.deviceId, this.channelDeviceId)
+        .then((res) => {
+          if (res.data.code === 0) {
+            this.allPresetList = res.data.data;
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     },
     addCruisePoint: function (){
       const loading = this.$loading({
@@ -136,30 +142,27 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/cruise/point/add/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          cruiseId: this.cruiseId,
-          presetId: this.selectPreset.presetId
-        }
-      }).then((res)=> {
+      
+      addCruisePoint(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId,
+        presetId: this.selectPreset.presetId
+      }).then((res) => {
         if (res.data.code === 0) {
           this.presetList.push(this.selectPreset)
-        }else {
+        } else {
           this.$message({
             showClose: true,
             message: res.data.msg,
             type: 'error'
           });
         }
-      }).catch((error)=> {
+      }).catch((error) => {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || error,
           type: 'error'
         });
-      }).finally(()=>{
+      }).finally(() => {
         this.selectPreset = ""
         this.selectPresetVisible = false;
         loading.close()
@@ -177,30 +180,27 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/cruise/point/delete/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          cruiseId: this.cruiseId,
-          presetId: preset.presetId
-        }
-      }).then((res)=> {
+      
+      deleteCruisePoint(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId,
+        presetId: preset.presetId
+      }).then((res) => {
         if (res.data.code === 0) {
           this.presetList.splice(index, 1)
-        }else {
+        } else {
           this.$message({
             showClose: true,
             message: res.data.msg,
             type: 'error'
           });
         }
-      }).catch((error)=> {
+      }).catch((error) => {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || error,
           type: 'error'
         });
-      }).finally(()=>{
+      }).finally(() => {
         loading.close()
       })
     },
@@ -218,30 +218,27 @@ export default {
           spinner: 'el-icon-loading',
           background: 'rgba(0, 0, 0, 0.7)'
         })
-        this.$axios({
-          method: 'get',
-          url: `/api/front-end/cruise/point/delete/${this.deviceId}/${this.channelDeviceId}`,
-          params: {
-            cruiseId: this.cruiseId,
-            presetId: 0
-          }
-        }).then((res)=> {
+        
+        deleteCruisePoint(this.deviceId, this.channelDeviceId, {
+          cruiseId: this.cruiseId,
+          presetId: 0
+        }).then((res) => {
           if (res.data.code === 0) {
             this.presetList = []
-          }else {
+          } else {
             this.$message({
               showClose: true,
               message: res.data.msg,
               type: 'error'
             });
           }
-        }).catch((error)=> {
+        }).catch((error) => {
           this.$message({
             showClose: true,
-            message: error,
+            message: error.message || error,
             type: 'error'
           });
-        }).finally(()=>{
+        }).finally(() => {
           loading.close()
         })
       })
@@ -254,34 +251,31 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/cruise/speed/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          cruiseId: this.cruiseId,
-          speed: this.cruiseSpeed
-        }
-      }).then((res)=> {
+      
+      setCruiseSpeed(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId,
+        speed: this.cruiseSpeed
+      }).then((res) => {
         if (res.data.code === 0) {
           this.$message({
             showClose: true,
             message: "保存成功",
             type: 'success'
           });
-        }else {
+        } else {
           this.$message({
             showClose: true,
             message: res.data.msg,
             type: 'error'
           });
         }
-      }).catch((error)=> {
+      }).catch((error) => {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || error,
           type: 'error'
         });
-      }).finally(()=>{
+      }).finally(() => {
         this.cruiseSpeed = ""
         this.setSpeedVisible = false
         loading.close()
@@ -299,34 +293,31 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/cruise/time/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          cruiseId: this.cruiseId,
-          time: this.cruiseTime
-        }
-      }).then((res)=> {
+      
+      setCruiseTime(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId,
+        time: this.cruiseTime
+      }).then((res) => {
         if (res.data.code === 0) {
           this.$message({
             showClose: true,
             message: "保存成功",
             type: 'success'
           });
-        }else {
+        } else {
           this.$message({
             showClose: true,
             message: res.data.msg,
             type: 'error'
           });
         }
-      }).catch((error)=> {
+      }).catch((error) => {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || error,
           type: 'error'
         });
-      }).finally(()=>{
+      }).finally(() => {
         this.setTimeVisible = false;
         this.cruiseTime = "";
         loading.close()
@@ -344,33 +335,30 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/cruise/start/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          cruiseId: this.cruiseId
-        }
-      }).then((res)=> {
+      
+      startCruiseFrontend(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId
+      }).then((res) => {
         if (res.data.code === 0) {
           this.$message({
             showClose: true,
             message: "发送成功",
             type: 'success'
           });
-        }else {
+        } else {
           this.$message({
             showClose: true,
             message: res.data.msg,
             type: 'error'
           });
         }
-      }).catch((error)=> {
+      }).catch((error) => {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || error,
           type: 'error'
         });
-      }).finally(()=>{
+      }).finally(() => {
         loading.close()
       })
     },
@@ -382,33 +370,30 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/cruise/stop/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          cruiseId: this.cruiseId
-        }
-      }).then((res)=> {
+      
+      stopCruiseFrontend(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId
+      }).then((res) => {
         if (res.data.code === 0) {
           this.$message({
             showClose: true,
             message: "发送成功",
             type: 'success'
           });
-        }else {
+        } else {
           this.$message({
             showClose: true,
             message: res.data.msg,
             type: 'error'
           });
         }
-      }).catch((error)=> {
+      }).catch((error) => {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || error,
           type: 'error'
         });
-      }).finally(()=>{
+      }).finally(() => {
         loading.close()
       })
     },

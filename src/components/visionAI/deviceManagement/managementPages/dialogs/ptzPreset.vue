@@ -52,6 +52,7 @@ export default {
       this.$axios({
         method: 'get',
         url: `/api/front-end/preset/query/${this.deviceId}/${this.channelDeviceId}`,
+        
       }).then((res)=> {
         if (res.data.code === 0) {
           this.presetList = res.data.data;

@@ -170,3 +170,101 @@ export function stopScan(deviceId, channelId) {
   })
 }
 
+// ==================== 巡航管理相关接口 ====================
+
+/**
+ * 获取预置点列表（用于巡航配置）
+ * @param {string} deviceId - 设备ID
+ * @param {string} channelDeviceId - 通道设备ID
+ */
+export function getPresetListForCruise(deviceId, channelDeviceId) {
+  return request({
+    url: `/api/front-end/preset/query/${deviceId}/${channelDeviceId}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 添加巡航点
+ * @param {string} deviceId - 设备ID
+ * @param {string} channelDeviceId - 通道设备ID
+ * @param {Object} params - 参数 { cruiseId, presetId }
+ */
+export function addCruisePoint(deviceId, channelDeviceId, params) {
+  return request({
+    url: `/api/front-end/cruise/point/add/${deviceId}/${channelDeviceId}`,
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 删除巡航点
+ * @param {string} deviceId - 设备ID
+ * @param {string} channelDeviceId - 通道设备ID
+ * @param {Object} params - 参数 { cruiseId, presetId }
+ */
+export function deleteCruisePoint(deviceId, channelDeviceId, params) {
+  return request({
+    url: `/api/front-end/cruise/point/delete/${deviceId}/${channelDeviceId}`,
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 设置巡航速度
+ * @param {string} deviceId - 设备ID
+ * @param {string} channelDeviceId - 通道设备ID
+ * @param {Object} params - 参数 { cruiseId, speed }
+ */
+export function setCruiseSpeed(deviceId, channelDeviceId, params) {
+  return request({
+    url: `/api/front-end/cruise/speed/${deviceId}/${channelDeviceId}`,
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 设置巡航时间
+ * @param {string} deviceId - 设备ID
+ * @param {string} channelDeviceId - 通道设备ID
+ * @param {Object} params - 参数 { cruiseId, time }
+ */
+export function setCruiseTime(deviceId, channelDeviceId, params) {
+  return request({
+    url: `/api/front-end/cruise/time/${deviceId}/${channelDeviceId}`,
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 开始巡航（前端接口）
+ * @param {string} deviceId - 设备ID
+ * @param {string} channelDeviceId - 通道设备ID
+ * @param {Object} params - 参数 { cruiseId }
+ */
+export function startCruiseFrontend(deviceId, channelDeviceId, params) {
+  return request({
+    url: `/api/front-end/cruise/start/${deviceId}/${channelDeviceId}`,
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 停止巡航（前端接口）
+ * @param {string} deviceId - 设备ID
+ * @param {string} channelDeviceId - 通道设备ID
+ * @param {Object} params - 参数 { cruiseId }
+ */
+export function stopCruiseFrontend(deviceId, channelDeviceId, params) {
+  return request({
+    url: `/api/front-end/cruise/stop/${deviceId}/${channelDeviceId}`,
+    method: 'get',
+    params: params
+  })
+}
+
