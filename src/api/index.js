@@ -1,38 +1,19 @@
 /**
- * API统一导出
- * 方便统一管理和导入
+ * API统一导出入口
+ * 参考若依框架的设计，将所有API按模块分类管理
  */
 
-// 通道相关API
-export * from './channel'
+// 边缘管理相关API
+export * from './edgeManagement'
 
-// 设备相关API
-export * from './device'
+// 算法推理相关API
+export * from './algorithm'
 
-// 系统相关API
-export * from './system'
+// 可视化中心相关API
+export * from './visualCenter'
 
-// 行政区域相关API
-export * from './region'
+// 园区管理相关API
+export * from './parkManagement'
 
-// 业务分组相关API
-export * from './group'
-
-// 流媒体服务器相关API
-export * from './mediaServer'
-
-// 流管理相关API
-export * from './stream'
-
-// 录像管理相关API
-export * from './record'
-
-// 用户管理相关API
-export * from './user'
-
-// 云台控制相关API
-export * from './ptz'
-
-// Dialog组件相关API
-export * from './dialog'
-
+// 默认导出request实例，方便特殊场景使用
+export { default as request } from './request'

@@ -112,6 +112,15 @@
 </template>
 
 <script>
+import { 
+  getEdgeServerList, 
+  registerEdgeServer, 
+  updateEdgeServer, 
+  deleteEdgeServer,
+  getEdgeServerDetail,
+  updateServerAuthorization
+} from '@/api/edgeManagement'
+
 export default {
   name: 'EdgeServer',
   
@@ -166,11 +175,33 @@ export default {
   
   methods: {
     // 加载表格数据
-    loadTableData() {
-      const filteredData = this.allData.filter(server => server.name.includes(this.searchKeyword))
-      this.total = filteredData.length
-      const start = (this.currentPage - 1) * this.pageSize
-      this.tableData = filteredData.slice(start, start + this.pageSize)
+    async loadTableData() {
+      try {
+        // 调用封装的API
+        const response = await getEdgeServerList({
+          pageNum: this.currentPage,
+          pageSize: this.pageSize,
+          keyword: this.searchKeyword
+        }).catch(() => null);
+        
+        if (response && response.data) {
+          this.tableData = response.data.list || response.data.rows || [];
+          this.total = response.data.total || 0;
+        } else {
+          // API调用失败，使用模拟数据
+          const filteredData = this.allData.filter(server => server.name.includes(this.searchKeyword));
+          this.total = filteredData.length;
+          const start = (this.currentPage - 1) * this.pageSize;
+          this.tableData = filteredData.slice(start, start + this.pageSize);
+        }
+      } catch (error) {
+        console.error('加载边缘服务器列表失败:', error);
+        // 使用模拟数据作为降级方案
+        const filteredData = this.allData.filter(server => server.name.includes(this.searchKeyword));
+        this.total = filteredData.length;
+        const start = (this.currentPage - 1) * this.pageSize;
+        this.tableData = filteredData.slice(start, start + this.pageSize);
+      }
     },
     
     // 注册边缘服务器
@@ -179,7 +210,7 @@ export default {
     },
     
     // 确认注册
-    confirmAddServer() {
+    async confirmAddServer() {
       if (!this.newServer.name || !this.newServer.ipAddress) {
         this.$message({
           message: '请填写名称和IP地址',
@@ -189,6 +220,7 @@ export default {
       }
       
       const serverData = {
+        id: this.editingId,
         name: this.newServer.name,
         ipAddress: this.newServer.ipAddress,
         status: this.newServer.status,
@@ -198,29 +230,33 @@ export default {
         authorizedGroups: this.newServer.authorizedGroups.split(',').map(group => group.trim()).filter(Boolean)
       }
 
-      if (this.isEditing) {
-        // 更新现有服务器
-        const index = this.allData.findIndex(s => s.id === this.editingId)
-        if (index !== -1) {
-          this.allData[index] = { ...this.allData[index], ...serverData }
+      try {
+        if (this.isEditing) {
+          // 更新现有服务器
+          await updateEdgeServer(serverData);
           this.$message({
             message: '边缘服务器更新成功！',
             type: 'success'
           })
+        } else {
+          // 添加新服务器
+          await registerEdgeServer(serverData);
+          this.$message({
+            message: '边缘服务器注册成功！',
+            type: 'success'
+          })
         }
-      } else {
-        // 添加新服务器
-        const newId = (this.allData.length + 1).toString()
-        this.allData.push({ id: newId, ...serverData })
-        this.$message({
-          message: '边缘服务器注册成功！',
-          type: 'success'
-        })
-      }
 
-      this.loadTableData()
-      this.dialogVisible = false
-      this.resetForm()
+        this.loadTableData();
+        this.dialogVisible = false;
+        this.resetForm();
+      } catch (error) {
+        console.error('操作失败:', error);
+        this.$message({
+          message: this.isEditing ? '更新失败' : '注册失败',
+          type: 'error'
+        });
+      }
     },
     
     // 管理功能
@@ -247,14 +283,22 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         inputValue: server.authorizedGroups.join(', ')
-      }).then(({ value }) => {
-        const index = this.allData.findIndex(s => s.id === server.id)
-        if (index !== -1) {
-          this.allData[index].authorizedGroups = value.split(',').map(group => group.trim()).filter(Boolean)
-          this.loadTableData()
+      }).then(async ({ value }) => {
+        try {
+          await updateServerAuthorization({
+            serverId: server.id,
+            authorizedGroups: value.split(',').map(group => group.trim()).filter(Boolean)
+          });
+          this.loadTableData();
           this.$message({
             message: '授权组织更新成功！',
             type: 'success'
+          })
+        } catch (error) {
+          console.error('授权更新失败:', error);
+          this.$message({
+            message: '授权组织更新失败',
+            type: 'error'
           })
         }
       })
@@ -302,14 +346,19 @@ export default {
           cancelButtonText: '取消',
           type: 'warning'
         }
-      ).then(() => {
-        const index = this.allData.findIndex(s => s.id === server.id)
-        if (index !== -1) {
-          this.allData.splice(index, 1)
-          this.loadTableData()
+      ).then(async () => {
+        try {
+          await deleteEdgeServer(server.id);
+          this.loadTableData();
           this.$message({
             message: '删除成功！',
             type: 'success'
+          })
+        } catch (error) {
+          console.error('删除失败:', error);
+          this.$message({
+            message: '删除失败',
+            type: 'error'
           })
         }
       })

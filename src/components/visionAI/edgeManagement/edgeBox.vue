@@ -115,6 +115,15 @@
 </template>
 
 <script>
+import { 
+  getEdgeBoxList, 
+  addEdgeBox, 
+  updateEdgeBox, 
+  deleteEdgeBox, 
+  bindEdgeServer,
+  getAvailableServerList
+} from '@/api/edgeManagement'
+
 export default {
   name: 'EdgeBox',
   
@@ -200,24 +209,52 @@ export default {
   
   mounted() {
     this.loadData()
+    this.loadServerList()
   },
   
   methods: {
     // 加载数据
-    loadData() {
-      // 模拟API调用
-      this.tableData = this.mockData
-      this.total = this.mockData.length
+    async loadData() {
+      try {
+        // 调用封装的API
+        const response = await getEdgeBoxList({
+          pageNum: this.currentPage,
+          pageSize: this.pageSize,
+          keyword: this.searchKeyword
+        }).catch(() => null);
+        
+        if (response && response.data) {
+          this.tableData = response.data.list || response.data.rows || [];
+          this.total = response.data.total || 0;
+        } else {
+          // API调用失败，使用模拟数据
+          this.tableData = this.mockData;
+          this.total = this.mockData.length;
+        }
+      } catch (error) {
+        console.error('加载边缘盒子列表失败:', error);
+        // 使用模拟数据作为降级方案
+        this.tableData = this.mockData;
+        this.total = this.mockData.length;
+      }
     },
     
+    // 加载服务器列表
+    async loadServerList() {
+      try {
+        const response = await getAvailableServerList().catch(() => null);
+        if (response && response.data) {
+          this.serverList = response.data;
+        }
+      } catch (error) {
+        console.error('加载服务器列表失败:', error);
+      }
+    },
+
     // 搜索
     handleSearch() {
-      // 实现搜索逻辑
-      const keyword = this.searchKeyword.toLowerCase()
-      this.tableData = this.mockData.filter(item => 
-        item.name.toLowerCase().includes(keyword) || 
-        item.serialNumber.toLowerCase().includes(keyword)
-      )
+      this.currentPage = 1;
+      this.loadData();
     },
     
     // 添加边缘盒子
@@ -234,10 +271,20 @@ export default {
     },
     
     // 绑定服务器
-    handleBind(row) {
+    async handleBind(row) {
       this.currentEditingBox = row
       this.bindForm.serverId = ''
       this.bindDialogVisible = true
+      
+      // 加载可用的服务器列表
+      try {
+        const response = await getAvailableServerList().catch(() => null);
+        if (response && response.data) {
+          this.serverList = response.data;
+        }
+      } catch (error) {
+        console.error('加载服务器列表失败:', error);
+      }
     },
     
     // 删除边缘盒子
@@ -246,35 +293,59 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        // 实现删除逻辑
-        this.$message.success('删除成功')
-        this.loadData()
+      }).then(async () => {
+        try {
+          await deleteEdgeBox(row.id);
+          this.$message.success('删除成功');
+          this.loadData();
+        } catch (error) {
+          console.error('删除失败:', error);
+          this.$message.error('删除失败');
+        }
       }).catch(() => {})
     },
     
     // 提交表单
     handleSubmit() {
-      this.$refs.boxForm.validate((valid) => {
+      this.$refs.boxForm.validate(async (valid) => {
         if (valid) {
-          // 实现提交逻辑
-          this.$message.success(this.dialogType === 'add' ? '添加成功' : '编辑成功')
-          this.dialogVisible = false
-          this.loadData()
+          try {
+            // 根据对话框类型调用不同的API
+            if (this.dialogType === 'add') {
+              await addEdgeBox(this.formData);
+              this.$message.success('添加成功');
+            } else {
+              await updateEdgeBox(this.formData);
+              this.$message.success('编辑成功');
+            }
+            this.dialogVisible = false;
+            this.loadData();
+          } catch (error) {
+            console.error('操作失败:', error);
+            this.$message.error(this.dialogType === 'add' ? '添加失败' : '编辑失败');
+          }
         }
       })
     },
     
     // 提交绑定
-    handleBindSubmit() {
+    async handleBindSubmit() {
       if (!this.bindForm.serverId) {
-        this.$message.warning('请选择要绑定的服务器')
-        return
+        this.$message.warning('请选择要绑定的服务器');
+        return;
       }
-      // 实现绑定逻辑
-      this.$message.success('绑定成功')
-      this.bindDialogVisible = false
-      this.loadData()
+      try {
+        await bindEdgeServer({
+          boxId: this.currentEditingBox.id,
+          serverId: this.bindForm.serverId
+        });
+        this.$message.success('绑定成功');
+        this.bindDialogVisible = false;
+        this.loadData();
+      } catch (error) {
+        console.error('绑定失败:', error);
+        this.$message.error('绑定失败');
+      }
     },
     
     // 重置表单
