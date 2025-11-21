@@ -1,13 +1,18 @@
-import axios from 'axios';
-
 /**
  * 通道服务类 - 封装通道相关的所有API请求
+ * 使用封装的API方法，不直接暴露axios
  */
-class ChannelService {
-  constructor() {
-    this.$axios = axios;
-  }
+import { 
+  getChannelInfo,
+  getChannelList as apiGetChannelList,
+  addChannel as apiAddChannel,
+  updateChannel as apiUpdateChannel,
+  deleteChannel as apiDeleteChannel,
+  getChannelPlayUrl as apiGetChannelPlayUrl,
+  stopChannelPlay as apiStopChannelPlay
+} from '@/api/channel'
 
+class ChannelService {
   /**
    * 获取通道播放地址
    * @param {string|number} channelId 通道ID
@@ -21,24 +26,18 @@ class ChannelService {
       return;
     }
 
-    this.$axios({
-      method: 'get',
-      url: '/api/common/channel/play',
-      params: {
-        channelId: channelId
-      }
-    })
-    .then((res) => {
-      if (typeof callback === 'function') {
-        callback(res.data);
-      }
-    })
-    .catch((error) => {
-      console.error('获取通道播放地址错误:', error);
-      if (typeof callback === 'function') {
-        callback({ code: -1, msg: error.message || '网络错误' });
-      }
-    });
+    apiGetChannelPlayUrl(channelId)
+      .then((res) => {
+        if (typeof callback === 'function') {
+          callback(res.data);
+        }
+      })
+      .catch((error) => {
+        console.error('获取通道播放地址错误:', error);
+        if (typeof callback === 'function') {
+          callback({ code: -1, msg: error.message || '网络错误' });
+        }
+      });
   }
 
   /**
@@ -54,24 +53,18 @@ class ChannelService {
       return;
     }
 
-    this.$axios({
-      method: 'get',
-      url: '/api/common/channel/stop',
-      params: {
-        channelId: channelId
-      }
-    })
-    .then((res) => {
-      if (typeof callback === 'function') {
-        callback(res.data);
-      }
-    })
-    .catch((error) => {
-      console.error('停止通道播放错误:', error);
-      if (typeof callback === 'function') {
-        callback({ code: -1, msg: error.message || '网络错误' });
-      }
-    });
+    apiStopChannelPlay(channelId)
+      .then((res) => {
+        if (typeof callback === 'function') {
+          callback(res.data);
+        }
+      })
+      .catch((error) => {
+        console.error('停止通道播放错误:', error);
+        if (typeof callback === 'function') {
+          callback({ code: -1, msg: error.message || '网络错误' });
+        }
+      });
   }
 
   /**
@@ -80,22 +73,18 @@ class ChannelService {
    * @param {Function} callback 回调函数
    */
   getChannelList(params, callback) {
-    this.$axios({
-      method: 'get',
-      url: '/api/common/channel/list',
-      params: params
-    })
-    .then((res) => {
-      if (typeof callback === 'function') {
-        callback(res.data);
-      }
-    })
-    .catch((error) => {
-      console.error('获取通道列表错误:', error);
-      if (typeof callback === 'function') {
-        callback({ code: -1, msg: error.message || '网络错误' });
-      }
-    });
+    apiGetChannelList(params)
+      .then((res) => {
+        if (typeof callback === 'function') {
+          callback(res.data);
+        }
+      })
+      .catch((error) => {
+        console.error('获取通道列表错误:', error);
+        if (typeof callback === 'function') {
+          callback({ code: -1, msg: error.message || '网络错误' });
+        }
+      });
   }
 
   /**
@@ -111,24 +100,18 @@ class ChannelService {
       return;
     }
 
-    this.$axios({
-      method: 'get',
-      url: `/api/common/channel/one`,
-      params: {
-        id: channelId
-      }
-    })
-    .then((res) => {
-      if (typeof callback === 'function') {
-        callback(res.data);
-      }
-    })
-    .catch((error) => {
-      console.error('获取通道详情错误:', error);
-      if (typeof callback === 'function') {
-        callback({ code: -1, msg: error.message || '网络错误' });
-      }
-    });
+    getChannelInfo(channelId)
+      .then((res) => {
+        if (typeof callback === 'function') {
+          callback(res.data);
+        }
+      })
+      .catch((error) => {
+        console.error('获取通道详情错误:', error);
+        if (typeof callback === 'function') {
+          callback({ code: -1, msg: error.message || '网络错误' });
+        }
+      });
   }
 
   /**
@@ -137,22 +120,18 @@ class ChannelService {
    * @param {Function} callback 回调函数
    */
   updateChannel(channelData, callback) {
-    this.$axios({
-      method: 'post',
-      url: '/api/common/channel/update',
-      data: channelData
-    })
-    .then((res) => {
-      if (typeof callback === 'function') {
-        callback(res.data);
-      }
-    })
-    .catch((error) => {
-      console.error('更新通道信息错误:', error);
-      if (typeof callback === 'function') {
-        callback({ code: -1, msg: error.message || '网络错误' });
-      }
-    });
+    apiUpdateChannel(channelData)
+      .then((res) => {
+        if (typeof callback === 'function') {
+          callback(res.data);
+        }
+      })
+      .catch((error) => {
+        console.error('更新通道信息错误:', error);
+        if (typeof callback === 'function') {
+          callback({ code: -1, msg: error.message || '网络错误' });
+        }
+      });
   }
 
   /**
@@ -161,22 +140,18 @@ class ChannelService {
    * @param {Function} callback 回调函数
    */
   addChannel(channelData, callback) {
-    this.$axios({
-      method: 'post',
-      url: '/api/common/channel/add',
-      data: channelData
-    })
-    .then((res) => {
-      if (typeof callback === 'function') {
-        callback(res.data);
-      }
-    })
-    .catch((error) => {
-      console.error('添加通道错误:', error);
-      if (typeof callback === 'function') {
-        callback({ code: -1, msg: error.message || '网络错误' });
-      }
-    });
+    apiAddChannel(channelData)
+      .then((res) => {
+        if (typeof callback === 'function') {
+          callback(res.data);
+        }
+      })
+      .catch((error) => {
+        console.error('添加通道错误:', error);
+        if (typeof callback === 'function') {
+          callback({ code: -1, msg: error.message || '网络错误' });
+        }
+      });
   }
 
   /**
@@ -192,26 +167,19 @@ class ChannelService {
       return;
     }
 
-    this.$axios({
-      method: 'delete',
-      url: '/api/common/channel/delete',
-      params: {
-        id: channelId
-      }
-    })
-    .then((res) => {
-      if (typeof callback === 'function') {
-        callback(res.data);
-      }
-    })
-    .catch((error) => {
-      console.error('删除通道错误:', error);
-      if (typeof callback === 'function') {
-        callback({ code: -1, msg: error.message || '网络错误' });
-      }
-    });
+    apiDeleteChannel(channelId)
+      .then((res) => {
+        if (typeof callback === 'function') {
+          callback(res.data);
+        }
+      })
+      .catch((error) => {
+        console.error('删除通道错误:', error);
+        if (typeof callback === 'function') {
+          callback({ code: -1, msg: error.message || '网络错误' });
+        }
+      });
   }
 }
 
 export default ChannelService;
-

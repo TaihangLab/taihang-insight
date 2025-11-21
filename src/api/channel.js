@@ -102,3 +102,53 @@ export function getChannelRawData(id) {
   })
 }
 
+/**
+ * 获取通道播放地址
+ * @param {number} channelId - 通道ID
+ */
+export function getChannelPlayUrl(channelId) {
+  return request({
+    url: '/api/common/channel/play',
+    method: 'get',
+    params: { channelId }
+  })
+}
+
+/**
+ * 停止通道播放
+ * @param {number} channelId - 通道ID
+ */
+export function stopChannelPlay(channelId) {
+  return request({
+    url: '/api/common/channel/stop',
+    method: 'get',
+    params: { channelId }
+  })
+}
+
+/**
+ * 获取通道列表
+ * @param {Object} params - 查询参数
+ */
+export function getChannelList(params) {
+  return request({
+    url: '/api/common/channel/list',
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 获取通道截图
+ * @param {number} channelId - 通道ID
+ */
+export function getChannelSnap(channelId) {
+  return request({
+    url: '/api/common/channel/snap/stream',
+    method: 'get',
+    params: { channelId },
+    responseType: 'blob',
+    timeout: 15000
+  })
+}
+

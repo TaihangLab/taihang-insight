@@ -52,6 +52,7 @@ import VueEasyTree from "@wchbrad/vue-easy-tree";
 import groupEdit from '../visionAI/deviceManagement/managementPages/dialogs/groupEdit.vue'
 import gbDeviceSelect from './../dialog/GbDeviceSelect'
 import GbChannelSelect from "../dialog/GbChannelSelect.vue";
+import { getGroupTreeList, deleteGroup, addDeviceToGroup, removeDeviceFromGroup } from '@/api/group'
 
 export default {
   name: 'DeviceTree',
@@ -93,14 +94,10 @@ export default {
           resolve([]);
           return
         }
-        this.$axios({
-          method: 'get',
-          url: `/api/group/tree/list`,
-          params: {
-            query: this.searchSrt,
-            parent: node.data.id,
-            hasChannel: this.hasChannel
-          }
+        getGroupTreeList({
+          query: this.searchSrt,
+          parent: node.data.id,
+          hasChannel: this.hasChannel
         }).then((res) => {
           if (res.data.code === 0) {
             if (res.data.data.length > 0) {
@@ -108,7 +105,6 @@ export default {
             }
             resolve(res.data.data);
           }
-
         }).catch(function (error) {
           console.log(error);
         });
@@ -211,13 +207,7 @@ export default {
       return false;
     },
     removeGroup: function (id, node) {
-      this.$axios({
-        method: "delete",
-        url: `/api/group/delete`,
-        params: {
-          id: node.data.id,
-        }
-      }).then((res) => {
+      deleteGroup(node.data.id).then((res) => {
         if (res.data.code === 0) {
           console.log("移除成功")
           node.parent.loaded = false
@@ -236,14 +226,10 @@ export default {
         for (let i = 0; i < rows.length; i++) {
           deviceIds.push(rows[i].id)
         }
-        this.$axios({
-          method: 'post',
-          url: `/api/common/channel/group/device/add`,
-          data: {
-            parentId: node.data.deviceId,
-            businessGroup: node.data.businessGroup,
-            deviceIds: deviceIds,
-          }
+        addDeviceToGroup({
+          parentId: node.data.deviceId,
+          businessGroup: node.data.businessGroup,
+          deviceIds: deviceIds,
         }).then((res) => {
           if (res.data.code === 0) {
             this.$message.success({
@@ -278,12 +264,8 @@ export default {
         for (let i = 0; i < rows.length; i++) {
           deviceIds.push(rows[i].id)
         }
-        this.$axios({
-          method: 'post',
-          url: `/api/common/channel/group/device/delete`,
-          data: {
-            deviceIds: deviceIds,
-          }
+        removeDeviceFromGroup({
+          deviceIds: deviceIds,
         }).then((res) => {
           if (res.data.code === 0) {
             this.$message.success({

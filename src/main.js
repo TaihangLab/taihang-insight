@@ -4,7 +4,6 @@ import ElementUI, {Notification} from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import './styles/design-system.css';
 import router from './router/index.js';
-import axios from 'axios';
 import VueCookies from 'vue-cookies';
 import VCharts from 'v-charts';
 import logViewer from '@femessage/log-viewer';
@@ -15,6 +14,8 @@ import Fingerprint2 from 'fingerprintjs2';
 import VueClipboards from 'vue-clipboards';
 import Contextmenu from "vue-contextmenujs"
 import userService from "./components/service/UserService"
+// 导入封装的API方法
+import { getSystemConfig } from './api/system'
 
 Vue.config.productionTip = false;
 
@@ -46,19 +47,8 @@ Vue.use(VCharts);
 Vue.use(logViewer);
 Vue.use(dataV);
 
-axios.defaults.baseURL = (process.env.NODE_ENV === 'development') ? process.env.BASE_API : (window.baseUrl ? window.baseUrl : "");
-axios.defaults.withCredentials = true;
-// 简化的axios拦截器 - 认证由Python后端统一处理
-axios.interceptors.response.use((response) => {
-  // 只处理响应数据，不处理认证
-  return response;
-}, (error) => {
-  // 简化错误处理
-  console.log("API请求错误:", error);
-  return Promise.reject(error);
-});
-
-Vue.prototype.$axios = axios;
+// 注意：已移除 Vue.prototype.$axios，所有接口请求请使用 /api 目录下封装的方法
+// 例如：import { getSystemConfig } from '@/api/system'
 Vue.prototype.$cookies.config(60 * 30);
 Vue.prototype.$tableHeght = window.innerHeight - 170;
 Vue.prototype.$channelTypeList = {
@@ -76,19 +66,17 @@ new Vue({
     // 获取本平台的服务ID
     console.log("获取本平台的服务ID")
     if (!this.$myServerId) {
-      axios({
-        method: 'get',
-        url: `/api/server/system/configInfo`,
-      }).then( (res)=> {
+      // 使用封装的API方法
+      getSystemConfig().then((res) => {
         if (res.data.code === 0) {
           console.log(res.data)
           console.log("当前服务ID： " + res.data.data.addOn.serverId)
           Vue.prototype.$myServerId = res.data.data.addOn.serverId;
         }
-      }).catch( (error)=> {
+      }).catch((error) => {
+        console.error("获取系统配置失败:", error);
       });
     }
-
   },
   router: router,
   render: h => h(App),

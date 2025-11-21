@@ -5,6 +5,7 @@
 import axios from 'axios'
 import { Message, MessageBox } from 'element-ui'
 import router from '@/router'
+import userService from '@/components/service/UserService'
 
 // 创建axios实例
 const service = axios.create({
@@ -16,12 +17,15 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    // 可以在这里添加token等请求头
-    // if (store.getters.token) {
-    //   config.headers['Authorization'] = 'Bearer ' + store.getters.token
-    // }
-
-    config.headers['Authorization'] = 'Bearer ' + 'jklfsdoi3213kjl321gkfds'
+    // 从userService获取token（如果存在）
+    const token = userService.getToken()
+    if (token) {
+      config.headers['Authorization'] = 'Bearer ' + token
+    }
+    
+    // 可以根据需要添加其他请求头
+    // config.headers['X-Requested-With'] = 'XMLHttpRequest'
+    
     return config
   },
   error => {
@@ -30,10 +34,20 @@ service.interceptors.request.use(
   }
 )
 
+// 是否正在刷新token的标志
+let isRefreshing = false
+// 存储待重试的请求队列
+let requestsQueue = []
+
 // 响应拦截器
 service.interceptors.response.use(
   response => {
     const res = response.data
+    
+    // 如果是Blob类型（如文件下载、图片），直接返回
+    if (response.config.responseType === 'blob') {
+      return response
+    }
     
     // 如果返回的状态码为200，说明接口请求成功，可以正常拿到数据
     // 否则的话抛出错误
@@ -45,13 +59,22 @@ service.interceptors.response.use(
         // 业务错误处理
         if (res.code === 401) {
           // 未授权，跳转登录页
-          MessageBox.confirm('登录状态已过期，请重新登录', '系统提示', {
-            confirmButtonText: '重新登录',
-            cancelButtonText: '取消',
-            type: 'warning'
-          }).then(() => {
-            router.push('/login')
-          })
+          if (!isRefreshing) {
+            isRefreshing = true
+            MessageBox.confirm('登录状态已过期，请重新登录', '系统提示', {
+              confirmButtonText: '重新登录',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(() => {
+              // 清除用户信息
+              userService.clearToken()
+              router.push('/login')
+            }).catch(() => {
+              // 用户取消
+            }).finally(() => {
+              isRefreshing = false
+            })
+          }
         } else {
           // 其他错误信息提示
           Message({
@@ -77,7 +100,15 @@ service.interceptors.response.use(
           break
         case 401:
           message = '未授权，请重新登录'
-          router.push('/login')
+          // 避免重复弹窗
+          if (!isRefreshing) {
+            isRefreshing = true
+            setTimeout(() => {
+              userService.clearToken()
+              router.push('/login')
+              isRefreshing = false
+            }, 1500)
+          }
           break
         case 403:
           message = '拒绝访问'
@@ -102,9 +133,9 @@ service.interceptors.response.use(
       }
     } else if (error.message) {
       if (error.message.includes('timeout')) {
-        message = '请求超时'
+        message = '请求超时，请检查网络连接'
       } else if (error.message.includes('Network Error')) {
-        message = '网络连接异常'
+        message = '网络连接异常，请检查网络'
       }
     }
     

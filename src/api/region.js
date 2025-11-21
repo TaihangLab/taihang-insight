@@ -58,8 +58,50 @@ export function updateRegion(data) {
 export function deleteRegion(id) {
   return request({
     url: '/api/region/delete',
-    method: 'post',
+    method: 'delete',
     params: { id }
+  })
+}
+
+/**
+ * 获取行政区域树形列表
+ * @param {Object} params - 查询参数
+ * @param {string} params.query - 查询关键字
+ * @param {string} params.parent - 父节点ID
+ * @param {boolean} params.hasChannel - 是否包含通道
+ */
+export function getRegionTreeList(params) {
+  return request({
+    url: '/api/region/tree/list',
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 添加设备到行政区域
+ * @param {Object} data - 数据
+ * @param {string} data.civilCode - 行政区划编码
+ * @param {Array} data.deviceIds - 设备ID数组
+ */
+export function addDeviceToRegion(data) {
+  return request({
+    url: '/api/common/channel/region/device/add',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 从行政区域移除设备
+ * @param {Object} data - 数据
+ * @param {Array} data.deviceIds - 设备ID数组
+ */
+export function removeDeviceFromRegion(data) {
+  return request({
+    url: '/api/common/channel/region/device/delete',
+    method: 'post',
+    data: data
   })
 }
 
