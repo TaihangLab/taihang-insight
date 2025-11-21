@@ -181,6 +181,9 @@
 </template>
 
 <script>
+// 导入日志API服务
+import { logAPI } from '../../service/VisionAIService.js';
+
 export default {
   name: 'LogRecords',
   
@@ -220,53 +223,88 @@ export default {
   
   methods: {
     // 获取日志数据
-    fetchLogs() {
+    async fetchLogs() {
       this.loading = true
       
-      // 模拟API调用获取日志数据
-      setTimeout(() => {
-        // 模拟完整数据
-        const allMockData = this.generateAllMockLogs()
-        
-        // 根据搜索条件筛选
-        let filteredData = [...allMockData]
-        
-        if (this.searchForm.logType) {
-          filteredData = filteredData.filter(item => item.type === this.searchForm.logType)
+      try {
+        // 构建API请求参数
+        const params = {
+          page: this.pagination.currentPage,
+          limit: this.pagination.pageSize,
+          logType: this.searchForm.logType || undefined,
+          logLevel: this.searchForm.logLevel || undefined,
+          keyword: this.searchForm.keyword || undefined
         }
         
-        if (this.searchForm.logLevel) {
-          filteredData = filteredData.filter(item => item.level === this.searchForm.logLevel)
-        }
-        
+        // 添加时间范围参数
         if (this.searchForm.timeRange && this.searchForm.timeRange.length === 2) {
-          filteredData = filteredData.filter(item => {
-            const itemDate = item.timestamp.split(' ')[0]
-            return itemDate >= this.searchForm.timeRange[0] && itemDate <= this.searchForm.timeRange[1]
-          })
+          params.startDate = this.searchForm.timeRange[0]
+          params.endDate = this.searchForm.timeRange[1]
         }
         
-        if (this.searchForm.keyword) {
-          const keyword = this.searchForm.keyword.toLowerCase()
-          filteredData = filteredData.filter(item => 
-            item.message.toLowerCase().includes(keyword) ||
-            item.module.toLowerCase().includes(keyword) ||
-            item.user.toLowerCase().includes(keyword)
-          )
+        // 调用封装的API
+        const response = await logAPI.getLogList(params)
+        
+        // 处理响应数据
+        if (response.data && response.data.code === 0) {
+          this.tableData = response.data.data || []
+          this.pagination.total = response.data.total || 0
+        } else {
+          // 如果API失败，使用模拟数据
+          console.warn('API返回失败，使用模拟数据')
+          this.useMockData()
         }
-        
-        // 设置总数
-        this.pagination.total = filteredData.length
-        
-        // 根据当前页码和每页数量过滤数据
-        const startIndex = (this.pagination.currentPage - 1) * this.pagination.pageSize
-        const endIndex = startIndex + this.pagination.pageSize
-        
-        // 截取当前页数据
-        this.tableData = filteredData.slice(startIndex, endIndex)
-        
+      } catch (error) {
+        console.error('获取日志数据失败:', error)
+        // 出错时使用模拟数据
+        console.warn('API调用失败，使用模拟数据')
+        this.useMockData()
+      } finally {
         this.loading = false
-      }, 500)
+      }
+    },
+    
+    // 使用模拟数据（作为备用方案）
+    useMockData() {
+      // 模拟完整数据
+      const allMockData = this.generateAllMockLogs()
+      
+      // 根据搜索条件筛选
+      let filteredData = [...allMockData]
+      
+      if (this.searchForm.logType) {
+        filteredData = filteredData.filter(item => item.type === this.searchForm.logType)
+      }
+      
+      if (this.searchForm.logLevel) {
+        filteredData = filteredData.filter(item => item.level === this.searchForm.logLevel)
+      }
+      
+      if (this.searchForm.timeRange && this.searchForm.timeRange.length === 2) {
+        filteredData = filteredData.filter(item => {
+          const itemDate = item.timestamp.split(' ')[0]
+          return itemDate >= this.searchForm.timeRange[0] && itemDate <= this.searchForm.timeRange[1]
+        })
+      }
+      
+      if (this.searchForm.keyword) {
+        const keyword = this.searchForm.keyword.toLowerCase()
+        filteredData = filteredData.filter(item => 
+          item.message.toLowerCase().includes(keyword) ||
+          item.module.toLowerCase().includes(keyword) ||
+          item.user.toLowerCase().includes(keyword)
+        )
+      }
+      
+      // 设置总数
+      this.pagination.total = filteredData.length
+      
+      // 根据当前页码和每页数量过滤数据
+      const startIndex = (this.pagination.currentPage - 1) * this.pagination.pageSize
+      const endIndex = startIndex + this.pagination.pageSize
+      
+      // 截取当前页数据
+      this.tableData = filteredData.slice(startIndex, endIndex)
     },
     
     // 生成模拟日志数据 - 当前页
@@ -421,9 +459,65 @@ export default {
     },
     
     // 导出日志
-    exportLogs() {
+    async exportLogs() {
       this.loading = true
       
+      try {
+        // 构建API请求参数
+        const params = {
+          format: 'csv',
+          logType: this.searchForm.logType || undefined,
+          logLevel: this.searchForm.logLevel || undefined,
+          keyword: this.searchForm.keyword || undefined
+        }
+        
+        // 添加时间范围参数
+        if (this.searchForm.timeRange && this.searchForm.timeRange.length === 2) {
+          params.startDate = this.searchForm.timeRange[0]
+          params.endDate = this.searchForm.timeRange[1]
+        }
+        
+        // 调用封装的API
+        const response = await logAPI.exportLogs(params)
+        
+        // 处理文件下载
+        const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' })
+        const link = document.createElement('a')
+        const url = URL.createObjectURL(blob)
+        
+        // 设置文件名，使用当前日期
+        const now = new Date()
+        const fileName = `系统日志_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}.csv`
+        
+        // 设置下载链接属性
+        link.setAttribute('href', url)
+        link.setAttribute('download', fileName)
+        link.style.visibility = 'hidden'
+        
+        // 添加到DOM并触发点击
+        document.body.appendChild(link)
+        link.click()
+        
+        // 清理
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        
+        this.$message({
+          message: '日志导出成功',
+          type: 'success'
+        })
+      } catch (error) {
+        console.error('导出日志失败:', error)
+        
+        // 如果API导出失败，使用本地数据导出
+        this.exportLogsLocally()
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    // 本地导出日志（备用方案）
+    exportLogsLocally() {
       // 获取筛选后的所有数据
       const allMockData = this.generateAllMockLogs()
       let dataToExport = [...allMockData]
@@ -486,7 +580,7 @@ export default {
       
       // 清理
       document.body.removeChild(link)
-      this.loading = false
+      URL.revokeObjectURL(url)
       
       this.$message({
         message: '日志导出成功',
@@ -500,21 +594,32 @@ export default {
     },
     
     // 确认清空日志
-    confirmClearLogs() {
+    async confirmClearLogs() {
       this.clearLogVisible = false
       this.loading = true
       
-      // 模拟API调用
-      setTimeout(() => {
-        this.tableData = []
-        this.pagination.total = 0
-        this.loading = false
+      try {
+        // 调用封装的API
+        const response = await logAPI.clearLogs()
         
-        this.$message({
-          message: '日志记录已成功清空',
-          type: 'success'
-        })
-      }, 800)
+        if (response.data && response.data.code === 0) {
+          // 清空成功，重新加载数据
+          this.tableData = []
+          this.pagination.total = 0
+          
+          this.$message({
+            message: '日志记录已成功清空',
+            type: 'success'
+          })
+        } else {
+          throw new Error(response.data?.msg || '清空失败')
+        }
+      } catch (error) {
+        console.error('清空日志失败:', error)
+        this.$message.error('清空日志失败: ' + (error.message || '未知错误'))
+      } finally {
+        this.loading = false
+      }
     },
     
     // 获取日志类型对应的标签类型

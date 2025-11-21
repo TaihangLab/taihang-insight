@@ -3576,6 +3576,230 @@ export const reviewRecordAPI = {
   }
 };
 
+// ===== 统计分析相关接口 =====
+export const statisticsAPI = {
+  /**
+   * 获取预警趋势统计
+   * @param {Object} params - 查询参数
+   * @param {string} params.timeRange - 时间范围 (today, week, month, custom)
+   * @param {string} [params.startDate] - 自定义开始日期
+   * @param {string} [params.endDate] - 自定义结束日期
+   * @returns {Promise} 包含趋势统计数据的Promise对象
+   */
+  getWarningTrend(params = {}) {
+    console.log('获取预警趋势统计 - 参数:', params);
+    return visionAIAxios.get('/api/v1/statistics/warning-trend', { params })
+      .then(response => {
+        console.log('获取预警趋势统计成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取预警趋势统计失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取预警状态分布统计
+   * @param {Object} params - 查询参数
+   * @returns {Promise} 包含状态分布数据的Promise对象
+   */
+  getWarningStatusDistribution(params = {}) {
+    console.log('获取预警状态分布统计 - 参数:', params);
+    return visionAIAxios.get('/api/v1/statistics/warning-status', { params })
+      .then(response => {
+        console.log('获取预警状态分布统计成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取预警状态分布统计失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取预警等级分布统计
+   * @param {Object} params - 查询参数
+   * @returns {Promise} 包含等级分布数据的Promise对象
+   */
+  getWarningLevelDistribution(params = {}) {
+    console.log('获取预警等级分布统计 - 参数:', params);
+    return visionAIAxios.get('/api/v1/statistics/warning-level', { params })
+      .then(response => {
+        console.log('获取预警等级分布统计成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取预警等级分布统计失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取TOP预警类型统计
+   * @param {Object} params - 查询参数
+   * @param {number} [params.limit=10] - 返回条数限制
+   * @returns {Promise} 包含TOP预警类型数据的Promise对象
+   */
+  getTopWarningTypes(params = {}) {
+    console.log('获取TOP预警类型统计 - 参数:', params);
+    return visionAIAxios.get('/api/v1/statistics/top-warning-types', { params })
+      .then(response => {
+        console.log('获取TOP预警类型统计成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取TOP预警类型统计失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取设备预警数量TOP统计
+   * @param {Object} params - 查询参数
+   * @param {number} [params.limit=10] - 返回条数限制
+   * @param {string} [params.timeRange] - 时间范围
+   * @returns {Promise} 包含设备预警TOP数据的Promise对象
+   */
+  getTopDeviceWarnings(params = {}) {
+    console.log('获取设备预警数量TOP统计 - 参数:', params);
+    return visionAIAxios.get('/api/v1/statistics/top-device-warnings', { params })
+      .then(response => {
+        console.log('获取设备预警数量TOP统计成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取设备预警数量TOP统计失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取综合统计数据
+   * @param {Object} params - 查询参数
+   * @returns {Promise} 包含综合统计数据的Promise对象
+   */
+  getOverallStatistics(params = {}) {
+    console.log('获取综合统计数据 - 参数:', params);
+    return visionAIAxios.get('/api/v1/statistics/overall', { params })
+      .then(response => {
+        console.log('获取综合统计数据成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取综合统计数据失败:', error);
+        throw error;
+      });
+  }
+};
+
+// ===== 系统日志相关接口 =====
+export const logAPI = {
+  /**
+   * 获取日志列表
+   * @param {Object} params - 查询参数
+   * @param {number} [params.page=1] - 页码
+   * @param {number} [params.limit=10] - 每页数量
+   * @param {string} [params.logType] - 日志类型 (操作、系统、错误、告警)
+   * @param {string} [params.logLevel] - 日志级别 (信息、警告、错误、严重)
+   * @param {string} [params.startDate] - 开始日期
+   * @param {string} [params.endDate] - 结束日期
+   * @param {string} [params.keyword] - 搜索关键词
+   * @returns {Promise} 包含日志列表的Promise对象
+   */
+  getLogList(params = {}) {
+    console.log('获取日志列表 - 参数:', params);
+    return visionAIAxios.get('/api/v1/logs/list', { params })
+      .then(response => {
+        console.log('获取日志列表成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取日志列表失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取日志详情
+   * @param {number} logId - 日志ID
+   * @returns {Promise} 包含日志详情的Promise对象
+   */
+  getLogDetail(logId) {
+    console.log('获取日志详情 - ID:', logId);
+    return visionAIAxios.get(`/api/v1/logs/${logId}`)
+      .then(response => {
+        console.log('获取日志详情成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('获取日志详情失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 导出日志
+   * @param {Object} params - 查询参数
+   * @param {string} [params.format='csv'] - 导出格式 (csv, excel)
+   * @returns {Promise} 包含导出文件的Promise对象
+   */
+  exportLogs(params = {}) {
+    console.log('导出日志 - 参数:', params);
+    return visionAIAxios.get('/api/v1/logs/export', { 
+      params,
+      responseType: 'blob'
+    })
+      .then(response => {
+        console.log('导出日志成功');
+        return response;
+      })
+      .catch(error => {
+        console.error('导出日志失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 清空日志
+   * @param {Object} params - 查询参数
+   * @param {string} [params.type] - 要清空的日志类型，不传则清空所有
+   * @returns {Promise} 包含清空结果的Promise对象
+   */
+  clearLogs(params = {}) {
+    console.log('清空日志 - 参数:', params);
+    return visionAIAxios.delete('/api/v1/logs/clear', { params })
+      .then(response => {
+        console.log('清空日志成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('清空日志失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 批量删除日志
+   * @param {Array<number>} logIds - 日志ID数组
+   * @returns {Promise} 包含删除结果的Promise对象
+   */
+  batchDeleteLogs(logIds) {
+    console.log('批量删除日志 - IDs:', logIds);
+    return visionAIAxios.delete('/api/v1/logs/batch', { 
+      data: { ids: logIds }
+    })
+      .then(response => {
+        console.log('批量删除日志成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('批量删除日志失败:', error);
+        throw error;
+      });
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
@@ -3586,5 +3810,7 @@ export default {
   archiveAPI,
   reviewRecordAPI,
   taskReviewAPI,
+  statisticsAPI,
+  logAPI,
   visionAIAxios
 };

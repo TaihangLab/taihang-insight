@@ -1,5 +1,6 @@
 <script>
 import * as echarts from "echarts";
+import { statisticsAPI, alertAPI } from '../../service/VisionAIService.js';
 
 export default {
   name: "StatisticsAnalysis",
