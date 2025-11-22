@@ -4,15 +4,17 @@
 
 const path = require('path')
 
-// 导入API配置
-const { API_BASE_URL, PROXY_CONFIG } = require('../src/config/api.js')
+// 后端API基础地址配置
+const API_BASE_URL = 'http://127.0.0.1:8000'
 
 module.exports = {
+  // 导出API配置供前端使用
+  API_BASE_URL: API_BASE_URL,
   dev: {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: PROXY_CONFIG,
+    proxyTable: {},  // 不再使用代理，前端直接通过 baseURL 访问
 
     // Various Dev Server settings
     host:"localhost",
