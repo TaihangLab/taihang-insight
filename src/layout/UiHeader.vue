@@ -134,9 +134,7 @@ export default {
       }
     },
     logout() {
-      // 清除所有用户信息和登录状态
-      userService.clearUserInfo();
-      userService.clearLoginStatus();
+      userService.clearToken();
 
       this.$message({
         showClose: true,
@@ -144,13 +142,8 @@ export default {
         type: 'success'
       });
 
-      // 更新登录状态
-      this.isLoggedIn = false;
-      this.username = '访客';
-
-      // 刷新页面以重置所有组件状态
       setTimeout(() => {
-        window.location.reload();
+        this.$router.push('/login');
       }, 500);
     }
   }

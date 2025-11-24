@@ -246,7 +246,6 @@ export default {
       }
     },
 
-    //登录逻辑 - 模拟登录并保持登录状态
     login(){
       if(this.selectedTenant === '') {
         this.$message({
@@ -259,9 +258,10 @@ export default {
       if(this.username!='' && this.password!=''){
         this.isLoging = true;
         
-        // 模拟登录延迟
         setTimeout(() => {
-          // 保存用户信息和登录状态
+          const timestamp = Date.now();
+          const token = `mock-token-${this.username}-${this.selectedTenant}-${timestamp}`;
+          
           const userInfo = {
             username: this.username,
             tenantNumber: this.selectedTenant,
@@ -269,7 +269,9 @@ export default {
           };
           
           userService.setUser(userInfo);
-          userService.setToken('mock-login-token');
+          userService.setToken(token);
+          
+          console.log('登录成功，Token已保存:', token);
           
           this.$message({
             showClose: true,

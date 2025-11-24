@@ -1,5 +1,6 @@
 import axios from 'axios';
 import apiConfig from '../../config/api.js';
+import userService from '@/components/service/UserService'
 
 // 创建专用于visionAI模块的axios实例
 const visionAIAxios = axios.create({
@@ -34,12 +35,10 @@ visionAIAxios.interceptors.request.use(
   config => {
     // 这里可以添加token等通用请求头
     const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers['access-token'] = token;
-    // }
-
-    // 模拟接收token
-    config.headers['access-token'] = 'Bearer token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111token111';
+    if (token) {
+      config.headers['access-token'] = token;
+    }
+   
     return config;
   },
   error => {

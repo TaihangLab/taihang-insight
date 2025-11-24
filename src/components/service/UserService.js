@@ -1,38 +1,27 @@
-
 export default {
 
-  /**
-   * 存储用户信息 - 保留用于页面显示
-   */
   setUser(user){
     localStorage.setItem("wvp-user", JSON.stringify(user));
   },
 
-  /**
-   * 获取用户信息 - 保留用于页面显示
-   */
   getUser(){
     return JSON.parse(localStorage.getItem("wvp-user")) || {};
   },
 
-  /**
-   * 清理用户信息
-   */
   clearUserInfo(){
     localStorage.removeItem("wvp-user");
   },
 
-  // 登录状态管理 - 用于前端页面刷新状态保持
   getToken(){
-    return localStorage.getItem("wvp-login-status");
+    return localStorage.getItem("wvp-token");
   },
 
   setToken(token) {
-    localStorage.setItem("wvp-login-status", token || "logged-in");
+    localStorage.setItem("wvp-token", token);
   },
 
-  // 清理登录状态
-  clearLoginStatus(){
-    localStorage.removeItem("wvp-login-status");
+  clearToken(){
+    localStorage.removeItem("wvp-token");
+    localStorage.removeItem("wvp-user");
   }
 }

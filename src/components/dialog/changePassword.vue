@@ -103,8 +103,7 @@ export default {
           });
           this.showDialog = false;
           setTimeout(()=>{
-            // 删除cookie，回到登录页面
-            userService.clearUserInfo();
+            userService.clearToken();
             this.$router.push('/login');
             this.sseSource.close();
           },800)
