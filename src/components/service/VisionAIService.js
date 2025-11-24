@@ -1,10 +1,9 @@
 import axios from 'axios';
-import apiConfig from '../../config/api.js';
-import userService from '@/components/service/UserService'
+const config = require('../../../config/index.js');
 
 // 创建专用于visionAI模块的axios实例
 const visionAIAxios = axios.create({
-  baseURL: apiConfig.API_BASE_URL,
+  baseURL: config.API_BASE_URL,
   timeout: 15000,
   withCredentials: false,  // 将withCredentials设置为false，避免CORS错误
 });
@@ -38,7 +37,6 @@ visionAIAxios.interceptors.request.use(
     if (token) {
       config.headers['access-token'] = token;
     }
-   
     return config;
   },
   error => {
@@ -3089,19 +3087,19 @@ export const archiveAPI = {
   },
 
   /**
-   * 获取档案统计信息
+   * 获取档案总体统计信息（所有档案）
    * @returns {Promise} 包含统计信息的Promise对象
    */
-  getArchiveStatistics() {
-    console.log('获取档案统计信息');
+  getAllArchivesStatistics() {
+    console.log('获取档案总体统计信息');
 
     return visionAIAxios.get('/api/v1/alert-archives/statistics')
       .then(response => {
-        console.log('获取档案统计信息成功:', response.data);
+        console.log('获取档案总体统计信息成功:', response.data);
         return response;
       })
       .catch(error => {
-        console.error('获取档案统计信息失败:', error);
+        console.error('获取档案总体统计信息失败:', error);
         throw error;
       });
   },
@@ -3578,1002 +3576,193 @@ export const reviewRecordAPI = {
   }
 };
 
-// ===== 统计分析相关接口 =====
-export const statisticsAPI = {
-  /**
-   * 获取预警趋势统计
-   * @param {Object} params - 查询参数
-   * @param {string} params.timeRange - 时间范围 (today, week, month, custom)
-   * @param {string} [params.startDate] - 自定义开始日期
-   * @param {string} [params.endDate] - 自定义结束日期
-   * @returns {Promise} 包含趋势统计数据的Promise对象
-   */
-  getWarningTrend(params = {}) {
-    console.log('获取预警趋势统计 - 参数:', params);
-    return visionAIAxios.get('/api/v1/statistics/warning-trend', { params })
-      .then(response => {
-        console.log('获取预警趋势统计成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取预警趋势统计失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取预警状态分布统计
-   * @param {Object} params - 查询参数
-   * @returns {Promise} 包含状态分布数据的Promise对象
-   */
-  getWarningStatusDistribution(params = {}) {
-    console.log('获取预警状态分布统计 - 参数:', params);
-    return visionAIAxios.get('/api/v1/statistics/warning-status', { params })
-      .then(response => {
-        console.log('获取预警状态分布统计成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取预警状态分布统计失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取预警等级分布统计
-   * @param {Object} params - 查询参数
-   * @returns {Promise} 包含等级分布数据的Promise对象
-   */
-  getWarningLevelDistribution(params = {}) {
-    console.log('获取预警等级分布统计 - 参数:', params);
-    return visionAIAxios.get('/api/v1/statistics/warning-level', { params })
-      .then(response => {
-        console.log('获取预警等级分布统计成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取预警等级分布统计失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取TOP预警类型统计
-   * @param {Object} params - 查询参数
-   * @param {number} [params.limit=10] - 返回条数限制
-   * @returns {Promise} 包含TOP预警类型数据的Promise对象
-   */
-  getTopWarningTypes(params = {}) {
-    console.log('获取TOP预警类型统计 - 参数:', params);
-    return visionAIAxios.get('/api/v1/statistics/top-warning-types', { params })
-      .then(response => {
-        console.log('获取TOP预警类型统计成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取TOP预警类型统计失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取设备预警数量TOP统计
-   * @param {Object} params - 查询参数
-   * @param {number} [params.limit=10] - 返回条数限制
-   * @param {string} [params.timeRange] - 时间范围
-   * @returns {Promise} 包含设备预警TOP数据的Promise对象
-   */
-  getTopDeviceWarnings(params = {}) {
-    console.log('获取设备预警数量TOP统计 - 参数:', params);
-    return visionAIAxios.get('/api/v1/statistics/top-device-warnings', { params })
-      .then(response => {
-        console.log('获取设备预警数量TOP统计成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取设备预警数量TOP统计失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取综合统计数据
-   * @param {Object} params - 查询参数
-   * @returns {Promise} 包含综合统计数据的Promise对象
-   */
-  getOverallStatistics(params = {}) {
-    console.log('获取综合统计数据 - 参数:', params);
-    return visionAIAxios.get('/api/v1/statistics/overall', { params })
-      .then(response => {
-        console.log('获取综合统计数据成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取综合统计数据失败:', error);
-        throw error;
-      });
-  }
-};
-
-// ===== 系统日志相关接口 =====
-export const logAPI = {
-  /**
-   * 获取日志列表
-   * @param {Object} params - 查询参数
-   * @param {number} [params.page=1] - 页码
-   * @param {number} [params.limit=10] - 每页数量
-   * @param {string} [params.logType] - 日志类型 (操作、系统、错误、告警)
-   * @param {string} [params.logLevel] - 日志级别 (信息、警告、错误、严重)
-   * @param {string} [params.startDate] - 开始日期
-   * @param {string} [params.endDate] - 结束日期
-   * @param {string} [params.keyword] - 搜索关键词
-   * @returns {Promise} 包含日志列表的Promise对象
-   */
-  getLogList(params = {}) {
-    console.log('获取日志列表 - 参数:', params);
-    return visionAIAxios.get('/api/v1/logs/list', { params })
-      .then(response => {
-        console.log('获取日志列表成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取日志列表失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取日志详情
-   * @param {number} logId - 日志ID
-   * @returns {Promise} 包含日志详情的Promise对象
-   */
-  getLogDetail(logId) {
-    console.log('获取日志详情 - ID:', logId);
-    return visionAIAxios.get(`/api/v1/logs/${logId}`)
-      .then(response => {
-        console.log('获取日志详情成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取日志详情失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 导出日志
-   * @param {Object} params - 查询参数
-   * @param {string} [params.format='csv'] - 导出格式 (csv, excel)
-   * @returns {Promise} 包含导出文件的Promise对象
-   */
-  exportLogs(params = {}) {
-    console.log('导出日志 - 参数:', params);
-    return visionAIAxios.get('/api/v1/logs/export', { 
-      params,
-      responseType: 'blob'
-    })
-      .then(response => {
-        console.log('导出日志成功');
-        return response;
-      })
-      .catch(error => {
-        console.error('导出日志失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 清空日志
-   * @param {Object} params - 查询参数
-   * @param {string} [params.type] - 要清空的日志类型，不传则清空所有
-   * @returns {Promise} 包含清空结果的Promise对象
-   */
-  clearLogs(params = {}) {
-    console.log('清空日志 - 参数:', params);
-    return visionAIAxios.delete('/api/v1/logs/clear', { params })
-      .then(response => {
-        console.log('清空日志成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('清空日志失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 批量删除日志
-   * @param {Array<number>} logIds - 日志ID数组
-   * @returns {Promise} 包含删除结果的Promise对象
-   */
-  batchDeleteLogs(logIds) {
-    console.log('批量删除日志 - IDs:', logIds);
-    return visionAIAxios.delete('/api/v1/logs/batch', { 
-      data: { ids: logIds }
-    })
-      .then(response => {
-        console.log('批量删除日志成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('批量删除日志失败:', error);
-        throw error;
-      });
-  }
-};
-
-// ==================== 系统管理API ====================
 /**
- * 用户管理API
+ * 实时监控相关API
+ * 提供实时监控页面的通道管理和视频播放功能
  */
-export const userManagementAPI = {
+export const realtimeMonitorAPI = {
   /**
-   * 获取用户列表
+   * 获取实时监控通道列表
    * @param {Object} params - 查询参数
-   * @param {number} [params.page=1] - 页码
-   * @param {number} [params.limit=10] - 每页数量
-   * @param {string} [params.userName] - 用户名
-   * @param {string} [params.userNickname] - 用户昵称
-   * @param {string} [params.phoneNumber] - 手机号码
-   * @param {string} [params.status] - 状态
-   * @param {number} [params.departmentId] - 部门ID
-   * @returns {Promise} 包含用户列表的Promise对象
+   * @param {number} params.page - 当前页，默认1
+   * @param {number} params.count - 每页数量，默认100
+   * @param {string} params.query - 查询关键词
+   * @param {boolean} params.online - 是否在线
+   * @param {boolean} params.has_record_plan - 是否有录制计划
+   * @param {number} params.channel_type - 通道类型：1=国标设备, 2=推流, 3=代理
+   * @param {string} params.civil_code - 行政区划
+   * @param {string} params.parent_device_id - 父节点编码
+   * @returns {Promise} 通道列表数据
    */
-  getUserList(params = {}) {
-    console.log('获取用户列表 - 参数:', params);
-    return visionAIAxios.get('/api/v1/users/list', { params })
+  getChannelList(params = {}) {
+    console.log('📤 获取实时监控通道列表 - 参数:', params);
+    
+    return visionAIAxios.get('/api/v1/realtime-monitor/channels', { params })
       .then(response => {
-        console.log('获取用户列表成功:', response.data);
+        console.log('📥 获取实时监控通道列表成功:', response.data);
         return response;
       })
       .catch(error => {
-        console.error('获取用户列表失败:', error);
+        console.error('❌ 获取实时监控通道列表失败:', error);
         throw error;
       });
   },
 
   /**
-   * 获取用户详情
-   * @param {number} userId - 用户ID
-   * @returns {Promise} 包含用户详情的Promise对象
+   * 获取通道详情
+   * @param {number} channelId - 通道ID
+   * @returns {Promise} 通道详情数据
    */
-  getUserDetail(userId) {
-    console.log('获取用户详情 - ID:', userId);
-    return visionAIAxios.get(`/api/v1/users/${userId}`)
+  getChannelDetail(channelId) {
+    console.log('📤 获取通道详情 - 通道ID:', channelId);
+    
+    return visionAIAxios.get(`/api/v1/realtime-monitor/channels/${channelId}`)
       .then(response => {
-        console.log('获取用户详情成功:', response.data);
+        console.log('📥 获取通道详情成功:', response.data);
         return response;
       })
       .catch(error => {
-        console.error('获取用户详情失败:', error);
+        console.error('❌ 获取通道详情失败:', error);
         throw error;
       });
   },
 
   /**
-   * 创建用户
-   * @param {Object} data - 用户数据
-   * @returns {Promise} 包含创建结果的Promise对象
+   * 播放通道视频
+   * @param {number} channelId - 通道ID
+   * @returns {Promise} 播放流地址信息
    */
-  createUser(data) {
-    console.log('创建用户 - 数据:', data);
-    return visionAIAxios.post('/api/v1/users', data)
+  playChannel(channelId) {
+    console.log('📤 播放通道 - 通道ID:', channelId);
+    
+    return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`)
       .then(response => {
-        console.log('创建用户成功:', response.data);
+        console.log('📥 播放通道成功:', response.data);
         return response;
       })
       .catch(error => {
-        console.error('创建用户失败:', error);
+        console.error('❌ 播放通道失败:', error);
         throw error;
       });
   },
 
   /**
-   * 更新用户
-   * @param {number} userId - 用户ID
-   * @param {Object} data - 用户数据
-   * @returns {Promise} 包含更新结果的Promise对象
+   * 停止播放通道视频
+   * @param {number} channelId - 通道ID
+   * @returns {Promise} 停止播放结果
    */
-  updateUser(userId, data) {
-    console.log('更新用户 - ID:', userId, '数据:', data);
-    return visionAIAxios.put(`/api/v1/users/${userId}`, data)
+  stopChannel(channelId) {
+    console.log('📤 停止播放通道 - 通道ID:', channelId);
+    
+    return visionAIAxios.get(`/api/v1/realtime-monitor/stop/${channelId}`)
       .then(response => {
-        console.log('更新用户成功:', response.data);
+        console.log('📥 停止播放成功:', response.data);
         return response;
       })
       .catch(error => {
-        console.error('更新用户失败:', error);
+        console.error('❌ 停止播放失败:', error);
         throw error;
       });
   },
 
   /**
-   * 删除用户
-   * @param {number} userId - 用户ID
-   * @returns {Promise} 包含删除结果的Promise对象
-   */
-  deleteUser(userId) {
-    console.log('删除用户 - ID:', userId);
-    return visionAIAxios.delete(`/api/v1/users/${userId}`)
-      .then(response => {
-        console.log('删除用户成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('删除用户失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 批量删除用户
-   * @param {Array<number>} userIds - 用户ID数组
-   * @returns {Promise} 包含删除结果的Promise对象
-   */
-  batchDeleteUsers(userIds) {
-    console.log('批量删除用户 - IDs:', userIds);
-    return visionAIAxios.delete('/api/v1/users/batch', { 
-      data: { ids: userIds }
-    })
-      .then(response => {
-        console.log('批量删除用户成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('批量删除用户失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 重置用户密码
-   * @param {number} userId - 用户ID
-   * @param {string} newPassword - 新密码
-   * @returns {Promise} 包含重置结果的Promise对象
-   */
-  resetPassword(userId, newPassword) {
-    console.log('重置用户密码 - ID:', userId);
-    return visionAIAxios.post(`/api/v1/users/${userId}/reset-password`, { password: newPassword })
-      .then(response => {
-        console.log('重置密码成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('重置密码失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 导出用户数据
+   * 获取通道树结构
    * @param {Object} params - 查询参数
-   * @returns {Promise} 包含导出文件的Promise对象
+   * @param {boolean} params.online - 是否在线
+   * @param {number} params.channel_type - 通道类型
+   * @returns {Promise} 通道树数据
    */
-  exportUsers(params = {}) {
-    console.log('导出用户数据 - 参数:', params);
-    return visionAIAxios.get('/api/v1/users/export', { 
-      params,
-      responseType: 'blob'
-    })
+  getChannelTree(params = {}) {
+    console.log('📤 获取通道树 - 参数:', params);
+    
+    return visionAIAxios.get('/api/v1/realtime-monitor/channels/tree', { params })
       .then(response => {
-        console.log('导出用户数据成功');
+        console.log('📥 获取通道树成功:', response.data);
         return response;
       })
       .catch(error => {
-        console.error('导出用户数据失败:', error);
+        console.error('❌ 获取通道树失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取行政区划树
+   * @param {Object} params - 查询参数
+   * @param {number} params.parent - 父节点ID (Integer类型)
+   * @param {boolean} params.hasChannel - 是否包含通道
+   * @returns {Promise} 行政区划树数据
+   * 
+   * 注意：RegionController没有query参数（与GroupController不同）
+   */
+  getRegionTree(params = {}) {
+    console.log('📤 获取行政区划树 - 参数:', params);
+    
+    return visionAIAxios.get('/api/v1/realtime-monitor/region/tree', { params })
+      .then(response => {
+        console.log('📥 获取行政区划树成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('❌ 获取行政区划树失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 获取业务分组树
+   * @param {Object} params - 查询参数
+   * @param {string} params.query - 搜索关键词 (可选)
+   * @param {number} params.parent - 父节点ID (Integer类型, 可选)
+   * @param {boolean} params.hasChannel - 是否包含通道
+   * @returns {Promise} 业务分组树数据
+   * 
+   * 注意：GroupController有query参数（与RegionController不同）
+   */
+  getGroupTree(params = {}) {
+    console.log('📤 获取业务分组树 - 参数:', params);
+    
+    return visionAIAxios.get('/api/v1/realtime-monitor/group/tree', { params })
+      .then(response => {
+        console.log('📥 获取业务分组树成功:', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('❌ 获取业务分组树失败:', error);
         throw error;
       });
   }
 };
 
 /**
- * 租户管理API
+ * 实时检测API - OSD检测框叠加
  */
-export const tenantManagementAPI = {
+export const realtimeDetectionAPI = {
   /**
-   * 获取租户列表
-   * @param {Object} params - 查询参数
-   * @param {number} [params.page=1] - 页码
-   * @param {number} [params.limit=10] - 每页数量
-   * @param {string} [params.companyName] - 企业名称
-   * @param {string} [params.tenantNumber] - 租户编号
-   * @param {string} [params.status] - 状态
-   * @returns {Promise} 包含租户列表的Promise对象
+   * 获取指定摄像头的运行中AI任务列表
+   * @param {number} cameraId - 摄像头ID
+   * @returns {Promise} AI任务列表
    */
-  getTenantList(params = {}) {
-    console.log('获取租户列表 - 参数:', params);
-    return visionAIAxios.get('/api/v1/tenants/list', { params })
-      .then(response => {
-        console.log('获取租户列表成功:', response.data);
-        return response;
-      })
+  getTasksByCamera(cameraId) {
+    return visionAIAxios.get(`/api/v1/realtime-detection/detection/tasks/by_camera/${cameraId}`)
       .catch(error => {
-        console.error('获取租户列表失败:', error);
+        console.error('❌ 获取AI任务列表失败:', error);
         throw error;
       });
   },
 
   /**
-   * 获取租户详情
-   * @param {number} tenantId - 租户ID
-   * @returns {Promise} 包含租户详情的Promise对象
+   * 获取指定任务的当前检测结果（HTTP轮询方式）
+   * @param {number} taskId - 任务ID
+   * @returns {Promise} 检测结果数据
    */
-  getTenantDetail(tenantId) {
-    console.log('获取租户详情 - ID:', tenantId);
-    return visionAIAxios.get(`/api/v1/tenants/${tenantId}`)
+  getDetectionResult(taskId) {
+    return visionAIAxios.get(`/api/v1/realtime-detection/detection/result/${taskId}`)
       .then(response => {
-        console.log('获取租户详情成功:', response.data);
         return response;
       })
       .catch(error => {
-        console.error('获取租户详情失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 创建租户
-   * @param {Object} data - 租户数据
-   * @returns {Promise} 包含创建结果的Promise对象
-   */
-  createTenant(data) {
-    console.log('创建租户 - 数据:', data);
-    return visionAIAxios.post('/api/v1/tenants', data)
-      .then(response => {
-        console.log('创建租户成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('创建租户失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 更新租户
-   * @param {number} tenantId - 租户ID
-   * @param {Object} data - 租户数据
-   * @returns {Promise} 包含更新结果的Promise对象
-   */
-  updateTenant(tenantId, data) {
-    console.log('更新租户 - ID:', tenantId, '数据:', data);
-    return visionAIAxios.put(`/api/v1/tenants/${tenantId}`, data)
-      .then(response => {
-        console.log('更新租户成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('更新租户失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 删除租户
-   * @param {number} tenantId - 租户ID
-   * @returns {Promise} 包含删除结果的Promise对象
-   */
-  deleteTenant(tenantId) {
-    console.log('删除租户 - ID:', tenantId);
-    return visionAIAxios.delete(`/api/v1/tenants/${tenantId}`)
-      .then(response => {
-        console.log('删除租户成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('删除租户失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 重置租户管理员密码
-   * @param {number} tenantId - 租户ID
-   * @param {string} newPassword - 新密码
-   * @returns {Promise} 包含重置结果的Promise对象
-   */
-  resetTenantPassword(tenantId, newPassword) {
-    console.log('重置租户管理员密码 - ID:', tenantId);
-    return visionAIAxios.post(`/api/v1/tenants/${tenantId}/reset-password`, { password: newPassword })
-      .then(response => {
-        console.log('重置租户密码成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('重置租户密码失败:', error);
-        throw error;
-      });
-  }
-};
-
-/**
- * 角色管理API
- */
-export const roleManagementAPI = {
-  /**
-   * 获取角色列表
-   * @param {Object} params - 查询参数
-   * @param {number} [params.page=1] - 页码
-   * @param {number} [params.limit=10] - 每页数量
-   * @param {string} [params.roleName] - 角色名称
-   * @param {string} [params.status] - 状态
-   * @returns {Promise} 包含角色列表的Promise对象
-   */
-  getRoleList(params = {}) {
-    console.log('获取角色列表 - 参数:', params);
-    return visionAIAxios.get('/api/v1/roles/list', { params })
-      .then(response => {
-        console.log('获取角色列表成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取角色列表失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取角色详情
-   * @param {number} roleId - 角色ID
-   * @returns {Promise} 包含角色详情的Promise对象
-   */
-  getRoleDetail(roleId) {
-    console.log('获取角色详情 - ID:', roleId);
-    return visionAIAxios.get(`/api/v1/roles/${roleId}`)
-      .then(response => {
-        console.log('获取角色详情成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取角色详情失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 创建角色
-   * @param {Object} data - 角色数据
-   * @returns {Promise} 包含创建结果的Promise对象
-   */
-  createRole(data) {
-    console.log('创建角色 - 数据:', data);
-    return visionAIAxios.post('/api/v1/roles', data)
-      .then(response => {
-        console.log('创建角色成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('创建角色失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 更新角色
-   * @param {number} roleId - 角色ID
-   * @param {Object} data - 角色数据
-   * @returns {Promise} 包含更新结果的Promise对象
-   */
-  updateRole(roleId, data) {
-    console.log('更新角色 - ID:', roleId, '数据:', data);
-    return visionAIAxios.put(`/api/v1/roles/${roleId}`, data)
-      .then(response => {
-        console.log('更新角色成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('更新角色失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 删除角色
-   * @param {number} roleId - 角色ID
-   * @returns {Promise} 包含删除结果的Promise对象
-   */
-  deleteRole(roleId) {
-    console.log('删除角色 - ID:', roleId);
-    return visionAIAxios.delete(`/api/v1/roles/${roleId}`)
-      .then(response => {
-        console.log('删除角色成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('删除角色失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 分配角色权限
-   * @param {number} roleId - 角色ID
-   * @param {Array<number>} permissionIds - 权限ID数组
-   * @returns {Promise} 包含分配结果的Promise对象
-   */
-  assignPermissions(roleId, permissionIds) {
-    console.log('分配角色权限 - 角色ID:', roleId, '权限IDs:', permissionIds);
-    return visionAIAxios.post(`/api/v1/roles/${roleId}/permissions`, { permissionIds })
-      .then(response => {
-        console.log('分配角色权限成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('分配角色权限失败:', error);
-        throw error;
-      });
-  }
-};
-
-/**
- * 部门管理API
- */
-export const departmentManagementAPI = {
-  /**
-   * 获取部门列表（树形结构）
-   * @param {Object} params - 查询参数
-   * @returns {Promise} 包含部门树的Promise对象
-   */
-  getDepartmentTree(params = {}) {
-    console.log('获取部门树 - 参数:', params);
-    return visionAIAxios.get('/api/v1/departments/tree', { params })
-      .then(response => {
-        console.log('获取部门树成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取部门树失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取部门列表（平铺）
-   * @param {Object} params - 查询参数
-   * @returns {Promise} 包含部门列表的Promise对象
-   */
-  getDepartmentList(params = {}) {
-    console.log('获取部门列表 - 参数:', params);
-    return visionAIAxios.get('/api/v1/departments/list', { params })
-      .then(response => {
-        console.log('获取部门列表成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取部门列表失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取部门详情
-   * @param {number} departmentId - 部门ID
-   * @returns {Promise} 包含部门详情的Promise对象
-   */
-  getDepartmentDetail(departmentId) {
-    console.log('获取部门详情 - ID:', departmentId);
-    return visionAIAxios.get(`/api/v1/departments/${departmentId}`)
-      .then(response => {
-        console.log('获取部门详情成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取部门详情失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 创建部门
-   * @param {Object} data - 部门数据
-   * @returns {Promise} 包含创建结果的Promise对象
-   */
-  createDepartment(data) {
-    console.log('创建部门 - 数据:', data);
-    return visionAIAxios.post('/api/v1/departments', data)
-      .then(response => {
-        console.log('创建部门成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('创建部门失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 更新部门
-   * @param {number} departmentId - 部门ID
-   * @param {Object} data - 部门数据
-   * @returns {Promise} 包含更新结果的Promise对象
-   */
-  updateDepartment(departmentId, data) {
-    console.log('更新部门 - ID:', departmentId, '数据:', data);
-    return visionAIAxios.put(`/api/v1/departments/${departmentId}`, data)
-      .then(response => {
-        console.log('更新部门成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('更新部门失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 删除部门
-   * @param {number} departmentId - 部门ID
-   * @returns {Promise} 包含删除结果的Promise对象
-   */
-  deleteDepartment(departmentId) {
-    console.log('删除部门 - ID:', departmentId);
-    return visionAIAxios.delete(`/api/v1/departments/${departmentId}`)
-      .then(response => {
-        console.log('删除部门成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('删除部门失败:', error);
-        throw error;
-      });
-  }
-};
-
-/**
- * 岗位管理API
- */
-export const positionManagementAPI = {
-  /**
-   * 获取岗位列表
-   * @param {Object} params - 查询参数
-   * @param {number} [params.page=1] - 页码
-   * @param {number} [params.limit=10] - 每页数量
-   * @param {string} [params.positionName] - 岗位名称
-   * @param {string} [params.status] - 状态
-   * @returns {Promise} 包含岗位列表的Promise对象
-   */
-  getPositionList(params = {}) {
-    console.log('获取岗位列表 - 参数:', params);
-    return visionAIAxios.get('/api/v1/positions/list', { params })
-      .then(response => {
-        console.log('获取岗位列表成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取岗位列表失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取岗位详情
-   * @param {number} positionId - 岗位ID
-   * @returns {Promise} 包含岗位详情的Promise对象
-   */
-  getPositionDetail(positionId) {
-    console.log('获取岗位详情 - ID:', positionId);
-    return visionAIAxios.get(`/api/v1/positions/${positionId}`)
-      .then(response => {
-        console.log('获取岗位详情成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取岗位详情失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 创建岗位
-   * @param {Object} data - 岗位数据
-   * @returns {Promise} 包含创建结果的Promise对象
-   */
-  createPosition(data) {
-    console.log('创建岗位 - 数据:', data);
-    return visionAIAxios.post('/api/v1/positions', data)
-      .then(response => {
-        console.log('创建岗位成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('创建岗位失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 更新岗位
-   * @param {number} positionId - 岗位ID
-   * @param {Object} data - 岗位数据
-   * @returns {Promise} 包含更新结果的Promise对象
-   */
-  updatePosition(positionId, data) {
-    console.log('更新岗位 - ID:', positionId, '数据:', data);
-    return visionAIAxios.put(`/api/v1/positions/${positionId}`, data)
-      .then(response => {
-        console.log('更新岗位成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('更新岗位失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 删除岗位
-   * @param {number} positionId - 岗位ID
-   * @returns {Promise} 包含删除结果的Promise对象
-   */
-  deletePosition(positionId) {
-    console.log('删除岗位 - ID:', positionId);
-    return visionAIAxios.delete(`/api/v1/positions/${positionId}`)
-      .then(response => {
-        console.log('删除岗位成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('删除岗位失败:', error);
-        throw error;
-      });
-  }
-};
-
-/**
- * 知识库管理API
- */
-export const knowledgeBaseAPI = {
-  /**
-   * 获取知识库列表
-   * @param {Object} params - 查询参数
-   * @param {number} [params.page=1] - 页码
-   * @param {number} [params.limit=10] - 每页数量
-   * @param {string} [params.title] - 标题
-   * @param {string} [params.category] - 分类
-   * @returns {Promise} 包含知识库列表的Promise对象
-   */
-  getKnowledgeBaseList(params = {}) {
-    console.log('获取知识库列表 - 参数:', params);
-    return visionAIAxios.get('/api/v1/knowledge-base/list', { params })
-      .then(response => {
-        console.log('获取知识库列表成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取知识库列表失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取知识库详情
-   * @param {number} knowledgeId - 知识库ID
-   * @returns {Promise} 包含知识库详情的Promise对象
-   */
-  getKnowledgeBaseDetail(knowledgeId) {
-    console.log('获取知识库详情 - ID:', knowledgeId);
-    return visionAIAxios.get(`/api/v1/knowledge-base/${knowledgeId}`)
-      .then(response => {
-        console.log('获取知识库详情成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取知识库详情失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 创建知识库
-   * @param {Object} data - 知识库数据
-   * @returns {Promise} 包含创建结果的Promise对象
-   */
-  createKnowledgeBase(data) {
-    console.log('创建知识库 - 数据:', data);
-    return visionAIAxios.post('/api/v1/knowledge-base', data)
-      .then(response => {
-        console.log('创建知识库成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('创建知识库失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 更新知识库
-   * @param {number} knowledgeId - 知识库ID
-   * @param {Object} data - 知识库数据
-   * @returns {Promise} 包含更新结果的Promise对象
-   */
-  updateKnowledgeBase(knowledgeId, data) {
-    console.log('更新知识库 - ID:', knowledgeId, '数据:', data);
-    return visionAIAxios.put(`/api/v1/knowledge-base/${knowledgeId}`, data)
-      .then(response => {
-        console.log('更新知识库成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('更新知识库失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 删除知识库
-   * @param {number} knowledgeId - 知识库ID
-   * @returns {Promise} 包含删除结果的Promise对象
-   */
-  deleteKnowledgeBase(knowledgeId) {
-    console.log('删除知识库 - ID:', knowledgeId);
-    return visionAIAxios.delete(`/api/v1/knowledge-base/${knowledgeId}`)
-      .then(response => {
-        console.log('删除知识库成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('删除知识库失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 批量删除知识库
-   * @param {Array<number>} knowledgeIds - 知识库ID数组
-   * @returns {Promise} 包含删除结果的Promise对象
-   */
-  batchDeleteKnowledgeBase(knowledgeIds) {
-    console.log('批量删除知识库 - IDs:', knowledgeIds);
-    return visionAIAxios.delete('/api/v1/knowledge-base/batch', { 
-      data: { ids: knowledgeIds }
-    })
-      .then(response => {
-        console.log('批量删除知识库成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('批量删除知识库失败:', error);
-        throw error;
-      });
-  }
-};
-
-/**
- * 应用设置API
- */
-export const applicationSettingsAPI = {
-  /**
-   * 获取应用设置
-   * @returns {Promise} 包含应用设置的Promise对象
-   */
-  getApplicationSettings() {
-    console.log('获取应用设置');
-    return visionAIAxios.get('/api/v1/settings/application')
-      .then(response => {
-        console.log('获取应用设置成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('获取应用设置失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 更新应用设置
-   * @param {Object} data - 应用设置数据
-   * @returns {Promise} 包含更新结果的Promise对象
-   */
-  updateApplicationSettings(data) {
-    console.log('更新应用设置 - 数据:', data);
-    return visionAIAxios.put('/api/v1/settings/application', data)
-      .then(response => {
-        console.log('更新应用设置成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('更新应用设置失败:', error);
+        console.error('❌ 获取检测结果失败:', error);
         throw error;
       });
   }
@@ -4589,15 +3778,7 @@ export default {
   archiveAPI,
   reviewRecordAPI,
   taskReviewAPI,
-  statisticsAPI,
-  logAPI,
-  // 系统管理API
-  userManagementAPI,
-  tenantManagementAPI,
-  roleManagementAPI,
-  departmentManagementAPI,
-  positionManagementAPI,
-  knowledgeBaseAPI,
-  applicationSettingsAPI,
+  realtimeMonitorAPI,
+  realtimeDetectionAPI,
   visionAIAxios
 };
