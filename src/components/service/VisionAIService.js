@@ -3734,40 +3734,6 @@ export const realtimeMonitorAPI = {
   }
 };
 
-/**
- * 实时检测API - OSD检测框叠加
- */
-export const realtimeDetectionAPI = {
-  /**
-   * 获取指定摄像头的运行中AI任务列表
-   * @param {number} cameraId - 摄像头ID
-   * @returns {Promise} AI任务列表
-   */
-  getTasksByCamera(cameraId) {
-    return visionAIAxios.get(`/api/v1/realtime-detection/detection/tasks/by_camera/${cameraId}`)
-      .catch(error => {
-        console.error('❌ 获取AI任务列表失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取指定任务的当前检测结果（HTTP轮询方式）
-   * @param {number} taskId - 任务ID
-   * @returns {Promise} 检测结果数据
-   */
-  getDetectionResult(taskId) {
-    return visionAIAxios.get(`/api/v1/realtime-detection/detection/result/${taskId}`)
-      .then(response => {
-        return response;
-      })
-      .catch(error => {
-        console.error('❌ 获取检测结果失败:', error);
-        throw error;
-      });
-  }
-};
-
 export default {
   modelAPI,
   skillAPI,
@@ -3779,6 +3745,5 @@ export default {
   reviewRecordAPI,
   taskReviewAPI,
   realtimeMonitorAPI,
-  realtimeDetectionAPI,
   visionAIAxios
 };
