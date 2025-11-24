@@ -389,11 +389,12 @@
 <script>
 import player from '../../common/jessibuca.vue'
 import DeviceTree from '../../common/DeviceTree.vue'
-import RegionTree from '../../common/RegionTree.vue'
-import GroupTree from '../../common/GroupTree.vue'
+// 使用本地专用组件（改造后的实时监控专用API）
+import RegionTree from './components/RegionTree.vue'
+import GroupTree from './components/GroupTree.vue'
 import WarningDetail from './warningDetail.vue'
 import screenfull from "screenfull";
-import { alertAPI } from '../../service/VisionAIService.js';
+import { alertAPI, realtimeMonitorAPI } from '../../service/VisionAIService.js';
 
 export default {
   name: "RealTimeMonitoring",
@@ -800,42 +801,55 @@ export default {
       // 上下文菜单处理
     },
     // 向设备发送推流请求
-    sendDevicePush(channelId) {
+    async sendDevicePush(channelId) {
       let idxTmp = this.playerIdx;
       this.setPlayUrl("", idxTmp);
       this.$set(this.videoTip, idxTmp, "正在拉流...");
       this.loading = true;
 
-      this.$axios({
-        method: 'get',
-        url: '/api/common/channel/play',
-        params: {
-          channelId: channelId
-        }
-      }).then((res) => {
-        if (res.data.code === 0 && res.data.data) {
+      try {
+        console.log('🎬 开始播放通道 - 通道ID:', channelId, '播放器索引:', idxTmp);
+        
+        // 使用新的专用API播放通道
+        const response = await realtimeMonitorAPI.playChannel(channelId);
+        
+        if (response.data && response.data.code === 0 && response.data.data) {
+          const streamData = response.data.data;
           let videoUrl;
+          
+          // 根据协议选择合适的流地址
           if (location.protocol === "https:") {
-            videoUrl = res.data.data.wss_flv;
+            videoUrl = streamData.wss_flv || streamData.https_flv;
           } else {
-            videoUrl = res.data.data.ws_flv;
+            videoUrl = streamData.ws_flv || streamData.http_flv;
           }
-          this.setPlayUrl(videoUrl, idxTmp);
+          
+          if (videoUrl) {
+            console.log('✅ 获取播放地址成功:', videoUrl);
+            this.setPlayUrl(videoUrl, idxTmp);
 
-          // 视频加载后刷新布局
-          setTimeout(() => {
-            this.refreshFourScreenLayout();
-            // 单独调整当前播放器尺寸
-            this.adjustPlayerSize(idxTmp);
-          }, 200);
+            // 视频加载后刷新布局
+            setTimeout(() => {
+              this.refreshFourScreenLayout();
+              // 单独调整当前播放器尺寸
+              this.adjustPlayerSize(idxTmp);
+            }, 200);
+          } else {
+            console.warn('⚠️ 未找到可用的流地址');
+            this.$set(this.videoTip, idxTmp, "播放失败: 未找到可用的流地址");
+          }
         } else {
-          this.$set(this.videoTip, idxTmp, "播放失败: " + res.data.msg);
+          const errorMsg = (response.data && response.data.msg) || '播放失败';
+          console.error('❌ 播放失败:', errorMsg);
+          this.$set(this.videoTip, idxTmp, "播放失败: " + errorMsg);
         }
-      }).catch(function (e) {
-        // 静默处理网络错误
-      }).finally(() => {
+      } catch (error) {
+        console.error('❌ 播放通道异常:', error);
+        const errorMsg = error.message || '网络错误';
+        this.$set(this.videoTip, idxTmp, "播放失败: " + errorMsg);
+      } finally {
         this.loading = false;
-      });
+      }
     },
     // 获取视频状态类
     getVideoStatus(index) {
