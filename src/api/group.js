@@ -106,3 +106,16 @@ export function removeDeviceFromGroup(data) {
   })
 }
 
+/**
+ * 获取业务分组路径
+ * @param {string} deviceId - 设备ID
+ * @param {string} businessGroup - 业务分组
+ */
+export function getGroupPath(deviceId, businessGroup) {
+  return request({
+    url: '/api/group/path',
+    method: 'get',
+    params: { deviceId, businessGroup }
+  })
+}
+

@@ -186,6 +186,7 @@
 
 <script>
 import DeviceService from "./service/DeviceService";
+import RegionChannelService from "./service/RegionChannelService";
 import GroupTree from "./dialogs/GroupTree.vue";
 import GbChannelSelect from "./dialogs/GbChannelSelect.vue";
 import UnusualGroupChannelSelect from "./dialogs/UnusualGroupChannelSelect.vue";
@@ -232,27 +233,22 @@ export default {
       this.getChannelList();
     },
     getChannelList() {
-      this.$axios({
-        method: 'get',
-        url: `/api/common/channel/parent/list`,
-        params: {
-          page: this.currentPage,
-          count: this.count,
-          query: this.searchSrt,
-          online: this.online,
-          channelType: this.channelType,
-          groupDeviceId: this.groupDeviceId
-        }
-      }).then((res) => {
-        if (res.data.code === 0) {
-          this.total = res.data.data.total;
-          this.channelList = res.data.data.list;
-          // 防止出现表格错位
+      RegionChannelService.getParentChannelList({
+        page: this.currentPage,
+        count: this.count,
+        query: this.searchSrt,
+        online: this.online,
+        channelType: this.channelType,
+        groupDeviceId: this.groupDeviceId
+      }, (res) => {
+        if (res.code === 0) {
+          this.total = res.data.total;
+          this.channelList = res.data.list;
           this.$nextTick(() => {
             this.$refs.channelListTable.doLayout();
           })
         }
-      }).catch((error) => {
+      }, (error) => {
         console.log(error);
       });
     },
@@ -286,16 +282,12 @@ export default {
       }
       this.loading = true
 
-      this.$axios({
-        method: 'post',
-        url: `/api/common/channel/group/add`,
-        data: {
-          parentId: groupDeviceId,
-          businessGroup: businessGroup,
-          channelIds: channels
-        }
-      }).then((res) => {
-        if (res.data.code === 0) {
+      RegionChannelService.addChannelToGroup({
+        parentId: groupDeviceId,
+        businessGroup: businessGroup,
+        channelIds: channels
+      }, (res) => {
+        if (res.code === 0) {
           this.$message.success({
             showClose: true,
             message: "保存成功"
@@ -304,14 +296,14 @@ export default {
         } else {
           this.$message.error({
             showClose: true,
-            message: res.data.msg
+            message: res.msg
           })
         }
         this.loading = false
-      }).catch((error) => {
+      }, (error) => {
         this.$message.error({
           showClose: true,
-          message: error
+          message: error.message || error
         })
         this.loading = false
       });
@@ -330,32 +322,27 @@ export default {
       }
       this.loading = true
 
-      this.$axios({
-        method: 'post',
-        url: `/api/common/channel/group/delete`,
-        data: {
-          channelIds: channels
-        }
-      }).then((res) => {
-        if (res.data.code === 0) {
+      RegionChannelService.deleteChannelFromGroup({
+        channelIds: channels
+      }, (res) => {
+        if (res.code === 0) {
           this.$message.success({
             showClose: true,
             message: "保存成功"
           })
           this.getChannelList()
-          // 刷新树节点
           this.$refs.groupTree.refresh(this.groupDeviceId)
         } else {
           this.$message.error({
             showClose: true,
-            message: res.data.msg
+            message: res.msg
           })
         }
         this.loading = false
-      }).catch((error) => {
+      }, (error) => {
         this.$message.error({
           showClose: true,
-          message: error
+          message: error.message || error
         })
         this.loading = false
       });
@@ -384,23 +371,15 @@ export default {
       this.groupDeviceId = group.deviceId;
       this.businessGroup = group.businessGroup;
       this.initData();
-      // 获取regionDeviceId对应的节点信息
-      this.$axios({
-        method: 'get',
-        url: `/api/group/path`,
-        params: {
-          deviceId: this.groupDeviceId,
-          businessGroup: this.businessGroup,
-        }
-      }).then((res) => {
-        if (res.data.code === 0) {
+      RegionChannelService.getGroupPath(this.groupDeviceId, this.businessGroup, (res) => {
+        if (res.code === 0) {
           let path = []
-          for (let i = 0; i < res.data.data.length; i++) {
-            path.push(res.data.data[i].name)
+          for (let i = 0; i < res.data.length; i++) {
+            path.push(res.data[i].name)
           }
           this.regionParents = path;
         }
-      }).catch((error) => {
+      }, (error) => {
         console.log(error);
       });
     },
