@@ -2,6 +2,7 @@ import Vue from 'vue';
 import App from './App.vue';
 import ElementUI, {Notification} from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
+import './styles/design-system.css';
 import router from './router/index.js';
 import axios from 'axios';
 import VueCookies from 'vue-cookies';
@@ -50,15 +51,7 @@ Vue.use(dataV);
 const config = require('../config/index.js');
 axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp';
 axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS错误
-// 简化的axios拦截器 - 认证由Python后端统一处理
-axios.interceptors.response.use((response) => {
-  // 只处理响应数据，不处理认证
-  return response;
-}, (error) => {
-  // 简化错误处理
-  console.log("API请求错误:", error);
-  return Promise.reject(error);
-});
+
 
 Vue.prototype.$axios = axios;
 Vue.prototype.$cookies.config(60 * 30);

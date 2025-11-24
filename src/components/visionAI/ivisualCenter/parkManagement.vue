@@ -256,16 +256,6 @@
 
 <script>
 import * as echarts from "echarts";
-import { 
-  getDeviceTree,
-  getCpuMemoryUsage,
-  getStorageUsage,
-  getRealtimeVideoList,
-  getAlertCaptureList,
-  getDeviceStatusStatistics,
-  getBandwidthUsage
-} from '@/api/parkManagement'
-
 export default {
   name: 'ParkManagement',
   components: {
@@ -553,111 +543,6 @@ export default {
     }
   },
   methods: {
-    // 加载所有数据
-    async loadAllData() {
-      await Promise.all([
-        this.loadDeviceTree(),
-        this.loadCpuMemoryData(),
-        this.loadStorageData(),
-        this.loadBandwidthData(),
-        this.loadDeviceStatus(),
-        this.loadAlertCaptures()
-      ]);
-    },
-
-    // 加载设备树数据
-    async loadDeviceTree() {
-      try {
-        const response = await getDeviceTree().catch(() => null);
-        if (response && response.data) {
-          this.treeData = response.data;
-        }
-      } catch (error) {
-        console.error('加载设备树失败:', error);
-      }
-    },
-
-    // 加载CPU内存数据
-    async loadCpuMemoryData() {
-      try {
-        const response = await getCpuMemoryUsage({ timeRange: 'realtime' }).catch(() => null);
-        if (response && response.data) {
-          // 更新cpuOption的数据
-          if (this.charts.cpuChart) {
-            this.charts.cpuChart.setOption({
-              xAxis: { data: response.data.timeLabels },
-              series: [{ data: response.data.values }]
-            });
-          }
-        }
-      } catch (error) {
-        console.error('加载CPU内存数据失败:', error);
-      }
-    },
-
-    // 加载存储数据
-    async loadStorageData() {
-      try {
-        const response = await getStorageUsage().catch(() => null);
-        if (response && response.data) {
-          if (this.charts.storageChart) {
-            this.charts.storageChart.setOption({
-              xAxis: { data: response.data.labels },
-              series: [{ data: response.data.values }]
-            });
-          }
-        }
-      } catch (error) {
-        console.error('加载存储数据失败:', error);
-      }
-    },
-
-    // 加载带宽数据
-    async loadBandwidthData() {
-      try {
-        const response = await getBandwidthUsage({ timeRange: 'realtime' }).catch(() => null);
-        if (response && response.data) {
-          if (this.charts.bandwidthChart) {
-            this.charts.bandwidthChart.setOption({
-              xAxis: { data: response.data.timeLabels },
-              series: response.data.series
-            });
-          }
-        }
-      } catch (error) {
-        console.error('加载带宽数据失败:', error);
-      }
-    },
-
-    // 加载设备状态
-    async loadDeviceStatus() {
-      try {
-        const response = await getDeviceStatusStatistics().catch(() => null);
-        if (response && response.data) {
-          this.deviceStatusConfig1 = response.data.config1 || this.deviceStatusConfig1;
-          this.deviceStatusConfig2 = response.data.config2 || this.deviceStatusConfig2;
-        }
-      } catch (error) {
-        console.error('加载设备状态失败:', error);
-      }
-    },
-
-    // 加载预警抓拍
-    async loadAlertCaptures() {
-      try {
-        const response = await getAlertCaptureList({
-          pageNum: 1,
-          pageSize: 10
-        }).catch(() => null);
-        if (response && response.data) {
-          // 处理预警抓拍数据
-          console.log('预警抓拍数据:', response.data);
-        }
-      } catch (error) {
-        console.error('加载预警抓拍失败:', error);
-      }
-    },
-
     // 初始化所有图表
     initCharts() {
       this.$nextTick(() => {
@@ -804,8 +689,6 @@ export default {
   },
   mounted() {
     this.initCharts();
-    // 加载所有数据
-    this.loadAllData();
     // 添加窗口大小变化监听
     window.addEventListener('resize', this.handleResize);
   },

@@ -1,7 +1,3 @@
-/**
- * 本地视频管理相关API
- * 参考若依框架设计，统一封装接口请求
- */
 import request from '@/utils/request'
 import apiConfig from '../config/api.js'
 

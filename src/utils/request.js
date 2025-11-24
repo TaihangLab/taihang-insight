@@ -1,7 +1,3 @@
-/**
- * 统一的axios请求封装
- * 参考若依框架设计
- */
 import axios from 'axios'
 import { Message, MessageBox } from 'element-ui'
 import router from '@/router'
@@ -13,6 +9,12 @@ const service = axios.create({
   withCredentials: true, // 跨域请求时发送cookies
   timeout: 30000 // 请求超时时间
 })
+
+// 设备管理模块使用的axios配置（走WVP代理）
+// 导入API配置
+const config = require('../../config/index.js');
+axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp';
+axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS错误
 
 // 请求拦截器
 service.interceptors.request.use(
