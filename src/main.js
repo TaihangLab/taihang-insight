@@ -45,11 +45,8 @@ Vue.use(VCharts);
 Vue.use(logViewer);
 Vue.use(dataV);
 
-// 设备管理模块使用的axios配置（走WVP代理）
-// 导入API配置
-const config = require('../config/index.js');
-axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp';
-axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS错误
+axios.defaults.baseURL = (process.env.NODE_ENV === 'development') ? process.env.BASE_API : (window.baseUrl ? window.baseUrl : "");
+axios.defaults.withCredentials = true;
 // 简化的axios拦截器 - 认证由Python后端统一处理
 axios.interceptors.response.use((response) => {
   // 只处理响应数据，不处理认证
