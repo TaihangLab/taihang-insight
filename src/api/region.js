@@ -118,3 +118,15 @@ export function getRegionChildList(params) {
   })
 }
 
+/**
+ * 获取行政区划路径
+ * @param {string} deviceId - 设备ID
+ */
+export function getRegionPath(deviceId) {
+  return request({
+    url: '/api/region/path',
+    method: 'get',
+    params: { deviceId }
+  })
+}
+

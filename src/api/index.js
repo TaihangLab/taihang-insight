@@ -1,8 +1,3 @@
-/**
- * API统一导出入口
- * 参考若依框架的设计，将所有API按模块分类管理
- */
-
 // 边缘管理相关API
 export * from './edgeManagement'
 

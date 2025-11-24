@@ -5,7 +5,7 @@
 const path = require('path')
 
 // 后端API基础地址配置
-const API_BASE_URL = 'http://127.0.0.1:8000'
+const API_BASE_URL = 'http://192.168.26.193:8000';//本地测试地址
 
 module.exports = {
   // 导出API配置供前端使用

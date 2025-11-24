@@ -211,3 +211,82 @@ export function getNetworkIdentificationList() {
   })
 }
 
+/**
+ * 获取行政区划通道列表
+ * @param {Object} params - 查询参数
+ */
+export function getCivilCodeChannelList(params) {
+  return request({
+    url: '/api/common/channel/civilcode/list',
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 获取业务分组通道列表
+ * @param {Object} params - 查询参数
+ */
+export function getParentChannelList(params) {
+  return request({
+    url: '/api/common/channel/parent/list',
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 添加通道到行政区划
+ * @param {Object} data - 数据
+ * @param {string} data.civilCode - 行政区划编码
+ * @param {Array} data.channelIds - 通道ID数组
+ */
+export function addChannelToRegion(data) {
+  return request({
+    url: '/api/common/channel/region/add',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 从行政区划删除通道
+ * @param {Object} data - 数据
+ * @param {Array} data.channelIds - 通道ID数组
+ */
+export function deleteChannelFromRegion(data) {
+  return request({
+    url: '/api/common/channel/region/delete',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 添加通道到业务分组
+ * @param {Object} data - 数据
+ * @param {string} data.parentId - 父节点ID
+ * @param {string} data.businessGroup - 业务分组
+ * @param {Array} data.channelIds - 通道ID数组
+ */
+export function addChannelToGroup(data) {
+  return request({
+    url: '/api/common/channel/group/add',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 从业务分组删除通道
+ * @param {Object} data - 数据
+ * @param {Array} data.channelIds - 通道ID数组
+ */
+export function deleteChannelFromGroup(data) {
+  return request({
+    url: '/api/common/channel/group/delete',
+    method: 'post',
+    data: data
+  })
+}
+
