@@ -3234,7 +3234,7 @@ export default {
 
 .custom-tree-header {
   padding: 20px 16px;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: #fff;
   color: #1e40af;
   border-bottom: 1px solid rgba(59, 130, 246, 0.2);
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
@@ -3514,6 +3514,7 @@ export default {
   background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   transform: translateY(-2px);
+  color: white;
 }
 
 
@@ -3758,7 +3759,7 @@ export default {
   font-size: 16px;
   font-weight: 600;
   border-bottom: 1px solid rgba(59, 130, 246, 0.2);
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: #fff;
   color: #1e40af;
   display: flex;
   justify-content: space-between;

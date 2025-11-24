@@ -3678,7 +3678,7 @@ body .el-time-picker.el-popper {
 
 /* 筛选条件区域 */
 .alert-filters {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: #fff;
   border-radius: 8px;
   padding: 20px;
   border: 1px solid rgba(59, 130, 246, 0.1);

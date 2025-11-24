@@ -356,8 +356,8 @@ export default {
     this.initMockData();
     
     // 初始化CSS变量 - 只保留面板相关的变量
-    document.documentElement.style.setProperty('--panel-top-height', '210px');
-    document.documentElement.style.setProperty('--panel-bottom-height', '330px');
+    document.documentElement.style.setProperty('--panel-top-height', '24vh');
+    document.documentElement.style.setProperty('--panel-bottom-height', '36vh');
     
     this.fetchWeatherData();
     this.fetchSystemStatus();
@@ -690,8 +690,8 @@ export default {
       } else {
         this.tableHeight = 280; // 非全屏模式下使用与全屏相同的表格高度，确保显示效果一致
         // 恢复正常模式下的面板高度
-        document.documentElement.style.setProperty('--panel-top-height', '210px');
-        document.documentElement.style.setProperty('--panel-bottom-height', '330px');
+        document.documentElement.style.setProperty('--panel-top-height', '24vh');
+        document.documentElement.style.setProperty('--panel-bottom-height', '36vh');
       }
       
       // 全屏状态变化后，重新调整图表大小
@@ -1073,8 +1073,8 @@ export default {
 <style scoped>
 /* Vue2项目中使用普通CSS样式 */
 :root {
-  --panel-top-height: 210px;
-  --panel-bottom-height: 330px;
+  --panel-top-height: 24vh;
+  --panel-bottom-height: 36vh;
 }
 
 /* 全局隐藏滚动条样式 */
@@ -1088,10 +1088,11 @@ export default {
 }
 
 .visual-center {
-  min-height: 100vh;
+  height: calc(100vh - 60px);
   background: linear-gradient(135deg, #001529 0%, #000B18 100%);
   color: #fff;
-  padding: 20px;
+  padding: 16px;
+  margin: 0;
   position: relative;
   overflow-x: hidden; /* 隐藏水平滚动条 */
 }

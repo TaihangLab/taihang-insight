@@ -57,10 +57,10 @@ export default {
     window.addEventListener("resize", this.handleResize);
 
     // 初始化CSS变量 - 设置适当的面板高度
-    document.documentElement.style.setProperty("--panel-top-height", "380px");
+    document.documentElement.style.setProperty("--panel-top-height", "35vh");
     document.documentElement.style.setProperty(
       "--panel-bottom-height",
-      "350px"
+      "33vh"
     );
   },
   beforeDestroy() {
@@ -933,12 +933,12 @@ export default {
 
 <style scoped>
 :root {
-  --panel-top-height: 380px;
-  --panel-bottom-height: 350px;
+  --panel-top-height: 35vh;
+  --panel-bottom-height: 33vh;
 }
 
 .visual-statistics {
-  min-height: 100vh;
+  height: calc(100vh - 60px);
   background: linear-gradient(135deg, #001529 0%, #000b18 100%);
   color: #fff;
   padding: 16px;
