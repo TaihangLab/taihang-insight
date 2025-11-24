@@ -2,8 +2,8 @@ import Vue from 'vue';
 import App from './App.vue';
 import ElementUI, {Notification} from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
-import './styles/design-system.css';
 import router from './router/index.js';
+import axios from 'axios';
 import VueCookies from 'vue-cookies';
 import VCharts from 'v-charts';
 import logViewer from '@femessage/log-viewer';
@@ -14,8 +14,6 @@ import Fingerprint2 from 'fingerprintjs2';
 import VueClipboards from 'vue-clipboards';
 import Contextmenu from "vue-contextmenujs"
 import userService from "./components/service/UserService"
-// 导入封装的API方法
-import { getSystemConfig } from './api/system'
 
 Vue.config.productionTip = false;
 
@@ -47,8 +45,22 @@ Vue.use(VCharts);
 Vue.use(logViewer);
 Vue.use(dataV);
 
-// 注意：已移除 Vue.prototype.$axios，所有接口请求请使用 /api 目录下封装的方法
-// 例如：import { getSystemConfig } from '@/api/system'
+// 设备管理模块使用的axios配置（走WVP代理）
+// 导入API配置
+const config = require('../config/index.js');
+axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp';
+axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS错误
+// 简化的axios拦截器 - 认证由Python后端统一处理
+axios.interceptors.response.use((response) => {
+  // 只处理响应数据，不处理认证
+  return response;
+}, (error) => {
+  // 简化错误处理
+  console.log("API请求错误:", error);
+  return Promise.reject(error);
+});
+
+Vue.prototype.$axios = axios;
 Vue.prototype.$cookies.config(60 * 30);
 Vue.prototype.$tableHeght = window.innerHeight - 170;
 Vue.prototype.$channelTypeList = {

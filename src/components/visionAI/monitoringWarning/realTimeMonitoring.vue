@@ -65,21 +65,78 @@
           >
                 <!-- 超薄标题栏 - 科技感设计 -->
                 <div class="video-slim-header">
-                  <span class="camera-name">摄像头 {{ index }}</span>
+                  <span class="camera-name">{{ cameraNames[index-1] || `摄像头 ${index}` }}</span>
                   <div class="video-status" :class="getVideoStatus(index-1)">
                     <span class="status-dot"></span>
                     <span class="status-text">{{ getVideoStatusText(index-1) }}</span>
             </div>
                 </div>
 
-            <div class="video-content">
+            <div class="video-content" :ref="'videoContent'+(index-1)">
+              
               <div class="video-placeholder" :data-timestamp="currentDateTime" :data-camera="formatCameraName(index)">
                     <div v-if="!videoUrl[index-1]" class="no-signal">
                       <i class="el-icon-video-camera-solid"></i>
                       <div>{{ videoTip[index-1] ? videoTip[index-1] : "无信号" }}</div>
                     </div>
-                    <player :ref="'player'+(index-1)" v-else :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
-                            @destroy="destroy"/>
+                    <div v-else class="video-player-wrapper">
+                      <player :ref="'player'+(index-1)" :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
+                              @destroy="destroy"/>
+                      
+                      <!-- 🆕 AI任务选择下拉框 - 移到video-player-wrapper内部 -->
+                      <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
+                           class="ai-task-selector">
+                        <el-select 
+                          v-model="selectedAITasks[index-1]" 
+                          size="mini" 
+                          placeholder="选择AI任务"
+                          @change="onTaskSelectionChange(index-1)"
+                          clearable>
+                          <el-option
+                            v-for="task in availableAITasks[cameraIdMapping[index-1]]"
+                            :key="task.task_id"
+                            :label="`${task.task_name}`"
+                            :value="task.task_id">
+                            <span style="float: left">{{ task.task_name }}</span>
+                            <span style="float: right; color: #8492a6; font-size: 12px">{{ task.skill_name }}</span>
+                          </el-option>
+                        </el-select>
+                      </div>
+                      
+                      <!-- 🆕 调试信息显示区域 -->
+                      <div v-if="selectedAITasks[index-1]" class="detection-debug-info">
+                        <div class="debug-line">
+                          <span class="debug-label">WebSocket:</span>
+                          <span :class="['debug-value', wsConnections[index-1] ? 'connected' : 'disconnected']">
+                            {{ wsConnections[index-1] ? '已连接' : '未连接' }}
+                          </span>
+                        </div>
+                        <div class="debug-line" v-if="detectionResults[index-1]">
+                          <span class="debug-label">检测目标:</span>
+                          <span class="debug-value">{{ detectionResults[index-1].detections ? detectionResults[index-1].detections.length : 0 }} 个</span>
+                        </div>
+                        <div class="debug-line" v-if="detectionResults[index-1] && detectionResults[index-1].detections && detectionResults[index-1].detections.length > 0">
+                          <span class="debug-label">目标列表:</span>
+                          <span class="debug-value">
+                            {{ detectionResults[index-1].detections.map(d => d.label || d.class_name).join(', ') }}
+                          </span>
+                        </div>
+                        <div class="debug-line">
+                          <span class="debug-label">最后更新:</span>
+                          <span class="debug-value">{{ detectionUpdateTime[index-1] || '无数据' }}</span>
+                        </div>
+                      </div>
+                      
+                      <!-- 🆕 检测框OSD叠加层 -->
+                      <detection-overlay
+                        v-if="selectedAITasks[index-1] && detectionResults[index-1]"
+                        :container-width="getVideoWidth(index-1)"
+                        :container-height="getVideoHeight(index-1)"
+                        :video-width="getActualVideoWidth(index-1)"
+                        :video-height="getActualVideoHeight(index-1)"
+                        :detections="detectionResults[index-1].detections || []">
+                      </detection-overlay>
+                    </div>
               </div>
             </div>
           </div>
@@ -94,21 +151,77 @@
           >
             <!-- 超薄标题栏 -->
             <div class="video-slim-header">
-              <span class="camera-name">摄像头 {{ index }}</span>
+              <span class="camera-name">{{ cameraNames[index-1] || `摄像头 ${index}` }}</span>
               <div class="video-status" :class="getVideoStatus(index-1)">
                 <span class="status-dot"></span>
                 <span class="status-text">{{ getVideoStatusText(index-1) }}</span>
               </div>
             </div>
 
-            <div class="video-content">
+            <div class="video-content" :ref="'videoContentFs'+(index-1)">
+              
               <div class="video-placeholder" :data-timestamp="currentDateTime" :data-camera="formatCameraName(index)">
                     <div v-if="!videoUrl[index-1]" class="no-signal">
                       <i class="el-icon-video-camera-solid"></i>
                       <div>{{ videoTip[index-1] ? videoTip[index-1] : "无信号" }}</div>
                     </div>
-                    <player :ref="'player'+(index-1)" v-else :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
-                            @destroy="destroy"/>
+                    <div v-else class="video-player-wrapper">
+                      <player :ref="'player'+(index-1)" :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
+                              @destroy="destroy"/>
+                      
+                      <!-- 🆕 AI任务选择下拉框（全屏模式） -->
+                      <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
+                           class="ai-task-selector">
+                        <el-select 
+                          v-model="selectedAITasks[index-1]" 
+                          size="mini" 
+                          placeholder="选择AI任务"
+                          @change="onTaskSelectionChange(index-1)"
+                          clearable>
+                          <el-option
+                            v-for="task in availableAITasks[cameraIdMapping[index-1]]"
+                            :key="task.task_id"
+                            :label="`${task.task_name}`"
+                            :value="task.task_id">
+                            <span style="float: left">{{ task.task_name }}</span>
+                            <span style="float: right; color: #8492a6; font-size: 12px">{{ task.skill_name }}</span>
+                          </el-option>
+                        </el-select>
+                      </div>
+                      
+                      <!-- 🆕 调试信息显示区域（全屏模式） -->
+                      <div v-if="selectedAITasks[index-1]" class="detection-debug-info">
+                        <div class="debug-line">
+                          <span class="debug-label">WebSocket:</span>
+                          <span :class="['debug-value', wsConnections[index-1] ? 'connected' : 'disconnected']">
+                            {{ wsConnections[index-1] ? '已连接' : '未连接' }}
+                          </span>
+                        </div>
+                        <div class="debug-line" v-if="detectionResults[index-1]">
+                          <span class="debug-label">检测目标:</span>
+                          <span class="debug-value">{{ detectionResults[index-1].detections ? detectionResults[index-1].detections.length : 0 }} 个</span>
+                        </div>
+                        <div class="debug-line" v-if="detectionResults[index-1] && detectionResults[index-1].detections && detectionResults[index-1].detections.length > 0">
+                          <span class="debug-label">目标列表:</span>
+                          <span class="debug-value">
+                            {{ detectionResults[index-1].detections.map(d => d.label || d.class_name).join(', ') }}
+                          </span>
+                        </div>
+                        <div class="debug-line">
+                          <span class="debug-label">最后更新:</span>
+                          <span class="debug-value">{{ detectionUpdateTime[index-1] || '无数据' }}</span>
+                        </div>
+                      </div>
+                      <!-- 🆕 检测框OSD叠加层（全屏模式） -->
+                      <detection-overlay
+                        v-if="selectedAITasks[index-1] && detectionResults[index-1]"
+                        :container-width="getVideoWidth(index-1)"
+                        :container-height="getVideoHeight(index-1)"
+                        :video-width="videoResolutions[index-1] ? videoResolutions[index-1].width : 1920"
+                        :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
+                        :detections="detectionResults[index-1].detections || []">
+                      </detection-overlay>
+                    </div>
               </div>
             </div>
           </div>
@@ -389,17 +502,21 @@
 <script>
 import player from '../../common/jessibuca.vue'
 import DeviceTree from '../../common/DeviceTree.vue'
-import RegionTree from '../../common/RegionTree.vue'
-import GroupTree from '../../common/GroupTree.vue'
+// 使用本地专用组件（改造后的实时监控专用API）
+import RegionTree from './components/RegionTree.vue'
+import GroupTree from './components/GroupTree.vue'
 import WarningDetail from './warningDetail.vue'
+// 🆕 导入OSD检测框组件
+import DetectionOverlay from './components/DetectionOverlay.vue'
 import screenfull from "screenfull";
-import { alertAPI } from '../../service/VisionAIService.js';
-import ChannelService from '../deviceManagement/managementPages/service/ChannelService';
+import { alertAPI, realtimeMonitorAPI, realtimeDetectionAPI } from '../../service/VisionAIService.js';
+// 🆕 导入配置文件获取后端地址
+const config = require('../../../../config/index.js');
 
 export default {
   name: "RealTimeMonitoring",
   components: {
-    player, DeviceTree, RegionTree, GroupTree, WarningDetail
+    player, DeviceTree, RegionTree, GroupTree, WarningDetail, DetectionOverlay
   },
   data() {
     return {
@@ -432,6 +549,16 @@ export default {
       // 添加预警管理相关的数据属性
       // archivesList: [],  // 已废弃，使用 availableArchivesList
       currentCameraId: '',
+      
+      // 🆕 OSD检测框叠加相关
+      selectedAITasks: {},  // 每个视频窗口的AI任务选择 {index: task_id}
+      availableAITasks: {},  // 每个摄像头的可用AI任务列表 {camera_id: []}
+      wsConnections: {},  // WebSocket连接池 {index: WebSocket}
+      detectionResults: {},  // 检测结果数据 {index: {detections: [], frame_size: {}}}
+      cameraIdMapping: {},  // 摄像头ID映射 {index: camera_id}
+      cameraNames: {},  // 摄像头名称映射 {index: camera_name}
+      videoResolutions: {},  // 视频分辨率 {index: {width, height}}
+      detectionUpdateTime: {},  // 检测结果更新时间 {index: time_string}
       archiveWarningId: '',
       reportWarningId: '',
 
@@ -520,10 +647,6 @@ export default {
     defaultArchive() {
       return this.availableArchives.find(archive => archive.isDefault);
     }
-  },
-  created() {
-    // 初始化服务实例
-    this.channelService = new ChannelService();
   },
   mounted() {
     // 启动时间更新定时器
@@ -797,6 +920,10 @@ export default {
     // 设备树点击事件
     treeNodeClickEvent(data) {
       if (data.leaf) {
+        // 🆕 保存摄像头名称
+        const idx = this.playerIdx
+        this.$set(this.cameraNames, idx, data.name || `摄像头 ${idx+1}`)
+        
         this.sendDevicePush(data.id);
       }
     },
@@ -805,33 +932,62 @@ export default {
       // 上下文菜单处理
     },
     // 向设备发送推流请求
-    sendDevicePush(channelId) {
+    async sendDevicePush(channelId) {
       let idxTmp = this.playerIdx;
       this.setPlayUrl("", idxTmp);
       this.$set(this.videoTip, idxTmp, "正在拉流...");
+      
+      // 🆕 保存摄像头ID映射
+      this.$set(this.cameraIdMapping, idxTmp, channelId);
+      
       this.loading = true;
 
-      this.channelService.getChannelPlayUrl(channelId, (res) => {
-        if (res.code === 0 && res.data) {
+      try {
+        console.log('🎬 开始播放通道 - 通道ID:', channelId, '播放器索引:', idxTmp);
+        
+        // 使用新的专用API播放通道
+        const response = await realtimeMonitorAPI.playChannel(channelId);
+        
+        if (response.data && response.data.code === 0 && response.data.data) {
+          const streamData = response.data.data;
           let videoUrl;
+          
+          // 根据协议选择合适的流地址
           if (location.protocol === "https:") {
-            videoUrl = res.data.wss_flv;
+            videoUrl = streamData.wss_flv || streamData.https_flv;
           } else {
-            videoUrl = res.data.ws_flv;
+            videoUrl = streamData.ws_flv || streamData.http_flv;
           }
-          this.setPlayUrl(videoUrl, idxTmp);
+          
+          if (videoUrl) {
+            console.log('✅ 获取播放地址成功:', videoUrl);
+            this.setPlayUrl(videoUrl, idxTmp);
 
-          // 视频加载后刷新布局
-          setTimeout(() => {
-            this.refreshFourScreenLayout();
-            // 单独调整当前播放器尺寸
-            this.adjustPlayerSize(idxTmp);
-          }, 200);
+            // 🆕 加载该摄像头的AI任务列表
+            await this.loadAvailableAITasks(channelId);
+
+            // 视频加载后刷新布局
+            setTimeout(() => {
+              this.refreshFourScreenLayout();
+              // 单独调整当前播放器尺寸
+              this.adjustPlayerSize(idxTmp);
+            }, 200);
+          } else {
+            console.warn('⚠️ 未找到可用的流地址');
+            this.$set(this.videoTip, idxTmp, "播放失败: 未找到可用的流地址");
+          }
         } else {
-          this.$set(this.videoTip, idxTmp, "播放失败: " + (res.msg || '未知错误'));
+          const errorMsg = (response.data && response.data.msg) || '播放失败';
+          console.error('❌ 播放失败:', errorMsg);
+          this.$set(this.videoTip, idxTmp, "播放失败: " + errorMsg);
         }
+      } catch (error) {
+        console.error('❌ 播放通道异常:', error);
+        const errorMsg = error.message || '网络错误';
+        this.$set(this.videoTip, idxTmp, "播放失败: " + errorMsg);
+      } finally {
         this.loading = false;
-      });
+      }
     },
     // 获取视频状态类
     getVideoStatus(index) {
@@ -2015,7 +2171,7 @@ export default {
           5: { text: '误报', class: 'status-false-alarm' }     // FALSE_ALARM
         };
         const result = statusMap[warning._apiData.status] || { text: '未知', class: 'status-pending' };
-        console.log('📊 预警状态显示 - API status:', warning._apiData.status, '显示:', result);
+        // console.log('📊 预警状态显示 - API status:', warning._apiData.status, '显示:', result);
         return result;
       }
 
@@ -2775,7 +2931,255 @@ export default {
       return this.sseStatus.connected ? '已连接' : '未连接';
     },
 
+    // 🆕 ========== OSD检测框叠加功能 ==========
+    
+    /**
+     * 加载指定摄像头的可用AI任务列表
+     */
+    async loadAvailableAITasks(cameraId) {
+      try {
+        const response = await realtimeDetectionAPI.getTasksByCamera(cameraId)
+        if (response.data && response.data.code === 0) {
+          this.$set(this.availableAITasks, cameraId, response.data.data || [])
+        }
+      } catch (error) {
+        console.error(`❌ 获取摄像头AI任务列表失败:`, error)
+      }
+    },
+    
+    /**
+     * AI任务选择变化处理
+     */
+    onTaskSelectionChange(index) {
+      const taskId = this.selectedAITasks[index]
+      
+      // 断开旧连接
+      if (this.wsConnections[index]) {
+        this.wsConnections[index].close()
+        delete this.wsConnections[index]
+      }
+      
+      // 清空检测结果
+      this.$set(this.detectionResults, index, null)
+      
+      // 如果选择了任务，建立WebSocket连接
+      if (taskId) {
+        this.connectDetectionWebSocket(index, taskId)
+      }
+    },
+    
+    /**
+     * 连接检测结果WebSocket
+     */
+    connectDetectionWebSocket(index, taskId) {
+      try {
+        // 构建WebSocket URL - 直接连接到后端服务器
+        // 使用与 VisionAIService 相同的后端地址
+        const backendUrl = config.API_BASE_URL // 从配置文件获取
+        const wsProtocol = backendUrl.startsWith('https') ? 'wss:' : 'ws:'
+        const wsHost = backendUrl.replace(/^https?:\/\//, '') // 移除 http:// 或 https://
+        const wsUrl = `${wsProtocol}//${wsHost}/api/v1/realtime-detection/ws/detection/${taskId}`
+        
+        const ws = new WebSocket(wsUrl)
+        
+        // 先设置为未连接状态
+        this.$set(this.wsConnections, index, null)
+        
+        ws.onopen = () => {
+          // 连接成功后才设置
+          this.$set(this.wsConnections, index, ws)
+        }
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data)
+            
+            // 更新检测结果
+            this.$set(this.detectionResults, index, {
+              detections: data.detections || [],
+              frame_size: data.frame_size || {width: 1920, height: 1080}
+            })
+            
+            // 更新时间戳
+            const now = new Date()
+            this.$set(this.detectionUpdateTime, index, 
+              `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`)
+            
+            // 更新视频分辨率
+            if (data.frame_size) {
+              this.$set(this.videoResolutions, index, {
+                width: data.frame_size.width,
+                height: data.frame_size.height
+              })
+            }
+          } catch (error) {
+            console.error('❌ 解析检测结果失败:', error)
+          }
+        }
+        
+        ws.onerror = (error) => {
+          console.error(`❌ WebSocket错误: task_id=${taskId}`, error)
+        }
+        
+        ws.onclose = () => {
+          // 清理
+          if (this.wsConnections[index] === ws) {
+            delete this.wsConnections[index]
+          }
+        }
+        
+        // 不在这里保存连接，等onopen成功后再保存
+        
+      } catch (error) {
+        console.error('❌ 创建WebSocket连接失败:', error)
+      }
+    },
+    
+    /**
+     * 获取视频窗口宽度
+     */
+    getVideoWidth(index) {
+      // 尝试获取实际的video/canvas元素
+      const playerRef = this.$refs[`player${index}`]
+      if (playerRef && playerRef[0]) {
+        const playerEl = playerRef[0].$el
+        if (playerEl) {
+          const videoEl = playerEl.querySelector('video') || playerEl.querySelector('canvas')
+          if (videoEl) {
+            return videoEl.clientWidth || 640
+          }
+        }
+      }
+      
+      // 降级方案：使用容器尺寸
+      const ref = this.$refs[`videoContent${index}`]
+      if (ref && ref[0]) {
+        return ref[0].clientWidth || 640
+      }
+      return 640
+    },
+    
+    /**
+     * 获取视频窗口高度
+     */
+    getVideoHeight(index) {
+      // 尝试获取实际的video/canvas元素
+      const playerRef = this.$refs[`player${index}`]
+      if (playerRef && playerRef[0]) {
+        const playerEl = playerRef[0].$el
+        if (playerEl) {
+          const videoEl = playerEl.querySelector('video') || playerEl.querySelector('canvas')
+          if (videoEl) {
+            return videoEl.clientHeight || 480
+          }
+        }
+      }
+      
+      // 降级方案：使用容器尺寸
+      const ref = this.$refs[`videoContent${index}`]
+      if (ref && ref[0]) {
+        return ref[0].clientHeight || 480
+      }
+      return 480
+    },
+    
+    /**
+     * 获取实际视频分辨率宽度
+     */
+    getActualVideoWidth(index) {
+      const playerRef = this.$refs[`player${index}`]
+      if (playerRef && playerRef[0]) {
+        const playerEl = playerRef[0].$el
+        if (playerEl) {
+          const videoEl = playerEl.querySelector('video') || playerEl.querySelector('canvas')
+          if (videoEl && videoEl.videoWidth) {
+            return videoEl.videoWidth
+          }
+          if (videoEl && videoEl.width) {
+            return videoEl.width
+          }
+        }
+      }
+      
+      // 降级方案：使用后端返回的分辨率
+      if (this.videoResolutions[index]) {
+        return this.videoResolutions[index].width
+      }
+      return 1920
+    },
+    
+    /**
+     * 获取实际视频分辨率高度
+     */
+    getActualVideoHeight(index) {
+      const playerRef = this.$refs[`player${index}`]
+      if (playerRef && playerRef[0]) {
+        const playerEl = playerRef[0].$el
+        if (playerEl) {
+          const videoEl = playerEl.querySelector('video') || playerEl.querySelector('canvas')
+          if (videoEl && videoEl.videoHeight) {
+            return videoEl.videoHeight
+          }
+          if (videoEl && videoEl.height) {
+            return videoEl.height
+          }
+        }
+      }
+      
+      // 降级方案：使用后端返回的分辨率
+      if (this.videoResolutions[index]) {
+        return this.videoResolutions[index].height
+      }
+      return 1080
+    },
+    
+    /**
+     * 清理指定索引的OSD资源
+     */
+    cleanupOSDResources(index) {
+      // 关闭WebSocket连接
+      if (this.wsConnections[index]) {
+        this.wsConnections[index].close()
+        delete this.wsConnections[index]
+      }
+      
+      // 清空数据
+      this.$set(this.selectedAITasks, index, null)
+      this.$set(this.detectionResults, index, null)
+      this.$set(this.videoResolutions, index, null)
+    },
+    
+    /**
+     * 清理所有OSD资源
+     */
+    cleanupAllOSDResources() {
+      // 关闭所有WebSocket连接
+      Object.values(this.wsConnections).forEach(ws => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.close()
+        }
+      })
+      
+      // 清空所有数据
+      this.wsConnections = {}
+      this.selectedAITasks = {}
+      this.detectionResults = {}
+      this.availableAITasks = {}
+      this.cameraIdMapping = {}
+      this.cameraNames = {}
+      this.videoResolutions = {}
+    }
+    // 🆕 ========== OSD检测框叠加功能结束 ==========
 
+  },
+  beforeDestroy() {
+    // 清理定时器
+    if (this.timer) {
+      clearInterval(this.timer)
+    }
+    
+    // 🆕 清理所有OSD资源
+    this.cleanupAllOSDResources()
   }
 }
 </script>
@@ -2807,7 +3211,7 @@ export default {
 
 /* 设备树容器 - 科技感设计 */
 .device-tree-aside {
-  background: #fff;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-right: 1px solid rgba(59, 130, 246, 0.1);
   height: 100%;
   overflow: hidden;
@@ -2884,7 +3288,7 @@ export default {
   flex: 1;
   overflow: auto;
   height: calc(100% - 80px);
-  /* padding: 16px;  */
+  padding: 16px;
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
 }
 
@@ -2940,7 +3344,7 @@ export default {
 /* 视频主容器 - 科技感设计 */
 .video-main-container {
   flex: 1;
-  background: #fff;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   position: relative;
   margin: 0 16px;
   border-radius: 16px;
@@ -2958,7 +3362,7 @@ export default {
 
 /* 视频工具栏 - 科技感设计 */
 .video-toolbar {
-  background: #fff;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
   display: flex;
   align-items: center;
@@ -3001,7 +3405,7 @@ export default {
 .warning-list {
   width: 100%;
   height: 100%;
-  background: #fff;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 16px;
   display: flex;
   flex-direction: column;
@@ -4416,6 +4820,90 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
     transform: translateY(0);
   }
 }
+
+/* 🆕 OSD检测框叠加相关样式 */
+/* AI任务选择器 */
+.ai-task-selector {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 6px;
+  border-radius: 6px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.ai-task-selector >>> .el-select {
+  width: 200px;
+}
+
+.ai-task-selector >>> .el-input__inner {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #fff;
+  font-size: 12px;
+}
+
+.ai-task-selector >>> .el-input__inner::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 视频播放器包装器 */
+.video-player-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 🆕 调试信息显示区域 */
+.detection-debug-info {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #fff;
+  z-index: 20;
+  max-width: 300px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.detection-debug-info .debug-line {
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.detection-debug-info .debug-line:last-child {
+  margin-bottom: 0;
+}
+
+.detection-debug-info .debug-label {
+  color: #8492a6;
+  margin-right: 8px;
+  min-width: 70px;
+}
+
+.detection-debug-info .debug-value {
+  color: #fff;
+  font-weight: 500;
+}
+
+.detection-debug-info .debug-value.connected {
+  color: #10b981;
+}
+
+.detection-debug-info .debug-value.disconnected {
+  color: #f56c6c;
+}
+
+/* 🆕 OSD样式结束 */
+
 </style>
 
 <!-- 全局样式，处理全屏模式 -->
