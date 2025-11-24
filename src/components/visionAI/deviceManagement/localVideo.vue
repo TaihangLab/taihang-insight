@@ -334,11 +334,11 @@
 
 <script>
 import axios from 'axios';
-const config = require('../../../../config/index.js');
+import apiConfig from '../../../config/api.js';
 
 // 创建专用axios实例，避免CORS错误
 const localVideoAxios = axios.create({
-  baseURL: config.API_BASE_URL,
+  baseURL: apiConfig.API_BASE_URL,
   timeout: 15000,
   withCredentials: false  // 避免CORS错误
 });
