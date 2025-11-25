@@ -101,7 +101,7 @@
                 </el-checkbox>
               </div>
               <div class="skill-thumbnail">
-                <img :src="skill.image_url || '/static/logo.png'" class="thumbnail-img" alt="技能图标">
+                <img :src="skill.image_url || './static/logo.png'" class="thumbnail-img" alt="技能图标">
               </div>
               <div class="skill-info">
                 <h3 class="skill-title">{{ skill.name_zh }}</h3>
@@ -222,7 +222,7 @@
                 :on-change="handleImageChange"
               >
                 <img v-if="imageUrl" :src="imageUrl" class="avatar" alt="技能图标">
-                <img v-else :src="currentSkill.image_url || '/static/logo.png'" class="avatar" alt="技能图标">
+                <img v-else :src="currentSkill.image_url || './static/logo.png'" class="avatar" alt="技能图标">
                 <div class="upload-mask">
                   <i class="el-icon-plus"></i>
                   <span>更换图片</span>
@@ -378,7 +378,7 @@
         
         <div v-else>
           <div class="skill-header">
-            <img :src="currentSkill.image_url || '/static/logo.png'" alt="技能图标" class="skill-logo">
+            <img :src="currentSkill.image_url || './static/logo.png'" alt="技能图标" class="skill-logo">
             <div class="skill-title">
               <h2>{{ currentSkill.name_zh }}</h2>
               <div class="skill-subtitle">

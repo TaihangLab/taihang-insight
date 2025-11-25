@@ -144,7 +144,7 @@
               
               <!-- 技能图片 -->
               <div class="skill-image">
-                <img :src="skill.image_url || '/static/logo.png'" alt="技能图片" />
+                <img :src="skill.image_url || './static/logo.png'" alt="技能图片" />
               </div>
               
               <div class="card-header">

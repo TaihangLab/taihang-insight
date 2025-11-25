@@ -20,7 +20,7 @@ export function login(data) {
  */
 export function logout() {
   return request({
-    url: '/api/user/logout',
+    url: '/api/user/static/logout',
     method: 'post'
   })
 }

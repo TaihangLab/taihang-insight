@@ -2,8 +2,8 @@
   <div class="side-menu-container" :class="{ collapsed: isCollapsed }">
     <!-- Logo 区域 -->
     <div class="logo-section">
-      <img src="/static/logo.png" alt="Logo" class="logo-img" v-if="!isCollapsed"/>
-      <img src="/static/logo.png" alt="Logo" class="logo-img-small" v-else/>
+      <img src="../../static/logo.png" alt="Logo" class="logo-img" v-if="!isCollapsed"/>
+      <img src="../../static/logo.png" alt="Logo" class="logo-img-small" v-else/>
       <div class="logo-text-container" v-if="!isCollapsed">
         <div class="brand-row">
           <span class="brand-name-text">太行·慧眼</span>
