@@ -1440,7 +1440,7 @@ export default {
 .device-skills-container {
   padding: 20px;
   background-color: #f5f5f5;
-  height: calc(100vh - 100px);
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1616,10 +1616,10 @@ export default {
 }
 
 .skills-grid {
-  margin-bottom: 20px;
+  /* margin-bottom: 20px; */
   padding: 20px;
-  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  border-radius: 16px;
+  background: #ffffff;
+  /* border-radius: 16px; */
   flex: 1; /* 占据剩余空间 */
   overflow-y: auto; /* 添加垂直滚动条 */
   overflow-x: hidden; /* 隐藏水平滚动条 */

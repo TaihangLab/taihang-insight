@@ -1798,15 +1798,16 @@ export default {
 .multimodal-llm-skills {
   padding: 20px;
   background-color: #f5f5f5;
-  min-height: 90vh-10px;
+  width: 100%;
+  height: 100%;
 }
 
 .page-container {
-  background: white;
+  background: orange;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  height: calc(100vh - 100px);
+  height: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -2742,7 +2743,7 @@ export default {
   }
 
   .page-container {
-    height: calc(100vh - 20px);
+    height: 100%
   }
 
   .header-section {

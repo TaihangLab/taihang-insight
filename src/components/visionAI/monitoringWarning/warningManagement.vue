@@ -2765,7 +2765,7 @@ export default {
 
 <style scoped>
 .warning-management-container {
-  height: calc(100vh - 80px); /* 减去顶部导航栏高度，增加缓冲空间 */
+  height: 100%; /* 减去顶部导航栏高度，增加缓冲空间 */
   background: #fff;
   padding: 0;
   overflow: hidden; /* 防止出现外部滚动条 */
@@ -3366,7 +3366,7 @@ export default {
   }
   
   .warning-management-container {
-    height: calc(100vh - 80px) !important;
+    height: 100% !important;
   }
   
   /* 移动端调整卡片容器高度 */

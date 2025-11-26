@@ -784,7 +784,7 @@ export default {
 .local-video-container {
   padding: 20px;
   background: #f5f7fa;
-  min-height: calc(100vh - 60px);
+  height: 100%;
 }
 
 /* 页面标题 */
@@ -907,6 +907,7 @@ export default {
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
+  height: calc(100% - 330px);
 }
 
 .video-name-cell {

@@ -1088,7 +1088,7 @@ export default {
 }
 
 .visual-center {
-  height: calc(100vh - 60px);
+  height: 100%;
   background: linear-gradient(135deg, #001529 0%, #000B18 100%);
   color: #fff;
   padding: 16px;

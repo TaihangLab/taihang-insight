@@ -629,7 +629,7 @@ export default {
 .intelligent-review-container {
   padding: 20px;
   background-color: #f5f7fa;
-  min-height: calc(100vh - 60px);
+  height: 100%;
 }
 
 /* 页面头部 */

@@ -1288,7 +1288,7 @@ export default {
 
 <style scoped>
 .review-records-container {
-  height: calc(100vh - 60px);
+  height: 100%;
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
   padding: 12px;
   width: 100%;

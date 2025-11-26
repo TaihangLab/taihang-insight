@@ -2239,7 +2239,7 @@ export default {
 .page-container {
   padding: 0;
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  min-height: calc(100vh - 60px);
+  height: 100%;
   position: relative;
 }
 
@@ -2249,7 +2249,7 @@ export default {
   gap: 16px;
   padding: 16px;
   align-items: flex-start;
-  height: calc(100vh - 92px);
+  height: 100%;
 }
 
 /* 右侧容器包装器 */
@@ -2291,7 +2291,7 @@ export default {
 /* 表格区域 */
 .table-section {
   background: #fff;
-  border-radius: 16px;
+  /* border-radius: 16px; */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
   overflow: hidden;

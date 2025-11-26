@@ -1,13 +1,13 @@
 <template>
   <div class="layout-container">
     <!-- 左侧菜单 -->
-    <side-menu @collapse-change="handleCollapseChange" />
+    <side-menu v-show="fixSiderbar" @collapse-change="handleCollapseChange" />
 
     <!-- 右侧内容区域 -->
-    <div class="layout-main" :class="{ 'menu-collapsed': isMenuCollapsed }">
+    <div class="layout-main" :class="!fixSiderbar ? 'layout-collapsed' : ''">
       <!-- 顶部导航栏 -->
-      <el-header class="layout-header">
-        <ui-header/>
+      <el-header v-show="fixedHeader" class="layout-header">
+        <ui-header />
       </el-header>
 
       <!-- 主内容区 -->
@@ -31,19 +31,21 @@ export default {
   components: {
     SideMenu,
     uiHeader,
-    IntelligentAssistant
+    IntelligentAssistant,
   },
+  created() {},
   data() {
     return {
-      isMenuCollapsed: false
+      fixedHeader: false, // 固定 Header : boolean
+      fixSiderbar: true, // 固定左侧菜单栏 ： boolean
     };
   },
   methods: {
     handleCollapseChange(collapsed) {
-      this.isMenuCollapsed = collapsed;
-    }
-  }
-}
+      this.fixSiderbar = collapsed;
+    },
+  },
+};
 </script>
 <style scoped>
 /* 布局容器 */
@@ -66,8 +68,8 @@ export default {
   overflow: hidden;
 }
 
-.layout-main.menu-collapsed {
-  margin-left: var(--sidebar-collapsed-width);
+.layout-collapsed {
+  margin-left: 0;
 }
 
 /* 顶部导航栏 */

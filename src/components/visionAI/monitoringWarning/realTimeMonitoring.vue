@@ -3187,8 +3187,8 @@ export default {
 <style scoped>
 /* 实时监控容器 - 科技感蓝色风格 */
 .realtime-monitoring-container {
-  height: calc(100vh - 60px);
-  max-height: calc(100vh - 60px);
+  height: 100%;
+  max-height: 100%;
   background: #f5f5f5;
   padding: 0;
   overflow: hidden;
@@ -3196,8 +3196,8 @@ export default {
 
 /* 主容器 - 科技感设计 */
 .main-container {
-  height: calc(100vh - 60px);
-  max-height: calc(100vh - 60px);
+  height: 100%;
+  max-height: 100%;
   background: #f5f5f5;
   position: relative;
   padding: 16px;
@@ -3217,7 +3217,7 @@ export default {
   overflow: hidden;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
   border-radius: 16px;
-  margin-right: 16px;
+  /* margin-right: 16px; */
   z-index: 10;
   position: relative;
   display: flex;
@@ -3287,9 +3287,9 @@ export default {
 .custom-tree-container {
   flex: 1;
   overflow: auto;
-  height: calc(100% - 80px);
-  padding: 16px;
-  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
+  height: calc(100% - 40px);
+  padding: 16px 0;
+  background: #fff;
 }
 
 /* 覆盖树组件样式 */

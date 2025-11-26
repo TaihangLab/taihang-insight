@@ -9,7 +9,7 @@
   width: 180px;
   padding: 15px;
   border-right: 1px solid #dcdfe6;
-  height: calc(100vh - 60px);
+  height: 100%;
   box-sizing: border-box;
   background-color: #f5f7fa;
   overflow-y: auto;
@@ -3775,14 +3775,14 @@
 .page-container {
   padding: 16px;
   background: linear-gradient(to bottom, #fafbff 0%, #f0f4ff 100%);
-  min-height: calc(100vh - 60px);
+  height: 100%;
 }
 
 /* 摄像头管理容器 */
 .camera-management {
   display: flex;
   gap: 16px;
-  height: calc(100vh - 92px);
+  height: 100%;
 }
 
 /* 左侧分类卡片 */

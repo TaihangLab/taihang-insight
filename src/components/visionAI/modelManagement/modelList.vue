@@ -833,7 +833,7 @@ export default {
 .model-list {
   padding: 20px;
   background-color: #f5f5f5;
-  height: calc(100vh - 100px); /* 固定整体高度 */
+  height: 100%; /* 固定整体高度 */
   display: flex;
   flex-direction: column;
   overflow: hidden; /* 防止整体页面出现滚动条 */
@@ -1058,14 +1058,14 @@ export default {
 /* 表格容器样式 */
 .table-container {
   background: white;
-  border-radius: 16px;
+  /* border-radius: 16px; */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   /* margin-bottom: 20px; */
   border: 1px solid rgba(59, 130, 246, 0.1);
   overflow: hidden;
   flex: 1; /* 占据剩余空间 */
   min-height: 0; /* 确保flex子元素可以收缩 */
-  height: calc(100vh - 250px); /* 增加表格容器高度，与卡片高度保持一致 */
+  height: 100%; /* 增加表格容器高度，与卡片高度保持一致 */
   padding: 0; /* 移除内边距让表格贴合容器边缘 */
 }
 

@@ -361,8 +361,8 @@
   
   /* 页面容器 */
   .page-container {
-    padding: var(--spacing-lg);
-    min-height: calc(100vh - var(--header-height));
+    /* padding: var(--spacing-lg); */
+    /* min-height: calc(100vh - var(--header-height)); */
   }
   
   /* 页面标题 */

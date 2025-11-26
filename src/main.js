@@ -14,7 +14,6 @@ import VueClipboard from 'vue-clipboard2';
 import Fingerprint2 from 'fingerprintjs2';
 import VueClipboards from 'vue-clipboards';
 import Contextmenu from "vue-contextmenujs"
-import userService from "./components/service/UserService"
 
 Vue.config.productionTip = false;
 
