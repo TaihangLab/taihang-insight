@@ -3216,7 +3216,7 @@ export default {
   height: 100%;
   overflow: hidden;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
-  border-radius: 16px;
+  border-radius: 8px;
   /* margin-right: 16px; */
   z-index: 10;
   position: relative;
@@ -3240,7 +3240,7 @@ export default {
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
   min-height: 80px;
   flex-shrink: 0;
-  border-radius: 16px 16px 0 0;
+  border-radius: 8px 8px 0 0;
   position: relative;
   overflow: hidden;
   text-shadow: none;
@@ -3347,7 +3347,7 @@ export default {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   position: relative;
   margin: 0 16px;
-  border-radius: 16px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -3396,8 +3396,8 @@ export default {
 .warning-aside {
   width: 270px;
   flex: none;
-  height: calc(100vh - 120px);
-  max-height: calc(100vh - 120px);
+  height: 100%;
+  max-height: 100%;
   position: relative;
   overflow: hidden;
 }
@@ -3406,7 +3406,7 @@ export default {
   width: 100%;
   height: 100%;
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -3537,9 +3537,9 @@ export default {
   width: 100%;
   height: 100%;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  /* border-radius: 12px; */
+  /* box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); */
+  /* border: 1px solid rgba(59, 130, 246, 0.1); */
   padding: 16px;
   position: relative;
   display: grid;
@@ -3563,7 +3563,7 @@ export default {
   flex-wrap: wrap;
   gap: 0;
   padding: 2px;
-  background-color: #2c3e50;
+  /* background-color: #2c3e50; */
   width: 100%;
   height: 100%;
   box-sizing: border-box;
@@ -3857,7 +3857,8 @@ export default {
   padding: 12px;
   overflow-y: auto;
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  height: calc(100% - 60px);
+  max-height: calc(100% - 80px);
+  min-height: 200px;
 }
 
 /* 加载状态样式 */

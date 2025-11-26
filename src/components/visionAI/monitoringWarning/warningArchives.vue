@@ -2269,7 +2269,7 @@ export default {
   align-items: center;
   padding: 16px 20px;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(59, 130, 246, 0.1);
   margin-bottom: 16px;
@@ -2526,7 +2526,7 @@ export default {
 .detail-section {
   width: 330px;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);

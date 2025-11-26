@@ -2423,7 +2423,7 @@ export default {
 /* 处理进展时间线样式 */
 .process-timeline {
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid #ebeef5;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
   overflow: hidden;

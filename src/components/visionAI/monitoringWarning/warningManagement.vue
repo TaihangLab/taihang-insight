@@ -113,7 +113,7 @@ export default {
       
       // 分页相关
       currentPage: 1,
-      pageSize: 12,
+      pageSize: 10,
       totalCount: 0
     }
   },
@@ -207,7 +207,7 @@ export default {
           if (response.data.pagination) {
             this.totalCount = response.data.pagination.total || 0
             this.currentPage = response.data.pagination.page || 1
-            this.pageSize = response.data.pagination.limit || 12
+            this.pageSize = response.data.pagination.limit || 10
           } else {
             this.totalCount = response.data.total || 0
           }
@@ -2431,7 +2431,7 @@ export default {
           @size-change="handleSizeChange" 
           @current-change="handleCurrentChange" 
           :current-page="currentPage"
-          :page-sizes="[12, 24, 48, 96]" 
+          :page-sizes="[10, 20, 50, 100]" 
           :page-size="pageSize" 
           :total="totalCount"
           layout="total, sizes, prev, pager, next, jumper" 
@@ -2779,15 +2779,16 @@ export default {
   padding: 16px 16px 8px 16px; /* 减少底部内边距 */
   overflow: hidden; /* 防止内容区域产生滚动条 */
   box-sizing: border-box;
+  background: #f5f7fa;
 }
 
 /* 搜索和筛选区域 - 科技感样式 */
 .search-filter-area {
   background: #fff;
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 20px;
   margin-bottom: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(59, 130, 246, 0.1);
   position: relative;
   overflow: hidden;
@@ -2809,19 +2810,19 @@ export default {
 .select-wrapper,
 .input-wrapper {
   margin-right: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .date-picker-wrapper {
-  width: 340px;
+  width: 360px;
 }
 
 .select-wrapper {
-  width: 140px;
+  width: 160px;
 }
 
 .input-wrapper {
-  width: 140px;
+  width: 160px;
 }
 
 .filter-actions {
@@ -2914,12 +2915,12 @@ export default {
 /* 预警卡片样式 - 科技感设计 */
 .warning-cards-container {
   flex: 1;
-  height: calc(100vh - 200px); /* 进一步减少预留空间，让分页栏紧贴底部 */
+  height: calc(100vh - 240px); /* 优化空间分配 */
   overflow-y: auto;
   overflow-x: hidden;
-  /* padding: 20px; */
-  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  border-radius: 16px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 12px;
   margin: 1px;
   /* 自定义滚动条样式 - 灰色主题 */
   scrollbar-width: thin;
@@ -2948,32 +2949,30 @@ export default {
 }
 
 .warning-cards-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
-  margin: 0;
-  padding-bottom: 20px; /* 底部预留空间，避免最后一行卡片贴底 */
+  padding: 12px;
   min-height: 100%; /* 确保网格填满容器 */
   align-content: flex-start; /* 卡片从顶部开始排列 */
 }
 
 .warning-col {
-  width: calc(16.66% - 13.33px);
+  width: 100%;
   margin: 0;
 }
 
 .warning-card {
-  height: 370px;
+  height: 380px;
   background: white;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   margin-bottom: 0;
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
-  border: 1px solid #f3f4f6;
+  border: 1px solid #e5e7eb;
 }
 
 
@@ -2984,13 +2983,13 @@ export default {
 }
 
 .warning-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .warning-card.selected {
-  border: 1px solid #3b82f6;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+  border: 2px solid #3b82f6;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
 }
 
 .warning-card.selected .selection-overlay {
@@ -3183,11 +3182,12 @@ export default {
 
 /* 底部按钮样式 - 统一样式 */
 .action-btn {
-  padding: 6px 16px;
-  font-size: 12px;
-  border-radius: 16px;
-  transition: all 0.3s ease;
-  margin: 0 2px;
+  padding: 8px 18px;
+  font-size: 13px;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin: 0 3px;
+  font-weight: 500;
   font-weight: 500;
   border: 1px solid #dcdfe6;
   background: #ffffff;
@@ -3196,10 +3196,10 @@ export default {
 
 .action-btn:hover {
   background: #ecf5ff;
-  border-color: #409eff;
-  color: #409eff;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
 
@@ -3307,15 +3307,21 @@ export default {
 }
 
 /* 响应式调整 */
+@media (max-width: 1920px) {
+  .warning-cards-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
 @media (max-width: 1600px) {
-  .warning-col {
-    width: calc(20% - 12.8px);
+  .warning-cards-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
 @media (max-width: 1280px) {
-  .warning-col {
-    width: calc(25% - 12px);
+  .warning-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
   
   .date-picker-wrapper {
@@ -3326,7 +3332,7 @@ export default {
   .select-wrapper,
   .input-wrapper {
     width: calc(33.33% - 8px);
-    min-width: 120px;
+    min-width: 140px;
   }
   
   .filter-actions {
@@ -3346,7 +3352,7 @@ export default {
   
   /* 调整卡片容器高度以适应更大的搜索区域 */
   .warning-cards-container {
-    height: calc(100vh - 250px) !important;
+    height: calc(100vh - 260px) !important;
   }
   
   .search-filter-area {
@@ -3355,14 +3361,15 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .warning-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
   .select-wrapper,
   .input-wrapper {
     width: 100%;
     margin-right: 0;
-  }
-  
-  .warning-col {
-    width: calc(50% - 8px);
   }
   
   .warning-management-container {
@@ -3371,11 +3378,15 @@ export default {
   
   /* 移动端调整卡片容器高度 */
   .warning-cards-container {
-    height: calc(100vh - 300px) !important;
+    height: calc(100vh - 320px) !important;
   }
   
   .search-filter-area {
-    min-height: 160px !important;
+    min-height: 180px !important;
+  }
+  
+  .warning-card {
+    height: 360px;
   }
 }
 
@@ -3440,30 +3451,38 @@ export default {
   align-items: center;
   justify-content: center;
   height: 100%; /* 填满整个容器高度 */
-  padding: 40px 20px;
+  padding: 60px 20px;
   color: #909399;
   text-align: center;
   box-sizing: border-box;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 12px;
 }
 
 .no-data i {
-  font-size: 64px;
-  margin-bottom: 20px;
-  color: #dcdfe6;
-  opacity: 0.6;
+  font-size: 72px;
+  margin-bottom: 24px;
+  color: #d1d5db;
+  opacity: 0.7;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 0.4; }
 }
 
 .no-data p {
-  font-size: 16px;
-  margin: 0 0 8px 0;
-  color: #606266;
-  font-weight: 500;
+  font-size: 18px;
+  margin: 0 0 12px 0;
+  color: #4b5563;
+  font-weight: 600;
 }
 
 .no-data-tip {
-  font-size: 13px;
-  color: #909399;
-  opacity: 0.8;
+  font-size: 14px;
+  color: #9ca3af;
+  opacity: 0.9;
 }
 
 /* 对话框内容样式 */
@@ -3795,55 +3814,65 @@ export default {
 
 /* 输入框和选择框样式优化 */
 .warning-management-container >>> .el-input__inner {
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
-  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #fafafa;
 }
 
 .warning-management-container >>> .el-input__inner:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .warning-management-container >>> .el-select .el-input__inner {
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
 }
 
 .warning-management-container >>> .el-select .el-input__inner:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .warning-management-container >>> .el-date-editor.el-input {
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .warning-management-container >>> .el-date-editor .el-input__inner {
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
 }
 
 .warning-management-container >>> .el-date-editor .el-input__inner:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* 分页样式 - 参照multimodalLlmSkills.vue */
+/* 分页样式 - 优化设计 */
 .pagination-section {
   display: flex;
   justify-content: center;
+  align-items: center;
   background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  margin-top: 12px !important;
+  padding: 16px 0 !important;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .pagination-section >>> .el-pagination .el-pager li.active {
-  background: #3b82f6 !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
   border-color: #3b82f6 !important;
   color: white !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transform: scale(1.05);
 }
 
 /* 覆盖Element UI分页组件样式 */
