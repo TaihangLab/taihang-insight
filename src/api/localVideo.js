@@ -12,7 +12,7 @@ import apiConfig from '../config/api.js'
  */
 export function getLocalVideoList(params) {
   return request({
-    url: '/api/v1/local-videos/list',
+    url: '/prod-api/smart-engine/api/v1/local-videos/list',
     method: 'get',
     params: params,
     baseURL: apiConfig.API_BASE_URL
@@ -27,7 +27,7 @@ export function getLocalVideoList(params) {
  */
 export function uploadLocalVideo(formData, onUploadProgress) {
   return request({
-    url: '/api/v1/local-videos/upload',
+    url: '/prod-api/smart-engine/api/v1/local-videos/upload',
     method: 'post',
     data: formData,
     baseURL: apiConfig.API_BASE_URL,
@@ -50,7 +50,7 @@ export function uploadLocalVideo(formData, onUploadProgress) {
  */
 export function updateLocalVideo(videoId, data) {
   return request({
-    url: `/api/v1/local-videos/${videoId}`,
+    url: `/prod-api/smart-engine/api/v1/local-videos/${videoId}`,
     method: 'put',
     data: data,
     baseURL: apiConfig.API_BASE_URL
@@ -64,7 +64,7 @@ export function updateLocalVideo(videoId, data) {
  */
 export function deleteLocalVideo(videoId) {
   return request({
-    url: `/api/v1/local-videos/${videoId}`,
+    url: `/prod-api/smart-engine/api/v1/local-videos/${videoId}`,
     method: 'delete',
     baseURL: apiConfig.API_BASE_URL
   })
@@ -80,7 +80,7 @@ export function deleteLocalVideo(videoId) {
  */
 export function startVideoStream(videoId, data) {
   return request({
-    url: `/api/v1/local-videos/${videoId}/start-stream`,
+    url: `/prod-api/smart-engine/api/v1/local-videos/${videoId}/start-stream`,
     method: 'post',
     data: data,
     baseURL: apiConfig.API_BASE_URL
@@ -94,7 +94,7 @@ export function startVideoStream(videoId, data) {
  */
 export function stopVideoStream(videoId) {
   return request({
-    url: `/api/v1/local-videos/${videoId}/stop-stream`,
+    url: `/prod-api/smart-engine/api/v1/local-videos/${videoId}/stop-stream`,
     method: 'post',
     baseURL: apiConfig.API_BASE_URL
   })
@@ -107,7 +107,7 @@ export function stopVideoStream(videoId) {
  */
 export function getVideoStreamStatus(videoId) {
   return request({
-    url: `/api/v1/local-videos/${videoId}/stream-status`,
+    url: `/prod-api/smart-engine/api/v1/local-videos/${videoId}/stream-status`,
     method: 'get',
     baseURL: apiConfig.API_BASE_URL
   })

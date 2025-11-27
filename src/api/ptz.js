@@ -11,7 +11,7 @@ import request from '@/utils/request'
  */
 export function ptzControl(deviceId, channelId, params) {
   return request({
-    url: `/api/ptz/control/${deviceId}/${channelId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/control/${deviceId}/${channelId}`,
     method: 'get',
     params: params
   })
@@ -29,7 +29,7 @@ export function ptzControl(deviceId, channelId, params) {
  */
 export function frontEndPtzControl(deviceId, channelId, params) {
   return request({
-    url: `/api/front-end/ptz/${deviceId}/${channelId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/ptz/${deviceId}/${channelId}`,
     method: 'get',
     params: params
   })
@@ -45,7 +45,7 @@ export function frontEndPtzControl(deviceId, channelId, params) {
  */
 export function irisControl(deviceId, channelId, params) {
   return request({
-    url: `/api/front-end/fi/iris/${deviceId}/${channelId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/fi/iris/${deviceId}/${channelId}`,
     method: 'get',
     params: params
   })
@@ -61,7 +61,7 @@ export function irisControl(deviceId, channelId, params) {
  */
 export function focusControl(deviceId, channelId, params) {
   return request({
-    url: `/api/front-end/fi/focus/${deviceId}/${channelId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/fi/focus/${deviceId}/${channelId}`,
     method: 'get',
     params: params
   })
@@ -74,7 +74,7 @@ export function focusControl(deviceId, channelId, params) {
  */
 export function getPresetList(deviceId, channelId) {
   return request({
-    url: `/api/ptz/preset/query/${deviceId}/${channelId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/preset/query/${deviceId}/${channelId}`,
     method: 'get'
   })
 }
@@ -86,7 +86,7 @@ export function getPresetList(deviceId, channelId) {
  */
 export function getFrontEndPresetList(deviceId, channelDeviceId) {
   return request({
-    url: `/api/front-end/preset/query/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/preset/query/${deviceId}/${channelDeviceId}`,
     method: 'get'
   })
 }
@@ -99,7 +99,7 @@ export function getFrontEndPresetList(deviceId, channelDeviceId) {
  */
 export function addPreset(deviceId, channelId, data) {
   return request({
-    url: `/api/ptz/preset/add/${deviceId}/${channelId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/preset/add/${deviceId}/${channelId}`,
     method: 'post',
     data: data
   })
@@ -113,7 +113,7 @@ export function addPreset(deviceId, channelId, data) {
  */
 export function deletePreset(deviceId, channelId, presetId) {
   return request({
-    url: `/api/ptz/preset/del/${deviceId}/${channelId}/${presetId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/preset/del/${deviceId}/${channelId}/${presetId}`,
     method: 'delete'
   })
 }
@@ -126,7 +126,7 @@ export function deletePreset(deviceId, channelId, presetId) {
  */
 export function callPreset(deviceId, channelId, presetId) {
   return request({
-    url: `/api/ptz/preset/goto/${deviceId}/${channelId}/${presetId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/preset/goto/${deviceId}/${channelId}/${presetId}`,
     method: 'get'
   })
 }
@@ -138,7 +138,7 @@ export function callPreset(deviceId, channelId, presetId) {
  */
 export function getCruiseList(deviceId, channelId) {
   return request({
-    url: `/api/ptz/cruise/query/${deviceId}/${channelId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/cruise/query/${deviceId}/${channelId}`,
     method: 'get'
   })
 }
@@ -151,7 +151,7 @@ export function getCruiseList(deviceId, channelId) {
  */
 export function addCruise(deviceId, channelId, data) {
   return request({
-    url: `/api/ptz/cruise/add/${deviceId}/${channelId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/cruise/add/${deviceId}/${channelId}`,
     method: 'post',
     data: data
   })
@@ -165,7 +165,7 @@ export function addCruise(deviceId, channelId, data) {
  */
 export function deleteCruise(deviceId, channelId, cruiseId) {
   return request({
-    url: `/api/ptz/cruise/del/${deviceId}/${channelId}/${cruiseId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/cruise/del/${deviceId}/${channelId}/${cruiseId}`,
     method: 'delete'
   })
 }
@@ -178,7 +178,7 @@ export function deleteCruise(deviceId, channelId, cruiseId) {
  */
 export function startCruise(deviceId, channelId, cruiseId) {
   return request({
-    url: `/api/ptz/cruise/start/${deviceId}/${channelId}/${cruiseId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/cruise/start/${deviceId}/${channelId}/${cruiseId}`,
     method: 'get'
   })
 }
@@ -191,7 +191,7 @@ export function startCruise(deviceId, channelId, cruiseId) {
  */
 export function stopCruise(deviceId, channelId, cruiseId) {
   return request({
-    url: `/api/ptz/cruise/stop/${deviceId}/${channelId}/${cruiseId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/cruise/stop/${deviceId}/${channelId}/${cruiseId}`,
     method: 'get'
   })
 }
@@ -203,7 +203,7 @@ export function stopCruise(deviceId, channelId, cruiseId) {
  */
 export function getScanConfig(deviceId, channelId) {
   return request({
-    url: `/api/ptz/scan/query/${deviceId}/${channelId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/scan/query/${deviceId}/${channelId}`,
     method: 'get'
   })
 }
@@ -215,7 +215,7 @@ export function getScanConfig(deviceId, channelId) {
  */
 export function startScan(deviceId, channelId) {
   return request({
-    url: `/api/ptz/scan/start/${deviceId}/${channelId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/scan/start/${deviceId}/${channelId}`,
     method: 'get'
   })
 }
@@ -227,7 +227,7 @@ export function startScan(deviceId, channelId) {
  */
 export function stopScan(deviceId, channelId) {
   return request({
-    url: `/api/ptz/scan/stop/${deviceId}/${channelId}`,
+    url: `/prod-api/smart-engine/api/v1/ptz/scan/stop/${deviceId}/${channelId}`,
     method: 'get'
   })
 }
@@ -242,7 +242,7 @@ export function stopScan(deviceId, channelId) {
  */
 export function addCruisePoint(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/cruise/point/add/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/cruise/point/add/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -258,7 +258,7 @@ export function addCruisePoint(deviceId, channelDeviceId, params) {
  */
 export function deleteCruisePoint(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/cruise/point/delete/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/cruise/point/delete/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -274,7 +274,7 @@ export function deleteCruisePoint(deviceId, channelDeviceId, params) {
  */
 export function setCruiseSpeed(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/cruise/speed/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/cruise/speed/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -290,7 +290,7 @@ export function setCruiseSpeed(deviceId, channelDeviceId, params) {
  */
 export function setCruiseTime(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/cruise/time/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/cruise/time/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -305,7 +305,7 @@ export function setCruiseTime(deviceId, channelDeviceId, params) {
  */
 export function startFrontEndCruise(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/cruise/start/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/cruise/start/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -320,7 +320,7 @@ export function startFrontEndCruise(deviceId, channelDeviceId, params) {
  */
 export function stopFrontEndCruise(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/cruise/stop/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/cruise/stop/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -337,7 +337,7 @@ export function stopFrontEndCruise(deviceId, channelDeviceId, params) {
  */
 export function addFrontEndPreset(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/preset/add/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/preset/add/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -352,7 +352,7 @@ export function addFrontEndPreset(deviceId, channelDeviceId, params) {
  */
 export function callFrontEndPreset(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/preset/call/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/preset/call/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -367,7 +367,7 @@ export function callFrontEndPreset(deviceId, channelDeviceId, params) {
  */
 export function deleteFrontEndPreset(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/preset/delete/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/preset/delete/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -384,7 +384,7 @@ export function deleteFrontEndPreset(deviceId, channelDeviceId, params) {
  */
 export function setScanLeft(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/scan/set/left/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/scan/set/left/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -399,7 +399,7 @@ export function setScanLeft(deviceId, channelDeviceId, params) {
  */
 export function setScanRight(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/scan/set/right/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/scan/set/right/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -415,7 +415,7 @@ export function setScanRight(deviceId, channelDeviceId, params) {
  */
 export function setScanSpeed(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/scan/set/speed/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/scan/set/speed/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -430,7 +430,7 @@ export function setScanSpeed(deviceId, channelDeviceId, params) {
  */
 export function startFrontEndScan(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/scan/start/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/scan/start/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -445,7 +445,7 @@ export function startFrontEndScan(deviceId, channelDeviceId, params) {
  */
 export function stopFrontEndScan(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/scan/stop/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/scan/stop/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -462,7 +462,7 @@ export function stopFrontEndScan(deviceId, channelDeviceId, params) {
  */
 export function controlWiper(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/wiper/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/wiper/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })
@@ -480,7 +480,7 @@ export function controlWiper(deviceId, channelDeviceId, params) {
  */
 export function controlAuxiliary(deviceId, channelDeviceId, params) {
   return request({
-    url: `/api/front-end/auxiliary/${deviceId}/${channelDeviceId}`,
+    url: `/prod-api/smart-engine/api/v1/front-end/auxiliary/${deviceId}/${channelDeviceId}`,
     method: 'get',
     params: params
   })

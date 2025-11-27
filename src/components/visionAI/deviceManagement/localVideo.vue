@@ -428,7 +428,7 @@ export default {
         }
         
          const response = await localVideoAxios.get(
-           '/api/v1/local-videos/list',
+           '/prod-api/smart-engine/api/v1/local-videos/list',
            { params }
          );
         
@@ -451,7 +451,7 @@ export default {
          if (video.is_streaming) {
            try {
              const response = await localVideoAxios.get(
-               `/api/v1/local-videos/${video.id}/stream-status`
+               `/prod-api/smart-engine/api/v1/local-videos/${video.id}/stream-status`
              );
              if (response.data) {
                // 使用 $set 确保Vue能追踪新属性的变化
@@ -473,7 +473,7 @@ export default {
        for (const video of streamingVideos) {
          try {
            const response = await localVideoAxios.get(
-             `/api/v1/local-videos/${video.id}/stream-status`
+             `/prod-api/smart-engine/api/v1/local-videos/${video.id}/stream-status`
            );
            if (response.data) {
              // 使用 $set 确保Vue能追踪新属性的变化
@@ -547,7 +547,7 @@ export default {
           
           try {
              await localVideoAxios.post(
-               '/api/v1/local-videos/upload',
+               '/prod-api/smart-engine/api/v1/local-videos/upload',
                formData,
                {
                  headers: {
@@ -609,7 +609,7 @@ export default {
             }
             
              await localVideoAxios.put(
-               `/api/v1/local-videos/${this.currentVideo.id}`,
+               `/prod-api/smart-engine/api/v1/local-videos/${this.currentVideo.id}`,
                updateData
              );
             
@@ -655,7 +655,7 @@ export default {
         }
         
          const response = await localVideoAxios.post(
-           `/api/v1/local-videos/${this.currentVideo.id}/start-stream`,
+           `/prod-api/smart-engine/api/v1/local-videos/${this.currentVideo.id}/start-stream`,
            payload
          );
         
@@ -689,7 +689,7 @@ export default {
       }).then(async () => {
         try {
            await localVideoAxios.post(
-             `/api/v1/local-videos/${video.id}/stop-stream`
+             `/prod-api/smart-engine/api/v1/local-videos/${video.id}/stop-stream`
            );
           
            this.$message.success('推流已停止');
@@ -714,7 +714,7 @@ export default {
       }).then(async () => {
         try {
            await localVideoAxios.delete(
-             `/api/v1/local-videos/${video.id}`
+             `/prod-api/smart-engine/api/v1/local-videos/${video.id}`
            );
           
            this.$message.success('视频已删除');

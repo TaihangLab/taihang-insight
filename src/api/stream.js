@@ -9,7 +9,7 @@ import request from '@/utils/request'
  */
 export function getPushStreamList(params) {
   return request({
-    url: '/api/push/list',
+    url: '/prod-api/smart-engine/api/v1/push/list',
     method: 'get',
     params: params
   })
@@ -21,7 +21,7 @@ export function getPushStreamList(params) {
  */
 export function addPushStream(data) {
   return request({
-    url: '/api/push/add',
+    url: '/prod-api/smart-engine/api/v1/push/add',
     method: 'post',
     data: data
   })
@@ -33,7 +33,7 @@ export function addPushStream(data) {
  */
 export function updatePushStream(data) {
   return request({
-    url: '/api/push/update',
+    url: '/prod-api/smart-engine/api/v1/push/update',
     method: 'post',
     data: data
   })
@@ -46,7 +46,7 @@ export function updatePushStream(data) {
  */
 export function deletePushStream(app, stream) {
   return request({
-    url: '/api/push/delete',
+    url: '/prod-api/smart-engine/api/v1/push/delete',
     method: 'delete',
     params: { app, stream }
   })
@@ -58,7 +58,7 @@ export function deletePushStream(app, stream) {
  */
 export function getStreamProxyList(params) {
   return request({
-    url: '/api/proxy/list',
+    url: '/prod-api/smart-engine/api/v1/proxy/list',
     method: 'get',
     params: params
   })
@@ -70,7 +70,7 @@ export function getStreamProxyList(params) {
  */
 export function addStreamProxy(data) {
   return request({
-    url: '/api/proxy/save',
+    url: '/prod-api/smart-engine/api/v1/proxy/save',
     method: 'post',
     data: data
   })
@@ -82,7 +82,7 @@ export function addStreamProxy(data) {
  */
 export function updateStreamProxy(data) {
   return request({
-    url: '/api/proxy/save',
+    url: '/prod-api/smart-engine/api/v1/proxy/save',
     method: 'post',
     data: data
   })
@@ -95,7 +95,7 @@ export function updateStreamProxy(data) {
  */
 export function deleteStreamProxy(app, stream) {
   return request({
-    url: '/api/proxy/del',
+    url: '/prod-api/smart-engine/api/v1/proxy/del',
     method: 'delete',
     params: { app, stream }
   })
@@ -108,7 +108,7 @@ export function deleteStreamProxy(app, stream) {
  */
 export function enableStreamProxy(app, stream) {
   return request({
-    url: '/api/proxy/start',
+    url: '/prod-api/smart-engine/api/v1/proxy/start',
     method: 'get',
     params: { app, stream }
   })
@@ -121,7 +121,7 @@ export function enableStreamProxy(app, stream) {
  */
 export function disableStreamProxy(app, stream) {
   return request({
-    url: '/api/proxy/stop',
+    url: '/prod-api/smart-engine/api/v1/proxy/stop',
     method: 'get',
     params: { app, stream }
   })
@@ -134,7 +134,7 @@ export function disableStreamProxy(app, stream) {
  */
 export function startPushStream(id) {
   return request({
-    url: '/api/push/start',
+    url: '/prod-api/smart-engine/api/v1/push/start',
     method: 'get',
     params: { id }
   })
@@ -147,7 +147,7 @@ export function startPushStream(id) {
  */
 export function stopPushStream(id) {
   return request({
-    url: '/api/push/stop',
+    url: '/prod-api/smart-engine/api/v1/push/stop',
     method: 'get',
     params: { id }
   })
@@ -161,7 +161,7 @@ export function stopPushStream(id) {
  */
 export function removePushStream(id, mediaServerId) {
   return request({
-    url: '/api/push/remove',
+    url: '/prod-api/smart-engine/api/v1/push/remove',
     method: 'delete',
     params: { id, mediaServerId }
   })
@@ -175,7 +175,7 @@ export function removePushStream(id, mediaServerId) {
  */
 export function batchRemovePushStream(ids, mediaServerId) {
   return request({
-    url: '/api/push/batchRemove',
+    url: '/prod-api/smart-engine/api/v1/push/batchRemove',
     method: 'post',
     data: { ids, mediaServerId }
   })
@@ -189,7 +189,7 @@ export function batchRemovePushStream(ids, mediaServerId) {
  */
 export function deleteStreamProxyById(id, mediaServerId) {
   return request({
-    url: '/api/proxy/delete',
+    url: '/prod-api/smart-engine/api/v1/proxy/delete',
     method: 'delete',
     params: { id, mediaServerId }
   })
@@ -203,7 +203,7 @@ export function deleteStreamProxyById(id, mediaServerId) {
  */
 export function batchRemoveStreamProxy(ids, mediaServerId) {
   return request({
-    url: '/api/proxy/batchRemove',
+    url: '/prod-api/smart-engine/api/v1/proxy/batchRemove',
     method: 'post',
     data: { ids, mediaServerId }
   })
@@ -217,7 +217,7 @@ export function batchRemoveStreamProxy(ids, mediaServerId) {
  */
 export function startStreamProxyById(id, mediaServerId) {
   return request({
-    url: '/api/proxy/start',
+    url: '/prod-api/smart-engine/api/v1/proxy/start',
     method: 'get',
     params: { id, mediaServerId }
   })
@@ -231,7 +231,7 @@ export function startStreamProxyById(id, mediaServerId) {
  */
 export function stopStreamProxyById(id, mediaServerId) {
   return request({
-    url: '/api/proxy/stop',
+    url: '/prod-api/smart-engine/api/v1/proxy/stop',
     method: 'get',
     params: { id, mediaServerId }
   })

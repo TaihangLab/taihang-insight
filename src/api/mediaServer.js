@@ -9,7 +9,7 @@ import request from '@/utils/request'
  */
 export function getMediaServerList(params) {
   return request({
-    url: '/api/server/media_server/list',
+    url: '/prod-api/smart-engine/api/v1/server/media_server/list',
     method: 'get',
     params: params
   })
@@ -21,7 +21,7 @@ export function getMediaServerList(params) {
  */
 export function getMediaServerInfo(id) {
   return request({
-    url: `/api/server/media_server/one/${id}`,
+    url: `/prod-api/smart-engine/api/v1/server/media_server/one/${id}`,
     method: 'get'
   })
 }
@@ -32,7 +32,7 @@ export function getMediaServerInfo(id) {
  */
 export function addMediaServer(data) {
   return request({
-    url: '/api/server/media_server/add',
+    url: '/prod-api/smart-engine/api/v1/server/media_server/add',
     method: 'post',
     data: data
   })
@@ -44,7 +44,7 @@ export function addMediaServer(data) {
  */
 export function updateMediaServer(data) {
   return request({
-    url: '/api/server/media_server/update',
+    url: '/prod-api/smart-engine/api/v1/server/media_server/update',
     method: 'post',
     data: data
   })
@@ -56,7 +56,7 @@ export function updateMediaServer(data) {
  */
 export function deleteMediaServer(id) {
   return request({
-    url: `/api/server/media_server/delete/${id}`,
+    url: `/prod-api/smart-engine/api/v1/server/media_server/delete/${id}`,
     method: 'delete'
   })
 }
@@ -67,7 +67,7 @@ export function deleteMediaServer(id) {
  */
 export function testMediaServer(id) {
   return request({
-    url: `/api/server/media_server/test/${id}`,
+    url: `/prod-api/smart-engine/api/v1/server/media_server/test/${id}`,
     method: 'get'
   })
 }
@@ -77,7 +77,7 @@ export function testMediaServer(id) {
  */
 export function getOnlineMediaServers() {
   return request({
-    url: '/api/server/media_server/online',
+    url: '/prod-api/smart-engine/api/v1/server/media_server/online',
     method: 'get'
   })
 }
@@ -87,7 +87,7 @@ export function getOnlineMediaServers() {
  */
 export function getOnlineMediaServerList() {
   return request({
-    url: '/api/server/media_server/online/list',
+    url: '/prod-api/smart-engine/api/v1/server/media_server/online/list',
     method: 'get'
   })
 }
@@ -98,7 +98,7 @@ export function getOnlineMediaServerList() {
  */
 export function checkMediaServer(params) {
   return request({
-    url: '/api/server/media_server/check',
+    url: '/prod-api/smart-engine/api/v1/server/media_server/check',
     method: 'get',
     params: {
       ip: params.ip,
@@ -115,7 +115,7 @@ export function checkMediaServer(params) {
  */
 export function checkRecordServer(params) {
   return request({
-    url: '/api/server/media_server/record/check',
+    url: '/prod-api/smart-engine/api/v1/server/media_server/record/check',
     method: 'get',
     params: {
       ip: params.ip,
@@ -130,7 +130,7 @@ export function checkRecordServer(params) {
  */
 export function saveMediaServer(data) {
   return request({
-    url: '/api/server/media_server/save',
+    url: '/prod-api/smart-engine/api/v1/server/media_server/save',
     method: 'post',
     data: data
   })
@@ -142,7 +142,7 @@ export function saveMediaServer(data) {
  */
 export function deleteMediaServerByParams(id) {
   return request({
-    url: '/api/server/media_server/delete',
+    url: '/prod-api/smart-engine/api/v1/server/media_server/delete',
     method: 'delete',
     params: { id }
   })
@@ -157,7 +157,7 @@ export function deleteMediaServerByParams(id) {
  */
 export function getMediaInfo(params) {
   return request({
-    url: '/api/server/media_server/media_info',
+    url: '/prod-api/smart-engine/api/v1/server/media_server/media_info',
     method: 'get',
     params: params
   })

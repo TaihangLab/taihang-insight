@@ -9,7 +9,7 @@ import request from '@/utils/request'
  */
 export function getDeviceList(params) {
   return request({
-    url: '/api/device/query/devices',
+    url: '/prod-api/smart-engine/api/v1/device/query/devices',
     method: 'get',
     params: params
   })
@@ -21,7 +21,7 @@ export function getDeviceList(params) {
  */
 export function getDeviceInfo(deviceId) {
   return request({
-    url: `/api/device/query/devices/${deviceId}`,
+    url: `/prod-api/smart-engine/api/v1/device/query/devices/${deviceId}`,
     method: 'get'
   })
 }
@@ -32,7 +32,7 @@ export function getDeviceInfo(deviceId) {
  */
 export function addDevice(data) {
   return request({
-    url: '/api/device/add',
+    url: '/prod-api/smart-engine/api/v1/device/add',
     method: 'post',
     data: data
   })
@@ -44,7 +44,7 @@ export function addDevice(data) {
  */
 export function updateDevice(data) {
   return request({
-    url: '/api/device/update',
+    url: '/prod-api/smart-engine/api/v1/device/update',
     method: 'post',
     data: data
   })
@@ -56,7 +56,7 @@ export function updateDevice(data) {
  */
 export function deleteDevice(deviceId) {
   return request({
-    url: `/api/device/delete/${deviceId}`,
+    url: `/prod-api/smart-engine/api/v1/device/delete/${deviceId}`,
     method: 'delete'
   })
 }
@@ -68,7 +68,7 @@ export function deleteDevice(deviceId) {
  */
 export function getDeviceTree(deviceId, params) {
   return request({
-    url: `/api/device/query/tree/${deviceId}`,
+    url: `/prod-api/smart-engine/api/v1/device/query/tree/${deviceId}`,
     method: 'get',
     params: params
   })
@@ -80,7 +80,7 @@ export function getDeviceTree(deviceId, params) {
  */
 export function syncDeviceChannels(deviceId) {
   return request({
-    url: `/api/device/query/devices/${deviceId}/sync`,
+    url: `/prod-api/smart-engine/api/v1/device/query/devices/${deviceId}/sync`,
     method: 'post'
   })
 }
@@ -91,7 +91,7 @@ export function syncDeviceChannels(deviceId) {
  */
 export function refreshDevice(deviceId) {
   return request({
-    url: `/api/device/query/devices/${deviceId}/status`,
+    url: `/prod-api/smart-engine/api/v1/device/query/devices/${deviceId}/status`,
     method: 'get'
   })
 }
@@ -103,7 +103,7 @@ export function refreshDevice(deviceId) {
  */
 export function subscribeCatalog(deviceId) {
   return request({
-    url: '/api/device/query/subscribe/catalog',
+    url: '/prod-api/smart-engine/api/v1/device/query/subscribe/catalog',
     method: 'get',
     params: { id: deviceId }
   })
@@ -118,7 +118,7 @@ export function subscribeCatalog(deviceId) {
  */
 export function subscribeMobilePosition(deviceId, expires, interval) {
   return request({
-    url: '/api/device/query/subscribe/mobile-position',
+    url: '/prod-api/smart-engine/api/v1/device/query/subscribe/mobile-position',
     method: 'get',
     params: { 
       id: deviceId,
@@ -136,7 +136,7 @@ export function subscribeMobilePosition(deviceId, expires, interval) {
  */
 export function subscribeAlarm(deviceId, expires) {
   return request({
-    url: '/api/device/query/subscribe/alarm',
+    url: '/prod-api/smart-engine/api/v1/device/query/subscribe/alarm',
     method: 'get',
     params: { 
       id: deviceId,
@@ -151,7 +151,7 @@ export function subscribeAlarm(deviceId, expires) {
  */
 export function addGBDevice(data) {
   return request({
-    url: '/api/device/query/devices/add',
+    url: '/prod-api/smart-engine/api/v1/device/query/devices/add',
     method: 'post',
     data: data
   })
@@ -164,7 +164,7 @@ export function addGBDevice(data) {
  */
 export function updateGBDevice(deviceId, data) {
   return request({
-    url: `/api/device/query/devices/${deviceId}/edit`,
+    url: `/prod-api/smart-engine/api/v1/device/query/devices/${deviceId}/edit`,
     method: 'put',
     data: data
   })
@@ -179,7 +179,7 @@ export function updateGBDevice(deviceId, data) {
  */
 export function controlRecord(params) {
   return request({
-    url: '/api/device/control/record',
+    url: '/prod-api/smart-engine/api/v1/device/control/record',
     method: 'get',
     params: params
   })
@@ -192,7 +192,7 @@ export function controlRecord(params) {
  */
 export function getDeviceSnap(deviceId, channelId) {
   return request({
-    url: `/api/device/query/snap/${deviceId}/${channelId}`,
+    url: `/prod-api/smart-engine/api/v1/device/query/snap/${deviceId}/${channelId}`,
     method: 'get',
     responseType: 'blob'
   })

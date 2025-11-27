@@ -9,7 +9,7 @@ import request from '@/utils/request'
  */
 export function getChannelInfo(id) {
   return request({
-    url: '/api/common/channel/one',
+    url: '/prod-api/smart-engine/api/v1/common/channel/one',
     method: 'get',
     params: { id }
   })
@@ -21,7 +21,7 @@ export function getChannelInfo(id) {
  */
 export function addChannel(data) {
   return request({
-    url: '/api/common/channel/add',
+    url: '/prod-api/smart-engine/api/v1/common/channel/add',
     method: 'post',
     data: data
   })
@@ -33,7 +33,7 @@ export function addChannel(data) {
  */
 export function updateChannel(data) {
   return request({
-    url: '/api/common/channel/update',
+    url: '/prod-api/smart-engine/api/v1/common/channel/update',
     method: 'post',
     data: data
   })
@@ -45,7 +45,7 @@ export function updateChannel(data) {
  */
 export function resetChannel(id) {
   return request({
-    url: '/api/common/channel/reset',
+    url: '/prod-api/smart-engine/api/v1/common/channel/reset',
     method: 'post',
     params: { id }
   })
@@ -57,7 +57,7 @@ export function resetChannel(id) {
  */
 export function deleteChannel(id) {
   return request({
-    url: '/api/common/channel/delete',
+    url: '/prod-api/smart-engine/api/v1/common/channel/delete',
     method: 'post',
     params: { id }
   })
@@ -70,7 +70,7 @@ export function deleteChannel(id) {
  */
 export function getDeviceChannels(deviceId, params) {
   return request({
-    url: `/api/device/query/devices/${deviceId}/channels`,
+    url: `/prod-api/smart-engine/api/v1/device/query/devices/${deviceId}/channels`,
     method: 'get',
     params: params
   })
@@ -84,7 +84,7 @@ export function getDeviceChannels(deviceId, params) {
  */
 export function getSubChannels(deviceId, channelId, params) {
   return request({
-    url: `/api/device/query/sub_channels/${deviceId}/${channelId}/channels`,
+    url: `/prod-api/smart-engine/api/v1/device/query/sub_channels/${deviceId}/${channelId}/channels`,
     method: 'get',
     params: params
   })
@@ -96,7 +96,7 @@ export function getSubChannels(deviceId, channelId, params) {
  */
 export function getChannelRawData(id) {
   return request({
-    url: '/api/device/query/channel/raw',
+    url: '/prod-api/smart-engine/api/v1/device/query/channel/raw',
     method: 'get',
     params: { id }
   })
@@ -108,7 +108,7 @@ export function getChannelRawData(id) {
  */
 export function getChannelPlayUrl(channelId) {
   return request({
-    url: '/api/common/channel/play',
+    url: '/prod-api/smart-engine/api/v1/common/channel/play',
     method: 'get',
     params: { channelId }
   })
@@ -120,7 +120,7 @@ export function getChannelPlayUrl(channelId) {
  */
 export function stopChannelPlay(channelId) {
   return request({
-    url: '/api/common/channel/stop',
+    url: '/prod-api/smart-engine/api/v1/common/channel/stop',
     method: 'get',
     params: { channelId }
   })
@@ -132,7 +132,7 @@ export function stopChannelPlay(channelId) {
  */
 export function getChannelList(params) {
   return request({
-    url: '/api/common/channel/list',
+    url: '/prod-api/smart-engine/api/v1/common/channel/list',
     method: 'get',
     params: params
   })
@@ -144,7 +144,7 @@ export function getChannelList(params) {
  */
 export function getChannelSnap(channelId) {
   return request({
-    url: '/api/common/channel/snap/stream',
+    url: '/prod-api/smart-engine/api/v1/common/channel/snap/stream',
     method: 'get',
     params: { channelId },
     responseType: 'blob',
@@ -160,7 +160,7 @@ export function getChannelSnap(channelId) {
  */
 export function updateChannelAudio(params) {
   return request({
-    url: '/api/device/query/channel/audio',
+    url: '/prod-api/smart-engine/api/v1/device/query/channel/audio',
     method: 'post',
     params: params
   })
@@ -175,7 +175,7 @@ export function updateChannelAudio(params) {
  */
 export function updateChannelStreamIdentification(params) {
   return request({
-    url: '/api/device/query/channel/stream/identification/update/',
+    url: '/prod-api/smart-engine/api/v1/device/query/channel/stream/identification/update/',
     method: 'post',
     params: params
   })
@@ -186,7 +186,7 @@ export function updateChannelStreamIdentification(params) {
  */
 export function getIndustryCodeList() {
   return request({
-    url: '/api/common/channel/industry/list',
+    url: '/prod-api/smart-engine/api/v1/common/channel/industry/list',
     method: 'get'
   })
 }
@@ -196,7 +196,7 @@ export function getIndustryCodeList() {
  */
 export function getDeviceTypeList() {
   return request({
-    url: '/api/common/channel/type/list',
+    url: '/prod-api/smart-engine/api/v1/common/channel/type/list',
     method: 'get'
   })
 }
@@ -206,7 +206,7 @@ export function getDeviceTypeList() {
  */
 export function getNetworkIdentificationList() {
   return request({
-    url: '/api/common/channel/network/identification/list',
+    url: '/prod-api/smart-engine/api/v1/common/channel/network/identification/list',
     method: 'get'
   })
 }
@@ -217,7 +217,7 @@ export function getNetworkIdentificationList() {
  */
 export function getCivilCodeChannelList(params) {
   return request({
-    url: '/api/common/channel/civilcode/list',
+    url: '/prod-api/smart-engine/api/v1/common/channel/civilcode/list',
     method: 'get',
     params: params
   })
@@ -229,7 +229,7 @@ export function getCivilCodeChannelList(params) {
  */
 export function getParentChannelList(params) {
   return request({
-    url: '/api/common/channel/parent/list',
+    url: '/prod-api/smart-engine/api/v1/common/channel/parent/list',
     method: 'get',
     params: params
   })
@@ -243,7 +243,7 @@ export function getParentChannelList(params) {
  */
 export function addChannelToRegion(data) {
   return request({
-    url: '/api/common/channel/region/add',
+    url: '/prod-api/smart-engine/api/v1/common/channel/region/add',
     method: 'post',
     data: data
   })
@@ -256,7 +256,7 @@ export function addChannelToRegion(data) {
  */
 export function deleteChannelFromRegion(data) {
   return request({
-    url: '/api/common/channel/region/delete',
+    url: '/prod-api/smart-engine/api/v1/common/channel/region/delete',
     method: 'post',
     data: data
   })
@@ -271,7 +271,7 @@ export function deleteChannelFromRegion(data) {
  */
 export function addChannelToGroup(data) {
   return request({
-    url: '/api/common/channel/group/add',
+    url: '/prod-api/smart-engine/api/v1/common/channel/group/add',
     method: 'post',
     data: data
   })
@@ -284,7 +284,7 @@ export function addChannelToGroup(data) {
  */
 export function deleteChannelFromGroup(data) {
   return request({
-    url: '/api/common/channel/group/delete',
+    url: '/prod-api/smart-engine/api/v1/common/channel/group/delete',
     method: 'post',
     data: data
   })

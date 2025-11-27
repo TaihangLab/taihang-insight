@@ -37,7 +37,7 @@ export default {
   data() {
     return {
       fixedHeader: false, // 固定 Header : boolean
-      fixSiderbar: true, // 固定左侧菜单栏 ： boolean
+      fixSiderbar: false, // 固定左侧菜单栏 ： boolean
     };
   },
   methods: {
