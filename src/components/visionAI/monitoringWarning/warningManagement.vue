@@ -2785,7 +2785,7 @@ export default {
 /* 搜索和筛选区域 - 科技感样式 */
 .search-filter-area {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 20px;
   margin-bottom: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
@@ -2965,7 +2965,7 @@ export default {
 .warning-card {
   height: 380px;
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   margin-bottom: 0;
@@ -3862,7 +3862,7 @@ export default {
   background: white;
   margin-top: 12px !important;
   padding: 16px 0 !important;
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
