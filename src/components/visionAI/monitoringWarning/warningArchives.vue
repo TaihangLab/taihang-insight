@@ -2578,6 +2578,8 @@ export default {
   background: white;
   margin-top: 0!important;
   padding-bottom: 10px!important;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
 .archives-pagination >>> .el-pagination__total {
