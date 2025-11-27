@@ -19,11 +19,12 @@ axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS�
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    const token = userService.getToken()
+    const token = userService.getAdminToken()
     if (token) {
-      config.headers['Authorization'] = 'Bearer ' + token
+      config.headers['Authorization'] = 'Bearer ' + token;
     }
     
+    config.headers['clientid'] = '02bb9cfe8d7844ecae8dbe62b1ba971a';
     return config
   },
   error => {

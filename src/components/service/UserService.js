@@ -16,6 +16,10 @@ export default {
     return localStorage.getItem("wvp-token");
   },
 
+  getAdminToken() {
+    return localStorage.getItem("Admin-Token");
+  },
+
   setToken(token) {
     localStorage.setItem("wvp-token", token);
   },
