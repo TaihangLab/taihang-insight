@@ -8,7 +8,7 @@ import request from '@/utils/request'
  */
 export function getSystemConfig() {
   return request({
-    url: '/prod-api/smart-engine/api/v1/server/system/configInfo',
+    url: '/api/v1/server/system/configInfo',
     method: 'get'
   })
 }
@@ -19,7 +19,7 @@ export function getSystemConfig() {
  */
 export function updateSystemConfig(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/server/system/config',
+    url: '/api/v1/server/system/config',
     method: 'post',
     data: data
   })
@@ -30,7 +30,7 @@ export function updateSystemConfig(data) {
  */
 export function getServerInfo() {
   return request({
-    url: '/prod-api/smart-engine/api/v1/server/info',
+    url: '/api/v1/server/info',
     method: 'get'
   })
 }
@@ -41,7 +41,7 @@ export function getServerInfo() {
  */
 export function getLogList(params) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/server/log/list',
+    url: '/api/v1/server/log/list',
     method: 'get',
     params: params
   })

@@ -858,7 +858,7 @@ export default {
       }
       
       // 否则拼接MinIO URL
-      return `/prod-api/smart-engine/api/v1/llm-skills/skill-icon/${skillIcon}`
+      return `/api/v1/llm-skills/skill-icon/${skillIcon}`
     },
 
     // 排序切换

@@ -10,7 +10,7 @@ import request from '@/utils/request'
  */
 export function startPlay(deviceId, channelId) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/play/start/${deviceId}/${channelId}`,
+    url: `/api/v1/play/start/${deviceId}/${channelId}`,
     method: 'get'
   })
 }
@@ -22,7 +22,7 @@ export function startPlay(deviceId, channelId) {
  */
 export function stopPlay(deviceId, channelId) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/play/stop/${deviceId}/${channelId}`,
+    url: `/api/v1/play/stop/${deviceId}/${channelId}`,
     method: 'get'
   })
 }
@@ -37,7 +37,7 @@ export function stopPlay(deviceId, channelId) {
  */
 export function startBroadcast(deviceId, channelId, params) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/play/broadcast/${deviceId}/${channelId}`,
+    url: `/api/v1/play/broadcast/${deviceId}/${channelId}`,
     method: 'get',
     params: params
   })
@@ -50,7 +50,7 @@ export function startBroadcast(deviceId, channelId, params) {
  */
 export function stopBroadcast(deviceId, channelId) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/play/broadcast/stop/${deviceId}/${channelId}`,
+    url: `/api/v1/play/broadcast/stop/${deviceId}/${channelId}`,
     method: 'get'
   })
 }

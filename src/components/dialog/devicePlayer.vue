@@ -474,21 +474,21 @@ export default {
       let that = this;
       this.$axios({
         method: 'get',
-        url: '/prod-api/smart-engine/api/v1/front-end/ptz/' + this.deviceId + '/' + this.channelId + '?command=' + command + '&horizonSpeed=' + parseInt(this.controSpeed * 255/100) + '&verticalSpeed=' + parseInt(this.controSpeed * 255/100) + '&zoomSpeed=' + parseInt(this.controSpeed * 16/100)
+        url: '/api/v1/front-end/ptz/' + this.deviceId + '/' + this.channelId + '?command=' + command + '&horizonSpeed=' + parseInt(this.controSpeed * 255/100) + '&verticalSpeed=' + parseInt(this.controSpeed * 255/100) + '&zoomSpeed=' + parseInt(this.controSpeed * 16/100)
       }).then(function (res) {
       });
     },
     irisCamera: function (command) {
       this.$axios({
         method: 'get',
-        url: '/prod-api/smart-engine/api/v1/front-end/fi/iris/' + this.deviceId + '/' + this.channelId + '?command=' + command + '&speed=' + parseInt(this.controSpeed * 255/100)
+        url: '/api/v1/front-end/fi/iris/' + this.deviceId + '/' + this.channelId + '?command=' + command + '&speed=' + parseInt(this.controSpeed * 255/100)
       }).then(function (res) {
       });
     },
     focusCamera: function (command) {
       this.$axios({
         method: 'get',
-        url: '/prod-api/smart-engine/api/v1/front-end/fi/focus/' + this.deviceId + '/' + this.channelId + '?command=' + command + '&speed=' + parseInt(this.controSpeed * 255/100)
+        url: '/api/v1/front-end/fi/focus/' + this.deviceId + '/' + this.channelId + '?command=' + command + '&speed=' + parseInt(this.controSpeed * 255/100)
       }).then(function (res) {
       });
     },
@@ -529,7 +529,7 @@ export default {
         // 发起语音对讲
         this.$axios({
           method: 'get',
-          url: '/prod-api/smart-engine/api/v1/play/broadcast/' + this.deviceId + '/' + this.channelId + "?timeout=30&broadcastMode=" + this.broadcastMode
+          url: '/api/v1/play/broadcast/' + this.deviceId + '/' + this.channelId + "?timeout=30&broadcastMode=" + this.broadcastMode
         }).then((res) => {
           if (res.data.code === 0) {
             let streamInfo = res.data.data.streamInfo;
@@ -555,7 +555,7 @@ export default {
       // 获取推流鉴权Key
       this.$axios({
         method: 'post',
-        url: '/prod-api/smart-engine/api/v1/user/userInfo',
+        url: '/api/v1/user/userInfo',
       }).then((res) => {
         if (res.data.code !== 0) {
           this.$message({
@@ -644,7 +644,7 @@ export default {
       this.broadcastStatus = -1;
       this.$axios({
         method: 'get',
-        url: '/prod-api/smart-engine/api/v1/play/broadcast/stop/' + this.deviceId + '/' + this.channelId
+        url: '/api/v1/play/broadcast/stop/' + this.deviceId + '/' + this.channelId
       }).then((res) => {
         if (res.data.code == 0) {
           // this.broadcastStatus = -1;

@@ -11,7 +11,7 @@ import request from '@/utils/request'
  */
 export function getRecordList(deviceId, channelId, params) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/record/list/${deviceId}/${channelId}`,
+    url: `/api/v1/record/list/${deviceId}/${channelId}`,
     method: 'get',
     params: params
   })
@@ -25,7 +25,7 @@ export function getRecordList(deviceId, channelId, params) {
  */
 export function downloadRecord(deviceId, channelId, params) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/record/download/${deviceId}/${channelId}`,
+    url: `/api/v1/record/download/${deviceId}/${channelId}`,
     method: 'get',
     params: params
   })
@@ -37,7 +37,7 @@ export function downloadRecord(deviceId, channelId, params) {
  */
 export function getCloudRecordList(params) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/cloudRecord/list',
+    url: '/api/v1/cloudRecord/list',
     method: 'get',
     params: params
   })
@@ -49,7 +49,7 @@ export function getCloudRecordList(params) {
  */
 export function deleteCloudRecord(id) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/cloudRecord/delete/${id}`,
+    url: `/api/v1/cloudRecord/delete/${id}`,
     method: 'delete'
   })
 }
@@ -60,7 +60,7 @@ export function deleteCloudRecord(id) {
  */
 export function getDownloadProgress(downloadId) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/record/download/progress/${downloadId}`,
+    url: `/api/v1/record/download/progress/${downloadId}`,
     method: 'get'
   })
 }

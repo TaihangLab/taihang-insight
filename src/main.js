@@ -48,7 +48,7 @@ Vue.use(dataV);
 // 设备管理模块使用的axios配置（走WVP代理）
 // 导入API配置
 const config = require('../config/index.js');
-axios.defaults.baseURL = config.API_BASE_URL + '/prod-api/smart-engine/api/v1/v1/wvp';
+axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/v1/wvp';
 axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS错误
 
 
@@ -72,7 +72,7 @@ new Vue({
     if (!this.$myServerId) {
       axios({
         method: 'get',
-        url: config.API_BASE_URL + `/prod-api/smart-engine/api/v1/server/system/configInfo`,
+        url: config.API_BASE_URL + `/api/v1/server/system/configInfo`,
       }).then( (res)=> {
         if (res.data.code === 0) {
           console.log(res.data)

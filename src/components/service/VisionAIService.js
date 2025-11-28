@@ -115,7 +115,7 @@ export const modelAPI = {
       delete apiParams.usage_status;
     }
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/models/list', { params: apiParams })
+    return visionAIAxios.get('/api/v1/models/list', { params: apiParams })
       .then(response => {
         // 单独处理模型列表接口的响应数据转换
         const originalData = response.data;
@@ -169,7 +169,7 @@ export const modelAPI = {
 
   // 获取模型详情
   getModelDetail(modelId) {
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/models/${modelId}`)
+    return visionAIAxios.get(`/api/v1/models/${modelId}`)
       .then(response => {
         // 单独处理模型详情接口的响应数据转换
         const originalData = response.data;
@@ -235,7 +235,7 @@ export const modelAPI = {
 
   // 更新模型信息
   updateModel(modelId, modelData) {
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/models/${modelId}`, modelData)
+    return visionAIAxios.put(`/api/v1/models/${modelId}`, modelData)
       .then(response => handleSimpleResponse(response, '更新模型'))
       .catch(error => {
         console.error('更新模型失败:', error);
@@ -245,7 +245,7 @@ export const modelAPI = {
 
   // 删除模型
   deleteModel(modelId) {
-    return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/models/${modelId}`)
+    return visionAIAxios.delete(`/api/v1/models/${modelId}`)
       .then(response => handleSimpleResponse(response, '删除模型'))
       .catch(error => {
         console.error('删除模型失败:', error);
@@ -255,7 +255,7 @@ export const modelAPI = {
 
   // 批量删除模型
   batchDeleteModels(ids) {
-    return visionAIAxios.delete('/prod-api/smart-engine/api/v1/models/batch-delete', { data: { model_ids: ids } })
+    return visionAIAxios.delete('/api/v1/models/batch-delete', { data: { model_ids: ids } })
       .then(response => {
         // 单独处理批量删除模型接口的响应数据转换
         const originalData = response.data;
@@ -302,7 +302,7 @@ export const modelAPI = {
 
   // 加载模型
   loadModel(modelId) {
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/models/${modelId}/load`)
+    return visionAIAxios.post(`/api/v1/models/${modelId}/load`)
       .then(response => handleSimpleResponse(response, '加载模型'))
       .catch(error => {
         console.error('加载模型失败:', error);
@@ -312,7 +312,7 @@ export const modelAPI = {
 
   // 卸载模型
   unloadModel(modelId) {
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/models/${modelId}/unload`)
+    return visionAIAxios.post(`/api/v1/models/${modelId}/unload`)
       .then(response => handleSimpleResponse(response, '卸载模型'))
       .catch(error => {
         console.error('卸载模型失败:', error);
@@ -359,7 +359,7 @@ export const skillAPI = {
       apiParams.limit = Math.min(params.limit, 100); // 限制最大为100条
     }
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/skill-classes', { params: apiParams })
+    return visionAIAxios.get('/api/v1/skill-classes', { params: apiParams })
       .then(response => {
         // 单独处理技能列表接口的响应数据转换
         const originalData = response.data;
@@ -405,7 +405,7 @@ export const skillAPI = {
 
   // 热加载技能类
   reloadSkillClasses() {
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/skill-classes/reload')
+    return visionAIAxios.post('/api/v1/skill-classes/reload')
       .then(response => handleSimpleResponse(response, '热加载技能类'))
       .catch(error => {
         console.error('热加载技能类失败:', error);
@@ -439,7 +439,7 @@ export const skillAPI = {
       apiParams.status = true; // 默认获取启用的技能
     }
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/ai-tasks/skill-classes', { params: apiParams })
+    return visionAIAxios.get('/api/v1/ai-tasks/skill-classes', { params: apiParams })
       .then(response => {
         // 单独处理AI任务技能类列表接口的响应数据转换
         const originalData = response.data;
@@ -519,7 +519,7 @@ export const skillAPI = {
     console.log('创建AI任务请求数据:', data);
 
     // 发送创建AI任务请求
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/ai-tasks', data)
+    return visionAIAxios.post('/api/v1/ai-tasks', data)
       .then(response => handleSimpleResponse(response, '创建AI任务'))
       .catch(error => {
         console.error('创建AI任务失败:', error);
@@ -529,7 +529,7 @@ export const skillAPI = {
 
   // 获取技能详情
   getSkillDetail(skillClassId) {
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/skill-classes/${skillClassId}`)
+    return visionAIAxios.get(`/api/v1/skill-classes/${skillClassId}`)
       .then(response => handleSimpleResponse(response, '获取技能详情'))
       .catch(error => {
         console.error('获取技能详情失败:', error);
@@ -539,7 +539,7 @@ export const skillAPI = {
 
   // 删除技能
   deleteSkill(skillClassId) {
-    return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/skill-classes/${skillClassId}`)
+    return visionAIAxios.delete(`/api/v1/skill-classes/${skillClassId}`)
       .then(response => handleSimpleResponse(response, '删除技能'))
       .catch(error => {
         console.error('删除技能失败:', error);
@@ -549,7 +549,7 @@ export const skillAPI = {
 
   // 批量删除技能
   batchDeleteSkills(ids) {
-    return visionAIAxios.delete('/prod-api/smart-engine/api/v1/skill-classes/batch-delete', { data: { skill_class_ids: ids } })
+    return visionAIAxios.delete('/api/v1/skill-classes/batch-delete', { data: { skill_class_ids: ids } })
       .then(response => {
         // 单独处理批量删除技能接口的响应数据转换
         const originalData = response.data;
@@ -596,7 +596,7 @@ export const skillAPI = {
 
   // 导入技能
   importSkill(skillData) {
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/skill-classes', skillData)
+    return visionAIAxios.post('/api/v1/skill-classes', skillData)
       .then(response => handleSimpleResponse(response, '导入技能'))
       .catch(error => {
         console.error('导入技能失败:', error);
@@ -606,7 +606,7 @@ export const skillAPI = {
 
   // 更新技能
   updateSkill(skillClassId, skillData) {
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/skill-classes/${skillClassId}`, skillData)
+    return visionAIAxios.put(`/api/v1/skill-classes/${skillClassId}`, skillData)
       .then(response => handleSimpleResponse(response, '更新技能'))
       .catch(error => {
         console.error('更新技能失败:', error);
@@ -639,7 +639,7 @@ export const skillAPI = {
       }
     };
 
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/skill-classes/${skillClassId}/image`, formData, config)
+    return visionAIAxios.post(`/api/v1/skill-classes/${skillClassId}/image`, formData, config)
       .then(response => {
         console.log('图片上传成功:', response.data);
         return handleSimpleResponse(response, '上传技能图片');
@@ -662,7 +662,7 @@ export const skillAPI = {
       return Promise.reject(new Error('缺少技能ID'));
     }
 
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/skill-classes/${skillClassId}/devices`)
+    return visionAIAxios.get(`/api/v1/skill-classes/${skillClassId}/devices`)
       .then(response => handleSimpleResponse(response, '获取技能关联设备'))
       .catch(error => {
         console.error('获取技能关联设备失败:', error);
@@ -673,7 +673,7 @@ export const skillAPI = {
 
   // 获取AI任务技能详情
   getAITaskSkillDetail(skillClassId) {
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/ai-tasks/skill-classes/${skillClassId}`)
+    return visionAIAxios.get(`/api/v1/ai-tasks/skill-classes/${skillClassId}`)
       .then(response => handleSimpleResponse(response, '获取AI任务技能详情'))
       .catch(error => {
         console.error('获取AI任务技能详情失败:', error);
@@ -687,7 +687,7 @@ export const skillAPI = {
       console.error('获取AI任务详情失败: 缺少任务ID');
       return Promise.reject(new Error('缺少任务ID'));
     }
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/ai-tasks/${taskId}`)
+    return visionAIAxios.get(`/api/v1/ai-tasks/${taskId}`)
       .then(response => handleSimpleResponse(response, '获取AI任务详情'))
       .catch(error => {
         console.error('获取AI任务详情失败:', error);
@@ -702,7 +702,7 @@ export const skillAPI = {
       return Promise.reject(new Error('缺少任务ID'));
     }
     console.log('更新AI任务请求数据:', taskData);
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/ai-tasks/${taskId}`, taskData)
+    return visionAIAxios.put(`/api/v1/ai-tasks/${taskId}`, taskData)
       .then(response => handleSimpleResponse(response, '更新AI任务'))
       .catch(error => {
         console.error('更新AI任务失败:', error);
@@ -717,7 +717,7 @@ export const skillAPI = {
       return Promise.reject(new Error('缺少任务ID'));
     }
     console.log('删除AI任务:', taskId);
-    return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/ai-tasks/${taskId}`)
+    return visionAIAxios.delete(`/api/v1/ai-tasks/${taskId}`)
       .then(response => handleSimpleResponse(response, '删除AI任务'))
       .catch(error => {
         console.error('删除AI任务失败:', error);
@@ -764,7 +764,7 @@ export const skillAPI = {
 
     console.log('创建多模态大模型技能请求数据:', data);
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/llm-skills/skill-classes', data);
+    return visionAIAxios.post('/api/v1/llm-skills/skill-classes', data);
   },
 
   /**
@@ -800,7 +800,7 @@ export const skillAPI = {
       }
     };
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/llm-skills/upload/skill-icon', formData, config)
+    return visionAIAxios.post('/api/v1/llm-skills/upload/skill-icon', formData, config)
       .then(response => {
         console.log('技能图标上传成功:', response.data);
         return response;
@@ -848,7 +848,7 @@ export const skillAPI = {
       timeout: 60000  // 为AI分析设置1分钟超时
     };
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/llm-skills/skill-classes/preview-test', formData, config)
+    return visionAIAxios.post('/api/v1/llm-skills/skill-classes/preview-test', formData, config)
       .then(response => {
         console.log('技能预览测试成功:', response.data);
         return response;
@@ -888,7 +888,7 @@ export const skillAPI = {
 
     console.log('获取多模态技能列表API调用参数:', apiParams);
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/llm-skills/skill-classes', { params: apiParams })
+    return visionAIAxios.get('/api/v1/llm-skills/skill-classes', { params: apiParams })
       .then(response => {
         console.log('获取多模态技能列表成功:', response.data);
         return response;
@@ -912,7 +912,7 @@ export const skillAPI = {
 
     console.log('获取多模态技能详情, skill_id:', skillId);
 
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/llm-skills/skill-classes/${skillId}`)
+    return visionAIAxios.get(`/api/v1/llm-skills/skill-classes/${skillId}`)
       .then(response => {
         console.log('获取多模态技能详情成功:', response.data);
         return response;
@@ -937,7 +937,7 @@ export const skillAPI = {
 
     console.log('更新多模态技能, skill_id:', skillId, '数据:', skillData);
 
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/llm-skills/skill-classes/${skillId}`, skillData)
+    return visionAIAxios.put(`/api/v1/llm-skills/skill-classes/${skillId}`, skillData)
       .then(response => {
         console.log('更新多模态技能成功:', response.data);
         return response;
@@ -961,7 +961,7 @@ export const skillAPI = {
 
     console.log('发布多模态技能, skill_id:', skillId);
 
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/llm-skills/skill-classes/${skillId}/publish`)
+    return visionAIAxios.post(`/api/v1/llm-skills/skill-classes/${skillId}/publish`)
       .then(response => {
         console.log('发布多模态技能成功:', response.data);
         return response;
@@ -985,7 +985,7 @@ export const skillAPI = {
 
     console.log('下架多模态技能, skill_id:', skillId);
 
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/llm-skills/skill-classes/${skillId}/unpublish`)
+    return visionAIAxios.post(`/api/v1/llm-skills/skill-classes/${skillId}/unpublish`)
       .then(response => {
         console.log('下架多模态技能成功:', response.data);
         return response;
@@ -1009,7 +1009,7 @@ export const skillAPI = {
 
     console.log('删除多模态技能, skill_id:', skillId);
 
-    return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/llm-skills/skill-classes/${skillId}`)
+    return visionAIAxios.delete(`/api/v1/llm-skills/skill-classes/${skillId}`)
       .then(response => {
         console.log('删除多模态技能成功:', response.data);
         return response;
@@ -1033,7 +1033,7 @@ export const skillAPI = {
 
     console.log('批量删除多模态技能, skill_ids:', skillIds);
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/llm-skills/skill-classes/batch-delete', skillIds)
+    return visionAIAxios.post('/api/v1/llm-skills/skill-classes/batch-delete', skillIds)
       .then(response => {
         console.log('批量删除多模态技能成功:', response.data);
         return response;
@@ -1092,7 +1092,7 @@ export const skillAPI = {
 
     console.log('创建大模型任务请求数据:', data);
 
-         return visionAIAxios.post('/prod-api/smart-engine/api/v1/llm-skills/tasks', data)
+         return visionAIAxios.post('/api/v1/llm-skills/tasks', data)
        .then(response => {
          console.log('创建大模型任务成功:', response.data);
          return response;
@@ -1116,7 +1116,7 @@ export const skillAPI = {
 
      console.log('删除大模型任务:', taskId);
 
-     return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/llm-skills/tasks/${taskId}`)
+     return visionAIAxios.delete(`/api/v1/llm-skills/tasks/${taskId}`)
        .then(response => {
          console.log('删除大模型任务成功:', response.data);
          return response;
@@ -1151,7 +1151,7 @@ export const skillAPI = {
 
      console.log('获取大模型任务列表API调用参数:', apiParams);
 
-     return visionAIAxios.get('/prod-api/smart-engine/api/v1/llm-skills/tasks', { params: apiParams })
+     return visionAIAxios.get('/api/v1/llm-skills/tasks', { params: apiParams })
        .then(response => {
          console.log('获取大模型任务列表成功:', response.data);
          return response;
@@ -1193,7 +1193,7 @@ export const skillAPI = {
 
      console.log('更新大模型任务请求数据:', { taskId, data });
 
-     return visionAIAxios.put(`/prod-api/smart-engine/api/v1/llm-skills/tasks/${taskId}`, data)
+     return visionAIAxios.put(`/api/v1/llm-skills/tasks/${taskId}`, data)
        .then(response => {
          console.log('更新大模型任务成功:', response.data);
          return response;
@@ -1238,7 +1238,7 @@ export const cameraAPI = {
 
     console.log('获取摄像头列表 - API调用参数:', apiParams);
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/cameras/ai/list', { params: apiParams })
+    return visionAIAxios.get('/api/v1/cameras/ai/list', { params: apiParams })
       .then(response => {
         // 单独处理摄像头列表接口的响应数据转换
         const originalData = response.data;
@@ -1325,7 +1325,7 @@ export const cameraAPI = {
    * @returns {Promise} 返回包含摄像头详细信息的响应
    */
   getCameraDetail(cameraId) {
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/cameras/${cameraId}`);
+    return visionAIAxios.get(`/api/v1/cameras/${cameraId}`);
   },
 
   /**
@@ -1342,7 +1342,7 @@ export const cameraAPI = {
 
     console.log('更新摄像头数据:', cameraId, updateData);
 
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/cameras/${cameraId}`, updateData)
+    return visionAIAxios.put(`/api/v1/cameras/${cameraId}`, updateData)
       .then(response => handleSimpleResponse(response, '更新摄像头'))
       .catch(error => {
         console.error('更新摄像头失败:', error);
@@ -1361,7 +1361,7 @@ export const cameraAPI = {
       return Promise.reject(new Error('缺少摄像头ID'));
     }
 
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/ai-tasks/camera/id/${cameraId}`);
+    return visionAIAxios.get(`/api/v1/ai-tasks/camera/id/${cameraId}`);
   }
 };
 
@@ -1469,7 +1469,7 @@ export const alertAPI = {
 
     console.log('获取实时预警列表 - API调用参数:', apiParams);
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/alerts/real-time', { params: apiParams })
+    return visionAIAxios.get('/api/v1/alerts/real-time', { params: apiParams })
       .then(response => {
         // 单独处理实时预警接口的响应数据转换
         const originalData = response.data;
@@ -1533,7 +1533,7 @@ export const alertAPI = {
 
     console.log('更新预警状态:', alertId, updateData);
 
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/alerts/${alertId}/status`, updateData);
+    return visionAIAxios.put(`/api/v1/alerts/${alertId}/status`, updateData);
   },
 
   /**
@@ -1550,7 +1550,7 @@ export const alertAPI = {
 
     console.log('批量更新预警状态:', alertIds, updateData);
 
-    return visionAIAxios.put('/prod-api/smart-engine/api/v1/alerts/batch-update', {
+    return visionAIAxios.put('/api/v1/alerts/batch-update', {
       alert_ids: alertIds,
       ...updateData
     });
@@ -1569,7 +1569,7 @@ export const alertAPI = {
 
     console.log('删除预警:', alertId);
 
-    return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/alerts/${alertId}`);
+    return visionAIAxios.delete(`/api/v1/alerts/${alertId}`);
   },
 
   /**
@@ -1585,7 +1585,7 @@ export const alertAPI = {
 
     console.log('批量删除预警:', alertIds);
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/alerts/batch-delete', {
+    return visionAIAxios.post('/api/v1/alerts/batch-delete', {
       alert_ids: alertIds
     });
   },
@@ -1603,7 +1603,7 @@ export const alertAPI = {
 
     console.log('获取预警详情:', alertId);
 
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/alerts/${alertId}`);
+    return visionAIAxios.get(`/api/v1/alerts/${alertId}`);
   },
 
   /**
@@ -1614,7 +1614,7 @@ export const alertAPI = {
    * @returns {EventSource} SSE连接对象
    */
   createAlertSSEConnection(onMessage, onError, onClose) {
-    const sseUrl = `${visionAIAxios.defaults.baseURL}/prod-api/smart-engine/api/v1/alerts/stream`;
+    const sseUrl = `${visionAIAxios.defaults.baseURL}/api/v1/alerts/stream`;
     console.log('创建SSE连接:', sseUrl);
 
     const eventSource = new EventSource(sseUrl);
@@ -1676,7 +1676,7 @@ export const alertAPI = {
    */
   getSSEStatus() {
     console.log('获取SSE连接状态');
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/alerts/sse/status');
+    return visionAIAxios.get('/api/v1/alerts/sse/status');
   },
 
   /**
@@ -1685,7 +1685,7 @@ export const alertAPI = {
    */
   getConnectedClients() {
     console.log('获取连接客户端信息');
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/alerts/connected');
+    return visionAIAxios.get('/api/v1/alerts/connected');
   },
 
   /**
@@ -1694,7 +1694,7 @@ export const alertAPI = {
    */
   sendTestAlert() {
     console.log('发送测试预警');
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/alerts/test');
+    return visionAIAxios.post('/api/v1/alerts/test');
   },
 
   /**
@@ -1704,7 +1704,7 @@ export const alertAPI = {
    */
   getAlertStatistics(days = 7) {
     console.log('获取预警统计信息，天数:', days);
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/alerts/statistics', {
+    return visionAIAxios.get('/api/v1/alerts/statistics', {
       params: { days }
     });
   },
@@ -1724,7 +1724,7 @@ export const alertAPI = {
 
     console.log('标记预警为误报:', { alertId, reviewNotes, reviewerName });
 
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/alerts/${alertId}/false-alarm`, null, {
+    return visionAIAxios.post(`/api/v1/alerts/${alertId}/false-alarm`, null, {
       params: {
         review_notes: reviewNotes,
         reviewer_name: reviewerName
@@ -1760,7 +1760,7 @@ export const alertAPI = {
 
     console.log('批量标记预警为误报:', { alertIds, reviewNotes, reviewerName });
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/alerts/batch-false-alarm', {
+    return visionAIAxios.post('/api/v1/alerts/batch-false-alarm', {
       alert_ids: alertIds
     }, {
       params: {
@@ -1817,7 +1817,7 @@ export const alertAPI = {
       delete exportParams.alert_ids;
     }
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/alerts/export', {
+    return visionAIAxios.get('/api/v1/alerts/export', {
       params: exportParams,
       responseType: 'blob', // 重要：设置响应类型为blob以处理文件下载
       timeout: 60000 // 导出可能需要较长时间，设置60秒超时
@@ -1852,7 +1852,7 @@ export const reviewSkillAPI = {
 
     console.log('创建多模态复判技能:', skillData);
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/llm-skill-review/review-skills', skillData)
+    return visionAIAxios.post('/api/v1/llm-skill-review/review-skills', skillData)
       .then(response => {
         console.log('创建复判技能成功:', response.data);
         return response;
@@ -1892,7 +1892,7 @@ export const reviewSkillAPI = {
 
     console.log('预览测试复判技能:', { fileName: testImage.name, userPrompt });
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/llm-skill-review/review-skills/preview-test', formData, {
+    return visionAIAxios.post('/api/v1/llm-skill-review/review-skills/preview-test', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
@@ -1937,7 +1937,7 @@ export const reviewSkillAPI = {
 
     console.log('更新复判技能:', skillId, updateData);
 
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/llm-skill-review/review-skills/${skillId}`, updateData)
+    return visionAIAxios.put(`/api/v1/llm-skill-review/review-skills/${skillId}`, updateData)
       .then(response => {
         console.log('更新复判技能成功:', response.data);
         return response;
@@ -2037,7 +2037,7 @@ export const reviewSkillAPI = {
 
     console.log('获取复判技能列表, 处理后的参数:', apiParams);
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/llm-skill-review/review-skills', { params: apiParams })
+    return visionAIAxios.get('/api/v1/llm-skill-review/review-skills', { params: apiParams })
       .then(response => {
         console.log('获取复判技能列表成功:', response.data);
         return response;
@@ -2072,7 +2072,7 @@ export const reviewSkillAPI = {
 
     console.log('获取复判技能详情:', skillId);
 
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/llm-skill-review/review-skills/${skillId}`)
+    return visionAIAxios.get(`/api/v1/llm-skill-review/review-skills/${skillId}`)
       .then(response => {
         console.log('获取复判技能详情成功:', response.data);
         return response;
@@ -2107,7 +2107,7 @@ export const reviewSkillAPI = {
 
     console.log('发布复判技能:', skillId);
 
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/llm-skill-review/review-skills/${skillId}/publish`)
+    return visionAIAxios.post(`/api/v1/llm-skill-review/review-skills/${skillId}/publish`)
       .then(response => {
         console.log('发布复判技能成功:', response.data);
         return response;
@@ -2142,7 +2142,7 @@ export const reviewSkillAPI = {
 
     console.log('下线复判技能:', skillId);
 
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/llm-skill-review/review-skills/${skillId}/unpublish`)
+    return visionAIAxios.post(`/api/v1/llm-skill-review/review-skills/${skillId}/unpublish`)
       .then(response => {
         console.log('下线复判技能成功:', response.data);
         return response;
@@ -2177,7 +2177,7 @@ export const reviewSkillAPI = {
 
     console.log('删除复判技能:', skillId);
 
-    return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/llm-skill-review/review-skills/${skillId}`)
+    return visionAIAxios.delete(`/api/v1/llm-skill-review/review-skills/${skillId}`)
       .then(response => {
         console.log('删除复判技能成功:', response.data);
         return response;
@@ -2217,7 +2217,7 @@ export const reviewSkillAPI = {
 
     console.log('批量删除复判技能, skill_ids:', skillIds);
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/llm-skill-review/review-skills/batch-delete', skillIds)
+    return visionAIAxios.post('/api/v1/llm-skill-review/review-skills/batch-delete', skillIds)
       .then(response => {
         console.log('批量删除复判技能成功:', response.data);
         return response;
@@ -2257,7 +2257,7 @@ const chatAssistantAPI = {
    */
   sendChatMessage(chatData) {
     console.log('发送聊天消息:', chatData);
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/chat/chat', {
+    return visionAIAxios.post('/api/v1/chat/chat', {
       message: chatData.message,
       conversation_id: chatData.conversation_id || null,
       system_prompt: chatData.system_prompt || null,
@@ -2293,7 +2293,7 @@ const chatAssistantAPI = {
       };
 
       // 发起POST请求（使用完整的chat端点）
-      const response = await fetch(`${visionAIAxios.defaults.baseURL}/prod-api/smart-engine/api/v1/chat/chat`, {
+      const response = await fetch(`${visionAIAxios.defaults.baseURL}/api/v1/chat/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2409,7 +2409,7 @@ const chatAssistantAPI = {
    */
   getChatConversations(params = {}) {
     console.log('获取会话列表:', params);
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/chat/conversations', {
+    return visionAIAxios.get('/api/v1/chat/conversations', {
       params: {
         limit: params.limit || 20
       }
@@ -2425,7 +2425,7 @@ const chatAssistantAPI = {
    */
   getChatMessages(conversationId, params = {}) {
     console.log('获取会话消息:', conversationId, params);
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/chat/conversations/${conversationId}/messages`, {
+    return visionAIAxios.get(`/api/v1/chat/conversations/${conversationId}/messages`, {
       params: {
         limit: params.limit || 50
       }
@@ -2439,7 +2439,7 @@ const chatAssistantAPI = {
    */
   deleteChatConversation(conversationId) {
     console.log('删除会话:', conversationId);
-    return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/chat/conversations/${conversationId}`);
+    return visionAIAxios.delete(`/api/v1/chat/conversations/${conversationId}`);
   },
 
   /**
@@ -2448,7 +2448,7 @@ const chatAssistantAPI = {
    */
   clearAllChatConversations() {
     console.log('清空所有会话');
-    return visionAIAxios.delete('/prod-api/smart-engine/api/v1/chat/conversations');
+    return visionAIAxios.delete('/api/v1/chat/conversations');
   },
 
   /**
@@ -2468,7 +2468,7 @@ const chatAssistantAPI = {
       formData.append('system_prompt', chatData.system_prompt);
     }
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/chat/quick', formData, {
+    return visionAIAxios.post('/api/v1/chat/quick', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -2481,7 +2481,7 @@ const chatAssistantAPI = {
    */
   getChatModels() {
     console.log('获取聊天模型列表');
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/chat/models');
+    return visionAIAxios.get('/api/v1/chat/models');
   },
 
   /**
@@ -2490,7 +2490,7 @@ const chatAssistantAPI = {
    */
   checkChatHealth() {
     console.log('聊天助手健康检查');
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/chat/health');
+    return visionAIAxios.get('/api/v1/chat/health');
   },
 
   // ==================== 分组管理 ====================
@@ -2504,7 +2504,7 @@ const chatAssistantAPI = {
     const formData = new FormData();
     formData.append('name', name);
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/chat/groups', formData);
+    return visionAIAxios.post('/api/v1/chat/groups', formData);
   },
 
   /**
@@ -2512,7 +2512,7 @@ const chatAssistantAPI = {
    * @returns {Promise}
    */
   getGroups() {
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/chat/groups');
+    return visionAIAxios.get('/api/v1/chat/groups');
   },
 
   /**
@@ -2521,7 +2521,7 @@ const chatAssistantAPI = {
    * @returns {Promise}
    */
   deleteGroup(groupId) {
-    return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/chat/groups/${groupId}`);
+    return visionAIAxios.delete(`/api/v1/chat/groups/${groupId}`);
   },
 
   /**
@@ -2536,7 +2536,7 @@ const chatAssistantAPI = {
       formData.append('group_id', groupId);
     }
 
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/chat/conversations/${conversationId}/group`, formData);
+    return visionAIAxios.put(`/api/v1/chat/conversations/${conversationId}/group`, formData);
   },
 
   /**
@@ -2546,7 +2546,7 @@ const chatAssistantAPI = {
    * @returns {Promise}
    */
   getGroupConversations(groupId, params = {}) {
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/chat/groups/${groupId}/conversations`, { params });
+    return visionAIAxios.get(`/api/v1/chat/groups/${groupId}/conversations`, { params });
   },
 
   /**
@@ -2555,7 +2555,7 @@ const chatAssistantAPI = {
    * @returns {Promise}
    */
   autoGenerateTitle(conversationId) {
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/chat/conversations/${conversationId}/auto-title`);
+    return visionAIAxios.post(`/api/v1/chat/conversations/${conversationId}/auto-title`);
   },
 
   /**
@@ -2567,7 +2567,7 @@ const chatAssistantAPI = {
   updateConversationTitle(conversationId, title) {
     const formData = new FormData();
     formData.append('title', title);
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/chat/conversations/${conversationId}/title`, formData);
+    return visionAIAxios.put(`/api/v1/chat/conversations/${conversationId}/title`, formData);
   },
 
   /**
@@ -2586,7 +2586,7 @@ const chatAssistantAPI = {
       formData.append('message_id', messageId);
     }
 
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/chat/conversations/${conversationId}/save-message`, formData);
+    return visionAIAxios.post(`/api/v1/chat/conversations/${conversationId}/save-message`, formData);
   },
 
   /**
@@ -2602,7 +2602,7 @@ const chatAssistantAPI = {
     formData.append('message_id', messageId);
     formData.append('partial_content', partialContent);
 
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/chat/conversations/${conversationId}/stop-generation`, formData);
+    return visionAIAxios.post(`/api/v1/chat/conversations/${conversationId}/stop-generation`, formData);
   }
 };
 
@@ -2635,7 +2635,7 @@ export const archiveAPI = {
 
     console.log('获取预警档案列表 - API调用参数:', apiParams);
 
-    return visionAIAxios.get(config.API_BASE_URL + '/prod-api/smart-engine/api/v1/alert-archives', { params: apiParams })
+    return visionAIAxios.get('/api/v1/alert-archives', { params: apiParams })
       .then(response => {
         console.log('获取预警档案列表成功:', response.data);
         return response;
@@ -2659,7 +2659,7 @@ export const archiveAPI = {
 
     console.log('获取预警档案详情:', archiveId);
 
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/alert-archives/${archiveId}`)
+    return visionAIAxios.get(`/api/v1/alert-archives/${archiveId}`)
       .then(response => {
         console.log('获取预警档案详情成功:', response.data);
         return response;
@@ -2690,7 +2690,7 @@ export const archiveAPI = {
 
     console.log('创建预警档案:', archiveData);
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/alert-archives', archiveData)
+    return visionAIAxios.post('/api/v1/alert-archives', archiveData)
       .then(response => {
         console.log('创建预警档案成功:', response.data);
         return response;
@@ -2715,7 +2715,7 @@ export const archiveAPI = {
 
     console.log('更新预警档案:', archiveId, archiveData);
 
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/alert-archives/${archiveId}`, archiveData)
+    return visionAIAxios.put(`/api/v1/alert-archives/${archiveId}`, archiveData)
       .then(response => {
         console.log('更新预警档案成功:', response.data);
         return response;
@@ -2739,7 +2739,7 @@ export const archiveAPI = {
 
     console.log('删除预警档案:', archiveId);
 
-    return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/alert-archives/${archiveId}`)
+    return visionAIAxios.delete(`/api/v1/alert-archives/${archiveId}`)
       .then(response => {
         console.log('删除预警档案成功:', response.data);
         return response;
@@ -2763,7 +2763,7 @@ export const archiveAPI = {
 
     console.log('批量删除预警档案:', archiveIds);
 
-    return visionAIAxios.delete('/prod-api/smart-engine/api/v1/alert-archives/batch', {
+    return visionAIAxios.delete('/api/v1/alert-archives/batch', {
       data: { archive_ids: archiveIds }
     })
       .then(response => {
@@ -2811,7 +2811,7 @@ export const archiveAPI = {
 
     console.log('获取档案预警记录列表 - API调用参数:', archiveId, apiParams);
 
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/alert-archives/${archiveId}/alerts`, { params: apiParams })
+    return visionAIAxios.get(`/api/v1/alert-archives/${archiveId}/alerts`, { params: apiParams })
       .then(response => {
         console.log('获取档案预警记录列表成功:', response.data);
         return response;
@@ -2848,7 +2848,7 @@ export const archiveAPI = {
 
     console.log('添加预警记录:', recordData);
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/alert-archives/alerts', recordData)
+    return visionAIAxios.post('/api/v1/alert-archives/alerts', recordData)
       .then(response => {
         console.log('添加预警记录成功:', response.data);
         return response;
@@ -2872,7 +2872,7 @@ export const archiveAPI = {
 
     console.log('获取预警记录详情:', recordId);
 
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/alert-archives/alerts/${recordId}`)
+    return visionAIAxios.get(`/api/v1/alert-archives/alerts/${recordId}`)
       .then(response => {
         console.log('获取预警记录详情成功:', response.data);
         return response;
@@ -2897,7 +2897,7 @@ export const archiveAPI = {
 
     console.log('更新预警记录:', recordId, recordData);
 
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/alert-archives/alerts/${recordId}`, recordData)
+    return visionAIAxios.put(`/api/v1/alert-archives/alerts/${recordId}`, recordData)
       .then(response => {
         console.log('更新预警记录成功:', response.data);
         return response;
@@ -2923,7 +2923,7 @@ export const archiveAPI = {
     console.log('删除预警记录:', recordId, '档案ID:', archiveId);
 
     // 构建URL，如果有archiveId则添加作为查询参数
-    let url = `/prod-api/smart-engine/api/v1/alert-archives/alerts/${recordId}`;
+    let url = `/api/v1/alert-archives/alerts/${recordId}`;
     if (archiveId) {
       url += `?archive_id=${archiveId}`;
     }
@@ -2952,7 +2952,7 @@ export const archiveAPI = {
 
     console.log('批量删除预警记录:', recordIds);
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/alert-archives/alerts/batch-delete', {
+    return visionAIAxios.post('/api/v1/alert-archives/alerts/batch-delete', {
       record_ids: recordIds
     })
       .then(response => {
@@ -2995,7 +2995,7 @@ export const archiveAPI = {
       }
     };
 
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/alert-archives/${archiveId}/upload/image`, formData, config)
+    return visionAIAxios.post(`/api/v1/alert-archives/${archiveId}/upload/image`, formData, config)
       .then(response => {
         console.log('档案图片上传成功:', response.data);
         return response;
@@ -3036,7 +3036,7 @@ export const archiveAPI = {
       }
     };
 
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/alert-archives/alerts/${recordId}/upload/image`, formData, config)
+    return visionAIAxios.post(`/api/v1/alert-archives/alerts/${recordId}/upload/image`, formData, config)
       .then(response => {
         console.log('预警记录图片上传成功:', response.data);
         return response;
@@ -3077,7 +3077,7 @@ export const archiveAPI = {
       }
     };
 
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/alert-archives/alerts/${recordId}/upload/video`, formData, config)
+    return visionAIAxios.post(`/api/v1/alert-archives/alerts/${recordId}/upload/video`, formData, config)
       .then(response => {
         console.log('预警记录视频上传成功:', response.data);
         return response;
@@ -3095,7 +3095,7 @@ export const archiveAPI = {
   getAllArchivesStatistics() {
     console.log('获取档案总体统计信息');
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/alert-archives/statistics')
+    return visionAIAxios.get('/api/v1/alert-archives/statistics')
       .then(response => {
         console.log('获取档案总体统计信息成功:', response.data);
         return response;
@@ -3129,7 +3129,7 @@ export const archiveAPI = {
 
     console.log('搜索档案 - API调用参数:', apiParams);
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/alert-archives/search', { params: apiParams })
+    return visionAIAxios.get('/api/v1/alert-archives/search', { params: apiParams })
       .then(response => {
         console.log('搜索档案成功:', response.data);
         return response;
@@ -3166,7 +3166,7 @@ export const archiveAPI = {
 
     console.log('获取可用预警列表 - API调用参数:', apiParams);
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/alert-archives/available-alerts', { params: apiParams })
+    return visionAIAxios.get('/api/v1/alert-archives/available-alerts', { params: apiParams })
       .then(response => {
         console.log('获取可用预警列表成功:', response.data);
         return response;
@@ -3192,7 +3192,7 @@ export const archiveAPI = {
 
     console.log('关联预警到档案 - API调用参数:', { archiveId, ...requestData });
 
-    return visionAIAxios.post(`/prod-api/smart-engine/api/v1/alert-archives/link-alerts/${archiveId}`, requestData)
+    return visionAIAxios.post(`/api/v1/alert-archives/link-alerts/${archiveId}`, requestData)
       .then(response => {
         console.log('关联预警到档案成功:', response.data);
         return response;
@@ -3212,7 +3212,7 @@ export const archiveAPI = {
   unlinkAlertFromArchive(archiveId, alertId) {
     console.log('移除预警关联 - API调用参数:', { archiveId, alertId });
 
-    return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/alert-archives/unlink-alert/${archiveId}/${alertId}`)
+    return visionAIAxios.delete(`/api/v1/alert-archives/unlink-alert/${archiveId}/${alertId}`)
       .then(response => {
         console.log('移除预警关联成功:', response.data);
         return response;
@@ -3245,7 +3245,7 @@ export const archiveAPI = {
 
     console.log('获取档案关联预警列表 - API调用参数:', { archiveId, ...apiParams });
 
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/alert-archives/linked-alerts/${archiveId}`, { params: apiParams })
+    return visionAIAxios.get(`/api/v1/alert-archives/linked-alerts/${archiveId}`, { params: apiParams })
       .then(response => {
         console.log('获取档案关联预警列表成功:', response.data);
         return response;
@@ -3264,7 +3264,7 @@ export const archiveAPI = {
   getArchiveStatistics(archiveId) {
     console.log('获取档案统计信息 - API调用参数:', { archiveId });
 
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/alert-archives/statistics/${archiveId}`)
+    return visionAIAxios.get(`/api/v1/alert-archives/statistics/${archiveId}`)
       .then(response => {
         console.log('获取档案统计信息成功:', response.data);
         return response;
@@ -3283,7 +3283,7 @@ export const archiveAPI = {
   checkAlertArchiveStatus(alertId) {
     console.log('检查预警归档状态 - API调用参数:', { alertId });
 
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/alert-archives/check-alert/${alertId}`)
+    return visionAIAxios.get(`/api/v1/alert-archives/check-alert/${alertId}`)
       .then(response => {
         console.log('检查预警归档状态成功:', response.data);
         return response;
@@ -3311,7 +3311,7 @@ export const taskReviewAPI = {
 
     console.log('获取任务复判配置:', { taskType, taskId });
 
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/tasks/${taskType}/${taskId}/review-config`)
+    return visionAIAxios.get(`/api/v1/tasks/${taskType}/${taskId}/review-config`)
       .then(response => {
         console.log('获取任务复判配置成功:', response.data);
         return response;
@@ -3341,7 +3341,7 @@ export const taskReviewAPI = {
 
     console.log('更新任务复判配置:', { taskType, taskId, config });
 
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/tasks/${taskType}/${taskId}/review-config`, config)
+    return visionAIAxios.put(`/api/v1/tasks/${taskType}/${taskId}/review-config`, config)
       .then(response => {
         console.log('更新任务复判配置成功:', response.data);
         return response;
@@ -3366,7 +3366,7 @@ export const taskReviewAPI = {
 
     console.log('删除任务复判配置:', { taskType, taskId });
 
-    return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/tasks/${taskType}/${taskId}/review-config`)
+    return visionAIAxios.delete(`/api/v1/tasks/${taskType}/${taskId}/review-config`)
       .then(response => {
         console.log('删除任务复判配置成功:', response.data);
         return response;
@@ -3384,7 +3384,7 @@ export const taskReviewAPI = {
   getAvailableReviewSkills() {
     console.log('获取可用的复判技能列表');
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/review-skills/available')
+    return visionAIAxios.get('/api/v1/review-skills/available')
       .then(response => {
         console.log('获取可用复判技能成功:', response.data);
         return response;
@@ -3402,7 +3402,7 @@ export const taskReviewAPI = {
   getReviewEnabledTasks() {
     console.log('获取启用复判的任务列表');
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/tasks/review-enabled')
+    return visionAIAxios.get('/api/v1/tasks/review-enabled')
       .then(response => {
         console.log('获取启用复判的任务成功:', response.data);
         return response;
@@ -3426,7 +3426,7 @@ export const taskReviewAPI = {
 
     console.log('手动触发预警复判:', alertId);
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/alerts/review', { alert_id: alertId })
+    return visionAIAxios.post('/api/v1/alerts/review', { alert_id: alertId })
       .then(response => {
         console.log('触发预警复判成功:', response.data);
         return response;
@@ -3444,7 +3444,7 @@ export const taskReviewAPI = {
   getReviewServiceStatus() {
     console.log('获取复判服务状态');
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/review-service/status')
+    return visionAIAxios.get('/api/v1/review-service/status')
       .then(response => {
         console.log('获取复判服务状态成功:', response.data);
         return response;
@@ -3462,7 +3462,7 @@ export const taskReviewAPI = {
   startReviewService() {
     console.log('启动复判服务');
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/review-service/start')
+    return visionAIAxios.post('/api/v1/review-service/start')
       .then(response => {
         console.log('启动复判服务成功:', response.data);
         return response;
@@ -3480,7 +3480,7 @@ export const taskReviewAPI = {
   stopReviewService() {
     console.log('停止复判服务');
 
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/review-service/stop')
+    return visionAIAxios.post('/api/v1/review-service/stop')
       .then(response => {
         console.log('停止复判服务成功:', response.data);
         return response;
@@ -3499,7 +3499,7 @@ export const taskReviewAPI = {
   getAITasksForReview(params = {}) {
     console.log('获取AI任务列表（用于复判配置）');
 
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/ai-tasks', { params })
+    return visionAIAxios.get('/api/v1/ai-tasks', { params })
       .then(response => {
         console.log('获取AI任务列表成功:', response.data);
         return response;
@@ -3519,7 +3519,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含复判记录列表的Promise对象
    */
   getReviewRecords(params = {}) {
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/review-records/', { params });
+    return visionAIAxios.get('/api/v1/review-records/', { params });
   },
 
   /**
@@ -3528,7 +3528,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含复判记录详情的Promise对象
    */
   getReviewRecordById(reviewId) {
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/review-records/${reviewId}`);
+    return visionAIAxios.get(`/api/v1/review-records/${reviewId}`);
   },
 
   /**
@@ -3537,7 +3537,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含复判记录列表的Promise对象
    */
   getReviewRecordsByAlertId(alertId) {
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/review-records/alert/${alertId}`);
+    return visionAIAxios.get(`/api/v1/review-records/alert/${alertId}`);
   },
 
   /**
@@ -3546,7 +3546,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含创建结果的Promise对象
    */
   createReviewRecord(reviewData) {
-    return visionAIAxios.post('/prod-api/smart-engine/api/v1/review-records/', reviewData);
+    return visionAIAxios.post('/api/v1/review-records/', reviewData);
   },
 
   /**
@@ -3556,7 +3556,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含更新结果的Promise对象
    */
   updateReviewRecord(reviewId, updateData) {
-    return visionAIAxios.put(`/prod-api/smart-engine/api/v1/review-records/${reviewId}`, updateData);
+    return visionAIAxios.put(`/api/v1/review-records/${reviewId}`, updateData);
   },
 
   /**
@@ -3565,7 +3565,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含删除结果的Promise对象
    */
   deleteReviewRecord(reviewId) {
-    return visionAIAxios.delete(`/prod-api/smart-engine/api/v1/review-records/${reviewId}`);
+    return visionAIAxios.delete(`/api/v1/review-records/${reviewId}`);
   },
 
   /**
@@ -3574,7 +3574,7 @@ export const reviewRecordAPI = {
    * @returns {Promise} 包含统计信息的Promise对象
    */
   getReviewRecordStatistics(params = {}) {
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/review-records/statistics', { params });
+    return visionAIAxios.get('/api/v1/review-records/statistics', { params });
   }
 };
 
@@ -3599,7 +3599,7 @@ export const realtimeMonitorAPI = {
   getChannelList(params = {}) {
     console.log('📤 获取实时监控通道列表 - 参数:', params);
     
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/realtime-monitor/channels', { params })
+    return visionAIAxios.get('/api/v1/realtime-monitor/channels', { params })
       .then(response => {
         console.log('📥 获取实时监控通道列表成功:', response.data);
         return response;
@@ -3618,7 +3618,7 @@ export const realtimeMonitorAPI = {
   getChannelDetail(channelId) {
     console.log('📤 获取通道详情 - 通道ID:', channelId);
     
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/realtime-monitor/channels/${channelId}`)
+    return visionAIAxios.get(`/api/v1/realtime-monitor/channels/${channelId}`)
       .then(response => {
         console.log('📥 获取通道详情成功:', response.data);
         return response;
@@ -3637,7 +3637,7 @@ export const realtimeMonitorAPI = {
   playChannel(channelId) {
     console.log('📤 播放通道 - 通道ID:', channelId);
     
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/realtime-monitor/play/${channelId}`)
+    return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`)
       .then(response => {
         console.log('📥 播放通道成功:', response.data);
         return response;
@@ -3656,7 +3656,7 @@ export const realtimeMonitorAPI = {
   stopChannel(channelId) {
     console.log('📤 停止播放通道 - 通道ID:', channelId);
     
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/realtime-monitor/stop/${channelId}`)
+    return visionAIAxios.get(`/api/v1/realtime-monitor/stop/${channelId}`)
       .then(response => {
         console.log('📥 停止播放成功:', response.data);
         return response;
@@ -3677,7 +3677,7 @@ export const realtimeMonitorAPI = {
   getChannelTree(params = {}) {
     console.log('📤 获取通道树 - 参数:', params);
     
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/realtime-monitor/channels/tree', { params })
+    return visionAIAxios.get('/api/v1/realtime-monitor/channels/tree', { params })
       .then(response => {
         console.log('📥 获取通道树成功:', response.data);
         return response;
@@ -3700,7 +3700,7 @@ export const realtimeMonitorAPI = {
   getRegionTree(params = {}) {
     console.log('📤 获取行政区划树 - 参数:', params);
     
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/realtime-monitor/region/tree', { params })
+    return visionAIAxios.get('/api/v1/realtime-monitor/region/tree', { params })
       .then(response => {
         console.log('📥 获取行政区划树成功:', response.data);
         return response;
@@ -3724,7 +3724,7 @@ export const realtimeMonitorAPI = {
   getGroupTree(params = {}) {
     console.log('📤 获取业务分组树 - 参数:', params);
     
-    return visionAIAxios.get('/prod-api/smart-engine/api/v1/realtime-monitor/group/tree', { params })
+    return visionAIAxios.get('/api/v1/realtime-monitor/group/tree', { params })
       .then(response => {
         console.log('📥 获取业务分组树成功:', response.data);
         return response;
@@ -3746,7 +3746,7 @@ export const realtimeDetectionAPI = {
    * @returns {Promise} AI任务列表
    */
   getTasksByCamera(cameraId) {
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/realtime-detection/detection/tasks/by_camera/${cameraId}`)
+    return visionAIAxios.get(`/api/v1/realtime-detection/detection/tasks/by_camera/${cameraId}`)
       .catch(error => {
         console.error('❌ 获取AI任务列表失败:', error);
         throw error;
@@ -3759,7 +3759,7 @@ export const realtimeDetectionAPI = {
    * @returns {Promise} 检测结果数据
    */
   getDetectionResult(taskId) {
-    return visionAIAxios.get(`/prod-api/smart-engine/api/v1/realtime-detection/detection/result/${taskId}`)
+    return visionAIAxios.get(`/api/v1/realtime-detection/detection/result/${taskId}`)
       .then(response => {
         return response;
       })

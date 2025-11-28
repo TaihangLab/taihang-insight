@@ -162,13 +162,13 @@ export default {
       
       if (this.addDialogVisible && this.currentRecordId) {
         // 添加预警记录时的图片上传
-        return `${baseUrl}/prod-api/smart-engine/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/image`
+        return `${baseUrl}/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/image`
       } else if (this.addArchiveDialogVisible && this.currentArchiveId) {
         // 添加档案时的图片上传
-        return `${baseUrl}/prod-api/smart-engine/api/v1/alert-archives/${this.currentArchiveId}/upload/image`
+        return `${baseUrl}/api/v1/alert-archives/${this.currentArchiveId}/upload/image`
       } else {
         // 临时上传地址（新建时还没有ID）
-        return `${baseUrl}/prod-api/smart-engine/api/v1/alert-archives/upload/temp`
+        return `${baseUrl}/api/v1/alert-archives/upload/temp`
       }
     },
     
@@ -177,9 +177,9 @@ export default {
       const baseUrl = 'http://127.0.0.1:8000'
       
       if (this.currentRecordId) {
-        return `${baseUrl}/prod-api/smart-engine/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/video`
+        return `${baseUrl}/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/video`
       } else {
-        return `${baseUrl}/prod-api/smart-engine/api/v1/alert-archives/upload/temp-video`
+        return `${baseUrl}/api/v1/alert-archives/upload/temp-video`
       }
     },
     

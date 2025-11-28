@@ -15,7 +15,7 @@ import request from '@/utils/request'
  */
 export function getOnvifRtsp(params) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/onvif/rtsp',
+    url: '/api/v1/onvif/rtsp',
     method: 'get',
     params: params
   })
@@ -30,7 +30,7 @@ export function getOnvifRtsp(params) {
  * @param {string} end - 结束时间
  */
 export function getPositionHistory(deviceId, channelId, start, end) {
-  let url = `/prod-api/smart-engine/api/v1/position/history/${deviceId}?start=${start}&end=${end}`
+  let url = `/api/v1/position/history/${deviceId}?start=${start}&end=${end}`
   if (channelId) {
     url += `&channelId=${channelId}`
   }
@@ -48,7 +48,7 @@ export function getPositionHistory(deviceId, channelId, start, end) {
  */
 export function saveDevice(data, isUpdate = false) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/device/query/device/${isUpdate ? 'update' : 'add'}`,
+    url: `/api/v1/device/query/device/${isUpdate ? 'update' : 'add'}`,
     method: 'post',
     data: data
   })
@@ -61,7 +61,7 @@ export function saveDevice(data, isUpdate = false) {
  */
 export function getRegionChildList(parent) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/region/base/child/list',
+    url: '/api/v1/region/base/child/list',
     method: 'get',
     params: { parent }
   })
@@ -72,7 +72,7 @@ export function getRegionChildList(parent) {
  */
 export function getIndustryCodeList() {
   return request({
-    url: '/prod-api/smart-engine/api/v1/common/channel/industry/list',
+    url: '/api/v1/common/channel/industry/list',
     method: 'get'
   })
 }
@@ -82,7 +82,7 @@ export function getIndustryCodeList() {
  */
 export function getDeviceTypeList() {
   return request({
-    url: '/prod-api/smart-engine/api/v1/common/channel/type/list',
+    url: '/api/v1/common/channel/type/list',
     method: 'get'
   })
 }
@@ -92,7 +92,7 @@ export function getDeviceTypeList() {
  */
 export function getNetworkIdentificationList() {
   return request({
-    url: '/prod-api/smart-engine/api/v1/common/channel/network/identification/list',
+    url: '/api/v1/common/channel/network/identification/list',
     method: 'get'
   })
 }
@@ -105,7 +105,7 @@ export function getNetworkIdentificationList() {
  */
 export function saveCatalog(data, isEdit = false) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/platform/catalog/${isEdit ? 'edit' : 'add'}`,
+    url: `/api/v1/platform/catalog/${isEdit ? 'edit' : 'add'}`,
     method: 'post',
     data: data
   })
@@ -119,7 +119,7 @@ export function saveCatalog(data, isEdit = false) {
  */
 export function changePassword(oldPassword, password) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/user/changePassword',
+    url: '/api/v1/user/changePassword',
     method: 'post',
     params: {
       oldPassword: oldPassword,
@@ -135,7 +135,7 @@ export function changePassword(oldPassword, password) {
  */
 export function changePasswordForAdmin(password, userId) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/user/changePasswordForAdmin',
+    url: '/api/v1/user/changePasswordForAdmin',
     method: 'post',
     params: {
       password: password,
@@ -151,7 +151,7 @@ export function changePasswordForAdmin(password, userId) {
  */
 export function changePushKey(pushKey, userId) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/user/changePushKey',
+    url: '/api/v1/user/changePushKey',
     method: 'post',
     params: {
       pushKey: pushKey,
@@ -169,7 +169,7 @@ export function changePushKey(pushKey, userId) {
  */
 export function getDownloadProgress(deviceId, channelId, stream) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/gb_record/download/progress/${deviceId}/${channelId}/${stream}`,
+    url: `/api/v1/gb_record/download/progress/${deviceId}/${channelId}/${stream}`,
     method: 'get'
   })
 }
@@ -182,7 +182,7 @@ export function getDownloadProgress(deviceId, channelId, stream) {
  */
 export function stopDownloadRecord(deviceId, channelId, stream) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/gb_record/download/stop/${deviceId}/${channelId}/${stream}`,
+    url: `/api/v1/gb_record/download/stop/${deviceId}/${channelId}/${stream}`,
     method: 'get'
   })
 }
@@ -194,7 +194,7 @@ export function stopDownloadRecord(deviceId, channelId, stream) {
  */
 export function getGbDeviceList(params) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/device/query/devices',
+    url: '/api/v1/device/query/devices',
     method: 'get',
     params: params
   })
@@ -206,7 +206,7 @@ export function getGbDeviceList(params) {
  */
 export function getChannelByCivilCode(params) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/common/channel/civilcode/list',
+    url: '/api/v1/common/channel/civilcode/list',
     method: 'get',
     params: params
   })
@@ -218,7 +218,7 @@ export function getChannelByCivilCode(params) {
  */
 export function getChannelByParent(params) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/common/channel/parent/list',
+    url: '/api/v1/common/channel/parent/list',
     method: 'get',
     params: params
   })
@@ -231,7 +231,7 @@ export function getChannelByParent(params) {
  */
 export function getPlatformChannelList(params) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/platform/channel/list',
+    url: '/api/v1/platform/channel/list',
     method: 'get',
     params: params
   })
@@ -243,7 +243,7 @@ export function getPlatformChannelList(params) {
  */
 export function addPlatformChannel(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/platform/channel/add',
+    url: '/api/v1/platform/channel/add',
     method: 'post',
     data: data
   })
@@ -255,7 +255,7 @@ export function addPlatformChannel(data) {
  */
 export function addPlatformChannelByDevice(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/platform/channel/device/add',
+    url: '/api/v1/platform/channel/device/add',
     method: 'post',
     data: data
   })
@@ -267,7 +267,7 @@ export function addPlatformChannelByDevice(data) {
  */
 export function removePlatformChannel(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/platform/channel/remove',
+    url: '/api/v1/platform/channel/remove',
     method: 'delete',
     data: data
   })
@@ -279,7 +279,7 @@ export function removePlatformChannel(data) {
  */
 export function removePlatformChannelByDevice(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/platform/channel/device/remove',
+    url: '/api/v1/platform/channel/device/remove',
     method: 'post',
     data: data
   })
@@ -291,7 +291,7 @@ export function removePlatformChannelByDevice(data) {
  */
 export function updatePlatformChannelCustom(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/platform/channel/custom/update',
+    url: '/api/v1/platform/channel/custom/update',
     method: 'post',
     data: data
   })
@@ -303,7 +303,7 @@ export function updatePlatformChannelCustom(data) {
  */
 export function updatePlatformChannelForGb(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/platform/update_channel_for_gb',
+    url: '/api/v1/platform/update_channel_for_gb',
     method: 'post',
     data: data
   })
@@ -316,7 +316,7 @@ export function updatePlatformChannelForGb(data) {
  */
 export function getRecordPlanChannelList(params) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/record/plan/channel/list',
+    url: '/api/v1/record/plan/channel/list',
     method: 'get',
     params: params
   })
@@ -328,7 +328,7 @@ export function getRecordPlanChannelList(params) {
  */
 export function linkRecordPlan(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/record/plan/link',
+    url: '/api/v1/record/plan/link',
     method: 'post',
     data: data
   })
@@ -341,7 +341,7 @@ export function linkRecordPlan(data) {
  */
 export function getUnusualCivilCodeChannelList(params) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/common/channel/civilCode/unusual/list',
+    url: '/api/v1/common/channel/civilCode/unusual/list',
     method: 'get',
     params: params
   })
@@ -353,7 +353,7 @@ export function getUnusualCivilCodeChannelList(params) {
  */
 export function clearUnusualCivilCodeChannel(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/common/channel/civilCode/unusual/clear',
+    url: '/api/v1/common/channel/civilCode/unusual/clear',
     method: 'post',
     data: data
   })
@@ -365,7 +365,7 @@ export function clearUnusualCivilCodeChannel(data) {
  */
 export function getRegionDescription(civilCode) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/region/description',
+    url: '/api/v1/region/description',
     method: 'get',
     params: { civilCode }
   })
@@ -377,7 +377,7 @@ export function getRegionDescription(civilCode) {
  */
 export function addRegionByCivilCode(civilCode) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/region/addByCivilCode',
+    url: '/api/v1/region/addByCivilCode',
     method: 'get',
     params: { civilCode }
   })
@@ -389,7 +389,7 @@ export function addRegionByCivilCode(civilCode) {
  */
 export function getUnusualParentChannelList(params) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/common/channel/parent/unusual/list',
+    url: '/api/v1/common/channel/parent/unusual/list',
     method: 'get',
     params: params
   })
@@ -401,7 +401,7 @@ export function getUnusualParentChannelList(params) {
  */
 export function clearUnusualParentChannel(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/common/channel/parent/unusual/clear',
+    url: '/api/v1/common/channel/parent/unusual/clear',
     method: 'post',
     data: data
   })
@@ -414,7 +414,7 @@ export function clearUnusualParentChannel(data) {
  */
 export function getDeviceSyncStatus(deviceId) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/device/query/${deviceId}/sync_status/`,
+    url: `/api/v1/device/query/${deviceId}/sync_status/`,
     method: 'get'
   })
 }
@@ -427,7 +427,7 @@ export function getDeviceSyncStatus(deviceId) {
  */
 export function startPlay(deviceId, channelId) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/play/start/${deviceId}/${channelId}`,
+    url: `/api/v1/play/start/${deviceId}/${channelId}`,
     method: 'get'
   })
 }

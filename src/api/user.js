@@ -9,7 +9,7 @@ import request from '@/utils/request'
  */
 export function login(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/user/login',
+    url: '/api/v1/user/login',
     method: 'post',
     data: data
   })
@@ -20,7 +20,7 @@ export function login(data) {
  */
 export function logout() {
   return request({
-    url: '/prod-api/smart-engine/api/v1/user/static/logout',
+    url: '/api/v1/user/static/logout',
     method: 'post'
   })
 }
@@ -30,7 +30,7 @@ export function logout() {
  */
 export function getUserInfo() {
   return request({
-    url: '/prod-api/smart-engine/api/v1/user/info',
+    url: '/api/v1/user/info',
     method: 'get'
   })
 }
@@ -41,7 +41,7 @@ export function getUserInfo() {
  */
 export function getUserList(params) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/user/list',
+    url: '/api/v1/user/list',
     method: 'get',
     params: params
   })
@@ -53,7 +53,7 @@ export function getUserList(params) {
  */
 export function addUser(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/user/add',
+    url: '/api/v1/user/add',
     method: 'post',
     data: data
   })
@@ -65,7 +65,7 @@ export function addUser(data) {
  */
 export function updateUser(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/user/update',
+    url: '/api/v1/user/update',
     method: 'post',
     data: data
   })
@@ -77,7 +77,7 @@ export function updateUser(data) {
  */
 export function deleteUser(id) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/user/delete/${id}`,
+    url: `/api/v1/user/delete/${id}`,
     method: 'delete'
   })
 }
@@ -88,7 +88,7 @@ export function deleteUser(id) {
  */
 export function changePassword(data) {
   return request({
-    url: '/prod-api/smart-engine/api/v1/user/password/change',
+    url: '/api/v1/user/password/change',
     method: 'post',
     data: data
   })
@@ -100,7 +100,7 @@ export function changePassword(data) {
  */
 export function resetPassword(userId) {
   return request({
-    url: `/prod-api/smart-engine/api/v1/user/password/reset/${userId}`,
+    url: `/api/v1/user/password/reset/${userId}`,
     method: 'post'
   })
 }
@@ -110,7 +110,7 @@ export function resetPassword(userId) {
  */
 export function getUserDetailInfo() {
   return request({
-    url: '/prod-api/smart-engine/api/v1/user/userInfo',
+    url: '/api/v1/user/userInfo',
     method: 'post'
   })
 }
