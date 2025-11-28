@@ -843,7 +843,7 @@ export default {
 .filter-section {
   background: #fff;
   padding: 12px 24px;
-  border-radius: 16px;
+  border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   margin-bottom: 20px;
   border: 1px solid rgba(59, 130, 246, 0.1);
