@@ -6,10 +6,29 @@ import request from '@/utils/request'
 /**
  * 获取推流列表
  * @param {Object} params - 查询参数
+ * @returns {Promise}
  */
 export function getPushStreamList(params) {
   return request({
     url: '/api/v1/push/list',
+    method: 'get',
+    params: params
+  })
+}
+
+/**
+ * 获取推流列表（管理页面）
+ * @param {Object} params - 查询参数
+ * @param {number} params.page - 当前页码
+ * @param {number} params.count - 每页数量
+ * @param {string} params.query - 搜索关键字
+ * @param {string} params.pushing - 推流状态
+ * @param {string} params.mediaServerId - 流媒体服务器ID
+ * @returns {Promise}
+ */
+export function getPushList(params) {
+  return request({
+    url: '/api/push/list',
     method: 'get',
     params: params
   })

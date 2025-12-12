@@ -469,7 +469,7 @@ export default {
       
       this.$axios({
         method: 'get',
-        url: '/api/device/query/devices',
+        url: '/debug/api/device/query/devices',
         params: params
       }).then((res) => {
         if (res.data.code === 0) {
@@ -576,7 +576,7 @@ export default {
     handleRefreshDevice(row) {
       this.$axios({
         method: 'get',
-        url: `/api/device/query/devices/${row.deviceId}/sync`
+        url: `/debug/api/device/query/devices/${row.deviceId}/sync`
       }).then((res) => {
         if (res.data.code !== 0) {
           this.$message.error(res.data.msg);
@@ -693,7 +693,7 @@ export default {
       }).then(() => {
         this.$axios({
           method: 'delete',
-          url: `/api/device/query/devices/${row.deviceId}/delete`
+          url: `/debug/api/device/query/devices/${row.deviceId}/delete`
         }).then((res) => {
           if (res.data.code === 0) {
             this.$message.success('删除成功');

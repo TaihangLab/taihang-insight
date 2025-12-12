@@ -36,8 +36,8 @@ export default {
   created() {},
   data() {
     return {
-      fixedHeader: true, // 固定 Header : boolean
-      fixSiderbar: true, // 固定左侧菜单栏 ： boolean
+      fixedHeader: false, // 固定 Header : boolean
+      fixSiderbar: false, // 固定左侧菜单栏 ： boolean
     };
   },
   methods: {

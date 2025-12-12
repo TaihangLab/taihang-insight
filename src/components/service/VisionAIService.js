@@ -1,7 +1,7 @@
 import axios from 'axios';
-const config = require('../../../config/index.js');
 import userService from '@/components/service/UserService'
 
+const config = require('../../../config/index.js');
 // 创建专用于visionAI模块的axios实例
 const visionAIAxios = axios.create({
   baseURL: config.API_BASE_URL,
