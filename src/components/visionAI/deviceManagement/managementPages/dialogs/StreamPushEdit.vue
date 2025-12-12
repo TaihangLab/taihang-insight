@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :title="streamPush.id ? '编辑推流信息' : '添加推流'"
-    :visible="true"
+    :visible="visible"
     width="1200px"
     top="3vh"
     :close-on-click-modal="false"
@@ -59,6 +59,7 @@ export default {
     return {
       locading: false,
       activeTab: 'push',
+      visible:true,
     };
   },
   methods: {
@@ -76,6 +77,7 @@ export default {
               showClose: true,
               message: '保存成功',
             });
+            this.visible = false
           }else {
             this.$message.error({
               showClose: true,
@@ -101,7 +103,7 @@ export default {
               showClose: true,
               message: '保存成功',
             });
-
+this.visible = false
             this.streamPush = res.data.data
           }else {
             this.$message.error({
