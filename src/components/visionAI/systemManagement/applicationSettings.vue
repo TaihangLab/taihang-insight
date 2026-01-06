@@ -624,16 +624,6 @@ export default {
 }
 
 /* 分页器样式 */
-/* .pagination-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 10px;
-  padding: 10px 0;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  border: 1px solid rgba(59, 130, 246, 0.1);
-} */
-
 .pagination-container {
   display: flex;
   justify-content: center;
