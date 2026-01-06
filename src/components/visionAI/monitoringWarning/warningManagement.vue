@@ -2168,7 +2168,7 @@ export default {
       <!-- 搜索和筛选区域 -->
       <div class="search-filter-area">
         <div class="search-row">
-          <div class="date-picker-wrapper">
+          <div class="date-picker-wrapper" style="margin-right: 24px;">
             <el-date-picker
               v-model="dateRange"
               type="daterange"
