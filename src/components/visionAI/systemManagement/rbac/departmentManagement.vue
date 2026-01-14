@@ -10,32 +10,22 @@
         </el-form-item>
         <el-form-item label="部门名称">
           <el-input
-            v-model="searchForm.deptName"
+            v-model="searchForm.name"
             placeholder="请输入部门名称"
             clearable
           ></el-input>
         </el-form-item>
-        <el-form-item label="类别编码">
+        <el-form-item label="部门编码">
           <el-input
-            v-model="searchForm.categoryCode"
-            placeholder="请输入类别编码"
+            v-model="searchForm.dept_code"
+            placeholder="请输入部门编码"
             clearable
           ></el-input>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
-            <el-option label="正常" value="1"></el-option>
-            <el-option label="停用" value="0"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="负责人">
-          <el-select v-model="searchForm.leader" placeholder="请选择负责人" clearable>
-            <el-option
-              v-for="user in userOptions"
-              :key="user.id"
-              :label="user.name"
-              :value="user.name">
-            </el-option>
+            <el-option label="启用" :value="0"></el-option>
+            <el-option label="停用" :value="1"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -56,7 +46,7 @@
         ref="customTable"
         :data="tableData"
         v-loading="loading"
-        row-key="deptCode"
+        row-key="dept_code"
         :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
         :border="false"
         class="custom-table"
@@ -64,21 +54,21 @@
         table-layout="fixed"
         :default-expand-all="false"
       >
-        <el-table-column prop="deptName" label="部门名称" min-width="200" align="left" header-align="center">
+        <el-table-column prop="name" label="部门名称" min-width="200" align="left" header-align="center">
           <template slot-scope="scope">
-            <span :style="{ paddingLeft: (scope.row.level * 20) + 'px' }">{{ scope.row.deptName }}</span>
+            <span :style="{ paddingLeft: (scope.row.depth * 20) + 'px' }">{{ scope.row.name }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="categoryCode" label="类别编码" min-width="140" align="center"></el-table-column>
-        <el-table-column prop="orderNum" label="排序" width="80" align="center"></el-table-column>
+        <el-table-column prop="dept_code" label="部门编码" min-width="140" align="center"></el-table-column>
+        <el-table-column prop="sort_order" label="排序" width="80" align="center"></el-table-column>
         <el-table-column prop="status" label="状态" width="80" align="center">
           <template slot-scope="scope">
-            <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="mini">
-              {{ scope.row.status === 1 ? '正常' : '停用' }}
+            <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="mini">
+              {{ scope.row.status === 0 ? '启用' : '停用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" min-width="160" align="center"></el-table-column>
+        <el-table-column prop="create_time" label="创建时间" min-width="160" align="center"></el-table-column>
         <el-table-column label="操作" width="180" fixed="right" align="center">
           <template slot-scope="scope">
             <div class="operation-buttons">
@@ -102,70 +92,42 @@
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item label="上级部门">
-              <el-select v-model="deptForm.parentCode" placeholder="选择上级部门" style="width: 100%">
+              <el-select v-model="deptForm.parent_id" placeholder="选择上级部门" style="width: 100%">
                 <el-option
                   v-for="dept in parentDeptOptions"
-                  :key="dept.deptCode"
-                  :label="dept.deptName"
-                  :value="dept.deptCode">
+                  :key="dept.dept_code"
+                  :label="dept.name"
+                  :value="dept.dept_code">
                 </el-option>
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="部门名称" prop="deptName" required>
-              <el-input v-model="deptForm.deptName" placeholder="请输入部门名称"></el-input>
+            <el-form-item label="部门名称" prop="name" required>
+              <el-input v-model="deptForm.name" placeholder="请输入部门名称"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="类别编码" prop="categoryCode" required>
-              <el-input v-model="deptForm.categoryCode" placeholder="请输入类别编码"></el-input>
+            <el-form-item label="部门编码" prop="dept_code" required>
+              <el-input v-model="deptForm.dept_code" placeholder="请输入部门编码"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="显示排序" prop="orderNum" required>
-              <el-input-number v-model="deptForm.orderNum" :min="0" :max="999" controls-position="right" style="width: 100%"></el-input-number>
+            <el-form-item label="显示排序" prop="sort_order" required>
+              <el-input-number v-model="deptForm.sort_order" :min="0" :max="999" controls-position="right" style="width: 100%"></el-input-number>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="负责人">
-              <el-select v-model="deptForm.leader" placeholder="请选择负责人" style="width: 100%">
-                <el-option
-                  v-for="user in userOptions"
-                  :key="user.id"
-                  :label="user.name"
-                  :value="user.name">
-                </el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="联系电话">
-              <el-input v-model="deptForm.phone" placeholder="请输入联系电话"></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="邮箱">
-              <el-input v-model="deptForm.email" placeholder="请输入邮箱"></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="24">
             <el-form-item label="部门状态">
               <el-radio-group v-model="deptForm.status">
-                <el-radio :label="1">正常</el-radio>
-                <el-radio :label="0">停用</el-radio>
+                <el-radio :label="0">启用</el-radio>
+                <el-radio :label="1">停用</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -210,53 +172,44 @@ export default {
     return {
       // 搜索表单
       searchForm: {
-        deptName: '',
-        categoryCode: '',
+        name: '',
+        dept_code: '',
         status: '',
-        leader: '',
         tenantCode: ''
       },
-      
+
       // 表格数据
       tableData: [],
       loading: false,
       expandAll: true,
-      
+
       // 部门表单
       deptForm: {
-        deptCode: null,
-        parentCode: 0,
-        parentName: '',
-        deptName: '',
-        categoryCode: '',
-        orderNum: 1,
-        status: 1,
-        leader: '',
-        phone: '',
-        email: ''
+        dept_code: null,
+        parent_id: null,
+        name: '',
+        sort_order: 0,
+        status: 0
       },
-      
+
       // 上级部门选项
       parentDeptOptions: [],
-      
-      // 用户选项
-      userOptions: [],
-      
+
       // 表单验证规则
       deptRules: {
-        deptName: [
+        name: [
           { required: true, message: '请输入部门名称', trigger: 'blur' },
           { min: 2, max: 30, message: '部门名称长度在2到30个字符', trigger: 'blur' }
         ],
-        categoryCode: [
-          { required: true, message: '请输入类别编码', trigger: 'blur' },
-          { min: 1, max: 20, message: '类别编码长度在1到20个字符', trigger: 'blur' }
+        dept_code: [
+          { required: true, message: '请输入部门编码', trigger: 'blur' },
+          { min: 1, max: 50, message: '部门编码长度在1到50个字符', trigger: 'blur' }
         ],
-        orderNum: [
+        sort_order: [
           { required: true, message: '请输入显示排序', trigger: 'blur' }
         ]
       },
-      
+
       // 对话框
       deptDialogVisible: false,
       deleteDialogVisible: false,
@@ -278,10 +231,9 @@ export default {
       try {
         // 构建请求参数
         const params = {
-          dept_name: this.searchForm.deptName || undefined,
-          category_code: this.searchForm.categoryCode || undefined,
+          name: this.searchForm.name || undefined,
+          dept_code: this.searchForm.dept_code || undefined,
           status: this.searchForm.status || undefined,
-          leader: this.searchForm.leader || undefined,
           tenant_code: this.searchForm.tenantCode || undefined
         }
 
@@ -316,19 +268,19 @@ export default {
         }, 100)
       }
     },
-    
+
     // 搜索部门
     searchDepts() {
       this.getDeptList()
     },
-    
+
     // 重置搜索
     resetSearch() {
       this.searchForm = {
-        deptName: '',
-        categoryCode: '',
+        name: '',
+        deptCode: '',
         status: '',
-        leader: ''
+        tenantCode: ''
       }
       this.getDeptList()
     },
@@ -359,15 +311,10 @@ export default {
       this.dialogTitle = '添加部门'
       this.deptForm = {
         deptCode: null,
-        parentCode: 0,
-        parentName: '',
-        deptName: '',
-        categoryCode: '',
-        orderNum: 0,
-        status: 1,
-        leader: '',
-        phone: '',
-        email: ''
+        parentId: null,
+        name: '',
+        sortOrder: 0,
+        status: 0
       }
       this.deptDialogVisible = true
       // 清除表单验证
@@ -375,21 +322,16 @@ export default {
         this.$refs.deptForm && this.$refs.deptForm.clearValidate()
       })
     },
-    
+
     // 添加子部门
     addSubDept(row) {
       this.dialogTitle = '添加子部门'
       this.deptForm = {
         deptCode: null,
-        parentCode: row.deptCode,
-        parentName: row.deptName,
-        deptName: '',
-        categoryCode: '',
-        orderNum: 0,
-        status: 1,
-        leader: '',
-        phone: '',
-        email: ''
+        parentId: row.deptCode,
+        name: '',
+        sortOrder: 0,
+        status: 0
       }
       this.deptDialogVisible = true
       // 清除表单验证
@@ -397,21 +339,16 @@ export default {
         this.$refs.deptForm && this.$refs.deptForm.clearValidate()
       })
     },
-    
+
     // 编辑部门
     editDept(row) {
       this.dialogTitle = '编辑部门'
       this.deptForm = {
         deptCode: row.deptCode,
-        parentCode: row.parentCode || 0,
-        parentName: row.parentName || '',
-        deptName: row.deptName,
-        categoryCode: row.categoryCode,
-        orderNum: row.orderNum,
-        status: row.status,
-        leader: row.leader || '',
-        phone: row.phone || '',
-        email: row.email || ''
+        parentId: row.parentId || null,
+        name: row.name,
+        sortOrder: row.sortOrder,
+        status: row.status !== undefined && row.status !== null ? row.status : 0
       }
       this.currentDept = row
       this.deptDialogVisible = true
@@ -478,24 +415,11 @@ export default {
         const response = await RBACService.getDepartments()
         if (response && response.data) {
           const depts = Array.isArray(response.data.items) ? response.data.items : response.data
-          this.parentDeptOptions = [{ deptCode: 0, deptName: '无上级部门' }, ...depts]
+          this.parentDeptOptions = [{ deptCode: null, name: '无上级部门' }, ...depts]
         }
       } catch (error) {
         console.error('获取上级部门选项失败:', error)
         this.$message.error(`获取上级部门选项失败: ${error.message}`)
-      }
-    },
-    
-    // 获取用户选项
-    async getUserOptions() {
-      try {
-        const response = await RBACService.getUsers()
-        if (response && response.data) {
-          this.userOptions = Array.isArray(response.data.items) ? response.data.items : response.data
-        }
-      } catch (error) {
-        console.error('获取用户选项失败:', error)
-        this.$message.error(`获取用户选项失败: ${error.message}`)
       }
     }
   }

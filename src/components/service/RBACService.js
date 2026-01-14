@@ -53,11 +53,11 @@ class RBACService {
       this.updatePosition = PositionService.updatePosition;
       this.deletePosition = PositionService.deletePosition;
 
-      // 租户管理API
-      this.getTenants = TenantService.getTenants;
-      this.createTenant = TenantService.createTenant;
-      this.updateTenant = TenantService.updateTenant;
-      this.deleteTenant = TenantService.deleteTenant;
+      // 租户管理API - 使用包装函数以保持正确的 this 上下文
+      this.getTenants = (...args) => TenantService.getTenants(...args);
+      this.createTenant = (...args) => TenantService.createTenant(...args);
+      this.updateTenant = (...args) => TenantService.updateTenant(...args);
+      this.deleteTenant = (...args) => TenantService.deleteTenant(...args);
 
       // 权限管理API
       this.getPermissions = PermissionService.getPermissions;

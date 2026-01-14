@@ -3,7 +3,7 @@
     :value="value"
     :placeholder="placeholder"
     :clearable="clearable"
-    :style="style"
+    :style="customStyle"
     @change="handleChange"
     @focus="loadTenantsIfNeeded">
     <el-option
@@ -33,7 +33,7 @@ export default {
       type: Boolean,
       default: true
     },
-    style: {
+    customStyle: {
       type: Object,
       default: () => ({ width: '200px' })
     },

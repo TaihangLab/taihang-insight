@@ -28,21 +28,21 @@
                 @change="handleTenantChange"/>
             </el-form-item>
             <el-form-item label="岗位编码">
-              <el-input v-model="searchForm.positionCode" placeholder="请输入岗位编码" clearable style="width: 180px;">
+              <el-input v-model="searchForm.position_code" placeholder="请输入岗位编码" clearable style="width: 180px;">
               </el-input>
             </el-form-item>
             <el-form-item label="岗位名称">
-              <el-input v-model="searchForm.positionName" placeholder="请输入岗位名称" clearable style="width: 180px;">
+              <el-input v-model="searchForm.position_name" placeholder="请输入岗位名称" clearable style="width: 180px;">
               </el-input>
             </el-form-item>
             <el-form-item label="类别编码">
-              <el-input v-model="searchForm.categoryCode" placeholder="请输入类别编码" clearable style="width: 180px;">
+              <el-input v-model="searchForm.category_code" placeholder="请输入类别编码" clearable style="width: 180px;">
               </el-input>
             </el-form-item>
             <el-form-item label="状态">
               <el-select v-model="searchForm.status" placeholder="请选择状态" clearable style="width: 120px;">
-                <el-option label="正常" value="1"></el-option>
-                <el-option label="停用" value="0"></el-option>
+                <el-option label="正常" :value="1"></el-option>
+                <el-option label="停用" :value="0"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item>
@@ -66,11 +66,11 @@
           <el-table ref="customTable" :data="tableData" v-loading="loading" :border="false" class="custom-table"
             style="width: 100%" table-layout="fixed" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="50" align="center"></el-table-column>
-            <el-table-column prop="positionCode" label="岗位编码" min-width="120" align="center"></el-table-column>
-            <el-table-column prop="categoryCode" label="类别编码" min-width="120" align="center"></el-table-column>
-            <el-table-column prop="positionName" label="岗位名称" min-width="150" align="center"></el-table-column>
+            <el-table-column prop="position_code" label="岗位编码" min-width="120" align="center"></el-table-column>
+            <el-table-column prop="category_code" label="类别编码" min-width="120" align="center"></el-table-column>
+            <el-table-column prop="position_name" label="岗位名称" min-width="150" align="center"></el-table-column>
             <el-table-column prop="department" label="部门" min-width="120" align="center"></el-table-column>
-            <el-table-column prop="orderNum" label="排序" width="80" align="center"></el-table-column>
+            <el-table-column prop="order_num" label="排序" width="80" align="center"></el-table-column>
             <el-table-column prop="status" label="状态" width="80" align="center">
               <template slot-scope="scope">
                 <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="mini">
@@ -78,7 +78,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" min-width="160" align="center"></el-table-column>
+            <el-table-column prop="create_time" label="创建时间" min-width="160" align="center"></el-table-column>
             <el-table-column label="操作" width="150" fixed="right" align="center">
               <template slot-scope="scope">
                 <div class="operation-buttons">
@@ -105,21 +105,21 @@
       <el-form :model="positionForm" :rules="positionRules" ref="positionForm" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="岗位编码" prop="positionCode">
-              <el-input v-model="positionForm.positionCode" placeholder="请输入岗位编码"></el-input>
+            <el-form-item label="岗位编码" prop="position_code">
+              <el-input v-model="positionForm.position_code" placeholder="请输入岗位编码"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="岗位名称" prop="positionName">
-              <el-input v-model="positionForm.positionName" placeholder="请输入岗位名称"></el-input>
+            <el-form-item label="岗位名称" prop="position_name">
+              <el-input v-model="positionForm.position_name" placeholder="请输入岗位名称"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="类别编码" prop="categoryCode">
-              <el-input v-model="positionForm.categoryCode" placeholder="请输入类别编码"></el-input>
+            <el-form-item label="类别编码" prop="category_code">
+              <el-input v-model="positionForm.category_code" placeholder="请输入类别编码"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -136,8 +136,8 @@
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="显示排序" prop="orderNum">
-              <el-input-number v-model="positionForm.orderNum" :min="0" :max="999" controls-position="right"
+            <el-form-item label="显示排序" prop="order_num">
+              <el-input-number v-model="positionForm.order_num" :min="0" :max="999" controls-position="right"
                 style="width: 100%"></el-input-number>
             </el-form-item>
           </el-col>
@@ -217,13 +217,13 @@
         </el-form-item>
         <el-form-item label="包含字段">
           <el-checkbox-group v-model="exportForm.fields">
-            <el-checkbox label="positionCode">岗位编码</el-checkbox>
-            <el-checkbox label="categoryCode">类别编码</el-checkbox>
-            <el-checkbox label="positionName">岗位名称</el-checkbox>
+            <el-checkbox label="position_code">岗位编码</el-checkbox>
+            <el-checkbox label="category_code">类别编码</el-checkbox>
+            <el-checkbox label="position_name">岗位名称</el-checkbox>
             <el-checkbox label="department">部门</el-checkbox>
-            <el-checkbox label="orderNum">排序</el-checkbox>
+            <el-checkbox label="order_num">排序</el-checkbox>
             <el-checkbox label="status">状态</el-checkbox>
-            <el-checkbox label="createTime">创建时间</el-checkbox>
+            <el-checkbox label="create_time">创建时间</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
       </el-form>
@@ -302,9 +302,9 @@ export default {
 
       // 搜索表单
       searchForm: {
-        positionCode: '',
-        positionName: '',
-        categoryCode: '',
+        position_code: '',
+        position_name: '',
+        category_code: '',
         department: '',
         status: '',
         tenantCode: ''
@@ -314,42 +314,42 @@ export default {
       tableData: [
         {
           id: 1,
-          positionCode: 'ceo',
-          categoryCode: 'ceo',
-          positionName: '董事长',
+          position_code: 'ceo',
+          category_code: 'ceo',
+          position_name: '董事长',
           department: '研发部门',
-          orderNum: 1,
+          order_num: 1,
           status: 1,
           level: 'high',
           responsibility: '负责公司整体战略规划和重大决策',
           requirements: '具有丰富的企业管理经验和战略眼光',
-          createTime: '2025-06-06 16:28:46'
+          create_time: '2025-06-06 16:28:46'
         },
         {
           id: 2,
-          positionCode: 'se',
-          categoryCode: 'se',
-          positionName: '项目经理',
+          position_code: 'se',
+          category_code: 'se',
+          position_name: '项目经理',
           department: 'XXX科技',
-          orderNum: 2,
+          order_num: 2,
           status: 1,
           level: 'middle',
           responsibility: '负责项目整体规划、执行和管理',
           requirements: '具有项目管理经验和团队协调能力',
-          createTime: '2025-06-06 16:28:46'
+          create_time: '2025-06-06 16:28:46'
         },
         {
           id: 3,
-          positionCode: 'hr',
-          categoryCode: 'hr',
-          positionName: '人力资源',
+          position_code: 'hr',
+          category_code: 'hr',
+          position_name: '人力资源',
           department: 'XXX科技',
-          orderNum: 3,
+          order_num: 3,
           status: 1,
           level: 'middle',
           responsibility: '负责人员招聘、培训和绩效管理',
           requirements: '熟悉人力资源管理体系和相关法规',
-          createTime: '2025-06-06 16:28:46'
+          create_time: '2025-06-06 16:28:46'
         },
         {
           id: 4,
@@ -430,13 +430,27 @@ export default {
   },
 
   created() {
-    this.searchPositions()
+    // 不再在 created 中直接调用 searchPositions()
+    // TenantSelector 的 autoSelectFirst 会触发 change 事件
+    // 由 handleTenantChange 来调用 searchPositions()，避免重复请求
   },
 
   methods: {
     // 处理租户变化
     handleTenantChange() {
       this.pagination.currentPage = 1
+      this.searchPositions()
+    },
+
+    // 部门树相关方法
+    filterNode(value, data) {
+      if (!value) return true
+      return data.label.indexOf(value) !== -1
+    },
+
+    handleNodeClick(data) {
+      // 点击部门节点时筛选对应部门的岗位
+      this.searchForm.department = data.label
       this.searchPositions()
     },
 
@@ -627,171 +641,6 @@ export default {
   watch: {
     filterText(val) {
       this.$refs.tree.filter(val)
-    }
-  },
-
-  methods: {
-    // 部门树相关方法
-    filterNode(value, data) {
-      if (!value) return true
-      return data.label.indexOf(value) !== -1
-    },
-
-    handleNodeClick(data) {
-      // 点击部门节点时筛选对应部门的岗位
-      this.searchForm.department = data.label
-      this.searchPositions()
-    },
-
-    // 搜索岗位
-    searchPositions() {
-      this.loading = true
-      // 这里模拟搜索逻辑
-      setTimeout(() => {
-        this.loading = false
-        this.$message.success('搜索完成')
-      }, 1000)
-    },
-
-    // 重置搜索
-    resetSearch() {
-      this.searchForm = {
-        positionCode: '',
-        positionName: '',
-        categoryCode: '',
-        department: '',
-        status: '',
-        tenantCode: ''
-      }
-      this.searchPositions()
-    },
-
-    // 新增岗位
-    addPosition() {
-      this.dialogTitle = '新增岗位'
-      this.positionForm = {
-        id: null,
-        positionCode: '',
-        categoryCode: '',
-        positionName: '',
-        department: '',
-        orderNum: 1,
-        level: '',
-        responsibility: '',
-        requirements: '',
-        status: 1
-      }
-      this.positionDialogVisible = true
-      // 清除表单验证状态
-      this.$nextTick(() => {
-        if (this.$refs.positionForm) {
-          this.$refs.positionForm.clearValidate()
-        }
-      })
-    },
-
-    // 编辑岗位
-    editPosition(row) {
-      this.dialogTitle = '编辑岗位'
-      this.positionForm = { ...row }
-      this.positionDialogVisible = true
-      // 清除表单验证状态
-      this.$nextTick(() => {
-        if (this.$refs.positionForm) {
-          this.$refs.positionForm.clearValidate()
-        }
-      })
-    },
-
-    // 保存岗位
-    savePosition() {
-      this.$refs.positionForm.validate((valid) => {
-        if (valid) {
-          if (this.positionForm.id) {
-            // 编辑
-            const index = this.tableData.findIndex(item => item.id === this.positionForm.id)
-            if (index !== -1) {
-              this.tableData.splice(index, 1, { ...this.positionForm })
-            }
-            this.$message.success('岗位信息更新成功')
-          } else {
-            // 新增
-            const newPosition = {
-              ...this.positionForm,
-              id: Date.now(),
-              createTime: new Date().toLocaleString('zh-CN')
-            }
-            this.tableData.unshift(newPosition)
-            this.total++
-            this.$message.success('岗位添加成功')
-          }
-          this.positionDialogVisible = false
-        }
-      })
-    },
-
-    // 删除岗位
-    deletePosition(row) {
-      this.deleteRow = row
-      this.deleteDialogVisible = true
-    },
-
-    // 确认删除
-    confirmDelete() {
-      if (this.deleteRow) {
-        const index = this.tableData.findIndex(item => item.id === this.deleteRow.id)
-        if (index !== -1) {
-          this.tableData.splice(index, 1)
-          this.total--
-          this.$message.success('岗位删除成功')
-        }
-      } else if (this.multipleSelection.length > 0) {
-        // 批量删除
-        this.multipleSelection.forEach(row => {
-          const index = this.tableData.findIndex(item => item.id === row.id)
-          if (index !== -1) {
-            this.tableData.splice(index, 1)
-            this.total--
-          }
-        })
-        this.$message.success(`成功删除 ${this.multipleSelection.length} 个岗位`)
-        this.multipleSelection = []
-      }
-      this.deleteDialogVisible = false
-      this.deleteRow = null
-    },
-
-    // 批量删除
-    batchDelete() {
-      this.deleteRow = null
-      this.deleteDialogVisible = true
-    },
-
-    // 导出岗位
-    exportPositions() {
-      this.exportDialogVisible = true
-    },
-
-    // 确认导出
-    confirmExport() {
-      this.$message.success(`正在导出${this.exportForm.format.toUpperCase()}格式的岗位数据...`)
-      this.exportDialogVisible = false
-    },
-
-    // 表格选择
-    handleSelectionChange(selection) {
-      this.multipleSelection = selection
-    },
-
-    // 分页
-    handleSizeChange(size) {
-      this.pageSize = size
-      this.searchPositions()
-    },
-
-    handleCurrentChange(page) {
-      this.currentPage = page
-      this.searchPositions()
     }
   },
 

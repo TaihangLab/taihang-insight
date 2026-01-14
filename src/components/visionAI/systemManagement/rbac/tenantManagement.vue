@@ -5,9 +5,8 @@
       <el-form :inline="true">
         <el-form-item label="租户编号">
           <el-input
-            v-model="searchForm.tenantCode"
-            placeholder="请输入租户编号"
-            clearable
+            v-model="searchForm.tenant_code"
+            placeholder="请输入租户编号（精确查询）"
           ></el-input>
         </el-form-item>
         <el-form-item label="租户名称">
@@ -17,17 +16,17 @@
             clearable
           ></el-input>
         </el-form-item>
-        <el-form-item label="创建人">
+        <el-form-item label="企业名称">
           <el-input
-            v-model="searchForm.createBy"
-            placeholder="请输入创建人"
+            v-model="searchForm.companyName"
+            placeholder="请输入企业名称"
             clearable
           ></el-input>
         </el-form-item>
         <el-form-item label="租户状态">
           <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
-            <el-option label="启用" :value="true"></el-option>
-            <el-option label="停用" :value="false"></el-option>
+            <el-option label="启用" :value="0"></el-option>
+            <el-option label="停用" :value="1"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -55,31 +54,33 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center"></el-table-column>
-        <el-table-column prop="tenantCode" label="租户编号" width="120" align="center"></el-table-column>
-        <el-table-column prop="tenantName" label="租户名称" align="center"></el-table-column>
-        <el-table-column prop="companyName" label="企业名称" width="180" align="center"></el-table-column>
-        <el-table-column prop="contactPerson" label="联系人" width="120" align="center"></el-table-column>
-        <el-table-column prop="contactPhone" label="联系电话" width="140" align="center"></el-table-column>
-        <el-table-column prop="expireTime" label="过期时间" width="120" align="center">
+        <el-table-column prop="tenant_code" label="租户编号" width="120" align="center"></el-table-column>
+        <el-table-column prop="tenant_name" label="租户名称" align="center"></el-table-column>
+        <el-table-column prop="company_name" label="企业名称" width="180" align="center"></el-table-column>
+        <el-table-column prop="contact_person" label="联系人" width="120" align="center"></el-table-column>
+        <el-table-column prop="contact_phone" label="联系电话" width="140" align="center"></el-table-column>
+        <el-table-column prop="expire_time" label="过期时间" width="120" align="center">
           <template slot-scope="scope">
-            {{ scope.row.expireTime ? new Date(scope.row.expireTime).toLocaleDateString() : '' }}
+            {{ scope.row.expire_time ? new Date(scope.row.expire_time).toLocaleDateString() : '' }}
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180" align="center">
+        <el-table-column prop="create_time" label="创建时间" width="180" align="center">
           <template slot-scope="scope">
-            {{ scope.row.createTime ? new Date(scope.row.createTime).toLocaleString() : '' }}
+            {{ scope.row.create_time ? new Date(scope.row.create_time).toLocaleString() : '' }}
           </template>
         </el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" width="180" align="center">
+        <el-table-column prop="update_time" label="更新时间" width="180" align="center">
           <template slot-scope="scope">
-            {{ scope.row.updateTime ? new Date(scope.row.updateTime).toLocaleString() : '' }}
+            {{ scope.row.update_time ? new Date(scope.row.update_time).toLocaleString() : '' }}
           </template>
         </el-table-column>
-        <el-table-column prop="createBy" label="创建人" width="120" align="center"></el-table-column>
+        <el-table-column prop="create_by" label="创建人" width="120" align="center"></el-table-column>
         <el-table-column prop="status" label="租户状态" width="100" align="center">
           <template slot-scope="scope">
             <el-switch
               v-model="scope.row.status"
+              :active-value="0"
+              :inactive-value="1"
               active-color="#3b82f6"
               inactive-color="#9ca3af"
               @change="handleStatusChange(scope.row)"
@@ -117,14 +118,14 @@
       width="700px"
     >
       <el-form :model="tenantForm" :rules="tenantRules" ref="tenantForm" label-width="100px">
-        <el-form-item label="企业名称" prop="companyName" required>
-          <el-input v-model="tenantForm.companyName" placeholder="请输入企业名称"></el-input>
+        <el-form-item label="企业名称" prop="company_name" required>
+          <el-input v-model="tenantForm.company_name" placeholder="请输入企业名称"></el-input>
         </el-form-item>
-        <el-form-item label="联系人" prop="contactPerson" required>
-          <el-input v-model="tenantForm.contactPerson" placeholder="请输入联系人"></el-input>
+        <el-form-item label="联系人" prop="contact_person" required>
+          <el-input v-model="tenantForm.contact_person" placeholder="请输入联系人"></el-input>
         </el-form-item>
-        <el-form-item label="联系电话" prop="contactPhone" required>
-          <el-input v-model="tenantForm.contactPhone" placeholder="请输入联系电话"></el-input>
+        <el-form-item label="联系电话" prop="contact_phone" required>
+          <el-input v-model="tenantForm.contact_phone" placeholder="请输入联系电话"></el-input>
         </el-form-item>
         <el-form-item label="用户名" prop="username" required>
           <el-input v-model="tenantForm.username" placeholder="请输入系统用户名"></el-input>
@@ -142,7 +143,7 @@
         </el-form-item>
         <el-form-item label="过期时间">
           <el-date-picker
-            v-model="tenantForm.expireTime"
+            v-model="tenantForm.expire_time"
             type="date"
             placeholder="请选择过期时间"
             format="yyyy-MM-dd"
@@ -207,9 +208,9 @@ export default {
     return {
       // 搜索表单
       searchForm: {
-        tenantCode: '',
+        tenant_code: '',
         tenantName: '',
-        createBy: '',
+        companyName: '',
         status: ''
       },
       
@@ -285,8 +286,9 @@ export default {
         const params = {
           skip: skip,
           limit: this.pagination.pageSize,
-          tenant_code: this.searchForm.tenantCode || undefined,
+          tenant_code: this.searchForm.tenant_code || undefined,
           tenant_name: this.searchForm.tenantName || undefined,
+          company_name: this.searchForm.companyName || undefined,  // 添加企业名称参数
           create_by: this.searchForm.createBy || undefined,
           status: this.searchForm.status || undefined
         }
@@ -319,91 +321,91 @@ export default {
       return [
         {
           id: 1,
-          tenantCode: 'default',
+          tenant_code: 'default',
           tenantName: '默认租户',
           createTime: '2026-01-11T18:59:04',
           updateTime: '2026-01-11T18:59:04',
           createBy: 'system',
           updateBy: 'system',
           remark: null,
-          status: true
+          status: 0
         },
         {
           id: 2,
-          tenantCode: '000000',
+          tenant_code: '000000',
           tenantName: 'XXX有限公司',
           createTime: '2026-01-11T19:27:23',
           updateTime: '2026-01-11T19:27:23',
           createBy: 'system',
           updateBy: 'system',
           remark: null,
-          status: true
+          status: 0
         },
         {
           id: 3,
-          tenantCode: '952742',
+          tenant_code: '952742',
           tenantName: '123企业',
           createTime: '2026-01-10T10:30:00',
           updateTime: '2026-01-10T10:30:00',
           createBy: 'admin',
           updateBy: 'admin',
           remark: '测试租户1',
-          status: true
+          status: 0
         },
         {
           id: 4,
-          tenantCode: '415387',
+          tenant_code: '415387',
           tenantName: '6666科技',
           createTime: '2026-01-09T14:20:00',
           updateTime: '2026-01-09T14:20:00',
           createBy: 'admin',
           updateBy: 'admin',
           remark: '测试租户2',
-          status: false
+          status: 1
         },
         {
           id: 5,
-          tenantCode: '297659',
+          tenant_code: '297659',
           tenantName: '16888贸易',
           createTime: '2026-01-08T09:15:00',
           updateTime: '2026-01-08T09:15:00',
           createBy: 'system',
           updateBy: 'system',
           remark: null,
-          status: true
+          status: 0
         },
         {
           id: 6,
-          tenantCode: '789133',
+          tenant_code: '789133',
           tenantName: '测试租户企业',
           createTime: '2026-01-07T16:45:00',
           updateTime: '2026-01-07T16:45:00',
           createBy: 'admin',
           updateBy: 'admin',
           remark: '测试用途',
-          status: true
+          status: 0
         },
         {
           id: 7,
-          tenantCode: '555083',
+          tenant_code: '555083',
           tenantName: '测试公司',
           createTime: '2026-01-06T11:20:00',
           updateTime: '2026-01-06T11:20:00',
           createBy: 'system',
           updateBy: 'system',
           remark: null,
-          status: true
+          status: 0
         },
         {
           id: 8,
-          tenantCode: '646214',
+          tenant_code: '646214',
           tenantName: 'test999',
           createTime: '2026-01-05T15:30:00',
           updateTime: '2026-01-05T15:30:00',
           createBy: 'admin',
           updateBy: 'admin',
           remark: '高级测试企业',
-          status: true
+          status: 0
         }
       ]
     },
@@ -417,10 +419,10 @@ export default {
     // 重置搜索条件
     resetSearch() {
       this.searchForm = {
-        tenantNumber: '',
-        contactPerson: '',
-        contactPhone: '',
-        companyName: ''
+        tenant_code: '',
+        tenantName: '',
+        companyName: '',
+        status: ''
       }
       this.pagination.currentPage = 1
       this.fetchTenants()
@@ -469,7 +471,18 @@ export default {
     editTenant(row) {
       this.dialogTitle = '编辑租户'
       this.currentTenant = row
-      this.tenantForm = { ...row }
+      // 映射字段名，确保表单字段与API字段匹配
+      this.tenantForm = {
+        ...row,
+        companyName: row.company_name || row.companyName,
+        contactPerson: row.contact_person || row.contactPerson,
+        contactPhone: row.contact_phone || row.contactPhone,
+        expireTime: row.expire_time || row.expireTime,
+        userCount: row.user_count || row.userCount || 0,
+        companyCode: row.company_code || row.companyCode,
+        description: row.description || row.description,
+        remark: row.remark || row.remark
+      }
       this.tenantDialogVisible = true
     },
     
@@ -490,15 +503,51 @@ export default {
           
           try {
             if (this.currentTenant) {
-              // 编辑租户
-              await RBACService.updateTenant(this.currentTenant.tenantCode, this.tenantForm)
+              // 编辑租户 - 将表单字段映射为API所需格式
+              const updateData = {
+                company_name: this.tenantForm.companyName,
+                contact_person: this.tenantForm.contactPerson,
+                contact_phone: this.tenantForm.contactPhone,
+                username: this.tenantForm.username,
+                package: this.tenantForm.package,
+                expire_time: this.tenantForm.expireTime,
+                user_count: this.tenantForm.userCount,
+                domain: this.tenantForm.domain,
+                address: this.tenantForm.address,
+                company_code: this.tenantForm.companyCode,
+                description: this.tenantForm.description,
+                remark: this.tenantForm.remark
+              };
+
+              // 如果密码不为空，则包含密码字段
+              if (this.tenantForm.password) {
+                updateData.password = this.tenantForm.password;
+              }
+
+              await RBACService.updateTenant(this.currentTenant.tenant_code, updateData)
               this.$message({
                 message: '租户信息修改成功',
                 type: 'success'
               })
             } else {
-              // 新增租户
-              await RBACService.createTenant(this.tenantForm)
+              // 新增租户 - 将表单字段映射为API所需格式
+              const createData = {
+                company_name: this.tenantForm.companyName,
+                contact_person: this.tenantForm.contactPerson,
+                contact_phone: this.tenantForm.contactPhone,
+                username: this.tenantForm.username,
+                password: this.tenantForm.password,
+                package: this.tenantForm.package,
+                expire_time: this.tenantForm.expireTime,
+                user_count: this.tenantForm.userCount,
+                domain: this.tenantForm.domain,
+                address: this.tenantForm.address,
+                company_code: this.tenantForm.companyCode,
+                description: this.tenantForm.description,
+                remark: this.tenantForm.remark
+              };
+
+              await RBACService.createTenant(createData)
               this.$message({
                 message: '租户添加成功',
                 type: 'success'
@@ -532,7 +581,7 @@ export default {
       this.loading = true
       
       try {// 删除租户
-        await RBACService.deleteTenant(this.currentTenant.tenantCode)
+        await RBACService.deleteTenant(this.currentTenant.tenant_code)
         this.$message({
           message: '租户删除成功',
           type: 'success'
@@ -654,11 +703,13 @@ export default {
     // 处理状态变化
     async handleStatusChange(row) {
       this.loading = true
-      
+
       try {
+        // 确保状态值为数字格式（0或1）
+        const statusValue = row.status ? 1 : 0;
         // 调用API更新租户状态
-        await RBACService.updateTenant(row.tenantCode, { status: row.status })
-        const status = row.status ? '启用' : '禁用'
+        await RBACService.updateTenant(row.tenant_code, { status: statusValue })
+        const status = statusValue === 0 ? '启用' : '禁用'
         this.$message({
           message: `租户状态已${status}`,
           type: 'success'

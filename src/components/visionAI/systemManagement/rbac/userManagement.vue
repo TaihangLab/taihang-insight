@@ -41,7 +41,7 @@
             </el-form-item>
             <el-form-item label="用户名称">
               <el-input
-                v-model="searchForm.userName"
+                v-model="searchForm.user_name"
                 placeholder="请输入用户名称"
                 clearable
                 style="width: 200px;">
@@ -49,7 +49,7 @@
             </el-form-item>
             <el-form-item label="用户昵称">
               <el-input
-                v-model="searchForm.userNickname"
+                v-model="searchForm.nick_name"
                 placeholder="请输入用户昵称"
                 clearable
                 style="width: 200px;">
@@ -57,7 +57,7 @@
             </el-form-item>
             <el-form-item label="手机号码">
               <el-input
-                v-model="searchForm.phoneNumber"
+                v-model="searchForm.phone"
                 placeholder="请输入手机号码"
                 clearable
                 style="width: 200px;">
@@ -71,7 +71,7 @@
             </el-form-item>
             <el-form-item label="部门">
               <el-cascader
-                v-model="searchForm.departmentId"
+                v-model="searchForm.dept_id"
                 :options="departmentOptions"
                 :props="cascaderProps"
                 placeholder="选择部门"
@@ -90,13 +90,14 @@
             </el-form-item>
             <el-form-item label="性别">
               <el-select v-model="searchForm.gender" placeholder="选择性别" clearable style="width: 100px;">
-                <el-option label="男" value="male"></el-option>
-                <el-option label="女" value="female"></el-option>
+                <el-option label="未知" :value="0"></el-option>
+                <el-option label="男" :value="1"></el-option>
+                <el-option label="女" :value="2"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item label="创建时间">
               <el-date-picker
-                v-model="searchForm.createTimeRange"
+                v-model="searchForm.create_time_range"
                 type="daterange"
                 range-separator="至"
                 start-placeholder="开始日期"
@@ -144,10 +145,10 @@
             class="custom-table"
             @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="50" align="center"></el-table-column>
-            <el-table-column prop="userName" label="用户名称" min-width="140" align="center"></el-table-column>
-            <el-table-column prop="userNickname" label="用户昵称" min-width="150" align="center"></el-table-column>
+            <el-table-column prop="user_name" label="用户名称" min-width="140" align="center"></el-table-column>
+            <el-table-column prop="nick_name" label="用户昵称" min-width="150" align="center"></el-table-column>
             <el-table-column prop="department" label="部门" min-width="80" align="center"></el-table-column>
-            <el-table-column prop="phoneNumber" label="手机号码" min-width="120" align="center"></el-table-column>
+            <el-table-column prop="phone" label="手机号码" min-width="120" align="center"></el-table-column>
             <el-table-column prop="status" label="状态" width="80" align="center">
               <template slot-scope="scope">
                 <el-switch
@@ -158,7 +159,7 @@
                 </el-switch>
               </template>
             </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" min-width="140" align="center"></el-table-column>
+            <el-table-column prop="create_time" label="创建时间" min-width="140" align="center"></el-table-column>
             <el-table-column label="操作" min-width="180" fixed="right" align="center">
               <template slot-scope="scope">
                 <div class="operation-buttons">
@@ -194,14 +195,14 @@
       <el-form :model="userForm" :rules="userRules" ref="userForm" label-width="80px">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="用户昵称" prop="userNickname" required>
-              <el-input v-model="userForm.userNickname" placeholder="请输入用户昵称"></el-input>
+            <el-form-item label="用户昵称" prop="nick_name" required>
+              <el-input v-model="userForm.nick_name" placeholder="请输入用户昵称"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="归属部门" prop="departmentId">
+            <el-form-item label="归属部门" prop="dept_id">
               <el-cascader
-                v-model="userForm.departmentId"
+                v-model="userForm.dept_id"
                 :options="departmentOptions"
                 :props="cascaderProps"
                 placeholder="请选择归属部门"
@@ -212,8 +213,8 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="手机号码" prop="phoneNumber">
-              <el-input v-model="userForm.phoneNumber" placeholder="请输入手机号码"></el-input>
+            <el-form-item label="手机号码" prop="phone">
+              <el-input v-model="userForm.phone" placeholder="请输入手机号码"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -224,8 +225,8 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="用户名称" prop="userName" required>
-              <el-input v-model="userForm.userName" placeholder="请输入用户名称"></el-input>
+            <el-form-item label="用户名称" prop="user_name" required>
+              <el-input v-model="userForm.user_name" placeholder="请输入用户名称"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -243,16 +244,17 @@
           <el-col :span="12">
             <el-form-item label="用户性别" prop="gender">
               <el-select v-model="userForm.gender" placeholder="请选择" style="width: 100%;">
-                <el-option label="男" value="male"></el-option>
-                <el-option label="女" value="female"></el-option>
+                <el-option label="未知" :value="0"></el-option>
+                <el-option label="男" :value="1"></el-option>
+                <el-option label="女" :value="2"></el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="状态" prop="status">
               <el-radio-group v-model="userForm.status">
-                <el-radio :label="true">正常</el-radio>
-                <el-radio :label="false">停用</el-radio>
+                <el-radio :label="1">正常</el-radio>
+                <el-radio :label="0">停用</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -311,7 +313,7 @@
       width="400px">
       <div class="reset-password-content">
         <div class="reset-password-message">
-          请输入"{{ resetPasswordUser ? resetPasswordUser.userName : '' }}"的新密码
+          请输入"{{ resetPasswordUser ? resetPasswordUser.user_name : '' }}"的新密码
         </div>
         <el-input
           v-model="newPassword"
@@ -348,14 +350,14 @@ export default {
 
       // 搜索表单
       searchForm: {
-        userName: '',
-        userNickname: '',
-        phoneNumber: '',
+        user_name: '',
+        nick_name: '',
+        phone: '',
         status: '',
-        departmentId: [],
+        dept_id: [],
         position: '',
         gender: '',
-        createTimeRange: [],
+        create_time_range: [],
         tenantCode: ''
       },
 
@@ -407,27 +409,27 @@ export default {
 
       // 用户表单
       userForm: {
-        userName: '',
-        userNickname: '',
-        phoneNumber: '',
+        user_name: '',
+        nick_name: '',
+        phone: '',
         email: '',
-        departmentId: [],
+        dept_id: [],
         password: '',
         gender: '',
-        status: true,
+        status: 1,
         position: '',
         remark: ''
       },
 
       // 表单验证规则
       userRules: {
-        userName: [
+        user_name: [
           { required: true, message: '请输入用户名称', trigger: 'blur' }
         ],
-        userNickname: [
+        nick_name: [
           { required: true, message: '请输入用户昵称', trigger: 'blur' }
         ],
-        phoneNumber: [
+        phone: [
           { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
         ],
         email: [
@@ -470,9 +472,9 @@ export default {
   },
 
   async created() {
-    // 先确保租户信息已加载，然后获取用户列表
+    // 加载租户信息，TenantSelector 的 autoSelectFirst 会触发 change 事件
+    // 由 handleTenantChange 来调用 fetchUsers()，避免重复请求
     await this.loadTenantsIfNeeded();
-    this.fetchUsers();
   },
 
   methods: {
@@ -480,10 +482,7 @@ export default {
     async loadTenantsIfNeeded() {
       // 如果已有缓存的租户信息，则直接使用
       if (this.cachedTenants && this.cachedTenants.length > 0) {
-        // 如果当前没有选择租户且需要自动选择第一个，则自动选择
-        if (!this.searchForm.tenantCode && this.cachedTenants.length > 0) {
-          this.searchForm.tenantCode = this.cachedTenants[0].tenantCode;
-        }
+        // 不再手动设置租户，让 TenantSelector 组件处理
         return;
       }
 
@@ -491,14 +490,9 @@ export default {
       const tenantSelector = this.$refs.tenantSelector;
       if (tenantSelector && typeof tenantSelector.loadTenantsIfNeeded === 'function') {
         await tenantSelector.loadTenantsIfNeeded();
-
         // 更新缓存
         this.cachedTenants = [...tenantSelector.tenants];
-
-        // 如果当前没有选择租户且需要自动选择第一个，则自动选择
-        if (!this.searchForm.tenantCode && this.cachedTenants.length > 0) {
-          this.searchForm.tenantCode = this.cachedTenants[0].tenantCode;
-        }
+        // 注意：不再手动设置 tenantCode，由 TenantSelector 的 autoSelectFirst 处理
       } else {
         // 如果无法直接访问租户选择器，则直接调用API获取租户
         try {
@@ -506,11 +500,7 @@ export default {
           if (response && response.data && Array.isArray(response.data.items)) {
             // 缓存租户信息
             this.cachedTenants = [...response.data.items];
-
-            // 如果当前没有选择租户且需要自动选择第一个，则自动选择
-            if (!this.searchForm.tenantCode && this.cachedTenants.length > 0) {
-              this.searchForm.tenantCode = this.cachedTenants[0].tenantCode;
-            }
+            // 注意：不再手动设置 tenantCode，由 TenantSelector 的 autoSelectFirst 处理
           }
         } catch (error) {
           console.error('获取租户列表失败:', error);
@@ -528,7 +518,7 @@ export default {
     // 获取当前租户信息
     getCurrentTenant() {
       if (this.cachedTenants && this.searchForm.tenantCode) {
-        return this.cachedTenants.find(tenant => tenant.tenantCode === this.searchForm.tenantCode);
+        return this.cachedTenants.find(tenant => tenant.tenant_code === this.searchForm.tenantCode);
       }
       return null;
     },
@@ -565,15 +555,15 @@ export default {
         const params = {
           skip: skip,
           limit: this.pagination.pageSize,
-          username: this.searchForm.userName || undefined,
-          nickname: this.searchForm.userNickname || undefined,
-          phone: this.searchForm.phoneNumber || undefined,
+          user_name: this.searchForm.user_name || undefined,
+          nick_name: this.searchForm.nick_name || undefined,
+          phone: this.searchForm.phone || undefined,
           status: this.searchForm.status || undefined,
-          role: this.searchForm.role || undefined,
-          department_id: this.searchForm.departmentId && this.searchForm.departmentId.length > 0 ? this.searchForm.departmentId[this.searchForm.departmentId.length - 1] : (this.selectedDepartment ? this.selectedDepartment.id : undefined),
-          position: this.searchForm.position || undefined,
-          gender: this.searchForm.gender || undefined,
-          tenant_code: this.searchForm.tenantCode || undefined,  // 添加租户参数
+          role_code: this.searchForm.role || undefined,
+          dept_id: this.searchForm.dept_id && this.searchForm.dept_id.length > 0 ? this.searchForm.dept_id[this.searchForm.dept_id.length - 1] : (this.selectedDepartment ? this.selectedDepartment.id : undefined),
+          position_code: this.searchForm.position || undefined,
+          gender: this.searchForm.gender !== '' ? this.searchForm.gender : undefined,
+          tenant_code: this.searchForm.tenantCode || undefined,
         }
 
         const response = await RBACService.getUsers(params)
@@ -582,21 +572,24 @@ export default {
           // API调用成功，使用API数据
           console.log('✅ 使用API数据获取用户列表')
 
-          // 将API返回的数据映射到表格期望的字段
+          // 将API返回的数据映射到表格期望的字段（使用snake_case）
           this.tableData = response.data.items.map(item => ({
             id: item.id,
-            tenantCode: item.tenantCode,
-            userName: item.userName,
-            userNickname: item.nickName, // API中是nickName，表格中是userNickname
+            tenant_code: item.tenant_code,
+            user_name: item.user_name,
+            nick_name: item.nick_name,
             email: item.email,
-            phoneNumber: item.phone, // API中是phone，表格中是phoneNumber
+            phone: item.phone,
             status: item.status,
-            createTime: item.createTime ? this.formatDate(item.createTime) : '', // 格式化日期
-            // 以下字段在API中不存在，设置默认值
-            department: item.department || '-', // 如果API中没有部门信息，则显示'-'
-            role: item.role || 'user', // 如果API中没有角色信息，则默认为'user'
-            userCode: item.userCode || item.id.toString(), // 如果API中没有userCode，则使用id作为替代
-            gender: item.gender || '' // 添加性别字段
+            create_time: item.create_time ? this.formatDate(item.create_time) : '',
+            // 以下字段可能从关联查询获取
+            department: item.department || '-',
+            dept_id: item.dept_id,
+            role: item.role || 'user',
+            position: item.position,
+            position_code: item.position_code,
+            user_code: item.user_code || item.id.toString(),
+            gender: item.gender !== undefined && item.gender !== null ? item.gender : 0 // 保持原始数字值
           }))
 
           this.pagination.total = response.data.total || response.data.items.length || 0
@@ -626,152 +619,152 @@ export default {
       return [
         {
           id: 1,
-          userName: 'admin',
-          userNickname: '疯狂的狮子Li',
+          user_name: 'admin',
+          nick_name: '疯狂的狮子Li',
           department: '研发部门',
-          departmentId: 3,
-          phoneNumber: '15888888888',
+          dept_id: 3,
+          phone: '15888888888',
           email: 'admin@xxx.com',
-          gender: 'male',
-          status: true,
+          gender: 1,
+          status: 1,
           position: 'developer',
           role: 'admin',
-          createTime: '2025-06-06 16:28:45',
+          create_time: '2025-06-06 16:28:45',
           remark: '管理员账户'
         },
         {
           id: 2,
-          userName: 'test',
-          userNickname: '本部门）以上 密码6',
+          user_name: 'test',
+          nick_name: '本部门）以上 密码6',
           department: '市场部门',
-          departmentId: 4,
-          phoneNumber: '',
+          dept_id: 4,
+          phone: '',
           email: 'test@xxx.com',
-          gender: 'female',
-          status: true,
+          gender: 2,
+          status: 1,
           position: 'pm',
           role: 'user',
-          createTime: '2025-06-06 16:28:45',
+          create_time: '2025-06-06 16:28:45',
           remark: ''
         },
         {
           id: 3,
-          userName: 'test1',
-          userNickname: '仅本人 密码66666',
+          user_name: 'test1',
+          nick_name: '仅本人 密码66666',
           department: '长沙分公司',
-          departmentId: 8,
-          phoneNumber: '',
+          dept_id: 8,
+          phone: '',
           email: '',
-          gender: 'male',
-          status: true,
+          gender: 1,
+          status: 1,
           position: 'tester',
           role: 'guest',
-          createTime: '2025-06-06 16:28:45',
+          create_time: '2025-06-06 16:28:45',
           remark: ''
         },
         {
           id: 4,
-          userName: 'testLoginOut',
-          userNickname: 'testLoginOut',
+          user_name: 'testLoginOut',
+          nick_name: 'testLoginOut',
           department: '',
-          departmentId: null,
-          phoneNumber: '',
+          dept_id: null,
+          phone: '',
           email: '',
-          gender: '',
-          status: true,
+          gender: 0,
+          status: 1,
           position: '',
           role: 'user',
-          createTime: '2025-07-02 15:04:32',
+          create_time: '2025-07-02 15:04:32',
           remark: ''
         },
         {
           id: 5,
-          userName: 'te',
-          userNickname: 'fy',
+          user_name: 'te',
+          nick_name: 'fy',
           department: '',
-          departmentId: null,
-          phoneNumber: '',
+          dept_id: null,
+          phone: '',
           email: '',
-          gender: '',
-          status: true,
+          gender: 0,
+          status: 1,
           position: '',
           role: 'user',
-          createTime: '2025-07-03 17:46:32',
+          create_time: '2025-07-03 17:46:32',
           remark: ''
         },
         {
           id: 6,
-          userName: '用户名称',
-          userNickname: '用户昵称',
+          user_name: '用户名称',
+          nick_name: '用户昵称',
           department: '',
-          departmentId: null,
-          phoneNumber: '',
+          dept_id: null,
+          phone: '',
           email: '',
-          gender: '',
-          status: true,
+          gender: 0,
+          status: 1,
           position: '',
           role: 'user',
-          createTime: '2025-07-03 17:48:21',
+          create_time: '2025-07-03 17:48:21',
           remark: ''
         },
         {
           id: 7,
-          userName: '用户名',
-          userNickname: '昵称',
+          user_name: '用户名',
+          nick_name: '昵称',
           department: '',
-          departmentId: null,
-          phoneNumber: '',
+          dept_id: null,
+          phone: '',
           email: '',
-          gender: '',
-          status: true,
+          gender: 0,
+          status: 1,
           position: '',
           role: 'user',
-          createTime: '2025-07-03 18:06:22',
+          create_time: '2025-07-03 18:06:22',
           remark: ''
         },
         {
           id: 8,
-          userName: '名称',
-          userNickname: 'yonghu11',
+          user_name: '名称',
+          nick_name: 'yonghu11',
           department: '',
-          departmentId: null,
-          phoneNumber: '',
+          dept_id: null,
+          phone: '',
           email: '',
-          gender: '',
-          status: true,
+          gender: 0,
+          status: 1,
           position: '',
           role: 'user',
-          createTime: '2025-07-03 18:30:12',
+          create_time: '2025-07-03 18:30:12',
           remark: ''
         },
         {
           id: 9,
-          userName: '2222',
-          userNickname: '2222',
+          user_name: '2222',
+          nick_name: '2222',
           department: '',
-          departmentId: null,
-          phoneNumber: '',
+          dept_id: null,
+          phone: '',
           email: '',
-          gender: '',
-          status: true,
+          gender: 0,
+          status: 1,
           position: '',
           role: 'user',
-          createTime: '2025-07-03 18:32:54',
+          create_time: '2025-07-03 18:32:54',
           remark: ''
         },
         {
           id: 10,
-          userName: '123用户名称',
-          userNickname: '123用户昵称',
+          user_name: '123用户名称',
+          nick_name: '123用户昵称',
           department: '',
-          departmentId: null,
-          phoneNumber: '',
+          dept_id: null,
+          phone: '',
           email: '',
-          gender: '',
-          status: true,
+          gender: 0,
+          status: 1,
           position: '',
           role: 'user',
-          createTime: '2025-07-03 18:36:14',
+          create_time: '2025-07-03 18:36:14',
           remark: ''
         }
       ]
@@ -788,15 +781,15 @@ export default {
       // 保留租户选择，只重置其他搜索条件
       const currentTenantCode = this.searchForm.tenantCode;
       this.searchForm = {
-        userName: '',
-        userNickname: '',
-        phoneNumber: '',
+        user_name: '',
+        nick_name: '',
+        phone: '',
         status: '',
         role: '',
-        departmentId: [],
+        dept_id: [],
         position: '',
         gender: '',
-        createTimeRange: [],
+        create_time_range: [],
         tenantCode: currentTenantCode  // 保留当前租户选择
       }
       this.pagination.currentPage = 1
@@ -845,14 +838,14 @@ export default {
       this.dialogTitle = '新增用户'
       this.currentUser = null
       this.userForm = {
-        userName: '',
-        userNickname: '',
-        phoneNumber: '',
+        user_name: '',
+        nick_name: '',
+        phone: '',
         email: '',
-        departmentId: [],
+        dept_id: [],
         password: '',
         gender: '',
-        status: true,
+        status: 1,
         position: '',
         remark: ''
       }
@@ -863,12 +856,15 @@ export default {
     editUser(row) {
       this.dialogTitle = '编辑用户'
       this.currentUser = row
+      // 将性别文本转换为数字
+      const genderValue = this.parseGender(row.gender)
       this.userForm = {
         ...row,
-        departmentId: row.departmentId ? [row.departmentId] : [],
+        dept_id: row.dept_id ? [row.dept_id] : [],
         password: '',
-        gender: row.gender || '',
-        position: row.position || ''
+        gender: genderValue !== undefined ? genderValue : 0,
+        position: row.position || '',
+        status: row.status ? 1 : 0  // 确保状态值为数字格式
       }
       this.userDialogVisible = true
     },
@@ -892,13 +888,13 @@ export default {
             const userData = {
               ...this.userForm,
               tenant_code: this.searchForm.tenantCode || this.userForm.tenantCode, // 优先使用当前选择的租户
-              department_id: this.userForm.departmentId && this.userForm.departmentId.length > 0 ? this.userForm.departmentId[this.userForm.departmentId.length - 1] : undefined
+              dept_id: this.userForm.dept_id && this.userForm.dept_id.length > 0 ? this.userForm.dept_id[this.userForm.dept_id.length - 1] : undefined
             }
 
             if (this.currentUser) {
               // 编辑用户
-              const tenantCode = this.currentUser.tenantCode || this.searchForm.tenantCode || 'default';
-              await RBACService.updateUser(this.currentUser.userCode, tenantCode, userData)
+              const tenantCode = this.currentUser.tenant_code || this.searchForm.tenantCode || 'default';
+              await RBACService.updateUser(this.currentUser.user_code, tenantCode, userData)
               this.$message({
                 message: '用户信息修改成功',
                 type: 'success'
@@ -944,8 +940,8 @@ export default {
 
       try {
           // 使用当前用户的租户信息或当前选择的租户
-          const tenantCode = this.currentUser.tenantCode || this.searchForm.tenantCode || 'default';
-          await RBACService.deleteUser(this.currentUser.userCode, tenantCode)
+          const tenantCode = this.currentUser.tenant_code || this.searchForm.tenantCode || 'default';
+          await RBACService.deleteUser(this.currentUser.user_code, tenantCode)
           this.$message({
             message: '用户删除成功',
             type: 'success'
@@ -982,8 +978,8 @@ export default {
           // 批量删除用户，使用Promise.all并行处理
           // 确保每个删除请求都使用正确的租户信息
           const deletePromises = this.selectedRows.map(row => {
-            const tenantCode = row.tenantCode || this.searchForm.tenantCode || 'default';
-            return RBACService.deleteUser(row.userCode, tenantCode);
+            const tenantCode = row.tenant_code || this.searchForm.tenantCode || 'default';
+            return RBACService.deleteUser(row.user_code, tenantCode);
           })
           await Promise.all(deletePromises)
           this.$message({
@@ -1062,8 +1058,8 @@ export default {
       this.loading = true
       try {
         // 使用当前用户的租户信息或当前选择的租户
-        const tenantCode = this.resetPasswordUser.tenantCode || this.searchForm.tenantCode || 'default';
-        await RBACService.resetUserPassword(this.resetPasswordUser.userCode, tenantCode)
+        const tenantCode = this.resetPasswordUser.tenant_code || this.searchForm.tenantCode || 'default';
+        await RBACService.resetUserPassword(this.resetPasswordUser.user_code, tenantCode)
         this.$message({
           message: '密码重置成功',
           type: 'success'
@@ -1088,9 +1084,9 @@ export default {
       this.$router.push({
         name: 'RoleAssignment',
         params: {
-          userCode: row.userCode,
-          userName: row.userName,
-          tenantCode: row.tenantCode || this.searchForm.tenantCode || 'default'
+          user_code: row.user_code,
+          user_name: row.user_name,
+          tenant_code: row.tenant_code || this.searchForm.tenantCode || 'default'
         }
       })
     },
@@ -1100,8 +1096,10 @@ export default {
       this.loading = true
 
       try {
-        await RBACService.updateUser(row.userCode, row.tenantCode || 'default', { status: row.status })
-        const status = row.status ? '启用' : '禁用'
+        // 确保状态值为数字格式（0或1）
+        const statusValue = row.status ? 1 : 0;
+        await RBACService.updateUser(row.user_code, row.tenant_code || 'default', { status: statusValue })
+        const status = statusValue ? '启用' : '禁用'
         this.$message({
           message: `用户状态已${status}`,
           type: 'success'
@@ -1131,6 +1129,27 @@ export default {
       const minutes = String(date.getMinutes()).padStart(2, '0');
 
       return `${year}-${month}-${day} ${hours}:${minutes}`;
+    },
+
+    // 格式化性别（数字转文本）
+    formatGender(genderValue) {
+      const genderMap = {
+        0: '未知',
+        1: '男',
+        2: '女'
+      };
+      return genderMap[genderValue] || '未知';
+    },
+
+    // 格式化性别（文本转数字）
+    parseGender(genderText) {
+      const genderMap = {
+        '': undefined,
+        '未知': 0,
+        '男': 1,
+        '女': 2
+      };
+      return genderMap[genderText];
     }
   }
 }

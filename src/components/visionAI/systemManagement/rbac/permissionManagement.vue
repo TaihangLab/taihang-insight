@@ -209,9 +209,10 @@ export default {
   },
 
   async mounted() {
-    // 等待租户加载完成后再获取权限数据
+    // 等待租户加载完成
+    // TenantSelector 的 autoSelectFirst 会触发 change 事件
+    // 由 handleTenantChange 来调用 fetchPermissions()，避免重复请求
     await this.waitForTenantLoaded();
-    this.fetchPermissions();
   },
 
   methods: {
@@ -227,11 +228,7 @@ export default {
       if (this.$refs.tenantSelector && typeof this.$refs.tenantSelector.loadTenantsIfNeeded === 'function') {
         await this.$refs.tenantSelector.loadTenantsIfNeeded();
       }
-
-      // 如果当前没有选择租户，但有租户列表，则自动选择第一个
-      if (!this.searchForm.tenantCode && this.$refs.tenantSelector && this.$refs.tenantSelector.tenants && this.$refs.tenantSelector.tenants.length > 0) {
-        this.searchForm.tenantCode = this.$refs.tenantSelector.tenants[0].tenantCode;
-      }
+      // 注意：不再手动设置 tenantCode，由 TenantSelector 的 autoSelectFirst 处理
     },
 
     // 获取权限数据

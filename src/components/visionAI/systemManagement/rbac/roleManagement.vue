@@ -10,26 +10,26 @@
         </el-form-item>
         <el-form-item label="角色名称">
           <el-input
-            v-model="searchForm.roleName"
+            v-model="searchForm.role_name"
             placeholder="请输入角色名称"
             clearable
           ></el-input>
         </el-form-item>
         <el-form-item label="权限字符">
           <el-input
-            v-model="searchForm.roleCode"
+            v-model="searchForm.role_code"
             placeholder="请输入权限字符"
             clearable
           ></el-input>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
-            <el-option label="正常" value="1"></el-option>
-            <el-option label="停用" value="0"></el-option>
+            <el-option label="正常" :value="1"></el-option>
+            <el-option label="停用" :value="0"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="数据权限">
-          <el-select v-model="searchForm.dataScope" placeholder="请选择数据权限" clearable>
+          <el-select v-model="searchForm.data_scope" placeholder="请选择数据权限" clearable>
             <el-option label="全部数据权限" value="1"></el-option>
             <el-option label="自定数据权限" value="2"></el-option>
             <el-option label="本部门数据权限" value="3"></el-option>
@@ -39,7 +39,7 @@
         </el-form-item>
         <el-form-item label="创建时间">
           <el-date-picker
-            v-model="searchForm.createTime"
+            v-model="searchForm.create_time"
             type="daterange"
             range-separator="-"
             start-placeholder="开始日期"
@@ -73,9 +73,9 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center"></el-table-column>
-        <el-table-column prop="roleName" label="角色名称" min-width="160" align="center"></el-table-column>
-        <el-table-column prop="roleCode" label="权限字符" min-width="140" align="center"></el-table-column>
-        <el-table-column prop="sortOrder" label="显示顺序" width="100" align="center"></el-table-column>
+        <el-table-column prop="role_name" label="角色名称" min-width="160" align="center"></el-table-column>
+        <el-table-column prop="role_code" label="权限字符" min-width="140" align="center"></el-table-column>
+        <el-table-column prop="sort_order" label="显示顺序" width="100" align="center"></el-table-column>
         <el-table-column prop="status" label="状态" width="80" align="center">
           <template slot-scope="scope">
             <el-switch
@@ -88,7 +88,7 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" min-width="160" align="center"></el-table-column>
+        <el-table-column prop="create_time" label="创建时间" min-width="160" align="center"></el-table-column>
         <el-table-column label="操作" width="280" fixed="right" align="center">
           <template slot-scope="scope">
             <div class="operation-buttons">
@@ -129,9 +129,9 @@
               <el-select v-model="roleForm.tenantCode" placeholder="请选择租户" style="width: 100%">
                 <el-option
                   v-for="tenant in tenantList"
-                  :key="tenant.tenantCode"
-                  :label="tenant.tenantName"
-                  :value="tenant.tenantCode"
+                  :key="tenant.tenant_code"
+                  :label="tenant.tenant_name"
+                  :value="tenant.tenant_code"
                 ></el-option>
               </el-select>
             </el-form-item>
@@ -139,16 +139,16 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item label="角色名称" prop="roleName" required>
-              <el-input v-model="roleForm.roleName" placeholder="请输入角色名称"></el-input>
+            <el-form-item label="角色名称" prop="role_name" required>
+              <el-input v-model="roleForm.role_name" placeholder="请输入角色名称"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item label="权限字符" prop="roleCode" required>
-              <el-input v-model="roleForm.roleCode" placeholder="请输入权限字符">
+            <el-form-item label="权限字符" prop="role_code" required>
+              <el-input v-model="roleForm.role_code" placeholder="请输入权限字符">
                 <template slot="suffix">
                   <i class="el-icon-question" style="color: #409eff; cursor: pointer;" title="权限字符用于权限控制"></i>
                 </template>
@@ -156,11 +156,11 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="显示顺序" prop="sortOrder" required>
-              <el-input-number v-model="roleForm.sortOrder" :min="0" :max="999" controls-position="right" style="width: 100%"></el-input-number>
+            <el-form-item label="显示顺序" prop="sort_order" required>
+              <el-input-number v-model="roleForm.sort_order" :min="0" :max="999" controls-position="right" style="width: 100%"></el-input-number>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -242,13 +242,13 @@
     >
       <el-form :model="assignPermissionForm" label-width="100px">
         <el-form-item label="角色名称">
-          <el-input v-model="assignPermissionForm.roleName" :disabled="true"></el-input>
+          <el-input v-model="assignPermissionForm.role_name" :disabled="true"></el-input>
         </el-form-item>
         <el-form-item label="权限字符">
-          <el-input v-model="assignPermissionForm.roleCode" :disabled="true"></el-input>
+          <el-input v-model="assignPermissionForm.role_code" :disabled="true"></el-input>
         </el-form-item>
         <el-form-item label="权限范围">
-          <el-select v-model="assignPermissionForm.dataScope" placeholder="请选择权限范围" style="width: 100%">
+          <el-select v-model="assignPermissionForm.data_scope" placeholder="请选择权限范围" style="width: 100%">
             <el-option label="全部数据权限" value="1"></el-option>
             <el-option label="自定数据权限" value="2"></el-option>
             <el-option label="本部门数据权限" value="3"></el-option>
@@ -282,54 +282,54 @@ export default {
     return {
       // 搜索表单
       searchForm: {
-        roleName: '',
-        roleCode: '',
+        role_name: '',
+        role_code: '',
         status: '',
-        dataScope: '',
-        createTime: [],
+        data_scope: '',
+        create_time: [],
         tenantCode: ''
       },
-      
+
       // 表格数据
       tableData: [],
       loading: false,
       selectedRows: [],
-      
+
       // 分页
       pagination: {
         currentPage: 1,
         pageSize: 10,
         total: 0
       },
-      
+
       // 租户相关
       tenantList: [],
-      
+
       // 角色表单
       roleForm: {
-        roleName: '',
-        roleCode: '',
-        sortOrder: 1,
+        role_name: '',
+        role_code: '',
+        sort_order: 1,
         status: 1,
         remark: '',
         permissions: [],
         tenantCode: ''
       },
-      
+
       // 表单验证规则
       roleRules: {
         tenantCode: [
           { required: true, message: '请选择所属租户', trigger: 'blur' }
         ],
-        roleName: [
+        role_name: [
           { required: true, message: '请输入角色名称', trigger: 'blur' },
           { min: 2, max: 20, message: '角色名称长度在2到20个字符', trigger: 'blur' }
         ],
-        roleCode: [
+        role_code: [
           { required: true, message: '请输入权限字符', trigger: 'blur' },
           { min: 2, max: 30, message: '权限字符长度在2到30个字符', trigger: 'blur' }
         ],
-        sortOrder: [
+        sort_order: [
           { required: true, message: '请输入显示顺序', trigger: 'blur' }
         ]
       },
@@ -503,12 +503,9 @@ export default {
         const response = await RBACService.getTenants()
         if (response && response.data && Array.isArray(response.data.items)) {
           this.tenantList = response.data.items
-          // 默认选中第一个租户
-          if (this.tenantList.length > 0 && !this.searchForm.tenantCode) {
-            this.searchForm.tenantCode = this.tenantList[0].tenantCode
-            // 重新获取角色列表
-            this.fetchRoles()
-          }
+          // 注意：不再手动设置默认租户和调用 fetchRoles()
+          // TenantSelector 组件的 autoSelectFirst 功能会自动选择第一个租户
+          // 并触发 @change 事件，由 handleTenantChange 来调用 fetchRoles()
         }
       } catch (error) {
         console.error('获取租户列表失败:', error)
@@ -529,10 +526,10 @@ export default {
         const params = {
           skip: skip,
           limit: this.pagination.pageSize,
-          role_name: this.searchForm.roleName || undefined,
-          role_code: this.searchForm.roleCode || undefined,
+          role_name: this.searchForm.role_name || undefined,
+          role_code: this.searchForm.role_code || undefined,
           status: this.searchForm.status || undefined,
-          data_scope: this.searchForm.dataScope || undefined,
+          data_scope: this.searchForm.data_scope || undefined,
           tenant_code: this.searchForm.tenantCode || undefined
         }
 
@@ -581,11 +578,11 @@ export default {
     // 重置搜索
     resetSearch() {
       this.searchForm = {
-        roleName: '',
-        roleCode: '',
+        role_name: '',
+        role_code: '',
         status: '',
-        dataScope: '',
-        createTime: [],
+        data_scope: '',
+        create_time: [],
         tenantCode: ''
       }
       this.pagination.currentPage = 1
@@ -597,9 +594,9 @@ export default {
       this.dialogTitle = '添加角色'
       this.currentRole = null
       this.roleForm = {
-        roleName: '',
-        roleCode: '',
-        sortOrder: 1,
+        role_name: '',
+        role_code: '',
+        sort_order: 1,
         status: 1,
         remark: '',
         permissions: [],
@@ -611,19 +608,19 @@ export default {
         this.$refs.permissionTree && this.$refs.permissionTree.setCheckedKeys([])
       })
     },
-    
+
     // 编辑角色
     editRole(row) {
       this.dialogTitle = '修改角色'
       this.currentRole = row
       this.roleForm = {
-        roleName: row.roleName,
-        roleCode: row.roleCode,
-        sortOrder: row.sortOrder,
+        role_name: row.role_name,
+        role_code: row.role_code,
+        sort_order: row.sort_order,
         status: row.status,
         remark: row.remark,
         permissions: row.permissions || [],
-        tenantCode: row.tenantCode || ''
+        tenantCode: row.tenant_code || ''
       }
       this.roleDialogVisible = true
       this.$nextTick(() => {
@@ -646,19 +643,19 @@ export default {
             let response
             if (this.currentRole) {
               // 更新角色
-              // 添加updateBy字段，使用默认值
-              this.roleForm.updateBy = 'admin'
-              // 编辑角色时，roleCode是不可修改的，使用currentRole的roleCode
-              response = await RBACService.updateRole(this.currentRole.roleCode, this.currentRole.tenantCode || 'default', this.roleForm)
+              // 添加update_by字段，使用默认值
+              this.roleForm.update_by = 'admin'
+              // 编辑角色时，role_code是不可修改的，使用currentRole的role_code
+              response = await RBACService.updateRole(this.currentRole.role_code, this.currentRole.tenant_code || 'default', this.roleForm)
               this.$message({
                 message: '角色更新成功',
                 type: 'success'
               })
             } else {
               // 创建角色
-              // 添加createBy和updateBy字段，使用默认值
-              this.roleForm.createBy = 'admin'
-              this.roleForm.updateBy = 'admin'
+              // 添加create_by和update_by字段，使用默认值
+              this.roleForm.create_by = 'admin'
+              this.roleForm.update_by = 'admin'
               response = await RBACService.createRole(this.roleForm)
               this.$message({
                 message: '角色添加成功',
@@ -843,25 +840,28 @@ export default {
     // 处理状态变化
     async handleStatusChange(row) {
       this.loading = true
-      
+
       try {
         // 调试信息，查看row对象的结构
         console.log('Row data:', row)
-        
+
+        // 确保状态值为数字格式（0或1）
+        const statusValue = row.status ? 1 : 0;
+
         // 更新角色状态 - 使用roleCode
         await RBACService.updateRole(row.roleCode, row.tenantCode, {
-          status: row.status,
+          status: statusValue,
           updateBy: 'admin' // 后端要求的必填字段，使用默认值
         })
-        
-        const status = row.status === 1 ? '启用' : '停用'
+
+        const status = statusValue === 1 ? '启用' : '停用'
         this.$message({
           message: `角色状态已${status}`,
           type: 'success'
         })
       } catch (error) {
         // 状态更新失败，恢复原状态
-        row.status = !row.status
+        row.status = row.status ? 0 : 1; // 正确翻转数字状态值
         this.$message({
           message: error.message || '更新角色状态失败',
           type: 'error'
