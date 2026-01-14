@@ -187,7 +187,7 @@ export default new VueRouter({
           component: roleManagement,
         },
         {
-        path: '/systemManage/roleAssignment/:userId/:userName',
+        path: '/systemManage/roleAssignment/:userId/:user_name',
         name: 'RoleAssignment',
         component: roleAssignment,
         },

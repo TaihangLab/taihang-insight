@@ -86,7 +86,7 @@
               <el-row :gutter="20">
                 <el-col :span="12">
                   <el-form-item label="创建时间">
-                    <el-input v-model="userInfo.createTime" disabled></el-input>
+                    <el-input v-model="userInfo.create_time" disabled></el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
@@ -128,17 +128,17 @@ export default {
     return {
       editMode: false,
       userInfo: {
-        userCode: '',
+        user_code: '',
         username: 'admin',
         email: 'admin@example.com',
         phone: '138****8888',
         department: '系统管理部',
         role: '系统管理员',
         status: '正常',
-        createTime: '2024-01-01 10:00:00',
+        create_time: '2024-01-01 10:00:00',
         lastLoginTime: '2024-12-26 09:30:15',
         description: '系统管理员，负责平台的日常维护和用户管理工作。',
-        tenantCode: ''
+        tenant_code: ''
       }
     }
   },
@@ -151,13 +151,13 @@ export default {
         // 从userService获取当前用户信息
         const currentUser = userService.getUser();
         if (currentUser) {
-          this.userInfo.userCode = currentUser.userCode;
-          this.userInfo.tenantCode = currentUser.tenantCode;
+          this.userInfo.user_code = currentUser.user_code;
+          this.userInfo.tenant_code = currentUser.tenant_code;
           
           // 调用RBACService获取详细用户信息
           const params = {
-            user_code: currentUser.userCode,
-            tenant_code: currentUser.tenantCode
+            user_code: currentUser.user_code,
+            tenant_code: currentUser.tenant_code
           };
           
           const response = await RBACService.getUsers(params);
@@ -169,7 +169,7 @@ export default {
             this.userInfo.department = user.department || this.userInfo.department;
             this.userInfo.role = user.role_name || this.userInfo.role;
             this.userInfo.status = user.status === 1 ? '正常' : '禁用';
-            this.userInfo.createTime = user.create_time || this.userInfo.createTime;
+            this.userInfo.create_time = user.create_time || this.userInfo.create_time;
             this.userInfo.lastLoginTime = user.last_login_time || this.userInfo.lastLoginTime;
             this.userInfo.description = user.description || this.userInfo.description;
           }
@@ -186,13 +186,13 @@ export default {
           email: this.userInfo.email,
           phone: this.userInfo.phone,
           description: this.userInfo.description,
-          updateBy: this.userInfo.userCode // 添加更新人信息
+          update_by: this.userInfo.user_code // 添加更新人信息
         };
         
         // 调用RBACService更新用户信息
         await RBACService.updateUser(
-          this.userInfo.userCode,
-          this.userInfo.tenantCode,
+          this.userInfo.user_code,
+          this.userInfo.tenant_code,
           userData
         );
         

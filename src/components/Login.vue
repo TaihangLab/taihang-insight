@@ -57,7 +57,7 @@
                   :key="tenant.tenantNumber" 
                   :value="tenant.tenantNumber"
                 >
-                  {{ tenant.companyName }}
+                  {{ tenant.company_name }}
                 </option>
               </select>
               <i class="select-arrow fa fa-chevron-down"></i>
@@ -183,44 +183,44 @@ export default {
       return [
         {
           tenantNumber: '000000',
-          companyName: 'XXX有限公司',
-          contactPerson: '管理组',
+          company_name: 'XXX有限公司',
+          contact_person: '管理组',
           status: true
         },
         {
           tenantNumber: '952742',
-          companyName: '123',
-          contactPerson: '123',
+          company_name: '123',
+          contact_person: '123',
           status: true
         },
         {
           tenantNumber: '415387',
-          companyName: '6666',
-          contactPerson: '66',
+          company_name: '6666',
+          contact_person: '66',
           status: true
         },
         {
           tenantNumber: '297659',
-          companyName: '16888',
-          contactPerson: '16888',
+          company_name: '16888',
+          contact_person: '16888',
           status: true
         },
         {
           tenantNumber: '789133',
-          companyName: '测试租户企业名称',
-          contactPerson: '测试租户联系人',
+          company_name: '测试租户企业名称',
+          contact_person: '测试租户联系人',
           status: true
         },
         {
           tenantNumber: '646214',
-          companyName: 'test999',
-          contactPerson: 'test999',
+          company_name: 'test999',
+          contact_person: 'test999',
           status: true
         },
         {
           tenantNumber: '252800',
-          companyName: 'ce',
-          contactPerson: 'ce',
+          company_name: 'ce',
+          contact_person: 'ce',
           status: true
         }
       ];
@@ -230,7 +230,7 @@ export default {
     onTenantChange() {
       const selectedTenantData = this.tenantList.find(tenant => tenant.tenantNumber === this.selectedTenant);
       if (selectedTenantData) {
-        console.log('选择的租户:', selectedTenantData.companyName);
+        console.log('选择的租户:', selectedTenantData.company_name);
       }
     },
 

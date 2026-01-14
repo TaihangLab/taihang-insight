@@ -24,7 +24,7 @@
           <el-form :inline="true" :model="searchForm" class="search-form">
             <el-form-item label="租户">
               <TenantSelector
-                v-model="searchForm.tenantCode"
+                v-model="searchForm.tenant_code"
                 @change="handleTenantChange"/>
             </el-form-item>
             <el-form-item label="岗位编码">
@@ -307,7 +307,7 @@ export default {
         category_code: '',
         department: '',
         status: '',
-        tenantCode: ''
+        tenant_code: ''
       },
 
       // 表格数据
@@ -353,16 +353,16 @@ export default {
         },
         {
           id: 4,
-          positionCode: 'user',
-          categoryCode: 'user',
-          positionName: '普通员工',
+          position_code: 'user',
+          category_code: 'user',
+          position_name: '普通员工',
           department: 'XXX科技',
-          orderNum: 4,
+          order_num: 4,
           status: 1,
           level: 'staff',
           responsibility: '执行具体业务工作任务',
           requirements: '具备相关专业技能和责任心',
-          createTime: '2025-06-06 16:28:46'
+          create_time: '2025-06-06 16:28:46'
         }
       ],
       loading: false,
@@ -387,11 +387,11 @@ export default {
       // 表单数据
       positionForm: {
         id: null,
-        positionCode: '',
-        categoryCode: '',
-        positionName: '',
+        position_code: '',
+        category_code: '',
+        position_name: '',
         department: '',
-        orderNum: 1,
+        order_num: 1,
         level: '',
         responsibility: '',
         requirements: '',
@@ -402,24 +402,24 @@ export default {
       exportForm: {
         format: 'excel',
         range: 'all',
-        fields: ['positionCode', 'categoryCode', 'positionName', 'department', 'orderNum', 'status', 'createTime']
+        fields: ['position_code', 'category_code', 'position_name', 'department', 'order_num', 'status', 'create_time']
       },
 
       // 表单验证规则
       positionRules: {
-        positionCode: [
+        position_code: [
           { required: true, message: '请输入岗位编码', trigger: 'blur' }
         ],
-        positionName: [
+        position_name: [
           { required: true, message: '请输入岗位名称', trigger: 'blur' }
         ],
-        categoryCode: [
+        category_code: [
           { required: true, message: '请输入类别编码', trigger: 'blur' }
         ],
         department: [
           { required: true, message: '请选择部门', trigger: 'change' }
         ],
-        orderNum: [
+        order_num: [
           { required: true, message: '请输入显示排序', trigger: 'blur' }
         ]
       },
@@ -464,12 +464,12 @@ export default {
         const params = {
           skip: skip,
           limit: this.pagination.pageSize,
-          position_code: this.searchForm.positionCode || undefined,
-          position_name: this.searchForm.positionName || undefined,
-          category_code: this.searchForm.categoryCode || undefined,
+          position_code: this.searchForm.position_code || undefined,
+          position_name: this.searchForm.position_name || undefined,
+          category_code: this.searchForm.category_code || undefined,
           department: this.searchForm.department || undefined,
           status: this.searchForm.status || undefined,
-          tenant_code: this.searchForm.tenantCode || undefined
+          tenant_code: this.searchForm.tenant_code || undefined
         }
 
         const response = await RBACService.getPositions(params)
@@ -500,12 +500,12 @@ export default {
     // 重置搜索
     resetSearch() {
       this.searchForm = {
-        positionCode: '',
-        positionName: '',
-        categoryCode: '',
+        position_code: '',
+        position_name: '',
+        category_code: '',
         department: '',
         status: '',
-        tenantCode: ''
+        tenant_code: ''
       }
       this.searchPositions()
     },
@@ -515,11 +515,11 @@ export default {
       this.dialogTitle = '新增岗位'
       this.positionForm = {
         id: null,
-        positionCode: '',
-        categoryCode: '',
-        positionName: '',
+        position_code: '',
+        category_code: '',
+        position_name: '',
         department: '',
-        orderNum: 1,
+        order_num: 1,
         level: '',
         responsibility: '',
         requirements: '',
@@ -542,9 +542,9 @@ export default {
           this.loading = true
           
           try {
-            if (this.positionForm.positionCode) {
+            if (this.positionForm.position_code) {
               // 编辑岗位
-              await RBACService.updatePosition(this.positionForm.positionCode, this.positionForm)
+              await RBACService.updatePosition(this.positionForm.position_code, this.positionForm)
               this.$message.success('岗位信息更新成功')
             } else {
               // 新增岗位
@@ -577,12 +577,12 @@ export default {
       try {
         if (this.deleteRow) {
           // 单个删除
-          await RBACService.deletePosition(this.deleteRow.positionCode)
+          await RBACService.deletePosition(this.deleteRow.position_code)
           this.$message.success('岗位删除成功')
         } else if (this.multipleSelection.length > 0) {
           // 批量删除
           for (const row of this.multipleSelection) {
-            await RBACService.deletePosition(row.positionCode)
+            await RBACService.deletePosition(row.position_code)
           }
           this.$message.success(`成功删除 ${this.multipleSelection.length} 个岗位`)
           this.multipleSelection = []
@@ -1319,11 +1319,11 @@ export default {
 }
 
 /* 手动为必填字段添加星号 */
-.position-management-container>>>.el-form-item[prop="positionCode"] .el-form-item__label:before,
-.position-management-container>>>.el-form-item[prop="positionName"] .el-form-item__label:before,
-.position-management-container>>>.el-form-item[prop="categoryCode"] .el-form-item__label:before,
+.position-management-container>>>.el-form-item[prop="position_code"] .el-form-item__label:before,
+.position-management-container>>>.el-form-item[prop="position_name"] .el-form-item__label:before,
+.position-management-container>>>.el-form-item[prop="category_code"] .el-form-item__label:before,
 .position-management-container>>>.el-form-item[prop="department"] .el-form-item__label:before,
-.position-management-container>>>.el-form-item[prop="orderNum"] .el-form-item__label:before {
+.position-management-container>>>.el-form-item[prop="order_num"] .el-form-item__label:before {
   content: '*';
   color: #f56c6c;
   margin-right: 4px;

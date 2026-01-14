@@ -8,9 +8,9 @@
     @focus="loadTenantsIfNeeded">
     <el-option
       v-for="tenant in tenants"
-      :key="tenant.tenantCode"
-      :label="tenant.tenantName"
-      :value="tenant.tenantCode">
+      :key="tenant.tenant_code"
+      :label="tenant.tenant_name"
+      :value="tenant.tenant_code">
     </el-option>
   </el-select>
 </template>
@@ -63,7 +63,7 @@ export default {
           
           // 如果需要自动选择第一个租户且当前没有选中租户
           if (this.autoSelectFirst && !this.value && this.tenants.length > 0) {
-            const firstTenantCode = this.tenants[0].tenantCode
+            const firstTenantCode = this.tenants[0].tenant_code
             this.$emit('input', firstTenantCode)  // 更新v-model绑定的值
             this.$emit('change', firstTenantCode) // 触发change事件
           }
@@ -94,7 +94,7 @@ export default {
     value: {
       handler(newValue) {
         // 如果传入的值不在租户列表中，且租户列表已加载，则尝试自动选择第一个
-        if (this.loaded && newValue && !this.tenants.some(t => t.tenantCode === newValue)) {
+        if (this.loaded && newValue && !this.tenants.some(t => t.tenant_code === newValue)) {
           console.warn(`租户代码 "${newValue}" 不存在于租户列表中`)
         }
       },

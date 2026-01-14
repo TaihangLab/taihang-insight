@@ -22,10 +22,10 @@ class UserService {
   }
 
   // 更新用户
-  static async updateUser(userCode, tenantCode, userData) {
+  static async updateUser(user_code, tenant_code, userData) {
     try {
-      return await rbacAxios.put(`/api/v1/rbac/users/${userCode}`, userData, {
-        params: { tenantCode: tenantCode }
+      return await rbacAxios.put(`/api/v1/rbac/users/${user_code}`, userData, {
+        params: { tenant_code: tenant_code }
       });
     } catch (error) {
       console.error('更新用户失败:', error);
@@ -34,10 +34,10 @@ class UserService {
   }
 
   // 删除用户
-  static async deleteUser(userCode, tenantCode) {
+  static async deleteUser(user_code, tenant_code) {
     try {
-      return await rbacAxios.delete(`/api/v1/rbac/users/${userCode}`, {
-        params: { tenantCode: tenantCode }
+      return await rbacAxios.delete(`/api/v1/rbac/users/${user_code}`, {
+        params: { tenant_code: tenant_code }
       });
     } catch (error) {
       console.error('删除用户失败:', error);
@@ -46,10 +46,10 @@ class UserService {
   }
 
   // 重置用户密码
-  static async resetUserPassword(userCode, tenantCode = 'default') {
+  static async resetUserPassword(user_code, tenant_code = 'default') {
     try {
-      return await rbacAxios.post(`/api/v1/rbac/users/${userCode}/reset-password`, {}, {
-        params: { tenantCode: tenantCode }
+      return await rbacAxios.post(`/api/v1/rbac/users/${user_code}/reset-password`, {}, {
+        params: { tenant_code: tenant_code }
       });
     } catch (error) {
       console.error('重置用户密码失败:', error);
@@ -58,10 +58,10 @@ class UserService {
   }
 
   // 获取用户的角色列表
-  static async getUserRoles(userId, tenantCode) {
+  static async getUserRoles(userId, tenant_code) {
     try {
       return await rbacAxios.get(`/api/v1/rbac/users/${userId}/roles`, {
-        params: { tenantCode: tenantCode }
+        params: { tenant_code: tenant_code }
       });
     } catch (error) {
       console.error('获取用户角色失败:', error);

@@ -29,8 +29,8 @@
               v-loading="rolesLoading"
               height="100%"
             >
-              <el-table-column prop="roleName" label="角色名称" />
-              <el-table-column prop="roleCode" label="角色编码" />
+              <el-table-column prop="role_name" label="角色名称" />
+              <el-table-column prop="role_code" label="角色编码" />
               <el-table-column prop="status" label="状态" width="80">
                 <template slot-scope="scope">
                   <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
@@ -45,7 +45,7 @@
         <!-- 右侧权限分配 -->
         <div class="permission-assignment-panel">
           <div class="panel-header" v-if="selectedRole">
-            <h3>{{ selectedRole.roleName }} ({{ selectedRole.roleCode }}) - 权限分配</h3>
+            <h3>{{ selectedRole.role_name }} ({{ selectedRole.role_code }}) - 权限分配</h3>
             <div class="panel-actions">
               <el-button size="small" @click="selectAllPermissions">全选</el-button>
               <el-button size="small" @click="unselectAllPermissions">全不选</el-button>
@@ -188,10 +188,10 @@ export default {
         
         // 模拟数据
         this.roles = [
-          { id: 1, roleName: '系统管理员', roleCode: 'admin', status: 1 },
-          { id: 2, roleName: '普通用户', roleCode: 'user', status: 1 },
-          { id: 3, roleName: '审核员', roleCode: 'reviewer', status: 1 },
-          { id: 4, roleName: '访客', roleCode: 'guest', status: 1 }
+          { id: 1, role_name: '系统管理员', role_code: 'admin', status: 1 },
+          { id: 2, role_name: '普通用户', role_code: 'user', status: 1 },
+          { id: 3, role_name: '审核员', role_code: 'reviewer', status: 1 },
+          { id: 4, role_name: '访客', role_code: 'guest', status: 1 }
         ];
         
         this.filterRoles();
@@ -257,8 +257,8 @@ export default {
       } else {
         const filter = this.roleFilter.toLowerCase();
         this.filteredRoles = this.roles.filter(role => 
-          role.roleName.toLowerCase().includes(filter) || 
-          role.roleCode.toLowerCase().includes(filter)
+          role.role_name.toLowerCase().includes(filter) || 
+          role.role_code.toLowerCase().includes(filter)
         );
       }
     },
@@ -350,7 +350,7 @@ export default {
         // 调用后端API保存权限分配
         // await RBACService.assignPermissionsToRole(this.selectedRole.id, permissions);
         
-        this.$message.success(`已成功为角色 "${this.selectedRole.roleName}" 分配权限`);
+        this.$message.success(`已成功为角色 "${this.selectedRole.role_name}" 分配权限`);
       } catch (error) {
         console.error('保存角色权限失败:', error);
         this.$message.error('保存角色权限失败');

@@ -15,7 +15,7 @@ class PermissionService {
   static async addPermission(permissionData) {
     try {
       return await rbacAxios.post('/api/v1/rbac/permissions', permissionData, {
-        params: { tenantCode: permissionData.tenantCode }
+        params: { tenant_code: permissionData.tenant_code }
       });
     } catch (error) {
       console.error('创建权限失败:', error);
@@ -24,10 +24,10 @@ class PermissionService {
   }
 
   // 更新权限
-  static async updatePermission(permissionCode, tenantCode, permissionData) {
+  static async updatePermission(permission_code, tenant_code, permissionData) {
     try {
-      return await rbacAxios.put(`/api/v1/rbac/permissions/${permissionCode}`, permissionData, {
-        params: { tenantCode: tenantCode }
+      return await rbacAxios.put(`/api/v1/rbac/permissions/${permission_code}`, permissionData, {
+        params: { tenant_code: tenant_code }
       });
     } catch (error) {
       console.error('更新权限失败:', error);
@@ -36,10 +36,10 @@ class PermissionService {
   }
 
   // 删除权限
-  static async deletePermission(permissionCode, tenantCode) {
+  static async deletePermission(permission_code, tenant_code) {
     try {
-      return await rbacAxios.delete(`/api/v1/rbac/permissions/${permissionCode}`, {
-        params: { tenantCode: tenantCode }
+      return await rbacAxios.delete(`/api/v1/rbac/permissions/${permission_code}`, {
+        params: { tenant_code: tenant_code }
       });
     } catch (error) {
       console.error('删除权限失败:', error);
@@ -48,10 +48,10 @@ class PermissionService {
   }
 
   // 更新权限状态
-  static async updatePermissionStatus(permissionCode, tenantCode, status) {
+  static async updatePermissionStatus(permission_code, tenant_code, status) {
     try {
-      return await rbacAxios.patch(`/api/v1/rbac/permissions/${permissionCode}/status`, { status }, {
-        params: { tenantCode: tenantCode }
+      return await rbacAxios.patch(`/api/v1/rbac/permissions/${permission_code}/status`, { status }, {
+        params: { tenant_code: tenant_code }
       });
     } catch (error) {
       console.error('更新权限状态失败:', error);
@@ -60,10 +60,10 @@ class PermissionService {
   }
 
   // 获取拥有指定权限的角色列表
-  static async getRolesByPermission(permissionId, tenantCode) {
+  static async getRolesByPermission(permissionId, tenant_code) {
     try {
       return await rbacAxios.get(`/api/v1/rbac/role-permissions/roles/${permissionId}`, {
-        params: { tenantCode: tenantCode }
+        params: { tenant_code: tenant_code }
       });
     } catch (error) {
       console.error('获取权限角色失败:', error);

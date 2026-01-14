@@ -98,7 +98,7 @@ export function changePassword(data) {
  * 重置密码
  * @param {number} userId - 用户ID
  */
-export function resetPassword(userId) {
+export function reset_password(userId) {
   return request({
     url: `/api/v1/user/password/reset/${userId}`,
     method: 'post'

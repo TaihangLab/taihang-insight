@@ -18,7 +18,7 @@ rbacAxios.defaults.paramsSerializer = function (params) {
   const convertedParams = {};
   for (const key in params) {
     if (params[key] !== undefined) {
-      // 将驼峰转换为下划线，例如：tenantCode -> tenant_code
+      // 将驼峰转换为下划线，例如：tenant_code -> tenant_code
       const snakeCaseKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
       convertedParams[snakeCaseKey] = params[key];
     }

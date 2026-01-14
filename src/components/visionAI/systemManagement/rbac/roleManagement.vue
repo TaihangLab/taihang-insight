@@ -5,7 +5,7 @@
       <el-form :inline="true">
         <el-form-item label="租户">
           <TenantSelector
-            v-model="searchForm.tenantCode"
+            v-model="searchForm.tenant_code"
             @change="handleTenantChange"/>
         </el-form-item>
         <el-form-item label="角色名称">
@@ -84,7 +84,7 @@
               inactive-color="#9ca3af"
               :active-value="1"
               :inactive-value="0"
-              @change="handleStatusChange(scope.row)"
+              @change="handle_status_change(scope.row)"
             ></el-switch>
           </template>
         </el-table-column>
@@ -125,8 +125,8 @@
       <el-form :model="roleForm" :rules="roleRules" ref="roleForm" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item label="所属租户" prop="tenantCode" required>
-              <el-select v-model="roleForm.tenantCode" placeholder="请选择租户" style="width: 100%">
+            <el-form-item label="所属租户" prop="tenant_code" required>
+              <el-select v-model="roleForm.tenant_code" placeholder="请选择租户" style="width: 100%">
                 <el-option
                   v-for="tenant in tenantList"
                   :key="tenant.tenant_code"
@@ -287,7 +287,7 @@ export default {
         status: '',
         data_scope: '',
         create_time: [],
-        tenantCode: ''
+        tenant_code: ''
       },
 
       // 表格数据
@@ -313,12 +313,12 @@ export default {
         status: 1,
         remark: '',
         permissions: [],
-        tenantCode: ''
+        tenant_code: ''
       },
 
       // 表单验证规则
       roleRules: {
-        tenantCode: [
+        tenant_code: [
           { required: true, message: '请选择所属租户', trigger: 'blur' }
         ],
         role_name: [
@@ -485,8 +485,8 @@ export default {
        
        // 分配权限表单
        assignPermissionForm: {
-         roleName: '',
-         roleCode: '',
+         role_name: '',
+         role_code: '',
          dataScope: '1'
        }
      }
@@ -530,7 +530,7 @@ export default {
           role_code: this.searchForm.role_code || undefined,
           status: this.searchForm.status || undefined,
           data_scope: this.searchForm.data_scope || undefined,
-          tenant_code: this.searchForm.tenantCode || undefined
+          tenant_code: this.searchForm.tenant_code || undefined
         }
 
         const response = await RBACService.getRoles(params)
@@ -583,7 +583,7 @@ export default {
         status: '',
         data_scope: '',
         create_time: [],
-        tenantCode: ''
+        tenant_code: ''
       }
       this.pagination.currentPage = 1
       this.fetchRoles()
@@ -600,7 +600,7 @@ export default {
         status: 1,
         remark: '',
         permissions: [],
-        tenantCode: ''
+        tenant_code: ''
       }
       this.roleDialogVisible = true
       this.$nextTick(() => {
@@ -620,7 +620,7 @@ export default {
         status: row.status,
         remark: row.remark,
         permissions: row.permissions || [],
-        tenantCode: row.tenant_code || ''
+        tenant_code: row.tenant_code || ''
       }
       this.roleDialogVisible = true
       this.$nextTick(() => {
@@ -679,14 +679,14 @@ export default {
     
     // 删除角色
     deleteRole(row) {
-      this.$confirm(`确定要删除角色 "${row.roleName}" 吗？`, '确认删除', {
+      this.$confirm(`确定要删除角色 "${row.role_name}" 吗？`, '确认删除', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async () => {
         this.loading = true
         try {
-          await RBACService.deleteRole(row.roleCode, row.tenantCode || 'default')
+          await RBACService.deleteRole(row.role_code, row.tenant_code || 'default')
           this.$message({
             message: '角色删除成功',
             type: 'success'
@@ -709,8 +709,8 @@ export default {
     assignPermissions(row) {
       this.currentAssignRole = row
       this.assignPermissionForm = {
-        roleName: row.roleName,
-        roleCode: row.roleCode,
+        role_name: row.role_name,
+        role_code: row.role_code,
         dataScope: '1'
       }
       this.assignPermissionDialogVisible = true
@@ -721,8 +721,8 @@ export default {
       this.$router.push({
         path: '/visionAI/systemManagement/userAssignment',
         query: {
-          roleCode: row.roleCode,
-          roleName: row.roleName
+          role_code: row.role_code,
+          role_name: row.role_name
         }
       })
     },
@@ -733,9 +733,9 @@ export default {
       try {
           // 这里需要根据实际API调整，可能需要调用不同的API端点
           // 假设使用updateRole方法更新数据权限
-          await RBACService.updateRole(this.currentAssignRole.roleCode, this.currentAssignRole.tenantCode || 'default', {
+          await RBACService.updateRole(this.currentAssignRole.role_code, this.currentAssignRole.tenant_code || 'default', {
             data_scope: this.assignPermissionForm.dataScope,
-            updateBy: 'admin' // 后端要求的必填字段，使用默认值
+            update_by: 'admin' // 后端要求的必填字段，使用默认值
           })
           
           this.$message({
@@ -777,7 +777,7 @@ export default {
           // 批量删除角色（这里假设API支持批量删除，否则需要逐个删除）
           // 注意：需要根据实际API调整，可能需要多次调用或使用不同的API端点
           for (const row of this.selectedRows) {
-            await RBACService.deleteRole(row.roleCode, row.tenantCode || 'default')
+            await RBACService.deleteRole(row.role_code, row.tenant_code || 'default')
           }
           
           this.$message({
@@ -811,7 +811,7 @@ export default {
       // 添加数据行
       dataToExport.forEach(item => {
         const status = item.status === 1 ? '正常' : '停用'
-        csvContent += `"${item.roleName}","${item.roleCode}","${item.sortOrder}","${status}","${item.createTime}","${item.remark || ''}"\n`
+        csvContent += `"${item.role_name}","${item.role_code}","${item.sort_order}","${status}","${item.create_time}","${item.remark || ''}"\n`
       })
       
       // 创建下载
@@ -838,7 +838,7 @@ export default {
     },
     
     // 处理状态变化
-    async handleStatusChange(row) {
+    async handle_status_change(row) {
       this.loading = true
 
       try {
@@ -849,9 +849,9 @@ export default {
         const statusValue = row.status ? 1 : 0;
 
         // 更新角色状态 - 使用roleCode
-        await RBACService.updateRole(row.roleCode, row.tenantCode, {
+        await RBACService.updateRole(row.role_code, row.tenant_code, {
           status: statusValue,
-          updateBy: 'admin' // 后端要求的必填字段，使用默认值
+          update_by: 'admin' // 后端要求的必填字段，使用默认值
         })
 
         const status = statusValue === 1 ? '启用' : '停用'

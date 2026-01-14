@@ -3,12 +3,12 @@ import rbacAxios from './base';
 class AssociationService {
   // 用户角色关联API
   // 分配角色给用户
-  static async assignRoleToUser(userId, roleId, tenantCode) {
+  static async assignRoleToUser(userId, roleId, tenant_code) {
     try {
       return await rbacAxios.post('/api/v1/rbac/user-roles', {
         userId: userId,
         roleId: roleId,
-        tenantCode: tenantCode
+        tenant_code: tenant_code
       });
     } catch (error) {
       console.error('分配角色给用户失败:', error);
@@ -17,13 +17,13 @@ class AssociationService {
   }
 
   // 移除用户角色
-  static async removeUserRole(userId, roleId, tenantCode) {
+  static async removeUserRole(userId, roleId, tenant_code) {
     try {
       return await rbacAxios.delete('/api/v1/rbac/user-roles', {
         data: {
           userId: userId,
           roleId: roleId,
-          tenantCode: tenantCode
+          tenant_code: tenant_code
         }
       });
     } catch (error) {
@@ -33,10 +33,10 @@ class AssociationService {
   }
 
   // 获取拥有指定角色的用户列表
-  static async getUsersByRole(roleId, tenantCode) {
+  static async getUsersByRole(roleId, tenant_code) {
     try {
       return await rbacAxios.get(`/api/v1/rbac/user-roles/users/${roleId}`, {
-        params: { tenantCode: tenantCode }
+        params: { tenant_code: tenant_code }
       });
     } catch (error) {
       console.error('获取角色用户失败:', error);
@@ -46,12 +46,12 @@ class AssociationService {
 
   // 角色权限关联API
   // 分配权限给角色
-  static async assignPermissionToRole(roleId, permissionId, tenantCode) {
+  static async assignPermissionToRole(roleId, permissionId, tenant_code) {
     try {
       return await rbacAxios.post('/api/v1/rbac/role-permissions', {
         roleId: roleId,
         permissionId: permissionId,
-        tenantCode: tenantCode
+        tenant_code: tenant_code
       });
     } catch (error) {
       console.error('分配权限给角色失败:', error);
@@ -60,13 +60,13 @@ class AssociationService {
   }
 
   // 移除角色权限
-  static async removeRolePermission(roleId, permissionId, tenantCode) {
+  static async removeRolePermission(roleId, permissionId, tenant_code) {
     try {
       return await rbacAxios.delete('/api/v1/rbac/role-permissions', {
         data: {
           roleId: roleId,
           permissionId: permissionId,
-          tenantCode: tenantCode
+          tenant_code: tenant_code
         }
       });
     } catch (error) {
@@ -77,11 +77,11 @@ class AssociationService {
 
   // 权限验证API
   // 检查用户权限
-  static async checkUserPermission(userId, tenantCode, url, method) {
+  static async checkUserPermission(userId, tenant_code, url, method) {
     try {
       return await rbacAxios.post('/api/v1/rbac/permissions/check', {
         userId: userId,
-        tenantCode: tenantCode,
+        tenant_code: tenant_code,
         url,
         method
       });
@@ -92,10 +92,10 @@ class AssociationService {
   }
 
   // 获取用户权限列表
-  static async getUserPermissions(userId, tenantCode) {
+  static async getUserPermissions(userId, tenant_code) {
     try {
       return await rbacAxios.get(`/api/v1/rbac/permissions/user/${userId}`, {
-        params: { tenantCode: tenantCode }
+        params: { tenant_code: tenant_code }
       });
     } catch (error) {
       console.error('获取用户权限列表失败:', error);

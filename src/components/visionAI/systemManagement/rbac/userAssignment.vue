@@ -7,7 +7,7 @@
           <i class="el-icon-arrow-left"></i>
           返回角色管理
         </el-button>
-        <h2>{{ roleName }}</h2>
+        <h2>{{ role_name }}</h2>
       </div>
     </div>
 
@@ -16,7 +16,7 @@
       <el-form :inline="true">
         <el-form-item label="用户名称">
           <el-input
-            v-model="searchForm.userName"
+            v-model="searchForm.user_name"
             placeholder="请输入用户名称"
             clearable
           ></el-input>
@@ -51,7 +51,7 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center"></el-table-column>
-        <el-table-column prop="userName" label="用户名称" min-width="120" align="center"></el-table-column>
+        <el-table-column prop="user_name" label="用户名称" min-width="120" align="center"></el-table-column>
         <el-table-column prop="nickName" label="用户昵称" min-width="120" align="center"></el-table-column>
         <el-table-column prop="email" label="邮箱" min-width="200" align="center"></el-table-column>
         <el-table-column prop="phone" label="手机" min-width="140" align="center"></el-table-column>
@@ -62,7 +62,7 @@
                  </el-tag>
                </template>
              </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" min-width="160" align="center"></el-table-column>
+        <el-table-column prop="create_time" label="创建时间" min-width="160" align="center"></el-table-column>
         <el-table-column label="操作" width="100" fixed="right" align="center">
           <template slot-scope="scope">
             <div class="operation-buttons">
@@ -99,7 +99,7 @@
           <el-form :inline="true">
             <el-form-item label="用户名称">
               <el-input
-                v-model="userSearchForm.userName"
+                v-model="userSearchForm.user_name"
                 placeholder="请输入用户名称"
                 clearable
               ></el-input>
@@ -129,7 +129,7 @@
             @selection-change="handleUserSelectionChange"
           >
             <el-table-column type="selection" width="55" align="center"></el-table-column>
-            <el-table-column prop="userName" label="用户名称" min-width="120" align="center"></el-table-column>
+            <el-table-column prop="user_name" label="用户名称" min-width="120" align="center"></el-table-column>
             <el-table-column prop="nickName" label="用户昵称" min-width="120" align="center"></el-table-column>
             <el-table-column prop="email" label="邮箱" min-width="200" align="center"></el-table-column>
             <el-table-column prop="phone" label="手机" min-width="140" align="center"></el-table-column>
@@ -140,7 +140,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" min-width="160" align="center"></el-table-column>
+            <el-table-column prop="create_time" label="创建时间" min-width="160" align="center"></el-table-column>
           </el-table>
           
           <!-- 分页器 -->
@@ -174,12 +174,12 @@ export default {
   data() {
     return {
       // 角色信息
-      roleCode: '',
-      roleName: '',
+      role_code: '',
+      role_name: '',
 
       // 搜索表单
       searchForm: {
-        userName: '',
+        user_name: '',
         phone: ''
       },
 
@@ -201,7 +201,7 @@ export default {
 
       // 用户搜索表单
       userSearchForm: {
-        userName: '',
+        user_name: '',
         phone: ''
       },
 
@@ -227,8 +227,8 @@ export default {
     // 初始化页面数据
     initPageData() {
       // 从路由参数或localStorage获取角色信息
-      this.roleCode = this.$route.query.roleCode || ''
-      this.roleName = this.$route.query.roleName || '未知角色'
+      this.role_code = this.$route.query.role_code || ''
+      this.role_name = this.$route.query.role_name || '未知角色'
     },
     
     // 获取用户数据
@@ -241,7 +241,7 @@ export default {
         const params = {
           skip: skip,
           limit: this.pagination.pageSize,
-          username: this.searchForm.userName || undefined,
+          username: this.searchForm.user_name || undefined,
           phone: this.searchForm.phone || undefined
         }
 
@@ -274,48 +274,48 @@ export default {
       return [
         {
           id: 1,
-          userName: 'asdasd',
+          user_name: 'asdasd',
           nickName: 'das',
           email: 'yunlongc528@gmail.com',
           phone: '19310742302',
           status: 1,
-          createTime: '2025-07-07 10:59:02'
+          create_time: '2025-07-07 10:59:02'
         },
         {
           id: 2,
-          userName: 'testuser',
+          user_name: 'testuser',
           nickName: '测试用户',
           email: 'test@example.com',
           phone: '13888888888',
           status: 1,
-          createTime: '2025-07-06 15:30:45'
+          create_time: '2025-07-06 15:30:45'
         },
         {
           id: 3,
-          userName: 'admin',
+          user_name: 'admin',
           nickName: '管理员',
           email: 'admin@system.com',
           phone: '15999999999',
           status: 1,
-          createTime: '2025-07-05 09:20:15'
+          create_time: '2025-07-05 09:20:15'
         },
         {
           id: 4,
-          userName: 'developer',
+          user_name: 'developer',
           nickName: '开发者',
           email: 'dev@company.com',
           phone: '13777777777',
           status: 1,
-          createTime: '2025-07-04 14:45:30'
+          create_time: '2025-07-04 14:45:30'
         },
         {
           id: 5,
-          userName: 'operator',
+          user_name: 'operator',
           nickName: '操作员',
           email: 'operator@system.com',
           phone: '18666666666',
           status: 0,
-          createTime: '2025-07-03 11:10:20'
+          create_time: '2025-07-03 11:10:20'
         }
       ]
     },
@@ -329,7 +329,7 @@ export default {
     // 重置搜索
     resetSearch() {
       this.searchForm = {
-        userName: '',
+        user_name: '',
         phone: ''
       }
       this.pagination.currentPage = 1
@@ -340,7 +340,7 @@ export default {
     addUser() {
       this.selectedUsers = []
       this.userSearchForm = {
-        userName: '',
+        user_name: '',
         phone: ''
       }
       this.userPagination = {
@@ -362,7 +362,7 @@ export default {
         const params = {
           skip: skip,
           limit: this.userPagination.pageSize,
-          username: this.userSearchForm.userName || undefined,
+          username: this.userSearchForm.user_name || undefined,
           phone: this.userSearchForm.phone || undefined
         }
 
@@ -395,93 +395,93 @@ export default {
       return [
         {
           id: 1,
-          userName: 'admin',
+          user_name: 'admin',
           nickName: '疯狂的狮子',
           email: 'crazyLion@gmail.com',
           phone: '15888888888',
           status: 1,
-          createTime: '2025-06-06 16:28:45'
+          create_time: '2025-06-06 16:28:45'
         },
         {
           id: 2,
-          userName: 'test',
+          user_name: 'test',
           nickName: '本部门及以下',
           email: 'test@example.com',
           phone: '13999999999',
           status: 1,
-          createTime: '2025-06-06 16:28:45'
+          create_time: '2025-06-06 16:28:45'
         },
         {
           id: 3,
-          userName: 'test1',
+          user_name: 'test1',
           nickName: '仅本人 密码',
           email: 'test1@example.com',
           phone: '13777777777',
           status: 1,
-          createTime: '2025-06-06 16:28:45'
+          create_time: '2025-06-06 16:28:45'
         },
         {
           id: 4,
-          userName: 'newuser',
+          user_name: 'newuser',
           nickName: '新用户',
           email: 'newuser@example.com',
           phone: '13666666666',
           status: 1,
-          createTime: '2025-06-06 16:28:45'
+          create_time: '2025-06-06 16:28:45'
         },
         {
           id: 5,
-          userName: 'manager',
+          user_name: 'manager',
           nickName: '管理员',
           email: 'manager@example.com',
           phone: '13555555555',
           status: 1,
-          createTime: '2025-06-06 16:28:45'
+          create_time: '2025-06-06 16:28:45'
         },
         {
           id: 6,
-          userName: 'operator',
+          user_name: 'operator',
           nickName: '操作员',
           email: 'operator@example.com',
           phone: '13444444444',
           status: 1,
-          createTime: '2025-06-06 16:28:45'
+          create_time: '2025-06-06 16:28:45'
         },
         {
           id: 7,
-          userName: 'viewer',
+          user_name: 'viewer',
           nickName: '查看者',
           email: 'viewer@example.com',
           phone: '13333333333',
           status: 1,
-          createTime: '2025-06-06 16:28:45'
+          create_time: '2025-06-06 16:28:45'
         },
         {
           id: 8,
-          userName: 'editor',
+          user_name: 'editor',
           nickName: '编辑者',
           email: 'editor@example.com',
           phone: '13222222222',
           status: 1,
-          createTime: '2025-06-06 16:28:45'
+          create_time: '2025-06-06 16:28:45'
         },
         {
           id: 9,
-          userName: 'auditor',
+          user_name: 'auditor',
           nickName: '审计员',
           email: 'auditor@example.com',
           phone: '13111111111',
           status: 1,
-          createTime: '2025-06-06 16:28:45'
+          create_time: '2025-06-06 16:28:45'
         },
         {
           id: 10,
-          userName: 'guest',
+          user_name: 'guest',
           nickName: '访客',
           email: 'guest@example.com',
           phone: '13000000000',
           status: 1,
-          createTime: '2025-06-06 16:28:45'
+          create_time: '2025-06-06 16:28:45'
         }
       ]
     },
@@ -495,7 +495,7 @@ export default {
     // 重置用户搜索
     resetUserSearch() {
       this.userSearchForm = {
-        userName: '',
+        user_name: '',
         phone: ''
       }
       this.userPagination.currentPage = 1
@@ -536,7 +536,7 @@ export default {
         const userIds = this.selectedUsers.map(user => user.id)
 
         // 调用API分配角色给用户
-        await RBACService.assignRolesToUser(this.roleCode, userIds)
+        await RBACService.assignRolesToUser(this.role_code, userIds)
 
         this.$message({
           message: `成功为 ${this.selectedUsers.length} 个用户分配角色`,
@@ -554,7 +554,7 @@ export default {
     
     // 取消授权
     async cancelAuth(row) {
-      this.$confirm(`确定要取消用户 "${row.userName}" 的授权吗？`, '确认取消', {
+      this.$confirm(`确定要取消用户 "${row.user_name}" 的授权吗？`, '确认取消', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -563,7 +563,7 @@ export default {
 
         try {
           // 调用API取消用户的角色分配
-          await RBACService.removeRoleFromUser(this.roleCode, row.id)
+          await RBACService.removeRoleFromUser(this.role_code, row.id)
 
           this.$message({
             message: '取消授权成功',
@@ -603,7 +603,7 @@ export default {
           const userIds = this.selectedRows.map(row => row.id)
 
           // 调用API批量取消用户的角色分配
-          await RBACService.removeRoleFromUsers(this.roleCode, userIds)
+          await RBACService.removeRoleFromUsers(this.role_code, userIds)
 
           this.$message({
             message: '批量取消授权成功',

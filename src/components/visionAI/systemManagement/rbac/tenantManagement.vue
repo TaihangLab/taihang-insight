@@ -11,14 +11,14 @@
         </el-form-item>
         <el-form-item label="租户名称">
           <el-input
-            v-model="searchForm.tenantName"
+            v-model="searchForm.tenant_name"
             placeholder="请输入租户名称"
             clearable
           ></el-input>
         </el-form-item>
         <el-form-item label="企业名称">
           <el-input
-            v-model="searchForm.companyName"
+            v-model="searchForm.company_name"
             placeholder="请输入企业名称"
             clearable
           ></el-input>
@@ -83,7 +83,7 @@
               :inactive-value="1"
               active-color="#3b82f6"
               inactive-color="#9ca3af"
-              @change="handleStatusChange(scope.row)"
+              @change="handle_status_change(scope.row)"
             ></el-switch>
           </template>
         </el-table-column>
@@ -209,8 +209,8 @@ export default {
       // 搜索表单
       searchForm: {
         tenant_code: '',
-        tenantName: '',
-        companyName: '',
+        tenant_name: '',
+        company_name: '',
         status: ''
       },
       
@@ -228,9 +228,9 @@ export default {
       
       // 租户表单
       tenantForm: {
-        companyName: '',
-        contactPerson: '',
-        contactPhone: '',
+        company_name: '',
+        contact_person: '',
+        contact_phone: '',
         username: '',
         password: '',
         package: '',
@@ -245,13 +245,13 @@ export default {
       
       // 表单验证规则
       tenantRules: {
-        companyName: [
+        company_name: [
           { required: true, message: '请输入企业名称', trigger: 'blur' }
         ],
-        contactPerson: [
+        contact_person: [
           { required: true, message: '请输入联系人', trigger: 'blur' }
         ],
-        contactPhone: [
+        contact_phone: [
           { required: true, message: '请输入联系电话', trigger: 'blur' },
           { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
         ],
@@ -287,9 +287,9 @@ export default {
           skip: skip,
           limit: this.pagination.pageSize,
           tenant_code: this.searchForm.tenant_code || undefined,
-          tenant_name: this.searchForm.tenantName || undefined,
-          company_name: this.searchForm.companyName || undefined,  // 添加企业名称参数
-          create_by: this.searchForm.createBy || undefined,
+          tenant_name: this.searchForm.tenant_name || undefined,
+          company_name: this.searchForm.company_name || undefined,  // 添加企业名称参数
+          create_by: this.searchForm.create_by || undefined,
           status: this.searchForm.status || undefined
         }
         
@@ -322,88 +322,88 @@ export default {
         {
           id: 1,
           tenant_code: 'default',
-          tenantName: '默认租户',
-          createTime: '2026-01-11T18:59:04',
-          updateTime: '2026-01-11T18:59:04',
-          createBy: 'system',
-          updateBy: 'system',
+          tenant_name: '默认租户',
+          create_time: '2026-01-11T18:59:04',
+          update_time: '2026-01-11T18:59:04',
+          create_by: 'system',
+          update_by: 'system',
           remark: null,
           status: 0
         },
         {
           id: 2,
           tenant_code: '000000',
-          tenantName: 'XXX有限公司',
-          createTime: '2026-01-11T19:27:23',
-          updateTime: '2026-01-11T19:27:23',
-          createBy: 'system',
-          updateBy: 'system',
+          tenant_name: 'XXX有限公司',
+          create_time: '2026-01-11T19:27:23',
+          update_time: '2026-01-11T19:27:23',
+          create_by: 'system',
+          update_by: 'system',
           remark: null,
           status: 0
         },
         {
           id: 3,
           tenant_code: '952742',
-          tenantName: '123企业',
-          createTime: '2026-01-10T10:30:00',
-          updateTime: '2026-01-10T10:30:00',
-          createBy: 'admin',
-          updateBy: 'admin',
+          tenant_name: '123企业',
+          create_time: '2026-01-10T10:30:00',
+          update_time: '2026-01-10T10:30:00',
+          create_by: 'admin',
+          update_by: 'admin',
           remark: '测试租户1',
           status: 0
         },
         {
           id: 4,
           tenant_code: '415387',
-          tenantName: '6666科技',
-          createTime: '2026-01-09T14:20:00',
-          updateTime: '2026-01-09T14:20:00',
-          createBy: 'admin',
-          updateBy: 'admin',
+          tenant_name: '6666科技',
+          create_time: '2026-01-09T14:20:00',
+          update_time: '2026-01-09T14:20:00',
+          create_by: 'admin',
+          update_by: 'admin',
           remark: '测试租户2',
           status: 1
         },
         {
           id: 5,
           tenant_code: '297659',
-          tenantName: '16888贸易',
-          createTime: '2026-01-08T09:15:00',
-          updateTime: '2026-01-08T09:15:00',
-          createBy: 'system',
-          updateBy: 'system',
+          tenant_name: '16888贸易',
+          create_time: '2026-01-08T09:15:00',
+          update_time: '2026-01-08T09:15:00',
+          create_by: 'system',
+          update_by: 'system',
           remark: null,
           status: 0
         },
         {
           id: 6,
           tenant_code: '789133',
-          tenantName: '测试租户企业',
-          createTime: '2026-01-07T16:45:00',
-          updateTime: '2026-01-07T16:45:00',
-          createBy: 'admin',
-          updateBy: 'admin',
+          tenant_name: '测试租户企业',
+          create_time: '2026-01-07T16:45:00',
+          update_time: '2026-01-07T16:45:00',
+          create_by: 'admin',
+          update_by: 'admin',
           remark: '测试用途',
           status: 0
         },
         {
           id: 7,
           tenant_code: '555083',
-          tenantName: '测试公司',
-          createTime: '2026-01-06T11:20:00',
-          updateTime: '2026-01-06T11:20:00',
-          createBy: 'system',
-          updateBy: 'system',
+          tenant_name: '测试公司',
+          create_time: '2026-01-06T11:20:00',
+          update_time: '2026-01-06T11:20:00',
+          create_by: 'system',
+          update_by: 'system',
           remark: null,
           status: 0
         },
         {
           id: 8,
           tenant_code: '646214',
-          tenantName: 'test999',
-          createTime: '2026-01-05T15:30:00',
-          updateTime: '2026-01-05T15:30:00',
-          createBy: 'admin',
-          updateBy: 'admin',
+          tenant_name: 'test999',
+          create_time: '2026-01-05T15:30:00',
+          update_time: '2026-01-05T15:30:00',
+          create_by: 'admin',
+          update_by: 'admin',
           remark: '高级测试企业',
           status: 0
         }
@@ -420,8 +420,8 @@ export default {
     resetSearch() {
       this.searchForm = {
         tenant_code: '',
-        tenantName: '',
-        companyName: '',
+        tenant_name: '',
+        company_name: '',
         status: ''
       }
       this.pagination.currentPage = 1
@@ -450,9 +450,9 @@ export default {
       this.dialogTitle = '添加租户'
       this.currentTenant = null
       this.tenantForm = {
-        companyName: '',
-        contactPerson: '',
-        contactPhone: '',
+        company_name: '',
+        contact_person: '',
+        contact_phone: '',
         username: '',
         password: '',
         package: '',
@@ -474,9 +474,9 @@ export default {
       // 映射字段名，确保表单字段与API字段匹配
       this.tenantForm = {
         ...row,
-        companyName: row.company_name || row.companyName,
-        contactPerson: row.contact_person || row.contactPerson,
-        contactPhone: row.contact_phone || row.contactPhone,
+        company_name: row.company_name || row.company_name,
+        contact_person: row.contact_person || row.contact_person,
+        contact_phone: row.contact_phone || row.contact_phone,
         expireTime: row.expire_time || row.expireTime,
         userCount: row.user_count || row.userCount || 0,
         companyCode: row.company_code || row.companyCode,
@@ -505,9 +505,9 @@ export default {
             if (this.currentTenant) {
               // 编辑租户 - 将表单字段映射为API所需格式
               const updateData = {
-                company_name: this.tenantForm.companyName,
-                contact_person: this.tenantForm.contactPerson,
-                contact_phone: this.tenantForm.contactPhone,
+                company_name: this.tenantForm.company_name,
+                contact_person: this.tenantForm.contact_person,
+                contact_phone: this.tenantForm.contact_phone,
                 username: this.tenantForm.username,
                 package: this.tenantForm.package,
                 expire_time: this.tenantForm.expireTime,
@@ -532,9 +532,9 @@ export default {
             } else {
               // 新增租户 - 将表单字段映射为API所需格式
               const createData = {
-                company_name: this.tenantForm.companyName,
-                contact_person: this.tenantForm.contactPerson,
-                contact_phone: this.tenantForm.contactPhone,
+                company_name: this.tenantForm.company_name,
+                contact_person: this.tenantForm.contact_person,
+                contact_phone: this.tenantForm.contact_phone,
                 username: this.tenantForm.username,
                 password: this.tenantForm.password,
                 package: this.tenantForm.package,
@@ -659,7 +659,7 @@ export default {
           'enterprise': '企业版'
         }[item.package] || item.package || ''
         
-        csvContent += `"${item.tenantNumber}","${item.companyName}","${item.contactPerson}","${item.contactPhone}","${item.username || ''}","${packageName}","${item.expireTime}","${item.userCount || 0}","${item.domain || ''}","${item.address || ''}","${item.companyCode || ''}","${item.description || ''}","${item.remark || ''}","${status}"\n`
+        csvContent += `"${item.tenantNumber}","${item.company_name}","${item.contact_person}","${item.contact_phone}","${item.username || ''}","${packageName}","${item.expireTime}","${item.userCount || 0}","${item.domain || ''}","${item.address || ''}","${item.companyCode || ''}","${item.description || ''}","${item.remark || ''}","${status}"\n`
       })
       
       // 创建下载
@@ -701,7 +701,7 @@ export default {
     },
     
     // 处理状态变化
-    async handleStatusChange(row) {
+    async handle_status_change(row) {
       this.loading = true
 
       try {

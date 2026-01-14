@@ -6,11 +6,11 @@
       <div class="info-row">
         <div class="info-item">
           <span class="info-label">用户账号</span>
-          <span class="info-value">{{ userInfo.userNickname }}</span>
+          <span class="info-value">{{ userInfo.nick_name }}</span>
         </div>
         <div class="info-item">
           <span class="info-label">登录账号</span>
-          <span class="info-value">{{ userInfo.userName }}</span>
+          <span class="info-value">{{ userInfo.user_name }}</span>
         </div>
       </div>
     </div>
@@ -28,10 +28,10 @@
         @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="50" align="center"></el-table-column>
         <el-table-column label="序号" type="index" width="80" align="center" :index="indexMethod"></el-table-column>
-        <el-table-column prop="roleCode" label="角色编号" min-width="180" align="center"></el-table-column>
-        <el-table-column prop="roleName" label="角色名称" min-width="120" align="center"></el-table-column>
+        <el-table-column prop="role_code" label="角色编号" min-width="180" align="center"></el-table-column>
+        <el-table-column prop="role_name" label="角色名称" min-width="120" align="center"></el-table-column>
         <el-table-column prop="roleKey" label="权限字符" min-width="120" align="center"></el-table-column>
-        <el-table-column prop="createTime" label="创建时间" min-width="160" align="center"></el-table-column>
+        <el-table-column prop="create_time" label="创建时间" min-width="160" align="center"></el-table-column>
       </el-table>
 
       <!-- 分页器 -->
@@ -68,9 +68,9 @@ export default {
       
       // 用户信息
       userInfo: {
-        userCode: '',
-        userName: '',
-        userNickname: ''
+        user_code: '',
+        user_name: '',
+        nick_name: ''
       },
       
       // 角色数据
@@ -94,9 +94,9 @@ export default {
   methods: {
     // 初始化用户信息
     initUserInfo() {
-      const { userCode, userName } = this.$route.params
-      this.userInfo.userCode = userCode
-      this.userInfo.userName = userName
+      const { user_code, user_name } = this.$route.params
+      this.userInfo.user_code = user_code
+      this.userInfo.user_name = user_name
       
       // 根据用户Code获取用户详细信息
       this.fetchUserInfo()
@@ -105,20 +105,20 @@ export default {
     // 获取用户详细信息
     async fetchUserInfo() {
       try {
-        const response = await RBACService.getUsers({ user_code: this.userInfo.userCode })
+        const response = await RBACService.getUsers({ user_code: this.userInfo.user_code })
 
         if (response && response.data && Array.isArray(response.data.items) && response.data.items.length > 0) {
           const userData = response.data.items[0]
-          this.userInfo.userNickname = userData.userNickname || userData.nickName || userData.userName
-          this.userInfo.userName = userData.userName
+          this.userInfo.nick_name = userData.nick_name || userData.nickName || userData.user_name
+          this.userInfo.user_name = userData.user_name
         } else {
-          console.warn(`未找到用户信息: ${this.userInfo.userCode}`)
-          this.userInfo.userNickname = this.userInfo.userCode // 使用用户代码作为昵称
+          console.warn(`未找到用户信息: ${this.userInfo.user_code}`)
+          this.userInfo.nick_name = this.userInfo.user_code // 使用用户代码作为昵称
         }
       } catch (error) {
         console.error('获取用户信息失败:', error.message)
         this.$message.error(`获取用户信息失败: ${error.message}`)
-        this.userInfo.userNickname = this.userInfo.userCode // 使用用户代码作为昵称
+        this.userInfo.nick_name = this.userInfo.user_code // 使用用户代码作为昵称
       }
     },
     
@@ -162,38 +162,38 @@ export default {
       return [
         {
           id: 1,
-          roleCode: '194204879171796922',
-          roleName: 'testwen',
+          role_code: '194204879171796922',
+          role_name: 'testwen',
           roleKey: 'testwen',
-          createTime: '2025-07-07 10:31:28'
+          create_time: '2025-07-07 10:31:28'
         },
         {
           id: 2,
-          roleCode: '3',
-          roleName: '本部门以上',
+          role_code: '3',
+          role_name: '本部门以上',
           roleKey: 'test1',
-          createTime: '2025-06-06 16:28:46'
+          create_time: '2025-06-06 16:28:46'
         },
         {
           id: 3,
-          roleCode: '4',
-          roleName: '仅本人',
+          role_code: '4',
+          role_name: '仅本人',
           roleKey: 'test2',
-          createTime: '2025-06-06 16:28:46'
+          create_time: '2025-06-06 16:28:46'
         },
         {
           id: 4,
-          roleCode: '5',
-          roleName: '管理员',
+          role_code: '5',
+          role_name: '管理员',
           roleKey: 'admin',
-          createTime: '2025-06-05 14:20:30'
+          create_time: '2025-06-05 14:20:30'
         },
         {
           id: 5,
-          roleCode: '6',
-          roleName: '普通用户',
+          role_code: '6',
+          role_name: '普通用户',
           roleKey: 'user',
-          createTime: '2025-06-05 14:20:30'
+          create_time: '2025-06-05 14:20:30'
         }
       ]
     },
@@ -233,13 +233,13 @@ export default {
       
       try {
         // 准备角色数据，提取roleCode
-        const roleCodes = this.selectedRoles.map(role => role.roleCode)
+        const roleCodes = this.selectedRoles.map(role => role.role_code)
         
         // 调用API提交角色分配
-        await RBACService.assignRolesToUser(this.userInfo.userCode, roleCodes)
+        await RBACService.assignRolesToUser(this.userInfo.user_code, roleCodes)
         
         this.$message({
-          message: `已为用户"${this.userInfo.userName}"分配${this.selectedRoles.length}个角色`,
+          message: `已为用户"${this.userInfo.user_name}"分配${this.selectedRoles.length}个角色`,
           type: 'success'
         })
         

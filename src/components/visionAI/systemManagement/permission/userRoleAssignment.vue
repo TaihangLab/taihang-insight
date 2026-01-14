@@ -29,7 +29,7 @@
               v-loading="usersLoading"
               height="100%"
             >
-              <el-table-column prop="userName" label="用户名" />
+              <el-table-column prop="user_name" label="用户名" />
               <el-table-column prop="nickName" label="昵称" />
               <el-table-column prop="email" label="邮箱" />
               <el-table-column prop="status" label="状态" width="80">
@@ -46,7 +46,7 @@
         <!-- 右侧角色分配 -->
         <div class="role-assignment-panel">
           <div class="panel-header" v-if="selectedUser">
-            <h3>{{ selectedUser.nickName || selectedUser.userName }} - 角色分配</h3>
+            <h3>{{ selectedUser.nickName || selectedUser.user_name }} - 角色分配</h3>
             <div class="panel-actions">
               <el-button size="small" @click="selectAllRoles">全选</el-button>
               <el-button size="small" @click="unselectAllRoles">全不选</el-button>
@@ -73,8 +73,8 @@
                   >
                     <el-checkbox :label="role.id" class="role-checkbox">
                       <div class="role-item">
-                        <div class="role-name">{{ role.roleName }}</div>
-                        <div class="role-code">{{ role.roleCode }}</div>
+                        <div class="role-name">{{ role.role_name }}</div>
+                        <div class="role-code">{{ role.role_code }}</div>
                         <div class="role-desc">{{ role.description || '暂无描述' }}</div>
                         <el-tag 
                           :type="role.status === 1 ? 'success' : 'danger'" 
@@ -140,11 +140,11 @@ export default {
         
         // 模拟数据
         this.users = [
-          { id: 1, userName: 'admin', nickName: '系统管理员', email: 'admin@example.com', status: 1 },
-          { id: 2, userName: 'user1', nickName: '普通用户1', email: 'user1@example.com', status: 1 },
-          { id: 3, userName: 'user2', nickName: '普通用户2', email: 'user2@example.com', status: 1 },
-          { id: 4, userName: 'reviewer1', nickName: '审核员1', email: 'reviewer1@example.com', status: 1 },
-          { id: 5, userName: 'guest1', nickName: '访客1', email: 'guest1@example.com', status: 1 }
+          { id: 1, user_name: 'admin', nickName: '系统管理员', email: 'admin@example.com', status: 1 },
+          { id: 2, user_name: 'user1', nickName: '普通用户1', email: 'user1@example.com', status: 1 },
+          { id: 3, user_name: 'user2', nickName: '普通用户2', email: 'user2@example.com', status: 1 },
+          { id: 4, user_name: 'reviewer1', nickName: '审核员1', email: 'reviewer1@example.com', status: 1 },
+          { id: 5, user_name: 'guest1', nickName: '访客1', email: 'guest1@example.com', status: 1 }
         ];
         
         this.filterUsers();
@@ -165,12 +165,12 @@ export default {
         
         // 模拟数据
         this.roles = [
-          { id: 1, roleName: '系统管理员', roleCode: 'admin', status: 1, description: '拥有系统最高权限' },
-          { id: 2, roleName: '普通用户', roleCode: 'user', status: 1, description: '基本用户权限' },
-          { id: 3, roleName: '审核员', roleCode: 'reviewer', status: 1, description: '负责审核相关内容' },
-          { id: 4, roleName: '访客', roleCode: 'guest', status: 1, description: '只读权限' },
-          { id: 5, roleName: '运营专员', roleCode: 'operator', status: 1, description: '负责日常运营工作' },
-          { id: 6, roleName: '数据分析员', roleCode: 'analyst', status: 1, description: '负责数据分析工作' }
+          { id: 1, role_name: '系统管理员', role_code: 'admin', status: 1, description: '拥有系统最高权限' },
+          { id: 2, role_name: '普通用户', role_code: 'user', status: 1, description: '基本用户权限' },
+          { id: 3, role_name: '审核员', role_code: 'reviewer', status: 1, description: '负责审核相关内容' },
+          { id: 4, role_name: '访客', role_code: 'guest', status: 1, description: '只读权限' },
+          { id: 5, role_name: '运营专员', role_code: 'operator', status: 1, description: '负责日常运营工作' },
+          { id: 6, role_name: '数据分析员', role_code: 'analyst', status: 1, description: '负责数据分析工作' }
         ];
       } catch (error) {
         console.error('加载角色列表失败:', error);
@@ -185,7 +185,7 @@ export default {
       } else {
         const filter = this.userFilter.toLowerCase();
         this.filteredUsers = this.users.filter(user => 
-          user.userName.toLowerCase().includes(filter) || 
+          user.user_name.toLowerCase().includes(filter) || 
           user.nickName.toLowerCase().includes(filter) ||
           user.email.toLowerCase().includes(filter)
         );
@@ -243,7 +243,7 @@ export default {
         // 调用后端API保存用户角色分配
         // await RBACService.assignRolesToUser(this.selectedUser.id, this.selectedUserRoles);
         
-        this.$message.success(`已成功为用户 "${this.selectedUser.nickName || this.selectedUser.userName}" 分配角色`);
+        this.$message.success(`已成功为用户 "${this.selectedUser.nickName || this.selectedUser.user_name}" 分配角色`);
       } catch (error) {
         console.error('保存用户角色失败:', error);
         this.$message.error('保存用户角色失败');

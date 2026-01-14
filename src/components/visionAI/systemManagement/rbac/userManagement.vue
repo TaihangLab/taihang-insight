@@ -36,7 +36,7 @@
             <el-form-item label="租户">
               <TenantSelector
                 ref="tenantSelector"
-                v-model="searchForm.tenantCode"
+                v-model="searchForm.tenant_code"
                 @change="handleTenantChange"/>
             </el-form-item>
             <el-form-item label="用户名称">
@@ -119,14 +119,14 @@
             <div class="left-buttons">
               <el-button type="primary" icon="el-icon-plus" size="small" @click="addUser">新增</el-button>
               <el-button icon="el-icon-delete" size="small" @click="batchDelete">删除</el-button>
-              <el-dropdown @command="handleMoreAction" class="more-dropdown">
+              <el-dropdown @command="handle_more_action" class="more-dropdown">
                 <el-button size="small">
                   更多<i class="el-icon-arrow-down el-icon--right"></i>
                 </el-button>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item command="downloadTemplate">下载模板</el-dropdown-item>
-                  <el-dropdown-item command="importData">导入数据</el-dropdown-item>
-                  <el-dropdown-item command="exportData">导出数据</el-dropdown-item>
+                  <el-dropdown-item command="download_template">下载模板</el-dropdown-item>
+                  <el-dropdown-item command="import_data">导入数据</el-dropdown-item>
+                  <el-dropdown-item command="export_data">导出数据</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
             </div>
@@ -155,7 +155,7 @@
                   v-model="scope.row.status"
                   active-color="#3b82f6"
                   inactive-color="#9ca3af"
-                  @change="handleStatusChange(scope.row)">
+                  @change="handle_status_change(scope.row)">
                 </el-switch>
               </template>
             </el-table-column>
@@ -165,7 +165,7 @@
                 <div class="operation-buttons">
                   <el-button type="text" class="edit-btn" @click="editUser(scope.row)">编辑</el-button>
                   <el-button type="text" class="delete-btn" @click="deleteUser(scope.row)">删除</el-button>
-                  <el-button type="text" class="reset-btn" @click="resetPassword(scope.row)">重置</el-button>
+                  <el-button type="text" class="reset-btn" @click="reset_password(scope.row)">重置</el-button>
                 </div>
               </template>
             </el-table-column>
@@ -325,7 +325,7 @@
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="resetPasswordDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmResetPassword">确定</el-button>
+        <el-button type="primary" @click="confirm_reset_password">确定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -358,7 +358,7 @@ export default {
         position: '',
         gender: '',
         create_time_range: [],
-        tenantCode: ''
+        tenant_code: ''
       },
 
 
@@ -492,7 +492,7 @@ export default {
         await tenantSelector.loadTenantsIfNeeded();
         // 更新缓存
         this.cachedTenants = [...tenantSelector.tenants];
-        // 注意：不再手动设置 tenantCode，由 TenantSelector 的 autoSelectFirst 处理
+        // 注意：不再手动设置 tenant_code，由 TenantSelector 的 autoSelectFirst 处理
       } else {
         // 如果无法直接访问租户选择器，则直接调用API获取租户
         try {
@@ -500,7 +500,7 @@ export default {
           if (response && response.data && Array.isArray(response.data.items)) {
             // 缓存租户信息
             this.cachedTenants = [...response.data.items];
-            // 注意：不再手动设置 tenantCode，由 TenantSelector 的 autoSelectFirst 处理
+            // 注意：不再手动设置 tenant_code，由 TenantSelector 的 autoSelectFirst 处理
           }
         } catch (error) {
           console.error('获取租户列表失败:', error);
@@ -517,8 +517,8 @@ export default {
 
     // 获取当前租户信息
     getCurrentTenant() {
-      if (this.cachedTenants && this.searchForm.tenantCode) {
-        return this.cachedTenants.find(tenant => tenant.tenant_code === this.searchForm.tenantCode);
+      if (this.cachedTenants && this.searchForm.tenant_code) {
+        return this.cachedTenants.find(tenant => tenant.tenant_code === this.searchForm.tenant_code);
       }
       return null;
     },
@@ -539,7 +539,7 @@ export default {
     // 获取用户数据
     async fetchUsers() {
       // 检查是否选择了租户，如果没有选择租户则提示用户
-      if (!this.searchForm.tenantCode) {
+      if (!this.searchForm.tenant_code) {
         this.$message.warning('请先选择租户');
         this.tableData = [];
         this.pagination.total = 0;
@@ -563,7 +563,7 @@ export default {
           dept_id: this.searchForm.dept_id && this.searchForm.dept_id.length > 0 ? this.searchForm.dept_id[this.searchForm.dept_id.length - 1] : (this.selectedDepartment ? this.selectedDepartment.id : undefined),
           position_code: this.searchForm.position || undefined,
           gender: this.searchForm.gender !== '' ? this.searchForm.gender : undefined,
-          tenant_code: this.searchForm.tenantCode || undefined,
+          tenant_code: this.searchForm.tenant_code || undefined,
         }
 
         const response = await RBACService.getUsers(params)
@@ -779,7 +779,7 @@ export default {
     // 重置搜索
     resetSearch() {
       // 保留租户选择，只重置其他搜索条件
-      const currentTenantCode = this.searchForm.tenantCode;
+      const currentTenantCode = this.searchForm.tenant_code;
       this.searchForm = {
         user_name: '',
         nick_name: '',
@@ -790,7 +790,7 @@ export default {
         position: '',
         gender: '',
         create_time_range: [],
-        tenantCode: currentTenantCode  // 保留当前租户选择
+        tenant_code: currentTenantCode  // 保留当前租户选择
       }
       this.pagination.currentPage = 1
       this.fetchUsers()
@@ -887,21 +887,21 @@ export default {
             // 确保用户数据中包含租户信息
             const userData = {
               ...this.userForm,
-              tenant_code: this.searchForm.tenantCode || this.userForm.tenantCode, // 优先使用当前选择的租户
+              tenant_code: this.searchForm.tenant_code || this.userForm.tenant_code, // 优先使用当前选择的租户
               dept_id: this.userForm.dept_id && this.userForm.dept_id.length > 0 ? this.userForm.dept_id[this.userForm.dept_id.length - 1] : undefined
             }
 
             if (this.currentUser) {
               // 编辑用户
-              const tenantCode = this.currentUser.tenant_code || this.searchForm.tenantCode || 'default';
-              await RBACService.updateUser(this.currentUser.user_code, tenantCode, userData)
+              const tenant_code = this.currentUser.tenant_code || this.searchForm.tenant_code || 'default';
+              await RBACService.updateUser(this.currentUser.user_code, tenant_code, userData)
               this.$message({
                 message: '用户信息修改成功',
                 type: 'success'
               })
             } else {
               // 新增用户，必须有租户信息
-              if (!this.searchForm.tenantCode) {
+              if (!this.searchForm.tenant_code) {
                 this.$message.error('请选择租户后再添加用户');
                 return;
               }
@@ -940,8 +940,8 @@ export default {
 
       try {
           // 使用当前用户的租户信息或当前选择的租户
-          const tenantCode = this.currentUser.tenant_code || this.searchForm.tenantCode || 'default';
-          await RBACService.deleteUser(this.currentUser.user_code, tenantCode)
+          const tenant_code = this.currentUser.tenant_code || this.searchForm.tenant_code || 'default';
+          await RBACService.deleteUser(this.currentUser.user_code, tenant_code)
           this.$message({
             message: '用户删除成功',
             type: 'success'
@@ -978,8 +978,8 @@ export default {
           // 批量删除用户，使用Promise.all并行处理
           // 确保每个删除请求都使用正确的租户信息
           const deletePromises = this.selectedRows.map(row => {
-            const tenantCode = row.tenant_code || this.searchForm.tenantCode || 'default';
-            return RBACService.deleteUser(row.user_code, tenantCode);
+            const tenant_code = row.tenant_code || this.searchForm.tenant_code || 'default';
+            return RBACService.deleteUser(row.user_code, tenant_code);
           })
           await Promise.all(deletePromises)
           this.$message({
@@ -1000,22 +1000,22 @@ export default {
     },
 
     // 处理更多操作
-    handleMoreAction(command) {
+    handle_more_action(command) {
       switch (command) {
-        case 'downloadTemplate':
-          this.downloadTemplate()
+        case 'download_template':
+          this.download_template()
           break
-        case 'importData':
-          this.importData()
+        case 'import_data':
+          this.import_data()
           break
-        case 'exportData':
-          this.exportData()
+        case 'export_data':
+          this.export_data()
           break
       }
     },
 
     // 下载模板
-    downloadTemplate() {
+    download_template() {
       this.$message({
         message: '模板下载成功',
         type: 'success'
@@ -1023,7 +1023,7 @@ export default {
     },
 
     // 导入数据
-    importData() {
+    import_data() {
       this.$message({
         message: '导入数据功能开发中',
         type: 'info'
@@ -1031,7 +1031,7 @@ export default {
     },
 
     // 导出数据
-    exportData() {
+    export_data() {
       this.$message({
         message: '数据导出成功',
         type: 'success'
@@ -1039,14 +1039,14 @@ export default {
     },
 
     // 重置密码
-    resetPassword(row) {
+    reset_password(row) {
       this.resetPasswordUser = row
       this.newPassword = ''
       this.resetPasswordDialogVisible = true
     },
 
     // 确认重置密码
-    async confirmResetPassword() {
+    async confirm_reset_password() {
       if (!this.newPassword || this.newPassword.trim() === '') {
         this.$message({
           message: '请输入新密码',
@@ -1058,8 +1058,8 @@ export default {
       this.loading = true
       try {
         // 使用当前用户的租户信息或当前选择的租户
-        const tenantCode = this.resetPasswordUser.tenant_code || this.searchForm.tenantCode || 'default';
-        await RBACService.resetUserPassword(this.resetPasswordUser.user_code, tenantCode)
+        const tenant_code = this.resetPasswordUser.tenant_code || this.searchForm.tenant_code || 'default';
+        await RBACService.resetUserPassword(this.resetPasswordUser.user_code, tenant_code)
         this.$message({
           message: '密码重置成功',
           type: 'success'
@@ -1079,20 +1079,20 @@ export default {
     },
 
     // 分配角色
-    assignRole(row) {
+    assign_role(row) {
       // 跳转到分配角色页面，传递用户信息和租户信息
       this.$router.push({
         name: 'RoleAssignment',
         params: {
           user_code: row.user_code,
           user_name: row.user_name,
-          tenant_code: row.tenant_code || this.searchForm.tenantCode || 'default'
+          tenant_code: row.tenant_code || this.searchForm.tenant_code || 'default'
         }
       })
     },
 
     // 处理状态变化
-    async handleStatusChange(row) {
+    async handle_status_change(row) {
       this.loading = true
 
       try {

@@ -19,7 +19,7 @@
             <el-option
               v-for="tenant in tenants"
               :key="tenant.id"
-              :label="tenant.tenantName"
+              :label="tenant.tenant_name"
               :value="tenant.tenantId"
             />
           </el-select>
@@ -109,7 +109,7 @@
       <!-- 部门信息侧边栏 -->
       <div class="sidebar" v-if="selectedDepartment">
         <div class="sidebar-header">
-          <h3>{{ selectedDepartment.deptName }}</h3>
+          <h3>{{ selectedDepartment.dept_name }}</h3>
           <el-tag :type="selectedDepartment.status === 1 ? 'success' : 'danger'">
             {{ selectedDepartment.status === 1 ? '启用' : '停用' }}
           </el-tag>
@@ -117,10 +117,10 @@
         <div class="sidebar-content">
           <el-descriptions :column="1" border>
             <el-descriptions-item label="部门编码">
-              {{ selectedDepartment.deptCode }}
+              {{ selectedDepartment.dept_code }}
             </el-descriptions-item>
             <el-descriptions-item label="部门名称">
-              {{ selectedDepartment.deptName }}
+              {{ selectedDepartment.dept_name }}
             </el-descriptions-item>
             <el-descriptions-item label="负责人" v-if="selectedDepartment.leader">
               {{ selectedDepartment.leader }}
@@ -132,13 +132,13 @@
               {{ selectedDepartment.email }}
             </el-descriptions-item>
             <el-descriptions-item label="排序">
-              {{ selectedDepartment.orderNum }}
+              {{ selectedDepartment.order_num }}
             </el-descriptions-item>
             <el-descriptions-item label="创建时间">
-              {{ selectedDepartment.createTime }}
+              {{ selectedDepartment.create_time }}
             </el-descriptions-item>
             <el-descriptions-item label="更新时间">
-              {{ selectedDepartment.updateTime }}
+              {{ selectedDepartment.update_time }}
             </el-descriptions-item>
           </el-descriptions>
           
@@ -169,12 +169,12 @@
         :close-on-click-modal="false"
       >
         <el-form :model="departmentForm" :rules="departmentRules" ref="departmentForm" label-width="100px">
-          <el-form-item label="部门名称" prop="deptName">
-            <el-input v-model="departmentForm.deptName" placeholder="请输入部门名称" />
+          <el-form-item label="部门名称" prop="dept_name">
+            <el-input v-model="departmentForm.dept_name" placeholder="请输入部门名称" />
           </el-form-item>
-          <el-form-item label="部门编码" prop="deptCode">
+          <el-form-item label="部门编码" prop="dept_code">
             <el-input 
-              v-model="departmentForm.deptCode" 
+              v-model="departmentForm.dept_code" 
               placeholder="请输入部门编码" 
               :disabled="!!departmentForm.id"
             />
@@ -182,7 +182,7 @@
           </el-form-item>
           <el-form-item label="上级部门">
             <el-cascader
-              v-model="departmentForm.parentId"
+              v-model="departmentForm.parent_id"
               :options="departmentOptions"
               :props="cascaderProps"
               placeholder="请选择上级部门"
@@ -202,7 +202,7 @@
           </el-form-item>
           <el-form-item label="排序">
             <el-input-number 
-              v-model="departmentForm.orderNum" 
+              v-model="departmentForm.order_num" 
               :min="0" 
               :max="999" 
               controls-position="right"
@@ -265,7 +265,7 @@ export default {
       departmentTree: [],
       treeProps: {
         children: 'children',
-        label: 'deptName',
+        label: 'dept_name',
         disabled: 'disabled'
       },
       expandedKeys: [],
@@ -279,13 +279,13 @@ export default {
       dialogType: '', // 'add', 'edit', 'addChild'
       departmentForm: {
         id: null,
-        deptName: '',
-        deptCode: '',
-        parentId: null,
+        dept_name: '',
+        dept_code: '',
+        parent_id: null,
         leader: '',
         phone: '',
         email: '',
-        orderNum: 1,
+        order_num: 1,
         status: 1,
         remark: '',
         tenantId: ''
@@ -293,11 +293,11 @@ export default {
 
       // 表单验证规则
       departmentRules: {
-        deptName: [
+        dept_name: [
           { required: true, message: '请输入部门名称', trigger: 'blur' },
           { min: 2, max: 50, message: '部门名称长度在2到50个字符', trigger: 'blur' }
         ],
-        deptCode: [
+        dept_code: [
           { required: true, message: '请输入部门编码', trigger: 'blur' },
           { min: 2, max: 30, message: '部门编码长度在2到30个字符', trigger: 'blur' },
           { pattern: /^[a-zA-Z0-9_-]+$/, message: '部门编码只能包含字母、数字、下划线和短横线', trigger: 'blur' }
@@ -308,7 +308,7 @@ export default {
       departmentOptions: [],
       cascaderProps: {
         value: 'id',
-        label: 'deptName',
+        label: 'dept_name',
         checkStrictly: true,
         emitPath: false,
         expandTrigger: 'hover'
@@ -431,8 +431,8 @@ export default {
     // 过滤节点
     filterNode(value, data) {
       if (!value) return true;
-      return data.deptName.indexOf(value) !== -1 ||
-             data.deptCode.indexOf(value) !== -1 ||
+      return data.dept_name.indexOf(value) !== -1 ||
+             data.dept_code.indexOf(value) !== -1 ||
              (data.leader && data.leader.indexOf(value) !== -1);
     },
 
@@ -466,13 +466,13 @@ export default {
       this.dialogType = 'add';
       this.departmentForm = {
         id: null,
-        deptName: '',
-        deptCode: '',
-        parentId: 0, // 根部门
+        dept_name: '',
+        dept_code: '',
+        parent_id: 0, // 根部门
         leader: '',
         phone: '',
         email: '',
-        orderNum: 1,
+        order_num: 1,
         status: 1,
         remark: '',
         tenantId: this.selectedTenant
@@ -486,13 +486,13 @@ export default {
       this.dialogType = 'addChild';
       this.departmentForm = {
         id: null,
-        deptName: '',
-        deptCode: '',
-        parentId: data.id,
+        dept_name: '',
+        dept_code: '',
+        parent_id: data.id,
         leader: '',
         phone: '',
         email: '',
-        orderNum: 1,
+        order_num: 1,
         status: 1,
         remark: '',
         tenantId: this.selectedTenant
@@ -517,14 +517,14 @@ export default {
 
     // 删除节点
     async remove(node, data) {
-      this.$confirm(`确定要删除部门 "${data.deptName}" 吗？`, '确认删除', {
+      this.$confirm(`确定要删除部门 "${data.dept_name}" 吗？`, '确认删除', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async () => {
         try {
           // 调用后端API删除部门
-          await DepartmentTreeService.deleteDepartment(data.deptCode, this.selectedTenant);
+          await DepartmentTreeService.deleteDepartment(data.dept_code, this.selectedTenant);
 
           // 从本地树中移除
           const parent = node.parent;
@@ -570,7 +570,7 @@ export default {
           if (this.dialogType === 'edit') {
             // 更新部门
             await DepartmentTreeService.updateDepartment(
-              this.departmentForm.deptCode,
+              this.departmentForm.dept_code,
               { ...this.departmentForm, tenantId: this.selectedTenant },
               this.selectedTenant
             );
@@ -587,9 +587,9 @@ export default {
             const departmentData = { ...this.departmentForm, tenantId: this.selectedTenant };
 
             // 如果有父部门，需要计算ancestors路径
-            if (this.departmentForm.parentId && this.departmentForm.parentId !== 0) {
+            if (this.departmentForm.parent_id && this.departmentForm.parent_id !== 0) {
               // 从现有树中获取父部门信息以计算ancestors
-              const parentDept = this.findTreeNode(this.departmentTree, this.departmentForm.parentId);
+              const parentDept = this.findTreeNode(this.departmentTree, this.departmentForm.parent_id);
               if (parentDept) {
                 // 根据Materialized Path规则计算ancestors
                 departmentData.ancestors = parentDept.ancestors
@@ -639,14 +639,14 @@ export default {
 
         // 调用后端API更新状态
         await DepartmentTreeService.updateDepartmentStatus(
-          dept.deptCode,
+          dept.dept_code,
           this.selectedTenant,
           newStatus
         );
 
         // 更新本地数据
         dept.status = newStatus;
-        dept.updateTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        dept.update_time = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
         this.$message.success(`部门已${newStatus === 1 ? '启用' : '停用'}`);
       } catch (error) {
@@ -657,7 +657,7 @@ export default {
 
     // 获取部门图标
     getDeptIcon(data) {
-      if (data.parentId === 0) {
+      if (data.parent_id === 0) {
         return 'el-icon-office-building'; // 根部门
       }
       if (data.children && data.children.length > 0) {
@@ -706,7 +706,7 @@ export default {
       try {
         // 确认用户操作
         const confirmResult = await this.$confirm(
-          `确定要将部门 "${draggingNode.data.deptName}" 移动到 "${dropNode.data.deptName}" 下吗？`,
+          `确定要将部门 "${draggingNode.data.dept_name}" 移动到 "${dropNode.data.dept_name}" 下吗？`,
           '确认移动',
           {
             confirmButtonText: '确定',
@@ -723,8 +723,8 @@ export default {
 
         // 调用后端API移动节点
         await DepartmentTreeService.moveNode(
-          draggingNode.data.deptCode,
-          dropNode.data.deptCode,
+          draggingNode.data.dept_code,
+          dropNode.data.dept_code,
           this.selectedTenant
         );
 
@@ -752,9 +752,9 @@ export default {
       return treeNodes.map(node => {
         const option = {
           id: node.id,
-          deptName: node.deptName,
+          dept_name: node.dept_name,
           value: node.id,
-          label: node.deptName
+          label: node.dept_name
         };
 
         if (node.children && node.children.length > 0) {

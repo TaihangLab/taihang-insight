@@ -113,13 +113,13 @@ class TenantService {
 
   /**
    * 更新租户（更新成功后清除缓存）
-   * @param {String} tenantCode 租户编码
+   * @param {String} tenant_code 租户编码
    * @param {Object} tenantData 租户数据
    * @returns {Promise<Object>}
    */
-  static async updateTenant(tenantCode, tenantData) {
+  static async updateTenant(tenant_code, tenantData) {
     try {
-      const response = await rbacAxios.put(`/api/v1/rbac/tenants/${tenantCode}`, tenantData);
+      const response = await rbacAxios.put(`/api/v1/rbac/tenants/${tenant_code}`, tenantData);
       // 更新成功后清除缓存
       this._clearCache();
       return response;
@@ -131,12 +131,12 @@ class TenantService {
 
   /**
    * 删除租户（删除成功后清除缓存）
-   * @param {String} tenantCode 租户编码
+   * @param {String} tenant_code 租户编码
    * @returns {Promise<Object>}
    */
-  static async deleteTenant(tenantCode) {
+  static async deleteTenant(tenant_code) {
     try {
-      const response = await rbacAxios.delete(`/api/v1/rbac/tenants/${tenantCode}`);
+      const response = await rbacAxios.delete(`/api/v1/rbac/tenants/${tenant_code}`);
       // 删除成功后清除缓存
       this._clearCache();
       return response;

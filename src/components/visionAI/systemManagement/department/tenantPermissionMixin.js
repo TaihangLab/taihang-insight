@@ -79,9 +79,9 @@ export default {
           
           // 模拟数据
           this.userTenants = [
-            { id: 1, tenantId: 'company_a', tenantName: 'A公司', status: 1 },
-            { id: 2, tenantId: 'company_b', tenantName: 'B公司', status: 1 },
-            { id: 3, tenantId: 'company_c', tenantName: 'C公司', status: 1 }
+            { id: 1, tenantId: 'company_a', tenant_name: 'A公司', status: 1 },
+            { id: 2, tenantId: 'company_b', tenant_name: 'B公司', status: 1 },
+            { id: 3, tenantId: 'company_c', tenant_name: 'C公司', status: 1 }
           ];
         } else {
           // 普通用户只能访问所属租户
@@ -95,7 +95,7 @@ export default {
             this.userTenants = [{
               id: 1,
               tenantId: userTenantId,
-              tenantName: `${userTenantId}公司`,
+              tenant_name: `${userTenantId}公司`,
               status: 1
             }];
           } else {
@@ -225,11 +225,11 @@ export default {
     
     /**
      * 检查用户是否拥有指定权限
-     * @param {string} permissionCode - 权限码
+     * @param {string} permission_code - 权限码
      * @returns {boolean} 是否拥有权限
      */
-    hasPermission(permissionCode) {
-      return this.userPermissions.includes(permissionCode);
+    hasPermission(permission_code) {
+      return this.userPermissions.includes(permission_code);
     },
     
     /**
@@ -320,7 +320,7 @@ export default {
      * 当前租户名称
      */
     currentTenantName() {
-      return this.currentTenant?.tenantName;
+      return this.currentTenant?.tenant_name;
     },
     
     /**

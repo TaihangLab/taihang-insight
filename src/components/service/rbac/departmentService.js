@@ -25,7 +25,7 @@ class DepartmentService {
   static async createDepartment(deptData) {
     try {
       return await rbacAxios.post('/api/v1/rbac/depts', deptData, {
-        params: { tenantCode: deptData.tenantCode }
+        params: { tenant_code: deptData.tenant_code }
       });
     } catch (error) {
       console.error('创建部门失败:', error);
@@ -34,10 +34,10 @@ class DepartmentService {
   }
 
   // 更新部门
-  static async updateDepartment(deptCode, deptData) {
+  static async updateDepartment(dept_code, deptData) {
     try {
-      return await rbacAxios.put(`/api/v1/rbac/depts/${deptCode}`, deptData, {
-        params: { tenantCode: deptData.tenantCode }
+      return await rbacAxios.put(`/api/v1/rbac/depts/${dept_code}`, deptData, {
+        params: { tenant_code: deptData.tenant_code }
       });
     } catch (error) {
       console.error('更新部门失败:', error);
@@ -46,10 +46,10 @@ class DepartmentService {
   }
 
   // 删除部门
-  static async deleteDepartment(deptCode, tenantCode) {
+  static async deleteDepartment(dept_code, tenant_code) {
     try {
-      return await rbacAxios.delete(`/api/v1/rbac/depts/${deptCode}`, {
-        params: { tenantCode: tenantCode }
+      return await rbacAxios.delete(`/api/v1/rbac/depts/${dept_code}`, {
+        params: { tenant_code: tenant_code }
       });
     } catch (error) {
       console.error('删除部门失败:', error);

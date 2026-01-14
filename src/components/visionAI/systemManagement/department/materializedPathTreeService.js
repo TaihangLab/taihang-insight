@@ -5,7 +5,7 @@
 export default class MaterializedPathTreeService {
   /**
    * 将Materialized Path扁平列表转换为树形结构
-   * @param {Array} list - 扁平列表，每个节点包含id, parentId, ancestors等字段
+   * @param {Array} list - 扁平列表，每个节点包含id, parent_id, ancestors等字段
    * @param {string} idField - ID字段名
    * @param {string} ancestorsField - 祖先路径字段名
    * @param {string} childrenField - 子节点字段名
@@ -44,9 +44,9 @@ export default class MaterializedPathTreeService {
         roots.push(node);
       } else {
         // 否则，找到它的父节点并添加到父节点的children中
-        const parentId = ancestors[ancestors.length - 1]; // 最后一个祖先就是父节点
-        if (map[parentId]) {
-          map[parentId][childrenField].push(node);
+        const parent_id = ancestors[ancestors.length - 1]; // 最后一个祖先就是父节点
+        if (map[parent_id]) {
+          map[parent_id][childrenField].push(node);
         } else {
           // 如果找不到父节点，可能是数据不一致，暂时作为根节点处理
           roots.push(node);

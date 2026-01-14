@@ -54,11 +54,11 @@ export default {
     
     /**
      * 检查用户是否拥有指定权限
-     * @param {string} permissionCode - 权限码
+     * @param {string} permission_code - 权限码
      * @returns {boolean} 是否拥有权限
      */
-    hasPermission(permissionCode) {
-      return this.userPermissions.includes(permissionCode);
+    hasPermission(permission_code) {
+      return this.userPermissions.includes(permission_code);
     },
     
     /**
@@ -111,16 +111,16 @@ export default {
      */
     permissionDirective: {
       bind(el, binding) {
-        const permissionCode = binding.value;
-        const hasPermission = this.hasPermission(permissionCode);
+        const permission_code = binding.value;
+        const hasPermission = this.hasPermission(permission_code);
         
         if (!hasPermission) {
           el.style.display = 'none';
         }
       },
       update(el, binding) {
-        const permissionCode = binding.value;
-        const hasPermission = this.hasPermission(permissionCode);
+        const permission_code = binding.value;
+        const hasPermission = this.hasPermission(permission_code);
         
         if (hasPermission) {
           el.style.display = '';

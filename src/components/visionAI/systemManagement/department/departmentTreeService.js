@@ -80,16 +80,16 @@ export default class DepartmentTreeService {
 
   /**
    * 更新部门
-   * @param {string} deptCode - 部门编码
+   * @param {string} dept_code - 部门编码
    * @param {Object} departmentData - 部门数据
    * @param {string} tenantId - 租户ID
    * @returns {Promise}
    */
-  static async updateDepartment(deptCode, departmentData, tenantId) {
+  static async updateDepartment(dept_code, departmentData, tenantId) {
     try {
-      const response = await RBACService.updateDepartment(deptCode, {
+      const response = await RBACService.updateDepartment(dept_code, {
         ...departmentData,
-        tenantCode: tenantId
+        tenant_code: tenantId
       });
       Message.success('部门更新成功');
       return response;
@@ -102,13 +102,13 @@ export default class DepartmentTreeService {
 
   /**
    * 删除部门
-   * @param {string} deptCode - 部门编码
+   * @param {string} dept_code - 部门编码
    * @param {string} tenantId - 租户ID
    * @returns {Promise}
    */
-  static async deleteDepartment(deptCode, tenantId) {
+  static async deleteDepartment(dept_code, tenantId) {
     try {
-      const response = await RBACService.deleteDepartment(deptCode, tenantId);
+      const response = await RBACService.deleteDepartment(dept_code, tenantId);
       Message.success('部门删除成功');
       return response;
     } catch (error) {
@@ -120,18 +120,18 @@ export default class DepartmentTreeService {
 
   /**
    * 更新部门状态
-   * @param {string} deptCode - 部门编码
+   * @param {string} dept_code - 部门编码
    * @param {string} tenantId - 租户ID
    * @param {number} status - 状态值
    * @returns {Promise}
    */
-  static async updateDepartmentStatus(deptCode, tenantId, status) {
+  static async updateDepartmentStatus(dept_code, tenantId, status) {
     try {
       // 注意：这里假设后端有专门的更新状态API
       // 如果没有，可以使用updateDepartment方法
-      const response = await RBACService.updateDepartment(deptCode, {
+      const response = await RBACService.updateDepartment(dept_code, {
         status: status,
-        tenantCode: tenantId
+        tenant_code: tenantId
       });
       Message.success(status === 1 ? '部门已启用' : '部门已停用');
       return response;
@@ -153,7 +153,7 @@ export default class DepartmentTreeService {
   static buildTreeFromList(
     list, 
     idField = 'id', 
-    parentIdField = 'parentId', 
+    parentIdField = 'parent_id', 
     childrenField = 'children'
   ) {
     if (!Array.isArray(list) || list.length === 0) {
@@ -175,15 +175,15 @@ export default class DepartmentTreeService {
     // 然后将每个项目添加到其父级的children数组中
     for (let i = 0; i < list.length; i++) {
       const node = map[list[i][idField]];
-      const parentId = list[i][parentIdField];
+      const parent_id = list[i][parentIdField];
 
-      if (parentId === 0 || parentId === null || parentId === undefined) {
+      if (parent_id === 0 || parent_id === null || parent_id === undefined) {
         // 如果没有父级，将其添加到根级
         roots.push(node);
       } else {
         // 否则，将其添加到父级的children数组中
-        if (map[parentId]) {
-          map[parentId][childrenField].push(node);
+        if (map[parent_id]) {
+          map[parent_id][childrenField].push(node);
         }
       }
     }

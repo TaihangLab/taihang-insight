@@ -7,25 +7,25 @@
         <el-form-item label="租户">
           <TenantSelector
             ref="tenantSelector"
-            v-model="searchForm.tenantCode"
+            v-model="searchForm.tenant_code"
             @change="handleTenantChange"/>
         </el-form-item>
         <el-form-item label="权限名称">
           <el-input
-            v-model="searchForm.permissionName"
+            v-model="searchForm.permission_name"
             placeholder="请输入权限名称"
             clearable
           ></el-input>
         </el-form-item>
         <el-form-item label="权限标识">
           <el-input
-            v-model="searchForm.permissionCode"
+            v-model="searchForm.permission_code"
             placeholder="请输入权限标识"
             clearable
           ></el-input>
         </el-form-item>
         <el-form-item label="权限类型">
-          <el-select v-model="searchForm.permissionType" placeholder="请选择权限类型" clearable>
+          <el-select v-model="searchForm.permission_type" placeholder="请选择权限类型" clearable>
             <el-option label="页面权限" value="page"></el-option>
             <el-option label="按钮权限" value="button"></el-option>
             <el-option label="数据权限" value="data"></el-option>
@@ -64,12 +64,12 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55"></el-table-column>
-        <el-table-column prop="permissionName" label="权限名称" width="200"></el-table-column>
-        <el-table-column prop="permissionCode" label="权限标识" width="200"></el-table-column>
-        <el-table-column prop="permissionType" label="权限类型" width="120">
+        <el-table-column prop="permission_name" label="权限名称" width="200"></el-table-column>
+        <el-table-column prop="permission_code" label="权限标识" width="200"></el-table-column>
+        <el-table-column prop="permission_type" label="权限类型" width="120">
           <template slot-scope="scope">
-            <el-tag :type="getPermissionTypeTag(scope.row.permissionType)">
-              {{ getPermissionTypeText(scope.row.permissionType) }}
+            <el-tag :type="getPermissionTypeTag(scope.row.permission_type)">
+              {{ getPermissionTypeText(scope.row.permission_type) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -79,11 +79,11 @@
               v-model="scope.row.status"
               :active-value="1"
               :inactive-value="0"
-              @change="handleStatusChange(scope.row)"
+              @change="handle_status_change(scope.row)"
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180"></el-table-column>
+        <el-table-column prop="create_time" label="创建时间" width="180"></el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template slot-scope="scope">
             <el-button type="text" @click="editPermission(scope.row)">编辑</el-button>
@@ -113,16 +113,16 @@
       width="600px"
     >
       <el-form :model="permissionForm" :rules="permissionRules" ref="permissionForm" label-width="100px">
-        <el-form-item label="权限名称" prop="permissionName">
-          <el-input v-model="permissionForm.permissionName" placeholder="请输入权限名称"></el-input>
+        <el-form-item label="权限名称" prop="permission_name">
+          <el-input v-model="permissionForm.permission_name" placeholder="请输入权限名称"></el-input>
         </el-form-item>
 
-        <el-form-item label="权限标识" prop="permissionCode">
-          <el-input v-model="permissionForm.permissionCode" placeholder="请输入权限标识"></el-input>
+        <el-form-item label="权限标识" prop="permission_code">
+          <el-input v-model="permissionForm.permission_code" placeholder="请输入权限标识"></el-input>
         </el-form-item>
 
-        <el-form-item label="权限类型" prop="permissionType">
-          <el-select v-model="permissionForm.permissionType" placeholder="请选择权限类型">
+        <el-form-item label="权限类型" prop="permission_type">
+          <el-select v-model="permissionForm.permission_type" placeholder="请选择权限类型">
             <el-option label="页面权限" value="page"></el-option>
             <el-option label="按钮权限" value="button"></el-option>
             <el-option label="数据权限" value="data"></el-option>
@@ -164,12 +164,12 @@ export default {
 
       // 搜索表单
       searchForm: {
-        permissionName: '',
-        permissionCode: '',
-        permissionType: '',
+        permission_name: '',
+        permission_code: '',
+        permission_type: '',
         status: '',
         creator: '',
-        tenantCode: ''
+        tenant_code: ''
       },
 
       // 分页
@@ -181,22 +181,22 @@ export default {
 
       // 权限表单
       permissionForm: {
-        permissionName: '',
-        permissionCode: '',
-        permissionType: 'button',
+        permission_name: '',
+        permission_code: '',
+        permission_type: 'button',
         status: 1,
-        tenantCode: ''
+        tenant_code: ''
       },
 
       // 表单验证规则
       permissionRules: {
-        permissionName: [
+        permission_name: [
           { required: true, message: '请输入权限名称', trigger: 'blur' }
         ],
-        permissionCode: [
+        permission_code: [
           { required: true, message: '请输入权限标识', trigger: 'blur' }
         ],
-        permissionType: [
+        permission_type: [
           { required: true, message: '请选择权限类型', trigger: 'change' }
         ]
       },
@@ -228,7 +228,7 @@ export default {
       if (this.$refs.tenantSelector && typeof this.$refs.tenantSelector.loadTenantsIfNeeded === 'function') {
         await this.$refs.tenantSelector.loadTenantsIfNeeded();
       }
-      // 注意：不再手动设置 tenantCode，由 TenantSelector 的 autoSelectFirst 处理
+      // 注意：不再手动设置 tenant_code，由 TenantSelector 的 autoSelectFirst 处理
     },
 
     // 获取权限数据
@@ -241,12 +241,12 @@ export default {
         const params = {
           skip: skip,
           limit: this.pagination.pageSize,
-          permission_name: this.searchForm.permissionName || undefined,
-          permission_code: this.searchForm.permissionCode || undefined,
-          permission_type: this.searchForm.permissionType || undefined,
+          permission_name: this.searchForm.permission_name || undefined,
+          permission_code: this.searchForm.permission_code || undefined,
+          permission_type: this.searchForm.permission_type || undefined,
           status: this.searchForm.status || undefined,
           creator: this.searchForm.creator || undefined,
-          tenant_code: this.searchForm.tenantCode || 'default'  // 使用默认租户代码
+          tenant_code: this.searchForm.tenant_code || 'default'  // 使用默认租户代码
         }
 
         // 调用API获取权限列表
@@ -282,12 +282,12 @@ export default {
     // 重置搜索
     resetSearch() {
       this.searchForm = {
-        permissionName: '',
-        permissionCode: '',
-        permissionType: '',
+        permission_name: '',
+        permission_code: '',
+        permission_type: '',
         status: '',
         creator: '',
-        tenantCode: ''
+        tenant_code: ''
       }
       this.pagination.currentPage = 1
       this.fetchPermissions()
@@ -303,12 +303,12 @@ export default {
         const params = {
           skip: skip,
           limit: this.pagination.pageSize,
-          permission_name: this.searchForm.permissionName || undefined,
-          permission_code: this.searchForm.permissionCode || undefined,
-          permission_type: this.searchForm.permissionType || undefined,
+          permission_name: this.searchForm.permission_name || undefined,
+          permission_code: this.searchForm.permission_code || undefined,
+          permission_type: this.searchForm.permission_type || undefined,
           status: this.searchForm.status || undefined,
           creator: this.searchForm.creator || undefined,
-          tenant_code: this.searchForm.tenantCode || undefined
+          tenant_code: this.searchForm.tenant_code || undefined
         }
 
         // 调用API获取权限列表
@@ -340,9 +340,9 @@ export default {
       this.dialogTitle = '添加权限'
       this.currentPermission = null
       this.permissionForm = {
-        permissionName: '',
-        permissionCode: '',
-        permissionType: 'button',
+        permission_name: '',
+        permission_code: '',
+        permission_type: 'button',
         status: 1
       }
       this.permissionDialogVisible = true
@@ -356,9 +356,9 @@ export default {
       this.dialogTitle = '修改权限'
       this.currentPermission = row
       this.permissionForm = {
-        permissionName: row.permissionName,
-        permissionCode: row.permissionCode,
-        permissionType: row.permissionType,
+        permission_name: row.permission_name,
+        permission_code: row.permission_code,
+        permission_type: row.permission_type,
         status: row.status
       }
       this.permissionDialogVisible = true
@@ -377,8 +377,8 @@ export default {
             let response
             if (this.currentPermission) {
               // 编辑权限
-              const tenantCode = this.currentPermission.tenantCode || 'default'
-              response = await RBACService.updatePermission(this.currentPermission.permissionCode, tenantCode, this.permissionForm)
+              const tenant_code = this.currentPermission.tenant_code || 'default'
+              response = await RBACService.updatePermission(this.currentPermission.permission_code, tenant_code, this.permissionForm)
               this.$message({
                 message: '权限更新成功',
                 type: 'success'
@@ -409,7 +409,7 @@ export default {
 
     // 删除权限
     deletePermission(row) {
-      this.$confirm(`确定要删除权限 "${row.permissionName}" 吗？`, '确认删除', {
+      this.$confirm(`确定要删除权限 "${row.permission_name}" 吗？`, '确认删除', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -417,8 +417,8 @@ export default {
         this.loading = true
         
         try {
-          const tenantCode = row.tenantCode || 'default'
-          await RBACService.deletePermission(row.permissionCode, tenantCode)
+          const tenant_code = row.tenant_code || 'default'
+          await RBACService.deletePermission(row.permission_code, tenant_code)
           this.$message({
             message: '权限删除成功',
             type: 'success'
@@ -437,12 +437,12 @@ export default {
     },
 
     // 处理状态变化
-    async handleStatusChange(row) {
+    async handle_status_change(row) {
       this.loading = true
       
       try {
-        const tenantCode = row.tenantCode || 'default'
-        await RBACService.updatePermissionStatus(row.permissionCode, tenantCode, row.status)
+        const tenant_code = row.tenant_code || 'default'
+        await RBACService.updatePermissionStatus(row.permission_code, tenant_code, row.status)
         const status = row.status === 1 ? '启用' : '停用'
         this.$message({
           message: `权限状态已${status}`,

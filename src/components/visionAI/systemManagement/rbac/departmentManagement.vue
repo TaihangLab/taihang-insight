@@ -5,7 +5,7 @@
       <el-form :inline="true">
         <el-form-item label="租户">
           <TenantSelector
-            v-model="searchForm.tenantCode"
+            v-model="searchForm.tenant_code"
             @change="handleTenantChange"/>
         </el-form-item>
         <el-form-item label="部门名称">
@@ -175,7 +175,7 @@ export default {
         name: '',
         dept_code: '',
         status: '',
-        tenantCode: ''
+        tenant_code: ''
       },
 
       // 表格数据
@@ -234,7 +234,7 @@ export default {
           name: this.searchForm.name || undefined,
           dept_code: this.searchForm.dept_code || undefined,
           status: this.searchForm.status || undefined,
-          tenant_code: this.searchForm.tenantCode || undefined
+          tenant_code: this.searchForm.tenant_code || undefined
         }
 
         // 调用真实API获取数据
@@ -278,9 +278,9 @@ export default {
     resetSearch() {
       this.searchForm = {
         name: '',
-        deptCode: '',
+        dept_code: '',
         status: '',
-        tenantCode: ''
+        tenant_code: ''
       }
       this.getDeptList()
     },
@@ -310,10 +310,10 @@ export default {
     addDept() {
       this.dialogTitle = '添加部门'
       this.deptForm = {
-        deptCode: null,
-        parentId: null,
+        dept_code: null,
+        parent_id: null,
         name: '',
-        sortOrder: 0,
+        sort_order: 0,
         status: 0
       }
       this.deptDialogVisible = true
@@ -327,10 +327,10 @@ export default {
     addSubDept(row) {
       this.dialogTitle = '添加子部门'
       this.deptForm = {
-        deptCode: null,
-        parentId: row.deptCode,
+        dept_code: null,
+        parent_id: row.dept_code,
         name: '',
-        sortOrder: 0,
+        sort_order: 0,
         status: 0
       }
       this.deptDialogVisible = true
@@ -344,10 +344,10 @@ export default {
     editDept(row) {
       this.dialogTitle = '编辑部门'
       this.deptForm = {
-        deptCode: row.deptCode,
-        parentId: row.parentId || null,
+        dept_code: row.dept_code,
+        parent_id: row.parent_id || null,
         name: row.name,
-        sortOrder: row.sortOrder,
+        sort_order: row.sort_order,
         status: row.status !== undefined && row.status !== null ? row.status : 0
       }
       this.currentDept = row
@@ -368,7 +368,7 @@ export default {
     async confirmDelete() {
       try {
         this.loading = true
-        await RBACService.deleteDepartment(this.currentDept.deptCode)
+        await RBACService.deleteDepartment(this.currentDept.dept_code)
         this.$message.success('删除成功')
         this.deleteDialogVisible = false
         this.getDeptList()
@@ -387,9 +387,9 @@ export default {
           try {
             this.loading = true
             
-            if (this.deptForm.deptCode) {
+            if (this.deptForm.dept_code) {
               // 更新部门
-              await RBACService.updateDepartment(this.deptForm.deptCode, this.deptForm)
+              await RBACService.updateDepartment(this.deptForm.dept_code, this.deptForm)
               this.$message.success('修改成功')
             } else {
               // 新增部门
@@ -415,7 +415,7 @@ export default {
         const response = await RBACService.getDepartments()
         if (response && response.data) {
           const depts = Array.isArray(response.data.items) ? response.data.items : response.data
-          this.parentDeptOptions = [{ deptCode: null, name: '无上级部门' }, ...depts]
+          this.parentDeptOptions = [{ dept_code: null, name: '无上级部门' }, ...depts]
         }
       } catch (error) {
         console.error('获取上级部门选项失败:', error)
