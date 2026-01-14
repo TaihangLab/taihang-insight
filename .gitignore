@@ -13,3 +13,8 @@ yarn-error.log*
 *.njsproj
 *.sln
 /.history/
+
+QWEN.md
+.wiki
+pnpm-lock.yaml
+.trae

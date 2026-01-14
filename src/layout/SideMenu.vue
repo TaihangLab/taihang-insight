@@ -102,24 +102,35 @@
           <span slot="title">系统管理</span>
         </template>
         <el-menu-item index="/systemManage/appSettings">
+          <i class="el-icon-setting"></i>
           <span slot="title">应用设置</span>
         </el-menu-item>
+        <el-menu-item index="/systemManage/tenantManagement">
+          <i class="el-icon-office-building"></i>
+          <span slot="title">租户管理</span>
+        </el-menu-item>
         <el-menu-item index="/systemManage/userManagement">
+          <i class="el-icon-user"></i>
           <span slot="title">用户管理</span>
         </el-menu-item>
         <el-menu-item index="/systemManage/roleManagement">
+          <i class="el-icon-s-custom"></i>
           <span slot="title">角色管理</span>
         </el-menu-item>
-        <el-menu-item index="/systemManage/tenantManagement">
-          <span slot="title">租户管理</span>
+        <el-menu-item index="/systemManage/permissionManagement">
+          <i class="el-icon-lock"></i>
+          <span slot="title">权限管理</span>
         </el-menu-item>
         <el-menu-item index="/systemManage/departmentManagement">
+          <i class="el-icon-school"></i>
           <span slot="title">部门管理</span>
         </el-menu-item>
         <el-menu-item index="/systemManage/positionManagement">
+          <i class="el-icon-postcard"></i>
           <span slot="title">岗位管理</span>
         </el-menu-item>
         <el-menu-item index="/systemManage/knowledgeBase">
+          <i class="el-icon-notebook-2"></i>
           <span slot="title">知识库管理</span>
         </el-menu-item>
       </el-submenu>

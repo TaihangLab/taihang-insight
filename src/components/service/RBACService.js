@@ -1,378 +1,189 @@
-import axios from 'axios';
-import userService from '@/components/service/UserService'
+import MockRBACService from './rbac/mockRBACService';
 
-// 导入配置
-const config = require('../../../config/index.js');
+// 尝试导入真实服务，如果失败则使用模拟服务
+let hasRealServices = false;
+let UserService, RoleService, DepartmentService, PositionService, TenantService, PermissionService, AssociationService;
 
-// 创建专用于RBAC模块的axios实例
-const rbacAxios = axios.create({
-  baseURL: config.RBAC_API_BASE_URL,
-  timeout: 15000,
-  withCredentials: false,  // 将withCredentials设置为false，避免CORS错误
-});
+try {
+  // 尝试导入真实服务
+  UserService = require('./rbac/userService').default;
+  RoleService = require('./rbac/roleService').default;
+  DepartmentService = require('./rbac/departmentService').default;
+  PositionService = require('./rbac/positionService').default;
+  TenantService = require('./rbac/tenantService').default;
+  PermissionService = require('./rbac/permissionService').default;
+  AssociationService = require('./rbac/associationService').default;
 
-// 自定义参数序列化函数
-rbacAxios.defaults.paramsSerializer = function (params) {
-  // 自定义参数序列化逻辑，确保数组以多个同名参数形式传递
-  const queryParams = [];
+  hasRealServices = true;
+} catch (error) {
+  console.warn('⚠️ 真实RBAC服务不可用，使用模拟服务:', error.message);
+  hasRealServices = false;
+}
 
-  for (const key in params) {
-    if (params[key] !== undefined) {
-      if (Array.isArray(params[key])) {
-        // 对于数组参数，使用重复的键名传递每个值
-        params[key].forEach(value => {
-          queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
-        });
-      } else {
-        queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`);
-      }
-    }
-  }
-
-  return queryParams.join('&');
-};
-
-// 添加请求拦截器
-rbacAxios.interceptors.request.use(
-  config => {
-    // 这里可以添加token等通用请求头
-    const token = userService.getAdminToken()
-    if (token) {
-      config.headers['Authorization'] = 'Bearer ' + token;
-    }
-    return config;
-  },
-  error => {
-    return Promise.reject(error);
-  }
-);
-
-// 添加响应拦截器（处理UnifiedResponse格式）
-rbacAxios.interceptors.response.use(
-  response => {
-    const data = response.data;
-    
-    // 检查是否为UnifiedResponse格式
-    if (data && typeof data === 'object' && 'success' in data && 'code' in data && 'message' in data) {
-      if (data.success) {
-        // 请求成功，返回data字段
-        return data;
-      } else {
-        // 请求失败，抛出错误
-        const error = new Error(data.message || 'API请求失败');
-        error.code = data.code;
-        error.response = data;
-        throw error;
-      }
-    }
-    
-    // 非UnifiedResponse格式，直接返回
-    return data;
-  },
-  error => {
-    // 处理响应错误
-    console.error('RBAC API 请求错误:', error.message);
-    return Promise.reject(error);
-  }
-);
-
-// RBAC服务类
+// RBAC服务类 - 整合所有RBAC相关服务
 class RBACService {
-  // 用户管理API
-  // 获取用户列表
-  static async getUsers(params = {}) {
-    try {
-      return await rbacAxios.get('/api/v1/rbac/users', { params });
-    } catch (error) {
-      console.error('获取用户列表失败:', error);
-      throw error;
-    }
-  }
+  constructor() {
+    if (hasRealServices) {
+      // 使用真实服务
+      // 用户管理API
+      this.getUsers = UserService.getUsers;
+      this.createUser = UserService.createUser;
+      this.updateUser = UserService.updateUser;
+      this.deleteUser = UserService.deleteUser;
+      this.resetUserPassword = UserService.resetUserPassword;
+      this.getUserRoles = UserService.getUserRoles;
 
-  // 创建用户
-  static async createUser(userData) {
-    try {
-      return await rbacAxios.post('/api/v1/rbac/users', userData);
-    } catch (error) {
-      console.error('创建用户失败:', error);
-      throw error;
-    }
-  }
+      // 角色管理API
+      this.getRoles = RoleService.getRoles;
+      this.createRole = RoleService.createRole;
+      this.updateRole = RoleService.updateRole;
+      this.deleteRole = RoleService.deleteRole;
+      this.getRolePermissions = RoleService.getRolePermissions;
 
-  // 更新用户
-  static async updateUser(userCode, tenantCode, userData) {
-    try {
-      return await rbacAxios.put(`/api/v1/rbac/users/${userCode}`, userData, {
-        params: { tenant_code: tenantCode }
-      });
-    } catch (error) {
-      console.error('更新用户失败:', error);
-      throw error;
-    }
-  }
+      // 部门管理API
+      this.getDepartments = DepartmentService.getDepartments;
+      this.getDepartmentTree = DepartmentService.getDepartmentTree;
+      this.createDepartment = DepartmentService.createDepartment;
+      this.updateDepartment = DepartmentService.updateDepartment;
+      this.deleteDepartment = DepartmentService.deleteDepartment;
 
-  // 删除用户
-  static async deleteUser(userCode, tenantCode) {
-    try {
-      return await rbacAxios.delete(`/api/v1/rbac/users/${userCode}`, {
-        params: { tenant_code: tenantCode }
-      });
-    } catch (error) {
-      console.error('删除用户失败:', error);
-      throw error;
-    }
-  }
+      // 岗位管理API
+      this.getPositions = PositionService.getPositions;
+      this.createPosition = PositionService.createPosition;
+      this.updatePosition = PositionService.updatePosition;
+      this.deletePosition = PositionService.deletePosition;
 
-  // 重置用户密码
-  static async resetUserPassword(userCode) {
-    try {
-      return await rbacAxios.post(`/api/v1/rbac/users/${userCode}/reset-password`);
-    } catch (error) {
-      console.error('重置用户密码失败:', error);
-      throw error;
-    }
-  }
+      // 租户管理API
+      this.getTenants = TenantService.getTenants;
+      this.createTenant = TenantService.createTenant;
+      this.updateTenant = TenantService.updateTenant;
+      this.deleteTenant = TenantService.deleteTenant;
 
-  // 角色管理API
-  // 获取角色列表
-  static async getRoles(params = {}) {
-    try {
-      return await rbacAxios.get('/api/v1/rbac/roles', { params });
-    } catch (error) {
-      console.error('获取角色列表失败:', error);
-      throw error;
-    }
-  }
+      // 权限管理API
+      this.getPermissions = PermissionService.getPermissions;
+      this.addPermission = PermissionService.addPermission;
+      this.updatePermission = PermissionService.updatePermission;
+      this.deletePermission = PermissionService.deletePermission;
+      this.updatePermissionStatus = PermissionService.updatePermissionStatus;
+      this.getRolesByPermission = PermissionService.getRolesByPermission;
 
-  // 创建角色
-  static async createRole(roleData) {
-    try {
-      return await rbacAxios.post('/api/v1/rbac/roles', roleData, {
-        params: { tenant_code: roleData.tenantCode }
-      });
-    } catch (error) {
-      console.error('创建角色失败:', error);
-      throw error;
-    }
-  }
+      // 关联管理API
+      this.assignRoleToUser = AssociationService.assignRoleToUser;
+      this.removeUserRole = AssociationService.removeUserRole;
+      this.getUsersByRole = AssociationService.getUsersByRole;
+      this.assignPermissionToRole = AssociationService.assignPermissionToRole;
+      this.removeRolePermission = AssociationService.removeRolePermission;
+      this.checkUserPermission = AssociationService.checkUserPermission;
+      this.getUserPermissions = AssociationService.getUserPermissions;
+    } else {
+      // 使用模拟服务
+      // 用户管理API
+      this.getUsers = MockRBACService.getUsers.bind(MockRBACService);
+      this.createUser = MockRBACService.createUser.bind(MockRBACService);
+      this.updateUser = MockRBACService.updateUser.bind(MockRBACService);
+      this.deleteUser = MockRBACService.deleteUser.bind(MockRBACService);
+      this.resetUserPassword = MockRBACService.resetUserPassword.bind(MockRBACService);
+      this.getUserRoles = MockRBACService.getUserRoles.bind(MockRBACService);
 
-  // 更新角色
-  static async updateRole(roleCode, tenantCode, roleData) {
-    try {
-      return await rbacAxios.put(`/api/v1/rbac/roles/${roleCode}`, roleData, {
-        params: { tenant_code: tenantCode }
-      });
-    } catch (error) {
-      console.error('更新角色失败:', error);
-      throw error;
-    }
-  }
+      // 角色管理API
+      this.getRoles = MockRBACService.getRoles.bind(MockRBACService);
+      this.createRole = MockRBACService.createRole.bind(MockRBACService);
+      this.updateRole = MockRBACService.updateRole.bind(MockRBACService);
+      this.deleteRole = MockRBACService.deleteRole.bind(MockRBACService);
+      this.getRolePermissions = MockRBACService.getRolePermissions.bind(MockRBACService);
 
-  // 删除角色
-  static async deleteRole(roleCode, tenantCode) {
-    try {
-      return await rbacAxios.delete(`/api/v1/rbac/roles/${roleCode}`, {
-        params: { tenant_code: tenantCode }
-      });
-    } catch (error) {
-      console.error('删除角色失败:', error);
-      throw error;
-    }
-  }
+      // 部门管理API
+      this.getDepartments = MockRBACService.getDepartments.bind(MockRBACService);
+      this.getDepartmentTree = MockRBACService.getDepartmentTree.bind(MockRBACService);
+      this.createDepartment = MockRBACService.createDepartment.bind(MockRBACService);
+      this.updateDepartment = MockRBACService.updateDepartment.bind(MockRBACService);
+      this.deleteDepartment = MockRBACService.deleteDepartment.bind(MockRBACService);
 
-  // 部门管理API
-  // 获取部门列表
-  static async getDepartments(params = {}) {
-    try {
-      return await rbacAxios.get('/api/v1/rbac/departments', { params });
-    } catch (error) {
-      console.error('获取部门列表失败:', error);
-      throw error;
-    }
-  }
+      // 岗位管理API
+      this.getPositions = MockRBACService.getPositions.bind(MockRBACService);
+      this.createPosition = MockRBACService.createPosition.bind(MockRBACService);
+      this.updatePosition = MockRBACService.updatePosition.bind(MockRBACService);
+      this.deletePosition = MockRBACService.deletePosition.bind(MockRBACService);
 
-  // 创建部门
-  static async createDepartment(deptData) {
-    try {
-      return await rbacAxios.post('/api/v1/rbac/departments', deptData, {
-        params: { tenant_code: deptData.tenantCode }
-      });
-    } catch (error) {
-      console.error('创建部门失败:', error);
-      throw error;
-    }
-  }
+      // 租户管理API
+      this.getTenants = MockRBACService.getTenants.bind(MockRBACService);
+      this.createTenant = MockRBACService.createTenant.bind(MockRBACService);
+      this.updateTenant = MockRBACService.updateTenant.bind(MockRBACService);
+      this.deleteTenant = MockRBACService.deleteTenant.bind(MockRBACService);
 
-  // 更新部门
-  static async updateDepartment(deptCode, deptData) {
-    try {
-      return await rbacAxios.put(`/api/v1/rbac/departments/${deptCode}`, deptData, {
-        params: { tenant_code: deptData.tenantCode }
-      });
-    } catch (error) {
-      console.error('更新部门失败:', error);
-      throw error;
-    }
-  }
+      // 权限管理API
+      this.getPermissions = MockRBACService.getPermissions.bind(MockRBACService);
+      this.addPermission = MockRBACService.addPermission.bind(MockRBACService);
+      this.updatePermission = MockRBACService.updatePermission.bind(MockRBACService);
+      this.deletePermission = MockRBACService.deletePermission.bind(MockRBACService);
+      this.updatePermissionStatus = MockRBACService.updatePermissionStatus.bind(MockRBACService);
+      this.getRolesByPermission = MockRBACService.getRolesByPermission.bind(MockRBACService);
 
-  // 删除部门
-  static async deleteDepartment(deptCode, tenantCode) {
-    try {
-      return await rbacAxios.delete(`/api/v1/rbac/departments/${deptCode}`, {
-        params: { tenant_code: tenantCode }
-      });
-    } catch (error) {
-      console.error('删除部门失败:', error);
-      throw error;
-    }
-  }
-
-  // 岗位管理API
-  // 获取岗位列表
-  static async getPositions(params = {}) {
-    try {
-      return await rbacAxios.get('/api/v1/rbac/positions', { params });
-    } catch (error) {
-      console.error('获取岗位列表失败:', error);
-      throw error;
-    }
-  }
-
-  // 创建岗位
-  static async createPosition(posData) {
-    try {
-      return await rbacAxios.post('/api/v1/rbac/positions', posData, {
-        params: { tenant_code: posData.tenantCode }
-      });
-    } catch (error) {
-      console.error('创建岗位失败:', error);
-      throw error;
-    }
-  }
-
-  // 更新岗位
-  static async updatePosition(positionCode, posData) {
-    try {
-      return await rbacAxios.put(`/api/v1/rbac/positions/${positionCode}`, posData, {
-        params: { tenant_code: posData.tenantCode }
-      });
-    } catch (error) {
-      console.error('更新岗位失败:', error);
-      throw error;
-    }
-  }
-
-  // 删除岗位
-  static async deletePosition(positionCode, tenantCode) {
-    try {
-      return await rbacAxios.delete(`/api/v1/rbac/positions/${positionCode}`, {
-        params: { tenant_code: tenantCode }
-      });
-    } catch (error) {
-      console.error('删除岗位失败:', error);
-      throw error;
-    }
-  }
-
-  // 租户管理API
-  // 获取租户列表
-  static async getTenants(params = {}) {
-    try {
-      return await rbacAxios.get('/api/v1/rbac/tenants', { params });
-    } catch (error) {
-      console.error('获取租户列表失败:', error);
-      throw error;
-    }
-  }
-
-  // 创建租户
-  static async createTenant(tenantData) {
-    try {
-      return await rbacAxios.post('/api/v1/rbac/tenants', tenantData);
-    } catch (error) {
-      console.error('创建租户失败:', error);
-      throw error;
-    }
-  }
-
-  // 更新租户
-  static async updateTenant(tenantCode, tenantData) {
-    try {
-      return await rbacAxios.put(`/api/v1/rbac/tenants/${tenantCode}`, tenantData);
-    } catch (error) {
-      console.error('更新租户失败:', error);
-      throw error;
-    }
-  }
-
-  // 删除租户
-  static async deleteTenant(tenantCode) {
-    try {
-      return await rbacAxios.delete(`/api/v1/rbac/tenants/${tenantCode}`);
-    } catch (error) {
-      console.error('删除租户失败:', error);
-      throw error;
-    }
-  }
-
-  // 权限管理API
-  // 获取权限列表
-  static async getPermissions(params = {}) {
-    try {
-      return await rbacAxios.get('/api/v1/rbac/permissions', { params });
-    } catch (error) {
-      console.error('获取权限列表失败:', error);
-      throw error;
-    }
-  }
-
-  // 创建权限
-  static async addPermission(permissionData) {
-    try {
-      return await rbacAxios.post('/api/v1/rbac/permissions', permissionData, {
-        params: { tenant_code: permissionData.tenantCode }
-      });
-    } catch (error) {
-      console.error('创建权限失败:', error);
-      throw error;
-    }
-  }
-
-  // 更新权限
-  static async updatePermission(permissionCode, tenantCode, permissionData) {
-    try {
-      return await rbacAxios.put(`/api/v1/rbac/permissions/${permissionCode}`, permissionData, {
-        params: { tenant_code: tenantCode }
-      });
-    } catch (error) {
-      console.error('更新权限失败:', error);
-      throw error;
-    }
-  }
-
-  // 删除权限
-  static async deletePermission(permissionCode, tenantCode) {
-    try {
-      return await rbacAxios.delete(`/api/v1/rbac/permissions/${permissionCode}`, {
-        params: { tenant_code: tenantCode }
-      });
-    } catch (error) {
-      console.error('删除权限失败:', error);
-      throw error;
-    }
-  }
-
-  // 更新权限状态
-  static async updatePermissionStatus(permissionCode, tenantCode, status) {
-    try {
-      return await rbacAxios.patch(`/api/v1/rbac/permissions/${permissionCode}/status`, { status }, {
-        params: { tenant_code: tenantCode }
-      });
-    } catch (error) {
-      console.error('更新权限状态失败:', error);
-      throw error;
+      // 关联管理API
+      this.assignRoleToUser = MockRBACService.assignRoleToUser.bind(MockRBACService);
+      this.removeUserRole = MockRBACService.removeUserRole.bind(MockRBACService);
+      this.getUsersByRole = MockRBACService.getUsersByRole.bind(MockRBACService);
+      this.assignPermissionToRole = MockRBACService.assignPermissionToRole.bind(MockRBACService);
+      this.removeRolePermission = MockRBACService.removeRolePermission.bind(MockRBACService);
+      this.checkUserPermission = MockRBACService.checkUserPermission.bind(MockRBACService);
+      this.getUserPermissions = MockRBACService.getUserPermissions.bind(MockRBACService);
     }
   }
 }
 
-export default RBACService;
+// 创建一个实例并导出
+const rbacServiceInstance = new RBACService();
+
+// 导出静态方法以保持原有调用方式
+export default {
+  // 用户管理API
+  getUsers: rbacServiceInstance.getUsers,
+  createUser: rbacServiceInstance.createUser,
+  updateUser: rbacServiceInstance.updateUser,
+  deleteUser: rbacServiceInstance.deleteUser,
+  resetUserPassword: rbacServiceInstance.resetUserPassword,
+  getUserRoles: rbacServiceInstance.getUserRoles,
+
+  // 角色管理API
+  getRoles: rbacServiceInstance.getRoles,
+  createRole: rbacServiceInstance.createRole,
+  updateRole: rbacServiceInstance.updateRole,
+  deleteRole: rbacServiceInstance.deleteRole,
+  getRolePermissions: rbacServiceInstance.getRolePermissions,
+
+  // 部门管理API
+  getDepartments: rbacServiceInstance.getDepartments,
+  getDepartmentTree: rbacServiceInstance.getDepartmentTree,
+  createDepartment: rbacServiceInstance.createDepartment,
+  updateDepartment: rbacServiceInstance.updateDepartment,
+  deleteDepartment: rbacServiceInstance.deleteDepartment,
+
+  // 岗位管理API
+  getPositions: rbacServiceInstance.getPositions,
+  createPosition: rbacServiceInstance.createPosition,
+  updatePosition: rbacServiceInstance.updatePosition,
+  deletePosition: rbacServiceInstance.deletePosition,
+
+  // 租户管理API
+  getTenants: rbacServiceInstance.getTenants,
+  createTenant: rbacServiceInstance.createTenant,
+  updateTenant: rbacServiceInstance.updateTenant,
+  deleteTenant: rbacServiceInstance.deleteTenant,
+
+  // 权限管理API
+  getPermissions: rbacServiceInstance.getPermissions,
+  addPermission: rbacServiceInstance.addPermission,
+  updatePermission: rbacServiceInstance.updatePermission,
+  deletePermission: rbacServiceInstance.deletePermission,
+  updatePermissionStatus: rbacServiceInstance.updatePermissionStatus,
+  getRolesByPermission: rbacServiceInstance.getRolesByPermission,
+
+  // 关联管理API
+  assignRoleToUser: rbacServiceInstance.assignRoleToUser,
+  removeUserRole: rbacServiceInstance.removeUserRole,
+  getUsersByRole: rbacServiceInstance.getUsersByRole,
+  assignPermissionToRole: rbacServiceInstance.assignPermissionToRole,
+  removeRolePermission: rbacServiceInstance.removeRolePermission,
+  checkUserPermission: rbacServiceInstance.checkUserPermission,
+  getUserPermissions: rbacServiceInstance.getUserPermissions
+};

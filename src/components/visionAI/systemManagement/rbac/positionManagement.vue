@@ -22,6 +22,11 @@
         <!-- 搜索和筛选区域 -->
         <div class="filter-section">
           <el-form :inline="true" :model="searchForm" class="search-form">
+            <el-form-item label="租户">
+              <TenantSelector
+                v-model="searchForm.tenantCode"
+                @change="handleTenantChange"/>
+            </el-form-item>
             <el-form-item label="岗位编码">
               <el-input v-model="searchForm.positionCode" placeholder="请输入岗位编码" clearable style="width: 180px;">
               </el-input>
@@ -232,9 +237,15 @@
 
 <script>
 import RBACService from '@/components/service/RBACService'
+import TenantSelector from '@/components/common/TenantSelector.vue'
 
 export default {
   name: 'PositionManagement',
+
+  components: {
+    TenantSelector
+  },
+
   data() {
     return {
       // 部门树筛选
@@ -295,7 +306,8 @@ export default {
         positionName: '',
         categoryCode: '',
         department: '',
-        status: ''
+        status: '',
+        tenantCode: ''
       },
 
       // 表格数据
@@ -422,6 +434,12 @@ export default {
   },
 
   methods: {
+    // 处理租户变化
+    handleTenantChange() {
+      this.pagination.currentPage = 1
+      this.searchPositions()
+    },
+
     // 搜索岗位
     async searchPositions() {
       this.loading = true
@@ -436,7 +454,8 @@ export default {
           position_name: this.searchForm.positionName || undefined,
           category_code: this.searchForm.categoryCode || undefined,
           department: this.searchForm.department || undefined,
-          status: this.searchForm.status || undefined
+          status: this.searchForm.status || undefined,
+          tenant_code: this.searchForm.tenantCode || undefined
         }
 
         const response = await RBACService.getPositions(params)
@@ -471,7 +490,8 @@ export default {
         positionName: '',
         categoryCode: '',
         department: '',
-        status: ''
+        status: '',
+        tenantCode: ''
       }
       this.searchPositions()
     },
@@ -640,7 +660,8 @@ export default {
         positionName: '',
         categoryCode: '',
         department: '',
-        status: ''
+        status: '',
+        tenantCode: ''
       }
       this.searchPositions()
     },

@@ -4,14 +4,9 @@
     <div class="filter-section">
       <el-form :inline="true">
         <el-form-item label="租户">
-          <el-select v-model="searchForm.tenantCode" placeholder="请选择租户" clearable>
-            <el-option
-              v-for="tenant in tenantList"
-              :key="tenant.tenantCode"
-              :label="tenant.tenantName"
-              :value="tenant.tenantCode"
-            ></el-option>
-          </el-select>
+          <TenantSelector
+            v-model="searchForm.tenantCode"
+            @change="handleTenantChange"/>
         </el-form-item>
         <el-form-item label="角色名称">
           <el-input
@@ -31,6 +26,15 @@
           <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
             <el-option label="正常" value="1"></el-option>
             <el-option label="停用" value="0"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="数据权限">
+          <el-select v-model="searchForm.dataScope" placeholder="请选择数据权限" clearable>
+            <el-option label="全部数据权限" value="1"></el-option>
+            <el-option label="自定数据权限" value="2"></el-option>
+            <el-option label="本部门数据权限" value="3"></el-option>
+            <el-option label="本部门及以下数据权限" value="4"></el-option>
+            <el-option label="仅本人数据权限" value="5"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="创建时间">
@@ -265,9 +269,14 @@
 
 <script>
 import RBACService from '@/components/service/RBACService'
+import TenantSelector from '@/components/common/TenantSelector.vue'
 
 export default {
   name: 'RoleManagement',
+
+  components: {
+    TenantSelector
+  },
   
   data() {
     return {
@@ -276,6 +285,7 @@ export default {
         roleName: '',
         roleCode: '',
         status: '',
+        dataScope: '',
         createTime: [],
         tenantCode: ''
       },
@@ -522,9 +532,10 @@ export default {
           role_name: this.searchForm.roleName || undefined,
           role_code: this.searchForm.roleCode || undefined,
           status: this.searchForm.status || undefined,
+          data_scope: this.searchForm.dataScope || undefined,
           tenant_code: this.searchForm.tenantCode || undefined
         }
-        
+
         const response = await RBACService.getRoles(params)
         
         if (response && response.data && Array.isArray(response.data.items)) {
@@ -555,6 +566,12 @@ export default {
     
 
     
+    // 处理租户变化
+    handleTenantChange() {
+      this.pagination.currentPage = 1
+      this.fetchRoles()
+    },
+
     // 搜索角色
     searchRoles() {
       this.pagination.currentPage = 1
@@ -567,6 +584,7 @@ export default {
         roleName: '',
         roleCode: '',
         status: '',
+        dataScope: '',
         createTime: [],
         tenantCode: ''
       }

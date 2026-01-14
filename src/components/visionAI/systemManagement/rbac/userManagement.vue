@@ -33,6 +33,12 @@
         <!-- 搜索筛选区域 -->
         <div class="filter-section">
           <el-form :inline="true" :model="searchForm" class="search-form">
+            <el-form-item label="租户">
+              <TenantSelector
+                ref="tenantSelector"
+                v-model="searchForm.tenantCode"
+                @change="handleTenantChange"/>
+            </el-form-item>
             <el-form-item label="用户名称">
               <el-input
                 v-model="searchForm.userName"
@@ -61,6 +67,31 @@
               <el-select v-model="searchForm.status" placeholder="用户状态" clearable style="width: 120px;">
                 <el-option label="启用" value="1"></el-option>
                 <el-option label="禁用" value="0"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="部门">
+              <el-cascader
+                v-model="searchForm.departmentId"
+                :options="departmentOptions"
+                :props="cascaderProps"
+                placeholder="选择部门"
+                clearable
+                style="width: 200px;">
+              </el-cascader>
+            </el-form-item>
+            <el-form-item label="岗位">
+              <el-select v-model="searchForm.position" placeholder="选择岗位" clearable style="width: 120px;">
+                <el-option label="开发工程师" value="developer"></el-option>
+                <el-option label="测试工程师" value="tester"></el-option>
+                <el-option label="产品经理" value="pm"></el-option>
+                <el-option label="UI设计师" value="designer"></el-option>
+                <el-option label="运维工程师" value="ops"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="性别">
+              <el-select v-model="searchForm.gender" placeholder="选择性别" clearable style="width: 100px;">
+                <el-option label="男" value="male"></el-option>
+                <el-option label="女" value="female"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item label="创建时间">
@@ -117,11 +148,6 @@
             <el-table-column prop="userNickname" label="用户昵称" min-width="150" align="center"></el-table-column>
             <el-table-column prop="department" label="部门" min-width="80" align="center"></el-table-column>
             <el-table-column prop="phoneNumber" label="手机号码" min-width="120" align="center"></el-table-column>
-            <el-table-column prop="role" label="角色" min-width="100" align="center">
-              <template slot-scope="scope">
-                <span>{{ scope.row.role === 'admin' ? '管理员' : scope.row.role === 'user' ? '普通用户' : scope.row.role === 'guest' ? '访客' : scope.row.role }}</span>
-              </template>
-            </el-table-column>
             <el-table-column prop="status" label="状态" width="80" align="center">
               <template slot-scope="scope">
                 <el-switch
@@ -133,13 +159,12 @@
               </template>
             </el-table-column>
             <el-table-column prop="createTime" label="创建时间" min-width="140" align="center"></el-table-column>
-            <el-table-column label="操作" min-width="240" fixed="right" align="center">
+            <el-table-column label="操作" min-width="180" fixed="right" align="center">
               <template slot-scope="scope">
                 <div class="operation-buttons">
                   <el-button type="text" class="edit-btn" @click="editUser(scope.row)">编辑</el-button>
                   <el-button type="text" class="delete-btn" @click="deleteUser(scope.row)">删除</el-button>
                   <el-button type="text" class="reset-btn" @click="resetPassword(scope.row)">重置</el-button>
-                  <el-button type="text" class="assign-role-btn" @click="assignRole(scope.row)">分配角色</el-button>
                 </div>
               </template>
             </el-table-column>
@@ -244,15 +269,6 @@
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="角色" prop="role" required>
-              <el-select v-model="userForm.role" placeholder="请选择" style="width: 100%;">
-                <el-option label="管理员" value="admin"></el-option>
-                <el-option label="普通用户" value="user"></el-option>
-                <el-option label="访客" value="guest"></el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
         </el-row>
         <el-row>
           <el-col :span="24">
@@ -315,36 +331,46 @@
 
 <script>
 import RBACService from '@/components/service/RBACService'
+import TenantSelector from '@/components/common/TenantSelector.vue'
 
 export default {
   name: 'UserManagement',
-  
+
+  components: {
+    TenantSelector
+  },
+
   data() {
     return {
       loading: false,
       filterText: '',
       selectedDepartment: null,
-      
+
       // 搜索表单
       searchForm: {
         userName: '',
         userNickname: '',
         phoneNumber: '',
         status: '',
-        createTimeRange: []
+        departmentId: [],
+        position: '',
+        gender: '',
+        createTimeRange: [],
+        tenantCode: ''
       },
-      
+
+
       // 表格数据
       tableData: [],
       selectedRows: [],
-      
+
       // 分页
       pagination: {
         currentPage: 1,
         pageSize: 10,
         total: 0
       },
-      
+
       // 组织架构树数据
       treeData: [
         {
@@ -373,12 +399,12 @@ export default {
           ]
         }
       ],
-      
+
       defaultProps: {
         children: 'children',
         label: 'label'
       },
-      
+
       // 用户表单
       userForm: {
         userName: '',
@@ -390,10 +416,9 @@ export default {
         gender: '',
         status: true,
         position: '',
-        role: '',
         remark: ''
       },
-      
+
       // 表单验证规则
       userRules: {
         userName: [
@@ -407,12 +432,9 @@ export default {
         ],
         email: [
           { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-        ],
-        role: [
-          { required: true, message: '请选择角色', trigger: 'change' }
         ]
       },
-      
+
       // 对话框
       userDialogVisible: false,
       deleteDialogVisible: false,
@@ -421,51 +443,122 @@ export default {
       currentUser: null,
       resetPasswordUser: null,
       newPassword: '',
-      
+
       // 级联选择器配置
       cascaderProps: {
         value: 'id',
         label: 'label',
         children: 'children',
         checkStrictly: true
-      }
+      },
+
+      // 租户缓存
+      cachedTenants: []
     }
   },
-  
+
   computed: {
     departmentOptions() {
       return this.treeData
     }
   },
-  
+
   watch: {
     filterText(val) {
       this.$refs.tree.filter(val)
     }
   },
-  
-  created() {
-    this.fetchUsers()
+
+  async created() {
+    // 先确保租户信息已加载，然后获取用户列表
+    await this.loadTenantsIfNeeded();
+    this.fetchUsers();
   },
-  
+
   methods: {
+    // 加载租户信息（如果尚未加载）
+    async loadTenantsIfNeeded() {
+      // 如果已有缓存的租户信息，则直接使用
+      if (this.cachedTenants && this.cachedTenants.length > 0) {
+        // 如果当前没有选择租户且需要自动选择第一个，则自动选择
+        if (!this.searchForm.tenantCode && this.cachedTenants.length > 0) {
+          this.searchForm.tenantCode = this.cachedTenants[0].tenantCode;
+        }
+        return;
+      }
+
+      // 检查租户选择器组件是否已加载租户数据
+      const tenantSelector = this.$refs.tenantSelector;
+      if (tenantSelector && typeof tenantSelector.loadTenantsIfNeeded === 'function') {
+        await tenantSelector.loadTenantsIfNeeded();
+
+        // 更新缓存
+        this.cachedTenants = [...tenantSelector.tenants];
+
+        // 如果当前没有选择租户且需要自动选择第一个，则自动选择
+        if (!this.searchForm.tenantCode && this.cachedTenants.length > 0) {
+          this.searchForm.tenantCode = this.cachedTenants[0].tenantCode;
+        }
+      } else {
+        // 如果无法直接访问租户选择器，则直接调用API获取租户
+        try {
+          const response = await RBACService.getTenants();
+          if (response && response.data && Array.isArray(response.data.items)) {
+            // 缓存租户信息
+            this.cachedTenants = [...response.data.items];
+
+            // 如果当前没有选择租户且需要自动选择第一个，则自动选择
+            if (!this.searchForm.tenantCode && this.cachedTenants.length > 0) {
+              this.searchForm.tenantCode = this.cachedTenants[0].tenantCode;
+            }
+          }
+        } catch (error) {
+          console.error('获取租户列表失败:', error);
+          this.$message.error(`获取租户列表失败: ${error.message}`);
+        }
+      }
+    },
+
+    // 处理租户变化
+    handleTenantChange() {
+      this.pagination.currentPage = 1
+      this.fetchUsers()
+    },
+
+    // 获取当前租户信息
+    getCurrentTenant() {
+      if (this.cachedTenants && this.searchForm.tenantCode) {
+        return this.cachedTenants.find(tenant => tenant.tenantCode === this.searchForm.tenantCode);
+      }
+      return null;
+    },
+
     // 过滤树节点
     filterNode(value, data) {
       if (!value) return true
       return data.label.indexOf(value) !== -1
     },
-    
+
     // 点击树节点
     handleNodeClick(data) {
       this.selectedDepartment = data
       this.pagination.currentPage = 1
       this.fetchUsers()
     },
-    
+
     // 获取用户数据
     async fetchUsers() {
+      // 检查是否选择了租户，如果没有选择租户则提示用户
+      if (!this.searchForm.tenantCode) {
+        this.$message.warning('请先选择租户');
+        this.tableData = [];
+        this.pagination.total = 0;
+        this.loading = false;
+        return;
+      }
+
       this.loading = true
-      
+
       try {
         // 尝试从API获取数据
         const skip = (this.pagination.currentPage - 1) * this.pagination.pageSize;
@@ -476,15 +569,36 @@ export default {
           nickname: this.searchForm.userNickname || undefined,
           phone: this.searchForm.phoneNumber || undefined,
           status: this.searchForm.status || undefined,
-          department_id: this.selectedDepartment ? this.selectedDepartment.id : undefined
+          role: this.searchForm.role || undefined,
+          department_id: this.searchForm.departmentId && this.searchForm.departmentId.length > 0 ? this.searchForm.departmentId[this.searchForm.departmentId.length - 1] : (this.selectedDepartment ? this.selectedDepartment.id : undefined),
+          position: this.searchForm.position || undefined,
+          gender: this.searchForm.gender || undefined,
+          tenant_code: this.searchForm.tenantCode || undefined,  // 添加租户参数
         }
-        
+
         const response = await RBACService.getUsers(params)
-        
+
         if (response && response.data && Array.isArray(response.data.items)) {
           // API调用成功，使用API数据
           console.log('✅ 使用API数据获取用户列表')
-          this.tableData = response.data.items
+
+          // 将API返回的数据映射到表格期望的字段
+          this.tableData = response.data.items.map(item => ({
+            id: item.id,
+            tenantCode: item.tenantCode,
+            userName: item.userName,
+            userNickname: item.nickName, // API中是nickName，表格中是userNickname
+            email: item.email,
+            phoneNumber: item.phone, // API中是phone，表格中是phoneNumber
+            status: item.status,
+            createTime: item.createTime ? this.formatDate(item.createTime) : '', // 格式化日期
+            // 以下字段在API中不存在，设置默认值
+            department: item.department || '-', // 如果API中没有部门信息，则显示'-'
+            role: item.role || 'user', // 如果API中没有角色信息，则默认为'user'
+            userCode: item.userCode || item.id.toString(), // 如果API中没有userCode，则使用id作为替代
+            gender: item.gender || '' // 添加性别字段
+          }))
+
           this.pagination.total = response.data.total || response.data.items.length || 0
         } else {
           // API返回格式异常
@@ -492,16 +606,21 @@ export default {
         }
       } catch (error) {
         // API调用失败
-        console.error('⚠️ API调用失败:', error.message)
-        this.$message.error(`获取用户列表失败: ${error.message}`)
+        console.error('⚠️ API调用失败:', error.message);
+        // 检查错误是否与租户相关
+        if (error.response && error.response.status === 422) {
+          this.$message.error('请求参数错误，请检查租户信息是否正确');
+        } else {
+          this.$message.error(`获取用户列表失败: ${error.message}`);
+        }
         // 在API调用失败时清空表格数据
-        this.tableData = []
-        this.pagination.total = 0
+        this.tableData = [];
+        this.pagination.total = 0;
       }
-      
+
       this.loading = false
     },
-    
+
     // 生成模拟用户数据
     generateAllMockUsers() {
       return [
@@ -657,31 +776,38 @@ export default {
         }
       ]
     },
-    
+
     // 搜索用户
     handleSearch() {
       this.pagination.currentPage = 1
       this.fetchUsers()
     },
-    
+
     // 重置搜索
     resetSearch() {
+      // 保留租户选择，只重置其他搜索条件
+      const currentTenantCode = this.searchForm.tenantCode;
       this.searchForm = {
         userName: '',
         userNickname: '',
         phoneNumber: '',
         status: '',
-        createTimeRange: []
+        role: '',
+        departmentId: [],
+        position: '',
+        gender: '',
+        createTimeRange: [],
+        tenantCode: currentTenantCode  // 保留当前租户选择
       }
       this.pagination.currentPage = 1
       this.fetchUsers()
     },
-    
+
     // 刷新数据
     refreshData() {
       this.fetchUsers()
     },
-    
+
     // 切换高级搜索
     toggleAdvancedSearch() {
       this.$message({
@@ -689,7 +815,7 @@ export default {
         type: 'info'
       })
     },
-    
+
     // 显示表格设置
     showTableSetting() {
       this.$message({
@@ -697,23 +823,23 @@ export default {
         type: 'info'
       })
     },
-    
+
     // 处理分页
     handleSizeChange(size) {
       this.pagination.pageSize = size
       this.fetchUsers()
     },
-    
+
     handleCurrentChange(page) {
       this.pagination.currentPage = page
       this.fetchUsers()
     },
-    
+
     // 处理选择变化
     handleSelectionChange(selection) {
       this.selectedRows = selection
     },
-    
+
     // 新增用户
     addUser() {
       this.dialogTitle = '新增用户'
@@ -728,12 +854,11 @@ export default {
         gender: '',
         status: true,
         position: '',
-        role: '',
         remark: ''
       }
       this.userDialogVisible = true
     },
-    
+
     // 编辑用户
     editUser(row) {
       this.dialogTitle = '编辑用户'
@@ -743,12 +868,11 @@ export default {
         departmentId: row.departmentId ? [row.departmentId] : [],
         password: '',
         gender: row.gender || '',
-        position: row.position || '',
-        role: row.role || ''
+        position: row.position || ''
       }
       this.userDialogVisible = true
     },
-    
+
     // 保存用户
     async saveUser() {
       if (!this.currentUser && !this.userForm.password) {
@@ -758,33 +882,40 @@ export default {
         })
         return
       }
-      
+
       this.$refs.userForm.validate(async (valid) => {
         if (valid) {
           this.loading = true
-          
+
           try {
+            // 确保用户数据中包含租户信息
             const userData = {
               ...this.userForm,
+              tenant_code: this.searchForm.tenantCode || this.userForm.tenantCode, // 优先使用当前选择的租户
               department_id: this.userForm.departmentId && this.userForm.departmentId.length > 0 ? this.userForm.departmentId[this.userForm.departmentId.length - 1] : undefined
             }
-            
+
             if (this.currentUser) {
               // 编辑用户
-              await RBACService.updateUser(this.currentUser.userCode, this.currentUser.tenantCode || 'default', userData)
+              const tenantCode = this.currentUser.tenantCode || this.searchForm.tenantCode || 'default';
+              await RBACService.updateUser(this.currentUser.userCode, tenantCode, userData)
               this.$message({
                 message: '用户信息修改成功',
                 type: 'success'
               })
             } else {
-              // 新增用户
+              // 新增用户，必须有租户信息
+              if (!this.searchForm.tenantCode) {
+                this.$message.error('请选择租户后再添加用户');
+                return;
+              }
               await RBACService.createUser(userData)
               this.$message({
                 message: '用户添加成功',
                 type: 'success'
               })
             }
-            
+
             this.userDialogVisible = false
             this.fetchUsers()
           } catch (error) {
@@ -799,20 +930,22 @@ export default {
         }
       })
     },
-    
+
     // 删除用户
     deleteUser(row) {
       this.currentUser = row
       this.deleteDialogVisible = true
     },
-    
+
     // 确认删除
     async confirmDelete() {
       this.deleteDialogVisible = false
       this.loading = true
-      
+
       try {
-          await RBACService.deleteUser(this.currentUser.userCode, this.currentUser.tenantCode || 'default')
+          // 使用当前用户的租户信息或当前选择的租户
+          const tenantCode = this.currentUser.tenantCode || this.searchForm.tenantCode || 'default';
+          await RBACService.deleteUser(this.currentUser.userCode, tenantCode)
           this.$message({
             message: '用户删除成功',
             type: 'success'
@@ -828,7 +961,7 @@ export default {
         this.loading = false
       }
     },
-    
+
     // 批量删除
     async batchDelete() {
       if (this.selectedRows.length === 0) {
@@ -838,7 +971,7 @@ export default {
         })
         return
       }
-      
+
       this.$confirm(`确定要删除选中的 ${this.selectedRows.length} 个用户吗？`, '确认删除', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -847,9 +980,11 @@ export default {
         this.loading = true
         try {
           // 批量删除用户，使用Promise.all并行处理
-          const deletePromises = this.selectedRows.map(row => 
-            RBACService.deleteUser(row.userCode, row.tenantCode || 'default')
-          )
+          // 确保每个删除请求都使用正确的租户信息
+          const deletePromises = this.selectedRows.map(row => {
+            const tenantCode = row.tenantCode || this.searchForm.tenantCode || 'default';
+            return RBACService.deleteUser(row.userCode, tenantCode);
+          })
           await Promise.all(deletePromises)
           this.$message({
             message: '批量删除成功',
@@ -867,7 +1002,7 @@ export default {
         }
       }).catch(() => {})
     },
-    
+
     // 处理更多操作
     handleMoreAction(command) {
       switch (command) {
@@ -882,7 +1017,7 @@ export default {
           break
       }
     },
-    
+
     // 下载模板
     downloadTemplate() {
       this.$message({
@@ -890,7 +1025,7 @@ export default {
         type: 'success'
       })
     },
-    
+
     // 导入数据
     importData() {
       this.$message({
@@ -898,7 +1033,7 @@ export default {
         type: 'info'
       })
     },
-    
+
     // 导出数据
     exportData() {
       this.$message({
@@ -906,7 +1041,7 @@ export default {
         type: 'success'
       })
     },
-    
+
     // 重置密码
     resetPassword(row) {
       this.resetPasswordUser = row
@@ -923,10 +1058,12 @@ export default {
         })
         return
       }
-      
+
       this.loading = true
       try {
-        await RBACService.resetUserPassword(this.resetPasswordUser.userCode)
+        // 使用当前用户的租户信息或当前选择的租户
+        const tenantCode = this.resetPasswordUser.tenantCode || this.searchForm.tenantCode || 'default';
+        await RBACService.resetUserPassword(this.resetPasswordUser.userCode, tenantCode)
         this.$message({
           message: '密码重置成功',
           type: 'success'
@@ -944,23 +1081,24 @@ export default {
         this.loading = false
       }
     },
-    
+
     // 分配角色
     assignRole(row) {
-      // 跳转到分配角色页面，传递用户信息
+      // 跳转到分配角色页面，传递用户信息和租户信息
       this.$router.push({
         name: 'RoleAssignment',
         params: {
           userCode: row.userCode,
-          userName: row.userName
+          userName: row.userName,
+          tenantCode: row.tenantCode || this.searchForm.tenantCode || 'default'
         }
       })
     },
-    
+
     // 处理状态变化
     async handleStatusChange(row) {
       this.loading = true
-      
+
       try {
         await RBACService.updateUser(row.userCode, row.tenantCode || 'default', { status: row.status })
         const status = row.status ? '启用' : '禁用'
@@ -979,6 +1117,20 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    // 格式化日期
+    formatDate(dateString) {
+      if (!dateString) return '';
+
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+
+      return `${year}-${month}-${day} ${hours}:${minutes}`;
     }
   }
 }
@@ -1567,7 +1719,7 @@ export default {
     height: auto;
     min-height: auto;
   }
-  
+
   .left-panel {
     width: 100%;
     min-width: 100%;
@@ -1584,48 +1736,48 @@ export default {
   .user-management-container {
     padding: 12px;
   }
-  
+
   .filter-section {
     padding: 12px 16px;
   }
-  
+
   .table-operations {
     flex-direction: column;
     gap: 12px;
     align-items: stretch;
     padding: 12px 16px;
   }
-  
+
   .left-buttons,
   .right-buttons {
     justify-content: center;
     flex-wrap: wrap;
   }
-  
+
   .search-form .el-form-item {
     width: 100%;
     margin-bottom: 16px;
   }
-  
+
   .search-form >>> .el-form-item__label {
     width: 80px !important;
   }
-  
+
   .search-form >>> .el-form-item__content {
     margin-left: 80px !important;
   }
-  
+
   .operation-buttons {
     gap: 4px;
   }
-  
+
   .operation-buttons .el-button {
     width: 24px !important;
     height: 24px !important;
   }
-  
+
   .custom-table >>> .el-table__body .el-table__row td .cell {
     padding: 0 4px;
   }
 }
-</style> 
+</style>

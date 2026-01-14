@@ -119,6 +119,7 @@
 </template>
 
 <script>
+import RBACService from '../../service/RBACService'
 import userService from '../../service/UserService'
 
 export default {
@@ -127,6 +128,7 @@ export default {
     return {
       editMode: false,
       userInfo: {
+        userCode: '',
         username: 'admin',
         email: 'admin@example.com',
         phone: '138****8888',
@@ -135,7 +137,8 @@ export default {
         status: '正常',
         createTime: '2024-01-01 10:00:00',
         lastLoginTime: '2024-12-26 09:30:15',
-        description: '系统管理员，负责平台的日常维护和用户管理工作。'
+        description: '系统管理员，负责平台的日常维护和用户管理工作。',
+        tenantCode: ''
       }
     }
   },
@@ -143,18 +146,62 @@ export default {
     this.loadUserInfo();
   },
   methods: {
-    loadUserInfo() {
-      // 从userService获取用户信息
-      const user = userService.getUser();
-      if (user) {
-        this.userInfo.username = user.username;
-        // 其他信息可以通过API获取
+    async loadUserInfo() {
+      try {
+        // 从userService获取当前用户信息
+        const currentUser = userService.getUser();
+        if (currentUser) {
+          this.userInfo.userCode = currentUser.userCode;
+          this.userInfo.tenantCode = currentUser.tenantCode;
+          
+          // 调用RBACService获取详细用户信息
+          const params = {
+            user_code: currentUser.userCode,
+            tenant_code: currentUser.tenantCode
+          };
+          
+          const response = await RBACService.getUsers(params);
+          if (response.data && response.data.length > 0) {
+            const user = response.data[0];
+            this.userInfo.username = user.username || this.userInfo.username;
+            this.userInfo.email = user.email || this.userInfo.email;
+            this.userInfo.phone = user.phone || this.userInfo.phone;
+            this.userInfo.department = user.department || this.userInfo.department;
+            this.userInfo.role = user.role_name || this.userInfo.role;
+            this.userInfo.status = user.status === 1 ? '正常' : '禁用';
+            this.userInfo.createTime = user.create_time || this.userInfo.createTime;
+            this.userInfo.lastLoginTime = user.last_login_time || this.userInfo.lastLoginTime;
+            this.userInfo.description = user.description || this.userInfo.description;
+          }
+        }
+      } catch (error) {
+        console.error('获取用户信息失败:', error);
+        this.$message.error('获取用户信息失败');
       }
     },
-    saveProfile() {
-      // 保存用户信息的逻辑
-      this.$message.success('个人信息保存成功');
-      this.editMode = false;
+    async saveProfile() {
+      try {
+        // 准备用户数据
+        const userData = {
+          email: this.userInfo.email,
+          phone: this.userInfo.phone,
+          description: this.userInfo.description,
+          updateBy: this.userInfo.userCode // 添加更新人信息
+        };
+        
+        // 调用RBACService更新用户信息
+        await RBACService.updateUser(
+          this.userInfo.userCode,
+          this.userInfo.tenantCode,
+          userData
+        );
+        
+        this.$message.success('个人信息保存成功');
+        this.editMode = false;
+      } catch (error) {
+        console.error('保存用户信息失败:', error);
+        this.$message.error('保存用户信息失败');
+      }
     },
     changePassword() {
       // 跳转到修改密码功能

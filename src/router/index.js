@@ -1,32 +1,12 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Layout from "../layout/index.vue"
-
-
-
-
 import gbRecordDetail from '../components/visionAI/deviceManagement/managementPages/GBRecordDetail.vue'
-
-
-
 import login from '../components/Login.vue'
-
-
 import cloudRecordDetail from '../components/visionAI/deviceManagement/managementPages/CloudRecordDetail.vue'
-
-
-
-
-
 import deviceTree from '../components/common/DeviceTree.vue'
-
-
 import wasmPlayer from '../components/common/jessibuca.vue'
 import rtcPlayer from '../components/dialog/rtcPlayer.vue'
-
-
-
-
 import visualCenter from '../components/visionAI/ivisualCenter/index.vue'
 import algorithmInference from '../components/visionAI/ivisualCenter/algorithmInference.vue'
 import realTimeMonitoring from '../components/visionAI/monitoringWarning/realTimeMonitoring.vue'
@@ -48,17 +28,18 @@ import logRecords from '../components/visionAI/smartControl/logRecords.vue'
 import edgeServer from '../components/visionAI/edgeManagement/edgeServer.vue'
 import edgeBox from '../components/visionAI/edgeManagement/edgeBox.vue'
 import applicationSettings from '../components/visionAI/systemManagement/applicationSettings.vue'
-import userManagement from '../components/visionAI/systemManagement/userManagement.vue'
-import roleManagement from '../components/visionAI/systemManagement/roleManagement.vue'
-import roleAssignment from '../components/visionAI/systemManagement/roleAssignment.vue'
-import userAssignment from '../components/visionAI/systemManagement/userAssignment.vue'
-import tenantManagement from '../components/visionAI/systemManagement/tenantManagement.vue'
-import departmentManagement from '../components/visionAI/systemManagement/departmentManagement.vue'
-import positionManagement from '../components/visionAI/systemManagement/positionManagement.vue'
+import tenantManagement from '../components/visionAI/systemManagement/rbac/tenantManagement.vue'
+import userManagement from '../components/visionAI/systemManagement/rbac/userManagement.vue'
+import roleManagement from '../components/visionAI/systemManagement/rbac/roleManagement.vue'
+import roleAssignment from '../components/visionAI/systemManagement/rbac/roleAssignment.vue'
+import userAssignment from '../components/visionAI/systemManagement/rbac/userAssignment.vue'
+import departmentManagement from '../components/visionAI/systemManagement/rbac/departmentManagement.vue'
+import positionManagement from '../components/visionAI/systemManagement/rbac/positionManagement.vue'
 import profile from '../components/visionAI/systemManagement/profile.vue'
 import parkManagement from '../components/visionAI/ivisualCenter/parkManagement.vue'
 import knowledgeBase from '../components/visionAI/systemManagement/knowledgeBase.vue'
 import knowledgeBaseDetail from '../components/visionAI/systemManagement/knowledgeBaseDetail.vue'
+import permissionManagement from '../components/visionAI/systemManagement/rbac/permissionManagement.vue'
 // 知识库管理
 
 const originalPush = VueRouter.prototype.push
@@ -78,11 +59,6 @@ export default new VueRouter({
       component: Layout,
       redirect: '/visualCenter',
       children: [
-
-
-
-
-
         {
           path: '/visualCenter',
           component: visualCenter,
@@ -195,6 +171,11 @@ export default new VueRouter({
           name: 'applicationSettings',
           component: applicationSettings,
         },
+         {
+          path: '/systemManage/tenantManagement',
+          name: 'tenantManagement',
+          component: tenantManagement,
+        },
         {
           path: '/systemManage/userManagement',
           name: 'userManagement',
@@ -205,7 +186,7 @@ export default new VueRouter({
           name: 'roleManagement',
           component: roleManagement,
         },
-              {
+        {
         path: '/systemManage/roleAssignment/:userId/:userName',
         name: 'RoleAssignment',
         component: roleAssignment,
@@ -214,11 +195,6 @@ export default new VueRouter({
           path: '/visionAI/systemManagement/userAssignment',
           name: 'userAssignment',
           component: userAssignment,
-        },
-        {
-          path: '/systemManage/tenantManagement',
-          name: 'tenantManagement',
-          component: tenantManagement,
         },
         {
           path: '/systemManage/departmentManagement',
@@ -245,6 +221,11 @@ export default new VueRouter({
           name: 'profile',
           component: profile,
         },
+        {
+          path: '/systemManage/permissionManagement',
+          name: 'permissionManagement',
+          component: permissionManagement,
+        },
 
         {
           path: '/gbRecordDetail/:deviceId/:channelId/',
@@ -264,16 +245,6 @@ export default new VueRouter({
           name: 'cloudRecordDetail',
           component: cloudRecordDetail,
         },
-
-
-
-
-
-
-
-
-
-
 
         ]
     },

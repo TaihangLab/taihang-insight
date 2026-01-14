@@ -1,16 +1,62 @@
 <template>
   <div class="permission-management-container">
     <!-- 页面标题 -->
-    <div class="page-header">
-      <div class="page-title">权限管理</div>
-      <div class="page-header-btn">
-        <el-button type="primary" icon="el-icon-plus" @click="addPermission">新增权限</el-button>
-        <el-button icon="el-icon-refresh" @click="fetchPermissions">刷新</el-button>
-      </div>
+      <!-- 搜索和筛选区域 -->
+    <div class="filter-section">
+      <el-form :inline="true">
+        <el-form-item label="租户">
+          <TenantSelector
+            ref="tenantSelector"
+            v-model="searchForm.tenantCode"
+            @change="handleTenantChange"/>
+        </el-form-item>
+        <el-form-item label="权限名称">
+          <el-input
+            v-model="searchForm.permissionName"
+            placeholder="请输入权限名称"
+            clearable
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="权限标识">
+          <el-input
+            v-model="searchForm.permissionCode"
+            placeholder="请输入权限标识"
+            clearable
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="权限类型">
+          <el-select v-model="searchForm.permissionType" placeholder="请选择权限类型" clearable>
+            <el-option label="页面权限" value="page"></el-option>
+            <el-option label="按钮权限" value="button"></el-option>
+            <el-option label="数据权限" value="data"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="创建者">
+          <el-select v-model="searchForm.creator" placeholder="请选择创建者" clearable>
+            <el-option label="admin" value="admin"></el-option>
+            <el-option label="system" value="system"></el-option>
+            <el-option label="manager" value="manager"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
+            <el-option label="正常" :value="1"></el-option>
+            <el-option label="停用" :value="0"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="searchPermissions">搜索</el-button>
+          <el-button @click="resetSearch">重置</el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 权限列表表格 -->
     <div class="table-container">
+      <div class="table-operations">
+        <el-button type="primary" icon="el-icon-plus" @click="addPermission">新增权限</el-button>
+        <el-button icon="el-icon-refresh" @click="fetchPermissions">刷新</el-button>
+      </div>
       <el-table
         :data="tableData"
         v-loading="loading"
@@ -100,9 +146,14 @@
 
 <script>
 import RBACService from '@/components/service/RBACService'
+import TenantSelector from '@/components/common/TenantSelector.vue'
 
 export default {
   name: 'PermissionManagement',
+
+  components: {
+    TenantSelector
+  },
 
   data() {
     return {
@@ -110,6 +161,16 @@ export default {
       tableData: [],
       loading: false,
       selectedRows: [],
+
+      // 搜索表单
+      searchForm: {
+        permissionName: '',
+        permissionCode: '',
+        permissionType: '',
+        status: '',
+        creator: '',
+        tenantCode: ''
+      },
 
       // 分页
       pagination: {
@@ -123,7 +184,8 @@ export default {
         permissionName: '',
         permissionCode: '',
         permissionType: 'button',
-        status: 1
+        status: 1,
+        tenantCode: ''
       },
 
       // 表单验证规则
@@ -146,26 +208,53 @@ export default {
     }
   },
 
-  created() {
-    this.fetchPermissions()
+  async mounted() {
+    // 等待租户加载完成后再获取权限数据
+    await this.waitForTenantLoaded();
+    this.fetchPermissions();
   },
 
   methods: {
+    // 处理租户变化
+    handleTenantChange() {
+      this.pagination.currentPage = 1
+      this.fetchPermissions()
+    },
+
+    // 等待租户选择器加载完成
+    async waitForTenantLoaded() {
+      // 等待租户选择器组件加载完成
+      if (this.$refs.tenantSelector && typeof this.$refs.tenantSelector.loadTenantsIfNeeded === 'function') {
+        await this.$refs.tenantSelector.loadTenantsIfNeeded();
+      }
+
+      // 如果当前没有选择租户，但有租户列表，则自动选择第一个
+      if (!this.searchForm.tenantCode && this.$refs.tenantSelector && this.$refs.tenantSelector.tenants && this.$refs.tenantSelector.tenants.length > 0) {
+        this.searchForm.tenantCode = this.$refs.tenantSelector.tenants[0].tenantCode;
+      }
+    },
+
     // 获取权限数据
     async fetchPermissions() {
       this.loading = true
-      
+
       try {
         // 构建请求参数
         const skip = (this.pagination.currentPage - 1) * this.pagination.pageSize;
         const params = {
           skip: skip,
-          limit: this.pagination.pageSize
+          limit: this.pagination.pageSize,
+          permission_name: this.searchForm.permissionName || undefined,
+          permission_code: this.searchForm.permissionCode || undefined,
+          permission_type: this.searchForm.permissionType || undefined,
+          status: this.searchForm.status || undefined,
+          creator: this.searchForm.creator || undefined,
+          tenant_code: this.searchForm.tenantCode || 'default'  // 使用默认租户代码
         }
-        
+
         // 调用API获取权限列表
         const response = await RBACService.getPermissions(params)
-        
+
         if (response && response.data && Array.isArray(response.data.items)) {
           // API调用成功，使用API数据
           console.log('✅ 使用API数据获取权限列表')
@@ -183,7 +272,69 @@ export default {
         this.tableData = []
         this.pagination.total = 0
       }
-      
+
+      this.loading = false
+    },
+
+    // 搜索权限
+    searchPermissions() {
+      this.pagination.currentPage = 1
+      this.fetchPermissions()
+    },
+
+    // 重置搜索
+    resetSearch() {
+      this.searchForm = {
+        permissionName: '',
+        permissionCode: '',
+        permissionType: '',
+        status: '',
+        creator: '',
+        tenantCode: ''
+      }
+      this.pagination.currentPage = 1
+      this.fetchPermissions()
+    },
+
+    // 获取权限数据
+    async fetchPermissions() {
+      this.loading = true
+
+      try {
+        // 构建请求参数
+        const skip = (this.pagination.currentPage - 1) * this.pagination.pageSize;
+        const params = {
+          skip: skip,
+          limit: this.pagination.pageSize,
+          permission_name: this.searchForm.permissionName || undefined,
+          permission_code: this.searchForm.permissionCode || undefined,
+          permission_type: this.searchForm.permissionType || undefined,
+          status: this.searchForm.status || undefined,
+          creator: this.searchForm.creator || undefined,
+          tenant_code: this.searchForm.tenantCode || undefined
+        }
+
+        // 调用API获取权限列表
+        const response = await RBACService.getPermissions(params)
+
+        if (response && response.data && Array.isArray(response.data.items)) {
+          // API调用成功，使用API数据
+          console.log('✅ 使用API数据获取权限列表')
+          this.tableData = response.data.items
+          this.pagination.total = response.data.total || response.data.items.length || 0
+        } else {
+          // API返回格式异常
+          throw new Error('API返回格式异常')
+        }
+      } catch (error) {
+        // API调用失败
+        console.error('⚠️ API调用失败:', error.message)
+        this.$message.error(`获取权限列表失败: ${error.message}`)
+        // 在API调用失败时清空表格数据
+        this.tableData = []
+        this.pagination.total = 0
+      }
+
       this.loading = false
     },
 

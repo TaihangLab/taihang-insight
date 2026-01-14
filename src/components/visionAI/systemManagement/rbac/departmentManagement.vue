@@ -3,6 +3,11 @@
     <!-- 搜索和筛选区域 -->
     <div class="filter-section">
       <el-form :inline="true">
+        <el-form-item label="租户">
+          <TenantSelector
+            v-model="searchForm.tenantCode"
+            @change="handleTenantChange"/>
+        </el-form-item>
         <el-form-item label="部门名称">
           <el-input
             v-model="searchForm.deptName"
@@ -21,6 +26,16 @@
           <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
             <el-option label="正常" value="1"></el-option>
             <el-option label="停用" value="0"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="负责人">
+          <el-select v-model="searchForm.leader" placeholder="请选择负责人" clearable>
+            <el-option
+              v-for="user in userOptions"
+              :key="user.id"
+              :label="user.name"
+              :value="user.name">
+            </el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -182,16 +197,24 @@
 
 <script>
 import RBACService from '@/components/service/RBACService'
+import TenantSelector from '@/components/common/TenantSelector.vue'
 
 export default {
   name: 'DepartmentManagement',
+
+  components: {
+    TenantSelector
+  },
+
   data() {
     return {
       // 搜索表单
       searchForm: {
         deptName: '',
         categoryCode: '',
-        status: ''
+        status: '',
+        leader: '',
+        tenantCode: ''
       },
       
       // 表格数据
@@ -243,21 +266,28 @@ export default {
   },
   
   methods: {
+    // 处理租户变化
+    handleTenantChange() {
+      this.getDeptList()
+    },
+
     // 获取部门列表
     async getDeptList() {
       this.loading = true
-      
+
       try {
         // 构建请求参数
         const params = {
           dept_name: this.searchForm.deptName || undefined,
           category_code: this.searchForm.categoryCode || undefined,
-          status: this.searchForm.status || undefined
+          status: this.searchForm.status || undefined,
+          leader: this.searchForm.leader || undefined,
+          tenant_code: this.searchForm.tenantCode || undefined
         }
-        
+
         // 调用真实API获取数据
         const response = await RBACService.getDepartments(params)
-        
+
         if (response && response.data) {
           // API调用成功，使用API数据
           console.log('✅ 使用API数据获取部门列表')
@@ -297,7 +327,8 @@ export default {
       this.searchForm = {
         deptName: '',
         categoryCode: '',
-        status: ''
+        status: '',
+        leader: ''
       }
       this.getDeptList()
     },

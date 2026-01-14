@@ -1,5 +1,5 @@
 import VisionAIService from '../../service/VisionAIService.js'
-import marked from 'marked'
+import { marked } from 'marked'
 
 // 配置 marked 选项
 if (typeof marked === 'function') {

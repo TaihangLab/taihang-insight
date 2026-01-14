@@ -86,11 +86,10 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right" align="center">
+        <el-table-column label="操作" width="120" fixed="right" align="center">
           <template slot-scope="scope">
             <div class="operation-buttons">
               <el-button type="text" class="edit-btn" @click="editTenant(scope.row)">编辑</el-button>
-              <el-button type="text" class="reset-btn" @click="resetTenant(scope.row)">重置</el-button>
               <el-button type="text" class="delete-btn" @click="deleteTenant(scope.row)">删除</el-button>
             </div>
           </template>
@@ -550,22 +549,6 @@ export default {
       }
     },
     
-    // 重置租户
-    resetTenant(row) {
-      this.$confirm('确定要重置该租户的信息吗？', '确认重置', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.$message({
-          message: '租户信息重置成功',
-          type: 'success'
-        })
-        this.fetchTenants()
-      }).catch(() => {
-        // 取消操作
-      })
-    },
     
     // 批量编辑
     batchEdit() {
@@ -862,7 +845,7 @@ export default {
   flex-wrap: nowrap;
 }
 
-.edit-btn, .reset-btn, .delete-btn {
+.edit-btn, .delete-btn {
   padding: 2px 8px !important;
   font-size: 11px !important;
   border-radius: 4px !important;
@@ -875,7 +858,7 @@ export default {
   min-width: 50px !important;
 }
 
-.edit-btn:hover, .reset-btn:hover, .delete-btn:hover {
+.edit-btn:hover, .delete-btn:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e3a8a !important;

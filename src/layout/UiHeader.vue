@@ -102,6 +102,7 @@ export default {
         '/systemManage/appSettings': { menu: '系统管理', page: '应用设置' },
         '/systemManage/userManagement': { menu: '系统管理', page: '用户管理' },
         '/systemManage/roleManagement': { menu: '系统管理', page: '角色管理' },
+        '/systemManage/permissionManagement': { menu: '系统管理', page: '权限管理' },
         '/systemManage/tenantManagement': { menu: '系统管理', page: '租户管理' },
         '/systemManage/departmentManagement': { menu: '系统管理', page: '部门管理' },
         '/systemManage/positionManagement': { menu: '系统管理', page: '岗位管理' },
