@@ -39,7 +39,7 @@ import profile from '../components/visionAI/systemManagement/profile.vue'
 import parkManagement from '../components/visionAI/ivisualCenter/parkManagement.vue'
 import knowledgeBase from '../components/visionAI/systemManagement/knowledgeBase.vue'
 import knowledgeBaseDetail from '../components/visionAI/systemManagement/knowledgeBaseDetail.vue'
-import permissionManagement from '../components/visionAI/systemManagement/rbac/permissionManagement.vue'
+import permissionManagement from '../components/visionAI/systemManagement/permission/permissionManagement.vue'
 // 知识库管理
 
 const originalPush = VueRouter.prototype.push

@@ -77,8 +77,8 @@
           <template slot-scope="scope">
             <el-switch
               v-model="scope.row.status"
-              :active-value="1"
-              :inactive-value="0"
+              :active-value="0"
+              :inactive-value="1"
               @change="handle_status_change(scope.row)"
             ></el-switch>
           </template>
@@ -246,68 +246,6 @@ export default {
           permission_type: this.searchForm.permission_type || undefined,
           status: this.searchForm.status || undefined,
           creator: this.searchForm.creator || undefined,
-          tenant_code: this.searchForm.tenant_code || 'default'  // 使用默认租户代码
-        }
-
-        // 调用API获取权限列表
-        const response = await RBACService.getPermissions(params)
-
-        if (response && response.data && Array.isArray(response.data.items)) {
-          // API调用成功，使用API数据
-          console.log('✅ 使用API数据获取权限列表')
-          this.tableData = response.data.items
-          this.pagination.total = response.data.total || response.data.items.length || 0
-        } else {
-          // API返回格式异常
-          throw new Error('API返回格式异常')
-        }
-      } catch (error) {
-        // API调用失败
-        console.error('⚠️ API调用失败:', error.message)
-        this.$message.error(`获取权限列表失败: ${error.message}`)
-        // 在API调用失败时清空表格数据
-        this.tableData = []
-        this.pagination.total = 0
-      }
-
-      this.loading = false
-    },
-
-    // 搜索权限
-    searchPermissions() {
-      this.pagination.currentPage = 1
-      this.fetchPermissions()
-    },
-
-    // 重置搜索
-    resetSearch() {
-      this.searchForm = {
-        permission_name: '',
-        permission_code: '',
-        permission_type: '',
-        status: '',
-        creator: '',
-        tenant_code: ''
-      }
-      this.pagination.currentPage = 1
-      this.fetchPermissions()
-    },
-
-    // 获取权限数据
-    async fetchPermissions() {
-      this.loading = true
-
-      try {
-        // 构建请求参数
-        const skip = (this.pagination.currentPage - 1) * this.pagination.pageSize;
-        const params = {
-          skip: skip,
-          limit: this.pagination.pageSize,
-          permission_name: this.searchForm.permission_name || undefined,
-          permission_code: this.searchForm.permission_code || undefined,
-          permission_type: this.searchForm.permission_type || undefined,
-          status: this.searchForm.status || undefined,
-          creator: this.searchForm.creator || undefined,
           tenant_code: this.searchForm.tenant_code || undefined
         }
 
@@ -443,7 +381,7 @@ export default {
       try {
         const tenant_code = row.tenant_code || 'default'
         await RBACService.updatePermissionStatus(row.permission_code, tenant_code, row.status)
-        const status = row.status === 1 ? '启用' : '停用'
+        const status = row.status === 0 ? '启用' : '停用'  // 0表示启用，1表示停用
         this.$message({
           message: `权限状态已${status}`,
           type: 'success'

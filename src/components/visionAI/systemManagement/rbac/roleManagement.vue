@@ -80,10 +80,10 @@
           <template slot-scope="scope">
             <el-switch
               v-model="scope.row.status"
+              :active-value="0"
+              :inactive-value="1"
               active-color="#3b82f6"
               inactive-color="#9ca3af"
-              :active-value="1"
-              :inactive-value="0"
               @change="handle_status_change(scope.row)"
             ></el-switch>
           </template>
@@ -871,8 +871,8 @@ export default {
         // 调试信息，查看row对象的结构
         console.log('Row data:', row)
 
-        // 确保状态值为数字格式（0为正常，1为停用）
-        const statusValue = row.status ? 1 : 0;  // 如果当前状态为真（非0），则设为1（停用）；否则设为0（正常）
+        // 确保状态值为数字格式（0为正常/启用，1为停用）
+        const statusValue = row.status;  // 现在row.status已经是正确的值（0或1）因为我们设置了active-value和inactive-value
 
         // 更新角色状态 - 使用roleCode
         await RBACService.updateRole(row.role_code, row.tenant_code, {
@@ -880,7 +880,7 @@ export default {
           update_by: 'admin' // 后端要求的必填字段，使用默认值
         })
 
-        const status = statusValue ? '停用' : '启用'  // 状态值为1时显示停用，为0时显示启用
+        const status = statusValue === 0 ? '启用' : '停用';  // 0表示启用，1表示停用
         this.$message({
           message: `角色状态已${status}`,
           type: 'success'

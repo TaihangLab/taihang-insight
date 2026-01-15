@@ -139,6 +139,231 @@ class MockRBACService {
       }
     ];
 
+    // 树形权限数据（新的三级权限结构）
+    this.permissionTree = [
+      {
+        id: 'folder_system',
+        code: 'system_manage',
+        name: '系统管理',
+        description: '系统管理模块',
+        type: 'folder',
+        parentId: null,
+        path: '/systemManage',
+        icon: 'el-icon-setting',
+        visible: true,
+        sortOrder: 1,
+        status: 0,
+        isSystem: true,
+        children: [
+          {
+            id: 'menu_user',
+            code: 'system:user:view',
+            name: '用户管理',
+            description: '用户管理页面访问权限',
+            type: 'menu',
+            parentId: 'folder_system',
+            path: '/systemManage/userManagement',
+            icon: 'el-icon-user',
+            visible: true,
+            sortOrder: 1,
+            status: 0,
+            isSystem: true,
+            children: [
+              {
+                id: 'btn_user_add',
+                code: 'system:user:add',
+                name: '新增用户',
+                description: '新增用户的权限',
+                type: 'button',
+                parentId: 'menu_user',
+                category: 'WRITE',
+                resource: 'user',
+                action: 'add',
+                sortOrder: 1,
+                status: 0,
+                isSystem: false
+              },
+              {
+                id: 'btn_user_edit',
+                code: 'system:user:edit',
+                name: '编辑用户',
+                description: '编辑用户的权限',
+                type: 'button',
+                parentId: 'menu_user',
+                category: 'WRITE',
+                resource: 'user',
+                action: 'edit',
+                sortOrder: 2,
+                status: 0,
+                isSystem: false
+              },
+              {
+                id: 'btn_user_delete',
+                code: 'system:user:delete',
+                name: '删除用户',
+                description: '删除用户的权限',
+                type: 'button',
+                parentId: 'menu_user',
+                category: 'DELETE',
+                resource: 'user',
+                action: 'delete',
+                sortOrder: 3,
+                status: 0,
+                isSystem: false
+              },
+              {
+                id: 'btn_user_reset',
+                code: 'system:user:reset_password',
+                name: '重置密码',
+                description: '重置用户密码的权限',
+                type: 'button',
+                parentId: 'menu_user',
+                category: 'SPECIAL',
+                resource: 'user',
+                action: 'reset_password',
+                sortOrder: 4,
+                status: 0,
+                isSystem: false
+              }
+            ]
+          },
+          {
+            id: 'menu_role',
+            code: 'system:role:view',
+            name: '角色管理',
+            description: '角色管理页面访问权限',
+            type: 'menu',
+            parentId: 'folder_system',
+            path: '/systemManage/roleManagement',
+            icon: 'el-icon-s-custom',
+            visible: true,
+            sortOrder: 2,
+            status: 0,
+            isSystem: true,
+            children: [
+              {
+                id: 'btn_role_add',
+                code: 'system:role:add',
+                name: '新增角色',
+                description: '新增角色的权限',
+                type: 'button',
+                parentId: 'menu_role',
+                category: 'WRITE',
+                resource: 'role',
+                action: 'add',
+                sortOrder: 1,
+                status: 0,
+                isSystem: false
+              },
+              {
+                id: 'btn_role_edit',
+                code: 'system:role:edit',
+                name: '编辑角色',
+                description: '编辑角色的权限',
+                type: 'button',
+                parentId: 'menu_role',
+                category: 'WRITE',
+                resource: 'role',
+                action: 'edit',
+                sortOrder: 2,
+                status: 0,
+                isSystem: false
+              },
+              {
+                id: 'btn_role_delete',
+                code: 'system:role:delete',
+                name: '删除角色',
+                description: '删除角色的权限',
+                type: 'button',
+                parentId: 'menu_role',
+                category: 'DELETE',
+                resource: 'role',
+                action: 'delete',
+                sortOrder: 3,
+                status: 0,
+                isSystem: false
+              }
+            ]
+          },
+          {
+            id: 'menu_permission',
+            code: 'system:permission:view',
+            name: '权限管理',
+            description: '权限管理页面访问权限',
+            type: 'menu',
+            parentId: 'folder_system',
+            path: '/systemManage/permissionManagement',
+            icon: 'el-icon-lock',
+            visible: true,
+            sortOrder: 3,
+            status: 0,
+            isSystem: true,
+            children: []
+          }
+        ]
+      },
+      {
+        id: 'folder_monitoring',
+        code: 'monitoring',
+        name: '监控预警',
+        description: '监控预警模块',
+        type: 'folder',
+        parentId: null,
+        path: '/monitoring',
+        icon: 'el-icon-video-camera',
+        visible: true,
+        sortOrder: 2,
+        status: 0,
+        isSystem: true,
+        children: [
+          {
+            id: 'menu_realtime',
+            code: 'monitoring:realtime:view',
+            name: '实时监控',
+            description: '实时监控页面访问权限',
+            type: 'menu',
+            parentId: 'folder_monitoring',
+            path: '/monitoring/realtime',
+            icon: 'el-icon-monitor',
+            visible: true,
+            sortOrder: 1,
+            status: 0,
+            isSystem: true,
+            children: [
+              {
+                id: 'btn_monitoring_start',
+                code: 'monitoring:realtime:start',
+                name: '开始监控',
+                description: '开始监控的权限',
+                type: 'button',
+                parentId: 'menu_realtime',
+                category: 'WRITE',
+                resource: 'realtime',
+                action: 'start',
+                sortOrder: 1,
+                status: 0,
+                isSystem: false
+              },
+              {
+                id: 'btn_monitoring_stop',
+                code: 'monitoring:realtime:stop',
+                name: '停止监控',
+                description: '停止监控的权限',
+                type: 'button',
+                parentId: 'menu_realtime',
+                category: 'WRITE',
+                resource: 'realtime',
+                action: 'stop',
+                sortOrder: 2,
+                status: 0,
+                isSystem: false
+              }
+            ]
+          }
+        ]
+      }
+    ];
+
     this.departments = [
       {
         id: 1,
@@ -494,6 +719,114 @@ class MockRBACService {
     await this.delay();
 
     return this.createResponse(this.roles);
+  }
+
+  // ==================== 树形权限相关 API ====================
+
+  /**
+   * 获取权限树结构
+   */
+  async getPermissionTree(params = {}) {
+    await this.delay();
+
+    // 返回树形结构
+    return this.createResponse(this.permissionTree);
+  }
+
+  /**
+   * 创建权限节点
+   */
+  async createPermissionNode(nodeData) {
+    await this.delay();
+
+    const newNode = {
+      ...nodeData,
+      id: `node_${Date.now()}`,
+      children: nodeData.children || []
+    };
+
+    // 如果有父节点，添加到父节点的children中
+    if (nodeData.parentId) {
+      const parentNode = this.findNodeInTree(this.permissionTree, nodeData.parentId);
+      if (parentNode) {
+        if (!parentNode.children) {
+          parentNode.children = [];
+        }
+        parentNode.children.push(newNode);
+      }
+    } else {
+      // 没有父节点，添加到根节点
+      this.permissionTree.push(newNode);
+    }
+
+    return this.createResponse(newNode);
+  }
+
+  /**
+   * 更新权限节点
+   */
+  async updatePermissionNode(nodeId, nodeData) {
+    await this.delay();
+
+    const node = this.findNodeInTree(this.permissionTree, nodeId);
+    if (node) {
+      Object.assign(node, nodeData);
+      return this.createResponse(node);
+    }
+
+    throw new Error('权限节点不存在');
+  }
+
+  /**
+   * 删除权限节点
+   */
+  async deletePermissionNode(nodeId, force = false) {
+    await this.delay();
+
+    const result = this.removeNodeFromTree(this.permissionTree, nodeId, force);
+    if (result) {
+      return this.createResponse({ message: '权限节点删除成功' });
+    }
+
+    throw new Error('权限节点不存在');
+  }
+
+  /**
+   * 在树中查找节点（辅助方法）
+   */
+  findNodeInTree(tree, nodeId) {
+    for (const node of tree) {
+      if (node.id === nodeId) {
+        return node;
+      }
+      if (node.children && node.children.length > 0) {
+        const found = this.findNodeInTree(node.children, nodeId);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 从树中删除节点（辅助方法）
+   */
+  removeNodeFromTree(tree, nodeId, force = false) {
+    for (let i = 0; i < tree.length; i++) {
+      const node = tree[i];
+      if (node.id === nodeId) {
+        // 如果有子节点且不是强制删除，则不允许删除
+        if (node.children && node.children.length > 0 && !force) {
+          throw new Error('该节点有子节点，无法删除');
+        }
+        tree.splice(i, 1);
+        return true;
+      }
+      if (node.children && node.children.length > 0) {
+        const removed = this.removeNodeFromTree(node.children, nodeId, force);
+        if (removed) return true;
+      }
+    }
+    return false;
   }
 
   // 部门相关API

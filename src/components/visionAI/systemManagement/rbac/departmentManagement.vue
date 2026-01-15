@@ -218,6 +218,11 @@ export default {
     }
   },
   
+  async created() {
+    // 组件创建时获取上级部门选项
+    await this.getParentDeptOptions();
+  },
+
   methods: {
     // 处理租户变化
     handleTenantChange() {
@@ -266,6 +271,9 @@ export default {
         setTimeout(() => {
           this.setTableExpandState(this.tableData, true)
         }, 100)
+
+        // 更新上级部门选项
+        await this.getParentDeptOptions();
       }
     },
 
@@ -328,7 +336,7 @@ export default {
       this.dialogTitle = '添加子部门'
       this.deptForm = {
         dept_code: null,
-        parent_id: row.id,  // 使用整数ID而不是部门编码
+        parent_id: row.dept_code,  // 使用部门编码而不是整数ID
         name: '',
         sort_order: 0,
         status: 0
@@ -341,11 +349,35 @@ export default {
     },
 
     // 编辑部门
-    editDept(row) {
+    async editDept(row) {
       this.dialogTitle = '编辑部门'
+
+      // 等待上级部门选项加载完成
+      if (this.parentDeptOptions.length === 0) {
+        await this.getParentDeptOptions();
+      }
+
+      // 尝试将parent_id映射到对应的dept_code
+      let parentIdValue = row.parent_id || null;
+      if (parentIdValue !== null) {
+        // 查找对应部门的dept_code
+        const correspondingDept = this.parentDeptOptions.find(dept => dept.id === parentIdValue);
+        if (correspondingDept) {
+          parentIdValue = correspondingDept.dept_code;
+        } else {
+          // 如果找不到对应的部门，尝试使用dept_code作为id的情况
+          const correspondingDeptByCode = this.parentDeptOptions.find(dept => dept.dept_code == parentIdValue);
+          if (correspondingDeptByCode) {
+            parentIdValue = correspondingDeptByCode.dept_code;
+          } else {
+            console.warn(`未找到ID为 ${parentIdValue} 的上级部门`);
+          }
+        }
+      }
+
       this.deptForm = {
         dept_code: row.dept_code,  // 保留原始部门编码
-        parent_id: row.parent_id || null,
+        parent_id: parentIdValue,  // 使用映射后的dept_code
         name: row.name,
         sort_order: row.sort_order,
         status: row.status !== undefined && row.status !== null ? row.status : 0
@@ -386,23 +418,44 @@ export default {
         if (valid) {
           try {
             this.loading = true
-            
+
+            // 准备提交的数据
+            const submitData = { ...this.deptForm };
+
+            // 确保parent_id字段使用的是dept_code而不是数值ID
+            if (submitData.parent_id !== null && submitData.parent_id !== undefined) {
+              // 如果parent_id是数值ID，需要转换为dept_code
+              if (typeof submitData.parent_id === 'number') {
+                const correspondingDept = this.parentDeptOptions.find(dept =>
+                  dept.id === submitData.parent_id
+                );
+                if (correspondingDept) {
+                  submitData.parent_id = correspondingDept.dept_code;
+                }
+              }
+            } else {
+              // 如果没有选择上级部门，确保parent_id为null
+              submitData.parent_id = null;
+            }
+
             if (this.currentDept) {
               // 更新部门 - 使用原始的dept_code，不更新编码
-              const updateData = { ...this.deptForm };
               // 从更新数据中移除dept_code，确保不会被修改
-              delete updateData.dept_code;
+              delete submitData.dept_code;
               await RBACService.updateDepartment(this.currentDept.dept_code, {
-                ...updateData,
-                tenant_code: this.deptForm.tenant_code || 'default'
+                ...submitData,
+                tenant_code: this.searchForm.tenant_code || 'default'
               })
               this.$message.success('修改成功')
             } else {
               // 新增部门
-              await RBACService.createDepartment(this.deptForm)
+              await RBACService.createDepartment({
+                ...submitData,
+                tenant_code: this.searchForm.tenant_code || 'default'
+              })
               this.$message.success('新增成功')
             }
-            
+
             this.deptDialogVisible = false
             this.getDeptList()
           } catch (error) {
@@ -418,10 +471,21 @@ export default {
     // 获取上级部门选项
     async getParentDeptOptions() {
       try {
+        // 获取所有部门数据
         const response = await RBACService.getDepartments()
         if (response && response.data) {
-          const depts = Array.isArray(response.data.items) ? response.data.items : response.data
-          this.parentDeptOptions = [{ dept_code: null, name: '无上级部门' }, ...depts]
+          let depts = Array.isArray(response.data.items) ? response.data.items : response.data
+
+          // 确保每个部门对象都有正确的属性
+          const processedDepts = depts.map(dept => ({
+            id: dept.id || dept.dept_code,  // 确保有id字段
+            dept_code: dept.dept_code,      // 部门代码
+            name: dept.name || dept.dept_name,  // 部门名称
+            parent_id: dept.parent_id       // 上级部门ID
+          }))
+
+          // 添加"无上级部门"选项
+          this.parentDeptOptions = [{ id: null, dept_code: null, name: '无上级部门' }, ...processedDepts]
         }
       } catch (error) {
         console.error('获取上级部门选项失败:', error)
@@ -701,56 +765,7 @@ export default {
   transform: translateY(-1px) !important;
 }
 
-/* 科技感状态标签样式 */
-.department-management-container >>> .el-table .el-tag--success {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
-  color: #065f46 !important;
-  border: 1px solid #a7f3d0 !important;
-  border-radius: 6px !important;
-  font-weight: 500 !important;
-  font-size: 12px !important;
-  padding: 0 8px !important;
-  height: 24px !important;
-  line-height: 22px !important;
-}
-
-.department-management-container >>> .el-table .el-tag--danger {
-  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%) !important;
-  color: #991b1b !important;
-  border: 1px solid #fca5a5 !important;
-  border-radius: 6px !important;
-  font-weight: 500 !important;
-  font-size: 12px !important;
-  padding: 0 8px !important;
-  height: 24px !important;
-  line-height: 22px !important;
-}
-
-.department-management-container >>> .el-table .el-tag--warning {
-  background: linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%) !important;
-  color: #92400e !important;
-  border: 1px solid #fbbf24 !important;
-  border-radius: 6px !important;
-  font-weight: 500 !important;
-  font-size: 12px !important;
-  padding: 0 8px !important;
-  height: 24px !important;
-  line-height: 22px !important;
-}
-
-.department-management-container >>> .el-table .el-tag--info {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  color: #1e40af !important;
-  border: 1px solid #93c5fd !important;
-  border-radius: 6px !important;
-  font-weight: 500 !important;
-  font-size: 12px !important;
-  padding: 0 8px !important;
-  height: 24px !important;
-  line-height: 22px !important;
-}
-
-/* 统一表格内所有标签样式 */
+/* 统一状态标签样式 - 符合主体设计 */
 .department-management-container >>> .el-table .el-tag {
   border-radius: 6px !important;
   font-weight: 500 !important;
@@ -759,6 +774,22 @@ export default {
   height: 24px !important;
   line-height: 22px !important;
   transition: all 0.3s ease !important;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.department-management-container >>> .el-table .el-tag.el-tag--success {
+  background-color: #f0f9ff !important;
+  border-color: #b3d8ff !important;
+  color: #2e7acc !important;
+}
+
+.department-management-container >>> .el-table .el-tag.el-tag--danger {
+  background-color: #fef0f0 !important;
+  border-color: #fbc4c4 !important;
+  color: #f56c6c !important;
 }
 
 .department-management-container >>> .el-table .el-tag:hover {

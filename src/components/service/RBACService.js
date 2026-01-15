@@ -140,28 +140,54 @@ class RBACService {
 
       // 权限管理API - 使用包装函数以保持正确的 this 上下文并集成缓存
       this.getPermissions = this._createCachedFunction(PermissionService.getPermissions, 'permissions_list');
+      this.getPermissionTree = this._createCachedFunction(PermissionService.getPermissionTree, 'permission_tree');
       this.addPermission = (...args) => {
         // 添加权限后清除相关缓存
         const result = PermissionService.addPermission.apply(PermissionService, args);
         cacheManager.delete('permissions_list');
+        cacheManager.delete('permission_tree');
+        return result;
+      };
+      this.createPermissionNode = (...args) => {
+        // 创建权限节点后清除相关缓存
+        const result = PermissionService.createPermissionNode ? PermissionService.createPermissionNode.apply(PermissionService, args) : PermissionService.addPermission.apply(PermissionService, args);
+        cacheManager.delete('permissions_list');
+        cacheManager.delete('permission_tree');
         return result;
       };
       this.updatePermission = (...args) => {
         // 更新权限后清除相关缓存
         const result = PermissionService.updatePermission.apply(PermissionService, args);
         cacheManager.delete('permissions_list');
+        cacheManager.delete('permission_tree');
+        return result;
+      };
+      this.updatePermissionNode = (...args) => {
+        // 更新权限节点后清除相关缓存
+        const result = PermissionService.updatePermissionNode ? PermissionService.updatePermissionNode.apply(PermissionService, args) : PermissionService.updatePermission.apply(PermissionService, args);
+        cacheManager.delete('permissions_list');
+        cacheManager.delete('permission_tree');
         return result;
       };
       this.deletePermission = (...args) => {
         // 删除权限后清除相关缓存
         const result = PermissionService.deletePermission.apply(PermissionService, args);
         cacheManager.delete('permissions_list');
+        cacheManager.delete('permission_tree');
+        return result;
+      };
+      this.deletePermissionNode = (...args) => {
+        // 删除权限节点后清除相关缓存
+        const result = PermissionService.deletePermissionNode ? PermissionService.deletePermissionNode.apply(PermissionService, args) : PermissionService.deletePermission.apply(PermissionService, args);
+        cacheManager.delete('permissions_list');
+        cacheManager.delete('permission_tree');
         return result;
       };
       this.updatePermissionStatus = (...args) => {
         // 更新权限状态后清除相关缓存
         const result = PermissionService.updatePermissionStatus.apply(PermissionService, args);
         cacheManager.delete('permissions_list');
+        cacheManager.delete('permission_tree');
         return result;
       };
       this.getRolesByPermission = PermissionService.getRolesByPermission;
@@ -225,9 +251,13 @@ class RBACService {
 
       // 权限管理API
       this.getPermissions = MockRBACService.getPermissions.bind(MockRBACService);
+      this.getPermissionTree = MockRBACService.getPermissionTree.bind(MockRBACService);
       this.addPermission = MockRBACService.addPermission.bind(MockRBACService);
+      this.createPermissionNode = MockRBACService.createPermissionNode.bind(MockRBACService);
       this.updatePermission = MockRBACService.updatePermission.bind(MockRBACService);
+      this.updatePermissionNode = MockRBACService.updatePermissionNode.bind(MockRBACService);
       this.deletePermission = MockRBACService.deletePermission.bind(MockRBACService);
+      this.deletePermissionNode = MockRBACService.deletePermissionNode.bind(MockRBACService);
       this.updatePermissionStatus = MockRBACService.updatePermissionStatus.bind(MockRBACService);
       this.getRolesByPermission = MockRBACService.getRolesByPermission.bind(MockRBACService);
 
@@ -245,6 +275,14 @@ class RBACService {
 
   /**
    * 创建带缓存的函数包装器
+   * 实现缓存策略：优先从缓存获取数据，只有在缓存未命中或数据过期时才调用API
+   *
+   * 缓存策略说明：
+   * 1. 生成基于参数的缓存键，确保不同参数的请求分别缓存
+   * 2. 优先从缓存获取数据，提高响应速度
+   * 3. 缓存未命中或数据过期时，调用原始API并更新缓存
+   * 4. 默认缓存时间为10分钟，可根据需要自定义
+   *
    * @param {Function} fn - 原始函数
    * @param {string} cacheKey - 缓存键
    * @param {number} ttl - 缓存时间（毫秒）
@@ -317,9 +355,13 @@ export default {
 
   // 权限管理API
   getPermissions: rbacServiceInstance.getPermissions,
+  getPermissionTree: rbacServiceInstance.getPermissionTree,
   addPermission: rbacServiceInstance.addPermission,
+  createPermissionNode: rbacServiceInstance.createPermissionNode,
   updatePermission: rbacServiceInstance.updatePermission,
+  updatePermissionNode: rbacServiceInstance.updatePermissionNode,
   deletePermission: rbacServiceInstance.deletePermission,
+  deletePermissionNode: rbacServiceInstance.deletePermissionNode,
   updatePermissionStatus: rbacServiceInstance.updatePermissionStatus,
   getRolesByPermission: rbacServiceInstance.getRolesByPermission,
 

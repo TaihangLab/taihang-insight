@@ -1,9 +1,15 @@
 /**
  * 通用缓存管理器
  * 结合内存缓存和sessionStorage，用于优化API调用性能
+ * 支持自动清理过期缓存，可配置多种缓存策略
+ *
+ * 缓存策略说明：
+ * 1. 内存缓存：使用Map对象存储最近访问的数据，访问速度快
+ * 2. sessionStorage持久化：对于需要跨会话保留的数据使用sessionStorage
+ * 3. 过期时间：每个缓存项包含过期时间戳，支持自动清理过期数据
+ * 4. 自动清理：启动定时任务每分钟清理一次过期缓存
+ * 5. 最大条目限制：内存缓存有最大条目数限制，超出时删除最旧的条目
  */
-
-class CacheManager {
   constructor(options = {}) {
     // 默认配置
     this.options = {
@@ -19,9 +25,27 @@ class CacheManager {
 
     // 内存缓存存储
     this.memoryCache = new Map();
-    
+
     // 记录内存缓存大小
     this.memorySize = 0;
+
+    // 启动定期清理过期缓存的任务（每分钟检查一次）
+    this.startCleanupTask();
+  }
+
+  /**
+   * 启动定期清理任务
+   * 自动清理内存和sessionStorage中的过期缓存项
+   *
+   * 缓存清理策略：
+   * - 每分钟检查一次内存和sessionStorage中的过期项
+   * - 自动移除已过期的缓存数据
+   * - 维护缓存的有效性和性能
+   */
+  startCleanupTask() {
+    setInterval(() => {
+      this.cleanupExpired();
+    }, 60000); // 每分钟执行一次清理
   }
 
   /**
@@ -182,6 +206,22 @@ class CacheManager {
    */
   has(key) {
     return this.get(key) !== null;
+  }
+
+  /**
+   * 清理内存和sessionStorage中的过期项
+   */
+  cleanupExpired() {
+    // 清理内存缓存中的过期项
+    for (const [key, value] of this.memoryCache.entries()) {
+      if (Date.now() >= value.expiry) {
+        this.memoryCache.delete(key);
+        this.memorySize--;
+      }
+    }
+
+    // 清理sessionStorage中的过期项
+    this.cleanupExpiredSessionStorage();
   }
 
   /**

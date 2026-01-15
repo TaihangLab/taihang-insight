@@ -153,6 +153,8 @@
               <template slot-scope="scope">
                 <el-switch
                   v-model="scope.row.status"
+                  :active-value="0"
+                  :inactive-value="1"
                   active-color="#3b82f6"
                   inactive-color="#9ca3af"
                   @change="handle_status_change(scope.row)">
@@ -944,11 +946,11 @@ export default {
       this.loading = true
 
       try {
-        // 确保状态值为数字格式（0为正常，1为停用）
-        const statusValue = row.status ? 1 : 0;  // 如果当前状态为真（非0），则设为1（停用）；否则设为0（正常）
+        // 确保状态值为数字格式（0为正常/启用，1为停用）
+        const statusValue = row.status;  // 现在row.status已经是正确的值（0或1）因为我们设置了active-value和inactive-value
         // 使用 user_name 而不是 user_code，以避免使用可遍历的 id
         await RBACService.updateUser(row.user_name, row.tenant_code || 'default', { status: statusValue })
-        const status = statusValue ? '停用' : '启用'  // 状态值为1时显示停用，为0时显示启用
+        const status = statusValue === 0 ? '启用' : '停用';  // 0表示启用，1表示停用
         this.$message({
           message: `用户状态已${status}`,
           type: 'success'
@@ -960,7 +962,7 @@ export default {
           type: 'error'
         })
         // 恢复原状态
-        row.status = !row.status
+        this.fetchUsers()
       } finally {
         this.loading = false
       }
