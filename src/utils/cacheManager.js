@@ -10,6 +10,7 @@
  * 4. 自动清理：启动定时任务每分钟清理一次过期缓存
  * 5. 最大条目限制：内存缓存有最大条目数限制，超出时删除最旧的条目
  */
+class CacheManager {
   constructor(options = {}) {
     // 默认配置
     this.options = {

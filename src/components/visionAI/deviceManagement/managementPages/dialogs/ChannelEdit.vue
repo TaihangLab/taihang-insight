@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import CommonChannelEdit from './common/CommonChannelEdit'
+import CommonChannelEdit from '@/components/common/CommonChannelEdit'
 
 export default {
   name: "channelEdit",

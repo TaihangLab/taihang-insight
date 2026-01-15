@@ -1,3 +1,5 @@
+import RBACService from './RBACService';
+
 export default {
 
   setUser(user){
@@ -27,5 +29,8 @@ export default {
   clearToken(){
     localStorage.removeItem("wvp-token");
     localStorage.removeItem("wvp-user");
+
+    // 清理RBAC服务缓存，避免登出后仍显示之前用户的缓存数据
+    RBACService.clearCache();
   }
 }
