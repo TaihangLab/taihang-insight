@@ -6,7 +6,7 @@
         <el-form-item label="租户编号">
           <el-input
             v-model="searchForm.tenant_code"
-            placeholder="请输入租户编号（精确查询）"
+            placeholder="请输入租户编号"
           ></el-input>
         </el-form-item>
         <el-form-item label="租户名称">
@@ -316,99 +316,6 @@ export default {
       this.loading = false
     },
     
-    // 生成模拟租户数据
-    generateAllMockTenants() {
-      return [
-        {
-          id: 1,
-          tenant_code: 'default',
-          tenant_name: '默认租户',
-          create_time: '2026-01-11T18:59:04',
-          update_time: '2026-01-11T18:59:04',
-          create_by: 'system',
-          update_by: 'system',
-          remark: null,
-          status: 0
-        },
-        {
-          id: 2,
-          tenant_code: '000000',
-          tenant_name: 'XXX有限公司',
-          create_time: '2026-01-11T19:27:23',
-          update_time: '2026-01-11T19:27:23',
-          create_by: 'system',
-          update_by: 'system',
-          remark: null,
-          status: 0
-        },
-        {
-          id: 3,
-          tenant_code: '952742',
-          tenant_name: '123企业',
-          create_time: '2026-01-10T10:30:00',
-          update_time: '2026-01-10T10:30:00',
-          create_by: 'admin',
-          update_by: 'admin',
-          remark: '测试租户1',
-          status: 0
-        },
-        {
-          id: 4,
-          tenant_code: '415387',
-          tenant_name: '6666科技',
-          create_time: '2026-01-09T14:20:00',
-          update_time: '2026-01-09T14:20:00',
-          create_by: 'admin',
-          update_by: 'admin',
-          remark: '测试租户2',
-          status: 1
-        },
-        {
-          id: 5,
-          tenant_code: '297659',
-          tenant_name: '16888贸易',
-          create_time: '2026-01-08T09:15:00',
-          update_time: '2026-01-08T09:15:00',
-          create_by: 'system',
-          update_by: 'system',
-          remark: null,
-          status: 0
-        },
-        {
-          id: 6,
-          tenant_code: '789133',
-          tenant_name: '测试租户企业',
-          create_time: '2026-01-07T16:45:00',
-          update_time: '2026-01-07T16:45:00',
-          create_by: 'admin',
-          update_by: 'admin',
-          remark: '测试用途',
-          status: 0
-        },
-        {
-          id: 7,
-          tenant_code: '555083',
-          tenant_name: '测试公司',
-          create_time: '2026-01-06T11:20:00',
-          update_time: '2026-01-06T11:20:00',
-          create_by: 'system',
-          update_by: 'system',
-          remark: null,
-          status: 0
-        },
-        {
-          id: 8,
-          tenant_code: '646214',
-          tenant_name: 'test999',
-          create_time: '2026-01-05T15:30:00',
-          update_time: '2026-01-05T15:30:00',
-          create_by: 'admin',
-          update_by: 'admin',
-          remark: '高级测试企业',
-          status: 0
-        }
-      ]
-    },
     
     // 搜索租户
     searchTenants() {
@@ -705,11 +612,11 @@ export default {
       this.loading = true
 
       try {
-        // 确保状态值为数字格式（0或1）
-        const statusValue = row.status ? 1 : 0;
+        // 确保状态值为数字格式（0为正常，1为停用）
+        const statusValue = row.status ? 1 : 0;  // 如果当前状态为真（非0），则设为1（停用）；否则设为0（正常）
         // 调用API更新租户状态
         await RBACService.updateTenant(row.tenant_code, { status: statusValue })
-        const status = statusValue === 0 ? '启用' : '禁用'
+        const status = statusValue ? '停用' : '启用'  // 状态值为1时显示停用，为0时显示启用
         this.$message({
           message: `租户状态已${status}`,
           type: 'success'

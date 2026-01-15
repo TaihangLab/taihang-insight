@@ -33,8 +33,8 @@
               <el-table-column prop="role_code" label="角色编码" />
               <el-table-column prop="status" label="状态" width="80">
                 <template slot-scope="scope">
-                  <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
-                    {{ scope.row.status === 1 ? '启用' : '禁用' }}
+                  <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'">
+                    {{ scope.row.status === 0 ? '启用' : '禁用' }}
                   </el-tag>
                 </template>
               </el-table-column>

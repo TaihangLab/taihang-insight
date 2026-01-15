@@ -106,7 +106,7 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="岗位编码" prop="position_code">
-              <el-input v-model="positionForm.position_code" placeholder="请输入岗位编码"></el-input>
+              <el-input v-model="positionForm.position_code" :disabled="!!positionForm.id" placeholder="请输入岗位编码"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -174,8 +174,8 @@
           <el-col :span="24">
             <el-form-item label="岗位状态">
               <el-radio-group v-model="positionForm.status">
-                <el-radio :label="1">正常</el-radio>
-                <el-radio :label="0">停用</el-radio>
+                <el-radio :label="0">正常</el-radio>
+                <el-radio :label="1">停用</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -477,7 +477,13 @@ export default {
         if (response && response.data && Array.isArray(response.data.items)) {
           // API调用成功，使用API数据
           console.log('✅ 使用API数据获取岗位列表')
-          this.tableData = response.data.items
+
+          // 将API返回的数据映射到表格期望的字段
+          this.tableData = response.data.items.map(item => ({
+            ...item,
+            tenant_code: item.tenant_code || 'default'  // 确保tenant_code字段存在
+          }))
+
           this.total = response.data.total || response.data.items.length || 0
           this.pagination.total = this.total
         } else {
@@ -531,7 +537,11 @@ export default {
     // 编辑岗位
     editPosition(row) {
       this.dialogTitle = '编辑岗位'
-      this.positionForm = { ...row }
+      this.positionForm = {
+        ...row,
+        // 在编辑模式下，保留原始的岗位编码，不允许修改
+        position_code: row.position_code
+      }
       this.positionDialogVisible = true
     },
 
@@ -542,9 +552,15 @@ export default {
           this.loading = true
           
           try {
-            if (this.positionForm.position_code) {
-              // 编辑岗位
-              await RBACService.updatePosition(this.positionForm.position_code, this.positionForm)
+            if (this.positionForm.id) {
+              // 编辑岗位 - 使用原始的position_code，不更新编码
+              const updateData = { ...this.positionForm };
+              // 从更新数据中移除position_code，确保不会被修改
+              delete updateData.position_code;
+              await RBACService.updatePosition(this.positionForm.position_code, {
+                ...updateData,
+                tenant_code: this.positionForm.tenant_code || 'default'
+              })
               this.$message.success('岗位信息更新成功')
             } else {
               // 新增岗位
@@ -577,12 +593,12 @@ export default {
       try {
         if (this.deleteRow) {
           // 单个删除
-          await RBACService.deletePosition(this.deleteRow.position_code)
+          await RBACService.deletePosition(this.deleteRow.position_code, this.deleteRow.tenant_code || this.searchForm.tenant_code || 'default')
           this.$message.success('岗位删除成功')
         } else if (this.multipleSelection.length > 0) {
           // 批量删除
           for (const row of this.multipleSelection) {
-            await RBACService.deletePosition(row.position_code)
+            await RBACService.deletePosition(row.position_code, row.tenant_code || this.searchForm.tenant_code || 'default')
           }
           this.$message.success(`成功删除 ${this.multipleSelection.length} 个岗位`)
           this.multipleSelection = []

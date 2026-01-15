@@ -57,8 +57,8 @@
         <el-table-column prop="phone" label="手机" min-width="140" align="center"></el-table-column>
                      <el-table-column prop="status" label="状态" width="80" align="center">
                <template slot-scope="scope">
-                 <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="mini">
-                   {{ scope.row.status === 1 ? '正常' : '停用' }}
+                 <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="mini">
+                   {{ scope.row.status === 0 ? '正常' : '停用' }}
                  </el-tag>
                </template>
              </el-table-column>
@@ -251,7 +251,14 @@ export default {
         if (response && response.data && Array.isArray(response.data.items)) {
           // API调用成功，使用API数据
           console.log('✅ 使用API数据获取用户列表')
-          this.tableData = response.data.items
+
+          // 将API返回的数据映射到表格期望的字段
+          this.tableData = response.data.items.map(item => ({
+            ...item,
+            user_name: item.user_name || item.user_code || item.id.toString(),
+            tenant_code: item.tenant_code || 'default'
+          }))
+
           this.pagination.total = response.data.total || response.data.items.length || 0
         } else {
           // API返回格式异常
@@ -269,56 +276,6 @@ export default {
       this.loading = false
     },
     
-    // 生成模拟用户数据
-    generateAllMockUsers() {
-      return [
-        {
-          id: 1,
-          user_name: 'asdasd',
-          nickName: 'das',
-          email: 'yunlongc528@gmail.com',
-          phone: '19310742302',
-          status: 1,
-          create_time: '2025-07-07 10:59:02'
-        },
-        {
-          id: 2,
-          user_name: 'testuser',
-          nickName: '测试用户',
-          email: 'test@example.com',
-          phone: '13888888888',
-          status: 1,
-          create_time: '2025-07-06 15:30:45'
-        },
-        {
-          id: 3,
-          user_name: 'admin',
-          nickName: '管理员',
-          email: 'admin@system.com',
-          phone: '15999999999',
-          status: 1,
-          create_time: '2025-07-05 09:20:15'
-        },
-        {
-          id: 4,
-          user_name: 'developer',
-          nickName: '开发者',
-          email: 'dev@company.com',
-          phone: '13777777777',
-          status: 1,
-          create_time: '2025-07-04 14:45:30'
-        },
-        {
-          id: 5,
-          user_name: 'operator',
-          nickName: '操作员',
-          email: 'operator@system.com',
-          phone: '18666666666',
-          status: 0,
-          create_time: '2025-07-03 11:10:20'
-        }
-      ]
-    },
     
     // 搜索用户
     searchUsers() {
@@ -372,7 +329,14 @@ export default {
         if (response && response.data && Array.isArray(response.data.items)) {
           // API调用成功，使用API数据
           console.log('✅ 使用API数据获取可选用户列表')
-          this.availableUsersData = response.data.items
+
+          // 将API返回的数据映射到表格期望的字段
+          this.availableUsersData = response.data.items.map(item => ({
+            ...item,
+            user_name: item.user_name || item.user_code || item.id.toString(),
+            tenant_code: item.tenant_code || 'default'
+          }))
+
           this.userPagination.total = response.data.total || response.data.items.length || 0
         } else {
           // API返回格式异常
@@ -533,10 +497,10 @@ export default {
 
       try {
         // 准备用户角色分配数据
-        const userIds = this.selectedUsers.map(user => user.id)
+        const userNames = this.selectedUsers.map(user => user.user_name)
 
         // 调用API分配角色给用户
-        await RBACService.assignRolesToUser(this.role_code, userIds)
+        await RBACService.assignRolesToUser(userNames, this.role_code, this.searchForm.tenant_code || 'default')
 
         this.$message({
           message: `成功为 ${this.selectedUsers.length} 个用户分配角色`,
@@ -563,7 +527,7 @@ export default {
 
         try {
           // 调用API取消用户的角色分配
-          await RBACService.removeRoleFromUser(this.role_code, row.id)
+          await RBACService.removeUserRole(row.user_name, this.role_code, row.tenant_code || 'default')
 
           this.$message({
             message: '取消授权成功',
@@ -603,7 +567,11 @@ export default {
           const userIds = this.selectedRows.map(row => row.id)
 
           // 调用API批量取消用户的角色分配
-          await RBACService.removeRoleFromUsers(this.role_code, userIds)
+          // 注意：这里需要逐个调用removeUserRole，因为API可能不支持批量取消
+          const promises = this.selectedRows.map(row =>
+            RBACService.removeUserRole(row.user_name, this.role_code, row.tenant_code || 'default')
+          );
+          await Promise.all(promises)
 
           this.$message({
             message: '批量取消授权成功',

@@ -112,7 +112,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="部门编码" prop="dept_code" required>
-              <el-input v-model="deptForm.dept_code" placeholder="请输入部门编码"></el-input>
+              <el-input v-model="deptForm.dept_code" :disabled="!!currentDept" placeholder="请输入部门编码"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
@@ -328,7 +328,7 @@ export default {
       this.dialogTitle = '添加子部门'
       this.deptForm = {
         dept_code: null,
-        parent_id: row.dept_code,
+        parent_id: row.id,  // 使用整数ID而不是部门编码
         name: '',
         sort_order: 0,
         status: 0
@@ -344,13 +344,13 @@ export default {
     editDept(row) {
       this.dialogTitle = '编辑部门'
       this.deptForm = {
-        dept_code: row.dept_code,
+        dept_code: row.dept_code,  // 保留原始部门编码
         parent_id: row.parent_id || null,
         name: row.name,
         sort_order: row.sort_order,
         status: row.status !== undefined && row.status !== null ? row.status : 0
       }
-      this.currentDept = row
+      this.currentDept = row  // 设置当前部门，用于判断是否为编辑模式
       this.deptDialogVisible = true
       // 清除表单验证
       this.$nextTick(() => {
@@ -387,9 +387,15 @@ export default {
           try {
             this.loading = true
             
-            if (this.deptForm.dept_code) {
-              // 更新部门
-              await RBACService.updateDepartment(this.deptForm.dept_code, this.deptForm)
+            if (this.currentDept) {
+              // 更新部门 - 使用原始的dept_code，不更新编码
+              const updateData = { ...this.deptForm };
+              // 从更新数据中移除dept_code，确保不会被修改
+              delete updateData.dept_code;
+              await RBACService.updateDepartment(this.currentDept.dept_code, {
+                ...updateData,
+                tenant_code: this.deptForm.tenant_code || 'default'
+              })
               this.$message.success('修改成功')
             } else {
               // 新增部门

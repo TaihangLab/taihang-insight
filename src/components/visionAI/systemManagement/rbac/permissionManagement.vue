@@ -131,8 +131,8 @@
 
         <el-form-item label="状态">
           <el-radio-group v-model="permissionForm.status">
-            <el-radio :label="1">正常</el-radio>
-            <el-radio :label="0">停用</el-radio>
+            <el-radio :label="0">正常</el-radio>
+            <el-radio :label="1">停用</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>

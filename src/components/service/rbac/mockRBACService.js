@@ -284,10 +284,14 @@ class MockRBACService {
     return this.createResponse(newUser);
   }
 
-  async updateUser(user_code, tenant_code, userData) {
+  async updateUser(user_identifier, tenant_code, userData) {
     await this.delay();
 
-    const index = this.users.findIndex(u => u.user_code === user_code && u.tenant_code === tenant_code);
+    // 尝试按 user_code 或 user_name 查找用户
+    const index = this.users.findIndex(u =>
+      (u.user_code === user_identifier || u.user_name === user_identifier) &&
+      u.tenant_code === tenant_code
+    );
     if (index !== -1) {
       this.users[index] = { ...this.users[index], ...userData };
       return this.createResponse(this.users[index]);
@@ -296,10 +300,14 @@ class MockRBACService {
     throw new Error('用户不存在');
   }
 
-  async deleteUser(user_code, tenant_code) {
+  async deleteUser(user_identifier, tenant_code) {
     await this.delay();
 
-    const index = this.users.findIndex(u => u.user_code === user_code && u.tenant_code === tenant_code);
+    // 尝试按 user_code 或 user_name 查找用户
+    const index = this.users.findIndex(u =>
+      (u.user_code === user_identifier || u.user_name === user_identifier) &&
+      u.tenant_code === tenant_code
+    );
     if (index !== -1) {
       this.users.splice(index, 1);
       return this.createResponse({ message: '用户删除成功' });
@@ -308,10 +316,13 @@ class MockRBACService {
     throw new Error('用户不存在');
   }
 
-  async resetUserPassword(user_code) {
+  async resetUserPassword(user_identifier) {
     await this.delay();
-    
-    const user = this.users.find(u => u.user_code === user_code);
+
+    // 尝试按 user_code 或 user_name 查找用户
+    const user = this.users.find(u =>
+      u.user_code === user_identifier || u.user_name === user_identifier
+    );
     if (user) {
       // 模拟重置密码操作
       return this.createResponse({ message: '密码重置成功' });
@@ -685,10 +696,14 @@ class MockRBACService {
   }
 
   // 关联管理API
-  async assignRoleToUser(userId, roleId, tenant_code) {
+  async assignRoleToUser(userIdentifier, roleId, tenant_code) {
     await this.delay();
 
-    const user = this.users.find(u => u.id === userId && u.tenant_code === tenant_code);
+    // 尝试按 user_code 或 user_name 查找用户
+    const user = this.users.find(u =>
+      (u.user_code === userIdentifier || u.user_name === userIdentifier) &&
+      u.tenant_code === tenant_code
+    );
     if (user) {
       user.roleId = roleId;
       return this.createResponse({ message: '角色分配成功' });
@@ -697,10 +712,14 @@ class MockRBACService {
     throw new Error('用户不存在');
   }
 
-  async removeUserRole(userId, roleId, tenant_code) {
+  async removeUserRole(userIdentifier, roleId, tenant_code) {
     await this.delay();
 
-    const user = this.users.find(u => u.id === userId && u.tenant_code === tenant_code && u.roleId === roleId);
+    // 尝试按 user_code 或 user_name 查找用户
+    const user = this.users.find(u =>
+      (u.user_code === userIdentifier || u.user_name === userIdentifier) &&
+      u.tenant_code === tenant_code && u.roleId === roleId
+    );
     if (user) {
       user.roleId = null;
       return this.createResponse({ message: '角色移除成功' });
@@ -748,6 +767,24 @@ class MockRBACService {
     }
 
     return this.createResponse([]);
+  }
+
+  // 批量分配角色给用户
+  async assignRolesToUser(userIdentifier, roleIds, tenant_code) {
+    await this.delay();
+
+    // 尝试按 user_code 或 user_name 查找用户
+    const user = this.users.find(u =>
+      (u.user_code === userIdentifier || u.user_name === userIdentifier) &&
+      u.tenant_code === tenant_code
+    );
+    if (user) {
+      // 为用户分配多个角色（这里简化为只保留最后一个角色）
+      user.roleId = roleIds[roleIds.length - 1]; // 或者可以实现为多角色分配
+      return this.createResponse({ message: '角色分配成功' });
+    }
+
+    throw new Error('用户不存在');
   }
 }
 

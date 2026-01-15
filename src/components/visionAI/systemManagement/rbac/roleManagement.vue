@@ -166,9 +166,23 @@
           <el-col :span="12">
             <el-form-item label="状态">
               <el-radio-group v-model="roleForm.status">
-                <el-radio :label="1">正常</el-radio>
-                <el-radio :label="0">停用</el-radio>
+                <el-radio :label="0">正常</el-radio>
+                <el-radio :label="1">停用</el-radio>
               </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="数据权限范围">
+              <el-select v-model="roleForm.data_scope" placeholder="请选择数据权限范围" style="width: 100%">
+                <el-option label="全部数据权限" value="1"></el-option>
+                <el-option label="自定数据权限" value="2"></el-option>
+                <el-option label="本部门数据权限" value="3"></el-option>
+                <el-option label="本部门及以下数据权限" value="4"></el-option>
+                <el-option label="仅本人数据权限" value="5"></el-option>
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
@@ -311,6 +325,7 @@ export default {
         role_code: '',
         sort_order: 1,
         status: 1,
+        data_scope: '1', // 默认为全部数据权限
         remark: '',
         permissions: [],
         tenant_code: ''
@@ -538,7 +553,13 @@ export default {
         if (response && response.data && Array.isArray(response.data.items)) {
           // API调用成功，使用API数据
           console.log('✅ 使用API数据获取角色列表')
-          this.tableData = response.data.items
+
+          // 将API返回的数据映射到表格期望的字段
+          this.tableData = response.data.items.map(item => ({
+            ...item,
+            data_scope: item.data_scope || '1'  // 默认为全部数据权限
+          }))
+
           this.pagination.total = response.data.total || response.data.items.length || 0
         } else {
           // API返回格式异常
@@ -618,6 +639,7 @@ export default {
         role_code: row.role_code,
         sort_order: row.sort_order,
         status: row.status,
+        data_scope: row.data_scope || '1', // 默认为全部数据权限
         remark: row.remark,
         permissions: row.permissions || [],
         tenant_code: row.tenant_code || ''
@@ -640,13 +662,17 @@ export default {
             const halfCheckedKeys = this.$refs.permissionTree.getHalfCheckedKeys()
             this.roleForm.permissions = [...checkedKeys, ...halfCheckedKeys]
             
+            // 准备角色数据，确保字段映射正确
+            const roleData = {
+              ...this.roleForm,
+              update_by: 'admin'
+            };
+
             let response
             if (this.currentRole) {
               // 更新角色
-              // 添加update_by字段，使用默认值
-              this.roleForm.update_by = 'admin'
               // 编辑角色时，role_code是不可修改的，使用currentRole的role_code
-              response = await RBACService.updateRole(this.currentRole.role_code, this.currentRole.tenant_code || 'default', this.roleForm)
+              response = await RBACService.updateRole(this.currentRole.role_code, this.currentRole.tenant_code || 'default', roleData)
               this.$message({
                 message: '角色更新成功',
                 type: 'success'
@@ -654,9 +680,9 @@ export default {
             } else {
               // 创建角色
               // 添加create_by和update_by字段，使用默认值
-              this.roleForm.create_by = 'admin'
-              this.roleForm.update_by = 'admin'
-              response = await RBACService.createRole(this.roleForm)
+              roleData.create_by = 'admin'
+              roleData.update_by = 'admin'
+              response = await RBACService.createRole(roleData)
               this.$message({
                 message: '角色添加成功',
                 type: 'success'
@@ -734,7 +760,7 @@ export default {
           // 这里需要根据实际API调整，可能需要调用不同的API端点
           // 假设使用updateRole方法更新数据权限
           await RBACService.updateRole(this.currentAssignRole.role_code, this.currentAssignRole.tenant_code || 'default', {
-            data_scope: this.assignPermissionForm.dataScope,
+            data_scope: this.assignPermissionForm.data_scope,
             update_by: 'admin' // 后端要求的必填字段，使用默认值
           })
           
@@ -845,8 +871,8 @@ export default {
         // 调试信息，查看row对象的结构
         console.log('Row data:', row)
 
-        // 确保状态值为数字格式（0或1）
-        const statusValue = row.status ? 1 : 0;
+        // 确保状态值为数字格式（0为正常，1为停用）
+        const statusValue = row.status ? 1 : 0;  // 如果当前状态为真（非0），则设为1（停用）；否则设为0（正常）
 
         // 更新角色状态 - 使用roleCode
         await RBACService.updateRole(row.role_code, row.tenant_code, {
@@ -854,7 +880,7 @@ export default {
           update_by: 'admin' // 后端要求的必填字段，使用默认值
         })
 
-        const status = statusValue === 1 ? '启用' : '停用'
+        const status = statusValue ? '停用' : '启用'  // 状态值为1时显示停用，为0时显示启用
         this.$message({
           message: `角色状态已${status}`,
           type: 'success'

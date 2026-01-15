@@ -3,10 +3,10 @@ import rbacAxios from './base';
 class AssociationService {
   // 用户角色关联API
   // 分配角色给用户
-  static async assignRoleToUser(userId, roleId, tenant_code) {
+  static async assignRoleToUser(userIdentifier, roleId, tenant_code) {
     try {
       return await rbacAxios.post('/api/v1/rbac/user-roles', {
-        userId: userId,
+        userIdentifier: userIdentifier,  // 可以是用户名或用户ID
         roleId: roleId,
         tenant_code: tenant_code
       });
@@ -17,11 +17,11 @@ class AssociationService {
   }
 
   // 移除用户角色
-  static async removeUserRole(userId, roleId, tenant_code) {
+  static async removeUserRole(userIdentifier, roleId, tenant_code) {
     try {
       return await rbacAxios.delete('/api/v1/rbac/user-roles', {
         data: {
-          userId: userId,
+          userIdentifier: userIdentifier,  // 可以是用户名或用户ID
           roleId: roleId,
           tenant_code: tenant_code
         }
@@ -87,6 +87,20 @@ class AssociationService {
       });
     } catch (error) {
       console.error('检查用户权限失败:', error);
+      throw error;
+    }
+  }
+
+  // 批量分配角色给用户
+  static async assignRolesToUser(userIdentifier, roleIds, tenant_code) {
+    try {
+      return await rbacAxios.post('/api/v1/rbac/user-roles/batch', {
+        userIdentifier: userIdentifier,  // 可以是用户名或用户ID
+        roleIds: roleIds,
+        tenant_code: tenant_code
+      });
+    } catch (error) {
+      console.error('批量分配角色给用户失败:', error);
       throw error;
     }
   }

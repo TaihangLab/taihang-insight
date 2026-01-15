@@ -1,4 +1,5 @@
 import MockRBACService from './rbac/mockRBACService';
+import cacheManager from '@/utils/cacheManager';
 
 // 尝试导入真实服务，如果失败则使用模拟服务
 let hasRealServices = false;
@@ -25,54 +26,165 @@ class RBACService {
   constructor() {
     if (hasRealServices) {
       // 使用真实服务
-      // 用户管理API
-      this.getUsers = UserService.getUsers;
-      this.createUser = UserService.createUser;
-      this.updateUser = UserService.updateUser;
-      this.deleteUser = UserService.deleteUser;
+      // 用户管理API - 使用包装函数以保持正确的 this 上下文并集成缓存
+      this.getUsers = this._createCachedFunction(UserService.getUsers, 'users_list');
+      this.createUser = (...args) => {
+        // 创建用户后清除相关缓存
+        const result = UserService.createUser.apply(UserService, args);
+        cacheManager.delete('users_list');
+        return result;
+      };
+      this.updateUser = (...args) => {
+        // 更新用户后清除相关缓存
+        const result = UserService.updateUser.apply(UserService, args);
+        cacheManager.delete('users_list');
+        return result;
+      };
+      this.deleteUser = (...args) => {
+        // 删除用户后清除相关缓存
+        const result = UserService.deleteUser.apply(UserService, args);
+        cacheManager.delete('users_list');
+        return result;
+      };
       this.resetUserPassword = UserService.resetUserPassword;
       this.getUserRoles = UserService.getUserRoles;
 
-      // 角色管理API
-      this.getRoles = RoleService.getRoles;
-      this.createRole = RoleService.createRole;
-      this.updateRole = RoleService.updateRole;
-      this.deleteRole = RoleService.deleteRole;
+      // 角色管理API - 使用包装函数以保持正确的 this 上下文并集成缓存
+      this.getRoles = this._createCachedFunction(RoleService.getRoles, 'roles_list');
+      this.createRole = (...args) => {
+        // 创建角色后清除相关缓存
+        const result = RoleService.createRole.apply(RoleService, args);
+        cacheManager.delete('roles_list');
+        return result;
+      };
+      this.updateRole = (...args) => {
+        // 更新角色后清除相关缓存
+        const result = RoleService.updateRole.apply(RoleService, args);
+        cacheManager.delete('roles_list');
+        return result;
+      };
+      this.deleteRole = (...args) => {
+        // 删除角色后清除相关缓存
+        const result = RoleService.deleteRole.apply(RoleService, args);
+        cacheManager.delete('roles_list');
+        return result;
+      };
       this.getRolePermissions = RoleService.getRolePermissions;
 
-      // 部门管理API
-      this.getDepartments = DepartmentService.getDepartments;
-      this.getDepartmentTree = DepartmentService.getDepartmentTree;
-      this.createDepartment = DepartmentService.createDepartment;
-      this.updateDepartment = DepartmentService.updateDepartment;
-      this.deleteDepartment = DepartmentService.deleteDepartment;
+      // 部门管理API - 使用包装函数以保持正确的 this 上下文并集成缓存
+      this.getDepartments = this._createCachedFunction(DepartmentService.getDepartments, 'departments_list');
+      this.getDepartmentTree = this._createCachedFunction(DepartmentService.getDepartmentTree, 'departments_tree');
+      this.createDepartment = (...args) => {
+        // 创建部门后清除相关缓存
+        const result = DepartmentService.createDepartment.apply(DepartmentService, args);
+        cacheManager.delete('departments_list');
+        cacheManager.delete('departments_tree');
+        return result;
+      };
+      this.updateDepartment = (...args) => {
+        // 更新部门后清除相关缓存
+        const result = DepartmentService.updateDepartment.apply(DepartmentService, args);
+        cacheManager.delete('departments_list');
+        cacheManager.delete('departments_tree');
+        return result;
+      };
+      this.deleteDepartment = (...args) => {
+        // 删除部门后清除相关缓存
+        const result = DepartmentService.deleteDepartment.apply(DepartmentService, args);
+        cacheManager.delete('departments_list');
+        cacheManager.delete('departments_tree');
+        return result;
+      };
 
-      // 岗位管理API
-      this.getPositions = PositionService.getPositions;
-      this.createPosition = PositionService.createPosition;
-      this.updatePosition = PositionService.updatePosition;
-      this.deletePosition = PositionService.deletePosition;
+      // 岗位管理API - 使用包装函数以保持正确的 this 上下文并集成缓存
+      this.getPositions = this._createCachedFunction(PositionService.getPositions, 'positions_list');
+      this.createPosition = (...args) => {
+        // 创建岗位后清除相关缓存
+        const result = PositionService.createPosition.apply(PositionService, args);
+        cacheManager.delete('positions_list');
+        return result;
+      };
+      this.updatePosition = (...args) => {
+        // 更新岗位后清除相关缓存
+        const result = PositionService.updatePosition.apply(PositionService, args);
+        cacheManager.delete('positions_list');
+        return result;
+      };
+      this.deletePosition = (...args) => {
+        // 删除岗位后清除相关缓存
+        const result = PositionService.deletePosition.apply(PositionService, args);
+        cacheManager.delete('positions_list');
+        return result;
+      };
 
-      // 租户管理API - 使用包装函数以保持正确的 this 上下文
-      this.getTenants = (...args) => TenantService.getTenants(...args);
-      this.createTenant = (...args) => TenantService.createTenant(...args);
-      this.updateTenant = (...args) => TenantService.updateTenant(...args);
-      this.deleteTenant = (...args) => TenantService.deleteTenant(...args);
+      // 租户管理API - 使用包装函数以保持正确的 this 上下文并集成缓存
+      this.getTenants = this._createCachedFunction(TenantService.getTenants, 'tenants_list');
+      this.createTenant = (...args) => {
+        // 创建租户后清除缓存
+        const result = TenantService.createTenant.apply(TenantService, args);
+        cacheManager.delete('tenants_list');
+        return result;
+      };
+      this.updateTenant = (...args) => {
+        // 更新租户后清除缓存
+        const result = TenantService.updateTenant.apply(TenantService, args);
+        cacheManager.delete('tenants_list');
+        return result;
+      };
+      this.deleteTenant = (...args) => {
+        // 删除租户后清除缓存
+        const result = TenantService.deleteTenant.apply(TenantService, args);
+        cacheManager.delete('tenants_list');
+        return result;
+      };
 
-      // 权限管理API
-      this.getPermissions = PermissionService.getPermissions;
-      this.addPermission = PermissionService.addPermission;
-      this.updatePermission = PermissionService.updatePermission;
-      this.deletePermission = PermissionService.deletePermission;
-      this.updatePermissionStatus = PermissionService.updatePermissionStatus;
+      // 权限管理API - 使用包装函数以保持正确的 this 上下文并集成缓存
+      this.getPermissions = this._createCachedFunction(PermissionService.getPermissions, 'permissions_list');
+      this.addPermission = (...args) => {
+        // 添加权限后清除相关缓存
+        const result = PermissionService.addPermission.apply(PermissionService, args);
+        cacheManager.delete('permissions_list');
+        return result;
+      };
+      this.updatePermission = (...args) => {
+        // 更新权限后清除相关缓存
+        const result = PermissionService.updatePermission.apply(PermissionService, args);
+        cacheManager.delete('permissions_list');
+        return result;
+      };
+      this.deletePermission = (...args) => {
+        // 删除权限后清除相关缓存
+        const result = PermissionService.deletePermission.apply(PermissionService, args);
+        cacheManager.delete('permissions_list');
+        return result;
+      };
+      this.updatePermissionStatus = (...args) => {
+        // 更新权限状态后清除相关缓存
+        const result = PermissionService.updatePermissionStatus.apply(PermissionService, args);
+        cacheManager.delete('permissions_list');
+        return result;
+      };
       this.getRolesByPermission = PermissionService.getRolesByPermission;
 
       // 关联管理API
       this.assignRoleToUser = AssociationService.assignRoleToUser;
+      this.assignRolesToUser = AssociationService.assignRolesToUser;
       this.removeUserRole = AssociationService.removeUserRole;
-      this.getUsersByRole = AssociationService.getUsersByRole;
-      this.assignPermissionToRole = AssociationService.assignPermissionToRole;
-      this.removeRolePermission = AssociationService.removeRolePermission;
+      this.getUsersByRole = this._createCachedFunction(AssociationService.getUsersByRole, 'users_by_role');
+      this.assignPermissionToRole = (...args) => {
+        // 分配权限给角色后清除相关缓存
+        const result = AssociationService.assignPermissionToRole.apply(AssociationService, args);
+        cacheManager.delete('users_by_role');
+        cacheManager.delete('roles_list'); // 可能影响角色权限
+        return result;
+      };
+      this.removeRolePermission = (...args) => {
+        // 移除角色权限后清除相关缓存
+        const result = AssociationService.removeRolePermission.apply(AssociationService, args);
+        cacheManager.delete('users_by_role');
+        cacheManager.delete('roles_list'); // 可能影响角色权限
+        return result;
+      };
       this.checkUserPermission = AssociationService.checkUserPermission;
       this.getUserPermissions = AssociationService.getUserPermissions;
     } else {
@@ -121,6 +233,7 @@ class RBACService {
 
       // 关联管理API
       this.assignRoleToUser = MockRBACService.assignRoleToUser.bind(MockRBACService);
+      this.assignRolesToUser = MockRBACService.assignRolesToUser.bind(MockRBACService);
       this.removeUserRole = MockRBACService.removeUserRole.bind(MockRBACService);
       this.getUsersByRole = MockRBACService.getUsersByRole.bind(MockRBACService);
       this.assignPermissionToRole = MockRBACService.assignPermissionToRole.bind(MockRBACService);
@@ -128,6 +241,38 @@ class RBACService {
       this.checkUserPermission = MockRBACService.checkUserPermission.bind(MockRBACService);
       this.getUserPermissions = MockRBACService.getUserPermissions.bind(MockRBACService);
     }
+  }
+
+  /**
+   * 创建带缓存的函数包装器
+   * @param {Function} fn - 原始函数
+   * @param {string} cacheKey - 缓存键
+   * @param {number} ttl - 缓存时间（毫秒）
+   * @returns {Function} 包装后的函数
+   */
+  _createCachedFunction(fn, cacheKey, ttl) {
+    return async (...args) => {
+      // 生成基于参数的缓存键
+      const params = args[0] || {};
+      const paramStr = JSON.stringify(params);
+      const fullCacheKey = `${cacheKey}_${paramStr}`;
+
+      // 尝试从缓存获取
+      const cachedResult = cacheManager.get(fullCacheKey);
+      if (cachedResult) {
+        console.log(`[RBACService] 从缓存获取 ${cacheKey} 数据`);
+        return cachedResult;
+      }
+
+      // 调用原始函数获取数据
+      console.log(`[RBACService] 从服务器获取 ${cacheKey} 数据`);
+      const result = await fn.apply(null, args);
+
+      // 存储到缓存
+      cacheManager.set(fullCacheKey, result, ttl || 10 * 60 * 1000); // 默认10分钟
+
+      return result;
+    };
   }
 }
 
@@ -180,10 +325,21 @@ export default {
 
   // 关联管理API
   assignRoleToUser: rbacServiceInstance.assignRoleToUser,
+  assignRolesToUser: rbacServiceInstance.assignRolesToUser,
   removeUserRole: rbacServiceInstance.removeUserRole,
   getUsersByRole: rbacServiceInstance.getUsersByRole,
   assignPermissionToRole: rbacServiceInstance.assignPermissionToRole,
   removeRolePermission: rbacServiceInstance.removeRolePermission,
   checkUserPermission: rbacServiceInstance.checkUserPermission,
-  getUserPermissions: rbacServiceInstance.getUserPermissions
+  getUserPermissions: rbacServiceInstance.getUserPermissions,
+
+  // 缓存管理方法
+  clearCache: () => {
+    cacheManager.clear();
+  },
+  getCacheStats: () => {
+    return cacheManager.getStats();
+  },
+  // 直接暴露缓存管理器以供更细粒度的控制
+  cacheManager
 };

@@ -65,8 +65,8 @@
             </el-form-item>
             <el-form-item label="状态">
               <el-select v-model="searchForm.status" placeholder="用户状态" clearable style="width: 120px;">
-                <el-option label="启用" value="1"></el-option>
-                <el-option label="禁用" value="0"></el-option>
+                <el-option label="启用" value="0"></el-option>
+                <el-option label="禁用" value="1"></el-option>
               </el-select>
             </el-form-item>
             <el-form-item label="部门">
@@ -253,8 +253,8 @@
           <el-col :span="12">
             <el-form-item label="状态" prop="status">
               <el-radio-group v-model="userForm.status">
-                <el-radio :label="1">正常</el-radio>
-                <el-radio :label="0">停用</el-radio>
+                <el-radio :label="0">正常</el-radio>
+                <el-radio :label="1">停用</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -588,7 +588,7 @@ export default {
             role: item.role || 'user',
             position: item.position,
             position_code: item.position_code,
-            user_code: item.user_code || item.id.toString(),
+            user_name: item.user_name || item.user_code || item.id.toString(),
             gender: item.gender !== undefined && item.gender !== null ? item.gender : 0 // 保持原始数字值
           }))
 
@@ -614,161 +614,6 @@ export default {
       this.loading = false
     },
 
-    // 生成模拟用户数据
-    generateAllMockUsers() {
-      return [
-        {
-          id: 1,
-          user_name: 'admin',
-          nick_name: '疯狂的狮子Li',
-          department: '研发部门',
-          dept_id: 3,
-          phone: '15888888888',
-          email: 'admin@xxx.com',
-          gender: 1,
-          status: 1,
-          position: 'developer',
-          role: 'admin',
-          create_time: '2025-06-06 16:28:45',
-          remark: '管理员账户'
-        },
-        {
-          id: 2,
-          user_name: 'test',
-          nick_name: '本部门）以上 密码6',
-          department: '市场部门',
-          dept_id: 4,
-          phone: '',
-          email: 'test@xxx.com',
-          gender: 2,
-          status: 1,
-          position: 'pm',
-          role: 'user',
-          create_time: '2025-06-06 16:28:45',
-          remark: ''
-        },
-        {
-          id: 3,
-          user_name: 'test1',
-          nick_name: '仅本人 密码66666',
-          department: '长沙分公司',
-          dept_id: 8,
-          phone: '',
-          email: '',
-          gender: 1,
-          status: 1,
-          position: 'tester',
-          role: 'guest',
-          create_time: '2025-06-06 16:28:45',
-          remark: ''
-        },
-        {
-          id: 4,
-          user_name: 'testLoginOut',
-          nick_name: 'testLoginOut',
-          department: '',
-          dept_id: null,
-          phone: '',
-          email: '',
-          gender: 0,
-          status: 1,
-          position: '',
-          role: 'user',
-          create_time: '2025-07-02 15:04:32',
-          remark: ''
-        },
-        {
-          id: 5,
-          user_name: 'te',
-          nick_name: 'fy',
-          department: '',
-          dept_id: null,
-          phone: '',
-          email: '',
-          gender: 0,
-          status: 1,
-          position: '',
-          role: 'user',
-          create_time: '2025-07-03 17:46:32',
-          remark: ''
-        },
-        {
-          id: 6,
-          user_name: '用户名称',
-          nick_name: '用户昵称',
-          department: '',
-          dept_id: null,
-          phone: '',
-          email: '',
-          gender: 0,
-          status: 1,
-          position: '',
-          role: 'user',
-          create_time: '2025-07-03 17:48:21',
-          remark: ''
-        },
-        {
-          id: 7,
-          user_name: '用户名',
-          nick_name: '昵称',
-          department: '',
-          dept_id: null,
-          phone: '',
-          email: '',
-          gender: 0,
-          status: 1,
-          position: '',
-          role: 'user',
-          create_time: '2025-07-03 18:06:22',
-          remark: ''
-        },
-        {
-          id: 8,
-          user_name: '名称',
-          nick_name: 'yonghu11',
-          department: '',
-          dept_id: null,
-          phone: '',
-          email: '',
-          gender: 0,
-          status: 1,
-          position: '',
-          role: 'user',
-          create_time: '2025-07-03 18:30:12',
-          remark: ''
-        },
-        {
-          id: 9,
-          user_name: '2222',
-          nick_name: '2222',
-          department: '',
-          dept_id: null,
-          phone: '',
-          email: '',
-          gender: 0,
-          status: 1,
-          position: '',
-          role: 'user',
-          create_time: '2025-07-03 18:32:54',
-          remark: ''
-        },
-        {
-          id: 10,
-          user_name: '123用户名称',
-          nick_name: '123用户昵称',
-          department: '',
-          dept_id: null,
-          phone: '',
-          email: '',
-          gender: 0,
-          status: 1,
-          position: '',
-          role: 'user',
-          create_time: '2025-07-03 18:36:14',
-          remark: ''
-        }
-      ]
-    },
 
     // 搜索用户
     handleSearch() {
@@ -864,7 +709,7 @@ export default {
         password: '',
         gender: genderValue !== undefined ? genderValue : 0,
         position: row.position || '',
-        status: row.status ? 1 : 0  // 确保状态值为数字格式
+        status: row.status ? 0 : 1  // 确保状态值为数字格式，0为正常，1为停用
       }
       this.userDialogVisible = true
     },
@@ -894,7 +739,8 @@ export default {
             if (this.currentUser) {
               // 编辑用户
               const tenant_code = this.currentUser.tenant_code || this.searchForm.tenant_code || 'default';
-              await RBACService.updateUser(this.currentUser.user_code, tenant_code, userData)
+              // 使用 user_name 而不是 user_code，以避免使用可遍历的 id
+              await RBACService.updateUser(this.currentUser.user_name, tenant_code, userData)
               this.$message({
                 message: '用户信息修改成功',
                 type: 'success'
@@ -941,7 +787,8 @@ export default {
       try {
           // 使用当前用户的租户信息或当前选择的租户
           const tenant_code = this.currentUser.tenant_code || this.searchForm.tenant_code || 'default';
-          await RBACService.deleteUser(this.currentUser.user_code, tenant_code)
+          // 使用 user_name 而不是 user_code，以避免使用可遍历的 id
+          await RBACService.deleteUser(this.currentUser.user_name, tenant_code)
           this.$message({
             message: '用户删除成功',
             type: 'success'
@@ -979,7 +826,8 @@ export default {
           // 确保每个删除请求都使用正确的租户信息
           const deletePromises = this.selectedRows.map(row => {
             const tenant_code = row.tenant_code || this.searchForm.tenant_code || 'default';
-            return RBACService.deleteUser(row.user_code, tenant_code);
+            // 使用 user_name 而不是 user_code，以避免使用可遍历的 id
+            return RBACService.deleteUser(row.user_name, tenant_code);
           })
           await Promise.all(deletePromises)
           this.$message({
@@ -1059,7 +907,8 @@ export default {
       try {
         // 使用当前用户的租户信息或当前选择的租户
         const tenant_code = this.resetPasswordUser.tenant_code || this.searchForm.tenant_code || 'default';
-        await RBACService.resetUserPassword(this.resetPasswordUser.user_code, tenant_code)
+        // 使用 user_name 而不是 user_code，以避免使用可遍历的 id
+        await RBACService.resetUserPassword(this.resetPasswordUser.user_name, tenant_code)
         this.$message({
           message: '密码重置成功',
           type: 'success'
@@ -1084,7 +933,6 @@ export default {
       this.$router.push({
         name: 'RoleAssignment',
         params: {
-          user_code: row.user_code,
           user_name: row.user_name,
           tenant_code: row.tenant_code || this.searchForm.tenant_code || 'default'
         }
@@ -1096,10 +944,11 @@ export default {
       this.loading = true
 
       try {
-        // 确保状态值为数字格式（0或1）
-        const statusValue = row.status ? 1 : 0;
-        await RBACService.updateUser(row.user_code, row.tenant_code || 'default', { status: statusValue })
-        const status = statusValue ? '启用' : '禁用'
+        // 确保状态值为数字格式（0为正常，1为停用）
+        const statusValue = row.status ? 1 : 0;  // 如果当前状态为真（非0），则设为1（停用）；否则设为0（正常）
+        // 使用 user_name 而不是 user_code，以避免使用可遍历的 id
+        await RBACService.updateUser(row.user_name, row.tenant_code || 'default', { status: statusValue })
+        const status = statusValue ? '停用' : '启用'  // 状态值为1时显示停用，为0时显示启用
         this.$message({
           message: `用户状态已${status}`,
           type: 'success'

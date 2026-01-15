@@ -63,10 +63,10 @@
               <span class="node-content">
                 <i :class="getDeptIcon(data)" class="node-icon"></i>
                 <span class="node-label">{{ node.label }}</span>
-                <el-tag 
-                  v-if="data.status === 0" 
-                  type="danger" 
-                  size="mini" 
+                <el-tag
+                  v-if="data.status === 1"
+                  type="danger"
+                  size="mini"
                   class="status-tag"
                 >
                   已停用
@@ -110,8 +110,8 @@
       <div class="sidebar" v-if="selectedDepartment">
         <div class="sidebar-header">
           <h3>{{ selectedDepartment.dept_name }}</h3>
-          <el-tag :type="selectedDepartment.status === 1 ? 'success' : 'danger'">
-            {{ selectedDepartment.status === 1 ? '启用' : '停用' }}
+          <el-tag :type="selectedDepartment.status === 0 ? 'success' : 'danger'">
+            {{ selectedDepartment.status === 0 ? '启用' : '停用' }}
           </el-tag>
         </div>
         <div class="sidebar-content">
@@ -150,12 +150,12 @@
             >
               编辑部门
             </el-button>
-            <el-button 
-              :type="selectedDepartment.status === 1 ? 'danger' : 'success'" 
+            <el-button
+              :type="selectedDepartment.status === 0 ? 'success' : 'danger'"
               size="small"
               @click="toggleStatus(selectedDepartment)"
             >
-              {{ selectedDepartment.status === 1 ? '停用' : '启用' }}
+              {{ selectedDepartment.status === 0 ? '启用' : '停用' }}
             </el-button>
           </div>
         </div>
@@ -211,8 +211,8 @@
           </el-form-item>
           <el-form-item label="状态">
             <el-radio-group v-model="departmentForm.status">
-              <el-radio :label="1">正常</el-radio>
-              <el-radio :label="0">停用</el-radio>
+              <el-radio :label="0">正常</el-radio>
+              <el-radio :label="1">停用</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="备注">
@@ -488,7 +488,7 @@ export default {
         id: null,
         dept_name: '',
         dept_code: '',
-        parent_id: data.id,
+        parent_id: typeof data.id === 'string' ? parseInt(data.id) : data.id,  // 确保传递整数ID
         leader: '',
         phone: '',
         email: '',
@@ -568,10 +568,22 @@ export default {
 
         try {
           if (this.dialogType === 'edit') {
-            // 更新部门
+            // 更新部门 - 保留原始的dept_code，不更新编码
+            const updateData = { ...this.departmentForm, tenantId: this.selectedTenant };
+
+            // 从更新数据中移除dept_code，确保不会被修改
+            delete updateData.dept_code;
+
+            // 确保parent_id是数字类型，以便后端正确解析
+            if (updateData.parent_id) {
+              updateData.parent_id = typeof updateData.parent_id === 'string'
+                ? parseInt(updateData.parent_id)
+                : updateData.parent_id;
+            }
+
             await DepartmentTreeService.updateDepartment(
-              this.departmentForm.dept_code,
-              { ...this.departmentForm, tenantId: this.selectedTenant },
+              this.departmentForm.dept_code,  // 使用原始的dept_code
+              updateData,
               this.selectedTenant
             );
 
@@ -585,6 +597,13 @@ export default {
           } else {
             // 创建部门时，需要处理Materialized Path结构
             const departmentData = { ...this.departmentForm, tenantId: this.selectedTenant };
+
+            // 确保parent_id是数字类型，以便后端正确解析
+            if (departmentData.parent_id) {
+              departmentData.parent_id = typeof departmentData.parent_id === 'string'
+                ? parseInt(departmentData.parent_id)
+                : departmentData.parent_id;
+            }
 
             // 如果有父部门，需要计算ancestors路径
             if (this.departmentForm.parent_id && this.departmentForm.parent_id !== 0) {
@@ -635,7 +654,7 @@ export default {
     // 切换部门状态
     async toggleStatus(dept) {
       try {
-        const newStatus = dept.status === 1 ? 0 : 1;
+        const newStatus = dept.status === 0 ? 1 : 0;  // 0为正常，1为停用
 
         // 调用后端API更新状态
         await DepartmentTreeService.updateDepartmentStatus(

@@ -68,7 +68,6 @@ export default {
       
       // 用户信息
       userInfo: {
-        user_code: '',
         user_name: '',
         nick_name: ''
       },
@@ -95,9 +94,8 @@ export default {
     // 初始化用户信息
     initUserInfo() {
       const { user_code, user_name } = this.$route.params
-      this.userInfo.user_code = user_code
-      this.userInfo.user_name = user_name
-      
+      this.userInfo.user_name = user_name || user_code
+
       // 根据用户Code获取用户详细信息
       this.fetchUserInfo()
     },
@@ -105,20 +103,20 @@ export default {
     // 获取用户详细信息
     async fetchUserInfo() {
       try {
-        const response = await RBACService.getUsers({ user_code: this.userInfo.user_code })
+        const response = await RBACService.getUsers({ user_name: this.userInfo.user_name })
 
         if (response && response.data && Array.isArray(response.data.items) && response.data.items.length > 0) {
           const userData = response.data.items[0]
           this.userInfo.nick_name = userData.nick_name || userData.nickName || userData.user_name
           this.userInfo.user_name = userData.user_name
         } else {
-          console.warn(`未找到用户信息: ${this.userInfo.user_code}`)
-          this.userInfo.nick_name = this.userInfo.user_code // 使用用户代码作为昵称
+          console.warn(`未找到用户信息: ${this.userInfo.user_name}`)
+          this.userInfo.nick_name = this.userInfo.user_name // 使用用户名作为昵称
         }
       } catch (error) {
         console.error('获取用户信息失败:', error.message)
         this.$message.error(`获取用户信息失败: ${error.message}`)
-        this.userInfo.nick_name = this.userInfo.user_code // 使用用户代码作为昵称
+        this.userInfo.nick_name = this.userInfo.user_name // 使用用户名作为昵称
       }
     },
     
@@ -236,7 +234,7 @@ export default {
         const roleCodes = this.selectedRoles.map(role => role.role_code)
         
         // 调用API提交角色分配
-        await RBACService.assignRolesToUser(this.userInfo.user_code, roleCodes)
+        await RBACService.assignRolesToUser(this.userInfo.user_name, roleCodes)
         
         this.$message({
           message: `已为用户"${this.userInfo.user_name}"分配${this.selectedRoles.length}个角色`,

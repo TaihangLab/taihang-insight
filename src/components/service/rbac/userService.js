@@ -22,9 +22,10 @@ class UserService {
   }
 
   // 更新用户
-  static async updateUser(user_code, tenant_code, userData) {
+  static async updateUser(user_identifier, tenant_code, userData) {
     try {
-      return await rbacAxios.put(`/api/v1/rbac/users/${user_code}`, userData, {
+      // user_identifier 可以是 user_code 或 user_name
+      return await rbacAxios.put(`/api/v1/rbac/users/${user_identifier}`, userData, {
         params: { tenant_code: tenant_code }
       });
     } catch (error) {
@@ -34,9 +35,10 @@ class UserService {
   }
 
   // 删除用户
-  static async deleteUser(user_code, tenant_code) {
+  static async deleteUser(user_identifier, tenant_code) {
     try {
-      return await rbacAxios.delete(`/api/v1/rbac/users/${user_code}`, {
+      // user_identifier 可以是 user_code 或 user_name
+      return await rbacAxios.delete(`/api/v1/rbac/users/${user_identifier}`, {
         params: { tenant_code: tenant_code }
       });
     } catch (error) {
@@ -46,9 +48,10 @@ class UserService {
   }
 
   // 重置用户密码
-  static async resetUserPassword(user_code, tenant_code = 'default') {
+  static async resetUserPassword(user_identifier, tenant_code = 'default') {
     try {
-      return await rbacAxios.post(`/api/v1/rbac/users/${user_code}/reset-password`, {}, {
+      // user_identifier 可以是 user_code 或 user_name
+      return await rbacAxios.post(`/api/v1/rbac/users/${user_identifier}/reset-password`, {}, {
         params: { tenant_code: tenant_code }
       });
     } catch (error) {

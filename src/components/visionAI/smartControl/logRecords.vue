@@ -225,11 +225,8 @@ export default {
       
       // 模拟API调用获取日志数据
       setTimeout(() => {
-        // 模拟完整数据
-        const allMockData = this.generateAllMockLogs()
-        
         // 根据搜索条件筛选
-        let filteredData = [...allMockData]
+        let filteredData = [...this.tableData]
         
         if (this.searchForm.logType) {
           filteredData = filteredData.filter(item => item.type === this.searchForm.logType)
@@ -296,36 +293,6 @@ export default {
       })
     },
     
-    // 生成所有模拟日志数据 - 用于分页
-    generateAllMockLogs() {
-      const logTypes = ['操作', '系统', '错误', '告警']
-      const logLevels = ['信息', '警告', '错误', '严重']
-      const modules = ['用户管理', '设备管理', '系统设置', '视频监控', '模型管理']
-      const users = ['admin', 'operator', 'system']
-      
-      // 生成200条模拟数据
-      return Array.from({ length: 200 }, (_, i) => {
-        const type = logTypes[Math.floor(Math.random() * logTypes.length)]
-        const level = logLevels[Math.floor(Math.random() * logLevels.length)]
-        const date = new Date()
-        
-        // 生成不同时间的日志
-        date.setHours(date.getHours() - Math.floor(Math.random() * 72)) // 近3天内
-        date.setMinutes(date.getMinutes() - Math.floor(Math.random() * 60))
-        
-        return {
-          id: 1000 + i,
-          timestamp: this.formatDate(date),
-          type,
-          level,
-          user: users[Math.floor(Math.random() * users.length)],
-          module: modules[Math.floor(Math.random() * modules.length)],
-          message: this.getRandomMessage(type),
-          ip: `192.168.1.${Math.floor(Math.random() * 255)}`,
-          stackTrace: level === '错误' || level === '严重' ? this.getRandomStackTrace() : null
-        }
-      })
-    },
     
     // 格式化日期
     formatDate(date) {
@@ -424,9 +391,8 @@ export default {
     exportLogs() {
       this.loading = true
       
-      // 获取筛选后的所有数据
-      const allMockData = this.generateAllMockLogs()
-      let dataToExport = [...allMockData]
+      // 使用当前表格数据
+      let dataToExport = [...this.tableData]
       
       // 应用当前筛选条件
       if (this.searchForm.logType) {

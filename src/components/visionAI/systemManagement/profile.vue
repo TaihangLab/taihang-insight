@@ -128,7 +128,7 @@ export default {
     return {
       editMode: false,
       userInfo: {
-        user_code: '',
+        user_name: '',
         username: 'admin',
         email: 'admin@example.com',
         phone: '138****8888',
@@ -151,12 +151,12 @@ export default {
         // 从userService获取当前用户信息
         const currentUser = userService.getUser();
         if (currentUser) {
-          this.userInfo.user_code = currentUser.user_code;
+          this.userInfo.user_name = currentUser.user_name || currentUser.user_code;
           this.userInfo.tenant_code = currentUser.tenant_code;
-          
+
           // 调用RBACService获取详细用户信息
           const params = {
-            user_code: currentUser.user_code,
+            user_name: currentUser.user_name || currentUser.user_code,
             tenant_code: currentUser.tenant_code
           };
           
@@ -168,7 +168,7 @@ export default {
             this.userInfo.phone = user.phone || this.userInfo.phone;
             this.userInfo.department = user.department || this.userInfo.department;
             this.userInfo.role = user.role_name || this.userInfo.role;
-            this.userInfo.status = user.status === 1 ? '正常' : '禁用';
+            this.userInfo.status = user.status === 0 ? '正常' : '禁用';  // 0为正常，1为禁用
             this.userInfo.create_time = user.create_time || this.userInfo.create_time;
             this.userInfo.lastLoginTime = user.last_login_time || this.userInfo.lastLoginTime;
             this.userInfo.description = user.description || this.userInfo.description;
@@ -186,12 +186,12 @@ export default {
           email: this.userInfo.email,
           phone: this.userInfo.phone,
           description: this.userInfo.description,
-          update_by: this.userInfo.user_code // 添加更新人信息
+          update_by: this.userInfo.user_name // 添加更新人信息
         };
-        
+
         // 调用RBACService更新用户信息
         await RBACService.updateUser(
-          this.userInfo.user_code,
+          this.userInfo.user_name,
           this.userInfo.tenant_code,
           userData
         );
