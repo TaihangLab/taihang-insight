@@ -176,6 +176,8 @@ class MockRBACService {
                 description: '新增用户的权限',
                 type: 'button',
                 parentId: 'menu_user',
+                api_path: '/api/v1/rbac/users',
+                methods: ['POST'],
                 category: 'WRITE',
                 resource: 'user',
                 action: 'add',
@@ -190,6 +192,8 @@ class MockRBACService {
                 description: '编辑用户的权限',
                 type: 'button',
                 parentId: 'menu_user',
+                api_path: '/api/v1/rbac/users/{user_code}',
+                methods: ['PUT'],
                 category: 'WRITE',
                 resource: 'user',
                 action: 'edit',
@@ -204,6 +208,8 @@ class MockRBACService {
                 description: '删除用户的权限',
                 type: 'button',
                 parentId: 'menu_user',
+                api_path: '/api/v1/rbac/users/{user_code}',
+                methods: ['DELETE'],
                 category: 'DELETE',
                 resource: 'user',
                 action: 'delete',
@@ -218,6 +224,8 @@ class MockRBACService {
                 description: '重置用户密码的权限',
                 type: 'button',
                 parentId: 'menu_user',
+                api_path: '/api/v1/rbac/users/{user_code}/reset-password',
+                methods: ['POST'],
                 category: 'SPECIAL',
                 resource: 'user',
                 action: 'reset_password',
@@ -248,6 +256,8 @@ class MockRBACService {
                 description: '新增角色的权限',
                 type: 'button',
                 parentId: 'menu_role',
+                api_path: '/api/v1/rbac/roles',
+                methods: ['POST'],
                 category: 'WRITE',
                 resource: 'role',
                 action: 'add',
@@ -262,6 +272,8 @@ class MockRBACService {
                 description: '编辑角色的权限',
                 type: 'button',
                 parentId: 'menu_role',
+                api_path: '/api/v1/rbac/roles/{role_code}',
+                methods: ['PUT'],
                 category: 'WRITE',
                 resource: 'role',
                 action: 'edit',
@@ -276,6 +288,8 @@ class MockRBACService {
                 description: '删除角色的权限',
                 type: 'button',
                 parentId: 'menu_role',
+                api_path: '/api/v1/rbac/roles/{role_code}',
+                methods: ['DELETE'],
                 category: 'DELETE',
                 resource: 'role',
                 action: 'delete',
@@ -337,6 +351,8 @@ class MockRBACService {
                 description: '开始监控的权限',
                 type: 'button',
                 parentId: 'menu_realtime',
+                api_path: '/api/v1/monitoring/realtime/start',
+                methods: ['POST'],
                 category: 'WRITE',
                 resource: 'realtime',
                 action: 'start',
@@ -351,6 +367,8 @@ class MockRBACService {
                 description: '停止监控的权限',
                 type: 'button',
                 parentId: 'menu_realtime',
+                api_path: '/api/v1/monitoring/realtime/stop',
+                methods: ['POST'],
                 category: 'WRITE',
                 resource: 'realtime',
                 action: 'stop',
@@ -636,8 +654,11 @@ class MockRBACService {
     throw new Error('角色不存在');
   }
 
-  async getRolePermissions(roleId, tenant_id) {
+  async getRolePermissions(params) {
     await this.delay();
+
+    // 如果传入的是对象，则从中提取role_id
+    const roleId = typeof params === 'object' && params !== null ? params.role_id : params;
 
     // 返回与角色相关的权限
     return this.createResponse(this.permissions);

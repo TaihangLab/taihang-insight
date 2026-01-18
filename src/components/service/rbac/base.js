@@ -51,6 +51,7 @@ rbacAxios.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token;
     }
+    config.headers['clientid'] = '02bb9cfe8d7844ecae8dbe62b1ba971a';
     return config;
   },
   error => {
@@ -82,7 +83,48 @@ rbacAxios.interceptors.response.use(
   },
   error => {
     // 处理响应错误
-    console.error('RBAC API 请求错误:', error.message);
+    console.error('RBAC API 请求错误:', error);
+    
+    // 如果是HTTP错误响应，尝试提取UnifiedResponse格式的错误消息
+    if (error.response && error.response.data) {
+      const data = error.response.data;
+      
+      // 检查是否为UnifiedResponse格式
+      if (data && typeof data === 'object' && 'success' in data && 'code' in data && 'message' in data) {
+        const errorMessage = data.message || 'API请求失败';
+        const errorCode = data.code || error.response.status;
+        
+        // 创建新的错误对象，包含详细错误信息
+        const customError = new Error(errorMessage);
+        customError.code = errorCode;
+        customError.status = error.response.status;
+        customError.response = data;
+        customError.originalError = error;
+        
+        return Promise.reject(customError);
+      }
+      
+      // 如果是403错误，即使不是UnifiedResponse格式，也提取消息
+      if (error.response.status === 403) {
+        let errorMessage = '权限不足，无权限访问该资源';
+        if (data && typeof data === 'object' && data.message) {
+          errorMessage = data.message;
+        } else if (data && typeof data === 'object' && data.detail) {
+          errorMessage = data.detail;
+        } else if (typeof data === 'string') {
+          errorMessage = data;
+        }
+        
+        const customError = new Error(errorMessage);
+        customError.code = 403;
+        customError.status = 403;
+        customError.response = error.response.data;
+        customError.originalError = error;
+        
+        return Promise.reject(customError);
+      }
+    }
+    
     return Promise.reject(error);
   }
 );

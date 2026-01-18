@@ -131,16 +131,20 @@ export default {
     parentDeptOptionsWithTreeStructure() {
       // 为el-cascader准备数据，确保树形结构正确
       const noneOption = {
-        id: null,
+        id: 0,  // 使用 0 而不是 null，与后端数据保持一致
         name: '无上级部门',
-        value: null,
+        value: 0,
         label: '无上级部门',
         children: []
       };
 
       // 过滤掉"无上级部门"选项（如果存在于parentDeptOptions中），然后添加到前面
-      const filteredOptions = this.parentDeptOptions.filter(option => option.id !== null);
-      return [noneOption, ...parentDeptOptions];
+      // 递归转换，确保所有id都是数字类型
+      const filteredOptions = this.parentDeptOptions
+        .filter(option => option.id !== null && option.id !== 0)
+        .map(option => this.convertOptionToNumber(option));
+      
+      return [noneOption, ...filteredOptions];
     },
     cascaderProps() {
       return {
@@ -156,14 +160,10 @@ export default {
   watch: {
     currentDept: {
       handler(newVal) {
+         console.log('DepartmentEditDialog - currentDept:', newVal);
         if (newVal) {
-          this.deptForm = {
-            id: newVal.id || null,
-            parent_id: newVal.parent_id || null,
-            name: newVal.name || '',
-            sort_order: newVal.sort_order || 0,
-            status: newVal.status !== undefined ? newVal.status : 0
-          }
+          this.deptForm =  newVal
+          console.log('DepartmentEditDialog - deptForm:', this.deptForm);
         } else {
           this.resetForm()
         }
@@ -172,6 +172,20 @@ export default {
     }
   },
   methods: {
+    // 递归转换选项的id为数字类型
+    convertOptionToNumber(option) {
+      const converted = {
+        ...option,
+        id: option.id !== null ? parseInt(option.id) : null,
+        value: option.value !== null ? parseInt(option.value) : null
+      };
+      
+      if (option.children && option.children.length > 0) {
+        converted.children = option.children.map(child => this.convertOptionToNumber(child));
+      }
+      
+      return converted;
+    },
     resetForm() {
       this.deptForm = {
         id: null,

@@ -15,7 +15,7 @@
       <el-table-column prop="status" label="状态" width="80" align="center">
         <template slot-scope="scope">
           <el-switch
-            :value="scope.row.status"
+            v-model="scope.row.status"
             :active-value="0"
             :inactive-value="1"
             active-color="#3b82f6"
@@ -25,9 +25,10 @@
         </template>
       </el-table-column>
       <el-table-column prop="create_time" label="创建时间" min-width="140" align="center"></el-table-column>
-      <el-table-column label="操作" min-width="180" fixed="right" align="center">
+      <el-table-column label="操作" min-width="240" fixed="right" align="center">
         <template slot-scope="scope">
           <div class="operation-buttons">
+            <el-button type="text" class="auth-btn" @click="handleAuthorization(scope.row)">授权</el-button>
             <el-button type="text" class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
             <el-button type="text" class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
             <el-button type="text" class="reset-btn" @click="handleResetPassword(scope.row)">重置</el-button>
@@ -56,7 +57,22 @@ export default {
       this.$emit('selection-change', selection)
     },
     handleStatusChange(row) {
-      this.$emit('status-change', row)
+      // 记录原始状态值
+      const originalStatus = row.status;
+
+      // 立即将状态切换，提供即时反馈
+      row.status = row.status === 0 ? 1 : 0;
+
+      // 定义一个回调函数来处理状态更新结果
+      const callback = (success) => {
+        if (!success) {
+          // 如果更新失败，恢复原始状态
+          row.status = originalStatus;
+        }
+      };
+
+      // 发送状态变更请求给父组件，并传递回调函数
+      this.$emit('status-change', row, callback);
     },
     handleEdit(row) {
       this.$emit('edit', row)
@@ -66,6 +82,9 @@ export default {
     },
     handleResetPassword(row) {
       this.$emit('reset-password', row)
+    },
+    handleAuthorization(row) {
+      this.$emit('authorization', row)
     }
   }
 }
@@ -111,6 +130,10 @@ export default {
   display: flex;
   justify-content: center;
   gap: 8px;
+}
+
+.auth-btn {
+  color: #67C23A;
 }
 
 .edit-btn {

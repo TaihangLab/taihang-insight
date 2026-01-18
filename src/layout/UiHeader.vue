@@ -18,7 +18,7 @@
       </div>
 
       <!-- 用户信息 - 仅在已登录时显示 -->
-      <el-dropdown v-if="isLoggedIn" trigger="click" @command="handleCommand">
+      <el-dropdown trigger="click" @command="handleCommand">
         <div class="user-info">
           <el-avatar :size="32" icon="el-icon-user" class="user-avatar"></el-avatar>
           <span class="username">{{ username }}</span>
@@ -32,6 +32,10 @@
           <el-dropdown-item command="password">
             <i class="el-icon-key"></i>
             <span>修改密码</span>
+          </el-dropdown-item>
+          <el-dropdown-item command="clearCache">
+            <i class="el-icon-delete"></i>
+            <span>清除缓存</span>
           </el-dropdown-item>
           <el-dropdown-item divided command="logout">
             <i class="el-icon-switch-button"></i>
@@ -49,6 +53,7 @@
 <script>
 import changePasswordDialog from '../components/dialog/changePassword.vue'
 import userService from '../components/service/UserService'
+import RBACService from '../components/service/RBACService'
 
 export default {
   name: "UiHeader",
@@ -129,10 +134,45 @@ export default {
         case 'password':
           this.$refs.changePasswordDialog.openDialog();
           break;
+        case 'clearCache':
+          this.clearCache();
+          break;
         case 'logout':
           this.logout();
           break;
       }
+    },
+    clearCache() {
+      this.$confirm('确定要清除所有本地缓存吗？包括部门缓存、租户缓存等数据。', '清除缓存', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        try {
+          // 清除所有 RBAC 缓存（部门树、租户等）
+          RBACService.clearAllCache();
+
+          this.$message({
+            showClose: true,
+            message: '缓存已清除',
+            type: 'success'
+          });
+
+          // 刷新页面以重新加载数据
+          setTimeout(() => {
+            location.reload();
+          }, 500);
+        } catch (error) {
+          console.error('清除缓存失败:', error);
+          this.$message({
+            showClose: true,
+            message: '清除缓存失败: ' + error.message,
+            type: 'error'
+          });
+        }
+      }).catch(() => {
+        // 用户取消
+      });
     },
     logout() {
       userService.clearToken();

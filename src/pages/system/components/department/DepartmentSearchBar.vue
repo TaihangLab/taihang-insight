@@ -43,7 +43,7 @@
 </template>
 
 <script>
-import TenantSelector from '@/components/common/TenantSelector.vue'
+import TenantSelector from '../commons/TenantSelector.vue'
 
 export default {
   name: 'DepartmentSearchBar',
@@ -54,9 +54,9 @@ export default {
     value: {
       type: Object,
       default: () => ({
-        tenant_id: -1,
+        tenant_id: null,
         name: '',
-        id: -1,
+        id: null,
         status: null
       })
     }
@@ -80,9 +80,9 @@ export default {
     },
     handleReset() {
       this.formValue = {
-        tenant_id: -1,
+        tenant_id: null,
         name: '',
-        id: -1,
+        id: null,
         status: null
       }
       this.$emit('reset')

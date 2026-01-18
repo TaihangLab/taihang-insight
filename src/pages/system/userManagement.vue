@@ -3,68 +3,31 @@
     <div class="content-layout">
       <!-- 右侧用户管理区域 -->
       <div class="right-panel">
-        <!-- 租户选择器 -->
-        <div class="tenant-selector-wrapper">
-          <TenantSelector
-            ref="tenantSelector"
-            v-model="searchForm.tenant_id"
-            @change="handleTenantChange"
-            :auto-select-first="true"
-          />
-        </div>
-
         <!-- 搜索筛选区域 -->
-    <UserSearchBar
-      v-model="searchForm"
-      :department-options="departmentOptions"
-      @search="handleSearch"
-      @reset="resetSearch"
-    />
+        <UserSearchBar v-model="searchForm" @search="handleSearch"
+          @reset="resetSearch" @tenant-change="handleTenantChange" />
 
         <!-- 表格操作区域 -->
-        <UserList
-          :users="users"
-          :loading="loading"
-          :pagination="pagination"
-          :total="total"
-          @selection-change="handleSelectionChange"
-          @edit="handleEdit"
-          @delete="handleDelete"
-          @status-change="handleStatusChange"
-          @reset-password="handleResetPassword"
-          @add="handleAdd"
-          @batch-delete="handleBatchDelete"
-          @more-action="handleMoreAction"
-          @advanced-search="toggleAdvancedSearch"
-          @refresh="refreshData"
-          @table-setting="showTableSetting"
-          @page-change="handlePageChange"
-          @size-change="handleSizeChange"
-        />
+        <UserList :users="users" :loading="loading" :pagination="pagination" :total="total"
+          @selection-change="handleSelectionChange" @edit="handleEdit" @delete="handleDelete"
+          @status-change="handleStatusChange" @reset-password="handleResetPassword" @add="handleAdd"
+          @batch-delete="handleBatchDelete" @more-action="handleMoreAction" @advanced-search="toggleAdvancedSearch"
+          @refresh="refreshData" @table-setting="showTableSetting" @page-change="handlePageChange"
+          @size-change="handleSizeChange" @authorization="handleAuthorization" />
       </div>
     </div>
 
     <!-- 新增/编辑用户对话框 -->
-    <UserEditDialog
-      :visible.sync="userDialogVisible"
-      :current-user="currentUser"
-      :department-options="departmentOptions"
-      @submit="handleSaveUser"
-    />
+    <UserEditDialog :visible.sync="userDialogVisible" :current-user="currentUser"
+      :tenant-id="searchForm.tenant_id" @submit="handleSaveUser" />
 
     <!-- 删除确认对话框 -->
-    <DeleteConfirmDialog
-      :visible.sync="deleteDialogVisible"
-      :target-type="selectedRows.length > 1 ? 'batch' : 'single'"
-      @confirm="confirmDelete"
-    />
+    <DeleteConfirmDialog :visible.sync="deleteDialogVisible" :target-type="selectedRows.length > 1 ? 'batch' : 'single'"
+      @confirm="confirmDelete" />
 
     <!-- 重置密码对话框 -->
-    <ResetPasswordDialog
-      :visible.sync="resetPasswordDialogVisible"
-      :reset-password-user="resetPasswordUser"
-      @confirm="handleResetPasswordConfirm"
-    />
+    <ResetPasswordDialog :visible.sync="resetPasswordDialogVisible" :reset-password-user="resetPasswordUser"
+      @confirm="handleResetPasswordConfirm" />
   </div>
 </template>
 
@@ -77,19 +40,17 @@ import DeleteConfirmDialog from './components/user/DeleteConfirmDialog.vue'
 import ResetPasswordDialog from './components/user/ResetPasswordDialog.vue'
 import { useUserData } from './composable/user/useUserData'
 import { useUserExport } from './composable/user/useUserExport'
-import TenantSelector from '@/components/common/TenantSelector.vue'
 
 export default {
   name: 'UserManagement',
 
   components: {
-      UserSearchBar,
-      UserList,
-      UserEditDialog,
-      DeleteConfirmDialog,
-      ResetPasswordDialog,
-      TenantSelector
-    },
+    UserSearchBar,
+    UserList,
+    UserEditDialog,
+    DeleteConfirmDialog,
+    ResetPasswordDialog
+  },
 
   data() {
     return {
@@ -105,56 +66,9 @@ export default {
         phone: '',
         status: '',
         dept_id: [],
-        position: '',
         gender: '',
         create_time_range: [],
-        tenant_id: ''
-      },
-
-      // 组织架构树数据（后续需要从API获取）
-      treeData: [
-        {
-          id: 1,
-          code: 'ROOT',
-          label: 'XXX科技',
-          children: [
-            {
-              id: 2,
-              code: 'SZ_HQ',
-              label: '深圳总公司',
-              children: [
-                { id: 3, code: 'DEV', label: '研发部门' },
-                { id: 4, code: 'MARKET', label: '市场部门' },
-                { id: 5, code: 'TEST', label: '测试部门' },
-                { id: 6, code: 'FINANCE', label: '财务部门' },
-                { id: 7, code: 'OPS', label: '运维部门' }
-              ]
-            },
-            {
-              id: 8,
-              code: 'CS_BRANCH',
-              label: '长沙分公司',
-              children: [
-                { id: 9, code: 'CS_MARKET', label: '市场部门' },
-                { id: 10, code: 'CS_FINANCE', label: '财务部门' }
-              ]
-            }
-          ]
-        }
-      ],
-
-      // 级联选择器配置
-      cascaderProps: {
-        value: 'id',
-        label: 'label',
-        children: 'children',
-        checkStrictly: true,
-        // 自定义显示模板，显示部门编码（编码在前，名称在后）
-        renderFormat: (labels, selectedOptions) => {
-          return selectedOptions.map(option => {
-            return `${option.code} - ${option.label}`;
-          }).join('/');
-        }
+        tenant_id: null
       },
 
       // 对话框状态
@@ -169,42 +83,19 @@ export default {
       pagination: {
         currentPage: 1,
         pageSize: 10
-      },
-
-      // 租户缓存
-      cachedTenants: []
-    }
-  },
-
-  computed: {
-    departmentOptions() {
-      return this.treeData
+      }
     }
   },
 
   async created() {
-    // 加载租户信息，TenantSelector 的 autoSelectFirst 会触发 change 事件
-    await this.loadTenantsIfNeeded()
+    // TenantSelector 组件内部会自动加载租户并触发 change 事件
   },
 
   methods: {
-    // 加载租户信息（如果尚未加载）
-    async loadTenantsIfNeeded() {
-      if (this.cachedTenants && this.cachedTenants.length > 0) {
-        return
-      }
-
-      const tenantSelector = this.$refs.tenantSelector
-      if (tenantSelector && typeof tenantSelector.loadTenantsIfNeeded === 'function') {
-        await tenantSelector.loadTenantsIfNeeded()
-        this.cachedTenants = [...tenantSelector.tenants]
-      }
-    },
-
     // 处理租户变化
-    handleTenantChange() {
+    async handleTenantChange() {
       this.pagination.currentPage = 1
-      this.fetchUsers()
+      this.fetchUsers();
     },
 
 
@@ -229,9 +120,8 @@ export default {
         dept_id: this.searchForm.dept_id && this.searchForm.dept_id.length > 0
           ? this.searchForm.dept_id[this.searchForm.dept_id.length - 1]
           : undefined,
-        position_code: this.searchForm.position || undefined,
         gender: this.searchForm.gender !== '' ? this.searchForm.gender : undefined,
-        tenant_id: this.searchForm.tenant_id || undefined
+        tenant_id: this.searchForm.tenant_id != null ? this.searchForm.tenant_id : undefined
       }
 
       await this.fetchUsersFromComposable(params)
@@ -252,10 +142,9 @@ export default {
         phone: '',
         status: '',
         dept_id: [],
-        position: '',
         gender: '',
         create_time_range: [],
-        tenant_id: currentTenantCode
+        tenant_id: currentTenantCode || null
       }
       this.pagination.currentPage = 1
       this.fetchUsers()
@@ -316,7 +205,7 @@ export default {
       try {
         const data = {
           ...userData,
-          tenant_id: this.searchForm.tenant_id || userData.tenant_id,
+          tenant_id: this.searchForm.tenant_id != null ? this.searchForm.tenant_id : userData.tenant_id,
           dept_id: userData.dept_id && userData.dept_id.length > 0
             ? userData.dept_id[userData.dept_id.length - 1]
             : undefined
@@ -388,19 +277,22 @@ export default {
     },
 
     // 状态切换
-    async handleStatusChange(row) {
+    async handleStatusChange(row, callback) {
       try {
-        await this.updateUserFromComposable(row.id, { status: row.status })
+        await this.updateUserFromComposable(row.id, { status: row.status });
         this.$message({
           message: '用户状态更新成功',
           type: 'success'
-        })
+        });
+        // 调用回调函数，通知更新成功
+        if (callback) callback(true);
       } catch (error) {
-        row.status = row.status === 0 ? 1 : 0
         this.$message({
           message: `更新用户状态失败: ${error.message}`,
           type: 'error'
-        })
+        });
+        // 调用回调函数，通知更新失败
+        if (callback) callback(false);
       }
     },
 
@@ -460,9 +352,8 @@ export default {
           dept_id: this.searchForm.dept_id && this.searchForm.dept_id.length > 0
             ? this.searchForm.dept_id[this.searchForm.dept_id.length - 1]
             : undefined,
-          position_code: this.searchForm.position || undefined,
           gender: this.searchForm.gender !== '' ? this.searchForm.gender : undefined,
-          tenant_id: this.searchForm.tenant_id || undefined
+          tenant_id: this.searchForm.tenant_id != null ? this.searchForm.tenant_id : undefined
         }
 
         const selectedUsers = this.selectedRows.length > 0 ? this.selectedRows : []
@@ -480,6 +371,18 @@ export default {
           type: 'error'
         })
       }
+    },
+
+    // 处理用户授权
+    handleAuthorization(row) {
+      // 跳转到角色分配页面，传递用户信息
+      this.$router.push({
+        name: 'RoleAssignment',
+        params: {
+          user_code: row.user_name,
+          user_name: row.nick_name || row.user_name
+        }
+      })
     }
   },
 

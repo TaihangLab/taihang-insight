@@ -22,8 +22,8 @@ export default {
   name: 'TenantSelector',
   props: {
     value: {
-      type: Number,
-      default: -1
+      type: [Number, String],
+      default: null
     },
     placeholder: {
       type: String,
@@ -63,11 +63,11 @@ export default {
           this.loaded = true
 
           // 如果需要自动选择第一个租户且当前没有选中租户
-          if (this.autoSelectFirst && !this.value && this.tenants.length > 0) {
+          if (this.autoSelectFirst && (this.value === null || this.value === undefined || this.value === '') && this.tenants.length > 0) {
             const firstTenantCode = this.getTenantValue(this.tenants[0])
             this.$emit('input', firstTenantCode)  // 更新v-model绑定的值
             this.$emit('change', firstTenantCode) // 触发change事件
-          } else if (this.autoSelectFirst && !this.value && this.tenants.length === 0) {
+          } else if (this.autoSelectFirst && (this.value === null || this.value === undefined || this.value === '') && this.tenants.length === 0) {
             // 如果启用了自动选择但没有租户，发出警告
             console.warn('没有可用的租户，请先创建租户')
             this.$message({
@@ -98,7 +98,8 @@ export default {
     },
 
     getTenantValue(tenant) {
-      return tenant.id;
+      // 返回tenant_id，优先使用id，如果没有则使用tenant_code
+      return tenant.id !== undefined ? tenant.id : tenant.tenant_code;
     }
   },
   watch: {

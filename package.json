@@ -47,9 +47,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
-    "@types/node": "^25.0.9",
-    "@types/vue": "^1.0.31",
-    "@vue/cli-plugin-typescript": "^5.0.9",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",
     "babel-helper-vue-jsx-merge-props": "^2.0.3",

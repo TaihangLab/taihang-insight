@@ -30,13 +30,12 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="归属部门" prop="dept_id">
-            <el-cascader
+            <DeptTreeSelect
               v-model="userForm.dept_id"
-              :options="departmentOptions"
-              :props="cascaderProps"
+              :tenant-id="tenantId"
+              :status="0"
               placeholder="请选择归属部门"
-              style="width: 100%">
-            </el-cascader>
+            />
           </el-form-item>
         </el-col>
       </el-row>
@@ -123,11 +122,13 @@
 
 <script>
 import SmartFillAssistant from '@/mock/components/SmartFillAssistant'
+import DeptTreeSelect from '../commons/DeptTreeSelect.vue'
 
 export default {
   name: 'UserEditDialog',
   components: {
-    SmartFillAssistant
+    SmartFillAssistant,
+    DeptTreeSelect
   },
   props: {
     visible: {
@@ -138,9 +139,9 @@ export default {
       type: Object,
       default: null
     },
-    departmentOptions: {
-      type: Array,
-      default: () => []
+    tenantId: {
+      type: [String, Number],
+      required: true
     }
   },
   data() {
@@ -170,12 +171,6 @@ export default {
         email: [
           { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
         ]
-      },
-      cascaderProps: {
-        value: 'id',
-        label: 'label',
-        children: 'children',
-        checkStrictly: true
       }
     }
   },
@@ -272,7 +267,7 @@ export default {
           nick_name: '测试用户' + Math.floor(Math.random() * 10000),
           phone: '138' + Math.floor(100000000 + Math.random() * 900000000).toString().substring(0, 8),
           email: 'test' + Math.floor(Math.random() * 10000) + '@example.com',
-          dept_id: this.departmentOptions.length > 0 ? [this.departmentOptions[0].id] : [],
+          dept_id: [],  // 部门由用户手动选择
           password: 'TestPass123!',
           gender: [0, 1, 2][Math.floor(Math.random() * 3)],
           status: Math.round(Math.random()),

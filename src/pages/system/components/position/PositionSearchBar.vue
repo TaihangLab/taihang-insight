@@ -1,5 +1,5 @@
 <template>
-  <div class="user-search-bar">
+  <div class="position-search-bar">
     <el-form :inline="true" :model="formValue" class="search-form">
       <el-form-item label="租户">
         <TenantSelector
@@ -8,50 +8,34 @@
           @change="handleTenantChange"
         />
       </el-form-item>
-      <el-form-item label="用户名称">
+      <el-form-item label="岗位编码">
         <el-input
-          v-model="formValue.user_name"
-          placeholder="请输入用户名称"
+          v-model="formValue.position_code"
+          placeholder="请输入岗位编码"
           clearable
           style="width: 200px;"
         ></el-input>
       </el-form-item>
-      <el-form-item label="用户昵称">
+      <el-form-item label="岗位名称">
         <el-input
-          v-model="formValue.nick_name"
-          placeholder="请输入用户昵称"
+          v-model="formValue.position_name"
+          placeholder="请输入岗位名称"
           clearable
           style="width: 200px;"
         ></el-input>
       </el-form-item>
-      <el-form-item label="手机号码">
+      <el-form-item label="类别编码">
         <el-input
-          v-model="formValue.phone"
-          placeholder="请输入手机号码"
+          v-model="formValue.category_code"
+          placeholder="请输入类别编码"
           clearable
           style="width: 200px;"
         ></el-input>
       </el-form-item>
       <el-form-item label="状态">
-        <el-select v-model="formValue.status" placeholder="用户状态" clearable style="width: 120px;">
-          <el-option label="启用" :value="0"></el-option>
-          <el-option label="禁用" :value="1"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="部门">
-        <DeptTreeSelect
-          v-model="formValue.dept_id"
-          :tenant-id="formValue.tenant_id"
-          :status="0"
-          placeholder="选择部门"
-          custom-style="width: 200px;"
-        />
-      </el-form-item>
-      <el-form-item label="性别">
-        <el-select v-model="formValue.gender" placeholder="选择性别" clearable style="width: 100px;">
-          <el-option label="未知" :value="0"></el-option>
-          <el-option label="男" :value="1"></el-option>
-          <el-option label="女" :value="2"></el-option>
+        <el-select v-model="formValue.status" placeholder="岗位状态" clearable style="width: 120px;">
+          <el-option label="正常" :value="1"></el-option>
+          <el-option label="停用" :value="0"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -67,7 +51,7 @@ import TenantSelector from '../commons/TenantSelector.vue'
 import DeptTreeSelect from '../commons/DeptTreeSelect.vue'
 
 export default {
-  name: 'UserSearchBar',
+  name: 'PositionSearchBar',
   components: {
     TenantSelector,
     DeptTreeSelect
@@ -77,12 +61,10 @@ export default {
       type: Object,
       default: () => ({
         tenant_id: null,
-        user_name: '',
-        nick_name: '',
-        phone: '',
-        status: null,
-        dept_id: [],
-        gender: null
+        position_code: '',
+        position_name: '',
+        category_code: '',
+        status: null
       })
     }
   },
@@ -94,7 +76,6 @@ export default {
   watch: {
     value: {
       handler(newVal) {
-        console.log('value change', newVal)
         this.formValue = { ...newVal }
       },
       deep: true
@@ -107,14 +88,11 @@ export default {
     handleReset() {
       const currentTenantCode = this.formValue.tenant_id
       this.formValue = {
-        tenant_id: currentTenantCode || null,
-        user_name: '',
-        nick_name: '',
-        phone: '',
-        status: null,
-        dept_id: [],
-        position: '',
-        gender: null
+        tenant_id: currentTenantCode,
+        position_code: '',
+        position_name: '',
+        category_code: '',
+        status: null
       }
       this.$emit('reset', this.formValue)
     },
@@ -127,7 +105,7 @@ export default {
 </script>
 
 <style scoped>
-.user-search-bar {
+.position-search-bar {
   margin-bottom: 20px;
 }
 

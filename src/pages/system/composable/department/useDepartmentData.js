@@ -17,21 +17,16 @@ export function useDepartmentData() {
   /**
    * 获取部门列表（树形结构）
    * @param {Object} params - 查询参数
-   * @param {string} params.sort_by - 排序字段
-   * @param {string} params.order - 排序方向 (asc/desc)
    * @param {string} params.name - 部门名称
-   * @param {string} params.id - 部门ID 
+   * @param {string} params.id - 部门ID
    * @param {number} params.status - 状态 (0=启用, 1=停用)
    * @param {string} params.tenant_id - 租户编码
    */
   const fetchDepartments = async (params) => {
     loading.value = true
     try {
-      // 添加按修改时间倒序排列的参数
       const queryParams = {
         ...params,
-        sort_by: 'updated_at',  // 按修改时间排序
-        order: 'desc'           // 倒序排列
       }
 
       const response = await RBACService.getDepartmentTree(queryParams)
@@ -92,61 +87,48 @@ export function useDepartmentData() {
       const response = await RBACService.getDepartmentTree(params)
 
       console.log('部门树形结构:', response.data);
-      parentDeptOptions.value= response.data;
-      return response.data;
+      
+      let depts = [];
 
-    //   if (response && response.data) {
-    //     let depts = [];
+      // 安全地提取部门数据，支持多种返回格式
+      if (response && response.data) {
+        if (response.data.items !== undefined) {
+          depts = Array.isArray(response.data.items) ? response.data.items : [];
+        } else if (Array.isArray(response.data)) {
+          depts = response.data;
+        }
+      }
 
-    //     // 安全地提取部门数据，支持多种返回格式
-    //     if (response.data.items !== undefined) {
-    //       depts = Array.isArray(response.data.items) ? response.data.items : [];
-    //     } else if (Array.isArray(response.data)) {
-    //       depts = response.data;
-    //     } else {
-    //       console.warn('API返回格式不符合预期:', response.data);
-    //       depts = [];
-    //     }
-    //     console.log('部门列表:', depts);
+      // 递归转换数据，确保所有 id 都是数字类型
+      const convertToNumber = (nodes) => {
+        return nodes.map(node => ({
+          ...node,
+          id: parseInt(node.id),
+          parent_id: node.parent_id !== null && node.parent_id !== undefined 
+            ? parseInt(node.parent_id) 
+            : null,
+          children: node.children && node.children.length > 0 
+            ? convertToNumber(node.children) 
+            : []
+        }));
+      };
 
-    //     // // 递归处理树形结构数据，将其扁平化为适合级联选择器的格式
-    //     // const flattenTree = (tree, level = 0) => {
-    //     //   let result = [];
-    //     //   for (const node of tree) {
-    //     //     result.push({
-    //     //       // 使用数据库的 bigint id 作为主要标识
-    //     //       id: node.id,
-    //     //       name: node.name ,
-    //     //       parent_id: node.parent_id,
-    //     //       path: node.path,
-    //     //       depth: node.depth,
-    //     //       sort_order: node.sort_order || 0,
-    //     //       status: node.status,
-    //     //       children: node.children && node.children.length > 0 ? flattenTree(node.children, level + 1) : []
-    //     //     });
+      // 转换数据类型
+      const convertedDepts = convertToNumber(depts);
 
-    //     //     if (node.children && node.children.length > 0) {
-    //     //       result = result.concat(flattenTree(node.children, level + 1));
-    //     //     }
-    //     //   }
-    //     //   return result;
-    //     // };
+      // 添加"无上级部门"选项（id为0）
+      const noneOption = {
+        id: 0,
+        name: '无上级部门',
+        parent_id: null,
+        children: []
+      };
 
-    //     // 如果返回的是树形结构数组
-    //     if (Array.isArray(depts)) {
-    //       const flattenedDepts = depts;
-    //       // 添加"无上级部门"选项
-    //       parentDeptOptions.value = [
-    //         { id: null,  name: '无上级部门', parent_id: null, children: [] },
-    //         ...flattenedDepts
-    //       ];
-    //     } else {
-    //       // 添加"无上级部门"选项
-    //       parentDeptOptions.value = [
-    //         { id: null,  name: '无上级部门', parent_id: null, children: [] }
-    //       ];
-    //     }
-    //   }
+      parentDeptOptions.value = [noneOption, ...convertedDepts];
+      console.log('转换后的上级部门选项:', parentDeptOptions.value);
+      
+      return parentDeptOptions.value;
+
     } catch (error) {
       console.error('获取上级部门选项失败:', error)
       throw error

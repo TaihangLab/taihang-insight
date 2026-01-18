@@ -15,7 +15,7 @@
       <template slot-scope="scope">
         <el-switch
           :data-testid="'switch-status-' + scope.row.id"
-          :value="scope.row.status"
+          v-model="scope.row.status"
           :active-value="0"
           :inactive-value="1"
           active-color="#3b82f6"

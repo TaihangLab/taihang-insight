@@ -17,9 +17,10 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="操作" min-width="180" fixed="right" align="center">
+      <el-table-column label="操作" min-width="250" fixed="right" align="center">
         <template slot-scope="scope">
           <div class="operation-buttons">
+            <el-button type="text" class="auth-btn" @click="handleAuthorization(scope.row)">授权</el-button>
             <el-button type="text" class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
             <el-button type="text" class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
           </div>
@@ -76,6 +77,9 @@ export default {
     handleDelete(row) {
       this.$emit('delete', row)
     },
+    handleAuthorization(row) {
+      this.$emit('authorization', row)
+    },
     handleSizeChange(size) {
       this.$emit('size-change', size)
     },
@@ -106,6 +110,10 @@ export default {
   display: flex;
   justify-content: center;
   gap: 8px;
+}
+
+.auth-btn {
+  color: #67C23A;
 }
 
 .edit-btn {

@@ -19,6 +19,7 @@
       @delete="handleDelete"
       @status-change="handleStatusChange"
       @reset-password="handleResetPassword"
+      @authorization="handleAuthorization"
     />
 
     <!-- 分页 -->
@@ -81,8 +82,8 @@ export default {
     handleBatchDelete() {
       this.$emit('batch-delete')
     },
-    handleStatusChange(row) {
-      this.$emit('status-change', row)
+    handleStatusChange(row, callback) {
+      this.$emit('status-change', row, callback)
     },
     handleResetPassword(row) {
       this.$emit('reset-password', row)
@@ -104,6 +105,9 @@ export default {
     },
     handleTableSetting() {
       this.$emit('table-setting')
+    },
+    handleAuthorization(row) {
+      this.$emit('authorization', row)
     }
   }
 }

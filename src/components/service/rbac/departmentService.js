@@ -21,6 +21,20 @@ class DepartmentService {
     }
   }
 
+  // 根据租户ID和状态获取部门树
+  static async getDepartmentTreeByTenantAndStatus(tenantId, status = 0) {
+    try {
+      const params = {
+        status: status,
+        tenant_id: tenantId
+      };
+      return await rbacAxios.get('/api/v1/rbac/depts/tree', { params });
+    } catch (error) {
+      console.error('根据租户ID和状态获取部门树失败:', error);
+      throw error;
+    }
+  }
+
   // 创建部门
   static async createDepartment(deptData) {
     try {

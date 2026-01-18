@@ -461,7 +461,7 @@ export default {
       this.departmentForm = {
         id: null,
         name: '',
-        parent_id: 0, // 根部门
+        parent_id: 0, // 根部门，确保是数字类型
         leader: '',
         phone: '',
         email: '',
@@ -480,7 +480,7 @@ export default {
       this.departmentForm = {
         id: null,
         name: '',
-        parent_id: data.id,  // 确保传递整数ID
+        parent_id: parseInt(data.id),  // 确保传递整数ID
         leader: '',
         phone: '',
         email: '',
@@ -497,7 +497,15 @@ export default {
     async edit(data) {
       this.dialogType = 'edit';
       this.departmentForm = { ...data };
+      // 确保 parent_id 是数字类型，与级联选择器的 value 类型一致
+      if (this.departmentForm.parent_id !== null && this.departmentForm.parent_id !== undefined) {
+        this.departmentForm.parent_id = parseInt(this.departmentForm.parent_id);
+      }
+      console.log('编辑部门 - 原始数据:', data);
+      console.log('编辑部门 - departmentForm.parent_id:', this.departmentForm.parent_id, '类型:', typeof this.departmentForm.parent_id);
       this.loadDepartmentOptions(); // 加载部门选项
+      console.log('编辑部门 - departmentOptions:', this.departmentOptions);
+      console.log('编辑部门 - 查找匹配的选项:', this.departmentOptions.find(opt => opt.id === this.departmentForm.parent_id));
       this.dialogVisible = true;
     },
 
@@ -743,16 +751,26 @@ export default {
     // 加载部门选项（用于级联选择器）
     loadDepartmentOptions() {
       // 将树形结构转换为级联选择器可用的格式
-      this.departmentOptions = this.convertTreeToCascaderOptions(this.departmentTree);
+      const options = this.convertTreeToCascaderOptions(this.departmentTree);
+      
+      // 添加"无上级部门"选项（id为0）
+      const noneOption = {
+        id: 0,
+        name: '无上级部门',
+        label: '无上级部门',
+        children: []
+      };
+      
+      this.departmentOptions = [noneOption, ...options];
+      console.log('加载部门选项 - departmentOptions:', this.departmentOptions);
     },
 
     // 转换树形结构为级联选择器格式
     convertTreeToCascaderOptions(treeNodes) {
       return treeNodes.map(node => {
         const option = {
-          id: node.id,
+          id: parseInt(node.id),  // 确保 id 字段是数字类型（cascaderProps.value 使用的是 'id'）
           name: node.name,
-          value: node.id,
           label: node.name
         };
 

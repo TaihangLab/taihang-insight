@@ -28,9 +28,19 @@
       @selection-change="handleSelectionChange"
       @edit="handleEdit"
       @delete="handleDelete"
+      @authorization="handleAuthorization"
       @status-change="handleStatusChange"
       @page-change="handlePageChange"
       @size-change="handleSizeChange"
+    />
+
+    <!-- 授权对话框 -->
+    <RoleAuthorizationDialog
+      :visible.sync="authorizationDialogVisible"
+      :role="currentRole"
+      :permissions="permissions"
+      :checked-permission-keys="checkedPermissionKeys"
+      @submit="handlePermissionSubmit"
     />
 
     <!-- 角色编辑对话框 -->
@@ -56,6 +66,7 @@ import RoleTable from './components/role/RoleTable.vue'
 import RoleSearchBar from './components/role/RoleSearchBar.vue'
 import RoleEditDialog from './components/role/RoleEditDialog.vue'
 import DeleteConfirmDialog from './components/role/DeleteConfirmDialog.vue'
+import RBACService from '@/components/service/RBACService'
 import { useRoleData } from './composable/role/useRoleData'
 
 export default {
@@ -65,16 +76,21 @@ export default {
     RoleTable,
     RoleSearchBar,
     RoleEditDialog,
-    DeleteConfirmDialog
+    DeleteConfirmDialog,
+    RoleAuthorizationDialog: () => import('./components/role/RoleAuthorizationDialog.vue')
   },
 
   data() {
     return {
       roleDialogVisible: false,
       deleteDialogVisible: false,
+      authorizationDialogVisible: false,
       currentRole: null,
       selectedRows: [],
-      
+      permissions: [],
+      expandedPermissionKeys: [],
+      checkedPermissionKeys: [],
+
       // 搜索表单
       searchForm: {
         tenant_id: '',
@@ -82,18 +98,23 @@ export default {
         role_name: '',
         status: null
       },
-      
+
       // 分页
       pagination: {
         currentPage: 1,
         pageSize: 10
+      },
+
+      // 树形控件配置
+      treeProps: {
+        children: 'children',
+        label: 'label'
       }
     }
   },
 
   async created() {
-    // 初始加载时不自动获取数据，等待用户选择租户
-    // 租户选择器会在挂载时自动加载租户列表
+    // TenantSelector 组件内部会自动加载租户并触发 change 事件
   },
 
   methods: {
@@ -183,6 +204,105 @@ export default {
         this.$message.error(`更新状态失败: ${error.message}`)
       }
     },
+
+    // 处理授权
+    async handleAuthorization(row) {
+      this.currentRole = row
+      this.authorizationDialogVisible = true
+
+      try {
+        // 获取所有权限
+        const response = await this.getPermissions()
+        this.permissions = this.buildPermissionTree(response.data && response.data.items ? response.data.items : response.data)
+
+        // 获取当前角色的权限
+        const rolePermissionsResponse = await this.getRolePermissions({ role_id: row.id })
+        this.checkedPermissionKeys = (rolePermissionsResponse.data && Array.isArray(rolePermissionsResponse.data.permissions) ? rolePermissionsResponse.data.permissions : []).map(p => p.id)
+      } catch (error) {
+        this.$message.error(`获取权限失败: ${error.message}`)
+      }
+    },
+
+    // 关闭授权对话框
+    closeAuthorizationDialog() {
+      this.authorizationDialogVisible = false
+      this.currentRole = null
+      this.permissions = []
+      this.expandedPermissionKeys = []
+      this.checkedPermissionKeys = []
+    },
+
+    // 分配权限
+    async assignPermissions() {
+      try {
+        const checkedKeys = this.$refs.permissionTree.getCheckedKeys()
+        const halfCheckedKeys = this.$refs.permissionTree.getHalfCheckedKeys()
+        const allPermissionIds = [...checkedKeys, ...halfCheckedKeys]
+
+        await this.assignPermissionToRole({
+          role_id: this.currentRole.id,
+          permission_ids: allPermissionIds
+        })
+
+        this.$message.success('权限分配成功')
+        this.closeAuthorizationDialog()
+      } catch (error) {
+        this.$message.error(`权限分配失败: ${error.message}`)
+      }
+    },
+
+    // 构建权限树
+    buildPermissionTree(permissions) {
+      // 确保permissions是数组格式
+      let perms;
+      if (Array.isArray(permissions)) {
+        perms = permissions;
+      } else if (permissions && permissions.items) {
+        perms = permissions.items;
+      } else {
+        perms = [];
+      }
+
+      // 将扁平化的权限数据转换为树形结构
+      const map = {}
+      const roots = []
+
+      // 首先创建所有节点的映射
+      perms.forEach(permission => {
+        map[permission.id] = {
+          id: permission.id,
+          label: permission.description || permission.permission_code,
+          children: []
+        }
+      })
+
+      // 然后建立父子关系
+      perms.forEach(permission => {
+        const node = map[permission.id]
+        if (permission.parent_id && map[permission.parent_id]) {
+          map[permission.parent_id].children.push(node)
+        } else {
+          roots.push(node)
+        }
+      })
+
+      return roots
+    },
+
+    // 处理权限提交
+    async handlePermissionSubmit({ roleId, permissionIds }) {
+      try {
+        await this.assignPermissionToRole({
+          role_id: roleId,
+          permission_ids: permissionIds
+        })
+
+        this.$message.success('权限分配成功')
+        this.authorizationDialogVisible = false
+      } catch (error) {
+        this.$message.error(`权限分配失败: ${error.message}`)
+      }
+    },
     
     // 处理租户变化
     handleTenantChange() {
@@ -247,6 +367,9 @@ export default {
   setup() {
     const { roles, total, loading, fetchRoles, createRole, updateRole, deleteRoles } = useRoleData()
 
+    // 从RBACService导入权限相关方法
+    const { getPermissions, getRolePermissions, assignPermissionToRole } = RBACService
+
     return {
       roles,
       total,
@@ -254,7 +377,10 @@ export default {
       loadRoles: fetchRoles,
       createRole,
       updateRole,
-      deleteRoles
+      deleteRoles,
+      getPermissions,
+      getRolePermissions,
+      assignPermissionToRole
     }
   }
 }

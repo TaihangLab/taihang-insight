@@ -91,9 +91,9 @@ export default {
     return {
       // 搜索条件
       searchConditions: {
-        tenant_id: '',
+        tenant_id: null,
         name: '',
-        id: '',
+        id: null,
         status: null
       },
 
@@ -231,11 +231,9 @@ export default {
      * 编辑部门
      */
     handleEdit(row) {
+      console.log('handleEdit', row)
       // 直接使用 row 数据，parent_id 已经是数据库的 id 值
-      this.currentDept = {
-        ...row,
-        parent_id: row.parent_id || null
-      }
+      this.currentDept = row
       this.editDialogVisible = true
     },
 

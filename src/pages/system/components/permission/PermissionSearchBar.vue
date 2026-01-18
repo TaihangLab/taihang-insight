@@ -1,58 +1,53 @@
 <template>
-  <div class="role-search-bar">
+  <div class="permission-search-bar">
     <el-form :inline="true" :model="formValue" class="search-form">
-      <el-form-item label="租户">
-        <TenantSelector
-          ref="tenantSelector"
-          v-model="formValue.tenant_id"
-          @change="handleTenantChange"
-        />
-      </el-form-item>
-      <el-form-item label="角色代码">
+      <el-form-item label="权限名称">
         <el-input
-          v-model="formValue.role_code"
-          placeholder="请输入角色代码"
+          v-model="formValue.name"
+          placeholder="请输入权限名称"
           clearable
           style="width: 200px;"
         ></el-input>
       </el-form-item>
-      <el-form-item label="角色名称">
+      <el-form-item label="权限码">
         <el-input
-          v-model="formValue.role_name"
-          placeholder="请输入角色名称"
+          v-model="formValue.code"
+          placeholder="请输入权限码"
           clearable
           style="width: 200px;"
         ></el-input>
+      </el-form-item>
+      <el-form-item label="类型">
+        <el-select v-model="formValue.type" placeholder="全部" clearable style="width: 120px;">
+          <el-option label="文件夹" value="folder"></el-option>
+          <el-option label="页面" value="menu"></el-option>
+          <el-option label="按钮" value="button"></el-option>
+        </el-select>
       </el-form-item>
       <el-form-item label="状态">
-        <el-select v-model="formValue.status" placeholder="角色状态" clearable style="width: 120px;">
+        <el-select v-model="formValue.status" placeholder="全部" clearable style="width: 100px;">
           <el-option label="启用" :value="0"></el-option>
           <el-option label="禁用" :value="1"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" data-testid="btn-search" @click="handleSearch">搜索</el-button>
-        <el-button icon="el-icon-refresh" data-testid="btn-reset" @click="handleReset">重置</el-button>
+        <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
+        <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
       </el-form-item>
     </el-form>
   </div>
 </template>
 
 <script>
-import TenantSelector from '../commons/TenantSelector.vue'
-
 export default {
-  name: 'RoleSearchBar',
-  components: {
-    TenantSelector
-  },
+  name: 'PermissionSearchBar',
   props: {
     value: {
       type: Object,
       default: () => ({
-        tenant_id: null,
-        role_code: '',
-        role_name: '',
+        name: '',
+        code: '',
+        type: '',
         status: null
       })
     }
@@ -75,25 +70,20 @@ export default {
       this.$emit('search', this.formValue)
     },
     handleReset() {
-      const currentTenantCode = this.formValue.tenant_id
       this.formValue = {
-        tenant_id: currentTenantCode || null,
-        role_code: '',
-        role_name: '',
+        name: '',
+        code: '',
+        type: '',
         status: null
       }
       this.$emit('reset', this.formValue)
-    },
-    handleTenantChange() {
-      this.$emit('input', this.formValue)
-      this.$emit('tenant-change')
     }
   }
 }
 </script>
 
 <style scoped>
-.role-search-bar {
+.permission-search-bar {
   margin-bottom: 20px;
 }
 

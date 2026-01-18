@@ -57,10 +57,12 @@ class UserService {
   }
 
   // 重置用户密码
-  static async resetUserPassword(userId) {
+  static async resetUserPassword(userId, newPassword) {
     try {
-      // 使用ID而非code作为路径参数
-      return await rbacAxios.post(`/api/v1/rbac/users/${userId}/reset-password`);
+      // 使用JSON请求体传递新密码
+      return await rbacAxios.post(`/api/v1/rbac/users/${userId}/reset-password`, {
+        new_password: newPassword
+      });
     } catch (error) {
       console.error('重置用户密码失败:', error);
       throw error;

@@ -1,6 +1,5 @@
 import { ref } from 'vue'
 import RBACService from '@/components/service/RBACService'
-import UserService from '@/components/service/UserService'
 
 /**
  * 权限数据管理 Composable
@@ -22,13 +21,13 @@ export function usePermissionData() {
 
   /**
    * 加载权限树
+   * @param {Object} params - 查询参数
    */
-  const fetchPermissionTree = async () => {
+  const fetchPermissionTree = async (params = {}) => {
     loading.value = true
     try {
-      // 权限管理功能与租户无关，不传递租户参数
-      const response = await RBACService.getPermissionTree({})
-      permissionTree.value = response.data || []
+      const response = await RBACService.getPermissionTree(params)
+      permissionTree.value = Array.isArray(response) ? response : response.data || []
     } catch (error) {
       console.error('加载权限树失败:', error)
       throw error

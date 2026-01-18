@@ -19,8 +19,6 @@ export function useRoleData() {
    * @param {Object} params - 查询参数
    * @param {number} params.skip - 跳过记录数
    * @param {number} params.limit - 每页数量
-   * @param {string} params.sort_by - 排序字段
-   * @param {string} params.order - 排序方向 (asc/desc)
    * @param {string} params.role_name - 角色名称
    * @param {string} params.role_code - 角色代码
    * @param {number} params.status - 状态 (0=启用, 1=禁用)
@@ -28,11 +26,8 @@ export function useRoleData() {
   const fetchRoles = async (params = {}) => {
     loading.value = true
     try {
-      // 添加按修改时间倒序排列的参数
       const queryParams = {
         ...params,
-        sort_by: 'updated_at',  // 按修改时间排序
-        order: 'desc'           // 倒序排列
       }
 
       const response = await RBACService.getRoles(queryParams)

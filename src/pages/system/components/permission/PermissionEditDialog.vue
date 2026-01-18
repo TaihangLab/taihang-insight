@@ -8,38 +8,38 @@
   >
     <el-form :model="form" :rules="rules" ref="permissionForm" label-width="110px">
       <!-- 1. 权限类型（必填，首字段） -->
-      <el-form-item label="权限类型" prop="type">
-        <el-radio-group v-model="form.type" :disabled="!isCreate" @change="handleTypeChange">
-          <el-radio label="folder" :disabled="!canCreateFolder">
+      <el-form-item label="权限类型" prop="permission_type">
+        <el-radio-group v-model="form.permission_type" @change="handleTypeChange">
+          <el-radio label="folder">
             <i class="el-icon-folder"></i> 文件夹
           </el-radio>
-          <el-radio label="menu" :disabled="!canCreateMenu">
+          <el-radio label="menu">
             <i class="el-icon-menu"></i> 页面
           </el-radio>
-          <el-radio label="button" :disabled="!canCreateButton">
+          <el-radio label="button">
             <i class="el-icon-document"></i> 按钮
           </el-radio>
         </el-radio-group>
         <div class="form-tip" v-if="parentNode">
-          父节点：{{ parentNode.name }} ({{ getTypeLabel(parentNode.type) }})
+          父节点：{{ parentNode.permission_name }} ({{ getTypeLabel(parentNode.permission_type) }})
         </div>
       </el-form-item>
 
       <!-- ============ 文件夹类型字段 ============ -->
-      <template v-if="form.type === 'folder'">
+      <template v-if="form.permission_type === 'folder'">
         <el-divider content-position="left">基本信息</el-divider>
 
-        <el-form-item label="权限名称" prop="name">
-          <el-input v-model="form.name" placeholder="如：系统管理" />
+        <el-form-item label="权限名称" prop="permission_name">
+          <el-input v-model="form.permission_name" placeholder="如：系统管理" />
         </el-form-item>
 
         <el-form-item label="路由路径" prop="path">
-          <el-input v-model="form.path" placeholder="如：system-management" @input="handlePathInput" />
-          <div class="form-tip">用于生成权限码，支持 kebab-case 或 camelCase</div>
+          <el-input v-model="form.path" placeholder="如：/system-management" @input="handlePathInput" />
+          <div class="form-tip">用于生成权限码，支持 kebab-case 或 camelCase，建议以 / 开头</div>
         </el-form-item>
 
-        <el-form-item label="权限码" prop="code">
-          <el-input v-model="form.code" placeholder="自动生成">
+        <el-form-item label="权限码" prop="permission_code">
+          <el-input v-model="form.permission_code" placeholder="自动生成">
             <template slot="append">
               <el-button @click="generateCode">生成</el-button>
             </template>
@@ -55,8 +55,8 @@
           </el-input>
         </el-form-item>
 
-        <el-form-item label="排序" prop="sortOrder">
-          <el-input-number v-model="form.sortOrder" :min="1" :max="9999" />
+        <el-form-item label="排序" prop="sort_order">
+          <el-input-number v-model="form.sort_order" :min="1" :max="9999" />
         </el-form-item>
 
         <el-form-item label="描述" prop="description">
@@ -70,19 +70,19 @@
       </template>
 
       <!-- ============ 页面类型字段 ============ -->
-      <template v-if="form.type === 'menu'">
+      <template v-if="form.permission_type === 'menu'">
         <el-divider content-position="left">基本信息</el-divider>
 
-        <el-form-item label="权限名称" prop="name">
-          <el-input v-model="form.name" placeholder="如：用户管理" />
+        <el-form-item label="权限名称" prop="permission_name">
+          <el-input v-model="form.permission_name" placeholder="如：用户管理" />
         </el-form-item>
 
         <el-form-item label="路由路径" prop="path">
-          <el-input v-model="form.path" placeholder="如：system/user-management" @input="handlePathInput" />
+          <el-input v-model="form.path" placeholder="如：/system/user-management" @input="handlePathInput" />
         </el-form-item>
 
-        <el-form-item label="权限码" prop="code">
-          <el-input v-model="form.code" placeholder="自动生成">
+        <el-form-item label="权限码" prop="permission_code">
+          <el-input v-model="form.permission_code" placeholder="自动生成">
             <template slot="append">
               <el-button @click="generateCode">生成</el-button>
             </template>
@@ -95,6 +95,23 @@
           <div class="form-tip">支持 @ 别名，相对路径</div>
         </el-form-item>
 
+        <el-divider content-position="left">API 配置</el-divider>
+
+        <el-form-item label="API 地址" prop="api_path">
+          <el-input v-model="form.api_path" placeholder="/api/system/user" />
+          <div class="form-tip">必须以 /api/ 开头</div>
+        </el-form-item>
+
+        <el-form-item label="请求方式" prop="methods">
+          <el-radio-group v-model="form.methods">
+            <el-radio label="GET">GET - 查询</el-radio>
+            <el-radio label="POST">POST - 新增</el-radio>
+            <el-radio label="PUT">PUT - 更新</el-radio>
+            <el-radio label="PATCH">PATCH - 部分更新</el-radio>
+            <el-radio label="DELETE">DELETE - 删除</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
         <el-divider content-position="left">显示设置</el-divider>
 
         <el-form-item label="图标" prop="icon">
@@ -105,20 +122,20 @@
           </el-input>
         </el-form-item>
 
-        <el-form-item label="排序" prop="sortOrder">
-          <el-input-number v-model="form.sortOrder" :min="1" :max="9999" />
+        <el-form-item label="排序" prop="sort_order">
+          <el-input-number v-model="form.sort_order" :min="1" :max="9999" />
         </el-form-item>
 
         <el-form-item label="显示选项">
           <el-checkbox v-model="form.layout">需要 Layout</el-checkbox>
           <el-checkbox v-model="form.visible">在菜单中显示</el-checkbox>
-          <el-checkbox v-model="form.openNewTab">新窗口打开</el-checkbox>
-          <el-checkbox v-model="form.keepAlive">页面缓存</el-checkbox>
+          <el-checkbox v-model="form.open_new_tab">新窗口打开</el-checkbox>
+          <el-checkbox v-model="form.keep_alive">页面缓存</el-checkbox>
         </el-form-item>
 
-        <el-form-item label="路由参数" prop="routeParams">
+        <el-form-item label="路由参数" prop="route_params">
           <el-input
-            v-model="routeParamsJson"
+            v-model="route_params_json"
             type="textarea"
             :rows="2"
             placeholder='{"status": "active"}'
@@ -138,32 +155,31 @@
       </template>
 
       <!-- ============ 按钮类型字段 ============ -->
-      <template v-if="form.type === 'button'">
+      <template v-if="form.permission_type === 'button'">
         <el-divider content-position="left">基本信息</el-divider>
 
-        <el-form-item label="权限名称" prop="name">
-          <el-input v-model="form.name" placeholder="如：新增用户" />
+        <el-form-item label="权限名称" prop="permission_name">
+          <el-input v-model="form.permission_name" placeholder="如：新增用户" />
         </el-form-item>
 
-        <el-form-item label="所属页面" prop="parentMenuId">
+        <el-form-item label="所属页面" prop="parent_menu_id">
           <el-select
-            v-model="form.parentId"
+            v-model="form.parent_id"
             placeholder="请选择所属页面"
             style="width: 100%"
             filterable
-            :disabled="!!parentNode"
           >
             <el-option
               v-for="menu in menuOptions"
               :key="menu.id"
-              :label="`${menu.name} (${menu.code})`"
+              :label="`${menu.permission_name} (${menu.permission_code})`"
               :value="menu.id"
             />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="权限码" prop="code">
-          <el-input v-model="form.code" placeholder="自动生成">
+        <el-form-item label="权限码" prop="permission_code">
+          <el-input v-model="form.permission_code" placeholder="自动生成">
             <template slot="append">
               <el-button @click="generateCode">生成</el-button>
             </template>
@@ -173,19 +189,19 @@
 
         <el-divider content-position="left">API 配置</el-divider>
 
-        <el-form-item label="API 地址" prop="apiPath">
-          <el-input v-model="form.apiPath" placeholder="/api/system/user" />
+        <el-form-item label="API 地址" prop="api_path">
+          <el-input v-model="form.api_path" placeholder="/api/system/user" />
           <div class="form-tip">必须以 /api/ 开头</div>
         </el-form-item>
 
         <el-form-item label="请求方式" prop="methods">
-          <el-checkbox-group v-model="form.methods">
-            <el-checkbox label="GET">GET - 查询</el-checkbox>
-            <el-checkbox label="POST">POST - 新增</el-checkbox>
-            <el-checkbox label="PUT">PUT - 更新</el-checkbox>
-            <el-checkbox label="PATCH">PATCH - 部分更新</el-checkbox>
-            <el-checkbox label="DELETE">DELETE - 删除</el-checkbox>
-          </el-checkbox-group>
+          <el-radio-group v-model="form.methods">
+            <el-radio label="GET">GET - 查询</el-radio>
+            <el-radio label="POST">POST - 新增</el-radio>
+            <el-radio label="PUT">PUT - 更新</el-radio>
+            <el-radio label="PATCH">PATCH - 部分更新</el-radio>
+            <el-radio label="DELETE">DELETE - 删除</el-radio>
+          </el-radio-group>
         </el-form-item>
 
         <el-form-item label="操作分类" prop="category">
@@ -206,7 +222,7 @@
 
         <el-form-item label="路径参数">
           <el-input
-            v-model="pathParamsJson"
+            v-model="path_params_json"
             type="textarea"
             :rows="2"
             placeholder='{"id": "number"}'
@@ -217,7 +233,7 @@
 
         <el-form-item label="请求体验证">
           <el-input
-            v-model="bodySchemaJson"
+            v-model="body_schema_json"
             type="textarea"
             :rows="2"
             placeholder='{"type": "object"}'
@@ -256,7 +272,6 @@
 
 <script>
 import { toSnakeCase, camelToSnake, kebabToSnake } from '@/utils/namingConverter';
-import permissionService from '@/components/service/rbac/permissionService';
 
 export default {
   name: 'PermissionEditDialog',
@@ -305,11 +320,15 @@ export default {
         callback(new Error('路由路径只能包含小写字母、数字、斜杠和短横线'));
         return;
       }
+      if (!value.startsWith('/')) {
+        callback(new Error('路由路径必须以 / 开头'));
+        return;
+      }
       callback();
     };
 
     const validateApiPath = (rule, value, callback) => {
-      if (this.form.type === 'button' && !value) {
+      if (this.form.permission_type === 'button' && !value) {
         callback(new Error('请输入 API 地址'));
         return;
       }
@@ -321,8 +340,8 @@ export default {
     };
 
     const validateMethods = (rule, value, callback) => {
-      if (this.form.type === 'button' && (!value || value.length === 0)) {
-        callback(new Error('请选择至少一种请求方式'));
+      if ((this.form.permission_type === 'button' || this.form.permission_type === 'menu') && this.form.api_path && !value) {
+        callback(new Error('当指定了API地址时，请选择请求方式'));
         return;
       }
       callback();
@@ -331,40 +350,40 @@ export default {
     return {
       form: {
         id: '',
-        type: 'menu',
-        name: '',
-        code: '',
+        permission_type: 'menu',
+        permission_name: '',
+        permission_code: '',
         path: '',
         component: '',
         icon: '',
-        sortOrder: 1,
+        sort_order: 1,
         visible: true,
         layout: true,
-        openNewTab: false,
-        keepAlive: true,
-        routeParams: null,
-        parentMenuId: null,
-        parentId: null,
-        apiPath: '',
-        methods: [],
+        open_new_tab: false,
+        keep_alive: true,
+        route_params: null,
+        parent_menu_id: null,
+        parent_id: null,
+        api_path: '',
+        methods: '',
         category: 'WRITE',
         resource: '',
-        pathParams: null,
-        bodySchema: null,
+        path_params: null,
+        body_schema: null,
         description: '',
         status: 0
       },
-      routeParamsJson: '',
-      pathParamsJson: '',
-      bodySchemaJson: '',
+      route_params_json: '',
+      path_params_json: '',
+      body_schema_json: '',
       menuOptions: [],
       rules: {
-        type: [{ required: true, message: '请选择权限类型', trigger: 'change' }],
-        name: [
+        permission_type: [{ required: true, message: '请选择权限类型', trigger: 'change' }],
+        permission_name: [
           { required: true, message: '请输入权限名称', trigger: 'blur' },
           { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
         ],
-        code: [
+        permission_code: [
           { required: true, message: '请输入权限码', trigger: 'blur' },
           { validator: validateCode, trigger: 'blur' }
         ],
@@ -373,7 +392,7 @@ export default {
           { validator: validatePath, trigger: 'blur' }
         ],
         component: [{ required: true, message: '请输入组件路径', trigger: 'blur' }],
-        apiPath: [{ validator: validateApiPath, trigger: 'blur' }],
+        api_path: [{ validator: validateApiPath, trigger: 'blur' }],
         methods: [{ validator: validateMethods, trigger: 'change' }],
         category: [{ required: true, message: '请选择操作分类', trigger: 'change' }],
         resource: [
@@ -393,22 +412,7 @@ export default {
       if (this.isCreate) {
         return '新增权限';
       }
-      return `编辑权限 - ${(this.node && this.node.name) || ''}`;
-    },
-    canCreateFolder() {
-      if (!this.isCreate) return false;
-      if (!this.parentNode) return true;
-      return this.parentNode.type === 'folder';
-    },
-    canCreateMenu() {
-      if (!this.isCreate) return false;
-      if (!this.parentNode) return false;
-      return this.parentNode.type === 'folder';
-    },
-    canCreateButton() {
-      if (!this.isCreate) return false;
-      if (!this.parentNode) return false;
-      return this.parentNode.type === 'menu';
+      return `编辑权限 - ${(this.node && this.node.permission_name) || ''}`;
     }
   },
 
@@ -418,7 +422,7 @@ export default {
         this.initForm();
       }
     },
-    'form.type'() {
+    'form.permission_type'() {
       this.$nextTick(() => {
         if (this.$refs.permissionForm) {
           this.$refs.permissionForm.clearValidate();
@@ -436,61 +440,90 @@ export default {
       this.extractMenuOptions();
 
       if (this.isCreate) {
-        // 根据父节点类型确定默认类型
-        let defaultType = 'menu';
-        if (!this.parentNode) {
-          defaultType = 'folder';
-        } else if (this.parentNode.type === 'folder') {
-          defaultType = 'menu';
-        } else if (this.parentNode.type === 'menu') {
-          defaultType = 'button';
+        // 根据父节点类型确定默认类型，如果没有父节点则默认为 folder
+        let defaultType = 'folder';
+        if (this.parentNode) {
+          if (this.parentNode.permission_type === 'folder') {
+            defaultType = 'menu';
+          } else if (this.parentNode.permission_type === 'menu') {
+            defaultType = 'button';
+          }
         }
 
         this.form = {
           id: '',
-          type: defaultType,
-          name: '',
-          code: '',
+          permission_type: defaultType,
+          permission_name: '',
+          permission_code: '',
           path: '',
           component: '',
           icon: '',
-          sortOrder: 1,
+          sort_order: 1,
           visible: true,
           layout: true,
-          openNewTab: false,
-          keepAlive: true,
-          routeParams: null,
-          parentId: (this.parentNode && this.parentNode.id) || null,
-          apiPath: '',
-          methods: [],
+          open_new_tab: false,
+          keep_alive: true,
+          route_params: null,
+          parent_id: (this.parentNode && this.parentNode.id) || null,
+          api_path: '',
+          methods: '',
           category: 'WRITE',
           resource: '',
-          pathParams: null,
-          bodySchema: null,
+          path_params: null,
+          body_schema: null,
           description: '',
           status: 0
         };
 
-        this.routeParamsJson = '';
-        this.pathParamsJson = '';
-        this.bodySchemaJson = '';
+        this.route_params_json = '';
+        this.path_params_json = '';
+        this.body_schema_json = '';
 
         // 如果有父节点，生成默认的权限码前缀
         if (this.parentNode) {
           this.generateCode();
         }
       } else if (this.node) {
-        this.form = { ...this.node };
+        // 编辑模式：需要处理字段名映射和默认值
+        this.form = {
+          id: this.node.id || '',
+          permission_type: this.node.permission_type || this.node.type || 'menu',
+          permission_name: this.node.permission_name || this.node.name || '',
+          permission_code: this.node.permission_code || this.node.code || '',
+          path: this.node.path || '',
+          component: this.node.component || '',
+          icon: this.node.icon || '',
+          sort_order: this.node.sort_order || this.node.sortOrder || 1,
+          visible: this.node.visible !== undefined ? this.node.visible : true,
+          layout: this.node.layout !== undefined ? this.node.layout : true,
+          open_new_tab: this.node.open_new_tab !== undefined ? this.node.open_new_tab : false,
+          keep_alive: this.node.keep_alive !== undefined ? this.node.keep_alive : true,
+          route_params: this.node.route_params || null,
+          parent_id: this.node.parent_id || this.node.parentId || null,
+          api_path: this.node.api_path || '',
+          methods: this.parseMethodsForForm(this.node.methods),
+          category: this.node.category || 'WRITE',
+          resource: this.node.resource || '',
+          path_params: this.node.path_params || null,
+          body_schema: this.node.body_schema || null,
+          description: this.node.description || '',
+          status: this.node.status !== undefined ? this.node.status : 0
+        };
+
+        // 在编辑模式下，也需要确保路径以 / 开头
+        if (this.form.path && !this.form.path.startsWith('/')) {
+          this.form.path = '/' + this.form.path;
+        }
 
         // 将对象转换为 JSON 字符串显示
-        if (this.form.routeParams && typeof this.form.routeParams === 'object') {
-          this.routeParamsJson = JSON.stringify(this.form.routeParams, null, 2);
+        if (this.form.route_params && typeof this.form.route_params === 'object') {
+          this.route_params_json = JSON.stringify(this.form.route_params, null, 2);
         }
-        if (this.form.pathParams && typeof this.form.pathParams === 'object') {
-          this.pathParamsJson = JSON.stringify(this.form.pathParams, null, 2);
+        if (this.form.path_params && typeof this.form.path_params === 'object') {
+          this.path_params_json = JSON.stringify(this.form.path_params, null, 2);
         }
-        if (this.form.bodySchema && typeof this.form.bodySchema === 'object') {
-          this.bodySchemaJson = JSON.stringify(this.form.bodySchema, null, 2);
+        if (this.form.body_schema && typeof this.form.body_schema === 'object') {
+          this.body_schema_json = JSON.stringify(this.form.body_schema, null, 2);
         }
       }
     },
@@ -502,7 +535,7 @@ export default {
       const menus = [];
       const extract = (nodes) => {
         nodes.forEach(node => {
-          if (node.type === 'menu') {
+          if (node.permission_type === 'menu') {
             menus.push(node);
           }
           if (node.children && node.children.length > 0) {
@@ -518,16 +551,19 @@ export default {
      * 权限类型变更
      */
     handleTypeChange() {
-      if (this.isCreate) {
-        this.generateCode();
-      }
+      this.generateCode();
     },
 
     /**
      * 路径输入变更
      */
     handlePathInput() {
-      if (this.isCreate) {
+      // 确保路径以 / 开头
+      if (this.form.path && !this.form.path.startsWith('/')) {
+        this.form.path = '/' + this.form.path;
+      }
+      // 在编辑模式下也需要重新生成权限码
+      if (this.isCreate || this.form.permission_type === 'folder' || this.form.permission_type === 'menu') {
         this.generateCode();
       }
     },
@@ -536,47 +572,53 @@ export default {
      * 生成权限码
      */
     generateCode() {
-      if (!this.isCreate) return;
+      let path = this.form.path;
 
-      const path = this.form.path;
+      // 如果是按钮类型且没有路径，尝试从父节点获取路径信息
+      if (this.form.permission_type === 'button' && !path && this.parentNode && this.parentNode.path) {
+        path = this.parentNode.path;
+      }
 
       if (!path) {
         return;
       }
 
-      // 将路由路径转换为蛇形命名
-      let code = kebabToSnake(path); // system/user-management -> system/user_management
-      code = code.replace(/\//g, ':'); // system:user_management
+      // 移除路径开头的斜杠，便于后续处理
+      let cleanPath = path.startsWith('/') ? path.substring(1) : path;
 
-      switch (this.form.type) {
+      // 将路由路径转换为蛇形命名
+      let permission_code = kebabToSnake(cleanPath); // system/user-management -> system/user_management
+      permission_code = permission_code.replace(/\//g, ':'); // system:user_management
+
+      switch (this.form.permission_type) {
         case 'folder':
           // 文件夹：保持原样
           break;
         case 'menu':
           // 页面：添加 :view 后缀
-          code += ':view';
+          permission_code += ':view';
           break;
         case 'button':
           // 按钮：需要基于父页面
-          if (this.parentNode && this.parentNode.code) {
-            const parentCode = this.parentNode.code;
+          if (this.parentNode && this.parentNode.permission_code) {
+            const parentCode = this.parentNode.permission_code;
             // 如果父页面是 menu 类型，替换 :view 为默认操作
             if (parentCode.endsWith(':view')) {
-              code = parentCode.replace(':view', ':create');
+              permission_code = parentCode.replace(':view', ':create');
             } else {
-              code = parentCode + ':create';
+              permission_code = parentCode + ':create';
             }
           } else {
-            code = '';
+            permission_code = '';
           }
           break;
       }
 
-      this.form.code = code;
+      this.form.permission_code = permission_code;
 
       // 自动生成资源名（按钮类型）
-      if (this.form.type === 'button' && path && !this.form.resource) {
-        const segments = path.split('/').filter(s => s);
+      if (this.form.permission_type === 'button' && path && !this.form.resource) {
+        const segments = cleanPath.split('/').filter(s => s);
         const lastSegment = segments[segments.length - 1];
         this.form.resource = toSnakeCase(lastSegment);
       }
@@ -586,15 +628,15 @@ export default {
      * 解析路由参数
      */
     parseRouteParams() {
-      if (!this.routeParamsJson.trim()) {
-        this.form.routeParams = null;
+      if (!this.route_params_json.trim()) {
+        this.form.route_params = null;
         return;
       }
       try {
-        this.form.routeParams = JSON.parse(this.routeParamsJson);
+        this.form.route_params = JSON.parse(this.route_params_json);
       } catch (e) {
         this.$message.error('路由参数 JSON 格式错误');
-        this.routeParamsJson = this.form.routeParams ? JSON.stringify(this.form.routeParams, null, 2) : '';
+        this.route_params_json = this.form.route_params ? JSON.stringify(this.form.route_params, null, 2) : '';
       }
     },
 
@@ -602,15 +644,15 @@ export default {
      * 解析路径参数
      */
     parsePathParams() {
-      if (!this.pathParamsJson.trim()) {
-        this.form.pathParams = null;
+      if (!this.path_params_json.trim()) {
+        this.form.path_params = null;
         return;
       }
       try {
-        this.form.pathParams = JSON.parse(this.pathParamsJson);
+        this.form.path_params = JSON.parse(this.path_params_json);
       } catch (e) {
         this.$message.error('路径参数 JSON 格式错误');
-        this.pathParamsJson = this.form.pathParams ? JSON.stringify(this.form.pathParams, null, 2) : '';
+        this.path_params_json = this.form.path_params ? JSON.stringify(this.form.path_params, null, 2) : '';
       }
     },
 
@@ -618,28 +660,28 @@ export default {
      * 解析请求体验证
      */
     parseBodySchema() {
-      if (!this.bodySchemaJson.trim()) {
-        this.form.bodySchema = null;
+      if (!this.body_schema_json.trim()) {
+        this.form.body_schema = null;
         return;
       }
       try {
-        this.form.bodySchema = JSON.parse(this.bodySchemaJson);
+        this.form.body_schema = JSON.parse(this.body_schema_json);
       } catch (e) {
         this.$message.error('请求体验证 JSON 格式错误');
-        this.bodySchemaJson = this.form.bodySchema ? JSON.stringify(this.form.bodySchema, null, 2) : '';
+        this.body_schema_json = this.form.body_schema ? JSON.stringify(this.form.body_schema, null, 2) : '';
       }
     },
 
     /**
      * 获取类型标签
      */
-    getTypeLabel(type) {
+    getTypeLabel(permission_type) {
       const labels = {
         folder: '文件夹',
         menu: '页面',
         button: '按钮'
       };
-      return labels[type] || type;
+      return labels[permission_type] || permission_type;
     },
 
     /**
@@ -650,27 +692,27 @@ export default {
         if (!valid) return;
 
         // 验证 JSON 字段
-        if (this.form.type === 'menu' && this.routeParamsJson) {
+        if (this.form.permission_type === 'menu' && this.route_params_json) {
           try {
-            this.form.routeParams = JSON.parse(this.routeParamsJson);
+            this.form.route_params = JSON.parse(this.route_params_json);
           } catch (e) {
             this.$message.error('路由参数 JSON 格式错误');
             return;
           }
         }
 
-        if (this.form.type === 'button') {
-          if (this.pathParamsJson) {
+        if (this.form.permission_type === 'button') {
+          if (this.path_params_json) {
             try {
-              this.form.pathParams = JSON.parse(this.pathParamsJson);
+              this.form.path_params = JSON.parse(this.path_params_json);
             } catch (e) {
               this.$message.error('路径参数 JSON 格式错误');
               return;
             }
           }
-          if (this.bodySchemaJson) {
+          if (this.body_schema_json) {
             try {
-              this.form.bodySchema = JSON.parse(this.bodySchemaJson);
+              this.form.body_schema = JSON.parse(this.body_schema_json);
             } catch (e) {
               this.$message.error('请求体验证 JSON 格式错误');
               return;
@@ -678,15 +720,25 @@ export default {
           }
 
           // 自动设置 category
-          if (!this.form.category && this.form.methods && this.form.methods.length > 0) {
-            if (this.form.methods.includes('GET')) {
+          if (!this.form.category && this.form.methods) {
+            if (this.form.methods === 'GET') {
               this.form.category = 'READ';
-            } else if (this.form.methods.includes('DELETE')) {
+            } else if (this.form.methods === 'DELETE') {
               this.form.category = 'DELETE';
             } else {
               this.form.category = 'WRITE';
             }
           }
+        }
+
+        // 确保路径字段被正确设置，特别是对于按钮类型权限
+        if (this.form.permission_type === 'button' && !this.form.path && this.parentNode && this.parentNode.path) {
+          this.form.path = this.parentNode.path;
+        }
+
+        // 确保路径以 / 开头
+        if (this.form.path && !this.form.path.startsWith('/')) {
+          this.form.path = '/' + this.form.path;
         }
 
         this.loading = true;
@@ -701,6 +753,15 @@ export default {
           this.loading = false;
         }
       });
+    },
+
+    /**
+     * 解析methods字段用于表单显示
+     */
+    parseMethodsForForm(methods) {
+      if (!methods) return '';
+      // methods 现在只支持单个字符串
+      return methods;
     },
 
     /**

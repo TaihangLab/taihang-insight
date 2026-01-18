@@ -27,6 +27,7 @@ export default {
   },
 
   clearToken(){
+    localStorage.removeItem("Admin-Token");
     localStorage.removeItem("wvp-token");
     localStorage.removeItem("wvp-user");
 

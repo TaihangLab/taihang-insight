@@ -1,196 +1,67 @@
 <template>
-  <div class="permission-management">
-    <!-- 页面头部 -->
-    <PermissionTreeHeader
-      :selected-node="selectedNode"
-      @add="openCreateDialog"
-      @edit="openEditDialog"
-      @delete="deleteNode"
-      @refresh="refreshTree"
+  <div class="permission-management-page">
+    <!-- 查询区 -->
+    <PermissionSearchBar
+      v-model="searchConditions"
+      @search="handleSearch"
+      @reset="handleReset"
     />
 
-    <!-- 主内容区 -->
-    <div class="main-content">
-      <!-- 工具栏 -->
-      <PermissionTreeToolbar
-        ref="toolbar"
-        @filter="handleFilter"
-        @expand-all="expandAll"
-        @collapse-all="collapseAll"
+    <!-- 列表区 -->
+    <div class="table-container">
+      <PermissionTableActions
+        @add="handleAdd"
+        @refresh="handleRefresh"
+        @toggle-expand="handleToggleExpand"
       />
 
-      <!-- 权限树 -->
-      <PermissionTreePanel
-        ref="treePanel"
-        :tree-data="permissionTree"
+      <PermissionTreeTable
+        ref="treeTable"
+        :data="permissionTree"
         :loading="loading"
-        :filter-text="filterText"
-        @node-click="onNodeClick"
-        @add-child="addChildNode"
-        @edit="editNode"
-        @delete="deleteNode"
-        @create-first="openCreateDialog"
+        :default-expand-all="defaultExpandAll"
+        @edit="handleEdit"
+        @add-sub="handleAddSub"
+        @delete="handleDelete"
       />
     </div>
 
-    <!-- 编辑对话框 -->
-    <permission-edit-dialog
-      :visible.sync="dialogVisible"
+    <!-- 权限编辑对话框 -->
+    <PermissionEditDialog
+      :visible.sync="editDialogVisible"
       :mode="dialogMode"
-      :node="editingNode"
+      :node="currentPermission"
       :parent-node="parentForNewNode"
       :permission-tree="permissionTree"
-      @saved="onPermissionSaved"
+      @saved="handleSaved"
+    />
+
+    <!-- 删除确认对话框 -->
+    <DeleteConfirmDialog
+      :visible.sync="deleteDialogVisible"
+      :target-name="deleteTargetName"
+      @confirm="handleDeleteConfirm"
     />
   </div>
 </template>
 
 <script>
-import PermissionTreeHeader from './components/permission/PermissionTreeHeader.vue'
-import PermissionTreeToolbar from './components/permission/PermissionTreeToolbar.vue'
-import PermissionTreePanel from './components/permission/PermissionTreePanel.vue'
-import PermissionEditDialog from './components/PermissionEditDialog.vue'
+import PermissionSearchBar from './components/permission/PermissionSearchBar.vue'
+import PermissionTableActions from './components/permission/PermissionTableActions.vue'
+import PermissionTreeTable from './components/permission/PermissionTreeTable.vue'
+import PermissionEditDialog from './components/permission/PermissionEditDialog.vue'
+import DeleteConfirmDialog from './components/permission/DeleteConfirmDialog.vue'
 import { usePermissionData } from './composable/permission/usePermissionData'
 
 export default {
   name: 'PermissionManagement',
   components: {
-    PermissionTreeHeader,
-    PermissionTreeToolbar,
-    PermissionTreePanel,
-    PermissionEditDialog
+    PermissionSearchBar,
+    PermissionTableActions,
+    PermissionTreeTable,
+    PermissionEditDialog,
+    DeleteConfirmDialog
   },
-
-  data() {
-    return {
-      selectedNode: null,
-      filterText: '',
-      dialogVisible: false,
-      dialogMode: 'create',
-      editingNode: null,
-      parentForNewNode: null
-    }
-  },
-
-  async created() {
-    await this.fetchPermissionTree()
-  },
-
-  methods: {
-    // 刷新权限树
-    async refreshTree() {
-      this.selectedNode = null
-      await this.fetchPermissionTree()
-      this.$message.success('刷新成功')
-    },
-
-    // 树节点点击事件
-    onNodeClick(data) {
-      this.selectedNode = data
-    },
-
-    // 搜索过滤
-    handleFilter(text) {
-      this.filterText = text
-    },
-
-    // 展开全部节点
-    expandAll() {
-      this.$refs.treePanel.expandAll()
-    },
-
-    // 收起全部节点
-    collapseAll() {
-      this.$refs.treePanel.collapseAll()
-    },
-
-    // 打开创建对话框
-    openCreateDialog() {
-      this.dialogMode = 'create'
-      this.editingNode = null
-      this.parentForNewNode = this.selectedNode
-      this.dialogVisible = true
-    },
-
-    // 打开编辑对话框
-    openEditDialog() {
-      if (!this.selectedNode) {
-        this.$message.warning('请先选择要编辑的权限节点')
-        return
-      }
-      this.dialogMode = 'edit'
-      this.editingNode = this.selectedNode
-      this.parentForNewNode = null
-      this.dialogVisible = true
-    },
-
-    // 添加子节点
-    addChildNode(parentNode) {
-      this.dialogMode = 'create'
-      this.editingNode = null
-      this.parentForNewNode = parentNode
-      this.dialogVisible = true
-    },
-
-    // 编辑节点
-    editNode(node) {
-      this.dialogMode = 'edit'
-      this.editingNode = node
-      this.parentForNewNode = null
-      this.selectedNode = node
-      this.dialogVisible = true
-    },
-
-    // 删除节点
-    deleteNode(node) {
-      const targetNode = node || this.selectedNode
-      if (!targetNode) {
-        this.$message.warning('请先选择要删除的权限节点')
-        return
-      }
-
-      const hasChildren = targetNode.children && targetNode.children.length > 0
-      const confirmMessage = hasChildren
-        ? `确定要删除权限 "${targetNode.name}" 吗？该节点包含 ${targetNode.children.length} 个子节点，将一并删除。`
-        : `确定要删除权限 "${targetNode.name}" 吗？`
-
-      this.$confirm(confirmMessage, '确认删除', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        try {
-          await this.deletePermission(targetNode.id, true)
-          this.$message.success('删除成功')
-          await this.fetchPermissionTree()
-          this.selectedNode = null
-        } catch (error) {
-          this.$message.error(error.message || '删除失败')
-        }
-      }).catch(() => {
-        // 用户取消
-      })
-    },
-
-    // 权限保存成功回调
-    async onPermissionSaved(data) {
-      try {
-        if (this.dialogMode === 'create') {
-          await this.createPermission(data)
-          this.$message.success('创建成功')
-        } else {
-          await this.updatePermission(data.id, data)
-          this.$message.success('更新成功')
-        }
-        await this.fetchPermissionTree()
-        this.selectedNode = null
-      } catch (error) {
-        this.$message.error(error.message || '保存失败')
-        throw error
-      }
-    }
-  },
-
   setup() {
     const {
       permissionTree,
@@ -209,21 +80,191 @@ export default {
       updatePermission,
       deletePermission
     }
+  },
+  data() {
+    return {
+      // 搜索条件
+      searchConditions: {
+        name: '',
+        code: '',
+        type: '',
+        status: null
+      },
+      // 展开控制
+      defaultExpandAll: false,
+      expandAll: true,
+      // 对话框状态
+      editDialogVisible: false,
+      deleteDialogVisible: false,
+      dialogMode: 'create',
+      currentPermission: null,
+      parentForNewNode: null,
+      deleteTargetName: ''
+    }
+  },
+  async created() {
+    await this.loadData()
+  },
+  methods: {
+    /**
+     * 加载数据
+     */
+    async loadData() {
+      try {
+        await this.fetchPermissionTree(this.buildParams())
+        // 数据加载完成后展开所有节点
+        this.$nextTick(() => {
+          if (this.$refs.treeTable) {
+            this.$refs.treeTable.toggleExpandAll(true)
+          }
+        })
+      } catch (error) {
+        this.$message.error(`获取权限列表失败: ${error.message}`)
+      }
+    },
+
+    /**
+     * 构建查询参数
+     */
+    buildParams() {
+      const params = {}
+      if (this.searchConditions.name) {
+        params.name = this.searchConditions.name
+      }
+      if (this.searchConditions.code) {
+        params.code = this.searchConditions.code
+      }
+      if (this.searchConditions.type) {
+        params.type = this.searchConditions.type
+      }
+      if (this.searchConditions.status !== null && this.searchConditions.status !== '') {
+        params.status = this.searchConditions.status
+      }
+      return params
+    },
+
+    /**
+     * 搜索
+     */
+    handleSearch(conditions) {
+      this.searchConditions = { ...conditions }
+      this.loadData()
+    },
+
+    /**
+     * 重置
+     */
+    handleReset(conditions) {
+      this.searchConditions = { ...conditions }
+      this.loadData()
+    },
+
+    /**
+     * 刷新
+     */
+    handleRefresh() {
+      this.loadData()
+    },
+
+    /**
+     * 展开/折叠
+     */
+    handleToggleExpand(expand) {
+      if (this.$refs.treeTable) {
+        this.$refs.treeTable.toggleExpandAll(expand)
+      }
+    },
+
+    /**
+     * 新增权限
+     */
+    handleAdd() {
+      this.dialogMode = 'create'
+      this.currentPermission = null
+      this.parentForNewNode = null
+      this.editDialogVisible = true
+    },
+
+    /**
+     * 添加子权限
+     */
+    handleAddSub(row) {
+      this.dialogMode = 'create'
+      this.currentPermission = null
+      this.parentForNewNode = row
+      this.editDialogVisible = true
+    },
+
+    /**
+     * 编辑权限
+     */
+    handleEdit(row) {
+      this.dialogMode = 'edit'
+      this.currentPermission = row
+      this.parentForNewNode = null
+      this.editDialogVisible = true
+    },
+
+    /**
+     * 删除权限
+     */
+    handleDelete(row) {
+      this.deleteTargetName = row.permission_name || row.permission_code
+      this.currentPermission = row
+      this.deleteDialogVisible = true
+    },
+
+    /**
+     * 确认删除
+     */
+    async handleDeleteConfirm() {
+      try {
+        await this.deletePermission(this.currentPermission.id)
+        this.$message.success('删除成功')
+        this.deleteDialogVisible = false
+        this.loadData()
+      } catch (error) {
+        this.$message.error(`删除失败: ${error.message}`)
+      }
+    },
+
+    /**
+     * 权限保存成功回调
+     */
+    async handleSaved(data) {
+      try {
+        if (this.dialogMode === 'create') {
+          await this.createPermission(data)
+          this.$message.success('创建成功')
+        } else {
+          await this.updatePermission(data.id, data)
+          this.$message.success('更新成功')
+        }
+        this.editDialogVisible = false
+        this.loadData()
+      } catch (error) {
+        this.$message.error(error.message || '保存失败')
+        throw error
+      }
+    }
   }
 }
 </script>
 
 <style scoped>
-.permission-management {
+.permission-management-page {
   padding: 20px;
-  background-color: #f5f7fa;
-  min-height: 100%;
+  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
+  min-height: calc(100vh - 100px);
 }
 
-.main-content {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  padding: 20px;
+.table-container {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #ebeef5;
+  margin-top: 0;
+  position: relative;
+  overflow: hidden;
 }
 </style>

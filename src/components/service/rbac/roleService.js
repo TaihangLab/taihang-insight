@@ -42,9 +42,13 @@ class RoleService {
   }
 
   // 获取角色的权限列表
-  static async getRolePermissions(roleId) {
+  static async getRolePermissions(params) {
     try {
-      return await rbacAxios.get(`/api/v1/rbac/roles/${roleId}/permissions`);
+      // 如果传入的是对象，则从中提取role_id
+      const roleId = typeof params === 'object' && params !== null ? params.role_id : params;
+      return await rbacAxios.get(`/api/v1/rbac/role-permissions`, {
+        params: { role_id: roleId }
+      });
     } catch (error) {
       console.error('获取角色权限失败:', error);
       throw error;

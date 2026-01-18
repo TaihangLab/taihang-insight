@@ -40,27 +40,18 @@
 
         <!-- 登录表单 -->
         <div class="login-form">
-          <!-- 租户选择框 -->
+          <!-- 租户输入框 -->
           <div class="input-group">
-            <div class="input-wrapper" :class="{'focused': tenantSelectFocused}">
+            <div class="input-wrapper" :class="{'focused': tenantInputFocused}">
               <i class="input-icon fa fa-building"></i>
-              <select 
-                v-model="selectedTenant" 
-                class="tech-select"
-                @focus="tenantSelectFocused = true"
-                @blur="tenantSelectFocused = false"
-                @change="onTenantChange"
+              <input
+                type="text"
+                v-model="selectedTenant"
+                placeholder="请输入租户编码"
+                class="tech-input"
+                @focus="tenantInputFocused = true; focusInput($event)"
+                @blur="tenantInputFocused = false; blurInput($event)"
               >
-                <option value="" disabled>请选择租户</option>
-                <option 
-                  v-for="tenant in tenantList" 
-                  :key="tenant.tenantNumber" 
-                  :value="tenant.tenantNumber"
-                >
-                  {{ tenant.company_name }}
-                </option>
-              </select>
-              <i class="select-arrow fa fa-chevron-down"></i>
               <div class="input-border"></div>
             </div>
           </div>
@@ -145,8 +136,7 @@ export default {
       username: '',
       password: '',
       selectedTenant: '',
-      tenantSelectFocused: false,
-      tenantList: []
+      tenantInputFocused: false
     }
   },
   created(){
@@ -157,8 +147,9 @@ export default {
         that.login();
       }
     }
-    // 页面加载时获取租户列表
-    this.getTenantList();
+
+    // 从本地缓存恢复租户信息
+    this.restoreTenantFromCache();
   },
   methods:{
     // 获取粒子样式
@@ -171,68 +162,32 @@ export default {
       }
     },
 
-    // 获取租户列表
-    getTenantList() {
-      // 直接使用写死的租户数据
-      this.tenantList = this.getMockTenantList();
-      this.loadingTenants = false;
-    },
-
-    // 模拟租户数据（从租户管理模块提取）
-    getMockTenantList() {
-      return [
-        {
-          tenantNumber: '000000',
-          company_name: 'XXX有限公司',
-          contact_person: '管理组',
-          status: true
-        },
-        {
-          tenantNumber: '952742',
-          company_name: '123',
-          contact_person: '123',
-          status: true
-        },
-        {
-          tenantNumber: '415387',
-          company_name: '6666',
-          contact_person: '66',
-          status: true
-        },
-        {
-          tenantNumber: '297659',
-          company_name: '16888',
-          contact_person: '16888',
-          status: true
-        },
-        {
-          tenantNumber: '789133',
-          company_name: '测试租户企业名称',
-          contact_person: '测试租户联系人',
-          status: true
-        },
-        {
-          tenantNumber: '646214',
-          company_name: 'test999',
-          contact_person: 'test999',
-          status: true
-        },
-        {
-          tenantNumber: '252800',
-          company_name: 'ce',
-          contact_person: 'ce',
-          status: true
-        }
-      ];
-    },
-
-    // 租户选择变化处理
-    onTenantChange() {
-      const selectedTenantData = this.tenantList.find(tenant => tenant.tenantNumber === this.selectedTenant);
-      if (selectedTenantData) {
-        console.log('选择的租户:', selectedTenantData.company_name);
+    // 从本地缓存恢复租户信息
+    restoreTenantFromCache() {
+      const cachedTenant = localStorage.getItem('selectedTenant');
+      if (cachedTenant) {
+        this.selectedTenant = cachedTenant;
       }
     },
+
+    // 解码Admin-Token
+    decodeAdminToken() {
+      const base64Token = localStorage.getItem('Admin-Token');
+      if (base64Token) {
+        try {
+          const decodedJson = decodeURIComponent(atob(base64Token).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          return JSON.parse(decodedJson);
+        } catch (error) {
+          console.error('解码Admin-Token失败:', error);
+          return null;
+        }
+      }
+      return null;
+    },
+
+
 
     // 输入框聚焦效果
     focusInput(event) {
@@ -246,42 +201,76 @@ export default {
       }
     },
 
-    login(){
+
+    async login(){
       if(this.selectedTenant === '') {
         this.$message({
           showClose: true,
-          message: '请选择租户',
+          message: '请输入租户编码',
           type: 'warning'
         });
         return;
       }
-      if(this.username!='' && this.password!=''){
+
+      if(this.username !== '' && this.password !== ''){
         this.isLoging = true;
-        
-        setTimeout(() => {
-          const timestamp = Date.now();
-          const token = `mock-token-${this.username}-${this.selectedTenant}-${timestamp}`;
-          
-          const userInfo = {
-            username: this.username,
-            tenantNumber: this.selectedTenant,
-            loginTime: new Date().toISOString()
-          };
-          
-          userService.setUser(userInfo);
-          userService.setToken(token);
-          
-          console.log('登录成功，Token已保存:', token);
-          
+
+        try {
+          // 发送登录请求到后端API
+          const response = await fetch('http://127.0.0.1:8000/api/v1/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              username: this.username,
+              password: this.password,
+              tenantCode: this.selectedTenant
+            })
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.code === 200) {
+            // 登录成功，处理返回的数据
+            const { token, adminToken, userInfo } = result.data;
+
+            // 存储用户信息和token
+            userService.setUser(userInfo);
+            userService.setToken(token);
+
+            // 存储Admin-Token
+            localStorage.setItem('Admin-Token', adminToken);
+
+            // 将租户信息存储到本地缓存
+            localStorage.setItem('selectedTenant', this.selectedTenant);
+
+            this.$message({
+              showClose: true,
+              message: '登录成功',
+              type: 'success'
+            });
+
+            this.isLoging = false;
+            this.$router.push('/');
+          } else {
+            // 登录失败
+            this.$message({
+              showClose: true,
+              message: result.message || '登录失败',
+              type: 'error'
+            });
+            this.isLoging = false;
+          }
+        } catch (error) {
+          console.error('登录请求失败:', error);
           this.$message({
             showClose: true,
-            message: '登录成功',
-            type: 'success'
+            message: '网络错误，请稍后重试',
+            type: 'error'
           });
-          
           this.isLoging = false;
-          this.$router.push('/');
-        }, 800);
+        }
       } else {
         this.$message({
           showClose: true,

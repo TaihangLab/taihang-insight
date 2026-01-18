@@ -19,8 +19,6 @@ export function useUserData() {
    * @param {Object} params - 查询参数
    * @param {number} params.skip - 跳过记录数
    * @param {number} params.limit - 每页数量
-   * @param {string} params.sort_by - 排序字段
-   * @param {string} params.order - 排序方向 (asc/desc)
    * @param {string} params.user_name - 用户名称
    * @param {string} params.nick_name - 用户昵称
    * @param {string} params.phone - 手机号码
@@ -33,11 +31,8 @@ export function useUserData() {
   const fetchUsers = async (params) => {
     loading.value = true
     try {
-      // 添加按修改时间倒序排列的参数
       const queryParams = {
         ...params,
-        sort_by: 'updated_at',  // 按修改时间排序
-        order: 'desc'           // 倒序排列
       }
 
       const response = await RBACService.getUsers(queryParams)
@@ -130,7 +125,7 @@ export function useUserData() {
   const resetUserPassword = async (userId, newPassword) => {
     loading.value = true
     try {
-      await RBACService.resetUserPassword(userId)
+      await RBACService.resetUserPassword(userId, newPassword)
       return { success: true, message: '密码重置成功' }
     } catch (error) {
       console.error('重置密码失败:', error)

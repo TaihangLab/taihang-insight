@@ -20,6 +20,50 @@ try {
   hasRealServices = false;
 }
 
+// 缓存管理器
+const cacheManager = {
+  cache: new Map(),
+
+  get(key) {
+    const item = this.cache.get(key);
+    if (!item) return null;
+
+    // 检查是否过期
+    if (Date.now() - item.timestamp > item.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return item.value;
+  },
+
+  set(key, value, ttl = 600000) { // 默认10分钟过期
+    this.cache.set(key, {
+      value: value,
+      timestamp: Date.now(),
+      ttl: ttl
+    });
+  },
+
+  delete(key) {
+    this.cache.delete(key);
+  },
+
+  clear() {
+    this.cache.clear();
+  },
+
+  // 清理过期缓存
+  cleanup() {
+    const now = Date.now();
+    for (const [key, item] of this.cache.entries()) {
+      if (now - item.timestamp > item.ttl) {
+        this.cache.delete(key);
+      }
+    }
+  }
+};
+
 // RBAC服务类 - 整合所有RBAC相关服务
 class RBACService {
   constructor() {
@@ -44,9 +88,91 @@ class RBACService {
       // 部门管理API - 直接调用，无缓存
       this.getDepartments = DepartmentService.getDepartments;
       this.getDepartmentTree = DepartmentService.getDepartmentTree;
+
+      // 部门管理API - 直接调用，不带自动缓存失效
       this.createDepartment = DepartmentService.createDepartment;
       this.updateDepartment = DepartmentService.updateDepartment;
       this.deleteDepartment = DepartmentService.deleteDepartment;
+
+      // 部门管理API - 带缓存的版本
+      this.getDepartmentTreeWithCache = async (params = {}) => {
+        // 生成缓存键
+        const cacheKey = `depts_tree_${JSON.stringify(params)}`;
+
+        // 尝试从缓存获取
+        let cachedResult = cacheManager.get(cacheKey);
+        if (cachedResult) {
+          console.log(`[RBACService] 从缓存获取部门树数据: ${cacheKey}`);
+          return cachedResult;
+        }
+
+        console.log(`[RBACService] 从服务器获取部门树数据: ${cacheKey}`);
+
+        // 从服务器获取数据
+        const result = await DepartmentService.getDepartmentTree(params);
+
+        // 存入缓存（默认10分钟过期）
+        cacheManager.set(cacheKey, result);
+
+        return result;
+      };
+
+      // 部门管理API - 根据租户ID和状态获取部门树（带缓存）
+      this.getDepartmentTreeByTenantAndStatus = async (tenantId, status = 0) => {
+        // 生成缓存键
+        const cacheKey = `depts_tree_tenant_${tenantId}_status_${status}`;
+
+        // 尝试从缓存获取
+        let cachedResult = cacheManager.get(cacheKey);
+        if (cachedResult) {
+          console.log(`[RBACService] 从缓存获取部门树数据: ${cacheKey}`);
+          return cachedResult;
+        }
+
+        console.log(`[RBACService] 从服务器获取部门树数据: ${cacheKey}`);
+
+        // 从服务器获取数据
+        const result = await DepartmentService.getDepartmentTreeByTenantAndStatus(tenantId, status);
+
+        // 存入缓存（默认10分钟过期）
+        cacheManager.set(cacheKey, result);
+
+        return result;
+      };
+
+      // 部门管理API - 缓存失效相关方法
+      this.invalidateDepartmentCache = (params = {}) => {
+        // 生成对应的缓存键并删除
+        const cacheKey = `depts_tree_${JSON.stringify(params)}`;
+        cacheManager.delete(cacheKey);
+        console.log(`[RBACService] 已使部门树缓存失效: ${cacheKey}`);
+      };
+
+      this.clearAllDepartmentCache = () => {
+        // 清除所有部门相关的缓存
+        for (const key of cacheManager.cache.keys()) {
+          if (key.startsWith('depts_tree_')) {
+            cacheManager.delete(key);
+          }
+        }
+        console.log('[RBACService] 已清除所有部门树缓存');
+      };
+
+      this.clearAllTenantCache = () => {
+        // 清除所有租户相关的缓存
+        for (const key of cacheManager.cache.keys()) {
+          if (key.startsWith('tenants_') || key === 'tenants_list') {
+            cacheManager.delete(key);
+          }
+        }
+        console.log('[RBACService] 已清除所有租户缓存');
+      };
+
+      this.clearAllCache = () => {
+        // 清除所有缓存
+        cacheManager.clear();
+        console.log('[RBACService] 已清除所有缓存');
+      };
 
       // 岗位管理API - 直接调用，无缓存
       this.getPositions = PositionService.getPositions;
@@ -217,9 +343,17 @@ export default {
   // 部门管理API
   getDepartments: rbacServiceInstance.getDepartments,
   getDepartmentTree: rbacServiceInstance.getDepartmentTree,
+  getDepartmentTreeWithCache: rbacServiceInstance.getDepartmentTreeWithCache,
+  getDepartmentTreeByTenantAndStatus: rbacServiceInstance.getDepartmentTreeByTenantAndStatus,
   createDepartment: rbacServiceInstance.createDepartment,
   updateDepartment: rbacServiceInstance.updateDepartment,
   deleteDepartment: rbacServiceInstance.deleteDepartment,
+  invalidateDepartmentCache: rbacServiceInstance.invalidateDepartmentCache,
+  clearAllDepartmentCache: rbacServiceInstance.clearAllDepartmentCache,
+
+  // 缓存管理API
+  clearAllTenantCache: rbacServiceInstance.clearAllTenantCache,
+  clearAllCache: rbacServiceInstance.clearAllCache,
 
   // 岗位管理API
   getPositions: rbacServiceInstance.getPositions,

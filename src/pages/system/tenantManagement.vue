@@ -288,8 +288,32 @@ export default {
       } catch (error) {
         // 如果更新失败，恢复原始状态
         row.status = originalStatus;
+        
+        // 提取错误消息，优先使用后端返回的具体错误信息
+        let errorMessage = '更新租户状态失败';
+        if (error.message && !error.message.includes('Network Error')) {
+          // 如果错误消息不是网络错误，使用错误消息
+          errorMessage = error.message;
+        } else if (error.response && error.response.data) {
+          // 尝试从响应数据中提取消息
+          const data = error.response.data;
+          if (data && typeof data === 'object') {
+            if (data.message) {
+              errorMessage = data.message;
+            } else if (data.detail) {
+              errorMessage = data.detail;
+            } else if (data.msg) {
+              errorMessage = data.msg;
+            }
+          } else if (typeof data === 'string') {
+            errorMessage = data;
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
         this.$message({
-          message: `更新租户状态失败: ${error.message || '未知错误'}`,
+          message: errorMessage,
           type: 'error'
         })
         // 恢复原状态

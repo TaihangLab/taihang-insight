@@ -26,13 +26,8 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="所属部门" prop="department">
-            <el-select v-model="positionForm.department" placeholder="请选择部门" style="width: 100%">
-              <el-option label="研发部门" value="研发部门"></el-option>
-              <el-option label="XXX科技" value="XXX科技"></el-option>
-              <el-option label="市场部门" value="市场部门"></el-option>
-              <el-option label="财务部门" value="财务部门"></el-option>
-            </el-select>
+          <el-form-item label="显示排序" prop="order_num">
+            <el-input-number v-model="positionForm.order_num" :min="0" :max="999" controls-position="right" style="width: 100%"></el-input-number>
           </el-form-item>
         </el-col>
       </el-row>
@@ -72,7 +67,7 @@
       </el-row>
 
       <el-row :gutter="20">
-        <el-col :span="24">
+        <el-col :span="12">
           <el-form-item label="岗位状态">
             <el-radio-group v-model="positionForm.status">
               <el-radio :label="1">正常</el-radio>
@@ -80,10 +75,21 @@
             </el-radio-group>
           </el-form-item>
         </el-col>
+        <el-col :span="12">
+          <el-form-item label="岗位级别">
+            <el-select v-model="positionForm.level" placeholder="请选择岗位级别" style="width: 100%">
+              <el-option label="高层管理" value="high"></el-option>
+              <el-option label="中层管理" value="middle"></el-option>
+              <el-option label="基层管理" value="basic"></el-option>
+              <el-option label="普通员工" value="staff"></el-option>
+            </el-select>
+          </el-form-item>
+        </el-col>
       </el-row>
     </el-form>
 
     <span slot="footer" class="dialog-footer">
+      <el-button @click="fillTestData">智能填充测试数据</el-button>
       <el-button @click="cancel">取消</el-button>
       <el-button type="primary" @click="submitForm">确定</el-button>
     </span>
@@ -101,6 +107,10 @@ export default {
     currentPosition: {
       type: Object,
       default: null
+    },
+    tenantId: {
+      type: [String, Number],
+      default: null
     }
   },
   data() {
@@ -110,7 +120,6 @@ export default {
         position_code: '',
         category_code: '',
         position_name: '',
-        department: '',
         order_num: 1,
         level: '',
         responsibility: '',
@@ -126,9 +135,6 @@ export default {
         ],
         category_code: [
           { required: true, message: '请输入类别编码', trigger: 'blur' }
-        ],
-        department: [
-          { required: true, message: '请选择部门', trigger: 'change' }
         ],
         order_num: [
           { required: true, message: '请输入显示排序', trigger: 'blur' }
@@ -166,7 +172,6 @@ export default {
         position_code: '',
         category_code: '',
         position_name: '',
-        department: '',
         order_num: 1,
         level: '',
         responsibility: '',
@@ -177,7 +182,21 @@ export default {
     submitForm() {
       this.$refs.positionForm.validate((valid) => {
         if (valid) {
-          this.$emit('submit', { ...this.positionForm })
+          // 自动添加当前租户ID到表单数据中
+          const formData = { ...this.positionForm };
+
+          // 优先使用传入的tenantId属性，否则尝试从父组件获取
+          if (this.tenantId) {
+            formData.tenant_id = this.tenantId;
+          } else if (this.$parent && this.$parent.searchForm && this.$parent.searchForm.tenant_id) {
+            formData.tenant_id = this.$parent.searchForm.tenant_id;
+          } else if (this.$parent && this.$parent.tenantId) {
+            formData.tenant_id = this.$parent.tenantId;
+          } else if (this.$parent && this.$parent.formValue && this.$parent.formValue.tenant_id) {
+            formData.tenant_id = this.$parent.formValue.tenant_id;
+          }
+
+          this.$emit('submit', formData)
         }
       })
     },
@@ -191,6 +210,69 @@ export default {
     },
     cancel() {
       this.closeDialog()
+    },
+
+    fillTestData() {
+      // 生成随机的测试数据
+      const testData = {
+        position_code: `POS${Math.floor(Math.random() * 9000 + 1000)}`,
+        category_code: `CAT${Math.floor(Math.random() * 900 + 100)}`,
+        position_name: this.getRandomPositionName(),
+        order_num: Math.floor(Math.random() * 100),
+        level: this.getRandomLevel(),
+        responsibility: this.getRandomResponsibility(),
+        requirements: this.getRandomRequirements(),
+        status: Math.random() > 0.5 ? 1 : 0
+      }
+
+      // 将测试数据填充到表单
+      Object.assign(this.positionForm, testData)
+    },
+
+    getRandomPositionName() {
+      const names = ['项目经理', '软件工程师', '产品经理', 'UI设计师', '测试工程师', '运维工程师', '数据分析师', '前端工程师', '后端工程师', '全栈工程师', '技术总监', '人事专员', '财务专员', '销售经理'];
+      return names[Math.floor(Math.random() * names.length)];
+    },
+
+    getRandomDepartment() {
+      const departments = ['研发部', '产品部', '设计部', '测试部', '运营部', '人事部', '财务部', '销售部', '市场部', '客服部'];
+      return departments[Math.floor(Math.random() * departments.length)];
+    },
+
+    getRandomLevel() {
+      const levels = ['high', 'middle', 'basic', 'staff'];
+      return levels[Math.floor(Math.random() * levels.length)];
+    },
+
+    getRandomResponsibility() {
+      const responsibilities = [
+        '负责项目整体规划与执行',
+        '负责产品功能设计与优化',
+        '负责系统架构设计与开发',
+        '负责产品质量保障',
+        '负责系统运维与安全',
+        '负责数据分析与报告',
+        '负责用户界面设计',
+        '负责客户服务与支持'
+      ];
+      return responsibilities[Math.floor(Math.random() * responsibilities.length)];
+    },
+
+    getRandomRequirements() {
+      const requirements = [
+        '本科及以上学历，计算机相关专业',
+        '3年以上相关工作经验',
+        '熟练掌握相关技术栈',
+        '良好的沟通协调能力',
+        '具备团队合作精神',
+        '有项目管理经验者优先',
+        '熟悉敏捷开发流程',
+        '有大型系统开发经验者优先'
+      ];
+      // 随机选择2-4个要求
+      const count = Math.floor(Math.random() * 3) + 2;
+      const shuffled = [...requirements].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, count).join('；');
     }
   }
 }
