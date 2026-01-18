@@ -138,7 +138,7 @@ export default {
         create_time: '2024-01-01 10:00:00',
         lastLoginTime: '2024-12-26 09:30:15',
         description: '系统管理员，负责平台的日常维护和用户管理工作。',
-        tenant_code: ''
+        tenant_id: ''
       }
     }
   },
@@ -152,12 +152,12 @@ export default {
         const currentUser = userService.getUser();
         if (currentUser) {
           this.userInfo.user_name = currentUser.user_name || currentUser.user_code;
-          this.userInfo.tenant_code = currentUser.tenant_code;
+          this.userInfo.tenant_id = currentUser.tenant_id;
 
           // 调用RBACService获取详细用户信息
           const params = {
             user_name: currentUser.user_name || currentUser.user_code,
-            tenant_code: currentUser.tenant_code
+            tenant_id: currentUser.tenant_id
           };
           
           const response = await RBACService.getUsers(params);
@@ -192,7 +192,7 @@ export default {
         // 调用RBACService更新用户信息
         await RBACService.updateUser(
           this.userInfo.user_name,
-          this.userInfo.tenant_code,
+          this.userInfo.tenant_id,
           userData
         );
         

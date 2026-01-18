@@ -38,7 +38,7 @@ def main():
     import sys
     if len(sys.argv) < 3:
         print("用法: python3 quick_replace.py <old_pattern> <new_pattern>")
-        print("例如: python3 quick_replace.py tenantCode tenant_code")
+        print("例如: python3 quick_replace.py tenantCode tenant_id")
         return
     
     old_pattern = sys.argv[1]

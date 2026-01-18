@@ -19,3 +19,10 @@ QWEN.md
 pnpm-lock.yaml
 .trae
 .venv
+CLAUDE.md
+.qwen
+
+test-results/
+playwright-report/
+
+package-lock.json

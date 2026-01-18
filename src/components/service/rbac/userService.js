@@ -22,12 +22,10 @@ class UserService {
   }
 
   // 更新用户
-  static async updateUser(user_identifier, tenant_code, userData) {
+  static async updateUser(userId, userData) {
     try {
-      // user_identifier 可以是 user_code 或 user_name
-      return await rbacAxios.put(`/api/v1/rbac/users/${user_identifier}`, userData, {
-        params: { tenant_code: tenant_code }
-      });
+      // 使用ID而非code作为路径参数
+      return await rbacAxios.put(`/api/v1/rbac/users/${userId}`, userData);
     } catch (error) {
       console.error('更新用户失败:', error);
       throw error;
@@ -35,25 +33,34 @@ class UserService {
   }
 
   // 删除用户
-  static async deleteUser(user_identifier, tenant_code) {
+  static async deleteUser(userId) {
     try {
-      // user_identifier 可以是 user_code 或 user_name
-      return await rbacAxios.delete(`/api/v1/rbac/users/${user_identifier}`, {
-        params: { tenant_code: tenant_code }
-      });
+      // 使用ID而非code作为路径参数
+      return await rbacAxios.delete(`/api/v1/rbac/users/${userId}`);
     } catch (error) {
       console.error('删除用户失败:', error);
       throw error;
     }
   }
 
-  // 重置用户密码
-  static async resetUserPassword(user_identifier, tenant_code = 'default') {
+  // 批量删除用户
+  static async deleteUsers(userIds) {
     try {
-      // user_identifier 可以是 user_code 或 user_name
-      return await rbacAxios.post(`/api/v1/rbac/users/${user_identifier}/reset-password`, {}, {
-        params: { tenant_code: tenant_code }
+      // 使用ID列表进行批量删除
+      return await rbacAxios.post('/api/v1/rbac/users/batch-delete', {
+        user_ids: userIds
       });
+    } catch (error) {
+      console.error('批量删除用户失败:', error);
+      throw error;
+    }
+  }
+
+  // 重置用户密码
+  static async resetUserPassword(userId) {
+    try {
+      // 使用ID而非code作为路径参数
+      return await rbacAxios.post(`/api/v1/rbac/users/${userId}/reset-password`);
     } catch (error) {
       console.error('重置用户密码失败:', error);
       throw error;
@@ -61,11 +68,10 @@ class UserService {
   }
 
   // 获取用户的角色列表
-  static async getUserRoles(userId, tenant_code) {
+  static async getUserRoles(userId) {
     try {
-      return await rbacAxios.get(`/api/v1/rbac/users/${userId}/roles`, {
-        params: { tenant_code: tenant_code }
-      });
+      // 使用ID而非code作为路径参数
+      return await rbacAxios.get(`/api/v1/rbac/users/${userId}/roles`);
     } catch (error) {
       console.error('获取用户角色失败:', error);
       throw error;

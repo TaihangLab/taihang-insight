@@ -109,7 +109,7 @@
       <!-- 部门信息侧边栏 -->
       <div class="sidebar" v-if="selectedDepartment">
         <div class="sidebar-header">
-          <h3>{{ selectedDepartment.dept_name }}</h3>
+          <h3>{{ selectedDepartment.name }}</h3>
           <el-tag :type="selectedDepartment.status === 0 ? 'success' : 'danger'">
             {{ selectedDepartment.status === 0 ? '启用' : '停用' }}
           </el-tag>
@@ -117,10 +117,10 @@
         <div class="sidebar-content">
           <el-descriptions :column="1" border>
             <el-descriptions-item label="部门编码">
-              {{ selectedDepartment.dept_code }}
+              {{ selectedDepartment.id }}
             </el-descriptions-item>
             <el-descriptions-item label="部门名称">
-              {{ selectedDepartment.dept_name }}
+              {{ selectedDepartment.name }}
             </el-descriptions-item>
             <el-descriptions-item label="负责人" v-if="selectedDepartment.leader">
               {{ selectedDepartment.leader }}
@@ -169,12 +169,12 @@
         :close-on-click-modal="false"
       >
         <el-form :model="departmentForm" :rules="departmentRules" ref="departmentForm" label-width="100px">
-          <el-form-item label="部门名称" prop="dept_name">
-            <el-input v-model="departmentForm.dept_name" placeholder="请输入部门名称" />
+          <el-form-item label="部门名称" prop="name">
+            <el-input v-model="departmentForm.name" placeholder="请输入部门名称" />
           </el-form-item>
-          <el-form-item label="部门编码" prop="dept_code">
+          <el-form-item label="部门编码" prop="ids">
             <el-input 
-              v-model="departmentForm.dept_code" 
+              v-model="departmentForm.id" 
               placeholder="请输入部门编码" 
               :disabled="!!departmentForm.id"
             />
@@ -265,7 +265,7 @@ export default {
       departmentTree: [],
       treeProps: {
         children: 'children',
-        label: 'dept_name',
+        label: 'name',
         disabled: 'disabled'
       },
       expandedKeys: [],
@@ -279,8 +279,7 @@ export default {
       dialogType: '', // 'add', 'edit', 'addChild'
       departmentForm: {
         id: null,
-        dept_name: '',
-        dept_code: '',
+        name: '',
         parent_id: null,
         leader: '',
         phone: '',
@@ -293,14 +292,9 @@ export default {
 
       // 表单验证规则
       departmentRules: {
-        dept_name: [
+        name: [
           { required: true, message: '请输入部门名称', trigger: 'blur' },
           { min: 2, max: 50, message: '部门名称长度在2到50个字符', trigger: 'blur' }
-        ],
-        dept_code: [
-          { required: true, message: '请输入部门编码', trigger: 'blur' },
-          { min: 2, max: 30, message: '部门编码长度在2到30个字符', trigger: 'blur' },
-          { pattern: /^[a-zA-Z0-9_-]+$/, message: '部门编码只能包含字母、数字、下划线和短横线', trigger: 'blur' }
         ]
       },
 
@@ -308,7 +302,7 @@ export default {
       departmentOptions: [],
       cascaderProps: {
         value: 'id',
-        label: 'dept_name',
+        label: 'name',
         checkStrictly: true,
         emitPath: false,
         expandTrigger: 'hover'
@@ -431,8 +425,8 @@ export default {
     // 过滤节点
     filterNode(value, data) {
       if (!value) return true;
-      return data.dept_name.indexOf(value) !== -1 ||
-             data.dept_code.indexOf(value) !== -1 ||
+      return data.name.indexOf(value) !== -1 ||
+             data.id.indexOf(value) !== -1 ||
              (data.leader && data.leader.indexOf(value) !== -1);
     },
 
@@ -466,8 +460,7 @@ export default {
       this.dialogType = 'add';
       this.departmentForm = {
         id: null,
-        dept_name: '',
-        dept_code: '',
+        name: '',
         parent_id: 0, // 根部门
         leader: '',
         phone: '',
@@ -486,9 +479,8 @@ export default {
       this.dialogType = 'addChild';
       this.departmentForm = {
         id: null,
-        dept_name: '',
-        dept_code: '',
-        parent_id: typeof data.id === 'string' ? parseInt(data.id) : data.id,  // 确保传递整数ID
+        name: '',
+        parent_id: data.id,  // 确保传递整数ID
         leader: '',
         phone: '',
         email: '',
@@ -517,14 +509,14 @@ export default {
 
     // 删除节点
     async remove(node, data) {
-      this.$confirm(`确定要删除部门 "${data.dept_name}" 吗？`, '确认删除', {
+      this.$confirm(`确定要删除部门 "${data.name}" 吗？`, '确认删除', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(async () => {
         try {
           // 调用后端API删除部门
-          await DepartmentTreeService.deleteDepartment(data.dept_code, this.selectedTenant);
+          await DepartmentTreeService.deleteDepartment(data.id, this.selectedTenant);
 
           // 从本地树中移除
           const parent = node.parent;
@@ -568,21 +560,9 @@ export default {
 
         try {
           if (this.dialogType === 'edit') {
-            // 更新部门 - 保留原始的dept_code，不更新编码
             const updateData = { ...this.departmentForm, tenantId: this.selectedTenant };
-
-            // 从更新数据中移除dept_code，确保不会被修改
-            delete updateData.dept_code;
-
-            // 确保parent_id是数字类型，以便后端正确解析
-            if (updateData.parent_id) {
-              updateData.parent_id = typeof updateData.parent_id === 'string'
-                ? parseInt(updateData.parent_id)
-                : updateData.parent_id;
-            }
-
             await DepartmentTreeService.updateDepartment(
-              this.departmentForm.dept_code,  // 使用原始的dept_code
+              this.departmentForm.id, 
               updateData,
               this.selectedTenant
             );
@@ -658,7 +638,7 @@ export default {
 
         // 调用后端API更新状态
         await DepartmentTreeService.updateDepartmentStatus(
-          dept.dept_code,
+          dept.id,
           this.selectedTenant,
           newStatus
         );
@@ -725,7 +705,7 @@ export default {
       try {
         // 确认用户操作
         const confirmResult = await this.$confirm(
-          `确定要将部门 "${draggingNode.data.dept_name}" 移动到 "${dropNode.data.dept_name}" 下吗？`,
+          `确定要将部门 "${draggingNode.data.name}" 移动到 "${dropNode.data.name}" 下吗？`,
           '确认移动',
           {
             confirmButtonText: '确定',
@@ -742,8 +722,8 @@ export default {
 
         // 调用后端API移动节点
         await DepartmentTreeService.moveNode(
-          draggingNode.data.dept_code,
-          dropNode.data.dept_code,
+          draggingNode.data.id,
+          dropNode.data.id,
           this.selectedTenant
         );
 
@@ -771,9 +751,9 @@ export default {
       return treeNodes.map(node => {
         const option = {
           id: node.id,
-          dept_name: node.dept_name,
+          name: node.name,
           value: node.id,
-          label: node.dept_name
+          label: node.name
         };
 
         if (node.children && node.children.length > 0) {

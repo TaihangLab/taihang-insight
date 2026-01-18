@@ -33,11 +33,11 @@ export default class DepartmentTreeService {
       const response = await RBACService.getDepartmentTree();
 
       // 如果后端返回的是扁平列表（Materialized Path结构），需要转换为树形结构
-      if (response.data && Array.isArray(response.data.items)) {
+      if (response.data && Array.isArray(response.data)) {
         // 使用Materialized Path服务转换数据
         const MaterializedPathTreeService = (await import('./materializedPathTreeService')).default;
         const treeData = MaterializedPathTreeService.buildTreeFromMaterializedPath(
-          response.data.items,
+          response.data,
           'id',
           'ancestors',
           'children'
@@ -80,16 +80,16 @@ export default class DepartmentTreeService {
 
   /**
    * 更新部门
-   * @param {string} dept_code - 部门编码
+   * @param {string} id - 部门id
    * @param {Object} departmentData - 部门数据
    * @param {string} tenantId - 租户ID
    * @returns {Promise}
    */
-  static async updateDepartment(dept_code, departmentData, tenantId) {
+  static async updateDepartment(id, departmentData, tenantId) {
     try {
-      const response = await RBACService.updateDepartment(dept_code, {
+      const response = await RBACService.updateDepartment(id, {
         ...departmentData,
-        tenant_code: tenantId
+        tenant_id: tenantId
       });
       Message.success('部门更新成功');
       return response;
@@ -102,13 +102,13 @@ export default class DepartmentTreeService {
 
   /**
    * 删除部门
-   * @param {string} dept_code - 部门编码
+   * @param {string}  id - 部门id
    * @param {string} tenantId - 租户ID
    * @returns {Promise}
    */
-  static async deleteDepartment(dept_code, tenantId) {
+  static async deleteDepartment(id, tenantId) {
     try {
-      const response = await RBACService.deleteDepartment(dept_code, tenantId);
+      const response = await RBACService.deleteDepartment(id, tenantId);
       Message.success('部门删除成功');
       return response;
     } catch (error) {
@@ -120,18 +120,18 @@ export default class DepartmentTreeService {
 
   /**
    * 更新部门状态
-   * @param {string} dept_code - 部门编码
+   * @param {string}  id - 部门id
    * @param {string} tenantId - 租户ID
    * @param {number} status - 状态值
    * @returns {Promise}
    */
-  static async updateDepartmentStatus(dept_code, tenantId, status) {
+  static async updateDepartmentStatus(id, tenantId, status) {
     try {
       // 注意：这里假设后端有专门的更新状态API
       // 如果没有，可以使用updateDepartment方法
-      const response = await RBACService.updateDepartment(dept_code, {
+      const response = await RBACService.updateDepartment(id, {
         status: status,
-        tenant_code: tenantId
+        tenant_id: tenantId
       });
       Message.success(status === 1 ? '部门已启用' : '部门已停用');
       return response;

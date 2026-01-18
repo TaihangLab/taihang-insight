@@ -228,7 +228,7 @@ describe('RBACService', () => {
     });
 
     test('创建部门后应该清除相关缓存', async () => {
-      const deptData = { name: 'New Department', dept_code: 'new_dept' };
+      const deptData = { name: 'New Department', id: '34557705324850' };
       
       // 模拟getDepartments返回初始数据
       DepartmentService.getDepartments.mockResolvedValueOnce({ data: [] });

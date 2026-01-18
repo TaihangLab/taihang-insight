@@ -1,9 +1,11 @@
 import Vue from 'vue';
+import Vuex from 'vuex';
 import App from './App.vue';
 import ElementUI, {Notification} from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import './styles/design-system.css';
 import router from './router/index.js';
+import store from './store/index.js';
 import axios from 'axios';
 import VueCookies from 'vue-cookies';
 import VCharts from 'v-charts';
@@ -16,6 +18,7 @@ import VueClipboards from 'vue-clipboards';
 import Contextmenu from "vue-contextmenujs"
 
 Vue.config.productionTip = false;
+Vue.use(Vuex);
 
 
 // 生成唯一ID
@@ -85,5 +88,6 @@ new Vue({
 
   },
   router: router,
+  store, // 注入store
   render: h => h(App),
 }).$mount('#app')

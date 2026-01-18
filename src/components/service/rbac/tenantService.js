@@ -34,13 +34,13 @@ class TenantService {
 
   /**
    * 更新租户
-   * @param {String} tenant_code 租户编码
+   * @param {Number} tenantId 租户ID
    * @param {Object} tenantData 租户数据
    * @returns {Promise<Object>}
    */
-  static async updateTenant(tenant_code, tenantData) {
+  static async updateTenant(tenantId, tenantData) {
     try {
-      const response = await rbacAxios.put(`/api/v1/rbac/tenants/${tenant_code}`, tenantData);
+      const response = await rbacAxios.put(`/api/v1/rbac/tenants/${tenantId}`, tenantData);
       return response;
     } catch (error) {
       console.error('更新租户失败:', error);
@@ -50,15 +50,32 @@ class TenantService {
 
   /**
    * 删除租户
-   * @param {String} tenant_code 租户编码
+   * @param {Number} tenantId 租户ID
    * @returns {Promise<Object>}
    */
-  static async deleteTenant(tenant_code) {
+  static async deleteTenant(tenantId) {
     try {
-      const response = await rbacAxios.delete(`/api/v1/rbac/tenants/${tenant_code}`);
+      const response = await rbacAxios.delete(`/api/v1/rbac/tenants/${tenantId}`);
       return response;
     } catch (error) {
       console.error('删除租户失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 批量删除租户
+   * @param {Array<Number>} tenantIds 租户ID列表
+   * @returns {Promise<Object>}
+   */
+  static async batchDeleteTenants(tenantIds) {
+    try {
+      const response = await rbacAxios.post('/api/v1/rbac/tenants/batch-delete', {
+        tenant_ids: tenantIds
+      });
+      return response;
+    } catch (error) {
+      console.error('批量删除租户失败:', error);
       throw error;
     }
   }

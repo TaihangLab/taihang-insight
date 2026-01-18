@@ -20,7 +20,7 @@ class MockRBACService {
         roleId: 1,
         create_time: '2024-01-01 10:00:00',
         remark: '超级管理员账户',
-        tenant_code: 'default'
+        tenant_id: 'default'
       },
       {
         id: 2,
@@ -37,7 +37,7 @@ class MockRBACService {
         roleId: 2,
         create_time: '2024-01-02 10:00:00',
         remark: '开发工程师',
-        tenant_code: 'default'
+        tenant_id: 'default'
       },
       {
         id: 3,
@@ -54,7 +54,7 @@ class MockRBACService {
         roleId: 3,
         create_time: '2024-01-03 10:00:00',
         remark: '测试工程师',
-        tenant_code: 'default'
+        tenant_id: 'default'
       }
     ];
 
@@ -66,7 +66,7 @@ class MockRBACService {
         sort_order: 1,
         status: 1,
         remark: '系统最高权限',
-        tenant_code: 'default',
+        tenant_id: 'default',
         create_time: '2024-01-01 10:00:00'
       },
       {
@@ -76,7 +76,7 @@ class MockRBACService {
         sort_order: 2,
         status: 1,
         remark: '系统管理权限',
-        tenant_code: 'default',
+        tenant_id: 'default',
         create_time: '2024-01-01 10:00:00'
       },
       {
@@ -86,7 +86,7 @@ class MockRBACService {
         sort_order: 3,
         status: 1,
         remark: '普通用户权限',
-        tenant_code: 'default',
+        tenant_id: 'default',
         create_time: '2024-01-01 10:00:00'
       }
     ];
@@ -99,7 +99,7 @@ class MockRBACService {
         permission_type: 'page',
         status: 1,
         create_time: '2024-01-01 10:00:00',
-        tenant_code: 'default'
+        tenant_id: 'default'
       },
       {
         id: 2,
@@ -108,7 +108,7 @@ class MockRBACService {
         permission_type: 'page',
         status: 1,
         create_time: '2024-01-01 10:00:00',
-        tenant_code: 'default'
+        tenant_id: 'default'
       },
       {
         id: 3,
@@ -117,7 +117,7 @@ class MockRBACService {
         permission_type: 'page',
         status: 1,
         create_time: '2024-01-01 10:00:00',
-        tenant_code: 'default'
+        tenant_id: 'default'
       },
       {
         id: 4,
@@ -126,7 +126,7 @@ class MockRBACService {
         permission_type: 'button',
         status: 1,
         create_time: '2024-01-01 10:00:00',
-        tenant_code: 'default'
+        tenant_id: 'default'
       },
       {
         id: 5,
@@ -135,7 +135,7 @@ class MockRBACService {
         permission_type: 'button',
         status: 1,
         create_time: '2024-01-01 10:00:00',
-        tenant_code: 'default'
+        tenant_id: 'default'
       }
     ];
 
@@ -367,8 +367,7 @@ class MockRBACService {
     this.departments = [
       {
         id: 1,
-        dept_code: 'dept001',
-        dept_name: '总部',
+        name: '总部',
         parent_id: 0,
         status: 1,
         sort: 1,
@@ -376,12 +375,11 @@ class MockRBACService {
         phone: '010-12345678',
         email: 'headquarters@example.com',
         create_time: '2024-01-01 10:00:00',
-        tenant_code: 'default'
+        tenant_id: 'default'
       },
       {
         id: 2,
-        dept_code: 'dept002',
-        dept_name: '技术部',
+        name: '技术部',
         parent_id: 1,
         status: 1,
         sort: 1,
@@ -389,12 +387,11 @@ class MockRBACService {
         phone: '010-12345679',
         email: 'tech@example.com',
         create_time: '2024-01-01 10:00:00',
-        tenant_code: 'default'
+        tenant_id: 'default'
       },
       {
         id: 3,
-        dept_code: 'dept003',
-        dept_name: '测试部',
+        name: '测试部',
         parent_id: 1,
         status: 1,
         sort: 2,
@@ -402,7 +399,7 @@ class MockRBACService {
         phone: '010-12345680',
         email: 'test@example.com',
         create_time: '2024-01-01 10:00:00',
-        tenant_code: 'default'
+        tenant_id: 'default'
       }
     ];
 
@@ -413,7 +410,7 @@ class MockRBACService {
         position_name: '总经理',
         status: 1,
         create_time: '2024-01-01 10:00:00',
-        tenant_code: 'default'
+        tenant_id: 'default'
       },
       {
         id: 2,
@@ -421,7 +418,7 @@ class MockRBACService {
         position_name: '开发工程师',
         status: 1,
         create_time: '2024-01-01 10:00:00',
-        tenant_code: 'default'
+        tenant_id: 'default'
       },
       {
         id: 3,
@@ -429,14 +426,14 @@ class MockRBACService {
         position_name: '测试工程师',
         status: 1,
         create_time: '2024-01-01 10:00:00',
-        tenant_code: 'default'
+        tenant_id: 'default'
       }
     ];
 
     this.tenants = [
       {
         id: 1,
-        tenant_code: 'default',
+        tenant_id: 'default',
         tenant_name: '默认租户',
         contact_person: 'admin',
         contact_phone: '13800138000',
@@ -502,20 +499,20 @@ class MockRBACService {
       id: Math.max(...this.users.map(u => u.id), 0) + 1,
       user_code: userData.user_name,
       create_time: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      tenant_code: userData.tenant_code || 'default'
+      tenant_id: userData.tenant_id || 'default'
     };
 
     this.users.push(newUser);
     return this.createResponse(newUser);
   }
 
-  async updateUser(user_identifier, tenant_code, userData) {
+  async updateUser(user_identifier, tenant_id, userData) {
     await this.delay();
 
     // 尝试按 user_code 或 user_name 查找用户
     const index = this.users.findIndex(u =>
       (u.user_code === user_identifier || u.user_name === user_identifier) &&
-      u.tenant_code === tenant_code
+      u.tenant_id === tenant_id
     );
     if (index !== -1) {
       this.users[index] = { ...this.users[index], ...userData };
@@ -525,13 +522,13 @@ class MockRBACService {
     throw new Error('用户不存在');
   }
 
-  async deleteUser(user_identifier, tenant_code) {
+  async deleteUser(user_identifier, tenant_id) {
     await this.delay();
 
     // 尝试按 user_code 或 user_name 查找用户
     const index = this.users.findIndex(u =>
       (u.user_code === user_identifier || u.user_name === user_identifier) &&
-      u.tenant_code === tenant_code
+      u.tenant_id === tenant_id
     );
     if (index !== -1) {
       this.users.splice(index, 1);
@@ -556,10 +553,10 @@ class MockRBACService {
     throw new Error('用户不存在');
   }
 
-  async getUserRoles(userId, tenant_code) {
+  async getUserRoles(userId, tenant_id) {
     await this.delay();
 
-    const user = this.users.find(u => u.id === userId && u.tenant_code === tenant_code);
+    const user = this.users.find(u => u.id === userId && u.tenant_id === tenant_id);
     if (user) {
       const role = this.roles.find(r => r.id === user.roleId);
       return this.createResponse([role]);
@@ -584,8 +581,8 @@ class MockRBACService {
     if (params.status !== undefined) {
       result = result.filter(role => role.status == params.status);
     }
-    if (params.tenant_code) {
-      result = result.filter(role => role.tenant_code === params.tenant_code);
+    if (params.tenant_id) {
+      result = result.filter(role => role.tenant_id === params.tenant_id);
     }
 
     // 分页处理
@@ -608,17 +605,17 @@ class MockRBACService {
       ...roleData,
       id: Math.max(...this.roles.map(r => r.id), 0) + 1,
       create_time: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      tenant_code: roleData.tenant_code || 'default'
+      tenant_id: roleData.tenant_id || 'default'
     };
 
     this.roles.push(newRole);
     return this.createResponse(newRole);
   }
 
-  async updateRole(role_code, tenant_code, roleData) {
+  async updateRole(role_code, tenant_id, roleData) {
     await this.delay();
 
-    const index = this.roles.findIndex(r => r.role_code === role_code && r.tenant_code === tenant_code);
+    const index = this.roles.findIndex(r => r.role_code === role_code && r.tenant_id === tenant_id);
     if (index !== -1) {
       this.roles[index] = { ...this.roles[index], ...roleData };
       return this.createResponse(this.roles[index]);
@@ -627,10 +624,10 @@ class MockRBACService {
     throw new Error('角色不存在');
   }
 
-  async deleteRole(role_code, tenant_code) {
+  async deleteRole(role_code, tenant_id) {
     await this.delay();
 
-    const index = this.roles.findIndex(r => r.role_code === role_code && r.tenant_code === tenant_code);
+    const index = this.roles.findIndex(r => r.role_code === role_code && r.tenant_id === tenant_id);
     if (index !== -1) {
       this.roles.splice(index, 1);
       return this.createResponse({ message: '角色删除成功' });
@@ -639,7 +636,7 @@ class MockRBACService {
     throw new Error('角色不存在');
   }
 
-  async getRolePermissions(roleId, tenant_code) {
+  async getRolePermissions(roleId, tenant_id) {
     await this.delay();
 
     // 返回与角色相关的权限
@@ -672,17 +669,17 @@ class MockRBACService {
       ...permissionData,
       id: Math.max(...this.permissions.map(p => p.id), 0) + 1,
       create_time: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      tenant_code: permissionData.tenant_code || 'default'
+      tenant_id: permissionData.tenant_id || 'default'
     };
 
     this.permissions.push(newPermission);
     return this.createResponse(newPermission);
   }
 
-  async updatePermission(permission_code, tenant_code, permissionData) {
+  async updatePermission(permission_code, tenant_id, permissionData) {
     await this.delay();
 
-    const index = this.permissions.findIndex(p => p.permission_code === permission_code && p.tenant_code === tenant_code);
+    const index = this.permissions.findIndex(p => p.permission_code === permission_code && p.tenant_id === tenant_id);
     if (index !== -1) {
       this.permissions[index] = { ...this.permissions[index], ...permissionData };
       return this.createResponse(this.permissions[index]);
@@ -691,10 +688,10 @@ class MockRBACService {
     throw new Error('权限不存在');
   }
 
-  async deletePermission(permission_code, tenant_code) {
+  async deletePermission(permission_code, tenant_id) {
     await this.delay();
 
-    const index = this.permissions.findIndex(p => p.permission_code === permission_code && p.tenant_code === tenant_code);
+    const index = this.permissions.findIndex(p => p.permission_code === permission_code && p.tenant_id === tenant_id);
     if (index !== -1) {
       this.permissions.splice(index, 1);
       return this.createResponse({ message: '权限删除成功' });
@@ -703,10 +700,10 @@ class MockRBACService {
     throw new Error('权限不存在');
   }
 
-  async updatePermissionStatus(permission_code, tenant_code, status) {
+  async updatePermissionStatus(permission_code, tenant_id, status) {
     await this.delay();
 
-    const index = this.permissions.findIndex(p => p.permission_code === permission_code && p.tenant_code === tenant_code);
+    const index = this.permissions.findIndex(p => p.permission_code === permission_code && p.tenant_id === tenant_id);
     if (index !== -1) {
       this.permissions[index].status = status;
       return this.createResponse(this.permissions[index]);
@@ -715,7 +712,7 @@ class MockRBACService {
     throw new Error('权限不存在');
   }
 
-  async getRolesByPermission(permissionId, tenant_code) {
+  async getRolesByPermission(permissionId, tenant_id) {
     await this.delay();
 
     return this.createResponse(this.roles);
@@ -729,6 +726,9 @@ class MockRBACService {
   async getPermissionTree(params = {}) {
     await this.delay();
 
+    // 权限管理功能与租户无关，从参数中移除租户代码
+    const { tenant_id, ...otherParams } = params;
+
     // 返回树形结构
     return this.createResponse(this.permissionTree);
   }
@@ -739,10 +739,13 @@ class MockRBACService {
   async createPermissionNode(nodeData) {
     await this.delay();
 
+    // 权限管理功能与租户无关，从数据中移除租户代码
+    const { tenant_id, ...otherData } = nodeData;
+
     const newNode = {
-      ...nodeData,
+      ...otherData,
       id: `node_${Date.now()}`,
-      children: nodeData.children || []
+      children: otherData.children || []
     };
 
     // 如果有父节点，添加到父节点的children中
@@ -768,9 +771,12 @@ class MockRBACService {
   async updatePermissionNode(nodeId, nodeData) {
     await this.delay();
 
+    // 权限管理功能与租户无关，从数据中移除租户代码
+    const { tenant_id, ...otherData } = nodeData;
+
     const node = this.findNodeInTree(this.permissionTree, nodeId);
     if (node) {
-      Object.assign(node, nodeData);
+      Object.assign(node, otherData);
       return this.createResponse(node);
     }
 
@@ -881,19 +887,18 @@ class MockRBACService {
     const newDept = {
       ...deptData,
       id: Math.max(...this.departments.map(d => d.id), 0) + 1,
-      dept_code: deptData.dept_name.toLowerCase().replace(/\s+/g, ''),
       create_time: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      tenant_code: deptData.tenant_code || 'default'
+      tenant_id: deptData.tenant_id || 'default'
     };
 
     this.departments.push(newDept);
     return this.createResponse(newDept);
   }
 
-  async updateDepartment(dept_code, deptData) {
+  async updateDepartment(id, deptData) {
     await this.delay();
 
-    const index = this.departments.findIndex(d => d.dept_code === dept_code);
+    const index = this.departments.findIndex(d => d.id === id);
     if (index !== -1) {
       this.departments[index] = { ...this.departments[index], ...deptData };
       return this.createResponse(this.departments[index]);
@@ -902,10 +907,10 @@ class MockRBACService {
     throw new Error('部门不存在');
   }
 
-  async deleteDepartment(dept_code, tenant_code) {
+  async deleteDepartment(id, tenant_id) {
     await this.delay();
 
-    const index = this.departments.findIndex(d => d.dept_code === dept_code && d.tenant_code === tenant_code);
+    const index = this.departments.findIndex(d => d.id === id && d.tenant_id === tenant_id);
     if (index !== -1) {
       this.departments.splice(index, 1);
       return this.createResponse({ message: '部门删除成功' });
@@ -941,7 +946,7 @@ class MockRBACService {
       id: Math.max(...this.positions.map(p => p.id), 0) + 1,
       position_code: posData.position_name.toLowerCase().replace(/\s+/g, ''),
       create_time: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      tenant_code: posData.tenant_code || 'default'
+      tenant_id: posData.tenant_id || 'default'
     };
 
     this.positions.push(newPosition);
@@ -960,10 +965,10 @@ class MockRBACService {
     throw new Error('岗位不存在');
   }
 
-  async deletePosition(position_code, tenant_code) {
+  async deletePosition(position_code, tenant_id) {
     await this.delay();
 
-    const index = this.positions.findIndex(p => p.position_code === position_code && p.tenant_code === tenant_code);
+    const index = this.positions.findIndex(p => p.position_code === position_code && p.tenant_id === tenant_id);
     if (index !== -1) {
       this.positions.splice(index, 1);
       return this.createResponse({ message: '岗位删除成功' });
@@ -1004,10 +1009,10 @@ class MockRBACService {
     return this.createResponse(newTenant);
   }
 
-  async updateTenant(tenant_code, tenantData) {
+  async updateTenant(tenant_id, tenantData) {
     await this.delay();
 
-    const index = this.tenants.findIndex(t => t.tenant_code === tenant_code);
+    const index = this.tenants.findIndex(t => t.tenant_id === tenant_id);
     if (index !== -1) {
       this.tenants[index] = { ...this.tenants[index], ...tenantData };
       return this.createResponse(this.tenants[index]);
@@ -1016,10 +1021,10 @@ class MockRBACService {
     throw new Error('租户不存在');
   }
 
-  async deleteTenant(tenant_code) {
+  async deleteTenant(tenant_id) {
     await this.delay();
 
-    const index = this.tenants.findIndex(t => t.tenant_code === tenant_code);
+    const index = this.tenants.findIndex(t => t.tenant_id === tenant_id);
     if (index !== -1) {
       this.tenants.splice(index, 1);
       return this.createResponse({ message: '租户删除成功' });
@@ -1028,14 +1033,37 @@ class MockRBACService {
     throw new Error('租户不存在');
   }
 
+  async batchDeleteTenants(tenant_ids) {
+    await this.delay();
+
+    let deletedCount = 0;
+    const notFoundCodes = [];
+
+    tenant_ids.forEach(code => {
+      const index = this.tenants.findIndex(t => t.tenant_id === code);
+      if (index !== -1) {
+        this.tenants.splice(index, 1);
+        deletedCount++;
+      } else {
+        notFoundCodes.push(code);
+      }
+    });
+
+    return this.createResponse({
+      message: `成功删除 ${deletedCount} 个租户`,
+      deleted_count: deletedCount,
+      not_found_codes: notFoundCodes
+    });
+  }
+
   // 关联管理API
-  async assignRoleToUser(userIdentifier, roleId, tenant_code) {
+  async assignRoleToUser(userIdentifier, roleId, tenant_id) {
     await this.delay();
 
     // 尝试按 user_code 或 user_name 查找用户
     const user = this.users.find(u =>
       (u.user_code === userIdentifier || u.user_name === userIdentifier) &&
-      u.tenant_code === tenant_code
+      u.tenant_id === tenant_id
     );
     if (user) {
       user.roleId = roleId;
@@ -1045,13 +1073,13 @@ class MockRBACService {
     throw new Error('用户不存在');
   }
 
-  async removeUserRole(userIdentifier, roleId, tenant_code) {
+  async removeUserRole(userIdentifier, roleId, tenant_id) {
     await this.delay();
 
     // 尝试按 user_code 或 user_name 查找用户
     const user = this.users.find(u =>
       (u.user_code === userIdentifier || u.user_name === userIdentifier) &&
-      u.tenant_code === tenant_code && u.roleId === roleId
+      u.tenant_id === tenant_id && u.roleId === roleId
     );
     if (user) {
       user.roleId = null;
@@ -1061,36 +1089,36 @@ class MockRBACService {
     throw new Error('用户角色关联不存在');
   }
 
-  async getUsersByRole(roleId, tenant_code) {
+  async getUsersByRole(roleId, tenant_id) {
     await this.delay();
 
-    const users = this.users.filter(u => u.roleId === roleId && u.tenant_code === tenant_code);
+    const users = this.users.filter(u => u.roleId === roleId && u.tenant_id === tenant_id);
     return this.createResponse(users);
   }
 
-  async assignPermissionToRole(roleId, permissionId, tenant_code) {
+  async assignPermissionToRole(roleId, permissionId, tenant_id) {
     await this.delay();
 
     return this.createResponse({ message: '权限分配成功' });
   }
 
-  async removeRolePermission(roleId, permissionId, tenant_code) {
+  async removeRolePermission(roleId, permissionId, tenant_id) {
     await this.delay();
 
     return this.createResponse({ message: '权限移除成功' });
   }
 
-  async checkUserPermission(userId, tenant_code, url, method) {
+  async checkUserPermission(userId, tenant_id, url, method) {
     await this.delay();
 
     return this.createResponse({ hasPermission: true });
   }
 
-  async getUserPermissions(userId, tenant_code) {
+  async getUserPermissions(userId, tenant_id) {
     await this.delay();
 
     // 返回用户拥有的权限
-    const user = this.users.find(u => u.id === userId && u.tenant_code === tenant_code);
+    const user = this.users.find(u => u.id === userId && u.tenant_id === tenant_id);
     if (user) {
       const role = this.roles.find(r => r.id === user.roleId);
       if (role) {
@@ -1103,13 +1131,13 @@ class MockRBACService {
   }
 
   // 批量分配角色给用户
-  async assignRolesToUser(userIdentifier, roleIds, tenant_code) {
+  async assignRolesToUser(userIdentifier, roleIds, tenant_id) {
     await this.delay();
 
     // 尝试按 user_code 或 user_name 查找用户
     const user = this.users.find(u =>
       (u.user_code === userIdentifier || u.user_name === userIdentifier) &&
-      u.tenant_code === tenant_code
+      u.tenant_id === tenant_id
     );
     if (user) {
       // 为用户分配多个角色（这里简化为只保留最后一个角色）

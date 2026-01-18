@@ -11,7 +11,7 @@ from pathlib import Path
 def camel_to_snake(name):
     """
     将驼峰命名转换为蛇形命名
-    例如: userName -> user_name, tenantCode -> tenant_code
+    例如: userName -> user_name, tenantCode -> tenant_id
     """
     # 在小写字母和大写字母之间插入下划线
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
@@ -61,8 +61,6 @@ def main():
         ('sortOrder', 'sort_order'),
         
         # 部门管理模块
-        ('deptName', 'dept_name'),
-        ('deptCode', 'dept_code'),
         ('parentId', 'parent_id'),
         
         # 职位管理模块
@@ -73,7 +71,7 @@ def main():
         
         # 租户管理模块
         ('tenantName', 'tenant_name'),
-        ('tenantCode', 'tenant_code'),
+        ('tenantCode', 'tenant_id'),
         ('companyName', 'company_name'),
         ('contactPerson', 'contact_person'),
         ('contactPhone', 'contact_phone'),

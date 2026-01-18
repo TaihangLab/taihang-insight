@@ -256,7 +256,7 @@ export default {
           this.tableData = response.data.items.map(item => ({
             ...item,
             user_name: item.user_name || item.user_code || item.id.toString(),
-            tenant_code: item.tenant_code || 'default'
+            tenant_id: item.tenant_id || 'default'
           }))
 
           this.pagination.total = response.data.total || response.data.items.length || 0
@@ -334,7 +334,7 @@ export default {
           this.availableUsersData = response.data.items.map(item => ({
             ...item,
             user_name: item.user_name || item.user_code || item.id.toString(),
-            tenant_code: item.tenant_code || 'default'
+            tenant_id: item.tenant_id || 'default'
           }))
 
           this.userPagination.total = response.data.total || response.data.items.length || 0
@@ -500,7 +500,7 @@ export default {
         const userNames = this.selectedUsers.map(user => user.user_name)
 
         // 调用API分配角色给用户
-        await RBACService.assignRolesToUser(userNames, this.role_code, this.searchForm.tenant_code || 'default')
+        await RBACService.assignRolesToUser(userNames, this.role_code, this.searchForm.tenant_id || 'default')
 
         this.$message({
           message: `成功为 ${this.selectedUsers.length} 个用户分配角色`,
@@ -527,7 +527,7 @@ export default {
 
         try {
           // 调用API取消用户的角色分配
-          await RBACService.removeUserRole(row.user_name, this.role_code, row.tenant_code || 'default')
+          await RBACService.removeUserRole(row.user_name, this.role_code, row.tenant_id || 'default')
 
           this.$message({
             message: '取消授权成功',
@@ -569,7 +569,7 @@ export default {
           // 调用API批量取消用户的角色分配
           // 注意：这里需要逐个调用removeUserRole，因为API可能不支持批量取消
           const promises = this.selectedRows.map(row =>
-            RBACService.removeUserRole(row.user_name, this.role_code, row.tenant_code || 'default')
+            RBACService.removeUserRole(row.user_name, this.role_code, row.tenant_id || 'default')
           );
           await Promise.all(promises)
 

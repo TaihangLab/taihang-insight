@@ -14,9 +14,7 @@ class PositionService {
   // 创建岗位
   static async createPosition(posData) {
     try {
-      return await rbacAxios.post('/api/v1/rbac/positions', posData, {
-        params: { tenant_code: posData.tenant_code }
-      });
+      return await rbacAxios.post('/api/v1/rbac/positions', posData);
     } catch (error) {
       console.error('创建岗位失败:', error);
       throw error;
@@ -24,11 +22,9 @@ class PositionService {
   }
 
   // 更新岗位
-  static async updatePosition(position_code, posData) {
+  static async updatePosition(positionId, posData) {
     try {
-      return await rbacAxios.put(`/api/v1/rbac/positions/${position_code}`, posData, {
-        params: { tenant_code: posData.tenant_code }
-      });
+      return await rbacAxios.put(`/api/v1/rbac/positions/${positionId}`, posData);
     } catch (error) {
       console.error('更新岗位失败:', error);
       throw error;
@@ -36,11 +32,9 @@ class PositionService {
   }
 
   // 删除岗位
-  static async deletePosition(position_code, tenant_code) {
+  static async deletePosition(positionId) {
     try {
-      return await rbacAxios.delete(`/api/v1/rbac/positions/${position_code}`, {
-        params: { tenant_code: tenant_code }
-      });
+      return await rbacAxios.delete(`/api/v1/rbac/positions/${positionId}`);
     } catch (error) {
       console.error('删除岗位失败:', error);
       throw error;
