@@ -33,7 +33,7 @@ export default {
 
   mounted(){
     //组件开始挂载时获取用户信息
-    // this.getUserInfo();
+    this.getUserInfo();
   },
   methods: {
   },

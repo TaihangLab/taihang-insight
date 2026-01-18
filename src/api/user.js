@@ -26,9 +26,19 @@ export function logout() {
 }
 
 /**
- * 获取用户信息
+ * 获取当前用户信息（包含权限和菜单树）
  */
 export function getUserInfo() {
+  return request({
+    url: '/api/v1/auth/user-info',
+    method: 'get'
+  })
+}
+
+/**
+ * 获取用户信息（兼容旧接口）
+ */
+export function getUserInfoOld() {
   return request({
     url: '/api/v1/user/info',
     method: 'get'
