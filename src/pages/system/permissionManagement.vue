@@ -119,7 +119,12 @@ export default {
           }
         })
       } catch (error) {
-        this.$message.error(`获取权限列表失败: ${error.message}`)
+        // 根据错误类型显示不同的提示
+        if (error.code === 403 || error.status === 403) {
+          this.$message.error('无权限访问权限管理功能')
+        } else {
+          this.$message.error(error.message || '获取权限列表失败')
+        }
       }
     },
 
