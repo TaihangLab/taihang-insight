@@ -1479,14 +1479,135 @@ export default {
       },
 
 
-      // 预览预警详情
-      previewAlert(alert) {
-        // 这里可以打开预警详情弹框或跳转到详情页面
-        console.log('预览预警详情:', alert);
-        this.$message.info(`预警详情：${alert.alert_name} (ID: ${alert.alert_id})`);
+      // 预览预警详情 - 在添加预警对话框中查看预警详情
+      async previewAlert(alert) {
+        try {
+          console.log('previewAlert - 原始预警数据:', alert);
 
-        // 可以根据需要实现详情弹框或其他预览方式
-        // 例如：this.showAlertDetailDialog(alert);
+          // 将 availableAlerts 表格数据格式转换为 WarningDetail 组件需要的格式
+          const levelMap = {
+            1: 'level1',
+            2: 'level2',
+            3: 'level3',
+            4: 'level4'
+          };
+
+          // 构建基础 warning 对象
+          const baseWarning = {
+            id: alert.alert_id,
+            device: alert.camera_name,
+            deviceInfo: {
+              name: alert.camera_name,
+              position: alert.location || ''
+            },
+            type: alert.alert_name || alert.alert_type,
+            time: alert.alert_time,
+            level: levelMap[alert.alert_level] || 'level1',
+            location: alert.location || '',
+            description: this.getDescriptionByType(alert.alert_type || alert.alert_name),
+            imageUrl: alert.minio_frame_url || null,
+            videoUrl: alert.minio_video_url || null,
+            minio_frame_url: alert.minio_frame_url || null,
+            minio_video_url: alert.minio_video_url || null,
+            status: this.convertStatusToText(alert.status),
+            operationHistory: [],
+            _apiData: alert
+          };
+
+          this.currentWarning = baseWarning;
+          this.warningDetailVisible = true;
+
+          // 调用 API 获取完整的预警详情
+          const alertId = alert.alert_id;
+          if (!alertId) {
+            console.warn('previewAlert - 缺少预警ID，使用基础数据');
+            return;
+          }
+
+          const resp = await alertAPI.getAlertDetail(alertId);
+          const apiDetail = resp && resp.data ? resp.data : null;
+
+          if (!apiDetail) {
+            console.warn('previewAlert - 获取详情失败，使用基础数据');
+            return;
+          }
+
+          console.log('previewAlert - API返回详情:', apiDetail);
+
+          // 更新 warning 对象，添加更多详细信息
+          let history = [];
+          if (apiDetail.process) {
+            history = this.processApiDataHistory(apiDetail);
+          } else {
+            history = this.buildFromApiData(apiDetail);
+          }
+
+          // 更新 currentWarning，覆盖图片、视频和操作历史
+          this.currentWarning = {
+            ...this.currentWarning,
+            imageUrl: apiDetail.minio_frame_url || this.currentWarning.imageUrl,
+            videoUrl: apiDetail.minio_video_url || this.currentWarning.videoUrl,
+            minio_frame_url: apiDetail.minio_frame_url || this.currentWarning.minio_frame_url,
+            minio_video_url: apiDetail.minio_video_url || this.currentWarning.minio_video_url,
+            description: apiDetail.description || this.currentWarning.description,
+            operationHistory: history,
+            _apiData: apiDetail
+          };
+
+          console.log('previewAlert - 详情构建完成，时间线条数:', history.length);
+        } catch (error) {
+          console.error('previewAlert - 获取预警详情失败:', error);
+          // 出错时仍然显示基础信息
+          if (this.currentWarning) {
+            this.currentWarning = {
+              ...this.currentWarning,
+              operationHistory: this.buildBasicHistoryFromAlert(alert)
+            };
+          }
+        }
+      },
+
+      // 将状态码转换为文本状态
+      convertStatusToText(status) {
+        const statusMap = {
+          1: 'pending',      // 待处理
+          2: 'processing',   // 处理中
+          3: 'completed',    // 已完成
+          4: 'ignored',      // 已忽略
+          5: 'archived'      // 已归档
+        };
+        return statusMap[status] || 'pending';
+      },
+
+      // 为 availableAlerts 构建基础操作历史
+      buildBasicHistoryFromAlert(alert) {
+        const history = [];
+
+        // 预警产生记录
+        history.push({
+          type: 'alert',
+          title: '预警产生',
+          time: alert.alert_time || new Date().toISOString(),
+          content: `检测到 ${alert.alert_type || alert.alert_name || '未知类型'} 预警`,
+          operator: '系统自动检测',
+          icon: 'warning',
+          color: '#faad14'
+        });
+
+        // 根据状态添加处理记录
+        if (alert.status >= 3) {
+          history.push({
+            type: 'process',
+            title: '预警处理',
+            time: alert.processed_at || alert.alert_time,
+            content: '预警已处理完成',
+            operator: alert.processed_by || '系统',
+            icon: 'success',
+            color: '#52c41a'
+          });
+        }
+
+        return history.reverse();
       },
     // 添加新档案
     addNewArchive() {
