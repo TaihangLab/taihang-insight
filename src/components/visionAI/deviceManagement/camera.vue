@@ -407,9 +407,9 @@
                           :key="`polygon-${polyIndex}`">
                           <polygon :points="formatPolygonPoints(polygon)" :fill="getPolygonColor(polyIndex)"
                             stroke="#1890ff" stroke-width="2" />
-                          <!-- 每个多边形的顶点 -->
+                          <!-- 每个多边形的顶点（使用归一化坐标转换） -->
                           <circle v-for="(point, pointIndex) in polygon" :key="`point-${polyIndex}-${pointIndex}`"
-                            :cx="point.x" :cy="point.y" r="8" fill="#fff" stroke="#1890ff" stroke-width="2"
+                            :cx="toDisplayCoord(point.x, true)" :cy="toDisplayCoord(point.y, false)" r="8" fill="#fff" stroke="#1890ff" stroke-width="2"
                             @mousedown.prevent="startDragPoint(polyIndex, pointIndex, $event)"
                             style="cursor: move; z-index: 100;"
                             title="拖动调整围栏形状" />
@@ -419,7 +419,7 @@
                         <g v-if="skillForm.electronicFence.isDrawing && skillForm.electronicFence.currentPolygon.length > 0">
                           <!-- 添加提示线连接最后一个点和第一个点 -->
                           <polyline v-if="skillForm.electronicFence.currentPolygon.length > 2"
-                            :points="`${skillForm.electronicFence.currentPolygon[skillForm.electronicFence.currentPolygon.length-1].x},${skillForm.electronicFence.currentPolygon[skillForm.electronicFence.currentPolygon.length-1].y} ${skillForm.electronicFence.currentPolygon[0].x},${skillForm.electronicFence.currentPolygon[0].y}`"
+                            :points="`${toDisplayCoord(skillForm.electronicFence.currentPolygon[skillForm.electronicFence.currentPolygon.length-1].x, true)},${toDisplayCoord(skillForm.electronicFence.currentPolygon[skillForm.electronicFence.currentPolygon.length-1].y, false)} ${toDisplayCoord(skillForm.electronicFence.currentPolygon[0].x, true)},${toDisplayCoord(skillForm.electronicFence.currentPolygon[0].y, false)}`"
                             fill="none"
                             stroke="#4caf50"
                             stroke-width="2"
@@ -433,8 +433,8 @@
                           <circle v-for="(point, index) in skillForm.electronicFence.currentPolygon"
                             v-if="index !== 0"
                             :key="`current-${index}`"
-                            :cx="point.x"
-                            :cy="point.y"
+                            :cx="toDisplayCoord(point.x, true)"
+                            :cy="toDisplayCoord(point.y, false)"
                             r="8"
                             fill="#f56c6c"
                             stroke="#fff"
@@ -444,8 +444,8 @@
 
                           <!-- 添加背景圆圈 -->
                           <circle v-if="skillForm.electronicFence.currentPolygon.length > 2"
-                            :cx="skillForm.electronicFence.currentPolygon[0].x"
-                            :cy="skillForm.electronicFence.currentPolygon[0].y"
+                            :cx="toDisplayCoord(skillForm.electronicFence.currentPolygon[0].x, true)"
+                            :cy="toDisplayCoord(skillForm.electronicFence.currentPolygon[0].y, false)"
                             r="16"
                             fill="none"
                             stroke="#4caf50"
@@ -454,8 +454,8 @@
 
                           <!-- 第一个点单独渲染，没有hover效果 -->
                           <circle v-if="skillForm.electronicFence.currentPolygon.length > 0"
-                            :cx="skillForm.electronicFence.currentPolygon[0].x"
-                            :cy="skillForm.electronicFence.currentPolygon[0].y"
+                            :cx="toDisplayCoord(skillForm.electronicFence.currentPolygon[0].x, true)"
+                            :cy="toDisplayCoord(skillForm.electronicFence.currentPolygon[0].y, false)"
                             r="10"
                             :fill="skillForm.electronicFence.currentPolygon.length > 2 ? '#4caf50' : '#f56c6c'"
                             stroke="#fff"

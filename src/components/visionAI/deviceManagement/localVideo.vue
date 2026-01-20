@@ -297,19 +297,19 @@
     <el-dialog
       title="推流配置"
       :visible.sync="streamDialogVisible"
-      width="600px"
+      width="500px"
     >
       <el-form
         :model="streamForm"
         ref="streamForm"
         label-width="120px"
       >
-         <el-form-item label="推流ID（可选）">
+         <el-form-item label="推流地址">
            <el-input
-             v-model="streamForm.stream_id"
-             placeholder="留空自动生成，如：warehouse_cam_1"
+             :value="`video_${currentVideo ? currentVideo.id : ''}`"
+             disabled
            />
-           <span class="form-tip">推流ID用于构建RTSP地址（如：rtsp://.../推流ID），留空则自动生成</span>
+           <span class="form-tip">推流ID固定为 video_视频ID，重启后地址不变</span>
          </el-form-item>
          <el-form-item label="推流帧率（可选）">
            <el-input-number
