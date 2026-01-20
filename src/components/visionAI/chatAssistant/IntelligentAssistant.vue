@@ -1,11 +1,11 @@
 <template>
   <div class="intelligent-assistant-container">
     <!-- 智能助手悬浮球 -->
-    <div 
+    <div
       class="assistant-float-ball"
-      :class="{ 
-        'expanded': isExpanded, 
-        'minimized': !isVisible, 
+      :class="{
+        'expanded': isExpanded,
+        'minimized': !isVisible,
         'dragging': isDragging,
         'auto-hidden': isAutoHidden,
         'hide-to-right': isAutoHidden && isOnRightSide,
@@ -44,7 +44,7 @@
           </svg>
         </div>
       </div>
-      
+
       <!-- 悬浮提示 -->
       <div class="hover-tooltip" v-if="showTooltip && !isChatOpen">
         <span>太行·问道</span>
@@ -53,7 +53,7 @@
     </div>
 
     <!-- 对话框 -->
-    <div 
+    <div
       class="chat-dialog"
       :class="{ 'visible': isChatOpen }"
       :style="getDialogPosition()"
@@ -157,8 +157,8 @@
 
         <!-- 聊天消息列表 -->
         <div class="messages-container" ref="messagesContainer">
-          <div 
-            v-for="(message, index) in messages" 
+          <div
+            v-for="(message, index) in messages"
             :key="index"
             class="message-item"
             :class="{ 'user-message': message.type === 'user', 'assistant-message': message.type === 'assistant' }"
@@ -183,11 +183,11 @@
             </div>
             <div class="message-content">
               <!-- 思考块（如果有思考内容） -->
-              <div v-if="message.hasThinkCompleted && message.thinkingContent" 
+              <div v-if="message.hasThinkCompleted && message.thinkingContent"
                    class="think-block-wrapper"
                    v-html="formatThinkBlock(message.thinkingContent, true)">
               </div>
-              
+
               <!-- 正在思考提示 -->
               <div v-if="message.isThinking" class="thinking-status">
                 <div class="thinking-indicator">
@@ -205,7 +205,7 @@
                   {{ message.thinkingContent }}
                 </div>
               </div>
-              
+
               <!-- 正常消息气泡 -->
               <div class="message-bubble" v-if="!message.isThinking">
                 <span v-if="message.isTyping" class="typing-indicator">
@@ -239,18 +239,18 @@
           >
             <template slot="append">
               <!-- 停止按钮（正在生成时显示） -->
-              <el-button 
+              <el-button
                 v-if="isGenerating"
-                @click="stopGeneration" 
+                @click="stopGeneration"
                 class="stop-button"
                 type="danger"
               >
                 <i class="el-icon-video-pause"></i>
               </el-button>
               <!-- 发送按钮（默认状态） -->
-              <el-button 
+              <el-button
                 v-else
-                @click="sendMessage" 
+                @click="sendMessage"
                 :disabled="!inputMessage.trim()"
                 class="send-button"
               >
@@ -282,10 +282,10 @@
         <div class="search-container">
           <div class="search-wrapper">
             <i class="el-icon-search search-icon"></i>
-            <input 
-              type="text" 
-              v-model="searchQuery" 
-              placeholder="搜索对话" 
+            <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="搜索对话"
               class="search-input"
               @input="onSearchInput"
             />
@@ -304,8 +304,8 @@
               </div>
             </div>
             <div class="groups-list">
-              <div 
-                v-for="group in userGroups" 
+              <div
+                v-for="group in userGroups"
                 :key="group.id"
                 class="group-item"
                 :class="{ 'active': selectedGroupId === group.id }"
@@ -329,14 +329,14 @@
           <!-- 聊天区域 -->
           <div class="chats-section">
             <div class="section-header">
-              <span class="section-title clickable-title" 
+              <span class="section-title clickable-title"
                     :class="{ 'active': selectedGroupId === null }"
                     @click="selectGroup(null)"
                     title="点击查看无分组对话">聊天</span>
             </div>
             <div class="chats-list">
-              <div 
-                v-for="chat in getFilteredChats()" 
+              <div
+                v-for="chat in getFilteredChats()"
                 :key="chat.conversation_id"
                 class="chat-history-item"
                 :class="{ 'active': chat.conversation_id === currentChatId }"
@@ -431,8 +431,8 @@
           <!-- 聊天消息列表 -->
           <div class="fullscreen-messages-container" ref="fullscreenMessagesContainer">
             <div class="fullscreen-messages-wrapper">
-              <div 
-                v-for="(message, index) in messages" 
+              <div
+                v-for="(message, index) in messages"
                 :key="index"
                 class="message-item"
                 :class="{ 'user-message': message.type === 'user', 'assistant-message': message.type === 'assistant' }"
@@ -454,11 +454,11 @@
                 </div>
                 <div class="message-content">
                   <!-- 思考块（如果有思考内容） -->
-                  <div v-if="message.hasThinkCompleted && message.thinkingContent" 
+                  <div v-if="message.hasThinkCompleted && message.thinkingContent"
                        class="think-block-wrapper"
                        v-html="formatThinkBlock(message.thinkingContent, true)">
                   </div>
-                  
+
                   <!-- 正在思考提示 -->
                   <div v-if="message.isThinking" class="thinking-status">
                     <div class="thinking-indicator">
@@ -476,7 +476,7 @@
                       {{ message.thinkingContent }}
                     </div>
                   </div>
-                  
+
                   <!-- 正常消息气泡 -->
                   <div class="message-bubble" v-if="!message.isThinking">
                     <span v-if="message.isTyping" class="typing-indicator">
@@ -516,9 +516,9 @@
               >
               </el-input>
               <!-- 停止按钮（正在生成时显示） -->
-              <el-button 
+              <el-button
                 v-if="isGenerating"
-                @click="stopGeneration" 
+                @click="stopGeneration"
                 class="fullscreen-stop-button"
                 circle
                 type="danger"
@@ -526,9 +526,9 @@
                 <i class="el-icon-video-pause"></i>
               </el-button>
               <!-- 发送按钮（默认状态） -->
-              <el-button 
+              <el-button
                 v-else
-                @click="sendMessage" 
+                @click="sendMessage"
                 :disabled="!inputMessage.trim()"
                 class="fullscreen-send-button"
                 circle
@@ -568,8 +568,8 @@
     >
       <el-form ref="groupForm" :model="groupForm" :rules="groupRules" label-position="top">
         <el-form-item label="分组名称" prop="name">
-          <el-input 
-            v-model="groupForm.name" 
+          <el-input
+            v-model="groupForm.name"
             placeholder="请输入分组名称"
             maxlength="20"
             show-word-limit
@@ -592,10 +592,10 @@
     >
       <div style="margin-bottom: 20px;">
         <p style="color: #666; margin-bottom: 15px;">选择要移动到的分组：</p>
-        
+
         <!-- 无分组选项 -->
-        <div 
-          class="group-option-item" 
+        <div
+          class="group-option-item"
           :class="{ 'selected': selectedGroupForMove === null }"
           @click="selectGroupForMove(null)"
         >
@@ -603,11 +603,11 @@
           <span>📁 无分组</span>
           <i v-if="selectedGroupForMove === null" class="el-icon-check check-icon"></i>
         </div>
-        
+
         <!-- 分组选项列表 -->
         <div v-if="userGroups.length > 0">
-          <div 
-            v-for="group in userGroups" 
+          <div
+            v-for="group in userGroups"
             :key="group.id"
             class="group-option-item"
             :class="{ 'selected': selectedGroupForMove === group.id }"
@@ -618,14 +618,14 @@
             <i v-if="selectedGroupForMove === group.id" class="el-icon-check check-icon"></i>
           </div>
         </div>
-        
+
         <!-- 无分组提示 -->
         <div v-if="userGroups.length === 0" style="padding: 20px; text-align: center; color: #999;">
           <i class="el-icon-folder-add" style="font-size: 32px; margin-bottom: 10px;"></i>
           <p>暂无分组，请先创建分组</p>
         </div>
       </div>
-      
+
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancelMoveToGroup">取 消</el-button>
         <el-button type="primary" @click="confirmMoveToGroup">确 定</el-button>
@@ -636,8 +636,8 @@
     <div v-if="showContextMenu" class="context-menu-overlay" @click="hideContextMenu"></div>
 
     <!-- 遮罩层 -->
-    <div 
-      class="dialog-overlay" 
+    <div
+      class="dialog-overlay"
       v-if="isChatOpen && !isFullScreen"
       @click="closeChat"
     ></div>
@@ -651,4 +651,4 @@ export default IntelligentAssistant
 
 <style scoped>
 @import './IntelligentAssistant.css';
-</style> 
+</style>

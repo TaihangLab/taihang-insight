@@ -1722,10 +1722,21 @@ export default {
     },
     
     // 电子围栏相关方法
-    // 格式化多边形点坐标为SVG path
+    // 格式化多边形点坐标为SVG path（归一化坐标转显示坐标）
     formatPolygonPoints(points) {
       if (!points || points.length === 0) return '';
-      return points.map(p => `${p.x},${p.y}`).join(' ');
+      const imageElement = document.querySelector('.fence-image');
+      if (!imageElement) return '';
+      const rect = imageElement.getBoundingClientRect();
+      return points.map(p => `${p.x * rect.width},${p.y * rect.height}`).join(' ');
+    },
+    
+    // 归一化坐标转显示坐标
+    toDisplayCoord(coord, isX) {
+      const imageElement = document.querySelector('.fence-image');
+      if (!imageElement) return 0;
+      const rect = imageElement.getBoundingClientRect();
+      return isX ? coord * rect.width : coord * rect.height;
     },
     
     // 获取多边形颜色
@@ -1755,7 +1766,7 @@ export default {
       const initialX = event.clientX;
       const initialY = event.clientY;
       
-      // 当前点的初始位置
+      // 当前点的初始归一化坐标
       const initialPointX = this.skillForm.electronicFence.points[polyIndex][pointIndex].x;
       const initialPointY = this.skillForm.electronicFence.points[polyIndex][pointIndex].y;
       
@@ -1769,15 +1780,15 @@ export default {
         
         moveEvent.preventDefault(); // 防止默认行为
         
-        // 计算偏移量
-        const offsetX = moveEvent.clientX - initialX;
-        const offsetY = moveEvent.clientY - initialY;
+        // 计算归一化偏移量
+        const offsetX = (moveEvent.clientX - initialX) / rect.width;
+        const offsetY = (moveEvent.clientY - initialY) / rect.height;
         
-        // 计算新位置
-        const newX = Math.max(0, Math.min(rect.width, initialPointX + offsetX));
-        const newY = Math.max(0, Math.min(rect.height, initialPointY + offsetY));
+        // 计算新的归一化坐标（限制在0-1范围内）
+        const newX = Math.max(0, Math.min(1, initialPointX + offsetX));
+        const newY = Math.max(0, Math.min(1, initialPointY + offsetY));
         
-        // 更新点的位置
+        // 更新点的归一化坐标
         this.skillForm.electronicFence.points[polyIndex][pointIndex] = {
           x: newX,
           y: newY
@@ -1858,23 +1869,28 @@ export default {
       // 如果正在绘制围栏，添加点
       if (this.skillForm.electronicFence.isDrawing) {
         const rect = event.target.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
+        
+        // 使用归一化坐标（0-1范围），解决图片缩放导致的坐标不一致问题
+        const x = clickX / rect.width;
+        const y = clickY / rect.height;
         
         // 如果已经有点，检查是否点击了第一个点附近区域来闭合围栏
         if (this.skillForm.electronicFence.currentPolygon.length > 2) {
           const firstPoint = this.skillForm.electronicFence.currentPolygon[0];
+          // 计算归一化坐标系下的距离（约40像素相当于0.1的归一化距离）
+          const normalizedThreshold = 40 / Math.max(rect.width, rect.height);
           const distance = Math.sqrt(Math.pow(x - firstPoint.x, 2) + Math.pow(y - firstPoint.y, 2));
           
-          // 如果点击位置距离第一个点很近（40像素内），则闭合围栏
-          // 使用更大的范围使闭合操作更容易
-          if (distance < 40) {
+          // 如果点击位置距离第一个点很近，则闭合围栏
+          if (distance < normalizedThreshold) {
             this.completeFence();
             return;
           }
         }
         
-        // 添加点到当前多边形
+        // 添加归一化坐标点到当前多边形
         this.skillForm.electronicFence.currentPolygon.push({ x, y });
         
         // 当点数大于2时，刷新界面显示闭合提示
@@ -2383,50 +2399,20 @@ export default {
         ];
       }
       
-      // 填充电子围栏
-      // 重置围栏数据
+      // 填充电子围栏（使用归一化坐标 0-1 范围）
       this.skillForm.electronicFence.points = [];
       
       if (taskData.electronic_fence && taskData.electronic_fence.points && taskData.electronic_fence.points.length > 0) {
-        // 判断电子围栏点数据的格式
         const fencePoints = taskData.electronic_fence.points;
+        console.log('电子围栏数据:', JSON.stringify(fencePoints));
         
-        console.log('电子围栏原始数据:', JSON.stringify(fencePoints));
-        
-        try {
-          // 如果是二维数组，并且第一层是多边形数组
-          if (Array.isArray(fencePoints) && Array.isArray(fencePoints[0])) {
-            // 遍历每个多边形
-            fencePoints.forEach(polygon => {
-              // 检查多边形点数据格式
-              if (polygon.length > 0) {
-                if (typeof polygon[0] === 'object' && 'x' in polygon[0] && 'y' in polygon[0]) {
-                  // 如果点已经是{x,y}格式，直接添加
-                  this.skillForm.electronicFence.points.push([...polygon]);
-                } else if (Array.isArray(polygon[0])) {
-                  // 如果点是[x,y]格式，转换为{x,y}格式
-                  const formattedPolygon = polygon.map(point => ({ x: point[0], y: point[1] }));
-                  this.skillForm.electronicFence.points.push(formattedPolygon);
-                }
-              }
-            });
-          } else if (Array.isArray(fencePoints)) {
-            // 如果是一维数组，可能是单个多边形的点数组
-            if (fencePoints.length > 0) {
-              if (typeof fencePoints[0] === 'object' && 'x' in fencePoints[0] && 'y' in fencePoints[0]) {
-                // 如果点已经是{x,y}格式，作为一个多边形添加
-                this.skillForm.electronicFence.points.push([...fencePoints]);
-              } else if (Array.isArray(fencePoints[0])) {
-                // 如果点是[x,y]格式，转换为{x,y}格式
-                const formattedPolygon = fencePoints.map(point => ({ x: point[0], y: point[1] }));
-                this.skillForm.electronicFence.points.push(formattedPolygon);
-              }
+        // 直接使用归一化坐标格式 [[{x, y}, {x, y}], ...]
+        if (Array.isArray(fencePoints) && Array.isArray(fencePoints[0])) {
+          fencePoints.forEach(polygon => {
+            if (polygon.length > 0 && typeof polygon[0] === 'object') {
+              this.skillForm.electronicFence.points.push([...polygon]);
             }
-          }
-          
-          console.log('处理后的电子围栏数据:', JSON.stringify(this.skillForm.electronicFence.points));
-        } catch (error) {
-          console.error('电子围栏数据处理错误:', error);
+          });
         }
         
         // 设置触发模式
