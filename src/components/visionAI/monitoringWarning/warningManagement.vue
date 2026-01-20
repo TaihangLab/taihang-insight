@@ -694,6 +694,9 @@ export default {
 
           // 关闭对话框
           this.closeArchiveDialog()
+          
+          // 刷新列表以获取最新数据
+          await this.getWarningList()
         } else {
           const errorMessage = (response.data && response.data.message) || '归档失败'
           this.$message.error(errorMessage)
@@ -886,6 +889,9 @@ export default {
           }
           
           this.$message.success(`已为 ${this.selectedWarnings.length} 项预警添加处理记录`)
+          
+          // 刷新列表以获取最新数据
+          await this.getWarningList()
         } else {
           console.error('批量处理API失败:', response.data)
           this.$message.error('批量处理失败：' + (response.data && response.data.msg || '服务器错误'))
@@ -1156,6 +1162,9 @@ export default {
           }
           
           this.$message.success('处理记录已添加')
+          
+          // 刷新列表以获取最新数据
+          await this.getWarningList()
         } else {
           console.error('更新预警状态API失败:', response.data)
           this.$message.error('处理失败：' + (response.data && response.data.msg || '服务器错误'))
@@ -1218,6 +1227,9 @@ export default {
         
         this.$message.success('预警已成功上报')
         this.closeReportDialog()
+        
+        // 刷新列表以获取最新数据
+        await this.getWarningList()
         // 不改变预警状态，保持预警可继续处理
       } catch (error) {
         console.error('上报失败:', error)
@@ -1339,7 +1351,7 @@ export default {
     },
     
     // 处理预警详情对话框中的事件
-    handleWarningFromDetail(warning) {
+    async handleWarningFromDetail(warning) {
       if (!warning || !warning.id) {
         return;
       }
@@ -1365,6 +1377,9 @@ export default {
             console.log('本地状态已更新为处理中:', this.warningList[index]);
           }
         }
+        
+        // 刷新列表以获取最新数据
+        await this.getWarningList()
       } else if (warning.action === 'finished') {
         // 结束处理 - 更新本地状态为已处理
         console.log('处理DetailDialog的结束处理事件:', warning);
@@ -1386,6 +1401,9 @@ export default {
             console.log('本地状态已更新为已处理:', this.warningList[index]);
           }
         }
+        
+        // 刷新列表以获取最新数据
+        await this.getWarningList()
       } else {
         // 兼容原有逻辑
         this.handleWarning(warning.id, 'markProcessed');
@@ -1508,6 +1526,9 @@ export default {
           }
           
           this.$message.success('预警已标记为误报，复判记录已保存')
+          
+          // 刷新列表以获取最新数据
+          await this.getWarningList()
         } else {
           this.$message.error((response.data && response.data.msg) || '标记误报失败')
         }
@@ -1791,6 +1812,9 @@ export default {
           }
           
           this.$message.success('处理已完成，现在可以进行归档等操作')
+          
+          // 刷新列表以获取最新数据
+          await this.getWarningList()
         } else {
           console.error('结束处理API失败:', response.data)
           this.$message.error('结束处理失败：' + (response.data && response.data.msg || '服务器错误'))
@@ -2144,7 +2168,7 @@ export default {
       <!-- 搜索和筛选区域 -->
       <div class="search-filter-area">
         <div class="search-row">
-          <div class="date-picker-wrapper">
+          <div class="date-picker-wrapper" style="margin-right: 24px;">
             <el-date-picker
               v-model="dateRange"
               type="daterange"

@@ -1538,6 +1538,12 @@ export default {
   gap: 10px;
 }
 
+/* 搜索框布局混乱 */
+.right-controls  >>> .el-input__prefix {
+  top:6px;
+  left:10px;
+}
+
 .filter-item {
   display: flex;
   align-items: center;

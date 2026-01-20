@@ -589,7 +589,11 @@ export default {
   min-width: max-content;
 }
 
-
+/* 搜索框布局混乱 */
+.search-item >>> .el-input__prefix {
+  top:7px;
+  left:5px;
+}
 
 /* 表格卡片 */
 .table-card {

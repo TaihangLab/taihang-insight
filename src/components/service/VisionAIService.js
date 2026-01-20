@@ -1798,7 +1798,7 @@ export const alertAPI = {
 
     // 处理导出参数
     const exportParams = { ...params };
-    
+
     // 设置默认导出格式
     if (!exportParams.format) {
       exportParams.format = 'csv';
@@ -3596,7 +3596,7 @@ export const realtimeMonitorAPI = {
    */
   getChannelList(params = {}) {
     console.log('📤 获取实时监控通道列表 - 参数:', params);
-    
+
     return visionAIAxios.get('/api/v1/realtime-monitor/channels', { params })
       .then(response => {
         console.log('📥 获取实时监控通道列表成功:', response.data);
@@ -3615,7 +3615,7 @@ export const realtimeMonitorAPI = {
    */
   getChannelDetail(channelId) {
     console.log('📤 获取通道详情 - 通道ID:', channelId);
-    
+
     return visionAIAxios.get(`/api/v1/realtime-monitor/channels/${channelId}`)
       .then(response => {
         console.log('📥 获取通道详情成功:', response.data);
@@ -3634,7 +3634,7 @@ export const realtimeMonitorAPI = {
    */
   playChannel(channelId) {
     console.log('📤 播放通道 - 通道ID:', channelId);
-    
+
     return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`)
       .then(response => {
         console.log('📥 播放通道成功:', response.data);
@@ -3653,7 +3653,7 @@ export const realtimeMonitorAPI = {
    */
   stopChannel(channelId) {
     console.log('📤 停止播放通道 - 通道ID:', channelId);
-    
+
     return visionAIAxios.get(`/api/v1/realtime-monitor/stop/${channelId}`)
       .then(response => {
         console.log('📥 停止播放成功:', response.data);
@@ -3674,7 +3674,7 @@ export const realtimeMonitorAPI = {
    */
   getChannelTree(params = {}) {
     console.log('📤 获取通道树 - 参数:', params);
-    
+
     return visionAIAxios.get('/api/v1/realtime-monitor/channels/tree', { params })
       .then(response => {
         console.log('📥 获取通道树成功:', response.data);
@@ -3692,12 +3692,12 @@ export const realtimeMonitorAPI = {
    * @param {number} params.parent - 父节点ID (Integer类型)
    * @param {boolean} params.hasChannel - 是否包含通道
    * @returns {Promise} 行政区划树数据
-   * 
+   *
    * 注意：RegionController没有query参数（与GroupController不同）
    */
   getRegionTree(params = {}) {
     console.log('📤 获取行政区划树 - 参数:', params);
-    
+
     return visionAIAxios.get('/api/v1/realtime-monitor/region/tree', { params })
       .then(response => {
         console.log('📥 获取行政区划树成功:', response.data);
@@ -3716,12 +3716,12 @@ export const realtimeMonitorAPI = {
    * @param {number} params.parent - 父节点ID (Integer类型, 可选)
    * @param {boolean} params.hasChannel - 是否包含通道
    * @returns {Promise} 业务分组树数据
-   * 
+   *
    * 注意：GroupController有query参数（与RegionController不同）
    */
   getGroupTree(params = {}) {
     console.log('📤 获取业务分组树 - 参数:', params);
-    
+
     return visionAIAxios.get('/api/v1/realtime-monitor/group/tree', { params })
       .then(response => {
         console.log('📥 获取业务分组树成功:', response.data);

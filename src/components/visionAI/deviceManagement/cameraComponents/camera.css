@@ -3972,6 +3972,12 @@
   align-items: center;
 }
 
+/* 搜索框布局混乱 */
+.operation-right >>> .el-input__prefix {
+  top:7px;
+  left:5px;
+}
+
 /* 表格卡片 */
 .table-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
