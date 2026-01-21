@@ -1585,7 +1585,7 @@ export default {
       // 更新预警对象的操作历史
       if (this.internalWarning) {
         if (!this.internalWarning.operationHistory) {
-          this.$set(this.internalWarning, 'operationHistory', []);
+          this.internalWarning.operationHistory = [];
         }
         this.internalWarning.operationHistory = [...allRecords];
       }
@@ -1619,7 +1619,7 @@ export default {
       // 更新预警对象的操作历史
       if (this.internalWarning) {
         if (!this.internalWarning.operationHistory) {
-          this.$set(this.internalWarning, 'operationHistory', []);
+          this.internalWarning.operationHistory = [];
         }
         this.internalWarning.operationHistory.unshift(newRecord);
       }
@@ -2869,38 +2869,38 @@ export default {
 }
 
 /* 对话框样式优化 - 科技感设计 */
-.warning-detail-component >>> .el-dialog {
+.warning-detail-component :deep(.el-dialog) {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-.warning-detail-component >>> .el-dialog__header {
+.warning-detail-component :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
   padding: 16px 20px;
 }
 
-.warning-detail-component >>> .el-dialog__title {
+.warning-detail-component :deep(.el-dialog__title) {
   color: #1f2937;
   font-weight: 600;
 }
 
-.warning-detail-component >>> .el-dialog__close {
+.warning-detail-component :deep(.el-dialog__close) {
   color: #6b7280;
   transition: color 0.3s ease;
 }
 
-.warning-detail-component >>> .el-dialog__close:hover {
+.warning-detail-component :deep(.el-dialog__close:hover) {
   color: #3b82f6;
 }
 
-.warning-detail-component >>> .el-dialog__body {
+.warning-detail-component :deep(.el-dialog__body) {
   padding: 20px;
   background: #ffffff;
 }
 
-.warning-detail-component >>> .el-button--primary {
+.warning-detail-component :deep(.el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
@@ -2910,13 +2910,13 @@ export default {
   border-radius: 6px;
 }
 
-.warning-detail-component >>> .el-button--primary:hover {
+.warning-detail-component :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
   transform: translateY(-1px);
 }
 
-.warning-detail-component >>> .el-button--success {
+.warning-detail-component :deep(.el-button--success) {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
@@ -2926,13 +2926,13 @@ export default {
   border-radius: 6px;
 }
 
-.warning-detail-component >>> .el-button--success:hover {
+.warning-detail-component :deep(.el-button--success:hover) {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
   transform: translateY(-1px);
 }
 
-.warning-detail-component >>> .el-button--default {
+.warning-detail-component :deep(.el-button--default) {
   background: white;
   border: 1px solid #d1d5db;
   color: #4b5563;
@@ -2940,14 +2940,14 @@ export default {
   border-radius: 6px;
 }
 
-.warning-detail-component >>> .el-button--default:hover {
+.warning-detail-component :deep(.el-button--default:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e40af;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
-.warning-detail-component >>> .el-button--danger {
+.warning-detail-component :deep(.el-button--danger) {
   background: linear-gradient(135deg, #f56c6c 0%, #dc2626 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(245, 108, 108, 0.3);
@@ -2957,13 +2957,13 @@ export default {
   border-radius: 6px;
 }
 
-.warning-detail-component >>> .el-button--danger:hover {
+.warning-detail-component :deep(.el-button--danger:hover) {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   box-shadow: 0 4px 10px rgba(245, 108, 108, 0.4);
   transform: translateY(-1px);
 }
 
-.warning-detail-component >>> .el-button--warning {
+.warning-detail-component :deep(.el-button--warning) {
   background: linear-gradient(135deg, #e6a23c 0%, #f59e0b 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(230, 162, 60, 0.3);
@@ -2973,41 +2973,41 @@ export default {
   border-radius: 6px;
 }
 
-.warning-detail-component >>> .el-button--warning:hover {
+.warning-detail-component :deep(.el-button--warning:hover) {
   background: linear-gradient(135deg, #d97706 0%, #dc2626 100%);
   box-shadow: 0 4px 10px rgba(230, 162, 60, 0.4);
   transform: translateY(-1px);
 }
 
 /* 输入框和选择框样式优化 */
-.warning-detail-component >>> .el-input__inner {
+.warning-detail-component :deep(.el-input__inner) {
   border: 1px solid #e4e7ed;
   border-radius: 6px;
   transition: all 0.3s ease;
 }
 
-.warning-detail-component >>> .el-input__inner:focus {
+.warning-detail-component :deep(.el-input__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-.warning-detail-component >>> .el-select .el-input__inner {
+.warning-detail-component :deep(.el-select .el-input__inner) {
   border: 1px solid #e4e7ed;
   border-radius: 6px;
 }
 
-.warning-detail-component >>> .el-select .el-input__inner:focus {
+.warning-detail-component :deep(.el-select .el-input__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-.warning-detail-component >>> .el-textarea__inner {
+.warning-detail-component :deep(.el-textarea__inner) {
   border: 1px solid #e4e7ed;
   border-radius: 6px;
   transition: all 0.3s ease;
 }
 
-.warning-detail-component >>> .el-textarea__inner:focus {
+.warning-detail-component :deep(.el-textarea__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }

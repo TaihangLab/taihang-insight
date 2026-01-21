@@ -218,7 +218,7 @@
 </template>
 
 <script>
-import channelCode from './../dialog/channelCode'
+import channelCode from './../dialog/channelCode.vue'
 import ChooseCivilCode from "../dialog/chooseCivilCode.vue";
 import ChooseGroup from "../visionAI/deviceManagement/managementPages/dialogs/chooseGroup.vue";
 import { getChannelInfo, addChannel, updateChannel, resetChannel } from '@/api/channel'

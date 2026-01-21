@@ -10,35 +10,35 @@
     >
       <!-- 权限类型图标 + 名称 -->
       <el-table-column label="权限名称"  min-width="200"  header-align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
             <span class="name-text">{{ scope.row.permission_name }}</span>
         </template>
       </el-table-column>
 
 
      <el-table-column label="权限图标" header-align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
            <i :class="getTypeIcon(scope.row.permission_type)" class="type-icon"></i>
         </template>
       </el-table-column>
 
       <!-- 权限码 -->
       <el-table-column prop="permission_code" label="权限码" min-width="200" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <code class="permission-code">{{ scope.row.permission_code }}</code>
         </template>
       </el-table-column>
 
       <!-- 路由路径 -->
       <el-table-column prop="path" label="路由路径" min-width="180" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span class="path-text">{{ scope.row.path || '-' }}</span>
         </template>
       </el-table-column>
 
       <!-- 类型标签 -->
       <el-table-column label="类型" width="100" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag :type="getTypeTagType(scope.row.permission_type)" size="small">
             {{ getTypeLabel(scope.row.permission_type) }}
           </el-tag>
@@ -47,14 +47,14 @@
 
       <!-- 排序 -->
       <el-table-column prop="sort_order" label="排序" width="80" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           {{ scope.row.sort_order || 0 }}
         </template>
       </el-table-column>
 
       <!-- 状态 -->
       <el-table-column label="状态" width="80" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="mini">
             {{ scope.row.status === 0 ? '启用' : '停用' }}
           </el-tag>
@@ -63,7 +63,7 @@
 
       <!-- 操作 -->
       <el-table-column label="操作" width="200" fixed="right" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <div class="operation-buttons">
             <el-button
               v-if="scope.row.permission_type !== 'button'"

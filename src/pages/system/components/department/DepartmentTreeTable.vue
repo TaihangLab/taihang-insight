@@ -11,13 +11,13 @@
     >
       <el-table-column prop="id" label="部门编码" min-width="140" align="center"></el-table-column>
       <el-table-column prop="name" label="部门名称" min-width="200" align="left" header-align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <span :style="{ paddingLeft: (scope.row.depth || 0) * 20 + 'px' }">{{ scope.row.name }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="sort_order" label="排序" width="80" align="center"></el-table-column>
       <el-table-column prop="status" label="状态" width="80" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="mini">
             {{ scope.row.status === 0 ? '启用' : '停用' }}
           </el-tag>
@@ -25,7 +25,7 @@
       </el-table-column>
       <el-table-column prop="create_time" label="创建时间" min-width="160" align="center"></el-table-column>
       <el-table-column label="操作" width="180" fixed="right" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <div class="operation-buttons">
             <el-button type="text" class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
             <el-button type="text" class="add-btn" @click="handleAddSub(scope.row)">添加</el-button>
@@ -108,15 +108,15 @@ export default {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
-.custom-table >>> .el-table__cell {
+.custom-table :deep(.el-table__cell) {
   border-right: none;
 }
 
-.custom-table >>> .el-table::before {
+.custom-table :deep(.el-table::before) {
   height: 0;
 }
 
-.custom-table >>> .el-table__header-wrapper th {
+.custom-table :deep(.el-table__header-wrapper th) {
   font-weight: bold;
   text-align: center;
   background: #f5f7fa !important;
@@ -124,27 +124,27 @@ export default {
   border-bottom: 1px solid #ebeef5 !important;
 }
 
-.custom-table >>> .el-table__row td {
+.custom-table :deep(.el-table__row td) {
   text-align: center;
 }
 
-.custom-table >>> .el-table .el-table__body tr:hover > td {
+.custom-table :deep(.el-table .el-table__body tr:hover > td) {
   background: #f5f7fa !important;
 }
 
 /* 部门名称列左对齐 */
-.custom-table >>> .el-table__row td:first-child {
+.custom-table :deep(.el-table__row td:first-child) {
   text-align: left !important;
   padding-left: 16px !important;
 }
 
-.custom-table >>> .el-table__header-wrapper th:first-child {
+.custom-table :deep(.el-table__header-wrapper th:first-child) {
   text-align: left !important;
   padding-left: 16px !important;
 }
 
 /* 折叠展开图标样式 */
-.custom-table >>> .el-table__expand-icon {
+.custom-table :deep(.el-table__expand-icon) {
   width: 16px;
   height: 16px;
   line-height: 16px;
@@ -158,13 +158,13 @@ export default {
   transition: all 0.3s ease;
 }
 
-.custom-table >>> .el-table__expand-icon:hover {
+.custom-table :deep(.el-table__expand-icon:hover) {
   background: #3b82f6;
   color: white;
   border-color: #3b82f6;
 }
 
-.custom-table >>> .el-table__expand-icon--expanded {
+.custom-table :deep(.el-table__expand-icon--expanded) {
   transform: rotate(90deg);
 }
 
@@ -201,7 +201,7 @@ export default {
 }
 
 /* 状态标签样式 */
-.custom-table >>> .el-tag {
+.custom-table :deep(.el-tag) {
   border-radius: 6px !important;
   font-weight: 500 !important;
   font-size: 12px !important;
@@ -210,13 +210,13 @@ export default {
   line-height: 22px !important;
 }
 
-.custom-table >>> .el-tag.el-tag--success {
+.custom-table :deep(.el-tag.el-tag--success) {
   background-color: #f0f9ff !important;
   border-color: #b3d8ff !important;
   color: #2e7acc !important;
 }
 
-.custom-table >>> .el-tag.el-tag--danger {
+.custom-table :deep(.el-tag.el-tag--danger) {
   background-color: #fef0f0 !important;
   border-color: #fbc4c4 !important;
   color: #f56c6c !important;

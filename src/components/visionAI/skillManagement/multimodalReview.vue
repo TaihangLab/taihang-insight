@@ -1405,20 +1405,20 @@ export default {
   transition: all 0.2s ease;
 }
 
-.card-checkbox >>> .el-checkbox {
+.card-checkbox :deep(.el-checkbox) {
   margin: 0;
 }
 
-.card-checkbox >>> .el-checkbox__input.is-checked .el-checkbox__inner {
+.card-checkbox :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
   background-color: #3b82f6 !important;
   border-color: #3b82f6 !important;
 }
 
-.card-checkbox >>> .el-checkbox__inner:hover {
+.card-checkbox :deep(.el-checkbox__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.card-checkbox >>> .el-checkbox__inner {
+.card-checkbox :deep(.el-checkbox__inner) {
   width: 18px !important;
   height: 18px !important;
   border: 2px solid #dcdfe6 !important;
@@ -1426,7 +1426,7 @@ export default {
   background: rgba(255, 255, 255, 0.9) !important;
 }
 
-.card-checkbox >>> .el-checkbox__inner::after {
+.card-checkbox :deep(.el-checkbox__inner::after) {
   height: 8px !important;
   left: 5px !important;
   top: 1px !important;
@@ -1641,16 +1641,16 @@ export default {
   padding-bottom: 10px!important;
 }
 
-.pagination-section >>> .el-pagination__total {
+.pagination-section :deep(.el-pagination__total) {
   padding-top: 3px;
 }
 
-.pagination-section >>> .el-pagination {
+.pagination-section :deep(.el-pagination) {
   display: flex;
   justify-content: center;
 }
 
-.pagination-section >>> .el-pagination .el-pager li {
+.pagination-section :deep(.el-pagination .el-pager li) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 4px;
@@ -1658,13 +1658,13 @@ export default {
   margin: 0 2px;
 }
 
-.pagination-section >>> .el-pagination .el-pager li:hover {
+.pagination-section :deep(.el-pagination .el-pager li:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.pagination-section >>> .el-pagination .el-pager li.active {
+.pagination-section :deep(.el-pagination .el-pager li.active) {
   background: #3b82f6 !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -1672,19 +1672,19 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination-section >>> .el-pagination button {
+.pagination-section :deep(.el-pagination button) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   color: #3b82f6;
 }
 
-.pagination-section >>> .el-pagination button:hover {
+.pagination-section :deep(.el-pagination button:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
 }
 
-.pagination-section >>> .el-pagination .btn-prev,
-.pagination-section >>> .el-pagination .btn-next {
+.pagination-section :deep(.el-pagination .btn-prev),
+.pagination-section :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -1705,20 +1705,20 @@ export default {
 }
 
 /* 覆盖Element UI分页组件样式 */
-/* .pagination-section >>> .el-pagination .el-pager li {
+/* .pagination-section :deep(.el-pagination .el-pager li) {
   background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
 }
 
-.pagination-section >>> .el-pagination .el-pager li:hover {
+.pagination-section :deep(.el-pagination .el-pager li:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 }
 
-.pagination-section >>> .el-pagination .el-pager li.active {
+.pagination-section :deep(.el-pagination .el-pager li.active) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -1726,13 +1726,13 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination-section >>> .el-pagination button {
+.pagination-section :deep(.el-pagination button) {
   background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
 }
 
-.pagination-section >>> .el-pagination button:hover {
+.pagination-section :deep(.el-pagination button:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -1740,47 +1740,47 @@ export default {
 } */
 
 /* 更强的Element UI样式覆盖 */
-/* .pagination-section >>> .el-pagination .el-pager li.number {
+/* .pagination-section :deep(.el-pagination .el-pager li.number) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
 }
 
-.pagination-section >>> .el-pagination .el-pager li.number:hover {
+.pagination-section :deep(.el-pagination .el-pager li.number:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 }
 
-.pagination-section >>> .el-pagination .el-pager li.number.active {
+.pagination-section :deep(.el-pagination .el-pager li.number.active) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border-color: #3b82f6 !important;
   color: white !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination-section >>> .el-pagination .btn-prev,
-.pagination-section >>> .el-pagination .btn-next {
+.pagination-section :deep(.el-pagination .btn-prev),
+.pagination-section :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
 }
 
-.pagination-section >>> .el-pagination .btn-prev:hover,
-.pagination-section >>> .el-pagination .btn-next:hover {
+.pagination-section :deep(.el-pagination .btn-prev:hover),
+.pagination-section :deep(.el-pagination .btn-next:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 }
 
-.pagination-section >>> .el-pagination .el-select .el-input .el-input__inner {
+.pagination-section :deep(.el-pagination .el-select .el-input .el-input__inner) {
   border-color: #dcdfe6 !important;
   color: #606266 !important;
 }
 
-.pagination-section >>> .el-pagination .el-select .el-input .el-input__inner:hover {
+.pagination-section :deep(.el-pagination .el-select .el-input .el-input__inner:hover) {
   border-color: #3b82f6 !important;
 } */
 
@@ -1809,13 +1809,13 @@ export default {
   padding: 40px;
 }
 
-.empty-state >>> .el-empty__description {
+.empty-state :deep(.el-empty__description) {
   color: #909399;
   font-size: 14px;
   margin-bottom: 20px;
 }
 
-.empty-state >>> .el-empty__image {
+.empty-state :deep(.el-empty__image) {
   margin-bottom: 20px;
 }
 

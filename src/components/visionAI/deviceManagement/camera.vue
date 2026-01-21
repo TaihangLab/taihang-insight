@@ -70,12 +70,12 @@
             <el-table-column prop="id" label="ID" width="80" align="center" />
             <el-table-column prop="name" label="摄像头名称" width="150" align="center" />
             <el-table-column prop="camera_type" label="类型" width="100" align="center">
-              <template slot-scope="{ row }">
+              <template #default="{ row }">
                 <el-tag size="mini" effect="plain" type="">{{ getCameraTypeText(row.camera_type) }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="status" label="状态" width="100" align="center">
-              <template slot-scope="{ row }">
+              <template #default="{ row }">
                 <el-tag :type="row.status === true ? 'success' : 'danger'" size="mini">
                   <template v-if="row.camera_type === 1">
                     {{ row.status === true ? '在线' : '离线' }}
@@ -94,7 +94,7 @@
             </el-table-column>
             <el-table-column prop="location" label="设备来源" width="140" align="center" />
             <el-table-column prop="skill" label="视频技能" min-width="220" align="center">
-              <template slot-scope="{ row }">
+              <template #default="{ row }">
                 <div v-if="row.skill && row.skill !== '-'" class="skill-tags-container">
                   <div v-for="(skillName, idx) in row.skill.split(',')" :key="idx" class="skill-tag-item">
                     <span class="skill-name" :style="{color: row.config && row.config[skillName.trim()] && row.config[skillName.trim()].status ? '#67C23A' : '#909399'}">
@@ -106,7 +106,7 @@
               </template>
             </el-table-column>
             <el-table-column label="操作" width="280" align="center">
-              <template slot-scope="{ row }">
+              <template #default="{ row }">
                 <div class="operation-buttons">
                   <el-button type="text" size="mini" icon="el-icon-setting" class="config-skill-btn"
                     @click="handleConfigSkill(row)">配置技能</el-button>

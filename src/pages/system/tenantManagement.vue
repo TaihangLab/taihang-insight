@@ -41,8 +41,8 @@
 </template>
 
 <script>
-import { useTenantData } from './composable/tenant/useTenantData'
-import { useTenantExport } from './composable/tenant/useTenantExport'
+import { useTenantData } from './composable/tenant/useTenantData.js'
+import { useTenantExport } from './composable/tenant/useTenantExport.js'
 import TenantSearchBar from './components/tenant/TenantSearchBar.vue'
 import TenantList from './components/tenant/TenantList.vue'
 import DeleteConfirmDialog from './components/tenant/DeleteConfirmDialog.vue'

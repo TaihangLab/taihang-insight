@@ -163,7 +163,7 @@
           <el-table-column prop="stream" label="流ID" min-width="120" align="center" show-overflow-tooltip></el-table-column>
           
           <el-table-column label="流地址" min-width="300" show-overflow-tooltip>
-            <template slot-scope="{ row }">
+            <template #default="{ row }">
               <div class="stream-url">
                 <el-tag size="medium" class="url-tag">
                   <i class="copy-btn el-icon-document-copy" 
@@ -179,7 +179,7 @@
           <el-table-column prop="mediaServerId" label="流媒体" min-width="120" align="center"></el-table-column>
           
           <el-table-column label="代理方式" width="120" align="center">
-            <template slot-scope="{ row }">
+            <template #default="{ row }">
               <el-tag :type="row.type === 'default' ? 'primary' : 'warning'" size="small">
                 {{ row.type === "default" ? "默认" : "FFMPEG代理" }}
               </el-tag>
@@ -189,7 +189,7 @@
           <el-table-column prop="gbDeviceId" label="国标编码" min-width="150" align="center" show-overflow-tooltip></el-table-column>
           
           <el-table-column label="拉流状态" width="100" align="center">
-            <template slot-scope="{ row }">
+            <template #default="{ row }">
               <el-tag size="medium" v-if="row.pulling && Vue.prototype.$myServerId !== row.serverId" style="border-color: #ecf1af">正在拉流</el-tag>
               <el-tag size="medium" v-if="row.pulling && Vue.prototype.$myServerId === row.serverId" type="success">正在拉流</el-tag>
               <el-tag size="medium" type="info" v-if="!row.pulling">尚未拉流</el-tag>
@@ -197,7 +197,7 @@
           </el-table-column>
           
           <el-table-column label="启用状态" width="100" align="center">
-            <template slot-scope="{ row }">
+            <template #default="{ row }">
               <el-tag size="medium" v-if="row.enable && Vue.prototype.$myServerId !== row.serverId" style="border-color: #ecf1af">已启用</el-tag>
               <el-tag size="medium" v-if="row.enable && Vue.prototype.$myServerId === row.serverId" type="success">已启用</el-tag>
               <el-tag size="medium" type="info" v-if="!row.enable">未启用</el-tag>
@@ -207,7 +207,7 @@
           <el-table-column prop="createTime" label="创建时间" min-width="150" align="center" show-overflow-tooltip></el-table-column>
           
           <el-table-column label="操作" width="350" fixed="right" align="center">
-            <template slot-scope="{ row }">
+            <template #default="{ row }">
               <div class="operation-buttons">
                 <el-button size="mini" :loading="row.playLoading" icon="el-icon-video-play" type="primary" @click="play(row)">播放</el-button>
                 <el-button size="mini" icon="el-icon-switch-button" type="danger" v-if="row.pulling" @click="stopPlay(row)">停止</el-button>
@@ -293,8 +293,8 @@ import { deleteStreamProxyById, startStreamProxyById, stopStreamProxyById } from
 import StreamProxyEdit from './dialogs/StreamProxyEdit.vue'
 import onvifEdit from './dialogs/onvifEdit.vue'
 import devicePlayer from './dialogs/devicePlayer.vue'
-import MediaServer from "./service/MediaServer";
-import Vue from "vue";
+import MediaServer from "./service/MediaServer.js";
+// import Vue from "vue"; // Vue 3中不再需要这种方式
 
 export default {
   name: 'PullProxy',
@@ -634,7 +634,7 @@ export default {
 }
 
 /* 搜索框布局混乱 */
-.search-item >>> .el-input__prefix {
+.search-item :deep(.el-input__prefix) {
   top:7px;
   left:5px;
 }

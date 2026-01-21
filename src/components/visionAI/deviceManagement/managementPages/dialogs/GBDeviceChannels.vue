@@ -122,7 +122,7 @@
         <el-table-column type="index" label="序号" width="60" align="center"></el-table-column>
         
         <el-table-column prop="name" label="名称" min-width="180" show-overflow-tooltip>
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <div class="channel-name">
               <span>{{ row.name || '未命名通道' }}</span>
               <el-tag v-if="row.parental" size="mini" type="warning">父节点</el-tag>
@@ -134,7 +134,7 @@
         </el-table-column>
         
         <el-table-column label="快照" min-width="100" align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <el-image
               :src="getSnap(row)"
               :preview-src-list="getBigSnap(row)"
@@ -151,7 +151,7 @@
         <el-table-column prop="manufacturer" label="厂家" min-width="100" align="center" show-overflow-tooltip></el-table-column>
         
         <el-table-column label="位置信息" min-width="150" align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <span v-if="row.longitude && row.latitude">
               {{ row.longitude }}<br/>{{ row.latitude }}
             </span>
@@ -160,13 +160,13 @@
         </el-table-column>
         
         <el-table-column prop="ptzType" label="云台类型" min-width="100" align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <div>{{ getPtzTypeText(row.ptzType) }}</div>
           </template>
         </el-table-column>
         
         <el-table-column label="开启音频" min-width="100" align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <el-switch 
               @change="updateChannel(row)" 
               v-model="row.hasAudio" 
@@ -176,7 +176,7 @@
         </el-table-column>
         
         <el-table-column label="码流类型" min-width="180" align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <el-select 
               size="mini" 
               style="width: 160px;" 
@@ -196,7 +196,7 @@
         </el-table-column>
         
         <el-table-column label="状态" min-width="100" align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <div>
               <el-tag size="medium" v-if="row.status === 'ON'">在线</el-tag>
               <el-tag size="medium" type="info" v-if="row.status !== 'ON'">离线</el-tag>
@@ -205,7 +205,7 @@
         </el-table-column>
         
         <el-table-column label="操作" min-width="340" align="center" fixed="right">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <div class="channel-actions">
               <el-button 
                 size="medium" 
@@ -428,7 +428,7 @@ export default {
     // 获取快照URL - 与channelList.vue一致
     getSnap(row) {
       let baseUrl = window.baseUrl ? window.baseUrl : "";
-      return ((process.env.NODE_ENV === 'development') ? process.env.BASE_API : baseUrl) + '/api/device/query/snap/' + this.currentDevice.deviceId + '/' + row.deviceId;
+      return ((import.meta.env.MODE === 'development') ? import.meta.env.VITE_BASE_API : baseUrl) + '/api/device/query/snap/' + this.currentDevice.deviceId + '/' + row.deviceId;
     },
     
     // 获取大图快照URL - 与channelList.vue一致

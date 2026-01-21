@@ -1,8 +1,5 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-
 /**
  * 检查路由配置中导入路径的一致性
  * 验证所有导入的组件文件是否真实存在
@@ -14,6 +11,8 @@ function checkRouteConsistency(routerFilePath) {
   const routerContent = fs.readFileSync(routerFilePath, 'utf8');
 
   // 使用正则表达式匹配所有 import 语句
+import fs from 'fs';
+import path from 'path';
   const importRegex = /import\s+(\w+)\s+from\s+['"]([^'"]+)['"]/g;
   const relativeImportRegex = /['"](\.\.\/[^'"]+)['"]/g;
 

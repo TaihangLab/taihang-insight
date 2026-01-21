@@ -2,7 +2,7 @@
 class MockService {
   constructor() {
     console.log('正在初始化Mock服务...');
-    console.log("是否启用Mock服务： " + process.env.VUE_APP_MOCK_ENABLED);
+    console.log("是否启用Mock服务： " + import.meta.env.VITE_MOCK_ENABLED);
     this.isEnabled = true
     this.mockData = {};
   }

@@ -75,7 +75,7 @@ export default {
          {
            id: '1',
            title: '人员越界',
-           image: require('./images/5.jpg'),
+           image: './images/5.jpg',
            cameraName: '门禁1',
            location: '工地入口区域',
            startTime: '2025-06-06 19:51',
@@ -85,7 +85,7 @@ export default {
          {
            id: '2',
            title: '未穿着反光衣',
-           image: require('./images/3.jpg'),
+           image: './images/3.jpg',
            cameraName: '摄像头01',
            location: '工地东北角',
            startTime: '2025-06-06 14:58',
@@ -95,7 +95,7 @@ export default {
          {
            id: '3',
            title: '未佩戴安全帽',
-           image: require('./images/5.jpg'),
+           image: './images/5.jpg',
            cameraName: '摄像头01',
            location: '工地东北角',
            startTime: '2025-06-06 14:57',
@@ -105,7 +105,7 @@ export default {
          {
            id: '4',
            title: '未佩戴安全帽',
-           image: require('./images/5.jpg'),
+           image: './images/5.jpg',
            cameraName: '摄像头01',
            location: '工地东北角',
            startTime: '2025-06-06 14:56',
@@ -115,7 +115,7 @@ export default {
          {
            id: '5',
            title: '人员穿越禁止区域',
-           image: require('./images/5.jpg'),
+           image: './images/5.jpg',
            cameraName: '摄像头02',
            location: '材料区',
            startTime: '2025-06-05 17:44',
@@ -125,7 +125,7 @@ export default {
          {
            id: '6',
            title: '未穿工作服',
-           image: require('./images/4.jpg'),
+           image: './images/4.jpg',
            cameraName: '摄像头03',
            location: '工地南侧',
            startTime: '2025-06-05 16:32',
@@ -135,7 +135,7 @@ export default {
          {
            id: '7',
            title: '违规吸烟',
-           image: require('./images/6.jpg'),
+           image: './images/6.jpg',
            cameraName: '摄像头05',
            location: '休息区',
            startTime: '2025-06-05 15:28',
@@ -145,7 +145,7 @@ export default {
          {
            id: '8',
            title: '高空作业未系安全带',
-           image: require('./images/1.jpg'),
+           image: './images/1.jpg',
            cameraName: '摄像头04',
            location: '施工作业区',
            startTime: '2025-06-05 14:15',
@@ -155,7 +155,7 @@ export default {
          {
            id: '9',
            title: '闲杂人员入侵',
-           image: require('./images/5.jpg'),
+           image: './images/5.jpg',
            cameraName: '摄像头02',
            location: '材料区',
            startTime: '2025-06-05 13:45',
@@ -165,7 +165,7 @@ export default {
          {
            id: '10',
            title: '未穿反光背心',
-           image: require('./images/3.jpg'),
+           image: './images/3.jpg',
            cameraName: '摄像头06',
            location: '工地东北角',
            startTime: '2025-06-05 12:20',
@@ -175,7 +175,7 @@ export default {
          {
            id: '11',
            title: '安全帽佩戴异常',
-           image: require('./images/5.jpg'),
+           image: './images/5.jpg',
            cameraName: '摄像头01',
            location: '工地东北角',
            startTime: '2025-06-05 11:35',
@@ -185,7 +185,7 @@ export default {
          {
            id: '12',
            title: '危险区域人员滞留',
-           image: require('./images/5.jpg'),
+           image: './images/5.jpg',
            cameraName: '摄像头07',
            location: '施工作业区',
            startTime: '2025-06-05 10:48',
@@ -195,7 +195,7 @@ export default {
          {
            id: '13',
            title: '工作服穿着不规范',
-           image: require('./images/4.jpg'),
+           image: './images/4.jpg',
            cameraName: '摄像头08',
            location: '工地南侧',
            startTime: '2025-06-05 09:22',
@@ -205,7 +205,7 @@ export default {
          {
            id: '14',
            title: '火源烟雾检测',
-           image: require('./images/6.jpg'),
+           image: './images/6.jpg',
            cameraName: '摄像头09',
            location: '休息区',
            startTime: '2025-06-05 08:55',
@@ -215,7 +215,7 @@ export default {
          {
            id: '15',
            title: '高空作业安全带检查',
-           image: require('./images/1.jpg'),
+           image: './images/1.jpg',
            cameraName: '摄像头10',
            location: '施工作业区',
            startTime: '2025-06-04 17:30',
@@ -225,7 +225,7 @@ export default {
          {
            id: '16',
            title: '无关人员进入施工区',
-           image: require('./images/5.jpg'),
+           image: './images/5.jpg',
            cameraName: '摄像头11',
            location: '施工作业区',
            startTime: '2025-06-04 16:45',
@@ -235,7 +235,7 @@ export default {
          {
            id: '17',
            title: '反光服装缺失检测',
-           image: require('./images/3.jpg'),
+           image: './images/3.jpg',
            cameraName: '摄像头12',
            location: '材料区',
            startTime: '2025-06-04 15:18',
@@ -245,7 +245,7 @@ export default {
          {
            id: '18',
            title: '防护用具佩戴检查',
-           image: require('./images/2.jpg'),
+           image: './images/2.jpg',
            cameraName: '摄像头13',
            location: '工地南侧',
            startTime: '2025-06-04 14:22',
@@ -426,7 +426,7 @@ export default {
           this.reviewList = response.data.data.map(record => ({
             id: record.review_id.toString(),
             title: record.alert_name || '未知预警',
-            image: record.image_url || require('./images/5.jpg'),
+            image: record.image_url || './images/5.jpg',
             cameraName: record.camera_name || '未知摄像头',
             location: record.location || '未知位置',
             startTime: record.created_at ? new Date(record.created_at).toLocaleString('zh-CN', {
@@ -1768,11 +1768,11 @@ export default {
   flex-shrink: 0; */
 }
 
-.pagination-section >>> .el-pagination__total {
+.pagination-section :deep(.el-pagination__total) {
   padding-top: 3px;
 }
 
-.pagination-section >>> .el-pagination .el-pager li {
+.pagination-section :deep(.el-pagination .el-pager li) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 4px;
@@ -1780,13 +1780,13 @@ export default {
   margin: 0 2px;
 }
 
-.pagination-section >>> .el-pagination .el-pager li:hover {
+.pagination-section :deep(.el-pagination .el-pager li:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.pagination-section >>> .el-pagination .el-pager li.active {
+.pagination-section :deep(.el-pagination .el-pager li.active) {
   background: #3b82f6 !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -1794,8 +1794,8 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination-section >>> .el-pagination .btn-prev,
-.pagination-section >>> .el-pagination .btn-next {
+.pagination-section :deep(.el-pagination .btn-prev),
+.pagination-section :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -2006,20 +2006,20 @@ export default {
   transition: all 0.2s ease;
 }
 
-.select-checkbox >>> .el-checkbox {
+.select-checkbox :deep(.el-checkbox) {
   margin: 0;
 }
 
-.select-checkbox >>> .el-checkbox__input.is-checked .el-checkbox__inner {
+.select-checkbox :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
   background-color: #3b82f6 !important;
   border-color: #3b82f6 !important;
 }
 
-.select-checkbox >>> .el-checkbox__inner:hover {
+.select-checkbox :deep(.el-checkbox__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.select-checkbox >>> .el-checkbox__inner {
+.select-checkbox :deep(.el-checkbox__inner) {
   width: 18px !important;
   height: 18px !important;
   border: 2px solid #dcdfe6 !important;
@@ -2027,7 +2027,7 @@ export default {
   background: rgba(255, 255, 255, 0.9) !important;
 }
 
-.select-checkbox >>> .el-checkbox__inner::after {
+.select-checkbox :deep(.el-checkbox__inner::after) {
   height: 8px !important;
   left: 5px !important;
   top: 1px !important;
@@ -2093,7 +2093,7 @@ export default {
 }
 
 /* 科技感按钮样式 */
-/* .review-records-container >>> .el-button--primary {
+/* .review-records-container :deep(.el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
@@ -2103,13 +2103,13 @@ export default {
   border-radius: 6px;
 }
 
-.review-records-container >>> .el-button--primary:hover {
+.review-records-container :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
   transform: translateY(-1px);
 }
 
-.review-records-container >>> .el-button--default {
+.review-records-container :deep(.el-button--default) {
   background: white;
   border: 1px solid #d1d5db;
   color: #4b5563;
@@ -2117,7 +2117,7 @@ export default {
   border-radius: 6px;
 }
 
-.review-records-container >>> .el-button--default:hover {
+.review-records-container :deep(.el-button--default:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e40af;
@@ -2125,7 +2125,7 @@ export default {
   transform: translateY(-1px);
 }
 
-.review-records-container >>> .el-button--danger {
+.review-records-container :deep(.el-button--danger) {
   background: linear-gradient(135deg, #f56c6c 0%, #dc2626 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(245, 108, 108, 0.3);
@@ -2135,64 +2135,64 @@ export default {
   border-radius: 6px;
 }
 
-.review-records-container >>> .el-button--danger:hover {
+.review-records-container :deep(.el-button--danger:hover) {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   box-shadow: 0 4px 10px rgba(245, 108, 108, 0.4);
   transform: translateY(-1px);
 }
 
-.review-records-container >>> .el-button--text {
+.review-records-container :deep(.el-button--text) {
   color: #4b5563;
   transition: all 0.3s ease;
 }
 
-.review-records-container >>> .el-button--text:hover {
+.review-records-container :deep(.el-button--text:hover) {
   color: #3b82f6;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
 } */
 
 /* 科技感输入框样式 */
-/* .review-records-container >>> .el-input__inner {
+/* .review-records-container :deep(.el-input__inner) {
   border: 1px solid #e4e7ed;
   border-radius: 6px;
   transition: all 0.3s ease;
 }
 
-.review-records-container >>> .el-input__inner:focus {
+.review-records-container :deep(.el-input__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-.review-records-container >>> .el-select .el-input__inner {
+.review-records-container :deep(.el-select .el-input__inner) {
   border: 1px solid #e4e7ed;
   border-radius: 6px;
 }
 
-.review-records-container >>> .el-select .el-input__inner:focus {
+.review-records-container :deep(.el-select .el-input__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-.review-records-container >>> .el-date-editor.el-input {
+.review-records-container :deep(.el-date-editor.el-input) {
   border-radius: 6px;
 }
 
-.review-records-container >>> .el-date-editor .el-input__inner {
+.review-records-container :deep(.el-date-editor .el-input__inner) {
   border: 1px solid #e4e7ed;
   border-radius: 6px;
 }
 
-.review-records-container >>> .el-date-editor .el-input__inner:focus {
+.review-records-container :deep(.el-date-editor .el-input__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 } */
 
 /* 科技感分页样式 */
-/* .review-records-container >>> .el-pagination {
+/* .review-records-container :deep(.el-pagination) {
   justify-content: center;
 }
 
-.review-records-container >>> .el-pagination .el-pager li {
+.review-records-container :deep(.el-pagination .el-pager li) {
   background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -2201,14 +2201,14 @@ export default {
   margin: 0 2px !important;
 }
 
-.review-records-container >>> .el-pagination .el-pager li:hover {
+.review-records-container :deep(.el-pagination .el-pager li:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 }
 
-.review-records-container >>> .el-pagination .el-pager li.active {
+.review-records-container :deep(.el-pagination .el-pager li.active) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -2216,7 +2216,7 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.review-records-container >>> .el-pagination button {
+.review-records-container :deep(.el-pagination button) {
   background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -2225,7 +2225,7 @@ export default {
   margin: 0 2px !important;
 }
 
-.review-records-container >>> .el-pagination button:hover {
+.review-records-container :deep(.el-pagination button:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -2233,38 +2233,38 @@ export default {
 } */
 
 /* 对话框样式优化 - 科技感设计 */
-.review-records-container >>> .el-dialog {
+.review-records-container :deep(.el-dialog) {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-.review-records-container >>> .el-dialog__header {
+.review-records-container :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
   padding: 16px 20px;
 }
 
-.review-records-container >>> .el-dialog__title {
+.review-records-container :deep(.el-dialog__title) {
   color: #1f2937;
   font-weight: 600;
 }
 
-.review-records-container >>> .el-dialog__close {
+.review-records-container :deep(.el-dialog__close) {
   color: #6b7280;
   transition: color 0.3s ease;
 }
 
-.review-records-container >>> .el-dialog__close:hover {
+.review-records-container :deep(.el-dialog__close:hover) {
   color: #3b82f6;
 }
 
-.review-records-container >>> .el-dialog__body {
+.review-records-container :deep(.el-dialog__body) {
   padding: 20px;
   background: #ffffff;
 }
 
-.review-records-container >>> .el-button--success {
+.review-records-container :deep(.el-button--success) {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
@@ -2274,13 +2274,13 @@ export default {
   border-radius: 6px;
 }
 
-.review-records-container >>> .el-button--success:hover {
+.review-records-container :deep(.el-button--success:hover) {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
   transform: translateY(-1px);
 }
 
-.review-records-container >>> .el-button--warning {
+.review-records-container :deep(.el-button--warning) {
   background: linear-gradient(135deg, #e6a23c 0%, #f59e0b 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(230, 162, 60, 0.3);
@@ -2290,19 +2290,19 @@ export default {
   border-radius: 6px;
 }
 
-.review-records-container >>> .el-button--warning:hover {
+.review-records-container :deep(.el-button--warning:hover) {
   background: linear-gradient(135deg, #d97706 0%, #dc2626 100%);
   box-shadow: 0 4px 10px rgba(230, 162, 60, 0.4);
   transform: translateY(-1px);
 }
 
 /* 科技感复选框样式 */
-.review-records-container >>> .el-checkbox__input.is-checked .el-checkbox__inner {
+.review-records-container :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
   background-color: #3b82f6 !important;
   border-color: #3b82f6 !important;
 }
 
-.review-records-container >>> .el-checkbox__inner:hover {
+.review-records-container :deep(.el-checkbox__inner:hover) {
   border-color: #3b82f6 !important;
 }
 

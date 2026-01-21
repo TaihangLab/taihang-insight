@@ -313,7 +313,7 @@ export default {
             });
             
             // 使用Vue.set确保视图更新
-            this.$set(this, 'deviceList', newDeviceList);
+            this.deviceList = newDeviceList;
             
             // 保存原始数据，用于重置
             this.originalDeviceList = [...this.deviceList];
@@ -340,7 +340,7 @@ export default {
           this.$message.error('获取摄像头列表失败：' + (error.message || '服务器错误'));
           
           // 如果获取失败，使用空数组
-          this.$set(this, 'deviceList', []);
+          this.deviceList = [];
           this.originalDeviceList = [];
           this.total = 0;
         })
@@ -540,7 +540,7 @@ export default {
     // 更新设备技能显示
     updateDeviceSkillDisplay(deviceIndex, skillNames) {
       // 更新设备的技能名称显示
-      this.$set(this.deviceList[deviceIndex], 'skill', skillNames.join(', '));
+      this.deviceList[deviceIndex].skill = skillNames.join(', ');
       // 更新原始列表
       this.originalDeviceList = [...this.deviceList];
     },
@@ -839,7 +839,7 @@ export default {
               
               // 确保设备有config对象
               if (deviceIndex !== -1 && !this.deviceList[deviceIndex].config) {
-                this.$set(this.deviceList[deviceIndex], 'config', {});
+                this.deviceList[deviceIndex].config = {};
               }
 
               // 获取当前技能的最佳键名（优先使用API返回的中文名称）
@@ -1180,7 +1180,7 @@ export default {
         if (deviceIndex !== -1) {
           // 确保设备有config对象
           if (!this.deviceList[deviceIndex].config) {
-            this.$set(this.deviceList[deviceIndex], 'config', {});
+            this.deviceList[deviceIndex].config = {};
           }
           
           // 获取当前技能的最佳键名
@@ -1458,14 +1458,14 @@ export default {
             const index = this.deviceList.findIndex(device => device.id === cameraId);
             if (index !== -1) {
               // 更新设备基本信息
-              this.$set(this.deviceList[index], 'name', camera.name);
-              this.$set(this.deviceList[index], 'status', camera.status);
-              this.$set(this.deviceList[index], 'location', camera.location || '-');
+              this.deviceList[index].name = camera.name;
+              this.deviceList[index].status = camera.status;
+              this.deviceList[index].location = camera.location || '-';
               
               // 更新技能列表（这是最关键的部分）
               if (camera.skill_names && Array.isArray(camera.skill_names)) {
                 // 更新设备显示的技能列表文本
-                this.$set(this.deviceList[index], 'skill', camera.skill_names.join(', '));
+                this.deviceList[index].skill = camera.skill_names.join(', ');
                 
                 // 更新已选技能缓存
                 this.selectedSkillCache = [...camera.skill_names];
@@ -1473,7 +1473,7 @@ export default {
                 
                 console.log('已更新摄像头技能列表:', camera.skill_names.join(', '));
               } else {
-                this.$set(this.deviceList[index], 'skill', '-');
+                this.deviceList[index].skill = '-';
                 // 清空已选技能缓存
                 this.selectedSkillCache = [];
                 this.skillSelectForm.selectedSkills = [];
@@ -2332,9 +2332,9 @@ export default {
       console.log('从任务中获取的任务描述:', taskData.description);
       
       // 填充基础信息 - 使用Vue的$set确保响应式更新
-      this.$set(this.skillForm, 'name', taskData.name || '');
-      this.$set(this.skillForm, 'description', taskData.description || '');
-      this.$set(this.skillForm, 'status', taskData.status !== undefined ? taskData.status : true);
+      this.skillForm.name = taskData.name || '';
+      this.skillForm.description = taskData.description || '';
+      this.skillForm.status = taskData.status !== undefined ? taskData.status : true;
       
       // 强制刷新表单视图
       this.$nextTick(() => {
@@ -2436,7 +2436,7 @@ export default {
       // 填充实时推流配置
       // 确保 rtspStreaming 对象存在
       if (!this.skillForm.rtspStreaming) {
-        this.$set(this.skillForm, 'rtspStreaming', { enabled: false });
+        this.skillForm.rtspStreaming = { enabled: false };
       }
       
       if (taskData.config && taskData.config.rtsp_streaming) {

@@ -119,8 +119,8 @@
 </template>
 
 <script>
-import RBACService from '../../service/RBACService'
-import userService from '../../service/UserService'
+import RBACService from '../../service/RBACService.js'
+import userService from '../../service/UserService.js'
 
 export default {
   name: 'Profile',
@@ -366,28 +366,28 @@ export default {
   overflow-y: auto;
 }
 
-.profile-form >>> .el-form-item__label {
+.profile-form :deep(.el-form-item__label) {
   color: #4b5563;
   font-weight: 500;
 }
 
-.profile-form >>> .el-input__inner {
+.profile-form :deep(.el-input__inner) {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   transition: all 0.3s ease;
   color: #374151;
 }
 
-.profile-form >>> .el-input__inner:hover {
+.profile-form :deep(.el-input__inner:hover) {
   border-color: #3b82f6;
 }
 
-.profile-form >>> .el-input__inner:focus {
+.profile-form :deep(.el-input__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-.profile-form >>> .el-textarea__inner {
+.profile-form :deep(.el-textarea__inner) {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   transition: all 0.3s ease;
@@ -395,16 +395,16 @@ export default {
   resize: vertical;
 }
 
-.profile-form >>> .el-textarea__inner:hover {
+.profile-form :deep(.el-textarea__inner:hover) {
   border-color: #3b82f6;
 }
 
-.profile-form >>> .el-textarea__inner:focus {
+.profile-form :deep(.el-textarea__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-.profile-form >>> .el-input.is-disabled .el-input__inner {
+.profile-form :deep(.el-input.is-disabled .el-input__inner) {
   background-color: #f9fafb;
   border-color: #e5e7eb;
   color: #6b7280;

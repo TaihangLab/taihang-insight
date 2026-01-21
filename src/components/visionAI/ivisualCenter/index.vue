@@ -198,7 +198,7 @@
                 <el-table-column prop="event" label="预警事件" min-width="120" />
                 <el-table-column prop="time" label="预警时间" width="180" />
                 <el-table-column prop="status" label="处理状态" width="120">
-                  <template slot-scope="scope">
+                  <template #default="scope">
                     <span :class="['status-tag', scope.row.status]">{{ scope.row.statusText }}</span>
                   </template>
                 </el-table-column>
@@ -485,7 +485,7 @@ export default {
       // 初始化预警图片数据 - 使用预警管理页面的真实数据
       this.warningImages = [
         {
-          image: require('../monitoringWarning/images/5.jpg'),
+          image: new URL('../monitoringWarning/images/5.jpg', import.meta.url).href,
           event: '未戴安全帽',
           time: '2024.01.15 10:30',
           level: 'urgent',
@@ -493,7 +493,7 @@ export default {
           location: '工地东北角'
         },
         {
-          image: require('../monitoringWarning/images/4.jpg'),
+          image: new URL('../monitoringWarning/images/4.jpg', import.meta.url).href,
           event: '未穿工作服',
           time: '2024.01.15 10:28',
           level: 'high',
@@ -501,7 +501,7 @@ export default {
           location: '工地南侧'
         },
         {
-          image: require('../monitoringWarning/images/5.jpg'),
+          image: new URL('../monitoringWarning/images/5.jpg', import.meta.url).href,
           event: '闲杂人员',
           time: '2024.01.15 10:15',
           level: 'medium',
@@ -509,7 +509,7 @@ export default {
           location: '材料区'
         },
         {
-          image: require('../monitoringWarning/images/6.jpg'),
+          image: new URL('../monitoringWarning/images/6.jpg', import.meta.url).href,
           event: '违规吸烟',
           time: '2024.01.15 09:58',
           level: 'high',
@@ -517,7 +517,7 @@ export default {
           location: '休息区'
         },
         {
-          image: require('../monitoringWarning/images/1.jpg'),
+          image: new URL('../monitoringWarning/images/1.jpg', import.meta.url).href,
           event: '高空作业未系安全带',
           time: '2024.01.15 09:45',
           level: 'urgent',
@@ -525,7 +525,7 @@ export default {
           location: '施工作业区'
         },
         {
-          image: require('../monitoringWarning/images/3.jpg'),
+          image: new URL('../monitoringWarning/images/3.jpg', import.meta.url).href,
           event: '未穿反光背心',
           time: '2024.01.15 09:32',
           level: 'medium',
@@ -1333,40 +1333,40 @@ export default {
 }
 
 /* 表格边框处理 */
-.warning-table >>> .el-table,
-.device-table >>> .el-table {
+.warning-table :deep(.el-table),
+.device-table :deep(.el-table) {
   border: none !important;
 }
 
 /* 完全移除表格边框和白边 */
-.warning-table >>> .el-table,
-.device-table >>> .el-table {
+.warning-table :deep(.el-table),
+.device-table :deep(.el-table) {
   border: none !important;
   border-collapse: collapse !important;
   border-spacing: 0 !important;
 }
 
 /* 移除表格容器边框 */
-.warning-table >>> .el-table__border-left-patch,
-.warning-table >>> .el-table__border-right-patch,
-.device-table >>> .el-table__border-left-patch,
-.device-table >>> .el-table__border-right-patch {
+.warning-table :deep(.el-table__border-left-patch),
+.warning-table :deep(.el-table__border-right-patch),
+.device-table :deep(.el-table__border-left-patch),
+.device-table :deep(.el-table__border-right-patch) {
   display: none !important;
 }
 
 /* 移除表格外边框伪元素 */
-.warning-table >>> .el-table::before,
-.warning-table >>> .el-table::after,
-.device-table >>> .el-table::before,
-.device-table >>> .el-table::after {
+.warning-table :deep(.el-table::before),
+.warning-table :deep(.el-table::after),
+.device-table :deep(.el-table::before),
+.device-table :deep(.el-table::after) {
   display: none !important;
 }
 
 /* 删除所有表格边框 */
-.warning-table >>> .el-table td,
-.warning-table >>> .el-table th,
-.device-table >>> .el-table td,
-.device-table >>> .el-table th {
+.warning-table :deep(.el-table) td,
+.warning-table :deep(.el-table) th,
+.device-table :deep(.el-table) td,
+.device-table :deep(.el-table) th {
   background-color: transparent;
   border: none !important; /* 删除所有边框 */
   border-left: none !important;
@@ -1376,40 +1376,40 @@ export default {
 }
 
 /* 删除表格最后一行的底部边框 */
-.warning-table >>> .el-table tbody tr:last-child td,
-.device-table >>> .el-table tbody tr:last-child td {
+.warning-table :deep(.el-table) tbody tr:last-child td,
+.device-table :deep(.el-table) tbody tr:last-child td {
   border-bottom: none !important;
 }
 
 /* 删除表格底部边框 */
-.warning-table >>> .el-table__append-wrapper,
-.device-table >>> .el-table__append-wrapper {
+.warning-table :deep(.el-table__append-wrapper),
+.device-table :deep(.el-table__append-wrapper) {
   border: none !important;
 }
 
 /* 删除表格所有可能的边框 */
-.warning-table >>> .el-table__header,
-.warning-table >>> .el-table__body,
-.warning-table >>> .el-table__footer,
-.device-table >>> .el-table__header,
-.device-table >>> .el-table__body,
-.device-table >>> .el-table__footer {
+.warning-table :deep(.el-table__header),
+.warning-table :deep(.el-table__body),
+.warning-table :deep(.el-table__footer),
+.device-table :deep(.el-table__header),
+.device-table :deep(.el-table__body),
+.device-table :deep(.el-table__footer) {
   border: none !important;
 }
 
 /* 删除表格固定列边框 */
-.warning-table >>> .el-table__fixed,
-.warning-table >>> .el-table__fixed-right,
-.device-table >>> .el-table__fixed,
-.device-table >>> .el-table__fixed-right {
+.warning-table :deep(.el-table__fixed),
+.warning-table :deep(.el-table__fixed-right),
+.device-table :deep(.el-table__fixed),
+.device-table :deep(.el-table__fixed-right) {
   border: none !important;
   box-shadow: none !important;
 }
 
-.warning-table >>> .el-table__fixed::before,
-.warning-table >>> .el-table__fixed-right::before,
-.device-table >>> .el-table__fixed::before,
-.device-table >>> .el-table__fixed-right::before {
+.warning-table :deep(.el-table__fixed::before),
+.warning-table :deep(.el-table__fixed-right::before),
+.device-table :deep(.el-table__fixed::before),
+.device-table :deep(.el-table__fixed-right::before) {
   display: none !important;
 }
 
@@ -1429,51 +1429,51 @@ export default {
 }
 
 /* 移除表格包装器的边框和阴影 */
-.warning-table >>> .el-table__body-wrapper,
-.device-table >>> .el-table__body-wrapper {
+.warning-table :deep(.el-table__body-wrapper),
+.device-table :deep(.el-table__body-wrapper) {
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
 }
 
-.warning-table >>> .el-table__header-wrapper,
-.device-table >>> .el-table__header-wrapper {
+.warning-table :deep(.el-table__header-wrapper),
+.device-table :deep(.el-table__header-wrapper) {
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
 }
 
 /* 移除表格内部所有可能的边框线 */
-.warning-table >>> .el-table__empty-block,
-.device-table >>> .el-table__empty-block {
+.warning-table :deep(.el-table__empty-block),
+.device-table :deep(.el-table__empty-block) {
   border: none !important;
 }
 
-.warning-table >>> .el-table__empty-text,
-.device-table >>> .el-table__empty-text {
+.warning-table :deep(.el-table__empty-text),
+.device-table :deep(.el-table__empty-text) {
   border: none !important;
 }
 
 /* 强制移除所有可能的白色边框 */
-.warning-table >>> *,
-.device-table >>> * {
+.warning-table :deep(*),
+.device-table :deep(*) {
   border-color: transparent !important;
   outline-color: transparent !important;
 }
 
 /* 特别处理可能存在的边框伪元素 */
-.warning-table >>> .el-table--border .el-table__cell:first-child::before,
-.warning-table >>> .el-table--border .el-table__cell:last-child::after,
-.device-table >>> .el-table--border .el-table__cell:first-child::before,
-.device-table >>> .el-table--border .el-table__cell:last-child::after {
+.warning-table :deep(.el-table--border) .el-table__cell:first-child::before,
+.warning-table :deep(.el-table--border) .el-table__cell:last-child::after,
+.device-table :deep(.el-table--border) .el-table__cell:first-child::before,
+.device-table :deep(.el-table--border) .el-table__cell:last-child::after {
   display: none !important;
 }
 
 /* 移除表格分组相关的边框 */
-.warning-table >>> .el-table--group::after,
-.warning-table >>> .el-table--group::before,
-.device-table >>> .el-table--group::after,
-.device-table >>> .el-table--group::before {
+.warning-table :deep(.el-table--group::after),
+.warning-table :deep(.el-table--group::before),
+.device-table :deep(.el-table--group::after),
+.device-table :deep(.el-table--group::before) {
   display: none !important;
 }
 
@@ -1559,7 +1559,7 @@ export default {
 }
 
 /* 更新图表组件样式 */
-.status-chart >>> .ve-pie {
+.status-chart :deep(.ve-pie) {
   width: 100%;
   height: 100%;
   display: flex;
@@ -1568,7 +1568,7 @@ export default {
 }
 
 /* 调整饼图系列的位置 */
-.status-chart >>> .echarts-for-vue {
+.status-chart :deep(.echarts-for-vue) {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1931,8 +1931,8 @@ export default {
   background-color: transparent !important;
 }
 
-.warning-table >>> .el-table,
-.device-table >>> .el-table {
+.warning-table :deep(.el-table),
+.device-table :deep(.el-table) {
   background-color: transparent;
   color: #7EAEE5;
   scrollbar-width: none; /* Firefox */
@@ -1942,35 +1942,35 @@ export default {
   box-shadow: none !important;
 }
 
-.warning-table >>> .el-table::-webkit-scrollbar,
-.device-table >>> .el-table::-webkit-scrollbar {
+.warning-table :deep(.el-table::-webkit-scrollbar),
+.device-table :deep(.el-table::-webkit-scrollbar) {
   display: none; /* Chrome, Safari, Opera */
 }
 
 /* 确保Element UI表格内部滚动条也隐藏 */
-.warning-table >>> .el-table__body-wrapper::-webkit-scrollbar,
-.device-table >>> .el-table__body-wrapper::-webkit-scrollbar {
+.warning-table :deep(.el-table__body-wrapper::-webkit-scrollbar),
+.device-table :deep(.el-table__body-wrapper::-webkit-scrollbar) {
   display: none;
 }
 
-.warning-table >>> .el-table__body-wrapper,
-.device-table >>> .el-table__body-wrapper {
+.warning-table :deep(.el-table__body-wrapper),
+.device-table :deep(.el-table__body-wrapper) {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
-.warning-table >>> .el-table tr,
-.device-table >>> .el-table tr {
+.warning-table :deep(.el-table) tr,
+.device-table :deep(.el-table) tr {
   background-color: transparent !important;
 }
 
-.warning-table >>> .el-table--enable-row-hover .el-table__body tr:hover > td,
-.device-table >>> .el-table--enable-row-hover .el-table__body tr:hover > td {
+.warning-table :deep(.el-table--enable-row-hover) .el-table__body tr:hover > td,
+.device-table :deep(.el-table--enable-row-hover) .el-table__body tr:hover > td {
   background-color: rgba(0, 255, 255, 0.1) !important;
 }
 
-.warning-table >>> .el-table--striped .el-table__body tr.el-table__row--striped td,
-.device-table >>> .el-table--striped .el-table__body tr.el-table__row--striped td {
+.warning-table :deep(.el-table--striped) .el-table__body tr.el-table__row--striped td,
+.device-table :deep(.el-table--striped) .el-table__body tr.el-table__row--striped td {
   background-color: rgba(6, 30, 93, 0.3) !important;
 }
 </style>

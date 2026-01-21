@@ -63,7 +63,7 @@
         <el-table-column prop="id" label="ID" width="80" align="center"></el-table-column>
         <el-table-column prop="timestamp" label="时间" width="160" align="center"></el-table-column>
         <el-table-column prop="type" label="日志类型" width="120" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag 
               :type="getLogTypeTag(scope.row.type)"
               size="mini"
@@ -73,7 +73,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="level" label="级别" width="100" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag 
               :type="getLevelTag(scope.row.level)"
               size="mini"
@@ -87,7 +87,7 @@
         <el-table-column prop="message" label="日志内容" align="center"></el-table-column>
         <el-table-column prop="ip" label="IP地址" width="130" align="center"></el-table-column>
         <el-table-column label="操作" width="100" fixed="right" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <div class="operation-buttons">
               <el-button type="text" class="view-detail-btn" @click="viewLogDetail(scope.row)">详情</el-button>
             </div>
@@ -545,25 +545,25 @@ export default {
   color: #303133;
   font-weight: 500;
 }
-.filter-section >>> .el-input__inner,
-.filter-section >>> .el-select .el-input__inner {
+.filter-section :deep(.el-input__inner),
+.filter-section :deep(.el-select .el-input__inner) {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   transition: all 0.3s ease;
   background: #fff;
 }
-.filter-section >>> .el-input__inner:hover,
-.filter-section >>> .el-select .el-input__inner:hover {
+.filter-section :deep(.el-input__inner:hover),
+.filter-section :deep(.el-select .el-input__inner:hover) {
   border-color: #3b82f6;
 }
-.filter-section >>> .el-input__inner:focus,
-.filter-section >>> .el-select .el-input__inner:focus {
+.filter-section :deep(.el-input__inner:focus),
+.filter-section :deep(.el-select .el-input__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 /* 搜索按钮 */
-.filter-section >>> .el-button--primary {
+.filter-section :deep(.el-button--primary) {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -572,19 +572,19 @@ export default {
   border-radius: 8px;
   transition: all 0.3s ease;
 }
-.filter-section >>> .el-button--primary:hover {
+.filter-section :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4);
   transform: translateY(-2px);
 }
-.filter-section >>> .el-button:not(.el-button--primary) {
+.filter-section :deep(.el-button:not(.el-button--primary)) {
   background: #f5f7fa;
   border-color: #e4e7ed;
   color: #606266;
   border-radius: 8px;
   transition: all 0.3s ease;
 }
-.filter-section >>> .el-button:not(.el-button--primary):hover {
+.filter-section :deep(.el-button:not(.el-button--primary):hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e3a8a;
@@ -598,7 +598,7 @@ export default {
   text-align: right;
   border-bottom: none;
 }
-.table-operations >>> .el-button--primary {
+.table-operations :deep(.el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   color: #fff;
@@ -607,13 +607,13 @@ export default {
   margin-right: 8px;
   transition: all 0.3s ease;
 }
-.table-operations >>> .el-button--primary:hover {
+.table-operations :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
   transform: translateY(-1px);
 }
 /* 清空日志按钮与重置按钮保持一致的样式 */
-.table-operations >>> .el-button--danger {
+.table-operations :deep(.el-button--danger) {
   background: #f5f7fa;
   border-color: #e4e7ed;
   color: #606266;
@@ -621,7 +621,7 @@ export default {
   transition: all 0.3s ease;
   font-weight: 600;
 }
-.table-operations >>> .el-button--danger:hover {
+.table-operations :deep(.el-button--danger:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e3a8a;
@@ -636,13 +636,13 @@ export default {
   border: 1px solid #ebeef5;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
-.custom-table >>> .el-table__cell {
+.custom-table :deep(.el-table__cell) {
   border-right: none;
 }
-.custom-table >>> .el-table::before {
+.custom-table :deep(.el-table::before) {
   height: 0;
 }
-.custom-table >>> .el-table__header-wrapper th {
+.custom-table :deep(.el-table__header-wrapper th) {
   font-weight: bold;
   text-align: center;
   background: #f5f7fa !important;
@@ -650,21 +650,21 @@ export default {
   border-bottom: 1px solid #ebeef5 !important;
 }
 /* 确保固定列表头也使用相同的背景色 */
-.custom-table >>> .el-table__fixed-right-header-wrapper th,
-.custom-table >>> .el-table__fixed-header-wrapper th {
+.custom-table :deep(.el-table__fixed-right-header-wrapper th),
+.custom-table :deep(.el-table__fixed-header-wrapper th) {
   font-weight: bold;
   text-align: center;
   background: #f5f7fa !important;
   color: #303133 !important;
   border-bottom: 1px solid #ebeef5 !important;
 }
-.custom-table >>> .el-table__row td {
+.custom-table :deep(.el-table__row td) {
   text-align: center;
 }
-.custom-table >>> .el-table .el-table__body tr:hover > td {
+.custom-table :deep(.el-table .el-table__body tr:hover > td) {
   background: #f5f7fa !important;
 }
-.custom-table >>> .el-table--striped .el-table__body tr.el-table__row--striped td {
+.custom-table :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
   background-color: #fafafa;
 }
 
@@ -699,8 +699,8 @@ export default {
 
 /* ===== 标签样式 - 完全参照camera.css ===== */
 /* 类型标签 - 灰底灰字 */
-.log-records-container >>> .el-table .el-tag[type=""],
-.log-records-container >>> .el-dialog .el-tag[type=""] {
+.log-records-container :deep(.el-table .el-tag[type=""]),
+.log-records-container :deep(.el-dialog .el-tag[type=""]) {
   background: #f3f4f6 !important;
   color: #6b7280 !important;
   border: 1px solid #e5e7eb !important;
@@ -713,8 +713,8 @@ export default {
 }
 
 /* 状态标签 - 科技感浅色 */
-.log-records-container >>> .el-table .el-tag--success,
-.log-records-container >>> .el-dialog .el-tag--success {
+.log-records-container :deep(.el-table .el-tag--success),
+.log-records-container :deep(.el-dialog .el-tag--success) {
   background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
   color: #065f46 !important;
   border: 1px solid #a7f3d0 !important;
@@ -726,8 +726,8 @@ export default {
   line-height: 22px !important;
 }
 
-.log-records-container >>> .el-table .el-tag--danger,
-.log-records-container >>> .el-dialog .el-tag--danger {
+.log-records-container :deep(.el-table .el-tag--danger),
+.log-records-container :deep(.el-dialog .el-tag--danger) {
   background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%) !important;
   color: #991b1b !important;
   border: 1px solid #fca5a5 !important;
@@ -739,8 +739,8 @@ export default {
   line-height: 22px !important;
 }
 
-.log-records-container >>> .el-table .el-tag--warning,
-.log-records-container >>> .el-dialog .el-tag--warning {
+.log-records-container :deep(.el-table .el-tag--warning),
+.log-records-container :deep(.el-dialog .el-tag--warning) {
   background: linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%) !important;
   color: #92400e !important;
   border: 1px solid #fbbf24 !important;
@@ -752,8 +752,8 @@ export default {
   line-height: 22px !important;
 }
 
-.log-records-container >>> .el-table .el-tag--info,
-.log-records-container >>> .el-dialog .el-tag--info {
+.log-records-container :deep(.el-table .el-tag--info),
+.log-records-container :deep(.el-dialog .el-tag--info) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   color: #1e40af !important;
   border: 1px solid #93c5fd !important;
@@ -766,8 +766,8 @@ export default {
 }
 
 /* 统一表格内所有标签样式 */
-.log-records-container >>> .el-table .el-tag,
-.log-records-container >>> .el-dialog .el-tag {
+.log-records-container :deep(.el-table .el-tag),
+.log-records-container :deep(.el-dialog .el-tag) {
   border-radius: 6px !important;
   font-weight: 500 !important;
   font-size: 12px !important;
@@ -777,8 +777,8 @@ export default {
   transition: all 0.3s ease !important;
 }
 
-.log-records-container >>> .el-table .el-tag:hover,
-.log-records-container >>> .el-dialog .el-tag:hover {
+.log-records-container :deep(.el-table .el-tag:hover),
+.log-records-container :deep(.el-dialog .el-tag:hover) {
   transform: translateY(-1px) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
@@ -793,12 +793,12 @@ export default {
   border-radius: 12px;
   border: 1px solid rgba(59, 130, 246, 0.1);
 }
-.pagination-container >>> .el-pagination {
+.pagination-container :deep(.el-pagination) {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-.pagination-container >>> .el-pagination .el-pager li {
+.pagination-container :deep(.el-pagination .el-pager li) {
   min-width: 32px;
   height: 32px;
   line-height: 30px;
@@ -813,7 +813,7 @@ export default {
   position: relative;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
-.pagination-container >>> .el-pagination .el-pager li.active {
+.pagination-container :deep(.el-pagination .el-pager li.active) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border-color: #3b82f6;
   color: #ffffff;
@@ -821,13 +821,13 @@ export default {
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
-.pagination-container >>> .el-pagination .el-pager li:hover {
+.pagination-container :deep(.el-pagination .el-pager li:hover) {
   border-color: #3b82f6;
   color: #1e40af;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
-.pagination-container >>> .el-pagination button {
+.pagination-container :deep(.el-pagination button) {
   min-width: 32px;
   height: 32px;
   border: 1px solid rgba(59, 130, 246, 0.3);
@@ -840,7 +840,7 @@ export default {
   font-weight: 500;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
-.pagination-container >>> .el-pagination button:hover {
+.pagination-container :deep(.el-pagination button:hover) {
   border-color: #3b82f6;
   color: #1e40af;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
@@ -849,38 +849,38 @@ export default {
 }
 
 /* ===== 弹框样式 - 完全参照camera.css ===== */
-.log-records-container >>> .el-dialog {
+.log-records-container :deep(.el-dialog) {
   border-radius: 12px !important;
   overflow: hidden !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
 }
 
-.log-records-container >>> .el-dialog__header {
+.log-records-container :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
   padding: 16px 20px !important;
 }
 
-.log-records-container >>> .el-dialog__title {
+.log-records-container :deep(.el-dialog__title) {
   color: #1f2937 !important;
   font-weight: 600 !important;
 }
 
-.log-records-container >>> .el-dialog__close {
+.log-records-container :deep(.el-dialog__close) {
   color: #6b7280 !important;
   transition: color 0.3s ease !important;
 }
 
-.log-records-container >>> .el-dialog__close:hover {
+.log-records-container :deep(.el-dialog__close:hover) {
   color: #3b82f6 !important;
 }
 
-.log-records-container >>> .el-dialog__body {
+.log-records-container :deep(.el-dialog__body) {
   padding: 20px !important;
   background: #ffffff !important;
 }
 
-.log-records-container >>> .el-dialog__footer {
+.log-records-container :deep(.el-dialog__footer) {
   padding: 10px 20px 20px !important;
   text-align: right !important;
   border-top: 1px solid rgba(59, 130, 246, 0.1) !important;
@@ -888,7 +888,7 @@ export default {
 }
 
 /* 弹框内按钮样式 */
-.log-records-container >>> .el-dialog .el-button--primary {
+.log-records-container :deep(.el-dialog .el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -898,13 +898,13 @@ export default {
   border-radius: 6px !important;
 }
 
-.log-records-container >>> .el-dialog .el-button--primary:hover {
+.log-records-container :deep(.el-dialog .el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
 }
 
-.log-records-container >>> .el-dialog .el-button--default {
+.log-records-container :deep(.el-dialog .el-button--default) {
   background: white !important;
   border: 1px solid #d1d5db !important;
   color: #4b5563 !important;
@@ -912,14 +912,14 @@ export default {
   border-radius: 6px !important;
 }
 
-.log-records-container >>> .el-dialog .el-button--default:hover {
+.log-records-container :deep(.el-dialog .el-button--default:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
 }
 
-.log-records-container >>> .el-dialog .el-button--danger {
+.log-records-container :deep(.el-dialog .el-button--danger) {
   background: linear-gradient(135deg, #f56c6c 0%, #e53e3e 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(245, 108, 108, 0.3) !important;
@@ -929,7 +929,7 @@ export default {
   border-radius: 6px !important;
 }
 
-.log-records-container >>> .el-dialog .el-button--danger:hover {
+.log-records-container :deep(.el-dialog .el-button--danger:hover) {
   background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%) !important;
   box-shadow: 0 4px 10px rgba(245, 108, 108, 0.4) !important;
   transform: translateY(-1px) !important;
@@ -1009,7 +1009,7 @@ export default {
 
 /* ===== 系统级弹框样式 (Alert/Confirm/Prompt) ===== */
 /* MessageBox 弹框整体样式 */
-.log-records-container >>> .el-message-box {
+.log-records-container :deep(.el-message-box) {
   border-radius: 12px !important;
   overflow: hidden !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
@@ -1017,65 +1017,65 @@ export default {
 }
 
 /* MessageBox 头部样式 */
-.log-records-container >>> .el-message-box__header {
+.log-records-container :deep(.el-message-box__header) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
   padding: 16px 20px !important;
 }
 
 /* MessageBox 标题样式 */
-.log-records-container >>> .el-message-box__title {
+.log-records-container :deep(.el-message-box__title) {
   color: #1f2937 !important;
   font-weight: 600 !important;
   font-size: 16px !important;
 }
 
 /* MessageBox 关闭按钮 */
-.log-records-container >>> .el-message-box__close {
+.log-records-container :deep(.el-message-box__close) {
   color: #6b7280 !important;
   transition: color 0.3s ease !important;
 }
 
-.log-records-container >>> .el-message-box__close:hover {
+.log-records-container :deep(.el-message-box__close:hover) {
   color: #3b82f6 !important;
 }
 
 /* MessageBox 主体内容样式 */
-.log-records-container >>> .el-message-box__content {
+.log-records-container :deep(.el-message-box__content) {
   padding: 20px !important;
   background: #ffffff !important;
 }
 
 /* MessageBox 消息文本样式 */
-.log-records-container >>> .el-message-box__message {
+.log-records-container :deep(.el-message-box__message) {
   color: #374151 !important;
   font-size: 14px !important;
   line-height: 1.6 !important;
 }
 
 /* MessageBox 图标样式 */
-.log-records-container >>> .el-message-box__status {
+.log-records-container :deep(.el-message-box__status) {
   font-size: 20px !important;
 }
 
-.log-records-container >>> .el-message-box__status.el-icon-warning {
+.log-records-container :deep(.el-message-box__status.el-icon-warning) {
   color: #f59e0b !important;
 }
 
-.log-records-container >>> .el-message-box__status.el-icon-info {
+.log-records-container :deep(.el-message-box__status.el-icon-info) {
   color: #3b82f6 !important;
 }
 
-.log-records-container >>> .el-message-box__status.el-icon-success {
+.log-records-container :deep(.el-message-box__status.el-icon-success) {
   color: #10b981 !important;
 }
 
-.log-records-container >>> .el-message-box__status.el-icon-error {
+.log-records-container :deep(.el-message-box__status.el-icon-error) {
   color: #ef4444 !important;
 }
 
 /* MessageBox 底部按钮区域 */
-.log-records-container >>> .el-message-box__btns {
+.log-records-container :deep(.el-message-box__btns) {
   padding: 10px 20px 20px !important;
   text-align: right !important;
   border-top: 1px solid rgba(59, 130, 246, 0.1) !important;
@@ -1083,7 +1083,7 @@ export default {
 }
 
 /* MessageBox 按钮样式 */
-.log-records-container >>> .el-message-box__btns .el-button--primary {
+.log-records-container :deep(.el-message-box__btns .el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -1094,13 +1094,13 @@ export default {
   padding: 8px 16px !important;
 }
 
-.log-records-container >>> .el-message-box__btns .el-button--primary:hover {
+.log-records-container :deep(.el-message-box__btns .el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
 }
 
-.log-records-container >>> .el-message-box__btns .el-button--default {
+.log-records-container :deep(.el-message-box__btns .el-button--default) {
   background: white !important;
   border: 1px solid #d1d5db !important;
   color: #4b5563 !important;
@@ -1110,7 +1110,7 @@ export default {
   margin-right: 10px !important;
 }
 
-.log-records-container >>> .el-message-box__btns .el-button--default:hover {
+.log-records-container :deep(.el-message-box__btns .el-button--default:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -1118,7 +1118,7 @@ export default {
 }
 
 /* 危险操作按钮样式 (删除确认等) */
-.log-records-container >>> .el-message-box__btns .el-button--danger {
+.log-records-container :deep(.el-message-box__btns .el-button--danger) {
   background: linear-gradient(135deg, #f56c6c 0%, #e53e3e 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(245, 108, 108, 0.3) !important;
@@ -1129,7 +1129,7 @@ export default {
   padding: 8px 16px !important;
 }
 
-.log-records-container >>> .el-message-box__btns .el-button--danger:hover {
+.log-records-container :deep(.el-message-box__btns .el-button--danger:hover) {
   background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%) !important;
   box-shadow: 0 4px 10px rgba(245, 108, 108, 0.4) !important;
   transform: translateY(-1px) !important;

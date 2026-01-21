@@ -1,8 +1,5 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-
 /**
  * 简化版路由一致性检查工具
  * 快速检查路由配置中导入路径的存在性
@@ -14,6 +11,8 @@ function quickCheckRoutes(routerFilePath) {
   const routerContent = fs.readFileSync(routerFilePath, 'utf8');
 
   // 匹配所有 import 语句
+import fs from 'fs';
+import path from 'path';
   const importRegex = /import\s+(\w+)\s+from\s+['"]([^'"]+)['"]/g;
 
   const imports = [];

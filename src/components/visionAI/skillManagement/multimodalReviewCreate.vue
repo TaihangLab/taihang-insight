@@ -269,25 +269,25 @@ export default {
         {
           title: '作业未穿工作服识别',
           description: '图中是否有人在操作软管但没有穿连体裤？',
-          imagePath: require('@/components/visionAI/skillManagement/example/imgs/example01.jpeg'),
+          imagePath: '@/components/visionAI/skillManagement/example/imgs/example01.jpeg',
           categories: ['安全监控', '行为分析']
         },
         {
           title: '天气异常识别',
           description: '图片是否是一个下雨天？',
-          imagePath: require('@/components/visionAI/skillManagement/example/imgs/example02.jpeg'),
+          imagePath: '@/components/visionAI/skillManagement/example/imgs/example02.jpeg',
           categories: ['图像识别', '异常检测']
         },
         {
           title: '人员驾驶识别',
           description: '图中的人坐在车里吗？',
-          imagePath: require('@/components/visionAI/skillManagement/example/imgs/example03.jpeg'),
+          imagePath: '@/components/visionAI/skillManagement/example/imgs/example03.jpeg',
           categories: ['图像识别', '行为分析']
         },
         {
           title: '倚靠栏杆识别',
           description: '图中的人是否靠在栏杆上？',
-          imagePath: require('@/components/visionAI/skillManagement/example/imgs/example04.jpeg'),
+          imagePath: '@/components/visionAI/skillManagement/example/imgs/example04.jpeg',
           categories: ['安全监控', '合规检测']
         }
       ]
@@ -1361,7 +1361,7 @@ export default {
   flex: 1;
 }
 
-.form-textarea >>> .el-textarea__inner {
+.form-textarea :deep(.el-textarea__inner) {
   height: 100% !important;
   min-height: 120px !important;
   resize: none !important;
@@ -1612,12 +1612,12 @@ export default {
   min-height: 360px !important;
 }
 
-.verification-card .upload-dragger /deep/ .el-upload {
+.verification-card .upload-dragger :deep(.el-upload) {
   width: 100% !important;
   height: 100% !important;
 }
 
-.verification-card .upload-dragger /deep/ .el-upload-dragger {
+.verification-card .upload-dragger :deep(.el-upload-dragger) {
   width: 100% !important;
   height: 360px !important;
   min-height: 360px !important;
@@ -1627,12 +1627,12 @@ export default {
   transition: all 0.3s ease;
 }
 
-.verification-card .upload-dragger ::v-deep .el-upload {
+.verification-card .upload-dragger :deep(.el-upload) {
   width: 100% !important;
   height: 100% !important;
 }
 
-.verification-card .upload-dragger ::v-deep .el-upload-dragger {
+.verification-card .upload-dragger :deep(.el-upload-dragger) {
   width: 100% !important;
   height: 360px !important;
   min-height: 360px !important;
@@ -1642,12 +1642,12 @@ export default {
   transition: all 0.3s ease;
 }
 
-.verification-card .upload-dragger /deep/ .el-upload-dragger:hover {
+.verification-card .upload-dragger :deep(.el-upload-dragger:hover) {
   border-color: #3b82f6;
   background: #eff6ff;
 }
 
-.verification-card .upload-dragger ::v-deep .el-upload-dragger:hover {
+.verification-card .upload-dragger :deep(.el-upload-dragger:hover) {
   border-color: #3b82f6;
   background: #eff6ff;
 }

@@ -176,46 +176,39 @@
   margin-left: 8px;
 }
 
-.skill-config-dialog {
-  border-radius: 4px;
+.skill-config-dialog {border-radius: 4px;
 }
 
-.skill-config-dialog>>>.el-dialog__title {
-  font-size: 16px;
+.skill-config-dialog :deep(.el-dialog__title) {font-size: 16px;
   font-weight: 500;
   color: #1F2329;
 }
 
-.skill-config-dialog>>>.el-dialog__headerbtn {
-  top: 20px;
+.skill-config-dialog :deep(.el-dialog__headerbtn) {top: 20px;
 }
 
-.skill-config-dialog>>>.el-dialog__body {
+.skill-config-dialog :deep(.el-dialog__body) {
   padding: 24px 0;
 }
 
-.skill-form {
-  padding: 0 20px;
+.skill-form {padding: 0 20px;
 }
 
-.skill-form>>>.el-form-item {
-  margin-bottom: 24px;
+.skill-form :deep(.el-form-item) {margin-bottom: 24px;
 }
 
-.skill-form>>>.el-form-item__label {
-  font-size: 14px;
+.skill-form :deep(.el-form-item__label) {font-size: 14px;
   color: #1F2329;
   font-weight: 600;
   padding-right: 12px;
   text-align: left;
 }
 
-.skill-form>>>.el-form-item__content {
-  margin-left: 85px !important;
+.skill-form :deep(.el-form-item__content) {margin-left: 85px !important;
   text-align: left;
 }
 
-.skill-form>>>.el-form-item__label::before {
+.skill-form :deep(.el-form-item__label::before) {
   margin-right: 4px;
   color: #F53F3F;
   font-weight: 600;
@@ -261,11 +254,10 @@
   font-size: 14px;
 }
 
-.number-input {
-  width: 100px !important;
+.number-input {width: 100px !important;
 }
 
-.number-input>>>.el-input__inner {
+.number-input :deep(.el-input__inner) {
   line-height: 32px;
   border-radius: 4px;
   padding: 0 8px;
@@ -498,16 +490,14 @@
   margin-bottom: 0;
 }
 
-.form-item-inline:last-child {
-  margin-right: 0;
+.form-item-inline:last-child {margin-right: 0;
   flex: 1;
 }
 
-.form-item-inline /deep/ .el-form-item__label {
-  width: auto !important;
+.form-item-inline :deep(.el-form-item__label) {width: auto !important;
 }
 
-.form-item-inline /deep/ .el-form-item__content {
+.form-item-inline :deep(.el-form-item__content) {
   margin-left: 0 !important;
   width: auto;
 }
@@ -557,16 +547,14 @@
   font-weight: 500;
 }
 
-.rtsp-streaming-settings .warning-tip {
-  margin-top: 8px;
+.rtsp-streaming-settings .warning-tip {margin-top: 8px;
 }
 
-.rtsp-streaming-settings .warning-tip >>> .el-alert {
-  background-color: #fdf6ec;
+.rtsp-streaming-settings .warning-tip :deep(.el-alert) {background-color: #fdf6ec;
   border: 1px solid #faecd8;
 }
 
-.rtsp-streaming-settings .warning-tip >>> .el-alert .el-alert__title {
+.rtsp-streaming-settings .warning-tip :deep(.el-alert .el-alert__title) {
   font-size: 13px;
   color: #e6a23c;
 }
@@ -656,15 +644,13 @@
   margin-right: 0;
 }
 
-.form-item-inline.status-item {
-  margin-left: 40px;
+.form-item-inline.status-item {margin-left: 40px;
 }
 
-.form-item-inline /deep/ .el-form-item__label {
-  width: auto !important;
+.form-item-inline :deep(.el-form-item__label) {width: auto !important;
 }
 
-.form-item-inline /deep/ .el-form-item__content {
+.form-item-inline :deep(.el-form-item__content) {
   margin-left: 0 !important;
 }
 
@@ -735,47 +721,39 @@
   color: #606266;
 }
 
-.skill-select-dialog {
-  border-radius: 4px;
+.skill-select-dialog {border-radius: 4px;
 }
 
-.skill-select-dialog>>>.el-dialog__header {
-  padding: 20px;
+.skill-select-dialog :deep(.el-dialog__header) {padding: 20px;
   border-bottom: 1px solid #EBEEF5;
 }
 
-.skill-select-dialog>>>.el-dialog__title {
-  font-size: 16px;
+.skill-select-dialog :deep(.el-dialog__title) {font-size: 16px;
   font-weight: 500;
   color: #1F2329;
 }
 
-.skill-select-dialog>>>.el-dialog__headerbtn {
-  top: 20px;
+.skill-select-dialog :deep(.el-dialog__headerbtn) {top: 20px;
 }
 
-.skill-select-dialog>>>.el-dialog__body {
-  padding: 24px 0;
+.skill-select-dialog :deep(.el-dialog__body) {padding: 24px 0;
 }
 
-.skill-select-dialog>>>.el-form-item {
-  margin-bottom: 24px;
+.skill-select-dialog :deep(.el-form-item) {margin-bottom: 24px;
 }
 
-.skill-select-dialog>>>.el-form-item__label {
-  font-size: 14px;
+.skill-select-dialog :deep(.el-form-item__label) {font-size: 14px;
   color: #1F2329;
   font-weight: 600;
   padding-right: 12px;
   text-align: left;
 }
 
-.skill-select-dialog>>>.el-form-item__content {
-  margin-left: 85px !important;
+.skill-select-dialog :deep(.el-form-item__content) {margin-left: 85px !important;
   text-align: left;
 }
 
-.skill-select-dialog>>>.el-form-item__label::before {
+.skill-select-dialog :deep(.el-form-item__label::before) {
   margin-right: 4px;
   color: #F53F3F;
   font-weight: 600;
@@ -1101,20 +1079,17 @@
   color: #67C23A;
 }
 
-.status-switch {
-  transform: scale(1.1);
+.status-switch {transform: scale(1.1);
 }
 
-.status-switch>>>.el-switch__core {
-  width: 48px;
+.status-switch :deep(.el-switch__core) {width: 48px;
   height: 22px;
   border-radius: 11px;
   border: none;
   transition: all 0.3s;
 }
 
-.status-switch>>>.el-switch__core:after {
-  width: 18px;
+.status-switch :deep(.el-switch__core:after) {width: 18px;
   height: 18px;
   top: 2px;
   left: 2px;
@@ -1122,24 +1097,20 @@
   transition: all 0.3s;
 }
 
-.status-switch>>>.el-switch.is-checked .el-switch__core::after {
-  margin-left: 20px;
+.status-switch :deep(.el-switch.is-checked .el-switch__core::after) {margin-left: 20px;
 }
 
-.status-switch>>>.el-switch__label {
-  font-size: 12px;
+.status-switch :deep(.el-switch__label) {font-size: 12px;
   font-weight: 500;
 }
 
-.status-switch>>>.el-switch__label.is-active {
-  color: #67C23A;
+.status-switch :deep(.el-switch__label.is-active) {color: #67C23A;
 }
 
-.status-switch>>>.el-switch__label--right {
-  margin-left: 8px;
+.status-switch :deep(.el-switch__label--right) {margin-left: 8px;
 }
 
-.status-switch>>>.el-switch__label--left {
+.status-switch :deep(.el-switch__label--left) {
   margin-right: 8px;
 }
 
@@ -1191,22 +1162,18 @@
   line-height: 18px;
 }
 
-.skill-status {
-  margin-left: auto;
+.skill-status {margin-left: auto;
   display: flex;
   align-items: center;
 }
 
-.skill-status .el-switch>>>.el-switch__core {
-  background-color: #909399;
+.skill-status .el-switch :deep(.el-switch__core) {background-color: #909399;
 }
 
-.skill-status .el-switch.is-checked>>>.el-switch__core {
-  background-color: #67C23A;
+.skill-status .el-switch.is-checked :deep(.el-switch__core) {background-color: #67C23A;
 }
 
-.skill-status .el-switch>>>.el-switch__core::after {
-  left: 2px;
+.skill-status .el-switch :deep(.el-switch__core::after) {left: 2px;
   top: 2px;
   border-radius: 100%;
   transition: all .3s;
@@ -1215,7 +1182,7 @@
   background-color: #FFFFFF;
 }
 
-.skill-status .el-switch.is-checked>>>.el-switch__core::after {
+.skill-status .el-switch.is-checked :deep(.el-switch__core::after) {
   left: 100%;
   margin-left: -18px;
 }
@@ -1563,12 +1530,10 @@
   background-color: #409EFF;
 }
 
-.tag-collapse {
-  margin: 10px 0 20px 0;
+.tag-collapse {margin: 10px 0 20px 0;
 }
 
-.tag-collapse /deep/ .el-collapse-item__header {
-  border: none;
+.tag-collapse :deep(.el-collapse-item__header) {border: none;
   font-size: 13px;
   font-weight: 500;
   color: #606266;
@@ -1581,7 +1546,7 @@
   border-left: 3px solid #409EFF;
 }
 
-.tag-collapse /deep/ .el-collapse-item__arrow {
+.tag-collapse :deep(.el-collapse-item__arrow) {
   line-height: 1.5;
   font-weight: bold;
   color: #409EFF;
@@ -1595,41 +1560,36 @@
   height: 24px;
 }
 
-.collapse-title span {
-  position: relative;
+.collapse-title span {position: relative;
   font-weight: 500;
   color: #606266;
   font-size: 13px;
 }
 
-.tag-collapse /deep/ .el-collapse-item__content {
-  padding: 10px;
+.tag-collapse :deep(.el-collapse-item__content) {padding: 10px;
   background-color: #f9fafc;
   border-radius: 0 0 4px 4px;
   margin-top: -1px;
   padding-top: 15px;
 }
 
-.tag-collapse /deep/ .el-collapse-item__wrap {
+.tag-collapse :deep(.el-collapse-item__wrap) {
   border: none;
 }
 
-.batch-result-dialog {
-  border-radius: 4px;
+.batch-result-dialog {border-radius: 4px;
 }
 
-.batch-result-dialog /deep/ .el-dialog__header {
-  padding: 15px 20px;
+.batch-result-dialog :deep(.el-dialog__header) {padding: 15px 20px;
   border-bottom: 1px solid #EBEEF5;
   background: #f5f7fa;
 }
 
-.batch-result-dialog /deep/ .el-dialog__title {
-  font-size: 16px;
+.batch-result-dialog :deep(.el-dialog__title) {font-size: 16px;
   font-weight: 500;
 }
 
-.batch-result-dialog /deep/ .el-dialog__body {
+.batch-result-dialog :deep(.el-dialog__body) {
   padding: 0;
 }
 
@@ -1977,17 +1937,15 @@
   cursor: pointer;
 }
 
-.selected-tags-header {
-  cursor: pointer;
+.selected-tags-header {cursor: pointer;
 }
 
-.selected-tag-item /deep/ .el-tag__close {
-  color: #ffffff !important;
+.selected-tag-item :deep(.el-tag__close) {color: #ffffff !important;
   font-weight: bold;
   background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.selected-tag-item /deep/ .el-tag__close:hover {
+.selected-tag-item :deep(.el-tag__close:hover) {
   background-color: rgba(255, 255, 255, 0.4) !important;
   color: #ffffff !important;
 }
@@ -2735,8 +2693,7 @@
   padding-right: 8px;
 }
 
-.skill-meta {
-  display: flex;
+.skill-meta {display: flex;
   flex-direction: column;
   align-items: flex-end;
   justify-content: space-between;
@@ -2747,8 +2704,7 @@
 }
 
 /* 自定义输入框样式 */
-.custom-input>>>.el-input__inner {
-  border-radius: 4px;
+.custom-input :deep(.el-input__inner) {border-radius: 4px;
   padding-left: 35px;
   font-size: 14px;
   border: 1px solid #dcdfe6;
@@ -2757,25 +2713,21 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.custom-input>>>.el-input__inner:focus,
-.custom-textarea>>>.el-textarea__inner:focus {
-  border-color: #409EFF;
+.custom-input :deep(.el-input__inner:focus,
+.custom-textarea:deep(.el-textarea__inner:focus)) {border-color: #409EFF;
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
 }
 
-.custom-input>>>.el-input__prefix {
-  left: 8px;
+.custom-input :deep(.el-input__prefix) {left: 8px;
   color: #409EFF;
 }
 
-.custom-input>>>.el-input__count {
-  background: transparent;
+.custom-input :deep(.el-input__count) {background: transparent;
   font-size: 12px;
   color: #909399;
 }
 
-.custom-textarea>>>.el-textarea__inner {
-  border-radius: 4px;
+.custom-textarea :deep(.el-textarea__inner) {border-radius: 4px;
   border: 1px solid #dcdfe6;
   padding: 10px 15px;
   font-size: 14px;
@@ -2787,7 +2739,7 @@
   letter-spacing: 0.3px;
 }
 
-.custom-textarea>>>.el-textarea__count {
+.custom-textarea :deep(.el-textarea__count) {
   background: transparent;
   color: #909399;
   font-size: 12px;
@@ -3313,8 +3265,7 @@
   margin-bottom: 6px;
 }
 
-.empty-subtitle {
-  font-size: 12px;
+.empty-subtitle {font-size: 12px;
   color: #64748b;
 }
 
@@ -3325,8 +3276,7 @@
    ======================================== */
 
 /* 全局按钮样式 */
-.camera-management >>> .el-button {
-  height: 28px;
+.camera-management :deep(.el-button) {height: 28px;
   padding: 4px 12px;
   font-size: 12px;
   border-radius: 6px;
@@ -3336,8 +3286,7 @@
 }
 
 /* 专门针对表格中的操作按钮进一步缩小 */
-.camera-management >>> .el-table .el-button {
-  height: 24px !important;
+.camera-management :deep(.el-table .el-button) {height: 24px !important;
   padding: 2px 8px !important;
   font-size: 11px !important;
   border-radius: 4px !important;
@@ -3348,8 +3297,7 @@
 }
 
 /* 主要按钮样式 - 科技蓝渐变 */
-/* .camera-management >>> .el-button--primary {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
+/* .camera-management :deep(.el-button--primary) {background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3) !important;
   position: relative !important;
@@ -3361,8 +3309,7 @@
   border-radius: 6px !important;
 }
 
-.camera-management >>> .el-button--primary::before {
-  content: '';
+.camera-management :deep(.el-button--primary::before) {content: '';
   position: absolute;
   top: 0;
   left: -100%;
@@ -3372,19 +3319,16 @@
   transition: left 0.5s;
 }
 
-.camera-management >>> .el-button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%) !important;
+.camera-management :deep(.el-button--primary:hover) {background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%) !important;
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4) !important;
   transform: translateY(-2px) !important;
 }
 
-.camera-management >>> .el-button--primary:hover::before {
-  left: 100%;
+.camera-management :deep(.el-button--primary:hover::before) {left: 100%;
 } */
 
 /* 成功按钮样式 */
-/* .camera-management >>> .el-button--success {
-  background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%) !important;
+/* .camera-management :deep(.el-button--success) {background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4), 0 2px 4px rgba(5, 150, 105, 0.3) !important;
   position: relative !important;
@@ -3396,8 +3340,7 @@
   border-radius: 6px !important;
 }
 
-.camera-management >>> .el-button--success::before {
-  content: '';
+.camera-management :deep(.el-button--success::before) {content: '';
   position: absolute;
   top: 0;
   left: -100%;
@@ -3407,19 +3350,16 @@
   transition: left 0.5s;
 }
 
-.camera-management >>> .el-button--success:hover {
-  background: linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%) !important;
+.camera-management :deep(.el-button--success:hover) {background: linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%) !important;
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5), 0 4px 8px rgba(5, 150, 105, 0.4) !important;
   transform: translateY(-2px) !important;
 }
 
-.camera-management >>> .el-button--success:hover::before {
-  left: 100%;
+.camera-management :deep(.el-button--success:hover::before) {left: 100%;
 } */
 
 /* 危险按钮样式 */
-.camera-management >>> .el-button--danger {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+.camera-management :deep(.el-button--danger) {background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4), 0 2px 4px rgba(185, 28, 28, 0.3) !important;
   position: relative !important;
@@ -3431,8 +3371,7 @@
   border-radius: 6px !important;
 }
 
-.camera-management >>> .el-button--danger::before {
-  content: '';
+.camera-management :deep(.el-button--danger::before) {content: '';
   position: absolute;
   top: 0;
   left: -100%;
@@ -3442,26 +3381,22 @@
   transition: left 0.5s;
 }
 
-.camera-management >>> .el-button--danger:hover {
-  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
+.camera-management :deep(.el-button--danger:hover) {background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
   box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5), 0 4px 8px rgba(185, 28, 28, 0.4) !important;
   transform: translateY(-2px) !important;
 }
 
-.camera-management >>> .el-button--danger:hover::before {
-  left: 100%;
+.camera-management :deep(.el-button--danger:hover::before) {left: 100%;
 }
 
 /* 默认按钮样式 */
-.camera-management >>> .el-button:not(.el-button--primary):not(.el-button--danger):not(.el-button--success) {
-  background: #f5f7fa !important;
+.camera-management :deep(.el-button:not(.el-button--primary):not(.el-button--danger):not(.el-button--success)) {background: #f5f7fa !important;
   border-color: #e4e7ed !important;
   color: #606266 !important;
   border-radius: 6px !important;
 }
 
-.camera-management >>> .el-button:not(.el-button--primary):not(.el-button--danger):not(.el-button--success):hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+.camera-management :deep(.el-button:not(.el-button--primary):not(.el-button--danger):not(.el-button--success):hover) {background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e3a8a !important;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;
@@ -3469,47 +3404,39 @@
 }
 
 /* 弹框样式 */
-.camera-management >>> .el-dialog {
-  border-radius: 12px;
+.camera-management :deep(.el-dialog) {border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-.camera-management >>> .el-dialog__header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+.camera-management :deep(.el-dialog__header) {background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
   padding: 16px 20px !important;
 }
 
-.camera-management >>> .el-dialog__title {
-  color: #1f2937 !important;
+.camera-management :deep(.el-dialog__title) {color: #1f2937 !important;
   font-weight: 600 !important;
 }
 
-.camera-management >>> .el-dialog__close {
-  color: #6b7280 !important;
+.camera-management :deep(.el-dialog__close) {color: #6b7280 !important;
   transition: color 0.3s ease !important;
 }
 
-.camera-management >>> .el-dialog__close:hover {
-  color: #3b82f6 !important;
+.camera-management :deep(.el-dialog__close:hover) {color: #3b82f6 !important;
 }
 
-.camera-management >>> .el-dialog__body {
-  padding: 20px !important;
+.camera-management :deep(.el-dialog__body) {padding: 20px !important;
   background: #ffffff !important;
 }
 
-.camera-management >>> .el-dialog__footer {
-  padding: 10px 20px 20px;
+.camera-management :deep(.el-dialog__footer) {padding: 10px 20px 20px;
   text-align: right;
   border-top: 1px solid rgba(59, 130, 246, 0.1);
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 /* 弹框内按钮样式 */
-.camera-management >>> .el-dialog .el-button--primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+.camera-management :deep(.el-dialog .el-button--primary) {background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
   color: white !important;
@@ -3518,108 +3445,89 @@
   border-radius: 6px !important;
 }
 
-.camera-management >>> .el-dialog .el-button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
+.camera-management :deep(.el-dialog .el-button--primary:hover) {background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
 }
 
-.camera-management >>> .el-dialog .el-button--default {
-  background: white !important;
+.camera-management :deep(.el-dialog .el-button--default) {background: white !important;
   border: 1px solid #d1d5db !important;
   color: #4b5563 !important;
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
 }
 
-.camera-management >>> .el-dialog .el-button--default:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+.camera-management :deep(.el-dialog .el-button--default:hover) {background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
 }
 
 /* 输入框样式 */
-.camera-management >>> .el-input__inner {
-  border: 1px solid #e2e8f0 !important;
+.camera-management :deep(.el-input__inner) {border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
-.camera-management >>> .el-input__inner:hover {
-  border-color: #3b82f6 !important;
+.camera-management :deep(.el-input__inner:hover) {border-color: #3b82f6 !important;
 }
 
-.camera-management >>> .el-input__inner:focus {
-  border-color: #3b82f6 !important;
+.camera-management :deep(.el-input__inner:focus) {border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* 选择器样式 */
-.camera-management >>> .el-select .el-input__inner {
-  border: 1px solid #e2e8f0 !important;
+.camera-management :deep(.el-select .el-input__inner) {border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
-.camera-management >>> .el-select .el-input__inner:hover {
-  border-color: #3b82f6 !important;
+.camera-management :deep(.el-select .el-input__inner:hover) {border-color: #3b82f6 !important;
 }
 
-.camera-management >>> .el-select .el-input__inner:focus {
-  border-color: #3b82f6 !important;
+.camera-management :deep(.el-select .el-input__inner:focus) {border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* 时间选择器样式 */
-.camera-management >>> .el-date-editor.el-input {
+.camera-management :deep(.el-date-editor.el-input) {border-radius: 6px !important;
+}
+
+.camera-management :deep(.el-date-editor .el-input__inner) {border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
 }
 
-.camera-management >>> .el-date-editor .el-input__inner {
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 6px !important;
+.camera-management :deep(.el-date-editor .el-input__inner:hover) {border-color: #3b82f6 !important;
 }
 
-.camera-management >>> .el-date-editor .el-input__inner:hover {
-  border-color: #3b82f6 !important;
-}
-
-.camera-management >>> .el-date-editor .el-input__inner:focus {
-  border-color: #3b82f6 !important;
+.camera-management :deep(.el-date-editor .el-input__inner:focus) {border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* 文本域样式 */
-.camera-management >>> .el-textarea__inner {
-  border: 1px solid #e2e8f0 !important;
+.camera-management :deep(.el-textarea__inner) {border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
-.camera-management >>> .el-textarea__inner:hover {
-  border-color: #3b82f6 !important;
+.camera-management :deep(.el-textarea__inner:hover) {border-color: #3b82f6 !important;
 }
 
-.camera-management >>> .el-textarea__inner:focus {
-  border-color: #3b82f6 !important;
+.camera-management :deep(.el-textarea__inner:focus) {border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* 表格样式 */
-.camera-management >>> .el-table th {
-  background: #f5f7fa !important;
+.camera-management :deep(.el-table th) {background: #f5f7fa !important;
   color: #303133 !important;
   font-weight: 500 !important;
 }
 
-.camera-management >>> .el-table__row:hover > td {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.03) 100%) !important;
+.camera-management :deep(.el-table__row:hover > td) {background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.03) 100%) !important;
 }
 
 /* 分页样式 */
-.camera-management >>> .el-pagination .el-pager li {
-  background: white !important;
+.camera-management :deep(.el-pagination .el-pager li) {background: white !important;
   /* border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
   transition: all 0.3s ease !important;
@@ -3627,23 +3535,20 @@
   margin: 0 2px !important; */
 }
 
-/* .camera-management >>> .el-pagination .el-pager li:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+/* .camera-management :deep(.el-pagination .el-pager li:hover) {background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 }
 
-.camera-management >>> .el-pagination .el-pager li.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+.camera-management :deep(.el-pagination .el-pager li.active) {background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border-color: #3b82f6 !important;
   color: white !important;
   font-weight: 600 !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.camera-management >>> .el-pagination button {
-  background: white !important;
+.camera-management :deep(.el-pagination button) {background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
   transition: all 0.3s ease !important;
@@ -3651,70 +3556,58 @@
   margin: 0 2px !important;
 }
 
-.camera-management >>> .el-pagination button:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+.camera-management :deep(.el-pagination button:hover) {background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 } */
 
 /* 标签样式 */
-.camera-management >>> .el-tag {
-  border-radius: 6px !important;
+.camera-management :deep(.el-tag) {border-radius: 6px !important;
   font-weight: 500 !important;
 }
 
 /* Radio 样式 */
-.camera-management >>> .el-radio__input.is-checked .el-radio__inner {
-  background-color: #3b82f6 !important;
+.camera-management :deep(.el-radio__input.is-checked .el-radio__inner) {background-color: #3b82f6 !important;
   border-color: #3b82f6 !important;
 }
 
-.camera-management >>> .el-radio__inner:hover {
-  border-color: #3b82f6 !important;
+.camera-management :deep(.el-radio__inner:hover) {border-color: #3b82f6 !important;
 }
 
 /* Checkbox 样式 */
-.camera-management >>> .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: #3b82f6 !important;
+.camera-management :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {background-color: #3b82f6 !important;
   border-color: #3b82f6 !important;
 }
 
-.camera-management >>> .el-checkbox__inner:hover {
-  border-color: #3b82f6 !important;
+.camera-management :deep(.el-checkbox__inner:hover) {border-color: #3b82f6 !important;
 }
 
 /* Switch 样式 */
-.camera-management >>> .el-switch.is-checked .el-switch__core {
-  background-color: #3b82f6 !important;
+.camera-management :deep(.el-switch.is-checked .el-switch__core) {background-color: #3b82f6 !important;
   border-color: #3b82f6 !important;
 }
 
-.camera-management >>> .el-switch__core:hover {
-  border-color: #3b82f6 !important;
+.camera-management :deep(.el-switch__core:hover) {border-color: #3b82f6 !important;
 }
 
 /* 上传组件样式 */
-.camera-management >>> .el-upload-dragger {
-  border: 2px dashed #d1d5db !important;
+.camera-management :deep(.el-upload-dragger) {border: 2px dashed #d1d5db !important;
   border-radius: 8px !important;
   transition: all 0.3s ease !important;
 }
 
-.camera-management >>> .el-upload-dragger:hover {
-  border-color: #3b82f6 !important;
+.camera-management :deep(.el-upload-dragger:hover) {border-color: #3b82f6 !important;
   background-color: rgba(59, 130, 246, 0.05) !important;
 }
 
-.camera-management >>> .el-upload-dragger .el-icon-upload {
-  color: #3b82f6 !important;
+.camera-management :deep(.el-upload-dragger .el-icon-upload) {color: #3b82f6 !important;
 }
 
-.camera-management >>> .el-upload__text {
-  color: #6b7280 !important;
+.camera-management :deep(.el-upload__text) {color: #6b7280 !important;
 }
 
-.camera-management >>> .el-upload__text em {
+.camera-management :deep(.el-upload__text em) {
   color: #3b82f6 !important;
   font-weight: 500 !important;
 }
@@ -3968,20 +3861,18 @@
   left: 100% !important;
 } */
 
-.operation-right {
-  display: flex;
+.operation-right {display: flex;
   align-items: center;
 }
 
 /* 搜索框布局混乱 */
-.operation-right >>> .el-input__prefix {
+.operation-right :deep(.el-input__prefix) {
   top:7px;
   left:5px;
 }
 
 /* 表格卡片 */
-.table-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+.table-card {background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -3992,40 +3883,34 @@
 }
 
 /* 表格内部样式优化 */
-.table-card >>> .el-table {
-  flex: 1;
+.table-card :deep(.el-table) {flex: 1;
   background: transparent !important;
 }
 
-.table-card >>> .el-table__header-wrapper {
-  background: #fff;
+.table-card :deep(.el-table__header-wrapper) {background: #fff;
 }
 
-.table-card >>> .el-table th {
-  background: transparent !important;
+.table-card :deep(.el-table th) {background: transparent !important;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
   color: #374151 !important;
   font-weight: 600 !important;
   padding: 12px 0 !important;
 }
 
-.table-card >>> .el-table td {
-  border-bottom: 1px solid rgba(59, 130, 246, 0.05) !important;
+.table-card :deep(.el-table td) {border-bottom: 1px solid rgba(59, 130, 246, 0.05) !important;
   padding: 10px 0 !important;
 }
 
-.table-card >>> .el-table__row:hover > td {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(147, 197, 253, 0.02) 100%) !important;
+.table-card :deep(.el-table__row:hover > td) {background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(147, 197, 253, 0.02) 100%) !important;
 }
 
-.table-card >>> .el-table--border::after,
-.table-card >>> .el-table--group::after,
-.table-card >>> .el-table::before {
-  display: none !important;
+.table-card :deep(.el-table--border::after,
+.table-card :deep(.el-table--group::after),
+.table-card :deep(.el-table::before)) {display: none !important;
 }
 
-.table-card >>> .el-table--border,
-.table-card >>> .el-table--group {
+.table-card :deep(.el-table--border,
+.table-card :deep(.el-table--group)) {
   border: none !important;
 }
 
@@ -4401,32 +4286,28 @@ body .el-dialog__wrapper .skill-params-dialog {
   color: #64748b;
 }
 
-.status-text.status-active {
-  color: #16a34a;
+.status-text.status-active {color: #16a34a;
 }
 
 /* 表单优化 */
-.skill-config-dialog .skill-form >>> .el-form-item {
-  margin-bottom: 24px;
+.skill-config-dialog .skill-form :deep(.el-form-item) {margin-bottom: 24px;
 }
 
-.skill-config-dialog .skill-form >>> .el-form-item__label {
-  color: #374151 !important;
+.skill-config-dialog .skill-form :deep(.el-form-item__label) {color: #374151 !important;
   font-weight: 500 !important;
   font-size: 14px !important;
 }
 
-.skill-config-dialog .skill-form >>> .el-input__inner,
-.skill-config-dialog .skill-form >>> .el-textarea__inner,
-.skill-config-dialog .skill-form >>> .el-select .el-input__inner {
-  border: 1px solid #e2e8f0 !important;
+.skill-config-dialog .skill-form :deep(.el-input__inner,
+.skill-config-dialog .skill-form :deep(.el-textarea__inner),
+.skill-config-dialog .skill-form :deep(.el-select) .el-input__inner) {border: 1px solid #e2e8f0 !important;
   border-radius: 8px !important;
   transition: all 0.3s ease !important;
 }
 
-.skill-config-dialog .skill-form >>> .el-input__inner:focus,
-.skill-config-dialog .skill-form >>> .el-textarea__inner:focus,
-.skill-config-dialog .skill-form >>> .el-select .el-input__inner:focus {
+.skill-config-dialog .skill-form :deep(.el-input__inner:focus,
+.skill-config-dialog .skill-form :deep(.el-textarea__inner:focus),
+.skill-config-dialog .skill-form :deep(.el-select) .el-input__inner:focus) {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
 }
@@ -4452,20 +4333,18 @@ body .el-dialog__wrapper .skill-params-dialog {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.fence-side-panel {
-  width: 280px;
+.fence-side-panel {width: 280px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.fence-tips >>> .el-alert {
+.fence-tips :deep(.el-alert) {
   border-radius: 8px !important;
   border: 1px solid rgba(59, 130, 246, 0.2) !important;
 }
 
-.fence-controls-panel {
-  background: white;
+.fence-controls-panel {background: white;
   border: 1px solid rgba(59, 130, 246, 0.1);
   border-radius: 8px;
   padding: 16px;
@@ -4476,9 +4355,8 @@ body .el-dialog__wrapper .skill-params-dialog {
    ======================================== */
 
 /* 类型标签 - 灰底灰字 */
-/* .table-card >>> .el-table .el-tag--plain,
-.table-card >>> .el-table .el-tag[type=""] {
-  background: #f3f4f6 !important;
+/* .table-card :deep(.el-table .el-tag--plain,
+.table-card :deep(.el-table) .el-tag[type=""]) {background: #f3f4f6 !important;
   color: #6b7280 !important;
   border: 1px solid #e5e7eb !important;
   border-radius: 6px !important;
@@ -4490,8 +4368,7 @@ body .el-dialog__wrapper .skill-params-dialog {
 }
 
 /* 状态标签 - 科技感浅色 */
-/* .table-card >>> .el-table .el-tag--success {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+/* .table-card :deep(.el-table .el-tag--success) {background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
   color: #065f46 !important;
   border: 1px solid #a7f3d0 !important;
   border-radius: 6px !important;
@@ -4502,8 +4379,7 @@ body .el-dialog__wrapper .skill-params-dialog {
   line-height: 22px !important;
 }
 
-.table-card >>> .el-table .el-tag--danger {
-  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%) !important;
+.table-card :deep(.el-table .el-tag--danger) {background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%) !important;
   color: #991b1b !important;
   border: 1px solid #fca5a5 !important;
   border-radius: 6px !important;
@@ -4514,8 +4390,7 @@ body .el-dialog__wrapper .skill-params-dialog {
   line-height: 22px !important;
 }
 
-.table-card >>> .el-table .el-tag--warning {
-  background: linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%) !important;
+.table-card :deep(.el-table .el-tag--warning) {background: linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%) !important;
   color: #92400e !important;
   border: 1px solid #fbbf24 !important;
   border-radius: 6px !important;
@@ -4526,8 +4401,7 @@ body .el-dialog__wrapper .skill-params-dialog {
   line-height: 22px !important;
 }
 
-.table-card >>> .el-table .el-tag--info {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+.table-card :deep(.el-table .el-tag--info) {background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   color: #1e40af !important;
   border: 1px solid #93c5fd !important;
   border-radius: 6px !important;
@@ -4539,8 +4413,7 @@ body .el-dialog__wrapper .skill-params-dialog {
 } */
 
 /* 统一表格内所有标签样式 */
-.table-card >>> .el-table .el-tag {
-  border-radius: 6px !important;
+.table-card :deep(.el-table .el-tag) {border-radius: 6px !important;
   font-weight: 500 !important;
   font-size: 12px !important;
   padding: 0 8px !important;
@@ -4549,7 +4422,7 @@ body .el-dialog__wrapper .skill-params-dialog {
   transition: all 0.3s ease !important;
 }
 
-.table-card >>> .el-table .el-tag:hover {
+.table-card :deep(.el-table .el-tag:hover) {
   transform: translateY(-1px) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }

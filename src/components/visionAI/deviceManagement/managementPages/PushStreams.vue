@@ -164,7 +164,7 @@
         <el-table-column type="index" label="序号" width="60" align="center"></el-table-column>
         
         <el-table-column prop="gbName" label="名称" min-width="160" show-overflow-tooltip>
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <div class="stream-name">
               <i class="el-icon-video-camera stream-icon"></i>
               <span>{{ row.gbName || '-' }}</span>
@@ -176,7 +176,7 @@
         <el-table-column prop="stream" label="流ID" min-width="180" align="center" show-overflow-tooltip></el-table-column>
         
         <el-table-column label="推流状态" min-width="100" align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <el-tag size="medium" v-if="row.pushing && Vue.prototype.$myServerId !== row.serverId" style="border-color: #ecf1af">推流中</el-tag>
             <el-tag size="medium" v-if="row.pushing && Vue.prototype.$myServerId === row.serverId">推流中</el-tag>
             <el-tag size="medium" type="info" v-if="!row.pushing">已停止</el-tag>
@@ -186,7 +186,7 @@
         <el-table-column prop="gbDeviceId" label="国标编码" min-width="180" align="center" show-overflow-tooltip></el-table-column>
         
         <el-table-column label="位置信息" min-width="150" align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <div v-if="row.gbLongitude && row.gbLatitude" class="location-info">
               <div>{{ row.gbLongitude }}</div>
               <div>{{ row.gbLatitude }}</div>
@@ -198,13 +198,13 @@
         <el-table-column prop="mediaServerId" label="流媒体" min-width="120" align="center" show-overflow-tooltip></el-table-column>
         
         <el-table-column label="开始时间" min-width="160" align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <span>{{ row.pushTime || '-' }}</span>
           </template>
         </el-table-column>
 
         <el-table-column label="操作" width="350" align="center" fixed="right">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <div class="operation-buttons">
               <el-button 
                 size="mini" 
@@ -329,9 +329,9 @@
 import { startPushStream, removePushStream, batchRemovePushStream } from '@/api/stream'
 import devicePlayer from './dialogs/devicePlayer.vue'
 import importChannel from './dialogs/importChannel.vue'
-import MediaServer from './service/MediaServer'
-import StreamPushEdit from "./dialogs/StreamPushEdit";
-import Vue from "vue";
+import MediaServer from './service/MediaServer.js'
+import StreamPushEdit from "./dialogs/StreamPushEdit.vue";
+import { getCurrentInstance } from 'vue'
 
 export default {
   name: 'PushStreams',
@@ -635,7 +635,7 @@ export default {
 }
 
 /* 搜索框布局混乱 */
-.search-item >>> .el-input__prefix {
+.search-item :deep(.el-input__prefix) {
   top:7px;
   left:5px;
 }

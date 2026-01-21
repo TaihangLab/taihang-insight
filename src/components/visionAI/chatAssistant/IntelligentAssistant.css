@@ -839,12 +839,10 @@
     gap: 14px;
   }
   
-  .message-input {
-    flex: 1;
+  .message-input {flex: 1;
   }
   
-  .message-input >>> .el-input__inner {
-    border: 1px solid rgba(229, 231, 235, 0.5);
+  .message-input :deep(.el-input__inner) {border: 1px solid rgba(229, 231, 235, 0.5);
     border-radius: 12px;
     padding: 14px 20px;
     font-size: 15px;
@@ -852,25 +850,22 @@
     transition: all 0.2s ease;
   }
   
-  .message-input >>> .el-input__inner:focus {
-    border-color: #667eea;
+  .message-input :deep(.el-input__inner:focus) {border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     outline: none;
   }
   
-  .message-input >>> .el-input__inner::placeholder {
-    color: #9ca3af;
+  .message-input :deep(.el-input__inner::placeholder) {color: #9ca3af;
   }
   
   /* 禁用状态的输入框样式 */
-  .message-input.is-disabled >>> .el-input__inner {
-    background-color: #f7fafc !important;
+  .message-input.is-disabled :deep(.el-input__inner) {background-color: #f7fafc !important;
     color: #a0aec0 !important;
     cursor: not-allowed !important;
     border-color: #e2e8f0 !important;
   }
 
-  .message-input.is-disabled >>> .el-input__inner::placeholder {
+  .message-input.is-disabled :deep(.el-input__inner::placeholder) {
     color: #cbd5e0 !important;
   }
   
@@ -1909,16 +1904,14 @@
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 20px rgba(0, 0, 0, 0.08);
   }
   
-  .fullscreen-message-input {
-    flex: 1;
+  .fullscreen-message-input {flex: 1;
     margin-right: 12px;
     /* 确保输入框占满整个容器高度 */
     display: flex;
     align-items: stretch;
   }
   
-  .fullscreen-message-input >>> .el-textarea__inner {
-    border: none;
+  .fullscreen-message-input :deep(.el-textarea__inner) {border: none;
     border-radius: 0;
     padding: 0;
     font-size: 16px;
@@ -1936,28 +1929,25 @@
     width: 100%;
   }
   
-  .fullscreen-message-input >>> .el-textarea__inner:focus {
-    border: none;
+  .fullscreen-message-input :deep(.el-textarea__inner:focus) {border: none;
     box-shadow: none;
     outline: none;
     background: transparent;
     transform: none;
   }
   
-  .fullscreen-message-input >>> .el-textarea__inner::placeholder {
-    color: #9ca3af;
+  .fullscreen-message-input :deep(.el-textarea__inner::placeholder) {color: #9ca3af;
     font-size: 16px;
   }
 
   /* 全屏模式禁用状态的输入框样式 */
-  .fullscreen-message-input.is-disabled >>> .el-textarea__inner {
-    background-color: #f7fafc !important;
+  .fullscreen-message-input.is-disabled :deep(.el-textarea__inner) {background-color: #f7fafc !important;
     color: #a0aec0 !important;
     cursor: not-allowed !important;
     border-color: #e2e8f0 !important;
   }
 
-  .fullscreen-message-input.is-disabled >>> .el-textarea__inner::placeholder {
+  .fullscreen-message-input.is-disabled :deep(.el-textarea__inner::placeholder) {
     color: #cbd5e0 !important;
   }
   

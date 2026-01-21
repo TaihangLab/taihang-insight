@@ -103,7 +103,7 @@
         :row-class-name="tableRowClassName"
       >
         <el-table-column prop="name" label="任务名称" width="300">
-          <template slot-scope="scope">
+          <template #default="scope">
             <div class="task-name-cell">
               <el-tag :type="scope.row.task_type === 'ai_task' ? 'primary' : 'success'" size="mini" style="margin-right: 8px;">
                 {{ scope.row.task_type === 'ai_task' ? 'AI' : 'LLM' }}
@@ -113,26 +113,26 @@
           </template>
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="180" show-overflow-tooltip>
-          <template slot-scope="scope">
+          <template #default="scope">
             <span>{{ scope.row.description || '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column label="任务状态" width="90" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag :type="scope.row.status ? 'success' : 'info'" size="small">
               {{ scope.row.status ? '运行中' : '已停止' }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="复判状态" width="90" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag :type="scope.row.review_enabled ? 'success' : 'info'" size="small">
               {{ scope.row.review_enabled ? '已启用' : '未启用' }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="复判技能" width="180" show-overflow-tooltip>
-          <template slot-scope="scope">
+          <template #default="scope">
             <span v-if="scope.row.review_skill_name" style="font-weight: 500; color: #303133;">
               {{ scope.row.review_skill_name }}
             </span>
@@ -140,7 +140,7 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-button
               type="text"
               size="small"
@@ -477,19 +477,19 @@ export default {
           const config = response.data;
           
           // 使用 Vue.set 确保响应式更新
-          this.$set(task, 'has_config', config.has_config);
-          this.$set(task, 'review_enabled', config.review_enabled || false);
-          this.$set(task, 'review_skill_class_id', config.review_skill_class_id);
-          this.$set(task, 'review_skill_name', config.review_skill_name);
-          this.$set(task, 'review_skill_tags', config.review_skill_tags || []);
+          task.has_config = config.has_config;
+          task.review_enabled = config.review_enabled || false;
+          task.review_skill_class_id = config.review_skill_class_id;
+          task.review_skill_name = config.review_skill_name;
+          task.review_skill_tags = config.review_skill_tags || [];
         } catch (error) {
           console.error(`加载任务 ${task.name} 的复判配置失败:`, error);
           // 如果API调用失败，使用默认值
-          this.$set(task, 'has_config', false);
-          this.$set(task, 'review_enabled', false);
-          this.$set(task, 'review_skill_class_id', null);
-          this.$set(task, 'review_skill_name', null);
-          this.$set(task, 'review_skill_tags', []);
+          task.has_config = false;
+          task.review_enabled = false;
+          task.review_skill_class_id = null;
+          task.review_skill_name = null;
+          task.review_skill_tags = [];
         }
       });
 
@@ -823,12 +823,12 @@ export default {
 }
 
 /* 表格行样式 */
-::v-deep .row-disabled {
+:deep(.row-disabled) {
   background-color: #fafafa;
   opacity: 0.7;
 }
 
-::v-deep .row-review-enabled {
+:deep(.row-review-enabled) {
   background-color: #f0f9ff;
 }
 

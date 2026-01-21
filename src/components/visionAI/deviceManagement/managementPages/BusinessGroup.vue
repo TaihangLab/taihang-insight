@@ -135,7 +135,7 @@
             <el-table-column type="selection" width="55" align="center"></el-table-column>
             
             <el-table-column prop="gbName" label="通道名称" min-width="180" show-overflow-tooltip>
-              <template slot-scope="{ row }">
+              <template #default="{ row }">
                 <div class="channel-name">
                   <i class="el-icon-video-camera channel-icon"></i>
                   <span>{{ row.gbName }}</span>
@@ -148,7 +148,7 @@
             <el-table-column prop="gbManufacturer" label="厂商" min-width="100" align="center" show-overflow-tooltip></el-table-column>
             
             <el-table-column label="通道类型" min-width="100" align="center">
-              <template slot-scope="{ row }">
+              <template #default="{ row }">
                 <el-tag size="medium" effect="plain" type="success" :style="$channelTypeList[row.dataType].style">
                   {{ $channelTypeList[row.dataType].name }}
                 </el-tag>
@@ -156,7 +156,7 @@
             </el-table-column>
             
             <el-table-column label="在线状态" min-width="100" align="center">
-              <template slot-scope="{ row }">
+              <template #default="{ row }">
                 <el-tag size="medium" v-if="row.gbStatus === 'ON'" type="success">在线</el-tag>
                 <el-tag size="medium" type="info" v-else>离线</el-tag>
               </template>
@@ -185,8 +185,8 @@
 </template>
 
 <script>
-import DeviceService from "./service/DeviceService";
-import RegionChannelService from "./service/RegionChannelService";
+import DeviceService from "./service/DeviceService.js";
+import RegionChannelService from "./service/RegionChannelService.js";
 import GroupTree from "./dialogs/GroupTree.vue";
 import GbChannelSelect from "./dialogs/GbChannelSelect.vue";
 import UnusualGroupChannelSelect from "./dialogs/UnusualGroupChannelSelect.vue";
@@ -579,7 +579,7 @@ export default {
 }
 
 /* 搜索框布局混乱 */
-.search-item >>> .el-input__prefix {
+.search-item :deep(.el-input__prefix) {
   top:7px;
   left:5px;
 }

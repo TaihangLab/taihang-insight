@@ -67,7 +67,7 @@ import RoleSearchBar from './components/role/RoleSearchBar.vue'
 import RoleEditDialog from './components/role/RoleEditDialog.vue'
 import DeleteConfirmDialog from './components/role/DeleteConfirmDialog.vue'
 import RBACService from '@/components/service/RBACService'
-import { useRoleData } from './composable/role/useRoleData'
+import { useRoleData } from './composable/role/useRoleData.js'
 
 export default {
   name: 'RoleManagement',

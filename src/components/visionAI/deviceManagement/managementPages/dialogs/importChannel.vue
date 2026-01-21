@@ -32,7 +32,7 @@
 
 <script>
 import ShowErrorData from './importChannelShowErrorData.vue'
-import userService from "../service/UserService";
+import userService from "../service/UserService.js";
 
 export default {
   name: "importChannel",
@@ -51,7 +51,7 @@ export default {
       headers: {
         "access-token": userService.getToken()
       },
-      uploadUrl: process.env.NODE_ENV === 'development'? `/debug/api/push/upload`: (window.baseUrl ? window.baseUrl : "") + `/api/push/upload`,
+      uploadUrl: import.meta.env.MODE === 'development'? `/debug/api/push/upload`: (window.baseUrl ? window.baseUrl : "") + `/api/push/upload`,
     };
   },
   methods: {

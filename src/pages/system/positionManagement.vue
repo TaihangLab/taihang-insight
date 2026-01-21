@@ -55,8 +55,8 @@ import PositionEditDialog from './components/position/PositionEditDialog.vue'
 import DeleteConfirmDialog from './components/position/DeleteConfirmDialog.vue'
 import ExportDialog from './components/position/ExportDialog.vue'
 import PositionSearchBar from './components/position/PositionSearchBar.vue'
-import { usePositionData } from './composable/position/usePositionData'
-import { usePositionExport } from './composable/position/usePositionExport'
+import { usePositionData } from './composable/position/usePositionData.js'
+import { usePositionExport } from './composable/position/usePositionExport.js'
 
 export default {
   name: 'PositionManagement',

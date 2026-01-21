@@ -1088,27 +1088,27 @@ export default {
   font-size: 12px;
 }
 
-.custom-tree >>> .el-tree-node__content {
+.custom-tree :deep(.el-tree-node__content) {
   background: transparent;
   color: #7a8baa;
   height: 32px;
   border-bottom: 1px solid rgba(10,37,80,0.5);
 }
 
-.custom-tree >>> .el-tree-node__content:hover {
+.custom-tree :deep(.el-tree-node__content:hover) {
   background: rgba(27,150,255,0.1);
   color: #fff;
 }
 
-.custom-tree >>> .el-tree-node__expand-icon {
+.custom-tree :deep(.el-tree-node__expand-icon) {
   color: #7a8baa;
 }
 
-.custom-tree >>> .el-tree-node__expand-icon.expanded {
+.custom-tree :deep(.el-tree-node__expand-icon.expanded) {
   transform: rotate(90deg);
 }
 
-.custom-tree >>> .el-tree-node__expand-icon.is-leaf {
+.custom-tree :deep(.el-tree-node__expand-icon.is-leaf) {
   color: transparent;
 }
 

@@ -48,8 +48,8 @@
 
 <script>
 import VueEasyTree from "@wchbrad/vue-easy-tree";
-import regionEdit from './regionEdit'
-import gbDeviceSelect from './GbDeviceSelect'
+import regionEdit from './regionEdit.vue'
+import gbDeviceSelect from './GbDeviceSelect.vue'
 import GbChannelSelect from "./GbChannelSelect.vue";
 
 export default {

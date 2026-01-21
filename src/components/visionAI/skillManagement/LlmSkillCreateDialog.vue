@@ -503,29 +503,29 @@ export default {
   --info-color: #909399;
 }
 
-.skill-create-dialog >>> .el-dialog {
+.skill-create-dialog :deep(.el-dialog) {
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
-.skill-create-dialog >>> .el-dialog__header {
+.skill-create-dialog :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 16px 20px;
   border-radius: 12px 12px 0 0;
 }
 
-.skill-create-dialog >>> .el-dialog__title {
+.skill-create-dialog :deep(.el-dialog__title) {
   font-size: 18px;
   font-weight: 600;
 }
 
-.skill-create-dialog >>> .el-dialog__headerbtn {
+.skill-create-dialog :deep(.el-dialog__headerbtn) {
   top: 18px;
   right: 20px;
 }
 
-.skill-create-dialog >>> .el-dialog__close {
+.skill-create-dialog :deep(.el-dialog__close) {
   color: white;
   font-size: 20px;
 }
@@ -740,7 +740,7 @@ export default {
   flex-shrink: 0;
 }
 
-.avatar-uploader >>> .el-upload {
+.avatar-uploader :deep(.el-upload) {
   border: 2px dashed #d9d9d9;
   border-radius: 6px;
   cursor: pointer;
@@ -751,7 +751,7 @@ export default {
   height: 60px;
 }
 
-.avatar-uploader >>> .el-upload:hover {
+.avatar-uploader :deep(.el-upload:hover) {
   border-color: var(--primary-color);
 }
 
@@ -843,33 +843,33 @@ export default {
 }
 
 /* 表单项样式优化 */
-.create-form >>> .el-form-item {
+.create-form :deep(.el-form-item) {
   margin-bottom: 16px;
 }
 
-.create-form >>> .el-form-item__label {
+.create-form :deep(.el-form-item__label) {
   font-weight: 500;
   color: #374151;
   font-size: 14px;
 }
 
-.create-form >>> .el-input__inner,
-.create-form >>> .el-textarea__inner {
+.create-form :deep(.el-input__inner),
+.create-form :deep(.el-textarea__inner) {
   border-radius: 8px;
   transition: all 0.3s ease;
   font-size: 14px;
 }
 
-.create-form >>> .el-input__inner:focus,
-.create-form >>> .el-textarea__inner:focus {
+.create-form :deep(.el-input__inner:focus),
+.create-form :deep(.el-textarea__inner:focus) {
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
 }
 
-.create-form >>> .el-select {
+.create-form :deep(.el-select) {
   width: 100%;
 }
 
-.create-form >>> .el-input-group__prepend {
+.create-form :deep(.el-input-group__prepend) {
   background: #f8fafc;
   border-color: #e5e7eb;
   color: #6b7280;
@@ -877,20 +877,20 @@ export default {
 }
 
 /* 编辑模式下的禁用样式 */
-.create-form >>> .el-input.is-disabled .el-input__inner {
+.create-form :deep(.el-input.is-disabled .el-input__inner) {
   background-color: #f5f7fa;
   border-color: #e4e7ed;
   color: #c0c4cc;
   cursor: not-allowed;
 }
 
-.create-form >>> .el-input.is-disabled .el-input__inner::placeholder {
+.create-form :deep(.el-input.is-disabled .el-input__inner::placeholder) {
   color: #c0c4cc;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .skill-create-dialog >>> .el-dialog {
+  .skill-create-dialog :deep(.el-dialog) {
     width: 95% !important;
     margin: 15px auto;
   }

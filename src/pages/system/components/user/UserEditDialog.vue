@@ -121,7 +121,7 @@
 </template>
 
 <script>
-import SmartFillAssistant from '@/mock/components/SmartFillAssistant'
+import SmartFillAssistant from '@/mock/components/SmartFillAssistant.vue'
 import DeptTreeSelect from '../commons/DeptTreeSelect.vue'
 
 export default {

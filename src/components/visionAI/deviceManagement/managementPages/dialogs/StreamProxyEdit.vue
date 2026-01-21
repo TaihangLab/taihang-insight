@@ -109,8 +109,8 @@
 </template>
 
 <script>
-import CommonChannelEdit from './CommonChannelEdit'
-import MediaServer from '../service/MediaServer'
+import CommonChannelEdit from './CommonChannelEdit.vue'
+import MediaServer from '../service/MediaServer.js'
 
 export default {
   name: "streamProxyEdit",

@@ -44,7 +44,9 @@
 </template>
 
 <script>
-import { useDepartmentData } from './composable/department/useDepartmentData'
+import _imported_1 from '@/components/service/RBACService';
+
+import { useDepartmentData } from './composable/department/useDepartmentData.js'
 
 import DepartmentSearchBar from './components/department/DepartmentSearchBar.vue'
 import DepartmentTableActions from './components/department/DepartmentTableActions.vue'
@@ -120,7 +122,7 @@ export default {
      */
     async getDefaultTenant() {
       try {
-        const RBACService = require('@/components/service/RBACService').default
+        const RBACService = _imported_1
         const response = await RBACService.getTenants()
         if (response && response.data && Array.isArray(response.data.items) && response.data.items.length > 0) {
           // 设置第一个租户为默认值

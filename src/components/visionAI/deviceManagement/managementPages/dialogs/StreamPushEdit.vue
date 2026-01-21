@@ -44,7 +44,7 @@
 </template>
 
 <script>
-import CommonChannelEdit from './CommonChannelEdit'
+import CommonChannelEdit from './CommonChannelEdit.vue'
 
 export default {
   name: "channelEdit",

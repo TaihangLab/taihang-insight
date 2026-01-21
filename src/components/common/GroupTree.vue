@@ -50,7 +50,7 @@
 <script>
 import VueEasyTree from "@wchbrad/vue-easy-tree";
 import groupEdit from '../visionAI/deviceManagement/managementPages/dialogs/groupEdit.vue'
-import gbDeviceSelect from './../dialog/GbDeviceSelect'
+import gbDeviceSelect from '../dialog/GbDeviceSelect.vue'
 import GbChannelSelect from "../dialog/GbChannelSelect.vue";
 import { getGroupTreeList, deleteGroup, addDeviceToGroup, removeDeviceFromGroup } from '@/api/group'
 

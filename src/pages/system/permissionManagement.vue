@@ -51,7 +51,7 @@ import PermissionTableActions from './components/permission/PermissionTableActio
 import PermissionTreeTable from './components/permission/PermissionTreeTable.vue'
 import PermissionEditDialog from './components/permission/PermissionEditDialog.vue'
 import DeleteConfirmDialog from './components/permission/DeleteConfirmDialog.vue'
-import { usePermissionData } from './composable/permission/usePermissionData'
+import { usePermissionData } from './composable/permission/usePermissionData.js'
 
 export default {
   name: 'PermissionManagement',

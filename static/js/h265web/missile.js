@@ -1,3 +1,7 @@
+import crypto_module from 'crypto';
+import fs from 'fs';
+import NODEJS_PATH from 'path';
+
 var ENVIRONMENT_IS_PTHREAD = true;
 var Module = typeof Module !== "undefined" ? Module : {};
 var moduleOverrides = {};
@@ -3755,8 +3759,7 @@ var FS = {
             }
         } else if (ENVIRONMENT_IS_NODE) {
             try {
-                var crypto_module = require("crypto");
-                random_device = function() {
+                                random_device = function() {
                     return crypto_module["randomBytes"](1)[0]
                 }
             } catch (e) {}
@@ -5679,9 +5682,7 @@ function _time(ptr) {
 }
 FS.staticInit();
 if (ENVIRONMENT_HAS_NODE) {
-    var fs = require("fs");
-    var NODEJS_PATH = require("path");
-    NODEFS.staticInit()
+            NODEFS.staticInit()
 }
 if (ENVIRONMENT_IS_NODE) {
     _emscripten_get_now = function _emscripten_get_now_actual() {

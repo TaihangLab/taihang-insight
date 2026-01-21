@@ -336,11 +336,11 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.ai-task-selector >>> .el-select {
+.ai-task-selector :deep(.el-select) {
   width: 200px;
 }
 
-.ai-task-selector >>> .el-input__inner {
+.ai-task-selector :deep(.el-input__inner) {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(59, 130, 246, 0.5);
   color: #fff;

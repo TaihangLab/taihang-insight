@@ -12,7 +12,7 @@
     <el-table-column prop="tenant_name" label="租户名称" width="120" align="center"></el-table-column>
     <el-table-column prop="company_name" label="企业名称" width="180" align="center"></el-table-column>
     <el-table-column prop="status" label="租户状态" width="100" align="center">
-      <template slot-scope="scope">
+      <template #default="scope">
         <el-switch
           :data-testid="'switch-status-' + scope.row.id"
           v-model="scope.row.status"
@@ -27,12 +27,12 @@
     <el-table-column prop="contact_person" label="联系人" width="120" align="center"></el-table-column>
     <el-table-column prop="contact_phone" label="联系电话" width="140" align="center"></el-table-column>
     <el-table-column prop="package" label="租户套餐" width="100" align="center">
-      <template slot-scope="scope">
+      <template #default="scope">
         {{ packageLabels[scope.row.package] || scope.row.package || '' }}
       </template>
     </el-table-column>
     <el-table-column prop="expire_time" label="过期时间" width="120" align="center">
-      <template slot-scope="scope">
+      <template #default="scope">
         {{ formatDate(scope.row.expire_time) }}
       </template>
     </el-table-column>
@@ -43,19 +43,19 @@
     <el-table-column prop="description" label="企业简介" width="200" align="center"></el-table-column>
     <el-table-column prop="remark" label="备注" width="150" align="center"></el-table-column>
     <el-table-column prop="create_time" label="创建时间" width="180" align="center">
-      <template slot-scope="scope">
+      <template #default="scope">
         {{ formatDateTime(scope.row.create_time) }}
       </template>
     </el-table-column>
     <el-table-column prop="update_time" label="更新时间" width="180" align="center">
-      <template slot-scope="scope">
+      <template #default="scope">
         {{ formatDateTime(scope.row.update_time) }}
       </template>
     </el-table-column>
     <el-table-column prop="create_by" label="创建人" width="120" align="center"></el-table-column>
 
     <el-table-column label="操作" width="120" fixed="right" align="center">
-      <template slot-scope="scope">
+      <template #default="scope">
         <div class="operation-buttons">
           <el-button type="text" class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
           <el-button type="text" class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
@@ -129,15 +129,15 @@ export default {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
-.custom-table >>> .el-table__cell {
+.custom-table :deep(.el-table__cell) {
   border-right: none;
 }
 
-.custom-table >>> .el-table::before {
+.custom-table :deep(.el-table::before) {
   height: 0;
 }
 
-.custom-table >>> .el-table__header-wrapper th {
+.custom-table :deep(.el-table__header-wrapper th) {
   font-weight: bold;
   text-align: center;
   background: #f5f7fa !important;
@@ -145,8 +145,8 @@ export default {
   border-bottom: 1px solid #ebeef5 !important;
 }
 
-.custom-table >>> .el-table__fixed-right-header-wrapper th,
-.custom-table >>> .el-table__fixed-header-wrapper th {
+.custom-table :deep(.el-table__fixed-right-header-wrapper th),
+.custom-table :deep(.el-table__fixed-header-wrapper th) {
   font-weight: bold;
   text-align: center;
   background: #f5f7fa !important;
@@ -154,15 +154,15 @@ export default {
   border-bottom: 1px solid #ebeef5 !important;
 }
 
-.custom-table >>> .el-table__row td {
+.custom-table :deep(.el-table__row td) {
   text-align: center;
 }
 
-.custom-table >>> .el-table .el-table__body tr:hover > td {
+.custom-table :deep(.el-table .el-table__body tr:hover > td) {
   background: #f5f7fa !important;
 }
 
-.custom-table >>> .el-table--striped .el-table__body tr.el-table__row--striped td {
+.custom-table :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
   background-color: #fafafa;
 }
 

@@ -2791,7 +2791,7 @@ export default {
   /* 保留垂直滚动 */
   overflow-x: hidden;
   /* 隐藏水平滚动 */
-  background-image: url('/static/img/bg-pattern.png');
+  background-image: url('/img/bg-pattern.png');
   padding: 0;
   margin: 0;
   display: flex;
@@ -4354,7 +4354,7 @@ export default {
   grid-column: 1;
   grid-row: 1;
   background-color: #0c1932;
-  background-image: url('/static/img/traffic.jpg');
+  background-image: url('/img/traffic.jpg');
   background-size: cover;
   background-position: center;
   border: 1px solid #1c3f6e;
@@ -4374,18 +4374,18 @@ export default {
 .thumbnail-item {
   flex: 1;
   background-color: #0c1932;
-  background-image: url('/static/img/traffic-3.jpg');
+  background-image: url('/img/traffic-3.jpg');
   background-size: cover;
   background-position: center;
   border: 1px solid #1c3f6e;
 }
 
 .thumbnail-item:nth-child(2) {
-  background-image: url('/static/img/traffic-1.jpg');
+  background-image: url('/img/traffic-1.jpg');
 }
 
 .thumbnail-item:nth-child(3) {
-  background-image: url('/static/img/traffic-2.jpg');
+  background-image: url('/img/traffic-2.jpg');
 }
 
 .event-info-area {

@@ -168,9 +168,9 @@
 </template>
 
 <script>
-import Vue from 'vue'
-import MediaServer from './service/MediaServer'
-import mediaServerEdit from './dialogs/MediaServerEdit'
+// import Vue from 'vue' // Vue 3中不再需要这种方式
+import MediaServer from './service/MediaServer.js'
+import mediaServerEdit from './dialogs/MediaServerEdit.vue'
 
 export default {
 	name: 'MediaServerManager',

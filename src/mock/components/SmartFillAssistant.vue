@@ -52,7 +52,7 @@ export default {
   data() {
     return {
       isOpen: false,
-      isEnabled: process.env.VUE_APP_MOCK_ENABLED ? process.env.VUE_APP_MOCK_ENABLED === 'true' : true
+      isEnabled: import.meta.env.VITE_MOCK_ENABLED ? import.meta.env.VITE_MOCK_ENABLED === 'true' : true
     }
   },
   methods: {

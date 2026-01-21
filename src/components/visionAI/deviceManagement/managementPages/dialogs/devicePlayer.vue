@@ -272,7 +272,7 @@
 
 <script>
 import rtcPlayer from './rtcPlayer.vue'
-import LivePlayer from '@liveqing/liveplayer'
+// import LivePlayer from '@liveqing/liveplayer-v3'  // 已禁用 - 使用 jessibuca/rtcPlayer/h265web 替代
 import crypto from 'crypto'
 import jessibucaPlayer from './jessibuca.vue'
 import PtzPreset from "./ptzPreset.vue";
@@ -292,7 +292,8 @@ export default {
   components: {
     H265web,
     PtzPreset,PtzCruising,ptzScan,ptzWiper,ptzSwitch,mediaInfo,
-    LivePlayer, jessibucaPlayer, rtcPlayer,
+    // LivePlayer,  // 已禁用 - liveplayer-v3 与 Vite/新版 video.js 不兼容
+    jessibucaPlayer, rtcPlayer,
   },
   computed: {
     getPlayerShared: function () {

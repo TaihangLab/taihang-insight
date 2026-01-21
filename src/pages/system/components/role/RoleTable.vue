@@ -6,7 +6,7 @@
       <el-table-column prop="role_code" label="角色代码" min-width="150" align="center" />
       <el-table-column prop="description" label="描述" min-width="200" align="center" show-overflow-tooltip />
       <el-table-column prop="status" label="状态" width="100" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-switch
             v-model="scope.row.status"
             :active-value="0"
@@ -18,7 +18,7 @@
         </template>
       </el-table-column>
       <el-table-column label="操作" min-width="250" fixed="right" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <div class="operation-buttons">
             <el-button type="text" class="auth-btn" @click="handleAuthorization(scope.row)">授权</el-button>
             <el-button type="text" class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>

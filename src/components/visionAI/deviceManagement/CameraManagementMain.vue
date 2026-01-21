@@ -361,13 +361,13 @@ export default {
   overflow: hidden !important;
 }
 
-.menu-card >>> .el-card__header {
+.menu-card :deep(.el-card__header) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
   padding: 20px !important;
 }
 
-.menu-card >>> .el-card__body {
+.menu-card :deep(.el-card__body) {
   padding: 16px !important;
 }
 
@@ -622,7 +622,7 @@ export default {
   overflow: hidden !important;
 }
 
-.welcome-card >>> .el-card__body {
+.welcome-card :deep(.el-card__body) {
   padding: 40px !important;
 }
 
@@ -676,7 +676,7 @@ export default {
   border-color: rgba(59, 130, 246, 0.3) !important;
 }
 
-.feature-card >>> .el-card__body {
+.feature-card :deep(.el-card__body) {
   padding: 20px !important;
 }
 
@@ -732,7 +732,7 @@ export default {
 }
 
 /* 科技感按钮样式 - 与 camera.vue 一致 */
-/* .camera-management-main >>> .el-button {
+/* .camera-management-main :deep(.el-button) {
   height: 32px;
   padding: 6px 16px;
   font-size: 14px;
@@ -742,7 +742,7 @@ export default {
   margin: 0;
 }
 
-.camera-management-main >>> .el-button--primary {
+.camera-management-main :deep(.el-button--primary) {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3) !important;
@@ -754,7 +754,7 @@ export default {
   letter-spacing: 0.3px !important;
 }
 
-.camera-management-main >>> .el-button--primary::before {
+.camera-management-main :deep(.el-button--primary::before) {
   content: '';
   position: absolute;
   top: 0;
@@ -765,24 +765,24 @@ export default {
   transition: left 0.5s;
 }
 
-.camera-management-main >>> .el-button--primary:hover {
+.camera-management-main :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%) !important;
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4) !important;
   transform: translateY(-2px) !important;
 }
 
-.camera-management-main >>> .el-button--primary:hover::before {
+.camera-management-main :deep(.el-button--primary:hover::before) {
   left: 100%;
 }
 
-.camera-management-main >>> .el-button:not(.el-button--primary) {
+.camera-management-main :deep(.el-button:not(.el-button--primary) {
   background: white !important;
   border: 1px solid #e2e8f0 !important;
   color: #4b5563 !important;
   transition: all 0.3s ease !important;
 }
 
-.camera-management-main >>> .el-button:not(.el-button--primary):hover {
+.camera-management-main :deep(.el-button:not(.el-button--primary):hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;

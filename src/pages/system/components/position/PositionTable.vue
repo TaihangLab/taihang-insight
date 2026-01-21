@@ -13,7 +13,7 @@
     <el-table-column prop="department" label="部门" min-width="120" align="center" />
     <el-table-column prop="order_num" label="排序" width="80" align="center" />
     <el-table-column prop="status" label="状态" width="80" align="center">
-      <template slot-scope="scope">
+      <template #default="scope">
         <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="mini">
           {{ scope.row.status === 0 ? '启用' : '停用' }}
         </el-tag>
@@ -22,7 +22,7 @@
     <el-table-column prop="remark" label="备注" min-width="150" align="center" />
     <el-table-column prop="create_time" label="创建时间" min-width="160" align="center" />
     <el-table-column label="操作" width="150" fixed="right" align="center">
-      <template slot-scope="scope">
+      <template #default="scope">
         <div class="operation-buttons">
           <el-button type="text" class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
           <el-button type="text" class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>

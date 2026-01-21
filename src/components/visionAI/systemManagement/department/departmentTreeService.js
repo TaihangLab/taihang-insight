@@ -3,7 +3,7 @@
  * 提供部门的增删改查及树形结构操作功能
  */
 import RBACService from '@/components/service/RBACService';
-import { Message } from 'element-ui';
+import { ElMessage } from 'element-plus';
 
 export default class DepartmentTreeService {
   /**
@@ -17,7 +17,7 @@ export default class DepartmentTreeService {
       return response;
     } catch (error) {
       console.error('获取部门列表失败:', error);
-      Message.error('获取部门列表失败');
+      ElMessage.error('获取部门列表失败');
       throw error;
     }
   }
@@ -56,7 +56,7 @@ export default class DepartmentTreeService {
       return response;
     } catch (error) {
       console.error('获取部门树失败:', error);
-      Message.error('获取部门树失败');
+      ElMessage.error('获取部门树失败');
       throw error;
     }
   }
@@ -69,11 +69,11 @@ export default class DepartmentTreeService {
   static async createDepartment(departmentData) {
     try {
       const response = await RBACService.createDepartment(departmentData);
-      Message.success('部门创建成功');
+      ElMessage.success('部门创建成功');
       return response;
     } catch (error) {
       console.error('创建部门失败:', error);
-      Message.error(error.message || '创建部门失败');
+      ElMessage.error(error.message || '创建部门失败');
       throw error;
     }
   }
@@ -91,11 +91,11 @@ export default class DepartmentTreeService {
         ...departmentData,
         tenant_id: tenantId
       });
-      Message.success('部门更新成功');
+      ElMessage.success('部门更新成功');
       return response;
     } catch (error) {
       console.error('更新部门失败:', error);
-      Message.error(error.message || '更新部门失败');
+      ElMessage.error(error.message || '更新部门失败');
       throw error;
     }
   }
@@ -109,11 +109,11 @@ export default class DepartmentTreeService {
   static async deleteDepartment(id, tenantId) {
     try {
       const response = await RBACService.deleteDepartment(id, tenantId);
-      Message.success('部门删除成功');
+      ElMessage.success('部门删除成功');
       return response;
     } catch (error) {
       console.error('删除部门失败:', error);
-      Message.error(error.message || '删除部门失败');
+      ElMessage.error(error.message || '删除部门失败');
       throw error;
     }
   }
@@ -133,11 +133,11 @@ export default class DepartmentTreeService {
         status: status,
         tenant_id: tenantId
       });
-      Message.success(status === 1 ? '部门已启用' : '部门已停用');
+      ElMessage.success(status === 1 ? '部门已启用' : '部门已停用');
       return response;
     } catch (error) {
       console.error('更新部门状态失败:', error);
-      Message.error(error.message || '更新部门状态失败');
+      ElMessage.error(error.message || '更新部门状态失败');
       throw error;
     }
   }
@@ -260,11 +260,11 @@ export default class DepartmentTreeService {
       // 这里需要调用后端API来处理节点移动
       // 后端需要更新移动节点及其所有子节点的ancestors字段
       const response = await RBACService.moveDepartment(nodeCode, targetParentCode, tenantId);
-      Message.success('节点移动成功');
+      ElMessage.success('节点移动成功');
       return response;
     } catch (error) {
       console.error('移动节点失败:', error);
-      Message.error(error.message || '移动节点失败');
+      ElMessage.error(error.message || '移动节点失败');
       throw error;
     }
   }

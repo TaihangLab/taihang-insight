@@ -1,8 +1,5 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-
 /**
  * 检查并修复路由配置中导入路径的一致性
  * 验证所有导入的组件文件是否真实存在，并尝试自动修复
@@ -47,6 +44,9 @@ class RouteConsistencyChecker {
     const routerContent = fs.readFileSync(this.routerFilePath, 'utf8');
 
     // 使用正则表达式匹配所有 import 语句
+import fs from 'fs';
+import path from 'path';
+import readline from 'readline';
     const importRegex = /import\s+(\w+)\s+from\s+['"]([^'"]+)['"]/g;
 
     const imports = [];
@@ -154,8 +154,7 @@ class RouteConsistencyChecker {
       });
 
       // 询问是否自动修复
-      const readline = require('readline');
-      const rl = readline.createInterface({
+            const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
       });

@@ -81,7 +81,7 @@
       >
         <el-table-column prop="id" label="ID" width="80" align="center" />
         <el-table-column prop="name" label="视频名称" min-width="180">
-          <template slot-scope="scope">
+          <template #default="scope">
             <div class="video-name-cell">
               <i class="el-icon-video-camera-solid"></i>
               <span>{{ scope.row.name }}</span>
@@ -89,7 +89,7 @@
           </template>
         </el-table-column>
         <el-table-column label="视频信息" min-width="200">
-          <template slot-scope="scope">
+          <template #default="scope">
             <div class="video-info-cell">
               <el-tag size="mini" type="info">{{ scope.row.width }}x{{ scope.row.height }}</el-tag>
               <el-tag size="mini" type="info">{{ scope.row.fps.toFixed(1) }} fps</el-tag>
@@ -98,12 +98,12 @@
           </template>
         </el-table-column>
         <el-table-column label="文件大小" width="110" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             {{ formatFileSize(scope.row.file_size) }}
           </template>
         </el-table-column>
         <el-table-column label="推流状态" width="120" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-tag v-if="scope.row.is_streaming" type="success" effect="dark">
               <i class="el-icon-video-play"></i> 推流中
             </el-tag>
@@ -113,7 +113,7 @@
           </template>
         </el-table-column>
         <el-table-column label="RTSP地址" min-width="250">
-          <template slot-scope="scope">
+          <template #default="scope">
             <div v-if="scope.row.is_streaming && scope.row.rtsp_url" class="rtsp-url-cell">
               <el-input
                 :value="scope.row.rtsp_url"
@@ -132,12 +132,12 @@
           </template>
         </el-table-column>
         <el-table-column label="创建时间" width="160" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             {{ formatDateTime(scope.row.created_at) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="280" align="center" fixed="right">
-          <template slot-scope="scope">
+          <template #default="scope">
             <div class="action-buttons">
               <el-button
                 v-if="!scope.row.is_streaming"
@@ -333,8 +333,10 @@
 </template>
 
 <script>
+import _imported_1 from '../../../../config/index.js';
+
 import axios from 'axios';
-const config = require('../../../../config/index.js');
+const config = _imported_1;
 
 // 创建专用axios实例，避免CORS错误
 const localVideoAxios = axios.create({
@@ -455,8 +457,8 @@ export default {
              );
              if (response.data) {
                // 使用 $set 确保Vue能追踪新属性的变化
-               this.$set(video, 'rtsp_url', response.data.rtsp_url);
-               this.$set(video, 'stream_stats', response.data.stats);
+               video.rtsp_url = response.data.rtsp_url;
+               video.stream_stats = response.data.stats;
              }
            } catch (error) {
              console.error(`获取视频${video.id}推流状态失败:`, error);
@@ -477,11 +479,11 @@ export default {
            );
            if (response.data) {
              // 使用 $set 确保Vue能追踪新属性的变化
-             this.$set(video, 'rtsp_url', response.data.rtsp_url);
-             this.$set(video, 'stream_stats', response.data.stats);
+             video.rtsp_url = response.data.rtsp_url;
+             video.stream_stats = response.data.stats;
            } else {
              // 推流状态不一致，刷新列表
-             this.$set(video, 'is_streaming', false);
+             video.is_streaming = false;
            }
          } catch (error) {
            console.error(`刷新视频${video.id}推流状态失败:`, error);
@@ -848,7 +850,7 @@ export default {
   color: white;
 }
 
-.stat-card.streaming >>> .el-card__body {
+.stat-card.streaming :deep(.el-card__body) {
   padding: 20px;
 }
 
@@ -930,7 +932,7 @@ export default {
   width: 100%;
 }
 
-.rtsp-url-cell >>> .el-input-group {
+.rtsp-url-cell :deep(.el-input-group) {
   width: 100%;
 }
 
@@ -954,13 +956,9 @@ export default {
 /* 上传组件样式 */
 .upload-demo {
   width: 100%;
-}
-
->>> .el-upload {
+}:deep(.el-upload) {
   width: 100%;
-}
-
->>> .el-upload-dragger {
+}:deep(.el-upload-dragger) {
   width: 100%;
 }
 </style>

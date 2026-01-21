@@ -38,8 +38,8 @@ import UserList from './components/user/UserList.vue'
 import UserEditDialog from './components/user/UserEditDialog.vue'
 import DeleteConfirmDialog from './components/user/DeleteConfirmDialog.vue'
 import ResetPasswordDialog from './components/user/ResetPasswordDialog.vue'
-import { useUserData } from './composable/user/useUserData'
-import { useUserExport } from './composable/user/useUserExport'
+import { useUserData } from './composable/user/useUserData.js'
+import { useUserExport } from './composable/user/useUserExport.js'
 
 export default {
   name: 'UserManagement',

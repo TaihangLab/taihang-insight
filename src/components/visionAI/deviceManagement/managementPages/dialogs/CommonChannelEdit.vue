@@ -218,7 +218,7 @@
 </template>
 
 <script>
-import channelCode from './channelCode'
+import channelCode from './channelCode.vue'
 import ChooseCivilCode from "./chooseCivilCode.vue";
 import ChooseGroup from "./chooseGroup.vue";
 import { getChannelInfo, addChannel, updateChannel, resetChannel } from '@/api/channel'

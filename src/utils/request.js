@@ -1,20 +1,20 @@
 import axios from 'axios'
-import { Message, MessageBox } from 'element-ui'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import router from '@/router'
 import userService from '@/components/service/UserService'
 
 // 创建axios实例
 const service = axios.create({
-  baseURL: (process.env.NODE_ENV === 'development') ? process.env.BASE_API : (window.baseUrl ? window.baseUrl : ""),
+  baseURL: (import.meta.env.MODE === 'development') ? import.meta.env.VITE_BASE_API : (window.baseUrl ? window.baseUrl : ""),
   withCredentials: true, // 跨域请求时发送cookies
   timeout: 30000 // 请求超时时间
 })
 
 // 设备管理模块使用的axios配置（走WVP代理）
 // 导入API配置
-const config = require('../../config/index.js');
-axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp';
-axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS错误
+const API_BASE_URL = 'http://172.16.201.80/prod-api/smart-engine'
+axios.defaults.baseURL = API_BASE_URL + '/api/v1/wvp'
+axios.defaults.withCredentials = false  // 关闭withCredentials，避免CORS错误
 
 // 请求拦截器
 service.interceptors.request.use(
@@ -60,7 +60,7 @@ service.interceptors.response.use(
           // 未授权，跳转登录页
           if (!isRefreshing) {
             isRefreshing = true
-            MessageBox.confirm('登录状态已过期，请重新登录', '系统提示', {
+            ElMessageBox.confirm('登录状态已过期，请重新登录', '系统提示', {
               confirmButtonText: '重新登录',
               cancelButtonText: '取消',
               type: 'warning'
@@ -76,7 +76,7 @@ service.interceptors.response.use(
           }
         } else {
           // 其他错误信息提示
-          Message({
+          ElMessage({
             message: res.msg || res.message || '请求失败',
             type: 'error',
             duration: 3 * 1000
@@ -138,7 +138,7 @@ service.interceptors.response.use(
       }
     }
     
-    Message({
+    ElMessage({
       message: message,
       type: 'error',
       duration: 3 * 1000

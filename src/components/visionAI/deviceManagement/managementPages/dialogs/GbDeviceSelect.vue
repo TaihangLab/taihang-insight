@@ -71,7 +71,7 @@
 </template>
 
 <script>
-import RegionChannelService from "../service/RegionChannelService";
+import RegionChannelService from "../service/RegionChannelService.js";
 
 export default {
   name: "gbDeviceSelect",

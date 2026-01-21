@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import DeviceService from '../service/DeviceService'
+import DeviceService from '../service/DeviceService.js'
 import { getPositionHistory } from '@/api/dialog'
 
 export default {

@@ -2306,13 +2306,13 @@
     line-height: 1.6;
   }
 
-  .prompt-textarea >>> .el-textarea__inner {
+  .prompt-textarea :deep(.el-textarea__inner) {
     height: 100% !important;
     resize: none;
   }
 
   /* 简单文本框样式 */
-  .simple-prompt-textarea >>> .el-textarea__inner {
+  .simple-prompt-textarea :deep(.el-textarea__inner) {
     font-family: 'Courier New', monospace !important;
     font-size: 13px !important;
     line-height: 1.3 !important;
@@ -2407,7 +2407,7 @@
   }
 
   /* 注释行样式 */
-  .text-segment >>> .comment-line {
+  .text-segment :deep(.comment-line) {
     background-color: #f5f5f5;
     color: #909399;
     padding: 2px 4px;
@@ -2422,19 +2422,19 @@
     -webkit-user-modify: read-only;
   }
 
-  .text-segment >>> .comment-line:hover {
+  .text-segment :deep(.comment-line:hover) {
     background-color: #e9e9e9;
     color: #7d7d7d;
     cursor: pointer;
     border-color: #c0c4cc;
   }
 
-  .text-segment >>> .comment-line::selection {
+  .text-segment :deep(.comment-line::selection) {
     background-color: #409eff;
     color: white;
   }
 
-  .text-segment >>> .comment-line::before {
+  .text-segment :deep(.comment-line::before) {
     content: '🔒';
     font-size: 10px;
     position: absolute;
@@ -2453,7 +2453,7 @@
     transition: opacity 0.3s ease;
   }
 
-  .text-segment >>> .comment-line:hover::before {
+  .text-segment :deep(.comment-line:hover::before) {
     opacity: 1;
   }
 
@@ -2574,7 +2574,7 @@
     flex-shrink: 0;
   }
   
-  .image-uploader >>> .el-upload-dragger {
+  .image-uploader :deep(.el-upload-dragger) {
     width: 100%;
     height: 160px;
     border: 2px dashed #d9d9d9;
@@ -2583,7 +2583,7 @@
     transition: all 0.3s ease;
   }
 
-  .image-uploader >>> .el-upload-dragger:hover {
+  .image-uploader :deep(.el-upload-dragger:hover) {
     border-color: #409eff;
     background: #f0f7ff;
   }
@@ -3055,7 +3055,7 @@
     width: 100%;
   }
 
-  .condition-field .el-input-number >>> .el-input__inner {
+  .condition-field .el-input-number :deep(.el-input__inner) {
     text-align: left;
   }
 
@@ -3069,11 +3069,11 @@
   }
   
   /* 布尔值选择器特殊样式 */
-  .condition-field .el-select >>> .el-input.is-focus .el-input__inner {
+  .condition-field .el-select :deep(.el-input.is-focus .el-input__inner) {
     border-color: #67c23a;
   }
   
-  .condition-field .el-input-number >>> .el-input.is-focus .el-input__inner {
+  .condition-field .el-input-number :deep(.el-input.is-focus .el-input__inner) {
     border-color: #409eff;
   }
   

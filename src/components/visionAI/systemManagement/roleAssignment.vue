@@ -329,13 +329,13 @@ export default {
   margin-top: 15px;
 }
 
-.role-table >>> .el-table__header-wrapper th {
+.role-table :deep(.el-table__header-wrapper th) {
   background: #f5f7fa !important;
   color: #303133 !important;
   font-weight: 600;
 }
 
-.role-table >>> .el-table__body .el-table__row:hover > td {
+.role-table :deep(.el-table__body .el-table__row:hover > td) {
   background: #f5f7fa !important;
 }
 
@@ -348,16 +348,16 @@ export default {
   padding-bottom: 10px!important;
 }
 
-.pagination-container >>> .el-pagination__total {
+.pagination-container :deep(.el-pagination__total) {
   padding-top: 3px;
 }
 
-.pagination-container >>> .el-pagination {
+.pagination-container :deep(.el-pagination) {
   display: flex;
   justify-content: center;
 }
 
-.pagination-container >>> .el-pagination .el-pager li {
+.pagination-container :deep(.el-pagination .el-pager li) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 4px;
@@ -365,13 +365,13 @@ export default {
   margin: 0 2px;
 }
 
-.pagination-container >>> .el-pagination .el-pager li:hover {
+.pagination-container :deep(.el-pagination .el-pager li:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.pagination-container >>> .el-pagination .el-pager li.active {
+.pagination-container :deep(.el-pagination .el-pager li.active) {
   background: #3b82f6 !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -379,19 +379,19 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination-container >>> .el-pagination button {
+.pagination-container :deep(.el-pagination button) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   color: #3b82f6;
 }
 
-.pagination-container >>> .el-pagination button:hover {
+.pagination-container :deep(.el-pagination button:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
 }
 
-.pagination-container >>> .el-pagination .btn-prev,
-.pagination-container >>> .el-pagination .btn-next {
+.pagination-container :deep(.el-pagination .btn-prev),
+.pagination-container :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -405,7 +405,7 @@ export default {
   padding: 20px 0;
 }
 
-.action-buttons >>> .el-button {
+.action-buttons :deep(.el-button) {
   padding: 12px 24px;
   font-size: 14px;
   border-radius: 6px;
@@ -413,26 +413,26 @@ export default {
   min-width: 80px;
 }
 
-/* .action-buttons >>> .el-button--primary {
+/* .action-buttons :deep(.el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
   color: white;
 }
 
-.action-buttons >>> .el-button--primary:hover {
+.action-buttons :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
   transform: translateY(-1px);
 }
 
-.action-buttons >>> .el-button--default {
+.action-buttons :deep(.el-button--default) {
   background: white;
   border: 1px solid #d1d5db;
   color: #4b5563;
 }
 
-.action-buttons >>> .el-button--default:hover {
+.action-buttons :deep(.el-button--default:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e40af;
@@ -455,7 +455,7 @@ export default {
     align-items: center;
   }
   
-  .action-buttons >>> .el-button {
+  .action-buttons :deep(.el-button) {
     width: 120px;
   }
 }

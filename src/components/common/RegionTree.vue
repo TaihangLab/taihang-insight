@@ -49,7 +49,7 @@
 <script>
 import VueEasyTree from "@wchbrad/vue-easy-tree";
 import regionEdit from '../visionAI/deviceManagement/managementPages/dialogs/regionEdit.vue'
-import gbDeviceSelect from './../dialog/GbDeviceSelect'
+import gbDeviceSelect from '../dialog/GbDeviceSelect.vue'
 import GbChannelSelect from "../dialog/GbChannelSelect.vue";
 import { getRegionTreeList, deleteRegion, addDeviceToRegion, removeDeviceFromRegion } from '@/api/region'
 

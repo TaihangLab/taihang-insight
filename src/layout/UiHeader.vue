@@ -13,35 +13,39 @@
     <div class="header-right">
       <!-- 系统时间 -->
       <div class="system-time">
-        <i class="el-icon-time"></i>
+        <el-icon><Clock /></el-icon>
         <span>{{ currentTime }}</span>
       </div>
 
       <!-- 用户信息 - 仅在已登录时显示 -->
       <el-dropdown trigger="click" @command="handleCommand">
         <div class="user-info">
-          <el-avatar :size="32" icon="el-icon-user" class="user-avatar"></el-avatar>
+          <el-avatar :size="32" class="user-avatar">
+            <el-icon><User /></el-icon>
+          </el-avatar>
           <span class="username">{{ username }}</span>
-          <i class="el-icon-arrow-down"></i>
+          <el-icon><ArrowDown /></el-icon>
         </div>
-        <el-dropdown-menu slot="dropdown" class="user-dropdown">
-          <el-dropdown-item command="profile">
-            <i class="el-icon-user-solid"></i>
-            <span>个人中心</span>
-          </el-dropdown-item>
-          <el-dropdown-item command="password">
-            <i class="el-icon-key"></i>
-            <span>修改密码</span>
-          </el-dropdown-item>
-          <el-dropdown-item command="clearCache">
-            <i class="el-icon-delete"></i>
-            <span>清除缓存</span>
-          </el-dropdown-item>
-          <el-dropdown-item divided command="logout">
-            <i class="el-icon-switch-button"></i>
-            <span>退出登录</span>
-          </el-dropdown-item>
-        </el-dropdown-menu>
+        <template #dropdown>
+          <el-dropdown-menu class="user-dropdown">
+            <el-dropdown-item command="profile">
+              <el-icon><UserFilled /></el-icon>
+              <span>个人中心</span>
+            </el-dropdown-item>
+            <el-dropdown-item command="password">
+              <el-icon><Key /></el-icon>
+              <span>修改密码</span>
+            </el-dropdown-item>
+            <el-dropdown-item command="clearCache">
+              <el-icon><Delete /></el-icon>
+              <span>清除缓存</span>
+            </el-dropdown-item>
+            <el-dropdown-item divided command="logout">
+              <el-icon><SwitchButton /></el-icon>
+              <span>退出登录</span>
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
       </el-dropdown>
     </div>
 
@@ -52,12 +56,30 @@
 
 <script>
 import changePasswordDialog from '../components/dialog/changePassword.vue'
-import userService from '../components/service/UserService'
-import RBACService from '../components/service/RBACService'
+import userService from '../components/service/UserService.js'
+import RBACService from '../components/service/RBACService.js'
+import {
+  Clock,
+  User,
+  UserFilled,
+  ArrowDown,
+  Key,
+  Delete,
+  SwitchButton
+} from '@element-plus/icons-vue'
 
 export default {
   name: "UiHeader",
-  components: { changePasswordDialog },
+  components: {
+    changePasswordDialog,
+    Clock,
+    User,
+    UserFilled,
+    ArrowDown,
+    Key,
+    Delete,
+    SwitchButton
+  },
   data() {
     return {
       username: userService.getUser().username || '访客',
@@ -209,21 +231,21 @@ export default {
   flex: 1;
 }
 
-.header-left >>> .el-breadcrumb {
+.header-left :deep(.el-breadcrumb) {
   font-size: var(--font-size-sm);
   line-height: var(--header-height);
 }
 
-.header-left >>> .el-breadcrumb__item {
+.header-left :deep(.el-breadcrumb__item) {
   font-size: var(--font-size-base);
 }
 
-.header-left >>> .el-breadcrumb__inner {
+.header-left :deep(.el-breadcrumb__inner) {
   color: var(--text-secondary);
   font-weight: var(--font-weight-normal);
 }
 
-.header-left >>> .el-breadcrumb__item:last-child .el-breadcrumb__inner {
+.header-left :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
   color: var(--text-primary);
   font-weight: var(--font-weight-semibold);
 }
@@ -294,32 +316,32 @@ export default {
   margin-top: var(--spacing-xs);
 }
 
-.user-dropdown >>> .el-dropdown-menu__item {
+.user-dropdown :deep(.el-dropdown-menu__item) {
   padding: 0 var(--spacing-base);
   font-size: var(--font-size-base);
   color: var(--text-primary);
 }
 
-.user-dropdown >>> .el-dropdown-menu__item i {
+.user-dropdown :deep(.el-dropdown-menu__item i) {
   margin-right: var(--spacing-xs);
   color: var(--text-secondary);
 }
 
-.user-dropdown >>> .el-dropdown-menu__item:hover {
+.user-dropdown :deep(.el-dropdown-menu__item:hover) {
   background-color: var(--bg-secondary);
   color: var(--primary-color);
 }
 
-.user-dropdown >>> .el-dropdown-menu__item:hover i {
+.user-dropdown :deep(.el-dropdown-menu__item:hover i) {
   color: var(--primary-color);
 }
 
 /* 分割线 */
-.user-dropdown >>> .el-dropdown-menu__item--divided {
+.user-dropdown :deep(.el-dropdown-menu__item--divided) {
   border-top: 1px solid var(--border-color);
 }
 
-.user-dropdown >>> .el-dropdown-menu__item--divided:before {
+.user-dropdown :deep(.el-dropdown-menu__item--divided:before) {
   display: none;
 }
 </style>

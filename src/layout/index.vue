@@ -111,7 +111,7 @@ export default {
 }
 
 /* 页面标题栏通用样式 */
-.layout-content >>> .page-header {
+.layout-content :deep(.page-header) {
   background-color: var(--bg-primary);
   margin-bottom: var(--spacing-base);
   padding: var(--spacing-base);
@@ -122,13 +122,13 @@ export default {
   box-shadow: var(--shadow-sm);
 }
 
-.layout-content >>> .page-title {
+.layout-content :deep(.page-title) {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
 }
 
-.layout-content >>> .page-header-btn {
+.layout-content :deep(.page-header-btn) {
   display: flex;
   gap: var(--spacing-sm);
 }

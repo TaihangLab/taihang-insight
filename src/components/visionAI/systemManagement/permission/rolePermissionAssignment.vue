@@ -32,7 +32,7 @@
               <el-table-column prop="role_name" label="角色名称" />
               <el-table-column prop="role_code" label="角色编码" />
               <el-table-column prop="status" label="状态" width="80">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'">
                     {{ scope.row.status === 0 ? '启用' : '禁用' }}
                   </el-tag>

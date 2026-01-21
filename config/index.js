@@ -2,14 +2,12 @@
 // Template version: 1.3.1
 // see http://vuejs-templates.github.io/webpack for documentation.
 
-const path = require('path')
-
-// 后端API基础地址配置  
+// 后端API基础地址配置
 // const API_BASE_URL = 'http://192.168.26.193:8000';//本地测试地址
 const API_BASE_URL = 'http://172.16.201.80/prod-api/smart-engine';//综治平台地址
 const RBAC_API_BASE_URL = 'http://127.0.0.1:8000';//RBAC服务地址
 
-module.exports = {
+const config = {
   // 导出API配置供前端使用
   API_BASE_URL: API_BASE_URL,
   RBAC_API_BASE_URL: RBAC_API_BASE_URL,
@@ -46,10 +44,10 @@ module.exports = {
 
   build: {
     // Template for index.html
-    index: path.resolve(__dirname, '../dist/index.html'),
+    index: 'dist/index.html',
 
     // Paths
-    assetsRoot: path.resolve(__dirname, '../dist'),
+    assetsRoot: 'dist',
     assetsSubDirectory: 'static',
     assetsPublicPath: './',
 
@@ -74,4 +72,7 @@ module.exports = {
     // Set to `true` or `false` to always turn it on or off
     bundleAnalyzerReport: process.env.npm_config_report
   }
-}
+};
+
+// ESM 默认导出
+export default config;

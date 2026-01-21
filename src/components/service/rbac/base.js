@@ -1,9 +1,8 @@
 import axios from 'axios';
 import userService from '@/components/service/UserService';
 
+import config from '../../../../config/index.js';
 // 导入配置
-const config = require('../../../../config/index.js');
-
 // 创建专用于RBAC模块的axios实例
 // 注意：如果后端没有RBAC API，则使用模拟数据或切换到主API
 const rbacAxios = axios.create({

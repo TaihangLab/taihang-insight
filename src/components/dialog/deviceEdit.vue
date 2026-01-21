@@ -62,7 +62,7 @@
 </template>
 
 <script>
-import MediaServer from '../service/MediaServer'
+import MediaServer from '../service/MediaServer.js'
 import { saveDevice } from '@/api/dialog'
 
 export default {

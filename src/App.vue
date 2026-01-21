@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import  userService from './components/service/UserService'
+import  userService from './components/service/UserService.js'
 export default {
   name: 'app',
   data(){
@@ -33,7 +33,8 @@ export default {
 
   mounted(){
     //组件开始挂载时获取用户信息
-    this.getUserInfo();
+    // getUserInfo 方法已移除 - 用户信息在需要时从 localStorage 读取
+    console.log('App mounted - 访客模式');
   },
   methods: {
   },

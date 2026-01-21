@@ -107,21 +107,21 @@
         <el-table-column prop="name" label="模型名称" min-width="180" align="center" header-align="center" />
         <el-table-column prop="id" label="模型ID" width="180" align="center" header-align="center" />
         <el-table-column label="使用状态" width="100" align="center" header-align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <el-tag :type="row.usage_status === 'using' ? 'success' : 'info'" class="tech-status-tag">
               {{ row.usage_status === 'using' ? '使用中' : '未使用' }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="加载状态" width="100" align="center" header-align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <el-tag :type="row.model_status === 'loaded' ? 'success' : 'warning'" class="tech-status-tag">
               {{ row.model_status === 'loaded' ? '已加载' : '未加载' }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="版本" width="100" align="center" header-align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <div class="version-badge">
               <i class="el-icon-odometer version-icon"></i>
               <span class="version-text">V{{ formatVersion(row.version) }}</span>
@@ -130,7 +130,7 @@
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="200" align="center" header-align="center" />
         <el-table-column label="操作" width="200" fixed="right" align="center" header-align="center">
-          <template slot-scope="{ row }">
+          <template #default="{ row }">
             <div class="operation-buttons">
               <!-- 卸载/加载按钮 -->
               <template v-if="row.model_status === 'loaded'">
@@ -276,7 +276,7 @@ export default {
   data() {
     return {
       // 开发环境标志
-      isDev: process.env.NODE_ENV === 'development',
+      isDev: import.meta.env.MODE === 'development',
 
       // 分页参数
       pagination: {
@@ -725,7 +725,7 @@ export default {
       // 设置加载中状态
       const index = this.tableData.findIndex(item => item.id === row.id)
       if (index !== -1) {
-        this.$set(this.tableData[index], 'isLoading', true)
+        this.tableData[index].isLoading = true
       }
 
       // 发送加载请求
@@ -738,7 +738,7 @@ export default {
           this.$message.error(res.data.msg || '加载失败')
           // 重置加载状态
           if (index !== -1) {
-            this.$set(this.tableData[index], 'isLoading', false)
+            this.tableData[index].isLoading = false
           }
         }
       }).catch((error) => {
@@ -746,7 +746,7 @@ export default {
         this.$message.error('加载失败: ' + (error.message || '未知错误'))
         // 重置加载状态
         if (index !== -1) {
-          this.$set(this.tableData[index], 'isLoading', false)
+          this.tableData[index].isLoading = false
         }
       })
     },
@@ -756,7 +756,7 @@ export default {
       // 设置加载中状态
       const index = this.tableData.findIndex(item => item.id === row.id)
       if (index !== -1) {
-        this.$set(this.tableData[index], 'isLoading', true)
+        this.tableData[index].isLoading = true
       }
 
       // 发送卸载请求
@@ -769,7 +769,7 @@ export default {
           this.$message.error(res.data.msg || '卸载失败')
           // 重置加载状态
           if (index !== -1) {
-            this.$set(this.tableData[index], 'isLoading', false)
+            this.tableData[index].isLoading = false
           }
         }
       }).catch((error) => {
@@ -777,7 +777,7 @@ export default {
         this.$message.error('卸载失败: ' + (error.message || '未知错误'))
         // 重置加载状态
         if (index !== -1) {
-          this.$set(this.tableData[index], 'isLoading', false)
+          this.tableData[index].isLoading = false
         }
       })
     },
@@ -1102,19 +1102,19 @@ export default {
   border: none; /* 移除默认边框 */
 }
 
-.tech-table>>>.el-table__header-wrapper {
+.tech-table :deep(.el-table__header-wrapper) {
   background: #f5f7fa;
 }
 
 
 
 /* 确保表格边框圆角 */
-.tech-table>>>.el-table {
+.tech-table :deep(.el-table) {
   overflow: hidden;
   border: none;
 }
 
-.tech-table>>>.el-table th {
+.tech-table :deep(.el-table th) {
   background: #f5f7fa !important;
   color: #303133 !important;
   font-weight: 500 !important;
@@ -1129,15 +1129,15 @@ export default {
 
 
 
-.tech-table>>>.el-table--enable-row-hover .el-table__body tr:hover>td {
+.tech-table :deep(.el-table--enable-row-hover .el-table__body tr:hover>td) {
   background-color: rgba(59, 130, 246, 0.05) !important;
 }
 
-.tech-table>>>.el-table__body tr {
+.tech-table :deep(.el-table__body tr) {
   transition: all 0.3s ease;
 }
 
-.tech-table>>>.el-table td {
+.tech-table :deep(.el-table td) {
   border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
   border-left: none !important;
   border-right: none !important;
@@ -1145,11 +1145,11 @@ export default {
 }
 
 /* 表格外边框样式 */
-.tech-table>>>.el-table::before {
+.tech-table :deep(.el-table::before) {
   display: none !important; /* 移除默认的表格边框线 */
 }
 
-.tech-table>>>.el-table::after {
+.tech-table :deep(.el-table::after) {
   display: none !important; /* 移除默认的表格边框线 */
 }
 
@@ -1199,16 +1199,16 @@ export default {
   padding-bottom: 10px!important;
 }
 
-.pagination >>> .el-pagination__total {
+.pagination :deep(.el-pagination__total) {
   padding-top: 3px;
 }
 
-.pagination >>> .el-pagination {
+.pagination :deep(.el-pagination) {
   display: flex;
   justify-content: center;
 }
 
-.pagination >>> .el-pagination .el-pager li {
+.pagination :deep(.el-pagination .el-pager li) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 4px;
@@ -1216,13 +1216,13 @@ export default {
   margin: 0 2px;
 }
 
-.pagination >>> .el-pagination .el-pager li:hover {
+.pagination :deep(.el-pagination .el-pager li:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.pagination >>> .el-pagination .el-pager li.active {
+.pagination :deep(.el-pagination .el-pager li.active) {
   background: #3b82f6 !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -1230,34 +1230,34 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination >>> .el-pagination button {
+.pagination :deep(.el-pagination button) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   color: #3b82f6;
 }
 
-.pagination >>> .el-pagination button:hover {
+.pagination :deep(.el-pagination button:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
 }
 
-.pagination >>> .el-pagination .btn-prev,
-.pagination >>> .el-pagination .btn-next {
+.pagination :deep(.el-pagination .btn-prev),
+.pagination :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
 }
 
 /* 深度选择器 - 使用多种语法确保兼容性 */
-/* .pagination /deep/ .el-pagination,
-.pagination ::v-deep .el-pagination,
-.pagination >>> .el-pagination {
+/* .pagination :deep(.el-pagination),
+.pagination :deep(.el-pagination),
+.pagination :deep(.el-pagination) {
   justify-content: center;
 } */
 
-/* .pagination /deep/ .el-pagination .el-pager li,
-.pagination ::v-deep .el-pagination .el-pager li,
-.pagination >>> .el-pagination .el-pager li {
+/* .pagination :deep(.el-pagination .el-pager li),
+.pagination :deep(.el-pagination .el-pager li),
+.pagination :deep(.el-pagination .el-pager li) {
   background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -1266,18 +1266,18 @@ export default {
   margin: 0 2px !important;
 } */
 
-/* .pagination /deep/ .el-pagination .el-pager li:hover,
-.pagination ::v-deep .el-pagination .el-pager li:hover,
-.pagination >>> .el-pagination .el-pager li:hover {
+/* .pagination :deep(.el-pagination .el-pager li:hover),
+.pagination :deep(.el-pagination .el-pager li:hover),
+.pagination :deep(.el-pagination .el-pager li:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15) !important;
 } */
 
-/* .pagination /deep/ .el-pagination .el-pager li.active,
-.pagination ::v-deep .el-pagination .el-pager li.active,
-.pagination >>> .el-pagination .el-pager li.active {
+/* .pagination :deep(.el-pagination .el-pager li.active),
+.pagination :deep(.el-pagination .el-pager li.active),
+.pagination :deep(.el-pagination .el-pager li.active) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -1285,9 +1285,9 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
 } */
 
-/* .pagination /deep/ .el-pagination button,
-.pagination ::v-deep .el-pagination button,
-.pagination >>> .el-pagination button {
+/* .pagination :deep(.el-pagination button),
+.pagination :deep(.el-pagination button),
+.pagination :deep(.el-pagination button) {
   background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -1296,9 +1296,9 @@ export default {
   margin: 0 2px !important;
 }
 
-.pagination /deep/ .el-pagination button:hover,
-.pagination ::v-deep .el-pagination button:hover,
-.pagination >>> .el-pagination button:hover {
+.pagination :deep(.el-pagination button:hover),
+.pagination :deep(.el-pagination button:hover),
+.pagination :deep(.el-pagination button:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -1324,11 +1324,11 @@ export default {
   padding-left: 10px;
 }
 
-.half-width-item>>>.el-form-item__label {
+.half-width-item :deep(.el-form-item__label) {
   width: 85px !important;
 }
 
-.half-width-item>>>.el-form-item__content {
+.half-width-item :deep(.el-form-item__content) {
   margin-left: 85px !important;
 }
 
@@ -1352,7 +1352,7 @@ export default {
   padding: 0 20px;
 }
 
-.tech-form>>>.el-form-item__label {
+.tech-form :deep(.el-form-item__label) {
   font-size: 14px;
   color: #1F2329;
   font-weight: 600;
@@ -1360,18 +1360,18 @@ export default {
   text-align: right;
 }
 
-.tech-form>>>.el-form-item__content {
+.tech-form :deep(.el-form-item__content) {
   margin-left: 85px !important;
   text-align: left;
 }
 
-.tech-form>>>.el-form-item__label::before {
+.tech-form :deep(.el-form-item__label::before) {
   margin-right: 4px;
   color: #F53F3F;
   font-weight: 600;
 }
 
-.tech-form>>>.el-form-item {
+.tech-form :deep(.el-form-item) {
   margin-bottom: 24px;
 }
 
@@ -1379,7 +1379,7 @@ export default {
   width: 160px !important;
 }
 
-.number-input>>>.el-input__inner {
+.number-input :deep(.el-input__inner) {
   line-height: 32px;
   border-radius: 4px;
   padding: 0 8px;
@@ -1387,11 +1387,11 @@ export default {
 }
 
 /* 深度选择器，确保上传组件样式正确 */
-.upload-demo>>>.el-upload-list {
+.upload-demo :deep(.el-upload-list) {
   margin-top: 10px;
 }
 
-.upload-demo>>>.el-upload {
+.upload-demo :deep(.el-upload) {
   text-align: left;
 }
 
@@ -1414,7 +1414,7 @@ export default {
   overflow: hidden;
 }
 
-.detail-card>>>.el-card__header {
+.detail-card :deep(.el-card__header) {
   border-bottom: none;
 }
 
@@ -1865,30 +1865,30 @@ export default {
   margin-left: 10px;
 }
 
-.tech-form>>>.el-form-item__error {
+.tech-form :deep(.el-form-item__error) {
   padding-top: 2px;
 }
 
-.number-input>>>.el-input-number__decrease,
-.number-input>>>.el-input-number__increase {
+.number-input :deep(.el-input-number__decrease),
+.number-input :deep(.el-input-number__increase) {
   background-color: #f5f7fa;
   border-color: #dcdfe6;
   color: #606266;
 }
 
-.number-input>>>.el-input-number__decrease:hover:not(.is-disabled)~.el-input .el-input__inner:not(.is-disabled),
-.number-input>>>.el-input-number__increase:hover:not(.is-disabled)~.el-input .el-input__inner:not(.is-disabled) {
+.number-input :deep(.el-input-number__decrease:hover:not(.is-disabled)~.el-input .el-input__inner:not(.is-disabled),
+.number-input :deep(.el-input-number__increase:hover:not(.is-disabled)~.el-input .el-input__inner:not(.is-disabled) ) ) {
   border-color: #409EFF;
 }
 
-.tech-form>>>.el-input:hover .el-input__inner {
+.tech-form :deep(.el-input:hover .el-input__inner) {
   border-color: #409EFF;
 }
 
-.tech-form>>>.el-form-item.is-error .el-input__inner,
-.tech-form>>>.el-form-item.is-error .el-input__inner:focus,
-.tech-form>>>.el-form-item.is-error .el-textarea__inner,
-.tech-form>>>.el-form-item.is-error .el-textarea__inner:focus {
+.tech-form :deep(.el-form-item.is-error .el-input__inner),
+.tech-form :deep(.el-form-item.is-error .el-input__inner:focus),
+.tech-form :deep(.el-form-item.is-error .el-textarea__inner),
+.tech-form :deep(.el-form-item.is-error .el-textarea__inner:focus) {
   border-color: #F56C6C;
 }
 
@@ -1997,7 +1997,7 @@ export default {
 }
 
 /* 版本号输入框样式 */
-.version-input>>>.el-input-group__prepend {
+.version-input :deep(.el-input-group__prepend) {
   background: linear-gradient(135deg, #f0f5ff, #e6f7ff);
   border-color: #d9e8ff;
   padding: 0 12px;
@@ -2010,23 +2010,23 @@ export default {
   font-family: 'Arial', sans-serif;
 }
 
-.version-input>>>.el-input__inner {
+.version-input :deep(.el-input__inner) {
   border-color: #d9e8ff;
   transition: all 0.3s;
   font-family: 'Arial', sans-serif;
 }
 
-.version-input>>>.el-input__inner:focus {
+.version-input :deep(.el-input__inner:focus) {
   border-color: #1890ff;
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
-.version-input>>>.el-input__inner:hover {
+.version-input :deep(.el-input__inner:hover) {
   border-color: #1890ff;
 }
 
 /* 科技感对话框样式 - 与deviceSkills.vue保持一致 */
-/* .tech-dialog>>>.el-dialog {
+/* .tech-dialog :deep(.el-dialog) {
   background: #ffffff !important;
   border-radius: 12px !important;
   overflow: hidden !important;
@@ -2034,70 +2034,70 @@ export default {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
 }
 
-.tech-dialog>>>.el-dialog__header {
+.tech-dialog :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
   padding: 16px 20px !important;
 }
 
-.tech-dialog>>>.el-dialog__title {
+.tech-dialog :deep(.el-dialog__title) {
   color: #1f2937 !important;
   font-weight: 600 !important;
   font-size: 16px !important;
 }
 
-.tech-dialog>>>.el-dialog__close {
+.tech-dialog :deep(.el-dialog__close) {
   color: #6b7280 !important;
   transition: color 0.3s ease !important;
 }
 
-.tech-dialog>>>.el-dialog__close:hover {
+.tech-dialog :deep(.el-dialog__close:hover) {
   color: #3b82f6 !important;
 }
 
-.tech-dialog>>>.el-dialog__body {
+.tech-dialog :deep(.el-dialog__body) {
   background: #ffffff !important;
   padding: 20px !important;
 } */
 
 /* 科技感表单样式 */
-/* .tech-form>>>.el-form-item__label {
+/* .tech-form :deep(.el-form-item__label) {
   color: #1F2329 !important;
   font-weight: 600 !important;
 }
 
-.tech-form>>>.el-input__inner {
+.tech-form :deep(.el-input__inner) {
   border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
-.tech-form>>>.el-input__inner:hover {
+.tech-form :deep(.el-input__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.tech-form>>>.el-input__inner:focus {
+.tech-form :deep(.el-input__inner:focus) {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
-.tech-form>>>.el-textarea__inner {
+.tech-form :deep(.el-textarea__inner) {
   border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
-.tech-form>>>.el-textarea__inner:hover {
+.tech-form :deep(.el-textarea__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.tech-form>>>.el-textarea__inner:focus {
+.tech-form :deep(.el-textarea__inner:focus) {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 } */
 
 /* 对话框按钮样式 - 与deviceSkills.vue保持一致 */
-/* .tech-dialog>>>.el-button--primary {
+/* .tech-dialog :deep(.el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -2107,13 +2107,13 @@ export default {
   border-radius: 6px !important;
 }
 
-.tech-dialog>>>.el-button--primary:hover {
+.tech-dialog :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
 }
 
-.tech-dialog>>>.el-button--default {
+.tech-dialog :deep(.el-button--default) {
   background: white !important;
   border: 1px solid #d1d5db !important;
   color: #4b5563 !important;
@@ -2121,7 +2121,7 @@ export default {
   border-radius: 6px !important;
 }
 
-.tech-dialog>>>.el-button--default:hover {
+.tech-dialog :deep(.el-button--default:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -2129,32 +2129,32 @@ export default {
 } */
 
 /* 上传组件样式 */
-.tech-dialog>>>.el-upload-dragger {
+.tech-dialog :deep(.el-upload-dragger) {
   border: 2px dashed #d1d5db !important;
   border-radius: 8px !important;
   transition: all 0.3s ease !important;
 }
 
-.tech-dialog>>>.el-upload-dragger:hover {
+.tech-dialog :deep(.el-upload-dragger:hover) {
   border-color: #3b82f6 !important;
   background-color: rgba(59, 130, 246, 0.05) !important;
 }
 
-.tech-dialog>>>.el-upload__text {
+.tech-dialog :deep(.el-upload__text) {
   color: #6b7280 !important;
 }
 
-.tech-dialog>>>.el-upload__text em {
+.tech-dialog :deep(.el-upload__text em) {
   color: #3b82f6 !important;
   font-weight: 500 !important;
 }
 
 /* 加载状态优化 */
-.tech-dialog>>>.el-loading-mask {
+.tech-dialog :deep(.el-loading-mask) {
   background-color: rgba(59, 130, 246, 0.1) !important;
 }
 
-.tech-dialog>>>.el-loading-spinner .circular {
+.tech-dialog :deep(.el-loading-spinner .circular) {
   stroke: #3b82f6 !important;
 }
 
@@ -2709,8 +2709,8 @@ body .model-list .pagination .el-pagination .el-pagination__jump .el-input__inne
    ======================================== */
 
 /* 使用全局样式确保生效 */
-.model-list /deep/ .el-tag--success,
-.model-list >>> .el-tag--success,
+.model-list :deep(.el-tag--success),
+.model-list :deep(.el-tag--success),
 body .model-list .el-tag--success {
   background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
   color: #065f46 !important;
@@ -2723,8 +2723,8 @@ body .model-list .el-tag--success {
   line-height: 22px !important;
 }
 
-.model-list /deep/ .el-tag--info,
-.model-list >>> .el-tag--info,
+.model-list :deep(.el-tag--info),
+.model-list :deep(.el-tag--info),
 body .model-list .el-tag--info {
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%) !important;
   color: #6b7280 !important;
@@ -2737,8 +2737,8 @@ body .model-list .el-tag--info {
   line-height: 22px !important;
 }
 
-.model-list /deep/ .el-tag--warning,
-.model-list >>> .el-tag--warning,
+.model-list :deep(.el-tag--warning),
+.model-list :deep(.el-tag--warning),
 body .model-list .el-tag--warning {
   background: linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%) !important;
   color: #92400e !important;
@@ -2751,8 +2751,8 @@ body .model-list .el-tag--warning {
   line-height: 22px !important;
 }
 
-.model-list /deep/ .el-tag--danger,
-.model-list >>> .el-tag--danger,
+.model-list :deep(.el-tag--danger),
+.model-list :deep(.el-tag--danger),
 body .model-list .el-tag--danger {
   background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%) !important;
   color: #991b1b !important;
@@ -2766,8 +2766,8 @@ body .model-list .el-tag--danger {
 }
 
 /* 统一所有状态标签样式 */
-.model-list /deep/ .el-tag,
-.model-list >>> .el-tag,
+.model-list :deep(.el-tag),
+.model-list :deep(.el-tag),
 body .model-list .el-tag {
   border-radius: 6px !important;
   font-weight: 500 !important;
@@ -2778,8 +2778,8 @@ body .model-list .el-tag {
   transition: all 0.3s ease !important;
 }
 
-.model-list /deep/ .el-tag:hover,
-.model-list >>> .el-tag:hover,
+.model-list :deep(.el-tag:hover),
+.model-list :deep(.el-tag:hover),
 body .model-list .el-tag:hover {
   transform: translateY(-1px) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;

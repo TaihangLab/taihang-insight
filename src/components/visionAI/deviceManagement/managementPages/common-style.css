@@ -112,14 +112,12 @@
   color: #6b7280 !important;
 }
 
-.management-text-body {
-  color: #374151 !important;
+.management-text-body {color: #374151 !important;
 }
 
 /* 科技感按钮样式 - 与 camera.vue 一致 */
 /* .management-page-container .el-button,
-.management-page-container >>> .el-button {
-  height: 28px !important;
+.management-page-container :deep(.el-button) {height: 28px !important;
   padding: 4px 12px !important;
   font-size: 12px !important;
   border-radius: 6px !important;
@@ -130,8 +128,7 @@
 
 /* 专门针对表格中的操作按钮进一步缩小 */
 /* .management-page-container .el-table .el-button,
-.management-page-container >>> .el-table .el-button {
-  height: 24px !important;
+.management-page-container :deep(.el-table .el-button) {height: 24px !important;
   padding: 2px 8px !important;
   font-size: 11px !important;
   border-radius: 4px !important;
@@ -144,8 +141,8 @@
 /* 卡片视图中的按钮样式 - 小按钮一行显示 */
 /* .management-page-container .stream-card-actions .el-button,
 .management-page-container .proxy-card-actions .el-button,
-.management-page-container >>> .stream-card-actions .el-button,
-.management-page-container >>> .proxy-card-actions .el-button {
+.management-page-container :deep(.stream-card-actions .el-button,
+.management-page-container :deep(.proxy-card-actions) .el-button) {
   height: 24px !important;
   padding: 4px 6px !important;
   font-size: 10px !important;
@@ -183,13 +180,11 @@
 }
 
 .management-page-container .stream-cards::-webkit-scrollbar-thumb:hover,
-.management-page-container .proxy-cards::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8 !important;
+.management-page-container .proxy-cards::-webkit-scrollbar-thumb:hover {background: #a8a8a8 !important;
 }
 
 /* .management-page-container .el-button--primary,
-.management-page-container >>> .el-button--primary {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
+.management-page-container :deep(.el-button--primary) {background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3) !important;
   position: relative !important;
@@ -201,8 +196,7 @@
 }
 
 .management-page-container .el-button--primary::before,
-.management-page-container >>> .el-button--primary::before {
-  content: '';
+.management-page-container :deep(.el-button--primary::before) {content: '';
   position: absolute;
   top: 0;
   left: -100%;
@@ -213,20 +207,17 @@
 }
 
 .management-page-container .el-button--primary:hover,
-.management-page-container >>> .el-button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%) !important;
+.management-page-container :deep(.el-button--primary:hover) {background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%) !important;
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4) !important;
   transform: translateY(-2px) !important;
 }
 
 .management-page-container .el-button--primary:hover::before,
-.management-page-container >>> .el-button--primary:hover::before {
-  left: 100%;
+.management-page-container :deep(.el-button--primary:hover::before) {left: 100%;
 }
 
 .management-page-container .el-button--success,
-.management-page-container >>> .el-button--success {
-  background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%) !important;
+.management-page-container :deep(.el-button--success) {background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4), 0 2px 4px rgba(5, 150, 105, 0.3) !important;
   position: relative !important;
@@ -238,15 +229,13 @@
 }
 
 .management-page-container .el-button--success:hover,
-.management-page-container >>> .el-button--success:hover {
-  background: linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%) !important;
+.management-page-container :deep(.el-button--success:hover) {background: linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%) !important;
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5), 0 4px 8px rgba(5, 150, 105, 0.4) !important;
   transform: translateY(-2px) !important;
 }
 
 .management-page-container .el-button--info,
-.management-page-container >>> .el-button--info {
-  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 50%, #22d3ee 100%) !important;
+.management-page-container :deep(.el-button--info) {background: linear-gradient(135deg, #0891b2 0%, #06b6d4 50%, #22d3ee 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4), 0 2px 4px rgba(8, 145, 178, 0.3) !important;
   position: relative !important;
@@ -258,23 +247,20 @@
 }
 
 .management-page-container .el-button--info:hover,
-.management-page-container >>> .el-button--info:hover {
-  background: linear-gradient(135deg, #0e7490 0%, #0891b2 50%, #06b6d4 100%) !important;
+.management-page-container :deep(.el-button--info:hover) {background: linear-gradient(135deg, #0e7490 0%, #0891b2 50%, #06b6d4 100%) !important;
   box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5), 0 4px 8px rgba(8, 145, 178, 0.4) !important;
   transform: translateY(-2px) !important;
 }
 
 .management-page-container .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--info):not(.el-button--danger):not(.el-button--warning),
-.management-page-container >>> .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--info):not(.el-button--danger):not(.el-button--warning) {
-  background: white !important;
+.management-page-container :deep(.el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--info):not(.el-button--danger):not(.el-button--warning)) {background: white !important;
   border: 1px solid #e2e8f0 !important;
   color: #4b5563 !important;
   transition: all 0.3s ease !important;
 }
 
 .management-page-container .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--info):not(.el-button--danger):not(.el-button--warning):hover,
-.management-page-container >>> .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--info):not(.el-button--danger):not(.el-button--warning):hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+.management-page-container :deep(.el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--info):not(.el-button--danger):not(.el-button--warning):hover) {background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
@@ -283,82 +269,70 @@
 
 /* 输入框样式 */
 .management-page-container .el-input__inner,
-.management-page-container >>> .el-input__inner {
-  border: 1px solid #e2e8f0 !important;
+.management-page-container :deep(.el-input__inner) {border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
 .management-page-container .el-input__inner:hover,
-.management-page-container >>> .el-input__inner:hover {
-  border-color: #3b82f6 !important;
+.management-page-container :deep(.el-input__inner:hover) {border-color: #3b82f6 !important;
 }
 
 .management-page-container .el-input__inner:focus,
-.management-page-container >>> .el-input__inner:focus {
-  border-color: #3b82f6 !important;
+.management-page-container :deep(.el-input__inner:focus) {border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* 选择器样式 */
 .management-page-container .el-select .el-input__inner,
-.management-page-container >>> .el-select .el-input__inner {
-  border: 1px solid #e2e8f0 !important;
+.management-page-container :deep(.el-select .el-input__inner) {border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
 .management-page-container .el-select .el-input__inner:hover,
-.management-page-container >>> .el-select .el-input__inner:hover {
-  border-color: #3b82f6 !important;
+.management-page-container :deep(.el-select .el-input__inner:hover) {border-color: #3b82f6 !important;
 }
 
 .management-page-container .el-select .el-input__inner:focus,
-.management-page-container >>> .el-select .el-input__inner:focus {
-  border-color: #3b82f6 !important;
+.management-page-container :deep(.el-select .el-input__inner:focus) {border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* 弹框样式 */
 .management-page-container .el-dialog,
-.management-page-container >>> .el-dialog {
-  border-radius: 12px !important;
+.management-page-container :deep(.el-dialog) {border-radius: 12px !important;
   overflow: hidden !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
 }
 
 .management-page-container .el-dialog__header,
-.management-page-container >>> .el-dialog__header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+.management-page-container :deep(.el-dialog__header) {background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
   padding: 16px 20px !important;
 }
 
 .management-page-container .el-dialog__title,
-.management-page-container >>> .el-dialog__title {
-  color: #1f2937 !important;
+.management-page-container :deep(.el-dialog__title) {color: #1f2937 !important;
   font-weight: 600 !important;
 }
 
 .management-page-container .el-dialog__close,
-.management-page-container >>> .el-dialog__close {
-  color: #6b7280 !important;
+.management-page-container :deep(.el-dialog__close) {color: #6b7280 !important;
   transition: color 0.3s ease !important;
 }
 
 .management-page-container .el-dialog__close:hover,
-.management-page-container >>> .el-dialog__close:hover {
-  color: #3b82f6 !important;
+.management-page-container :deep(.el-dialog__close:hover) {color: #3b82f6 !important;
 }
 
 .management-page-container .el-dialog__body,
-.management-page-container >>> .el-dialog__body {
-  padding: 20px !important;
+.management-page-container :deep(.el-dialog__body) {padding: 20px !important;
   background: #ffffff !important;
 }
 
 .management-page-container .el-dialog__footer,
-.management-page-container >>> .el-dialog__footer {
+.management-page-container :deep(.el-dialog__footer) {
   padding: 10px 20px 20px !important;
   text-align: right !important;
   border-top: 1px solid rgba(59, 130, 246, 0.1) !important;

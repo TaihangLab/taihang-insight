@@ -250,7 +250,7 @@
 
 <script>
 import RBACService from '@/components/service/RBACService';
-import DepartmentTreeService from './departmentTreeService';
+import DepartmentTreeService from './departmentTreeService.js';
 
 export default {
   name: 'DepartmentTreeManagement',
@@ -931,7 +931,7 @@ export default {
   display: none;
 }
 
-.department-tree >>> .el-tree-node__content:hover .node-actions {
+.department-tree :deep(.el-tree-node__content:hover .node-actions) {
   display: inline-block;
 }
 

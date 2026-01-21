@@ -49,8 +49,8 @@
 
 <script>
 import VueEasyTree from "@wchbrad/vue-easy-tree";
-import groupEdit from './groupEdit'
-import gbDeviceSelect from './GbDeviceSelect'
+import groupEdit from './groupEdit.vue'
+import gbDeviceSelect from './GbDeviceSelect.vue'
 import GbChannelSelect from "./GbChannelSelect.vue";
 
 export default {

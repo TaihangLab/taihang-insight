@@ -349,7 +349,7 @@
             stripe
             height="380">
             <el-table-column prop="name" label="设备名称" width="230">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <div class="device-name">
                   <i class="el-icon-monitor"></i>
                   <span>{{ scope.row.name }}</span>
@@ -357,12 +357,12 @@
               </template>
             </el-table-column>
             <el-table-column prop="id" label="设备ID" width="140">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <span class="device-id">{{ scope.row.id }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="location" label="位置" width="200">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <div class="device-location">
                   <i class="el-icon-location-outline"></i>
                   <span>{{ scope.row.location }}</span>
@@ -370,7 +370,7 @@
               </template>
             </el-table-column>
             <el-table-column prop="status" label="状态" width="100">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-tag 
                   size="small" 
                   :type="scope.row.status === 'online' ? 'success' : scope.row.status === 'offline' ? 'danger' : 'warning'">
@@ -379,7 +379,7 @@
               </template>
             </el-table-column>
             <el-table-column label="操作" width="80">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-button size="mini" type="text" @click="viewDevice(scope.row)">查看</el-button>
               </template>
             </el-table-column>
@@ -501,22 +501,22 @@
               <div class="output-params-content">
                 <el-table :data="detailSkill.outputParameters" style="width: 100%" size="small">
                   <el-table-column prop="name" label="参数名称" width="150">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       <el-tag size="mini" type="info">{{ scope.row.name }}</el-tag>
                     </template>
                   </el-table-column>
                   <el-table-column prop="type" label="数据类型" width="100">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       <span class="param-type">{{ scope.row.type }}</span>
                     </template>
                   </el-table-column>
                   <el-table-column prop="description" label="参数描述">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       <span>{{ scope.row.description || '暂无描述' }}</span>
                     </template>
                   </el-table-column>
                   <el-table-column prop="required" label="是否必填" width="80">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       <el-tag size="mini" :type="scope.row.required ? 'warning' : 'info'">
                         {{ scope.row.required ? '必填' : '可选' }}
                       </el-tag>
@@ -574,7 +574,7 @@
                   <el-table-column prop="id" label="任务ID" width="80"></el-table-column>
                   <el-table-column prop="name" label="任务名称" width="200"></el-table-column>
                   <el-table-column prop="status" label="状态" width="100">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       <el-tag size="mini" :type="scope.row.status ? 'success' : 'info'">
                         {{ scope.row.status ? '运行中' : '已停止' }}
                       </el-tag>
@@ -2187,20 +2187,20 @@ export default {
   transition: all 0.2s ease;
 }
 
-.card-checkbox >>> .el-checkbox {
+.card-checkbox :deep(.el-checkbox) {
   margin: 0;
 }
 
-.card-checkbox >>> .el-checkbox__input.is-checked .el-checkbox__inner {
+.card-checkbox :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
   background-color: #3b82f6 !important;
   border-color: #3b82f6 !important;
 }
 
-.card-checkbox >>> .el-checkbox__inner:hover {
+.card-checkbox :deep(.el-checkbox__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.card-checkbox >>> .el-checkbox__inner {
+.card-checkbox :deep(.el-checkbox__inner) {
   width: 18px !important;
   height: 18px !important;
   border: 2px solid #dcdfe6 !important;
@@ -2208,7 +2208,7 @@ export default {
   background: rgba(255, 255, 255, 0.9) !important;
 }
 
-.card-checkbox >>> .el-checkbox__inner::after {
+.card-checkbox :deep(.el-checkbox__inner::after) {
   height: 8px !important;
   left: 5px !important;
   top: 1px !important;
@@ -2393,14 +2393,14 @@ export default {
 }
 
 /* 卡片内标签基础样式 */
-.skill-card >>> .el-tag {
+.skill-card :deep(.el-tag) {
   font-size: 11px !important;
   padding: 0 8px !important;
   height: 20px !important;
   line-height: 18px !important;
 }
 
-.skill-card >>> .el-tag--mini {
+.skill-card :deep(.el-tag--mini) {
   font-size: 11px !important;
   padding: 0 8px !important;
   height: 20px !important;
@@ -2443,16 +2443,16 @@ export default {
   padding-bottom: 10px!important;
 }
 
-.pagination-section >>> .el-pagination__total {
+.pagination-section :deep(.el-pagination__total) {
   padding-top: 3px;
 }
 
-.pagination-section >>> .el-pagination {
+.pagination-section :deep(.el-pagination) {
   display: flex;
   justify-content: center;
 }
 
-.pagination-section >>> .el-pagination .el-pager li {
+.pagination-section :deep(.el-pagination .el-pager li) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 4px;
@@ -2460,13 +2460,13 @@ export default {
   margin: 0 2px;
 }
 
-.pagination-section >>> .el-pagination .el-pager li:hover {
+.pagination-section :deep(.el-pagination .el-pager li:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.pagination-section >>> .el-pagination .el-pager li.active {
+.pagination-section :deep(.el-pagination .el-pager li.active) {
   background: #3b82f6 !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -2474,19 +2474,19 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination-section >>> .el-pagination button {
+.pagination-section :deep(.el-pagination button) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   color: #3b82f6;
 }
 
-.pagination-section >>> .el-pagination button:hover {
+.pagination-section :deep(.el-pagination button:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
 }
 
-.pagination-section >>> .el-pagination .btn-prev,
-.pagination-section >>> .el-pagination .btn-next {
+.pagination-section :deep(.el-pagination .btn-prev),
+.pagination-section :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -2508,7 +2508,7 @@ export default {
 } */
 
 /* 覆盖Element UI分页组件样式 */
-/* .pagination-section >>> .el-pagination .el-pager li {
+/* .pagination-section :deep(.el-pagination .el-pager li) {
   background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -2517,14 +2517,14 @@ export default {
   margin: 0 2px !important;
 }
 
-.pagination-section >>> .el-pagination .el-pager li:hover {
+.pagination-section :deep(.el-pagination .el-pager li:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 }
 
-.pagination-section >>> .el-pagination .el-pager li.active {
+.pagination-section :deep(.el-pagination .el-pager li.active) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -2532,7 +2532,7 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination-section >>> .el-pagination button {
+.pagination-section :deep(.el-pagination button) {
   background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -2541,7 +2541,7 @@ export default {
   margin: 0 2px !important;
 }
 
-.pagination-section >>> .el-pagination button:hover {
+.pagination-section :deep(.el-pagination button:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -2549,47 +2549,47 @@ export default {
 } */
 
 /* 更强的Element UI样式覆盖 */
-/* .pagination-section >>> .el-pagination .el-pager li.number {
+/* .pagination-section :deep(.el-pagination .el-pager li.number) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
 }
 
-.pagination-section >>> .el-pagination .el-pager li.number:hover {
+.pagination-section :deep(.el-pagination .el-pager li.number:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 }
 
-.pagination-section >>> .el-pagination .el-pager li.number.active {
+.pagination-section :deep(.el-pagination .el-pager li.number.active) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border-color: #3b82f6 !important;
   color: white !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination-section >>> .el-pagination .btn-prev,
-.pagination-section >>> .el-pagination .btn-next {
+.pagination-section :deep(.el-pagination .btn-prev),
+.pagination-section :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
 }
 
-.pagination-section >>> .el-pagination .btn-prev:hover,
-.pagination-section >>> .el-pagination .btn-next:hover {
+.pagination-section :deep(.el-pagination .btn-prev:hover),
+.pagination-section :deep(.el-pagination .btn-next:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 }
 
-.pagination-section >>> .el-pagination .el-select .el-input .el-input__inner {
+.pagination-section :deep(.el-pagination .el-select .el-input .el-input__inner) {
   border-color: #dcdfe6 !important;
   color: #606266 !important;
 }
 
-.pagination-section >>> .el-pagination .el-select .el-input .el-input__inner:hover {
+.pagination-section :deep(.el-pagination .el-select .el-input .el-input__inner:hover) {
   border-color: #3b82f6 !important;
 } */
 
@@ -2616,14 +2616,14 @@ export default {
 }
 
 /* 弹框样式 - 与 warningManagement.vue 一致 */
-.multimodal-llm-skills-wrapper >>> .el-dialog {
+.multimodal-llm-skills-wrapper :deep(.el-dialog) {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
 /* 弹框按钮统一样式 */
-/* .multimodal-llm-skills-wrapper >>> .el-dialog .el-button--primary {
+/* .multimodal-llm-skills-wrapper :deep(.el-dialog .el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -2633,13 +2633,13 @@ export default {
   border-radius: 6px !important;
 }
 
-.multimodal-llm-skills-wrapper >>> .el-dialog .el-button--primary:hover {
+.multimodal-llm-skills-wrapper :deep(.el-dialog .el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
 }
 
-.multimodal-llm-skills-wrapper >>> .el-dialog .el-button--default {
+.multimodal-llm-skills-wrapper :deep(.el-dialog .el-button--default) {
   background: white !important;
   border: 1px solid #d1d5db !important;
   color: #4b5563 !important;
@@ -2647,67 +2647,67 @@ export default {
   border-radius: 6px !important;
 }
 
-.multimodal-llm-skills-wrapper >>> .el-dialog .el-button--default:hover {
+.multimodal-llm-skills-wrapper :deep(.el-dialog .el-button--default:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
 }
 
-.multimodal-llm-skills-wrapper >>> .el-dialog .dialog-footer .el-button {
+.multimodal-llm-skills-wrapper :deep(.el-dialog .dialog-footer .el-button) {
   border-radius: 6px !important;
   font-weight: 500 !important;
   padding: 8px 20px !important;
 } */
 
 /* 弹框标题样式 */
-.multimodal-llm-skills-wrapper >>> .el-dialog__header {
+.multimodal-llm-skills-wrapper :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
   padding: 16px 20px !important;
 }
 
-.multimodal-llm-skills-wrapper >>> .el-dialog__title {
+.multimodal-llm-skills-wrapper :deep(.el-dialog__title) {
   color: #1f2937 !important;
   font-weight: 600 !important;
 }
 
-.multimodal-llm-skills-wrapper >>> .el-dialog__close {
+.multimodal-llm-skills-wrapper :deep(.el-dialog__close) {
   color: #6b7280 !important;
   transition: color 0.3s ease !important;
 }
 
-.multimodal-llm-skills-wrapper >>> .el-dialog__close:hover {
+.multimodal-llm-skills-wrapper :deep(.el-dialog__close:hover) {
   color: #3b82f6 !important;
 }
 
 /* 弹框内容样式 */
-.multimodal-llm-skills-wrapper >>> .el-dialog__body {
+.multimodal-llm-skills-wrapper :deep(.el-dialog__body) {
   padding: 20px !important;
   background: #ffffff !important;
 }
 
 /* 上传组件样式优化 */
-.multimodal-llm-skills-wrapper >>> .el-upload-dragger {
+.multimodal-llm-skills-wrapper :deep(.el-upload-dragger) {
   border: 2px dashed #d1d5db !important;
   border-radius: 8px !important;
   transition: all 0.3s ease !important;
 }
 
-.multimodal-llm-skills-wrapper >>> .el-upload-dragger:hover {
+.multimodal-llm-skills-wrapper :deep(.el-upload-dragger:hover) {
   border-color: #3b82f6 !important;
   background-color: rgba(59, 130, 246, 0.05) !important;
 }
 
-.multimodal-llm-skills-wrapper >>> .el-upload-dragger .el-icon-upload {
+.multimodal-llm-skills-wrapper :deep(.el-upload-dragger .el-icon-upload) {
   color: #3b82f6 !important;
 }
 
-.multimodal-llm-skills-wrapper >>> .el-upload__text {
+.multimodal-llm-skills-wrapper :deep(.el-upload__text) {
   color: #6b7280 !important;
 }
 
-.multimodal-llm-skills-wrapper >>> .el-upload__text em {
+.multimodal-llm-skills-wrapper :deep(.el-upload__text em) {
   color: #3b82f6 !important;
   font-weight: 500 !important;
 }
@@ -3053,7 +3053,7 @@ export default {
   max-height: 600px !important;
 }
 
-.fixed-height-device-dialog >>> .el-dialog {
+.fixed-height-device-dialog :deep(.el-dialog) {
   margin-top: 5vh !important;
   margin-bottom: 5vh !important;
   max-height: 600px !important;
@@ -3061,7 +3061,7 @@ export default {
   flex-direction: column !important;
 }
 
-.fixed-height-device-dialog >>> .el-dialog__body {
+.fixed-height-device-dialog :deep(.el-dialog__body) {
   padding: 20px !important;
   overflow: hidden !important;
   flex: 1 !important;
@@ -3095,16 +3095,16 @@ export default {
   overflow: hidden;
 }
 
-.device-table-scroll-wrapper >>> .el-table__header-wrapper {
+.device-table-scroll-wrapper :deep(.el-table__header-wrapper) {
   background: #f8fafc;
   border-bottom: 2px solid #e5e7eb;
 }
 
-.device-table-scroll-wrapper >>> .el-table__header {
+.device-table-scroll-wrapper :deep(.el-table__header) {
   background: #f8fafc !important;
 }
 
-.device-table-scroll-wrapper >>> .el-table th {
+.device-table-scroll-wrapper :deep(.el-table th) {
   background: #f8fafc !important;
   color: #374151 !important;
   font-weight: 600 !important;
@@ -3113,36 +3113,36 @@ export default {
   text-align: center !important;
 }
 
-.device-table-scroll-wrapper >>> .el-table td {
+.device-table-scroll-wrapper :deep(.el-table td) {
   border-bottom: 1px solid #f3f4f6 !important;
   padding: 12px 0 !important;
   text-align: center !important;
 }
 
-.device-table-scroll-wrapper >>> .el-table th .cell {
+.device-table-scroll-wrapper :deep(.el-table th .cell) {
   text-align: center !important;
 }
 
-.device-table-scroll-wrapper >>> .el-table td .cell {
+.device-table-scroll-wrapper :deep(.el-table td .cell) {
   text-align: center !important;
 }
 
-.device-table-scroll-wrapper >>> .el-table--striped .el-table__body tr.el-table__row--striped td {
+.device-table-scroll-wrapper :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
   background-color: #fafbfc !important;
 }
 
-.device-table-scroll-wrapper >>> .el-table__body tr:hover td {
+.device-table-scroll-wrapper :deep(.el-table__body tr:hover td) {
   background-color: rgba(59, 130, 246, 0.05) !important;
 }
 
 /* 表格内按钮样式 */
-.device-list-container >>> .el-button--text {
+.device-list-container :deep(.el-button--text) {
   color: #3b82f6 !important;
   font-weight: 500 !important;
   transition: all 0.3s ease !important;
 }
 
-.device-list-container >>> .el-button--text:hover {
+.device-list-container :deep(.el-button--text:hover) {
   color: #1e40af !important;
   background-color: rgba(59, 130, 246, 0.1) !important;
 }
@@ -3218,22 +3218,22 @@ export default {
 }
 
 /* 滚动条美化 */
-.device-table-scroll-wrapper >>> .el-table__body-wrapper::-webkit-scrollbar {
+.device-table-scroll-wrapper :deep(.el-table__body-wrapper::-webkit-scrollbar) {
   width: 8px;
 }
 
-.device-table-scroll-wrapper >>> .el-table__body-wrapper::-webkit-scrollbar-track {
+.device-table-scroll-wrapper :deep(.el-table__body-wrapper::-webkit-scrollbar-track) {
   background: #f1f5f9;
   border-radius: 4px;
 }
 
-.device-table-scroll-wrapper >>> .el-table__body-wrapper::-webkit-scrollbar-thumb {
+.device-table-scroll-wrapper :deep(.el-table__body-wrapper::-webkit-scrollbar-thumb) {
   background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
   border-radius: 4px;
   transition: all 0.3s ease;
 }
 
-.device-table-scroll-wrapper >>> .el-table__body-wrapper::-webkit-scrollbar-thumb:hover {
+.device-table-scroll-wrapper :deep(.el-table__body-wrapper::-webkit-scrollbar-thumb:hover) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
 }
 

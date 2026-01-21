@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import SmartFillAssistant from '@/mock/components/SmartFillAssistant'
+import SmartFillAssistant from '@/mock/components/SmartFillAssistant.vue'
 
 export default {
   name: 'RoleEditDialog',

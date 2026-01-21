@@ -934,20 +934,20 @@ export default {
   transition: all 0.2s ease;
 }
 
-.card-checkbox >>> .el-checkbox {
+.card-checkbox :deep(.el-checkbox) {
   margin: 0;
 }
 
-.card-checkbox >>> .el-checkbox__input.is-checked .el-checkbox__inner {
+.card-checkbox :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
   background-color: #3b82f6 !important;
   border-color: #3b82f6 !important;
 }
 
-.card-checkbox >>> .el-checkbox__inner:hover {
+.card-checkbox :deep(.el-checkbox__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.card-checkbox >>> .el-checkbox__inner {
+.card-checkbox :deep(.el-checkbox__inner) {
   width: 18px !important;
   height: 18px !important;
   border: 2px solid #dcdfe6 !important;
@@ -955,7 +955,7 @@ export default {
   background: rgba(255, 255, 255, 0.9) !important;
 }
 
-.card-checkbox >>> .el-checkbox__inner::after {
+.card-checkbox :deep(.el-checkbox__inner::after) {
   height: 8px !important;
   left: 5px !important;
   top: 1px !important;
@@ -1137,16 +1137,16 @@ export default {
   padding-bottom: 10px!important;
 }
 
-.pagination-section >>> .el-pagination__total {
+.pagination-section :deep(.el-pagination__total) {
   padding-top: 3px;
 }
 
-.pagination-section >>> .el-pagination {
+.pagination-section :deep(.el-pagination) {
   display: flex;
   justify-content: center;
 }
 
-.pagination-section >>> .el-pagination .el-pager li {
+.pagination-section :deep(.el-pagination .el-pager li) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 4px;
@@ -1154,13 +1154,13 @@ export default {
   margin: 0 2px;
 }
 
-.pagination-section >>> .el-pagination .el-pager li:hover {
+.pagination-section :deep(.el-pagination .el-pager li:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.pagination-section >>> .el-pagination .el-pager li.active {
+.pagination-section :deep(.el-pagination .el-pager li.active) {
   background: #3b82f6 !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -1168,57 +1168,57 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination-section >>> .el-pagination button {
+.pagination-section :deep(.el-pagination button) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   color: #3b82f6;
 }
 
-.pagination-section >>> .el-pagination button:hover {
+.pagination-section :deep(.el-pagination button:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
 }
 
-.pagination-section >>> .el-pagination .btn-prev,
-.pagination-section >>> .el-pagination .btn-next {
+.pagination-section :deep(.el-pagination .btn-prev),
+.pagination-section :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
 }
 
   /* 编辑弹窗样式 - 参照 tenantManagement.vue */
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog) {
     border-radius: 12px !important;
     overflow: hidden !important;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-dialog__header {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__header) {
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
     border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
     padding: 16px 20px !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-dialog__title {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__title) {
     color: #1f2937 !important;
     font-weight: 600 !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-dialog__close {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__close) {
     color: #6b7280 !important;
     transition: color 0.3s ease !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-dialog__close:hover {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__close:hover) {
     color: #3b82f6 !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-dialog__body {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__body) {
     padding: 20px !important;
     background: #ffffff !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-dialog__footer {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__footer) {
     padding: 10px 20px 20px !important;
     text-align: right !important;
     border-top: 1px solid rgba(59, 130, 246, 0.1) !important;
@@ -1226,43 +1226,43 @@ export default {
   }
 
   /* 表单样式美化 - 与 tenantManagement.vue 保持一致 */
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-form-item__label {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-form-item__label) {
     color: #303133 !important;
     font-weight: 500 !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-form-item.is-required .el-form-item__label:before {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-form-item.is-required .el-form-item__label:before) {
     content: '*' !important;
     color: #f56c6c !important;
     margin-right: 4px !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-input__inner,
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-date-editor .el-input__inner,
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-select .el-input__inner,
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-textarea__inner {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-input__inner),
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-date-editor .el-input__inner),
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-select .el-input__inner),
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-textarea__inner) {
     border: 1px solid #e2e8f0 !important;
     border-radius: 6px !important;
     transition: all 0.3s ease !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-input__inner:hover,
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-date-editor .el-input__inner:hover,
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-select .el-input__inner:hover,
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-textarea__inner:hover {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-input__inner:hover),
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-date-editor .el-input__inner:hover),
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-select .el-input__inner:hover),
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-textarea__inner:hover) {
     border-color: #3b82f6 !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-input__inner:focus,
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-date-editor .el-input__inner:focus,
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-select .el-input__inner:focus,
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-textarea__inner:focus {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-input__inner:focus),
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-date-editor .el-input__inner:focus),
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-select .el-input__inner:focus),
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-textarea__inner:focus) {
     border-color: #3b82f6 !important;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
   }
 
   /* 下拉框样式优化 */
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-select-dropdown {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-select-dropdown) {
     border: 1px solid #e2e8f0 !important;
     border-radius: 6px !important;
   }
@@ -1287,7 +1287,7 @@ export default {
   }
 
   /* 弹框内按钮样式 - 与 tenantManagement.vue 完全一致 */
-  /* .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-button--primary {
+  /* .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-button--primary) {
     background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
     border: none !important;
     box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -1297,13 +1297,13 @@ export default {
     border-radius: 6px !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-button--primary:hover {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-button--primary:hover) {
     background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
     box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
     transform: translateY(-1px) !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-button:not(.el-button--primary) {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-button:not(.el-button--primary) {
     background: white !important;
     border: 1px solid #d1d5db !important;
     color: #4b5563 !important;
@@ -1311,7 +1311,7 @@ export default {
     border-radius: 6px !important;
   }
 
-  .knowledge-base-wrapper >>> .el-dialog.edit-knowledge-dialog .el-button:not(.el-button--primary):hover {
+  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-button:not(.el-button--primary):hover {
     background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
     border-color: #3b82f6 !important;
     color: #1e40af !important;
@@ -1341,13 +1341,13 @@ export default {
   padding: 40px;
 }
 
-.empty-state >>> .el-empty__description {
+.empty-state :deep(.el-empty__description) {
   color: #909399;
   font-size: 14px;
   margin-bottom: 20px;
 }
 
-.empty-state >>> .el-empty__image {
+.empty-state :deep(.el-empty__image) {
   margin-bottom: 20px;
 }
 

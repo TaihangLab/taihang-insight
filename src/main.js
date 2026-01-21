@@ -17,6 +17,7 @@ import Fingerprint2 from 'fingerprintjs2';
 import VueClipboards from 'vue-clipboards';
 import Contextmenu from "vue-contextmenujs"
 
+import config from '../config/index.js';
 Vue.config.productionTip = false;
 Vue.use(Vuex);
 
@@ -50,7 +51,6 @@ Vue.use(dataV);
 
 // 设备管理模块使用的axios配置（走WVP代理）
 // 导入API配置
-const config = require('../config/index.js');
 axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp';
 axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS错误
 

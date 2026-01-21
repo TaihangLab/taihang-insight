@@ -1893,7 +1893,7 @@ export default {
             <el-table-column label="序号" prop="id" width="80" align="center"></el-table-column>
             <el-table-column label="预警名称" prop="name" min-width="120" align="center"></el-table-column>
             <el-table-column label="预警图片" width="100" align="center">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <div class="preview-image-cell">
                   <div class="mini-image-preview" @click="showImagePreview(scope.row)">
                     <div class="mini-blue-box">
@@ -1906,12 +1906,12 @@ export default {
             </el-table-column>
             <el-table-column label="设备名称" prop="deviceName" min-width="150" align="center"></el-table-column>
             <el-table-column label="预警时间" prop="warningTime" min-width="180" align="center">
-              <template slot-scope="scope">
+              <template #default="scope">
                 {{ formatTime(scope.row.warningTime) }}
               </template>
             </el-table-column>
             <el-table-column label="预警等级" width="100" align="center">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <span class="level-tag" :class="{
                   'level1-tag': scope.row.warningLevel === 'level1',
                   'level2-tag': scope.row.warningLevel === 'level2',
@@ -1928,7 +1928,7 @@ export default {
               </template>
             </el-table-column>
             <el-table-column label="操作" width="120" align="center">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <div class="operation-buttons">
                   <el-button type="text" size="mini" @click="showDetail(scope.row)" class="operation-btn detail-btn">详情</el-button>
                   <el-button type="text" size="mini" @click="handleDelete(scope.row.id)" class="operation-btn delete-btn">删除</el-button>
@@ -2093,7 +2093,7 @@ export default {
         <el-table-column label="预警名称" prop="alert_name" min-width="140" align="center" show-overflow-tooltip></el-table-column>
         <el-table-column label="摄像头名称" prop="camera_name" min-width="150" align="center" show-overflow-tooltip></el-table-column>
         <el-table-column label="预警等级" width="100" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <span class="level-tag" :class="getAlertLevelClass(scope.row.alert_level)">
               {{ convertAlertLevelDisplay(scope.row.alert_level) }}
             </span>
@@ -2102,12 +2102,12 @@ export default {
         <el-table-column label="预警类型" prop="alert_type" width="100" align="center"></el-table-column>
         <el-table-column label="技能名称" prop="skill_name_zh" min-width="120" align="center" show-overflow-tooltip></el-table-column>
         <el-table-column label="预警时间" prop="alert_time" min-width="160" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             {{ formatTime(scope.row.alert_time) }}
           </template>
         </el-table-column>
         <el-table-column label="处理状态" width="100" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <span class="status-tag" :class="getStatusClass(scope.row.status)">
               {{ convertStatusDisplay(scope.row.status) }}
             </span>
@@ -2115,7 +2115,7 @@ export default {
         </el-table-column>
         <el-table-column label="位置" prop="location" min-width="120" align="center" show-overflow-tooltip></el-table-column>
         <el-table-column label="操作" width="80" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <el-button 
               type="text" 
               size="mini" 
@@ -2300,18 +2300,18 @@ export default {
 }
 
 /* 移除表格竖线条 */
-::v-deep .table-section .el-table--border td,
-::v-deep .table-section .el-table--border th {
+:deep(.table-section .el-table--border td),
+:deep(.table-section .el-table--border th) {
   border-right: none;
 }
 
-::v-deep .table-section .el-table::before,
-::v-deep .table-section .el-table::after {
+:deep(.table-section .el-table::before),
+:deep(.table-section .el-table::after) {
   display: none;
 }
 
 /* 调整el-table样式 */
-::v-deep .table-section .el-table th {
+:deep(.table-section .el-table th) {
   background: #f5f7fa !important;
   color: #303133 !important;
   font-weight: 500 !important;
@@ -2320,23 +2320,23 @@ export default {
   border-bottom: 1px solid #ebeef5 !important;
 }
 
-::v-deep .table-section .el-table--border {
+:deep(.table-section .el-table--border) {
   border: none;
   border-radius: 0;
   overflow: hidden;
 }
 
-::v-deep .table-section .el-table td {
+:deep(.table-section .el-table td) {
   padding: 8px 0;
   text-align: center;
   border-bottom: 1px solid #ebeef5 !important;
 }
 
-::v-deep .table-section .el-table__row:hover > td {
+:deep(.table-section .el-table__row:hover > td) {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.03) 100%) !important;
 }
 
-::v-deep .table-section .el-table__row {
+:deep(.table-section .el-table__row) {
   border-bottom: 1px solid #ebeef5;
 }
 
@@ -2443,7 +2443,7 @@ export default {
 }
 
 /* 确保表格内的预警等级标签优先级足够高 */
-.table-section >>> .el-table .level-tag {
+.table-section :deep(.el-table .level-tag) {
   border-radius: 6px !important;
   font-weight: 500 !important;
   font-size: 12px !important;
@@ -2454,31 +2454,31 @@ export default {
   border: 1px solid !important;
 }
 
-.table-section >>> .el-table .level-tag:hover {
+.table-section :deep(.el-table .level-tag:hover) {
   transform: translateY(-1px) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* 表格内预警等级标签的具体样式 */
-.table-section >>> .el-table .level1-tag {
+.table-section :deep(.el-table .level1-tag) {
   background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%) !important;
   color: #991b1b !important;
   border-color: #fca5a5 !important;
 }
 
-.table-section >>> .el-table .level2-tag {
+.table-section :deep(.el-table .level2-tag) {
   background: linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%) !important;
   color: #92400e !important;
   border-color: #fbbf24 !important;
 }
 
-.table-section >>> .el-table .level3-tag {
+.table-section :deep(.el-table .level3-tag) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   color: #1e40af !important;
   border-color: #93c5fd !important;
 }
 
-.table-section >>> .el-table .level4-tag {
+.table-section :deep(.el-table .level4-tag) {
   background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
   color: #065f46 !important;
   border-color: #a7f3d0 !important;
@@ -2580,16 +2580,16 @@ export default {
   padding-bottom: 10px!important;
 }
 
-.archives-pagination >>> .el-pagination__total {
+.archives-pagination :deep(.el-pagination__total) {
   padding-top: 3px;
 }
 
-.archives-pagination >>> .el-pagination {
+.archives-pagination :deep(.el-pagination) {
   display: flex;
   justify-content: center;
 }
 
-.archives-pagination >>> .el-pagination .el-pager li {
+.archives-pagination :deep(.el-pagination .el-pager li) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 4px;
@@ -2597,13 +2597,13 @@ export default {
   margin: 0 2px;
 }
 
-.archives-pagination >>> .el-pagination .el-pager li:hover {
+.archives-pagination :deep(.el-pagination .el-pager li:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.archives-pagination >>> .el-pagination .el-pager li.active {
+.archives-pagination :deep(.el-pagination .el-pager li.active) {
   background: #3b82f6 !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -2611,19 +2611,19 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.archives-pagination >>> .el-pagination button {
+.archives-pagination :deep(.el-pagination button) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   color: #3b82f6;
 }
 
-.archives-pagination >>> .el-pagination button:hover {
+.archives-pagination :deep(.el-pagination button:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
 }
 
-.archives-pagination >>> .el-pagination .btn-prev,
-.archives-pagination >>> .el-pagination .btn-next {
+.archives-pagination :deep(.el-pagination .btn-prev),
+.archives-pagination :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -2803,38 +2803,38 @@ export default {
 }
 
 /* 弹框样式 - 与 warningManagement.vue 一致 */
-.page-container >>> .el-dialog {
+.page-container :deep(.el-dialog) {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-.page-container >>> .el-dialog__header {
+.page-container :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
   padding: 16px 20px !important;
 }
 
-.page-container >>> .el-dialog__title {
+.page-container :deep(.el-dialog__title) {
   color: #1f2937 !important;
   font-weight: 600 !important;
 }
 
-.page-container >>> .el-dialog__close {
+.page-container :deep(.el-dialog__close) {
   color: #6b7280 !important;
   transition: color 0.3s ease !important;
 }
 
-.page-container >>> .el-dialog__close:hover {
+.page-container :deep(.el-dialog__close:hover) {
   color: #3b82f6 !important;
 }
 
-.page-container >>> .el-dialog__body {
+.page-container :deep(.el-dialog__body) {
   padding: 20px !important;
   background: #ffffff !important;
 }
 
-.page-container >>> .el-dialog__footer {
+.page-container :deep(.el-dialog__footer) {
   padding: 10px 20px 20px;
   text-align: right;
   border-top: 1px solid rgba(59, 130, 246, 0.1);
@@ -2842,32 +2842,32 @@ export default {
 }
 
 /* 上传组件样式优化 */
-.page-container >>> .el-upload-dragger {
+.page-container :deep(.el-upload-dragger) {
   border: 2px dashed #d1d5db !important;
   border-radius: 8px !important;
   transition: all 0.3s ease !important;
 }
 
-.page-container >>> .el-upload-dragger:hover {
+.page-container :deep(.el-upload-dragger:hover) {
   border-color: #3b82f6 !important;
   background-color: rgba(59, 130, 246, 0.05) !important;
 }
 
-.page-container >>> .el-upload-dragger .el-icon-upload {
+.page-container :deep(.el-upload-dragger .el-icon-upload) {
   color: #3b82f6 !important;
 }
 
-.page-container >>> .el-upload__text {
+.page-container :deep(.el-upload__text) {
   color: #6b7280 !important;
 }
 
-.page-container >>> .el-upload__text em {
+.page-container :deep(.el-upload__text em) {
   color: #3b82f6 !important;
   font-weight: 500 !important;
 }
 
 /* 表格样式优化 - 保持黑色字体 */
-.page-container >>> .el-table th {
+.page-container :deep(.el-table th) {
   background: #f5f7fa !important;
   color: #303133 !important;
   font-weight: 500 !important;
@@ -2876,38 +2876,38 @@ export default {
   border-bottom: 1px solid #ebeef5 !important;
 }
 
-.page-container >>> .el-table td {
+.page-container :deep(.el-table td) {
   padding: 8px 0;
   text-align: center;
   border-bottom: 1px solid #ebeef5 !important;
 }
 
-.page-container >>> .el-table__row:hover > td {
+.page-container :deep(.el-table__row:hover > td) {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.03) 100%) !important;
 }
 
 /* 科技感 Radio 样式 */
-.page-container >>> .el-radio__input.is-checked .el-radio__inner {
+.page-container :deep(.el-radio__input.is-checked .el-radio__inner) {
   background-color: #3b82f6 !important;
   border-color: #3b82f6 !important;
 }
 
-.page-container >>> .el-radio__inner:hover {
+.page-container :deep(.el-radio__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
 /* 科技感 Checkbox 样式 */
-.page-container >>> .el-checkbox__input.is-checked .el-checkbox__inner {
+.page-container :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
   background-color: #3b82f6 !important;
   border-color: #3b82f6 !important;
 }
 
-.page-container >>> .el-checkbox__inner:hover {
+.page-container :deep(.el-checkbox__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
 /* 科技感 Tag 样式 */
-.page-container >>> .el-tag {
+.page-container :deep(.el-tag) {
   border-radius: 6px !important;
   font-weight: 500 !important;
 }
@@ -2963,11 +2963,11 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); */
 }
 
-/* .pagination >>> .el-pagination {
+/* .pagination :deep(.el-pagination) {
   justify-content: center;
 }
 
-.pagination >>> .el-pagination .el-pager li {
+.pagination :deep(.el-pagination .el-pager li) {
   background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -2976,14 +2976,14 @@ export default {
   margin: 0 2px !important;
 } */
 
-/* .pagination >>> .el-pagination .el-pager li:hover {
+/* .pagination :deep(.el-pagination .el-pager li:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 }
 
-.pagination >>> .el-pagination .el-pager li.active {
+.pagination :deep(.el-pagination .el-pager li.active) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -2991,7 +2991,7 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination >>> .el-pagination button {
+.pagination :deep(.el-pagination button) {
   background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -3000,7 +3000,7 @@ export default {
   margin: 0 2px !important;
 }
 
-.pagination >>> .el-pagination button:hover {
+.pagination :deep(.el-pagination button:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -3008,7 +3008,7 @@ export default {
 } */
 
 /* 详情弹窗 */
-::v-deep .warning-detail-dialog .el-dialog {
+:deep(.warning-detail-dialog .el-dialog) {
   border-radius: 4px;
   overflow: hidden;
 }
@@ -3046,7 +3046,7 @@ export default {
 }
 
 /* 图片预览对话框 */
-::v-deep .image-preview-dialog .el-dialog {
+:deep(.image-preview-dialog .el-dialog) {
   border-radius: 8px;
   overflow: hidden;
 }
@@ -3090,7 +3090,7 @@ export default {
 }
 
 /* 编辑档案弹窗 */
-::v-deep .edit-archive-dialog .el-dialog {
+:deep(.edit-archive-dialog .el-dialog) {
   border-radius: 4px;
   overflow: hidden;
 }
@@ -3109,7 +3109,7 @@ export default {
 }
 
 /* 添加预警弹窗 */
-::v-deep .add-warning-dialog .el-dialog {
+:deep(.add-warning-dialog .el-dialog) {
   border-radius: 4px;
   overflow: hidden;
 }
@@ -3128,17 +3128,17 @@ export default {
 }
 
 /* 删除确认弹窗 */
-::v-deep .delete-confirm-dialog .el-dialog {
+:deep(.delete-confirm-dialog .el-dialog) {
   border-radius: 4px;
   overflow: hidden;
   min-width: 320px;
 }
 
-::v-deep .delete-confirm-dialog .el-dialog__body {
+:deep(.delete-confirm-dialog .el-dialog__body) {
   padding: 30px 20px;
 }
 
-::v-deep .delete-confirm-dialog .el-dialog__footer {
+:deep(.delete-confirm-dialog .el-dialog__footer) {
   border-top: 1px solid #ebeef5;
   padding: 10px 20px;
 }
@@ -3341,18 +3341,18 @@ export default {
 }
 
 /* 时间段选择器样式优化 */
-::v-deep .el-date-editor--datetimerange {
+:deep(.el-date-editor--datetimerange) {
   width: 100% !important;
 }
 
-::v-deep .el-date-editor--datetimerange .el-range-separator {
+:deep(.el-date-editor--datetimerange .el-range-separator) {
   width: 30px;
   text-align: center;
   color: #606266;
   font-weight: 500;
 }
 
-::v-deep .el-date-editor--datetimerange .el-range-input {
+:deep(.el-date-editor--datetimerange .el-range-input) {
   background-color: transparent;
   border: 0;
   color: #606266;
@@ -3364,7 +3364,7 @@ export default {
   text-align: center;
 }
 
-::v-deep .el-date-editor--datetimerange .el-range__icon {
+:deep(.el-date-editor--datetimerange .el-range__icon) {
   font-size: 14px;
   color: #c0c4cc;
   float: left;
@@ -3374,7 +3374,7 @@ export default {
 }
 
 /* 科技感蓝色按钮样式 - 与 deviceSkills.vue 完全一致 */
-.page-container >>> .el-button {
+.page-container :deep(.el-button) {
   height: 32px;
   padding: 6px 16px;
   font-size: 14px;
@@ -3384,9 +3384,9 @@ export default {
   margin-right: 0;
 }
 
-/* .page-container >>> .el-button--primary,
-.page-container >>> .add-btn,
-.page-container >>> .edit-archive-btn {
+/* .page-container :deep(.el-button--primary),
+.page-container :deep(.add-btn),
+.page-container :deep(.edit-archive-btn) {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3) !important;
@@ -3401,9 +3401,9 @@ export default {
 
 
 
-/* .page-container >>> .el-button--primary:hover,
-.page-container >>> .add-btn:hover,
-.page-container >>> .edit-archive-btn:hover {
+/* .page-container :deep(.el-button--primary:hover),
+.page-container :deep(.add-btn:hover),
+.page-container :deep(.edit-archive-btn:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%) !important;
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4) !important;
   transform: translateY(-2px) !important;
@@ -3412,7 +3412,7 @@ export default {
 
 
 /* 批量删除按钮改为刷新按钮样式 */
-.page-container >>> .batch-delete-btn {
+.page-container :deep(.batch-delete-btn) {
   padding: 7px 10px !important;
   margin-left: 0 !important;
   color: #606266 !important;
@@ -3429,7 +3429,7 @@ export default {
   overflow: visible !important;
 }
 
-.page-container >>> .batch-delete-btn:hover {
+.page-container :deep(.batch-delete-btn:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -3437,16 +3437,16 @@ export default {
   transform: none !important;
 }
 
-.page-container >>> .batch-delete-btn::before {
+.page-container :deep(.batch-delete-btn::before) {
   display: none !important;
 }
 
-.page-container >>> .batch-delete-btn:hover::before {
+.page-container :deep(.batch-delete-btn:hover::before) {
   display: none !important;
 }
 
 /* 保持其他危险按钮的红色样式 */
-/* .page-container >>> .el-button--danger:not(.batch-delete-btn) {
+/* .page-container :deep(.el-button--danger:not(.batch-delete-btn) {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4), 0 2px 4px rgba(185, 28, 28, 0.3) !important;
@@ -3461,7 +3461,7 @@ export default {
 
 
 
-/* .page-container >>> .el-button--danger:not(.batch-delete-btn):hover {
+/* .page-container :deep(.el-button--danger:not(.batch-delete-btn):hover {
   background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
   box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5), 0 4px 8px rgba(185, 28, 28, 0.4) !important;
   transform: translateY(-2px) !important;
@@ -3469,14 +3469,14 @@ export default {
 
 
 
-/* .page-container >>> .el-button:not(.el-button--primary):not(.el-button--danger):not(.add-btn):not(.edit-archive-btn):not(.batch-delete-btn) {
+/* .page-container :deep(.el-button:not(.el-button--primary):not(.el-button--danger):not(.add-btn):not(.edit-archive-btn):not(.batch-delete-btn) {
   background: #f5f7fa !important;
   border-color: #e4e7ed !important;
   color: #606266 !important;
   border-radius: 6px !important;
 }
 
-.page-container >>> .el-button:not(.el-button--primary):not(.el-button--danger):not(.add-btn):not(.edit-archive-btn):not(.batch-delete-btn):hover {
+.page-container :deep(.el-button:not(.el-button--primary):not(.el-button--danger):not(.add-btn):not(.edit-archive-btn):not(.batch-delete-btn):hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e3a8a !important;
@@ -3485,7 +3485,7 @@ export default {
 } */
 
 /* 弹框按钮统一样式 */
-/* .page-container >>> .el-dialog .el-button--primary {
+/* .page-container :deep(.el-dialog .el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -3495,13 +3495,13 @@ export default {
   border-radius: 6px !important;
 } */
 
-/* .page-container >>> .el-dialog .el-button--primary:hover {
+/* .page-container :deep(.el-dialog .el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
 }
 
-.page-container >>> .el-dialog .el-button--default {
+.page-container :deep(.el-dialog .el-button--default) {
   background: white !important;
   border: 1px solid #d1d5db !important;
   color: #4b5563 !important;
@@ -3509,7 +3509,7 @@ export default {
   border-radius: 6px !important;
 } */
 
-/* .page-container >>> .el-dialog .el-button--default:hover {
+/* .page-container :deep(.el-dialog .el-button--default:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -3517,15 +3517,15 @@ export default {
 } */
 
 /* 修复时间选择器z-index层级问题 - 确保弹出层显示在弹框上方 */
-.page-container >>> .el-date-picker {
+.page-container :deep(.el-date-picker) {
   z-index: 9999 !important;
 }
 
-.page-container >>> .el-picker-panel {
+.page-container :deep(.el-picker-panel) {
   z-index: 9999 !important;
 }
 
-.page-container >>> .el-date-picker__header {
+.page-container :deep(.el-date-picker__header) {
   z-index: 9999 !important;
 }
 
@@ -3550,65 +3550,65 @@ export default {
 
 
 /* 输入框和选择器样式 - 与 deviceSkills.vue 一致 */
-.page-container >>> .el-input__inner {
+.page-container :deep(.el-input__inner) {
   border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
-.page-container >>> .el-input__inner:hover {
+.page-container :deep(.el-input__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.page-container >>> .el-input__inner:focus {
+.page-container :deep(.el-input__inner:focus) {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
-.page-container >>> .el-select .el-input__inner {
+.page-container :deep(.el-select .el-input__inner) {
   border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
-.page-container >>> .el-select .el-input__inner:hover {
+.page-container :deep(.el-select .el-input__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.page-container >>> .el-select .el-input__inner:focus {
+.page-container :deep(.el-select .el-input__inner:focus) {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
-.page-container >>> .el-date-editor.el-input {
+.page-container :deep(.el-date-editor.el-input) {
   border-radius: 6px !important;
 }
 
-.page-container >>> .el-date-editor .el-input__inner {
+.page-container :deep(.el-date-editor .el-input__inner) {
   border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
 }
 
-.page-container >>> .el-date-editor .el-input__inner:hover {
+.page-container :deep(.el-date-editor .el-input__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.page-container >>> .el-date-editor .el-input__inner:focus {
+.page-container :deep(.el-date-editor .el-input__inner:focus) {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
-.page-container >>> .el-textarea__inner {
+.page-container :deep(.el-textarea__inner) {
   border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
-.page-container >>> .el-textarea__inner:hover {
+.page-container :deep(.el-textarea__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.page-container >>> .el-textarea__inner:focus {
+.page-container :deep(.el-textarea__inner:focus) {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
@@ -3654,24 +3654,24 @@ body .el-time-picker.el-popper {
 /* ==================== 选择预警弹框样式 ==================== */
 
 /* 选择预警弹框样式 */
-.select-alert-dialog >>> .el-dialog {
+.select-alert-dialog :deep(.el-dialog) {
   border-radius: 12px;
   overflow: hidden;
 }
 
-.select-alert-dialog >>> .el-dialog__header {
+.select-alert-dialog :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
   padding: 16px 20px;
 }
 
-.select-alert-dialog >>> .el-dialog__title {
+.select-alert-dialog :deep(.el-dialog__title) {
   color: #1f2937;
   font-weight: 600;
   font-size: 18px;
 }
 
-.select-alert-dialog >>> .el-dialog__body {
+.select-alert-dialog :deep(.el-dialog__body) {
   padding: 20px;
   background: #ffffff;
 }
@@ -3798,7 +3798,7 @@ body .el-time-picker.el-popper {
 }
 
 /* 弹框底部样式 */
-.select-alert-dialog >>> .el-dialog__footer {
+.select-alert-dialog :deep(.el-dialog__footer) {
   padding: 20px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-top: 1px solid rgba(59, 130, 246, 0.1);
@@ -3861,14 +3861,14 @@ body .el-time-picker.el-popper {
 } */
 
 /* 表格样式增强 */
-.select-alert-dialog >>> .el-table {
+.select-alert-dialog :deep(.el-table) {
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid #f0f2f5;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.select-alert-dialog >>> .el-table th {
+.select-alert-dialog :deep(.el-table th) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   color: #374151;
   font-weight: 600;
@@ -3876,31 +3876,31 @@ body .el-time-picker.el-popper {
   font-size: 13px;
 }
 
-.select-alert-dialog >>> .el-table__row:hover > td {
+.select-alert-dialog :deep(.el-table__row:hover > td) {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 197, 253, 0.05) 100%);
 }
 
-.select-alert-dialog >>> .el-table__row.current-row > td {
+.select-alert-dialog :deep(.el-table__row.current-row > td) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
 }
 
-.select-alert-dialog >>> .el-table td {
+.select-alert-dialog :deep(.el-table td) {
   border-bottom: 1px solid #f3f4f6;
   font-size: 13px;
 }
 
 /* 空状态样式 */
-.select-alert-dialog >>> .el-table__empty-block {
+.select-alert-dialog :deep(.el-table__empty-block) {
   padding: 60px 0;
 }
 
-.select-alert-dialog >>> .el-table__empty-text {
+.select-alert-dialog :deep(.el-table__empty-text) {
   color: #9ca3af;
   font-size: 14px;
 }
 
 /* 加载状态样式 */
-.select-alert-dialog >>> .el-loading-mask {
+.select-alert-dialog :deep(.el-loading-mask) {
   border-radius: 8px;
 }
 </style>

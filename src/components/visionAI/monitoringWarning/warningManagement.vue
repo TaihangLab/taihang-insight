@@ -640,15 +640,15 @@ export default {
         
         // 2. 更新本地的_apiData.status字段
         if (this.warningList[index]._apiData) {
-          this.$set(this.warningList[index]._apiData, 'status', 4)
+          this.warningList[index]._apiData.status = 4
         }
-        this.$set(this.warningList[index], 'status', 'archived')
-        this.$set(this.warningList[index], 'archiveId', targetArchiveId)
-        this.$set(this.warningList[index], 'archiveTime', new Date().toLocaleString())
+        this.warningList[index].status = 'archived'
+        this.warningList[index].archiveId = targetArchiveId
+        this.warningList[index].archiveTime = new Date().toLocaleString()
 
         // 3. 添加归档记录到操作历史
         if (!this.warningList[index].operationHistory) {
-          this.$set(this.warningList[index], 'operationHistory', [])
+          this.warningList[index].operationHistory = []
         }
         
         const archiveRecord = {
@@ -855,7 +855,7 @@ export default {
             if (index !== -1) {
               // 确保有操作历史数组
               if (!this.warningList[index].operationHistory) {
-                this.$set(this.warningList[index], 'operationHistory', [])
+                this.warningList[index].operationHistory = []
               }
               
               // 更新待处理记录为已完成状态
@@ -1134,15 +1134,15 @@ export default {
           if (index !== -1) {
             // 🔧 关键修复：更新 _apiData.status 字段为处理中
             if (this.warningList[index]._apiData) {
-              this.$set(this.warningList[index]._apiData, 'status', 2)
+              this.warningList[index]._apiData.status = 2
             }
             
             // 更新字符串状态为处理中
-            this.$set(this.warningList[index], 'status', 'processing')
+            this.warningList[index].status = 'processing'
             
             // 确保有操作历史数组
             if (!this.warningList[index].operationHistory) {
-              this.$set(this.warningList[index], 'operationHistory', [])
+              this.warningList[index].operationHistory = []
             }
             
             // 添加新的处理中记录
@@ -1209,7 +1209,7 @@ export default {
         if (index !== -1) {
           // 添加上报记录到操作历史
           if (!this.warningList[index].operationHistory) {
-            this.$set(this.warningList[index], 'operationHistory', [])
+            this.warningList[index].operationHistory = []
           }
           
           const newRecord = {
@@ -1370,9 +1370,9 @@ export default {
           
           if (index !== -1) {
             // 更新状态相关字段
-            this.$set(this.warningList[index], 'status', 'processing');
-            this.$set(this.warningList[index], 'processed_by', warning.apiResponse.processed_by);
-            this.$set(this.warningList[index], 'processing_notes', warning.apiResponse.processing_notes);
+            this.warningList[index].status = 'processing';
+            this.warningList[index].processed_by = warning.apiResponse.processed_by;
+            this.warningList[index].processing_notes = warning.apiResponse.processing_notes;
             
             console.log('本地状态已更新为处理中:', this.warningList[index]);
           }
@@ -1393,10 +1393,10 @@ export default {
           
           if (index !== -1) {
             // 更新状态相关字段
-            this.$set(this.warningList[index], 'status', 'resolved');
-            this.$set(this.warningList[index], 'processed_by', warning.apiResponse.processed_by);
-            this.$set(this.warningList[index], 'processing_notes', warning.apiResponse.processing_notes);
-            this.$set(this.warningList[index], 'processed_at', warning.apiResponse.processed_at);
+            this.warningList[index].status = 'resolved';
+            this.warningList[index].processed_by = warning.apiResponse.processed_by;
+            this.warningList[index].processing_notes = warning.apiResponse.processing_notes;
+            this.warningList[index].processed_at = warning.apiResponse.processed_at;
             
             console.log('本地状态已更新为已处理:', this.warningList[index]);
           }
@@ -1501,7 +1501,7 @@ export default {
         if (response.data && response.data.code === 0) {
           // 添加误报记录到操作历史
           if (!this.warningList[warningIndex].operationHistory) {
-            this.$set(this.warningList[warningIndex], 'operationHistory', [])
+            this.warningList[warningIndex].operationHistory = []
           }
           
           const newRecord = {
@@ -1655,15 +1655,15 @@ export default {
         if (index !== -1) {
           // 🔧 关键修复：更新 _apiData.status 字段为处理中
           if (this.warningList[index]._apiData) {
-            this.$set(this.warningList[index]._apiData, 'status', 2);
+            this.warningList[index]._apiData.status = 2;
           }
           
           // 🔧 同时更新前端使用的 status 字段
-          this.$set(this.warningList[index], 'status', 'processing');
+          this.warningList[index].status = 'processing';
           
           // 确保有操作历史数组
           if (!this.warningList[index].operationHistory) {
-            this.$set(this.warningList[index], 'operationHistory', []);
+            this.warningList[index].operationHistory = [];
           }
           
           // 更新待处理记录为已完成状态
@@ -1743,7 +1743,7 @@ export default {
       })
       
       // 设置操作历史
-      this.$set(warning, 'operationHistory', operationHistory)
+      warning.operationHistory = operationHistory
     },
     
     // 结束处理 - 与预警详情对话框保持一致
@@ -1784,15 +1784,15 @@ export default {
           if (index !== -1) {
             // 🔧 关键修复：更新 _apiData.status 字段为已处理
             if (this.warningList[index]._apiData) {
-              this.$set(this.warningList[index]._apiData, 'status', 3)
+              this.warningList[index]._apiData.status = 3
             }
             
             // 更新字符串状态为已处理
-            this.$set(this.warningList[index], 'status', 'completed')
+            this.warningList[index].status = 'completed'
             
             // 确保有操作历史数组
             if (!this.warningList[index].operationHistory) {
-              this.$set(this.warningList[index], 'operationHistory', [])
+              this.warningList[index].operationHistory = []
             }
             
             // 添加新的已处理记录
@@ -3437,20 +3437,20 @@ export default {
   transition: all 0.2s ease;
 }
 
-.select-checkbox >>> .el-checkbox {
+.select-checkbox :deep(.el-checkbox) {
   margin: 0;
 }
 
-.select-checkbox >>> .el-checkbox__input.is-checked .el-checkbox__inner {
+.select-checkbox :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
   background-color: #3b82f6 !important;
   border-color: #3b82f6 !important;
 }
 
-.select-checkbox >>> .el-checkbox__inner:hover {
+.select-checkbox :deep(.el-checkbox__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.select-checkbox >>> .el-checkbox__inner {
+.select-checkbox :deep(.el-checkbox__inner) {
   width: 18px !important;
   height: 18px !important;
   border: 2px solid #dcdfe6 !important;
@@ -3458,7 +3458,7 @@ export default {
   background: rgba(255, 255, 255, 0.9) !important;
 }
 
-.select-checkbox >>> .el-checkbox__inner::after {
+.select-checkbox :deep(.el-checkbox__inner::after) {
   height: 8px !important;
   left: 5px !important;
   top: 1px !important;
@@ -3726,38 +3726,38 @@ export default {
 }
 
 /* 对话框样式优化 - 科技感设计 */
-.warning-management-container >>> .el-dialog {
+.warning-management-container :deep(.el-dialog) {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-.warning-management-container >>> .el-dialog__header {
+.warning-management-container :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
   padding: 16px 20px;
 }
 
-.warning-management-container >>> .el-dialog__title {
+.warning-management-container :deep(.el-dialog__title) {
   color: #1f2937;
   font-weight: 600;
 }
 
-.warning-management-container >>> .el-dialog__close {
+.warning-management-container :deep(.el-dialog__close) {
   color: #6b7280;
   transition: color 0.3s ease;
 }
 
-.warning-management-container >>> .el-dialog__close:hover {
+.warning-management-container :deep(.el-dialog__close:hover) {
   color: #3b82f6;
 }
 
-.warning-management-container >>> .el-dialog__body {
+.warning-management-container :deep(.el-dialog__body) {
   padding: 20px;
   background: #ffffff;
 }
 
-/* .warning-management-container >>> .el-button--primary {
+/* .warning-management-container :deep(.el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
@@ -3767,13 +3767,13 @@ export default {
   border-radius: 6px;
 }
 
-.warning-management-container >>> .el-button--primary:hover {
+.warning-management-container :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
   transform: translateY(-1px);
 } */
 
-.warning-management-container >>> .el-button--success {
+.warning-management-container :deep(.el-button--success) {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
@@ -3783,13 +3783,13 @@ export default {
   border-radius: 6px;
 }
 
-.warning-management-container >>> .el-button--success:hover {
+.warning-management-container :deep(.el-button--success:hover) {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
   transform: translateY(-1px);
 }
 
-.warning-management-container >>> .el-button--default {
+.warning-management-container :deep(.el-button--default) {
   background: white;
   border: 1px solid #d1d5db;
   color: #4b5563;
@@ -3797,14 +3797,14 @@ export default {
   border-radius: 6px;
 }
 
-.warning-management-container >>> .el-button--default:hover {
+.warning-management-container :deep(.el-button--default:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e40af;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
-.warning-management-container >>> .el-button--danger {
+.warning-management-container :deep(.el-button--danger) {
   background: linear-gradient(135deg, #f56c6c 0%, #dc2626 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(245, 108, 108, 0.3);
@@ -3814,13 +3814,13 @@ export default {
   border-radius: 6px;
 }
 
-.warning-management-container >>> .el-button--danger:hover {
+.warning-management-container :deep(.el-button--danger:hover) {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   box-shadow: 0 4px 10px rgba(245, 108, 108, 0.4);
   transform: translateY(-1px);
 }
 
-.warning-management-container >>> .el-button--warning {
+.warning-management-container :deep(.el-button--warning) {
   background: linear-gradient(135deg, #e6a23c 0%, #f59e0b 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(230, 162, 60, 0.3);
@@ -3830,49 +3830,49 @@ export default {
   border-radius: 6px;
 }
 
-.warning-management-container >>> .el-button--warning:hover {
+.warning-management-container :deep(.el-button--warning:hover) {
   background: linear-gradient(135deg, #d97706 0%, #dc2626 100%);
   box-shadow: 0 4px 10px rgba(230, 162, 60, 0.4);
   transform: translateY(-1px);
 }
 
 /* 输入框和选择框样式优化 */
-.warning-management-container >>> .el-input__inner {
+.warning-management-container :deep(.el-input__inner) {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: #fafafa;
 }
 
-.warning-management-container >>> .el-input__inner:focus {
+.warning-management-container :deep(.el-input__inner:focus) {
   border-color: #3b82f6;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.warning-management-container >>> .el-select .el-input__inner {
+.warning-management-container :deep(.el-select .el-input__inner) {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fafafa;
 }
 
-.warning-management-container >>> .el-select .el-input__inner:focus {
+.warning-management-container :deep(.el-select .el-input__inner:focus) {
   border-color: #3b82f6;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.warning-management-container >>> .el-date-editor.el-input {
+.warning-management-container :deep(.el-date-editor.el-input) {
   border-radius: 8px;
 }
 
-.warning-management-container >>> .el-date-editor .el-input__inner {
+.warning-management-container :deep(.el-date-editor .el-input__inner) {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fafafa;
 }
 
-.warning-management-container >>> .el-date-editor .el-input__inner:focus {
+.warning-management-container :deep(.el-date-editor .el-input__inner:focus) {
   border-color: #3b82f6;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -3890,7 +3890,7 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.pagination-section >>> .el-pagination .el-pager li.active {
+.pagination-section :deep(.el-pagination .el-pager li.active) {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -3900,7 +3900,7 @@ export default {
 }
 
 /* 覆盖Element UI分页组件样式 */
-/* .pagination-section >>> .el-pagination .el-pager li {
+/* .pagination-section :deep(.el-pagination .el-pager li) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 4px;
@@ -3908,13 +3908,13 @@ export default {
   margin: 0 2px;
 }
 
-.pagination-section >>> .el-pagination .el-pager li:hover {
+.pagination-section :deep(.el-pagination .el-pager li:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.pagination-section >>> .el-pagination .el-pager li.active {
+.pagination-section :deep(.el-pagination .el-pager li.active) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -3922,7 +3922,7 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination-section >>> .el-pagination button {
+.pagination-section :deep(.el-pagination button) {
   background: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -3931,7 +3931,7 @@ export default {
   margin: 0 2px !important;
 }
 
-.pagination-section >>> .el-pagination button:hover {
+.pagination-section :deep(.el-pagination button:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -3939,60 +3939,60 @@ export default {
 } */
 
 /* 更强的Element UI样式覆盖 */
-/* .pagination-section >>> .el-pagination .el-pager li.number {
+/* .pagination-section :deep(.el-pagination .el-pager li.number) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
 }
 
-.pagination-section >>> .el-pagination .el-pager li.number:hover {
+.pagination-section :deep(.el-pagination .el-pager li.number:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 }
 
-.pagination-section >>> .el-pagination .el-pager li.number.active {
+.pagination-section :deep(.el-pagination .el-pager li.number.active) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border-color: #3b82f6 !important;
   color: white !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 } */
 
-.pagination-section >>> .el-pagination .btn-prev,
-.pagination-section >>> .el-pagination .btn-next {
+.pagination-section :deep(.el-pagination .btn-prev),
+.pagination-section :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
 }
 
-.pagination-section >>> .el-pagination .btn-prev:hover,
-/* .pagination-section >>> .el-pagination .btn-next:hover {
+.pagination-section :deep(.el-pagination .btn-prev:hover),
+/* .pagination-section :deep(.el-pagination .btn-next:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 } */
 
-.pagination-section >>> .el-pagination .el-select .el-input .el-input__inner {
+.pagination-section :deep(.el-pagination .el-select .el-input .el-input__inner) {
   border-color: #dcdfe6 !important;
   color: #606266 !important;
   border-radius: 6px !important;
 }
 
-.pagination-section >>> .el-pagination .el-select .el-input .el-input__inner:hover {
+.pagination-section :deep(.el-pagination .el-select .el-input .el-input__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.pagination-section >>> .el-pagination .el-input__inner {
+.pagination-section :deep(.el-pagination .el-input__inner) {
   border-radius: 6px !important;
 }
 
-.pagination-section >>> .el-pagination__jump {
+.pagination-section :deep(.el-pagination__jump) {
   color: #606266 !important;
 }
 
-.pagination-section >>> .el-pagination__total {
+.pagination-section :deep(.el-pagination__total) {
   color: #606266 !important;
   font-weight: 500 !important;
 }
@@ -4003,7 +4003,7 @@ export default {
 }
 
 /* 归档对话框层级控制 */
-.page-container >>> .el-dialog__wrapper {
+.page-container :deep(.el-dialog__wrapper) {
   z-index: 3000 !important;
 }
 </style>

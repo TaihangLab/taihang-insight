@@ -1,24 +1,18 @@
 import MockRBACService from './rbac/mockRBACService';
 
-// 尝试导入真实服务，如果失败则使用模拟服务
-let hasRealServices = false;
-let UserService, RoleService, DepartmentService, PositionService, TenantService, PermissionService, AssociationService;
+// 导入真实服务 (Vite/ESM compatible)
+import UserService from './rbac/userService.js';
+import RoleService from './rbac/roleService.js';
+import DepartmentService from './rbac/departmentService.js';
+import PositionService from './rbac/positionService.js';
+import TenantService from './rbac/tenantService.js';
+import PermissionService from './rbac/permissionService.js';
+import AssociationService from './rbac/associationService.js';
 
-try {
-  // 尝试导入真实服务
-  UserService = require('./rbac/userService').default;
-  RoleService = require('./rbac/roleService').default;
-  DepartmentService = require('./rbac/departmentService').default;
-  PositionService = require('./rbac/positionService').default;
-  TenantService = require('./rbac/tenantService').default;
-  PermissionService = require('./rbac/permissionService').default;
-  AssociationService = require('./rbac/associationService').default;
+// 标记真实服务可用
+const hasRealServices = true;
 
-  hasRealServices = true;
-} catch (error) {
-  console.warn('⚠️ 真实RBAC服务不可用，使用模拟服务:', error.message);
-  hasRealServices = false;
-}
+
 
 // 缓存管理器
 const cacheManager = {

@@ -13,7 +13,7 @@
       <el-table-column prop="department" label="部门" min-width="80" align="center"></el-table-column>
       <el-table-column prop="phone" label="手机号码" min-width="120" align="center"></el-table-column>
       <el-table-column prop="status" label="状态" width="80" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-switch
             v-model="scope.row.status"
             :active-value="0"
@@ -26,7 +26,7 @@
       </el-table-column>
       <el-table-column prop="create_time" label="创建时间" min-width="140" align="center"></el-table-column>
       <el-table-column label="操作" min-width="240" fixed="right" align="center">
-        <template slot-scope="scope">
+        <template #default="scope">
           <div class="operation-buttons">
             <el-button type="text" class="auth-btn" @click="handleAuthorization(scope.row)">授权</el-button>
             <el-button type="text" class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
@@ -102,15 +102,15 @@ export default {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
-.custom-table >>> .el-table__cell {
+.custom-table :deep(.el-table__cell) {
   border-right: none;
 }
 
-.custom-table >>> .el-table::before {
+.custom-table :deep(.el-table::before) {
   height: 0;
 }
 
-.custom-table >>> .el-table__header-wrapper th {
+.custom-table :deep(.el-table__header-wrapper th) {
   font-weight: bold;
   text-align: center;
   background: #f5f7fa !important;
@@ -118,11 +118,11 @@ export default {
   border-bottom: 1px solid #ebeef5 !important;
 }
 
-.custom-table >>> .el-table__row td {
+.custom-table :deep(.el-table__row td) {
   text-align: center;
 }
 
-.custom-table >>> .el-table .el-table__body tr:hover > td {
+.custom-table :deep(.el-table .el-table__body tr:hover > td) {
   background: #f5f7fa !important;
 }
 

@@ -98,14 +98,13 @@
 
 
 <script>
-	import uiHeader from '../../../../layout/UiHeader.vue'
+	
   import player from './dialogs/jessibuca.vue'
   import moment  from 'moment'
   import recordDownload from '../../../dialog/recordDownload.vue'
 	export default {
 		name: 'app',
-		components: {
-			uiHeader, player,recordDownload
+		components: {player,recordDownload
 		},
 		data() {
 			return {

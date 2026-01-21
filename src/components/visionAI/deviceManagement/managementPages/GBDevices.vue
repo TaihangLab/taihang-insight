@@ -142,7 +142,7 @@
           <el-table-column type="index" label="序号" width="60" align="center"></el-table-column>
           
           <el-table-column prop="name" label="设备名称" min-width="160" show-overflow-tooltip>
-            <template slot-scope="{ row }">
+            <template #default="{ row }">
               <div class="device-name">
                 <i class="el-icon-video-camera device-icon"></i>
                 <span>{{ row.name }}</span>
@@ -153,7 +153,7 @@
           <el-table-column prop="deviceId" label="设备编号" min-width="180" align="center" show-overflow-tooltip></el-table-column>
           
           <el-table-column label="网络地址" min-width="140" align="center">
-            <template slot-scope="{ row }">
+            <template #default="{ row }">
               <el-tag v-if="row.hostAddress" size="small" type="info">{{ row.hostAddress }}</el-tag>
               <el-tag v-else size="small" type="warning">未知</el-tag>
             </template>
@@ -163,7 +163,7 @@
           <el-table-column prop="transport" label="信令传输" min-width="100" align="center"></el-table-column>
           
           <el-table-column label="流传输模式" min-width="140" align="center">
-            <template slot-scope="{ row }">
+            <template #default="{ row }">
               <el-select
                 v-model="row.streamMode"
                 size="mini"
@@ -177,23 +177,23 @@
           </el-table-column>
           
           <el-table-column label="通道数" width="80" align="center">
-            <template slot-scope="{ row }">
+            <template #default="{ row }">
               <span class="channel-count">{{ row.channelCount || 0 }}</span>
             </template>
           </el-table-column>
           
           <el-table-column label="状态" width="100" align="center">
-            <template slot-scope="{ row }">
+            <template #default="{ row }">
               <div slot="reference" class="name-wrapper">
-                <el-tag size="medium" v-if="row.onLine && Vue.prototype.$myServerId !== row.serverId" style="border-color: #ecf1af">在线</el-tag>
-                <el-tag size="medium" v-if="row.onLine && Vue.prototype.$myServerId === row.serverId">在线</el-tag>
+                <el-tag size="medium" v-if="row.onLine && myServerId !== row.serverId" style="border-color: #ecf1af">在线</el-tag>
+                <el-tag size="medium" v-if="row.onLine && myServerId === row.serverId">在线</el-tag>
                 <el-tag size="medium" type="info" v-if="!row.onLine">离线</el-tag>
               </div>
             </template>
           </el-table-column>
           
           <el-table-column label="订阅状态" min-width="180" align="center">
-            <template slot-scope="{ row }">
+            <template #default="{ row }">
               <div class="subscribe-status">
                 <el-tooltip content="目录订阅" placement="top">
                   <el-checkbox 
@@ -221,7 +221,7 @@
           <el-table-column prop="registerTime" label="最近注册" min-width="140" align="center" show-overflow-tooltip></el-table-column>
           
           <el-table-column label="操作" width="280" align="center" fixed="right">
-            <template slot-scope="{ row }">
+            <template #default="{ row }">
               <div class="operation-buttons">
                 <el-tooltip content="刷新设备" placement="top">
                   <el-button 
@@ -358,7 +358,7 @@ import deviceEdit from '../../../dialog/deviceEdit.vue'
 import GBDeviceChannels from './dialogs/GBDeviceChannels.vue'
 import SyncChannelProgress from './dialogs/SyncChannelProgress.vue'
 import configInfo from '../../../dialog/configInfo.vue'
-import Vue from 'vue'
+import { getCurrentInstance } from 'vue'
 
 export default {
   name: 'GBDevices',
@@ -403,17 +403,15 @@ export default {
       updateLooper: null,
       
       // 服务ID
-      serverId: null
-    }
-  },
-  
-  computed: {
-    Vue() {
-      return Vue
+      serverId: null,
+
+      // 当前服务器ID
+      myServerId: null
     }
   },
   
   created() {
+    this.myServerId = this.$myServerId || null;
     this.initData();
   },
   
@@ -872,7 +870,7 @@ export default {
 }
 
 /* 搜索框布局混乱 */
-.search-item >>> .el-input__prefix {
+.search-item :deep(.el-input__prefix) {
   top:7px;
   left:5px;
 }
@@ -1151,7 +1149,7 @@ export default {
 }
 
 /* 科技感按钮样式 - 与 camera.vue 一致 */
-/* .gb-devices-container >>> .el-button {
+/* .gb-devices-container :deep(.el-button) {
   height: 32px;
   padding: 6px 16px;
   font-size: 14px;
@@ -1161,7 +1159,7 @@ export default {
   margin: 0;
 }
 
-.gb-devices-container >>> .el-button--primary {
+.gb-devices-container :deep(.el-button--primary) {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3) !important;
@@ -1173,7 +1171,7 @@ export default {
   letter-spacing: 0.3px !important;
 }
 
-.gb-devices-container >>> .el-button--primary::before {
+.gb-devices-container :deep(.el-button--primary::before) {
   content: '';
   position: absolute;
   top: 0;
@@ -1184,17 +1182,17 @@ export default {
   transition: left 0.5s;
 }
 
-.gb-devices-container >>> .el-button--primary:hover {
+.gb-devices-container :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%) !important;
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4) !important;
   transform: translateY(-2px) !important;
 }
 
-.gb-devices-container >>> .el-button--primary:hover::before {
+.gb-devices-container :deep(.el-button--primary:hover::before) {
   left: 100%;
 }
 
-.gb-devices-container >>> .el-button--success {
+.gb-devices-container :deep(.el-button--success) {
   background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4), 0 2px 4px rgba(5, 150, 105, 0.3) !important;
@@ -1206,13 +1204,13 @@ export default {
   letter-spacing: 0.3px !important;
 }
 
-.gb-devices-container >>> .el-button--success:hover {
+.gb-devices-container :deep(.el-button--success:hover) {
   background: linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%) !important;
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5), 0 4px 8px rgba(5, 150, 105, 0.4) !important;
   transform: translateY(-2px) !important;
 }
 
-.gb-devices-container >>> .el-button--info {
+.gb-devices-container :deep(.el-button--info) {
   background: linear-gradient(135deg, #0891b2 0%, #06b6d4 50%, #22d3ee 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4), 0 2px 4px rgba(8, 145, 178, 0.3) !important;
@@ -1224,20 +1222,20 @@ export default {
   letter-spacing: 0.3px !important;
 }
 
-.gb-devices-container >>> .el-button--info:hover {
+.gb-devices-container :deep(.el-button--info:hover) {
   background: linear-gradient(135deg, #0e7490 0%, #0891b2 50%, #06b6d4 100%) !important;
   box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5), 0 4px 8px rgba(8, 145, 178, 0.4) !important;
   transform: translateY(-2px) !important;
 }
 
-.gb-devices-container >>> .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--info):not(.el-button--danger):not(.el-button--warning) {
+.gb-devices-container :deep(.el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--info):not(.el-button--danger):not(.el-button--warning) {
   background: white !important;
   border: 1px solid #e2e8f0 !important;
   color: #4b5563 !important;
   transition: all 0.3s ease !important;
 }
 
-.gb-devices-container >>> .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--info):not(.el-button--danger):not(.el-button--warning):hover {
+.gb-devices-container :deep(.el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--info):not(.el-button--danger):not(.el-button--warning):hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -1246,36 +1244,36 @@ export default {
 } */
 
 /* 输入框样式 */
-/* .gb-devices-container >>> .el-input__inner {
+/* .gb-devices-container :deep(.el-input__inner) {
   border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
-.gb-devices-container >>> .el-input__inner:hover {
+.gb-devices-container :deep(.el-input__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.gb-devices-container >>> .el-input__inner:focus {
+.gb-devices-container :deep(.el-input__inner:focus) {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* 选择器样式 */
-.gb-devices-container >>> .el-select .el-input__inner {
+.gb-devices-container :deep(.el-select .el-input__inner) {
   border: 1px solid #e2e8f0 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
 }
 
-.gb-devices-container >>> .el-select .el-input__inner:hover {
+.gb-devices-container :deep(.el-select .el-input__inner:hover) {
   border-color: #3b82f6 !important;
 }
 
-.gb-devices-container >>> .el-select .el-input__inner:focus {
+.gb-devices-container :deep(.el-select .el-input__inner:focus) {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
-} */
+}
 
 /* 深色主题支持 */
 @media (prefers-color-scheme: dark) {

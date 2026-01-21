@@ -124,7 +124,7 @@
 </template>
 
 <script>
-import userService from './service/UserService'
+import userService from './service/UserService.js'
 
 export default {
   name: 'Login',
@@ -293,9 +293,6 @@ export default {
 </script>
 
 <style scoped>
-/* 引入Font Awesome图标字体 */
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
-
 /* 主容器样式 */
 .tech-login-container {
   position: relative;

@@ -1017,41 +1017,40 @@ export default {
   width: 330px;
 }
 
-.time-filter >>> .el-radio-button__inner {
+.time-filter:deep(.el-radio-button__inner) {
   background-color: rgba(6, 30, 93, 0.5) !important;
   border-color: rgba(0, 255, 255, 0.3) !important;
   color: #7eaee5 !important;
 }
 
-.time-filter
-  >>> .el-radio-button__orig-radio:checked
-  + .el-radio-button__inner {
+.time-filter:deep(.el-radio-button__orig-radio:checked
+  + .el-radio-button__inner) {
   background-color: rgba(0, 255, 255, 0.2) !important;
   border-color: #00ffff !important;
   color: #00ffff !important;
   box-shadow: -1px 0 0 0 #00ffff !important;
 }
 
-.action-buttons >>> .el-button--primary {
+.action-buttons:deep(.el-button--primary) {
   background-color: rgba(0, 255, 255, 0.2) !important;
   border-color: #00ffff !important;
   color: #00ffff !important;
 }
 
-.action-buttons >>> .el-button {
+.action-buttons:deep(.el-button) {
   background-color: rgba(6, 30, 93, 0.5) !important;
   border-color: rgba(0, 255, 255, 0.3) !important;
   color: #7eaee5 !important;
 }
 
-.action-buttons >>> .el-button:hover {
+.action-buttons:deep(.el-button:hover) {
   background-color: rgba(0, 255, 255, 0.1) !important;
   border-color: #00ffff !important;
   color: #00ffff !important;
 }
 
 /* 自定义对话框样式 */
-.visual-statistics >>> .custom-dialog {
+.visual-statistics:deep(.custom-dialog) {
   background: linear-gradient(
     180deg,
     rgba(6, 30, 93, 0.95) 0%,
@@ -1062,69 +1061,68 @@ export default {
   border-radius: 4px;
 }
 
-.visual-statistics >>> .custom-dialog .el-dialog__header {
+.visual-statistics:deep(.custom-dialog .el-dialog__header) {
   background: rgba(6, 30, 93, 0.9);
   border-bottom: 1px solid rgba(0, 255, 255, 0.2);
   padding: 12px 20px;
 }
 
-.visual-statistics >>> .custom-dialog .el-dialog__title {
+.visual-statistics:deep(.custom-dialog .el-dialog__title) {
   color: #00ffff;
   font-size: 16px;
   font-weight: bold;
 }
 
-.visual-statistics >>> .custom-dialog .el-dialog__headerbtn .el-dialog__close {
+.visual-statistics:deep(.custom-dialog .el-dialog__headerbtn .el-dialog__close) {
   color: #7eaee5;
 }
 
-.visual-statistics
-  >>> .custom-dialog
+.visual-statistics:deep(.custom-dialog
   .el-dialog__headerbtn:hover
-  .el-dialog__close {
+  .el-dialog__close) {
   color: #00ffff;
 }
 
-.visual-statistics >>> .custom-dialog .el-dialog__body {
+.visual-statistics:deep(.custom-dialog .el-dialog__body) {
   background: transparent;
   padding: 20px;
   color: #7eaee5;
 }
 
-.visual-statistics >>> .custom-dialog .el-dialog__footer {
+.visual-statistics:deep(.custom-dialog .el-dialog__footer) {
   background: rgba(6, 30, 93, 0.9);
   border-top: 1px solid rgba(0, 255, 255, 0.2);
   padding: 10px 20px;
 }
 
 /* 日期选择器组件样式 */
-.visual-statistics >>> .el-range-editor.el-input__inner {
+.visual-statistics:deep(.el-range-editor.el-input__inner) {
   background-color: rgba(0, 30, 60, 0.3) !important;
   border: 1px solid rgba(0, 255, 255, 0.3) !important;
   color: #7eaee5 !important;
 }
 
-.visual-statistics >>> .el-range-editor.el-input__inner:hover,
-.visual-statistics >>> .el-range-editor.el-input__inner:focus {
+.visual-statistics:deep(.el-range-editor.el-input__inner:hover),
+.visual-statistics:deep(.el-range-editor.el-input__inner:focus) {
   border-color: #00ffff !important;
 }
 
-.visual-statistics >>> .el-range-editor .el-range-input {
+.visual-statistics:deep(.el-range-editor .el-range-input) {
   background-color: transparent !important;
   color: #7eaee5 !important;
 }
 
-.visual-statistics >>> .el-range-editor .el-range-separator {
+.visual-statistics:deep(.el-range-editor .el-range-separator) {
   color: #7eaee5 !important;
 }
 
-.visual-statistics >>> .el-range-editor .el-range__icon,
-.visual-statistics >>> .el-range-editor .el-range__close-icon {
+.visual-statistics:deep(.el-range-editor .el-range__icon),
+.visual-statistics:deep(.el-range-editor .el-range__close-icon) {
   color: #00ffff !important;
 }
 
 /* 日期选择面板样式 */
-.visual-statistics >>> .date-picker-dropdown.el-picker-panel {
+.visual-statistics:deep(.date-picker-dropdown.el-picker-panel) {
   background: linear-gradient(
     180deg,
     rgba(6, 30, 93, 0.98) 0%,
@@ -1135,72 +1133,70 @@ export default {
   border-radius: 4px !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-picker__header {
+.visual-statistics:deep(.date-picker-dropdown .el-date-picker__header) {
   margin: 8px 12px !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-picker__header-label {
+.visual-statistics:deep(.date-picker-dropdown .el-date-picker__header-label) {
   color: #00ffff !important;
   font-weight: bold !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-picker-panel__icon-btn {
+.visual-statistics:deep(.date-picker-dropdown .el-picker-panel__icon-btn) {
   color: #7eaee5 !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-picker-panel__icon-btn:hover {
+.visual-statistics:deep(.date-picker-dropdown .el-picker-panel__icon-btn:hover) {
   color: #00ffff !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-table {
+.visual-statistics:deep(.date-picker-dropdown .el-date-table) {
   margin: 5px 0 !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-table th {
+.visual-statistics:deep(.date-picker-dropdown .el-date-table th) {
   color: #00ffff !important;
   font-weight: 600 !important;
   border-bottom-color: rgba(0, 255, 255, 0.2) !important;
   padding: 5px 0 !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-table td {
+.visual-statistics:deep(.date-picker-dropdown .el-date-table td) {
   padding: 2px 0 !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-table td div {
+.visual-statistics:deep(.date-picker-dropdown .el-date-table td div) {
   padding: 0 !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-table td span {
+.visual-statistics:deep(.date-picker-dropdown .el-date-table td span) {
   width: 28px !important;
   height: 28px !important;
   line-height: 28px !important;
   border-radius: 50% !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-table td.available span {
+.visual-statistics:deep(.date-picker-dropdown .el-date-table td.available span) {
   color: #7eaee5 !important;
 }
 
-.visual-statistics
-  >>> .date-picker-dropdown
+.visual-statistics:deep(.date-picker-dropdown
   .el-date-table
   td.available:hover
-  span {
+  span) {
   background-color: rgba(0, 255, 255, 0.15) !important;
   color: #fff !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-table td.today span {
+.visual-statistics:deep(.date-picker-dropdown .el-date-table td.today span) {
   color: #00ffff !important;
   border: 1px solid rgba(0, 255, 255, 0.5) !important;
 }
 
-.visual-statistics
-  >>> .date-picker-dropdown
+.visual-statistics:deep(.date-picker-dropdown
   .el-date-table
   td.current:not(.disabled)
-  span {
+  span) {
   background: linear-gradient(
     135deg,
     rgba(0, 255, 255, 0.3) 0%,
@@ -1209,50 +1205,46 @@ export default {
   color: #ffffff !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-range-picker__header {
+.visual-statistics:deep(.date-picker-dropdown .el-date-range-picker__header) {
   margin-bottom: 8px !important;
   color: #00ffff !important;
   font-weight: bold !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-range-picker__content {
+.visual-statistics:deep(.date-picker-dropdown .el-date-range-picker__content) {
   padding: 5px 0 !important;
 }
 
-.visual-statistics
-  >>> .date-picker-dropdown
-  .el-date-range-picker__content.is-left {
+.visual-statistics:deep(.date-picker-dropdown
+  .el-date-range-picker__content.is-left) {
   border-right: 1px solid rgba(0, 255, 255, 0.2) !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-picker-panel__footer {
+.visual-statistics:deep(.date-picker-dropdown .el-picker-panel__footer) {
   background-color: rgba(6, 30, 93, 0.9) !important;
   border-top: 1px solid rgba(0, 255, 255, 0.2) !important;
   padding: 8px 15px !important;
 }
 
-.visual-statistics
-  >>> .date-picker-dropdown
+.visual-statistics:deep(.date-picker-dropdown
   .el-picker-panel__footer
-  .el-button--default {
+  .el-button--default) {
   background-color: rgba(6, 30, 93, 0.5) !important;
   border-color: rgba(0, 255, 255, 0.3) !important;
   color: #7eaee5 !important;
 }
 
-.visual-statistics
-  >>> .date-picker-dropdown
+.visual-statistics:deep(.date-picker-dropdown
   .el-picker-panel__footer
-  .el-button--default:hover {
+  .el-button--default:hover) {
   background-color: rgba(0, 255, 255, 0.1) !important;
   border-color: #00ffff !important;
   color: #00ffff !important;
 }
 
-.visual-statistics
-  >>> .date-picker-dropdown
+.visual-statistics:deep(.date-picker-dropdown
   .el-picker-panel__footer
-  .el-button--primary {
+  .el-button--primary) {
   background-color: rgba(0, 255, 255, 0.2) !important;
   border-color: #00ffff !important;
   color: #00ffff !important;
@@ -1577,31 +1569,31 @@ export default {
 }
 
 /* 自定义对话框按钮样式 */
-.visual-statistics >>> .custom-dialog .el-button--primary {
+.visual-statistics:deep(.custom-dialog .el-button--primary) {
   background-color: rgba(0, 255, 255, 0.2) !important;
   border-color: #00ffff !important;
   color: #00ffff !important;
 }
 
-.visual-statistics >>> .custom-dialog .el-button {
+.visual-statistics:deep(.custom-dialog .el-button) {
   background-color: rgba(6, 30, 93, 0.5) !important;
   border-color: rgba(0, 255, 255, 0.3) !important;
   color: #7eaee5 !important;
 }
 
-.visual-statistics >>> .custom-dialog .el-button:hover {
+.visual-statistics:deep(.custom-dialog .el-button:hover) {
   background-color: rgba(0, 255, 255, 0.1) !important;
   border-color: #00ffff !important;
   color: #00ffff !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-table td.next-month span,
-.visual-statistics >>> .date-picker-dropdown .el-date-table td.prev-month span {
+.visual-statistics:deep(.date-picker-dropdown .el-date-table td.next-month span),
+.visual-statistics:deep(.date-picker-dropdown .el-date-table td.prev-month span) {
   color: rgba(126, 174, 229, 0.2) !important;
   background: transparent !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-table td.in-range div {
+.visual-statistics:deep(.date-picker-dropdown .el-date-table td.in-range div) {
   background: linear-gradient(
     90deg,
     rgba(0, 255, 255, 0.05) 0%,
@@ -1609,8 +1601,8 @@ export default {
   ) !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-date-table td.start-date span,
-.visual-statistics >>> .date-picker-dropdown .el-date-table td.end-date span {
+.visual-statistics:deep(.date-picker-dropdown .el-date-table td.start-date span),
+.visual-statistics:deep(.date-picker-dropdown .el-date-table td.end-date span) {
   background: linear-gradient(
     90deg,
     rgba(0, 255, 255, 0.3) 0%,
@@ -1620,36 +1612,35 @@ export default {
   font-weight: bold !important;
 }
 
-.visual-statistics
-  >>> .date-picker-dropdown
+.visual-statistics:deep(.date-picker-dropdown
   .el-date-table
   td.disabled
   div
-  span {
+  span) {
   color: rgba(126, 174, 229, 0.2) !important;
   background: transparent !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-month-table td .cell {
+.visual-statistics:deep(.date-picker-dropdown .el-month-table td .cell) {
   color: #7eaee5 !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-month-table td.current .cell {
+.visual-statistics:deep(.date-picker-dropdown .el-month-table td.current .cell) {
   color: #00ffff !important;
   background-color: rgba(0, 255, 255, 0.2) !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-year-table td .cell {
+.visual-statistics:deep(.date-picker-dropdown .el-year-table td .cell) {
   color: #7eaee5 !important;
 }
 
-.visual-statistics >>> .date-picker-dropdown .el-year-table td.current .cell {
+.visual-statistics:deep(.date-picker-dropdown .el-year-table td.current .cell) {
   color: #00ffff !important;
   background-color: rgba(0, 255, 255, 0.2) !important;
 }
 
 /* 解决选择时间界面被覆盖的问题 */
-::v-deep .date-picker-dropdown {
+:deep(.date-picker-dropdown) {
   position: absolute !important;
 }
 </style>

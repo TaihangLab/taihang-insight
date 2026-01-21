@@ -56,7 +56,7 @@
         <el-table-column prop="email" label="邮箱" min-width="200" align="center"></el-table-column>
         <el-table-column prop="phone" label="手机" min-width="140" align="center"></el-table-column>
                      <el-table-column prop="status" label="状态" width="80" align="center">
-               <template slot-scope="scope">
+               <template #default="scope">
                  <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="mini">
                    {{ scope.row.status === 0 ? '正常' : '停用' }}
                  </el-tag>
@@ -64,7 +64,7 @@
              </el-table-column>
         <el-table-column prop="create_time" label="创建时间" min-width="160" align="center"></el-table-column>
         <el-table-column label="操作" width="100" fixed="right" align="center">
-          <template slot-scope="scope">
+          <template #default="scope">
             <div class="operation-buttons">
               <el-button type="text" class="cancel-auth-btn" @click="cancelAuth(scope.row)">取消授权</el-button>
             </div>
@@ -134,7 +134,7 @@
             <el-table-column prop="email" label="邮箱" min-width="200" align="center"></el-table-column>
             <el-table-column prop="phone" label="手机" min-width="140" align="center"></el-table-column>
             <el-table-column prop="status" label="状态" width="80" align="center">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="mini">
                   {{ scope.row.status === 1 ? '正常' : '停用' }}
                 </el-tag>
@@ -689,25 +689,25 @@ export default {
   color: #303133;
   font-weight: 500;
 }
-.filter-section >>> .el-input__inner,
-.filter-section >>> .el-select .el-input__inner {
+.filter-section :deep(.el-input__inner),
+.filter-section :deep(.el-select .el-input__inner) {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   transition: all 0.3s ease;
   background: #fff;
 }
-.filter-section >>> .el-input__inner:hover,
-.filter-section >>> .el-select .el-input__inner:hover {
+.filter-section :deep(.el-input__inner:hover),
+.filter-section :deep(.el-select .el-input__inner:hover) {
   border-color: #3b82f6;
 }
-.filter-section >>> .el-input__inner:focus,
-.filter-section >>> .el-select .el-input__inner:focus {
+.filter-section :deep(.el-input__inner:focus),
+.filter-section :deep(.el-select .el-input__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 /* 搜索按钮 */
-/* .filter-section >>> .el-button--primary {
+/* .filter-section :deep(.el-button--primary) {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -716,19 +716,19 @@ export default {
   border-radius: 8px;
   transition: all 0.3s ease;
 }
-.filter-section >>> .el-button--primary:hover {
+.filter-section :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4);
   transform: translateY(-2px);
 }
-.filter-section >>> .el-button:not(.el-button--primary) {
+.filter-section :deep(.el-button:not(.el-button--primary) {
   background: #f5f7fa;
   border-color: #e4e7ed;
   color: #606266;
   border-radius: 8px;
   transition: all 0.3s ease;
 }
-.filter-section >>> .el-button:not(.el-button--primary):hover {
+.filter-section :deep(.el-button:not(.el-button--primary):hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e3a8a;
@@ -742,29 +742,29 @@ export default {
   text-align: left;
   border-bottom: none;
 }
-/* .table-operations >>> .el-button {
+/* .table-operations :deep(.el-button) {
   margin-right: 8px;
   border-radius: 8px;
   font-weight: 600;
   transition: all 0.3s ease;
 }
-.table-operations >>> .el-button--primary {
+.table-operations :deep(.el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   color: #fff;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
-.table-operations >>> .el-button--primary:hover {
+.table-operations :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
   transform: translateY(-1px);
 }
-.table-operations >>> .el-button:not(.el-button--primary) {
+.table-operations :deep(.el-button:not(.el-button--primary) {
   background: #f5f7fa;
   border-color: #e4e7ed;
   color: #606266;
 }
-.table-operations >>> .el-button:not(.el-button--primary):hover {
+.table-operations :deep(.el-button:not(.el-button--primary):hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e3a8a;
@@ -779,34 +779,34 @@ export default {
   border: 1px solid #ebeef5;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
-.custom-table >>> .el-table__cell {
+.custom-table :deep(.el-table__cell) {
   border-right: none;
 }
-.custom-table >>> .el-table::before {
+.custom-table :deep(.el-table::before) {
   height: 0;
 }
-.custom-table >>> .el-table__header-wrapper th {
+.custom-table :deep(.el-table__header-wrapper th) {
   font-weight: bold;
   text-align: center;
   background: #f5f7fa !important;
   color: #303133 !important;
   border-bottom: 1px solid #ebeef5 !important;
 }
-.custom-table >>> .el-table__fixed-right-header-wrapper th,
-.custom-table >>> .el-table__fixed-header-wrapper th {
+.custom-table :deep(.el-table__fixed-right-header-wrapper th),
+.custom-table :deep(.el-table__fixed-header-wrapper th) {
   font-weight: bold;
   text-align: center;
   background: #f5f7fa !important;
   color: #303133 !important;
   border-bottom: 1px solid #ebeef5 !important;
 }
-.custom-table >>> .el-table__row td {
+.custom-table :deep(.el-table__row td) {
   text-align: center;
 }
-.custom-table >>> .el-table .el-table__body tr:hover > td {
+.custom-table :deep(.el-table .el-table__body tr:hover > td) {
   background: #f5f7fa !important;
 }
-.custom-table >>> .el-table--striped .el-table__body tr.el-table__row--striped td {
+.custom-table :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
   background-color: #fafafa;
 }
 
@@ -848,16 +848,16 @@ export default {
   padding-bottom: 10px!important;
 }
 
-.user-pagination >>> .el-pagination__total {
+.user-pagination :deep(.el-pagination__total) {
   padding-top: 3px;
 }
 
-.user-pagination >>> .el-pagination {
+.user-pagination :deep(.el-pagination) {
   display: flex;
   justify-content: center;
 }
 
-.user-pagination >>> .el-pagination .el-pager li {
+.user-pagination :deep(.el-pagination .el-pager li) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 4px;
@@ -865,13 +865,13 @@ export default {
   margin: 0 2px;
 }
 
-.user-pagination >>> .el-pagination .el-pager li:hover {
+.user-pagination :deep(.el-pagination .el-pager li:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.user-pagination >>> .el-pagination .el-pager li.active {
+.user-pagination :deep(.el-pagination .el-pager li.active) {
   background: #3b82f6 !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -879,48 +879,48 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.user-pagination >>> .el-pagination button {
+.user-pagination :deep(.el-pagination button) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   color: #3b82f6;
 }
 
-.user-pagination >>> .el-pagination button:hover {
+.user-pagination :deep(.el-pagination button:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
 }
 
-.user-pagination >>> .el-pagination .btn-prev,
-.user-pagination >>> .el-pagination .btn-next {
+.user-pagination :deep(.el-pagination .btn-prev),
+.user-pagination :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
 }
 
 /* 添加用户弹框样式 */
-.role-user-assignment-container >>> .add-user-dialog .el-dialog {
+.role-user-assignment-container :deep(.add-user-dialog .el-dialog) {
   border-radius: 12px !important;
   overflow: hidden !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
 }
 
-.role-user-assignment-container >>> .add-user-dialog .el-dialog__header {
+.role-user-assignment-container :deep(.add-user-dialog .el-dialog__header) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
   padding: 16px 20px !important;
 }
 
-.role-user-assignment-container >>> .add-user-dialog .el-dialog__title {
+.role-user-assignment-container :deep(.add-user-dialog .el-dialog__title) {
   color: #1f2937 !important;
   font-weight: 600 !important;
 }
 
-.role-user-assignment-container >>> .add-user-dialog .el-dialog__body {
+.role-user-assignment-container :deep(.add-user-dialog .el-dialog__body) {
   padding: 20px !important;
   background: #ffffff !important;
 }
 
-.role-user-assignment-container >>> .add-user-dialog .el-dialog__footer {
+.role-user-assignment-container :deep(.add-user-dialog .el-dialog__footer) {
   padding: 10px 20px 20px !important;
   text-align: right !important;
   border-top: 1px solid rgba(59, 130, 246, 0.1) !important;
@@ -949,23 +949,23 @@ export default {
   font-weight: 500;
 }
 
-.user-search-section >>> .el-input__inner {
+.user-search-section :deep(.el-input__inner) {
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   transition: all 0.3s ease;
   background: #fff;
 }
 
-.user-search-section >>> .el-input__inner:hover {
+.user-search-section :deep(.el-input__inner:hover) {
   border-color: #3b82f6;
 }
 
-.user-search-section >>> .el-input__inner:focus {
+.user-search-section :deep(.el-input__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-/* .user-search-section >>> .el-button--primary {
+/* .user-search-section :deep(.el-button--primary) {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -975,13 +975,13 @@ export default {
   transition: all 0.3s ease;
 }
 
-.user-search-section >>> .el-button--primary:hover {
+.user-search-section :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4);
   transform: translateY(-2px);
 }
 
-.user-search-section >>> .el-button:not(.el-button--primary) {
+.user-search-section :deep(.el-button:not(.el-button--primary) {
   background: #f5f7fa;
   border-color: #e4e7ed;
   color: #606266;
@@ -989,7 +989,7 @@ export default {
   transition: all 0.3s ease;
 }
 
-.user-search-section >>> .el-button:not(.el-button--primary):hover {
+.user-search-section :deep(.el-button:not(.el-button--primary):hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e3a8a;
@@ -1009,15 +1009,15 @@ export default {
   overflow: hidden;
 }
 
-.user-table >>> .el-table__cell {
+.user-table :deep(.el-table__cell) {
   border-right: none;
 }
 
-.user-table >>> .el-table::before {
+.user-table :deep(.el-table::before) {
   height: 0;
 }
 
-.user-table >>> .el-table__header-wrapper th {
+.user-table :deep(.el-table__header-wrapper th) {
   font-weight: bold;
   text-align: center;
   background: #f5f7fa !important;
@@ -1025,15 +1025,15 @@ export default {
   border-bottom: 1px solid #ebeef5 !important;
 }
 
-.user-table >>> .el-table__row td {
+.user-table :deep(.el-table__row td) {
   text-align: center;
 }
 
-.user-table >>> .el-table .el-table__body tr:hover > td {
+.user-table :deep(.el-table .el-table__body tr:hover > td) {
   background: #f5f7fa !important;
 }
 
-.user-table >>> .el-table--striped .el-table__body tr.el-table__row--striped td {
+.user-table :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
   background-color: #fafafa;
 }
 
@@ -1046,16 +1046,16 @@ export default {
   padding-bottom: 10px!important;
 }
 
-.user-pagination >>> .el-pagination__total {
+.user-pagination :deep(.el-pagination__total) {
   padding-top: 3px;
 }
 
-.user-pagination >>> .el-pagination {
+.user-pagination :deep(.el-pagination) {
   display: flex;
   justify-content: center;
 }
 
-.user-pagination >>> .el-pagination .el-pager li {
+.user-pagination :deep(.el-pagination .el-pager li) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 4px;
@@ -1063,13 +1063,13 @@ export default {
   margin: 0 2px;
 }
 
-.user-pagination >>> .el-pagination .el-pager li:hover {
+.user-pagination :deep(.el-pagination .el-pager li:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.user-pagination >>> .el-pagination .el-pager li.active {
+.user-pagination :deep(.el-pagination .el-pager li.active) {
   background: #3b82f6 !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -1077,19 +1077,19 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.user-pagination >>> .el-pagination button {
+.user-pagination :deep(.el-pagination button) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   color: #3b82f6;
 }
 
-.user-pagination >>> .el-pagination button:hover {
+.user-pagination :deep(.el-pagination button:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
 }
 
-.user-pagination >>> .el-pagination .btn-prev,
-.user-pagination >>> .el-pagination .btn-next {
+.user-pagination :deep(.el-pagination .btn-prev),
+.user-pagination :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -1102,13 +1102,13 @@ export default {
   border-top: 1px solid rgba(59, 130, 246, 0.1);
 }
 
-.user-pagination >>> .el-pagination {
+.user-pagination :deep(.el-pagination) {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.user-pagination >>> .el-pagination .el-pager li {
+.user-pagination :deep(.el-pagination .el-pager li) {
   min-width: 30px;
   height: 30px;
   line-height: 28px;
@@ -1123,7 +1123,7 @@ export default {
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
 
-.user-pagination >>> .el-pagination .el-pager li.active {
+.user-pagination :deep(.el-pagination .el-pager li.active) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border-color: #3b82f6;
   color: #ffffff;
@@ -1131,14 +1131,14 @@ export default {
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
-.user-pagination >>> .el-pagination .el-pager li:hover {
+.user-pagination :deep(.el-pagination .el-pager li:hover) {
   border-color: #3b82f6;
   color: #1e40af;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25);
 }
 
-.user-pagination >>> .el-pagination button {
+.user-pagination :deep(.el-pagination button) {
   min-width: 30px;
   height: 30px;
   border: 1px solid rgba(59, 130, 246, 0.3);
@@ -1152,7 +1152,7 @@ export default {
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
 
-.user-pagination >>> .el-pagination button:hover {
+.user-pagination :deep(.el-pagination button:hover) {
   border-color: #3b82f6;
   color: #1e40af;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
@@ -1160,7 +1160,7 @@ export default {
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25);
 }
 
-.user-pagination >>> .el-pagination .el-select .el-input__inner {
+.user-pagination :deep(.el-pagination .el-select .el-input__inner) {
   border: 1px solid rgba(59, 130, 246, 0.3);
   border-radius: 6px;
   background: #fff;
@@ -1170,16 +1170,16 @@ export default {
   line-height: 30px;
 }
 
-.user-pagination >>> .el-pagination .el-select .el-input__inner:hover {
+.user-pagination :deep(.el-pagination .el-select .el-input__inner:hover) {
   border-color: #3b82f6;
 }
 
-.user-pagination >>> .el-pagination .el-pagination__jump {
+.user-pagination :deep(.el-pagination .el-pagination__jump) {
   color: #4b5563;
   font-size: 12px;
 }
 
-.user-pagination >>> .el-pagination .el-pagination__jump .el-input__inner {
+.user-pagination :deep(.el-pagination .el-pagination__jump .el-input__inner) {
   border: 1px solid rgba(59, 130, 246, 0.3);
   border-radius: 6px;
   background: #fff;
@@ -1190,14 +1190,14 @@ export default {
   width: 50px;
 }
 
-.user-pagination >>> .el-pagination .el-pagination__jump .el-input__inner:hover {
+.user-pagination :deep(.el-pagination .el-pagination__jump .el-input__inner:hover) {
   border-color: #3b82f6;
 } */
 
 /* 科技感标签样式 - 完全参照logRecords.vue设计 */
-.role-user-assignment-container >>> .el-table .el-tag--success,
-.role-user-assignment-container >>> .user-table .el-tag--success,
-.role-user-assignment-container >>> .el-dialog .el-tag--success {
+.role-user-assignment-container :deep(.el-table .el-tag--success),
+.role-user-assignment-container :deep(.user-table .el-tag--success),
+.role-user-assignment-container :deep(.el-dialog .el-tag--success) {
   background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
   color: #065f46 !important;
   border: 1px solid #a7f3d0 !important;
@@ -1209,9 +1209,9 @@ export default {
   line-height: 22px !important;
 }
 
-.role-user-assignment-container >>> .el-table .el-tag--danger,
-.role-user-assignment-container >>> .user-table .el-tag--danger,
-.role-user-assignment-container >>> .el-dialog .el-tag--danger {
+.role-user-assignment-container :deep(.el-table .el-tag--danger),
+.role-user-assignment-container :deep(.user-table .el-tag--danger),
+.role-user-assignment-container :deep(.el-dialog .el-tag--danger) {
   background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%) !important;
   color: #991b1b !important;
   border: 1px solid #fca5a5 !important;
@@ -1223,9 +1223,9 @@ export default {
   line-height: 22px !important;
 }
 
-.role-user-assignment-container >>> .el-table .el-tag--warning,
-.role-user-assignment-container >>> .user-table .el-tag--warning,
-.role-user-assignment-container >>> .el-dialog .el-tag--warning {
+.role-user-assignment-container :deep(.el-table .el-tag--warning),
+.role-user-assignment-container :deep(.user-table .el-tag--warning),
+.role-user-assignment-container :deep(.el-dialog .el-tag--warning) {
   background: linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%) !important;
   color: #92400e !important;
   border: 1px solid #fbbf24 !important;
@@ -1237,9 +1237,9 @@ export default {
   line-height: 22px !important;
 }
 
-.role-user-assignment-container >>> .el-table .el-tag--info,
-.role-user-assignment-container >>> .user-table .el-tag--info,
-.role-user-assignment-container >>> .el-dialog .el-tag--info {
+.role-user-assignment-container :deep(.el-table .el-tag--info),
+.role-user-assignment-container :deep(.user-table .el-tag--info),
+.role-user-assignment-container :deep(.el-dialog .el-tag--info) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   color: #1e40af !important;
   border: 1px solid #93c5fd !important;
@@ -1252,9 +1252,9 @@ export default {
 }
 
 /* 统一表格内所有标签样式 */
-.role-user-assignment-container >>> .el-table .el-tag,
-.role-user-assignment-container >>> .user-table .el-tag,
-.role-user-assignment-container >>> .el-dialog .el-tag {
+.role-user-assignment-container :deep(.el-table .el-tag),
+.role-user-assignment-container :deep(.user-table .el-tag),
+.role-user-assignment-container :deep(.el-dialog .el-tag) {
   border-radius: 6px !important;
   font-weight: 500 !important;
   font-size: 12px !important;
@@ -1264,15 +1264,15 @@ export default {
   transition: all 0.3s ease !important;
 }
 
-.role-user-assignment-container >>> .el-table .el-tag:hover,
-.role-user-assignment-container >>> .user-table .el-tag:hover,
-.role-user-assignment-container >>> .el-dialog .el-tag:hover {
+.role-user-assignment-container :deep(.el-table .el-tag:hover),
+.role-user-assignment-container :deep(.user-table .el-tag:hover),
+.role-user-assignment-container :deep(.el-dialog .el-tag:hover) {
   transform: translateY(-1px) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* 弹框内按钮样式 */
-/* .role-user-assignment-container >>> .el-dialog .el-button--primary {
+/* .role-user-assignment-container :deep(.el-dialog .el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -1282,13 +1282,13 @@ export default {
   border-radius: 6px !important;
 }
 
-.role-user-assignment-container >>> .el-dialog .el-button--primary:hover {
+.role-user-assignment-container :deep(.el-dialog .el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
 }
 
-.role-user-assignment-container >>> .el-dialog .el-button--default {
+.role-user-assignment-container :deep(.el-dialog .el-button--default) {
   background: white !important;
   border: 1px solid #d1d5db !important;
   color: #4b5563 !important;
@@ -1296,7 +1296,7 @@ export default {
   border-radius: 6px !important;
 }
 
-.role-user-assignment-container >>> .el-dialog .el-button--default:hover {
+.role-user-assignment-container :deep(.el-dialog .el-button--default:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;

@@ -1826,7 +1826,7 @@ export default {
             conversationsData = response.data;
           } else {
             console.warn('会话列表格式错误或为空:', response.data);
-            this.$set(this, 'chatHistories', []);
+            this.chatHistories = [];
             return;
           }
           
@@ -1845,7 +1845,7 @@ export default {
           }));
           
           // 使用 Vue.set 确保响应式更新
-          this.$set(this, 'chatHistories', newChatHistories);
+          this.chatHistories = newChatHistories;
           
           console.log('会话列表加载成功:', this.chatHistories.length, '个会话');
           console.log('会话详细数据:', this.chatHistories);
@@ -1859,7 +1859,7 @@ export default {
         } catch (error) {
           console.error('加载会话列表失败:', error);
           // 不显示错误消息，保持默认的空列表
-          this.$set(this, 'chatHistories', []);
+          this.chatHistories = [];
         }
       },
       
@@ -1886,7 +1886,7 @@ export default {
             groupsData = response.data;
           } else {
             console.warn('分组列表格式错误或为空:', response.data);
-            this.$set(this, 'userGroups', []);
+            this.userGroups = [];
             return;
           }
           
@@ -1900,7 +1900,7 @@ export default {
           }));
           
           // 使用 Vue.set 确保响应式更新
-          this.$set(this, 'userGroups', newGroups);
+          this.userGroups = newGroups;
           
           console.log('分组列表加载成功:', this.userGroups.length, '个分组');
           console.log('分组详细数据:', this.userGroups);
@@ -1911,7 +1911,7 @@ export default {
         } catch (error) {
           console.error('加载分组列表失败:', error);
           // 不显示错误消息，保持默认的空列表
-          this.$set(this, 'userGroups', []);
+          this.userGroups = [];
         }
       },
       

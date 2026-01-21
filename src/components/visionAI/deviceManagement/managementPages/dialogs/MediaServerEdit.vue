@@ -127,7 +127,7 @@
 </template>
 
 <script>
-import MediaServer from './../service/MediaServer'
+import MediaServer from './../service/MediaServer.js'
 
 export default {
   name: "streamProxyEdit",

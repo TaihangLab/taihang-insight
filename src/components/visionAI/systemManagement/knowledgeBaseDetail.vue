@@ -75,13 +75,13 @@
               size="medium">
               
               <el-table-column prop="fileName" label="文档名称" width="150" align="center" show-overflow-tooltip>
-                <template slot-scope="scope">
+                <template #default="scope">
                   <span class="file-name">{{ scope.row.fileName }}</span>
                 </template>
               </el-table-column>
               
               <el-table-column prop="source" label="文档来源" width="100" align="center">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <el-tag size="mini" type="info">{{ scope.row.source }}</el-tag>
                 </template>
               </el-table-column>
@@ -91,13 +91,13 @@
               <el-table-column prop="chunkCount" label="切片数量" width="90" align="center"></el-table-column>
               
               <el-table-column prop="uploadTime" label="上传时间" width="150" align="center">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <span style="font-size: 12px;">{{ scope.row.uploadTime }}</span>
                 </template>
               </el-table-column>
               
               <el-table-column prop="status" label="文档状态" width="90" align="center">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <el-tag 
                     size="mini" 
                     :type="getStatusType(scope.row.status)">
@@ -107,19 +107,19 @@
               </el-table-column>
               
               <el-table-column prop="fileSize" label="文档大小" width="100" align="center">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <span style="font-size: 12px;">{{ scope.row.fileSize }}</span>
                 </template>
               </el-table-column>
               
               <el-table-column prop="logs" label="执行日志" width="120" align="center" show-overflow-tooltip>
-                <template slot-scope="scope">
+                <template #default="scope">
                   <span class="log-text">{{ scope.row.logs }}</span>
                 </template>
               </el-table-column>
               
               <el-table-column label="操作" width="130" align="center">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <div class="operation-buttons">
                     <el-button type="text" class="view-btn" @click="viewDocument(scope.row)" title="查看">
                       <i class="el-icon-view"></i>
@@ -198,7 +198,7 @@
               size="medium">
               
               <el-table-column prop="question" label="问题" width="320" align="left" show-overflow-tooltip>
-                <template slot-scope="scope">
+                <template #default="scope">
                   <div class="question-cell">
                     <el-tag size="mini" :type="getQuestionTagType(scope.row.question)" class="question-tag">
                       {{ getQuestionCategory(scope.row.question) }}
@@ -209,7 +209,7 @@
               </el-table-column>
               
               <el-table-column prop="answer" label="答案" width="600" align="left" show-overflow-tooltip>
-                <template slot-scope="scope">
+                <template #default="scope">
                   <div class="answer-cell">
                     <span class="answer-text">{{ scope.row.answer }}</span>
                   </div>
@@ -217,7 +217,7 @@
               </el-table-column>
               
               <el-table-column prop="trainedStatus" label="切配状态" width="100" align="center">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <el-tag 
                     size="mini" 
                     :type="scope.row.trainedStatus ? 'success' : 'warning'"
@@ -228,7 +228,7 @@
               </el-table-column>
               
               <el-table-column label="操作" width="100" align="center">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <div class="operation-buttons tech-operations">
                     <el-button type="text" class="tech-edit-btn" @click="editPresetAnswer(scope.row)" title="编辑">
                       编辑
@@ -897,32 +897,32 @@ export default {
   gap: 8px;
 }
 
-/* .toolbar >>> .el-button {
+/* .toolbar :deep(.el-button) {
   border-radius: 8px;
   font-weight: 600;
   transition: all 0.3s ease;
 }
 
-.toolbar >>> .el-button--primary {
+.toolbar :deep(.el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   color: #fff;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.toolbar >>> .el-button--primary:hover {
+.toolbar :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
   transform: translateY(-1px);
 }
 
-.toolbar >>> .el-button:not(.el-button--primary) {
+.toolbar :deep(.el-button:not(.el-button--primary) {
   background: #f5f7fa;
   border-color: #e4e7ed;
   color: #606266;
 }
 
-.toolbar >>> .el-button:not(.el-button--primary):hover {
+.toolbar :deep(.el-button:not(.el-button--primary):hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e3a8a;
@@ -995,21 +995,21 @@ export default {
   max-width: 100% !important;
 }
 
-.custom-table >>> .el-table {
+.custom-table :deep(.el-table) {
   width: 100% !important;
   table-layout: fixed !important;
   max-width: 100% !important;
 }
 
-.custom-table >>> .el-table__header {
+.custom-table :deep(.el-table__header) {
   width: 100% !important;
 }
 
-.custom-table >>> .el-table__body {
+.custom-table :deep(.el-table__body) {
   width: 100% !important;
 }
 
-.custom-table >>> .el-table__body-wrapper {
+.custom-table :deep(.el-table__body-wrapper) {
   max-height: calc(100vh - 320px);
   overflow-y: auto;
   overflow-x: hidden;
@@ -1017,20 +1017,20 @@ export default {
   max-width: 100% !important;
 }
 
-.custom-table >>> .el-table__header-wrapper {
+.custom-table :deep(.el-table__header-wrapper) {
   overflow-x: hidden;
   width: 100% !important;
 }
 
-.custom-table >>> .el-table__cell {
+.custom-table :deep(.el-table__cell) {
   border-right: none;
 }
 
-.custom-table >>> .el-table::before {
+.custom-table :deep(.el-table::before) {
   height: 0;
 }
 
-.custom-table >>> .el-table__header-wrapper th {
+.custom-table :deep(.el-table__header-wrapper th) {
   font-weight: bold;
   text-align: center;
   background: #f5f7fa !important;
@@ -1043,7 +1043,7 @@ export default {
   border-right: none !important;
 }
 
-.custom-table >>> .el-table__row td {
+.custom-table :deep(.el-table__row td) {
   text-align: center;
   vertical-align: middle;
   height: 50px !important;
@@ -1053,19 +1053,19 @@ export default {
   border-right: none !important;
 }
 
-.custom-table >>> .el-table__cell {
+.custom-table :deep(.el-table__cell) {
   padding: 0 !important;
   overflow: hidden !important;
 }
 
-.custom-table >>> .cell {
+.custom-table :deep(.cell) {
   padding: 0 6px !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
 
-.custom-table >>> .el-table .el-table__body tr:hover > td {
+.custom-table :deep(.el-table .el-table__body tr:hover > td) {
   background: #f5f7fa !important;
 }
 
@@ -1119,16 +1119,16 @@ export default {
   padding-bottom: 10px!important;
 }
 
-.pagination-container >>> .el-pagination__total {
+.pagination-container :deep(.el-pagination__total) {
   padding-top: 3px;
 }
 
-.pagination-container >>> .el-pagination {
+.pagination-container :deep(.el-pagination) {
   display: flex;
   justify-content: center;
 }
 
-.pagination-container >>> .el-pagination .el-pager li {
+.pagination-container :deep(.el-pagination .el-pager li) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 4px;
@@ -1136,13 +1136,13 @@ export default {
   margin: 0 2px;
 }
 
-.pagination-container >>> .el-pagination .el-pager li:hover {
+.pagination-container :deep(.el-pagination .el-pager li:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.pagination-container >>> .el-pagination .el-pager li.active {
+.pagination-container :deep(.el-pagination .el-pager li.active) {
   background: #3b82f6 !important;
   border-color: #3b82f6 !important;
   color: white !important;
@@ -1150,19 +1150,19 @@ export default {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination-container >>> .el-pagination button {
+.pagination-container :deep(.el-pagination button) {
   background-color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.2);
   color: #3b82f6;
 }
 
-.pagination-container >>> .el-pagination button:hover {
+.pagination-container :deep(.el-pagination button:hover) {
   color: #1d4ed8;
   border-color: #3b82f6;
 }
 
-.pagination-container >>> .el-pagination .btn-prev,
-.pagination-container >>> .el-pagination .btn-next {
+.pagination-container :deep(.el-pagination .btn-prev),
+.pagination-container :deep(.el-pagination .btn-next) {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -1181,7 +1181,7 @@ export default {
 }
 
 /* 标签样式 */
-.knowledge-detail-container >>> .el-tag {
+.knowledge-detail-container :deep(.el-tag) {
   border-radius: 6px !important;
   font-weight: 500 !important;
   font-size: 12px !important;
@@ -1190,46 +1190,46 @@ export default {
   line-height: 22px !important;
 }
 
-.knowledge-detail-container >>> .el-tag--success {
+.knowledge-detail-container :deep(.el-tag--success) {
   background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
   color: #065f46 !important;
   border: 1px solid #a7f3d0 !important;
 }
 
-.knowledge-detail-container >>> .el-tag--info {
+.knowledge-detail-container :deep(.el-tag--info) {
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
   color: #0c4a6e !important;
   border: 1px solid #7dd3fc !important;
 }
 
   /* 执行日志弹框样式 - 与 knowledgeBase.vue 编辑弹框保持一致 */
-  .knowledge-detail-container >>> .el-dialog.log-dialog {
+  .knowledge-detail-container :deep(.el-dialog.log-dialog) {
     border-radius: 12px !important;
     overflow: hidden !important;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
   }
 
-  .knowledge-detail-container >>> .el-dialog.log-dialog .el-dialog__header {
+  .knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__header) {
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
     border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
     padding: 16px 20px !important;
   }
 
-  .knowledge-detail-container >>> .el-dialog.log-dialog .el-dialog__title {
+  .knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__title) {
     color: #1f2937 !important;
     font-weight: 600 !important;
   }
 
-  .knowledge-detail-container >>> .el-dialog.log-dialog .el-dialog__close {
+  .knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__close) {
     color: #6b7280 !important;
     transition: color 0.3s ease !important;
   }
 
-  .knowledge-detail-container >>> .el-dialog.log-dialog .el-dialog__close:hover {
+  .knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__close:hover) {
     color: #3b82f6 !important;
   }
 
-  .knowledge-detail-container >>> .el-dialog.log-dialog .el-dialog__body {
+  .knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__body) {
     padding: 20px !important;
     background: #ffffff !important;
     max-height: 500px !important;
@@ -1349,24 +1349,24 @@ export default {
   max-width: 100% !important;
 }
 
-.tech-table >>> .el-table {
+.tech-table :deep(.el-table) {
   background: #ffffff !important;
   width: 100% !important;
   table-layout: fixed !important;
   min-width: 1120px !important;
 }
 
-.tech-table >>> .el-table__body-wrapper {
+.tech-table :deep(.el-table__body-wrapper) {
   overflow-x: auto !important;
   width: 100% !important;
 }
 
-.tech-table >>> .el-table__header-wrapper {
+.tech-table :deep(.el-table__header-wrapper) {
   overflow-x: auto !important;
   width: 100% !important;
 }
 
-.tech-table >>> .el-table__header-wrapper th {
+.tech-table :deep(.el-table__header-wrapper th) {
   background: #f5f7fa !important;
   color: #303133 !important;
   font-weight: 600 !important;
@@ -1374,11 +1374,11 @@ export default {
   text-align: center !important;
 }
 
-.tech-table >>> .el-table__row {
+.tech-table :deep(.el-table__row) {
   transition: none !important;
 }
 
-.tech-table >>> .el-table__row:hover {
+.tech-table :deep(.el-table__row:hover) {
   background: #f5f7fa !important;
   transform: none !important;
   box-shadow: none !important;
@@ -1504,7 +1504,7 @@ export default {
   font-weight: 400 !important;
 }
 
-.tech-pagination-controls >>> .el-pagination .el-pager li {
+.tech-pagination-controls :deep(.el-pagination .el-pager li) {
   background: #ffffff !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -1512,7 +1512,7 @@ export default {
   transition: none !important;
 }
 
-.tech-pagination-controls >>> .el-pagination .el-pager li:hover {
+.tech-pagination-controls :deep(.el-pagination .el-pager li:hover) {
   background: #f5f7fa !important;
   border-color: #c0c4cc !important;
   color: #409eff !important;
@@ -1520,21 +1520,21 @@ export default {
   box-shadow: none !important;
 }
 
-.tech-pagination-controls >>> .el-pagination .el-pager li.active {
+.tech-pagination-controls :deep(.el-pagination .el-pager li.active) {
   background: #409eff !important;
   border-color: #409eff !important;
   color: #ffffff !important;
   box-shadow: none !important;
 }
 
-.tech-pagination-controls >>> .el-pagination button {
+.tech-pagination-controls :deep(.el-pagination button) {
   background: #ffffff !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
   transition: none !important;
 }
 
-.tech-pagination-controls >>> .el-pagination button:hover {
+.tech-pagination-controls :deep(.el-pagination button:hover) {
   background: #f5f7fa !important;
   border-color: #c0c4cc !important;
   color: #409eff !important;
@@ -1542,7 +1542,7 @@ export default {
   box-shadow: none !important;
 }
 
-.tech-pagination-controls >>> .el-select .el-input .el-input__inner {
+.tech-pagination-controls :deep(.el-select .el-input .el-input__inner) {
   background: #ffffff !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;

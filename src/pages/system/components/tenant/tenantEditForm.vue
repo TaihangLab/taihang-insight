@@ -129,7 +129,7 @@
 
 <script>
 import RBACService from '@/components/service/RBACService';
-import SmartFillAssistant from '@/mock/components/SmartFillAssistant';
+import SmartFillAssistant from '@/mock/components/SmartFillAssistant.vue';
 
 export default {
   name: 'TenantEditForm',

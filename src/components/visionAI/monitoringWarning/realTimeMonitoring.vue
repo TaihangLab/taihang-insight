@@ -500,6 +500,8 @@
 </template>
 
 <script>
+import _imported_1 from '../../../../config/index.js';
+
 import player from '../../common/jessibuca.vue'
 import DeviceTree from '../../common/DeviceTree.vue'
 // 使用本地专用组件（改造后的实时监控专用API）
@@ -511,7 +513,7 @@ import DetectionOverlay from './components/DetectionOverlay.vue'
 import screenfull from "screenfull";
 import { alertAPI, realtimeMonitorAPI, realtimeDetectionAPI } from '../../service/VisionAIService.js';
 // 🆕 导入配置文件获取后端地址
-const config = require('../../../../config/index.js');
+const config = _imported_1;
 
 export default {
   name: "RealTimeMonitoring",
@@ -707,7 +709,7 @@ export default {
   methods: {
     // 切换分组展开/折叠
     toggleGroup(groupIndex) {
-      this.$set(this.deviceGroups[groupIndex], 'expanded', !this.deviceGroups[groupIndex].expanded);
+      this.deviceGroups[groupIndex].expanded = !this.deviceGroups[groupIndex].expanded;
     },
 
     // 选择设备
@@ -1138,7 +1140,7 @@ export default {
         if (index !== -1) {
           // 确保有操作历史数组
           if (!this.warningList[index].operationHistory) {
-            this.$set(this.warningList[index], 'operationHistory', []);
+            this.warningList[index].operationHistory = [];
           }
 
           // 更新待处理记录为已完成状态
@@ -1172,7 +1174,7 @@ export default {
           }
 
           // 🔧 同时更新前端使用的 status 字段
-          this.$set(this.warningList[index], 'status', 'processing');
+          this.warningList[index].status = 'processing';
 
           console.log('✅ 开始处理，本地状态已更新为处理中:', this.warningList[index]);
         }
@@ -1218,7 +1220,7 @@ export default {
         const index = this.warningList.findIndex(item => item.id === this.currentProcessingWarningId);
         if (index !== -1) {
           if (!this.warningList[index].operationHistory) {
-            this.$set(this.warningList[index], 'operationHistory', []);
+            this.warningList[index].operationHistory = [];
           }
 
           const newRecord = {
@@ -1267,7 +1269,7 @@ export default {
         const index = this.warningList.findIndex(item => item.id === this.currentProcessingWarningId);
         if (index !== -1) {
           if (!this.warningList[index].operationHistory) {
-            this.$set(this.warningList[index], 'operationHistory', []);
+            this.warningList[index].operationHistory = [];
           }
 
           // 添加已处理记录 - 这是状态判断的关键
@@ -1291,7 +1293,7 @@ export default {
           }
 
           // 🔧 同时更新前端使用的 status 字段
-          this.$set(this.warningList[index], 'status', 'completed');
+          this.warningList[index].status = 'completed';
 
           console.log('✅ 本地状态已更新为已处理:', this.warningList[index]);
         }
@@ -1330,7 +1332,7 @@ export default {
             if (this.warningList[index]._apiData) {
               this.warningList[index]._apiData.status = 3; // 已处理状态
             }
-            this.$set(this.warningList[index], 'status', 'completed');
+            this.warningList[index].status = 'completed';
 
             console.log('✅ 从详情对话框完成处理，状态已更新:', this.warningList[index]);
           }
@@ -1352,7 +1354,7 @@ export default {
 
             if (hasProcessingRecord && this.warningList[index]._apiData) {
               this.warningList[index]._apiData.status = 2; // 处理中状态
-              this.$set(this.warningList[index], 'status', 'processing');
+              this.warningList[index].status = 'processing';
             }
 
             console.log('✅ 从详情对话框添加处理记录，状态已更新:', this.warningList[index]);
@@ -1552,15 +1554,15 @@ export default {
 
         // 2. 更新本地的_apiData.status字段
         if (this.warningList[index]._apiData) {
-          this.$set(this.warningList[index]._apiData, 'status', 4);
+          this.warningList[index]._apiData.status = 4;
         }
-        this.$set(this.warningList[index], 'status', 'archived');
-        this.$set(this.warningList[index], 'archiveId', this.selectedArchiveId);
-        this.$set(this.warningList[index], 'archiveTime', new Date().toLocaleString());
+        this.warningList[index].status = 'archived';
+        this.warningList[index].archiveId = this.selectedArchiveId;
+        this.warningList[index].archiveTime = new Date().toLocaleString();
 
         // 添加归档记录到操作历史
         if (!this.warningList[index].operationHistory) {
-          this.$set(this.warningList[index], 'operationHistory', []);
+          this.warningList[index].operationHistory = [];
         }
 
         // 🔧 修复：在归档记录中包含位置信息
@@ -1772,7 +1774,7 @@ export default {
         if (response.data && response.data.code === 0) {
           // 添加误报记录到操作历史
           if (!this.warningList[warningIndex].operationHistory) {
-            this.$set(this.warningList[warningIndex], 'operationHistory', []);
+            this.warningList[warningIndex].operationHistory = [];
           }
 
           const newRecord = {
@@ -3274,13 +3276,13 @@ export default {
   margin-top: 6px;
 }
 
-.header-switch /deep/ .el-switch__label {
+.header-switch :deep(.el-switch__label) {
   color: #1e40af !important;
   font-weight: 600 !important;
   text-shadow: none !important;
 }
 
-.header-switch /deep/ .el-switch__label.is-active {
+.header-switch :deep(.el-switch__label.is-active) {
   color: #1e40af !important;
 }
 
@@ -3293,19 +3295,19 @@ export default {
 }
 
 /* 覆盖树组件样式 */
-.device-tree-aside /deep/ #DeviceTree {
+.device-tree-aside :deep(#DeviceTree) {
   height: 100% !important;
 }
 
-.device-tree-aside /deep/ .el-container {
+.device-tree-aside :deep(.el-container) {
   height: 100% !important;
 }
 
-.device-tree-aside /deep/ .el-header {
+.device-tree-aside :deep(.el-header) {
   display: none !important; /* 隐藏原组件头部 */
 }
 
-.device-tree-aside /deep/ .el-main {
+.device-tree-aside :deep(.el-main) {
   padding: 0 !important;
   overflow: visible !important;
   height: auto !important;
@@ -3313,7 +3315,7 @@ export default {
 }
 
 /* 简单修复树节点样式 */
-.device-tree-aside /deep/ .el-tree-node__content {
+.device-tree-aside :deep(.el-tree-node__content) {
   height: auto !important;
   min-height: 34px !important;
   transition: all 0.2s ease !important;
@@ -3323,7 +3325,7 @@ export default {
 }
 
 /* 修正文字显示不全问题 */
-.device-tree-aside /deep/ .custom-tree-node {
+.device-tree-aside :deep(.custom-tree-node) {
   font-size: 14px !important;
   line-height: 20px !important;
   transition: all 0.3s ease !important;
@@ -3337,7 +3339,7 @@ export default {
   padding: 0 !important;
 }
 
-.device-tree-aside /deep/ .flow-tree {
+.device-tree-aside :deep(.flow-tree) {
   padding: 0 !important;
 }
 
@@ -4424,7 +4426,7 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
 }
 
 /* 修复文本只显示一半的问题 */
-.device-tree-aside /deep/ .custom-tree-node {
+.device-tree-aside :deep(.custom-tree-node) {
   font-size: 14px !important;
   line-height: 20px !important;
   transition: all 0.3s ease !important;
@@ -4439,7 +4441,7 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
 }
 
 /* 调整树节点高度，确保文本显示完整 */
-.device-tree-aside /deep/ .el-tree-node__content {
+.device-tree-aside :deep(.el-tree-node__content) {
   height: auto !important;
   min-height: 34px !important;
   transition: all 0.2s ease !important;
@@ -4449,7 +4451,7 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
 }
 
 /* 修改树节点悬浮效果，使其更加轻微 */
-.device-tree-aside /deep/ .el-tree-node__content:hover {
+.device-tree-aside :deep(.el-tree-node__content:hover) {
   background-color: rgba(64, 158, 255, 0.1) !important;
   transform: translateX(2px) !important;
 }
@@ -4463,7 +4465,7 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
 }
 
 /* 添加树节点选中样式以区分悬浮状态 */
-.device-tree-aside /deep/ .is-current>.el-tree-node__content {
+.device-tree-aside :deep(.is-current>.el-tree-node__content) {
   background-color: rgba(64, 158, 255, 0.15) !important;
   color: #409EFF !important;
   font-weight: bold !important;
@@ -4471,7 +4473,7 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
 }
 
 /* 修复图标显示 */
-.device-tree-aside /deep/ .iconfont {
+.device-tree-aside :deep(.iconfont) {
   transition: all 0.2s ease !important;
   margin-right: 6px !important;
   font-size: 16px !important;
@@ -4482,7 +4484,7 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
 }
 
 /* 确保文本容器有足够的空间 */
-.device-tree-aside /deep/ .custom-tree-node span {
+.device-tree-aside :deep(.custom-tree-node span) {
   line-height: 1.5 !important;
   display: inline-block !important;
   padding-bottom: 2px !important; /* 底部添加小间距 */
@@ -4628,38 +4630,38 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
 }
 
 /* 对话框样式优化 - 科技感设计 */
-.realtime-monitoring-container >>> .el-dialog {
+.realtime-monitoring-container :deep(.el-dialog) {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
 
-.realtime-monitoring-container >>> .el-dialog__header {
+.realtime-monitoring-container :deep(.el-dialog__header) {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
   padding: 16px 20px;
 }
 
-.realtime-monitoring-container >>> .el-dialog__title {
+.realtime-monitoring-container :deep(.el-dialog__title) {
   color: #1f2937;
   font-weight: 600;
 }
 
-.realtime-monitoring-container >>> .el-dialog__close {
+.realtime-monitoring-container :deep(.el-dialog__close) {
   color: #6b7280;
   transition: color 0.3s ease;
 }
 
-.realtime-monitoring-container >>> .el-dialog__close:hover {
+.realtime-monitoring-container :deep(.el-dialog__close:hover) {
   color: #3b82f6;
 }
 
-.realtime-monitoring-container >>> .el-dialog__body {
+.realtime-monitoring-container :deep(.el-dialog__body) {
   padding: 20px;
   background: #ffffff;
 }
 
-.realtime-monitoring-container >>> .el-button--primary {
+.realtime-monitoring-container :deep(.el-button--primary) {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
@@ -4669,13 +4671,13 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
   border-radius: 6px;
 }
 
-.realtime-monitoring-container >>> .el-button--primary:hover {
+.realtime-monitoring-container :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
   transform: translateY(-1px);
 }
 
-.realtime-monitoring-container >>> .el-button--success {
+.realtime-monitoring-container :deep(.el-button--success) {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
@@ -4685,13 +4687,13 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
   border-radius: 6px;
 }
 
-.realtime-monitoring-container >>> .el-button--success:hover {
+.realtime-monitoring-container :deep(.el-button--success:hover) {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
   transform: translateY(-1px);
 }
 
-.realtime-monitoring-container >>> .el-button--default {
+.realtime-monitoring-container :deep(.el-button--default) {
   background: white;
   border: 1px solid #d1d5db;
   color: #4b5563;
@@ -4699,7 +4701,7 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
   border-radius: 6px;
 }
 
-.realtime-monitoring-container >>> .el-button--default:hover {
+.realtime-monitoring-container :deep(.el-button--default:hover) {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e40af;
@@ -4707,24 +4709,24 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
 }
 
 /* 输入框和选择框样式优化 */
-.realtime-monitoring-container >>> .el-input__inner {
+.realtime-monitoring-container :deep(.el-input__inner) {
   border: 1px solid #e4e7ed;
   border-radius: 6px;
   transition: all 0.3s ease;
 }
 
-.realtime-monitoring-container >>> .el-input__inner:focus {
+.realtime-monitoring-container :deep(.el-input__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-.realtime-monitoring-container >>> .el-textarea__inner {
+.realtime-monitoring-container :deep(.el-textarea__inner) {
   border: 1px solid #e4e7ed;
   border-radius: 6px;
   transition: all 0.3s ease;
 }
 
-.realtime-monitoring-container >>> .el-textarea__inner:focus {
+.realtime-monitoring-container :deep(.el-textarea__inner:focus) {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
@@ -4781,16 +4783,16 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
 }
 
 /* Loading动画 - 科技感效果 */
-.realtime-monitoring-container >>> .el-loading-mask {
+.realtime-monitoring-container :deep(.el-loading-mask) {
   background-color: rgba(255, 255, 255, 0.9) !important;
   backdrop-filter: blur(4px);
 }
 
-.realtime-monitoring-container >>> .el-loading-spinner {
+.realtime-monitoring-container :deep(.el-loading-spinner) {
   color: #3b82f6 !important;
 }
 
-.realtime-monitoring-container >>> .el-loading-text {
+.realtime-monitoring-container :deep(.el-loading-text) {
   color: #1f2937 !important;
   font-weight: 500 !important;
 }
@@ -4837,18 +4839,18 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.ai-task-selector >>> .el-select {
+.ai-task-selector :deep(.el-select) {
   width: 200px;
 }
 
-.ai-task-selector >>> .el-input__inner {
+.ai-task-selector :deep(.el-input__inner) {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(59, 130, 246, 0.5);
   color: #fff;
   font-size: 12px;
 }
 
-.ai-task-selector >>> .el-input__inner::placeholder {
+.ai-task-selector :deep(.el-input__inner::placeholder) {
   color: rgba(255, 255, 255, 0.5);
 }
 
