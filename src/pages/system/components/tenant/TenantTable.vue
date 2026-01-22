@@ -127,6 +127,7 @@ export default {
   overflow: hidden;
   border: 1px solid #ebeef5;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  font-size: 13px;
 }
 
 .custom-table :deep(.el-table__cell) {
@@ -138,24 +139,27 @@ export default {
 }
 
 .custom-table :deep(.el-table__header-wrapper th) {
-  font-weight: bold;
+  font-weight: 600;
   text-align: center;
   background: #f5f7fa !important;
   color: #303133 !important;
   border-bottom: 1px solid #ebeef5 !important;
+  padding: 10px 12px;
 }
 
 .custom-table :deep(.el-table__fixed-right-header-wrapper th),
 .custom-table :deep(.el-table__fixed-header-wrapper th) {
-  font-weight: bold;
+  font-weight: 600;
   text-align: center;
   background: #f5f7fa !important;
   color: #303133 !important;
   border-bottom: 1px solid #ebeef5 !important;
+  padding: 10px 12px;
 }
 
 .custom-table :deep(.el-table__row td) {
   text-align: center;
+  padding: 8px 12px;
 }
 
 .custom-table :deep(.el-table .el-table__body tr:hover > td) {

@@ -1,16 +1,21 @@
 // 首先初始化全局变量（必须在所有其他导入之前）
 import './setup-globals'
 
-// 导入全局设计系统样式
-import './styles/design-system.css'
+// 【性能优化】导入 UnoCSS 虚拟模块（按需生成样式）
+import 'virtual:uno.css'
 
-// 导入 video.js 样式
-import 'video.js/dist/video-js.css'
+// Element Plus 基础样式（先导入默认样式）
+import 'element-plus/dist/index.css'
+
+// 【主题统一】导入 Element Plus 主题配置（后导入以覆盖默认样式）
+import './styles/theme.css'
+
+// 【按需加载】video.js 样式移到组件内导入
+// import 'video.js/dist/video-js.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus, { ElNotification } from 'element-plus'
-import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import dataV from 'data-view-vue3'
 // import Contextmenu from 'vue-contextmenujs' // 暂时注释 - Vue 3 不兼容
@@ -19,8 +24,7 @@ import router from './router'
 import FpJS from '@fingerprintjs/fingerprintjs'
 import axios from 'axios'
 
-// 导入 font-awesome
-import '@fortawesome/fontawesome-free/css/all.min.css'
+// 【已替换】FontAwesome 已替换为 UnoCSS Carbon 图标
 
 // 导入配置
 const config = {
@@ -57,40 +61,39 @@ app.config.globalProperties.$channelTypeList = {
   3: { id: 3, name: '拉流代理', style: { color: '#e6a23c', borderColor: '#f5dab1' } }
 }
 
-// 生成浏览器指纹并初始化应用
-async function initApp() {
+// 生成备用ID
+function generateFallbackId() {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36)
+}
+
+// 【性能优化】立即挂载应用，后台异步初始化
+app.mount('#app')
+
+// 后台异步初始化 - 不阻塞应用挂载
+queueMicrotask(async () => {
+  // 1. 异步生成浏览器指纹
   try {
     const fp = await FpJS.load()
     const result = await fp.get()
     const visitorId = result.visitorId
-
-    // 设置浏览器 ID
     app.config.globalProperties.$browserId = visitorId
-    console.log('浏览器 ID:', visitorId)
-
-    // 获取服务ID
-    try {
-      const res = await axios({
-        method: 'get',
-        url: config.API_BASE_URL + '/api/v1/server/system/configInfo'
-      })
-      if (res.data.code === 0) {
-        console.log('当前服务ID:', res.data.data.addOn.serverId)
-        app.config.globalProperties.$myServerId = res.data.data.addOn.serverId
-      }
-    } catch (error) {
-      console.error('获取服务ID失败:', error)
-    }
+    console.log('✅ 浏览器 ID:', visitorId)
   } catch (error) {
-    console.error('生成浏览器指纹失败:', error)
-    // 使用备用方法生成ID
-    const fallbackId = Math.random().toString(36).substring(2) + Date.now().toString(36)
-    app.config.globalProperties.$browserId = fallbackId
+    console.warn('⚠️ 生成浏览器指纹失败，使用备用ID')
+    app.config.globalProperties.$browserId = generateFallbackId()
   }
 
-  // 挂载应用
-  app.mount('#app')
-}
-
-// 启动应用
-initApp()
+  // 2. 异步获取服务ID
+  try {
+    const res = await axios({
+      method: 'get',
+      url: config.API_BASE_URL + '/api/v1/server/system/configInfo'
+    })
+    if (res.data.code === 0) {
+      console.log('✅ 当前服务ID:', res.data.data.addOn.serverId)
+      app.config.globalProperties.$myServerId = res.data.data.addOn.serverId
+    }
+  } catch (error) {
+    console.warn('⚠️ 获取服务ID失败（非关键错误）')
+  }
+})
