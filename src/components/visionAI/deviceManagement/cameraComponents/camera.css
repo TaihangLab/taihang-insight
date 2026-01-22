@@ -188,6 +188,8 @@
 
 .skill-config-dialog>>>.el-dialog__headerbtn {
   top: 20px;
+  z-index: 10;
+  position: relative;
 }
 
 .skill-config-dialog>>>.el-dialog__body {
@@ -1086,6 +1088,7 @@
 
 .skill-status {
   margin-left: auto;
+  margin-right: 30px; /* 避免与对话框关闭按钮重叠 */
   display: flex;
   align-items: center;
 }
@@ -1193,6 +1196,7 @@
 
 .skill-status {
   margin-left: auto;
+  margin-right: 30px; /* 避免与对话框关闭按钮重叠 */
   display: flex;
   align-items: center;
 }
@@ -4166,6 +4170,8 @@ body .el-dialog__wrapper .skill-config-dialog {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
   padding: 16px 20px !important;
+  position: relative !important;
+  z-index: 10 !important;
 }
 
 .skill-config-dialog.el-dialog .el-dialog__title {
@@ -4177,6 +4183,8 @@ body .el-dialog__wrapper .skill-config-dialog {
 .skill-config-dialog.el-dialog .el-dialog__close {
   color: #6b7280 !important;
   transition: color 0.3s ease !important;
+  pointer-events: auto !important;
+  z-index: 20 !important;
 }
 
 .skill-config-dialog.el-dialog .el-dialog__close:hover {
@@ -4347,6 +4355,8 @@ body .el-dialog__wrapper .skill-params-dialog {
   padding: 20px;
   margin-bottom: 24px;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  position: relative;
+  z-index: 1;
 }
 
 .skill-info-wrapper {
@@ -4392,6 +4402,7 @@ body .el-dialog__wrapper .skill-params-dialog {
   align-items: center;
   gap: 8px;
   margin-left: auto;
+  margin-right: 30px; /* 避免与对话框关闭按钮重叠 */
 }
 
 .status-text {
