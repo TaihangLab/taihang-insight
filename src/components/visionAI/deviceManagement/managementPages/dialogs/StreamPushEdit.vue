@@ -31,14 +31,14 @@
           </el-form>
         </el-tab-pane>
         <el-tab-pane label="国标通道配置" name="channel" v-if="streamPush.id">
-          <CommonChannelEdit ref="commonChannelEdit" :dataForm="streamPush" :cancel="close"></CommonChannelEdit>
+          <CommonChannelEdit ref="commonChannelEdit" :dataForm="streamPush" :cancel="close" :hideButtons="true" :saveSuccess="onChannelSaveSuccess"></CommonChannelEdit>
         </el-tab-pane>
       </el-tabs>
     </div>
 
-    <div slot="footer" class="dialog-footer" v-if="activeTab === 'push'">
+    <div slot="footer" class="dialog-footer">
       <el-button @click="close">取消</el-button>
-      <el-button type="primary" @click="onSubmit" :loading="locading">保存</el-button>
+      <el-button type="primary" @click="handleSave" :loading="locading">保存</el-button>
     </div>
   </el-dialog>
 </template>
@@ -63,6 +63,13 @@ export default {
     };
   },
   methods: {
+    handleSave: function () {
+      if (this.activeTab === 'push') {
+        this.onSubmit()
+      } else if (this.activeTab === 'channel') {
+        this.$refs.commonChannelEdit.onSubmit()
+      }
+    },
     onSubmit: function () {
       console.log(this.streamPush)
       this.locading = true
@@ -77,7 +84,7 @@ export default {
               showClose: true,
               message: '保存成功',
             });
-            this.visible = false
+            this.close()
           }else {
             this.$message.error({
               showClose: true,
@@ -103,8 +110,8 @@ export default {
               showClose: true,
               message: '保存成功',
             });
-this.visible = false
             this.streamPush = res.data.data
+            this.close()
           }else {
             this.$message.error({
               showClose: true,
@@ -124,6 +131,9 @@ this.visible = false
     },
     close: function () {
       this.closeEdit()
+    },
+    onChannelSaveSuccess: function () {
+      this.close()
     },
   },
 };

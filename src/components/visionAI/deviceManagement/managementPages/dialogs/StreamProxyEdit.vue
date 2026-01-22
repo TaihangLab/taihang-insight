@@ -96,14 +96,14 @@
           </el-form>
         </el-tab-pane>
         <el-tab-pane label="国标通道配置" name="channel" v-if="proxyParam.id">
-          <CommonChannelEdit ref="commonChannelEdit" :dataForm="proxyParam" :cancel="close"></CommonChannelEdit>
+          <CommonChannelEdit ref="commonChannelEdit" :dataForm="proxyParam" :cancel="close" :hideButtons="true" :saveSuccess="onChannelSaveSuccess"></CommonChannelEdit>
         </el-tab-pane>
       </el-tabs>
     </div>
 
-    <div slot="footer" class="dialog-footer" v-if="activeTab === 'proxy'">
+    <div slot="footer" class="dialog-footer">
       <el-button @click="close">取消</el-button>
-      <el-button type="primary" @click="onSubmit" :loading="dialogLoading">保存</el-button>
+      <el-button type="primary" @click="handleSave" :loading="dialogLoading">保存</el-button>
     </div>
   </el-dialog>
 </template>
@@ -146,6 +146,16 @@ export default {
     }
   },
   methods: {
+    handleSave() {
+      if (this.activeTab === 'proxy') {
+        this.onSubmit()
+      } else if (this.activeTab === 'channel') {
+        this.$refs.commonChannelEdit.onSubmit()
+      }
+    },
+    onChannelSaveSuccess() {
+      this.close()
+    },
     initData() {
       this.mediaServer.getOnlineMediaServerList((data)=>{
         this.mediaServerList = data.data;
@@ -186,13 +196,13 @@ export default {
               message: "保存成功"
             });
             this.proxyParam = res.data.data
+            this.close()
           }else {
             this.$message.error({
               showClose: true,
               message: res.data.msg
             })
           }
-          this.dialogLoading = false;
         }).catch((error) =>{
           this.$message.error({
             showClose: true,
@@ -200,7 +210,6 @@ export default {
           });
           this.dialogLoading = false;
         }).finally(()=>{
-          console.log("finally==finally")
           this.dialogLoading = false;
         })
       }else {
@@ -212,10 +221,11 @@ export default {
           this.dialogLoading = false;
           if (typeof (res.data.code) != "undefined" && res.data.code === 0) {
             this.$message.success({
-            showClose: true,
-            message: "保存成功"
-          });
+              showClose: true,
+              message: "保存成功"
+            });
             this.proxyParam = res.data.data
+            this.close()
           }else {
             this.$message.error({
               showClose: true,
