@@ -203,7 +203,7 @@
             <el-option label="3级增强" value="3"></el-option>
           </el-select>
         </el-form-item>
-        <div style="float: right;">
+        <div v-if="!hideButtons" style="float: right;">
           <el-button type="primary" @click="onSubmit">保存</el-button>
           <el-button v-if="cancel" @click="cancelSubmit">取消</el-button>
           <el-button v-if="form.dataType === 1" @click="reset">重置</el-button>
@@ -225,7 +225,7 @@ import { getChannelInfo, addChannel, updateChannel, resetChannel } from '@/api/c
 
 export default {
   name: "CommonChannelEdit",
-  props: [ 'id', 'dataForm', 'saveSuccess', 'cancel'],
+  props: [ 'id', 'dataForm', 'saveSuccess', 'cancel', 'hideButtons'],
   components: {
     ChooseCivilCode,
     ChooseGroup,
