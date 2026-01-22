@@ -401,6 +401,13 @@ export default {
     })
   },
   methods: {
+    // 截断文本
+    truncateText(text, maxLength = 30) {
+      if (!text) return ''
+      if (text.length <= maxLength) return text
+      return text.substring(0, maxLength) + '...'
+    },
+
     // 返回上一页
     goBack() {
       this.$router.go(-1)
@@ -1226,7 +1233,16 @@ export default {
             </div>
             
             <div class="card-content">
-              <div class="card-title">{{ item.title }}</div>
+              <div class="card-header">
+                <div class="card-title">{{ item.title }}</div>
+                <el-tag
+                  :type="item.reviewType === 'auto' ? 'success' : 'warning'"
+                  size="mini"
+                  class="review-type-tag"
+                >
+                  {{ item.reviewType === 'auto' ? 'AI复判' : '人工审核' }}
+                </el-tag>
+              </div>
               <div class="card-info">
                 <div class="info-item">
                   <span class="label">设备名称：</span>
@@ -1235,6 +1251,10 @@ export default {
                 <div class="info-item">
                   <span class="label">违规位置：</span>
                   <span class="value">{{ item.location }}</span>
+                </div>
+                <div class="info-item review-notes-item" v-if="item.reviewNotes">
+                  <span class="label">复判意见：</span>
+                  <span class="value notes-text">{{ truncateText(item.reviewNotes, 30) }}</span>
                 </div>
                 <div class="info-item time-item">
                   <span class="time">{{ formatTimeDisplay(item.startTime) }}</span>
@@ -1708,9 +1728,29 @@ export default {
   justify-content: space-between;
 }
 
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
 .card-title {
   font-size: 12px;
-  margin-bottom: 4px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-type-tag {
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.review-notes-item .notes-text {
+  color: #606266;
+  font-style: italic;
 }
 
 .card-info {

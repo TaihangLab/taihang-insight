@@ -112,6 +112,18 @@
                 <h4 class="media-title">
                   <i class="el-icon-picture"></i>
                   违规截图
+                  <!-- 合并预警查看按钮 -->
+                  <el-button
+                    v-if="internalWarning.is_merged"
+                    type="warning"
+                    size="mini"
+                    plain
+                    class="merge-view-btn"
+                    @click.stop="showMergedDialog = true"
+                  >
+                    <i class="el-icon-folder-opened"></i>
+                    查看合并 ({{ internalWarning.alert_count }})
+                  </el-button>
                 </h4>
                 <div class="image-container" @click="openImageViewer">
                   <div v-if="internalWarning.imageUrl" class="real-image">
@@ -371,11 +383,94 @@
       </span>
     </el-dialog>
 
-         <!-- 简单图片放大显示 -->
-     <div
-       v-if="imageViewerVisible"
-       class="simple-image-overlay"
-       @click="closeImageViewer">
+    <!-- 合并预警详情弹窗 -->
+    <el-dialog
+      title="合并预警详情"
+      :visible.sync="showMergedDialog"
+      width="700px"
+      class="merged-dialog"
+      append-to-body
+    >
+      <div v-if="internalWarning && internalWarning.is_merged" class="merged-content">
+        <!-- 合并统计信息 -->
+        <div class="merged-stats">
+          <div class="stat-item">
+            <div class="stat-value">{{ internalWarning.alert_count }}</div>
+            <div class="stat-label">检测次数</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ formatMergeDuration(internalWarning.alert_duration) }}</div>
+            <div class="stat-label">持续时长</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ formatTime(internalWarning.first_alert_time) }}</div>
+            <div class="stat-label">首次检测</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ formatTime(internalWarning.last_alert_time) }}</div>
+            <div class="stat-label">最后检测</div>
+          </div>
+        </div>
+
+        <!-- 合并图片列表 -->
+        <div class="merged-images-section">
+          <div class="section-title">全部截图</div>
+          <div class="merged-images-grid">
+            <div
+              v-for="(img, index) in internalWarning.alert_images"
+              :key="index"
+              class="merged-image-item"
+              :class="{ 'is-primary': index === getMergedMiddleIndex() }"
+              @click="openMergedImage(index)"
+            >
+              <img :src="getMergedImageUrl(img.object_name)" />
+              <div class="image-info">
+                <span class="image-index">#{{ index + 1 }}</span>
+                <span v-if="index === getMergedMiddleIndex()" class="primary-tag">主图</span>
+                <span class="image-time">+{{ img.relative_time.toFixed(1) }}s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
+
+    <!-- 合并图片大图查看 -->
+    <div
+      v-if="mergedImageViewerVisible"
+      class="simple-image-overlay"
+      @click="closeMergedImageViewer"
+    >
+      <div class="merged-image-viewer-container" @click.stop>
+        <div class="viewer-header">
+          <span>{{ currentMergedImageIndex + 1 }} / {{ internalWarning.alert_images.length }}</span>
+          <span class="viewer-time">+{{ internalWarning.alert_images[currentMergedImageIndex].relative_time.toFixed(1) }}s</span>
+          <i class="el-icon-close" @click="closeMergedImageViewer"></i>
+        </div>
+        <div class="viewer-body">
+          <i class="el-icon-arrow-left nav-btn" @click="prevMergedImage"></i>
+          <img :src="getMergedImageUrl(internalWarning.alert_images[currentMergedImageIndex].object_name)" />
+          <i class="el-icon-arrow-right nav-btn" @click="nextMergedImage"></i>
+        </div>
+        <div class="viewer-thumbnails">
+          <div
+            v-for="(img, index) in internalWarning.alert_images"
+            :key="index"
+            class="viewer-thumb"
+            :class="{ active: index === currentMergedImageIndex }"
+            @click="currentMergedImageIndex = index"
+          >
+            <img :src="getMergedImageUrl(img.object_name)" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 简单图片放大显示 -->
+    <div
+      v-if="imageViewerVisible"
+      class="simple-image-overlay"
+      @click="closeImageViewer">
        <div class="simple-image-container" @click.stop>
          <img
            v-if="internalWarning && internalWarning.imageUrl"
@@ -492,7 +587,12 @@ export default {
 
       // 视频播放器相关
       videoViewerVisible: false,
-      videoFitMode: 'cover' // 'cover' 无黑边但可能裁剪, 'contain' 完整显示但可能有黑边
+      videoFitMode: 'cover', // 'cover' 无黑边但可能裁剪, 'contain' 完整显示但可能有黑边
+
+      // 合并预警相关
+      showMergedDialog: false,
+      mergedImageViewerVisible: false,
+      currentMergedImageIndex: 0
     }
   },
   watch: {
@@ -547,6 +647,56 @@ export default {
     }
   },
   methods: {
+    // ==================== 合并预警相关方法 ====================
+    // 格式化合并持续时间
+    formatMergeDuration(seconds) {
+      if (!seconds) return '0秒'
+      if (seconds < 60) return `${Math.round(seconds)}秒`
+      return `${(seconds / 60).toFixed(1)}分钟`
+    },
+
+    // 获取合并图片的中间索引
+    getMergedMiddleIndex() {
+      if (!this.internalWarning || !this.internalWarning.alert_images) return 0
+      return Math.floor(this.internalWarning.alert_images.length / 2)
+    },
+
+    // 获取合并图片URL
+    getMergedImageUrl(objectName) {
+      if (!objectName) return ''
+      // 如果已经是完整URL则直接返回
+      if (objectName.startsWith('http')) return objectName
+      // 否则拼接MinIO地址（根据实际配置调整）
+      const taskId = (this.internalWarning && this.internalWarning.task_id) || ''
+      return `${window.VUE_APP_MINIO_URL || ''}/visionai/alert-images/${taskId}/${objectName}`
+    },
+
+    // 打开合并图片大图
+    openMergedImage(index) {
+      this.currentMergedImageIndex = index
+      this.mergedImageViewerVisible = true
+    },
+
+    // 关闭合并图片大图
+    closeMergedImageViewer() {
+      this.mergedImageViewerVisible = false
+    },
+
+    // 上一张合并图片
+    prevMergedImage() {
+      if (this.currentMergedImageIndex > 0) {
+        this.currentMergedImageIndex--
+      }
+    },
+
+    // 下一张合并图片
+    nextMergedImage() {
+      if (this.currentMergedImageIndex < this.internalWarning.alert_images.length - 1) {
+        this.currentMergedImageIndex++
+      }
+    },
+
+    // ==================== 原有方法 ====================
     // 加载预警数据（从props或API获取）
     async loadWarningData() {
       try {
@@ -3323,5 +3473,215 @@ export default {
     max-width: 95vw;
     max-height: 50vh;
   }
+}
+
+/* ==================== 合并预警相关样式 ==================== */
+.merge-view-btn {
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+.merged-content {
+  padding: 0 10px;
+}
+
+.merged-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px 0;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #fff7e6 0%, #fff3cd 100%);
+  border-radius: 12px;
+}
+
+.merged-stats .stat-item {
+  text-align: center;
+}
+
+.merged-stats .stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #e6a23c;
+}
+
+.merged-stats .stat-label {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.merged-images-section .section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+  margin-bottom: 12px;
+  padding-left: 8px;
+  border-left: 3px solid #e6a23c;
+}
+
+.merged-images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.merged-image-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  aspect-ratio: 4/3;
+}
+
+.merged-image-item:hover {
+  border-color: #409eff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.merged-image-item.is-primary {
+  border-color: #e6a23c;
+}
+
+.merged-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.merged-image-item .image-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 8px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.merged-image-item .image-index {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.merged-image-item .primary-tag {
+  background: #e6a23c;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.merged-image-item .image-time {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+}
+
+/* 合并图片大图查看器 */
+.merged-image-viewer-container {
+  background: rgba(0, 0, 0, 0.95);
+  border-radius: 12px;
+  padding: 16px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.merged-image-viewer-container .viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.merged-image-viewer-container .viewer-header .viewer-time {
+  color: #e6a23c;
+  margin-left: 12px;
+}
+
+.merged-image-viewer-container .viewer-header .el-icon-close {
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.3s;
+}
+
+.merged-image-viewer-container .viewer-header .el-icon-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.merged-image-viewer-container .viewer-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 400px;
+}
+
+.merged-image-viewer-container .viewer-body img {
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.merged-image-viewer-container .viewer-body .nav-btn {
+  color: #fff;
+  font-size: 32px;
+  padding: 20px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.merged-image-viewer-container .viewer-body .nav-btn:hover {
+  opacity: 1;
+}
+
+.merged-image-viewer-container .viewer-thumbnails {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  overflow-x: auto;
+  justify-content: center;
+}
+
+.merged-image-viewer-container .viewer-thumb {
+  width: 60px;
+  height: 45px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  opacity: 0.6;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.merged-image-viewer-container .viewer-thumb:hover {
+  opacity: 0.9;
+}
+
+.merged-image-viewer-container .viewer-thumb.active {
+  border-color: #e6a23c;
+  opacity: 1;
+}
+
+.merged-image-viewer-container .viewer-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style>
