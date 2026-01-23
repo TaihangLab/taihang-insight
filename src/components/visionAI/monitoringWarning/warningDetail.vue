@@ -390,25 +390,33 @@
       width="700px"
       class="merged-dialog"
       append-to-body
+      :modal-append-to-body="true"
+      :z-index="3000"
     >
       <div v-if="internalWarning && internalWarning.is_merged" class="merged-content">
         <!-- 合并统计信息 -->
-        <div class="merged-stats">
-          <div class="stat-item">
-            <div class="stat-value">{{ internalWarning.alert_count }}</div>
-            <div class="stat-label">检测次数</div>
+        <div class="merged-stats-wrapper">
+          <!-- 数值统计行 -->
+          <div class="merged-stats-row stats-numbers">
+            <div class="stat-item">
+              <div class="stat-value">{{ internalWarning.alert_count }}</div>
+              <div class="stat-label">检测次数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{ formatMergeDuration(internalWarning.alert_duration) }}</div>
+              <div class="stat-label">持续时长</div>
+            </div>
           </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ formatMergeDuration(internalWarning.alert_duration) }}</div>
-            <div class="stat-label">持续时长</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ formatTime(internalWarning.first_alert_time) }}</div>
-            <div class="stat-label">首次检测</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ formatTime(internalWarning.last_alert_time) }}</div>
-            <div class="stat-label">最后检测</div>
+          <!-- 时间统计行 -->
+          <div class="merged-stats-row stats-times">
+            <div class="time-item">
+              <span class="time-label">首次检测：</span>
+              <span class="time-value">{{ formatTime(internalWarning.first_alert_time) }}</span>
+            </div>
+            <div class="time-item">
+              <span class="time-label">最后检测：</span>
+              <span class="time-value">{{ formatTime(internalWarning.last_alert_time) }}</span>
+            </div>
           </div>
         </div>
 
@@ -423,7 +431,7 @@
               :class="{ 'is-primary': index === getMergedMiddleIndex() }"
               @click="openMergedImage(index)"
             >
-              <img :src="getMergedImageUrl(img.object_name)" />
+              <img :src="getMergedImageUrl(img)" />
               <div class="image-info">
                 <span class="image-index">#{{ index + 1 }}</span>
                 <span v-if="index === getMergedMiddleIndex()" class="primary-tag">主图</span>
@@ -438,7 +446,7 @@
     <!-- 合并图片大图查看 -->
     <div
       v-if="mergedImageViewerVisible"
-      class="simple-image-overlay"
+      class="merged-image-overlay"
       @click="closeMergedImageViewer"
     >
       <div class="merged-image-viewer-container" @click.stop>
@@ -449,7 +457,7 @@
         </div>
         <div class="viewer-body">
           <i class="el-icon-arrow-left nav-btn" @click="prevMergedImage"></i>
-          <img :src="getMergedImageUrl(internalWarning.alert_images[currentMergedImageIndex].object_name)" />
+          <img :src="getMergedImageUrl(internalWarning.alert_images[currentMergedImageIndex])" />
           <i class="el-icon-arrow-right nav-btn" @click="nextMergedImage"></i>
         </div>
         <div class="viewer-thumbnails">
@@ -460,7 +468,7 @@
             :class="{ active: index === currentMergedImageIndex }"
             @click="currentMergedImageIndex = index"
           >
-            <img :src="getMergedImageUrl(img.object_name)" />
+            <img :src="getMergedImageUrl(img)" />
           </div>
         </div>
       </div>
@@ -484,7 +492,10 @@
     <div
       v-if="videoViewerVisible"
       class="simple-video-overlay"
-      @click="closeVideoViewer">
+      @click="closeVideoViewer"
+      @keydown.esc.stop="closeVideoViewer"
+      tabindex="-1"
+      ref="videoOverlay">
       <div class="simple-video-container" @click.stop>
         <div class="simple-video-player">
           <!-- 视频预览区域 -->
@@ -662,13 +673,27 @@ export default {
     },
 
     // 获取合并图片URL
-    getMergedImageUrl(objectName) {
-      if (!objectName) return ''
+    getMergedImageUrl(imageData) {
+      // 支持两种格式：直接传入object_name字符串，或传入包含image_url的对象
+      if (!imageData) return ''
+      
+      // 如果传入的是对象，优先使用后端生成的image_url（预签名URL）
+      if (typeof imageData === 'object') {
+        if (imageData.image_url) {
+          return imageData.image_url
+        }
+        // 没有image_url则使用object_name
+        imageData = imageData.object_name
+      }
+      
+      if (!imageData) return ''
+      
       // 如果已经是完整URL则直接返回
-      if (objectName.startsWith('http')) return objectName
-      // 否则拼接MinIO地址（根据实际配置调整）
+      if (imageData.startsWith('http')) return imageData
+      
+      // 否则通过后端API代理访问（使用baseUrl）
       const taskId = (this.internalWarning && this.internalWarning.task_id) || ''
-      return `${window.VUE_APP_MINIO_URL || ''}/visionai/alert-images/${taskId}/${objectName}`
+      return `${window.baseUrl || ''}/api/v1/alerts/image/${taskId}/${imageData}`
     },
 
     // 打开合并图片大图
@@ -1900,31 +1925,42 @@ export default {
           return '时间未知';
         }
 
-        // 如果是完整的时间字符串，格式化为更友好的显示
-        if (timeString.includes(' ')) {
-          const [date, time] = timeString.split(' ');
-          let year, month, day;
-
-          // 处理不同的日期分隔符
-          if (date.includes('-')) {
-            // YYYY-MM-DD 格式
-            [year, month, day] = date.split('-');
-          } else if (date.includes('/')) {
-            // YYYY/MM/DD 格式
-            [year, month, day] = date.split('/');
-          } else {
-            return timeString;
-          }
-
-          // 确保年月日都有值
-          if (year && month && day) {
-            return `${year}年${month}月${day}日 ${time}`;
-          } else {
-            return timeString;
-          }
+        let date, time;
+        
+        // 处理 ISO 格式时间（包含 T 的格式，如 2026-01-23T12:30:00）
+        if (timeString.includes('T')) {
+          const parts = timeString.split('T');
+          date = parts[0];
+          // 移除可能的时区信息和毫秒
+          time = parts[1] ? parts[1].split('.')[0].split('+')[0].split('Z')[0] : '';
+        } else if (timeString.includes(' ')) {
+          // 处理空格分隔的格式（如 2026-01-23 12:30:00）
+          const parts = timeString.split(' ');
+          date = parts[0];
+          time = parts[1] || '';
+        } else {
+          return timeString;
         }
 
-        return timeString;
+        let year, month, day;
+        
+        // 处理不同的日期分隔符
+        if (date.includes('-')) {
+          // YYYY-MM-DD 格式
+          [year, month, day] = date.split('-');
+        } else if (date.includes('/')) {
+          // YYYY/MM/DD 格式
+          [year, month, day] = date.split('/');
+        } else {
+          return timeString;
+        }
+
+        // 确保年月日都有值
+        if (year && month && day) {
+          return `${year}年${month}月${day}日 ${time}`;
+        } else {
+          return timeString;
+        }
       } catch (error) {
         return timeString || '时间解析失败';
       }
@@ -1957,9 +1993,18 @@ export default {
     // 处理键盘事件
     handleKeydown(event) {
       if (event.key === 'Escape') {
-        if (this.imageViewerVisible) {
+        // 优先关闭合并图片查看器（因为它在最上层）
+        if (this.mergedImageViewerVisible) {
+          event.preventDefault();
+          event.stopPropagation();
+          this.closeMergedImageViewer();
+        } else if (this.imageViewerVisible) {
+          event.preventDefault();
+          event.stopPropagation();
           this.closeImageViewer();
         } else if (this.videoViewerVisible) {
+          event.preventDefault();
+          event.stopPropagation();
           this.closeVideoViewer();
         }
       }
@@ -1979,6 +2024,10 @@ export default {
         this.videoViewerVisible = true;
         // 延迟一下确保DOM已渲染
         this.$nextTick(() => {
+          // 让 overlay 获取焦点，以便 ESC 键能被捕获
+          if (this.$refs.videoOverlay) {
+            this.$refs.videoOverlay.focus();
+          }
           if (this.$refs.videoPlayer) {
             console.log('视频元素已创建，初始化视频');
             this.initializeVideo();
@@ -3268,7 +3317,7 @@ export default {
   right: 0;
   bottom: 0;
   background: transparent;
-  z-index: 3000;
+  z-index: 10001;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3326,7 +3375,7 @@ export default {
   right: 0;
   bottom: 0;
   background: transparent;
-  z-index: 3000;
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3485,29 +3534,61 @@ export default {
   padding: 0 10px;
 }
 
-.merged-stats {
-  display: flex;
-  justify-content: space-around;
-  padding: 20px 0;
+.merged-stats-wrapper {
   margin-bottom: 20px;
   background: linear-gradient(135deg, #fff7e6 0%, #fff3cd 100%);
   border-radius: 12px;
+  padding: 16px;
 }
 
-.merged-stats .stat-item {
+.merged-stats-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.merged-stats-row.stats-numbers {
+  gap: 60px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(230, 162, 60, 0.3);
+}
+
+.merged-stats-row.stats-numbers .stat-item {
   text-align: center;
 }
 
-.merged-stats .stat-value {
-  font-size: 24px;
+.merged-stats-row.stats-numbers .stat-value {
+  font-size: 28px;
   font-weight: 600;
   color: #e6a23c;
 }
 
-.merged-stats .stat-label {
+.merged-stats-row.stats-numbers .stat-label {
   font-size: 12px;
   color: #909399;
   margin-top: 4px;
+}
+
+.merged-stats-row.stats-times {
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.merged-stats-row.stats-times .time-item {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+}
+
+.merged-stats-row.stats-times .time-label {
+  color: #909399;
+  margin-right: 4px;
+}
+
+.merged-stats-row.stats-times .time-value {
+  color: #606266;
+  font-weight: 500;
 }
 
 .merged-images-section .section-title {
@@ -3583,6 +3664,22 @@ export default {
 .merged-image-item .image-time {
   color: rgba(255, 255, 255, 0.9);
   font-size: 11px;
+}
+
+/* 合并图片大图查看遮罩层 - 必须在最上层 */
+.merged-image-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  z-index: 40002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  animation: fadeIn 0.3s ease-out;
 }
 
 /* 合并图片大图查看器 */

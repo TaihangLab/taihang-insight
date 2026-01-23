@@ -1326,7 +1326,15 @@ export default {
             imageUrl: apiDetail.minio_frame_url || item.imageUrl,
             
             // 更新描述使用API返回的
-            description: apiDetail.alert_description || item.description
+            description: apiDetail.alert_description || item.description,
+            
+            // 🔧 修复：添加合并预警相关字段
+            is_merged: apiDetail.is_merged || false,
+            alert_count: apiDetail.alert_count || 1,
+            alert_duration: apiDetail.alert_duration || 0,
+            first_alert_time: apiDetail.first_alert_time,
+            last_alert_time: apiDetail.last_alert_time,
+            alert_images: apiDetail.alert_images || []
           }
           
           console.log('预警详情API响应:', apiDetail)
