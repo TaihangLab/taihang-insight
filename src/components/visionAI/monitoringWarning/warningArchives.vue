@@ -158,7 +158,7 @@ export default {
     // 动态上传地址配置
     uploadAction() {
       // 根据当前上传的类型和ID返回对应的上传地址
-      const baseUrl = 'http://127.0.0.1:8000'
+      const baseUrl = window.baseUrl ? window.baseUrl : ''
 
       if (this.addDialogVisible && this.currentRecordId) {
         // 添加预警记录时的图片上传
@@ -174,7 +174,7 @@ export default {
 
     // 视频上传地址
     videoUploadAction() {
-      const baseUrl = 'http://127.0.0.1:8000'
+      const baseUrl = window.baseUrl ? window.baseUrl : ''
 
       if (this.currentRecordId) {
         return `${baseUrl}/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/video`
