@@ -2361,12 +2361,24 @@ export default {
           location: apiWarning.location || '未知位置',
           status: this.convertAlertStatus(apiWarning.status, apiWarning.status_display) || 'pending',
           imageUrl: this.getWarningImageUrl(apiWarning) || null,
+          // 🔧 修复：添加视频URL字段，用于预警详情页播放视频
+          videoUrl: this.getWarningVideoUrl(apiWarning) || null,
+          minio_video_url: this.getWarningVideoUrl(apiWarning) || null,
+          minio_frame_url: this.getWarningImageUrl(apiWarning) || null,
           description: apiWarning.alert_description || '无描述信息',
           operationHistory: this.convertProcessHistory(apiWarning.process, apiWarning.status, this.formatAPITime(apiWarning.alert_time)) || [],
           // 添加额外的API数据字段
           taskId: apiWarning.task_id || null,
+          task_id: apiWarning.task_id || null,  // 合并图片URL拼接需要
           electronicFence: apiWarning.electronic_fence || null,
           result: apiWarning.result || null,
+          // 🔧 修复：添加合并预警相关字段，用于显示"查看合并"按钮
+          is_merged: apiWarning.is_merged || false,
+          alert_count: apiWarning.alert_count || 1,
+          alert_duration: apiWarning.alert_duration || 0,
+          alert_images: apiWarning.alert_images || [],
+          first_alert_time: apiWarning.first_alert_time || null,
+          last_alert_time: apiWarning.last_alert_time || null,
           // 保存原始API数据，用于状态判断和其他功能
           _apiData: {
             alert_id: apiWarning.alert_id,
@@ -2375,11 +2387,16 @@ export default {
             alert_time: apiWarning.alert_time,
             camera_id: apiWarning.camera_id,
             task_id: apiWarning.task_id,
-            process: apiWarning.process
+            process: apiWarning.process,
+            minio_video_url: apiWarning.minio_video_url,  // 保存原始视频URL
+            minio_video_object_name: apiWarning.minio_video_object_name,
+            is_merged: apiWarning.is_merged,
+            alert_count: apiWarning.alert_count,
+            alert_images: apiWarning.alert_images
           }
         };
 
-        console.log('🔄 转换API预警数据 - alert_id:', apiWarning.alert_id, 'status:', apiWarning.status, '→ 前端格式');
+        console.log('🔄 转换API预警数据 - alert_id:', apiWarning.alert_id, '合并:', apiWarning.is_merged ? `是(${apiWarning.alert_count}次)` : '否', '视频:', apiWarning.minio_video_url ? '有' : '无');
 
         return convertedWarning;
       } catch (error) {
@@ -2463,7 +2480,7 @@ export default {
             const imageUrl = apiWarning[field];
             // 如果是相对路径，拼接基础URL
             if (imageUrl.startsWith('/')) {
-              return `http://192.168.1.106:8000${imageUrl}`;
+              return `${window.baseUrl || ''}${imageUrl}`;
             }
             return imageUrl;
           }
@@ -2475,6 +2492,35 @@ export default {
         }
 
         // 如果没有图片，返回null
+        return null;
+      } catch (error) {
+        return null;
+      }
+    },
+
+    // 🔧 新增：获取预警视频URL
+    getWarningVideoUrl(apiWarning) {
+      try {
+        // 优先使用常见的视频字段
+        const videoFields = [
+          'minio_video_url',
+          'video_url',
+          'alert_video_url',
+          'clip_url'
+        ];
+
+        for (const field of videoFields) {
+          if (apiWarning[field]) {
+            const videoUrl = apiWarning[field];
+            // 如果是相对路径，拼接基础URL
+            if (videoUrl.startsWith('/')) {
+              return `${window.baseUrl || ''}${videoUrl}`;
+            }
+            return videoUrl;
+          }
+        }
+
+        // 如果没有视频URL，返回null
         return null;
       } catch (error) {
         return null;
