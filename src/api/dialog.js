@@ -72,7 +72,7 @@ export function getRegionChildList(parent) {
  */
 export function getIndustryCodeList() {
   return request({
-    url: '/api/v1/common/channel/industry/list',
+    url: '/api/v1/wvp/api/common/channel/industry/list',
     method: 'get'
   })
 }
@@ -82,7 +82,7 @@ export function getIndustryCodeList() {
  */
 export function getDeviceTypeList() {
   return request({
-    url: '/api/v1/common/channel/type/list',
+    url: '/api/v1/wvp/api/common/channel/type/list',
     method: 'get'
   })
 }
@@ -92,7 +92,7 @@ export function getDeviceTypeList() {
  */
 export function getNetworkIdentificationList() {
   return request({
-    url: '/api/v1/common/channel/network/identification/list',
+    url: '/api/v1/wvp/api/common/channel/network/identification/list',
     method: 'get'
   })
 }
@@ -206,7 +206,7 @@ export function getGbDeviceList(params) {
  */
 export function getChannelByCivilCode(params) {
   return request({
-    url: '/api/v1/common/channel/civilcode/list',
+    url: '/api/v1/wvp/api/common/channel/civilcode/list',
     method: 'get',
     params: params
   })
@@ -218,7 +218,7 @@ export function getChannelByCivilCode(params) {
  */
 export function getChannelByParent(params) {
   return request({
-    url: '/api/v1/common/channel/parent/list',
+    url: '/api/v1/wvp/api/common/channel/parent/list',
     method: 'get',
     params: params
   })
@@ -341,7 +341,7 @@ export function linkRecordPlan(data) {
  */
 export function getUnusualCivilCodeChannelList(params) {
   return request({
-    url: '/api/v1/common/channel/civilCode/unusual/list',
+    url: '/api/v1/wvp/api/common/channel/civilCode/unusual/list',
     method: 'get',
     params: params
   })
@@ -353,7 +353,7 @@ export function getUnusualCivilCodeChannelList(params) {
  */
 export function clearUnusualCivilCodeChannel(data) {
   return request({
-    url: '/api/v1/common/channel/civilCode/unusual/clear',
+    url: '/api/v1/wvp/api/common/channel/civilCode/unusual/clear',
     method: 'post',
     data: data
   })
@@ -389,7 +389,7 @@ export function addRegionByCivilCode(civilCode) {
  */
 export function getUnusualParentChannelList(params) {
   return request({
-    url: '/api/v1/common/channel/parent/unusual/list',
+    url: '/api/v1/wvp/api/common/channel/parent/unusual/list',
     method: 'get',
     params: params
   })
@@ -401,7 +401,7 @@ export function getUnusualParentChannelList(params) {
  */
 export function clearUnusualParentChannel(data) {
   return request({
-    url: '/api/v1/common/channel/parent/unusual/clear',
+    url: '/api/v1/wvp/api/common/channel/parent/unusual/clear',
     method: 'post',
     data: data
   })

@@ -86,7 +86,7 @@ export function getRegionTreeList(params) {
  */
 export function addDeviceToRegion(data) {
   return request({
-    url: '/api/v1/common/channel/region/device/add',
+    url: '/api/v1/wvp/api/common/channel/region/device/add',
     method: 'post',
     data: data
   })
@@ -99,7 +99,7 @@ export function addDeviceToRegion(data) {
  */
 export function removeDeviceFromRegion(data) {
   return request({
-    url: '/api/v1/common/channel/region/device/delete',
+    url: '/api/v1/wvp/api/common/channel/region/device/delete',
     method: 'post',
     data: data
   })

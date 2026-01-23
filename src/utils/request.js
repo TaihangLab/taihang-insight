@@ -6,7 +6,7 @@ import userService from '@/components/service/UserService'
 // 创建axios实例
 const service = axios.create({
   baseURL: (process.env.NODE_ENV === 'development') ? process.env.BASE_API : (window.baseUrl ? window.baseUrl : ""),
-  withCredentials: true, // 跨域请求时发送cookies
+  withCredentials: false, // 关闭跨域凭据，项目使用Token认证
   timeout: 30000 // 请求超时时间
 })
 

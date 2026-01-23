@@ -4,9 +4,9 @@
 
 const path = require('path')
 
-// 后端API基础地址配置  
-// const API_BASE_URL = 'http://192.168.26.193:8000';//本地测试地址
-const API_BASE_URL = 'http://172.16.201.80/prod-api/smart-engine';//综治平台地址
+// 后端API基础地址配置
+const API_BASE_URL = 'http://192.168.26.193:8000';//本地测试地址
+// const API_BASE_URL = 'http://172.16.201.80/prod-api/smart-engine';//综治平台地址
 
 module.exports = {
   // 导出API配置供前端使用

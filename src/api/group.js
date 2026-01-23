@@ -87,7 +87,7 @@ export function getGroupTreeList(params) {
  */
 export function addDeviceToGroup(data) {
   return request({
-    url: '/api/v1/common/channel/group/device/add',
+    url: '/api/v1/wvp/api/common/channel/group/device/add',
     method: 'post',
     data: data
   })
@@ -100,7 +100,7 @@ export function addDeviceToGroup(data) {
  */
 export function removeDeviceFromGroup(data) {
   return request({
-    url: '/api/v1/common/channel/group/device/delete',
+    url: '/api/v1/wvp/api/common/channel/group/device/delete',
     method: 'post',
     data: data
   })
