@@ -1133,6 +1133,11 @@ export default {
         const response = await alertAPI.updateAlertStatus(warning.id, updateData);
         console.log('✅ 后端状态更新成功:', response);
 
+        // 🔧 从后端响应中获取实际的操作人名字
+        const operatorName = response.data?.data?.updated_alert?.processed_by || 
+                            response.data?.data?.processing_record?.operator || 
+                            this.getCurrentUserName();
+
         // 2. 后端更新成功后，更新本地状态
         const index = this.warningList.findIndex(item => item.id === warning.id);
         if (index !== -1) {
@@ -1153,7 +1158,7 @@ export default {
             return record;
           });
 
-          // 添加处理中记录
+          // 添加处理中记录 - 使用后端返回的操作人名字
           const newRecord = {
             id: Date.now() + Math.random(),
             status: 'active',
@@ -1161,7 +1166,7 @@ export default {
             time: this.getCurrentTime(),
             description: '处理人员正在处理此预警，可添加处理记录',
             operationType: 'processing',
-            operator: this.getCurrentUserName()
+            operator: operatorName
           };
 
           this.warningList[index].operationHistory.unshift(newRecord);
@@ -1214,6 +1219,11 @@ export default {
         const response = await alertAPI.updateAlertStatus(this.currentProcessingWarningId, updateData);
         console.log('✅ 处理意见保存成功:', response);
 
+        // 🔧 从后端响应中获取实际的操作人名字
+        const operatorName = response.data?.data?.updated_alert?.processed_by || 
+                            response.data?.data?.processing_record?.operator || 
+                            this.getCurrentUserName();
+
         // 更新本地数据状态 - 添加新的处理记录
         const index = this.warningList.findIndex(item => item.id === this.currentProcessingWarningId);
         if (index !== -1) {
@@ -1228,7 +1238,7 @@ export default {
             time: this.getCurrentTime(),
             description: `处理意见：${this.remarkForm.remark}`,
             operationType: 'processing-action',
-            operator: this.getCurrentUserName()
+            operator: operatorName
           };
 
           this.warningList[index].operationHistory.unshift(newRecord);
@@ -1263,6 +1273,11 @@ export default {
         const response = await alertAPI.updateAlertStatus(this.currentProcessingWarningId, updateData);
         console.log('✅ 处理完成状态更新成功:', response);
 
+        // 🔧 从后端响应中获取实际的操作人名字
+        const operatorName = response.data?.data?.updated_alert?.processed_by || 
+                            response.data?.data?.processing_record?.operator || 
+                            this.getCurrentUserName();
+
         // 更新本地数据状态
         const index = this.warningList.findIndex(item => item.id === this.currentProcessingWarningId);
         if (index !== -1) {
@@ -1270,7 +1285,7 @@ export default {
             this.$set(this.warningList[index], 'operationHistory', []);
           }
 
-          // 添加已处理记录 - 这是状态判断的关键
+          // 添加已处理记录 - 这是状态判断的关键，使用后端返回的操作人名字
           const completedRecord = {
             id: Date.now() + Math.random(),
             status: 'completed',
@@ -1278,16 +1293,16 @@ export default {
             time: this.getCurrentTime(),
             description: this.remarkForm.remark ? `处理完成：${this.remarkForm.remark}` : '预警处理已完成',
             operationType: 'completed',
-            operator: this.getCurrentUserName()
+            operator: operatorName
           };
 
           this.warningList[index].operationHistory.unshift(completedRecord);
 
-          // 🔧 关键修复：更新 _apiData.status 字段
+          // 🔧 关键修复：更新 _apiData.status 字段，使用后端返回的操作人名字
           if (this.warningList[index]._apiData) {
             this.warningList[index]._apiData.status = 3; // 已处理状态
             this.warningList[index]._apiData.processed_at = new Date().toISOString();
-            this.warningList[index]._apiData.processed_by = this.getCurrentUserName();
+            this.warningList[index]._apiData.processed_by = operatorName;
           }
 
           // 🔧 同时更新前端使用的 status 字段
@@ -1550,6 +1565,11 @@ export default {
         const updateResponse = await alertAPI.updateAlertStatus(alertId, updateData);
         console.log('✅ 预警状态更新成功:', updateResponse);
 
+        // 🔧 从后端响应中获取实际的操作人名字
+        const operatorName = updateResponse.data?.data?.updated_alert?.processed_by || 
+                            updateResponse.data?.data?.processing_record?.operator || 
+                            this.getCurrentUserName();
+
         // 2. 更新本地的_apiData.status字段
         if (this.warningList[index]._apiData) {
           this.$set(this.warningList[index]._apiData, 'status', 4);
@@ -1563,7 +1583,7 @@ export default {
           this.$set(this.warningList[index], 'operationHistory', []);
         }
 
-        // 🔧 修复：在归档记录中包含位置信息
+        // 🔧 修复：在归档记录中包含位置信息，使用后端返回的操作人名字
         const archiveRecord = {
           id: Date.now() + Math.random(),
           status: 'completed',
@@ -1571,7 +1591,7 @@ export default {
           time: this.getCurrentTime(),
           description: `预警已归档到：${archiveName}（${archiveLocation}），可在预警档案中查看`,
           operationType: 'archive',
-          operator: this.getCurrentUserName(),
+          operator: operatorName,
           archiveInfo: {
             archiveId: this.selectedArchiveId,
             archiveName: archiveName,
@@ -1770,6 +1790,11 @@ export default {
         );
 
         if (response.data && response.data.code === 0) {
+          // 🔧 从后端响应中获取实际的操作人名字
+          const operatorName = response.data?.data?.reviewed_by || 
+                              response.data?.data?.processed_by || 
+                              this.getCurrentUserName();
+
           // 添加误报记录到操作历史
           if (!this.warningList[warningIndex].operationHistory) {
             this.$set(this.warningList[warningIndex], 'operationHistory', []);
@@ -1782,7 +1807,7 @@ export default {
             time: this.getCurrentTime(),
             description: `预警被标记为误报：${this.falseAlarmForm.reviewNotes}`,
             operationType: 'falseAlarm',
-            operator: this.getCurrentUserName()
+            operator: operatorName
           };
 
           this.warningList[warningIndex].operationHistory.unshift(newRecord);
@@ -2366,7 +2391,7 @@ export default {
           minio_video_url: this.getWarningVideoUrl(apiWarning) || null,
           minio_frame_url: this.getWarningImageUrl(apiWarning) || null,
           description: apiWarning.alert_description || '无描述信息',
-          operationHistory: this.convertProcessHistory(apiWarning.process, apiWarning.status, this.formatAPITime(apiWarning.alert_time)) || [],
+          operationHistory: this.convertProcessHistory(apiWarning.process, apiWarning.status, this.formatAPITime(apiWarning.alert_time), apiWarning.processed_by) || [],
           // 添加额外的API数据字段
           taskId: apiWarning.task_id || null,
           task_id: apiWarning.task_id || null,  // 合并图片URL拼接需要
@@ -2834,11 +2859,13 @@ export default {
     },
 
     // 转换处理历史 - 确保与状态判断逻辑一致
-    convertProcessHistory(processData, apiStatus, alertTime) {
+    convertProcessHistory(processData, apiStatus, alertTime, processedBy) {
       try {
         const operationHistory = []
+        // 🔧 使用后端返回的操作人名字，如果没有则使用默认值
+        const defaultOperator = processedBy || '系统';
 
-        console.log('🔄 转换处理历史, API状态:', apiStatus, '处理数据:', processData);
+        console.log('🔄 转换处理历史, API状态:', apiStatus, '处理数据:', processData, '操作人:', processedBy);
 
         // 处理API返回的步骤（如果存在）
         if (processData && processData.steps && Array.isArray(processData.steps)) {
@@ -2870,7 +2897,7 @@ export default {
             });
           }
         } else if (apiStatus === 2) {
-          // 处理中状态 - 添加处理中记录
+          // 处理中状态 - 添加处理中记录，使用后端返回的操作人
           operationHistory.push({
             id: Date.now() + Math.random(),
             status: 'active',
@@ -2878,10 +2905,10 @@ export default {
             time: alertTime || this.getCurrentTime(),
             description: '预警正在处理中',
             operationType: 'processing',
-            operator: '处理人员'
+            operator: defaultOperator
           });
         } else if (apiStatus === 3) {
-          // 已处理状态 - 添加已完成记录（关键修复）
+          // 已处理状态 - 添加已完成记录，使用后端返回的操作人
           operationHistory.push({
             id: Date.now() + Math.random(),
             status: 'completed',
@@ -2889,11 +2916,11 @@ export default {
             time: alertTime || this.getCurrentTime(),
             description: '预警处理已完成',
             operationType: 'completed', // 这是按钮状态判断的关键
-            operator: '处理人员'
+            operator: defaultOperator
           });
           console.log('✅ 已添加已处理状态记录');
         } else if (apiStatus === 4) {
-          // 已归档状态 - 添加归档记录
+          // 已归档状态 - 添加归档记录，使用后端返回的操作人
           operationHistory.push({
             id: Date.now() + Math.random(),
             status: 'completed',
@@ -2901,10 +2928,10 @@ export default {
             time: alertTime || this.getCurrentTime(),
             description: '预警已归档',
             operationType: 'archive',
-            operator: '管理员'
+            operator: defaultOperator
           });
         } else if (apiStatus === 5) {
-          // 误报状态 - 添加误报记录
+          // 误报状态 - 添加误报记录，使用后端返回的操作人
           operationHistory.push({
             id: Date.now() + Math.random(),
             status: 'completed',
@@ -2912,7 +2939,7 @@ export default {
             time: alertTime || this.getCurrentTime(),
             description: '预警已标记为误报',
             operationType: 'falseAlarm',
-            operator: '管理员'
+            operator: defaultOperator
           });
         }
 
