@@ -1035,16 +1035,15 @@ export default {
 
     // 处理预警
     handleWarning() {
-      // 检查当前是否已经在处理中
-      const hasProcessingRecord = this.operationHistory.some(record =>
-        record.operationType === 'processing' && record.status === 'active'
-      );
+      // 🔧 检查当前是否已经在处理中（通过API状态判断）
+      const isProcessing = (this.internalWarning._apiData && this.internalWarning._apiData.status === 2) || 
+                           this.internalWarning.status === 'processing';
 
-      if (hasProcessingRecord) {
-        // 如果已经有处理中记录，直接弹出处理意见对话框
+      if (isProcessing) {
+        // 如果已在处理中，直接弹出处理意见对话框
         this.remarkDialogVisible = true;
       } else {
-        // 如果没有处理中记录，先添加"处理中"状态
+        // 如果不在处理中，开始处理流程
         this.startProcessing();
       }
     },
@@ -1081,20 +1080,10 @@ export default {
           return record;
         });
 
-        // 添加处理中记录
-        const newRecord = {
-          id: Date.now() + Math.random(),
-          status: 'active',
-          statusText: '处理中',
-          time: this.getCurrentTime(),
-          description: '处理人员正在处理此预警，可添加处理记录',
-          operationType: 'processing',
-          operator: this.getCurrentUserName()
-        };
+        // 🔧 不再添加"处理中"记录到时间线，只更新状态
+        // 用户添加的处理意见会作为 processing-action 类型单独显示
 
-        this.operationHistory.unshift(newRecord);
-
-        // 同步更新warning对象的操作历史
+        // 同步更新warning对象的操作历史（更新待处理状态为已完成）
         if (this.warning && this.warning.operationHistory) {
           this.warning.operationHistory = this.warning.operationHistory.map(record => {
             if (record.operationType === 'pending' && record.status === 'active') {
@@ -1106,11 +1095,9 @@ export default {
             }
             return record;
           });
-
-          this.warning.operationHistory.unshift(newRecord);
         }
 
-        // 🔧 关键修复：更新 _apiData.status 字段为处理中
+        // 更新 _apiData.status 字段为处理中
         if (this.warning._apiData) {
           this.warning._apiData.status = 2; // 处理中状态
         }
@@ -1153,13 +1140,13 @@ export default {
         const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
 
         if (response.data && response.data.code === 0) {
-          // API调用成功，添加本地操作记录
+          // 🔧 API调用成功，添加处理意见记录（使用 processing-action 类型）
           this.addOperationRecord({
             status: 'completed',
-            statusText: '处理中',
+            statusText: '处理记录',
             time: this.getCurrentTime(),
             description: `处理意见：${this.remarkForm.remark}`,
-            operationType: 'processing',
+            operationType: 'processing-action',
             operator: this.getCurrentUserName()
           });
 
@@ -1663,9 +1650,11 @@ export default {
       // 重置操作历史
       this.operationHistory = [];
 
-      // 如果预警有保存的操作历史，则直接加载
+      // 如果预警有保存的操作历史，则直接加载并排序
       if (this.internalWarning.operationHistory && Array.isArray(this.internalWarning.operationHistory) && this.internalWarning.operationHistory.length > 0) {
         this.operationHistory = [...this.internalWarning.operationHistory];
+        // 🔧 统一按时间排序（最新的在前面，时间倒序）
+        this.sortOperationHistory();
         return;
       }
 
@@ -1724,16 +1713,8 @@ export default {
         };
         allRecords.push(pendingRecord);
       } else if (status === 'processing') {
-        const processingRecord = {
-          id: Date.now() + Math.random(),
-          status: 'active',
-          statusText: '处理中',
-          time: this.internalWarning.updatedAt || this.getCurrentTime(),
-          description: '预警正在处理中，处理人员：' + (this.internalWarning.processedBy || '未知'),
-          operationType: 'processing',
-          operator: this.internalWarning.processedBy || '处理人员'
-        };
-        allRecords.push(processingRecord);
+        // 🔧 处理中状态 - 不在时间线中显示，通过预警状态标签体现
+        // 用户添加的处理意见会作为 processing-action 类型单独显示
       } else if (status === 'completed') {
         const completedRecord = {
           id: Date.now() + Math.random(),
@@ -1747,11 +1728,13 @@ export default {
         allRecords.push(completedRecord);
       }
 
-      // 按时间排序（时间早的在后面，晚的在前面，因为时间轴显示是最新的在上面）
+      // 🔧 按时间排序（最新的在最下面，时间正序）
       allRecords.sort((a, b) => {
         const timeA = new Date(a.time).getTime();
         const timeB = new Date(b.time).getTime();
-        return timeB - timeA; // 降序排列，最新的在前面
+        // 如果时间无效，保持原有顺序
+        if (isNaN(timeA) || isNaN(timeB)) return 0;
+        return timeA - timeB; // 升序排列，最新的在最下面
       });
 
       // 添加到操作历史
@@ -1774,6 +1757,19 @@ export default {
       }
     },
 
+    // 🔧 统一排序操作历史（最新的在最下面，时间正序）
+    sortOperationHistory() {
+      if (!this.operationHistory || this.operationHistory.length <= 1) return;
+      
+      this.operationHistory.sort((a, b) => {
+        const timeA = new Date(a.time).getTime();
+        const timeB = new Date(b.time).getTime();
+        // 如果时间无效，保持原有顺序
+        if (isNaN(timeA) || isNaN(timeB)) return 0;
+        return timeA - timeB; // 升序排列，最新的在最下面
+      });
+    },
+
     // 添加操作记录到历史
     addOperationRecord(record) {
       // 确保记录包含必要字段
@@ -1788,15 +1784,15 @@ export default {
         ...record
       };
 
-      // 添加到历史记录开头（最新的在上面）
-      this.operationHistory.unshift(newRecord);
+      // 添加到历史记录末尾（最新的在最下面，时间正序）
+      this.operationHistory.push(newRecord);
 
       // 更新预警对象的操作历史
       if (this.internalWarning) {
         if (!this.internalWarning.operationHistory) {
           this.$set(this.internalWarning, 'operationHistory', []);
         }
-        this.internalWarning.operationHistory.unshift(newRecord);
+        this.internalWarning.operationHistory.push(newRecord);
       }
     },
 
@@ -2782,19 +2778,29 @@ export default {
   }
 }
 
-/* 移除原有的active和completed状态样式，避免干扰圆点颜色 */
-/* .timeline-item.active .timeline-dot {
+/* 🔧 优化：恢复active和completed状态的圆点样式 */
+/* 处理中状态 - 蓝色脉冲动画，醒目提示 */
+.timeline-item.active .timeline-dot {
   border-color: #409EFF;
   background: #409EFF;
-  box-shadow: 0 0 0 4px rgba(64, 158, 255, 0.2), 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 4px rgba(64, 158, 255, 0.2), 0 2px 6px rgba(64, 158, 255, 0.3);
   animation: pulse-dot 2s infinite;
 }
 
+/* 处理中状态（processing类型）- 特殊强调样式 */
+.timeline-item[data-type="processing"].active .timeline-dot {
+  border-color: #409EFF;
+  background: #409EFF;
+  box-shadow: 0 0 0 6px rgba(64, 158, 255, 0.3), 0 2px 8px rgba(64, 158, 255, 0.4);
+  animation: pulse-dot 1.5s infinite;
+}
+
+/* 已完成状态 - 绿色 */
 .timeline-item.completed .timeline-dot {
   border-color: #67c23a;
   background: #67c23a;
   box-shadow: 0 2px 6px rgba(103, 194, 58, 0.3);
-} */
+}
 
 .timeline-content {
   margin-left: 4px;
