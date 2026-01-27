@@ -33,83 +33,98 @@
   </div>
 </template>
 
-<script>
-import UserTableActions from './UserTableActions.vue'
-import UserTable from './UserTable.vue'
-import UserPagination from './UserPagination.vue'
+<script setup lang="ts">
+import UserTableActions from '@/pages/system/components/user/UserTableActions.vue'
+import UserTable from '@/pages/system/components/user/UserTable.vue'
+import UserPagination from '@/pages/system/components/user/UserPagination.vue'
 
-export default {
-  name: 'UserList',
-  components: {
-    UserTableActions,
-    UserTable,
-    UserPagination
-  },
-  props: {
-    users: {
-      type: Array,
-      default: () => []
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    pagination: {
-      type: Object,
-      default: () => ({
-        currentPage: 1,
-        pageSize: 10
-      })
-    },
-    total: {
-      type: Number,
-      default: 0
-    }
-  },
-  methods: {
-    handleSelectionChange(selection) {
-      this.$emit('selection-change', selection)
-    },
-    handleAdd() {
-      this.$emit('add')
-    },
-    handleEdit(row) {
-      this.$emit('edit', row)
-    },
-    handleDelete(row) {
-      this.$emit('delete', row)
-    },
-    handleBatchDelete() {
-      this.$emit('batch-delete')
-    },
-    handleStatusChange(row, callback) {
-      this.$emit('status-change', row, callback)
-    },
-    handleResetPassword(row) {
-      this.$emit('reset-password', row)
-    },
-    handlePageChange(page) {
-      this.$emit('page-change', page)
-    },
-    handleSizeChange(size) {
-      this.$emit('size-change', size)
-    },
-    handleMoreAction(command) {
-      this.$emit('more-action', command)
-    },
-    handleAdvancedSearch() {
-      this.$emit('advanced-search')
-    },
-    handleRefresh() {
-      this.$emit('refresh')
-    },
-    handleTableSetting() {
-      this.$emit('table-setting')
-    },
-    handleAuthorization(row) {
-      this.$emit('authorization', row)
-    }
-  }
+interface Pagination {
+  currentPage: number
+  pageSize: number
+}
+
+interface User {
+  [key: string]: any
+}
+
+defineProps<{
+  users: User[]
+  loading: boolean
+  pagination: Pagination
+  total: number
+}>()
+
+const emit = defineEmits<{
+  selectionChange: [selection: User[]]
+  add: []
+  edit: [row: User]
+  delete: [row: User]
+  batchDelete: []
+  statusChange: [row: User, callback: (success: boolean) => void]
+  resetPassword: [row: User]
+  pageChange: [page: number]
+  sizeChange: [size: number]
+  moreAction: [command: string]
+  advancedSearch: []
+  refresh: []
+  tableSetting: []
+  authorization: [row: User]
+}>()
+
+const handleSelectionChange = (selection: User[]) => {
+  emit('selectionChange', selection)
+}
+
+const handleAdd = () => {
+  emit('add')
+}
+
+const handleEdit = (row: User) => {
+  emit('edit', row)
+}
+
+const handleDelete = (row: User) => {
+  emit('delete', row)
+}
+
+const handleBatchDelete = () => {
+  emit('batchDelete')
+}
+
+const handleStatusChange = (row: User, callback: (success: boolean) => void) => {
+  emit('statusChange', row, callback)
+}
+
+const handleResetPassword = (row: User) => {
+  emit('resetPassword', row)
+}
+
+const handlePageChange = (page: number) => {
+  emit('pageChange', page)
+}
+
+const handleSizeChange = (size: number) => {
+  emit('sizeChange', size)
+}
+
+const handleMoreAction = (command: string) => {
+  emit('moreAction', command)
+}
+
+const handleAdvancedSearch = () => {
+  emit('advancedSearch')
+}
+
+const handleRefresh = () => {
+  emit('refresh')
+}
+
+const handleTableSetting = () => {
+  emit('tableSetting')
+}
+
+const handleAuthorization = (row: User) => {
+  emit('authorization', row)
 }
 </script>
 

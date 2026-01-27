@@ -89,7 +89,7 @@
         <el-table-column label="操作" width="100" fixed="right" align="center">
           <template #default="scope">
             <div class="operation-buttons">
-              <el-button type="text" class="view-detail-btn" @click="viewLogDetail(scope.row)">详情</el-button>
+              <el-button link class="view-detail-btn" @click="viewLogDetail(scope.row)">详情</el-button>
             </div>
           </template>
         </el-table-column>

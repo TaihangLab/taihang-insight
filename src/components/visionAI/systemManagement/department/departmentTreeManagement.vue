@@ -74,7 +74,7 @@
               </span>
               <span class="node-actions">
                 <el-button
-                  type="text"
+                  link
                   size="mini"
                   @click="() => append(data)"
                   class="action-btn"
@@ -83,7 +83,7 @@
                   <i class="el-icon-plus"></i>
                 </el-button>
                 <el-button
-                  type="text"
+                  link
                   size="mini"
                   @click="() => edit(data)"
                   class="action-btn"
@@ -92,7 +92,7 @@
                   <i class="el-icon-edit"></i>
                 </el-button>
                 <el-button
-                  type="text"
+                  link
                   size="mini"
                   @click="() => remove(node, data)"
                   class="action-btn delete-btn"
@@ -239,9 +239,9 @@
         width="150"
       >
         <div class="context-menu">
-          <el-button type="text" @click="addSubDepartment">添加子部门</el-button>
-          <el-button type="text" @click="editContextMenu">编辑部门</el-button>
-          <el-button type="text" class="delete-btn" @click="deleteContextMenu">删除部门</el-button>
+          <el-button link @click="addSubDepartment">添加子部门</el-button>
+          <el-button link @click="editContextMenu">编辑部门</el-button>
+          <el-button link class="delete-btn" @click="deleteContextMenu">删除部门</el-button>
         </div>
       </el-popover>
     </div>

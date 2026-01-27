@@ -20,9 +20,9 @@
       <el-table-column label="操作" min-width="250" fixed="right" align="center">
         <template #default="scope">
           <div class="operation-buttons">
-            <el-button type="text" class="auth-btn" @click="handleAuthorization(scope.row)">授权</el-button>
-            <el-button type="text" class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button type="text" class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button link class="auth-btn" @click="handleAuthorization(scope.row)">授权</el-button>
+            <el-button link class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button link class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
           </div>
         </template>
       </el-table-column>
@@ -44,49 +44,60 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'RoleTable',
-  props: {
-    data: {
-      type: Array,
-      default: () => []
-    },
-    pagination: {
-      type: Object,
-      default: () => ({
-        currentPage: 1,
-        pageSize: 10
-      })
-    },
-    total: {
-      type: Number,
-      default: 0
-    }
-  },
-  methods: {
-    handleSelectionChange(selection) {
-      this.$emit('selection-change', selection)
-    },
-    handleStatusChange(row) {
-      this.$emit('status-change', row)
-    },
-    handleEdit(row) {
-      this.$emit('edit', row)
-    },
-    handleDelete(row) {
-      this.$emit('delete', row)
-    },
-    handleAuthorization(row) {
-      this.$emit('authorization', row)
-    },
-    handleSizeChange(size) {
-      this.$emit('size-change', size)
-    },
-    handlePageChange(page) {
-      this.$emit('page-change', page)
-    }
-  }
+<script setup lang="ts">
+interface Role {
+  id: string | number
+  status: number
+  [key: string]: any
+}
+
+interface Pagination {
+  currentPage: number
+  pageSize: number
+}
+
+defineProps<{
+  data: Role[]
+  pagination: Pagination
+  total: number
+}>()
+
+const emit = defineEmits<{
+  selectionChange: [selection: Role[]]
+  statusChange: [row: Role]
+  edit: [row: Role]
+  delete: [row: Role]
+  authorization: [row: Role]
+  sizeChange: [size: number]
+  pageChange: [page: number]
+}>()
+
+const handleSelectionChange = (selection: Role[]) => {
+  emit('selectionChange', selection)
+}
+
+const handleStatusChange = (row: Role) => {
+  emit('statusChange', row)
+}
+
+const handleEdit = (row: Role) => {
+  emit('edit', row)
+}
+
+const handleDelete = (row: Role) => {
+  emit('delete', row)
+}
+
+const handleAuthorization = (row: Role) => {
+  emit('authorization', row)
+}
+
+const handleSizeChange = (size: number) => {
+  emit('sizeChange', size)
+}
+
+const handlePageChange = (page: number) => {
+  emit('pageChange', page)
 }
 </script>
 
@@ -113,14 +124,14 @@ export default {
 }
 
 .auth-btn {
-  color: #67C23A;
+  color: #67c23a;
 }
 
 .edit-btn {
-  color: #409EFF;
+  color: #409eff;
 }
 
 .delete-btn {
-  color: #F56C6C;
+  color: #f56c6c;
 }
 </style>

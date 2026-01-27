@@ -12,31 +12,24 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'PositionPagination',
-  props: {
-    currentPage: {
-      type: Number,
-      default: 1
-    },
-    pageSize: {
-      type: Number,
-      default: 10
-    },
-    total: {
-      type: Number,
-      default: 0
-    }
-  },
-  methods: {
-    handlePageChange(page) {
-      this.$emit('page-change', page)
-    },
-    handleSizeChange(size) {
-      this.$emit('size-change', size)
-    }
-  }
+<script setup lang="ts">
+defineProps<{
+  currentPage: number
+  pageSize: number
+  total: number
+}>()
+
+const emit = defineEmits<{
+  pageChange: [page: number]
+  sizeChange: [size: number]
+}>()
+
+const handlePageChange = (page: number) => {
+  emit('pageChange', page)
+}
+
+const handleSizeChange = (size: number) => {
+  emit('sizeChange', size)
 }
 </script>
 

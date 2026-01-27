@@ -34,11 +34,11 @@
         <el-col :span="6">
           <div class="stat-panel panel-box panel-equal-height">
             <div class="panel-title">预警趋势</div>
-            <div class="trend-chart" ref="trendChart"></div>
+            <div class="trend-chart" ref="trendChartRef"></div>
           </div>
           <div class="type-panel panel-box panel-equal-height">
             <div class="panel-title">预警类型排名</div>
-            <div class="type-list">
+            <div v-loading="loading.types" class="type-list">
               <div v-for="(item, index) in warningTypes" :key="index" class="type-item">
                 <span class="type-name">{{ item.name }}</span>
                 <div class="type-bar">
@@ -57,12 +57,12 @@
             <div class="warning-viewer">
               <!-- 主要显示区域 -->
               <div class="main-image-container">
-                <img 
-                  :src="currentWarningImage.image" 
+                <img
+                  :src="currentWarningImage.image"
                   :alt="currentWarningImage.event"
                   class="main-warning-image"
                 />
-                
+
                 <!-- 顶部信息叠加层 -->
                 <div class="top-info-overlay">
                   <div class="info-card warning-info-card">
@@ -84,7 +84,7 @@
                 </div>
               </div>
                 </div>
-                
+
                 <!-- 预警信息叠加层 -->
                 <div class="warning-info-overlay">
                   <div class="warning-info-panel">
@@ -107,22 +107,22 @@
               </div>
             </div>
                 </div>
-              
+
               <!-- 底部缩略图滑动区域 -->
               <div class="thumbnail-container-bottom">
                 <!-- 左侧导航按钮 -->
-                <button 
+                <button
                   class="slider-btn prev-btn"
                   @click="slidePrev"
                   :disabled="currentImageIndex === 0"
                 >
                   <i class="el-icon-arrow-left"></i>
                 </button>
-                
+
                 <!-- 中间滑动区域 -->
                 <div class="thumbnail-slider" ref="thumbnailSlider">
-                  <div 
-                    v-for="(warning, index) in warningImages" 
+                  <div
+                    v-for="(warning, index) in warningImages"
                     :key="index"
                     :class="['thumbnail-item', { active: currentImageIndex === index }]"
                     @click="selectWarningImage(index)"
@@ -130,9 +130,9 @@
                     <img :src="warning.image" :alt="warning.event" />
                 </div>
               </div>
-                
+
                 <!-- 右侧导航按钮 -->
-                <button 
+                <button
                   class="slider-btn next-btn"
                   @click="slideNext"
                   :disabled="currentImageIndex === warningImages.length - 1"
@@ -148,11 +148,11 @@
         <el-col :span="6">
           <div class="level-panel panel-box panel-equal-height">
             <div class="panel-title">预警等级占比</div>
-            <div class="level-chart" ref="levelChart"></div>
+            <div class="level-chart" ref="levelChartRef"></div>
           </div>
           <div class="top-panel panel-box panel-equal-height">
             <div class="panel-title">组织预警 Top 5</div>
-            <div class="top-list">
+            <div v-loading="loading.locations" class="top-list">
               <div v-for="(item, index) in topWarnings" :key="index" class="top-item">
                 <span class="item-name">{{ item.name }}</span>
                 <div class="item-bar">
@@ -171,26 +171,26 @@
           <div class="status-panel panel-box panel-bottom-equal-height">
             <div class="panel-title">预警处理情况</div>
             <div class="status-tabs">
-              <div 
-                v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" 
+              <div
+                v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }"
                 :key="key"
                 :class="['tab-item', { active: statusTimeRange === key }]"
-                @click="changeStatusTimeRange(key)"
+                @click="changeStatusTimeRange(key as 'day' | 'week' | 'month')"
               >
                 {{ label }}
               </div>
             </div>
-            <div class="status-chart" ref="statusChart"></div>
+            <div class="status-chart" ref="statusChartRef"></div>
           </div>
         </el-col>
         <el-col :span="12">
           <div class="list-panel panel-box panel-bottom-equal-height">
             <div class="panel-title">预警记录</div>
             <div class="warning-table">
-              <el-table 
-                :data="warningList" 
-                style="width: 100%" 
-                :header-cell-style="headerCellStyle" 
+              <el-table
+                :data="warningList"
+                style="width: 100%"
+                :header-cell-style="headerCellStyle"
                 :cell-style="{ background: 'transparent', color: '#7EAEE5', borderBottom: '1px solid rgba(35, 88, 148, 0.3)' }"
                 :row-style="{ background: 'transparent' }"
                 :row-class-name="'transparent-row'"
@@ -210,16 +210,16 @@
           <div class="device-panel panel-box panel-bottom-equal-height">
             <div class="panel-title">设备预警数量 Top 10</div>
             <div class="device-tabs">
-              <div 
-                v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" 
+              <div
+                v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }"
                 :key="key"
                 :class="['tab-item', { active: deviceTimeRange === key }]"
-                @click="changeDeviceTimeRange(key)"
+                @click="changeDeviceTimeRange(key as 'day' | 'week' | 'month')"
               >
                 {{ label }}
               </div>
             </div>
-              
+
             <div class="device-table">
               <el-table
                 :data="deviceWarnings"
@@ -241,833 +241,959 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import * as echarts from 'echarts';
-import axios from 'axios';
+import type { ECharts } from 'echarts';
+import { alertStatisticsAPI, deviceStatisticsAPI } from '@/components/service/VisionAIService.js';
 
-export default {
-  name: 'VisualCenter',
-  data() {
-    return {
-      // 系统状态数据
-      todayWarnings: 0,
-      deviceCount: 0,
-      totalDevices: 0,
-      currentDetailTime: this.formatDate(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-      currentEvent: '',
-      currentDevice: '',
+// ============================================================================
+// 类型定义
+// ============================================================================
 
-      // 天气和位置信息
-      locationInfo: {
-        location: '',
-        weather: '',
-        airQuality: '',
-        loading: true
+interface LocationInfo {
+  location: string;
+  weather: string;
+  airQuality: string;
+  loading: boolean;
+}
+
+interface LoadingState {
+  summary: boolean;
+  trend: boolean;
+  types: boolean;
+  level: boolean;
+  locations: boolean;
+  processing: boolean;
+  deviceStatus: boolean;
+  warningList: boolean;
+  warningImages: boolean;
+}
+
+interface WarningType {
+  name: string;
+  count: number;
+  value: number;
+  color?: string;
+}
+
+interface TopWarning {
+  name: string;
+  count: number;
+  value: number;
+}
+
+interface WarningImage {
+  id: number;
+  image: string;
+  event: string;
+  time: string;
+  alert_time: string;
+  level: string;
+  levelText: string;
+  location: string;
+  camera_name: string;
+}
+
+interface CurrentWarningImage {
+  image: string;
+  event: string;
+  time: string;
+  level: string;
+  levelText: string;
+  location: string;
+}
+
+interface WarningListItem {
+  event: string;
+  time: string;
+  status: string;
+  statusText: string;
+}
+
+interface DeviceWarning {
+  name: string;
+  count: number;
+}
+
+interface StatusDataItem {
+  value: number;
+  name: string;
+  itemStyle?: { color: string };
+}
+
+interface TrendData {
+  timeLabels: string[];
+  dataPoints: number[];
+}
+
+type TimeRange = 'day' | 'week' | 'month';
+
+// ============================================================================
+// 响应式状态
+// ============================================================================
+
+// 系统状态数据
+const todayWarnings = ref<number>(0);
+const deviceCount = ref<number>(0);
+const totalDevices = ref<number>(0);
+const currentDetailTime = ref<string>('');
+const currentEvent = ref<string>('');
+const currentDevice = ref<string>('');
+
+// 天气和位置信息
+const locationInfo = reactive<LocationInfo>({
+  location: '',
+  weather: '',
+  airQuality: '',
+  loading: true
+});
+
+// 加载状态
+const loading = reactive<LoadingState>({
+  summary: false,
+  trend: false,
+  types: false,
+  level: false,
+  locations: false,
+  processing: false,
+  deviceStatus: false,
+  warningList: false,
+  warningImages: false
+});
+
+// 全屏状态
+const isFullscreen = ref<boolean>(false);
+
+// 表格样式
+const headerCellStyle = {
+  background: 'linear-gradient(180deg, rgba(6, 30, 93, 0.9) 0%, rgba(4, 20, 63, 1) 100%)',
+  color: '#00FFFF',
+  borderBottom: '1px solid rgba(0, 255, 255, 0.3)',
+  fontWeight: 'normal',
+  padding: '12px 0',
+  textShadow: '0 0 10px rgba(0, 255, 255, 0.3)'
+};
+
+// 预警类型数据
+const warningTypes = ref<WarningType[]>([]);
+
+// 图表引用
+const trendChartRef = ref<HTMLElement | null>(null);
+const levelChartRef = ref<HTMLElement | null>(null);
+const statusChartRef = ref<HTMLElement | null>(null);
+const thumbnailSlider = ref<HTMLElement | null>(null);
+const visualCenter = ref<HTMLElement | null>(null);
+
+let trendChart: ECharts | null = null;
+let levelChart: ECharts | null = null;
+let statusChart: ECharts | null = null;
+
+// 预警列表
+const warningList = ref<WarningListItem[]>([]);
+
+// 设备预警
+const deviceWarnings = ref<DeviceWarning[]>([]);
+
+// 时间范围
+const statusTimeRange = ref<TimeRange>('day');
+const deviceTimeRange = ref<TimeRange>('day');
+
+// 组织预警Top5
+const topWarnings = ref<TopWarning[]>([]);
+
+// 表格高度
+const tableHeight = ref<number>(280);
+
+// 预警图片相关数据
+const currentWarningImage = ref<CurrentWarningImage>({
+  image: '',
+  event: '',
+  time: '',
+  level: '',
+  levelText: '',
+  location: ''
+});
+const warningImages = ref<WarningImage[]>([]);
+const currentImageIndex = ref<number>(0);
+
+// 预警趋势数据
+const trendData = ref<TrendData>({
+  timeLabels: [],
+  dataPoints: []
+});
+
+// 定时器
+let weatherTimer: number | null = null;
+let dataRefreshTimer: number | null = null;
+let timeTimer: number | null = null;
+
+// ============================================================================
+// 工具方法
+// ============================================================================
+
+/**
+ * 格式化日期
+ */
+function formatDate(date: Date, formatStr: string): string {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+
+  return formatStr
+    .replace('yyyy', String(year))
+    .replace('MM', month)
+    .replace('dd', day)
+    .replace('HH', hours)
+    .replace('mm', minutes)
+    .replace('ss', seconds);
+}
+
+/**
+ * 更新当前时间
+ */
+function updateCurrentTime(): void {
+  const now = new Date();
+  currentDetailTime.value = formatDate(now, 'yyyy-MM-dd HH:mm:ss');
+}
+
+// ============================================================================
+// 数据加载方法
+// ============================================================================
+
+/**
+ * 加载所有统计数据
+ */
+async function loadAllStatistics(): Promise<void> {
+  try {
+    await Promise.all([
+      loadSummaryData(),
+      loadTrendData(),
+      loadTypesData(),
+      loadLevelData(),
+      loadLocationsData(),
+      loadProcessingStatusData(),
+      loadDeviceWarningsData(),
+      loadWarningImagesData(),
+      loadWarningListData()
+    ]);
+  } catch (error) {
+    console.error('加载统计数据失败:', error);
+  }
+}
+
+/**
+ * 加载预警统计摘要
+ */
+async function loadSummaryData(): Promise<void> {
+  loading.summary = true;
+  try {
+    const response = await alertStatisticsAPI.getSummary('day');
+    if (response.data?.code === 0 && response.data?.data) {
+      const data = response.data.data;
+      todayWarnings.value = data.total_alerts || 0;
+      deviceCount.value = data.online_devices || 0;
+      totalDevices.value = data.total_devices || 0;
+    }
+  } catch (error) {
+    console.error('加载预警统计摘要失败:', error);
+  } finally {
+    loading.summary = false;
+  }
+}
+
+/**
+ * 加载预警趋势数据
+ */
+async function loadTrendData(): Promise<void> {
+  loading.trend = true;
+  try {
+    const response = await alertStatisticsAPI.getTrend('24h', '1h');
+    if (response.data?.code === 0 && response.data?.data) {
+      const data = response.data.data;
+      trendData.value = {
+        timeLabels: data.time_labels || [],
+        dataPoints: data.trend_data || []
+      };
+      // 更新趋势图表
+      if (trendChart) {
+        updateTrendChart(data.time_labels || [], data.trend_data || []);
+      }
+    }
+  } catch (error) {
+    console.error('加载预警趋势失败:', error);
+  } finally {
+    loading.trend = false;
+  }
+}
+
+/**
+ * 加载预警类型数据
+ */
+async function loadTypesData(): Promise<void> {
+  loading.types = true;
+  try {
+    const response = await alertStatisticsAPI.getByType('day');
+    if (response.data?.code === 0 && response.data?.data) {
+      warningTypes.value = response.data.data.map((item: any) => ({
+        name: item.name,
+        count: item.count,
+        value: item.value,
+        color: item.color
+      }));
+    }
+  } catch (error) {
+    console.error('加载预警类型失败:', error);
+  } finally {
+    loading.types = false;
+  }
+}
+
+/**
+ * 加载预警等级数据
+ */
+async function loadLevelData(): Promise<void> {
+  loading.level = true;
+  try {
+    const response = await alertStatisticsAPI.getByLevel('day');
+    if (response.data?.code === 0 && response.data?.data) {
+      // 更新等级图表
+      if (levelChart) {
+        updateLevelChart(response.data.data);
+      }
+    }
+  } catch (error) {
+    console.error('加载预警等级失败:', error);
+  } finally {
+    loading.level = false;
+  }
+}
+
+/**
+ * 加载预警位置数据
+ */
+async function loadLocationsData(): Promise<void> {
+  loading.locations = true;
+  try {
+    const response = await alertStatisticsAPI.getByLocation('day', 5);
+    if (response.data?.code === 0 && response.data?.data) {
+      topWarnings.value = response.data.data.map((item: any) => ({
+        name: item.name,
+        count: item.count,
+        value: item.value
+      }));
+    }
+  } catch (error) {
+    console.error('加载预警位置失败:', error);
+  } finally {
+    loading.locations = false;
+  }
+}
+
+/**
+ * 加载预警处理情况数据
+ */
+async function loadProcessingStatusData(): Promise<void> {
+  loading.processing = true;
+  try {
+    const response = await alertStatisticsAPI.getProcessingStatus(statusTimeRange.value);
+    if (response.data?.code === 0 && response.data?.data) {
+      // 更新状态图表
+      if (statusChart) {
+        updateStatusChart(response.data.data);
+      }
+    }
+  } catch (error) {
+    console.error('加载预警处理情况失败:', error);
+  } finally {
+    loading.processing = false;
+  }
+}
+
+/**
+ * 加载设备预警数据
+ */
+async function loadDeviceWarningsData(): Promise<void> {
+  loading.deviceStatus = true;
+  try {
+    const response = await alertStatisticsAPI.getByLocation(deviceTimeRange.value, 10);
+    if (response.data?.code === 0 && response.data?.data) {
+      deviceWarnings.value = response.data.data.map((item: any) => ({
+        name: item.name,
+        count: item.count
+      }));
+    }
+  } catch (error) {
+    console.error('加载设备预警失败:', error);
+  } finally {
+    loading.deviceStatus = false;
+  }
+}
+
+/**
+ * 加载预警图片数据
+ */
+async function loadWarningImagesData(): Promise<void> {
+  loading.warningImages = true;
+  try {
+    const response = await alertStatisticsAPI.getLatestImages(10);
+    if (response.data?.code === 0 && response.data?.data) {
+      warningImages.value = response.data.data;
+      if (response.data.data.length > 0) {
+        currentWarningImage.value = {
+          image: response.data.data[0].image,
+          event: response.data.data[0].event,
+          time: response.data.data[0].time,
+          level: response.data.data[0].level,
+          levelText: response.data.data[0].levelText,
+          location: response.data.data[0].location
+        };
+        currentImageIndex.value = 0;
+      }
+    }
+  } catch (error) {
+    console.error('加载预警图片失败:', error);
+  } finally {
+    loading.warningImages = false;
+  }
+}
+
+/**
+ * 加载预警列表数据
+ */
+async function loadWarningListData(): Promise<void> {
+  loading.warningList = true;
+  try {
+    // 使用 alertAPI 获取预警列表
+    const { alertAPI } = await import('@/components/service/VisionAIService.js');
+    const response = await alertAPI.getAlerts({ page: 1, limit: 10 });
+    if (response.data?.code === 0 && response.data?.data) {
+      warningList.value = response.data.data.map((item: any) => ({
+        event: item.alert_name || item.name || '未知预警',
+        time: item.alert_time || item.time || '',
+        status: item.status || 'pending',
+        statusText: getStatusText(item.status)
+      }));
+    }
+  } catch (error) {
+    console.error('加载预警列表失败:', error);
+    // 使用模拟数据作为后备
+    warningList.value = [
+      { event: '未戴安全帽', time: '2024-01-15 10:30:25', status: 'pending', statusText: '待处理' },
+      { event: '未穿工作服', time: '2024-01-15 10:28:15', status: 'pending', statusText: '待处理' },
+      { event: '闲杂人员', time: '2024-01-15 10:15:42', status: 'pending', statusText: '待处理' },
+      { event: '违规吸烟', time: '2024-01-15 09:58:30', status: 'completed', statusText: '已完成' },
+      { event: '高空作业未系安全带', time: '2024-01-15 09:45:12', status: 'pending', statusText: '待处理' }
+    ];
+  } finally {
+    loading.warningList = false;
+  }
+}
+
+/**
+ * 获取状态文本
+ */
+function getStatusText(status: string): string {
+  const statusMap: Record<string, string> = {
+    'pending': '待处理',
+    'processing': '处理中',
+    'completed': '已完成'
+  };
+  return statusMap[status] || '未知';
+}
+
+/**
+ * 获取天气数据
+ */
+async function fetchWeatherData(): Promise<void> {
+  locationInfo.loading = true;
+  try {
+    // 使用模拟数据
+    locationInfo.location = '太行工业园区';
+    locationInfo.weather = '晴 26°C';
+    locationInfo.airQuality = '空气质量: 良';
+  } catch (error) {
+    console.error('获取天气数据失败:', error);
+    locationInfo.location = '太行工业园区';
+    locationInfo.weather = '晴 26°C';
+  } finally {
+    locationInfo.loading = false;
+  }
+}
+
+// ============================================================================
+// 图表初始化方法
+// ============================================================================
+
+/**
+ * 初始化趋势图表
+ */
+function initTrendChart(): void {
+  if (!trendChartRef.value) return;
+
+  trendChart = echarts.init(trendChartRef.value);
+
+  const option = {
+    backgroundColor: 'transparent',
+    grid: {
+      top: 40,
+      bottom: 20,
+      left: 0,
+      right: 20,
+      containLabel: true
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'line',
+        lineStyle: {
+          color: 'rgba(0, 255, 255, 0.3)',
+          width: 1
+        }
       },
+      backgroundColor: 'rgba(0, 19, 40, 0.8)',
+      borderColor: 'rgba(0, 255, 255, 0.3)',
+      textStyle: {
+        color: '#00FFFF'
+      }
+    },
+    xAxis: {
+      type: 'category',
+      data: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+      axisLine: {
+        lineStyle: {
+          color: 'rgba(0, 255, 255, 0.3)'
+        }
+      },
+      axisLabel: {
+        color: '#7EAEE5'
+      },
+      axisTick: {
+        show: false
+      },
+      splitLine: {
+        show: false
+      }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: {
+        show: false
+      },
+      axisLabel: {
+        color: '#7EAEE5'
+      },
+      splitLine: {
+        lineStyle: {
+          color: 'rgba(35, 88, 148, 0.3)',
+          type: 'dashed'
+        }
+      }
+    },
+    series: [
+      {
+        name: '预警数量',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 8,
+        data: [3, 5, 10, 14, 12, 7, 5],
+        lineStyle: {
+          width: 3,
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 1, y2: 0,
+            colorStops: [
+              { offset: 0, color: '#00FFFF' },
+              { offset: 1, color: '#207FFF' }
+            ]
+          }
+        },
+        itemStyle: {
+          color: '#00FFFF',
+          borderColor: 'rgba(0, 255, 255, 0.3)',
+          borderWidth: 6
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(0, 255, 255, 0.3)' },
+              { offset: 1, color: 'rgba(0, 255, 255, 0)' }
+            ]
+          }
+        }
+      }
+    ]
+  };
 
-      // 状态数据
-      statusData: {
-        day: [
+  trendChart.setOption(option);
+}
+
+/**
+ * 更新趋势图表
+ */
+function updateTrendChart(timeLabels: string[], dataPoints: number[]): void {
+  if (!trendChart) return;
+
+  trendChart.setOption({
+    xAxis: {
+      data: timeLabels
+    },
+    series: [
+      {
+        data: dataPoints
+      }
+    ]
+  });
+}
+
+/**
+ * 初始化等级图表
+ */
+function initLevelChart(): void {
+  if (!levelChartRef.value) return;
+
+  levelChart = echarts.init(levelChartRef.value);
+
+  const option = {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)',
+      backgroundColor: 'rgba(0, 19, 40, 0.8)',
+      borderColor: 'rgba(0, 255, 255, 0.3)',
+      textStyle: {
+        color: '#00FFFF'
+      }
+    },
+    color: ['#FF4D4F', '#FF8746', '#44FF9B', '#00C5FF'],
+    legend: {
+      orient: 'vertical',
+      right: 0,
+      top: 'center',
+      itemWidth: 12,
+      itemHeight: 12,
+      itemGap: 20,
+      textStyle: {
+        color: '#7EAEE5'
+      }
+    },
+    series: [
+      {
+        name: '预警等级',
+        type: 'pie',
+        radius: ['60%', '85%'],
+        center: ['30%', '50%'],
+        avoidLabelOverlap: false,
+        label: {
+          show: false
+        },
+        labelLine: {
+          show: false
+        },
+        data: [
+          { value: 8, name: '紧急' },
+          { value: 15, name: '重要' },
+          { value: 21, name: '普通' },
+          { value: 11, name: '提示' }
+        ]
+      }
+    ]
+  };
+
+  levelChart.setOption(option);
+}
+
+/**
+ * 更新等级图表
+ */
+function updateLevelChart(data: any[]): void {
+  if (!levelChart) return;
+
+  levelChart.setOption({
+    series: [
+      {
+        data: data
+      }
+    ]
+  });
+}
+
+/**
+ * 初始化状态图表
+ */
+function initStatusChart(): void {
+  if (!statusChartRef.value) return;
+
+  statusChart = echarts.init(statusChartRef.value);
+
+  const option = {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)',
+      backgroundColor: 'rgba(0, 19, 40, 0.8)',
+      borderColor: 'rgba(0, 255, 255, 0.3)',
+      textStyle: {
+        color: '#00FFFF'
+      }
+    },
+    series: [
+      {
+        name: '状态分布',
+        type: 'pie',
+        radius: ['50%', '70%'],
+        center: ['50%', '50%'],
+        avoidLabelOverlap: false,
+        label: {
+          show: true,
+          position: 'outside',
+          formatter: '{b}\n{c}条',
+          color: '#7EAEE5'
+        },
+        labelLine: {
+          show: true,
+          length: 10,
+          length2: 10,
+          lineStyle: {
+            color: 'rgba(35, 88, 148, 0.8)'
+          }
+        },
+        data: [
           { value: 5, name: '待处理', itemStyle: { color: '#FF8746' } },
           { value: 3, name: '处理中', itemStyle: { color: '#44FF9B' } },
           { value: 12, name: '已完成', itemStyle: { color: '#00FFFF' } }
-        ],
-        week: [
-          { value: 18, name: '待处理', itemStyle: { color: '#FF8746' } },
-          { value: 25, name: '处理中', itemStyle: { color: '#44FF9B' } },
-          { value: 65, name: '已完成', itemStyle: { color: '#00FFFF' } }
-        ],
-        month: [
-          { value: 42, name: '待处理', itemStyle: { color: '#FF8746' } },
-          { value: 78, name: '处理中', itemStyle: { color: '#44FF9B' } },
-          { value: 180, name: '已完成', itemStyle: { color: '#00FFFF' } }
         ]
-      },
+      }
+    ]
+  };
 
-      // 全屏状态
-      isFullscreen: false,
+  statusChart.setOption(option);
+}
 
-      // 表格样式
-      headerCellStyle: {
-        background: 'linear-gradient(180deg, rgba(6, 30, 93, 0.9) 0%, rgba(4, 20, 63, 1) 100%)',
-        color: '#00FFFF',
-        borderBottom: '1px solid rgba(0, 255, 255, 0.3)',
-        fontWeight: 'normal',
-        padding: '12px 0',
-        textShadow: '0 0 10px rgba(0, 255, 255, 0.3)'
-      },
+/**
+ * 更新状态图表
+ */
+function updateStatusChart(data: StatusDataItem[]): void {
+  if (!statusChart) return;
 
-      // 预警类型数据
-      warningTypes: [
-        { name: '未戴安全帽', count: 9, value: 100 },
-        { name: '区域入侵', count: 7, value: 78 },
-        { name: '垃圾堆积', count: 5, value: 56 },
-        { name: '人员聚集', count: 4, value: 44 },
-        { name: '烟雾识别', count: 2, value: 22 }
-      ],
+  statusChart.setOption({
+    series: [
+      {
+        data: data
+      }
+    ]
+  });
+}
 
-      // 定时器
-      weatherTimer: null,
-      statusTimer: null,
-      timeTimer: null,
+// ============================================================================
+// 预警图片查看器方法
+// ============================================================================
 
-      // 图表实例
-      trendChart: null,
-      levelChart: null,
-      statusChart: null,
+/**
+ * 初始化预警图片查看器
+ */
+function initWarningViewer(): void {
+  document.addEventListener('keydown', handleKeyboardNavigation);
+}
 
-      // 预警列表
-      warningList: [],
-      
-      // 设备预警
-      deviceWarnings: [],
-      
-      // 时间范围
-      statusTimeRange: 'day',
-      deviceTimeRange: 'day',
-      
-      // 组织预警Top5
-      topWarnings: [
-        { name: '生产车间A', count: 15, value: 100 },
-        { name: '装配车间', count: 12, value: 80 },
-        { name: '机械加工区', count: 9, value: 60 },
-        { name: '原料仓库', count: 6, value: 40 },
-        { name: '成品仓库', count: 3, value: 20 }
-      ],
+/**
+ * 处理键盘导航
+ */
+function handleKeyboardNavigation(event: KeyboardEvent): void {
+  if (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement) {
+    return;
+  }
 
-      // 表格高度
-      tableHeight: 280,
-
-      // 预警图片相关数据
-      currentWarningImage: {
-        image: '',
-        event: '',
-        time: '',
-        level: '',
-        levelText: '',
-        location: ''
-      },
-      warningImages: [],
-      currentImageIndex: 0
-    };
-  },
-  mounted() {
-    // 初始化模拟数据
-    this.initMockData();
-    
-    // 初始化CSS变量 - 只保留面板相关的变量
-    document.documentElement.style.setProperty('--panel-top-height', '24vh');
-    document.documentElement.style.setProperty('--panel-bottom-height', '36vh');
-    
-    this.fetchWeatherData();
-    this.fetchSystemStatus();
-    this.updateCurrentTime();
-    
-    // 设置定时器
-    this.weatherTimer = setInterval(this.fetchWeatherData, 5 * 60 * 1000); // 每5分钟更新天气
-    this.statusTimer = setInterval(this.fetchSystemStatus, 30 * 1000); // 每30秒更新系统状态
-    this.timeTimer = setInterval(this.updateCurrentTime, 1000); // 每秒更新一次时间
-    
-    // 监听全屏变化
-    document.addEventListener('fullscreenchange', this.handleFullscreenChange);
-    
-    // 初始化图表和3D场景
-    this.$nextTick(() => {
-      this.initTrendChart();
-      this.initLevelChart();
-      this.initStatusChart();
-      this.initSimpleMapArea();
-      this.generateMockData();
-      this.initWarningViewer();
-    });
-    
-    window.addEventListener('resize', this.handleResize);
-  },
-  beforeDestroy() {
-    // 清理定时器
-    clearInterval(this.weatherTimer);
-    clearInterval(this.statusTimer);
-    clearInterval(this.timeTimer);
-    
-    // 移除事件监听
-    document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
-    document.removeEventListener('keydown', this.handleKeyboardNavigation);
-    window.removeEventListener('resize', this.handleResize);
-    
-    // 销毁图表和3D资源
-    if (this.trendChart) this.trendChart.dispose();
-    if (this.levelChart) this.levelChart.dispose();
-    if (this.statusChart) this.statusChart.dispose();
-  },
-  methods: {
-    // 添加格式化日期的方法
-    formatDate(date, formatStr) {
-      if (!date) return '';
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      const seconds = String(date.getSeconds()).padStart(2, '0');
-      
-      return formatStr
-        .replace('yyyy', year)
-        .replace('MM', month)
-        .replace('dd', day)
-        .replace('HH', hours)
-        .replace('mm', minutes)
-        .replace('ss', seconds);
-    },
-    
-    // 初始化模拟数据
-    initMockData() {
-      // 初始化数据，以避免undefined错误
-      this.todayWarnings = 25;
-      this.deviceCount = 120;
-      this.totalDevices = 150;
-      this.currentEvent = '未戴安全帽';
-      this.currentDevice = '生产车间A区监控';
-      
-      // 初始化天气信息
-      this.locationInfo = {
-        location: '太行工业园区',
-        weather: '晴 26°C',
-        loading: false
-      };
-      
-      // 初始化预警列表 - 与预警管理页面保持一致
-      this.warningList = [
-        { event: '未戴安全帽', time: '2024-01-15 10:30:25', status: 'pending', statusText: '待处理' },
-        { event: '未穿工作服', time: '2024-01-15 10:28:15', status: 'pending', statusText: '待处理' },
-        { event: '闲杂人员', time: '2024-01-15 10:15:42', status: 'pending', statusText: '待处理' },
-        { event: '违规吸烟', time: '2024-01-15 09:58:30', status: 'completed', statusText: '已完成' },
-        { event: '高空作业未系安全带', time: '2024-01-15 09:45:12', status: 'pending', statusText: '待处理' },
-        { event: '未穿反光背心', time: '2024-01-15 09:32:18', status: 'pending', statusText: '待处理' },
-        { event: '未戴安全帽', time: '2024-01-15 08:45:33', status: 'processing', statusText: '处理中' },
-        { event: '未穿工作服', time: '2024-01-15 08:22:15', status: 'completed', statusText: '已完成' },
-        { event: '违规吸烟', time: '2024-01-15 07:58:42', status: 'completed', statusText: '已完成' },
-        { event: '高空作业未系安全带', time: '2024-01-15 07:15:28', status: 'processing', statusText: '处理中' }
-      ];
-      
-      // 初始化设备预警 - 与预警管理页面保持一致
-      this.deviceWarnings = [
-        { name: '摄像头01-工地东北角', count: 15 },
-        { name: '摄像头03-工地南侧', count: 12 },
-        { name: '摄像头02-材料区', count: 9 },
-        { name: '摄像头05-休息区', count: 6 },
-        { name: '摄像头04-施工作业区', count: 5 },
-        { name: '摄像头06-工地东北角', count: 4 },
-        { name: '摄像头07-塔吊区域', count: 3 },
-        { name: '摄像头08-脚手架区域', count: 2 },
-        { name: '摄像头09-设备存放区', count: 7 },
-        { name: '摄像头10-危险作业区', count: 8 }
-      ];
-      
-      // 初始化预警类型 - 与预警管理页面保持一致
-      this.warningTypes = [
-        { name: '未戴安全帽', count: 9, value: 100 },
-        { name: '未穿工作服', count: 7, value: 78 },
-        { name: '闲杂人员', count: 5, value: 56 },
-        { name: '违规吸烟', count: 4, value: 44 },
-        { name: '高空作业未系安全带', count: 3, value: 33 },
-        { name: '未穿反光背心', count: 2, value: 22 }
-      ];
-      
-      // 初始化组织预警 - 与施工现场主题保持一致
-      this.topWarnings = [
-        { name: '工地东北角', count: 15, value: 100 },
-        { name: '工地南侧', count: 12, value: 80 },
-        { name: '施工作业区', count: 9, value: 60 },
-        { name: '材料区', count: 6, value: 40 },
-        { name: '休息区', count: 3, value: 20 }
-      ];
-      
-      // 初始化预警图片数据 - 使用预警管理页面的真实数据
-      this.warningImages = [
-        {
-          image: new URL('../monitoringWarning/images/5.jpg', import.meta.url).href,
-          event: '未戴安全帽',
-          time: '2024.01.15 10:30',
-          level: 'urgent',
-          levelText: '一级',
-          location: '工地东北角'
-        },
-        {
-          image: new URL('../monitoringWarning/images/4.jpg', import.meta.url).href,
-          event: '未穿工作服',
-          time: '2024.01.15 10:28',
-          level: 'high',
-          levelText: '二级',
-          location: '工地南侧'
-        },
-        {
-          image: new URL('../monitoringWarning/images/5.jpg', import.meta.url).href,
-          event: '闲杂人员',
-          time: '2024.01.15 10:15',
-          level: 'medium',
-          levelText: '三级',
-          location: '材料区'
-        },
-        {
-          image: new URL('../monitoringWarning/images/6.jpg', import.meta.url).href,
-          event: '违规吸烟',
-          time: '2024.01.15 09:58',
-          level: 'high',
-          levelText: '二级',
-          location: '休息区'
-        },
-        {
-          image: new URL('../monitoringWarning/images/1.jpg', import.meta.url).href,
-          event: '高空作业未系安全带',
-          time: '2024.01.15 09:45',
-          level: 'urgent',
-          levelText: '一级',
-          location: '施工作业区'
-        },
-        {
-          image: new URL('../monitoringWarning/images/3.jpg', import.meta.url).href,
-          event: '未穿反光背心',
-          time: '2024.01.15 09:32',
-          level: 'medium',
-          levelText: '三级',
-          location: '工地东北角'
-        }
-      ];
-      
-      // 设置默认显示第一张图片
-      if (this.warningImages.length > 0) {
-        this.currentWarningImage = this.warningImages[0];
-        this.currentImageIndex = 0;
-      }
-    },
-    
-    // 获取系统状态数据
-    async fetchSystemStatus() {
-      try {
-        // 使用模拟数据代替真实API调用
-        // const response = await this.$axios.get('/api/system/status').catch(() => null);
-        
-        // 模拟API响应
-        const response = {
-          data: {
-            todayWarnings: 25,
-            deviceCount: 120,
-            totalDevices: 150,
-            currentEvent: '未戴安全帽',
-            currentDevice: '生产车间A区监控'
-          }
-        };
-        
-        if (response && response.data) {
-          const { data } = response;
-          this.todayWarnings = data.todayWarnings || 0;
-          this.deviceCount = data.deviceCount || 0;
-          this.totalDevices = data.totalDevices || 0;
-          this.currentEvent = data.currentEvent || '';
-          this.currentDevice = data.currentDevice || '';
-        }
-      } catch (error) {
-        console.error('获取系统状态失败:', error);
-      }
-    },
-    
-    // 获取实时位置和天气信息
-    async fetchWeatherData() {
-      try {
-        this.locationInfo.loading = true;
-        
-        // 模拟天气数据，避免跨域和API密钥问题
-        /*
-        // 首先尝试获取用户位置
-        let position;
-        try {
-          position = await this.getCurrentPosition();
-        } catch (error) {
-          console.warn('无法获取用户位置，使用默认位置:', error);
-          position = { latitude: 38.0428, longitude: 114.5149 }; // 石家庄默认坐标
-        }
-        
-        // 使用获取到的位置请求天气信息
-        const response = await axios.get('https://api.weatherapi.com/v1/current.json', {
-          params: {
-            key: 'f0245b8d45c94ca58ba24440251703',
-            q: `${position.latitude},${position.longitude}`,
-            lang: 'zh',
-            aqi: 'yes'
-          }
-        });
-        */
-        
-        // 使用模拟数据
-        const response = {
-          data: {
-            location: {
-              name: '太行工业园区'
-            },
-            current: {
-              condition: {
-                text: '晴'
-              },
-              temp_c: 26,
-              air_quality: {
-                'us-epa-index': 2 // 良
-              }
-            }
-          }
-        };
-        
-        if (response && response.data && response.data.location && response.data.current) {
-          const { location, current } = response.data;
-          this.locationInfo.location = location.name;
-          // 天气和温度合并显示
-          this.locationInfo.weather = `${current.condition.text} ${current.temp_c}°C`;
-          
-        }
-      } catch (error) {
-        console.error('获取天气数据失败:', error);
-        this.locationInfo.location = '太行工业园区';
-        this.locationInfo.weather = '晴 26°C';
-      } finally {
-        this.locationInfo.loading = false;
-      }
-    },
-    
-    // 获取当前位置的Promise封装
-    getCurrentPosition() {
-      return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-          reject(new Error('浏览器不支持地理位置'));
-          return;
-        }
-        
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            resolve({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            });
-          },
-          (error) => {
-            reject(error);
-          },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        );
-      });
-    },
-    
-    // 更新当前时间
-    updateCurrentTime() {
-      // 获取实时时间
-      const now = new Date();
-      this.currentDetailTime = this.formatDate(now, 'yyyy-MM-dd HH:mm:ss');
-    },
-    
-    // 切换全屏
-    async toggleFullscreen() {
-      try {
-        if (!document.fullscreenElement) {
-          await this.$refs.visualCenter.requestFullscreen();
-          this.isFullscreen = true;
-        } else {
-          await document.exitFullscreen();
-          this.isFullscreen = false;
-        }
-      } catch (err) {
-        console.error('全屏切换失败:', err);
-      }
-    },
-    
-    // 处理全屏变化事件
-    handleFullscreenChange() {
-      this.isFullscreen = !!document.fullscreenElement;
-      
-      // 根据全屏状态调整表格高度和面板高度
-      if (this.isFullscreen) {
-        this.tableHeight = 280; // 全屏模式下适中的表格高度
-        // 调整全屏下的面板高度 - 适当缩小以避免滚动
-        document.documentElement.style.setProperty('--panel-top-height', '240px');
-        document.documentElement.style.setProperty('--panel-bottom-height', '320px');
-      } else {
-        this.tableHeight = 280; // 非全屏模式下使用与全屏相同的表格高度，确保显示效果一致
-        // 恢复正常模式下的面板高度
-        document.documentElement.style.setProperty('--panel-top-height', '24vh');
-        document.documentElement.style.setProperty('--panel-bottom-height', '36vh');
-      }
-      
-      // 全屏状态变化后，重新调整图表大小
-      setTimeout(() => {
-        if (this.trendChart) this.trendChart.resize();
-        if (this.levelChart) this.levelChart.resize();
-        if (this.statusChart) this.statusChart.resize();
-      }, 300);
-    },
-    
-    // 处理窗口大小变化
-    handleResize() {
-      if (this.trendChart) this.trendChart.resize();
-      if (this.levelChart) this.levelChart.resize();
-      if (this.statusChart) this.statusChart.resize();
-    },
-    
-    // 初始化趋势图表
-    initTrendChart() {
-      const trendChartDom = this.$refs.trendChart;
-      if (!trendChartDom) return;
-      
-      this.trendChart = echarts.init(trendChartDom);
-      
-      const option = {
-        backgroundColor: 'transparent',
-        grid: {
-          top: 40,
-          bottom: 20,
-          left: 0,
-          right: 20,
-          containLabel: true
-        },
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'line',
-            lineStyle: {
-              color: 'rgba(0, 255, 255, 0.3)',
-              width: 1
-            }
-          },
-          backgroundColor: 'rgba(0, 19, 40, 0.8)',
-          borderColor: 'rgba(0, 255, 255, 0.3)',
-          textStyle: {
-            color: '#00FFFF'
-          }
-        },
-        xAxis: {
-          type: 'category',
-          data: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
-          axisLine: {
-            lineStyle: {
-              color: 'rgba(0, 255, 255, 0.3)'
-            }
-          },
-          axisLabel: {
-            color: '#7EAEE5'
-          },
-          axisTick: {
-            show: false
-          },
-          splitLine: {
-            show: false
-          }
-        },
-        yAxis: {
-          type: 'value',
-          axisLine: {
-            show: false
-          },
-          axisLabel: {
-            color: '#7EAEE5'
-          },
-          splitLine: {
-            lineStyle: {
-              color: 'rgba(35, 88, 148, 0.3)',
-              type: 'dashed'
-            }
-          }
-        },
-        series: [
-          {
-            name: '预警数量',
-            type: 'line',
-            smooth: true,
-            symbol: 'circle',
-            symbolSize: 8,
-            data: [3, 5, 10, 14, 12, 7, 5],
-            lineStyle: {
-              width: 3,
-              color: {
-                type: 'linear',
-                x: 0, y: 0, x2: 1, y2: 0,
-                colorStops: [
-                  { offset: 0, color: '#00FFFF' },
-                  { offset: 1, color: '#207FFF' }
-                ]
-              }
-            },
-            itemStyle: {
-              color: '#00FFFF',
-              borderColor: 'rgba(0, 255, 255, 0.3)',
-              borderWidth: 6
-            },
-            areaStyle: {
-              color: {
-                type: 'linear',
-                x: 0, y: 0, x2: 0, y2: 1,
-                colorStops: [
-                  { offset: 0, color: 'rgba(0, 255, 255, 0.3)' },
-                  { offset: 1, color: 'rgba(0, 255, 255, 0)' }
-                ]
-              }
-            }
-          }
-        ]
-      };
-      
-      this.trendChart.setOption(option);
-    },
-    
-    // 初始化等级占比图表
-    initLevelChart() {
-      const levelChartDom = this.$refs.levelChart;
-      if (!levelChartDom) return;
-      
-      this.levelChart = echarts.init(levelChartDom);
-      
-      const option = {
-        backgroundColor: 'transparent',
-        tooltip: {
-          trigger: 'item',
-          formatter: '{b}: {c} ({d}%)',
-          backgroundColor: 'rgba(0, 19, 40, 0.8)',
-          borderColor: 'rgba(0, 255, 255, 0.3)',
-          textStyle: {
-            color: '#00FFFF'
-          }
-        },
-        color: ['#FF4D4F', '#FF8746', '#44FF9B', '#00C5FF'],
-        legend: {
-          orient: 'vertical',
-          right: 0,
-          top: 'center',
-          itemWidth: 12,
-          itemHeight: 12,
-          itemGap: 20,
-          textStyle: {
-            color: '#7EAEE5'
-          },
-          formatter: function(name) {
-            return name;
-          }
-        },
-        series: [
-          {
-            name: '预警等级',
-            type: 'pie',
-            radius: ['60%', '85%'],
-            center: ['30%', '50%'],
-            avoidLabelOverlap: false,
-            label: {
-              show: false
-            },
-            emphasis: {
-              label: {
-                show: false
-              }
-            },
-            labelLine: {
-              show: false
-            },
-            data: [
-              { value: 8, name: '紧急' },
-              { value: 15, name: '重要' },
-              { value: 21, name: '普通' },
-              { value: 11, name: '提示' }
-            ]
-          }
-        ]
-      };
-      
-      this.levelChart.setOption(option);
-    },
-    
-    // 初始化状态图表
-    initStatusChart() {
-      const statusChartDom = this.$refs.statusChart;
-      if (!statusChartDom) return;
-      
-      this.statusChart = echarts.init(statusChartDom);
-      
-      const option = {
-        backgroundColor: 'transparent',
-        tooltip: {
-          trigger: 'item',
-          formatter: '{b}: {c} ({d}%)',
-          backgroundColor: 'rgba(0, 19, 40, 0.8)',
-          borderColor: 'rgba(0, 255, 255, 0.3)',
-          textStyle: {
-            color: '#00FFFF'
-          }
-        },
-        series: [
-          {
-            name: '状态分布',
-            type: 'pie',
-            radius: ['50%', '70%'],
-            center: ['50%', '50%'], // 修改为50%,50%使其上下左右都居中
-            avoidLabelOverlap: false,
-            label: {
-              show: true,
-              position: 'outside',
-              formatter: '{b}\n{c}条',
-              color: '#7EAEE5'
-            },
-            emphasis: {
-              label: {
-                show: true,
-                fontSize: '14',
-                fontWeight: 'bold',
-                color: '#00FFFF'
-              }
-            },
-            labelLine: {
-              show: true,
-              length: 10,
-              length2: 10,
-              lineStyle: {
-                color: 'rgba(35, 88, 148, 0.8)'
-              }
-            },
-            data: this.statusData.day
-          }
-        ]
-      };
-      
-      this.statusChart.setOption(option);
-    },
-    
-    // 初始化简单地图区域
-    initSimpleMapArea() {
-      // 地图区域已移除
-    },
-    
-    // 更新设备表格数据
-    generateMockData() {
-      // 生成模拟的预警列表 - 与预警管理页面保持一致
-      this.warningList = [
-        { event: '未戴安全帽', time: '2024-01-15 10:30:25', status: 'pending', statusText: '待处理' },
-        { event: '未穿工作服', time: '2024-01-15 10:28:15', status: 'pending', statusText: '待处理' },
-        { event: '闲杂人员', time: '2024-01-15 10:15:42', status: 'pending', statusText: '待处理' },
-        { event: '违规吸烟', time: '2024-01-15 09:58:30', status: 'completed', statusText: '已完成' },
-        { event: '高空作业未系安全带', time: '2024-01-15 09:45:12', status: 'pending', statusText: '待处理' },
-        { event: '未穿反光背心', time: '2024-01-15 09:32:18', status: 'pending', statusText: '待处理' },
-        { event: '未戴安全帽', time: '2024-01-15 08:45:33', status: 'processing', statusText: '处理中' },
-        { event: '未穿工作服', time: '2024-01-15 08:22:15', status: 'completed', statusText: '已完成' },
-        { event: '违规吸烟', time: '2024-01-15 07:58:42', status: 'completed', statusText: '已完成' },
-        { event: '高空作业未系安全带', time: '2024-01-15 07:15:28', status: 'processing', statusText: '处理中' }
-      ];
-      
-      // 生成模拟的设备预警 - 与预警管理页面保持一致
-      this.deviceWarnings = [
-        { name: '摄像头01-工地东北角', count: 15 },
-        { name: '摄像头03-工地南侧', count: 12 },
-        { name: '摄像头02-材料区', count: 9 },
-        { name: '摄像头05-休息区', count: 6 },
-        { name: '摄像头04-施工作业区', count: 5 },
-        { name: '摄像头06-工地东北角', count: 4 },
-        { name: '摄像头07-塔吊区域', count: 3 },
-        { name: '摄像头08-脚手架区域', count: 2 },
-        { name: '摄像头09-设备存放区', count: 7 },
-        { name: '摄像头10-危险作业区', count: 8 }
-      ];
-    },
-    
-    // 切换状态时间范围
-    changeStatusTimeRange(range) {
-      this.statusTimeRange = range;
-      if (this.statusChart) {
-        this.statusChart.setOption({
-          series: [
-            {
-              data: this.statusData[range]
-            }
-          ]
-        });
-      }
-    },
-    
-    // 切换设备时间范围
-    changeDeviceTimeRange(range) {
-      this.deviceTimeRange = range;
-      // 这里可以根据不同时间范围加载不同设备数据
-    },
-
-    // 预警图片相关方法
-    initWarningViewer() {
-      // 添加键盘导航功能
-      document.addEventListener('keydown', this.handleKeyboardNavigation);
-      
-      // 确保图片加载
-      this.preloadImages();
-    },
-    
-    handleKeyboardNavigation(event) {
-      // 只在当前页面激活时处理键盘事件
-      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
-        return;
-      }
-      
-      switch (event.key) {
-        case 'ArrowLeft':
-          event.preventDefault();
-          this.slidePrev();
-          break;
-        case 'ArrowRight':
-          event.preventDefault();
-          this.slideNext();
-          break;
-        case 'Escape':
-          event.preventDefault();
-          // 可以添加退出全屏等功能
-          break;
-      }
-    },
-    
-    preloadImages() {
-      // 预加载所有图片以提升用户体验
-      this.warningImages.forEach(warning => {
-        const img = new Image();
-        img.src = warning.image;
-      });
-    },
-    
-    // 滑动到指定缩略图位置
-    scrollToThumbnail(index) {
-      const thumbnailSlider = this.$refs.thumbnailSlider;
-      if (thumbnailSlider) {
-        const thumbnailItem = thumbnailSlider.children[index];
-        if (thumbnailItem) {
-          thumbnailItem.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-            inline: 'center'
-          });
-        }
-      }
-    },
-    
-    // 重写选择图片方法，添加滚动效果
-    selectWarningImage(index) {
-      this.currentImageIndex = index;
-      this.currentWarningImage = this.warningImages[index];
-      this.scrollToThumbnail(index);
-    },
-    
-    // 重写滑动方法，添加滚动效果
-    slidePrev() {
-      if (this.currentImageIndex > 0) {
-        this.currentImageIndex = this.currentImageIndex - 1;
-        this.currentWarningImage = this.warningImages[this.currentImageIndex];
-        this.scrollToThumbnail(this.currentImageIndex);
-      }
-    },
-    
-    slideNext() {
-      if (this.currentImageIndex < this.warningImages.length - 1) {
-        this.currentImageIndex = this.currentImageIndex + 1;
-        this.currentWarningImage = this.warningImages[this.currentImageIndex];
-        this.scrollToThumbnail(this.currentImageIndex);
-      }
-    }
+  switch (event.key) {
+    case 'ArrowLeft':
+      event.preventDefault();
+      slidePrev();
+      break;
+    case 'ArrowRight':
+      event.preventDefault();
+      slideNext();
+      break;
+    case 'Escape':
+      event.preventDefault();
+      break;
   }
 }
+
+/**
+ * 选择预警图片
+ */
+function selectWarningImage(index: number): void {
+  currentImageIndex.value = index;
+  const warning = warningImages.value[index];
+  if (warning) {
+    currentWarningImage.value = {
+      image: warning.image,
+      event: warning.event,
+      time: warning.time,
+      level: warning.level,
+      levelText: warning.levelText,
+      location: warning.location
+    };
+    scrollToThumbnail(index);
+  }
+}
+
+/**
+ * 滚动到缩略图
+ */
+function scrollToThumbnail(index: number): void {
+  if (!thumbnailSlider.value) return;
+
+  const thumbnailItem = thumbnailSlider.value.children[index];
+  if (thumbnailItem) {
+    thumbnailItem.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center'
+    });
+  }
+}
+
+/**
+ * 上一张图片
+ */
+function slidePrev(): void {
+  if (currentImageIndex.value > 0) {
+    selectWarningImage(currentImageIndex.value - 1);
+  }
+}
+
+/**
+ * 下一张图片
+ */
+function slideNext(): void {
+  if (currentImageIndex.value < warningImages.value.length - 1) {
+    selectWarningImage(currentImageIndex.value + 1);
+  }
+}
+
+// ============================================================================
+// 其他交互方法
+// ============================================================================
+
+/**
+ * 切换状态时间范围
+ */
+function changeStatusTimeRange(range: TimeRange): void {
+  statusTimeRange.value = range;
+  loadProcessingStatusData();
+}
+
+/**
+ * 切换设备时间范围
+ */
+function changeDeviceTimeRange(range: TimeRange): void {
+  deviceTimeRange.value = range;
+  loadDeviceWarningsData();
+}
+
+/**
+ * 切换全屏
+ */
+async function toggleFullscreen(): Promise<void> {
+  try {
+    if (!document.fullscreenElement) {
+      await visualCenter.value?.requestFullscreen();
+      isFullscreen.value = true;
+    } else {
+      await document.exitFullscreen();
+      isFullscreen.value = false;
+    }
+  } catch (err) {
+    console.error('全屏切换失败:', err);
+  }
+}
+
+/**
+ * 处理窗口大小变化
+ */
+function handleResize(): void {
+  if (trendChart) trendChart.resize();
+  if (levelChart) levelChart.resize();
+  if (statusChart) statusChart.resize();
+}
+
+// ============================================================================
+// 生命周期
+// ============================================================================
+
+onMounted(() => {
+  // 初始化CSS变量
+  document.documentElement.style.setProperty('--panel-top-height', '24vh');
+  document.documentElement.style.setProperty('--panel-bottom-height', '36vh');
+
+  // 更新当前时间
+  updateCurrentTime();
+
+  // 初始化天气数据
+  fetchWeatherData();
+
+  // 加载所有统计数据
+  loadAllStatistics();
+
+  // 设置定时器
+  weatherTimer = window.setInterval(fetchWeatherData, 5 * 60 * 1000);
+  dataRefreshTimer = window.setInterval(loadAllStatistics, 30 * 1000);
+  timeTimer = window.setInterval(updateCurrentTime, 1000);
+
+  // 监听全屏变化
+  document.addEventListener('fullscreenchange', () => {
+    isFullscreen.value = !!document.fullscreenElement;
+    if (isFullscreen.value) {
+      tableHeight.value = 280;
+      document.documentElement.style.setProperty('--panel-top-height', '240px');
+      document.documentElement.style.setProperty('--panel-bottom-height', '320px');
+    } else {
+      tableHeight.value = 280;
+      document.documentElement.style.setProperty('--panel-top-height', '24vh');
+      document.documentElement.style.setProperty('--panel-bottom-height', '36vh');
+    }
+    setTimeout(() => {
+      if (trendChart) trendChart.resize();
+      if (levelChart) levelChart.resize();
+      if (statusChart) statusChart.resize();
+    }, 300);
+  });
+
+  // 初始化图表
+  nextTick(() => {
+    initTrendChart();
+    initLevelChart();
+    initStatusChart();
+    initWarningViewer();
+  });
+
+  window.addEventListener('resize', handleResize);
+});
+
+onBeforeUnmount(() => {
+  // 清理定时器
+  if (weatherTimer) clearInterval(weatherTimer);
+  if (dataRefreshTimer) clearInterval(dataRefreshTimer);
+  if (timeTimer) clearInterval(timeTimer);
+
+  // 移除事件监听
+  document.removeEventListener('fullscreenchange', () => {});
+  document.removeEventListener('keydown', handleKeyboardNavigation);
+  window.removeEventListener('resize', handleResize);
+
+  // 销毁图表
+  if (trendChart) trendChart.dispose();
+  if (levelChart) levelChart.dispose();
+  if (statusChart) statusChart.dispose();
+});
 </script>
 
 <style scoped>
@@ -1182,18 +1308,26 @@ export default {
   color: #44FF9B;
 }
 
-.exit-fullscreen-tip {
-  color: #7EAEE5;
-  font-size: 14px;
+.fullscreen-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 30, 93, 0.8);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #00FFFF;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.exit-fullscreen-tip kbd {
-  background-color: #061E5D;
-  border: 1px solid #00FFFF;
-  border-radius: 3px;
-  padding: 2px 4px;
-  margin: 0 2px;
-  color: #00FFFF;
+.fullscreen-btn:hover {
+  background: rgba(0, 30, 60, 0.7);
+  border-color: rgba(0, 255, 255, 0.6);
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
 }
 
 .panel-box {
@@ -1228,253 +1362,19 @@ export default {
 }
 
 .map-panel {
-  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height) - 30px); /* 精确对齐：上面板 + 间距 + 下面板 */
-  margin-bottom: 20px; /* 确保与其他面板保持一致的底部间距 */
+  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height) - 30px);
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
 }
 
-/* 全屏模式下的中间面板 */
-.visual-center:fullscreen .map-panel {
-  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height) - 30px); /* 全屏下使用相同的52px间距 */
-}
-
-.map-container {
-  height: var(--map-container-height);
-  background: rgba(6, 30, 93, 0.3);
-  position: relative;
-  overflow: hidden;
-  border-radius: 4px;
-  box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.2);
-  flex: 1;
-}
-
-.stat-value {
-  color: #00FFFF;
-  font-size: 18px;
-  font-weight: bold;
-}
-
-.stat-value .unit {
-  font-size: 14px;
-  opacity: 0.8;
-  margin-left: 2px;
-}
-
-.status-tabs,
-.device-tabs {
-  display: flex;
-  margin-bottom: 8px;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-}
-
-.tab-item {
-  padding: 8px 12px;
-  cursor: pointer;
-  color: #7EAEE5;
-  font-size: 13px;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.tab-item.active {
-  color: #00FFFF;
-}
-
-.tab-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
+.trend-chart,
+.level-chart,
+.status-chart {
+  height: calc(100% - 20px);
   width: 100%;
-  height: 2px;
-  background-color: #00FFFF;
-}
-
-.status-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 3px;
-  font-size: 12px;
-  line-height: 1.5;
   position: relative;
-  text-align: center;
-  min-width: 52px;
-}
-
-.status-tag.pending {
-  color: #ff8746;
-  background: rgba(255, 135, 70, 0.1);
-  border: 1px solid rgba(255, 135, 70, 0.3);
-}
-
-.status-tag.processing {
-  color: #44ff9b;
-  background: rgba(68, 255, 155, 0.1);
-  border: 1px solid rgba(68, 255, 155, 0.3);
-}
-
-.status-tag.completed {
-  color: #00ffff;
-  background: rgba(0, 255, 255, 0.1);
-  border: 1px solid rgba(0, 255, 255, 0.3);
-}
-
-.warning-table,
-.device-table {
-  height: calc(100% - 40px);
   flex: 1;
-  overflow: hidden;
-}
-
-/* 特别针对预警记录表格的高度调整 */
-.warning-table {
-  height: calc(100% - 10px) !important;
-}
-
-/* 表格边框处理 */
-.warning-table :deep(.el-table),
-.device-table :deep(.el-table) {
-  border: none !important;
-}
-
-/* 完全移除表格边框和白边 */
-.warning-table :deep(.el-table),
-.device-table :deep(.el-table) {
-  border: none !important;
-  border-collapse: collapse !important;
-  border-spacing: 0 !important;
-}
-
-/* 移除表格容器边框 */
-.warning-table :deep(.el-table__border-left-patch),
-.warning-table :deep(.el-table__border-right-patch),
-.device-table :deep(.el-table__border-left-patch),
-.device-table :deep(.el-table__border-right-patch) {
-  display: none !important;
-}
-
-/* 移除表格外边框伪元素 */
-.warning-table :deep(.el-table::before),
-.warning-table :deep(.el-table::after),
-.device-table :deep(.el-table::before),
-.device-table :deep(.el-table::after) {
-  display: none !important;
-}
-
-/* 删除所有表格边框 */
-.warning-table :deep(.el-table) td,
-.warning-table :deep(.el-table) th,
-.device-table :deep(.el-table) td,
-.device-table :deep(.el-table) th {
-  background-color: transparent;
-  border: none !important; /* 删除所有边框 */
-  border-left: none !important;
-  border-right: none !important;
-  border-top: none !important;
-  border-bottom: 1px solid rgba(35, 88, 148, 0.3) !important; /* 只保留底部分隔线 */
-}
-
-/* 删除表格最后一行的底部边框 */
-.warning-table :deep(.el-table) tbody tr:last-child td,
-.device-table :deep(.el-table) tbody tr:last-child td {
-  border-bottom: none !important;
-}
-
-/* 删除表格底部边框 */
-.warning-table :deep(.el-table__append-wrapper),
-.device-table :deep(.el-table__append-wrapper) {
-  border: none !important;
-}
-
-/* 删除表格所有可能的边框 */
-.warning-table :deep(.el-table__header),
-.warning-table :deep(.el-table__body),
-.warning-table :deep(.el-table__footer),
-.device-table :deep(.el-table__header),
-.device-table :deep(.el-table__body),
-.device-table :deep(.el-table__footer) {
-  border: none !important;
-}
-
-/* 删除表格固定列边框 */
-.warning-table :deep(.el-table__fixed),
-.warning-table :deep(.el-table__fixed-right),
-.device-table :deep(.el-table__fixed),
-.device-table :deep(.el-table__fixed-right) {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.warning-table :deep(.el-table__fixed::before),
-.warning-table :deep(.el-table__fixed-right::before),
-.device-table :deep(.el-table__fixed::before),
-.device-table :deep(.el-table__fixed-right::before) {
-  display: none !important;
-}
-
-/* 统一表格高度 - 两个表格底边完全对齐 */
-.warning-table {
-  height: calc(100% - 15px) !important; /* 进一步增加预警记录表格高度，确保显示5行数据 */
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.device-table {
-  height: calc(100% - 45px) !important; /* 设备表格有Tab，需要减去更多高度以对齐底部 */
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-/* 移除表格包装器的边框和阴影 */
-.warning-table :deep(.el-table__body-wrapper),
-.device-table :deep(.el-table__body-wrapper) {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.warning-table :deep(.el-table__header-wrapper),
-.device-table :deep(.el-table__header-wrapper) {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-/* 移除表格内部所有可能的边框线 */
-.warning-table :deep(.el-table__empty-block),
-.device-table :deep(.el-table__empty-block) {
-  border: none !important;
-}
-
-.warning-table :deep(.el-table__empty-text),
-.device-table :deep(.el-table__empty-text) {
-  border: none !important;
-}
-
-/* 强制移除所有可能的白色边框 */
-.warning-table :deep(*),
-.device-table :deep(*) {
-  border-color: transparent !important;
-  outline-color: transparent !important;
-}
-
-/* 特别处理可能存在的边框伪元素 */
-.warning-table :deep(.el-table--border) .el-table__cell:first-child::before,
-.warning-table :deep(.el-table--border) .el-table__cell:last-child::after,
-.device-table :deep(.el-table--border) .el-table__cell:first-child::before,
-.device-table :deep(.el-table--border) .el-table__cell:last-child::after {
-  display: none !important;
-}
-
-/* 移除表格分组相关的边框 */
-.warning-table :deep(.el-table--group::after),
-.warning-table :deep(.el-table--group::before),
-.device-table :deep(.el-table--group::after),
-.device-table :deep(.el-table--group::before) {
-  display: none !important;
 }
 
 .type-list,
@@ -1483,11 +1383,10 @@ export default {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-/* 隐藏自定义滚动条 */
 .type-list::-webkit-scrollbar,
 .top-list::-webkit-scrollbar {
   display: none;
@@ -1525,126 +1424,123 @@ export default {
   color: #7EAEE5;
 }
 
-/* 全屏按钮样式 */
-.fullscreen-btn {
-  width: 30px;
-  height: 30px;
+.status-tabs,
+.device-tabs {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(6, 30, 93, 0.8);
-  border: 1px solid rgba(0, 255, 255, 0.2);
-  border-radius: 4px;
-  color: #00FFFF;
-  font-size: 20px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.tab-item {
+  padding: 8px 12px;
   cursor: pointer;
+  color: #7EAEE5;
+  font-size: 13px;
+  position: relative;
   transition: all 0.3s ease;
 }
 
-.fullscreen-btn:hover {
-  background: rgba(0, 30, 60, 0.7);
-  border-color: rgba(0, 255, 255, 0.6);
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+.tab-item.active {
+  color: #00FFFF;
 }
 
-.status-chart {
-  height: calc(var(--panel-top-height) - 80px);
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
   width: 100%;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  height: 2px;
+  background-color: #00FFFF;
 }
 
-/* 更新图表组件样式 */
-.status-chart :deep(.ve-pie) {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.warning-table,
+.device-table {
+  height: calc(100% - 40px);
+  flex: 1;
+  overflow: hidden;
 }
 
-/* 调整饼图系列的位置 */
-.status-chart :deep(.echarts-for-vue) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100% !important;
+.warning-table {
+  height: calc(100% - 10px) !important;
+}
+
+.status-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  min-width: 52px;
+}
+
+.status-tag.pending {
+  color: #ff8746;
+  background: rgba(255, 135, 70, 0.1);
+  border: 1px solid rgba(255, 135, 70, 0.3);
+}
+
+.status-tag.processing {
+  color: #44ff9b;
+  background: rgba(68, 255, 155, 0.1);
+  border: 1px solid rgba(68, 255, 155, 0.3);
+}
+
+.status-tag.completed {
+  color: #00ffff;
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 255, 0.3);
 }
 
 /* 预警图片查看器样式 */
 .warning-viewer {
-  height: 100%; /* 占满整个面板高度 */
-  background: transparent; /* 改为透明背景，去掉黑色边框 */
+  height: 100%;
+  background: transparent;
   border-radius: 4px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-/* 全屏模式下的特殊样式 */
-.visual-center:fullscreen .warning-viewer {
-  height: calc(100% - 30px); /* 保持一致的高度计算 */
-}
-
-.visual-center:fullscreen .main-image-container {
-  min-height: 350px; /* 全屏下适中的主图片区域高度 */
-}
-
-.visual-center:fullscreen .thumbnail-container-bottom {
-  height: 100px; /* 全屏下保持适中的缩略图区域高度 */
-}
-
-.visual-center:fullscreen .thumbnail-item {
-  width: 110px; /* 全屏下保持适中的缩略图尺寸 */  
-  height: 62px; /* 保持16:9比例 */
-}
-
 .main-image-container {
-  flex: 1; /* 占据剩余空间 */
-  background: transparent; /* 改为透明背景，去掉黑色边框 */
+  flex: 1;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden; /* 恢复hidden，防止内容溢出 */
-  height: calc(100% - 160px); /* 减去信息条60px和缩略图区域100px */
-  border-radius: 25px; /* 容器圆角与图片保持一致 */
-  padding: 15px; /* 增加内边距，为圆角留出空间 */
+  overflow: hidden;
+  height: calc(100% - 160px);
+  border-radius: 25px;
+  padding: 15px;
 }
 
-  .main-warning-image {
-    width: 100%; /* 占容器100%宽度 */
-    height: 100%; /* 占容器100%高度 */
-    object-fit: cover; /* 保持比例的同时填充 */
-    background: transparent; /* 改为透明背景 */
-    transition: opacity 0.3s ease;
-    aspect-ratio: 4/3; /* 强制4:3比例 */
-    border-radius: 10px; /* 适当的圆角，与容器配合 */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* 添加阴影效果 */
-  }
-
-.main-warning-image.loading {
-  opacity: 0.5;
+.main-warning-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: transparent;
+  transition: opacity 0.3s ease;
+  aspect-ratio: 4/3;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .warning-info-overlay {
   position: absolute;
   bottom: 20px;
   right: 20px;
-  background: rgba(0, 0, 0, 0.4); /* 降低背景透明度，从0.8改为0.4 */
-  backdrop-filter: blur(8px); /* 减少模糊效果 */
-  border: 1px solid rgba(0, 255, 255, 0.2); /* 降低边框透明度 */
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 255, 255, 0.2);
   border-radius: 8px;
-  padding: 12px 15px; /* 减少padding */
-  min-width: 200px; /* 减少最小宽度 */
-  max-width: 280px; /* 添加最大宽度限制 */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* 减轻阴影 */
+  padding: 12px 15px;
+  min-width: 200px;
+  max-width: 280px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   animation: slideInRight 0.3s ease-out;
-  z-index: 10; /* 确保信息叠加层在最上层 */
+  z-index: 10;
 }
 
 @keyframes slideInRight {
@@ -1665,14 +1561,14 @@ export default {
   max-width: 100%;
   max-height: 100%;
   overflow: visible;
-  text-align: left; /* 确保内容居左 */
+  text-align: left;
 }
 
 .info-row {
   display: flex;
-  align-items: flex-start; /* 改为顶部对齐 */
-  margin-bottom: 6px; /* 减少行间距 */
-  font-size: 13px; /* 稍微减小字体 */
+  align-items: flex-start;
+  margin-bottom: 6px;
+  font-size: 13px;
   text-align: left;
 }
 
@@ -1684,16 +1580,16 @@ export default {
   color: #7EAEE5;
   font-weight: normal;
   white-space: nowrap;
-  min-width: 70px; /* 减少标签最小宽度 */
+  min-width: 70px;
   text-align: left;
 }
 
 .info-value {
   color: #FFFFFF;
-  margin-left: 8px; /* 减少左边距 */
+  margin-left: 8px;
   flex: 1;
   text-align: left;
-  word-break: break-word; /* 允许长文本换行 */
+  word-break: break-word;
 }
 
 .info-value.level-urgent {
@@ -1715,46 +1611,46 @@ export default {
 }
 
 .thumbnail-container-bottom {
-  height: 100px; /* 增加缩略图区域高度 */
-  background: transparent; /* 改为透明背景 */
-  backdrop-filter: none; /* 去掉模糊效果 */
-  border-top: none; /* 去掉顶部边框 */
+  height: 100px;
+  background: transparent;
+  backdrop-filter: none;
+  border-top: none;
   display: flex;
   align-items: center;
   padding: 0 20px;
   overflow: hidden;
   position: relative;
-  flex-shrink: 0; /* 不允许收缩 */
-  gap: 15px; /* 按钮和滑块之间的间距 */
+  flex-shrink: 0;
+  gap: 15px;
 }
 
 .thumbnail-slider {
   display: flex;
   align-items: center;
-  gap: 20px; /* 增大缩略图间距 */
+  gap: 20px;
   overflow-x: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
-  flex: 1; /* 占据剩余空间 */
-  padding: 15px 0; /* 增大上下padding */
-  scroll-behavior: smooth; /* 平滑滚动 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex: 1;
+  padding: 15px 0;
+  scroll-behavior: smooth;
 }
 
 .slider-btn {
-  width: 45px; /* 增大按钮尺寸 */
+  width: 45px;
   height: 45px;
   background: rgba(0, 255, 255, 0.15);
   border: 2px solid rgba(0, 255, 255, 0.4);
   border-radius: 50%;
   color: #00FFFF;
-  font-size: 18px; /* 增大图标尺寸 */
+  font-size: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  flex-shrink: 0; /* 按钮不收缩 */
+  flex-shrink: 0;
 }
 
 .slider-btn:hover:not(:disabled) {
@@ -1771,20 +1667,20 @@ export default {
 }
 
 .thumbnail-slider::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
 }
 
 .thumbnail-item {
   flex-shrink: 0;
-  width: 110px; /* 增大缩略图尺寸 */
-  height: 62px; /* 16:9 比例 */
+  width: 110px;
+  height: 62px;
   border-radius: 6px;
   overflow: hidden;
   cursor: pointer;
-  border: 3px solid rgba(255, 255, 255, 0.3); /* 默认白色半透明边框 */
+  border: 3px solid rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
   position: relative;
-  background: transparent; /* 改为透明背景 */
+  background: transparent;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -1795,7 +1691,7 @@ export default {
 }
 
 .thumbnail-item.active {
-  border-color: #00FFFF; /* 蓝色高亮边框 */
+  border-color: #00FFFF;
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
   transform: scale(1.08);
 }
@@ -1804,7 +1700,7 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  background: transparent; /* 改为透明背景 */
+  background: transparent;
   aspect-ratio: 16/9;
 }
 
@@ -1818,27 +1714,27 @@ export default {
   justify-content: space-between;
   align-items: flex-start;
   gap: 20px;
-  z-index: 15; /* 提高z-index确保在图片之上 */
-  pointer-events: none; /* 允许点击穿透到图片 */
+  z-index: 15;
+  pointer-events: none;
 }
 
 .info-card {
-  background: rgba(0, 0, 0, 0.4); /* 降低背景透明度，从0.7改为0.4 */
-  backdrop-filter: blur(8px); /* 减少模糊效果 */
-  border: 1px solid rgba(0, 255, 255, 0.2); /* 降低边框透明度 */
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 255, 255, 0.2);
   border-radius: 8px;
   padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 12px;
   transition: all 0.3s ease;
-  pointer-events: auto; /* 恢复卡片的点击事件 */
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* 减轻阴影 */
+  pointer-events: auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .info-card:hover {
-  background: rgba(0, 0, 0, 0.6); /* 降低悬停状态的背景透明度 */
-  border-color: rgba(0, 255, 255, 0.4); /* 降低悬停状态的边框透明度 */
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(0, 255, 255, 0.4);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 255, 255, 0.2);
 }
@@ -1893,39 +1789,6 @@ export default {
   margin-left: 2px;
 }
 
-.trend-chart,
-.level-chart,
-.status-chart {
-  height: calc(100% - 20px);
-  width: 100%;
-  position: relative;
-  flex: 1;
-}
-
-/* 全屏模式下图表高度调整 */
-.visual-center:fullscreen .trend-chart,
-.visual-center:fullscreen .level-chart,
-.visual-center:fullscreen .status-chart {
-  height: calc(100% - 15px); /* 全屏下稍微减少图表高度 */
-}
-
-/* 全屏模式下整体布局优化 */
-.visual-center:fullscreen {
-  padding: 15px; /* 减少全屏下的内边距 */
-}
-
-.visual-center:fullscreen .main-content {
-  margin-bottom: 15px; /* 减少内容区域底部间距 */
-}
-
-.visual-center:fullscreen .panel-box {
-  margin-bottom: 15px; /* 减少面板间距 */
-}
-
-.visual-center:fullscreen .top-bar {
-  margin-bottom: 8px; /* 减少顶部栏底部间距 */
-}
-
 /* 表格透明样式 */
 .transparent-row {
   background-color: transparent !important;
@@ -1935,8 +1798,8 @@ export default {
 .device-table :deep(.el-table) {
   background-color: transparent;
   color: #7EAEE5;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
@@ -1944,12 +1807,6 @@ export default {
 
 .warning-table :deep(.el-table::-webkit-scrollbar),
 .device-table :deep(.el-table::-webkit-scrollbar) {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-/* 确保Element UI表格内部滚动条也隐藏 */
-.warning-table :deep(.el-table__body-wrapper::-webkit-scrollbar),
-.device-table :deep(.el-table__body-wrapper::-webkit-scrollbar) {
   display: none;
 }
 
@@ -1968,10 +1825,4 @@ export default {
 .device-table :deep(.el-table--enable-row-hover) .el-table__body tr:hover > td {
   background-color: rgba(0, 255, 255, 0.1) !important;
 }
-
-.warning-table :deep(.el-table--striped) .el-table__body tr.el-table__row--striped td,
-.device-table :deep(.el-table--striped) .el-table__body tr.el-table__row--striped td {
-  background-color: rgba(6, 30, 93, 0.3) !important;
-}
 </style>
-

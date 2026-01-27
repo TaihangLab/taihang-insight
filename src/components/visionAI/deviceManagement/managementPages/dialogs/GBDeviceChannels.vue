@@ -211,7 +211,7 @@
                 size="medium" 
                 :disabled="!currentDevice || currentDevice.onLine === false" 
                 icon="el-icon-video-play"
-                type="text" 
+                link 
                 :loading="row.playLoading" 
                 @click="sendDevicePush(row)">
                 播放
@@ -220,7 +220,7 @@
                 size="medium" 
                 :disabled="!currentDevice || currentDevice.onLine === false"
                 icon="el-icon-switch-button"
-                type="text" 
+                link 
                 style="color: #f56c6c" 
                 v-if="!!row.streamId"
                 @click="stopDevicePush(row)">
@@ -229,7 +229,7 @@
               <el-divider direction="vertical"></el-divider>
               <el-button
                 size="medium"
-                type="text"
+                link
                 icon="el-icon-edit"
                 @click="handleEdit(row)">
                 编辑
@@ -238,7 +238,7 @@
               <el-button 
                 size="medium" 
                 icon="el-icon-s-open" 
-                type="text"
+                link
                 v-if="row.subCount > 0 || row.parental === 1 || row.deviceId.length <= 8"
                 @click="changeSubchannel(row)">
                 查看
@@ -248,7 +248,7 @@
                 direction="vertical">
               </el-divider>
               <el-dropdown @command="(command) => moreClick(command, row)">
-                <el-button size="medium" type="text">
+                <el-button size="medium" link>
                   更多<i class="el-icon-arrow-down el-icon--right"></i>
                 </el-button>
                 <el-dropdown-menu slot="dropdown">

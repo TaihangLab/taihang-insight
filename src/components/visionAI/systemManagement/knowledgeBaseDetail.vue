@@ -6,7 +6,7 @@
         <div class="menu-container">
                   <div class="knowledge-info">
           <div class="knowledge-header">
-            <el-button type="text" icon="el-icon-arrow-left" @click="goBack" class="back-button"></el-button>
+            <el-button link icon="el-icon-arrow-left" @click="goBack" class="back-button"></el-button>
             <div class="knowledge-name">{{ knowledgeName }}</div>
           </div>
           <div class="knowledge-id">ID: {{ knowledgeId }}</div>
@@ -121,16 +121,16 @@
               <el-table-column label="操作" width="130" align="center">
                 <template #default="scope">
                   <div class="operation-buttons">
-                    <el-button type="text" class="view-btn" @click="viewDocument(scope.row)" title="查看">
+                    <el-button link class="view-btn" @click="viewDocument(scope.row)" title="查看">
                       <i class="el-icon-view"></i>
                     </el-button>
-                    <el-button type="text" class="download-btn" @click="downloadDocument(scope.row)" title="下载">
+                    <el-button link class="download-btn" @click="downloadDocument(scope.row)" title="下载">
                       <i class="el-icon-download"></i>
                     </el-button>
-                    <el-button type="text" class="refresh-btn" @click="refreshDocument(scope.row)" title="刷新">
+                    <el-button link class="refresh-btn" @click="refreshDocument(scope.row)" title="刷新">
                       <i class="el-icon-refresh"></i>
                     </el-button>
-                    <el-button type="text" class="delete-btn" @click="deleteDocument(scope.row)" title="删除">
+                    <el-button link class="delete-btn" @click="deleteDocument(scope.row)" title="删除">
                       <i class="el-icon-delete"></i>
                     </el-button>
                   </div>
@@ -230,10 +230,10 @@
               <el-table-column label="操作" width="100" align="center">
                 <template #default="scope">
                   <div class="operation-buttons tech-operations">
-                    <el-button type="text" class="tech-edit-btn" @click="editPresetAnswer(scope.row)" title="编辑">
+                    <el-button link class="tech-edit-btn" @click="editPresetAnswer(scope.row)" title="编辑">
                       编辑
                     </el-button>
-                    <el-button type="text" class="tech-delete-btn" @click="deletePresetAnswer(scope.row)" title="删除">
+                    <el-button link class="tech-delete-btn" @click="deletePresetAnswer(scope.row)" title="删除">
                       删除
                     </el-button>
                   </div>

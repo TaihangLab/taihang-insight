@@ -2257,7 +2257,7 @@ const chatAssistantAPI = {
    */
   sendChatMessage(chatData) {
     console.log('发送聊天消息:', chatData);
-    return visionAIAxios.post('/api/v1/chat/chat', {
+    return visionAIAxios.post('/api/chat/chat', {
       message: chatData.message,
       conversation_id: chatData.conversation_id || null,
       system_prompt: chatData.system_prompt || null,
@@ -2293,7 +2293,7 @@ const chatAssistantAPI = {
       };
 
       // 发起POST请求（使用完整的chat端点）
-      const response = await fetch(`${visionAIAxios.defaults.baseURL}/api/v1/chat/chat`, {
+      const response = await fetch(`${visionAIAxios.defaults.baseURL}/api/chat/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2409,7 +2409,7 @@ const chatAssistantAPI = {
    */
   getChatConversations(params = {}) {
     console.log('获取会话列表:', params);
-    return visionAIAxios.get('/api/v1/chat/conversations', {
+    return visionAIAxios.get('/api/chat/conversations', {
       params: {
         limit: params.limit || 20
       }
@@ -2425,7 +2425,7 @@ const chatAssistantAPI = {
    */
   getChatMessages(conversationId, params = {}) {
     console.log('获取会话消息:', conversationId, params);
-    return visionAIAxios.get(`/api/v1/chat/conversations/${conversationId}/messages`, {
+    return visionAIAxios.get(`/api/chat/conversations/${conversationId}/messages`, {
       params: {
         limit: params.limit || 50
       }
@@ -2439,7 +2439,7 @@ const chatAssistantAPI = {
    */
   deleteChatConversation(conversationId) {
     console.log('删除会话:', conversationId);
-    return visionAIAxios.delete(`/api/v1/chat/conversations/${conversationId}`);
+    return visionAIAxios.delete(`/api/chat/conversations/${conversationId}`);
   },
 
   /**
@@ -2448,7 +2448,7 @@ const chatAssistantAPI = {
    */
   clearAllChatConversations() {
     console.log('清空所有会话');
-    return visionAIAxios.delete('/api/v1/chat/conversations');
+    return visionAIAxios.delete('/api/chat/conversations');
   },
 
   /**
@@ -2468,7 +2468,7 @@ const chatAssistantAPI = {
       formData.append('system_prompt', chatData.system_prompt);
     }
 
-    return visionAIAxios.post('/api/v1/chat/quick', formData, {
+    return visionAIAxios.post('/api/chat/quick', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -2481,7 +2481,7 @@ const chatAssistantAPI = {
    */
   getChatModels() {
     console.log('获取聊天模型列表');
-    return visionAIAxios.get('/api/v1/chat/models');
+    return visionAIAxios.get('/api/chat/models');
   },
 
   /**
@@ -2490,7 +2490,7 @@ const chatAssistantAPI = {
    */
   checkChatHealth() {
     console.log('聊天助手健康检查');
-    return visionAIAxios.get('/api/v1/chat/health');
+    return visionAIAxios.get('/api/chat/health');
   },
 
   // ==================== 分组管理 ====================
@@ -2504,7 +2504,7 @@ const chatAssistantAPI = {
     const formData = new FormData();
     formData.append('name', name);
 
-    return visionAIAxios.post('/api/v1/chat/groups', formData);
+    return visionAIAxios.post('/api/chat/groups', formData);
   },
 
   /**
@@ -2512,7 +2512,7 @@ const chatAssistantAPI = {
    * @returns {Promise}
    */
   getGroups() {
-    return visionAIAxios.get('/api/v1/chat/groups');
+    return visionAIAxios.get('/api/chat/groups');
   },
 
   /**
@@ -2521,7 +2521,7 @@ const chatAssistantAPI = {
    * @returns {Promise}
    */
   deleteGroup(groupId) {
-    return visionAIAxios.delete(`/api/v1/chat/groups/${groupId}`);
+    return visionAIAxios.delete(`/api/chat/groups/${groupId}`);
   },
 
   /**
@@ -2536,7 +2536,7 @@ const chatAssistantAPI = {
       formData.append('group_id', groupId);
     }
 
-    return visionAIAxios.put(`/api/v1/chat/conversations/${conversationId}/group`, formData);
+    return visionAIAxios.put(`/api/chat/conversations/${conversationId}/group`, formData);
   },
 
   /**
@@ -2546,7 +2546,7 @@ const chatAssistantAPI = {
    * @returns {Promise}
    */
   getGroupConversations(groupId, params = {}) {
-    return visionAIAxios.get(`/api/v1/chat/groups/${groupId}/conversations`, { params });
+    return visionAIAxios.get(`/api/chat/groups/${groupId}/conversations`, { params });
   },
 
   /**
@@ -2555,7 +2555,7 @@ const chatAssistantAPI = {
    * @returns {Promise}
    */
   autoGenerateTitle(conversationId) {
-    return visionAIAxios.post(`/api/v1/chat/conversations/${conversationId}/auto-title`);
+    return visionAIAxios.post(`/api/chat/conversations/${conversationId}/auto-title`);
   },
 
   /**
@@ -2567,7 +2567,7 @@ const chatAssistantAPI = {
   updateConversationTitle(conversationId, title) {
     const formData = new FormData();
     formData.append('title', title);
-    return visionAIAxios.put(`/api/v1/chat/conversations/${conversationId}/title`, formData);
+    return visionAIAxios.put(`/api/chat/conversations/${conversationId}/title`, formData);
   },
 
   /**
@@ -2586,7 +2586,7 @@ const chatAssistantAPI = {
       formData.append('message_id', messageId);
     }
 
-    return visionAIAxios.post(`/api/v1/chat/conversations/${conversationId}/save-message`, formData);
+    return visionAIAxios.post(`/api/chat/conversations/${conversationId}/save-message`, formData);
   },
 
   /**
@@ -2602,7 +2602,7 @@ const chatAssistantAPI = {
     formData.append('message_id', messageId);
     formData.append('partial_content', partialContent);
 
-    return visionAIAxios.post(`/api/v1/chat/conversations/${conversationId}/stop-generation`, formData);
+    return visionAIAxios.post(`/api/chat/conversations/${conversationId}/stop-generation`, formData);
   }
 };
 
@@ -3770,6 +3770,808 @@ export const realtimeDetectionAPI = {
   }
 };
 
+// ============================================================================
+// 统计API模块 - 带模拟数据支持
+// ============================================================================
+
+/**
+ * 预警统计API
+ * 提供预警相关的统计数据，包括摘要、趋势、分类统计等
+ */
+export const alertStatisticsAPI = {
+  /**
+   * 获取预警统计摘要
+   * @param {string} timeRange - 时间范围: 'day' | 'week' | 'month'
+   * @returns {Promise} 包含预警统计摘要的Promise对象
+   */
+  async getSummary(timeRange = 'day') {
+    console.log('[统计API] 获取预警统计摘要, 时间范围:', timeRange);
+
+    // 模拟数据 - 根据时间范围返回不同数据
+    const mockDataMap = {
+      day: {
+        total_alerts: 25,
+        pending_count: 5,
+        processing_count: 3,
+        completed_count: 12,
+        online_devices: 120,
+        total_devices: 150,
+        top_alert_types: [
+          { name: '未戴安全帽', count: 9, value: 100 },
+          { name: '区域入侵', count: 7, value: 78 },
+          { name: '垃圾堆积', count: 5, value: 56 },
+          { name: '人员聚集', count: 4, value: 44 },
+          { name: '烟雾识别', count: 2, value: 22 }
+        ],
+        top_locations: [
+          { name: '工地东北角', count: 15, value: 100 },
+          { name: '工地南侧', count: 12, value: 80 },
+          { name: '施工作业区', count: 9, value: 60 },
+          { name: '材料区', count: 6, value: 40 },
+          { name: '休息区', count: 3, value: 20 }
+        ]
+      },
+      week: {
+        total_alerts: 108,
+        pending_count: 18,
+        processing_count: 25,
+        completed_count: 65,
+        online_devices: 120,
+        total_devices: 150,
+        top_alert_types: [
+          { name: '未戴安全帽', count: 35, value: 100 },
+          { name: '区域入侵', count: 28, value: 80 },
+          { name: '垃圾堆积', count: 22, value: 63 },
+          { name: '人员聚集', count: 15, value: 43 },
+          { name: '烟雾识别', count: 8, value: 23 }
+        ],
+        top_locations: [
+          { name: '生产车间A', count: 45, value: 100 },
+          { name: '装配车间', count: 38, value: 84 },
+          { name: '机械加工区', count: 32, value: 71 },
+          { name: '原料仓库', count: 28, value: 62 },
+          { name: '成品仓库', count: 18, value: 40 }
+        ]
+      },
+      month: {
+        total_alerts: 300,
+        pending_count: 42,
+        processing_count: 78,
+        completed_count: 180,
+        online_devices: 120,
+        total_devices: 150,
+        top_alert_types: [
+          { name: '未戴安全帽', count: 95, value: 100 },
+          { name: '区域入侵', count: 78, value: 82 },
+          { name: '垃圾堆积', count: 65, value: 68 },
+          { name: '人员聚集', count: 52, value: 55 },
+          { name: '烟雾识别', count: 35, value: 37 }
+        ],
+        top_locations: [
+          { name: '生产车间A', count: 128, value: 100 },
+          { name: '装配车间', count: 98, value: 77 },
+          { name: '机械加工区', count: 85, value: 66 },
+          { name: '原料仓库', count: 72, value: 56 },
+          { name: '成品仓库', count: 45, value: 35 }
+        ]
+      }
+    };
+
+    const data = mockDataMap[timeRange] || mockDataMap.day;
+
+    // 模拟API响应延迟
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: data,
+            total: data.total_alerts
+          }
+        });
+      }, 300);
+    });
+
+    // 真实API调用（后端就绪后取消注释）
+    // return visionAIAxios.get('/api/v1/alerts/statistics/summary', {
+    //   params: { time_range: timeRange }
+    // });
+  },
+
+  /**
+   * 获取预警趋势数据
+   * @param {string} timeRange - 时间范围: '24h' | '7d' | '30d'
+   * @param {string} granularity - 时间粒度: '1h' | '1d'
+   * @returns {Promise} 包含预警趋势数据的Promise对象
+   */
+  async getTrend(timeRange = '24h', granularity = '1h') {
+    console.log('[统计API] 获取预警趋势, 时间范围:', timeRange, '粒度:', granularity);
+
+    // 模拟趋势数据
+    let timeLabels, trendData;
+
+    if (timeRange === '24h') {
+      // 24小时趋势
+      timeLabels = ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00', '24:00'];
+      trendData = [3, 2, 5, 10, 14, 12, 7, 5, 8, 11, 9, 6, 5];
+    } else if (timeRange === '7d') {
+      // 7天趋势
+      timeLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      trendData = [25, 32, 28, 35, 30, 22, 18];
+    } else {
+      // 30天趋势（取样显示）
+      timeLabels = Array.from({ length: 30 }, (_, i) => `${i + 1}日`);
+      trendData = Array.from({ length: 30 }, () => Math.floor(Math.random() * 30) + 10);
+    }
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: {
+              time_labels: timeLabels,
+              trend_data: trendData,
+              total: trendData.reduce((a, b) => a + b, 0)
+            }
+          }
+        });
+      }, 300);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/alerts/statistics/trend', {
+    //   params: { time_range: timeRange, granularity }
+    // });
+  },
+
+  /**
+   * 获取预警类型统计
+   * @param {string} timeRange - 时间范围
+   * @returns {Promise} 包含预警类型统计的Promise对象
+   */
+  async getByType(timeRange = 'day') {
+    console.log('[统计API] 获取预警类型统计, 时间范围:', timeRange);
+
+    const mockData = [
+      { name: '未戴安全帽', count: 9, value: 100, color: '#FF4D4F' },
+      { name: '未穿工作服', count: 7, value: 78, color: '#FF8746' },
+      { name: '区域入侵', count: 5, value: 56, color: '#44FF9B' },
+      { name: '人员聚集', count: 4, value: 44, color: '#00C5FF' },
+      { name: '违规吸烟', count: 3, value: 33, color: '#FFD700' },
+      { name: '高空作业未系安全带', count: 2, value: 22, color: '#FF69B4' },
+      { name: '烟雾识别', count: 2, value: 22, color: '#9370DB' }
+    ];
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: mockData
+          }
+        });
+      }, 200);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/alerts/statistics/by-type', {
+    //   params: { time_range: timeRange }
+    // });
+  },
+
+  /**
+   * 获取预警等级统计
+   * @param {string} timeRange - 时间范围
+   * @returns {Promise} 包含预警等级统计的Promise对象
+   */
+  async getByLevel(timeRange = 'day') {
+    console.log('[统计API] 获取预警等级统计, 时间范围:', timeRange);
+
+    const mockData = [
+      { value: 8, name: '紧急', level: 1, color: '#FF4D4F' },
+      { value: 15, name: '重要', level: 2, color: '#FF8746' },
+      { value: 21, name: '普通', level: 3, color: '#44FF9B' },
+      { value: 11, name: '提示', level: 4, color: '#00C5FF' }
+    ];
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: mockData
+          }
+        });
+      }, 200);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/alerts/statistics/by-level', {
+    //   params: { time_range: timeRange }
+    // });
+  },
+
+  /**
+   * 获取预警位置统计
+   * @param {string} timeRange - 时间范围
+   * @param {number} limit - 返回数量限制
+   * @returns {Promise} 包含预警位置统计的Promise对象
+   */
+  async getByLocation(timeRange = 'day', limit = 10) {
+    console.log('[统计API] 获取预警位置统计, 时间范围:', timeRange, '限制:', limit);
+
+    const mockData = [
+      { name: '摄像头01-工地东北角', count: 15, value: 100 },
+      { name: '摄像头03-工地南侧', count: 12, value: 80 },
+      { name: '摄像头02-材料区', count: 9, value: 60 },
+      { name: '摄像头05-休息区', count: 6, value: 40 },
+      { name: '摄像头04-施工作业区', count: 5, value: 33 },
+      { name: '摄像头06-工地东北角', count: 4, value: 27 },
+      { name: '摄像头07-塔吊区域', count: 3, value: 20 },
+      { name: '摄像头08-脚手架区域', count: 2, value: 13 },
+      { name: '摄像头09-设备存放区', count: 7, value: 47 },
+      { name: '摄像头10-危险作业区', count: 8, value: 53 }
+    ];
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: mockData.slice(0, limit)
+          }
+        });
+      }, 200);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/alerts/statistics/by-location', {
+    //   params: { time_range: timeRange, limit }
+    // });
+  },
+
+  /**
+   * 获取最新预警图片（用于大屏展示）
+   * @param {number} limit - 返回数量限制
+   * @returns {Promise} 包含最新预警图片的Promise对象
+   */
+  async getLatestImages(limit = 10) {
+    console.log('[统计API] 获取最新预警图片, 限制:', limit);
+
+    // 模拟预警图片数据
+    const mockImages = [
+      {
+        id: 1,
+        image: new URL('../monitoringWarning/images/5.jpg', import.meta.url).href,
+        event: '未戴安全帽',
+        time: '2024-01-15 10:30',
+        alert_time: '2024-01-15 10:30:25',
+        level: 'urgent',
+        levelText: '一级',
+        location: '工地东北角',
+        camera_name: '摄像头01-工地东北角'
+      },
+      {
+        id: 2,
+        image: new URL('../monitoringWarning/images/4.jpg', import.meta.url).href,
+        event: '未穿工作服',
+        time: '2024-01-15 10:28',
+        alert_time: '2024-01-15 10:28:15',
+        level: 'high',
+        levelText: '二级',
+        location: '工地南侧',
+        camera_name: '摄像头03-工地南侧'
+      },
+      {
+        id: 3,
+        image: new URL('../monitoringWarning/images/5.jpg', import.meta.url).href,
+        event: '区域入侵',
+        time: '2024-01-15 10:15',
+        alert_time: '2024-01-15 10:15:42',
+        level: 'medium',
+        levelText: '三级',
+        location: '材料区',
+        camera_name: '摄像头02-材料区'
+      },
+      {
+        id: 4,
+        image: new URL('../monitoringWarning/images/6.jpg', import.meta.url).href,
+        event: '违规吸烟',
+        time: '2024-01-15 09:58',
+        alert_time: '2024-01-15 09:58:30',
+        level: 'high',
+        levelText: '二级',
+        location: '休息区',
+        camera_name: '摄像头05-休息区'
+      },
+      {
+        id: 5,
+        image: new URL('../monitoringWarning/images/1.jpg', import.meta.url).href,
+        event: '高空作业未系安全带',
+        time: '2024-01-15 09:45',
+        alert_time: '2024-01-15 09:45:12',
+        level: 'urgent',
+        levelText: '一级',
+        location: '施工作业区',
+        camera_name: '摄像头04-施工作业区'
+      },
+      {
+        id: 6,
+        image: new URL('../monitoringWarning/images/3.jpg', import.meta.url).href,
+        event: '未穿反光背心',
+        time: '2024-01-15 09:32',
+        alert_time: '2024-01-15 09:32:18',
+        level: 'medium',
+        levelText: '三级',
+        location: '工地东北角',
+        camera_name: '摄像头01-工地东北角'
+      }
+    ];
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: mockImages.slice(0, limit)
+          }
+        });
+      }, 300);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/alerts/latest-images', {
+    //   params: { limit }
+    // });
+  },
+
+  /**
+   * 获取预警处理情况统计
+   * @param {string} timeRange - 时间范围: 'day' | 'week' | 'month'
+   * @returns {Promise} 包含预警处理情况统计的Promise对象
+   */
+  async getProcessingStatus(timeRange = 'day') {
+    console.log('[统计API] 获取预警处理情况, 时间范围:', timeRange);
+
+    const mockDataMap = {
+      day: [
+        { value: 5, name: '待处理', itemStyle: { color: '#FF8746' } },
+        { value: 3, name: '处理中', itemStyle: { color: '#44FF9B' } },
+        { value: 12, name: '已完成', itemStyle: { color: '#00FFFF' } }
+      ],
+      week: [
+        { value: 18, name: '待处理', itemStyle: { color: '#FF8746' } },
+        { value: 25, name: '处理中', itemStyle: { color: '#44FF9B' } },
+        { value: 65, name: '已完成', itemStyle: { color: '#00FFFF' } }
+      ],
+      month: [
+        { value: 42, name: '待处理', itemStyle: { color: '#FF8746' } },
+        { value: 78, name: '处理中', itemStyle: { color: '#44FF9B' } },
+        { value: 180, name: '已完成', itemStyle: { color: '#00FFFF' } }
+      ]
+    };
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: mockDataMap[timeRange] || mockDataMap.day
+          }
+        });
+      }, 200);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/alerts/statistics/processing-status', {
+    //   params: { time_range: timeRange }
+    // });
+  }
+};
+
+/**
+ * 系统资源监控API
+ * 提供系统资源使用率监控数据
+ */
+export const systemMonitorAPI = {
+  /**
+   * 获取当前资源使用率
+   * @returns {Promise} 包含当前资源使用率的Promise对象
+   */
+  async getCurrentResources() {
+    console.log('[监控API] 获取当前资源使用率');
+
+    // 模拟实时资源数据（带小幅波动）
+    const baseData = {
+      cpu: 20.69,
+      memory: 64.35,
+      disk: 45.60,
+      network: 92.34
+    };
+
+    const addFluctuation = (value, range = 5) => {
+      return Math.max(0, Math.min(100, value + (Math.random() - 0.5) * range));
+    };
+
+    const mockData = {
+      cpu_usage: parseFloat(addFluctuation(baseData.cpu).toFixed(2)),
+      memory_usage: parseFloat(addFluctuation(baseData.memory, 2).toFixed(2)),
+      disk_usage: baseData.disk,
+      network_usage: parseFloat(addFluctuation(baseData.network, 10).toFixed(2)),
+      timestamp: new Date().toISOString()
+    };
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: mockData
+          }
+        });
+      }, 200);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/system/resources');
+  },
+
+  /**
+   * 获取资源历史数据（用于图表展示）
+   * @param {string} metric - 资源类型: 'cpu' | 'memory' | 'disk' | 'network'
+   * @param {string} timeRange - 时间范围: '1h' | '6h' | '24h' | '7d'
+   * @returns {Promise} 包含资源历史数据的Promise对象
+   */
+  async getResourceHistory(metric = 'cpu', timeRange = '1h') {
+    console.log('[监控API] 获取资源历史数据, 指标:', metric, '时间范围:', timeRange);
+
+    // 生成模拟历史数据
+    let pointCount, interval;
+
+    if (timeRange === '1h') {
+      pointCount = 12; // 每5分钟一个点
+      interval = 5;
+    } else if (timeRange === '6h') {
+      pointCount = 24; // 每15分钟一个点
+      interval = 15;
+    } else if (timeRange === '24h') {
+      pointCount = 24; // 每小时一个点
+      interval = 60;
+    } else {
+      pointCount = 7; // 7天，每天一个点
+      interval = 1440;
+    }
+
+    const baseValues = {
+      cpu: 20,
+      memory: 64,
+      disk: 45,
+      network: 85
+    };
+
+    const baseValue = baseValues[metric] || 50;
+    const timeLabels = [];
+    const dataPoints = [];
+    const now = new Date();
+
+    for (let i = pointCount - 1; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * interval * 60 * 1000);
+
+      if (timeRange === '7d') {
+        timeLabels.push(`${time.getMonth() + 1}/${time.getDate()}`);
+      } else {
+        timeLabels.push(`${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`);
+      }
+
+      // 添加随机波动
+      dataPoints.push(parseFloat(Math.max(0, Math.min(100, baseValue + (Math.random() - 0.5) * 20)).toFixed(2)));
+    }
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: {
+              metric,
+              time_range: timeRange,
+              time_labels: timeLabels,
+              data_points: dataPoints
+            }
+          }
+        });
+      }, 200);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/system/resources/history', {
+    //   params: { metric, time_range: timeRange }
+    // });
+  },
+
+  /**
+   * 获取存储使用情况
+   * @returns {Promise} 包含存储使用情况的Promise对象
+   */
+  async getStorageUsage() {
+    console.log('[监控API] 获取存储使用情况');
+
+    const mockData = {
+      total_storage: 1024, // GB
+      used_storage: 467,   // GB
+      storage_usage: 45.6, // 百分比
+      storage_list: [
+        { name: '内存1', usage: 60, total: 100 },
+        { name: '内存2', usage: 40, total: 100 },
+        { name: '内存3', usage: 20, total: 100 },
+        { name: '内存4', usage: 70, total: 100 },
+        { name: '内存5', usage: 30, total: 100 },
+        { name: '内存6', usage: 50, total: 100 },
+        { name: '内存7', usage: 10, total: 100 }
+      ]
+    };
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: mockData
+          }
+        });
+      }, 200);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/storage/usage');
+  },
+
+  /**
+   * 获取带宽使用情况
+   * @param {string} timeRange - 时间范围
+   * @returns {Promise} 包含带宽使用情况的Promise对象
+   */
+  async getBandwidthUsage(timeRange = '1h') {
+    console.log('[监控API] 获取带宽使用情况, 时间范围:', timeRange);
+
+    // 生成模拟带宽数据
+    let pointCount = 12;
+    const timeLabels = [];
+    const upstreamData = [];
+    const downstreamData = [];
+
+    const now = new Date();
+    for (let i = pointCount - 1; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * 5 * 60 * 1000);
+      timeLabels.push(`${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`);
+      upstreamData.push(parseFloat((2 + Math.random() * 0.5).toFixed(2)));
+      downstreamData.push(parseFloat((2 + Math.random() * 0.5).toFixed(2)));
+    }
+
+    const mockData = {
+      time_range: timeRange,
+      time_labels: timeLabels,
+      upstream_bandwidth: upstreamData, // 上行带宽 Mbps
+      downstream_bandwidth: downstreamData, // 下行带宽 Mbps
+      current_upstream: upstreamData[upstreamData.length - 1],
+      current_downstream: downstreamData[downstreamData.length - 1]
+    };
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: mockData
+          }
+        });
+      }, 200);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/bandwidth/usage', {
+    //   params: { time_range: timeRange }
+    // });
+  }
+};
+
+/**
+ * 设备统计API
+ * 提供设备状态统计和设备树结构
+ */
+export const deviceStatisticsAPI = {
+  /**
+   * 获取设备状态统计
+   * @returns {Promise} 包含设备状态统计的Promise对象
+   */
+  async getStatusStatistics() {
+    console.log('[设备API] 获取设备状态统计');
+
+    const mockData = {
+      total_devices: 150,
+      online_devices: 120,
+      offline_devices: 30,
+      online_rate: 80, // 百分比
+      device_groups: [
+        { name: '总数量', online: 27, offline: 3, total: 30 },
+        { name: '摄像头组A', online: 18, offline: 9, total: 27 }
+      ]
+    };
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: mockData
+          }
+        });
+      }, 200);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/devices/statistics');
+  },
+
+  /**
+   * 获取设备树状结构
+   * @returns {Promise} 包含设备树结构的Promise对象
+   */
+  async getDeviceTree() {
+    console.log('[设备API] 获取设备树状结构');
+
+    const mockData = [{
+      id: '1',
+      label: '市直单位',
+      children: [{
+        id: '2',
+        label: '清江园区',
+        children: [{
+          id: '3',
+          label: '清江园区-南',
+          children: [
+            { id: '4', label: '监控点1号探头', status: 'online' },
+            { id: '5', label: '监控点2号探头', status: 'online' }
+          ]
+        }, {
+          id: '6',
+          label: '清江园区-西',
+          children: [
+            { id: '7', label: '监控点19号探头', status: 'offline' },
+            { id: '8', label: '监控点21号探头', status: 'online' }
+          ]
+        }]
+      }]
+    }];
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: mockData
+          }
+        });
+      }, 300);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/devices/tree');
+  },
+
+  /**
+   * 获取设备接入摘要
+   * @returns {Promise} 包含设备接入摘要的Promise对象
+   */
+  async getConnectionSummary() {
+    console.log('[设备API] 获取设备接入摘要');
+
+    const mockData = {
+      total_connections: 286589,
+      video_streams: 562,
+      capture_services: 23108,
+      nvr_calls: 2389,
+      other_connections: 260530
+    };
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: mockData
+          }
+        });
+      }, 200);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/devices/summary');
+  }
+};
+
+/**
+ * 报警转发统计API
+ * 提供报警转发相关统计数据
+ */
+export const alertForwardAPI = {
+  /**
+   * 获取报警转发统计
+   * @param {string} timeRange - 时间范围: '7d' | '30d'
+   * @returns {Promise} 包含报警转发统计的Promise对象
+   */
+  async getForwardStatistics(timeRange = '7d') {
+    console.log('[转发API] 获取报警转发统计, 时间范围:', timeRange);
+
+    // 生成模拟统计数据
+    const days = timeRange === '7d' ? 7 : 30;
+    const dateLabels = [];
+    const forwardCounts = [];
+
+    const now = new Date();
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      dateLabels.push(`${date.getMonth() + 1}/${date.getDate()}`);
+      forwardCounts.push(Math.floor(Math.random() * 20000) + 5000);
+    }
+
+    const mockData = {
+      time_range: timeRange,
+      total_forwards: forwardCounts.reduce((a, b) => a + b, 0),
+      daily_statistics: dateLabels.map((label, index) => ({
+        date: label,
+        count: forwardCounts[index]
+      })),
+      date_labels: dateLabels,
+      forward_counts: forwardCounts
+    };
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          data: {
+            code: 0,
+            msg: 'success',
+            data: mockData
+          }
+        });
+      }, 200);
+    });
+
+    // 真实API调用
+    // return visionAIAxios.get('/api/v1/alerts/forward-statistics', {
+    //   params: { time_range: timeRange }
+    // });
+  },
+
+  /**
+   * 获取报警转发趋势
+   * @param {string} timeRange - 时间范围
+   * @returns {Promise} 包含报警转发趋势的Promise对象
+   */
+  async getForwardTrend(timeRange = '7d') {
+    console.log('[转发API] 获取报警转发趋势, 时间范围:', timeRange);
+
+    // 复用统计方法
+    return this.getForwardStatistics(timeRange);
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
@@ -3782,5 +4584,10 @@ export default {
   taskReviewAPI,
   realtimeMonitorAPI,
   realtimeDetectionAPI,
+  // 新增统计API模块
+  alertStatisticsAPI,
+  systemMonitorAPI,
+  deviceStatisticsAPI,
+  alertForwardAPI,
   visionAIAxios
 };

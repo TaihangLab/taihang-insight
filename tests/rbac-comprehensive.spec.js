@@ -54,7 +54,7 @@ test.describe('RBAC 综合功能验证', () => {
 
   test('应能访问用户管理页面', async ({ page }) => {
     console.log('👤 测试用户管理...');
-    await page.goto(`${BASE_URL}/#/systemManagement/userManagement`);
+    await page.goto(`${BASE_URL}/#/systemManage/userManagement`);
     await waitForPageLoad(page);
 
     // 检查页面容器
@@ -89,7 +89,7 @@ test.describe('RBAC 综合功能验证', () => {
 
   test('应能访问角色管理页面', async ({ page }) => {
     console.log('🔐 测试角色管理...');
-    await page.goto(`${BASE_URL}/#/systemManagement/roleManagement`);
+    await page.goto(`${BASE_URL}/#/systemManage/roleManagement`);
     await waitForPageLoad(page);
 
     const hasTable = await checkTableExists(page);
@@ -109,7 +109,7 @@ test.describe('RBAC 综合功能验证', () => {
 
   test('应能访问部门管理页面', async ({ page }) => {
     console.log('🏢 测试部门管理...');
-    await page.goto(`${BASE_URL}/#/systemManagement/departmentManagement`);
+    await page.goto(`${BASE_URL}/#/systemManage/departmentManagement`);
     await waitForPageLoad(page);
 
     const hasTree = await checkTreeExists(page);
@@ -129,7 +129,7 @@ test.describe('RBAC 综合功能验证', () => {
 
   test('应能访问岗位管理页面', async ({ page }) => {
     console.log('💼 测试岗位管理...');
-    await page.goto(`${BASE_URL}/#/systemManagement/positionManagement`);
+    await page.goto(`${BASE_URL}/#/systemManage/positionManagement`);
     await waitForPageLoad(page);
 
     const hasTable = await checkTableExists(page);
@@ -149,7 +149,7 @@ test.describe('RBAC 综合功能验证', () => {
 
   test('应能访问租户管理页面', async ({ page }) => {
     console.log('🏢 测试租户管理...');
-    await page.goto(`${BASE_URL}/#/systemManagement/tenantManagement`);
+    await page.goto(`${BASE_URL}/#/systemManage/tenantManagement`);
     await waitForPageLoad(page);
 
     const hasTable = await checkTableExists(page);
@@ -169,7 +169,7 @@ test.describe('RBAC 综合功能验证', () => {
 
   test('应能访问权限管理页面', async ({ page }) => {
     console.log('🔑 测试权限管理...');
-    await page.goto(`${BASE_URL}/#/systemManagement/permissionManagement`);
+    await page.goto(`${BASE_URL}/#/systemManage/permissionManagement`);
     await waitForPageLoad(page);
 
     const hasTree = await checkTreeExists(page);
@@ -201,7 +201,7 @@ test.describe('RBAC 综合功能验证', () => {
     });
 
     // 访问用户管理页面
-    await page.goto(`${BASE_URL}/#/systemManagement/userManagement`);
+    await page.goto(`${BASE_URL}/#/systemManage/userManagement`);
     await waitForPageLoad(page);
 
     // 等待 API 请求
@@ -234,7 +234,7 @@ test.describe('RBAC 综合功能验证', () => {
 
     for (const vp of viewports) {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await page.goto(`${BASE_URL}/#/systemManagement/userManagement`);
+      await page.goto(`${BASE_URL}/#/systemManage/userManagement`);
       await waitForPageLoad(page);
 
       const hasTable = await checkTableExists(page);
@@ -252,12 +252,12 @@ test.describe('RBAC 综合功能验证', () => {
     console.log('🔍 RBAC 功能完整性检查...\n');
 
     const pages = [
-      { path: '#/systemManagement/userManagement', name: '用户管理', hasTable: true },
-      { path: '#/systemManagement/roleManagement', name: '角色管理', hasTable: true },
-      { path: '#/systemManagement/departmentManagement', name: '部门管理', hasTree: true },
-      { path: '#/systemManagement/positionManagement', name: '岗位管理', hasTable: true },
-      { path: '#/systemManagement/tenantManagement', name: '租户管理', hasTable: true },
-      { path: '#/systemManagement/permissionManagement', name: '权限管理', hasTree: true },
+      { path: '#/systemManage/userManagement', name: '用户管理', hasTable: true },
+      { path: '#/systemManage/roleManagement', name: '角色管理', hasTable: true },
+      { path: '#/systemManage/departmentManagement', name: '部门管理', hasTree: true },
+      { path: '#/systemManage/positionManagement', name: '岗位管理', hasTable: true },
+      { path: '#/systemManage/tenantManagement', name: '租户管理', hasTable: true },
+      { path: '#/systemManage/permissionManagement', name: '权限管理', hasTree: true },
     ];
 
     const results = [];

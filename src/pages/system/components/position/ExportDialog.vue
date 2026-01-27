@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     title="导出岗位数据"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="500px"
     @close="handleClose"
   >
@@ -38,46 +38,46 @@
   </el-dialog>
 </template>
 
-<script>
-export default {
-  name: 'ExportDialog',
-  props: {
-    visible: {
-      type: Boolean,
-      default: false
-    }
-  },
-  data() {
-    return {
-      exportForm: {
-        format: 'excel',
-        range: 'all',
-        fields: ['position_code', 'category_code', 'position_name', 'department', 'order_num', 'status', 'create_time']
-      }
-    }
-  },
-  computed: {
-    dialogVisible: {
-      get() {
-        return this.visible
-      },
-      set(value) {
-        this.$emit('update:visible', value)
-      }
-    }
-  },
-  methods: {
-    handleConfirm() {
-      this.$emit('confirm', { ...this.exportForm })
-      this.dialogVisible = false
-    },
-    handleCancel() {
-      this.dialogVisible = false
-    },
-    handleClose() {
-      this.dialogVisible = false
-    }
-  }
+<script setup lang="ts">
+import { reactive, computed } from 'vue'
+
+interface ExportForm {
+  format: string
+  range: string
+  fields: string[]
+}
+
+defineProps<{
+  visible: boolean
+}>()
+
+const emit = defineEmits<{
+  'update:visible': [value: boolean]
+  confirm: [data: ExportForm]
+}>()
+
+const exportForm = reactive<ExportForm>({
+  format: 'excel',
+  range: 'all',
+  fields: ['position_code', 'category_code', 'position_name', 'department', 'order_num', 'status', 'create_time']
+})
+
+const dialogVisible = computed({
+  get: () => props.visible,
+  set: (value) => emit('update:visible', value)
+})
+
+const handleConfirm = () => {
+  emit('confirm', { ...exportForm })
+  dialogVisible.value = false
+}
+
+const handleCancel = () => {
+  dialogVisible.value = false
+}
+
+const handleClose = () => {
+  dialogVisible.value = false
 }
 </script>
 

@@ -11,29 +11,36 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'PermissionTreeHeader',
-  props: {
-    selectedNode: {
-      type: Object,
-      default: null
-    }
-  },
-  methods: {
-    handleAdd() {
-      this.$emit('add')
-    },
-    handleEdit() {
-      this.$emit('edit')
-    },
-    handleDelete() {
-      this.$emit('delete')
-    },
-    handleRefresh() {
-      this.$emit('refresh')
-    }
-  }
+<script setup lang="ts">
+interface PermissionNode {
+  [key: string]: any
+}
+
+defineProps<{
+  selectedNode: PermissionNode | null
+}>()
+
+const emit = defineEmits<{
+  add: []
+  edit: []
+  delete: []
+  refresh: []
+}>()
+
+const handleAdd = () => {
+  emit('add')
+}
+
+const handleEdit = () => {
+  emit('edit')
+}
+
+const handleDelete = () => {
+  emit('delete')
+}
+
+const handleRefresh = () => {
+  emit('refresh')
 }
 </script>
 

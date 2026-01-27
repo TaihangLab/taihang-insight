@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     title="确认删除"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="400px"
     @close="handleClose"
   >
@@ -16,44 +16,44 @@
   </el-dialog>
 </template>
 
-<script>
-export default {
-  name: 'DeleteConfirmDialog',
-  props: {
-    visible: {
-      type: Boolean,
-      default: false
-    },
-    targetName: {
-      type: String,
-      default: ''
-    }
-  },
-  computed: {
-    dialogVisible: {
-      get() {
-        return this.visible
-      },
-      set(value) {
-        this.$emit('update:visible', value)
-      }
-    },
-    message() {
-      return `确定要删除部门"${this.targetName}"吗？此操作不可恢复。`
-    }
-  },
-  methods: {
-    handleConfirm() {
-      this.$emit('confirm')
-      this.dialogVisible = false
-    },
-    handleCancel() {
-      this.dialogVisible = false
-    },
-    handleClose() {
-      this.dialogVisible = false
-    }
+<script setup lang="ts">
+import { computed } from 'vue'
+
+const props = withDefaults(
+  defineProps<{
+    visible: boolean
+    targetName: string
+  }>(),
+  {
+    targetName: ''
   }
+)
+
+const emit = defineEmits<{
+  'update:visible': [value: boolean]
+  confirm: []
+}>()
+
+const dialogVisible = computed({
+  get: () => props.visible,
+  set: (value) => emit('update:visible', value)
+})
+
+const message = computed(() => {
+  return `确定要删除部门"${props.targetName}"吗？此操作不可恢复。`
+})
+
+const handleConfirm = () => {
+  emit('confirm')
+  dialogVisible.value = false
+}
+
+const handleCancel = () => {
+  dialogVisible.value = false
+}
+
+const handleClose = () => {
+  dialogVisible.value = false
 }
 </script>
 

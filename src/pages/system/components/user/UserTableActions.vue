@@ -7,11 +7,13 @@
         <el-button size="small">
           更多<i class="el-icon-arrow-down el-icon--right"></i>
         </el-button>
-        <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item command="download_template">下载模板</el-dropdown-item>
-          <el-dropdown-item command="import_data">导入数据</el-dropdown-item>
-          <el-dropdown-item command="export_data">导出数据</el-dropdown-item>
-        </el-dropdown-menu>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="download_template">下载模板</el-dropdown-item>
+            <el-dropdown-item command="import_data">导入数据</el-dropdown-item>
+            <el-dropdown-item command="export_data">导出数据</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
       </el-dropdown>
     </div>
     <div class="right-buttons">
@@ -22,29 +24,38 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'UserTableActions',
-  methods: {
-    handleAdd() {
-      this.$emit('add')
-    },
-    handleBatchDelete() {
-      this.$emit('batch-delete')
-    },
-    handleMoreAction(command) {
-      this.$emit('more-action', command)
-    },
-    handleAdvancedSearch() {
-      this.$emit('advanced-search')
-    },
-    handleRefresh() {
-      this.$emit('refresh')
-    },
-    handleTableSetting() {
-      this.$emit('table-setting')
-    }
-  }
+<script setup lang="ts">
+const emit = defineEmits<{
+  add: []
+  batchDelete: []
+  moreAction: [command: string]
+  advancedSearch: []
+  refresh: []
+  tableSetting: []
+}>()
+
+const handleAdd = () => {
+  emit('add')
+}
+
+const handleBatchDelete = () => {
+  emit('batchDelete')
+}
+
+const handleMoreAction = (command: string) => {
+  emit('moreAction', command)
+}
+
+const handleAdvancedSearch = () => {
+  emit('advancedSearch')
+}
+
+const handleRefresh = () => {
+  emit('refresh')
+}
+
+const handleTableSetting = () => {
+  emit('tableSetting')
 }
 </script>
 
@@ -67,7 +78,7 @@ export default {
   gap: 10px;
 }
 
-.more-dropdown .el-button {
+.more-dropdown :deep(.el-button) {
   border: 1px solid #dcdfe6;
   background: white;
   color: #606266;

@@ -40,9 +40,9 @@
       <el-table-column label="操作" fixed="right" width="250" align="center">
         <template #default="{ row }">
           <div class="operation-buttons">
-            <el-button type="text" class="edit-btn" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="text" class="bind-btn" @click="handleBind(row)">绑定服务器</el-button>
-            <el-button type="text" class="delete-btn" @click="handleDelete(row)">删除</el-button>
+            <el-button link class="edit-btn" @click="handleEdit(row)">编辑</el-button>
+            <el-button link class="bind-btn" @click="handleBind(row)">绑定服务器</el-button>
+            <el-button link class="delete-btn" @click="handleDelete(row)">删除</el-button>
           </div>
         </template>
       </el-table-column>

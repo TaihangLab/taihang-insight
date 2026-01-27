@@ -146,32 +146,22 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ResourceStatistics',
-  props: {
-    cpuUsage: {
-      type: Number,
-      default: 0
-    },
-    memoryUsage: {
-      type: Number,
-      default: 0
-    },
-    diskUsage: {
-      type: Number,
-      default: 0
-    },
-    networkUsage: {
-      type: Number,
-      default: 0
-    },
-    currentTime: {
-      type: String,
-      default: ''
-    }
-  }
+<script setup lang="ts">
+interface Props {
+  cpuUsage?: number;
+  memoryUsage?: number;
+  diskUsage?: number;
+  networkUsage?: number;
+  currentTime?: string;
 }
+
+const props = withDefaults(defineProps<Props>(), {
+  cpuUsage: 0,
+  memoryUsage: 0,
+  diskUsage: 0,
+  networkUsage: 0,
+  currentTime: ''
+});
 </script>
 
 <style scoped>

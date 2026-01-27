@@ -43,9 +43,9 @@
           <!-- 租户输入框 -->
           <div class="input-group">
             <div class="input-wrapper" :class="{'focused': tenantInputFocused}">
-              <i class="input-icon fa fa-building"></i>
+              <i class="input-icon i-carbon-enterprise"></i>
               <input
-                type="text"
+                link
                 v-model="selectedTenant"
                 placeholder="请输入租户编码"
                 class="tech-input"
@@ -59,9 +59,9 @@
           <!-- 用户名输入框 -->
           <div class="input-group">
             <div class="input-wrapper">
-              <i class="input-icon fa fa-user"></i>
+              <i class="input-icon i-carbon-user"></i>
               <input 
-                type="text" 
+                link 
                 v-model="username" 
                 placeholder="请输入用户名"
                 class="tech-input"
@@ -75,7 +75,7 @@
           <!-- 密码输入框 -->
           <div class="input-group">
             <div class="input-wrapper">
-              <i class="input-icon fa fa-lock"></i>
+              <i class="input-icon i-carbon-locked"></i>
               <input 
                 :type="showPassword ? 'text' : 'password'"
                 v-model="password" 
@@ -84,8 +84,9 @@
                 @focus="focusInput"
                 @blur="blurInput"
               >
-              <i 
-                :class="'password-toggle fa ' + (showPassword ? 'fa-eye-slash' : 'fa-eye')"
+              <i
+                :class="showPassword ? 'i-carbon-view-off' : 'i-carbon-view'"
+                class="password-toggle"
                 @click="showPassword = !showPassword"
               ></i>
               <div class="input-border"></div>
@@ -102,7 +103,7 @@
             >
               <span v-if="!isLoging">登录系统</span>
               <span v-else class="loading-text">
-                <i class="fa fa-spinner fa-spin"></i>
+                <i class="i-carbon-circle-dash animate-spin"></i>
                 登录中...
               </span>
               <div class="btn-glow"></div>
@@ -113,7 +114,7 @@
         <!-- 底部装饰 -->
         <div class="login-footer">
           <div class="security-info">
-            <i class="fa fa-shield"></i>
+            <i class="i-carbon-security"></i>
             <span>安全登录 · 数据加密传输</span>
           </div>
         </div>

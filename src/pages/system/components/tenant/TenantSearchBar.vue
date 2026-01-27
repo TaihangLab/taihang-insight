@@ -23,6 +23,7 @@
           placeholder="请选择状态"
           clearable
           @clear="handleSearch"
+          style="width: 120px"
         >
           <el-option label="启用" :value="0"></el-option>
           <el-option label="停用" :value="1"></el-option>
@@ -36,47 +37,60 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'TenantSearchBar',
-  props: {
-    value: {
-      type: Object,
-      default: () => ({
-        tenant_id: '',
-        tenant_name: '',
-        company_name: '',
-        status: null
-      })
+<script setup lang="ts">
+import { ref, watch, onScopeDispose } from 'vue'
+
+interface SearchValue {
+  tenant_id: string
+  tenant_name: string
+  company_name: string
+  status: number | null
+}
+
+const props = defineProps<{
+  modelValue: SearchValue
+}>()
+
+const emit = defineEmits<{
+  'update:modelValue': [value: SearchValue]
+  search: [value: SearchValue]
+  reset: []
+}>()
+
+// 使用 ref 替代 reactive，避免潜在的响应式问题
+const formValue = ref<SearchValue>({ ...props.modelValue })
+
+// 使用 watch 并添加清理逻辑
+const stopWatch = watch(
+  () => props.modelValue,
+  (newVal) => {
+    // 确保在更新时检查组件是否仍然挂载
+    if (newVal) {
+      Object.assign(formValue.value, newVal)
     }
   },
-  data() {
-    return {
-      formValue: { ...this.value }
-    }
-  },
-  watch: {
-    value: {
-      handler(newVal) {
-        this.formValue = { ...newVal }
-      },
-      deep: true
-    }
-  },
-  methods: {
-    handleSearch() {
-      this.$emit('search', this.formValue)
-    },
-    handleReset() {
-      this.formValue = {
-        tenant_id: '',
-        tenant_name: '',
-        company_name: '',
-        status: null
-      }
-      this.$emit('reset')
-    }
-  }
+  { deep: true }
+)
+
+// 组件卸载时停止监听
+onScopeDispose(() => {
+  stopWatch()
+})
+
+const handleSearch = () => {
+  emit('update:modelValue', { ...formValue.value })
+  emit('search', formValue.value)
+}
+
+const handleReset = () => {
+  Object.assign(formValue.value, {
+    tenant_id: '',
+    tenant_name: '',
+    company_name: '',
+    status: null
+  })
+  emit('update:modelValue', { ...formValue.value })
+  emit('reset')
 }
 </script>
 

@@ -1,7 +1,7 @@
 <template>
   <div class="permission-tree-table">
     <el-table
-      ref="treeTable"
+      ref="treeTableRef"
       :data="processedData"
       v-loading="loading"
       row-key="id"
@@ -67,19 +67,19 @@
           <div class="operation-buttons">
             <el-button
               v-if="scope.row.permission_type !== 'button'"
-              type="text"
+              link
               class="add-btn"
               @click="handleAddSub(scope.row)"
               title="添加子项"
             >添加</el-button>
             <el-button
-              type="text"
+              link
               class="edit-btn"
               @click="handleEdit(scope.row)"
               title="编辑"
             >编辑</el-button>
             <el-button
-              type="text"
+              link
               class="delete-btn"
               @click="handleDelete(scope.row)"
               title="删除"
@@ -91,100 +91,128 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed, nextTick } from 'vue'
+import type { ElTable } from 'element-plus'
 import { calculateTreeDepth } from '@/utils/treeUtils'
 
-export default {
-  name: 'PermissionTreeTable',
-  props: {
-    data: {
-      type: Array,
-      default: () => []
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    defaultExpandAll: {
-      type: Boolean,
-      default: true
-    }
-  },
-  computed: {
-    processedData() {
-      return calculateTreeDepth(this.data, 'children', 0)
-    }
-  },
-  methods: {
-    handleEdit(row) {
-      this.$emit('edit', row)
-    },
-    handleAddSub(row) {
-      this.$emit('add-sub', row)
-    },
-    handleDelete(row) {
-      this.$emit('delete', row)
-    },
-    getTypeIcon(type) {
-      const icons = {
-        folder: 'el-icon-folder',
-        menu: 'el-icon-menu',
-        button: 'el-icon-document'
+interface Permission {
+  permission_name: string
+  permission_type: string
+  permission_code: string
+  path?: string
+  sort_order: number
+  status: number
+  children?: Permission[]
+  [key: string]: any
+}
+
+defineExpose({
+  toggleExpandAll
+})
+
+const props = withDefaults(
+  defineProps<{
+    data: Permission[]
+    loading: boolean
+    defaultExpandAll: boolean
+  }>(),
+  {
+    data: () => [],
+    loading: false,
+    defaultExpandAll: true
+  }
+)
+
+const emit = defineEmits<{
+  edit: [row: Permission]
+  addSub: [row: Permission]
+  delete: [row: Permission]
+}>()
+
+const treeTableRef = ref<InstanceType<typeof ElTable>>()
+
+const processedData = computed(() => {
+  return calculateTreeDepth(props.data, 'children', 0)
+})
+
+const handleEdit = (row: Permission) => {
+  emit('edit', row)
+}
+
+const handleAddSub = (row: Permission) => {
+  emit('addSub', row)
+}
+
+const handleDelete = (row: Permission) => {
+  emit('delete', row)
+}
+
+const getTypeIcon = (type: string) => {
+  const icons: Record<string, string> = {
+    folder: 'el-icon-folder',
+    menu: 'el-icon-menu',
+    button: 'el-icon-document'
+  }
+  return icons[type] || 'el-icon-document'
+}
+
+const getTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    folder: '文件夹',
+    menu: '页面',
+    button: '按钮'
+  }
+  return labels[type] || type
+}
+
+const getTypeTagType = (type: string) => {
+  const types: Record<string, string> = {
+    folder: '',
+    menu: 'primary',
+    button: 'info'
+  }
+  return types[type] || 'info'
+}
+
+const getCategoryTagType = (category: string) => {
+  const types: Record<string, string> = {
+    READ: 'primary',
+    WRITE: 'success',
+    DELETE: 'danger',
+    SPECIAL: 'warning'
+  }
+  return types[category] || 'info'
+}
+
+const getCategoryLabel = (category: string) => {
+  const labels: Record<string, string> = {
+    READ: '读取',
+    WRITE: '写入',
+    DELETE: '删除',
+    SPECIAL: '特殊'
+  }
+  return labels[category] || category
+}
+
+const toggleExpandAll = async (expand: boolean) => {
+  await nextTick()
+  await setTableExpandState(processedData.value, expand)
+}
+
+const setTableExpandState = async (data: Permission[], expand: boolean) => {
+  for (const item of data) {
+    if (item.children && item.children.length > 0) {
+      if (treeTableRef.value) {
+        treeTableRef.value.toggleRowExpansion(item, expand)
       }
-      return icons[type] || 'el-icon-document'
-    },
-    getTypeLabel(type) {
-      const labels = {
-        folder: '文件夹',
-        menu: '页面',
-        button: '按钮'
-      }
-      return labels[type] || type
-    },
-    getTypeTagType(type) {
-      const types = {
-        folder: '',
-        menu: 'primary',
-        button: 'info'
-      }
-      return types[type] || 'info'
-    },
-    getCategoryTagType(category) {
-      const types = {
-        READ: 'primary',
-        WRITE: 'success',
-        DELETE: 'danger',
-        SPECIAL: 'warning'
-      }
-      return types[category] || 'info'
-    },
-    getCategoryLabel(category) {
-      const labels = {
-        READ: '读取',
-        WRITE: '写入',
-        DELETE: '删除',
-        SPECIAL: '特殊'
-      }
-      return labels[category] || category
-    },
-    async toggleExpandAll(expand) {
-      await this.$nextTick()
-      await this.setTableExpandState(this.processedData, expand)
-    },
-    async setTableExpandState(data, expand) {
-      for (const item of data) {
-        if (item.children && item.children.length > 0) {
-          if (this.$refs.treeTable) {
-            this.$refs.treeTable.toggleRowExpansion(item, expand)
-          }
-          await this.$nextTick()
-          await this.setTableExpandState(item.children, expand)
-        }
-      }
+      await nextTick()
+      await setTableExpandState(item.children, expand)
     }
   }
 }
 </script>
 
 <style scoped>
+/* 组件样式继承自父组件的全局样式 */
 </style>

@@ -3,7 +3,7 @@
     <el-form :inline="true" :model="formValue" class="search-form">
       <el-form-item label="租户">
         <TenantSelector
-          ref="tenantSelector"
+          ref="tenantSelectorRef"
           v-model="formValue.tenant_id"
           @change="handleTenantChange"
         />
@@ -38,57 +38,67 @@
   </div>
 </template>
 
-<script>
-import TenantSelector from '../commons/TenantSelector.vue'
+<script setup lang="ts">
+import { reactive, watch, ref } from 'vue'
+import TenantSelector from '@/pages/system/components/commons/TenantSelector.vue'
 
-export default {
-  name: 'RoleSearchBar',
-  components: {
-    TenantSelector
-  },
-  props: {
-    value: {
-      type: Object,
-      default: () => ({
-        tenant_id: null,
-        role_code: '',
-        role_name: '',
-        status: null
-      })
-    }
-  },
-  data() {
-    return {
-      formValue: { ...this.value }
-    }
-  },
-  watch: {
-    value: {
-      handler(newVal) {
-        this.formValue = { ...newVal }
-      },
-      deep: true
-    }
-  },
-  methods: {
-    handleSearch() {
-      this.$emit('search', this.formValue)
-    },
-    handleReset() {
-      const currentTenantCode = this.formValue.tenant_id
-      this.formValue = {
-        tenant_id: currentTenantCode || null,
-        role_code: '',
-        role_name: '',
-        status: null
-      }
-      this.$emit('reset', this.formValue)
-    },
-    handleTenantChange() {
-      this.$emit('input', this.formValue)
-      this.$emit('tenant-change')
-    }
+interface SearchValue {
+  tenant_id: string | number | null
+  role_code: string
+  role_name: string
+  status: number | null
+}
+
+const props = withDefaults(
+  defineProps<{
+    value: SearchValue
+  }>(),
+  {
+    value: () => ({
+      tenant_id: null,
+      role_code: '',
+      role_name: '',
+      status: null
+    })
   }
+)
+
+const emit = defineEmits<{
+  search: [value: SearchValue]
+  reset: [value: SearchValue]
+  input: [value: SearchValue]
+  tenantChange: []
+}>()
+
+const tenantSelectorRef = ref()
+const formValue = reactive<SearchValue>({ ...props.value })
+
+watch(
+  () => props.value,
+  (newVal) => {
+    Object.assign(formValue, newVal)
+  },
+  { deep: true }
+)
+
+const handleSearch = () => {
+  emit('search', formValue)
+}
+
+const handleReset = () => {
+  const currentTenantCode = formValue.tenant_id
+  Object.assign(formValue, {
+    tenant_id: currentTenantCode || null,
+    role_code: '',
+    role_name: '',
+    status: null
+  })
+  emit('reset', formValue)
+}
+
+const handleTenantChange = () => {
+  emit('input', formValue)
+  emit('tenantChange')
 }
 </script>
 

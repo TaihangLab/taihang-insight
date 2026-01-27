@@ -82,7 +82,7 @@
                   <div class="operation-buttons">
                     <el-button
                       size="mini"
-                      type="text"
+                      link
                       @click="handleEdit(scope.row)"
                       class="operation-btn config-btn">更多设置</el-button>
                   </div>

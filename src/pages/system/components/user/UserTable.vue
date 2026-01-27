@@ -28,10 +28,10 @@
       <el-table-column label="操作" min-width="240" fixed="right" align="center">
         <template #default="scope">
           <div class="operation-buttons">
-            <el-button type="text" class="auth-btn" @click="handleAuthorization(scope.row)">授权</el-button>
-            <el-button type="text" class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button type="text" class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
-            <el-button type="text" class="reset-btn" @click="handleResetPassword(scope.row)">重置</el-button>
+            <el-button link class="auth-btn" @click="handleAuthorization(scope.row)">授权</el-button>
+            <el-button link class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button link class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button link class="reset-btn" @click="handleResetPassword(scope.row)">重置</el-button>
           </div>
         </template>
       </el-table-column>
@@ -39,54 +39,63 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'UserTable',
-  props: {
-    data: {
-      type: Array,
-      default: () => []
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    }
-  },
-  methods: {
-    handleSelectionChange(selection) {
-      this.$emit('selection-change', selection)
-    },
-    handleStatusChange(row) {
-      // 记录原始状态值
-      const originalStatus = row.status;
+<script setup lang="ts">
+interface User {
+  status: number
+  [key: string]: any
+}
 
-      // 立即将状态切换，提供即时反馈
-      row.status = row.status === 0 ? 1 : 0;
+defineProps<{
+  data: User[]
+  loading: boolean
+}>()
 
-      // 定义一个回调函数来处理状态更新结果
-      const callback = (success) => {
-        if (!success) {
-          // 如果更新失败，恢复原始状态
-          row.status = originalStatus;
-        }
-      };
+const emit = defineEmits<{
+  selectionChange: [selection: User[]]
+  statusChange: [row: User, callback: (success: boolean) => void]
+  edit: [row: User]
+  delete: [row: User]
+  resetPassword: [row: User]
+  authorization: [row: User]
+}>()
 
-      // 发送状态变更请求给父组件，并传递回调函数
-      this.$emit('status-change', row, callback);
-    },
-    handleEdit(row) {
-      this.$emit('edit', row)
-    },
-    handleDelete(row) {
-      this.$emit('delete', row)
-    },
-    handleResetPassword(row) {
-      this.$emit('reset-password', row)
-    },
-    handleAuthorization(row) {
-      this.$emit('authorization', row)
+const handleSelectionChange = (selection: User[]) => {
+  emit('selectionChange', selection)
+}
+
+const handleStatusChange = (row: User) => {
+  // 记录原始状态值
+  const originalStatus = row.status
+
+  // 立即将状态切换，提供即时反馈
+  row.status = row.status === 0 ? 1 : 0
+
+  // 定义一个回调函数来处理状态更新结果
+  const callback = (success: boolean) => {
+    if (!success) {
+      // 如果更新失败，恢复原始状态
+      row.status = originalStatus
     }
   }
+
+  // 发送状态变更请求给父组件，并传递回调函数
+  emit('statusChange', row, callback)
+}
+
+const handleEdit = (row: User) => {
+  emit('edit', row)
+}
+
+const handleDelete = (row: User) => {
+  emit('delete', row)
+}
+
+const handleResetPassword = (row: User) => {
+  emit('resetPassword', row)
+}
+
+const handleAuthorization = (row: User) => {
+  emit('authorization', row)
 }
 </script>
 
@@ -113,7 +122,7 @@ export default {
 .custom-table :deep(.el-table__header-wrapper th) {
   font-weight: bold;
   text-align: center;
-  background: #f5f7fa !important;
+  background: var(--design-bg-secondary) !important;
   color: #303133 !important;
   border-bottom: 1px solid #ebeef5 !important;
 }
@@ -123,7 +132,7 @@ export default {
 }
 
 .custom-table :deep(.el-table .el-table__body tr:hover > td) {
-  background: #f5f7fa !important;
+  background: var(--design-bg-secondary) !important;
 }
 
 .operation-buttons {
@@ -133,18 +142,18 @@ export default {
 }
 
 .auth-btn {
-  color: #67C23A;
+  color: #67c23a;
 }
 
 .edit-btn {
-  color: #409EFF;
+  color: #409eff;
 }
 
 .delete-btn {
-  color: #F56C6C;
+  color: #f56c6c;
 }
 
 .reset-btn {
-  color: #E6A23C;
+  color: #e6a23c;
 }
 </style>

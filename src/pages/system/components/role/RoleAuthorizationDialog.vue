@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    :visible.sync="visible"
+    v-model="dialogVisible"
     :title="`为【${roleName}】分配权限`"
     width="700px"
     :before-close="handleClose"
@@ -22,7 +22,7 @@
           </div>
           <div class="permission-tree-container">
             <el-tree
-              ref="permissionTree"
+              ref="permissionTreeRef"
               :data="filteredPermissions"
               :props="treeProps"
               show-checkbox
@@ -43,90 +43,104 @@
   </el-dialog>
 </template>
 
-<script>
-export default {
-  name: 'RoleAuthorizationDialog',
-  props: {
-    visible: {
-      type: Boolean,
-      default: false
-    },
-    role: {
-      type: Object,
-      default: () => ({})
-    },
-    permissions: {
-      type: Array,
-      default: () => []
-    },
-    checkedPermissionKeys: {
-      type: Array,
-      default: () => []
-    }
-  },
-  data() {
-    return {
-      formData: {},
-      searchKeyword: '',
-      filteredPermissions: [],
-      expandedPermissionKeys: [],
-      treeProps: {
-        children: 'children',
-        label: 'label'
-      }
-    }
-  },
-  computed: {
-    roleName() {
-      return this.role.role_name || ''
-    }
-  },
-  watch: {
-    visible(val) {
-      if (val) {
-        this.filteredPermissions = this.permissions
-        // 设置默认展开的节点（第一层节点）
-        this.expandedPermissionKeys = this.permissions.map(item => item.id)
-      }
-    },
-    permissions: {
-      handler(newVal) {
-        if (this.visible) {
-          this.filteredPermissions = newVal
-        }
-      },
-      deep: true
-    }
-  },
-  methods: {
-    handleClose() {
-      this.$emit('update:visible', false)
-      this.searchKeyword = ''
-      this.filteredPermissions = []
-      this.expandedPermissionKeys = []
-    },
-    handleSubmit() {
-      const checkedKeys = this.$refs.permissionTree.getCheckedKeys()
-      const halfCheckedKeys = this.$refs.permissionTree.getHalfCheckedKeys()
-      const allPermissionIds = [...checkedKeys, ...halfCheckedKeys]
-      
-      this.$emit('submit', {
-        roleId: this.role.id,
-        permissionIds: allPermissionIds
-      })
-    },
-    filterPermissions() {
-      if (this.searchKeyword) {
-        this.$refs.permissionTree.filter(this.searchKeyword)
-      } else {
-        this.filteredPermissions = this.permissions
-      }
-    },
-    filterNode(value, data) {
-      if (!value) return true
-      return data.label.toLowerCase().includes(value.toLowerCase())
+<script setup lang="ts">
+import { ref, reactive, computed, watch } from 'vue'
+import type { ElTree } from 'element-plus'
+
+interface Permission {
+  id: string | number
+  label: string
+  children?: Permission[]
+}
+
+interface Role {
+  id: string | number
+  role_name?: string
+}
+
+const props = defineProps<{
+  visible: boolean
+  role: Role
+  permissions: Permission[]
+  checkedPermissionKeys: (string | number)[]
+}>()
+
+const emit = defineEmits<{
+  'update:visible': [value: boolean]
+  submit: [data: { roleId: string | number; permissionIds: (string | number)[] }]
+}>()
+
+const permissionTreeRef = ref<InstanceType<typeof ElTree>>()
+
+const formData = reactive({})
+const searchKeyword = ref('')
+const filteredPermissions = ref<Permission[]>([])
+const expandedPermissionKeys = ref<(string | number)[]>([])
+const treeProps = {
+  children: 'children',
+  label: 'label'
+}
+
+const dialogVisible = computed({
+  get: () => props.visible,
+  set: (value) => emit('update:visible', value)
+})
+
+const roleName = computed(() => props.role.role_name || '')
+
+watch(
+  () => props.visible,
+  (val) => {
+    if (val) {
+      filteredPermissions.value = props.permissions
+      expandedPermissionKeys.value = props.permissions.map((item) => item.id)
     }
   }
+)
+
+watch(
+  () => props.permissions,
+  (newVal) => {
+    if (props.visible) {
+      filteredPermissions.value = newVal
+    }
+  },
+  { deep: true }
+)
+
+const handleClose = () => {
+  emit('update:visible', false)
+  searchKeyword.value = ''
+  filteredPermissions.value = []
+  expandedPermissionKeys.value = []
+}
+
+const handleSubmit = () => {
+  if (!permissionTreeRef.value) return
+
+  const checkedKeys = permissionTreeRef.value.getCheckedKeys()
+  const halfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys()
+  const allPermissionIds = [...checkedKeys, ...halfCheckedKeys]
+
+  emit('submit', {
+    roleId: props.role.id,
+    permissionIds: allPermissionIds
+  })
+}
+
+const filterPermissions = () => {
+  if (permissionTreeRef.value) {
+    if (searchKeyword.value) {
+      permissionTreeRef.value.filter(searchKeyword.value)
+    } else {
+      filteredPermissions.value = props.permissions
+    }
+  }
+}
+
+const filterNode = (value: string, data: Permission) => {
+  if (!value) return true
+  return data.label.toLowerCase().includes(value.toLowerCase())
 }
 </script>
 

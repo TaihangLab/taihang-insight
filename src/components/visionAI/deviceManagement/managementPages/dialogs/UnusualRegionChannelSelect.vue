@@ -69,7 +69,7 @@
           <template v-slot:default="scope">
             <el-button
               size="medium"
-              type="text"
+              link
               icon="el-icon-plus"
               :loading="scope.row.addRegionLoading"
               @click="addRegion(scope.row)"

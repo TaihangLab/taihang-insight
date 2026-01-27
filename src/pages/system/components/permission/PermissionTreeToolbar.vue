@@ -15,25 +15,27 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'PermissionTreeToolbar',
-  data() {
-    return {
-      filterText: ''
-    }
-  },
-  methods: {
-    handleFilterInput() {
-      this.$emit('filter', this.filterText)
-    },
-    handleExpandAll() {
-      this.$emit('expand-all')
-    },
-    handleCollapseAll() {
-      this.$emit('collapse-all')
-    }
-  }
+<script setup lang="ts">
+import { ref } from 'vue'
+
+const emit = defineEmits<{
+  filter: [text: string]
+  expandAll: []
+  collapseAll: []
+}>()
+
+const filterText = ref('')
+
+const handleFilterInput = () => {
+  emit('filter', filterText.value)
+}
+
+const handleExpandAll = () => {
+  emit('expandAll')
+}
+
+const handleCollapseAll = () => {
+  emit('collapseAll')
 }
 </script>
 

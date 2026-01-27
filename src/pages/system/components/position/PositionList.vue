@@ -28,76 +28,74 @@
   </div>
 </template>
 
-<script>
-import PositionTableActions from './PositionTableActions.vue'
-import PositionTable from './PositionTable.vue'
-import PositionPagination from './PositionPagination.vue'
+<script setup lang="ts">
+import { computed } from 'vue'
+import PositionTableActions from '@/pages/system/components/position/PositionTableActions.vue'
+import PositionTable from '@/pages/system/components/position/PositionTable.vue'
+import PositionPagination from '@/pages/system/components/position/PositionPagination.vue'
 
-export default {
-  name: 'PositionList',
-  components: {
-    PositionTableActions,
-    PositionTable,
-    PositionPagination
-  },
-  props: {
-    data: {
-      type: Array,
-      default: () => []
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    pagination: {
-      type: Object,
-      default: () => ({
-        currentPage: 1,
-        pageSize: 10
-      })
-    },
-    total: {
-      type: Number,
-      default: 0
-    }
-  },
-  computed: {
-    currentPage() {
-      return this.pagination.currentPage
-    },
-    pageSize() {
-      return this.pagination.pageSize
-    },
-    selectedCount() {
-      return this.data.filter(item => item._selected).length
-    }
-  },
-  methods: {
-    handleSelectionChange(selection) {
-      this.$emit('selection-change', selection)
-    },
-    handleAdd() {
-      this.$emit('add')
-    },
-    handleEdit(row) {
-      this.$emit('edit', row)
-    },
-    handleDelete(row) {
-      this.$emit('delete', row)
-    },
-    handleBatchDelete() {
-      this.$emit('batch-delete')
-    },
-    handleExport() {
-      this.$emit('export')
-    },
-    handlePageChange(page) {
-      this.$emit('page-change', page)
-    },
-    handleSizeChange(size) {
-      this.$emit('size-change', size)
-    }
-  }
+interface Pagination {
+  currentPage: number
+  pageSize: number
+}
+
+interface PositionItem {
+  _selected?: boolean
+  [key: string]: any
+}
+
+defineProps<{
+  data: PositionItem[]
+  loading: boolean
+  pagination: Pagination
+  total: number
+}>()
+
+const emit = defineEmits<{
+  selectionChange: [selection: PositionItem[]]
+  add: []
+  edit: [row: PositionItem]
+  delete: [row: PositionItem]
+  batchDelete: []
+  export: []
+  pageChange: [page: number]
+  sizeChange: [size: number]
+}>()
+
+const currentPage = computed(() => props.pagination.currentPage)
+const pageSize = computed(() => props.pagination.pageSize)
+const selectedCount = computed(() => props.data.filter((item) => item._selected).length)
+
+const handleSelectionChange = (selection: PositionItem[]) => {
+  emit('selectionChange', selection)
+}
+
+const handleAdd = () => {
+  emit('add')
+}
+
+const handleEdit = (row: PositionItem) => {
+  emit('edit', row)
+}
+
+const handleDelete = (row: PositionItem) => {
+  emit('delete', row)
+}
+
+const handleBatchDelete = () => {
+  emit('batchDelete')
+}
+
+const handleExport = () => {
+  emit('export')
+}
+
+const handlePageChange = (page: number) => {
+  emit('pageChange', page)
+}
+
+const handleSizeChange = (size: number) => {
+  emit('sizeChange', size)
 }
 </script>
 

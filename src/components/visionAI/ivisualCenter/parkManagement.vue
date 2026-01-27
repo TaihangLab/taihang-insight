@@ -1,11 +1,10 @@
 <template>
   <div class="park-management">
     <!-- 标题区域 -->
-    <dv-border-box-12 class="header-box">
+    <div class="header-box">
       <div class="header-wrapper">
         <!-- 左侧装饰 -->
         <div class="left-decoration">
-          <dv-decoration-5 style="width:250px;height:60px;" />
           <div class="decoration-line-group">
             <div class="decoration-line line1"></div>
             <div class="decoration-line line2"></div>
@@ -15,18 +14,13 @@
 
         <!-- 中间标题 -->
         <div class="title-container">
-          <dv-decoration-8 style="width:300px;height:50px;" :reverse="true" />
           <div class="title-wrapper">
-            <dv-decoration-6 style="width:200px;height:50px;" />
             <div class="title-text">园区封闭管理平台</div>
-            <dv-decoration-6 style="width:200px;height:50px;" :reverse="true" />
           </div>
-          <dv-decoration-8 style="width:300px;height:50px;" />
         </div>
 
         <!-- 右侧装饰 -->
         <div class="right-decoration">
-          <dv-decoration-5 style="width:250px;height:60px;" :reverse="true" />
           <div class="decoration-line-group">
             <div class="decoration-line line1"></div>
             <div class="decoration-line line2"></div>
@@ -38,17 +32,16 @@
           </div>
         </div>
       </div>
-    </dv-border-box-12>
+    </div>
 
     <div class="content-wrapper">
       <div class="main-content">
         <!-- 左侧面板 -->
         <div class="left-panel">
           <!-- 设备树状图 -->
-          <dv-border-box-12 class="panel device-panel">
+          <div class="panel device-panel">
             <div class="panel-header">
               <span>设备树状图</span>
-              <div class="watermark">TSINGSEE</div>
             </div>
             <div class="device-tree">
               <el-tree
@@ -56,35 +49,32 @@
                 :props="defaultProps"
                 node-key="id"
                 :default-expanded-keys="['1']"
-                class="custom-tree">
+                class="custom-tree"
+              >
               </el-tree>
             </div>
-          </dv-border-box-12>
-          
+          </div>
+
           <!-- CPU使用率 -->
-          <dv-border-box-12 class="panel cpu-panel">
+          <div class="panel cpu-panel">
             <div class="panel-header">
               <span>内存/CPU</span>
-              <div class="watermark">TSINGSEE</div>
             </div>
-            <!-- <dv-charts :option="cpuOption" /> -->
-            <div id="cpuChart" style="width: 90%; height: 90%;"></div>
-          </dv-border-box-12>
-          
+            <div id="cpuChart" class="chart-container"></div>
+          </div>
+
           <!-- 存储使用 -->
-          <dv-border-box-12 class="panel storage-panel">
+          <div class="panel storage-panel">
             <div class="panel-header">
               <span>存储使用</span>
-              <div class="watermark">TSINGSEE</div>
             </div>
-            <!-- <dv-charts :option="storageOption" /> -->
-            <div id="storageChart" style="width: 90%; height: 90%;"></div>
-          </dv-border-box-12>
+            <div id="storageChart" class="chart-container"></div>
+          </div>
         </div>
 
         <!-- 中间视频区域 -->
         <div class="center-panel">
-          <dv-border-box-12 class="video-container">
+          <div class="video-container">
             <div class="panel-header">
               <span>实时画面</span>
               <div class="screen-controls">
@@ -92,93 +82,41 @@
                 <i class="el-icon-menu active"></i>
                 <i class="el-icon-s-grid"></i>
               </div>
-              <div class="watermark">TSINGSEE</div>
             </div>
             <div class="video-grid">
               <div v-for="i in 4" :key="i" class="video-item">
-                <dv-border-box-8>
-                  <div class="video-content">
-                    <img :src="getRandomImage(i)" alt="监控画面">
-                  </div>
-                </dv-border-box-8>
+                <div class="video-content">
+                  <img :src="getRandomImage(i)" alt="监控画面">
+                </div>
               </div>
             </div>
-          </dv-border-box-12>
+          </div>
         </div>
 
         <!-- 右侧预警区域 -->
         <div class="right-panel">
-          <dv-border-box-12 class="panel alert-panel">
+          <div class="panel alert-panel">
             <div class="panel-header">
               <span>预警抓拍</span>
-              <div class="watermark">TSINGSEE</div>
             </div>
             <div class="alert-list">
-              <div class="alert-item">
-                <div class="category-label">在岗检测</div>
+              <div v-for="(alert, index) in alertSnapshots" :key="index" class="alert-item">
+                <div class="category-label">{{ alert.category }}</div>
                 <div class="alert-image-container">
-                  <img :src="getRandomImage(14)" alt="在岗检测">
+                  <img :src="alert.image" alt="预警抓拍">
                 </div>
                 <div class="alert-info single-line">
                   <div class="info-content">
-                    <p>抓拍时间: 2023-04-14 17:23:12</p>
-                    <p>布点名称: 115号探头</p>
+                    <p>抓拍时间: {{ alert.time }}</p>
+                    <p>布点名称: {{ alert.location }}</p>
                   </div>
                   <div class="view-btn">
-                    <span class="view-large" @click="showLargeImage(14)">查看大图</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="alert-item">
-                <div class="category-label">安全帽检测</div>
-                <div class="alert-image-container">
-                  <img :src="getRandomImage(12)" alt="安全帽检测">
-                </div>
-                <div class="alert-info single-line">
-                  <div class="info-content">
-                    <p>抓拍时间: 2023-04-14 17:23:12</p>
-                    <p>布点名称: 115号探头</p>
-                  </div>
-                  <div class="view-btn">
-                    <span class="view-large" @click="showLargeImage(12)">查看大图</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="alert-item">
-                <div class="category-label">安全帽检测</div>
-                <div class="alert-image-container">
-                  <img :src="getRandomImage(13)" alt="安全帽检测">
-                </div>
-                <div class="alert-info single-line">
-                  <div class="info-content">
-                    <p>抓拍时间: 2023-04-14 17:23:12</p>
-                    <p>布点名称: 115号探头</p>
-                  </div>
-                  <div class="view-btn">
-                    <span class="view-large" @click="showLargeImage(13)">查看大图</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="alert-item">
-                <div class="category-label">在岗检测</div>
-                <div class="alert-image-container">
-                  <img :src="getRandomImage(11)" alt="在岗检测">
-                </div>
-                <div class="alert-info single-line">
-                  <div class="info-content">
-                    <p>抓拍时间: 2023-04-14 17:23:12</p>
-                    <p>布点名称: 115号探头</p>
-                  </div>
-                  <div class="view-btn">
-                    <span class="view-large" @click="showLargeImage(11)">查看大图</span>
+                    <span class="view-large" @click="showLargeImage(alert)">查看大图</span>
                   </div>
                 </div>
               </div>
             </div>
-          </dv-border-box-12>
+          </div>
         </div>
       </div>
 
@@ -186,53 +124,45 @@
       <div class="bottom-container">
         <div class="bottom-area">
           <!-- 设备状态 -->
-          <dv-border-box-12 class="panel status-panel">
+          <div class="panel status-panel">
             <div class="panel-header">
               <span>设备状态</span>
-              <div class="watermark">TSINGSEE</div>
             </div>
             <div class="status-content">
               <div class="status-item">
-                <dv-active-ring-chart :config="deviceStatusConfig1" />
+                <div class="status-chart" :id="`status-chart-${index}`"></div>
                 <div class="status-text">
-                  <p>总数量: 27</p>
-                  <p>离线数: 3</p>
+                  <p>总数量: {{ deviceStatus.total }}</p>
+                  <p>在线: {{ deviceStatus.online }}</p>
                 </div>
               </div>
               <div class="status-item">
-                <dv-active-ring-chart :config="deviceStatusConfig2" />
+                <div class="status-chart" :id="`status-chart-2`"></div>
                 <div class="status-text">
-                  <p>在线: 18</p>
-                  <p>离线: 9</p>
+                  <p>总数量: {{ deviceStatus.total2 }}</p>
+                  <p>在线: {{ deviceStatus.online2 }}</p>
                 </div>
               </div>
             </div>
-          </dv-border-box-12>
+          </div>
 
           <!-- 带宽使用 -->
-          <dv-border-box-12 class="panel bandwidth-panel">
+          <div class="panel bandwidth-panel">
             <div class="panel-header">
               <span>带宽使用(Mbps)</span>
-              <div class="watermark">TSINGSEE</div>
             </div>
-            <div class="bandwidth-content">
-              <!-- <dv-charts :option="bandwidthOption" /> -->
-              <div id="bandwidthChart" style="width: 90%; height: 90%;"></div>
-            </div>
-          </dv-border-box-12>
+            <div id="bandwidthChart" class="chart-container"></div>
+          </div>
         </div>
       </div>
     </div>
-    
+
     <!-- 大图查看模态框 -->
     <div class="modal-overlay" v-if="showModal" @click="closeModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <div class="modal-title">
-            <span v-if="modalType === 'parking'" class="category-badge parking">泊车库检测</span>
-            <span v-else-if="modalType === 'helmet'" class="category-badge helmet">安全帽检测</span>
-            <span v-else class="category-badge duty">在岗检测</span>
-            {{ modalTitle }}
+            <span :class="['category-badge', modalType]">{{ modalTitle }}</span>
           </div>
           <span class="close-modal" @click="closeModal">&times;</span>
         </div>
@@ -242,11 +172,11 @@
         <div class="modal-footer">
           <div class="info-row">
             <span class="info-label">抓拍时间:</span>
-            <span class="info-value">2023-04-14 17:23:12</span>
+            <span class="info-value">{{ currentAlert.time }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">布点名称:</span>
-            <span class="info-value">115号探头</span>
+            <span class="info-value">{{ currentAlert.location }}</span>
           </div>
         </div>
       </div>
@@ -254,451 +184,546 @@
   </div>
 </template>
 
-<script>
-import * as echarts from "echarts";
-export default {
-  name: 'ParkManagement',
-  components: {
-    // 暂时注释掉data-view组件，使项目能够正常运行
-    // 这些组件仅在可视化中心功能中使用，不影响系统管理功能
-    /* 
-    dvBorderBox8,
-    dvBorderBox12,
-    dvBorderBox13,
-    dvDecoration5,
-    dvDecoration8,
-    dvDecoration6,
-    dvDecoration10,
-    dvActiveRingChart,
-    dvCharts
-    */
-  },
-  data() {
-    return {
-      isFullScreen: false,
-      treeData: [{
-        id: '1',
-        label: '市直单位',
-        children: [{
-          id: '2',
-          label: '清江园区',
-          children: [{
-            id: '3',
-            label: '清江园区-南',
-            children: [{
-              id: '4',
-              label: '监控点1号探头'
-            }, {
-              id: '5',
-              label: '监控点2号探头'
-            }]
-          }, {
-            id: '6',
-            label: '清江园区-西',
-            children: [{
-              id: '7',
-              label: '监控点19号探头'
-            }, {
-              id: '8',
-              label: '监控点21号探头'
-            }]
-          }]
-        }]
-      }],
-      defaultProps: {
-        children: 'children',
-        label: 'label'
-      },
-      cpuOption: {
-        grid: {
-          left: '5%',
-          right: '5%',
-          top: '10%',
-          bottom: '20%',
-          containLabel: true
-        },
-        xAxis: {
-          type: 'category',
-          boundaryGap: false,
-          data: ['17:23:05', '17:23:10', '17:23:15', '17:23:20'],
-          axisLine: {
-            style: {
-              stroke: '#1B96FF'
-            }
-          },
-          axisLabel: {
-            style: {
-              fill: '#fff'
-            },
-            textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                //  fontSize : 10      //更改坐标轴文字大小
-              }
-          }
-        },
-        yAxis: {
-          type: 'value',
-          splitLine: {
-            show: true,
-            style: {
-              stroke: 'rgba(27,150,255,0.1)'
-            }
-          },
-          axisLine: {
-            style: {
-              stroke: '#1B96FF'
-            }
-          },
-          axisLabel: {
-            style: {
-              fill: '#fff'
-            },
-            textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
-              }
-          }
-        },
-        series: [{
-          type: 'line',
-          data: [65, 59, 80, 81],
-          smooth: true,
-          lineStyle: {
-            stroke: '#1B96FF',
-            width: 2
-          },
-          areaStyle: {
-            fill: 'rgba(27,150,255,0.3)'
-          }
-        }]
-      },
-      storageOption: {
-        grid: {
-          left: '5%',
-          right: '5%',
-          top: '10%',
-          bottom: '20%',
-          containLabel: true
-        },
-        xAxis: {
-          type: 'category',
-          data: ['内存1', '内存2', '内存3', '内存4', '内存5', '内存6', '内存7'],
-          axisLine: {
-            style: {
-              stroke: '#1B96FF'
-            }
-          },
-          axisLabel: {
-            style: {
-              fill: '#fff'
-            },
-            textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
-              }
-          }
-        },
-        yAxis: {
-          type: 'value',
-          splitLine: {
-            show: true,
-            style: {
-              stroke: 'rgba(27,150,255,0.1)'
-            }
-          },
-          axisLine: {
-            style: {
-              stroke: '#1B96FF'
-            }
-          },
-          axisLabel: {
-            style: {
-              fill: '#fff'
-            },
-            textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
-              }
-          }
-        },
-        series: [{
-          type: 'bar',
-          data: [60, 40, 20, 70, 30, 50, 10],
-          barWidth: 20,
-          itemStyle: {
-            color: {
-              type: 'linear',
-              x: 0, y: 0, x2: 0, y2: 1,
-              colorStops: [
-                {offset: 0, color: 'rgba(27,150,255,0.8)'},
-                {offset: 1, color: 'rgba(27,150,255,0.3)'}
-              ]
-            }
-          }
-        }]
-      },
-      bandwidthOption: {
-        grid: {
-          left: '5%',
-          right: '5%',
-          top: '5%',
-          bottom: '20%',
-          containLabel: true
-        },
-        legend: {
-          data: ['上行带宽', '下行带宽'],
-          textStyle: {
-            fill: '#fff'
-          },
-          right: 0,
-          top: 0
-        },
-        xAxis: {
-          type: 'category',
-          boundaryGap: false,
-          data: ['17:23:05', '17:23:10', '17:23:15', '17:23:20', '17:23:25', '17:23:30'],
-          axisLine: {
-            style: {
-              stroke: '#1B96FF'
-            }
-          },
-          axisLabel: {
-            style: {
-              fill: '#fff'
-            },
-            textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
-              }
-          }
-        },
-        yAxis: {
-          type: 'value',
-          splitLine: {
-            show: true,
-            style: {
-              stroke: 'rgba(27,150,255,0.1)'
-            }
-          },
-          axisLine: {
-            style: {
-              stroke: '#1B96FF'
-            }
-          },
-          axisLabel: {
-            style: {
-              fill: '#fff'
-            },
-            textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
-              }
-          }
-        },
-        series: [{
-          name: '上行带宽',
-          type: 'line',
-          data: [2.39687, 2.39687, 2.39687, 2.39687, 2.39687, 2.39687],
-          smooth: true,
-          lineStyle: {
-            stroke: '#1B96FF'
-          }
-        }, {
-          name: '下行带宽',
-          type: 'line',
-          data: [2.39687, 2.39687, 2.39687, 2.39687, 2.39687, 2.39687],
-          smooth: true,
-          lineStyle: {
-            stroke: '#FFD700'
-          }
-        }]
-      },
-      deviceStatusConfig1: {
-        data: [
-          {name: '在线', value: 27},
-          {name: '离线', value: 3}
-        ],
-        color: ['#1B96FF', 'rgba(27,150,255,0.2)'],
-        radius: '80%',
-        activeRadius: '85%'
-      },
-      deviceStatusConfig2: {
-        data: [
-          {name: '在线', value: 18},
-          {name: '离线', value: 9}
-        ],
-        color: ['#1B96FF', 'rgba(27,150,255,0.2)'],
-        radius: '80%',
-        activeRadius: '85%'
-      },
-      showModal: false,
-      largeImage: '',
-      modalTitle: '',
-      modalType: '',
+<script setup lang="ts">
+import { ref, reactive, onMounted, onBeforeUnmount, onUnmounted } from 'vue';
+import * as echarts from 'echarts';
+import type { ECharts } from 'echarts';
+import { deviceStatisticsAPI, systemMonitorAPI, alertStatisticsAPI } from '@/components/service/VisionAIService.js';
 
-      // 图表实例
-      charts: {
-        cpuChart: null
-      }
+// ============================================================================
+// 类型定义
+// ============================================================================
+
+interface TreeNode {
+  id: string;
+  label: string;
+  children?: TreeNode[];
+  status?: string;
+}
+
+interface AlertSnapshot {
+  image: string;
+  category: string;
+  time: string;
+  location: string;
+  event?: string;
+  level?: string;
+}
+
+interface DeviceStatus {
+  total: number;
+  online: number;
+  total2: number;
+  online2: number;
+}
+
+// ============================================================================
+// 响应式状态
+// ============================================================================
+
+const isFullScreen = ref<boolean>(false);
+
+// 设备树数据
+const treeData = ref<TreeNode[]>([]);
+
+const defaultProps = {
+  children: 'children' as keyof TreeNode,
+  label: 'label'
+};
+
+// 图表引用
+const cpuChartRef = ref<HTMLElement | null>(null);
+const storageChartRef = ref<HTMLElement | null>(null);
+const bandwidthChartRef = ref<HTMLElement | null>(null);
+let cpuChart: ECharts | null = null;
+let storageChart: ECharts | null = null;
+let bandwidthChart: ECharts | null = null;
+
+// 预警抓拍数据
+const alertSnapshots = ref<AlertSnapshot[]>([]);
+
+// 模态框状态
+const showModal = ref<boolean>(false);
+const largeImage = ref<string>('');
+const modalTitle = ref<string>('');
+const modalType = ref<string>('');
+const currentAlert = ref<AlertSnapshot>({
+  image: '',
+  category: '',
+  time: '',
+  location: ''
+});
+
+// 设备状态
+const deviceStatus = ref<DeviceStatus>({
+  total: 30,
+  online: 27,
+  total2: 27,
+  online2: 18
+});
+
+// ============================================================================
+// 数据加载方法
+// ============================================================================
+
+/**
+ * 加载所有数据
+ */
+async function loadAllData(): Promise<void> {
+  await Promise.all([
+    loadDeviceTree(),
+    loadResourceHistory(),
+    loadStorageUsage(),
+    loadBandwidthUsage(),
+    loadAlertSnapshots(),
+    loadDeviceStatus()
+  ]);
+}
+
+/**
+ * 加载设备树
+ */
+async function loadDeviceTree(): Promise<void> {
+  try {
+    const response = await deviceStatisticsAPI.getDeviceTree();
+    if (response.data?.code === 0 && response.data?.data) {
+      treeData.value = response.data.data;
     }
-  },
-  methods: {
-    // 初始化所有图表
-    initCharts() {
-      this.$nextTick(() => {
-        this.initCpuChart();
-        this.initStorageChart();
-        this.initBandwidthChart();
-      });
-    },
-
-    // 初始化内存CPU图表
-    initCpuChart() {
-      const cpuChart = document.getElementById("cpuChart");
-      if (!cpuChart) return;
-
-      this.charts.cpuChart = echarts.init(cpuChart);
-      this.charts.cpuChart.setOption(this.cpuOption);
-    },
-
-    // 初始化存储使用图表
-    initStorageChart() {
-      const storageChart = document.getElementById("storageChart");
-      if (!storageChart) return;
-
-      this.charts.storageChart = echarts.init(storageChart);
-      this.charts.storageChart.setOption(this.storageOption);
-    },
-
-    // 初始化带宽使用图表
-    initBandwidthChart() {
-      const bandwidthChart = document.getElementById("bandwidthChart");
-      if (!bandwidthChart) return;
-
-      this.charts.bandwidthChart = echarts.init(bandwidthChart);
-      this.charts.bandwidthChart.setOption(this.bandwidthOption);
-    },
-
-    // 销毁所有图表实例
-    disposeCharts() {
-      Object.keys(this.charts).forEach((key) => {
-        if (this.charts[key]) {
-          this.charts[key].dispose();
-          this.charts[key] = null;
-        }
-      });
-    },
-
-    getRandomImage(index) {
-      // 根据索引返回不同类型的工业场景图片
-      const industrialImages = [
-        // 管道设施图片
-        'https://images.unsplash.com/photo-1574172367057-93d703ae5bad?w=800&h=450&fit=crop',
-        // 工业储罐图片
-        'https://images.unsplash.com/photo-1518640467707-6811f4a6ab73?w=800&h=450&fit=crop',
-        // 工厂设备图片
-        'https://images.unsplash.com/photo-1631651738795-b89747292eb0?w=800&h=450&fit=crop',
-        // 货运卡车图片
-        'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&h=450&fit=crop',
-        // 安全帽工人
-        'https://images.unsplash.com/photo-1531973486364-5fa64260d75b?w=400&h=300&fit=crop',
-        // 工厂作业
-        'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=400&h=300&fit=crop',
-        // 安全检查
-        'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=300&fit=crop',
-        // 工厂监督
-        'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=300&fit=crop'
-      ];
-      
-      // 选择合适的图片索引
-      let imgIndex = (index - 1) % industrialImages.length;
-      if (index > 10) imgIndex = index % 4 + 4; // 预警图片使用后面的索引
-      
-      return industrialImages[imgIndex];
-    },
-    
-    // 显示大图
-    showLargeImage(index) {
-      this.largeImage = this.getRandomImage(index);
-      
-      // 设置标题和类型
-      if (index === 11) {
-        this.modalTitle = "预警详情";
-        this.modalType = "parking";
-      } else if (index === 12 || index === 13) {
-        this.modalTitle = "预警详情";
-        this.modalType = "helmet";
-      } else {
-        this.modalTitle = "预警详情";
-        this.modalType = "duty";
-      }
-      
-      this.showModal = true;
-      
-      // 防止页面滚动
-      document.body.style.overflow = 'hidden';
-    },
-    
-    // 关闭模态框
-    closeModal() {
-      this.showModal = false;
-      this.largeImage = '';
-      
-      // 恢复页面滚动
-      document.body.style.overflow = 'auto';
-    },
-    
-    // 添加窗口大小变化监听
-    handleResize() {
-      // 在窗口大小变化时可以进行额外调整
-      // 此处仅作为示例，实际实现可能需要调整其他组件
-      console.log('Window resized');
-    },
-    
-    // 添加全屏切换方法
-    toggleFullScreen() {
-      this.isFullScreen = !this.isFullScreen;
-      
-      const navBar = document.querySelector('.el-header');
-      const parkManagement = document.querySelector('.park-management');
-      
-      if (this.isFullScreen) {
-        // 请求全屏
-        if (document.documentElement.requestFullscreen) {
-          document.documentElement.requestFullscreen();
-        }
-        
-        // 隐藏导航栏
-        if (navBar) navBar.style.display = 'none';
-        
-        // 添加全屏模式样式类
-        if (parkManagement) parkManagement.classList.add('fullscreen-mode');
-      } else {
-        // 退出全屏
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-        
-        // 显示导航栏
-        if (navBar) navBar.style.display = '';
-        
-        // 移除全屏模式样式类
-        if (parkManagement) parkManagement.classList.remove('fullscreen-mode');
-      }
-    }
-  },
-  mounted() {
-    this.initCharts();
-    // 添加窗口大小变化监听
-    window.addEventListener('resize', this.handleResize);
-  },
-  beforeDestroy() {
-    // 移除监听器避免内存泄漏
-    window.removeEventListener('resize', this.handleResize);
-
-    this.disposeCharts();
+  } catch (error) {
+    console.error('加载设备树失败:', error);
   }
 }
+
+/**
+ * 加载资源历史数据（CPU/内存）
+ */
+async function loadResourceHistory(): Promise<void> {
+  try {
+    const response = await systemMonitorAPI.getResourceHistory('cpu', '1h');
+    if (response.data?.code === 0 && response.data?.data) {
+      const data = response.data.data;
+      initCpuChart(data.time_labels || [], data.data_points || []);
+    }
+  } catch (error) {
+    console.error('加载CPU数据失败:', error);
+  }
+}
+
+/**
+ * 加载存储使用情况
+ */
+async function loadStorageUsage(): Promise<void> {
+  try {
+    const response = await systemMonitorAPI.getStorageUsage();
+    if (response.data?.code === 0 && response.data?.data) {
+      const data = response.data.data;
+      initStorageChart(data.storage_list || []);
+    }
+  } catch (error) {
+    console.error('加载存储数据失败:', error);
+  }
+}
+
+/**
+ * 加载带宽使用情况
+ */
+async function loadBandwidthUsage(): Promise<void> {
+  try {
+    const response = await systemMonitorAPI.getBandwidthUsage('1h');
+    if (response.data?.code === 0 && response.data?.data) {
+      const data = response.data.data;
+      initBandwidthChart(data.time_labels || [], data.upstream_bandwidth || [], data.downstream_bandwidth || []);
+    }
+  } catch (error) {
+    console.error('加载带宽数据失败:', error);
+  }
+}
+
+/**
+ * 加载预警抓拍
+ */
+async function loadAlertSnapshots(): Promise<void> {
+  try {
+    const response = await alertStatisticsAPI.getLatestImages(4);
+    if (response.data?.code === 0 && response.data?.data) {
+      alertSnapshots.value = response.data.data.map((item: any) => ({
+        image: item.image,
+        category: item.event || '未知类型',
+        time: item.alert_time || item.time,
+        location: item.camera_name || item.location || '未知位置'
+      }));
+    }
+  } catch (error) {
+    console.error('加载预警抓拍失败:', error);
+    // 使用模拟数据作为后备
+    alertSnapshots.value = [
+      {
+        image: 'https://images.unsplash.com/photo-1531974863696-5fa64260d75b?w=400&h=300&fit=crop',
+        category: '在岗检测',
+        time: '2023-04-14 17:23:12',
+        location: '115号探头'
+      },
+      {
+        image: 'https://images.unsplash.com/photo-1531974863696-5fa64260d75b?w=400&h=300&fit=crop',
+        category: '安全帽检测',
+        time: '2023-04-14 17:23:12',
+        location: '115号探头'
+      },
+      {
+        image: 'https://images.unsplash.com/photo-1531974863696-5fa64260d75b?w=400&h=300&fit=crop',
+        category: '安全帽检测',
+        time: '2023-04-14 17:23:12',
+        location: '115号探头'
+      },
+      {
+        image: 'https://images.unsplash.com/photo-1531974863696-5fa64260d75b?w=400&h=300&fit=crop',
+        category: '在岗检测',
+        time: '2023-04-14 17:23:12',
+        location: '115号探头'
+      }
+    ];
+  }
+}
+
+/**
+ * 加载设备状态
+ */
+async function loadDeviceStatus(): Promise<void> {
+  try {
+    const response = await deviceStatisticsAPI.getStatusStatistics();
+    if (response.data?.code === 0 && response.data?.data) {
+      const data = response.data.data;
+      deviceStatus.value = {
+        total: data.total_devices || 0,
+        online: data.online_devices || 0,
+        total2: data.device_groups?.[0]?.total || 0,
+        online2: data.device_groups?.[0]?.online || 0
+      };
+      // 更新设备状态图表
+      updateDeviceStatusCharts();
+    }
+  } catch (error) {
+    console.error('加载设备状态失败:', error);
+  }
+}
+
+// ============================================================================
+// 图表初始化方法
+// ============================================================================
+
+/**
+ * 初始化CPU图表
+ */
+function initCpuChart(timeLabels: string[], dataPoints: number[]): void {
+  if (!document.getElementById('cpuChart')) return;
+
+  cpuChart = echarts.init(document.getElementById('cpuChart'));
+
+  const option = {
+    grid: {
+      left: '5%',
+      right: '5%',
+      top: '10%',
+      bottom: '20%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: timeLabels,
+      axisLine: {
+        lineStyle: { stroke: '#1B96FF' }
+      },
+      axisLabel: {
+        textStyle: { color: '#fff' }
+      }
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: {
+        show: true,
+        lineStyle: { stroke: 'rgba(27,150,255,0.1)' }
+      },
+      axisLine: {
+        lineStyle: { stroke: '#1B96FF' }
+      },
+      axisLabel: {
+        textStyle: { color: '#fff' }
+      }
+    },
+    series: [{
+      type: 'line',
+      data: dataPoints,
+      smooth: true,
+      lineStyle: { stroke: '#1B96FF', width: 2 },
+      areaStyle: { fill: 'rgba(27,150,255,0.3)' }
+    }]
+  };
+
+  cpuChart.setOption(option);
+}
+
+/**
+ * 初始化存储图表
+ */
+function initStorageChart(storageList: Array<{ name: string; usage: number; total: number }>): void {
+  if (!document.getElementById('storageChart')) return;
+
+  storageChart = echarts.init(document.getElementById('storageChart'));
+
+  const option = {
+    grid: {
+      left: '5%',
+      right: '5%',
+      top: '10%',
+      bottom: '20%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: storageList.map(item => item.name),
+      axisLine: {
+        lineStyle: { stroke: '#1B96FF' }
+      },
+      axisLabel: {
+        textStyle: { color: '#fff' }
+      }
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: {
+        show: true,
+        lineStyle: { stroke: 'rgba(27,150,255,0.1)' }
+      },
+      axisLine: {
+        lineStyle: { stroke: '#1B96FF' }
+      },
+      axisLabel: {
+        textStyle: { color: '#fff' }
+      }
+    },
+    series: [{
+      type: 'bar',
+      data: storageList.map(item => item.usage),
+      barWidth: 20,
+      itemStyle: {
+        color: {
+          type: 'linear',
+          x: 0, y: 0, x2: 0, y2: 1,
+          colorStops: [
+            { offset: 0, color: 'rgba(27,150,255,0.8)' },
+            { offset: 1, color: 'rgba(27,150,255,0.3)' }
+          ]
+        }
+      }
+    }]
+  };
+
+  storageChart.setOption(option);
+}
+
+/**
+ * 初始化带宽图表
+ */
+function initBandwidthChart(timeLabels: string[], upstreamData: number[], downstreamData: number[]): void {
+  if (!document.getElementById('bandwidthChart')) return;
+
+  bandwidthChart = echarts.init(document.getElementById('bandwidthChart'));
+
+  const option = {
+    grid: {
+      left: '5%',
+      right: '5%',
+      top: '5%',
+      bottom: '20%',
+      containLabel: true
+    },
+    legend: {
+      data: ['上行带宽', '下行带宽'],
+      textStyle: { fill: '#fff' },
+      right: 0,
+      top: 0
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: timeLabels,
+      axisLine: {
+        lineStyle: { stroke: '#1B96FF' }
+      },
+      axisLabel: {
+        textStyle: { color: '#fff' }
+      }
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: {
+        show: true,
+        lineStyle: { stroke: 'rgba(27,150,255,0.1)' }
+      },
+      axisLine: {
+        lineStyle: { stroke: '#1B96FF' }
+      },
+      axisLabel: {
+        textStyle: { color: '#fff' }
+      }
+    },
+    series: [
+      {
+        name: '上行带宽',
+        type: 'line',
+        data: upstreamData,
+        smooth: true,
+        lineStyle: { stroke: '#1B96FF' }
+      },
+      {
+        name: '下行带宽',
+        type: 'line',
+        data: downstreamData,
+        smooth: true,
+        lineStyle: { stroke: '#FFD700' }
+      }
+    ]
+  };
+
+  bandwidthChart.setOption(option);
+}
+
+/**
+ * 更新设备状态图表
+ */
+function updateDeviceStatusCharts(): void {
+  const chart1Element = document.getElementById(`status-chart-0`);
+  const chart2Element = document.getElementById(`status-chart-2`);
+
+  if (chart1Element) {
+    const chart1 = echarts.init(chart1Element);
+    chart1.setOption({
+      series: [{
+        type: 'pie',
+        radius: ['60%', '70%'],
+        data: [
+          { name: '在线', value: deviceStatus.value.online },
+          { name: '离线', value: deviceStatus.value.total - deviceStatus.value.online }
+        ]
+      }]
+    });
+  }
+
+  if (chart2Element) {
+    const chart2 = echarts.init(chart2Element);
+    chart2.setOption({
+      series: [{
+        type: 'pie',
+        radius: ['60%', '70%'],
+        data: [
+          { name: '在线', value: deviceStatus.value.online2 },
+          { name: '离线', value: deviceStatus.value.total2 - deviceStatus.value.online2 }
+        ]
+      }]
+    });
+  }
+}
+
+// ============================================================================
+// 辅助方法
+// ============================================================================
+
+/**
+ * 获取随机图片
+ */
+function getRandomImage(index: number): string {
+  const images = [
+    'https://images.unsplash.com/photo-157417236756-c4617579486?w=800&h=450&fit=crop',
+    'https://images.unsplash.com/photo-1581518640467707-6811f4a6ab73?w=800&h=450&fit=crop',
+    'https://images.unsplash.com/photo-1631651738795-b89747292eb0?w=800&h=450&fit=crop',
+    'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&h=450&fit=crop'
+  ];
+  return images[index % images.length];
+}
+
+/**
+ * 显示大图
+ */
+function showLargeImage(alert: AlertSnapshot): void {
+  largeImage.value = alert.image;
+  currentAlert.value = alert;
+
+  // 设置标题和类型
+  if (alert.category.includes('在岗')) {
+    modalTitle.value = '在岗检测';
+    modalType.value = 'duty';
+  } else if (alert.category.includes('安全帽')) {
+    modalTitle.value = '安全帽检测';
+    modalType.value = 'helmet';
+  } else {
+    modalTitle.value = '预警详情';
+    modalType.value = 'parking';
+  }
+
+  showModal.value = true;
+  document.body.style.overflow = 'hidden';
+}
+
+/**
+ * 关闭模态框
+ */
+function closeModal(): void {
+  showModal.value = false;
+  largeImage.value = '';
+  document.body.style.overflow = 'auto';
+}
+
+/**
+ * 切换全屏
+ */
+async function toggleFullScreen(): Promise<void> {
+  isFullScreen.value = !isFullScreen.value;
+
+  const navBar = document.querySelector('.el-header');
+  const parkManagement = document.querySelector('.park-management');
+
+  if (isFullScreen.value) {
+    if (document.documentElement.requestFullscreen) {
+      await document.documentElement.requestFullscreen();
+    }
+    if (navBar) (navBar as HTMLElement).style.display = 'none';
+    if (parkManagement) parkManagement.classList.add('fullscreen-mode');
+  } else {
+    if (document.exitFullscreen) {
+      await document.exitFullscreen();
+    }
+    if (navBar) (navBar as HTMLElement).style.display = '';
+    if (parkManagement) parkManagement.classList.remove('fullscreen-mode');
+  }
+}
+
+// ============================================================================
+// 生命周期
+// ============================================================================
+
+onMounted(() => {
+  // 加载数据
+  loadAllData();
+
+  // 窗口大小变化监听
+  window.addEventListener('resize', () => {
+    if (cpuChart) cpuChart.resize();
+    if (storageChart) storageChart.resize();
+    if (bandwidthChart) bandwidthChart.resize();
+  });
+});
+
+onBeforeUnmount(() => {
+  // 销毁图表
+  if (cpuChart) cpuChart.dispose();
+  if (storageChart) storageChart.dispose();
+  if (bandwidthChart) bandwidthChart.dispose();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', () => {});
+});
 </script>
 
 <style scoped>
@@ -763,19 +788,9 @@ export default {
   box-shadow: 0 0 10px rgba(51,255,255,0.8);
 }
 
-.decoration-line.line1 {
-  height: 40px;
-}
-
-.decoration-line.line2 {
-  height: 25px;
-  margin-top: 15px;
-}
-
-.decoration-line.line3 {
-  height: 15px;
-  margin-top: 25px;
-}
+.decoration-line.line1 { height: 40px; }
+.decoration-line.line2 { height: 25px; margin-top: 15px; }
+.decoration-line.line3 { height: 15px; margin-top: 25px; }
 
 .right-decoration .decoration-line-group {
   transform: scaleX(-1);
@@ -785,13 +800,11 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
 }
 
 .title-wrapper {
   display: flex;
   align-items: center;
-  gap: 10px;
 }
 
 .title-text {
@@ -800,8 +813,6 @@ export default {
   color: #ffffff;
   text-shadow: 0 0 10px rgba(51,255,255,0.5);
   letter-spacing: 4px;
-  position: relative;
-  padding: 0 20px;
 }
 
 .content-wrapper {
@@ -838,26 +849,6 @@ export default {
   flex: 2;
 }
 
-.device-panel, .cpu-panel, .storage-panel {
-  height: auto;
-}
-
-.center-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.right-panel {
-  width: 310px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background-color: transparent;
-  position: relative;
-}
-
 .panel {
   background: #001135;
   border: 1px solid #0a2550;
@@ -869,7 +860,6 @@ export default {
   height: 36px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 0 15px;
   background: linear-gradient(90deg, #001135 0%, rgba(0,17,53,0.8) 100%);
   border-bottom: 1px solid #0a2550;
@@ -891,6 +881,37 @@ export default {
   padding: 10px;
   height: calc(100% - 36px);
   overflow: auto;
+}
+
+.custom-tree {
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+}
+
+.custom-tree :deep(.el-tree-node__content) {
+  background: transparent;
+  color: #7a8baa;
+  height: 32px;
+  border-bottom: 1px solid rgba(10,37,80,0.5);
+}
+
+.custom-tree :deep(.el-tree-node__content:hover) {
+  background: rgba(27,150,255,0.1);
+  color: #fff;
+}
+
+.chart-container {
+  height: calc(100% - 36px);
+  width: 100%;
+  position: relative;
+}
+
+.center-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .video-container {
@@ -936,30 +957,19 @@ export default {
   object-fit: cover;
 }
 
-.video-info {
-  height: 24px;
-  line-height: 24px;
-  background: rgba(0,17,53,0.9);
-  padding: 0 10px;
-  font-size: 11px;
-  color: #fff;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.right-panel {
+  width: 310px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .alert-panel {
   height: 100%;
-  position: relative;
-  overflow: visible;
 }
 
 .alert-list {
-  height: calc(100% - 60px);
+  height: calc(100% - 36px);
   padding: 10px;
   padding-bottom: 5px;
   overflow-y: auto;
@@ -1075,68 +1085,6 @@ export default {
   color: #1B96FF;
 }
 
-.watermark {
-  font-size: 12px;
-  color: #7a8baa;
-  opacity: 0.5;
-}
-
-/* 树形控件样式覆盖 */
-.custom-tree {
-  background: transparent;
-  color: #fff;
-  font-size: 12px;
-}
-
-.custom-tree :deep(.el-tree-node__content) {
-  background: transparent;
-  color: #7a8baa;
-  height: 32px;
-  border-bottom: 1px solid rgba(10,37,80,0.5);
-}
-
-.custom-tree :deep(.el-tree-node__content:hover) {
-  background: rgba(27,150,255,0.1);
-  color: #fff;
-}
-
-.custom-tree :deep(.el-tree-node__expand-icon) {
-  color: #7a8baa;
-}
-
-.custom-tree :deep(.el-tree-node__expand-icon.expanded) {
-  transform: rotate(90deg);
-}
-
-.custom-tree :deep(.el-tree-node__expand-icon.is-leaf) {
-  color: transparent;
-}
-
-.chart-wrapper {
-  height: calc(100% - 36px);
-  padding: 10px;
-}
-
-/* 自定义滚动条 */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: #001135;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #0a2550;
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #1B96FF;
-}
-
-/* 底部容器样式 */
 .bottom-container {
   position: relative;
   height: 180px;
@@ -1145,14 +1093,12 @@ export default {
   z-index: 2;
 }
 
-/* 底部区域样式 */
 .bottom-area {
   display: flex;
   gap: 10px;
   height: 100%;
-  /* 中间区域的布局定位 */
-  margin-left: 310px; /* 左侧面板宽度 + gap */
-  width: calc(100% - 630px); /* 屏幕宽度 - (左面板宽度 + 右面板宽度 + 边距) */
+  margin-left: 310px;
+  width: calc(100% - 630px);
 }
 
 .status-panel, .bandwidth-panel {
@@ -1182,24 +1128,7 @@ export default {
   margin: 5px 0;
 }
 
-/* 修改媒体查询以适应新布局 */
-@media screen and (max-height: 900px) {
-  .main-content {
-    height: calc(100vh - 270px);
-  }
-}
-
-@media screen and (max-height: 750px) {
-  .main-content {
-    height: calc(100vh - 250px);
-  }
-}
-
-/* 全屏模式下的调整 */
-.park-management.fullscreen-mode .main-content {
-  height: calc(100vh - 130px);
-}
-
+/* 模态框样式 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1253,10 +1182,6 @@ export default {
   align-items: center;
   font-size: 16px;
   font-weight: bold;
-}
-
-.modal-title .category-badge {
-  margin-right: 10px;
 }
 
 .close-modal {
@@ -1359,25 +1284,26 @@ export default {
 }
 
 /* 全屏模式下的样式调整 */
-.park-management.fullscreen-mode {
-  --header-height: 80px;
-  --footer-height: 150px;
-  --main-height: calc(100vh - var(--header-height) - var(--footer-height) - 20px);
+.park-management.fullscreen-mode .main-content {
+  height: calc(100vh - 130px);
 }
 
-.park-management.fullscreen-mode .device-panel {
-  min-height: calc(var(--main-height) * var(--device-panel-ratio) / var(--total-left-ratio));
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
 }
 
-.park-management.fullscreen-mode .cpu-panel {
-  min-height: calc(var(--main-height) * var(--cpu-panel-ratio) / var(--total-left-ratio));
+::-webkit-scrollbar-track {
+  background: #001135;
 }
 
-.park-management.fullscreen-mode .storage-panel {
-  min-height: calc(var(--main-height) * var(--storage-panel-ratio) / var(--total-left-ratio));
+::-webkit-scrollbar-thumb {
+  background: #0a2550;
+  border-radius: 2px;
 }
 
-.park-management.fullscreen-mode .alert-panel {
-  min-height: var(--main-height);
+::-webkit-scrollbar-thumb:hover {
+  background: #1B96FF;
 }
-</style> 
+</style>

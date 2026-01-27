@@ -2,8 +2,8 @@
   <div class="side-menu-container" :class="{ collapsed: isCollapsed }">
     <!-- Logo 区域 -->
     <div class="logo-section">
-      <img src="../../static/logo.png" alt="Logo" class="logo-img" v-if="!isCollapsed"/>
-      <img src="../../static/logo.png" alt="Logo" class="logo-img-small" v-else/>
+      <img src="@static/logo.png" alt="Logo" class="logo-img" v-if="!isCollapsed"/>
+      <img src="@static/logo.png" alt="Logo" class="logo-img-small" v-else/>
       <div class="logo-text-container" v-if="!isCollapsed">
         <div class="brand-row">
           <span class="brand-name-text">太行·慧眼</span>
@@ -25,10 +25,6 @@
       :collapse="isCollapsed"
       :collapse-transition="false"
       :unique-opened="true"
-      class="sidebar-menu"
-      background-color="#FFFFFF"
-      text-color="#1F2937"
-      active-text-color="#4185F7"
       router
     >
       <!-- 监控预警 -->
@@ -156,7 +152,9 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import {
   VideoCamera,
   Cpu,
@@ -175,43 +173,33 @@ import {
   Expand
 } from '@element-plus/icons-vue'
 
-export default {
-  name: "SideMenu",
-  components: {
-    VideoCamera,
-    Cpu,
-    DataAnalysis,
-    MagicStick,
-    Setting,
-    OfficeBuilding,
-    User,
-    UserFilled,
-    Lock,
-    School,
-    Postcard,
-    Notebook,
-    View,
-    Fold,
-    Expand
-  },
-  data() {
-    return {
-      isCollapsed: false,
-      activeMenu: this.$route.path
-    };
-  },
-  watch: {
-    $route(to) {
-      this.activeMenu = to.path;
-    }
-  },
-  methods: {
-    toggleCollapse() {
-      this.isCollapsed = !this.isCollapsed;
-      this.$emit('collapse-change', this.isCollapsed);
-    }
+// 定义 emit
+const emit = defineEmits<{
+  collapseChange: [collapsed: boolean]
+}>()
+
+// 路由
+const route = useRoute()
+
+// 菜单折叠状态
+const isCollapsed = ref(false)
+
+// 当前激活的菜单
+const activeMenu = ref(route.path)
+
+// 监听路由变化
+watch(
+  () => route.path,
+  (newPath) => {
+    activeMenu.value = newPath
   }
-};
+)
+
+// 切换折叠状态
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value
+  emit('collapseChange', isCollapsed.value)
+}
 </script>
 
 <style scoped>
@@ -426,24 +414,52 @@ export default {
 
 /* 子菜单弹出样式 */
 .sidebar-menu :deep(.el-menu--popup) {
+  /* 弹出菜单最小宽度 */
   min-width: 180px;
-  padding: var(--spacing-xs) 0;
+  padding: 4px 0;
+  /* 确保弹出菜单在侧边栏右侧 */
+  position: fixed;
+  left: var(--sidebar-width) !important;
+  margin-left: 0 !important;
+  border-radius: var(--border-radius-base);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+}
+
+/* 折叠状态下弹出菜单位置调整 */
+.side-menu-container.collapsed .sidebar-menu :deep(.el-menu--popup) {
+  left: var(--sidebar-collapsed-width) !important;
 }
 
 .sidebar-menu :deep(.el-menu--popup .el-menu-item) {
   height: 40px;
   line-height: 40px;
-  font-size: var(--font-size-sm);
-}
-
-/* 箭头图标 */
-.sidebar-menu :deep(.el-submenu__icon-arrow) {
-  font-size: 12px;
+  padding: 0 16px !important;
+  font-size: var(--font-size-base);
   color: var(--text-secondary);
 }
 
-.sidebar-menu :deep(.el-submenu.is-opened > .el-submenu__title .el-submenu__icon-arrow) {
+.sidebar-menu :deep(.el-menu--popup .el-menu-item:hover) {
+  background-color: var(--bg-secondary) !important;
+  color: var(--primary-color) !important;
+}
+
+.sidebar-menu :deep(.el-menu--popup .el-menu-item.is-active) {
+  background-color: var(--design-primary-light) !important;
+  color: var(--primary-color) !important;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 箭头图标 */
+.sidebar-menu :deep(.el-sub-menu__icon-arrow) {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  transition: transform 0.3s;
+}
+
+/* 展开时箭头旋转 */
+.sidebar-menu :deep(.el-sub-menu.is-opened > .el-sub-menu__title .el-sub-menu__icon-arrow) {
+  transform: rotate(90deg);
   color: var(--primary-color);
 }
 </style>
-

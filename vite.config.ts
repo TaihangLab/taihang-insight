@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import UnoCSS from 'unocss/vite'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -9,7 +10,11 @@ const __dirname = dirname(__filename)
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    // UnoCSS - 原子化 CSS 引擎
+    UnoCSS(),
+  ],
   define: {
     // Global polyfills for webpack compatibility
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
@@ -23,7 +28,7 @@ export default defineConfig({
     }
   },
   server: {
-    port: 8080,
+    port: 4000,
     host: 'localhost',
     open: false,
     // 代理配置 - 如需要可以添加

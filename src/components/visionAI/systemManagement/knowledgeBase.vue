@@ -37,7 +37,7 @@
 
           <div class="sort-section">
             <span>{{ sortTypeText }}</span>
-            <el-button type="text" 
+            <el-button link 
                        :icon="sortOrder === 'desc' ? 'el-icon-caret-bottom' : 'el-icon-caret-top'" 
                        @click="toggleSort"></el-button>
           </div>

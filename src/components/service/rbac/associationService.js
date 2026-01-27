@@ -59,7 +59,8 @@ class AssociationService {
   // 移除角色权限
   static async removeRolePermission(roleId, permissionId) {
     try {
-      return await rbacAxios.delete('/api/v1/rbac/role-permissions', {
+      // 使用正确的后端端点：DELETE /role-permissions-by-id
+      return await rbacAxios.delete('/api/v1/rbac/role-permissions-by-id', {
         params: {
           role_id: roleId,
           permission_id: permissionId

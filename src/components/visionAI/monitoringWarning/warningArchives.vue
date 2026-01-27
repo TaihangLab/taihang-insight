@@ -1813,7 +1813,7 @@ export default {
             </div>
             <div class="archive-actions">
               <el-button 
-                type="text" 
+                link 
                 size="mini" 
                 @click.stop="handleDeleteArchive(archive.id, archive.name)"
                 class="delete-archive-btn"
@@ -1930,8 +1930,8 @@ export default {
             <el-table-column label="操作" width="120" align="center">
               <template #default="scope">
                 <div class="operation-buttons">
-                  <el-button type="text" size="mini" @click="showDetail(scope.row)" class="operation-btn detail-btn">详情</el-button>
-                  <el-button type="text" size="mini" @click="handleDelete(scope.row.id)" class="operation-btn delete-btn">删除</el-button>
+                  <el-button link size="mini" @click="showDetail(scope.row)" class="operation-btn detail-btn">详情</el-button>
+                  <el-button link size="mini" @click="handleDelete(scope.row.id)" class="operation-btn delete-btn">删除</el-button>
                 </div>
               </template>
             </el-table-column>
@@ -2117,7 +2117,7 @@ export default {
         <el-table-column label="操作" width="80" align="center">
           <template #default="scope">
             <el-button 
-              type="text" 
+              link 
               size="mini" 
               @click="previewAlert(scope.row)"
               title="查看详情">

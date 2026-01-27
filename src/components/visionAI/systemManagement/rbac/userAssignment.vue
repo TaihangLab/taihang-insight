@@ -3,7 +3,7 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
-        <el-button type="text" class="back-btn" @click="goBack">
+        <el-button link class="back-btn" @click="goBack">
           <i class="el-icon-arrow-left"></i>
           返回角色管理
         </el-button>
@@ -66,7 +66,7 @@
         <el-table-column label="操作" width="100" fixed="right" align="center">
           <template #default="scope">
             <div class="operation-buttons">
-              <el-button type="text" class="cancel-auth-btn" @click="cancelAuth(scope.row)">取消授权</el-button>
+              <el-button link class="cancel-auth-btn" @click="cancelAuth(scope.row)">取消授权</el-button>
             </div>
           </template>
         </el-table-column>

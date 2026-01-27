@@ -182,7 +182,7 @@
                     <div class="control-inner-btn control-inner"></div>
                   </div>
                   <div class="control-round">
-                    <div class="control-round-inner"><i class="fa fa-pause-circle"></i></div>
+                    <div class="control-round-inner"><i class="i-carbon-pause-filled"></i></div>
                   </div>
                   <div class="contro-speed" style="position: absolute; left: 4px; top: 7rem; width: 6.25rem;">
                     <el-slider v-model="controSpeed" :max="100"></el-slider>

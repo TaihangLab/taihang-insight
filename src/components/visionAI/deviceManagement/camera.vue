@@ -108,11 +108,11 @@
             <el-table-column label="操作" width="280" align="center">
               <template #default="{ row }">
                 <div class="operation-buttons">
-                  <el-button type="text" size="mini" icon="el-icon-setting" class="config-skill-btn"
+                  <el-button link size="mini" icon="el-icon-setting" class="config-skill-btn"
                     @click="handleConfigSkill(row)">配置技能</el-button>
-                  <el-button type="text" size="mini" icon="el-icon-magic-stick" class="config-llm-skill-btn"
+                  <el-button link size="mini" icon="el-icon-magic-stick" class="config-llm-skill-btn"
                     @click="handleConfigLlmSkillForCamera(row)">配置大模型技能</el-button>
-                  <el-button type="text" size="mini" icon="el-icon-view" class="view-detail-btn"
+                  <el-button link size="mini" icon="el-icon-view" class="view-detail-btn"
                     @click="handleViewDetails(row)">查看详情</el-button>
                 </div>
               </template>
@@ -275,7 +275,7 @@
                 <el-tag size="mini" effect="plain" class="skill-type-tag" v-if="currentSkillInfo.type">
                   {{ currentSkillInfo.type }}
                 </el-tag>
-                <el-button type="text" icon="el-icon-setting" @click.stop="showSkillParamsConfig" style="margin-left: 5px;" title="技能参数配置"></el-button>
+                <el-button link icon="el-icon-setting" @click.stop="showSkillParamsConfig" style="margin-left: 5px;" title="技能参数配置"></el-button>
                 <div class="skill-status">
                   <el-switch v-model="skillForm.status" active-color="#67C23A" inactive-color="#909399">
                   </el-switch>
@@ -363,7 +363,7 @@
               <el-time-picker v-model="timeRange.start" placeholder="开始时间" format="HH:mm" class="time-picker" />
               <span class="time-separator">-</span>
               <el-time-picker v-model="timeRange.end" placeholder="结束时间" format="HH:mm" class="time-picker" />
-              <el-button type="text" icon="el-icon-delete" @click="removeTimeRange(index)" style="margin-left: 15px;" />
+              <el-button link icon="el-icon-delete" @click="removeTimeRange(index)" style="margin-left: 15px;" />
             </div>
             <div class="add-time">
               <el-link type="primary" @click="addTimeRange" :disabled="skillForm.timeRanges.length >= 3"

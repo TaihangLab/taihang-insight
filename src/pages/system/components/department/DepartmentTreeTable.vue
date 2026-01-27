@@ -1,7 +1,7 @@
 <template>
   <div class="department-tree-table">
     <el-table
-      ref="treeTable"
+      ref="treeTableRef"
       :data="processedData"
       v-loading="loading"
       row-key="id"
@@ -27,9 +27,9 @@
       <el-table-column label="操作" width="180" fixed="right" align="center">
         <template #default="scope">
           <div class="operation-buttons">
-            <el-button type="text" class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button type="text" class="add-btn" @click="handleAddSub(scope.row)">添加</el-button>
-            <el-button type="text" class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button link class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button link class="add-btn" @click="handleAddSub(scope.row)">添加</el-button>
+            <el-button link class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
           </div>
         </template>
       </el-table-column>
@@ -37,67 +37,80 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed, nextTick } from 'vue'
+import type { ElTable } from 'element-plus'
 import { calculateTreeDepth } from '@/utils/treeUtils'
 
-export default {
-  name: 'DepartmentTreeTable',
-  props: {
-    data: {
-      type: Array,
-      default: () => []
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    defaultExpandAll: {
-      type: Boolean,
-      default: true
-    }
-  },
-  computed: {
-    processedData() {
-      // 为树形数据计算深度，确保每个节点都有depth字段
-      return calculateTreeDepth(this.data, 'children', 0);
-    }
-  },
-  methods: {
-    handleEdit(row) {
-      this.$emit('edit', row)
-    },
-    handleAddSub(row) {
-      this.$emit('add-sub', row)
-    },
-    handleDelete(row) {
-      this.$emit('delete', row)
-    },
-    /**
-     * 展开/折叠所有节点
-     */
-    async toggleExpandAll(expand) {
-      await this.$nextTick()
-      await this.setTableExpandState(this.processedData, expand)
-    },
-    /**
-     * 递归设置表格展开状态
-     */
-    async setTableExpandState(data, expand) {
-      for (const item of data) {
-        if (item.children && item.children.length > 0) {
-          // 先设置当前节点的展开状态
-          if (this.$refs.treeTable) {
-            this.$refs.treeTable.toggleRowExpansion(item, expand);
-          }
+interface Department {
+  id: string | number
+  name: string
+  sort_order: number
+  status: number
+  children?: Department[]
+  depth?: number
+  [key: string]: any
+}
 
-          // 递归处理子节点
-          await this.$nextTick();
-          await this.setTableExpandState(item.children, expand);
-        }
+const props = withDefaults(
+  defineProps<{
+    data: Department[]
+    loading: boolean
+    defaultExpandAll: boolean
+  }>(),
+  {
+    data: () => [],
+    loading: false,
+    defaultExpandAll: true
+  }
+)
+
+const emit = defineEmits<{
+  edit: [row: Department]
+  addSub: [row: Department]
+  delete: [row: Department]
+}>()
+
+const treeTableRef = ref<InstanceType<typeof ElTable>>()
+
+const processedData = computed(() => {
+  return calculateTreeDepth(props.data, 'children', 0)
+})
+
+const handleEdit = (row: Department) => {
+  emit('edit', row)
+}
+
+const handleAddSub = (row: Department) => {
+  emit('addSub', row)
+}
+
+const handleDelete = (row: Department) => {
+  emit('delete', row)
+}
+
+const toggleExpandAll = async (expand: boolean) => {
+  await nextTick()
+  await setTableExpandState(processedData.value, expand)
+}
+
+const setTableExpandState = async (data: Department[], expand: boolean) => {
+  for (const item of data) {
+    if (item.children && item.children.length > 0) {
+      if (treeTableRef.value) {
+        treeTableRef.value.toggleRowExpansion(item, expand)
       }
+
+      await nextTick()
+      await setTableExpandState(item.children, expand)
     }
   }
 }
+
+// Define expose after function definitions
+defineExpose({
+  toggleExpandAll
+})
 </script>
 
 <style scoped>
@@ -119,7 +132,7 @@ export default {
 .custom-table :deep(.el-table__header-wrapper th) {
   font-weight: bold;
   text-align: center;
-  background: #f5f7fa !important;
+  background: var(--design-bg-secondary) !important;
   color: #303133 !important;
   border-bottom: 1px solid #ebeef5 !important;
 }
@@ -129,7 +142,7 @@ export default {
 }
 
 .custom-table :deep(.el-table .el-table__body tr:hover > td) {
-  background: #f5f7fa !important;
+  background: var(--design-bg-secondary) !important;
 }
 
 /* 部门名称列左对齐 */
@@ -183,7 +196,7 @@ export default {
   border-radius: 4px !important;
   font-weight: 500 !important;
   transition: all 0.3s ease !important;
-  background: #f5f7fa !important;
+  background: var(--design-bg-secondary) !important;
   border-color: #e4e7ed !important;
   color: #606266 !important;
   height: 24px !important;

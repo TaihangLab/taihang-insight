@@ -7,7 +7,7 @@
         <div class="header-section">
           <div class="header-left">
             <div class="page-title-container">
-              <el-button icon="el-icon-arrow-left" type="text" @click="goBack" class="back-btn">
+              <el-button icon="el-icon-arrow-left" link @click="goBack" class="back-btn">
                 {{ pageTitle }}
               </el-button>
               <span v-if="showSkillInfo" class="skill-info">
@@ -53,7 +53,7 @@
                 <div class="skill-id-display">
                   <span class="id-text">{{ skillData.id }}</span>
                   <el-button 
-                    type="text" 
+                    link 
                     icon="el-icon-document-copy" 
                     size="mini"
                     @click="copyToClipboard(skillData.id)"
@@ -117,7 +117,7 @@
                   class="form-textarea">
                 </el-input>
                 <div class="form-link">
-                  <el-button type="text" @click="showDescriptionExample">技能描述示例</el-button>
+                  <el-button link @click="showDescriptionExample">技能描述示例</el-button>
                 </div>
               </div>
               </div>
@@ -134,7 +134,7 @@
                   <span class="verification-text">效果验证</span>
                   <el-button 
                     icon="el-icon-delete" 
-                    type="text" 
+                    link 
                     size="small" 
                     class="clear-btn-overlay"
                     @click="clearUpload">
@@ -214,7 +214,7 @@
       <div class="example-panel" @click.stop>
         <div class="example-header">
           <h3 class="example-title">技能描述示例</h3>
-          <el-button icon="el-icon-close" type="text" @click="closeExamplePanel" class="close-btn"></el-button>
+          <el-button icon="el-icon-close" link @click="closeExamplePanel" class="close-btn"></el-button>
         </div>
         
         <div class="example-subtitle">

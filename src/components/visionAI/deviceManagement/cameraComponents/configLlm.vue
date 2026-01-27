@@ -140,9 +140,9 @@
                 </div>
               </div>
               <div class="task-actions">
-                <el-button type="text" size="mini" @click="editTask(task)">编辑</el-button>
-                <el-button type="text" size="mini" @click="viewTask(task)">查看</el-button>
-                <el-button type="text" size="mini" style="color: #f56c6c;" @click="deleteTask(task)">删除</el-button>
+                <el-button link size="mini" @click="editTask(task)">编辑</el-button>
+                <el-button link size="mini" @click="viewTask(task)">查看</el-button>
+                <el-button link size="mini" style="color: #f56c6c;" @click="deleteTask(task)">删除</el-button>
               </div>
             </el-card>
           </div>
@@ -359,7 +359,7 @@
                   style="width: 120px;">
                 </el-time-picker>
                 <el-button
-                  type="text"
+                  link
                   icon="el-icon-delete"
                   @click="removeTimeRange(index)"
                   style="margin-left: 10px;">
@@ -367,7 +367,7 @@
               </div>
               <div class="add-time-range">
                 <el-button
-                  type="text"
+                  link
                   icon="el-icon-plus"
                   @click="addTimeRange"
                   :disabled="configForm.timeRanges.length >= 3">

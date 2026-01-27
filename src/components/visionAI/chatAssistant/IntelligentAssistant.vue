@@ -283,7 +283,7 @@
           <div class="search-wrapper">
             <i class="el-icon-search search-icon"></i>
             <input 
-              type="text" 
+              link 
               v-model="searchQuery" 
               placeholder="搜索对话" 
               class="search-input"

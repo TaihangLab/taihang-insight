@@ -12,31 +12,24 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'TenantPagination',
-  props: {
-    currentPage: {
-      type: Number,
-      default: 1
-    },
-    pageSize: {
-      type: Number,
-      default: 10
-    },
-    total: {
-      type: Number,
-      default: 0
-    }
-  },
-  methods: {
-    handleSizeChange(size) {
-      this.$emit('size-change', size)
-    },
-    handleCurrentChange(page) {
-      this.$emit('page-change', page)
-    }
-  }
+<script setup lang="ts">
+defineProps<{
+  currentPage: number
+  pageSize: number
+  total: number
+}>()
+
+const emit = defineEmits<{
+  sizeChange: [size: number]
+  pageChange: [page: number]
+}>()
+
+const handleSizeChange = (size: number) => {
+  emit('sizeChange', size)
+}
+
+const handleCurrentChange = (page: number) => {
+  emit('pageChange', page)
 }
 </script>
 

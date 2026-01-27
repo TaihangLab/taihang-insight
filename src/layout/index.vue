@@ -1,10 +1,10 @@
 <template>
   <div class="layout-container">
     <!-- 左侧菜单 -->
-    <side-menu v-show="fixSiderbar" @collapse-change="handleCollapseChange" />
+    <side-menu @collapse-change="handleCollapseChange" />
 
     <!-- 右侧内容区域 -->
-    <div class="layout-main" :class="!fixSiderbar ? 'layout-collapsed' : ''">
+    <div class="layout-main" :class="{ 'layout-collapsed': isMenuCollapsed }">
       <!-- 顶部导航栏 -->
       <el-header v-show="fixedHeader" class="layout-header">
         <ui-header />
@@ -21,32 +21,24 @@
   </div>
 </template>
 
-<script>
-import SideMenu from "./SideMenu.vue";
-import uiHeader from "./UiHeader.vue";
-import IntelligentAssistant from "../components/visionAI/chatAssistant/IntelligentAssistant.vue";
+<script setup lang="ts">
+import { ref } from 'vue'
+import SideMenu from '@/layout/SideMenu.vue'
+import UiHeader from '@/layout/UiHeader.vue'
+import IntelligentAssistant from '@/components/visionAI/chatAssistant/IntelligentAssistant.vue'
 
-export default {
-  name: "index",
-  components: {
-    SideMenu,
-    uiHeader,
-    IntelligentAssistant,
-  },
-  created() {},
-  data() {
-    return {
-      fixedHeader: true, // 固定 Header : boolean
-      fixSiderbar: true, // 固定左侧菜单栏 ： boolean
-    };
-  },
-  methods: {
-    handleCollapseChange(collapsed) {
-      this.fixSiderbar = collapsed;
-    },
-  },
-};
+// 固定 Header
+const fixedHeader = ref(true)
+
+// 菜单折叠状态
+const isMenuCollapsed = ref(false)
+
+// 处理菜单折叠变化
+const handleCollapseChange = (collapsed: boolean) => {
+  isMenuCollapsed.value = collapsed
+}
 </script>
+
 <style scoped>
 /* 布局容器 */
 .layout-container {
@@ -68,8 +60,9 @@ export default {
   overflow: hidden;
 }
 
+/* 菜单折叠时的样式 - 使用折叠后的宽度 */
 .layout-collapsed {
-  margin-left: 0;
+  margin-left: var(--sidebar-collapsed-width);
 }
 
 /* 顶部导航栏 */

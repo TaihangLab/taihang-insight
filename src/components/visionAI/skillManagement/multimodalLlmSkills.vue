@@ -81,7 +81,7 @@
           <div class="sort-section">
             <span>{{ sortTypeText }}</span>
             <el-button 
-              type="text" 
+              link 
               :icon="sortOrder === 'desc' ? 'el-icon-caret-bottom' : 'el-icon-caret-top'" 
               @click="toggleSort">
             </el-button>
@@ -380,7 +380,7 @@
             </el-table-column>
             <el-table-column label="操作" width="80">
               <template #default="scope">
-                <el-button size="mini" type="text" @click="viewDevice(scope.row)">查看</el-button>
+                <el-button size="mini" link @click="viewDevice(scope.row)">查看</el-button>
               </template>
             </el-table-column>
           </el-table>

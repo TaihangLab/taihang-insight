@@ -16,17 +16,18 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'DepartmentTableActions',
-  methods: {
-    handleAdd() {
-      this.$emit('add')
-    },
-    handleToggleExpand() {
-      this.$emit('toggle-expand')
-    }
-  }
+<script setup lang="ts">
+const emit = defineEmits<{
+  add: []
+  toggleExpand: []
+}>()
+
+const handleAdd = () => {
+  emit('add')
+}
+
+const handleToggleExpand = () => {
+  emit('toggleExpand')
 }
 </script>
 

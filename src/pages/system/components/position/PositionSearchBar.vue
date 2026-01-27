@@ -3,7 +3,7 @@
     <el-form :inline="true" :model="formValue" class="search-form">
       <el-form-item label="租户">
         <TenantSelector
-          ref="tenantSelector"
+          ref="tenantSelectorRef"
           v-model="formValue.tenant_id"
           @change="handleTenantChange"
         />
@@ -46,61 +46,60 @@
   </div>
 </template>
 
-<script>
-import TenantSelector from '../commons/TenantSelector.vue'
-import DeptTreeSelect from '../commons/DeptTreeSelect.vue'
+<script setup lang="ts">
+import { reactive, watch, ref } from 'vue'
+import TenantSelector from '@/pages/system/components/commons/TenantSelector.vue'
+import DeptTreeSelect from '@/pages/system/components/commons/DeptTreeSelect.vue'
 
-export default {
-  name: 'PositionSearchBar',
-  components: {
-    TenantSelector,
-    DeptTreeSelect
+interface SearchValue {
+  tenant_id: string | number | null
+  position_code: string
+  position_name: string
+  category_code: string
+  status: number | null
+}
+
+const props = defineProps<{
+  value: SearchValue
+}>()
+
+const emit = defineEmits<{
+  search: [value: SearchValue]
+  reset: [value: SearchValue]
+  input: [value: SearchValue]
+  tenantChange: []
+}>()
+
+const tenantSelectorRef = ref()
+const formValue = reactive<SearchValue>({ ...props.value })
+
+watch(
+  () => props.value,
+  (newVal) => {
+    Object.assign(formValue, newVal)
   },
-  props: {
-    value: {
-      type: Object,
-      default: () => ({
-        tenant_id: null,
-        position_code: '',
-        position_name: '',
-        category_code: '',
-        status: null
-      })
-    }
-  },
-  data() {
-    return {
-      formValue: { ...this.value }
-    }
-  },
-  watch: {
-    value: {
-      handler(newVal) {
-        this.formValue = { ...newVal }
-      },
-      deep: true
-    }
-  },
-  methods: {
-    handleSearch() {
-      this.$emit('search', this.formValue)
-    },
-    handleReset() {
-      const currentTenantCode = this.formValue.tenant_id
-      this.formValue = {
-        tenant_id: currentTenantCode,
-        position_code: '',
-        position_name: '',
-        category_code: '',
-        status: null
-      }
-      this.$emit('reset', this.formValue)
-    },
-    handleTenantChange() {
-      this.$emit('input', this.formValue)
-      this.$emit('tenant-change')
-    }
-  }
+  { deep: true }
+)
+
+const handleSearch = () => {
+  emit('search', formValue)
+}
+
+const handleReset = () => {
+  const currentTenantCode = formValue.tenant_id
+  Object.assign(formValue, {
+    tenant_id: currentTenantCode,
+    position_code: '',
+    position_name: '',
+    category_code: '',
+    status: null
+  })
+  emit('reset', formValue)
+}
+
+const handleTenantChange = () => {
+  emit('input', formValue)
+  emit('tenantChange')
 }
 </script>
 

@@ -1,332 +1,326 @@
+<!--
+  岗位管理页面
+  使用 <script setup> + TypeScript
+-->
 <template>
-  <div class="position-management-container">
-    <div class="content-layout">
-      <!-- 右侧岗位管理区域 -->
-      <div class="right-panel-full">
-        <!-- 搜索和筛选区域 -->
-        <PositionSearchBar v-model="searchForm" @search="handleSearch"
-          @reset="resetSearch" @tenant-change="handleTenantChange" />
+  <div class="position-management-page">
+    <!-- 搜索表单 -->
+    <el-card class="search-card" shadow="never">
+      <el-form :model="queryForm" inline>
+        <el-form-item label="岗位编号">
+          <el-input
+            v-model="queryForm.position_code"
+            placeholder="请输入岗位编号"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
 
-        <!-- 岗位列表表格 -->
-        <PositionList
-          :data="positions"
-          :loading="loading"
-          :pagination="pagination"
-          :total="total"
-          @selection-change="handleSelectionChange"
-          @edit="handleEdit"
-          @delete="handleDelete"
-          @add="handleAdd"
-          @batch-delete="handleBatchDelete"
-          @export="handleExport"
-          @page-change="handlePageChange"
+        <el-form-item label="岗位名称">
+          <el-input
+            v-model="queryForm.position_name"
+            placeholder="请输入岗位名称"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+
+        <el-form-item label="岗位类别">
+          <el-select
+            v-model="queryForm.category_code"
+            placeholder="请选择岗位类别"
+            clearable
+            style="width: 180px"
+          >
+            <el-option
+              v-for="category in positionCategories"
+              :key="category.categoryCode"
+              :label="category.categoryName"
+              :value="category.categoryCode"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="部门">
+          <el-input
+            v-model="queryForm.department"
+            placeholder="请输入部门"
+            clearable
+            style="width: 150px"
+          />
+        </el-form-item>
+
+        <el-form-item label="状态">
+          <el-select
+            v-model="queryForm.status"
+            placeholder="请选择状态"
+            clearable
+            style="width: 120px"
+          >
+            <el-option label="启用" :value="Status.ENABLED" />
+            <el-option label="停用" :value="Status.DISABLED" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">查询</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <!-- 操作按钮 -->
+    <el-card class="table-card" shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span class="card-title">岗位列表</span>
+          <div class="card-actions">
+            <el-button type="primary" icon="Plus" @click="handleAdd">新增岗位</el-button>
+          </div>
+        </div>
+      </template>
+
+      <!-- 岗位表格 -->
+      <el-table
+        v-loading="loading"
+        :data="positions"
+      >
+        <el-table-column prop="positionCode" label="岗位编号" width="150" />
+
+        <el-table-column prop="positionName" label="岗位名称" width="150" />
+
+        <el-table-column prop="categoryName" label="岗位类别" width="150" />
+
+        <el-table-column prop="department" label="所属部门" width="180" />
+
+        <el-table-column prop="sortOrder" label="排序" width="100" />
+
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === Status.ENABLED ? 'success' : 'danger'">
+              {{ row.status === Status.ENABLED ? '启用' : '停用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="createTime" label="创建时间" width="180" />
+
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" size="small" @click="handleEdit(row)">
+              编辑
+            </el-button>
+            <el-button link type="danger" size="small" @click="handleDelete(row)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-container">
+        <el-pagination
+          v-model:current-page="pagination.currentPage"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="handleCurrentChange"
           @size-change="handleSizeChange"
         />
       </div>
-    </div>
-
-    <!-- 新增/编辑岗位对话框 -->
-    <PositionEditDialog
-      :visible.sync="positionDialogVisible"
-      :current-position="currentPosition"
-      :tenant-id="searchForm.tenant_id"
-      @submit="handleSavePosition"
-    />
-
-    <!-- 删除确认对话框 -->
-    <DeleteConfirmDialog
-      :visible.sync="deleteDialogVisible"
-      :target-type="selectedRows.length > 1 ? 'batch' : 'single'"
-      @confirm="confirmDelete"
-    />
-
-    <!-- 导出对话框 -->
-    <ExportDialog
-      :visible.sync="exportDialogVisible"
-      @confirm="handleExportConfirm"
-    />
+    </el-card>
   </div>
 </template>
 
-<script>
-import TenantSelector from './components/commons/TenantSelector.vue'
-import PositionList from './components/position/PositionList.vue'
-import PositionEditDialog from './components/position/PositionEditDialog.vue'
-import DeleteConfirmDialog from './components/position/DeleteConfirmDialog.vue'
-import ExportDialog from './components/position/ExportDialog.vue'
-import PositionSearchBar from './components/position/PositionSearchBar.vue'
-import { usePositionData } from './composable/position/usePositionData.js'
-import { usePositionExport } from './composable/position/usePositionExport.js'
+<script setup lang="ts">
+/**
+ * 岗位管理页面
+ * 使用 Composition API + TypeScript
+ */
+import { reactive, onMounted } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import type { Position } from '@/types/rbac';
+import { Status } from '@/types/rbac';
+import { usePositionData, type PositionSearchConditions } from '@/pages/system/composable/position/usePositionData';
 
-export default {
-  name: 'PositionManagement',
+// ============================================
+// Composables
+// ============================================
 
-  components: {
-    TenantSelector,
-    PositionList,
-    PositionEditDialog,
-    DeleteConfirmDialog,
-    ExportDialog,
-    PositionSearchBar
-  },
+const {
+  positions,
+  positionCategories,
+  loading,
+  pagination,
+  fetchPositions,
+  fetchPositionCategories,
+  deletePosition
+} = usePositionData();
 
-  data() {
-    return {
-      // 无需额外数据
+// ============================================
+// 响应式状态
+// ============================================
 
-      // 搜索表单
-      searchForm: {
-        position_code: '',
-        position_name: '',
-        category_code: '',
-        status: '',
-        tenant_id: ''
-      },
+// 查询表单
+const queryForm = reactive<PositionSearchConditions>({
+  position_code: '',
+  position_name: '',
+  category_code: undefined,
+  department: '',
+  status: undefined
+});
 
-      // 对话框控制
-      positionDialogVisible: false,
-      deleteDialogVisible: false,
-      exportDialogVisible: false,
-      currentPosition: null,
-      selectedRows: [],
+// ============================================
+// 方法
+// ============================================
 
-      // 分页
-      pagination: {
-        currentPage: 1,
-        pageSize: 10
-      }
-    }
-  },
-
-  created() {
-    // TenantSelector 的 autoSelectFirst 会触发 change 事件
-    // 由 handleTenantChange 来调用 fetchPositions()
-  },
-
-  methods: {
-    // 处理租户变化
-    handleTenantChange() {
-      this.pagination.currentPage = 1
-      this.fetchPositionsData()
-    },
-
-    // 搜索岗位
-    async fetchPositionsData() {
-      const skip = (this.pagination.currentPage - 1) * this.pagination.pageSize
-      const params = {
-        skip: skip,
-        limit: this.pagination.pageSize,
-        position_code: this.searchForm.position_code || undefined,
-        position_name: this.searchForm.position_name || undefined,
-        category_code: this.searchForm.category_code || undefined,
-        status: this.searchForm.status || undefined,
-        tenant_id: this.searchForm.tenant_id || undefined
-      }
-
-      await this.fetchPositions(params)
-    },
-
-    // 搜索
-    handleSearch() {
-      this.pagination.currentPage = 1
-      this.fetchPositionsData()
-    },
-
-    // 重置搜索
-    resetSearch() {
-      const currentTenantCode = this.searchForm.tenant_id
-      this.searchForm = {
-        position_code: '',
-        position_name: '',
-        category_code: '',
-        status: '',
-        tenant_id: currentTenantCode
-      }
-      this.pagination.currentPage = 1
-      this.fetchPositionsData()
-    },
-
-    // 处理选择变化
-    handleSelectionChange(selection) {
-      this.selectedRows = selection
-    },
-
-    // 新增岗位
-    handleAdd() {
-      this.currentPosition = null
-      this.positionDialogVisible = true
-    },
-
-    // 编辑岗位
-    handleEdit(row) {
-      this.currentPosition = row
-      this.positionDialogVisible = true
-    },
-
-    // 保存岗位
-    async handleSavePosition(positionData) {
-      try {
-        if (this.currentPosition) {
-          // 编辑岗位 - 使用 id 进行更新
-          const updateData = { ...positionData }
-          delete updateData.id  // 不允许修改 id
-          await this.updatePosition(this.currentPosition.id, updateData)
-          this.$message.success('岗位信息更新成功')
-        } else {
-          // 新增岗位 - 确保包含租户ID
-          const createData = {
-            ...positionData,
-            tenant_id: this.searchForm.tenant_id  // 自动添加当前页面的租户ID
-          }
-          await this.createPosition(createData)
-          this.$message.success('岗位添加成功')
-        }
-        this.positionDialogVisible = false
-        this.fetchPositionsData()
-      } catch (error) {
-        this.$message.error(`保存失败: ${error.message || '未知错误'}`)
-      }
-    },
-
-    // 删除岗位
-    handleDelete(row) {
-      this.selectedRows = [row]
-      this.deleteDialogVisible = true
-    },
-
-    // 批量删除
-    handleBatchDelete() {
-      if (this.selectedRows.length === 0) {
-        this.$message({
-          message: '请至少选择一个岗位',
-          type: 'warning'
-        })
-        return
-      }
-      this.deleteDialogVisible = true
-    },
-
-    // 确认删除
-    async confirmDelete() {
-      try {
-        if (this.selectedRows.length === 1) {
-          await this.deletePosition(this.selectedRows[0].id)
-          this.$message.success('岗位删除成功')
-        } else {
-          await this.deletePositions(this.selectedRows)
-          this.$message.success(`成功删除 ${this.selectedRows.length} 个岗位`)
-        }
-        this.deleteDialogVisible = false
-        this.fetchPositionsData()
-      } catch (error) {
-        this.$message.error(`删除失败: ${error.message || '未知错误'}`)
-      }
-    },
-
-    // 导出岗位
-    handleExport() {
-      this.exportDialogVisible = true
-    },
-
-    // 确认导出
-    async handleExportConfirm(exportOptions) {
-      try {
-        const searchConditions = {
-          position_code: this.searchForm.position_code || undefined,
-          position_name: this.searchForm.position_name || undefined,
-          category_code: this.searchForm.category_code || undefined,
-          status: this.searchForm.status || undefined,
-          tenant_id: this.searchForm.tenant_id || undefined
-        }
-
-        const selectedPositions = exportOptions.range === 'selected' ? this.selectedRows : []
-        const result = await this.exportPositionsData(searchConditions, selectedPositions, exportOptions)
-
-        if (result.success) {
-          this.$message.success(result.message)
-        }
-      } catch (error) {
-        this.$message.error(`导出失败: ${error.message || '未知错误'}`)
-      }
-    },
-
-    // 分页
-    handlePageChange(page) {
-      this.pagination.currentPage = page
-      this.fetchPositionsData()
-    },
-
-    handleSizeChange(size) {
-      this.pagination.pageSize = size
-      this.pagination.currentPage = 1
-      this.fetchPositionsData()
-    }
-  },
-
-  setup() {
-    const {
-      positions,
-      total,
-      loading,
-      fetchPositions,
-      createPosition,
-      updatePosition,
-      deletePosition,
-      deletePositions
-    } = usePositionData()
-
-    const { exportPositions: exportPositionsData } = usePositionExport()
-
-    return {
-      positions,
-      total,
-      loading,
-      fetchPositions,
-      createPosition,
-      updatePosition,
-      deletePosition,
-      deletePositions,
-      exportPositionsData
-    }
+/**
+ * 加载岗位列表
+ */
+const loadPositions = async () => {
+  try {
+    await fetchPositions(queryForm);
+  } catch (error: unknown) {
+    const err = error as Error;
+    ElMessage.error(`加载岗位列表失败: ${err.message}`);
   }
-}
+};
+
+/**
+ * 加载岗位类别列表
+ */
+const loadPositionCategories = async () => {
+  try {
+    await fetchPositionCategories();
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('加载岗位类别失败:', err.message);
+  }
+};
+
+/**
+ * 查询处理
+ */
+const handleSearch = () => {
+  pagination.value.currentPage = 1;
+  loadPositions();
+};
+
+/**
+ * 重置处理
+ */
+const handleReset = () => {
+  queryForm.position_code = '';
+  queryForm.position_name = '';
+  queryForm.category_code = undefined;
+  queryForm.department = '';
+  queryForm.status = undefined;
+  pagination.value.currentPage = 1;
+  loadPositions();
+};
+
+/**
+ * 页码变化处理
+ */
+const handleCurrentChange = (page: number) => {
+  pagination.value.currentPage = page;
+  loadPositions();
+};
+
+/**
+ * 每页条数变化处理
+ */
+const handleSizeChange = (size: number) => {
+  pagination.value.pageSize = size;
+  pagination.value.currentPage = 1;
+  loadPositions();
+};
+
+/**
+ * 新增岗位处理
+ */
+const handleAdd = () => {
+  // TODO: 打开新增对话框
+  ElMessage.info('打开新增岗位对话框');
+};
+
+/**
+ * 编辑岗位处理
+ */
+const handleEdit = (row: Position) => {
+  // TODO: 打开编辑对话框
+  ElMessage.info(`编辑岗位: ${row.positionName}`);
+};
+
+/**
+ * 删除岗位处理
+ */
+const handleDelete = async (row: Position) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除岗位 "${row.positionName}" 吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    );
+
+    await deletePosition(row.id);
+    ElMessage.success('删除成功');
+    loadPositions();
+  } catch {
+    // 用户取消操作
+  }
+};
+
+// ============================================
+// 生命周期
+// ============================================
+
+onMounted(() => {
+  loadPositionCategories();
+  loadPositions();
+});
 </script>
 
 <style scoped>
-/* 整体容器 */
-.position-management-container {
-  padding: 20px 20px 5px 20px;
-  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  min-height: calc(100vh - 90px);
-  height: calc(100vh - 90px);
-  overflow: hidden;
+.position-management-page {
+  padding: 20px;
 }
 
-/* 主要布局 */
-.content-layout {
+.search-card {
+  margin-bottom: 20px;
+}
+
+.table-card {
+  min-height: calc(100vh - 280px);
+}
+
+.card-header {
   display: flex;
-  height: calc(100vh - 100px);
-  min-height: 600px;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* 右侧面板 */
-.right-panel-full {
-  flex: 1;
+.card-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.card-actions {
   display: flex;
-  flex-direction: column;
+  gap: 10px;
 }
 
-/* 搜索区卡片 */
-.filter-section {
-  margin-bottom: 12px;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #ebeef5;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.05);
-  flex-shrink: 0;
-}
-
-.search-form .el-form-item {
-  margin-bottom: 12px;
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

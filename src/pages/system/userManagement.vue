@@ -1,460 +1,436 @@
+<!--
+  用户管理页面
+  使用 <script setup> + TypeScript
+-->
 <template>
-  <div class="user-management-container">
-    <div class="content-layout">
-      <!-- 右侧用户管理区域 -->
-      <div class="right-panel">
-        <!-- 搜索筛选区域 -->
-        <UserSearchBar v-model="searchForm" @search="handleSearch"
-          @reset="resetSearch" @tenant-change="handleTenantChange" />
+  <div class="user-management-page">
+    <!-- 用户编辑对话框 -->
+    <UserEditDialog
+      v-model:visible="editDialogVisible"
+      :current-user="currentUser"
+      :tenant-id="tenantCode"
+      @submit="handleUserSubmit"
+    />
+    <!-- 搜索表单 -->
+    <el-card class="search-card" shadow="never">
+      <el-form :model="queryForm" inline>
+        <el-form-item label="用户名">
+          <el-input
+            v-model="queryForm.username"
+            placeholder="请输入用户名"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
 
-        <!-- 表格操作区域 -->
-        <UserList :users="users" :loading="loading" :pagination="pagination" :total="total"
-          @selection-change="handleSelectionChange" @edit="handleEdit" @delete="handleDelete"
-          @status-change="handleStatusChange" @reset-password="handleResetPassword" @add="handleAdd"
-          @batch-delete="handleBatchDelete" @more-action="handleMoreAction" @advanced-search="toggleAdvancedSearch"
-          @refresh="refreshData" @table-setting="showTableSetting" @page-change="handlePageChange"
-          @size-change="handleSizeChange" @authorization="handleAuthorization" />
+        <el-form-item label="手机号">
+          <el-input
+            v-model="queryForm.phone"
+            placeholder="请输入手机号"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+
+        <el-form-item label="部门">
+          <el-input
+            v-model="queryForm.department_id"
+            placeholder="请输入部门ID"
+            clearable
+            style="width: 150px"
+            type="number"
+          />
+        </el-form-item>
+
+        <el-form-item label="状态">
+          <el-select
+            v-model="queryForm.status"
+            placeholder="请选择状态"
+            clearable
+            style="width: 120px"
+          >
+            <el-option label="启用" :value="Status.ENABLED" />
+            <el-option label="停用" :value="Status.DISABLED" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="性别">
+          <el-select
+            v-model="queryForm.gender"
+            placeholder="请选择性别"
+            clearable
+            style="width: 120px"
+          >
+            <el-option label="男" :value="Gender.MALE" />
+            <el-option label="女" :value="Gender.FEMALE" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">查询</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <!-- 操作按钮 -->
+    <el-card class="table-card" shadow="never">
+      <template #header>
+        <div class="card-header">
+          <span class="card-title">用户列表</span>
+          <div class="card-actions">
+            <el-button type="primary" icon="Plus" @click="handleAdd">新增用户</el-button>
+            <el-button
+              type="danger"
+              icon="Delete"
+              :disabled="selectedIds.length === 0"
+              @click="handleBatchDelete"
+            >
+              批量删除 ({{ selectedIds.length }})
+            </el-button>
+          </div>
+        </div>
+      </template>
+
+      <!-- 用户表格 -->
+      <el-table
+        v-loading="loading"
+        :data="users"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" />
+
+        <el-table-column prop="userName" label="用户名" width="120" />
+
+        <el-table-column prop="userNickname" label="昵称" width="120" />
+
+        <el-table-column prop="phoneNumber" label="手机号" width="140" />
+
+        <el-table-column prop="department" label="部门" width="150" />
+
+        <el-table-column prop="position" label="岗位" width="120" />
+
+        <el-table-column prop="gender" label="性别" width="80">
+          <template #default="{ row }">
+            <span>{{ row.gender === Gender.MALE ? '男' : '女' }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === Status.ENABLED ? 'success' : 'danger'">
+              {{ row.status === Status.ENABLED ? '启用' : '停用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="createTime" label="创建时间" width="180" />
+
+        <el-table-column label="操作" width="250" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" size="small" @click="handleEdit(row)">
+              编辑
+            </el-button>
+            <el-button link type="primary" size="small" @click="handleResetPassword(row)">
+              重置密码
+            </el-button>
+            <el-button link type="warning" size="small" @click="handleAssignRoles(row)">
+              分配角色
+            </el-button>
+            <el-button link type="danger" size="small" @click="handleDelete(row)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-container">
+        <el-pagination
+          v-model:current-page="pagination.currentPage"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
+        />
       </div>
-    </div>
-
-    <!-- 新增/编辑用户对话框 -->
-    <UserEditDialog :visible.sync="userDialogVisible" :current-user="currentUser"
-      :tenant-id="searchForm.tenant_id" @submit="handleSaveUser" />
-
-    <!-- 删除确认对话框 -->
-    <DeleteConfirmDialog :visible.sync="deleteDialogVisible" :target-type="selectedRows.length > 1 ? 'batch' : 'single'"
-      @confirm="confirmDelete" />
-
-    <!-- 重置密码对话框 -->
-    <ResetPasswordDialog :visible.sync="resetPasswordDialogVisible" :reset-password-user="resetPasswordUser"
-      @confirm="handleResetPasswordConfirm" />
+    </el-card>
   </div>
 </template>
 
-<script>
-import { ref, reactive, computed } from 'vue'
-import UserSearchBar from './components/user/UserSearchBar.vue'
-import UserList from './components/user/UserList.vue'
-import UserEditDialog from './components/user/UserEditDialog.vue'
-import DeleteConfirmDialog from './components/user/DeleteConfirmDialog.vue'
-import ResetPasswordDialog from './components/user/ResetPasswordDialog.vue'
-import { useUserData } from './composable/user/useUserData.js'
-import { useUserExport } from './composable/user/useUserExport.js'
+<script setup lang="ts">
+/**
+ * 用户管理页面
+ * 使用 Composition API + TypeScript
+ */
+import { ref, reactive, onMounted } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import type {
+  UserQueryParams,
+  UserQueryForm,
+  User
+} from '@/types/rbac';
+import { Status, Gender } from '@/types/rbac';
+import { useUserData } from '@/pages/system/composable/user/useUserData';
+import UserEditDialog from './components/user/UserEditDialog.vue';
 
-export default {
-  name: 'UserManagement',
+// ============================================
+// Composables
+// ============================================
 
-  components: {
-    UserSearchBar,
-    UserList,
-    UserEditDialog,
-    DeleteConfirmDialog,
-    ResetPasswordDialog
-  },
+const {
+  users,
+  loading,
+  pagination,
+  fetchUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  deleteUsers,
+  resetUserPassword
+} = useUserData();
 
-  data() {
-    return {
+// ============================================
+// 响应式状态
+// ============================================
 
-      // 筛选相关
-      filterText: '',
+// 查询表单
+const queryForm = reactive<UserQueryForm>({
+  username: '',
+  phone: '',
+  department_id: undefined,
+  status: undefined,
+  gender: undefined
+});
 
+// 选中的行
+const selectedIds = ref<number[]>([]);
 
-      // 搜索表单
-      searchForm: {
-        user_name: '',
-        nick_name: '',
-        phone: '',
-        status: '',
-        dept_id: [],
-        gender: '',
-        create_time_range: [],
-        tenant_id: null
-      },
+// 当前租户ID
+const tenantCode = ref<number>(1);
 
-      // 对话框状态
-      userDialogVisible: false,
-      deleteDialogVisible: false,
-      resetPasswordDialogVisible: false,
-      currentUser: null,
-      resetPasswordUser: null,
-      selectedRows: [],
+// 对话框状态
+const editDialogVisible = ref(false);
+const currentUser = ref<User | null>(null);
 
-      // 分页
-      pagination: {
-        currentPage: 1,
-        pageSize: 10
-      }
-    }
-  },
+// ============================================
+// 方法
+// ============================================
 
-  async created() {
-    // TenantSelector 组件内部会自动加载租户并触发 change 事件
-  },
+/**
+ * 构建查询参数
+ */
+const buildQueryParams = (): UserQueryParams => {
+  const params: UserQueryParams = {
+    skip: (pagination.value.currentPage - 1) * pagination.value.pageSize,
+    limit: pagination.value.pageSize,
+    tenant_id: tenantCode.value
+  };
 
-  methods: {
-    // 处理租户变化
-    async handleTenantChange() {
-      this.pagination.currentPage = 1
-      this.fetchUsers();
-    },
-
-
-
-    // 获取用户数据
-    async fetchUsers() {
-      if (!this.searchForm.tenant_id) {
-        this.$message.warning('请先选择租户')
-        this.users = []
-        this.total = 0
-        return
-      }
-
-      const skip = (this.pagination.currentPage - 1) * this.pagination.pageSize
-      const params = {
-        skip: skip,
-        limit: this.pagination.pageSize,
-        user_name: this.searchForm.user_name || undefined,
-        nick_name: this.searchForm.nick_name || undefined,
-        phone: this.searchForm.phone || undefined,
-        status: this.searchForm.status || undefined,
-        dept_id: this.searchForm.dept_id && this.searchForm.dept_id.length > 0
-          ? this.searchForm.dept_id[this.searchForm.dept_id.length - 1]
-          : undefined,
-        gender: this.searchForm.gender !== '' ? this.searchForm.gender : undefined,
-        tenant_id: this.searchForm.tenant_id != null ? this.searchForm.tenant_id : undefined
-      }
-
-      await this.fetchUsersFromComposable(params)
-    },
-
-    // 搜索用户
-    handleSearch() {
-      this.pagination.currentPage = 1
-      this.fetchUsers()
-    },
-
-    // 重置搜索
-    resetSearch() {
-      const currentTenantCode = this.searchForm.tenant_id
-      this.searchForm = {
-        user_name: '',
-        nick_name: '',
-        phone: '',
-        status: '',
-        dept_id: [],
-        gender: '',
-        create_time_range: [],
-        tenant_id: currentTenantCode || null
-      }
-      this.pagination.currentPage = 1
-      this.fetchUsers()
-    },
-
-    // 刷新数据
-    refreshData() {
-      this.fetchUsers()
-    },
-
-    // 切换高级搜索
-    toggleAdvancedSearch() {
-      this.$message({
-        message: '高级搜索功能开发中',
-        type: 'info'
-      })
-    },
-
-    // 显示表格设置
-    showTableSetting() {
-      this.$message({
-        message: '表格设置功能开发中',
-        type: 'info'
-      })
-    },
-
-    // 处理分页
-    handlePageChange(page) {
-      this.pagination.currentPage = page
-      this.fetchUsers()
-    },
-
-    handleSizeChange(size) {
-      this.pagination.pageSize = size
-      this.pagination.currentPage = 1
-      this.fetchUsers()
-    },
-
-    // 处理选择变化
-    handleSelectionChange(selection) {
-      this.selectedRows = selection
-    },
-
-    // 新增用户
-    handleAdd() {
-      this.currentUser = null
-      this.userDialogVisible = true
-    },
-
-    // 编辑用户
-    handleEdit(row) {
-      this.currentUser = row
-      this.userDialogVisible = true
-    },
-
-    // 保存用户
-    async handleSaveUser(userData) {
-      try {
-        const data = {
-          ...userData,
-          tenant_id: this.searchForm.tenant_id != null ? this.searchForm.tenant_id : userData.tenant_id,
-          dept_id: userData.dept_id && userData.dept_id.length > 0
-            ? userData.dept_id[userData.dept_id.length - 1]
-            : undefined
-        }
-
-        if (this.currentUser) {
-          await this.updateUserFromComposable(this.currentUser.id, data)
-          this.$message({
-            message: '用户信息修改成功',
-            type: 'success'
-          })
-        } else {
-          if (!this.searchForm.tenant_id) {
-            this.$message.error('请选择租户后再添加用户')
-            return
-          }
-          await this.createUserFromComposable(data)
-          this.$message({
-            message: '用户添加成功',
-            type: 'success'
-          })
-        }
-
-        this.userDialogVisible = false
-        this.fetchUsers()
-      } catch (error) {
-        this.$message({
-          message: `保存用户失败: ${error.message}`,
-          type: 'error'
-        })
-      }
-    },
-
-    // 删除用户
-    handleDelete(row) {
-      this.selectedRows = [row]
-      this.deleteDialogVisible = true
-    },
-
-    // 批量删除
-    handleBatchDelete() {
-      if (this.selectedRows.length === 0) {
-        this.$message({
-          message: '请至少选择一个用户',
-          type: 'warning'
-        })
-        return
-      }
-      this.deleteDialogVisible = true
-    },
-
-    // 确认删除
-    async confirmDelete() {
-      try {
-        const userIds = this.selectedRows.map(row => row.id)
-        await this.deleteUsersFromComposable(userIds)
-        this.$message({
-          message: '删除成功',
-          type: 'success'
-        })
-        this.deleteDialogVisible = false
-        this.fetchUsers()
-      } catch (error) {
-        this.$message({
-          message: `删除用户失败: ${error.message}`,
-          type: 'error'
-        })
-      }
-    },
-
-    // 状态切换
-    async handleStatusChange(row, callback) {
-      try {
-        await this.updateUserFromComposable(row.id, { status: row.status });
-        this.$message({
-          message: '用户状态更新成功',
-          type: 'success'
-        });
-        // 调用回调函数，通知更新成功
-        if (callback) callback(true);
-      } catch (error) {
-        this.$message({
-          message: `更新用户状态失败: ${error.message}`,
-          type: 'error'
-        });
-        // 调用回调函数，通知更新失败
-        if (callback) callback(false);
-      }
-    },
-
-    // 重置密码
-    handleResetPassword(row) {
-      this.resetPasswordUser = row
-      this.resetPasswordDialogVisible = true
-    },
-
-    // 确认重置密码
-    async handleResetPasswordConfirm(newPassword) {
-      try {
-        await this.resetUserPasswordFromComposable(this.resetPasswordUser.id, newPassword)
-        this.$message({
-          message: '密码重置成功',
-          type: 'success'
-        })
-        this.resetPasswordDialogVisible = false
-        this.resetPasswordUser = null
-      } catch (error) {
-        this.$message({
-          message: `重置密码失败: ${error.message}`,
-          type: 'error'
-        })
-      }
-    },
-
-    // 更多操作
-    handleMoreAction(command) {
-      switch (command) {
-        case 'download_template':
-          this.$message({
-            message: '下载模板功能开发中',
-            type: 'info'
-          })
-          break
-        case 'import_data':
-          this.$message({
-            message: '导入数据功能开发中',
-            type: 'info'
-          })
-          break
-        case 'export_data':
-          this.handleExport()
-          break
-      }
-    },
-
-    // 导出数据
-    async handleExport() {
-      try {
-        const searchConditions = {
-          user_name: this.searchForm.user_name || undefined,
-          nick_name: this.searchForm.nick_name || undefined,
-          phone: this.searchForm.phone || undefined,
-          status: this.searchForm.status || undefined,
-          dept_id: this.searchForm.dept_id && this.searchForm.dept_id.length > 0
-            ? this.searchForm.dept_id[this.searchForm.dept_id.length - 1]
-            : undefined,
-          gender: this.searchForm.gender !== '' ? this.searchForm.gender : undefined,
-          tenant_id: this.searchForm.tenant_id != null ? this.searchForm.tenant_id : undefined
-        }
-
-        const selectedUsers = this.selectedRows.length > 0 ? this.selectedRows : []
-        const result = await this.exportUsersFromComposable(searchConditions, selectedUsers)
-
-        if (result.success) {
-          this.$message({
-            message: result.message,
-            type: 'success'
-          })
-        }
-      } catch (error) {
-        this.$message({
-          message: `导出数据失败: ${error.message}`,
-          type: 'error'
-        })
-      }
-    },
-
-    // 处理用户授权
-    handleAuthorization(row) {
-      // 跳转到角色分配页面，传递用户信息
-      this.$router.push({
-        name: 'RoleAssignment',
-        params: {
-          user_code: row.user_name,
-          user_name: row.nick_name || row.user_name
-        }
-      })
-    }
-  },
-
-  setup() {
-    const { users, total, loading, fetchUsers, createUser, updateUser, deleteUsers, resetUserPassword } = useUserData()
-    const { exporting, exportUsers } = useUserExport()
-
-    // 包装 composable 方法以供 methods 使用
-    const fetchUsersFromComposable = async (params) => {
-      await fetchUsers(params)
-    }
-
-    const createUserFromComposable = async (data) => {
-      await createUser(data)
-    }
-
-    const updateUserFromComposable = async (userId, data) => {
-      await updateUser(userId, data)
-    }
-
-    const deleteUsersFromComposable = async (userIds) => {
-      await deleteUsers(userIds)
-    }
-
-    const resetUserPasswordFromComposable = async (userId, newPassword) => {
-      await resetUserPassword(userId, newPassword)
-    }
-
-    const exportUsersFromComposable = async (searchConditions, selectedUsers) => {
-      return await exportUsers(searchConditions, selectedUsers)
-    }
-
-    return {
-      users,
-      total,
-      loading,
-      exporting,
-      fetchUsersFromComposable,
-      createUserFromComposable,
-      updateUserFromComposable,
-      deleteUsersFromComposable,
-      resetUserPasswordFromComposable,
-      exportUsersFromComposable
-    }
+  // 添加可选查询条件
+  if (queryForm.username) {
+    params.username = queryForm.username;
   }
-}
+  if (queryForm.phone) {
+    params.phone = queryForm.phone;
+  }
+  if (queryForm.department_id) {
+    params.department_id = queryForm.department_id;
+  }
+  if (queryForm.status !== undefined) {
+    params.status = queryForm.status;
+  }
+  if (queryForm.gender) {
+    params.gender = queryForm.gender;
+  }
+
+  return params;
+};
+
+/**
+ * 加载用户列表
+ */
+const loadUsers = async () => {
+  try {
+    const params = buildQueryParams();
+    await fetchUsers(params);
+  } catch (error: unknown) {
+    const err = error as Error;
+    ElMessage.error(`加载用户列表失败: ${err.message}`);
+  }
+};
+
+/**
+ * 查询处理
+ */
+const handleSearch = () => {
+  pagination.value.currentPage = 1;
+  loadUsers();
+};
+
+/**
+ * 重置处理
+ */
+const handleReset = () => {
+  Object.keys(queryForm).forEach(key => {
+    delete queryForm[key as keyof UserQueryForm];
+  });
+  pagination.value.currentPage = 1;
+  loadUsers();
+};
+
+/**
+ * 页码变化处理
+ */
+const handleCurrentChange = (page: number) => {
+  pagination.value.currentPage = page;
+  loadUsers();
+};
+
+/**
+ * 每页条数变化处理
+ */
+const handleSizeChange = (size: number) => {
+  pagination.value.pageSize = size;
+  pagination.value.currentPage = 1;
+  loadUsers();
+};
+
+/**
+ * 选择变化处理
+ */
+const handleSelectionChange = (selection: User[]) => {
+  selectedIds.value = selection.map(item => item.id);
+};
+
+/**
+ * 新增用户处理
+ */
+const handleAdd = () => {
+  currentUser.value = null;
+  editDialogVisible.value = true;
+};
+
+/**
+ * 编辑用户处理
+ */
+const handleEdit = (row: User) => {
+  currentUser.value = row;
+  editDialogVisible.value = true;
+};
+
+/**
+ * 用户表单提交处理
+ */
+const handleUserSubmit = async (formData: any) => {
+  try {
+    if (currentUser.value) {
+      // 编辑用户
+      await updateUser(currentUser.value.id, formData);
+      ElMessage.success('用户修改成功');
+    } else {
+      // 新增用户
+      await createUser(formData);
+      ElMessage.success('用户添加成功');
+    }
+    editDialogVisible.value = false;
+    loadUsers();
+  } catch (error: unknown) {
+    const err = error as Error;
+    ElMessage.error(`保存失败: ${err.message}`);
+  }
+};
+
+/**
+ * 删除用户处理
+ */
+const handleDelete = async (row: User) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除用户 "${row.userName}" 吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    );
+
+    await deleteUser(row.id);
+    ElMessage.success('删除成功');
+    loadUsers();
+  } catch {
+    // 用户取消操作
+  }
+};
+
+/**
+ * 批量删除处理
+ */
+const handleBatchDelete = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedIds.value.length} 个用户吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    );
+
+    await deleteUsers(selectedIds.value);
+    ElMessage.success('批量删除成功');
+    selectedIds.value = [];
+    loadUsers();
+  } catch {
+    // 用户取消操作
+  }
+};
+
+/**
+ * 重置密码处理
+ */
+const handleResetPassword = async (row: User) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要重置用户 "${row.userName}" 的密码吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    );
+
+    await resetUserPassword(row.id, '123456');
+    ElMessage.success('密码重置成功，新密码为：123456');
+  } catch {
+    // 用户取消操作
+  }
+};
+
+/**
+ * 分配角色处理
+ */
+const handleAssignRoles = (row: User) => {
+  // TODO: 打开角色分配对话框
+  ElMessage.info(`为用户 "${row.userName}" 分配角色`);
+};
+
+// ============================================
+// 生命周期
+// ============================================
+
+onMounted(() => {
+  loadUsers();
+});
 </script>
 
 <style scoped>
-.user-management-container {
-  padding: 20px;
-  background-color: #f5f7fa;
-  min-height: calc(100vh - 40px);
-}
 
-.content-layout {
-  display: flex;
-  gap: 20px;
-  height: 100%;
-}
-
-.right-panel {
-  flex: 1;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-.tenant-selector-wrapper {
-  margin-bottom: 20px;
-}
 </style>

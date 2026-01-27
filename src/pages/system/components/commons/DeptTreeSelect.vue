@@ -38,160 +38,145 @@
   />
 </template>
 
-<script>
-import RBACService from '@/components/service/RBACService';
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import RBACService from '@/components/service/RBACService'
 
-export default {
-  name: 'DeptTreeSelect',
+interface DeptNode {
+  id: string | number
+  name: string
+  children?: DeptNode[]
+}
 
-  props: {
-    // v-model 绑定值（数组格式，表示部门路径）
-    value: {
-      type: [Array, String, Number],
-      default: () => []
+interface TransformedDeptNode {
+  id: number
+  label: string
+  code: string | number
+  children: TransformedDeptNode[]
+}
+
+const props = withDefaults(
+  defineProps<{
+    value: any
+    tenantId: string | number
+    status?: number
+    placeholder?: string
+    clearable?: boolean
+    disabled?: boolean
+    customStyle?: string | Record<string, any>
+    props?: Record<string, any>
+  }>(),
+  {
+    status: 0,
+    placeholder: '选择部门',
+    clearable: true,
+    disabled: false,
+    customStyle: '',
+    props: () => ({})
+  }
+)
+
+defineExpose({
+  refresh
+})
+
+const emit = defineEmits<{
+  input: [value: any]
+  change: [value: any]
+}>()
+
+const treeData = ref<TransformedDeptNode[]>([])
+const loading = ref(false)
+const loaded = ref(false)
+
+const innerValue = computed({
+  get: () => props.value,
+  set: (val) => {
+    emit('input', val)
+  }
+})
+
+const cascaderProps = computed(() => {
+  return {
+    value: 'id',
+    label: 'label',
+    children: 'children',
+    checkStrictly: true,
+    expandTrigger: 'hover' as const,
+    renderFormat: (labels: string[], selectedOptions: any[]) => {
+      return selectedOptions
+        .map((option) => {
+          return `${option.code} - ${option.label}`
+        })
+        .join('/')
     },
-    // 租户ID（必填）
-    tenantId: {
-      type: [String, Number],
-      required: true
-    },
-    // 部门状态过滤（默认0表示只获取启用的部门，1表示获取停用的部门）
-    status: {
-      type: Number,
-      default: 0
-    },
-    // 占位文本
-    placeholder: {
-      type: String,
-      default: '选择部门'
-    },
-    // 是否可清空
-    clearable: {
-      type: Boolean,
-      default: true
-    },
-    // 是否禁用
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    // 自定义样式
-    customStyle: {
-      type: [String, Object],
-      default: ''
-    },
-    // 级联选择器配置（可覆盖默认配置）
-    props: {
-      type: Object,
-      default: () => ({})
+    ...props.props
+  }
+})
+
+watch(
+  () => props.tenantId,
+  (newVal) => {
+    if (newVal) {
+      fetchDepartmentTree()
+    } else {
+      treeData.value = []
     }
   },
+  { immediate: true }
+)
 
-  data() {
-    return {
-      treeData: [],
-      loading: false,
-      loaded: false  // 标记部门树数据是否已加载
-    };
-  },
-
-  computed: {
-    innerValue: {
-      get() {
-        return this.value;
-      },
-      set(val) {
-        this.$emit('input', val);
-      }
-    },
-
-    cascaderProps() {
-      return {
-        value: 'id',
-        label: 'label',
-        children: 'children',
-        checkStrictly: true,
-        expandTrigger: 'hover',
-        // 自定义显示格式：编码 - 名称
-        renderFormat: (labels, selectedOptions) => {
-          return selectedOptions.map(option => {
-            return `${option.code} - ${option.label}`;
-          }).join('/');
-        },
-        ...this.props
-      };
-    }
-  },
-
-  watch: {
-    tenantId: {
-      immediate: true,
-      handler(newVal) {
-        if (newVal) {
-          this.fetchDepartmentTree();
-        } else {
-          this.treeData = [];
-        }
-      }
-    },
-
-    status: {
-      handler() {
-        if (this.tenantId) {
-          this.fetchDepartmentTree();
-        }
-      }
-    }
-  },
-
-  methods: {
-    // 获取部门树数据
-    async fetchDepartmentTree() {
-      if (!this.tenantId) {
-        this.treeData = [];
-        return;
-      }
-
-      this.loading = true;
-      try {
-        const response = await RBACService.getDepartmentTreeByTenantAndStatus(
-          this.tenantId,
-          this.status
-        );
-        this.treeData = this.transformDeptTree(response.data);
-        this.loaded = true;
-      } catch (error) {
-        console.error('获取部门树失败:', error);
-        this.$message.error(`获取部门树失败: ${error.message}`);
-        this.treeData = [];
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    // 转换部门树数据：API返回的name字段转为label（级联选择器需要）
-    transformDeptTree(depts) {
-      if (!Array.isArray(depts)) return [];
-      return depts.map(dept => ({
-        id: parseInt(dept.id),  // 确保是数字类型
-        label: dept.name,  // name -> label
-        code: dept.id,     // 使用ID作为编码
-        children: dept.children ? this.transformDeptTree(dept.children) : []
-      }));
-    },
-
-    // 处理选择变化
-    handleChange(value) {
-      this.$emit('change', value);
-    },
-
-    // 刷新部门树（供外部调用）
-    refresh() {
-      this.loaded = false;
-      this.fetchDepartmentTree();
+watch(
+  () => props.status,
+  () => {
+    if (props.tenantId) {
+      fetchDepartmentTree()
     }
   }
-};
+)
+
+const fetchDepartmentTree = async () => {
+  if (!props.tenantId) {
+    treeData.value = []
+    return
+  }
+
+  loading.value = true
+  try {
+    const response = await RBACService.getDepartmentTreeByTenantAndStatus(
+      props.tenantId,
+      props.status
+    )
+    treeData.value = transformDeptTree(response.data)
+    loaded.value = true
+  } catch (error: any) {
+    console.error('获取部门树失败:', error)
+    ElMessage.error(`获取部门树失败: ${error.message}`)
+    treeData.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+const transformDeptTree = (depts: DeptNode[]): TransformedDeptNode[] => {
+  if (!Array.isArray(depts)) return []
+  return depts.map((dept) => ({
+    id: parseInt(String(dept.id)),
+    label: dept.name,
+    code: dept.id,
+    children: dept.children ? transformDeptTree(dept.children) : []
+  }))
+}
+
+const handleChange = (value: any) => {
+  emit('change', value)
+}
+
+const refresh = () => {
+  loaded.value = false
+  fetchDepartmentTree()
+}
 </script>
 
 <style scoped>

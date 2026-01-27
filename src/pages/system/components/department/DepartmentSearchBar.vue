@@ -42,55 +42,63 @@
   </div>
 </template>
 
-<script>
-import TenantSelector from '../commons/TenantSelector.vue'
+<script setup lang="ts">
+import { reactive, watch } from 'vue'
+import TenantSelector from '@/pages/system/components/commons/TenantSelector.vue'
 
-export default {
-  name: 'DepartmentSearchBar',
-  components: {
-    TenantSelector
-  },
-  props: {
-    value: {
-      type: Object,
-      default: () => ({
-        tenant_id: null,
-        name: '',
-        id: null,
-        status: null
-      })
-    }
-  },
-  data() {
-    return {
-      formValue: { ...this.value }
-    }
-  },
-  watch: {
-    value: {
-      handler(newVal) {
-        this.formValue = { ...newVal }
-      },
-      deep: true
-    }
-  },
-  methods: {
-    handleSearch() {
-      this.$emit('search', this.formValue)
-    },
-    handleReset() {
-      this.formValue = {
-        tenant_id: null,
-        name: '',
-        id: null,
-        status: null
-      }
-      this.$emit('reset')
-    },
-    handleTenantChange() {
-      this.$emit('tenant-change')
-    }
+interface SearchValue {
+  tenant_id: string | number | null
+  name: string
+  id: string | null
+  status: number | null
+}
+
+const props = withDefaults(
+  defineProps<{
+    value: SearchValue
+  }>(),
+  {
+    value: () => ({
+      tenant_id: null,
+      name: '',
+      id: null,
+      status: null
+    })
   }
+)
+
+const emit = defineEmits<{
+  search: [value: SearchValue]
+  reset: []
+  tenantChange: []
+}>()
+
+const formValue = reactive<SearchValue>({ ...props.value })
+
+watch(
+  () => props.value,
+  (newVal) => {
+    Object.assign(formValue, newVal)
+  },
+  { deep: true }
+)
+
+const handleSearch = () => {
+  emit('search', formValue)
+}
+
+const handleReset = () => {
+  Object.assign(formValue, {
+    tenant_id: null,
+    name: '',
+    id: null,
+    status: null
+  })
+  emit('reset')
+}
+
+const handleTenantChange = () => {
+  emit('tenantChange')
 }
 </script>
 

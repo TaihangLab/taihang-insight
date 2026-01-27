@@ -24,38 +24,42 @@
     <el-table-column label="操作" width="150" fixed="right" align="center">
       <template #default="scope">
         <div class="operation-buttons">
-          <el-button type="text" class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button type="text" class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button link class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
+          <el-button link class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
         </div>
       </template>
     </el-table-column>
   </el-table>
 </template>
 
-<script>
-export default {
-  name: 'PositionTable',
-  props: {
-    data: {
-      type: Array,
-      default: () => []
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    }
-  },
-  methods: {
-    handleSelectionChange(selection) {
-      this.$emit('selection-change', selection)
-    },
-    handleEdit(row) {
-      this.$emit('edit', row)
-    },
-    handleDelete(row) {
-      this.$emit('delete', row)
-    }
-  }
+<script setup lang="ts">
+interface Position {
+  id: string | number
+  status: number
+  [key: string]: any
+}
+
+defineProps<{
+  data: Position[]
+  loading: boolean
+}>()
+
+const emit = defineEmits<{
+  selectionChange: [selection: Position[]]
+  edit: [row: Position]
+  delete: [row: Position]
+}>()
+
+const handleSelectionChange = (selection: Position[]) => {
+  emit('selectionChange', selection)
+}
+
+const handleEdit = (row: Position) => {
+  emit('edit', row)
+}
+
+const handleDelete = (row: Position) => {
+  emit('delete', row)
 }
 </script>
 

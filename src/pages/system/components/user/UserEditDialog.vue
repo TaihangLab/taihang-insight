@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :title="dialogTitle"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="700px"
     @close="closeDialog"
   >
@@ -30,12 +30,8 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="归属部门" prop="dept_id">
-            <DeptTreeSelect
-              v-model="userForm.dept_id"
-              :tenant-id="tenantId"
-              :status="0"
-              placeholder="请选择归属部门"
-            />
+            <!-- DeptTreeSelect 暂时禁用 -->
+            <el-input v-model="userForm.dept_id_text" placeholder="请输入部门ID" type="number"></el-input>
           </el-form-item>
         </el-col>
       </el-row>
@@ -121,14 +117,13 @@
 </template>
 
 <script>
+import { ref } from 'vue'
 import SmartFillAssistant from '@/mock/components/SmartFillAssistant.vue'
-import DeptTreeSelect from '../commons/DeptTreeSelect.vue'
 
 export default {
   name: 'UserEditDialog',
   components: {
-    SmartFillAssistant,
-    DeptTreeSelect
+    SmartFillAssistant
   },
   props: {
     visible: {
@@ -147,11 +142,13 @@ export default {
   data() {
     return {
       userForm: {
+        tenant_id: 1, // Default tenant ID
         user_name: '',
         nick_name: '',
         phone: '',
         email: '',
-        dept_id: [],
+        dept_id: null,
+        dept_id_text: '',
         password: '',
         gender: null,
         status: 0,
@@ -193,7 +190,9 @@ export default {
         if (newVal) {
           this.userForm = {
             ...newVal,
-            dept_id: newVal.dept_id ? [newVal.dept_id] : [],
+            tenant_id: newVal.tenant_id || this.tenantId,
+            dept_id: newVal.dept_id || null,
+            dept_id_text: newVal.dept_id ? String(newVal.dept_id) : '',
             password: '',
             gender: this.normalizeGenderValue(newVal.gender),
             position: newVal.position || '',
@@ -206,14 +205,23 @@ export default {
       immediate: true
     }
   },
+  mounted() {
+    // Initialize tenant_id from prop - only if it's a number
+    // Backend expects int or null, not string
+    if (this.tenantId && typeof this.tenantId === 'number' && !this.userForm.tenant_id) {
+      this.userForm.tenant_id = this.tenantId
+    }
+  },
   methods: {
     resetForm() {
       this.userForm = {
+        tenant_id: (typeof this.tenantId === 'number') ? this.tenantId : 1, // Default to tenant 1
         user_name: '',
         nick_name: '',
         phone: '',
         email: '',
-        dept_id: [],
+        dept_id: null,
+        dept_id_text: '',
         password: '',
         gender: null,
         status: 0,
@@ -242,7 +250,19 @@ export default {
     submitForm() {
       this.$refs.userForm.validate((valid) => {
         if (valid) {
-          this.$emit('submit', { ...this.userForm })
+          // Transform data to match backend API
+          const submitData = { ...this.userForm }
+          // Remove dept_id_text (not used by backend)
+          delete submitData.dept_id_text
+          // Remove position field (backend expects position_id which is optional)
+          delete submitData.position
+          // Convert dept_id to number or null
+          if (submitData.dept_id === '') {
+            submitData.dept_id = null
+          } else if (submitData.dept_id !== null) {
+            submitData.dept_id = parseInt(submitData.dept_id) || null
+          }
+          this.$emit('submit', submitData)
         }
       })
     },
@@ -263,22 +283,24 @@ export default {
       try {
         // 直接填充测试数据
         const testData = {
+          tenant_id: 1, // Default tenant ID (required by backend, 0 is invalid)
           user_name: 'testuser' + Math.floor(Math.random() * 10000),
           nick_name: '测试用户' + Math.floor(Math.random() * 10000),
           phone: '138' + Math.floor(100000000 + Math.random() * 900000000).toString().substring(0, 8),
           email: 'test' + Math.floor(Math.random() * 10000) + '@example.com',
-          dept_id: [],  // 部门由用户手动选择
+          dept_id: null,
+          dept_id_text: '',
           password: 'TestPass123!',
           gender: [0, 1, 2][Math.floor(Math.random() * 3)],
           status: Math.round(Math.random()),
-          position: ['developer', 'tester', 'pm', 'designer', 'ops'][Math.floor(Math.random() * 5)],
+          position: '',
           remark: '这是测试用户的备注信息'
         };
 
         // 将测试数据填充到表单
         Object.keys(testData).forEach(key => {
           if (this.userForm.hasOwnProperty(key)) {
-            this.$set(this.userForm, key, testData[key]);
+            this.userForm[key] = testData[key];
           }
         });
 

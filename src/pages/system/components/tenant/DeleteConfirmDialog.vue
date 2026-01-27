@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     title="确认删除"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="400px"
     @close="handleClose"
   >
@@ -16,52 +16,48 @@
   </el-dialog>
 </template>
 
-<script>
-export default {
-  name: 'DeleteConfirmDialog',
-  props: {
-    visible: {
-      type: Boolean,
-      default: false
-    },
-    targetName: {
-      type: String,
-      default: ''
-    },
-    targetType: {
-      type: String,
-      default: 'single', // 'single' | 'batch'
-      validator: (value) => ['single', 'batch'].includes(value)
-    }
-  },
-  computed: {
-    dialogVisible: {
-      get() {
-        return this.visible
-      },
-      set(value) {
-        this.$emit('update:visible', value)
-      }
-    },
-    message() {
-      if (this.targetType === 'batch') {
-        return `确定要删除选中的 ${this.targetName} 个租户吗？此操作不可恢复。`
-      }
-      return `确定要删除租户"${this.targetName}"吗？此操作不可恢复。`
-    }
-  },
-  methods: {
-    handleConfirm() {
-      this.$emit('confirm')
-      this.dialogVisible = false
-    },
-    handleCancel() {
-      this.dialogVisible = false
-    },
-    handleClose() {
-      this.dialogVisible = false
-    }
+<script setup lang="ts">
+import { computed } from 'vue'
+
+const props = withDefaults(
+  defineProps<{
+    visible: boolean
+    targetName: string
+    targetType?: 'single' | 'batch'
+  }>(),
+  {
+    targetType: 'single'
   }
+)
+
+const emit = defineEmits<{
+  'update:visible': [value: boolean]
+  confirm: []
+}>()
+
+const dialogVisible = computed({
+  get: () => props.visible,
+  set: (value) => emit('update:visible', value)
+})
+
+const message = computed(() => {
+  if (props.targetType === 'batch') {
+    return `确定要删除选中的 ${props.targetName} 个租户吗？此操作不可恢复。`
+  }
+  return `确定要删除租户"${props.targetName}"吗？此操作不可恢复。`
+})
+
+const handleConfirm = () => {
+  emit('confirm')
+  dialogVisible.value = false
+}
+
+const handleCancel = () => {
+  dialogVisible.value = false
+}
+
+const handleClose = () => {
+  dialogVisible.value = false
 }
 </script>
 

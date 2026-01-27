@@ -1,136 +1,264 @@
 /**
  * 铜矿峪矿综合管控平台 UI 主题配置
  *
- * 统一项目整体样式，使用 Element Plus CSS 变量主题系统
+ * 统一项目整体样式，使用 CSS 变量主题系统
  * 基于设计规范文档: docs/ui-design-specs.md
  *
  * 设计理念: "科技、专业、高效、安全"
+ *
+ * ==============================================
+ * 重要说明: 这是唯一的颜色配置源
+ * - Element Plus 主题变量引用这里定义的变量
+ * - UnoCSS 配置引用这里定义的变量
+ * - 修改颜色值只需在本文档中修改一处
+ * ==============================================
  */
 
 /* ================================
-   Element Plus 主题 CSS 变量
+   1. 设计系统核心变量（单一配置源）
+   ================================ */
+
+:root {
+  /* ========== 主色调 Primary Color ========== */
+  /* 科技蓝 - 主要按钮、链接、强调元素 */
+  --design-primary-color: #4185F7;
+  /* 深蓝色 - 主色悬停状态 */
+  --design-primary-hover: #2d5fd9;
+  /* 浅蓝色 - 主色背景、浅色遮罩 */
+  --design-primary-light: #e9f3ff;
+  /* 透明浅色 - 主色 10% 透明度 */
+  --design-primary-lighter: rgba(65, 133, 247, 0.1);
+
+  /* ========== 辅助色 Functional Colors ========== */
+  /* 成功绿 - 成功提示、启用状态 */
+  --design-success-color: #67C23A;
+  /* 成功浅色背景 */
+  --design-success-light: #f0f9ff;
+
+  /* 警告橙 - 警告提示、待处理状态 */
+  --design-warning-color: #E6A23C;
+  /* 警告浅色背景 */
+  --design-warning-light: #fef3c7;
+
+  /* 危险红 - 危险操作、删除、错误状态 */
+  --design-danger-color: #F56C6C;
+  /* 危险浅色背景 */
+  --design-danger-light: #fef2f2;
+
+  /* 信息灰 - 信息提示、中性状态（注意：设计规范中为灰色） */
+  --design-info-color: #909399;
+  /* 信息浅色背景 */
+  --design-info-light: #f3f4f6;
+
+  /* ========== 中性色 Neutral Colors ========== */
+  /* 深灰 - 主文本、标题、重要文本 */
+  --design-text-primary: #1F2937;
+  /* 中灰 - 次文本、普通文本 */
+  --design-text-secondary: #6B7280;
+  /* 浅灰 - 辅助文本、提示信息、占位符 */
+  --design-text-tertiary: #9CA3AF;
+  /* 极浅灰 - 禁用文本 */
+  --design-text-disabled: #D1D5DB;
+
+  /* 极浅灰 - 边框、分割线 */
+  --design-border-color: #E5E7EB;
+  /* 浅灰背景 - 悬停状态背景 */
+  --design-bg-hover: #F3F4F6;
+  /* 浅背景 - 次级背景 */
+  --design-bg-secondary: #F9FAFB;
+  /* 白色 - 主背景 */
+  --design-bg-primary: #FFFFFF;
+
+  /* ========== 渐变色 Gradients ========== */
+  /* 主色渐变 - 主按钮、卡片装饰 */
+  --design-gradient-primary: linear-gradient(135deg, #4185F7 0%, #2d5fd9 100%);
+  /* 背景渐变 - 页面背景 */
+  --design-gradient-background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  /* 卡片渐变 - 卡片背景 */
+  --design-gradient-card: linear-gradient(180deg, #ffffff 0%, #f5f7fa 100%);
+
+  /* ========== 图表色板 Chart Colors ========== */
+  --design-chart-color-1: #4185F7;  /* 蓝色 */
+  --design-chart-color-2: #67C23A;  /* 绿色 */
+  --design-chart-color-3: #E6A23C;  /* 橙色 */
+  --design-chart-color-4: #F56C6C;  /* 红色 */
+  --design-chart-color-5: #909399;  /* 灰色 */
+  --design-chart-color-6: #9C27B0;  /* 紫色 */
+
+  /* ========== 字体家族 Font Family ========== */
+  --design-font-family-base: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --design-font-family-mono: "SF Mono", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace;
+  --design-font-family-number: "DIN Alternate", "Roboto", "Helvetica Neue", Arial, sans-serif;
+
+  /* ========== 字体大小 Font Size (按照设计规范) ========== */
+  --design-font-size-xs: 12px;   /* 辅助文字 */
+  --design-font-size-sm: 14px;   /* 正文 */
+  --design-font-size-md: 16px;   /* 小标题 */
+  --design-font-size-lg: 20px;   /* 中标题 */
+  --design-font-size-xl: 24px;   /* 大标题 */
+
+  /* ========== 行高 Line Height ========== */
+  --design-line-height-xs: 20px;
+  --design-line-height-sm: 22px;
+  --design-line-height-md: 24px;
+  --design-line-height-lg: 28px;
+  --design-line-height-xl: 32px;
+
+  /* ========== 字重 Font Weight ========== */
+  --design-font-weight-light: 300;
+  --design-font-weight-normal: 400;
+  --design-font-weight-medium: 500;
+  --design-font-weight-semibold: 600;
+  --design-font-weight-bold: 700;
+
+  /* ========== 间距 Spacing (基于 8px 基础单位) ========== */
+  --design-spacing-xs: 4px;     /* 紧凑元素间距 */
+  --design-spacing-sm: 8px;     /* 小元素间距 */
+  --design-spacing-md: 16px;    /* 基础间距 */
+  --design-spacing-lg: 24px;    /* 区块间距 */
+  --design-spacing-xl: 32px;    /* 页面级间距 */
+  --design-spacing-2xl: 48px;   /* 大区块间距 */
+
+  /* ========== 圆角 Border Radius ========== */
+  --design-radius-sm: 4px;      /* 小圆角 - 小标签、徽章 */
+  --design-radius-md: 8px;      /* 基础圆角 - 按钮、标签 */
+  --design-radius-lg: 12px;     /* 中圆角 - 普通卡片、输入框 */
+  --design-radius-xl: 16px;     /* 大圆角 - 大卡片、模态框 */
+  --design-radius-full: 50%;    /* 圆形 - 头像、圆形按钮 */
+
+  /* ========== 阴影 Box Shadow ========== */
+  --design-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --design-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --design-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --design-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --design-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* 主色调阴影 */
+  --design-shadow-primary: 0 4px 12px rgba(65, 133, 247, 0.3);
+  --design-shadow-primary-hover: 0 6px 16px rgba(65, 133, 247, 0.4);
+
+  /* ========== 过渡动画 Transition ========== */
+  --design-transition-fast: 0.15s;
+  --design-transition-base: 0.3s;
+  --design-transition-slow: 0.5s;
+
+  /* ========== 缓动函数 Easing ========== */
+  --design-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --design-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --design-ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ========== 布局尺寸 Layout ========== */
+  --design-header-height: 56px;
+  --design-sidebar-width: 224px;
+  --design-sidebar-collapsed-width: 64px;
+
+  /* ========== Z-index 层级 ========== */
+  --design-z-dropdown: 1000;
+  --design-z-sticky: 1020;
+  --design-z-fixed: 1030;
+  --design-z-modal-backdrop: 1040;
+  --design-z-modal: 1050;
+  --design-z-popover: 1060;
+  --design-z-tooltip: 1070;
+
+  /* ========== 响应式断点 Breakpoints ========== */
+  --design-breakpoint-xs: 480px;
+  --design-breakpoint-sm: 576px;
+  --design-breakpoint-md: 768px;
+  --design-breakpoint-lg: 992px;
+  --design-breakpoint-xl: 1200px;
+  --design-breakpoint-xxl: 1600px;
+}
+
+/* ================================
+   2. Element Plus 主题变量（引用设计系统变量）
    ================================ */
 
 :root {
   /* ===== 主色调 Primary Color ===== */
-  /* 科技蓝 - 主色 */
-  --el-color-primary: #4185F7;
-  /* 主色悬停状态 */
+  --el-color-primary: var(--design-primary-color);
+  /* 主色浅色渐变 (light-9 最浅) */
   --el-color-primary-light-3: #5a96f8;
   --el-color-primary-light-5: #82aafa;
   --el-color-primary-light-7: #a9befc;
   --el-color-primary-light-8: #bdd0fb;
-  --el-color-primary-light-9: #e9f3ff;
+  --el-color-primary-light-9: var(--design-primary-light);
   /* 主色深色状态 */
-  --el-color-primary-dark-2: #2d5fd9;
+  --el-color-primary-dark-2: var(--design-primary-hover);
 
   /* ===== 功能色 Functional Colors ===== */
-
-  /* Success 成功色 - 启用、在线、成功 */
-  --el-color-success: #67C23A;
-  --el-color-success-light-3: #85ce61;
-  --el-color-success-light-5: #a0da9b;
-  --el-color-success-light-7: #bbe6c1;
-  --el-color-success-light-8: #d3edce;
-  --el-color-success-light-9: #f0f9ff;
+  --el-color-success: var(--design-success-color);
+  --el-color-success-light-9: var(--design-success-light);
   --el-color-success-dark-2: #529b2e;
 
-  /* Warning 警告色 - 待审核、即将过期 */
-  --el-color-warning: #E6A23C;
-  --el-color-warning-light-3: #ebb563;
-  --el-color-warning-light-5: #f0d28a;
-  --el-color-warning-light-7: #f5dfaa;
-  --el-color-warning-light-8: #fae8c3;
-  --el-color-warning-light-9: #fef3c7;
+  --el-color-warning: var(--design-warning-color);
+  --el-color-warning-light-9: var(--design-warning-light);
   --el-color-warning-dark-2: #c37e22;
 
-  /* Danger 危险色 - 停用、错误、离线 */
-  --el-color-danger: #F56C6C;
-  --el-color-danger-light-3: #f89898;
-  --el-color-danger-light-5: #fab6b6;
-  --el-color-danger-light-7: #fcd3d3;
-  --el-color-danger-light-8: #fde2e2;
-  --el-color-danger-light-9: #fef2f2;
+  --el-color-danger: var(--design-danger-color);
+  --el-color-danger-light-9: var(--design-danger-light);
   --el-color-danger-dark-2: #c94a4a;
 
-  /* Error 错误色 (与 danger 相同) */
-  --el-color-error: #F56C6C;
-  --el-color-error-light-3: #f89898;
-  --el-color-error-light-5: #fab6b6;
-  --el-color-error-light-7: #fcd3d3;
-  --el-color-error-light-8: #fde2e2;
-  --el-color-error-light-9: #fef2f2;
+  --el-color-error: var(--design-danger-color);
+  --el-color-error-light-9: var(--design-danger-light);
   --el-color-error-dark-2: #c94a4a;
 
-  /* Info 信息色 - 中性、处理中 */
-  --el-color-info: #909399;
-  --el-color-info-light-3: #a6a9ad;
-  --el-color-info-light-5: #b8bcc2;
-  --el-color-info-light-7: #c8cccf;
-  --el-color-info-light-8: #d2d5d8;
-  --el-color-info-light-9: #dfe1e3;
+  --el-color-info: var(--design-info-color);
+  --el-color-info-light-9: var(--design-info-light);
   --el-color-info-dark-2: #747f8a;
 
   /* ===== 中性色 Neutral Colors ===== */
-  --el-color-white: #ffffff;
+  --el-color-white: var(--design-bg-primary);
 
   /* Text 文本色 */
-  --el-text-color-primary: #1F2937;      /* 深灰 - 主文本 */
-  --el-text-color-regular: #6B7280;      /* 中灰 - 次文本 */
-  --el-text-color-secondary: #9CA3AF;    /* 浅灰 - 辅助文本 */
-  --el-text-color-placeholder: #D1D5DB;  /* 极浅灰 - 占位符 */
+  --el-text-color-primary: var(--design-text-primary);
+  --el-text-color-regular: var(--design-text-secondary);
+  --el-text-color-secondary: var(--design-text-tertiary);
+  --el-text-color-placeholder: var(--design-text-disabled);
 
   /* Border 边框色 */
-  --el-border-color: #E5E7EB;           /* 极浅灰 - 边框 */
-  --el-border-color-light: #F3F4F6;       /* 悬停背景 - 边框 */
-  --el-border-color-lighter: #F9FAFB;     /* 浅背景 - 边框 */
+  --el-border-color: var(--design-border-color);
+  --el-border-color-light: var(--design-bg-hover);
+  --el-border-color-lighter: var(--design-bg-secondary);
   --el-border-color-extra-light: #f9f9f9;
-  --el-border-color-dark: #D1D5DB;        /* 深边框 */
-  --el-border-color-darker: #9CA3AF;      /* 更深边框 */
+  --el-border-color-dark: var(--design-text-disabled);
+  --el-border-color-darker: var(--design-text-tertiary);
 
   /* Fill 填充色 */
-  --el-fill-color: #F3F4F6;              /* 悬停背景 */
-  --el-fill-color-light: #F9FAFB;         /* 浅背景 */
+  --el-fill-color: var(--design-bg-hover);
+  --el-fill-color-light: var(--design-bg-secondary);
   --el-fill-color-lighter: #fafafa;
   --el-fill-color-extra-light: #fafbfc;
-  --el-fill-color-dark: #E5E7EB;         /* 深填充 */
-  --el-fill-color-darker: #D1D5DB;
+  --el-fill-color-dark: var(--design-border-color);
+  --el-fill-color-darker: var(--design-text-disabled);
 
   /* Background 背景色 */
-  --el-bg-color: #F9FAFB;                /* 次级背景 */
-  --el-bg-color-page: #F9FAFB;            /* 页面背景 */
+  --el-bg-color: var(--design-bg-secondary);
+  --el-bg-color-page: var(--design-bg-secondary);
 
   /* ===== 字体 Typography ===== */
-  /* 字号 */
   --el-font-size-base: 13px;
   --el-font-size-small: 12px;
   --el-font-size-large: 13px;
   --el-font-size-extra-large: 16px;
 
-  /* 字体家族 - 兼容中文 */
-  --el-font-family: '"PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif';
-  --el-font-family-primary: '"PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif';
-  --el-font-family-secondary: '"PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif';
-
-  /* 数字专用字体 */
-  --font-family-number: '"DIN Alternate", "Roboto", "Helvetica Neue", Arial, sans-serif';
-  --font-family-mono: '"SF Mono", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace';
+  --el-font-family: var(--design-font-family-base);
 
   /* ===== 边框圆角 Border Radius ===== */
-  --el-border-radius-base: 8px;          /* 基础圆角 - 按钮、标签 */
-  --el-border-radius-small: 4px;         /* 小圆角 - 小标签、徽章 */
-  --el-border-radius-round: 20px;        /* 圆角按钮 */
-  --el-border-radius-circle: 100%;       /* 圆形 - 头像、圆形按钮 */
+  --el-border-radius-base: var(--design-radius-md);
+  --el-border-radius-small: var(--design-radius-sm);
+  --el-border-radius-round: 20px;
+  --el-border-radius-circle: var(--design-radius-full);
 
   /* ===== 阴影 Shadow ===== */
-  --el-box-shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  --el-box-shadow-dark: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.1);
-  --el-box-shadow-light: 0 0 12px rgba(0, 0, 0, 0.12);
-  --el-box-shadow-lighter: 0 0 6px rgba(0, 0, 0, 0.12);
+  --el-box-shadow-base: var(--design-shadow-sm);
+  --el-box-shadow-dark: var(--design-shadow-md);
+  --el-box-shadow-light: var(--design-shadow-lg);
+  --el-box-shadow-lighter: var(--design-shadow-sm);
 
   /* ===== 过渡动画 Transition ===== */
-  --el-transition-duration: 0.3s;
-  --el-transition-duration-fast: 0.15s;
+  --el-transition-duration: var(--design-transition-base);
+  --el-transition-duration-fast: var(--design-transition-fast);
 
   /* ===== 组件尺寸 Component Size ===== */
   --el-component-size-large: 40px;
@@ -139,147 +267,129 @@
 }
 
 /* ================================
-   设计系统 CSS 变量
-   与 Element Plus 保持一致，用于自定义组件
+   3. 别名变量（向后兼容，便于使用）
    ================================ */
 
 :root {
-  /* ========== 主色调 ========== */
-  --primary-color: #4185F7;
-  --primary-hover: #2d5fd9;
-  --primary-light: #e9f3ff;
-  --primary-lighter: rgba(65, 133, 247, 0.1);
+  /* 主色别名 */
+  --primary-color: var(--design-primary-color);
+  --primary-hover: var(--design-primary-hover);
+  --primary-light: var(--design-primary-light);
+  --primary-lighter: var(--design-primary-lighter);
 
-  /* ========== 功能色 ========== */
-  --success-color: #67C23A;
-  --warning-color: #E6A23C;
-  --danger-color: #F56C6C;
-  --info-color: #909399;
+  /* 功能色别名 */
+  --success-color: var(--design-success-color);
+  --warning-color: var(--design-warning-color);
+  --danger-color: var(--design-danger-color);
+  --info-color: var(--design-info-color);
 
-  /* ========== 文本颜色 ========== */
-  --text-primary: #1F2937;      /* 主文本 - 标题、重要文本 */
-  --text-secondary: #6B7280;    /* 次文本 - 普通文本 */
-  --text-tertiary: #9CA3AF;     /* 辅助文本 - 说明、占位符 */
-  --text-disabled: #D1D5DB;     /* 禁用文本 */
+  /* 文本色别名 */
+  --text-primary: var(--design-text-primary);
+  --text-secondary: var(--design-text-secondary);
+  --text-tertiary: var(--design-text-tertiary);
+  --text-disabled: var(--design-text-disabled);
 
-  /* ========== 背景颜色 ========== */
-  --bg-primary: #FFFFFF;        /* 主背景 */
-  --bg-secondary: #F9FAFB;      /* 次级背景 */
-  --bg-tertiary: #F3F4F6;       /* 悬停背景 */
+  /* 背景色别名 */
+  --bg-primary: var(--design-bg-primary);
+  --bg-secondary: var(--design-bg-secondary);
+  --bg-tertiary: var(--design-bg-hover);
 
-  /* ========== 边框颜色 ========== */
-  --border-color: #E5E7EB;      /* 边框 */
-  --border-color-light: #F3F4F6; /* 浅边框 */
+  /* 边框色别名 */
+  --border-color: var(--design-border-color);
+  --border-color-light: var(--design-bg-hover);
 
-  /* ========== 字体大小 ========== */
-  --font-size-xs: 12px;
-  --font-size-sm: 14px;
-  --font-size-base: 16px;
-  --font-size-lg: 20px;
-  --font-size-xl: 24px;
+  /* 渐变别名 */
+  --gradient-primary: var(--design-gradient-primary);
+  --gradient-background: var(--design-gradient-background);
+  --gradient-card: var(--design-gradient-card);
 
-  /* ========== 行高 ========== */
-  --line-height-xs: 20px;
-  --line-height-sm: 22px;
-  --line-height-base: 24px;
-  --line-height-lg: 28px;
-  --line-height-xl: 32px;
+  /* 字体别名 */
+  --font-family-base: var(--design-font-family-base);
+  --font-family-mono: var(--design-font-family-mono);
+  --font-family-number: var(--design-font-family-number);
 
-  /* ========== 字重 ========== */
-  --font-weight-light: 300;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
+  --font-size-base: var(--design-font-size-sm);
+  --font-size-xs: var(--design-font-size-xs);
+  --font-size-sm: var(--design-font-size-sm);
+  --font-size-md: var(--design-font-size-md);
+  --font-size-lg: var(--design-font-size-lg);
+  --font-size-xl: var(--design-font-size-xl);
 
-  /* ========== 间距 (基于 8px 基础单位) ========== */
-  --spacing-xs: 4px;      /* 0.5x */
-  --spacing-sm: 8px;      /* 1x */
-  --spacing-base: 16px;   /* 2x */
-  --spacing-lg: 24px;     /* 3x */
-  --spacing-xl: 32px;     /* 4x */
-  --spacing-2xl: 48px;    /* 6x */
+  /* 行高别名 */
+  --line-height-xs: var(--design-line-height-xs);
+  --line-height-sm: var(--design-line-height-sm);
+  --line-height-base: var(--design-line-height-md);
+  --line-height-lg: var(--design-line-height-lg);
+  --line-height-xl: var(--design-line-height-xl);
 
-  /* ========== 圆角 ========== */
-  --border-radius-sm: 4px;
-  --border-radius-base: 8px;
-  --border-radius-lg: 12px;
-  --border-radius-xl: 16px;
+  /* 字重别名 */
+  --font-weight-light: var(--design-font-weight-light);
+  --font-weight-normal: var(--design-font-weight-normal);
+  --font-weight-medium: var(--design-font-weight-medium);
+  --font-weight-semibold: var(--design-font-weight-semibold);
+  --font-weight-bold: var(--design-font-weight-bold);
 
-  /* ========== 阴影 ========== */
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  /* 间距别名 */
+  --spacing-xs: var(--design-spacing-xs);
+  --spacing-sm: var(--design-spacing-sm);
+  --spacing-base: var(--design-spacing-md);
+  --spacing-lg: var(--design-spacing-lg);
+  --spacing-xl: var(--design-spacing-xl);
+  --spacing-2xl: var(--design-spacing-2xl);
 
-  /* 主色调阴影 */
-  --shadow-primary: 0 4px 12px rgba(65, 133, 247, 0.3);
-  --shadow-primary-hover: 0 6px 16px rgba(65, 133, 247, 0.4);
+  /* 圆角别名 */
+  --border-radius-sm: var(--design-radius-sm);
+  --border-radius-base: var(--design-radius-md);
+  --border-radius-lg: var(--design-radius-lg);
+  --border-radius-xl: var(--design-radius-xl);
 
-  /* ========== 渐变 ========== */
-  --gradient-primary: linear-gradient(135deg, #4185F7 0%, #2d5fd9 100%);
-  --gradient-background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
-  --gradient-card: linear-gradient(180deg, #ffffff 0%, #f5f7fa 100%);
+  /* 阴影别名 */
+  --shadow-xs: var(--design-shadow-xs);
+  --shadow-sm: var(--design-shadow-sm);
+  --shadow-md: var(--design-shadow-md);
+  --shadow-lg: var(--design-shadow-lg);
+  --shadow-xl: var(--design-shadow-xl);
+  --shadow-primary: var(--design-shadow-primary);
+  --shadow-primary-hover: var(--design-shadow-primary-hover);
 
-  /* ========== 过渡时间 ========== */
-  --transition-fast: 0.15s;
-  --transition-base: 0.3s;
-  --transition-slow: 0.5s;
+  /* 过渡别名 */
+  --transition-fast: var(--design-transition-fast);
+  --transition-base: var(--design-transition-base);
+  --transition-slow: var(--design-transition-slow);
 
-  /* ========== 缓动函数 ========== */
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  /* 缓动函数别名 */
+  --ease-in-out: var(--design-ease-in-out);
+  --ease-out: var(--design-ease-out);
+  --ease-in: var(--design-ease-in);
 
-  /* ========== 布局 ========== */
-  --header-height: 56px;
-  --sidebar-width: 224px;
-  --sidebar-collapsed-width: 64px;
+  /* 布局别名 */
+  --header-height: var(--design-header-height);
+  --sidebar-width: var(--design-sidebar-width);
+  --sidebar-collapsed-width: var(--design-sidebar-collapsed-width);
 
-  /* ========== 菜单 ========== */
-  --menu-item-height: 60px;
-  --menu-icon-size: 16px;
-  --menu-icon-gap: 18px;
-  --submenu-indent: 20px;
+  /* Z-index 别名 */
+  --z-index-dropdown: var(--design-z-dropdown);
+  --z-index-sticky: var(--design-z-sticky);
+  --z-index-fixed: var(--design-z-fixed);
+  --z-index-modal-backdrop: var(--design-z-modal-backdrop);
+  --z-index-modal: var(--design-z-modal);
+  --z-index-popover: var(--design-z-popover);
+  --z-index-tooltip: var(--design-z-tooltip);
 
-  /* ========== 输入框 ========== */
-  --input-height: 32px;
-  --input-height-sm: 24px;
-  --input-border-radius: 8px;
-
-  /* ========== 按钮 ========== */
-  --button-height-sm: 32px;
-  --button-height-md: 40px;
-  --button-height-lg: 48px;
-
-  /* ========== 表格 ========== */
-  --table-header-height: 40px;
-  --table-row-height: 40px;
-
-  /* ========== Z-index 层级 ========== */
-  --z-index-dropdown: 1000;
-  --z-index-sticky: 1020;
-  --z-index-fixed: 1030;
-  --z-index-modal-backdrop: 1040;
-  --z-index-modal: 1050;
-  --z-index-popover: 1060;
-  --z-index-tooltip: 1070;
-
-  /* ========== 响应式断点 ========== */
-  --breakpoint-xs: 480px;
-  --breakpoint-sm: 576px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 992px;
-  --breakpoint-xl: 1200px;
-  --breakpoint-xxl: 1600px;
+  /* 断点别名 */
+  --breakpoint-xs: var(--design-breakpoint-xs);
+  --breakpoint-sm: var(--design-breakpoint-sm);
+  --breakpoint-md: var(--design-breakpoint-md);
+  --breakpoint-lg: var(--design-breakpoint-lg);
+  --breakpoint-xl: var(--design-breakpoint-xl);
+  --breakpoint-xxl: var(--design-breakpoint-xxl);
 }
 
 /* ================================
-   Element Plus 组件样式微调
+   4. Element Plus 组件样式微调
    ================================ */
 
-/* 按钮 Button - 统一高度和内边距 */
+/* 按钮 Button */
 .el-button {
   height: 32px;
   padding: 0 16px;
@@ -297,7 +407,7 @@
 }
 
 .el-button--primary:hover {
-  background: linear-gradient(135deg, #2d5fd9 0%, #1a45c9 100%);
+  background: linear-gradient(135deg, var(--design-primary-hover) 0%, #1a45c9 100%);
   box-shadow: var(--shadow-primary-hover);
   transform: translateY(-1px);
 }
@@ -319,11 +429,11 @@
   font-size: 16px;
 }
 
-/* 输入框 Input - 统一高度和圆角 */
+/* 输入框 Input */
 .el-input__inner {
   height: 32px;
   line-height: 32px;
-  border-radius: var(--input-border-radius);
+  border-radius: var(--border-radius-base);
   transition: all var(--transition-base) var(--ease-out);
 }
 
@@ -346,7 +456,7 @@
   line-height: 40px;
 }
 
-/* 表格 Table - 统一字体和行高 */
+/* 表格 Table */
 .el-table {
   font-size: 13px;
   border-radius: var(--border-radius-lg);
@@ -354,12 +464,12 @@
 }
 
 .el-table th.el-table__cell {
-  background: var(--gradient-background);
-  color: var(--text-primary);
-  font-weight: var(--font-weight-semibold);
+  background: var(--design-bg-secondary);
+  color: var(--design-text-primary);
+  font-weight: var(--design-font-weight-semibold);
   font-size: 13px;
   padding: 10px 12px;
-  border-bottom: 2px solid var(--border-color);
+  border-bottom: 1px solid var(--design-border-color);
 }
 
 .el-table td.el-table__cell {
@@ -372,7 +482,7 @@
   background-color: var(--primary-lighter) !important;
 }
 
-/* 表单 Form - 统一间距 */
+/* 表单 Form */
 .el-form-item {
   margin-bottom: 16px;
 }
@@ -383,7 +493,7 @@
   color: var(--text-primary);
 }
 
-/* 卡片 Card - 圆角和阴影 */
+/* 卡片 Card */
 .el-card {
   border: none;
   border-radius: var(--border-radius-lg);
@@ -431,7 +541,7 @@
   border-top: 1px solid var(--border-color);
 }
 
-/* 标签 Tag - 带图标支持 */
+/* 标签 Tag */
 .el-tag {
   border-radius: var(--border-radius-base);
   font-weight: var(--font-weight-medium);
@@ -474,7 +584,7 @@
 }
 
 /* ================================
-   全局样式重置
+   5. 全局样式重置
    ================================ */
 
 * {
@@ -489,10 +599,10 @@ body {
 }
 
 body {
-  font-family: var(--el-font-family);
-  font-size: var(--el-font-size-base);
-  color: var(--el-text-color-primary);
-  background-color: var(--el-bg-color-page);
+  font-family: var(--font-family-base);
+  font-size: 13px;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -519,7 +629,7 @@ body {
 }
 
 /* ================================
-   通用工具类
+   6. 通用工具类
    ================================ */
 
 /* 文本省略号 */
@@ -552,7 +662,7 @@ body {
 }
 
 /* ================================
-   状态样式
+   7. 状态样式类
    ================================ */
 
 /* 成功状态 */
@@ -561,7 +671,7 @@ body {
 }
 
 .status-success-bg {
-  background: var(--el-color-success-light-9);
+  background: var(--design-success-light);
   color: var(--success-color);
 }
 
@@ -571,7 +681,7 @@ body {
 }
 
 .status-warning-bg {
-  background: var(--el-color-warning-light-9);
+  background: var(--design-warning-light);
   color: var(--warning-color);
 }
 
@@ -581,7 +691,7 @@ body {
 }
 
 .status-danger-bg {
-  background: var(--el-color-danger-light-9);
+  background: var(--design-danger-light);
   color: var(--danger-color);
 }
 
@@ -591,6 +701,69 @@ body {
 }
 
 .status-info-bg {
-  background: var(--el-color-info-light-9);
+  background: var(--design-info-light);
   color: var(--info-color);
 }
+
+/* ================================
+   8. 侧边栏菜单样式修复
+   ================================ */
+
+/* 修复折叠菜单时子菜单弹出层定位问题 */
+/* 当侧边栏折叠时，子菜单弹出层应出现在侧边栏右侧 */
+
+/* 子菜单弹出层基础样式 */
+.el-menu--popup {
+  min-width: 180px !important;
+  padding: 4px 0 !important;
+  border-radius: var(--border-radius-base) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+/* 确保弹出菜单在折叠状态下正确显示在右侧 */
+.el-menu--vertical .el-menu--popup {
+  /* 当菜单折叠时，弹出菜单应该从侧边栏右侧开始 */
+  left: 64px !important;
+  margin-left: 0 !important;
+}
+
+/* 弹出菜单项样式 */
+.el-menu--popup .el-menu-item {
+  height: 40px;
+  line-height: 40px;
+  padding: 0 16px !important;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.el-menu--popup .el-menu-item:hover {
+  background-color: var(--bg-secondary) !important;
+  color: var(--primary-color) !important;
+}
+
+.el-menu--popup .el-menu-item.is-active {
+  background-color: var(--design-primary-light) !important;
+  color: var(--primary-color) !important;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 弹出菜单箭头 */
+.el-sub-menu__icon-arrow {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  transition: transform 0.3s;
+}
+
+/* 展开时箭头旋转 */
+.el-sub-menu.is-opened > .el-sub-menu__title .el-sub-menu__icon-arrow {
+  transform: rotate(90deg);
+  color: var(--primary-color);
+}
+
+/* ================================
+   9. 设计令牌（供 JavaScript 使用）
+   ================================ */
+
+/* 可以通过 JavaScript 获取的变量 */
+/* 示例: getComputedStyle(document.documentElement).getPropertyValue('--design-primary-color') */

@@ -48,7 +48,7 @@
       <div class="sync-logs">
         <div class="logs-header">
           <span class="logs-title">同步日志</span>
-          <el-button type="text" size="mini" @click="clearLogs" v-if="logs.length > 0">
+          <el-button link size="mini" @click="clearLogs" v-if="logs.length > 0">
             <i class="el-icon-delete"></i> 清空日志
           </el-button>
         </div>

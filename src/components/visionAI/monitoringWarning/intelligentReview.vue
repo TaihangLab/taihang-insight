@@ -142,7 +142,7 @@
         <el-table-column label="操作" width="150" align="center">
           <template #default="scope">
             <el-button
-              type="text"
+              link
               size="small"
               icon="el-icon-edit"
               @click="handleConfigReview(scope.row)"
@@ -151,7 +151,7 @@
             </el-button>
             <el-button
               v-if="scope.row.review_enabled"
-              type="text"
+              link
               size="small"
               icon="el-icon-close"
               style="color: #f56c6c;"

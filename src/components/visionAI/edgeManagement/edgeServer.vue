@@ -48,10 +48,10 @@
       <el-table-column label="操作" fixed="right" width="280" align="center">
         <template #default="{ row }">
           <div class="operation-buttons">
-            <el-button type="text" class="manage-btn" @click="handleManage(row)">管理</el-button>
-            <el-button type="text" class="authorize-btn" @click="handleAuthorize(row)">授权组织</el-button>
-            <el-button type="text" class="edit-btn" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="text" class="delete-btn" @click="handleDelete(row)">删除</el-button>
+            <el-button link class="manage-btn" @click="handleManage(row)">管理</el-button>
+            <el-button link class="authorize-btn" @click="handleAuthorize(row)">授权组织</el-button>
+            <el-button link class="edit-btn" @click="handleEdit(row)">编辑</el-button>
+            <el-button link class="delete-btn" @click="handleDelete(row)">删除</el-button>
           </div>
         </template>
       </el-table-column>

@@ -76,7 +76,7 @@
                   <div class="prompt-header">
                     <span>提示词模板</span>
                     <el-button 
-                      type="text" 
+                      link 
                       size="small" 
                       @click="useTemplate" 
                       class="template-btn">
@@ -190,7 +190,7 @@
                         <i class="el-icon-success"></i>
                         AI分析结果
                       </h4>
-                      <el-button type="text" size="small" icon="el-icon-copy-document" @click="copyResult">
+                      <el-button link size="small" icon="el-icon-copy-document" @click="copyResult">
                         复制结果
                       </el-button>
                     </div>
@@ -456,7 +456,7 @@
                         
                         <div class="add-condition-container">
                           <el-button 
-                            type="text" 
+                            link 
                             icon="el-icon-plus" 
                             @click="addCondition(groupIndex)" 
                             class="add-condition-btn">

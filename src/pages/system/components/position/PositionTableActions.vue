@@ -8,26 +8,27 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'PositionTableActions',
-  props: {
-    selectedCount: {
-      type: Number,
-      default: 0
-    }
-  },
-  methods: {
-    handleAdd() {
-      this.$emit('add')
-    },
-    handleBatchDelete() {
-      this.$emit('batch-delete')
-    },
-    handleExport() {
-      this.$emit('export')
-    }
-  }
+<script setup lang="ts">
+defineProps<{
+  selectedCount: number
+}>()
+
+const emit = defineEmits<{
+  add: []
+  batchDelete: []
+  export: []
+}>()
+
+const handleAdd = () => {
+  emit('add')
+}
+
+const handleBatchDelete = () => {
+  emit('batchDelete')
+}
+
+const handleExport = () => {
+  emit('export')
 }
 </script>
 

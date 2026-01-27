@@ -1,65 +1,65 @@
 import { createRouter, createWebHashHistory, type RouterOptions } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
-// 导入布局组件
+// 导入布局组件（保留同步，因为它是必须的）
 import Layout from '../layout/index.vue'
 
-// 导入页面组件
-import gbRecordDetail from '../components/visionAI/deviceManagement/managementPages/GBRecordDetail.vue'
-import login from '../components/Login.vue'
-import cloudRecordDetail from '../components/visionAI/deviceManagement/managementPages/CloudRecordDetail.vue'
-import deviceTree from '../components/common/DeviceTree.vue'
-import wasmPlayer from '../components/common/jessibuca.vue'
-import rtcPlayer from '../components/dialog/rtcPlayer.vue'
+// 使用懒加载导入页面组件 - 优化启动性能
+const gbRecordDetail = () => import('../components/visionAI/deviceManagement/managementPages/GBRecordDetail.vue')
+const login = () => import('../components/Login.vue')
+const cloudRecordDetail = () => import('../components/visionAI/deviceManagement/managementPages/CloudRecordDetail.vue')
+const deviceTree = () => import('../components/common/DeviceTree.vue')
+const wasmPlayer = () => import('../components/common/jessibuca.vue')
+const rtcPlayer = () => import('../components/dialog/rtcPlayer.vue')
 
 // 视觉AI - 可视化中心
-import visualCenter from '../components/visionAI/ivisualCenter/index.vue'
-import algorithmInference from '../components/visionAI/ivisualCenter/algorithmInference.vue'
-import parkManagement from '../components/visionAI/ivisualCenter/parkManagement.vue'
+const visualCenter = () => import('../components/visionAI/ivisualCenter/index.vue')
+const algorithmInference = () => import('../components/visionAI/ivisualCenter/algorithmInference.vue')
+const parkManagement = () => import('../components/visionAI/ivisualCenter/parkManagement.vue')
 
 // 监控预警
-import realTimeMonitoring from '../components/visionAI/monitoringWarning/realTimeMonitoring.vue'
-import statisticsAnalysis from '../components/visionAI/monitoringWarning/statisticsAnalysis.vue'
-import warningArchives from '../components/visionAI/monitoringWarning/warningArchives.vue'
-import warningManagement from '../components/visionAI/monitoringWarning/warningManagement.vue'
-import reviewRecords from '../components/visionAI/monitoringWarning/reviewRecords.vue'
-import intelligentReview from '../components/visionAI/monitoringWarning/intelligentReview.vue'
+const realTimeMonitoring = () => import('../components/visionAI/monitoringWarning/realTimeMonitoring.vue')
+const statisticsAnalysis = () => import('../components/visionAI/monitoringWarning/statisticsAnalysis.vue')
+const warningArchives = () => import('../components/visionAI/monitoringWarning/warningArchives.vue')
+const warningManagement = () => import('../components/visionAI/monitoringWarning/warningManagement.vue')
+const reviewRecords = () => import('../components/visionAI/monitoringWarning/reviewRecords.vue')
+const intelligentReview = () => import('../components/visionAI/monitoringWarning/intelligentReview.vue')
 
 // 设备管理
-import camera from '../components/visionAI/deviceManagement/camera.vue'
-import CameraManagementMain from '../components/visionAI/deviceManagement/CameraManagementMain.vue'
-import localVideo from '../components/visionAI/deviceManagement/localVideo.vue'
+const camera = () => import('../components/visionAI/deviceManagement/camera.vue')
+const CameraManagementMain = () => import('../components/visionAI/deviceManagement/CameraManagementMain.vue')
+const localVideo = () => import('../components/visionAI/deviceManagement/localVideo.vue')
 
 // 模型管理
-import modelList from '../components/visionAI/modelManagement/modelList.vue'
+const modelList = () => import('../components/visionAI/modelManagement/modelList.vue')
 
 // 技能管理
-import deviceSkills from '../components/visionAI/skillManagement/deviceSkills.vue'
-import multimodalLlmSkills from '../components/visionAI/skillManagement/multimodalLlmSkills.vue'
-import multimodalCreateDetail from '../components/visionAI/skillManagement/LlmSkillCreateDialogDetail.vue'
-import multimodalReview from '../components/visionAI/skillManagement/multimodalReview.vue'
-import multimodalReviewCreate from '../components/visionAI/skillManagement/multimodalReviewCreate.vue'
+const deviceSkills = () => import('../components/visionAI/skillManagement/deviceSkills.vue')
+const multimodalLlmSkills = () => import('../components/visionAI/skillManagement/multimodalLlmSkills.vue')
+const multimodalCreateDetail = () => import('../components/visionAI/skillManagement/LlmSkillCreateDialogDetail.vue')
+const multimodalReview = () => import('../components/visionAI/skillManagement/multimodalReview.vue')
+const multimodalReviewCreate = () => import('../components/visionAI/skillManagement/multimodalReviewCreate.vue')
 
 // 智能控制
-import logRecords from '../components/visionAI/smartControl/logRecords.vue'
+const logRecords = () => import('../components/visionAI/smartControl/logRecords.vue')
 
 // 边缘管理
-import edgeServer from '../components/visionAI/edgeManagement/edgeServer.vue'
-import edgeBox from '../components/visionAI/edgeManagement/edgeBox.vue'
+const edgeServer = () => import('../components/visionAI/edgeManagement/edgeServer.vue')
+const edgeBox = () => import('../components/visionAI/edgeManagement/edgeBox.vue')
 
 // 系统管理
-import applicationSettings from '../components/visionAI/systemManagement/applicationSettings.vue'
-import tenantManagement from '../pages/system/tenantManagement.vue'
-import userManagement from '../pages/system/userManagement.vue'
-import roleManagement from '../pages/system/roleManagement.vue'
-import roleAssignment from '../components/visionAI/systemManagement/rbac/roleAssignment.vue'
-import userAssignment from '../components/visionAI/systemManagement/rbac/userAssignment.vue'
-import departmentManagement from '../pages/system/departmentManagement.vue'
-import positionManagement from '../pages/system/positionManagement.vue'
-import profile from '../components/visionAI/systemManagement/profile.vue'
-import knowledgeBase from '../components/visionAI/systemManagement/knowledgeBase.vue'
-import knowledgeBaseDetail from '../components/visionAI/systemManagement/knowledgeBaseDetail.vue'
-import permissionManagement from '../pages/system/permissionManagement.vue'
+const applicationSettings = () => import('../components/visionAI/systemManagement/applicationSettings.vue')
+const tenantManagement = () => import('../pages/system/tenantManagement.vue')
+const userManagement = () => import('../pages/system/userManagement.vue')
+const roleManagement = () => import('../pages/system/roleManagement.vue')
+const roleAssignment = () => import('../components/visionAI/systemManagement/rbac/roleAssignment.vue')
+const userAssignment = () => import('../components/visionAI/systemManagement/rbac/userAssignment.vue')
+const departmentManagement = () => import('../pages/system/departmentManagement.vue')
+const positionManagement = () => import('../pages/system/positionManagement.vue')
+const profile = () => import('../components/visionAI/systemManagement/profile.vue')
+const knowledgeBase = () => import('../components/visionAI/systemManagement/knowledgeBase.vue')
+const knowledgeBaseDetail = () => import('../components/visionAI/systemManagement/knowledgeBaseDetail.vue')
+const permissionManagement = () => import('../pages/system/permissionManagement.vue')
 
 // 路由配置
 const routes: RouteRecordRaw[] = [

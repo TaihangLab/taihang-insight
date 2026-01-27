@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     title="提示"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="400px"
     @close="handleClose"
   >
@@ -14,8 +14,8 @@
         type="password"
         placeholder="请输入新密码"
         show-password
-        style="margin-top: 15px;">
-      </el-input>
+        style="margin-top: 15px;"
+      ></el-input>
     </div>
     <span slot="footer" class="dialog-footer">
       <el-button @click="handleCancel">取消</el-button>
@@ -24,60 +24,59 @@
   </el-dialog>
 </template>
 
-<script>
-export default {
-  name: 'ResetPasswordDialog',
-  props: {
-    visible: {
-      type: Boolean,
-      default: false
-    },
-    resetPasswordUser: {
-      type: Object,
-      default: null
-    }
-  },
-  data() {
-    return {
-      newPassword: ''
-    }
-  },
-  computed: {
-    dialogVisible: {
-      get() {
-        return this.visible
-      },
-      set(value) {
-        this.$emit('update:visible', value)
-      }
-    }
-  },
-  watch: {
-    visible(newVal) {
-      if (!newVal) {
-        this.newPassword = ''
-      }
-    }
-  },
-  methods: {
-    handleConfirm() {
-      if (!this.newPassword) {
-        this.$message({
-          message: '请输入新密码',
-          type: 'warning'
-        })
-        return
-      }
-      this.$emit('confirm', this.newPassword)
-      this.dialogVisible = false
-    },
-    handleCancel() {
-      this.dialogVisible = false
-    },
-    handleClose() {
-      this.dialogVisible = false
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+
+interface User {
+  user_name?: string
+  [key: string]: any
+}
+
+const props = defineProps<{
+  visible: boolean
+  resetPasswordUser: User | null
+}>()
+
+const emit = defineEmits<{
+  'update:visible': [value: boolean]
+  confirm: [password: string]
+}>()
+
+const newPassword = ref('')
+
+const dialogVisible = computed({
+  get: () => props.visible,
+  set: (value) => emit('update:visible', value)
+})
+
+watch(
+  () => props.visible,
+  (newVal) => {
+    if (!newVal) {
+      newPassword.value = ''
     }
   }
+)
+
+const handleConfirm = () => {
+  if (!newPassword.value) {
+    ElMessage({
+      message: '请输入新密码',
+      type: 'warning'
+    })
+    return
+  }
+  emit('confirm', newPassword.value)
+  dialogVisible.value = false
+}
+
+const handleCancel = () => {
+  dialogVisible.value = false
+}
+
+const handleClose = () => {
+  dialogVisible.value = false
 }
 </script>
 

@@ -10,26 +10,27 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'RoleTableActions',
-  props: {
-    selectedCount: {
-      type: Number,
-      default: 0
-    }
-  },
-  methods: {
-    handleAdd() {
-      this.$emit('add')
-    },
-    handleBatchDelete() {
-      this.$emit('batch-delete')
-    },
-    handleRefresh() {
-      this.$emit('refresh')
-    }
-  }
+<script setup lang="ts">
+defineProps<{
+  selectedCount: number
+}>()
+
+const emit = defineEmits<{
+  add: []
+  batchDelete: []
+  refresh: []
+}>()
+
+const handleAdd = () => {
+  emit('add')
+}
+
+const handleBatchDelete = () => {
+  emit('batchDelete')
+}
+
+const handleRefresh = () => {
+  emit('refresh')
 }
 </script>
 

@@ -4,7 +4,7 @@
     <div class="page-header">
       <div class="header-content">
         <div class="page-title">
-          <el-button type="text" icon="el-icon-arrow-left" @click="goBack" class="back-btn">
+          <el-button link icon="el-icon-arrow-left" @click="goBack" class="back-btn">
             返回设备列表
           </el-button>
           <div class="title-info">

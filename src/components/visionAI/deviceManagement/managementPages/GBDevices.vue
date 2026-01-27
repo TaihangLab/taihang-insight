@@ -249,7 +249,7 @@
                 </el-tooltip>
                 
                 <el-dropdown @command="(command) => handleMoreActions(command, row)" trigger="click">
-                  <el-button size="mini" type="text">
+                  <el-button size="mini" link>
                     更多<i class="el-icon-arrow-down el-icon--right"></i>
                   </el-button>
                   <el-dropdown-menu slot="dropdown">

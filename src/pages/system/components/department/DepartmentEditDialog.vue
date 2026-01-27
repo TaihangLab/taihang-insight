@@ -1,11 +1,11 @@
 <template>
   <el-dialog
     :title="dialogTitle"
-    :visible.sync="dialogVisible"
+    v-model="dialogVisible"
     width="600px"
     @close="closeDialog"
   >
-    <el-form :model="deptForm" :rules="deptRules" ref="deptForm" label-width="100px">
+    <el-form :model="deptForm" :rules="deptRules" ref="deptFormRef" label-width="100px">
       <el-row :gutter="20">
         <el-col :span="24">
           <el-form-item label="上级部门">
@@ -64,156 +64,166 @@
   </el-dialog>
 </template>
 
-<script>
-export default {
-  name: 'DepartmentEditDialog',
-  props: {
-    visible: {
-      type: Boolean,
-      default: false
-    },
-    currentDept: {
-      type: Object,
-      default: null
-    },
-    parentDeptOptions: {
-      type: Array,
-      default: () => []
-    }
-  },
-  data() {
-    return {
-      deptForm: {
-        id: null,
-        parent_id: null,
-        name: '',
-        sort_order: 0,
-        status: 0
-      }
-    }
-  },
-  computed: {
-    dialogVisible: {
-      get() {
-        return this.visible
-      },
-      set(value) {
-        this.$emit('update:visible', value)
-      }
-    },
-    dialogTitle() {
-      if (this.currentDept && this.currentDept.isSubDept) {
-        return '添加子部门'
-      }
-      return this.currentDept ? '编辑部门' : '添加部门'
-    },
-    isEdit() {
-      return !!this.currentDept && !this.currentDept.isSubDept
-    },
-    deptRules() {
-      const rules = {
-        name: [
-          { required: true, message: '请输入部门名称', trigger: 'blur' },
-          { min: 2, max: 30, message: '部门名称长度在2到30个字符', trigger: 'blur' }
-        ],
-        sort_order: [
-          { required: true, message: '请输入显示排序', trigger: 'blur' }
-        ]
-      };
+<script setup lang="ts">
+import { ref, reactive, computed, watch, nextTick } from 'vue'
+import type { FormInstance } from 'element-plus'
 
-      return rules;
-    },
-    parentDeptOptionsWithNone() {
-      // 直接使用从API获取的树形结构数据，添加"无上级部门"选项
-      const noneOption = { id: null, name: '无上级部门', value: null, label: '无上级部门' };
-      return [noneOption, ...this.parentDeptOptions.slice(1)]; // 跳过原有的"无上级部门"选项
-    },
-    parentDeptOptionsWithTreeStructure() {
-      // 为el-cascader准备数据，确保树形结构正确
-      const noneOption = {
-        id: 0,  // 使用 0 而不是 null，与后端数据保持一致
-        name: '无上级部门',
-        value: 0,
-        label: '无上级部门',
-        children: []
-      };
+interface DeptForm {
+  id: string | number | null
+  parent_id: number | null
+  name: string
+  sort_order: number
+  status: number
+}
 
-      // 过滤掉"无上级部门"选项（如果存在于parentDeptOptions中），然后添加到前面
-      // 递归转换，确保所有id都是数字类型
-      const filteredOptions = this.parentDeptOptions
-        .filter(option => option.id !== null && option.id !== 0)
-        .map(option => this.convertOptionToNumber(option));
-      
-      return [noneOption, ...filteredOptions];
-    },
-    cascaderProps() {
-      return {
-        value: 'id',
-        label: 'name',
-        children: 'children',
-        checkStrictly: true, // 允许选择任意一级
-        emitPath: false, // 只返回选中节点的值，而不是路径
-        expandTrigger: 'hover'
-      }
-    }
-  },
-  watch: {
-    currentDept: {
-      handler(newVal) {
-         console.log('DepartmentEditDialog - currentDept:', newVal);
-        if (newVal) {
-          this.deptForm =  newVal
-          console.log('DepartmentEditDialog - deptForm:', this.deptForm);
-        } else {
-          this.resetForm()
-        }
-      },
-      immediate: true
-    }
-  },
-  methods: {
-    // 递归转换选项的id为数字类型
-    convertOptionToNumber(option) {
-      const converted = {
-        ...option,
-        id: option.id !== null ? parseInt(option.id) : null,
-        value: option.value !== null ? parseInt(option.value) : null
-      };
-      
-      if (option.children && option.children.length > 0) {
-        converted.children = option.children.map(child => this.convertOptionToNumber(child));
-      }
-      
-      return converted;
-    },
-    resetForm() {
-      this.deptForm = {
-        id: null,
-        parent_id: null,
-        name: '',
-        sort_order: 0,
-        status: 0
-      }
-    },
-    submitForm() {
-      this.$refs.deptForm.validate((valid) => {
-        if (valid) {
-          this.$emit('submit', { ...this.deptForm })
-        }
-      })
-    },
-    closeDialog() {
-      this.$emit('update:visible', false)
-      this.$nextTick(() => {
-        if (this.$refs.deptForm) {
-          this.$refs.deptForm.clearValidate()
-        }
-      })
-    },
-    cancel() {
-      this.closeDialog()
-    }
+interface DeptOption {
+  id: number | string | null
+  name: string
+  value?: number | string | null
+  label?: string
+  children?: DeptOption[]
+  [key: string]: any
+}
+
+interface CurrentDept {
+  id?: string | number
+  isSubDept?: boolean
+  [key: string]: any
+}
+
+const props = withDefaults(
+  defineProps<{
+    visible: boolean
+    currentDept: CurrentDept | null
+    parentDeptOptions: DeptOption[]
+  }>(),
+  {
+    parentDeptOptions: () => []
   }
+)
+
+const emit = defineEmits<{
+  'update:visible': [value: boolean]
+  submit: [data: DeptForm]
+}>()
+
+const deptFormRef = ref<FormInstance>()
+
+const deptForm = reactive<DeptForm>({
+  id: null,
+  parent_id: null,
+  name: '',
+  sort_order: 0,
+  status: 0
+})
+
+const dialogVisible = computed({
+  get: () => props.visible,
+  set: (value) => emit('update:visible', value)
+})
+
+const dialogTitle = computed(() => {
+  if (props.currentDept && props.currentDept.isSubDept) {
+    return '添加子部门'
+  }
+  return props.currentDept ? '编辑部门' : '添加部门'
+})
+
+const isEdit = computed(() => !!props.currentDept && !props.currentDept.isSubDept)
+
+const deptRules = {
+  name: [
+    { required: true, message: '请输入部门名称', trigger: 'blur' },
+    { min: 2, max: 30, message: '部门名称长度在2到30个字符', trigger: 'blur' }
+  ],
+  sort_order: [
+    { required: true, message: '请输入显示排序', trigger: 'blur' }
+  ]
+}
+
+const cascaderProps = {
+  value: 'id',
+  label: 'name',
+  children: 'children',
+  checkStrictly: true,
+  emitPath: false,
+  expandTrigger: 'hover' as const
+}
+
+const parentDeptOptionsWithTreeStructure = computed(() => {
+  const noneOption: DeptOption = {
+    id: 0,
+    name: '无上级部门',
+    value: 0,
+    label: '无上级部门',
+    children: []
+  }
+
+  const filteredOptions = props.parentDeptOptions
+    .filter((option) => option.id !== null && option.id !== 0)
+    .map((option) => convertOptionToNumber(option))
+
+  return [noneOption, ...filteredOptions]
+})
+
+const convertOptionToNumber = (option: DeptOption): DeptOption => {
+  const converted: DeptOption = {
+    ...option,
+    id: option.id !== null ? Number(option.id) : null,
+    value: option.value !== null ? Number(option.value) : null
+  }
+
+  if (option.children && option.children.length > 0) {
+    converted.children = option.children.map((child) => convertOptionToNumber(child))
+  }
+
+  return converted
+}
+
+const resetForm = () => {
+  Object.assign(deptForm, {
+    id: null,
+    parent_id: null,
+    name: '',
+    sort_order: 0,
+    status: 0
+  })
+}
+
+watch(
+  () => props.currentDept,
+  (newVal) => {
+    console.log('DepartmentEditDialog - currentDept:', newVal)
+    if (newVal) {
+      Object.assign(deptForm, newVal)
+      console.log('DepartmentEditDialog - deptForm:', deptForm)
+    } else {
+      resetForm()
+    }
+  },
+  { immediate: true }
+)
+
+const submitForm = async () => {
+  if (!deptFormRef.value) return
+
+  const valid = await deptFormRef.value.validate()
+  if (valid) {
+    emit('submit', { ...deptForm })
+  }
+}
+
+const closeDialog = () => {
+  emit('update:visible', false)
+  nextTick(() => {
+    if (deptFormRef.value) {
+      deptFormRef.value.clearValidate()
+    }
+  })
+}
+
+const cancel = () => {
+  closeDialog()
 }
 </script>
 

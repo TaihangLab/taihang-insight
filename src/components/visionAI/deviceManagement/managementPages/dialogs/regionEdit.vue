@@ -50,7 +50,7 @@
             <div style="text-align: center">{{ allVal[3].meaning }}</div>
           </div>
           <el-input
-            type="text"
+            link
             placeholder="请输入内容"
             v-model="allVal[3].val"
             maxlength="2"

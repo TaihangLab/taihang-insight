@@ -50,14 +50,14 @@
     </div>
 
     <!-- 修改密码对话框 -->
-    <changePasswordDialog ref="changePasswordDialog"></changePasswordDialog>
+    <change-password-dialog ref="changePasswordDialogRef"></change-password-dialog>
   </div>
 </template>
 
-<script>
-import changePasswordDialog from '../components/dialog/changePassword.vue'
-import userService from '../components/service/UserService.js'
-import RBACService from '../components/service/RBACService.js'
+<script setup lang="ts">
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Clock,
   User,
@@ -67,150 +67,190 @@ import {
   Delete,
   SwitchButton
 } from '@element-plus/icons-vue'
+import ChangePasswordDialog from '../components/dialog/changePassword.vue'
+import userService from '../components/service/UserService.js'
+import RBACService from '../components/service/RBACService.js'
 
-export default {
-  name: "UiHeader",
-  components: {
-    changePasswordDialog,
-    Clock,
-    User,
-    UserFilled,
-    ArrowDown,
-    Key,
-    Delete,
-    SwitchButton
-  },
-  data() {
-    return {
-      username: userService.getUser().username || '访客',
-      isLoggedIn: userService.getToken() != null,
-      currentTime: '',
-      currentMenuName: '',
-      currentPageName: ''
-    };
-  },
-  created() {
-    this.updateTime();
-    this.updateBreadcrumb();
-    // 每秒更新时间
-    setInterval(this.updateTime, 1000);
-  },
-  watch: {
-    $route() {
-      this.updateBreadcrumb();
-    }
-  },
-  methods: {
-    updateTime() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      this.currentTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    },
-    updateBreadcrumb() {
-      const path = this.$route.path;
-      const routeMap = {
-        '/monitoring': { menu: '监控预警', page: '' },
-        '/monitoring/realtime': { menu: '监控预警', page: '实时监控' },
-        '/monitoring/statistics': { menu: '监控预警', page: '统计分析' },
-        '/monitoring/warningArchive': { menu: '监控预警', page: '预警档案' },
-        '/monitoring/warningManage': { menu: '监控预警', page: '预警管理' },
-        '/monitoring/intelligentReview': { menu: '监控预警', page: '智能复判' },
-        '/deviceManage/camera': { menu: '设备配置', page: '摄像头' },
-        '/deviceManage/localVideo': { menu: '设备配置', page: '本地视频' },
-        '/modelManage/modelList': { menu: '模型管理', page: '模型列表' },
-        '/skillManage/deviceSkills': { menu: '技能管理', page: '视觉模型技能' },
-        '/skillManage/multimodalLlmSkills': { menu: '技能管理', page: '多模态大模型技能' },
-        '/skillManage/multimodalReview': { menu: '技能管理', page: '多模态大模型复判' },
-        '/systemManage/appSettings': { menu: '系统管理', page: '应用设置' },
-        '/systemManage/userManagement': { menu: '系统管理', page: '用户管理' },
-        '/systemManage/roleManagement': { menu: '系统管理', page: '角色管理' },
-        '/systemManage/permissionManagement': { menu: '系统管理', page: '权限管理' },
-        '/systemManage/tenantManagement': { menu: '系统管理', page: '租户管理' },
-        '/systemManage/departmentManagement': { menu: '系统管理', page: '部门管理' },
-        '/systemManage/positionManagement': { menu: '系统管理', page: '岗位管理' },
-        '/systemManage/knowledgeBase': { menu: '系统管理', page: '知识库管理' },
-        '/visualCenter': { menu: '可视中心', page: '可视中心首页' },
-        '/algorithmInference': { menu: '可视中心', page: '算法推理平台' },
-        '/visualCenter/parkManagement': { menu: '可视中心', page: '园区封闭管理平台' }
-      };
-      
-      const route = routeMap[path];
-      if (route) {
-        this.currentMenuName = route.menu;
-        this.currentPageName = route.page;
-      } else {
-        this.currentMenuName = '';
-        this.currentPageName = '';
-      }
-    },
-    handleCommand(command) {
-      switch (command) {
-        case 'profile':
-          this.$router.push('/systemManage/profile');
-          break;
-        case 'password':
-          this.$refs.changePasswordDialog.openDialog();
-          break;
-        case 'clearCache':
-          this.clearCache();
-          break;
-        case 'logout':
-          this.logout();
-          break;
-      }
-    },
-    clearCache() {
-      this.$confirm('确定要清除所有本地缓存吗？包括部门缓存、租户缓存等数据。', '清除缓存', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        try {
-          // 清除所有 RBAC 缓存（部门树、租户等）
-          RBACService.clearAllCache();
+// 路由
+const route = useRoute()
+const router = useRouter()
 
-          this.$message({
-            showClose: true,
-            message: '缓存已清除',
-            type: 'success'
-          });
+// 修改密码对话框引用
+const changePasswordDialogRef = ref<InstanceType<typeof ChangePasswordDialog>>()
 
-          // 刷新页面以重新加载数据
-          setTimeout(() => {
-            location.reload();
-          }, 500);
-        } catch (error) {
-          console.error('清除缓存失败:', error);
-          this.$message({
-            showClose: true,
-            message: '清除缓存失败: ' + error.message,
-            type: 'error'
-          });
-        }
-      }).catch(() => {
-        // 用户取消
-      });
-    },
-    logout() {
-      userService.clearToken();
+// 用户名
+const username = ref(userService.getUser().username || '访客')
 
-      this.$message({
-        showClose: true,
-        message: '已安全退出登录',
-        type: 'success'
-      });
+// 登录状态
+const isLoggedIn = ref(userService.getToken() != null)
 
-      setTimeout(() => {
-        this.$router.push('/login');
-      }, 500);
-    }
+// 当前时间
+const currentTime = ref('')
+
+// 当前菜单名称
+const currentMenuName = ref('')
+
+// 当前页面名称
+const currentPageName = ref('')
+
+// 定时器
+let timeInterval: number | null = null
+
+// 路由映射表
+interface RouteInfo {
+  menu: string
+  page: string
+}
+
+const routeMap: Record<string, RouteInfo> = {
+  '/monitoring': { menu: '监控预警', page: '' },
+  '/monitoring/realtime': { menu: '监控预警', page: '实时监控' },
+  '/monitoring/statistics': { menu: '监控预警', page: '统计分析' },
+  '/monitoring/warningArchive': { menu: '监控预警', page: '预警档案' },
+  '/monitoring/warningManage': { menu: '监控预警', page: '预警管理' },
+  '/monitoring/intelligentReview': { menu: '监控预警', page: '智能复判' },
+  '/deviceManage/camera': { menu: '设备配置', page: '摄像头' },
+  '/deviceManage/localVideo': { menu: '设备配置', page: '本地视频' },
+  '/modelManage/modelList': { menu: '模型管理', page: '模型列表' },
+  '/skillManage/deviceSkills': { menu: '技能管理', page: '视觉模型技能' },
+  '/skillManage/multimodalLlmSkills': { menu: '技能管理', page: '多模态大模型技能' },
+  '/skillManage/multimodalReview': { menu: '技能管理', page: '多模态大模型复判' },
+  '/systemManage/appSettings': { menu: '系统管理', page: '应用设置' },
+  '/systemManage/userManagement': { menu: '系统管理', page: '用户管理' },
+  '/systemManage/roleManagement': { menu: '系统管理', page: '角色管理' },
+  '/systemManage/permissionManagement': { menu: '系统管理', page: '权限管理' },
+  '/systemManage/tenantManagement': { menu: '系统管理', page: '租户管理' },
+  '/systemManage/departmentManagement': { menu: '系统管理', page: '部门管理' },
+  '/systemManage/positionManagement': { menu: '系统管理', page: '岗位管理' },
+  '/systemManage/knowledgeBase': { menu: '系统管理', page: '知识库管理' },
+  '/visualCenter': { menu: '可视中心', page: '可视中心首页' },
+  '/algorithmInference': { menu: '可视中心', page: '算法推理平台' },
+  '/visualCenter/parkManagement': { menu: '可视中心', page: '园区封闭管理平台' }
+}
+
+// 更新时间
+const updateTime = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  const seconds = String(now.getSeconds()).padStart(2, '0')
+  currentTime.value = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
+// 更新面包屑
+const updateBreadcrumb = () => {
+  const path = route.path
+  const routeInfo = routeMap[path]
+
+  if (routeInfo) {
+    currentMenuName.value = routeInfo.menu
+    currentPageName.value = routeInfo.page
+  } else {
+    currentMenuName.value = ''
+    currentPageName.value = ''
   }
 }
+
+// 处理下拉菜单命令
+type Command = 'profile' | 'password' | 'clearCache' | 'logout'
+
+const handleCommand = (command: Command) => {
+  switch (command) {
+    case 'profile':
+      router.push('/systemManage/profile')
+      break
+    case 'password':
+      changePasswordDialogRef.value?.openDialog()
+      break
+    case 'clearCache':
+      clearCache()
+      break
+    case 'logout':
+      logout()
+      break
+  }
+}
+
+// 清除缓存
+const clearCache = () => {
+  ElMessageBox.confirm(
+    '确定要清除所有本地缓存吗？包括部门缓存、租户缓存等数据。',
+    '清除缓存',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  )
+    .then(() => {
+      try {
+        // 清除所有 RBAC 缓存（部门树、租户等）
+        RBACService.clearAllCache()
+
+        ElMessage({
+          showClose: true,
+          message: '缓存已清除',
+          type: 'success'
+        })
+
+        // 刷新页面以重新加载数据
+        setTimeout(() => {
+          location.reload()
+        }, 500)
+      } catch (error) {
+        console.error('清除缓存失败:', error)
+        ElMessage({
+          showClose: true,
+          message: '清除缓存失败: ' + (error as Error).message,
+          type: 'error'
+        })
+      }
+    })
+    .catch(() => {
+      // 用户取消
+    })
+}
+
+// 退出登录
+const logout = () => {
+  userService.clearToken()
+
+  ElMessage({
+    showClose: true,
+    message: '已安全退出登录',
+    type: 'success'
+  })
+
+  setTimeout(() => {
+    router.push('/login')
+  }, 500)
+}
+
+// 监听路由变化
+watch(
+  () => route.path,
+  () => {
+    updateBreadcrumb()
+  }
+)
+
+// 组件挂载
+onMounted(() => {
+  updateTime()
+  updateBreadcrumb()
+  // 每秒更新时间
+  timeInterval = window.setInterval(updateTime, 1000)
+})
+
+// 组件卸载
+onUnmounted(() => {
+  if (timeInterval !== null) {
+    clearInterval(timeInterval)
+  }
+})
 </script>
 
 <style scoped>

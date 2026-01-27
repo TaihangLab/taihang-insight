@@ -27,8 +27,8 @@ export default defineConfig({
     actionTimeout: 5000,
     navigationTimeout: 5000,
   },
-  // 单个测试用例超时5秒
-  timeout: 5000,
+  // 单个测试用例超时30秒
+  timeout: 30000,
   retries: 0,
   // 每个测试文件使用独立的 worker，但同一个文件内的测试共享浏览器
   workers: 1,

@@ -84,6 +84,9 @@ export default {
         maxRetries: 3, // 最大重试次数
         isGenerating: false, // 是否正在生成回复（可以被用户停止）
         userStoppedGeneration: false, // 用户是否手动停止了生成
+        // 内部状态
+        _isMounted: false, // 组件挂载状态
+        _pendingTimers: [], // 待处理的定时器
       }
     },
         methods: {
@@ -2064,21 +2067,29 @@ export default {
                   node.classList.contains('el-select-dropdown')
                 )) {
                   // 延迟设置z-index，确保组件完全渲染
-                  setTimeout(() => {
-                    this.forceElementUIZIndex();
+                  const timer = setTimeout(() => {
+                    // 确保组件仍然挂载
+                    if (this._isMounted) {
+                      this.forceElementUIZIndex();
+                    }
                   }, 50);
+                  // 保存定时器以便清理
+                  if (!this._pendingTimers) {
+                    this._pendingTimers = [];
+                  }
+                  this._pendingTimers.push(timer);
                 }
               }
             });
           });
         });
-        
+
         // 开始观察
         observer.observe(document.body, {
           childList: true,
           subtree: true
         });
-        
+
         // 保存观察器引用以便后续清理
         this._elementUIObserver = observer;
       }
@@ -2105,14 +2116,17 @@ export default {
       }
     },
     async mounted() {
+      // 标记组件已挂载
+      this._isMounted = true;
+
       console.log('=== 智能助手组件初始化 ===');
-      
+
       // 检查 Markdown 渲染库是否加载
       console.log('Marked 类型检查:', typeof marked);
       console.log('Marked 对象:', marked);
-      
+
       const markedFn = typeof marked === 'function' ? marked : (marked && marked.marked);
-      
+
       if (markedFn) {
         console.log('✅ Marked 函数可用');
         try {
@@ -2129,49 +2143,61 @@ export default {
         console.error('❌ Marked 函数不可用！');
         console.error('请检查 marked 包是否正确安装：npm install marked@4.3.0');
       }
-      
+
       // 初始化位置到右侧
       this.initializePosition();
-      
+
       // 确保侧边栏初始状态为展开（重要！）
       this.sidebarCollapsed = false;
       console.log('侧边栏初始化为展开状态');
-      
+
       // 监听窗口大小变化，调整助手位置
       window.addEventListener('resize', this.handleWindowResize);
-      
+
       // 启动自动隐藏计时器
       this.startHideTimer();
-      
+
       // 添加全局点击监听器，用于关闭右键菜单
       document.addEventListener('click', this.handleGlobalClick);
-      
+
       // 启动Element UI组件观察器
       this.observeElementUIComponents();
-      
+
       // 加载会话列表和分组列表
       await this.loadChatConversations();
       await this.loadUserGroups();
-      
+
       // 初始化时强制设置Element UI组件z-index
       this.$nextTick(() => {
-        this.forceElementUIZIndex();
-        this.bindThinkBlockEvents(); // 绑定思考块点击事件
-        console.log('组件初始化完成 - 已连接后端API');
-        console.log('当前侧边栏状态:', this.sidebarCollapsed ? '收起' : '展开');
-        console.log('当前分组数量:', this.userGroups.length);
+        // 检查组件是否仍然挂载
+        if (this._isMounted) {
+          this.forceElementUIZIndex();
+          this.bindThinkBlockEvents(); // 绑定思考块点击事件
+          console.log('组件初始化完成 - 已连接后端API');
+          console.log('当前侧边栏状态:', this.sidebarCollapsed ? '收起' : '展开');
+          console.log('当前分组数量:', this.userGroups.length);
+        }
       });
     },
     beforeDestroy() {
+      // 标记组件已卸载
+      this._isMounted = false;
+
+      // 清理所有待处理的定时器
+      if (this._pendingTimers && this._pendingTimers.length > 0) {
+        this._pendingTimers.forEach(timer => clearTimeout(timer));
+        this._pendingTimers = [];
+      }
+
       // 清理聊天连接
       this.stopCurrentChat();
-      
+
       // 清理事件监听器
       window.removeEventListener('resize', this.handleWindowResize);
       document.removeEventListener('mousemove', this.onDrag);
       document.removeEventListener('mouseup', this.stopDrag);
       document.removeEventListener('click', this.handleGlobalClick);
-      
+
       // 清理思考块事件监听器
       if (this.$refs.messagesContainer) {
         this.$refs.messagesContainer.removeEventListener('click', this.handleThinkToggle);
@@ -2179,16 +2205,16 @@ export default {
       if (this.$refs.fullscreenMessagesContainer) {
         this.$refs.fullscreenMessagesContainer.removeEventListener('click', this.handleThinkToggle);
       }
-      
+
       // 清理隐藏计时器
       this.clearHideTimer();
-      
+
       // 清理Element UI组件观察器
       if (this._elementUIObserver) {
         this._elementUIObserver.disconnect();
         this._elementUIObserver = null;
       }
-      
+
       console.log('智能助手组件已销毁，所有连接已清理');
     }
   }

@@ -7,129 +7,108 @@
     style="width: 100%"
     @selection-change="handleSelectionChange"
   >
-    <el-table-column type="selection" width="55" align="center"></el-table-column>
-    <el-table-column prop="id" label="租户编号" width="120" align="center"></el-table-column>
-    <el-table-column prop="tenant_name" label="租户名称" width="120" align="center"></el-table-column>
-    <el-table-column prop="company_name" label="企业名称" width="180" align="center"></el-table-column>
-    <el-table-column prop="status" label="租户状态" width="100" align="center">
+    <el-table-column type="selection"  align="center"></el-table-column>
+    <el-table-column prop="id" label="租户编号" align="center"></el-table-column>
+    <el-table-column prop="tenant_name" label="租户名称" align="center"></el-table-column>
+    <el-table-column prop="company_name" label="企业名称"  align="center"></el-table-column>
+    <el-table-column prop="package" label="租户套餐" align="center">
+      <template #default="scope">
+        {{ packageLabels[scope.row.package] || scope.row.package || '-' }}
+      </template>
+    </el-table-column>
+    <el-table-column prop="expire_time" label="过期时间" width="140" align="center">
+      <template #default="scope">
+        {{ formatDate(scope.row.expire_time) }}
+      </template>
+    </el-table-column>
+    <el-table-column prop="status" label="状态" width="100" align="center">
       <template #default="scope">
         <el-switch
           :data-testid="'switch-status-' + scope.row.id"
           v-model="scope.row.status"
           :active-value="0"
           :inactive-value="1"
-          active-color="#3b82f6"
-          inactive-color="#9ca3af"
+          active-color="var(--design-success-color)"
+          inactive-color="var(--design-text-tertiary)"
           @change="handleStatusChange(scope.row)"
         ></el-switch>
       </template>
     </el-table-column>
-    <el-table-column prop="contact_person" label="联系人" width="120" align="center"></el-table-column>
-    <el-table-column prop="contact_phone" label="联系电话" width="140" align="center"></el-table-column>
-    <el-table-column prop="package" label="租户套餐" width="100" align="center">
-      <template #default="scope">
-        {{ packageLabels[scope.row.package] || scope.row.package || '' }}
-      </template>
-    </el-table-column>
-    <el-table-column prop="expire_time" label="过期时间" width="120" align="center">
-      <template #default="scope">
-        {{ formatDate(scope.row.expire_time) }}
-      </template>
-    </el-table-column>
-    <el-table-column prop="user_count" label="用户数量" width="100" align="center"></el-table-column>
-    <el-table-column prop="domain" label="绑定域名" width="150" align="center"></el-table-column>
-    <el-table-column prop="address" label="企业地址" width="200" align="center"></el-table-column>
-    <el-table-column prop="company_code" label="企业代码" width="150" align="center"></el-table-column>
-    <el-table-column prop="description" label="企业简介" width="200" align="center"></el-table-column>
-    <el-table-column prop="remark" label="备注" width="150" align="center"></el-table-column>
-    <el-table-column prop="create_time" label="创建时间" width="180" align="center">
-      <template #default="scope">
-        {{ formatDateTime(scope.row.create_time) }}
-      </template>
-    </el-table-column>
-    <el-table-column prop="update_time" label="更新时间" width="180" align="center">
-      <template #default="scope">
-        {{ formatDateTime(scope.row.update_time) }}
-      </template>
-    </el-table-column>
-    <el-table-column prop="create_by" label="创建人" width="120" align="center"></el-table-column>
 
-    <el-table-column label="操作" width="120" fixed="right" align="center">
+    <el-table-column label="操作" width="300" fixed="right" align="center">
       <template #default="scope">
         <div class="operation-buttons">
-          <el-button type="text" class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button type="text" class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button link class="edit-btn" @click="handleEdit(scope.row)">
+            <el-icon><Edit /></el-icon>
+            <span>编辑</span>
+          </el-button>
+          <el-button link class="delete-btn" @click="handleDelete(scope.row)">
+            <el-icon><Delete /></el-icon>
+            <span>删除</span>
+          </el-button>
         </div>
       </template>
     </el-table-column>
   </el-table>
 </template>
 
-<script>
-// 套餐标签映射常量
-const PACKAGE_LABELS = {
-  'basic': '基础版',
-  'standard': '标准版',
-  'premium': '高级版',
-  'enterprise': '企业版'
+<script setup lang="ts">
+import { ref } from 'vue'
+import { Edit, Delete } from '@element-plus/icons-vue'
+import type { Tenant } from '@/types/rbac/tenant'
+
+const PACKAGE_LABELS: Record<string, string> = {
+  basic: '基础版',
+  standard: '标准版',
+  premium: '高级版',
+  enterprise: '企业版'
 }
 
-export default {
-  name: 'TenantTable',
-  props: {
-    data: {
-      type: Array,
-      default: () => []
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    selectedCodes: {
-      type: Array,
-      default: () => []
-    }
-  },
-  data() {
-    return {
-      packageLabels: PACKAGE_LABELS
-    }
-  },
-  methods: {
-    formatDate(timestamp) {
-      if (!timestamp) return ''
-      return new Date(timestamp).toLocaleDateString()
-    },
-    formatDateTime(timestamp) {
-      if (!timestamp) return ''
-      return new Date(timestamp).toLocaleString()
-    },
-    handleSelectionChange(selection) {
-      const codes = selection.map(row => row.id)
-      this.$emit('selection-change', codes, selection)
-    },
-    handleStatusChange(row) {
-      this.$emit('status-change', row)
-    },
-    handleEdit(row) {
-      this.$emit('edit', row)
-    },
-    handleDelete(row) {
-      this.$emit('delete', row)
-    }
-  }
+defineProps<{
+  data: Tenant[]
+  loading: boolean
+  selectedCodes: number[]
+}>()
+
+const emit = defineEmits<{
+  selectionChange: [codes: number[], selection: Tenant[]]
+  statusChange: [row: Tenant]
+  edit: [row: Tenant]
+  delete: [row: Tenant]
+}>()
+
+const packageLabels = ref(PACKAGE_LABELS)
+
+const formatDate = (timestamp: string | null | undefined): string => {
+  if (!timestamp) return '-'
+  const date = new Date(timestamp)
+  return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+}
+
+const handleSelectionChange = (selection: Tenant[]) => {
+  const codes = selection.map((row) => row.id)
+  emit('selectionChange', codes, selection)
+}
+
+const handleStatusChange = (row: Tenant) => {
+  emit('statusChange', row)
+}
+
+const handleEdit = (row: Tenant) => {
+  emit('edit', row)
+}
+
+const handleDelete = (row: Tenant) => {
+  emit('delete', row)
 }
 </script>
 
 <style scoped>
 .custom-table {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #ebeef5;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  font-size: 13px;
+  font-size: var(--font-size-base);
 }
 
+/* 移除边框 */
 .custom-table :deep(.el-table__cell) {
   border-right: none;
 }
@@ -138,65 +117,82 @@ export default {
   height: 0;
 }
 
+/* 表头样式 */
 .custom-table :deep(.el-table__header-wrapper th) {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-align: center;
-  background: #f5f7fa !important;
-  color: #303133 !important;
-  border-bottom: 1px solid #ebeef5 !important;
-  padding: 10px 12px;
+  background: var(--design-bg-secondary) !important;
+  color: var(--design-text-primary) !important;
+  border-bottom: 1px solid var(--design-border-color) !important;
+  padding: 12px;
 }
 
-.custom-table :deep(.el-table__fixed-right-header-wrapper th),
-.custom-table :deep(.el-table__fixed-header-wrapper th) {
-  font-weight: 600;
-  text-align: center;
-  background: #f5f7fa !important;
-  color: #303133 !important;
-  border-bottom: 1px solid #ebeef5 !important;
-  padding: 10px 12px;
-}
-
+/* 表格行样式 */
 .custom-table :deep(.el-table__row td) {
   text-align: center;
-  padding: 8px 12px;
+  padding: 12px;
 }
 
 .custom-table :deep(.el-table .el-table__body tr:hover > td) {
-  background: #f5f7fa !important;
+  background-color: var(--design-primary-lighter) !important;
 }
 
-.custom-table :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
-  background-color: #fafafa;
-}
-
+/* 操作按钮容器 */
 .operation-buttons {
   display: flex;
   justify-content: center;
-  gap: 4px;
-  flex-wrap: nowrap;
+  gap: 8px;
 }
 
+/* 操作按钮样式 */
 .edit-btn,
 .delete-btn {
-  padding: 2px 8px !important;
-  font-size: 11px !important;
-  border-radius: 4px !important;
-  font-weight: 500 !important;
-  transition: all 0.3s ease !important;
-  background: #f5f7fa !important;
-  border-color: #e4e7ed !important;
-  color: #606266 !important;
-  height: 24px !important;
-  min-width: 50px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px !important;
+  font-size: var(--font-size-sm) !important;
+  border-radius: var(--design-radius-sm) !important;
+  font-weight: var(--font-weight-normal) !important;
+  transition: all var(--design-transition-base) !important;
 }
 
-.edit-btn:hover,
+.edit-btn {
+  color: var(--design-primary-color) !important;
+}
+
+.edit-btn:hover {
+  background-color: var(--design-primary-light) !important;
+}
+
+.delete-btn {
+  color: var(--design-danger-color) !important;
+}
+
 .delete-btn:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e3a8a !important;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;
-  transform: translateY(-1px) !important;
+  background-color: var(--design-danger-light) !important;
+}
+
+/* 按钮禁用状态 */
+.edit-btn:disabled,
+.delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+/* 开关样式 */
+:deep(.el-switch) {
+  height: 22px;
+}
+
+:deep(.el-switch__core) {
+  border-radius: 11px;
+  height: 22px;
+  min-width: 44px;
+}
+
+:deep(.el-switch__action) {
+  top: 2px;
+  left: 2px;
 }
 </style>

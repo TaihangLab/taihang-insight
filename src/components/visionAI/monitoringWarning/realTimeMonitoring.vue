@@ -241,7 +241,7 @@
             <span class="status-text">{{ getSSEStatusText() }}</span>
           </div>
         </div>
-        <el-button type="text" class="more-btn" @click="goToMoreWarnings">更多 <i class="el-icon-arrow-right"></i></el-button>
+        <el-button link class="more-btn" @click="goToMoreWarnings">更多 <i class="el-icon-arrow-right"></i></el-button>
       </div>
       <div class="list-content">
         <!-- 加载状态 -->
@@ -254,7 +254,7 @@
         <div v-else-if="!apiDataLoading && warningList.length === 0" class="empty-state">
           <i class="el-icon-warning-outline"></i>
           <span>暂无预警数据</span>
-          <el-button type="text" @click="refreshWarningData">点击刷新</el-button>
+          <el-button link @click="refreshWarningData">点击刷新</el-button>
         </div>
 
         <!-- 预警列表 -->
@@ -393,7 +393,7 @@
             </el-option>
           </el-select>
           <el-button
-            type="text"
+            link
             size="small"
             @click="createNewArchiveForFalseAlarm"
             style="margin-top: 5px"
@@ -455,7 +455,7 @@
                 </el-option>
               </el-select>
               <el-button
-                type="text"
+                link
                 size="small"
                 @click="createNewArchiveForArchiveDialog"
                 style="margin-top: 5px"

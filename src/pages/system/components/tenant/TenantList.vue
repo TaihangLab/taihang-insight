@@ -30,74 +30,74 @@
   </div>
 </template>
 
-<script>
-import TenantTableActions from './TenantTableActions.vue'
-import TenantTable from './TenantTable.vue'
-import TenantPagination from './TenantPagination.vue'
+<script setup lang="ts">
+import { ref } from 'vue'
+import TenantTableActions from '@/pages/system/components/tenant/TenantTableActions.vue'
+import TenantTable from '@/pages/system/components/tenant/TenantTable.vue'
+import TenantPagination from '@/pages/system/components/tenant/TenantPagination.vue'
+import type { Tenant } from '@/types/rbac/tenant'
 
-export default {
-  name: 'TenantList',
-  components: {
-    TenantTableActions,
-    TenantTable,
-    TenantPagination
-  },
-  props: {
-    tenants: {
-      type: Array,
-      default: () => []
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    pagination: {
-      type: Object,
-      default: () => ({
-        currentPage: 1,
-        pageSize: 10
-      })
-    },
-    total: {
-      type: Number,
-      default: 0
-    }
-  },
-  data() {
-    return {
-      selectedCodes: []
-    }
-  },
-  methods: {
-    handleSelectionChange(codes) {
-      this.selectedCodes = codes
-      this.$emit('selection-change', codes)
-    },
-    handleAdd() {
-      this.$emit('add')
-    },
-    handleEdit(row) {
-      this.$emit('edit', row)
-    },
-    handleDelete(row) {
-      this.$emit('delete', row)
-    },
-    handleBatchDelete() {
-      this.$emit('batch-delete', this.selectedCodes)
-    },
-    handleStatusChange(row) {
-      this.$emit('status-change', row)
-    },
-    handlePageChange(page) {
-      this.$emit('page-change', page)
-    },
-    handleSizeChange(size) {
-      this.$emit('size-change', size)
-    },
-    handleExport() {
-      this.$emit('export', this.selectedCodes)
-    }
-  }
+interface Pagination {
+  currentPage: number
+  pageSize: number
+}
+
+defineProps<{
+  tenants: Tenant[]
+  loading: boolean
+  pagination: Pagination
+  total: number
+}>()
+
+const emit = defineEmits<{
+  selectionChange: [codes: number[]]
+  add: []
+  edit: [row: Tenant]
+  delete: [row: Tenant]
+  batchDelete: [codes: number[]]
+  statusChange: [row: Tenant]
+  pageChange: [page: number]
+  sizeChange: [size: number]
+  export: [codes: number[]]
+}>()
+
+const selectedCodes = ref<number[]>([])
+
+const handleSelectionChange = (codes: number[]) => {
+  selectedCodes.value = codes
+  emit('selectionChange', codes)
+}
+
+const handleAdd = () => {
+  emit('add')
+}
+
+const handleEdit = (row: Tenant) => {
+  emit('edit', row)
+}
+
+const handleDelete = (row: Tenant) => {
+  emit('delete', row)
+}
+
+const handleBatchDelete = () => {
+  emit('batchDelete', selectedCodes.value)
+}
+
+const handleStatusChange = (row: Tenant) => {
+  emit('statusChange', row)
+}
+
+const handlePageChange = (page: number) => {
+  emit('pageChange', page)
+}
+
+const handleSizeChange = (size: number) => {
+  emit('sizeChange', size)
+}
+
+const handleExport = () => {
+  emit('export', selectedCodes.value)
 }
 </script>
 

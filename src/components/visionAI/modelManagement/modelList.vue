@@ -134,23 +134,23 @@
             <div class="operation-buttons">
               <!-- 卸载/加载按钮 -->
               <template v-if="row.model_status === 'loaded'">
-                <el-button type="text" size="small" @click="handleUnload(row)" :loading="row.isLoading"
+                <el-button link size="small" @click="handleUnload(row)" :loading="row.isLoading"
                   class="operation-text-btn unload-text-btn">
                   卸载
                 </el-button>
               </template>
               <template v-else>
-                <el-button type="text" size="small" @click="handleLoad(row)" :loading="row.isLoading"
+                <el-button link size="small" @click="handleLoad(row)" :loading="row.isLoading"
                   class="operation-text-btn load-text-btn">
                   加载
                 </el-button>
               </template>
 
-              <el-button type="text" size="small" @click="handleDetail(row)"
+              <el-button link size="small" @click="handleDetail(row)"
                 class="operation-text-btn detail-text-btn">详情</el-button>
-              <el-button type="text" size="small" @click="handleEdit(row)"
+              <el-button link size="small" @click="handleEdit(row)"
                 class="operation-text-btn edit-text-btn">编辑</el-button>
-              <el-button type="text" size="small" @click="handleDelete(row)" :disabled="row.usage_status === 'using'"
+              <el-button link size="small" @click="handleDelete(row)" :disabled="row.usage_status === 'using'"
                 class="operation-text-btn delete-text-btn"
                 :class="{ 'disabled-text-btn': row.usage_status === 'using' }">
                 删除

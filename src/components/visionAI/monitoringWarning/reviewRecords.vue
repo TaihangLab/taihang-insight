@@ -989,7 +989,7 @@ export default {
     <div class="page-header">
       <div class="header-left">
         <el-button 
-          type="text" 
+          link 
           icon="el-icon-arrow-left" 
           @click="goBack"
           class="back-btn"
@@ -999,7 +999,7 @@ export default {
       </div>
       <div class="header-right">
         <el-button 
-          type="text" 
+          link 
           :icon="showStatsPanel ? 'el-icon-view' : 'el-icon-s-data'"
           @click="toggleStatsPanel"
         >
@@ -1093,7 +1093,7 @@ export default {
         <div class="filter-actions">
           <div class="filter-right">
             <el-button 
-              type="text" 
+              link 
               icon="el-icon-refresh"
               @click="handleRefresh"
             >
