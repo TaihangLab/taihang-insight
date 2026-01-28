@@ -318,6 +318,71 @@ export const modelAPI = {
         console.error('卸载模型失败:', error);
         throw error;
       });
+  },
+
+  // 导入模型
+  importModel(formData, onUploadProgress) {
+    return visionAIAxios.post('/api/v1/models/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      // 上传进度回调
+      onUploadProgress: onUploadProgress || ((progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        console.log(`模型上传进度: ${percentCompleted}%`);
+      }),
+      // 设置较长的超时时间（模型文件可能较大）
+      timeout: 300000 // 5分钟
+    }).then(response => {
+      // 处理导入模型接口的响应
+      const originalData = response.data;
+      
+      // 如果已经是期望的格式，直接返回
+      if (originalData && originalData.code !== undefined) {
+        return response;
+      }
+      
+      // 转换为前端期望的格式
+      const transformedData = {
+        code: originalData.success ? 0 : -1,
+        msg: originalData.message || (originalData.success ? '导入成功' : '导入失败'),
+        data: originalData.data || originalData
+      };
+      
+      response.data = transformedData;
+      console.log('导入模型响应:', response.data);
+      return response;
+    }).catch(error => {
+      console.error('导入模型失败:', error);
+      throw error;
+    });
+  },
+
+  // 获取支持的模型平台列表
+  getSupportedPlatforms() {
+    return visionAIAxios.get('/api/v1/models/platforms')
+      .then(response => {
+        const originalData = response.data;
+        
+        // 如果已经是期望的格式，直接返回
+        if (originalData && originalData.code !== undefined) {
+          return response;
+        }
+        
+        // 转换为前端期望的格式
+        const transformedData = {
+          code: 0,
+          msg: 'success',
+          data: originalData.data || originalData
+        };
+        
+        response.data = transformedData;
+        return response;
+      })
+      .catch(error => {
+        console.error('获取平台列表失败:', error);
+        throw error;
+      });
   }
 };
 
