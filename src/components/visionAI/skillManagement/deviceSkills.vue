@@ -153,58 +153,72 @@
     </div>
 
     <!-- 导入技能对话框 -->
-    <el-dialog title="导入技能" :visible.sync="importDialogVisible" width="40%">
-      <el-form :model="importForm" ref="importForm" label-width="100px" :rules="importRules">
-        <el-form-item label="技能名称" prop="name">
-          <el-input v-model="importForm.name" placeholder="请输入技能名称"></el-input>
-        </el-form-item>
-        <el-form-item label="版本" prop="version">
-          <el-input v-model="importForm.version" placeholder="请输入版本号，如v1.0"></el-input>
-        </el-form-item>
-        <el-form-item label="技能类型" prop="type">
-          <el-select v-model="importForm.type" placeholder="请选择技能类型" style="width: 100%">
-            <el-option label="人体检测" value="人体检测" />
-            <el-option label="车辆检测" value="车辆检测" />
-            <el-option label="人脸识别" value="人脸识别" />
-            <el-option label="目标跟踪" value="目标跟踪" />
-            <el-option label="人群分析" value="人群分析" />
-            <el-option label="车牌识别" value="车牌识别" />
-            <el-option label="行为分析" value="行为分析" />
-            <el-option label="其他" value="其他" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="importForm.status">
-            <el-radio label="published">
-              <span class="status-radio published">已发布</span>
-            </el-radio>
-            <el-radio label="unpublished">
-              <span class="status-radio unpublished">未发布</span>
-            </el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="技能描述" prop="description">
-          <el-input type="textarea" v-model="importForm.description" rows="3" placeholder="请输入技能描述"></el-input>
-        </el-form-item>
-        <el-form-item label="技能文件" prop="file">
+    <el-dialog title="导入技能" :visible.sync="importDialogVisible" width="50%" @close="resetImportForm">
+      <el-form :model="importForm" ref="importForm" label-width="120px" :rules="importRules">
+        <el-form-item label="主技能文件" prop="mainFile" required>
           <el-upload
-            class="upload-demo"
+            class="upload-demo main-file-upload"
             drag
             action="#"
             :auto-upload="false"
-            :on-change="handleFileChange"
+            :on-change="handleMainFileChange"
+            :on-remove="handleMainFileRemove"
             :limit="1"
-            :file-list="fileList"
+            :file-list="mainFileList"
+            accept=".py"
           >
             <i class="el-icon-upload"></i>
-            <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-            <div class="el-upload__tip" slot="tip">只能上传json文件，且不超过500kb</div>
+            <div class="el-upload__text">将主技能文件拖到此处，或<em>点击上传</em></div>
+            <div class="el-upload__tip" slot="tip">只能上传 .py 技能文件，文件中需包含技能类定义</div>
           </el-upload>
         </el-form-item>
+        
+        <el-form-item label="依赖文件">
+          <el-upload
+            class="upload-demo dependency-file-upload"
+            drag
+            action="#"
+            :auto-upload="false"
+            :on-change="handleDependencyFileChange"
+            :on-remove="handleDependencyFileRemove"
+            multiple
+            :file-list="dependencyFileList"
+          >
+            <i class="el-icon-upload"></i>
+            <div class="el-upload__text">将依赖文件拖到此处，或<em>点击上传</em></div>
+            <div class="el-upload__tip" slot="tip">可上传多个依赖文件（.py、.json、.yaml、.txt等），这些文件将与主技能文件一起保存到技能目录</div>
+          </el-upload>
+        </el-form-item>
+        
+        <el-divider content-position="left">文件预览</el-divider>
+        
+        <div class="file-preview-section">
+          <div class="file-list-header">
+            <span class="file-count">待上传文件：{{ getTotalFileCount }} 个</span>
+          </div>
+          <div class="file-list-content" v-if="getTotalFileCount > 0">
+            <div class="file-item main-file" v-if="importForm.mainFile">
+              <i class="el-icon-document"></i>
+              <span class="file-name">{{ importForm.mainFile.name }}</span>
+              <el-tag size="mini" type="success">主文件</el-tag>
+              <span class="file-size">{{ formatFileSize(importForm.mainFile.size) }}</span>
+            </div>
+            <div class="file-item" v-for="(file, index) in importForm.dependencyFiles" :key="index">
+              <i class="el-icon-document"></i>
+              <span class="file-name">{{ file.name }}</span>
+              <el-tag size="mini" type="info">依赖</el-tag>
+              <span class="file-size">{{ formatFileSize(file.size) }}</span>
+            </div>
+          </div>
+          <div class="no-files-tip" v-else>
+            <i class="el-icon-folder-opened"></i>
+            <span>请选择要上传的文件</span>
+          </div>
+        </div>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="importDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmImport" :loading="importing">确定</el-button>
+        <el-button type="primary" @click="confirmImport" :loading="importing" :disabled="!importForm.mainFile">确定</el-button>
       </span>
     </el-dialog>
 
@@ -619,30 +633,16 @@ export default {
       
       // 导入相关
       importForm: {
-        name: '',
-        version: '',
-        type: '',
-        status: 'published',
-        description: '',
-        file: null
+        mainFile: null,           // 主技能文件
+        dependencyFiles: []       // 依赖文件列表
       },
       importRules: {
-        name: [
-          { required: true, message: '请输入技能名称', trigger: 'blur' },
-          { min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur' }
-        ],
-        version: [
-          { required: true, message: '请输入版本号', trigger: 'blur' },
-          { pattern: /^v\d+\.\d+$/, message: '版本号格式为vX.X', trigger: 'blur' }
-        ],
-        type: [
-          { required: true, message: '请选择技能类型', trigger: 'change' }
-        ],
-        file: [
-          { required: true, message: '请上传技能文件', trigger: 'change' }
+        mainFile: [
+          { required: true, message: '请上传主技能文件', trigger: 'change' }
         ]
       },
-      fileList: [],
+      mainFileList: [],           // 主文件上传列表（用于el-upload显示）
+      dependencyFileList: [],     // 依赖文件上传列表（用于el-upload显示）
       importing: false, // 导入中状态
       loading: false,   // 数据加载状态
       reloading: false, // 热加载状态
@@ -687,6 +687,14 @@ export default {
     skillTypes() {
       const types = new Set(this.skillsList.map(skill => skill.type))
       return Array.from(types)
+    },
+    
+    // 计算待上传文件总数
+    getTotalFileCount() {
+      let count = 0;
+      if (this.importForm.mainFile) count++;
+      if (this.importForm.dependencyFiles) count += this.importForm.dependencyFiles.length;
+      return count;
     },
 
     // 筛选后的技能列表
@@ -1007,88 +1015,113 @@ export default {
       this.importDialogVisible = true;
     },
 
-    // 处理文件变化
-    handleFileChange(file) {
+    // 处理主技能文件变化
+    handleMainFileChange(file) {
       if (file.raw) {
         // 检查文件类型
-        if (file.raw.type !== 'application/json') {
-          this.$message.error('只能上传JSON文件');
-          this.fileList = [];
+        if (!file.raw.name.endsWith('.py')) {
+          this.$message.error('主技能文件必须是.py文件');
+          this.mainFileList = [];
           return;
         }
-        // 检查文件大小
-        if (file.raw.size / 1024 > 500) {
-          this.$message.error('文件大小不能超过500KB');
-          this.fileList = [];
+        // 检查文件大小（限制5MB）
+        if (file.raw.size / 1024 / 1024 > 5) {
+          this.$message.error('文件大小不能超过5MB');
+          this.mainFileList = [];
           return;
         }
-        this.importForm.file = file.raw;
-        this.fileList = [file];
+        this.importForm.mainFile = file.raw;
+        this.mainFileList = [file];
       } else {
-        this.importForm.file = null;
-        this.fileList = [];
+        this.importForm.mainFile = null;
+        this.mainFileList = [];
       }
+    },
+    
+    // 处理主文件移除
+    handleMainFileRemove() {
+      this.importForm.mainFile = null;
+      this.mainFileList = [];
+    },
+    
+    // 处理依赖文件变化
+    handleDependencyFileChange(file, fileList) {
+      if (file.raw) {
+        // 检查文件大小（限制5MB）
+        if (file.raw.size / 1024 / 1024 > 5) {
+          this.$message.error(`文件 ${file.raw.name} 大小不能超过5MB`);
+          // 从列表中移除该文件
+          const index = fileList.findIndex(f => f.uid === file.uid);
+          if (index > -1) {
+            fileList.splice(index, 1);
+          }
+          return;
+        }
+        // 更新依赖文件列表
+        this.importForm.dependencyFiles = fileList.map(f => f.raw).filter(f => f);
+        this.dependencyFileList = fileList;
+      }
+    },
+    
+    // 处理依赖文件移除
+    handleDependencyFileRemove(file, fileList) {
+      this.importForm.dependencyFiles = fileList.map(f => f.raw).filter(f => f);
+      this.dependencyFileList = fileList;
+    },
+    
+    // 重置导入表单
+    resetImportForm() {
+      this.importForm = {
+        mainFile: null,
+        dependencyFiles: []
+      };
+      this.mainFileList = [];
+      this.dependencyFileList = [];
+    },
+    
+    // 格式化文件大小
+    formatFileSize(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     },
 
     // 确认导入
     confirmImport() {
-      this.$refs.importForm.validate(async valid => {
-        if (valid) {
-          this.importing = true;
-          
-          try {
-            // 读取文件内容
-            const reader = new FileReader();
-            reader.readAsText(this.importForm.file);
+      // 验证主文件是否存在
+      if (!this.importForm.mainFile) {
+        this.$message.error('请上传主技能文件');
+        return;
+      }
+      
+      this.importing = true;
+      
+      // 调用上传API
+      skillAPI.uploadSkillFiles(this.importForm.mainFile, this.importForm.dependencyFiles)
+        .then(response => {
+          if (response.data.code === 0) {
+            const uploadedCount = response.data.data.uploaded_files ? response.data.data.uploaded_files.length : 1;
+            this.$message.success(`技能导入成功，共上传 ${uploadedCount} 个文件`);
+            this.importDialogVisible = false;
             
-            reader.onload = async (event) => {
-              try {
-                const fileContent = JSON.parse(event.target.result);
-                
-                // 创建导入数据对象
-                const importData = {
-                  name: this.importForm.name,
-                  name_zh: this.importForm.name, // 可能需要根据实际API调整
-                  version: this.importForm.version,
-                  type: this.importForm.type,
-                  description: this.importForm.description,
-                  status: this.importForm.status === 'published',
-                  skill_data: fileContent
-                };
-                
-                // 调用API导入技能
-                const response = await skillAPI.importSkill(importData);
-                
-                if (response.data.code === 0) {
-                  this.$message.success('技能导入成功');
-                  this.importDialogVisible = false;
-                  
-                  // 重新获取技能列表
-                  this.fetchSkills();
-                } else {
-                  this.$message.error(response.data.msg || '技能导入失败');
-                }
-              } catch (error) {
-                console.error('解析文件内容失败:', error);
-                this.$message.error('文件格式错误，请检查JSON格式');
-              } finally {
-                this.importing = false;
-              }
-            };
+            // 重置表单
+            this.resetImportForm();
             
-            reader.onerror = () => {
-              this.$message.error('读取文件失败');
-              this.importing = false;
-            };
-          } catch (error) {
-            console.error('导入技能失败:', error);
-            this.$message.error('导入失败');
-            this.importing = false;
+            // 重新获取技能列表
+            this.fetchSkills();
+          } else {
+            this.$message.error(response.data.msg || '技能导入失败');
           }
-        } else {
-          return false;
-        }
-      });
+        })
+        .catch(error => {
+          console.error('导入技能失败:', error);
+          this.$message.error(error.message || '导入失败，请检查网络连接');
+        })
+        .finally(() => {
+          this.importing = false;
+        });
     },
 
     // 编辑技能
@@ -2662,6 +2695,112 @@ export default {
 .device-skills-container >>> .el-upload__text em {
   color: #3b82f6 !important;
   font-weight: 500 !important;
+}
+
+/* 导入技能对话框样式 */
+.main-file-upload >>> .el-upload-dragger {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.02) 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+
+.dependency-file-upload >>> .el-upload-dragger {
+  border-color: #6b7280;
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.02) 0%, rgba(107, 114, 128, 0.05) 100%);
+}
+
+.file-preview-section {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.file-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.file-count {
+  font-size: 14px;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.file-list-content {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.file-item:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.file-item.main-file {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #3b82f6;
+}
+
+.file-item i {
+  font-size: 18px;
+  color: #3b82f6;
+  margin-right: 10px;
+}
+
+.file-item .file-name {
+  flex: 1;
+  font-size: 13px;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 10px;
+}
+
+.file-item .el-tag {
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.file-item .file-size {
+  font-size: 12px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.no-files-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  color: #9ca3af;
+}
+
+.no-files-tip i {
+  font-size: 40px;
+  margin-bottom: 10px;
+  color: #d1d5db;
+}
+
+.no-files-tip span {
+  font-size: 14px;
 }
 
 /* 关联设备列表样式 */

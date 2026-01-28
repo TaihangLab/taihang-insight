@@ -659,12 +659,69 @@ export const skillAPI = {
       });
   },
 
-  // 导入技能
+  // 导入技能（旧方法，保留向后兼容）
   importSkill(skillData) {
     return visionAIAxios.post('/api/v1/skill-classes', skillData)
       .then(response => handleSimpleResponse(response, '导入技能'))
       .catch(error => {
         console.error('导入技能失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 上传技能文件和依赖文件
+   * @param {File} mainFile - 主技能文件（必须是.py文件）
+   * @param {File[]} dependencyFiles - 依赖文件列表（可选，可以是.py或其他配置文件）
+   * @returns {Promise} 包含上传结果的Promise对象
+   */
+  uploadSkillFiles(mainFile, dependencyFiles = []) {
+    if (!mainFile) {
+      console.error('上传技能文件失败: 缺少主技能文件');
+      return Promise.reject(new Error('缺少主技能文件'));
+    }
+
+    // 验证主文件是否为.py文件
+    if (!mainFile.name.endsWith('.py')) {
+      console.error('上传技能文件失败: 主技能文件必须是.py文件');
+      return Promise.reject(new Error('主技能文件必须是.py文件'));
+    }
+
+    console.log('准备上传技能文件:', {
+      mainFile: mainFile.name,
+      dependencyFiles: dependencyFiles.map(f => f.name)
+    });
+
+    // 创建FormData对象
+    const formData = new FormData();
+    formData.append('main_file', mainFile);
+    
+    // 添加依赖文件
+    if (dependencyFiles && dependencyFiles.length > 0) {
+      dependencyFiles.forEach(file => {
+        formData.append('dependency_files', file);
+      });
+    }
+
+    // 设置请求配置
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      // 添加上传进度事件
+      onUploadProgress: progressEvent => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        console.log('技能文件上传进度:', percentCompleted + '%');
+      }
+    };
+
+    return visionAIAxios.post('/api/v1/skill-classes/upload', formData, config)
+      .then(response => {
+        console.log('技能文件上传成功:', response.data);
+        return handleSimpleResponse(response, '上传技能文件');
+      })
+      .catch(error => {
+        console.error('技能文件上传请求失败:', error);
         throw error;
       });
   },
