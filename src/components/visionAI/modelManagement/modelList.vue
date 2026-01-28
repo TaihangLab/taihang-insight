@@ -34,35 +34,92 @@
     </div>
 
     <!-- 导入模型对话框 -->
-    <el-dialog :visible.sync="importDialogVisible" title="导入模型" width="650px" :close-on-click-modal="false"
-      custom-class="tech-dialog">
-      <el-form :model="importForm" label-width="85px" class="tech-form">
-        <el-form-item label="模型名称" required>
-          <el-input v-model="importForm.name" placeholder="请输入模型名称" style="width: 100%;" />
+    <el-dialog :visible.sync="importDialogVisible" title="导入模型" width="700px" :close-on-click-modal="false"
+      custom-class="tech-dialog" :before-close="handleImportDialogClose">
+      <el-form :model="importForm" :rules="importFormRules" ref="importForm" label-width="100px" class="tech-form">
+        <!-- 模型名称 -->
+        <el-form-item label="模型名称" prop="name" required>
+          <el-input v-model="importForm.name" placeholder="请输入模型名称（英文，如yolo11_fire）" style="width: 100%;" />
+          <div class="form-tip">仅支持英文、数字和下划线，且以字母开头，将作为Triton中的模型标识</div>
         </el-form-item>
-        <el-form-item label="模型文件" required>
-          <el-upload class="upload-demo" action="#" :auto-upload="false" :on-change="file => handleFileChange(file.raw)"
-            :limit="1">
-            <el-button type="primary" style="margin-left: 0;">选择文件</el-button>
-            <div class="el-upload__tip" style="margin-top: 10px; color: #86909C; font-size: 12px;">
-              请选择模型文件进行上传
+        
+        <!-- 模型平台 -->
+        <el-form-item label="模型平台" prop="platform" required>
+          <el-select v-model="importForm.platform" placeholder="请选择模型平台" style="width: 100%;" @change="handlePlatformChange">
+            <el-option 
+              v-for="item in platformOptions" 
+              :key="item.value" 
+              :label="item.label" 
+              :value="item.value">
+              <span>{{ item.label }}</span>
+              <span style="float: right; color: #8492a6; font-size: 12px">{{ item.extensions.join(', ') }}</span>
+            </el-option>
+          </el-select>
+        </el-form-item>
+        
+        <!-- 模型版本 -->
+        <el-form-item label="版本号" prop="version">
+          <el-input-number v-model="importForm.version" :min="1" :max="999" style="width: 150px;" />
+          <span class="form-tip-inline">默认为1，用于模型版本管理</span>
+        </el-form-item>
+        
+        <!-- 模型文件上传 -->
+        <el-form-item label="模型文件" prop="modelFile" required>
+          <el-upload
+            class="model-upload"
+            drag
+            action="#"
+            :auto-upload="false"
+            :on-change="handleModelFileChange"
+            :on-remove="handleModelFileRemove"
+            :file-list="modelFileList"
+            :limit="1"
+            :accept="acceptExtensions">
+            <i class="el-icon-upload"></i>
+            <div class="el-upload__text">
+              将文件拖到此处，或<em>点击上传</em>
+            </div>
+            <div class="el-upload__tip" slot="tip">
+              {{ platformTip }}
             </div>
           </el-upload>
         </el-form-item>
-        <el-form-item label="版本">
-          <el-input v-model="importForm.version" placeholder="请输入版本号" style="width: 40%;" class="version-input">
-            <template slot="prepend">
-              <span class="version-prefix">V</span>
-            </template>
-          </el-input>
+        
+        <!-- 配置文件上传（可选） -->
+        <el-form-item label="配置文件">
+          <el-upload
+            class="config-upload"
+            action="#"
+            :auto-upload="false"
+            :on-change="handleConfigFileChange"
+            :on-remove="handleConfigFileRemove"
+            :file-list="configFileList"
+            :limit="1"
+            accept=".pbtxt">
+            <el-button size="small" type="primary">选择配置文件</el-button>
+            <div slot="tip" class="el-upload__tip">
+              可选：上传 config.pbtxt，不上传则由Triton自动生成
+            </div>
+          </el-upload>
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="importForm.description" placeholder="请输入模型描述" style="width: 100%;" />
+        
+        <!-- 描述 -->
+        <el-form-item label="描述" prop="description">
+          <el-input v-model="importForm.description" type="textarea" :rows="3" placeholder="请输入模型描述（可选）" style="width: 100%;" />
         </el-form-item>
       </el-form>
+      
+      <!-- 上传进度 -->
+      <div v-if="uploading" class="upload-progress">
+        <el-progress :percentage="uploadProgress" :status="uploadStatus" />
+        <p class="progress-text">{{ uploadStatusText }}</p>
+      </div>
+      
       <div slot="footer" class="dialog-footer">
-        <el-button @click="importDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmImport">确认导入</el-button>
+        <el-button @click="importDialogVisible = false" :disabled="uploading">取消</el-button>
+        <el-button type="primary" @click="confirmImport" :loading="uploading">
+          {{ uploading ? '上传中...' : '确认导入' }}
+        </el-button>
       </div>
     </el-dialog>
 
@@ -307,9 +364,42 @@ export default {
       importDialogVisible: false,
       importForm: {
         name: '',
-        file: null,
-        version: '1.0',
-        description: ''
+        platform: 'onnxruntime_onnx',
+        version: 1,
+        description: '',
+        modelFile: null,
+        configFile: null
+      },
+      // 模型文件列表（用于el-upload显示）
+      modelFileList: [],
+      // 配置文件列表
+      configFileList: [],
+      // 上传状态
+      uploading: false,
+      uploadProgress: 0,
+      uploadStatus: '',
+      uploadStatusText: '',
+      // 支持的平台选项
+      platformOptions: [
+        { value: 'onnxruntime_onnx', label: 'ONNX Runtime', extensions: ['.onnx'] },
+        { value: 'tensorrt_plan', label: 'TensorRT (NVIDIA)', extensions: ['.plan', '.engine'] },
+        { value: 'pytorch_libtorch', label: 'PyTorch (TorchScript)', extensions: ['.pt', '.pth'] },
+        { value: 'tensorflow_savedmodel', label: 'TensorFlow SavedModel', extensions: ['.pb'] },
+        { value: 'openvino', label: 'OpenVINO', extensions: ['.xml', '.bin'] }
+      ],
+      // 导入表单验证规则
+      importFormRules: {
+        name: [
+          { required: true, message: '请输入模型名称', trigger: 'blur' },
+          { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: '仅支持英文、数字和下划线，且以字母开头', trigger: 'blur' },
+          { min: 2, max: 50, message: '长度在 2 到 50 个字符之间', trigger: 'blur' }
+        ],
+        platform: [
+          { required: true, message: '请选择模型平台', trigger: 'change' }
+        ],
+        description: [
+          { max: 200, message: '长度不超过200个字符', trigger: 'blur' }
+        ]
       },
 
       // 编辑模型对话框
@@ -370,6 +460,19 @@ export default {
     // 计算当前页的数据
     currentPageData() {
       return this.tableData
+    },
+    // 根据选择的平台计算接受的文件扩展名
+    acceptExtensions() {
+      const platform = this.platformOptions.find(p => p.value === this.importForm.platform)
+      return platform ? platform.extensions.join(',') : '.onnx'
+    },
+    // 根据选择的平台计算提示文字
+    platformTip() {
+      const platform = this.platformOptions.find(p => p.value === this.importForm.platform)
+      if (platform) {
+        return `请上传 ${platform.extensions.join(' 或 ')} 格式的模型文件（${platform.label}）`
+      }
+      return '请先选择模型平台'
     }
   },
 
@@ -526,9 +629,55 @@ export default {
       })
     },
 
-    // 处理文件上传
-    handleFileChange(file) {
-      this.importForm.file = file
+    // 处理模型文件选择
+    handleModelFileChange(file) {
+      // 验证文件扩展名
+      const ext = '.' + file.name.split('.').pop().toLowerCase()
+      const platform = this.platformOptions.find(p => p.value === this.importForm.platform)
+      
+      if (platform && !platform.extensions.includes(ext)) {
+        this.$message.warning(`文件格式不匹配，${platform.label}平台需要 ${platform.extensions.join(', ')} 格式的文件`)
+        this.modelFileList = []
+        this.importForm.modelFile = null
+        return
+      }
+      
+      this.importForm.modelFile = file.raw
+      this.modelFileList = [file]
+    },
+
+    // 处理模型文件移除
+    handleModelFileRemove() {
+      this.importForm.modelFile = null
+      this.modelFileList = []
+    },
+
+    // 处理配置文件选择
+    handleConfigFileChange(file) {
+      this.importForm.configFile = file.raw
+      this.configFileList = [file]
+    },
+
+    // 处理配置文件移除
+    handleConfigFileRemove() {
+      this.importForm.configFile = null
+      this.configFileList = []
+    },
+
+    // 处理平台切换
+    handlePlatformChange() {
+      // 清空已选择的模型文件
+      this.importForm.modelFile = null
+      this.modelFileList = []
+    },
+
+    // 处理导入对话框关闭
+    handleImportDialogClose(done) {
+      if (this.uploading) {
+        this.$message.warning('正在上传中，请等待完成')
+        return
+      }
+      done()
     },
 
     // 处理导入模型
@@ -536,44 +685,104 @@ export default {
       // 重置导入表单
       this.importForm = {
         name: '',
-        file: null,
-        version: '1.0',
-        description: ''
+        platform: 'onnxruntime_onnx',
+        version: 1,
+        description: '',
+        modelFile: null,
+        configFile: null
       }
+      this.modelFileList = []
+      this.configFileList = []
+      this.uploading = false
+      this.uploadProgress = 0
+      this.uploadStatus = ''
+      this.uploadStatusText = ''
       this.importDialogVisible = true
+      
+      // 重置表单验证
+      this.$nextTick(() => {
+        if (this.$refs.importForm) {
+          this.$refs.importForm.clearValidate()
+        }
+      })
     },
 
     // 确认导入模型
     confirmImport() {
-      if (!this.importForm.name || !this.importForm.file) {
-        this.$message.warning('请填写模型名称并选择模型文件')
-        return
-      }
-
-      this.loading = true
-
-      // 创建FormData对象
-      const formData = new FormData()
-      formData.append('name', this.importForm.name)
-      formData.append('version', this.importForm.version.toString())
-      formData.append('description', this.importForm.description || '')
-      formData.append('file', this.importForm.file)
-
-      // 发送导入请求
-      modelAPI.importModel(formData).then((res) => {
-        if (res.data && res.data.code === 0) {
-          // 导入成功后重新获取列表
-          this.fetchModelList()
-          this.$message.success('导入成功')
-          this.importDialogVisible = false
-        } else {
-          this.$message.error(res.data.msg || '导入失败')
+      // 表单验证
+      this.$refs.importForm.validate((valid) => {
+        if (!valid) {
+          return
         }
-        this.loading = false
-      }).catch((error) => {
-        console.error('导入模型失败', error)
-        this.$message.error('导入失败: ' + (error.message || '未知错误'))
-        this.loading = false
+        
+        // 检查是否选择了模型文件
+        if (!this.importForm.modelFile) {
+          this.$message.warning('请选择模型文件')
+          return
+        }
+
+        this.uploading = true
+        this.uploadProgress = 0
+        this.uploadStatus = ''
+        this.uploadStatusText = '正在上传模型文件...'
+
+        // 创建FormData对象
+        const formData = new FormData()
+        formData.append('name', this.importForm.name)
+        formData.append('platform', this.importForm.platform)
+        formData.append('version', this.importForm.version.toString())
+        formData.append('description', this.importForm.description || '')
+        formData.append('model_file', this.importForm.modelFile)
+        
+        // 如果有配置文件，也添加
+        if (this.importForm.configFile) {
+          formData.append('config_file', this.importForm.configFile)
+        }
+
+        // 发送导入请求
+        modelAPI.importModel(formData, (progressEvent) => {
+          // 更新上传进度
+          this.uploadProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          if (this.uploadProgress >= 100) {
+            this.uploadStatusText = '文件上传完成，正在加载模型到Triton...'
+          }
+        }).then((res) => {
+          if (res.data && res.data.code === 0) {
+            this.uploadStatus = 'success'
+            this.uploadStatusText = '导入成功！'
+            
+            // 显示详细信息
+            const data = res.data.data
+            let message = `模型 ${data.name} 导入成功`
+            if (data.status === 'loaded') {
+              message += '，已成功加载到Triton'
+            } else {
+              message += '，文件已上传但Triton加载可能需要手动操作'
+            }
+            this.$message.success(message)
+            
+            // 导入成功后重新获取列表
+            this.fetchModelList()
+            
+            // 延迟关闭对话框
+            setTimeout(() => {
+              this.importDialogVisible = false
+              this.uploading = false
+            }, 1000)
+          } else {
+            this.uploadStatus = 'exception'
+            this.uploadStatusText = res.data.msg || '导入失败'
+            this.$message.error(res.data.msg || '导入失败')
+            this.uploading = false
+          }
+        }).catch((error) => {
+          console.error('导入模型失败', error)
+          this.uploadStatus = 'exception'
+          const errorDetail = (error.response && error.response.data && error.response.data.detail) || error.message || '未知错误'
+          this.uploadStatusText = '导入失败: ' + errorDetail
+          this.$message.error('导入失败: ' + errorDetail)
+          this.uploading = false
+        })
       })
     },
 
@@ -837,6 +1046,100 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden; /* 防止整体页面出现滚动条 */
+}
+
+/* ==================== 导入模型对话框样式 ==================== */
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.form-tip-inline {
+  font-size: 12px;
+  color: #909399;
+  margin-left: 10px;
+}
+
+/* 模型文件上传区域 */
+.model-upload {
+  width: 100%;
+}
+
+.model-upload .el-upload {
+  width: 100%;
+}
+
+.model-upload .el-upload-dragger {
+  width: 100%;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  background-color: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.model-upload .el-upload-dragger:hover {
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.02);
+}
+
+.model-upload .el-upload-dragger .el-icon-upload {
+  font-size: 48px;
+  color: #c0c4cc;
+  margin-bottom: 8px;
+}
+
+.model-upload .el-upload-dragger:hover .el-icon-upload {
+  color: #3b82f6;
+}
+
+.model-upload .el-upload__text {
+  color: #606266;
+  font-size: 14px;
+}
+
+.model-upload .el-upload__text em {
+  color: #3b82f6;
+  font-style: normal;
+}
+
+.model-upload .el-upload__tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 8px;
+}
+
+/* 配置文件上传 */
+.config-upload .el-upload__tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+/* 上传进度条 */
+.upload-progress {
+  margin-top: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.upload-progress .el-progress {
+  margin-bottom: 8px;
+}
+
+.upload-progress .progress-text {
+  text-align: center;
+  font-size: 13px;
+  color: #606266;
+  margin: 0;
 }
 
 /* 科技感蓝色主题的过滤区域 */

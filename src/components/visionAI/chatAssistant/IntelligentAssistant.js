@@ -1,5 +1,5 @@
 import VisionAIService from '../../service/VisionAIService.js'
-import marked from 'marked'
+import { marked } from 'marked'
 
 // 配置 marked 选项
 if (typeof marked === 'function') {
@@ -1048,13 +1048,10 @@ export default {
       formatMessage(content) {
         if (!content) return '';
         
-        // 检查 marked 是否可用 - 兼容多种导出方式
-        const markedFn = typeof marked === 'function' ? marked : (marked && marked.marked);
-        
-        if (!markedFn) {
+        // 检查 marked 是否可用
+        if (typeof marked !== 'function') {
           if (!this._markedErrorShown) {
             console.error('❌ marked 未正确加载，类型:', typeof marked);
-            console.error('marked 对象:', marked);
             this._markedErrorShown = true;
           }
           // 降级处理：只处理换行符
@@ -1063,7 +1060,7 @@ export default {
         
         try {
           // 使用 marked 渲染 Markdown
-          const html = markedFn(content);
+          const html = marked(content);
           
           // 调试：只在第一次调用时打印
           if (!this._markedDebugPrinted) {
@@ -2109,16 +2106,13 @@ export default {
       
       // 检查 Markdown 渲染库是否加载
       console.log('Marked 类型检查:', typeof marked);
-      console.log('Marked 对象:', marked);
       
-      const markedFn = typeof marked === 'function' ? marked : (marked && marked.marked);
-      
-      if (markedFn) {
+      if (typeof marked === 'function') {
         console.log('✅ Marked 函数可用');
         try {
           // 测试 Markdown 渲染
           const testMd = '**加粗测试** 和 *斜体测试*\n\n- 列表项1\n- 列表项2';
-          const testHtml = markedFn(testMd);
+          const testHtml = marked(testMd);
           console.log('Markdown 渲染测试:');
           console.log('  输入:', testMd);
           console.log('  输出:', testHtml);
@@ -2127,7 +2121,7 @@ export default {
         }
       } else {
         console.error('❌ Marked 函数不可用！');
-        console.error('请检查 marked 包是否正确安装：npm install marked@4.3.0');
+        console.error('请检查 marked 包是否正确安装：npm install marked');
       }
       
       // 初始化位置到右侧
