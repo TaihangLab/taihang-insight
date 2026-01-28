@@ -245,7 +245,7 @@
 import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import * as echarts from 'echarts';
 import type { ECharts } from 'echarts';
-import { alertStatisticsAPI, deviceStatisticsAPI } from '@/components/service/VisionAIService.js';
+import centerAPI from '@/api/center';
 
 // ============================================================================
 // 类型定义
@@ -527,7 +527,7 @@ async function loadAllStatistics(): Promise<void> {
 async function loadSummaryData(): Promise<void> {
   loading.summary = true;
   try {
-    const response = await alertStatisticsAPI.getSummary('day');
+    const response = await centerAPI.alertStatistics.getSummary('day');
     if (response.data?.code === 0 && response.data?.data) {
       const data = response.data.data;
       todayWarnings.value = data.total_alerts || 0;
@@ -547,7 +547,7 @@ async function loadSummaryData(): Promise<void> {
 async function loadTrendData(): Promise<void> {
   loading.trend = true;
   try {
-    const response = await alertStatisticsAPI.getTrend('24h', '1h');
+    const response = await centerAPI.alertStatistics.getTrend('24h', '1h');
     if (response.data?.code === 0 && response.data?.data) {
       const data = response.data.data;
       trendData.value = {
@@ -572,7 +572,7 @@ async function loadTrendData(): Promise<void> {
 async function loadTypesData(): Promise<void> {
   loading.types = true;
   try {
-    const response = await alertStatisticsAPI.getByType('day');
+    const response = await centerAPI.alertStatistics.getByType('day');
     if (response.data?.code === 0 && response.data?.data) {
       warningTypes.value = response.data.data.map((item: any) => ({
         name: item.name,
@@ -594,7 +594,7 @@ async function loadTypesData(): Promise<void> {
 async function loadLevelData(): Promise<void> {
   loading.level = true;
   try {
-    const response = await alertStatisticsAPI.getByLevel('day');
+    const response = await centerAPI.alertStatistics.getByLevel('day');
     if (response.data?.code === 0 && response.data?.data) {
       // 更新等级图表
       if (levelChart) {
@@ -614,7 +614,7 @@ async function loadLevelData(): Promise<void> {
 async function loadLocationsData(): Promise<void> {
   loading.locations = true;
   try {
-    const response = await alertStatisticsAPI.getByLocation('day', 5);
+    const response = await centerAPI.alertStatistics.getByLocation('day', 5);
     if (response.data?.code === 0 && response.data?.data) {
       topWarnings.value = response.data.data.map((item: any) => ({
         name: item.name,
@@ -635,7 +635,7 @@ async function loadLocationsData(): Promise<void> {
 async function loadProcessingStatusData(): Promise<void> {
   loading.processing = true;
   try {
-    const response = await alertStatisticsAPI.getProcessingStatus(statusTimeRange.value);
+    const response = await centerAPI.alertStatistics.getProcessingStatus(statusTimeRange.value);
     if (response.data?.code === 0 && response.data?.data) {
       // 更新状态图表
       if (statusChart) {
@@ -655,7 +655,7 @@ async function loadProcessingStatusData(): Promise<void> {
 async function loadDeviceWarningsData(): Promise<void> {
   loading.deviceStatus = true;
   try {
-    const response = await alertStatisticsAPI.getByLocation(deviceTimeRange.value, 10);
+    const response = await centerAPI.alertStatistics.getByLocation(deviceTimeRange.value, 10);
     if (response.data?.code === 0 && response.data?.data) {
       deviceWarnings.value = response.data.data.map((item: any) => ({
         name: item.name,
@@ -675,7 +675,7 @@ async function loadDeviceWarningsData(): Promise<void> {
 async function loadWarningImagesData(): Promise<void> {
   loading.warningImages = true;
   try {
-    const response = await alertStatisticsAPI.getLatestImages(10);
+    const response = await centerAPI.alertStatistics.getLatestImages(10);
     if (response.data?.code === 0 && response.data?.data) {
       // 转换MinIO URL为本地路径
       const images = response.data.data.map((item: any) => ({
@@ -710,8 +710,7 @@ async function loadWarningListData(): Promise<void> {
   loading.warningList = true;
   try {
     // 使用 alertAPI 获取预警列表
-    const { alertAPI } = await import('@/components/service/VisionAIService.js');
-    const response = await alertAPI.getAlerts({ page: 1, limit: 10 });
+    const response = await centerAPI.alert.getRealTimeAlerts({ page: 1, limit: 10 });
     if (response.data?.code === 0 && response.data?.data) {
       warningList.value = response.data.data.map((item: any) => ({
         event: item.alert_name || item.name || '未知预警',

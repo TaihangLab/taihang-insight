@@ -1,4 +1,4 @@
-import { cameraAPI, skillAPI } from '@/components/service/VisionAIService.js';
+import centerAPI from '@/api/center';
 import MediaServer from '@/components/service/MediaServer.js';
 
 export default {
@@ -287,7 +287,7 @@ export default {
       // 在发送请求前，打印出请求参数用于调试
       console.log('发送API请求参数:', queryParams);
       
-      cameraAPI.getCameraList(queryParams)
+      centerAPI.camera.getCameraList(queryParams)
         .then(response => {
           console.log('获取摄像头列表原始响应:', response);
           console.log('获取摄像头列表响应data:', response.data);
@@ -445,7 +445,7 @@ export default {
       this.loading = true;
       
       // 调用API获取完整的摄像头信息
-      cameraAPI.getCameraDetail(row.id)
+      centerAPI.camera.getCameraDetail(row.id)
         .then(response => {
           // 检查API响应
           if (response.data && (response.data.success || response.data.code === 0)) {
@@ -496,7 +496,7 @@ export default {
         // 获取摄像头关联的任务列表
         this.fetchCameraRelatedTasks(row.id);
         
-        cameraAPI.getCameraDetail(row.id)
+        centerAPI.camera.getCameraDetail(row.id)
           .then(response => {
             if (response.data && (response.data.success || response.data.code === 0)) {
               const camera = response.data.camera || response.data.data;
@@ -661,7 +661,7 @@ export default {
 
         // 为新创建的技能加载默认参数（每次都重新加载，确保数据独立）
         // 从API获取该技能类的默认参数
-        skillAPI.getAITaskSkillDetail(skillInfo.id)
+        centerAPI.skill.getAITaskSkillDetail(skillInfo.id)
           .then(response => {
             let params = {};
             let alertDefinitions = '';
@@ -936,7 +936,7 @@ export default {
                 }
                 
                 // 3. 最后才获取默认参数
-                skillAPI.getAITaskSkillDetail(skillInfo.id)
+                centerAPI.skill.getAITaskSkillDetail(skillInfo.id)
                   .then(response => {
                     if (response.data && (response.data.code === 0 || response.data.success)) {
                       const skillDetail = response.data.data;
@@ -1448,7 +1448,7 @@ export default {
       
       console.log('刷新摄像头详情:', cameraId);
       
-      cameraAPI.getCameraDetail(cameraId)
+      centerAPI.camera.getCameraDetail(cameraId)
         .then(response => {
           if (response.data && (response.data.success || response.data.code === 0)) {
             const camera = response.data.camera || response.data.data;
@@ -1523,7 +1523,7 @@ export default {
       
       console.log('获取技能类列表参数:', queryParams);
       
-      skillAPI.getAITaskSkillClasses(queryParams)
+      centerAPI.skill.getAITaskSkillClasses(queryParams)
         .then(response => {
           console.log('获取技能类列表原始响应:', response);
           if (response.data && (response.data.success || response.data.code === 0)) {
@@ -1965,7 +1965,7 @@ export default {
       console.log('设备索引:', deviceIndex, '技能键:', skillKey);
       
       // 调用API创建AI任务
-      skillAPI.createAITask(taskData)
+      centerAPI.skill.createAITask(taskData)
         .then(response => {
           console.log('创建AI任务返回数据:', response.data);
           
@@ -2080,7 +2080,7 @@ export default {
       this.taskLoading = true;
       this.cameraRelatedTasks = [];
       
-      cameraAPI.getCameraAITasks(cameraId)
+      centerAPI.camera.getCameraAITasks(cameraId)
         .then(response => {
           console.log('获取摄像头关联任务原始响应:', response);
           
@@ -2222,7 +2222,7 @@ export default {
       // 返回Promise以便外部处理错误
       return new Promise((resolve, reject) => {
         // 调用接口获取任务详情
-        skillAPI.getAITaskDetail(taskId)
+        centerAPI.skill.getAITaskDetail(taskId)
           .then(response => {
             // 正确处理不同的数据结构
             let taskData;
@@ -2254,7 +2254,7 @@ export default {
             // 获取技能信息
             if (taskData.skill_class_id) {
               // 查找对应的技能信息
-              skillAPI.getAITaskSkillDetail(taskData.skill_class_id)
+              centerAPI.skill.getAITaskSkillDetail(taskData.skill_class_id)
                 .then(skillResponse => {
                   // 处理不同格式的技能数据
                   let skillData;
@@ -2471,7 +2471,7 @@ export default {
       console.log('设备索引:', deviceIndex, '技能键:', skillKey);
       
       // 调用API更新AI任务
-      skillAPI.updateAITask(this.currentTaskId, taskData)
+      centerAPI.skill.updateAITask(this.currentTaskId, taskData)
         .then(response => {
           console.log('更新AI任务返回数据:', response.data);
           
@@ -2561,7 +2561,7 @@ export default {
         type: 'warning'
       }).then(() => {
         const deletedTaskId = this.currentTaskId;
-        skillAPI.deleteAITask(deletedTaskId).then(response => {
+        centerAPI.skill.deleteAITask(deletedTaskId).then(response => {
           // 兼容多种返回结构（经由handleSimpleResponse转换后为{code, msg, data:{success}}）
           const ok = (response && response.data && response.data.code === 0)
             || (response && response.data && response.data.data && response.data.data.success === true)

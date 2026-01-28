@@ -7,25 +7,39 @@ import type {
   AuthInfoResponse,
   AuthPermissionsResponse,
   AuthMenuResponse,
+  LoginRequest,
+  LoginResponse,
   UnifiedResponse
-} from './types'
+} from '@/types/auth'
+
+// 获取 API 基础 URL
+// 开发环境为空（路径中包含 /api/v1 前缀，由 vite 代理转发）
+// 生产环境使用环境变量配置的完整 URL
+const getApiBaseURL = () => {
+  if (import.meta.env.MODE === 'production') {
+    return import.meta.env.VITE_API_BASE_URL || ''
+  }
+  return ''
+}
 
 // 创建独立的 axios 实例用于认证接口
 const authAxios = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
+  baseURL: getApiBaseURL(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
   }
 })
 
-// 请求拦截器：添加 token
+// 请求拦截器：添加 token 和 clientid
 authAxios.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    // 添加 clientid 请求头（后端认证必需）
+    config.headers.clientid = import.meta.env.VITE_CLIENT_ID
     return config
   },
   (error) => {
@@ -53,11 +67,19 @@ authAxios.interceptors.response.use(
  */
 class AuthAPI {
   /**
-   * 获取用户基本信息
+   * 用户登录
+   * POST /api/v1/login
+   */
+  async login(params: LoginRequest): Promise<LoginResponse> {
+    return authAxios.post('/api/v1/login', params)
+  }
+
+  /**
+   * 获取用户基本信息（包含权限和菜单）
    * GET /api/v1/auth/info
    */
   async getUserInfo(): Promise<UnifiedResponse<AuthInfoResponse>> {
-    return authAxios.get('/auth/info')
+    return authAxios.get('/api/v1/auth/info')
   }
 
   /**
@@ -65,7 +87,7 @@ class AuthAPI {
    * GET /api/v1/auth/permissions
    */
   async getPermissions(): Promise<UnifiedResponse<AuthPermissionsResponse>> {
-    return authAxios.get('/auth/permissions')
+    return authAxios.get('/api/v1/auth/permissions')
   }
 
   /**
@@ -73,7 +95,7 @@ class AuthAPI {
    * GET /api/v1/auth/menu
    */
   async getMenuTree(): Promise<UnifiedResponse<AuthMenuResponse['data']>> {
-    return authAxios.get('/auth/menu')
+    return authAxios.get('/api/v1/auth/menu')
   }
 }
 

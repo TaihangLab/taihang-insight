@@ -487,7 +487,7 @@
   </template>
   
   <script>
-  import { skillAPI } from '@/components/service/VisionAIService.js'
+  import centerAPI from '@/api/center'
   
   export default {
     name: 'LlmSkillCreateDialogDetail',
@@ -1052,7 +1052,7 @@
           const validOutputParams = this.outputParams.filter(param => param.name.trim())
           
           console.log('正在进行AI分析...')
-          const response = await skillAPI.previewTestLlmSkill(
+          const response = await centerAPI.skill.previewTestLlmSkill(
             testImageFile,
             this.promptTemplate,
             null, // 系统提示词暂时为null
@@ -1172,7 +1172,7 @@
             console.log('正在更新多模态技能:', this.skillInfo.skillId, skillData)
             
             // 调用API更新技能
-            const response = await skillAPI.updateLlmSkill(this.skillInfo.skillId, skillData)
+            const response = await centerAPI.skill.updateLlmSkill(this.skillInfo.skillId, skillData)
             
             if (response.data && response.data.success) {
               this.$message.success('技能更新成功！')
@@ -1205,7 +1205,7 @@
             console.log('正在创建多模态技能:', skillData)
             
             // 调用API创建技能
-            const response = await skillAPI.createLlmSkill(skillData)
+            const response = await centerAPI.skill.createLlmSkill(skillData)
             
             if (response.data && response.data.success) {
               this.$message.success('技能创建成功！')
@@ -1275,7 +1275,7 @@
           
           // 第一步：创建技能
           this.$message.info('正在创建技能...')
-          const createResponse = await skillAPI.createLlmSkill(skillData)
+          const createResponse = await centerAPI.skill.createLlmSkill(skillData)
           
           if (!createResponse.data || !createResponse.data.success) {
             throw new Error('创建技能失败')
@@ -1285,7 +1285,7 @@
           
           // 第二步：发布技能
           this.$message.info('技能创建成功，正在发布...')
-          const publishResponse = await skillAPI.publishLlmSkill(createdSkillId)
+          const publishResponse = await centerAPI.skill.publishLlmSkill(createdSkillId)
           
           if (!publishResponse.data || !publishResponse.data.success) {
             // 发布失败，但技能已创建成功

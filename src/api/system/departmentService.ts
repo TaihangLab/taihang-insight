@@ -74,7 +74,7 @@ class DepartmentService {
     deptData: UpdateDepartmentRequest
   ): Promise<UnifiedResponse<Department>> {
     try {
-      return await rbacAxios.put(`/api/v1/rbac/depts/${deptId}`, deptData)
+      return await rbacAxios.put(`/rbac/depts/${deptId}`, deptData)
     } catch (error) {
       console.error('更新部门失败:', error)
       throw error
@@ -86,7 +86,7 @@ class DepartmentService {
    */
   static async deleteDepartment(deptId: number): Promise<UnifiedResponse<void>> {
     try {
-      return await rbacAxios.delete(`/api/v1/rbac/depts/${deptId}`)
+      return await rbacAxios.delete(`/rbac/depts/${deptId}`)
     } catch (error) {
       console.error('删除部门失败:', error)
       throw error

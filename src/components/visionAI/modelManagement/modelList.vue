@@ -269,7 +269,7 @@
 </template>
 
 <script>
-import { modelAPI } from '@/components/service/VisionAIService';
+import centerAPI from '@/api/center';
 
 export default {
   name: 'ModelList',
@@ -400,7 +400,7 @@ export default {
       }
 
       // 使用modelAPI服务发送请求
-      modelAPI.getModelList(params).then((res) => {
+      centerAPI.model.getModelList(params).then((res) => {
         if (res.data && res.data.code === 0) {
           // 更新数据
           this.tableData = res.data.data || []
@@ -442,7 +442,7 @@ export default {
         this.loading = true
 
         // 发送删除请求
-        modelAPI.deleteModel(row.id).then((res) => {
+        centerAPI.model.deleteModel(row.id).then((res) => {
           if (res.data && res.data.code === 0) {
             // 删除成功后重新获取列表
             this.fetchModelList()
@@ -491,7 +491,7 @@ export default {
         const selectedIds = selectedItems.map(item => item.id)
 
         // 发送批量删除请求
-        modelAPI.batchDeleteModels(selectedIds).then((res) => {
+        centerAPI.model.batchDeleteModels(selectedIds).then((res) => {
           if (res.data && res.data.success) {
             // 删除成功后重新获取列表
             this.fetchModelList()
@@ -560,7 +560,7 @@ export default {
       formData.append('file', this.importForm.file)
 
       // 发送导入请求
-      modelAPI.importModel(formData).then((res) => {
+      centerAPI.model.importModel(formData).then((res) => {
         if (res.data && res.data.code === 0) {
           // 导入成功后重新获取列表
           this.fetchModelList()
@@ -629,7 +629,7 @@ export default {
         }
 
         // 发送更新请求
-        modelAPI.updateModel(this.editForm.id, updateData).then((res) => {
+        centerAPI.model.updateModel(this.editForm.id, updateData).then((res) => {
           if (res.data && res.data.code === 0) {
             // 更新成功后重新获取列表
             this.fetchModelList()
@@ -678,7 +678,7 @@ export default {
       this.loading = true
 
       // 获取模型详情
-      modelAPI.getModelDetail(row.id).then((res) => {
+      centerAPI.model.getModelDetail(row.id).then((res) => {
         if (res.data && res.data.code === 0) {
           // 更新详情表单
           this.detailForm = {
@@ -729,7 +729,7 @@ export default {
       }
 
       // 发送加载请求
-      modelAPI.loadModel(row.id).then((res) => {
+      centerAPI.model.loadModel(row.id).then((res) => {
         if (res.data && res.data.code === 0) {
           // 加载成功后重新获取列表
           this.fetchModelList()
@@ -760,7 +760,7 @@ export default {
       }
 
       // 发送卸载请求
-      modelAPI.unloadModel(row.id).then((res) => {
+      centerAPI.model.unloadModel(row.id).then((res) => {
         if (res.data && res.data.code === 0) {
           // 卸载成功后重新获取列表
           this.fetchModelList()

@@ -210,7 +210,7 @@
 </template>
 
 <script>
-import { skillAPI } from '@/components/service/VisionAIService.js'
+import centerAPI from '@/api/center'
 
 export default {
   name: 'LlmSkillCreateDialog',
@@ -408,7 +408,7 @@ export default {
             // 如果有图标文件，先上传图标
             if (this.form.iconFile) {
               console.log('正在上传技能图标...')
-              const uploadResponse = await skillAPI.uploadLlmSkillIcon(this.form.iconFile, this.form.skillId)
+              const uploadResponse = await centerAPI.skill.uploadLlmSkillIcon(this.form.iconFile, this.form.skillId)
               
               console.log('图标上传响应:', uploadResponse.data)
               

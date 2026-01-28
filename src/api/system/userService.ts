@@ -62,7 +62,7 @@ class UserService {
    */
   static async updateUser(userId: number, userData: UpdateUserRequest): Promise<UnifiedResponse<User>> {
     try {
-      return await rbacAxios.put(`/api/v1/rbac/users/${userId}`, userData)
+      return await rbacAxios.put(`/rbac/users/${userId}`, userData)
     } catch (error) {
       console.error('更新用户失败:', error)
       throw error
@@ -74,7 +74,7 @@ class UserService {
    */
   static async deleteUser(userId: number): Promise<UnifiedResponse<void>> {
     try {
-      return await rbacAxios.delete(`/api/v1/rbac/users/${userId}`)
+      return await rbacAxios.delete(`/rbac/users/${userId}`)
     } catch (error) {
       console.error('删除用户失败:', error)
       throw error
@@ -100,7 +100,7 @@ class UserService {
    */
   static async resetUserPassword(userId: number, newPassword: string): Promise<UnifiedResponse<void>> {
     try {
-      return await rbacAxios.post(`/api/v1/rbac/users/${userId}/reset-password`, {
+      return await rbacAxios.post(`/rbac/users/${userId}/reset-password`, {
         new_password: newPassword
       })
     } catch (error) {
@@ -114,7 +114,7 @@ class UserService {
    */
   static async getUserRoles(userId: number): Promise<UnifiedResponse<Role[]>> {
     try {
-      return await rbacAxios.get(`/api/v1/rbac/users/${userId}/roles`)
+      return await rbacAxios.get(`/rbac/users/${userId}/roles`)
     } catch (error) {
       console.error('获取用户角色失败:', error)
       throw error

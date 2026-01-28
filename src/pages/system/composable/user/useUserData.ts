@@ -7,8 +7,8 @@ import { ref, computed } from 'vue'
 import type { User, UserQueryForm, UserRole, CreateUserRequest, UpdateUserRequest } from '@/types/rbac/user'
 import type { PaginationState } from '@/types/rbac/common'
 import { useUserStore } from '@/stores/modules/user'
-import userService from '@/api/rbac/userService'
-import associationService from '@/api/rbac/associationService'
+import userService from '@/api/system/userService'
+import associationService from '@/api/system/associationService'
 
 // ============================================
 // Composable

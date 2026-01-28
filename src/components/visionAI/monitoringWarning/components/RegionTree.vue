@@ -31,7 +31,7 @@
 
 <script>
 import VueEasyTree from "@wchbrad/vue-easy-tree";
-import { realtimeMonitorAPI } from '../../../service/VisionAIService.js';
+import centerAPI from '@/api/center';
 
 export default {
   name: 'MonitorRegionTree',
@@ -68,7 +68,7 @@ export default {
           
           // 使用专用的实时监控API
           // 注意：RegionController没有query参数
-          const response = await realtimeMonitorAPI.getRegionTree({
+          const response = await centerAPI.realtimeMonitor.getRegionTree({
             parent: node.data.id,
             hasChannel: this.hasChannel
           });

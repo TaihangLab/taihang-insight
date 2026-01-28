@@ -5,7 +5,7 @@
 
 import { computed } from 'vue'
 import { useUserStore } from '@/stores/modules/user'
-import type { MenuItem } from '@/api/auth/types'
+import type { MenuItem } from '@/types/auth'
 
 /**
  * 菜单类型映射

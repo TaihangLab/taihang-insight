@@ -1,13 +1,13 @@
-# RBAC 服务使用指南
+# System API 服务使用指南
 
 ## 概述
 
-RBAC 服务提供所有与基于角色的访问控制（Role-Based Access Control）相关的 API 调用功能。
+System API 提供所有与系统管理（用户、角色、部门、权限等）相关的 API 调用功能。
 
 ## 服务文件
 
 ```
-src/api/rbac/
+src/api/system/
 ├── base.ts                  # Axios 配置和基础响应处理
 ├── userService.ts           # 用户管理服务
 ├── roleService.ts           # 角色管理服务
@@ -15,8 +15,7 @@ src/api/rbac/
 ├── positionService.ts       # 岗位管理服务
 ├── tenantService.ts         # 租户管理服务
 ├── permissionService.ts     # 权限管理服务
-├── associationService.ts    # 关联管理服务
-└── RBACService.ts          # 统一服务入口
+└── associationService.ts    # 关联管理服务
 ```
 
 ## Vue 3 组件中使用（`<script setup lang="ts">`）
@@ -60,8 +59,8 @@ src/api/rbac/
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import RBACService from '@/api/rbac/RBACService'
-import type { User } from '@/api/rbac/RBACService'
+import RBACService from '@/api/system/RBACService'
+import type { User } from '@/api/system/RBACService'
 
 // 响应式数据
 const users = ref<User[]>([])
@@ -165,8 +164,8 @@ onMounted(() => {
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import RBACService from '@/api/rbac/RBACService'
-import type { Department } from '@/api/rbac/RBACService'
+import RBACService from '@/api/system/RBACService'
+import type { Department } from '@/api/system/RBACService'
 
 // 响应式数据
 const departmentTree = ref<Department[]>([])
@@ -330,8 +329,8 @@ onMounted(() => {
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import RBACService from '@/api/rbac/RBACService'
-import type { CreateUserRequest, Role, Department } from '@/api/rbac/RBACService'
+import RBACService from '@/api/system/RBACService'
+import type { CreateUserRequest, Role, Department } from '@/api/system/RBACService'
 
 // 定义 props
 interface Props {
@@ -422,7 +421,7 @@ const handleSubmit = async () => {
 ### 用户管理
 
 ```typescript
-import RBACService from '@/api/rbac/RBACService'
+import RBACService from '@/api/system/RBACService'
 
 // 获取用户列表
 const users = await RBACService.getUsers({ page: 1, limit: 10 })

@@ -511,7 +511,7 @@ import WarningDetail from './warningDetail.vue'
 // 🆕 导入OSD检测框组件
 import DetectionOverlay from './components/DetectionOverlay.vue'
 import screenfull from "screenfull";
-import { alertAPI, realtimeMonitorAPI, realtimeDetectionAPI } from '../../service/VisionAIService.js';
+import centerAPI from '@/api/center';
 // 🆕 导入配置文件获取后端地址
 const config = _imported_1;
 
@@ -948,7 +948,7 @@ export default {
         console.log('🎬 开始播放通道 - 通道ID:', channelId, '播放器索引:', idxTmp);
         
         // 使用新的专用API播放通道
-        const response = await realtimeMonitorAPI.playChannel(channelId);
+        const response = await centerAPI.realtimeMonitor.playChannel(channelId);
         
         if (response.data && response.data.code === 0 && response.data.data) {
           const streamData = response.data.data;
@@ -1132,7 +1132,7 @@ export default {
         };
 
         // 发送真实的API请求
-        const response = await alertAPI.updateAlertStatus(warning.id, updateData);
+        const response = await centerAPI.alert.updateAlertStatus(warning.id, updateData);
         console.log('✅ 后端状态更新成功:', response);
 
         // 2. 后端更新成功后，更新本地状态
@@ -1213,7 +1213,7 @@ export default {
           operation_type: 'add_processing_note'
         };
 
-        const response = await alertAPI.updateAlertStatus(this.currentProcessingWarningId, updateData);
+        const response = await centerAPI.alert.updateAlertStatus(this.currentProcessingWarningId, updateData);
         console.log('✅ 处理意见保存成功:', response);
 
         // 更新本地数据状态 - 添加新的处理记录
@@ -1262,7 +1262,7 @@ export default {
           operation_type: 'complete_processing'
         };
 
-        const response = await alertAPI.updateAlertStatus(this.currentProcessingWarningId, updateData);
+        const response = await centerAPI.alert.updateAlertStatus(this.currentProcessingWarningId, updateData);
         console.log('✅ 处理完成状态更新成功:', response);
 
         // 更新本地数据状态
@@ -1549,7 +1549,7 @@ export default {
         };
 
         console.log('📤 更新预警状态为已归档:', alertId, updateData);
-        const updateResponse = await alertAPI.updateAlertStatus(alertId, updateData);
+        const updateResponse = await centerAPI.alert.updateAlertStatus(alertId, updateData);
         console.log('✅ 预警状态更新成功:', updateResponse);
 
         // 2. 更新本地的_apiData.status字段
@@ -1586,8 +1586,8 @@ export default {
         console.log('✅ 本地状态已更新为已归档');
 
         // 3. 调用归档API关联预警到档案
-        const { archiveAPI } = await import('../../service/VisionAIService.js');
-        const response = await archiveAPI.linkAlertsToArchive(
+        const { archive } = centerAPI;
+        const response = await centerAPI.archive.linkAlertsToArchive(
           this.selectedArchiveId,
           [alertId],
           `实时监控归档 - 预警类型: ${warningInfo.type}`
@@ -1763,9 +1763,9 @@ export default {
         }
 
         // 调用后端API标记误报
-        const { alertAPI, archiveAPI } = await import('../../service/VisionAIService.js');
+        const { alert, archive } = centerAPI;
         const alertId = warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId);
-        const response = await alertAPI.markAlertAsFalseAlarm(
+        const response = await centerAPI.alert.markAlertAsFalseAlarm(
           alertId,
           this.falseAlarmForm.reviewNotes,
           this.getCurrentUserName()
@@ -1799,7 +1799,7 @@ export default {
           // 如果选择了归档，调用归档API
           if (this.falseAlarmForm.needArchive && this.falseAlarmForm.archiveId) {
             try {
-              const archiveResponse = await archiveAPI.linkAlertsToArchive(
+              const archiveResponse = await centerAPI.archive.linkAlertsToArchive(
                 this.falseAlarmForm.archiveId,
                 [alertId],
                 `误报记录归档：${this.falseAlarmForm.reviewNotes}`
@@ -1913,9 +1913,9 @@ export default {
     async loadAvailableArchives() {
       try {
         this.archiveListLoading = true;
-        const { archiveAPI } = await import('../../service/VisionAIService.js');
+        const { archive } = centerAPI;
 
-        const response = await archiveAPI.getArchiveList({
+        const response = await centerAPI.archive.getArchiveList({
           page: 1,
           limit: 100,
           status: 1 // 只获取正常状态的档案
@@ -1964,12 +1964,12 @@ export default {
         inputPlaceholder: '例如：误报记录档案'
       }).then(async ({ value }) => {
         try {
-          const { archiveAPI } = await import('../../service/VisionAIService.js');
+          const { archive } = centerAPI;
           const now = new Date();
           const startTime = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
           const endTime = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
-          const response = await archiveAPI.createArchive({
+          const response = await centerAPI.archive.createArchive({
             name: value,
             location: '误报记录档案',
             description: '用于存储误报预警记录',
@@ -2018,12 +2018,12 @@ export default {
       }).then(async ({ value }) => {
         try {
           this.archiveListLoading = true;
-          const { archiveAPI } = await import('../../service/VisionAIService.js');
+          const { archive } = centerAPI;
           const now = new Date();
           const startTime = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
           const endTime = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
-          const response = await archiveAPI.createArchive({
+          const response = await centerAPI.archive.createArchive({
             name: value,
             location: '实时预警归档',
             description: '从实时监控页面创建的预警档案',
@@ -2315,7 +2315,7 @@ export default {
           // 默认只获取最近的预警，按时间倒序
         };
 
-        const response = await alertAPI.getRealTimeAlerts(params);
+        const response = await centerAPI.alert.getRealTimeAlerts(params);
 
         if (response.data && response.data.code === 0) {
           // 修正数据结构 - 数据直接在data字段中（是一个数组）
@@ -2510,7 +2510,7 @@ export default {
           limit: this.pageSize,
         };
 
-        const response = await alertAPI.getRealTimeAlerts(params);
+        const response = await centerAPI.alert.getRealTimeAlerts(params);
 
         if (response.data && response.data.code === 0) {
           // 修正数据结构 - 数据直接在data字段中（是一个数组）
@@ -2554,7 +2554,7 @@ export default {
       }
 
       // 创建新的SSE连接
-      this.sseConnection = alertAPI.createAlertSSEConnection(
+      this.sseConnection = centerAPI.alert.createAlertSSEConnection(
         this.handleSSEMessage.bind(this),   // 消息处理
         this.handleSSEError.bind(this),     // 错误处理
         this.handleSSEClose.bind(this)      // 连接关闭处理
@@ -2940,7 +2940,7 @@ export default {
      */
     async loadAvailableAITasks(cameraId) {
       try {
-        const response = await realtimeDetectionAPI.getTasksByCamera(cameraId)
+        const response = await centerAPI.realtimeDetection.getTasksByCamera(cameraId)
         if (response.data && response.data.code === 0) {
           this.$set(this.availableAITasks, cameraId, response.data.data || [])
         }

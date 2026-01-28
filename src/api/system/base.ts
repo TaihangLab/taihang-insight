@@ -2,15 +2,14 @@ import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 
 import userService from '@/components/service/UserService.ts'
 
 // 获取 API 基础 URL
-// 开发环境使用代理（baseURL 为空），生产环境使用环境变量
+// 开发环境为空（路径中包含 /api/v1 前缀，由 vite 代理转发）
+// 生产环境使用环境变量配置的完整 URL
 const getApiBaseURL = () => {
-  if (import.meta.env.MODE === 'development') {
-    // 开发环境：使用代理，baseURL 为空
-    return ''
-  } else {
-    // 生产环境：使用环境变量配置的完整 URL
+  // 生产环境使用完整 URL，开发环境为空
+  if (import.meta.env.MODE === 'production') {
     return import.meta.env.VITE_API_BASE_URL || ''
   }
+  return ''
 }
 
 /**
@@ -87,9 +86,9 @@ rbacAxios.interceptors.request.use(
     // 添加token等通用请求头
     const token = userService.getAdminToken()
     if (token) {
-      config.headers['Authorization'] = 'Bearer ' + token
+      config.headers['Authorization'] = `Bearer ${token}`
     }
-    config.headers['clientid'] = '02bb9cfe8d7844ecae8dbe62b1ba971a'
+    config.headers.clientid = import.meta.env.VITE_CLIENT_ID
     return config
   },
   (error) => {

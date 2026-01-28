@@ -596,7 +596,7 @@
 
 <script>
 import LlmSkillCreateDialog from './LlmSkillCreateDialog.vue'
-import { skillAPI } from '@/components/service/VisionAIService.js'
+import centerAPI from '@/api/center'
 
 export default {
   name: 'MultimodalLlmSkills',
@@ -754,7 +754,7 @@ export default {
 
         console.log('加载多模态技能列表，参数:', params)
 
-        const response = await skillAPI.getLlmSkillList(params)
+        const response = await centerAPI.skill.getLlmSkillList(params)
         
         if (response.data && response.data.success) {
           // 修复数据解析：技能数组直接在 response.data.data 中
@@ -1088,7 +1088,7 @@ export default {
       // 获取技能详情数据并跳转到编辑页面
       this.detailLoading = true
       
-      skillAPI.getLlmSkillDetail(skill.skillId)
+      centerAPI.skill.getLlmSkillDetail(skill.skillId)
         .then(response => {
           if (response.data && response.data.success) {
             const skillDetail = response.data.data
@@ -1223,9 +1223,9 @@ export default {
         // 调用相应的API
         let response
         if (actionVerb === 'publish') {
-          response = await skillAPI.publishLlmSkill(skill.skillId)
+          response = await centerAPI.skill.publishLlmSkill(skill.skillId)
         } else {
-          response = await skillAPI.unpublishLlmSkill(skill.skillId)
+          response = await centerAPI.skill.unpublishLlmSkill(skill.skillId)
         }
         
         if (response.data && response.data.success) {
@@ -1286,7 +1286,7 @@ export default {
         console.log('正在删除技能:', skill.name, '(skill_id:', skill.skillId, ')')
         
         // 调用删除API
-        const response = await skillAPI.deleteLlmSkill(skill.skillId)
+        const response = await centerAPI.skill.deleteLlmSkill(skill.skillId)
         
         if (response.data && response.data.success) {
           // 从本地列表中移除技能
@@ -1358,7 +1358,7 @@ export default {
         console.log('正在批量删除技能, skill_ids:', selectedSkillIds)
 
         // 调用批量删除API
-        const response = await skillAPI.batchDeleteLlmSkills(selectedSkillIds)
+        const response = await centerAPI.skill.batchDeleteLlmSkills(selectedSkillIds)
 
         if (response.data && response.data.success) {
           // 获取删除结果
@@ -1435,7 +1435,7 @@ export default {
       this.detailDialogVisible = true
       
       // 调用API获取技能详情
-      skillAPI.getLlmSkillDetail(skill.skillId)
+      centerAPI.skill.getLlmSkillDetail(skill.skillId)
         .then(response => {
           if (response.data && response.data.success) {
             const skillDetail = response.data.data

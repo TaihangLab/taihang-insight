@@ -116,7 +116,7 @@ import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { ElMessage, ElNotification } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import DevTools from '@/components/common/DevTools.vue'
-import tenantService from '@/api/rbac/tenantService'
+import tenantService from '@/api/system/tenantService'
 import type { TenantAPI } from '@/types/rbac/tenant'
 
 interface TenantForm {

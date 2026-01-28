@@ -265,7 +265,7 @@
 </template>
 
 <script>
-import { taskReviewAPI, skillAPI, reviewSkillAPI } from '../../service/VisionAIService.js';
+import centerAPI from '@/api/center';
 
 export default {
   name: 'IntelligentReview',
@@ -398,7 +398,7 @@ export default {
     // 加载服务状态
     async loadServiceStatus() {
       try {
-        const response = await taskReviewAPI.getReviewServiceStatus();
+        const response = await centerAPI.taskReview.getReviewServiceStatus();
         const data = response.data;
         
         this.serviceStatus = data.status || 'stopped';
@@ -412,7 +412,7 @@ export default {
     // 加载可用技能
     async loadAvailableSkills() {
       try {
-        const response = await taskReviewAPI.getAvailableReviewSkills();
+        const response = await centerAPI.taskReview.getAvailableReviewSkills();
         const data = response.data;
         
         this.availableSkills = data.skills || [];
@@ -428,7 +428,7 @@ export default {
       this.tableLoading = true;
       try {
         // 加载AI任务
-        const aiTasksResponse = await taskReviewAPI.getAITasksForReview({
+        const aiTasksResponse = await centerAPI.taskReview.getAITasksForReview({
           page: 1,
           limit: 1000 // 获取所有任务
         });
@@ -438,7 +438,7 @@ export default {
         }));
 
         // 加载LLM任务
-        const llmTasksResponse = await skillAPI.getLlmTaskList({
+        const llmTasksResponse = await centerAPI.skill.getLlmTaskList({
           page: 1,
           limit: 1000
         });
@@ -470,7 +470,7 @@ export default {
     async loadReviewConfigs() {
       const promises = this.taskList.map(async (task, index) => {
         try {
-          const response = await taskReviewAPI.getTaskReviewConfig(
+          const response = await centerAPI.taskReview.getTaskReviewConfig(
             task.task_type,
             task.id
           );
@@ -540,7 +540,7 @@ export default {
       }).then(async () => {
         this.tableLoading = true;
         try {
-          await taskReviewAPI.updateTaskReviewConfig(
+          await centerAPI.taskReview.updateTaskReviewConfig(
             task.task_type,
             task.id,
             { review_enabled: false }
@@ -575,7 +575,7 @@ export default {
           };
 
           // 调用API更新配置
-          await taskReviewAPI.updateTaskReviewConfig(
+          await centerAPI.taskReview.updateTaskReviewConfig(
             this.currentTask.task_type,
             this.currentTask.id,
             config

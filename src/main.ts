@@ -105,4 +105,48 @@ queueMicrotask(async () => {
   } catch (error) {
     console.warn('⚠️ 获取服务ID失败（非关键错误）')
   }
+
+  // 3. 同步权限和菜单数据（如果已登录但缓存为空）
+  try {
+    const token = localStorage.getItem('token')
+    // 直接检查 token 而不是 isLoggedIn，因为响应式更新可能还没完成
+    if (token) {
+      // 检查缓存是否存在
+      const cachedPermissions = localStorage.getItem('auth_permissions')
+      const cachedMenu = localStorage.getItem('auth_menu')
+
+      // 如果缓存为空，从后端同步获取
+      if (!cachedPermissions || !cachedMenu) {
+        console.log('🔄 本地缓存为空，从后端同步权限和菜单数据...')
+
+        // 导入 auth 模块
+        const { getPermissions, getMenuTree } = await import('@/api/auth')
+
+        // 并行获取权限和菜单
+        const [perms, menu] = await Promise.all([
+          getPermissions(true),
+          getMenuTree(true)
+        ])
+
+        // 存储到 localStorage
+        if (perms && perms.length > 0) {
+          localStorage.setItem('auth_permissions', JSON.stringify(perms))
+          localStorage.setItem('auth_permissions_timestamp', Date.now().toString())
+        }
+        if (menu && menu.length > 0) {
+          localStorage.setItem('auth_menu', JSON.stringify(menu))
+          localStorage.setItem('auth_menu_timestamp', Date.now().toString())
+        }
+
+        // 重新初始化 userStore 以加载新数据
+        // @ts-ignore - 忽略类型错误，运行时存在
+        userStore.initFromCache()
+        console.log('✅ 权限和菜单数据已同步')
+      } else {
+        console.log('✅ 使用本地缓存的权限和菜单数据')
+      }
+    }
+  } catch (error) {
+    console.error('⚠️ 同步权限和菜单数据失败:', error)
+  }
 })

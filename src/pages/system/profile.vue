@@ -119,7 +119,7 @@
 </template>
 
 <script>
-import userService from '@/api/rbac/userService'
+import userService from '@/api/system/userService'
 import localUserService from '@/components/service/UserService'
 
 export default {

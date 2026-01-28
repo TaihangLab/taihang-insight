@@ -6,7 +6,7 @@
 import { ref, computed } from 'vue';
 import type { DepartmentTreeNode } from '@/types/rbac';
 import { Status } from '@/types/rbac';
-import departmentService from '@/api/rbac/departmentService';
+import departmentService from '@/api/system/departmentService';
 
 // ============================================
 // 类型定义

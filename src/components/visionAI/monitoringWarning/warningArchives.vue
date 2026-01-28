@@ -1,9 +1,9 @@
 <script>
 // 导入API服务
-import VisionAIService from '../../service/VisionAIService.js'
+import centerAPI from '@/api/center'
 
-// 解构获取archiveAPI和alertAPI（用于拉取预警详情）
-const { archiveAPI, alertAPI } = VisionAIService
+// 解构获取archive和alert（用于拉取预警详情）
+const { archive, alert } = centerAPI
 
 export default {
   name: "WarningArchives",
@@ -245,7 +245,7 @@ export default {
 
         console.log('获取档案列表参数:', queryParams);
 
-        const response = await archiveAPI.getArchiveList(queryParams);
+        const response = await centerAPI.archive.getArchiveList(queryParams);
         
         // 适配新的API响应格式：检查是否为包装格式或直接数据格式
         let archiveData;
@@ -303,7 +303,7 @@ export default {
       try {
         if (!archiveId) return;
 
-        const response = await archiveAPI.getArchiveDetail(archiveId);
+        const response = await centerAPI.archive.getArchiveDetail(archiveId);
         
         // 适配新的API响应格式
         let archiveData;
@@ -351,7 +351,7 @@ export default {
         };
 
         console.log(`加载第${this.pagination.currentPage}页预警记录，每页${limit}条...`);
-        const response = await archiveAPI.getArchiveLinkedAlerts(archiveId, queryParams);
+        const response = await centerAPI.archive.getArchiveLinkedAlerts(archiveId, queryParams);
         
         // 适配新的API响应格式
         let alertRecords = [];
@@ -625,7 +625,7 @@ export default {
         const apiAlertId = (record._apiData && record._apiData.alert_id) || record.id;
         if (!apiAlertId) return;
 
-        const resp = await alertAPI.getAlertDetail(apiAlertId);
+        const resp = await centerAPI.alert.getAlertDetail(apiAlertId);
         const apiDetail = resp && resp.data ? resp.data : null;
         if (!apiDetail) return;
 
@@ -1011,7 +1011,7 @@ export default {
             alertId: this.deleteId
           });
           
-          const response = await archiveAPI.unlinkAlertFromArchive(this.currentArchiveId, this.deleteId);
+          const response = await centerAPI.archive.unlinkAlertFromArchive(this.currentArchiveId, this.deleteId);
           
           // 适配API响应格式
           if (response.data.code !== undefined) {
@@ -1048,7 +1048,7 @@ export default {
           
           for (const alertId of recordIds) {
             try {
-              const response = await archiveAPI.unlinkAlertFromArchive(this.currentArchiveId, alertId);
+              const response = await centerAPI.archive.unlinkAlertFromArchive(this.currentArchiveId, alertId);
               if (!response.data || response.data.code === 0) {
                 successCount++;
               } else {
@@ -1138,7 +1138,7 @@ export default {
         console.log('更新档案数据:', updateData);
 
         // 调用后端API更新档案
-        const response = await archiveAPI.updateArchive(this.currentArchiveId, updateData);
+        const response = await centerAPI.archive.updateArchive(this.currentArchiveId, updateData);
         
         // 适配新的API响应格式
         let updatedArchive;
@@ -1233,7 +1233,7 @@ export default {
          console.log('添加预警记录数据:', recordData);
 
         // 调用后端API添加预警记录
-        const response = await archiveAPI.addAlertRecord(recordData);
+        const response = await centerAPI.archive.addAlertRecord(recordData);
         
         // 适配新的API响应格式
         let newRecord;
@@ -1303,7 +1303,7 @@ export default {
 
           console.log('加载可用预警列表参数:', params);
 
-          const response = await archiveAPI.getAvailableAlerts(params);
+          const response = await centerAPI.archive.getAvailableAlerts(params);
           
           if (response.data && response.data.code === 0) {
             this.availableAlerts = response.data.data.items || [];
@@ -1385,7 +1385,7 @@ export default {
             linkReason 
           });
 
-          const response = await archiveAPI.linkAlertsToArchive(
+          const response = await centerAPI.archive.linkAlertsToArchive(
             this.currentArchiveId, 
             alertIds, 
             linkReason
@@ -1534,7 +1534,7 @@ export default {
          console.log('创建档案数据:', archiveData);
 
         // 调用后端API创建档案
-        const response = await archiveAPI.createArchive(archiveData);
+        const response = await centerAPI.archive.createArchive(archiveData);
         
         // 适配新的API响应格式
         let newArchive;
@@ -1747,7 +1747,7 @@ export default {
     // 确认删除档案
     async confirmDeleteArchive() {
       try {
-        const response = await archiveAPI.deleteArchive(this.deleteArchiveId);
+        const response = await centerAPI.archive.deleteArchive(this.deleteArchiveId);
         
         // 适配API响应格式
         if (response.data.code !== undefined) {

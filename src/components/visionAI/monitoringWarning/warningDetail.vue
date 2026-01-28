@@ -441,7 +441,7 @@
 </template>
 
 <script>
-import { alertAPI } from '@/components/service/VisionAIService.js'
+import centerAPI from '@/api/center'
 
 export default {
   name: "WarningDetail",
@@ -560,7 +560,7 @@ export default {
           this.loading = true;
           console.log('通过ID获取预警详情:', this.warningId);
 
-          const response = await alertAPI.getAlertDetail(this.warningId);
+          const response = await centerAPI.alert.getAlertDetail(this.warningId);
           console.log('预警详情API响应:', response.data);
 
           if (response.data && response.data.alert_id) {
@@ -694,9 +694,9 @@ export default {
     // 初始化档案列表 - 调用真实API
     async initArchivesList() {
       try {
-        const { archiveAPI } = await import('../../service/VisionAIService.js');
+        const { archive } = centerAPI;
 
-        const response = await archiveAPI.getArchiveList({
+        const response = await centerAPI.archive.getArchiveList({
           page: 1,
           limit: 100,
           // status: 1 // 获取所有正常状态的档案
@@ -890,7 +890,7 @@ export default {
         };
 
         // 发送真实的API请求
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        const response = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData);
         console.log('✅ 后端状态更新成功:', response);
 
         // 2. 后端更新成功后，更新本地状态
@@ -975,7 +975,7 @@ export default {
 
         console.log('确认处理 - 调用API:', apiAlertId, updateData);
 
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        const response = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData);
 
         if (response.data && response.data.code === 0) {
           // API调用成功，添加本地操作记录
@@ -1022,7 +1022,7 @@ export default {
 
         console.log('结束处理 - 调用API:', apiAlertId, updateData);
 
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        const response = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData);
 
         if (response.data && response.data.code === 0) {
           // API调用成功，添加本地操作记录
@@ -1175,8 +1175,8 @@ export default {
         const alertId = this.warning._apiData ? this.warning._apiData.alert_id : parseInt(this.warning.id);
 
         // 调用真实的归档API
-        const { archiveAPI } = await import('../../service/VisionAIService.js');
-        const response = await archiveAPI.linkAlertsToArchive(
+        const { archive } = centerAPI;
+        const response = await centerAPI.archive.linkAlertsToArchive(
           targetArchiveId,
           [alertId],
           `预警详情页面归档 - 预警类型: ${this.warning.type || this.warning.alert_type}`
@@ -1228,14 +1228,14 @@ export default {
     // 自动创建默认档案
     async createDefaultArchive() {
       try {
-        const { archiveAPI } = await import('../../service/VisionAIService.js');
+        const { archive } = centerAPI;
         const now = new Date();
         const startTime = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
         const endTime = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
         const archiveName = `${this.getCurrentCameraName() || '未知设备'}默认档案`;
 
-        const response = await archiveAPI.createArchive({
+        const response = await centerAPI.archive.createArchive({
           name: archiveName,
           location: this.getCurrentCameraName() || '未知位置',
           description: '系统自动创建的默认档案',

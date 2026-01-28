@@ -302,4 +302,27 @@ router.push = function push(location) {
   })
 } as typeof router.push
 
+// 全局前置守卫 - 认证检查
+router.beforeEach((to, _from, next) => {
+  const token = localStorage.getItem('token')
+
+  // 定义不需要认证的白名单路径
+  const whiteList = ['/login', '/test']
+
+  if (whiteList.includes(to.path)) {
+    // 白名单路径直接放行
+    next()
+  } else if (!token) {
+    // 没有 token，重定向到登录页
+    console.warn('⚠️ 未登录，重定向到登录页')
+    next({
+      path: '/login',
+      query: { redirect: to.fullPath } // 保存原始目标路径
+    })
+  } else {
+    // 有 token，放行
+    next()
+  }
+})
+
 export default router

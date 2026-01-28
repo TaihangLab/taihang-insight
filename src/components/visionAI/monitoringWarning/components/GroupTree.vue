@@ -31,7 +31,7 @@
 
 <script>
 import VueEasyTree from "@wchbrad/vue-easy-tree";
-import { realtimeMonitorAPI } from '../../../service/VisionAIService.js';
+import centerAPI from '@/api/center';
 
 export default {
   name: 'MonitorGroupTree',
@@ -69,7 +69,7 @@ export default {
           }
           
           // 使用专用的实时监控API
-          const response = await realtimeMonitorAPI.getGroupTree({
+          const response = await centerAPI.realtimeMonitor.getGroupTree({
             query: this.searchSrt,
             parent: node.data.id,
             hasChannel: this.hasChannel

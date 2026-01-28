@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { MenuItem } from '@/api/auth/types'
+import type { MenuItem } from '@/types/auth'
 import {
   getUserInfo,
   getPermissions,

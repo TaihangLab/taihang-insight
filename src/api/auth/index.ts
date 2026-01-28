@@ -8,13 +8,13 @@ import type {
   AuthInfoResponse,
   AuthPermissionsResponse,
   AuthMenuResponse
-} from './types'
+} from '@/types/auth'
 
 // 导出单例实例
 export const authAPI = createAuthAPI()
 
 // 导出类型
-export * from './types'
+export type * from '@/types/auth'
 
 /**
  * localStorage 缓存管理

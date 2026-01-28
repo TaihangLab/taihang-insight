@@ -7,7 +7,7 @@
 import { ref, computed } from 'vue';
 import type { TenantAPI } from '@/types/rbac/tenant';
 import { Status } from '@/types/rbac';
-import tenantService from '@/api/rbac/tenantService';
+import tenantService from '@/api/system/tenantService';
 
 // ============================================
 // 类型定义

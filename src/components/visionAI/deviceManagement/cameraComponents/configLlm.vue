@@ -396,7 +396,7 @@
 </template>
 
 <script>
-import visionAIService from '@/components/service/VisionAIService.js';
+import centerAPI from '@/api/center';
 
 export default {
   name: 'ConfigLlm',
@@ -569,7 +569,7 @@ export default {
         }
 
         console.log('发送技能列表API请求，参数:', params);
-        const response = await visionAIService.skillAPI.getLlmSkillList(params);
+        const response = await centerAPI.skill.getLlmSkillList(params);
         console.log('技能列表API完整响应:', response);
         console.log('响应数据结构:', response.data);
         
@@ -710,7 +710,7 @@ export default {
       this.skillDetailLoading = true;
       try {
         console.log('加载技能详情，技能ID:', skillId);
-        const response = await visionAIService.skillAPI.getLlmSkillDetail(skillId);
+        const response = await centerAPI.skill.getLlmSkillDetail(skillId);
         console.log('技能详情API响应:', response.data);
         
         if (response.data && response.data.success) {
@@ -739,7 +739,7 @@ export default {
       this.tasksLoading = true;
       try {
         // 调用API获取大模型任务列表
-        const response = await visionAIService.skillAPI.getLlmTaskList();
+        const response = await centerAPI.skill.getLlmTaskList();
         console.log('大模型任务列表响应:', response.data);
         
         let allTasks = [];
@@ -781,7 +781,7 @@ export default {
     async loadSkillDetail(skillId) {
       this.skillDetailLoading = true;
       try {
-        const response = await visionAIService.skillAPI.getLlmSkillDetail(skillId);
+        const response = await centerAPI.skill.getLlmSkillDetail(skillId);
         console.log('技能详情API响应:', response.data);
         
         // 兼容不同的响应格式
@@ -880,10 +880,10 @@ export default {
         let response;
         if (this.isEditMode && this.editingTaskId) {
           // 编辑模式：调用更新API
-          response = await visionAIService.skillAPI.updateLlmTask(this.editingTaskId, taskData);
+          response = await centerAPI.skill.updateLlmTask(this.editingTaskId, taskData);
         } else {
           // 创建模式：调用创建API
-          response = await visionAIService.skillAPI.createLlmTask(taskData);
+          response = await centerAPI.skill.createLlmTask(taskData);
         }
         
         // 检查不同的响应格式
@@ -1007,7 +1007,7 @@ export default {
         type: 'warning'
       }).then(async () => {
         try {
-          await visionAIService.skillAPI.deleteLlmTask(task.id);
+          await centerAPI.skill.deleteLlmTask(task.id);
           this.$message.success('删除成功');
           this.loadRelatedTasks(); // 重新加载任务列表
         } catch (error) {

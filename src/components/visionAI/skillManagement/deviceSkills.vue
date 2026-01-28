@@ -583,7 +583,7 @@
 </template>
 
 <script>
-import { skillAPI } from '@/components/service/VisionAIService.js';
+import centerAPI from '@/api/center';
 
 export default {
   name: 'DeviceSkills',
@@ -793,7 +793,7 @@ export default {
         }
         
         // 调用API获取技能列表
-        const response = await skillAPI.getSkillList(params);
+        const response = await centerAPI.skill.getSkillList(params);
         
         if (response.data.code === 0) {
           this.processSkillsData(response.data.data);
@@ -852,7 +852,7 @@ export default {
     async viewSkillDetails(skill) {
       try {
         // 加载详细数据
-        const response = await skillAPI.getSkillDetail(skill.id);
+        const response = await centerAPI.skill.getSkillDetail(skill.id);
         if (response.data.code === 0) {
           this.currentSkill = {
             ...skill,
@@ -881,7 +881,7 @@ export default {
         type: 'warning'
       }).then(async () => {
         try {
-          const response = await skillAPI.deleteSkill(skill.id);
+          const response = await centerAPI.skill.deleteSkill(skill.id);
           
           if (response.data.code === 0) {
             this.skillsList = this.skillsList.filter(item => item.id !== skill.id);
@@ -955,7 +955,7 @@ export default {
         type: 'warning'
       }).then(async () => {
         try {
-          const response = await skillAPI.batchDeleteSkills(this.selectedSkills);
+          const response = await centerAPI.skill.batchDeleteSkills(this.selectedSkills);
           
           if (response.data.success) {
             // 处理成功与失败的情况
@@ -1057,7 +1057,7 @@ export default {
                 };
                 
                 // 调用API导入技能
-                const response = await skillAPI.importSkill(importData);
+                const response = await centerAPI.skill.importSkill(importData);
                 
                 if (response.data.code === 0) {
                   this.$message.success('技能导入成功');
@@ -1144,7 +1144,7 @@ export default {
           
           try {
             // 首先更新技能基本信息
-            const response = await skillAPI.updateSkill(this.currentSkill.id, {
+            const response = await centerAPI.skill.updateSkill(this.currentSkill.id, {
               name_zh: this.editForm.name_zh,
               description: this.editForm.description,
               version: this.editForm.version
@@ -1156,7 +1156,7 @@ export default {
                 try {
                   console.log('准备上传图片:', this.imageFile.name, this.imageFile.size, this.imageFile.type);
                   
-                  const imageResponse = await skillAPI.uploadSkillImage(this.currentSkill.id, this.imageFile);
+                  const imageResponse = await centerAPI.skill.uploadSkillImage(this.currentSkill.id, this.imageFile);
                   console.log('图片上传响应:', imageResponse.data);
                   
                   if (imageResponse.data.code === 0) {
@@ -1213,7 +1213,7 @@ export default {
       if (!this.currentSkill || !this.currentSkill.id) return;
       
       try {
-        const response = await skillAPI.getSkillDetail(this.currentSkill.id);
+        const response = await centerAPI.skill.getSkillDetail(this.currentSkill.id);
         
         if (response.data.code === 0) {
           // 更新当前技能的所有数据
@@ -1273,7 +1273,7 @@ export default {
       
       try {
         // 获取关联设备列表
-        const response = await skillAPI.getSkillDevices(this.currentSkill.id);
+        const response = await centerAPI.skill.getSkillDevices(this.currentSkill.id);
         
         if (response.data.code === 0) {
           // 处理设备数据
@@ -1345,7 +1345,7 @@ export default {
           duration: 1000
         });
 
-        const response = await skillAPI.reloadSkillClasses();
+        const response = await centerAPI.skill.reloadSkillClasses();
         
         if (response.data.code === 0) {
           this.$message.success('技能加载成功');
@@ -1392,7 +1392,7 @@ export default {
       
       try {
         // 获取技能实例关联设备列表
-        const response = await skillAPI.getSkillInstanceDevices(instance.id);
+        const response = await centerAPI.skill.getSkillInstanceDevices(instance.id);
         
         if (response.data.code === 0) {
           // 处理设备数据

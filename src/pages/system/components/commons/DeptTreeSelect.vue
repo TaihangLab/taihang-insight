@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import departmentService from '@/api/rbac/departmentService'
+import departmentService from '@/api/system/departmentService'
 import type { Department } from '@/types/rbac/department'
 
 interface DeptNode {

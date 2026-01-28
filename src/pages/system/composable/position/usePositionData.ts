@@ -7,7 +7,7 @@ import { ref, computed } from 'vue';
 import type { Position } from '@/types/rbac';
 import type { PositionCategory } from '@/types/rbac/position';
 import { Status } from '@/types/rbac';
-import positionService from '@/api/rbac/positionService';
+import positionService from '@/api/system/positionService';
 
 // ============================================
 // 类型定义

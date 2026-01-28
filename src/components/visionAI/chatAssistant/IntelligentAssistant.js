@@ -1,4 +1,4 @@
-import VisionAIService from '../../service/VisionAIService.js'
+import centerAPI from '@/api/center'
 import { marked } from 'marked'
 
 // 配置 marked 选项
@@ -10,7 +10,6 @@ if (typeof marked === 'function') {
       headerIds: false, // 禁用标题 ID
       mangle: false // 禁用邮箱混淆
     })
-    console.log('✅ Marked 配置成功')
   } catch (error) {
     console.error('❌ Marked 配置失败:', error)
   }
@@ -259,7 +258,7 @@ export default {
           console.log('加载会话历史:', chatId);
           
           // 从API加载会话消息
-          const response = await VisionAIService.chatAssistantAPI.getChatMessages(chatId);
+          const response = await centerAPI.chatAssistant.getChatMessages(chatId);
           
           console.log('会话消息API响应:', response.data); // 添加调试日志
           
@@ -341,7 +340,7 @@ export default {
           console.log('删除会话:', chatId);
           
           // 调用API删除会话
-          await VisionAIService.chatAssistantAPI.deleteChatConversation(chatId);
+          await centerAPI.chatAssistant.deleteChatConversation(chatId);
           
           // 删除本地缓存
           const chatIndex = this.chatHistories.findIndex(chat => chat.conversation_id === chatId);
@@ -609,7 +608,7 @@ export default {
           this.scrollToBottom();
           
           // 创建流式连接
-          this.currentEventSource = await VisionAIService.chatAssistantAPI.createChatStream(
+          this.currentEventSource = await centerAPI.chatAssistant.createChatStream(
             chatData,
             // onMessage回调 - 接收流式数据
             async (chunk, fullResponse, conversationId) => {
@@ -688,7 +687,7 @@ export default {
               // 如果是新对话（只有2条消息：用户+助手），自动生成标题
               if (this.messages.length === 2 && this.currentChatId) {
                 try {
-                  const response = await VisionAIService.chatAssistantAPI.autoGenerateTitle(this.currentChatId);
+                  const response = await centerAPI.chatAssistant.autoGenerateTitle(this.currentChatId);
                   if (response.data && (response.data.success || response.data.code === 0)) {
                     // 再次更新对话列表以显示新标题
                     await this.loadChatConversations();
@@ -878,7 +877,7 @@ export default {
               contentLength: currentContent.length
             });
             
-            const response = await VisionAIService.chatAssistantAPI.stopGeneration(
+            const response = await centerAPI.chatAssistant.stopGeneration(
               this.currentChatId,
               messageId,
               currentContent
@@ -896,7 +895,7 @@ export default {
               // 如果是新对话的第一轮，尝试生成标题
               if (this.messages.length === 2) {
                 try {
-                  const titleResponse = await VisionAIService.chatAssistantAPI.autoGenerateTitle(this.currentChatId);
+                  const titleResponse = await centerAPI.chatAssistant.autoGenerateTitle(this.currentChatId);
                   if (titleResponse.data && (titleResponse.data.success || titleResponse.data.code === 0)) {
                     await this.loadChatConversations();
                     console.log('停止后自动生成标题成功');
@@ -950,7 +949,7 @@ export default {
               contentLength: currentContent.length
             });
             
-            const response = await VisionAIService.chatAssistantAPI.stopGeneration(
+            const response = await centerAPI.chatAssistant.stopGeneration(
               this.currentChatId,
               messageId,
               currentContent
@@ -965,7 +964,7 @@ export default {
               // 如果是新对话的第一轮，尝试生成标题
               if (this.messages.length === 2) {
                 try {
-                  const titleResponse = await VisionAIService.chatAssistantAPI.autoGenerateTitle(this.currentChatId);
+                  const titleResponse = await centerAPI.chatAssistant.autoGenerateTitle(this.currentChatId);
                   if (titleResponse.data && (titleResponse.data.success || titleResponse.data.code === 0)) {
                     await this.loadChatConversations();
                     console.log('切换前自动生成标题成功');
@@ -1448,7 +1447,7 @@ export default {
         this.$refs.groupForm.validate(async (valid) => {
           if (valid) {
             try {
-              const response = await VisionAIService.chatAssistantAPI.createGroup(this.groupForm.name.trim());
+              const response = await centerAPI.chatAssistant.createGroup(this.groupForm.name.trim());
               
               console.log('创建分组API响应:', response.data); // 添加调试日志
               
@@ -1531,7 +1530,7 @@ export default {
         }
         
         try {
-          const response = await VisionAIService.chatAssistantAPI.deleteGroup(groupId);
+          const response = await centerAPI.chatAssistant.deleteGroup(groupId);
           
           console.log('删除分组API响应:', response.data); // 添加调试日志
           
@@ -1632,7 +1631,7 @@ export default {
           }).then(async ({ value }) => {
             try {
               // 调用后端API更新标题
-              const response = await VisionAIService.chatAssistantAPI.updateConversationTitle(
+              const response = await centerAPI.chatAssistant.updateConversationTitle(
                 this.selectedChatId, 
                 value.trim()
               );
@@ -1726,7 +1725,7 @@ export default {
         }
         
         try {
-          const response = await VisionAIService.chatAssistantAPI.updateConversationGroup(
+          const response = await centerAPI.chatAssistant.updateConversationGroup(
             this.selectedChatId, 
             this.selectedGroupForMove
           );
@@ -1815,7 +1814,7 @@ export default {
       async loadChatConversations() {
         try {
           console.log('加载会话列表...');
-          const response = await VisionAIService.chatAssistantAPI.getChatConversations({ limit: 50 });
+          const response = await centerAPI.chatAssistant.getChatConversations({ limit: 50 });
           
           console.log('会话API响应:', response.data); // 添加调试日志
           
@@ -1872,7 +1871,7 @@ export default {
       async loadUserGroups() {
         try {
           console.log('加载分组列表...');
-          const response = await VisionAIService.chatAssistantAPI.getGroups();
+          const response = await centerAPI.chatAssistant.getGroups();
           
           console.log('分组API响应:', response.data); // 添加调试日志
           
@@ -1920,8 +1919,6 @@ export default {
       
       // 强制设置Element UI组件的z-index
       forceElementUIZIndex() {
-        console.log('强制设置Element UI组件z-index...');
-        
         // 设置对话框z-index
         const dialogWrappers = document.querySelectorAll('.el-dialog__wrapper');
         dialogWrappers.forEach(wrapper => {
@@ -1949,8 +1946,6 @@ export default {
         dropdowns.forEach(dropdown => {
           dropdown.style.zIndex = '30004';
         });
-        
-        console.log('Element UI组件z-index设置完成');
       },
       
       // 调试方法：手动检查组件状态
@@ -2018,25 +2013,25 @@ export default {
         try {
           // 1. 测试获取分组列表
           console.log('1. 测试获取分组列表...');
-          const groupsResponse = await VisionAIService.chatAssistantAPI.getGroups();
+          const groupsResponse = await centerAPI.chatAssistant.getGroups();
           console.log('分组列表响应:', groupsResponse);
           console.log('分组列表响应数据:', groupsResponse.data);
           
           // 2. 测试获取会话列表
           console.log('2. 测试获取会话列表...');
-          const chatsResponse = await VisionAIService.chatAssistantAPI.getChatConversations();
+          const chatsResponse = await centerAPI.chatAssistant.getChatConversations();
           console.log('会话列表响应:', chatsResponse);
           console.log('会话列表响应数据:', chatsResponse.data);
           
           // 3. 测试创建分组
           console.log('3. 测试创建分组...');
-          const createResponse = await VisionAIService.chatAssistantAPI.createGroup('测试分组' + Date.now());
+          const createResponse = await centerAPI.chatAssistant.createGroup('测试分组' + Date.now());
           console.log('创建分组响应:', createResponse);
           console.log('创建分组响应数据:', createResponse.data);
           
           // 4. 再次获取分组列表
           console.log('4. 创建后再次获取分组列表...');
-          const groupsResponse2 = await VisionAIService.chatAssistantAPI.getGroups();
+          const groupsResponse2 = await centerAPI.chatAssistant.getGroups();
           console.log('创建后分组列表响应:', groupsResponse2);
           console.log('创建后分组列表响应数据:', groupsResponse2.data);
           
@@ -2119,12 +2114,6 @@ export default {
       // 标记组件已挂载
       this._isMounted = true;
 
-      console.log('=== 智能助手组件初始化 ===');
-
-      // 检查 Markdown 渲染库是否加载
-      console.log('Marked 类型检查:', typeof marked);
-      console.log('Marked 对象:', marked);
-
       const markedFn = typeof marked === 'function' ? marked : (marked && marked.marked);
 
       if (markedFn) {
@@ -2132,10 +2121,7 @@ export default {
         try {
           // 测试 Markdown 渲染
           const testMd = '**加粗测试** 和 *斜体测试*\n\n- 列表项1\n- 列表项2';
-          const testHtml = markedFn(testMd);
-          console.log('Markdown 渲染测试:');
-          console.log('  输入:', testMd);
-          console.log('  输出:', testHtml);
+          markedFn(testMd);
         } catch (err) {
           console.error('❌ Markdown 测试失败:', err);
         }
@@ -2149,7 +2135,6 @@ export default {
 
       // 确保侧边栏初始状态为展开（重要！）
       this.sidebarCollapsed = false;
-      console.log('侧边栏初始化为展开状态');
 
       // 监听窗口大小变化，调整助手位置
       window.addEventListener('resize', this.handleWindowResize);

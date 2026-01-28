@@ -28,131 +28,163 @@
         :unique-opened="true"
         router
       >
-      <!-- 监控预警 -->
-      <el-sub-menu index="/monitoring">
-        <template #title>
-          <el-icon class="menu-icon"><VideoCamera /></el-icon>
-          <span>监控预警</span>
-        </template>
-        <el-menu-item index="/monitoring/realtime">
-          <span>实时监控</span>
-        </el-menu-item>
-        <el-menu-item index="/monitoring/statistics">
-          <span>统计分析</span>
-        </el-menu-item>
-        <el-menu-item index="/monitoring/warningArchive">
-          <span>预警档案</span>
-        </el-menu-item>
-        <el-menu-item index="/monitoring/warningManage">
-          <span>预警管理</span>
-        </el-menu-item>
-        <el-menu-item index="/monitoring/intelligentReview">
-          <span>智能复判</span>
-        </el-menu-item>
-      </el-sub-menu>
+        <!-- 动态渲染菜单树 -->
+        <template v-for="menuItem in menuTree" :key="menuItem.id">
+          <!-- 有子菜单的情况 -->
+          <el-sub-menu v-if="menuItem.children && menuItem.children.length > 0" :index="String(menuItem.path || menuItem.id)">
+            <template #title>
+              <el-icon class="menu-icon">
+                <component :is="getIconComponent(menuItem.icon)" />
+              </el-icon>
+              <span>{{ menuItem.menu_name }}</span>
+            </template>
+            <!-- 递归渲染子菜单 -->
+            <template v-for="child in menuItem.children" :key="child.id">
+              <el-menu-item v-if="child.menu_type !== 'button'" :index="String(child.path || child.id)">
+                <span>{{ child.menu_name }}</span>
+              </el-menu-item>
+            </template>
+          </el-sub-menu>
 
-      <!-- 设备配置 -->
-      <el-sub-menu index="/deviceManage">
-        <template #title>
-          <el-icon class="menu-icon"><Cpu /></el-icon>
-          <span>设备配置</span>
+          <!-- 没有子菜单的情况 -->
+          <el-menu-item v-else-if="menuItem.menu_type !== 'button'" :index="String(menuItem.path || menuItem.id)">
+            <el-icon class="menu-icon">
+              <component :is="getIconComponent(menuItem.icon)" />
+            </el-icon>
+            <span>{{ menuItem.menu_name }}</span>
+          </el-menu-item>
         </template>
-        <el-menu-item index="/deviceManage/camera">
-          <span>摄像头</span>
-        </el-menu-item>
-        <el-menu-item index="/deviceManage/localVideo">
-          <span>本地视频</span>
-        </el-menu-item>
-      </el-sub-menu>
 
-      <!-- 模型管理 -->
-      <el-sub-menu index="/modelManage">
-        <template #title>
-          <el-icon class="menu-icon"><DataAnalysis /></el-icon>
-          <span>模型管理</span>
-        </template>
-        <el-menu-item index="/modelManage/modelList">
-          <span>模型列表</span>
-        </el-menu-item>
-      </el-sub-menu>
+        <!-- 降级方案：如果 menuTree 为空，显示默认菜单 -->
+        <template v-if="menuTree.length === 0">
+          <!-- 监控预警 -->
+          <el-sub-menu index="/monitoring">
+            <template #title>
+              <el-icon class="menu-icon"><VideoCamera /></el-icon>
+              <span>监控预警</span>
+            </template>
+            <el-menu-item index="/monitoring/realtime">
+              <span>实时监控</span>
+            </el-menu-item>
+            <el-menu-item index="/monitoring/statistics">
+              <span>统计分析</span>
+            </el-menu-item>
+            <el-menu-item index="/monitoring/warningArchive">
+              <span>预警档案</span>
+            </el-menu-item>
+            <el-menu-item index="/monitoring/warningManage">
+              <span>预警管理</span>
+            </el-menu-item>
+            <el-menu-item index="/monitoring/intelligentReview">
+              <span>智能复判</span>
+            </el-menu-item>
+          </el-sub-menu>
 
-      <!-- 技能管理 -->
-      <el-sub-menu index="/skillManage">
-        <template #title>
-          <el-icon class="menu-icon"><MagicStick /></el-icon>
-          <span>技能管理</span>
-        </template>
-        <el-menu-item index="/skillManage/deviceSkills">
-          <span>视觉模型技能</span>
-        </el-menu-item>
-        <el-menu-item index="/skillManage/multimodalLlmSkills">
-          <span>多模态大模型技能</span>
-        </el-menu-item>
-        <el-menu-item index="/skillManage/multimodalReview">
-          <span>多模态大模型复判</span>
-        </el-menu-item>
-      </el-sub-menu>
+          <!-- 设备配置 -->
+          <el-sub-menu index="/deviceManage">
+            <template #title>
+              <el-icon class="menu-icon"><Cpu /></el-icon>
+              <span>设备配置</span>
+            </template>
+            <el-menu-item index="/deviceManage/camera">
+              <span>摄像头</span>
+            </el-menu-item>
+            <el-menu-item index="/deviceManage/localVideo">
+              <span>本地视频</span>
+            </el-menu-item>
+          </el-sub-menu>
 
-      <!-- 系统管理 -->
-      <el-sub-menu index="/systemManage">
-        <template #title>
-          <el-icon class="menu-icon"><Setting /></el-icon>
-          <span>系统管理</span>
-        </template>
-        <el-menu-item index="/systemManage/appSettings">
-          <el-icon><Setting /></el-icon>
-          <span>应用设置</span>
-        </el-menu-item>
-        <el-menu-item index="/systemManage/tenantManagement">
-          <el-icon><OfficeBuilding /></el-icon>
-          <span>租户管理</span>
-        </el-menu-item>
-        <el-menu-item index="/systemManage/userManagement">
-          <el-icon><User /></el-icon>
-          <span>用户管理</span>
-        </el-menu-item>
-        <el-menu-item index="/systemManage/roleManagement">
-          <el-icon><UserFilled /></el-icon>
-          <span>角色管理</span>
-        </el-menu-item>
-        <el-menu-item index="/systemManage/permissionManagement">
-          <el-icon><Lock /></el-icon>
-          <span>权限管理</span>
-        </el-menu-item>
-        <el-menu-item index="/systemManage/departmentManagement">
-          <el-icon><School /></el-icon>
-          <span>部门管理</span>
-        </el-menu-item>
-        <el-menu-item index="/systemManage/knowledgeBase">
-          <el-icon><Notebook /></el-icon>
-          <span>知识库管理</span>
-        </el-menu-item>
-      </el-sub-menu>
+          <!-- 模型管理 -->
+          <el-sub-menu index="/modelManage">
+            <template #title>
+              <el-icon class="menu-icon"><DataAnalysis /></el-icon>
+              <span>模型管理</span>
+            </template>
+            <el-menu-item index="/modelManage/modelList">
+              <span>模型列表</span>
+            </el-menu-item>
+          </el-sub-menu>
 
-      <!-- 可视中心 -->
-      <el-sub-menu index="/visualAI">
-        <template #title>
-          <el-icon class="menu-icon"><View /></el-icon>
-          <span>可视中心</span>
+          <!-- 技能管理 -->
+          <el-sub-menu index="/skillManage">
+            <template #title>
+              <el-icon class="menu-icon"><MagicStick /></el-icon>
+              <span>技能管理</span>
+            </template>
+            <el-menu-item index="/skillManage/deviceSkills">
+              <span>视觉模型技能</span>
+            </el-menu-item>
+            <el-menu-item index="/skillManage/multimodalLlmSkills">
+              <span>多模态大模型技能</span>
+            </el-menu-item>
+            <el-menu-item index="/skillManage/multimodalReview">
+              <span>多模态大模型复判</span>
+            </el-menu-item>
+          </el-sub-menu>
+
+          <!-- 系统管理 -->
+          <el-sub-menu index="/systemManage">
+            <template #title>
+              <el-icon class="menu-icon"><Setting /></el-icon>
+              <span>系统管理</span>
+            </template>
+            <el-menu-item index="/systemManage/appSettings">
+              <el-icon><Setting /></el-icon>
+              <span>应用设置</span>
+            </el-menu-item>
+            <el-menu-item index="/systemManage/tenantManagement">
+              <el-icon><OfficeBuilding /></el-icon>
+              <span>租户管理</span>
+            </el-menu-item>
+            <el-menu-item index="/systemManage/userManagement">
+              <el-icon><User /></el-icon>
+              <span>用户管理</span>
+            </el-menu-item>
+            <el-menu-item index="/systemManage/roleManagement">
+              <el-icon><UserFilled /></el-icon>
+              <span>角色管理</span>
+            </el-menu-item>
+            <el-menu-item index="/systemManage/permissionManagement">
+              <el-icon><Lock /></el-icon>
+              <span>权限管理</span>
+            </el-menu-item>
+            <el-menu-item index="/systemManage/departmentManagement">
+              <el-icon><School /></el-icon>
+              <span>部门管理</span>
+            </el-menu-item>
+            <el-menu-item index="/systemManage/knowledgeBase">
+              <el-icon><Notebook /></el-icon>
+              <span>知识库管理</span>
+            </el-menu-item>
+          </el-sub-menu>
+
+          <!-- 可视中心 -->
+          <el-sub-menu index="/visualAI">
+            <template #title>
+              <el-icon class="menu-icon"><View /></el-icon>
+              <span>可视中心</span>
+            </template>
+            <el-menu-item index="/visualCenter">
+              <span>可视中心首页</span>
+            </el-menu-item>
+            <el-menu-item index="/algorithmInference">
+              <span>算法推理平台</span>
+            </el-menu-item>
+            <el-menu-item index="/visualCenter/parkManagement">
+              <span>园区封闭管理平台</span>
+            </el-menu-item>
+          </el-sub-menu>
         </template>
-        <el-menu-item index="/visualCenter">
-          <span>可视中心首页</span>
-        </el-menu-item>
-        <el-menu-item index="/algorithmInference">
-          <span>算法推理平台</span>
-        </el-menu-item>
-        <el-menu-item index="/visualCenter/parkManagement">
-          <span>园区封闭管理平台</span>
-        </el-menu-item>
-      </el-sub-menu>
-    </el-menu>
+      </el-menu>
     </el-scrollbar>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useUserStore } from '@/stores/modules/user'
+import type { MenuItem } from '@/types/auth'
 import {
   VideoCamera,
   Cpu,
@@ -164,11 +196,17 @@ import {
   UserFilled,
   Lock,
   School,
-  Postcard,
   Notebook,
   View,
   Fold,
-  Expand
+  Expand,
+  Document,
+  Tools,
+  Monitor,
+  Platform,
+  Histogram,
+  Warning,
+  DataLine
 } from '@element-plus/icons-vue'
 
 // 定义 emit
@@ -179,11 +217,46 @@ const emit = defineEmits<{
 // 路由
 const route = useRoute()
 
+// 用户 Store
+const userStore = useUserStore()
+
 // 菜单折叠状态
 const isCollapsed = ref(false)
 
 // 当前激活的菜单
 const activeMenu = ref(route.path)
+
+// 从 store 获取菜单树
+const menuTree = computed(() => userStore.menuTree || [])
+
+// 图标映射
+const iconMap: Record<string, any> = {
+  'VideoCamera': VideoCamera,
+  'Cpu': Cpu,
+  'DataAnalysis': DataAnalysis,
+  'MagicStick': MagicStick,
+  'Setting': Setting,
+  'OfficeBuilding': OfficeBuilding,
+  'User': User,
+  'UserFilled': UserFilled,
+  'Lock': Lock,
+  'School': School,
+  'Notebook': Notebook,
+  'View': View,
+  'Document': Document,
+  'Tools': Tools,
+  'Monitor': Monitor,
+  'Platform': Platform,
+  'Histogram': Histogram,
+  'Warning': Warning,
+  'DataLine': DataLine
+}
+
+// 获取图标组件
+const getIconComponent = (iconName?: string) => {
+  if (!iconName) return Setting
+  return iconMap[iconName] || Setting
+}
 
 // 监听路由变化
 watch(
@@ -198,6 +271,19 @@ const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value
   emit('collapseChange', isCollapsed.value)
 }
+
+// 组件挂载时，如果菜单树为空且有 token，尝试获取菜单
+onMounted(async () => {
+  if (menuTree.value.length === 0 && userStore.isLoggedIn) {
+    try {
+      console.log('🔄 菜单树为空，尝试从后端获取...')
+      await userStore.fetchMenuTree(true)
+      console.log('✅ 菜单树已更新:', userStore.menuTree.length, '个顶级菜单项')
+    } catch (error) {
+      console.error('⚠️ 获取菜单树失败，将使用默认菜单')
+    }
+  }
+})
 </script>
 
 <style scoped>

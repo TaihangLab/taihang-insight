@@ -3,7 +3,45 @@
  */
 
 /**
- * 用户基本信息响应
+ * 登录请求参数
+ */
+export interface LoginRequest {
+  username: string
+  password: string
+  tenantCode: string
+}
+
+/**
+ * 用户信息
+ */
+export interface UserInfo {
+  id: number
+  username: string
+  user_name: string
+  tenant_id?: number
+  [key: string]: any
+}
+
+/**
+ * 登录响应数据
+ */
+export interface LoginResponseData {
+  token: string
+  adminToken: string
+  userInfo: UserInfo
+}
+
+/**
+ * 登录响应
+ */
+export interface LoginResponse {
+  code: number
+  message: string
+  data: LoginResponseData
+}
+
+/**
+ * 用户基本信息响应（包含权限和菜单）
  */
 export interface AuthInfoResponse {
   user_id: number | string
@@ -19,6 +57,8 @@ export interface AuthInfoResponse {
   gender?: number
   create_time?: string
   update_time?: string
+  permission_codes?: string[]
+  menu_tree?: MenuItem[]
 }
 
 /**

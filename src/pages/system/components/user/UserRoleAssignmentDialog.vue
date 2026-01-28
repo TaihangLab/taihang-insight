@@ -49,7 +49,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import associationService from '@/api/rbac/associationService'
+import associationService from '@/api/system/associationService'
 import type { User } from '@/types/rbac/user'
 import type { Role } from '@/types/rbac/role'
 

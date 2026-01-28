@@ -35,37 +35,36 @@ export default defineConfig(({ mode }) => {
       port: 4000,
       host: 'localhost',
       open: false,
-      // 代理配置
+      // 代理配置 - 统一代理所有 /api 开头的请求
       proxy: {
-        // 代理所有 /api 开头的请求到后端服务器
         '/api': {
-          target: env.VITE_API_BASE_URL || 'http://localhost:8000',
+          target: env.VITE_BACKEND_URL || 'http://127.0.0.1:8000',
           changeOrigin: true,
           // 不重写路径，保持 /api 前缀
           rewrite: (path) => path
         }
       }
     },
-  publicDir: 'public', // 指定公共静态资源目录
-  build: {
-    outDir: 'dist',
-    assetsDir: 'static',
-    sourcemap: false,
-    // 限制 chunk 大小警告
-    chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        // 分包策略
-        manualChunks: {
-          'element-plus': ['element-plus'],
-          'echarts': ['echarts', 'vue-echarts'],
-          'vue-vendor': ['vue', 'vue-router', 'pinia']
+    publicDir: 'public', // 指定公共静态资源目录
+    build: {
+      outDir: 'dist',
+      assetsDir: 'static',
+      sourcemap: false,
+      // 限制 chunk 大小警告
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          // 分包策略
+          manualChunks: {
+            'element-plus': ['element-plus'],
+            'echarts': ['echarts', 'vue-echarts'],
+            'vue-vendor': ['vue', 'vue-router', 'pinia']
+          }
         }
       }
+    },
+    optimizeDeps: {
+      include: ['element-plus', 'vue-echarts', 'data-view-vue3']
     }
-  },
-  optimizeDeps: {
-    include: ['element-plus', 'vue-echarts', 'data-view-vue3']
-  }
-};
+  };
 })

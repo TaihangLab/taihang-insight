@@ -124,171 +124,184 @@
 </div>
 </template>
 
-<script>
-export default {
-  name: 'Login',
-  data(){
-    return {
-      isLoging: false,
-      showPassword: false,
-      loginLoading: false,
-      username: '',
-      password: '',
-      selectedTenant: '',
-      tenantInputFocused: false
-    }
-  },
-  created(){
-    var that = this;
-    document.onkeydown = function(e) {
-      var key = window.event.keyCode;
-      if (key == 13) {
-        that.login();
-      }
-    }
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores/modules/user'
+import authAPI from '@/api/auth/authAPI'
 
-    // 从本地缓存恢复租户信息
-    this.restoreTenantFromCache();
-  },
-  methods:{
-    // 获取粒子样式
-    getParticleStyle() {
-      return {
-        left: Math.random() * 100 + '%',
-        top: Math.random() * 100 + '%',
-        animationDelay: Math.random() * 3 + 's',
-        animationDuration: (Math.random() * 3 + 2) + 's'
-      }
-    },
+const router = useRouter()
+const route = useRoute()
+const userStore = useUserStore()
 
-    // 从本地缓存恢复租户信息
-    restoreTenantFromCache() {
-      const cachedTenant = localStorage.getItem('selectedTenant');
-      if (cachedTenant) {
-        this.selectedTenant = cachedTenant;
-      }
-    },
+// 表单数据
+const isLoging = ref(false)
+const showPassword = ref(false)
+const username = ref('')
+const password = ref('')
+const selectedTenant = ref('')
+const tenantInputFocused = ref(false)
 
-    // 解码Admin-Token
-    decodeAdminToken() {
-      const base64Token = localStorage.getItem('Admin-Token');
-      if (base64Token) {
-        try {
-          const decodedJson = decodeURIComponent(atob(base64Token).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-          }).join(''));
-          return JSON.parse(decodedJson);
-        } catch (error) {
-          console.error('解码Admin-Token失败:', error);
-          return null;
-        }
-      }
-      return null;
-    },
-
-
-
-    // 输入框聚焦效果
-    focusInput(event) {
-      event.target.parentElement.classList.add('focused');
-    },
-
-    // 输入框失焦效果
-    blurInput(event) {
-      if (!event.target.value) {
-        event.target.parentElement.classList.remove('focused');
-      }
-    },
-
-
-    async login(){
-      if(this.selectedTenant === '') {
-        this.$message({
-          showClose: true,
-          message: '请输入租户编码',
-          type: 'warning'
-        });
-        return;
-      }
-
-      if(this.username !== '' && this.password !== ''){
-        this.isLoging = true;
-
-        try {
-          // 发送登录请求到后端API
-          const response = await fetch('http://127.0.0.1:8000/api/v1/login', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              username: this.username,
-              password: this.password,
-              tenantCode: this.selectedTenant
-            })
-          });
-
-          const result = await response.json();
-
-          if (response.ok && result.code === 200) {
-            // 登录成功，处理返回的数据
-            const { token, adminToken, userInfo } = result.data;
-
-            // 存储用户信息和token
-            localStorage.setItem('wvp-user', JSON.stringify(userInfo));
-            localStorage.setItem('wvp-token', token);
-
-            // 存储Admin-Token
-            localStorage.setItem('Admin-Token', adminToken);
-
-            // 将租户信息存储到本地缓存
-            localStorage.setItem('selectedTenant', this.selectedTenant);
-
-            this.$message({
-              showClose: true,
-              message: '登录成功',
-              type: 'success'
-            });
-
-            this.isLoging = false;
-            this.$router.push('/');
-          } else {
-            // 登录失败
-            this.$message({
-              showClose: true,
-              message: result.message || '登录失败',
-              type: 'error'
-            });
-            this.isLoging = false;
-          }
-        } catch (error) {
-          console.error('登录请求失败:', error);
-          this.$message({
-            showClose: true,
-            message: '网络错误，请稍后重试',
-            type: 'error'
-          });
-          this.isLoging = false;
-        }
-      } else {
-        this.$message({
-          showClose: true,
-          message: '请输入用户名和密码',
-          type: 'warning'
-        });
-      }
-    },
-    
-    cancelEnterkeyDefaultAction: function() {
-        document.onkeydown = function(e) {
-        var key = window.event.keyCode;
-        if (key == 13) {
-          return false;
-        }
-      }
-    }
+// 粒子样式生成函数
+function getParticleStyle() {
+  return {
+    left: Math.random() * 100 + '%',
+    top: Math.random() * 100 + '%',
+    animationDelay: Math.random() * 3 + 's',
+    animationDuration: (Math.random() * 3 + 2) + 's'
   }
 }
+
+// 从本地缓存恢复租户信息
+function restoreTenantFromCache(): void {
+  const cachedTenant = localStorage.getItem('selectedTenant')
+  if (cachedTenant) {
+    selectedTenant.value = cachedTenant
+  }
+}
+
+// 输入框聚焦效果
+function focusInput(event: Event): void {
+  const target = event.target as HTMLElement
+  target.parentElement?.classList.add('focused')
+}
+
+// 输入框失焦效果
+function blurInput(event: Event): void {
+  const target = event.target as HTMLInputElement
+  if (!target.value) {
+    target.parentElement?.classList.remove('focused')
+  }
+}
+
+// 回车键登录处理
+function handleKeyDown(event: KeyboardEvent): void {
+  if (event.key === 'Enter') {
+    login()
+  }
+}
+
+// 登录功能
+async function login(): Promise<void> {
+  if (selectedTenant.value === '') {
+    ElMessage.warning({
+      message: '请输入租户编码',
+      showClose: true
+    })
+    return
+  }
+
+  if (username.value !== '' && password.value !== '') {
+    isLoging.value = true
+
+    try {
+      // 调用登录 API
+      const result = await authAPI.login({
+        username: username.value,
+        password: password.value,
+        tenantCode: selectedTenant.value
+      })
+
+      if (result.code === 200) {
+        // 登录成功，处理返回的数据
+        const { token, adminToken, userInfo } = result.data
+
+        // 存储token到 localStorage（与 User Store 兼容）
+        localStorage.setItem('token', token)
+
+        // 存储旧的wvp-token（兼容旧系统）
+        localStorage.setItem('wvp-token', token)
+
+        // 存储用户信息和Admin-Token
+        localStorage.setItem('wvp-user', JSON.stringify(userInfo))
+        localStorage.setItem('Admin-Token', adminToken)
+
+        // 将租户信息存储到本地缓存
+        localStorage.setItem('selectedTenant', selectedTenant.value)
+
+        ElMessage.success({
+          message: '登录成功',
+          showClose: true
+        })
+
+        isLoging.value = false
+
+        // 调用认证 API 获取用户权限和菜单信息
+        try {
+          const authInfoResult = await authAPI.getUserInfo()
+
+          if (authInfoResult.code === 200) {
+            const userData = authInfoResult.data
+
+            // 存储用户信息到缓存
+            localStorage.setItem('auth_user_info', JSON.stringify(userData))
+            localStorage.setItem('auth_user_info_timestamp', Date.now().toString())
+
+            // 存储权限码列表
+            if (userData.permission_codes && userData.permission_codes.length > 0) {
+              localStorage.setItem('auth_permissions', JSON.stringify(userData.permission_codes))
+              localStorage.setItem('auth_permissions_timestamp', Date.now().toString())
+            }
+
+            // 存储菜单树
+            if (userData.menu_tree && userData.menu_tree.length > 0) {
+              localStorage.setItem('auth_menu', JSON.stringify(userData.menu_tree))
+              localStorage.setItem('auth_menu_timestamp', Date.now().toString())
+            }
+
+            console.log('✅ 认证信息已加载:', {
+              user: userData.user_name,
+              permissions: userData.permission_codes?.length || 0,
+              menuItems: userData.menu_tree?.length || 0
+            })
+
+            // 重新初始化 userStore 以加载刚刚存储的菜单数据
+            userStore.initFromCache()
+            console.log('✅ userStore 已重新初始化，菜单数据已加载到 store')
+          }
+        } catch (error) {
+          console.error('加载认证信息失败:', error)
+          // 即使出错，也尝试从缓存初始化 store
+          userStore.initFromCache()
+        }
+
+        // 获取重定向路径（如果有）
+        const redirect = (route.query.redirect as string) || '/'
+        router.push(redirect)
+      } else {
+        // 登录失败
+        ElMessage.error({
+          message: result.message || '登录失败',
+          showClose: true
+        })
+        isLoging.value = false
+      }
+    } catch (error) {
+      console.error('登录请求失败:', error)
+      ElMessage.error({
+        message: '网络错误，请稍后重试',
+        showClose: true
+      })
+      isLoging.value = false
+    }
+  } else {
+    ElMessage.warning({
+      message: '请输入用户名和密码',
+      showClose: true
+    })
+  }
+}
+
+// 生命周期
+onMounted(() => {
+  document.addEventListener('keydown', handleKeyDown)
+  restoreTenantFromCache()
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyDown)
+})
 </script>
 
 <style scoped>

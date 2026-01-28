@@ -166,7 +166,7 @@
 </template>
 
 <script>
-import associationService from '@/api/rbac/associationService'
+import associationService from '@/api/system/associationService'
 
 export default {
   name: 'UserAssignment',

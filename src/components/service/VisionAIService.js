@@ -1,26 +1,10 @@
 import axios from 'axios';
 import userService from '@/components/service/UserService'
 
-// 获取 API 基础 URL
-// 开发环境使用代理（baseURL 为空），生产环境使用环境变量
-const getApiBaseURL = () => {
-  if (import.meta.env.MODE === 'development') {
-    // 开发环境：使用代理，baseURL 为空
-    return ''
-  } else {
-    // 生产环境：使用环境变量配置的完整 URL
-    return import.meta.env.VITE_API_BASE_URL || ''
-  }
-}
-
-// 获取完整的 API 地址（用于 SSE、fetch 等不经过 axios 代理的请求）
-const getFullApiUrl = () => {
-  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-}
-
+import config from '../../../config/index.js';
 // 创建专用于visionAI模块的axios实例
 const visionAIAxios = axios.create({
-  baseURL: getApiBaseURL(),
+  baseURL: config.API_BASE_URL,
   timeout: 15000,
   withCredentials: false,  // 将withCredentials设置为false，避免CORS错误
 });
@@ -1630,8 +1614,7 @@ export const alertAPI = {
    * @returns {EventSource} SSE连接对象
    */
   createAlertSSEConnection(onMessage, onError, onClose) {
-    // SSE 不经过 axios 代理，需要使用完整的 API 地址
-    const sseUrl = `${getFullApiUrl()}/api/v1/alerts/stream`;
+    const sseUrl = `${visionAIAxios.defaults.baseURL}/api/v1/alerts/stream`;
     console.log('创建SSE连接:', sseUrl);
 
     const eventSource = new EventSource(sseUrl);
@@ -2309,8 +2292,8 @@ const chatAssistantAPI = {
         conversation_id: chatData.conversation_id || null
       };
 
-      // 发起POST请求（fetch 不经过 axios 代理，使用完整 URL）
-      const response = await fetch(`${getFullApiUrl()}/api/chat/chat`, {
+      // 发起POST请求（使用完整的chat端点）
+      const response = await fetch(`${visionAIAxios.defaults.baseURL}/api/chat/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2425,7 +2408,6 @@ const chatAssistantAPI = {
    * @returns {Promise} axios响应
    */
   getChatConversations(params = {}) {
-    console.log('获取会话列表:', params);
     return visionAIAxios.get('/api/chat/conversations', {
       params: {
         limit: params.limit || 20

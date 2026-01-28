@@ -244,7 +244,7 @@
 <script>
 import * as echarts from 'echarts';
 import axios from 'axios';
-import { alertStatisticsAPI, deviceStatisticsAPI } from '@/components/service/VisionAIService.js';
+import centerAPI from '@/api/center';
 
 export default {
   name: 'VisualCenter',

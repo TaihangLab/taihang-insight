@@ -41,7 +41,7 @@ class RoleService {
    */
   static async updateRole(roleId: number, roleData: UpdateRoleRequest): Promise<UnifiedResponse<Role>> {
     try {
-      return await rbacAxios.put(`/api/v1/rbac/roles/${roleId}`, roleData)
+      return await rbacAxios.put(`/rbac/roles/${roleId}`, roleData)
     } catch (error) {
       console.error('更新角色失败:', error)
       throw error
@@ -53,7 +53,7 @@ class RoleService {
    */
   static async deleteRole(roleId: number): Promise<UnifiedResponse<void>> {
     try {
-      return await rbacAxios.delete(`/api/v1/rbac/roles/${roleId}`)
+      return await rbacAxios.delete(`/rbac/roles/${roleId}`)
     } catch (error) {
       console.error('删除角色失败:', error)
       throw error
@@ -67,7 +67,7 @@ class RoleService {
     try {
       // 如果传入的是对象，则从中提取role_id
       const roleId = typeof params === 'object' && params !== null ? params.role_id : params
-      return await rbacAxios.get(`/api/v1/rbac/role-permissions`, {
+      return await rbacAxios.get(`/rbac/role-permissions`, {
         params: { role_id: roleId }
       })
     } catch (error) {

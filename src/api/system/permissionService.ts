@@ -57,7 +57,7 @@ class PermissionService {
     nodeData: UpdatePermissionRequest
   ): Promise<UnifiedResponse<Permission>> {
     try {
-      const response = await rbacAxios.put(`/api/v1/rbac/permissions/${nodeId}`, nodeData)
+      const response = await rbacAxios.put(`/rbac/permissions/${nodeId}`, nodeData)
       return response.data as UnifiedResponse<Permission>
     } catch (error) {
       console.error('更新权限节点失败:', error)
@@ -71,7 +71,7 @@ class PermissionService {
   static async deletePermissionNode(nodeId: number, force: boolean = false): Promise<UnifiedResponse<void>> {
     try {
       const params = { force }
-      await rbacAxios.delete(`/api/v1/rbac/permissions/${nodeId}`, { params })
+      await rbacAxios.delete(`/rbac/permissions/${nodeId}`, { params })
       return { success: true, code: 0, message: '删除成功', data: undefined }
     } catch (error) {
       console.error('删除权限节点失败:', error)
@@ -84,7 +84,7 @@ class PermissionService {
    */
   static async getPermissionNode(nodeId: number): Promise<UnifiedResponse<Permission>> {
     try {
-      const response = await rbacAxios.get(`/api/v1/rbac/permissions/${nodeId}`)
+      const response = await rbacAxios.get(`/rbac/permissions/${nodeId}`)
       return response.data as UnifiedResponse<Permission>
     } catch (error) {
       console.error('获取权限节点详情失败:', error)
@@ -114,7 +114,7 @@ class PermissionService {
    */
   static async updatePermissionNodeStatus(nodeId: number, status: number): Promise<UnifiedResponse<void>> {
     try {
-      await rbacAxios.patch(`/api/v1/rbac/permissions/${nodeId}/status`, { status })
+      await rbacAxios.patch(`/rbac/permissions/${nodeId}/status`, { status })
       return { success: true, code: 0, message: '更新成功', data: undefined }
     } catch (error) {
       console.error('更新权限状态失败:', error)
@@ -127,7 +127,7 @@ class PermissionService {
    */
   static async getRolesByPermission(permissionId: number): Promise<UnifiedResponse<Role[]>> {
     try {
-      const response = await rbacAxios.get(`/api/v1/rbac/permissions/${permissionId}/roles`)
+      const response = await rbacAxios.get(`/rbac/permissions/${permissionId}/roles`)
       return response.data as UnifiedResponse<Role[]>
     } catch (error) {
       console.error('获取权限角色失败:', error)

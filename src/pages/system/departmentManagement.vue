@@ -56,8 +56,8 @@
  */
 import { ref, onMounted, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
-import departmentService from '@/api/rbac/departmentService';
-import tenantService from '@/api/rbac/tenantService';
+import departmentService from '@/api/system/departmentService';
+import tenantService from '@/api/system/tenantService';
 import {
   useDepartmentData,
   type DepartmentSearchConditions,

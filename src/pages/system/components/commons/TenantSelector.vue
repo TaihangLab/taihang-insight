@@ -20,7 +20,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import tenantService from '@/api/rbac/tenantService'
+import tenantService from '@/api/system/tenantService'
 import { useUserStore } from '@/stores/modules/user'
 
 interface Tenant {

@@ -45,7 +45,7 @@ class TenantService {
     tenantData: UpdateTenantRequest
   ): Promise<UnifiedResponse<TenantAPI>> {
     try {
-      return await rbacAxios.put(`/api/v1/rbac/tenants/${tenantId}`, tenantData) as UnifiedResponse<TenantAPI>
+      return await rbacAxios.put(`/rbac/tenants/${tenantId}`, tenantData) as UnifiedResponse<TenantAPI>
     } catch (error) {
       console.error('更新租户失败:', error)
       throw error
@@ -57,7 +57,7 @@ class TenantService {
    */
   static async deleteTenant(tenantId: number): Promise<UnifiedResponse<void>> {
     try {
-      return await rbacAxios.delete(`/api/v1/rbac/tenants/${tenantId}`) as UnifiedResponse<void>
+      return await rbacAxios.delete(`/rbac/tenants/${tenantId}`) as UnifiedResponse<void>
     } catch (error) {
       console.error('删除租户失败:', error)
       throw error

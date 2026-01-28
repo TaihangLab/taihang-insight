@@ -1,6 +1,6 @@
 <script>
 import WarningDetail from './warningDetail.vue'
-import { alertAPI } from '@/components/service/VisionAIService.js'
+import centerAPI from '@/api/center'
 
 export default {
   name: "WarningManagement",
@@ -196,7 +196,7 @@ export default {
         console.log('获取预警列表 - 请求参数:', apiParams)
 
         // 调用API获取数据
-        const response = await alertAPI.getRealTimeAlerts(apiParams)
+        const response = await centerAPI.alert.getRealTimeAlerts(apiParams)
         console.log('获取预警列表 - API响应:', response.data)
 
         if (response.data && response.data.code === 0) {
@@ -463,9 +463,9 @@ export default {
     async loadAvailableArchives() {
       try {
         this.archiveListLoading = true
-        const { archiveAPI } = await import('../../service/VisionAIService.js')
+        const { archive } = centerAPI
 
-        const response = await archiveAPI.getArchiveList({
+        const response = await centerAPI.archive.getArchiveList({
           page: 1,
           limit: 100,
           status: 1 // 只获取正常状态的档案
@@ -635,7 +635,7 @@ export default {
         }
         
         console.log('📤 更新预警状态为已归档:', apiAlertId, updateData)
-        const updateResponse = await alertAPI.updateAlertStatus(apiAlertId, updateData)
+        const updateResponse = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData)
         console.log('✅ 预警状态更新成功:', updateResponse)
         
         // 2. 更新本地的_apiData.status字段
@@ -670,8 +670,8 @@ export default {
         console.log('✅ 本地状态已更新为已归档')
         
         // 4. 调用归档API关联预警到档案
-        const { archiveAPI } = await import('../../service/VisionAIService.js')
-        const response = await archiveAPI.linkAlertsToArchive(
+        const { archive } = centerAPI
+        const response = await centerAPI.archive.linkAlertsToArchive(
           targetArchiveId,
           [apiAlertId],
           `预警管理归档 - 预警类型: ${warning.type || warning.alert_type}`
@@ -846,7 +846,7 @@ export default {
 
         console.log('批量处理预警:', apiAlertIds, updateData)
 
-        const response = await alertAPI.batchUpdateAlertStatus(apiAlertIds, updateData)
+        const response = await centerAPI.alert.batchUpdateAlertStatus(apiAlertIds, updateData)
         
         if (response.data && response.data.code === 0) {
           // API调用成功，更新本地数据（与单个处理逻辑一致）
@@ -974,7 +974,7 @@ export default {
         console.log('📤 导出预警数据，参数:', exportParams);
         
         // 调用后端导出接口
-        const response = await alertAPI.exportAlerts(exportParams);
+        const response = await centerAPI.alert.exportAlerts(exportParams);
         
         if (response && response.data) {
           // 创建下载链接
@@ -1126,7 +1126,7 @@ export default {
         console.log('更新预警状态:', apiAlertId, updateData)
 
         // 调用API更新预警状态
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData)
+        const response = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData)
         
         if (response.data && response.data.code === 0) {
           // API调用成功，更新本地数据状态 - 添加新的处理记录
@@ -1201,7 +1201,7 @@ export default {
           processed_by: this.getCurrentUserName()
         };
         
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        const response = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData);
         console.log('✅ 上报API调用成功:', response);
         
         // 获取当前预警
@@ -1263,7 +1263,7 @@ export default {
         console.log('获取预警详情:', apiAlertId, item)
         
         // 调用API获取完整的预警详情
-        const response = await alertAPI.getAlertDetail(apiAlertId)
+        const response = await centerAPI.alert.getAlertDetail(apiAlertId)
         
         console.log('预警详情API完整响应:', response)
         console.log('预警详情API响应数据:', response.data)
@@ -1491,8 +1491,8 @@ export default {
         }
         
         // 调用后端API标记误报
-        const { alertAPI } = await import('../../service/VisionAIService.js')
-        const response = await alertAPI.markAlertAsFalseAlarm(
+        const { alert } = centerAPI
+        const response = await centerAPI.alert.markAlertAsFalseAlarm(
           warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId),
           this.falseAlarmForm.reviewNotes,
           this.getCurrentUserName()
@@ -1647,7 +1647,7 @@ export default {
         };
         
         // 发送真实的API请求
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        const response = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData);
         console.log('✅ 后端状态更新成功:', response);
         
         // 2. 后端更新成功后，更新本地状态
@@ -1776,7 +1776,7 @@ export default {
         console.log('结束处理预警:', apiAlertId, updateData)
 
         // 调用API更新预警状态
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData)
+        const response = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData)
         
         if (response.data && response.data.code === 0) {
           // API调用成功，更新本地数据状态
@@ -2090,7 +2090,7 @@ export default {
         console.log('批量删除预警:', apiAlertIds)
 
         // 调用API进行批量删除
-        const response = await alertAPI.batchDeleteAlerts(apiAlertIds)
+        const response = await centerAPI.alert.batchDeleteAlerts(apiAlertIds)
         
         if (response.data && response.data.code === 0) {
           // API调用成功，从预警列表中移除选中的项

@@ -60,7 +60,7 @@ import { ElMessage } from 'element-plus'
 import { Folder, Operation, Menu } from '@element-plus/icons-vue'
 import type { Role } from '@/types/rbac'
 import type { PermissionTreeNode } from '@/types/rbac/permission'
-import associationService from '@/api/rbac/associationService'
+import associationService from '@/api/system/associationService'
 
 interface TreeProps {
   children: string

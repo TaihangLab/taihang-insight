@@ -173,7 +173,7 @@
 </template>
 
 <script>
-import VisionAIService from '@/components/service/VisionAIService'
+import centerAPI from '@/api/center'
 
 export default {
   name: 'MultimodalReview',
@@ -549,7 +549,7 @@ export default {
         
         console.log('加载复判技能列表，参数:', params)
         
-        const response = await VisionAIService.reviewSkillAPI.getReviewSkillList(params)
+        const response = await centerAPI.reviewSkill.getReviewSkillList(params)
         
         // 解析后端返回的数据格式
         let skillsData = null
@@ -636,7 +636,7 @@ export default {
           prompt_template: skillData.prompt_template || skillData.description
         }
         
-        await VisionAIService.reviewSkillAPI.updateReviewSkill(skillId, updateData)
+        await centerAPI.reviewSkill.updateReviewSkill(skillId, updateData)
         
         // 重新加载数据
         await this.loadSkillsData()
@@ -665,7 +665,7 @@ export default {
         }
         
         const apiSkillId = skill.skill_id || skillId
-        await VisionAIService.reviewSkillAPI.deleteReviewSkill(apiSkillId)
+        await centerAPI.reviewSkill.deleteReviewSkill(apiSkillId)
         
         // 重新加载数据
         await this.loadSkillsData()
@@ -709,7 +709,7 @@ export default {
         // 转换为API使用的skill_id
         const apiSkillIds = selectedSkills.map(skill => skill.skill_id || skill.id)
         
-        const response = await VisionAIService.reviewSkillAPI.batchDeleteReviewSkills(apiSkillIds)
+        const response = await centerAPI.reviewSkill.batchDeleteReviewSkills(apiSkillIds)
         
         // 重新加载数据
         await this.loadSkillsData()
@@ -746,10 +746,10 @@ export default {
         
         if (skill.status === 'online') {
           // 下线技能
-          await VisionAIService.reviewSkillAPI.unpublishReviewSkill(skillId)
+          await centerAPI.reviewSkill.unpublishReviewSkill(skillId)
         } else {
           // 上线技能
-          await VisionAIService.reviewSkillAPI.publishReviewSkill(skillId)
+          await centerAPI.reviewSkill.publishReviewSkill(skillId)
         }
         
         // 重新加载数据

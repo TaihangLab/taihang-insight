@@ -28,7 +28,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import * as ElementPlusIcons from '@element-plus/icons-vue'
-import type { MenuItem } from '@/api/auth/types'
+import type { MenuItem } from '@/types/auth'
 
 interface Props {
   item: MenuItem

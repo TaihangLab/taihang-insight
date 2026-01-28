@@ -197,7 +197,7 @@ class AssociationService {
    */
   static async getUserPermissions(userId: number): Promise<UnifiedResponse<Permission[]>> {
     try {
-      return await rbacAxios.get(`/api/v1/rbac/permissions/user/${userId}`)
+      return await rbacAxios.get(`/rbac/permissions/user/${userId}`)
     } catch (error) {
       console.error('获取用户权限列表失败:', error)
       throw error
@@ -230,7 +230,7 @@ class AssociationService {
    */
   static async getRolePermissions(roleId: number): Promise<UnifiedResponse<Permission[]>> {
     try {
-      return await rbacAxios.get(`/api/v1/rbac/permissions/role/${roleId}`)
+      return await rbacAxios.get(`/rbac/permissions/role/${roleId}`)
     } catch (error) {
       console.error('获取角色权限失败:', error)
       throw error
@@ -265,7 +265,7 @@ class AssociationService {
    */
   static async getUserRoles(userId: number): Promise<UnifiedResponse<Role[]>> {
     try {
-      return await rbacAxios.get(`/api/v1/rbac/user-roles/${userId}`)
+      return await rbacAxios.get(`/rbac/user-roles/${userId}`)
     } catch (error) {
       console.error('获取用户角色失败:', error)
       throw error

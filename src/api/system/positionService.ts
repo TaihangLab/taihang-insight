@@ -43,7 +43,7 @@ class PositionService {
     posData: UpdatePositionRequest
   ): Promise<UnifiedResponse<Position>> {
     try {
-      return await rbacAxios.put(`/api/v1/rbac/positions/${positionId}`, posData)
+      return await rbacAxios.put(`/rbac/positions/${positionId}`, posData)
     } catch (error) {
       console.error('更新岗位失败:', error)
       throw error
@@ -55,7 +55,7 @@ class PositionService {
    */
   static async deletePosition(positionId: number): Promise<UnifiedResponse<void>> {
     try {
-      return await rbacAxios.delete(`/api/v1/rbac/positions/${positionId}`)
+      return await rbacAxios.delete(`/rbac/positions/${positionId}`)
     } catch (error) {
       console.error('删除岗位失败:', error)
       throw error

@@ -38,7 +38,7 @@
 </template>
 
 <script>
-import { cameraAPI } from '@/components/service/VisionAIService';
+import centerAPI from '@/api/center';
 
 export default {
   name: 'TagEdit',
@@ -105,8 +105,8 @@ export default {
 
       // 根据是编辑还是新增模式调用不同API
       const apiCall = this.isEdit
-        ? cameraAPI.updateTag(this.editTag.id, this.tagForm)
-        : cameraAPI.createTag(this.tagForm);
+        ? centerAPI.camera.updateTag(this.editTag.id, this.tagForm)
+        : centerAPI.camera.createTag(this.tagForm);
 
       apiCall
         .then(res => {

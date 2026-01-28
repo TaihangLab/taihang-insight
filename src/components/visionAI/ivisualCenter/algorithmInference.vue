@@ -352,7 +352,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue';
 import ResourceStatistics from './components/ResourceStatistics.vue';
-import { systemMonitorAPI, alertStatisticsAPI, deviceStatisticsAPI, alertForwardAPI, skillAPI } from '@/components/service/VisionAIService.js';
+import centerAPI from '@/api/center';
 
 // ============================================================================
 // 类型定义
@@ -518,7 +518,7 @@ async function loadAllData(): Promise<void> {
  */
 async function loadResourceData(): Promise<void> {
   try {
-    const response = await systemMonitorAPI.getCurrentResources();
+    const response = await centerAPI.systemMonitor.getCurrentResources();
     if (response.data?.code === 0 && response.data?.data) {
       const data = response.data.data;
       cpuUsage.value = data.cpu_usage || 0;
@@ -536,7 +536,7 @@ async function loadResourceData(): Promise<void> {
  */
 async function loadDeviceStatistics(): Promise<void> {
   try {
-    const response = await deviceStatisticsAPI.getConnectionSummary();
+    const response = await centerAPI.deviceStatistics.getConnectionSummary();
     if (response.data?.code === 0 && response.data?.data) {
       const data = response.data.data;
       deviceStats.value = {
@@ -556,7 +556,7 @@ async function loadDeviceStatistics(): Promise<void> {
  */
 async function loadAlertTrendData(): Promise<void> {
   try {
-    const response = await alertStatisticsAPI.getTrend('30d', '1d');
+    const response = await centerAPI.alertStatistics.getTrend('30d', '1d');
     if (response.data?.code === 0 && response.data?.data) {
       const data = response.data.data;
       const labels = data.time_labels || [];
@@ -583,7 +583,7 @@ async function loadAlertTrendData(): Promise<void> {
  */
 async function loadForwardData(): Promise<void> {
   try {
-    const response = await alertForwardAPI.getForwardStatistics('7d');
+    const response = await centerAPI.alertForward.getForwardStatistics('7d');
     if (response.data?.code === 0 && response.data?.data) {
       const data = response.data.data;
       const counts = data.forward_counts || [];

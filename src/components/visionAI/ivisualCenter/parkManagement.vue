@@ -188,7 +188,7 @@
 import { ref, reactive, onMounted, onBeforeUnmount, onUnmounted } from 'vue';
 import * as echarts from 'echarts';
 import type { ECharts } from 'echarts';
-import { deviceStatisticsAPI, systemMonitorAPI, alertStatisticsAPI } from '@/components/service/VisionAIService.js';
+import centerAPI from '@/api/center';
 
 // ============================================================================
 // 类型定义
@@ -285,7 +285,7 @@ async function loadAllData(): Promise<void> {
  */
 async function loadDeviceTree(): Promise<void> {
   try {
-    const response = await deviceStatisticsAPI.getDeviceTree();
+    const response = await centerAPI.deviceStatistics.getDeviceTree();
     if (response.data?.code === 0 && response.data?.data) {
       treeData.value = response.data.data;
     }
@@ -299,7 +299,7 @@ async function loadDeviceTree(): Promise<void> {
  */
 async function loadResourceHistory(): Promise<void> {
   try {
-    const response = await systemMonitorAPI.getResourceHistory('cpu', '1h');
+    const response = await centerAPI.systemMonitor.getResourceHistory('cpu', '1h');
     if (response.data?.code === 0 && response.data?.data) {
       const data = response.data.data;
       initCpuChart(data.time_labels || [], data.data_points || []);
@@ -314,7 +314,7 @@ async function loadResourceHistory(): Promise<void> {
  */
 async function loadStorageUsage(): Promise<void> {
   try {
-    const response = await systemMonitorAPI.getStorageUsage();
+    const response = await centerAPI.systemMonitor.getStorageUsage();
     if (response.data?.code === 0 && response.data?.data) {
       const data = response.data.data;
       initStorageChart(data.storage_list || []);
@@ -329,7 +329,7 @@ async function loadStorageUsage(): Promise<void> {
  */
 async function loadBandwidthUsage(): Promise<void> {
   try {
-    const response = await systemMonitorAPI.getBandwidthUsage('1h');
+    const response = await centerAPI.systemMonitor.getBandwidthUsage('1h');
     if (response.data?.code === 0 && response.data?.data) {
       const data = response.data.data;
       initBandwidthChart(data.time_labels || [], data.upstream_bandwidth || [], data.downstream_bandwidth || []);
@@ -344,7 +344,7 @@ async function loadBandwidthUsage(): Promise<void> {
  */
 async function loadAlertSnapshots(): Promise<void> {
   try {
-    const response = await alertStatisticsAPI.getLatestImages(4);
+    const response = await centerAPI.alertStatistics.getLatestImages(4);
     if (response.data?.code === 0 && response.data?.data) {
       alertSnapshots.value = response.data.data.map((item: any) => ({
         image: item.image,
@@ -390,7 +390,7 @@ async function loadAlertSnapshots(): Promise<void> {
  */
 async function loadDeviceStatus(): Promise<void> {
   try {
-    const response = await deviceStatisticsAPI.getStatusStatistics();
+    const response = await centerAPI.deviceStatistics.getStatusStatistics();
     if (response.data?.code === 0 && response.data?.data) {
       const data = response.data.data;
       deviceStatus.value = {

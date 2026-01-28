@@ -8,7 +8,7 @@ import { ref, computed } from 'vue';
 import type { Permission } from '@/types/rbac';
 import type { PermissionTreeNode, PermissionType } from '@/types/rbac/permission';
 import { Status } from '@/types/rbac';
-import permissionService from '@/api/rbac/permissionService';
+import permissionService from '@/api/system/permissionService';
 
 // ============================================
 // 类型定义

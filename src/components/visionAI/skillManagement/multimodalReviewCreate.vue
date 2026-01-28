@@ -245,7 +245,7 @@
 </template>
 
 <script>
-import VisionAIService from '@/components/service/VisionAIService'
+import centerAPI from '@/api/center'
 
 export default {
   name: 'MultimodalReviewCreate',
@@ -356,7 +356,7 @@ export default {
     // 根据ID获取技能（通过API）
     async getSkillById(skillId) {
       try {
-        const response = await VisionAIService.reviewSkillAPI.getReviewSkillDetail(skillId)
+        const response = await centerAPI.reviewSkill.getReviewSkillDetail(skillId)
         console.log('获取技能详情响应:', response.data)
         
         // 修复数据解析逻辑，处理后端统一响应格式
@@ -588,7 +588,7 @@ export default {
         if (this.isCreateMode || !this.currentSkillId) {
           // 创建新技能
           console.log('创建新技能:', skillData)
-          const response = await VisionAIService.reviewSkillAPI.createReviewSkill(skillData)
+          const response = await centerAPI.reviewSkill.createReviewSkill(skillData)
           
           // 检查响应数据结构
           console.log('创建技能响应:', response.data)
@@ -660,7 +660,7 @@ export default {
           // 更新现有技能
           skillId = this.skillData.skill_id || this.currentSkillId
           console.log('更新现有技能:', skillId, skillData)
-          const response = await VisionAIService.reviewSkillAPI.updateReviewSkill(skillId, skillData)
+          const response = await centerAPI.reviewSkill.updateReviewSkill(skillId, skillData)
           
           console.log('更新技能响应:', response.data, 'status:', response.status)
           
@@ -678,7 +678,7 @@ export default {
         if (success && (shouldPublish || this.skillForm.status === 'online') && skillId) {
           console.log('准备发布技能:', skillId, '发布标记:', shouldPublish, '表单状态:', this.skillForm.status)
           try {
-            const publishResponse = await VisionAIService.reviewSkillAPI.publishReviewSkill(skillId)
+            const publishResponse = await centerAPI.reviewSkill.publishReviewSkill(skillId)
             console.log('发布技能响应:', publishResponse.data)
             
             // 检查发布是否成功
@@ -865,7 +865,7 @@ export default {
         })
         
         // 调用预览测试API
-        const response = await VisionAIService.reviewSkillAPI.previewTestReviewSkill(imageFile, userPrompt)
+        const response = await centerAPI.reviewSkill.previewTestReviewSkill(imageFile, userPrompt)
         
         if (response.data && response.data.success) {
           const testData = response.data.data || response.data

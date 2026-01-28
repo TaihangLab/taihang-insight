@@ -7,8 +7,8 @@ import { ref, computed } from 'vue';
 import type { Role } from '@/types/rbac';
 import type { RolePermission } from '@/types/rbac/role';
 import { Status, DataScope } from '@/types/rbac';
-import roleService from '@/api/rbac/roleService';
-import associationService from '@/api/rbac/associationService';
+import roleService from '@/api/system/roleService';
+import associationService from '@/api/system/associationService';
 
 // ============================================
 // 类型定义

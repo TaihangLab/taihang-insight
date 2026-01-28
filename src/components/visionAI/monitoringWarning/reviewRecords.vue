@@ -411,8 +411,8 @@ export default {
       this.loading = true
       try {
         // 调用后端API获取复判记录
-        const { reviewRecordAPI } = await import('../../service/VisionAIService.js')
-        const response = await reviewRecordAPI.getReviewRecords({
+        const { reviewRecord } = (await import('@/api/center')).default;
+        const response = await centerAPI.reviewRecord.getReviewRecords({
           page: 1,
           limit: 1000, // 获取所有记录
           review_type: this.activeSearchForm.reviewType || undefined,
