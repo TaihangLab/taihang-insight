@@ -13,24 +13,24 @@
       <div class="page-header" style="width: 100%; margin-bottom: 20px;">
         <div class="page-header-btn" style="width: 100%; text-align: left">
           搜索:
-          <el-input @input="getChannelList" style="margin-right: 1rem; width: auto;" size="mini" placeholder="关键字"
+          <el-input @input="getChannelList" style="margin-right: 1rem; width: auto;" size="small" placeholder="关键字"
                     prefix-icon="el-icon-search" v-model="searchSrt" clearable></el-input>
           在线状态:
-          <el-select size="mini" style="width: 8rem; margin-right: 1rem;" @change="getChannelList" v-model="online" placeholder="请选择"
+          <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="getChannelList" v-model="online" placeholder="请选择"
                      default-first-option>
             <el-option label="全部" value=""></el-option>
             <el-option label="在线" value="true"></el-option>
             <el-option label="离线" value="false"></el-option>
           </el-select>
           类型:
-          <el-select size="mini" style="width: 8rem; margin-right: 1rem;" @change="getChannelList" v-model="channelType" placeholder="请选择"
+          <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="getChannelList" v-model="channelType" placeholder="请选择"
                      default-first-option>
             <el-option label="全部" value=""></el-option>
             <el-option v-for="item in Object.values($channelTypeList)" :key="item.id" :label="item.name" :value="item.id"></el-option>
           </el-select>
-          <el-button size="mini" :loading="getChannelListLoading"
+          <el-button size="small" :loading="getChannelListLoading"
                      @click="getChannelList()">刷新</el-button>
-          <el-button type="primary" size="mini" style="float: right" @click="onSubmit">确 定</el-button>
+          <el-button type="primary" size="small" style="float: right" @click="onSubmit">确 定</el-button>
         </div>
       </div>
       <!--通道列表-->

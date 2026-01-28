@@ -1,13 +1,13 @@
 <template>
   <div id="mediaInfo" >
-    <el-button style="position: absolute; right: 1rem;" icon="el-icon-refresh-right" circle size="mini" @click="getMediaInfo"></el-button>
-    <el-descriptions size="mini" :column="3" title="概况">
+    <el-button style="position: absolute; right: 1rem;" icon="el-icon-refresh-right" circle size="small" @click="getMediaInfo"></el-button>
+    <el-descriptions size="small" :column="3" title="概况">
       <el-descriptions-item label="观看人数">{{ info.readerCount }}</el-descriptions-item>
       <el-descriptions-item label="网络">{{ formatByteSpeed() }}</el-descriptions-item>
       <el-descriptions-item label="持续时间">{{info.aliveSecond}}秒</el-descriptions-item>
     </el-descriptions>
     <div style="display: grid; grid-template-columns: 1fr 1fr">
-      <el-descriptions size="mini" v-if="info.videoCodec" :column="2" title="视频信息">
+      <el-descriptions size="small" v-if="info.videoCodec" :column="2" title="视频信息">
         <el-descriptions-item label="编码">{{ info.videoCodec }}</el-descriptions-item>
         <el-descriptions-item label="分辨率"
         >{{ info.width }}x{{ info.height }}
@@ -15,7 +15,7 @@
         <el-descriptions-item label="FPS">{{ info.fps }}</el-descriptions-item>
         <el-descriptions-item label="丢包率">{{ info.loss }}</el-descriptions-item>
       </el-descriptions>
-      <el-descriptions size="mini" v-if="info.audioCodec" :column="2" title="音频信息">
+      <el-descriptions size="small" v-if="info.audioCodec" :column="2" title="音频信息">
         <el-descriptions-item label="编码">
           {{ info.audioCodec }}
         </el-descriptions-item>

@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Edit, Delete } from '@element-plus/icons-vue'
-import type { Tenant } from '@/types/rbac/tenant'
+import type { TenantAPI } from '@/types/rbac/tenant'
 
 const PACKAGE_LABELS: Record<string, string> = {
   basic: '基础版',
@@ -65,16 +65,16 @@ const PACKAGE_LABELS: Record<string, string> = {
 }
 
 defineProps<{
-  data: Tenant[]
+  data: TenantAPI[]
   loading: boolean
   selectedCodes: number[]
 }>()
 
 const emit = defineEmits<{
-  selectionChange: [codes: number[], selection: Tenant[]]
-  statusChange: [row: Tenant]
-  edit: [row: Tenant]
-  delete: [row: Tenant]
+  selectionChange: [codes: number[], selection: TenantAPI[]]
+  statusChange: [row: TenantAPI]
+  edit: [row: TenantAPI]
+  delete: [row: TenantAPI]
 }>()
 
 const packageLabels = ref(PACKAGE_LABELS)
@@ -85,20 +85,20 @@ const formatDate = (timestamp: string | null | undefined): string => {
   return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
 }
 
-const handleSelectionChange = (selection: Tenant[]) => {
+const handleSelectionChange = (selection: TenantAPI[]) => {
   const codes = selection.map((row) => row.id)
   emit('selectionChange', codes, selection)
 }
 
-const handleStatusChange = (row: Tenant) => {
+const handleStatusChange = (row: TenantAPI) => {
   emit('statusChange', row)
 }
 
-const handleEdit = (row: Tenant) => {
+const handleEdit = (row: TenantAPI) => {
   emit('edit', row)
 }
 
-const handleDelete = (row: Tenant) => {
+const handleDelete = (row: TenantAPI) => {
   emit('delete', row)
 }
 </script>

@@ -8,7 +8,7 @@
 		<el-container>
       <el-aside width="300px">
         <div class="record-list-box-box">
-          <el-date-picker size="mini" v-model="chooseDate" type="date" value-format="yyyy-MM-dd" placeholder="日期" @change="dateChange()"></el-date-picker>
+          <el-date-picker size="small" v-model="chooseDate" type="date" value-format="yyyy-MM-dd" placeholder="日期" @change="dateChange()"></el-date-picker>
           <div class="record-list-box" v-loading="recordsLoading" :style="recordListStyle">
             <ul v-if="detailFiles.length >0" class="infinite-list record-list" >
               <li v-for="item in detailFiles" class="infinite-list-item record-list-item" >
@@ -25,7 +25,7 @@
               </li>
             </ul>
           </div>
-          <div size="mini" v-if="detailFiles.length ==0" class="record-list-no-val" >暂无数据</div>
+          <div size="small" v-if="detailFiles.length ==0" class="record-list-no-val" >暂无数据</div>
         </div>
 
       </el-aside>
@@ -44,7 +44,7 @@
           <div>
             <el-button-group >
               <el-time-picker
-                size="mini"
+                size="small"
                 is-range
                 align="left"
                 v-model="timeRange"
@@ -58,19 +58,19 @@
             </el-button-group>
 
             <el-button-group >
-              <el-button size="mini" class="iconfont icon-zanting" title="暂停" @click="gbPause()"></el-button>
-              <el-button size="mini" class="iconfont icon-kaishi" title="开始" @click="gbPlay()"></el-button>
-              <el-dropdown size="mini" title="播放倍速"  @command="gbScale">
-                <el-button size="mini">
+              <el-button size="small" class="iconfont icon-zanting" title="暂停" @click="gbPause()"></el-button>
+              <el-button size="small" class="iconfont icon-kaishi" title="开始" @click="gbPlay()"></el-button>
+              <el-dropdown size="small" title="播放倍速"  @command="gbScale">
+                <el-button size="small">
                   倍速 <i class="el-icon-arrow-down el-icon--right"></i>
                 </el-button>
                 <el-dropdown-menu>
                   <el-dropdown-item v-for="(item,index) in downloadSpeedArray" :key="index" :command="item">{{item}}倍速</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
-              <el-button size="mini" class="iconfont icon-xiazai1" title="下载选定录像" @click="downloadRecord()"></el-button>
-              <el-button v-if="sliderMIn === 0 && sliderMax === 86400" size="mini" class="iconfont icon-slider" title="放大滑块" @click="setSliderFit()"></el-button>
-              <el-button v-if="sliderMIn !== 0 || sliderMax !== 86400" size="mini" class="iconfont icon-slider-right" title="恢复滑块" @click="setSliderFit()"></el-button>
+              <el-button size="small" class="iconfont icon-xiazai1" title="下载选定录像" @click="downloadRecord()"></el-button>
+              <el-button v-if="sliderMIn === 0 && sliderMax === 86400" size="small" class="iconfont icon-slider" title="放大滑块" @click="setSliderFit()"></el-button>
+              <el-button v-if="sliderMIn !== 0 || sliderMax !== 86400" size="small" class="iconfont icon-slider-right" title="恢复滑块" @click="setSliderFit()"></el-button>
             </el-button-group>
           </div>
           <el-slider

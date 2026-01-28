@@ -18,7 +18,7 @@
       <el-table-column prop="sort_order" label="排序" width="80" align="center"></el-table-column>
       <el-table-column prop="status" label="状态" width="80" align="center">
         <template #default="scope">
-          <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="mini">
+          <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="small">
             {{ scope.row.status === 0 ? '启用' : '停用' }}
           </el-tag>
         </template>

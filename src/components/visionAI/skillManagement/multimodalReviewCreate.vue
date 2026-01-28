@@ -55,7 +55,7 @@
                   <el-button 
                     link 
                     icon="el-icon-document-copy" 
-                    size="mini"
+                    size="small"
                     @click="copyToClipboard(skillData.id)"
                     class="copy-id-btn">
                     复制

@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import  userService from './components/service/UserService.js'
+import  userService from './components/service/UserService'
 export default {
   name: 'app',
   data(){

@@ -156,7 +156,7 @@
                   <div class="status-item">
                     <i class="el-icon-circle-check status-icon"></i>
                     <span class="status-label">状态</span>
-                    <el-tag size="mini" :type="skill.status === 'enabled' ? 'success' : 'info'">
+                    <el-tag size="small" :type="skill.status === 'enabled' ? 'success' : 'info'">
                       {{ skill.status === 'enabled' ? '已发布' : '未发布' }}
                     </el-tag>
                   </div>
@@ -169,14 +169,14 @@
                 <div class="model-row">
                   <i class="el-icon-cpu model-icon"></i>
                   <span class="model-label">技能类型</span>
-                  <el-tag size="mini" :type="getSkillTypeTagType(skill.type)">
+                  <el-tag size="small" :type="getSkillTypeTagType(skill.type)">
                     {{ getSkillTypeDisplayName(skill.type) }}
                   </el-tag>
                 </div>
                 <div class="tag-row" v-if="skill.tags">
                   <i class="el-icon-price-tag tag-icon"></i>
                   <span class="tag-label">技能标签</span>
-                  <el-tag size="mini" type="warning">
+                  <el-tag size="small" type="warning">
                     {{ skill.tags }}
                   </el-tag>
                 </div>
@@ -380,7 +380,7 @@
             </el-table-column>
             <el-table-column label="操作" width="80">
               <template #default="scope">
-                <el-button size="mini" link @click="viewDevice(scope.row)">查看</el-button>
+                <el-button size="small" link @click="viewDevice(scope.row)">查看</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -502,7 +502,7 @@
                 <el-table :data="detailSkill.outputParameters" style="width: 100%" size="small">
                   <el-table-column prop="name" label="参数名称" width="150">
                     <template #default="scope">
-                      <el-tag size="mini" type="info">{{ scope.row.name }}</el-tag>
+                      <el-tag size="small" type="info">{{ scope.row.name }}</el-tag>
                     </template>
                   </el-table-column>
                   <el-table-column prop="type" label="数据类型" width="100">
@@ -517,7 +517,7 @@
                   </el-table-column>
                   <el-table-column prop="required" label="是否必填" width="80">
                     <template #default="scope">
-                      <el-tag size="mini" :type="scope.row.required ? 'warning' : 'info'">
+                      <el-tag size="small" :type="scope.row.required ? 'warning' : 'info'">
                         {{ scope.row.required ? '必填' : '可选' }}
                       </el-tag>
                     </template>
@@ -575,7 +575,7 @@
                   <el-table-column prop="name" label="任务名称" width="200"></el-table-column>
                   <el-table-column prop="status" label="状态" width="100">
                     <template #default="scope">
-                      <el-tag size="mini" :type="scope.row.status ? 'success' : 'info'">
+                      <el-tag size="small" :type="scope.row.status ? 'success' : 'info'">
                         {{ scope.row.status ? '运行中' : '已停止' }}
                       </el-tag>
                     </template>

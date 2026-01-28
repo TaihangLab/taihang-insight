@@ -78,7 +78,7 @@
                 </div>
                 <div class="skill-status">
                   <el-tag
-                    size="mini"
+                    size="small"
                     :type="(skill.status === true || skill.status === 'published') ? 'success' : 'info'">
                     {{ (skill.status === true || skill.status === 'published') ? '已发布' : '草稿' }}
                   </el-tag>
@@ -127,7 +127,7 @@
                   <div class="task-skill">{{ task.skill_name || task.skill_class_name }}</div>
                 </div>
                 <div class="task-status">
-                  <el-tag size="mini" :type="task.status ? 'success' : 'info'">
+                  <el-tag size="small" :type="task.status ? 'success' : 'info'">
                     {{ task.status ? '运行中' : '已停止' }}
                   </el-tag>
                 </div>
@@ -140,9 +140,9 @@
                 </div>
               </div>
               <div class="task-actions">
-                <el-button link size="mini" @click="editTask(task)">编辑</el-button>
-                <el-button link size="mini" @click="viewTask(task)">查看</el-button>
-                <el-button link size="mini" style="color: #f56c6c;" @click="deleteTask(task)">删除</el-button>
+                <el-button link size="small" @click="editTask(task)">编辑</el-button>
+                <el-button link size="small" @click="viewTask(task)">查看</el-button>
+                <el-button link size="small" style="color: #f56c6c;" @click="deleteTask(task)">删除</el-button>
               </div>
             </el-card>
           </div>
@@ -180,9 +180,9 @@
               <h3 class="skill-title">{{ skillDetail.skill_name || skillDetail.name }}</h3>
               <p class="skill-desc">{{ skillDetail.skill_description || skillDetail.description || '暂无描述' }}</p>
               <div class="skill-tags">
-                <el-tag size="mini" type="primary">{{ skillDetail.type || '大模型技能' }}</el-tag>
-                <el-tag size="mini" type="success" v-if="skillDetail.version">v{{ skillDetail.version }}</el-tag>
-                <el-tag size="mini" :type="(skillDetail.status === true || skillDetail.status === 'published') ? 'success' : 'info'">
+                <el-tag size="small" type="primary">{{ skillDetail.type || '大模型技能' }}</el-tag>
+                <el-tag size="small" type="success" v-if="skillDetail.version">v{{ skillDetail.version }}</el-tag>
+                <el-tag size="small" :type="(skillDetail.status === true || skillDetail.status === 'published') ? 'success' : 'info'">
                   {{ (skillDetail.status === true || skillDetail.status === 'published') ? '已发布' : '草稿' }}
                 </el-tag>
               </div>

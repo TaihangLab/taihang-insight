@@ -7,7 +7,7 @@
 
       <div class="page-header-btn" v-if="!this.$route.params.mediaServerId" style="padding-right: 1rem">
         <!--        节点选择:-->
-        <!--        <el-select size="mini" @change="chooseMediaChange" style="width: 16rem; margin-right: 1rem;" v-model="mediaServerId" placeholder="请选择" >-->
+        <!--        <el-select size="small" @change="chooseMediaChange" style="width: 16rem; margin-right: 1rem;" v-model="mediaServerId" placeholder="请选择" >-->
         <!--          <el-option-->
         <!--              key="undefined"-->
         <!--              label="全部"-->
@@ -30,9 +30,9 @@
       <el-aside width="260px">
         <div class="record-list-box-box">
           <div style="margin-top: 20px">
-            <el-date-picker size="mini" v-model="chooseDate" :picker-options="pickerOptions" type="date"
+            <el-date-picker size="small" v-model="chooseDate" :picker-options="pickerOptions" type="date"
                             value-format="yyyy-MM-dd" placeholder="日期" @change="dateChange()"></el-date-picker>
-            <!--            <el-button :disabled="!mediaServerId" size="mini" type="primary" icon="fa fa-cloud-download" style="margin: auto; margin-left: 12px " title="裁剪合并" @click="drawerOpen"></el-button>-->
+            <!--            <el-button :disabled="!mediaServerId" size="small" type="primary" icon="fa fa-cloud-download" style="margin: auto; margin-left: 12px " title="裁剪合并" @click="drawerOpen"></el-button>-->
           </div>
           <div class="record-list-box" :style="recordListStyle">
             <ul v-if="detailFiles.length >0" class="infinite-list record-list" v-infinite-scroll="infiniteScroll" >
@@ -84,7 +84,7 @@
       :direction="direction"
       :before-close="drawerClose">
       <div class="drawer-box">
-          <el-button icon="el-icon-plus" size="mini"  type="primary" @click="addTask"></el-button>
+          <el-button icon="el-icon-plus" size="small"  type="primary" @click="addTask"></el-button>
         <el-tabs type="border-card" style="height: 100%" v-model="tabVal" @tab-click="tabClick">
           <el-tab-pane name="running">
             <span slot="label"><i class="el-icon-scissors"></i>进行中</span>
@@ -125,7 +125,7 @@
         format="HH:mm:ss"
         placeholder="选择时间范围">
       </el-date-picker>
-      <el-button size="mini"  type="primary" @click="addTaskToServer">确认</el-button>
+      <el-button size="small"  type="primary" @click="addTaskToServer">确认</el-button>
     </el-dialog>
 	</div>
 </template>

@@ -2,26 +2,25 @@
 class MockService {
   constructor() {
     console.log('正在初始化Mock服务...');
-    console.log("是否启用Mock服务： " + import.meta.env.VITE_MOCK_ENABLED);
-    this.isEnabled = true
+    this._enabled = true  // 使用私有属性避免方法名冲突
     this.mockData = {};
   }
 
   // 启用Mock服务
   enable() {
-    this.isEnabled = true;
+    this._enabled = true;
     console.log('Mock服务已启用');
   }
 
   // 禁用Mock服务
   disable() {
-    this.isEnabled = false;
+    this._enabled = false;
     console.log('Mock服务已禁用');
   }
 
   // 检查Mock服务是否启用
-  isEnabled() {
-    return this.isEnabled;
+  getEnabled() {
+    return this._enabled;
   }
 
   // 注册Mock数据
@@ -31,7 +30,7 @@ class MockService {
 
   // 获取Mock数据
   getData(key) {
-    if (!this.isEnabled) {
+    if (!this._enabled) {
       return null;
     }
     return this.mockData[key] || null;
@@ -44,12 +43,12 @@ class MockService {
 
   // 模拟API调用
   async mockApiCall(apiName, params = {}, delayMs = 1000) {
-    if (!this.isEnabled) {
+    if (!this._enabled) {
       return null;
     }
 
     await this.delay(delayMs);
-    
+
     // 这里可以根据apiName返回相应的模拟数据
     const mockResponses = {
       // 示例API响应

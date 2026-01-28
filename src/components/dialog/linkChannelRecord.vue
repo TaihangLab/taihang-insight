@@ -11,33 +11,33 @@
             <div class="page-header-btn" >
               <div  style="display: inline;">
                 搜索:
-                <el-input @input="search" style="margin-right: 1rem; width: auto;" size="mini" placeholder="关键字"
+                <el-input @input="search" style="margin-right: 1rem; width: auto;" size="small" placeholder="关键字"
                           prefix-icon="el-icon-search" v-model="searchSrt" clearable></el-input>
 
                 在线状态:
-                <el-select size="mini" style="width: 8rem; margin-right: 1rem;" @change="search" v-model="online" placeholder="请选择"
+                <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="search" v-model="online" placeholder="请选择"
                            default-first-option>
                   <el-option label="全部" value=""></el-option>
                   <el-option label="在线" value="true"></el-option>
                   <el-option label="离线" value="false"></el-option>
                 </el-select>
                 类型:
-                <el-select size="mini" style="width: 8rem; margin-right: 1rem;" @change="search" v-model="channelType" placeholder="请选择"
+                <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="search" v-model="channelType" placeholder="请选择"
                            default-first-option>
                   <el-option label="全部" value=""></el-option>
                   <el-option v-for="item in Object.values($channelTypeList)" :key="item.id" :label="item.name" :value="item.id"></el-option>
                 </el-select>
-                <el-button v-if="hasLink !=='true'" size="mini" type="primary" @click="add()">
+                <el-button v-if="hasLink !=='true'" size="small" type="primary" @click="add()">
                   添加
                 </el-button>
-                <el-button v-if="hasLink ==='true'" size="mini" type="danger" @click="remove()">
+                <el-button v-if="hasLink ==='true'" size="small" type="danger" @click="remove()">
                   移除
                 </el-button>
-                <el-button size="mini" v-if="hasLink !=='true'" @click="addByDevice()">按设备添加</el-button>
-                <el-button size="mini" v-if="hasLink ==='true'" @click="removeByDevice()">按设备移除</el-button>
-                <el-button size="mini" v-if="hasLink !=='true'" @click="addAll()">添加所有通道</el-button>
-                <el-button size="mini" v-if="hasLink ==='true'" @click="removeAll()">移除所有通道</el-button>
-                <el-button size="mini" @click="getChannelList()">刷新</el-button>
+                <el-button size="small" v-if="hasLink !=='true'" @click="addByDevice()">按设备添加</el-button>
+                <el-button size="small" v-if="hasLink ==='true'" @click="removeByDevice()">按设备移除</el-button>
+                <el-button size="small" v-if="hasLink !=='true'" @click="addAll()">添加所有通道</el-button>
+                <el-button size="small" v-if="hasLink ==='true'" @click="removeAll()">移除所有通道</el-button>
+                <el-button size="small" @click="getChannelList()">刷新</el-button>
               </div>
             </div>
           </div>

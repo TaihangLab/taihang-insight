@@ -5,7 +5,7 @@
             closable
             @close="delPreset(item)"
             @click="gotoPreset(item)"
-            size="mini"
+            size="small"
             style="margin-right: 1rem; cursor: pointer; margin-bottom: 0.6rem"
     >
       {{item.presetName?item.presetName:item.presetId}}

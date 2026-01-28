@@ -1217,7 +1217,7 @@ export default {
               <el-checkbox 
                 :value="selectedRecords.includes(item.id)"
                 @change="toggleSelect(item.id)"
-                size="mini"
+                size="small"
               />
             </div>
             

@@ -2,10 +2,12 @@
  * 部门管理类型定义
  * Department Management Types
  * 注意：部门使用树形结构，不支持传统分页
+ *
+ * 字段统一使用蛇形命名（snake_case），与后端保持一致
  */
 
-import type { ApiResponse } from './common';
-import { Status } from './common';
+import type { ApiResponse } from './common'
+import { Status } from './common'
 
 // ============================================
 // 查询参数类型
@@ -16,9 +18,9 @@ import { Status } from './common';
  */
 export interface DepartmentQueryFields {
   /** 部门名称（模糊查询） */
-  name?: string;
+  dept_name?: string
   /** 部门编码（精确匹配） */
-  dept_code?: string;
+  dept_code?: string
 }
 
 /**
@@ -26,18 +28,18 @@ export interface DepartmentQueryFields {
  */
 export interface DepartmentQueryParams extends DepartmentQueryFields {
   /** 部门状态（0启用/1停用） */
-  status?: Status;
-  /** 租户编码（多租户隔离必填） */
-  tenant_code: string;
+  status?: Status
+  /** 租户ID（多租户隔离必填） */
+  tenant_id?: number
 }
 
 /**
  * 部门查询参数表单类型（用于表单筛选，所有字段可选）
  */
 export type DepartmentQueryForm = Partial<DepartmentQueryFields> & {
-  status?: Status;
-  tenant_code?: string;
-};
+  status?: Status
+  tenant_id?: number
+}
 
 // ============================================
 // 实体类型
@@ -45,28 +47,29 @@ export type DepartmentQueryForm = Partial<DepartmentQueryFields> & {
 
 /**
  * 部门基础字段
+ * 字段统一使用蛇形命名（snake_case）
  */
 export interface DepartmentBase {
   /** 部门ID */
-  id: number;
+  id: number
+  /** 租户ID */
+  tenant_id?: number
   /** 部门编码 */
-  deptCode: string;
+  dept_code: string
   /** 部门名称 */
-  name: string;
+  dept_name: string
   /** 父级部门ID */
-  parentId: number | null;
+  parent_id: number | null
   /** 显示排序 */
-  sortOrder: number;
+  sort_order: number
   /** 状态（0启用/1停用） */
-  status: Status;
-  /** 租户编码 */
-  tenantCode: string;
+  status: Status
   /** 部门路径 */
-  path: string;
+  path: string
   /** 部门深度 */
-  depth: number;
+  depth: number
   /** 创建时间 */
-  createTime: string;
+  create_time: string
 }
 
 /**
@@ -74,17 +77,17 @@ export interface DepartmentBase {
  */
 export interface DepartmentTreeNode extends DepartmentBase {
   /** 负责人 */
-  leader?: string;
+  leader?: string
   /** 联系电话 */
-  phone?: string;
+  phone?: string
   /** 邮箱 */
-  email?: string;
+  email?: string
   /** 更新时间 */
-  updateTime?: string;
+  update_time?: string
   /** 备注 */
-  remark?: string;
+  remark?: string
   /** 子部门数组 */
-  children?: DepartmentTreeNode[];
+  children?: DepartmentTreeNode[]
 }
 
 /**
@@ -92,15 +95,15 @@ export interface DepartmentTreeNode extends DepartmentBase {
  */
 export interface Department extends DepartmentBase {
   /** 负责人 */
-  leader?: string;
+  leader?: string
   /** 联系电话 */
-  phone?: string;
+  phone?: string
   /** 邮箱 */
-  email?: string;
+  email?: string
   /** 更新时间 */
-  updateTime?: string;
+  update_time?: string
   /** 备注 */
-  remark?: string;
+  remark?: string
 }
 
 // ============================================
@@ -112,25 +115,25 @@ export interface Department extends DepartmentBase {
  */
 export interface CreateDepartmentRequest {
   /** 部门编码（必填） */
-  deptCode: string;
+  dept_code: string
   /** 部门名称（必填） */
-  name: string;
+  dept_name: string
   /** 父级部门ID */
-  parentId?: number | null;
+  parent_id?: number | null
   /** 显示排序 */
-  sortOrder?: number;
+  sort_order?: number
   /** 负责人 */
-  leader?: string;
+  leader?: string
   /** 联系电话 */
-  phone?: string;
+  phone?: string
   /** 邮箱 */
-  email?: string;
+  email?: string
   /** 状态 */
-  status?: Status;
-  /** 租户编码 */
-  tenantCode: string;
+  status?: Status
+  /** 租户ID */
+  tenant_id: number
   /** 备注 */
-  remark?: string;
+  remark?: string
 }
 
 /**
@@ -138,23 +141,23 @@ export interface CreateDepartmentRequest {
  */
 export interface UpdateDepartmentRequest {
   /** 部门ID（必填） */
-  id: number;
+  id: number
   /** 部门名称 */
-  name?: string;
+  dept_name?: string
   /** 父级部门ID */
-  parentId?: number | null;
+  parent_id?: number | null
   /** 显示排序 */
-  sortOrder?: number;
+  sort_order?: number
   /** 负责人 */
-  leader?: string;
+  leader?: string
   /** 联系电话 */
-  phone?: string;
+  phone?: string
   /** 邮箱 */
-  email?: string;
+  email?: string
   /** 状态 */
-  status?: Status;
+  status?: Status
   /** 备注 */
-  remark?: string;
+  remark?: string
 }
 
 /**
@@ -162,11 +165,11 @@ export interface UpdateDepartmentRequest {
  */
 export interface MoveDepartmentRequest {
   /** 部门ID（必填） */
-  id: number;
+  id: number
   /** 新的父级部门ID */
-  parentId: number | null;
+  parent_id: number | null
   /** 新的排序位置 */
-  sortOrder?: number;
+  sort_order?: number
 }
 
 // ============================================
@@ -178,32 +181,32 @@ export interface MoveDepartmentRequest {
  */
 export type DepartmentListResponse = ApiResponse<{
   /** 总记录数 */
-  total: number;
+  total: number
   /** 部门树节点列表 */
-  items: DepartmentTreeNode[];
-}>;
+  items: DepartmentTreeNode[]
+}>
 
 /**
  * 部门树响应类型
  */
-export type DepartmentTreeResponse = ApiResponse<DepartmentTreeNode[]>;
+export type DepartmentTreeResponse = ApiResponse<DepartmentTreeNode[]>
 
 /**
  * 部门详情响应类型
  */
-export type DepartmentDetailResponse = ApiResponse<Department>;
+export type DepartmentDetailResponse = ApiResponse<Department>
 
 /**
  * 创建部门响应类型
  */
-export type CreateDepartmentResponse = ApiResponse<Department>;
+export type CreateDepartmentResponse = ApiResponse<Department>
 
 /**
  * 更新部门响应类型
  */
-export type UpdateDepartmentResponse = ApiResponse<Department>;
+export type UpdateDepartmentResponse = ApiResponse<Department>
 
 /**
  * 删除部门响应类型
  */
-export type DeleteDepartmentResponse = ApiResponse<null>;
+export type DeleteDepartmentResponse = ApiResponse<null>

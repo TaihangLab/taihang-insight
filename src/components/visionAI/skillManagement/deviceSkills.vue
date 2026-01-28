@@ -107,7 +107,7 @@
                 <h3 class="skill-title">{{ skill.name_zh }}</h3>
                 <div class="version-line">
                   <el-tag 
-                    size="mini" 
+                    size="small" 
                     :type="skill.status === 'published' ? 'success' : 'info'" 
                     class="status-mini-tag"
                   >
@@ -341,7 +341,7 @@
                       :key="task.id">
                       <div class="instance-header">
                         <h4>{{ task.name }}</h4>
-                        <el-tag :type="task.status ? 'success' : 'info'" size="mini" class="status-tag">
+                        <el-tag :type="task.status ? 'success' : 'info'" size="small" class="status-tag">
                           {{ task.status ? '运行中' : '已停止' }}
                         </el-tag>
                       </div>
@@ -477,7 +477,7 @@
                       :key="task.id">
                       <div class="instance-header">
                         <h4>{{ task.name }}</h4>
-                        <el-tag :type="task.status ? 'success' : 'info'" size="mini" class="status-tag">
+                        <el-tag :type="task.status ? 'success' : 'info'" size="small" class="status-tag">
                           {{ task.status ? '运行中' : '已停止' }}
                         </el-tag>
                       </div>
@@ -567,7 +567,7 @@
             width="80"
             align="center">
             <template #default="scope">
-              <el-tag :type="scope.row.status ? 'success' : 'info'" size="mini" effect="light">
+              <el-tag :type="scope.row.status ? 'success' : 'info'" size="small" effect="light">
                 {{ scope.row.status ? '在线' : '离线' }}
               </el-tag>
             </template>

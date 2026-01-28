@@ -95,7 +95,7 @@
     --button-padding-sm: 12px;
     --button-padding-md: 16px;
     --button-padding-lg: 24px;
-    --button-border-radius: 4px;
+    /* --button-border-radius: 4px; */
   
     /* 表格 */
     --table-header-height: 40px;
@@ -361,8 +361,8 @@
   
   /* 页面容器 */
   .page-container {
-    /* padding: var(--spacing-lg); */
-    /* min-height: calc(100vh - var(--header-height)); */
+    padding: var(--spacing-lg);
+    min-height: calc(100vh - var(--header-height));
   }
   
   /* 页面标题 */

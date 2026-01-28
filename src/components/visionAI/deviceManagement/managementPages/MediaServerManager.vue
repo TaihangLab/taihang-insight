@@ -98,19 +98,19 @@
 								<el-button 
 									v-if="!item.defaultServer" 
 									icon="el-icon-edit" 
-									size="mini"
+									size="small"
 									link 
 									@click="edit(item)">编辑</el-button>
 								<el-button 
 									v-if="item.defaultServer" 
 									icon="el-icon-view" 
-									size="mini"
+									size="small"
 									link 
 									@click="edit(item)">查看</el-button>
 								<el-button 
 									v-if="!item.defaultServer" 
 									icon="el-icon-delete" 
-									size="mini"
+									size="small"
 									link 
 									@click="del(item)">移除</el-button>
 							</div>

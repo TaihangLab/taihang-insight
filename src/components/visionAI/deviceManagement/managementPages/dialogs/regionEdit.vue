@@ -62,10 +62,10 @@
         </el-tab-pane>
     </el-tabs>
     <el-form ref="form" style="  display: grid; padding: 1rem 2rem 0 2rem;grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-      <el-form-item label="名称" prop="name" size="mini" >
+      <el-form-item label="名称" prop="name" size="small" >
         <el-input v-model="form.name" autocomplete="off"></el-input>
       </el-form-item>
-      <el-form-item label="编号" prop="deviceId" size="mini" >
+      <el-form-item label="编号" prop="deviceId" size="small" >
         <el-input v-model="form.deviceId" autocomplete="off"></el-input>
       </el-form-item>
       <el-form-item style="margin-top: 22px; margin-bottom: 0;">

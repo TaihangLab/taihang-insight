@@ -40,10 +40,7 @@
 </template>
 
 <script setup lang="ts">
-interface User {
-  status: number
-  [key: string]: any
-}
+import type { User } from '@/types/rbac/user'
 
 defineProps<{
   data: User[]

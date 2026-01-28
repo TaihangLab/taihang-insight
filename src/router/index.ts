@@ -6,14 +6,14 @@ import Layout from '../layout/index.vue'
 
 // 使用懒加载导入页面组件 - 优化启动性能
 const gbRecordDetail = () => import('../components/visionAI/deviceManagement/managementPages/GBRecordDetail.vue')
-const login = () => import('../components/Login.vue')
+const login = () => import('../pages/commons/Login.vue')
 const cloudRecordDetail = () => import('../components/visionAI/deviceManagement/managementPages/CloudRecordDetail.vue')
 const deviceTree = () => import('../components/common/DeviceTree.vue')
 const wasmPlayer = () => import('../components/common/jessibuca.vue')
 const rtcPlayer = () => import('../components/dialog/rtcPlayer.vue')
 
 // 视觉AI - 可视化中心
-const visualCenter = () => import('../components/visionAI/ivisualCenter/index.vue')
+const visualCenter = () => import('../pages/center/visualCenter.vue')
 const algorithmInference = () => import('../components/visionAI/ivisualCenter/algorithmInference.vue')
 const parkManagement = () => import('../components/visionAI/ivisualCenter/parkManagement.vue')
 
@@ -48,17 +48,17 @@ const edgeServer = () => import('../components/visionAI/edgeManagement/edgeServe
 const edgeBox = () => import('../components/visionAI/edgeManagement/edgeBox.vue')
 
 // 系统管理
-const applicationSettings = () => import('../components/visionAI/systemManagement/applicationSettings.vue')
+const applicationSettings = () => import('../pages/system/applicationSettings.vue')
 const tenantManagement = () => import('../pages/system/tenantManagement.vue')
 const userManagement = () => import('../pages/system/userManagement.vue')
 const roleManagement = () => import('../pages/system/roleManagement.vue')
-const roleAssignment = () => import('../components/visionAI/systemManagement/rbac/roleAssignment.vue')
-const userAssignment = () => import('../components/visionAI/systemManagement/rbac/userAssignment.vue')
+const roleAssignment = () => import('../pages/system/components/role/RoleUserAssignmentPage.vue')
+const userAssignment = () => import('../pages/system/components/user/UserAssignmentPage.vue')
 const departmentManagement = () => import('../pages/system/departmentManagement.vue')
 const positionManagement = () => import('../pages/system/positionManagement.vue')
-const profile = () => import('../components/visionAI/systemManagement/profile.vue')
-const knowledgeBase = () => import('../components/visionAI/systemManagement/knowledgeBase.vue')
-const knowledgeBaseDetail = () => import('../components/visionAI/systemManagement/knowledgeBaseDetail.vue')
+const profile = () => import('../pages/system/profile.vue')
+const knowledgeBase = () => import('../pages/system/knowledgeBase.vue')
+const knowledgeBaseDetail = () => import('../pages/system/knowledgeBaseDetail.vue')
 const permissionManagement = () => import('../pages/system/permissionManagement.vue')
 
 // 路由配置

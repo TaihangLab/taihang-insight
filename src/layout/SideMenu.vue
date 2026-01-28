@@ -20,13 +20,14 @@
     </div>
 
     <!-- 菜单区域 -->
-    <el-menu
-      :default-active="activeMenu"
-      :collapse="isCollapsed"
-      :collapse-transition="false"
-      :unique-opened="true"
-      router
-    >
+    <el-scrollbar height="calc(100vh - 128px)">
+      <el-menu
+        :default-active="activeMenu"
+        :collapse="isCollapsed"
+        :collapse-transition="false"
+        :unique-opened="true"
+        router
+      >
       <!-- 监控预警 -->
       <el-sub-menu index="/monitoring">
         <template #title>
@@ -122,10 +123,6 @@
           <el-icon><School /></el-icon>
           <span>部门管理</span>
         </el-menu-item>
-        <el-menu-item index="/systemManage/positionManagement">
-          <el-icon><Postcard /></el-icon>
-          <span>岗位管理</span>
-        </el-menu-item>
         <el-menu-item index="/systemManage/knowledgeBase">
           <el-icon><Notebook /></el-icon>
           <span>知识库管理</span>
@@ -149,6 +146,7 @@
         </el-menu-item>
       </el-sub-menu>
     </el-menu>
+    </el-scrollbar>
   </div>
 </template>
 
@@ -307,159 +305,5 @@ const toggleCollapse = () => {
 .collapse-trigger i {
   font-size: var(--font-size-lg);
   transition: transform var(--transition-base);
-}
-
-/* 菜单区域 */
-.sidebar-menu {
-  flex: 1;
-  border-right: none;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* 滚动条样式 */
-.sidebar-menu::-webkit-scrollbar {
-  width: 6px;
-}
-
-.sidebar-menu::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-}
-
-.sidebar-menu::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
-}
-
-.sidebar-menu::-webkit-scrollbar-thumb:hover {
-  background: var(--text-tertiary);
-}
-
-/* 菜单项样式 */
-.sidebar-menu :deep(.el-submenu__title),
-.sidebar-menu :deep(.el-menu-item) {
-  height: var(--menu-item-height);
-  line-height: var(--menu-item-height);
-  font-size: var(--font-size-base);
-  color: var(--text-primary);
-  padding-left: var(--spacing-lg) !important;
-  transition: all var(--transition-base);
-}
-
-/* 图标样式 */
-.menu-icon {
-  font-size: var(--menu-icon-size);
-  margin-right: var(--menu-icon-gap);
-  color: var(--text-secondary);
-  transition: color var(--transition-base);
-}
-
-/* 悬停效果 */
-.sidebar-menu :deep(.el-submenu__title:hover),
-.sidebar-menu :deep(.el-menu-item:hover) {
-  background-color: var(--bg-secondary) !important;
-}
-
-.sidebar-menu :deep(.el-submenu__title:hover .menu-icon),
-.sidebar-menu :deep(.el-menu-item:hover i) {
-  color: var(--primary-color);
-}
-
-/* 激活状态 */
-.sidebar-menu :deep(.el-menu-item.is-active) {
-  background-color: var(--primary-color-light) !important;
-  color: var(--primary-color) !important;
-  font-weight: var(--font-weight-semibold);
-  position: relative;
-}
-
-.sidebar-menu :deep(.el-menu-item.is-active::before) {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background-color: var(--primary-color);
-}
-
-.sidebar-menu :deep(.el-menu-item.is-active i) {
-  color: var(--primary-color);
-}
-
-/* 子菜单项样式 */
-.sidebar-menu :deep(.el-menu--inline .el-menu-item) {
-  height: 48px;
-  line-height: 48px;
-  padding-left: calc(var(--spacing-lg) + var(--submenu-indent)) !important;
-  font-size: var(--font-size-sm);
-}
-
-/* 展开的子菜单标题 */
-.sidebar-menu :deep(.el-submenu.is-opened > .el-submenu__title) {
-  background-color: var(--bg-secondary);
-}
-
-/* 折叠状态样式 */
-.side-menu-container.collapsed .sidebar-menu :deep(.el-submenu__title),
-.side-menu-container.collapsed .sidebar-menu :deep(.el-menu-item) {
-  padding-left: 0 !important;
-  text-align: center;
-}
-
-.side-menu-container.collapsed .menu-icon {
-  margin-right: 0;
-  font-size: 20px;
-}
-
-/* 子菜单弹出样式 */
-.sidebar-menu :deep(.el-menu--popup) {
-  /* 弹出菜单最小宽度 */
-  min-width: 180px;
-  padding: 4px 0;
-  /* 确保弹出菜单在侧边栏右侧 */
-  position: fixed;
-  left: var(--sidebar-width) !important;
-  margin-left: 0 !important;
-  border-radius: var(--border-radius-base);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-color);
-}
-
-/* 折叠状态下弹出菜单位置调整 */
-.side-menu-container.collapsed .sidebar-menu :deep(.el-menu--popup) {
-  left: var(--sidebar-collapsed-width) !important;
-}
-
-.sidebar-menu :deep(.el-menu--popup .el-menu-item) {
-  height: 40px;
-  line-height: 40px;
-  padding: 0 16px !important;
-  font-size: var(--font-size-base);
-  color: var(--text-secondary);
-}
-
-.sidebar-menu :deep(.el-menu--popup .el-menu-item:hover) {
-  background-color: var(--bg-secondary) !important;
-  color: var(--primary-color) !important;
-}
-
-.sidebar-menu :deep(.el-menu--popup .el-menu-item.is-active) {
-  background-color: var(--design-primary-light) !important;
-  color: var(--primary-color) !important;
-  font-weight: var(--font-weight-semibold);
-}
-
-/* 箭头图标 */
-.sidebar-menu :deep(.el-sub-menu__icon-arrow) {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  transition: transform 0.3s;
-}
-
-/* 展开时箭头旋转 */
-.sidebar-menu :deep(.el-sub-menu.is-opened > .el-sub-menu__title .el-sub-menu__icon-arrow) {
-  transform: rotate(90deg);
-  color: var(--primary-color);
 }
 </style>

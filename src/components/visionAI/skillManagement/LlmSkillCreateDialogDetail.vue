@@ -303,7 +303,7 @@
                     <el-button 
                       type="danger" 
                       icon="el-icon-delete" 
-                      size="mini" 
+                      size="small" 
                           circle
                           @click="removeParam(index)"
                           :disabled="outputParams.length <= 1">
@@ -362,7 +362,7 @@
                           v-if="conditionGroups.length > 1"
                           type="danger" 
                           icon="el-icon-delete" 
-                          size="mini" 
+                          size="small" 
                           circle
                           @click="removeConditionGroup(groupIndex)"
                           class="delete-group-btn">
@@ -446,7 +446,7 @@
                             <el-button 
                               type="danger" 
                               icon="el-icon-delete" 
-                              size="mini" 
+                              size="small" 
                               circle
                               @click="removeCondition(groupIndex, conditionIndex)"
                               :disabled="group.conditions.length <= 1">

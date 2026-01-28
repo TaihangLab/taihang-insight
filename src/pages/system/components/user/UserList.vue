@@ -2,9 +2,9 @@
   <div class="user-list-container">
     <!-- 操作按钮区 -->
     <UserTableActions
+      :selected-count="selectedCodes.length"
       @add="handleAdd"
       @batch-delete="handleBatchDelete"
-      @more-action="handleMoreAction"
       @advanced-search="handleAdvancedSearch"
       @refresh="handleRefresh"
       @table-setting="handleTableSetting"
@@ -34,17 +34,15 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import UserTableActions from '@/pages/system/components/user/UserTableActions.vue'
 import UserTable from '@/pages/system/components/user/UserTable.vue'
 import UserPagination from '@/pages/system/components/user/UserPagination.vue'
+import type { User } from '@/types/rbac/user'
 
 interface Pagination {
   currentPage: number
   pageSize: number
-}
-
-interface User {
-  [key: string]: any
 }
 
 defineProps<{
@@ -59,19 +57,22 @@ const emit = defineEmits<{
   add: []
   edit: [row: User]
   delete: [row: User]
-  batchDelete: []
+  batchDelete: [ids: number[]]
   statusChange: [row: User, callback: (success: boolean) => void]
   resetPassword: [row: User]
   pageChange: [page: number]
   sizeChange: [size: number]
-  moreAction: [command: string]
   advancedSearch: []
   refresh: []
   tableSetting: []
   authorization: [row: User]
 }>()
 
+const selectedCodes = ref<number[]>([])
+
 const handleSelectionChange = (selection: User[]) => {
+  const codes = selection.map((row) => row.id)
+  selectedCodes.value = codes
   emit('selectionChange', selection)
 }
 
@@ -88,7 +89,7 @@ const handleDelete = (row: User) => {
 }
 
 const handleBatchDelete = () => {
-  emit('batchDelete')
+  emit('batchDelete', selectedCodes.value)
 }
 
 const handleStatusChange = (row: User, callback: (success: boolean) => void) => {
@@ -105,10 +106,6 @@ const handlePageChange = (page: number) => {
 
 const handleSizeChange = (size: number) => {
   emit('sizeChange', size)
-}
-
-const handleMoreAction = (command: string) => {
-  emit('moreAction', command)
 }
 
 const handleAdvancedSearch = () => {

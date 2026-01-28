@@ -130,14 +130,14 @@
             </div>
             <div class="status-content">
               <div class="status-item">
-                <div class="status-chart" :id="`status-chart-${index}`"></div>
+                <div class="status-chart" id="status-chart-1"></div>
                 <div class="status-text">
                   <p>总数量: {{ deviceStatus.total }}</p>
                   <p>在线: {{ deviceStatus.online }}</p>
                 </div>
               </div>
               <div class="status-item">
-                <div class="status-chart" :id="`status-chart-2`"></div>
+                <div class="status-chart" id="status-chart-2"></div>
                 <div class="status-text">
                   <p>总数量: {{ deviceStatus.total2 }}</p>
                   <p>在线: {{ deviceStatus.online2 }}</p>

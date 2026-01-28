@@ -51,6 +51,15 @@ app.use(ElementPlus)
 app.use(dataV)
 // app.use(Contextmenu) // 暂时注释 - vue-contextmenujs 不兼容 Vue 3，待后续使用 UnoCSS 重写
 
+// 初始化 User Store（从 localStorage 恢复状态）
+import { useUserStore } from '@/stores/modules/user'
+const userStore = useUserStore()
+userStore.initFromCache()
+
+// 注册自定义指令
+import { setupDirectives } from '@/directives'
+setupDirectives(app)
+
 // 全局属性
 app.config.globalProperties.$axios = axios
 app.config.globalProperties.$notify = ElNotification

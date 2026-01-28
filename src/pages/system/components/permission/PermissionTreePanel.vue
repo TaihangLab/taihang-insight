@@ -17,31 +17,31 @@
             <i :class="getNodeIconClass(data.type)" class="node-icon"></i>
             <span class="node-label">{{ data.name }}</span>
             <span class="node-code">{{ data.code }}</span>
-            <el-tag v-if="data.type === 'button'" size="mini" :type="getCategoryTagType(data.category)">
+            <el-tag v-if="data.type === 'button'" size="small" :type="getCategoryTagType(data.category)">
               {{ getCategoryLabel(data.category) }}
             </el-tag>
-            <el-tag v-if="data.type === 'menu' && !data.visible" size="mini" type="info">隐藏</el-tag>
-            <el-tag v-if="data.status === 1" size="mini" type="danger">禁用</el-tag>
+            <el-tag v-if="data.type === 'menu' && !data.visible" size="small" type="info">隐藏</el-tag>
+            <el-tag v-if="data.status === 1" size="small" type="danger">禁用</el-tag>
           </span>
           <span class="node-actions">
             <el-button
               v-if="data.type !== 'button'"
               link
-              size="mini"
+              size="small"
               icon="el-icon-plus"
               @click.stop="handleAddChild(data)"
               title="添加子项"
             >子项</el-button>
             <el-button
               link
-              size="mini"
+              size="small"
               icon="el-icon-edit"
               @click.stop="handleEdit(data)"
               title="编辑"
             >编辑</el-button>
             <el-button
               link
-              size="mini"
+              size="small"
               icon="el-icon-delete"
               class="delete-btn"
               @click.stop="handleDelete(data)"
@@ -75,11 +75,6 @@ interface PermissionNode {
   status: number
   children?: PermissionNode[]
 }
-
-defineExpose({
-  expandAll,
-  collapseAll
-})
 
 const props = withDefaults(
   defineProps<{
@@ -191,6 +186,11 @@ const collapseAll = () => {
     nodes[key].expanded = false
   }
 }
+
+defineExpose({
+  expandAll,
+  collapseAll
+})
 </script>
 
 <style scoped>

@@ -50,6 +50,38 @@ const mockData = {
       status: [0, 1][Math.floor(Math.random() * 2)], // 0: 启用, 1: 禁用
       remarks: '测试角色备注信息'
     })
+  },
+
+  department: {
+    // 部门管理页面的模拟数据
+    departmentManagement: () => ({
+      name: ['技术部', '市场部', '财务部', '人事部', '运营部'][Math.floor(Math.random() * 5)] + Math.floor(Math.random() * 100),
+      sort_order: Math.floor(Math.random() * 100),
+      status: [0, 1][Math.floor(Math.random() * 2)], // 0: 启用, 1: 停用
+      parent_id: [null, 1, 2, 3][Math.floor(Math.random() * 4)]
+    })
+  },
+
+  permission: {
+    // 权限管理页面的模拟数据
+    permissionManagement: () => {
+      const types = ['folder', 'menu', 'button']
+      const type = types[Math.floor(Math.random() * types.length)]
+      return {
+        permission_type: type,
+        permission_name: ['用户管理', '角色管理', '部门管理', '权限管理', '系统设置'][Math.floor(Math.random() * 5)],
+        permission_code: 'system:' + ['user', 'role', 'dept', 'permission', 'setting'][Math.floor(Math.random() * 5)],
+        path: '/system/' + ['user', 'role', 'dept', 'permission', 'setting'][Math.floor(Math.random() * 5)],
+        component: '@/pages/system/' + ['userManagement', 'roleManagement', 'deptManagement', 'permissionManagement'][Math.floor(Math.random() * 4)] + '.vue',
+        icon: ['User', 'Role', 'Dept', 'Permission', 'Setting'][Math.floor(Math.random() * 5)],
+        sort_order: Math.floor(Math.random() * 100),
+        description: '这是一个测试权限的描述',
+        visible: Math.random() > 0.5,
+        status: [0, 1][Math.floor(Math.random() * 2)], // 0: 启用, 1: 禁用
+        api_path: type === 'button' ? '/api/system/test' : '',
+        methods: type === 'button' ? ['GET', 'POST', 'PUT', 'DELETE'][Math.floor(Math.random() * 4)] : ''
+      }
+    }
   }
 };
 

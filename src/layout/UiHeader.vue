@@ -68,8 +68,8 @@ import {
   SwitchButton
 } from '@element-plus/icons-vue'
 import ChangePasswordDialog from '../components/dialog/changePassword.vue'
-import userService from '../components/service/UserService.js'
-import RBACService from '../components/service/RBACService.js'
+import userService from '../components/service/UserService'
+import cacheManager from '@/utils/cacheManager'
 
 // 路由
 const route = useRoute()
@@ -188,7 +188,7 @@ const clearCache = () => {
     .then(() => {
       try {
         // 清除所有 RBAC 缓存（部门树、租户等）
-        RBACService.clearAllCache()
+        cacheManager.clear()
 
         ElMessage({
           showClose: true,

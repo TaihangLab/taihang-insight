@@ -248,7 +248,7 @@
                   </div>
                 </div>
                 <div class="skill-status">
-                  <el-tag size="mini" :type="skill.enabled ? 'success' : 'info'" class="status-tag tech-status-tag">
+                  <el-tag size="small" :type="skill.enabled ? 'success' : 'info'" class="status-tag tech-status-tag">
                     {{ skill.enabled ? '已启用' : '未启用' }}
                   </el-tag>
                 </div>

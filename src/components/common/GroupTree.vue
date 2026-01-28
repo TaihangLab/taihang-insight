@@ -4,7 +4,7 @@
       <div class="page-title">业务分组</div>
       <div class="page-header-btn">
         <div style="display: inline;">
-          <el-input @input="search" style="visibility:hidden; margin-right: 1rem; width: 12rem;" size="mini"
+          <el-input @input="search" style="visibility:hidden; margin-right: 1rem; width: 12rem;" size="small"
                     placeholder="关键字"
                     prefix-icon="el-icon-search" v-model="searchSrt" clearable></el-input>
 

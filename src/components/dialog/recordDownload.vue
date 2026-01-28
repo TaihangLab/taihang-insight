@@ -6,7 +6,7 @@
         <el-progress :percentage="percentage"></el-progress>
       </el-col>
       <el-col :span="6" >
-        <el-button icon="el-icon-download" v-if="downloadFile" size="mini" title="点击下载" @click="downloadFileClientEvent()">下载</el-button>
+        <el-button icon="el-icon-download" v-if="downloadFile" size="small" title="点击下载" @click="downloadFileClientEvent()">下载</el-button>
       </el-col>
     </el-row>
   </el-dialog>

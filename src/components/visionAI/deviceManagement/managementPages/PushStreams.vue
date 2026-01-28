@@ -134,7 +134,7 @@
           </el-button-group>
           <el-button
             icon="el-icon-delete"
-            size="mini"
+            size="small"
             :disabled="multipleSelection.length === 0"
             type="danger"
             @click="batchDel">
@@ -207,7 +207,7 @@
           <template #default="{ row }">
             <div class="operation-buttons">
               <el-button 
-                size="mini" 
+                size="small" 
                 :loading="row.playLoading" 
                 icon="el-icon-video-play" 
                 @click="playPush(row)" 
@@ -215,21 +215,21 @@
                 播放
               </el-button>
               <el-button 
-                size="mini" 
+                size="small" 
                 icon="el-icon-edit" 
                 type="success" 
                 @click="edit(row)">
                 编辑
               </el-button>
               <el-button 
-                size="mini" 
+                size="small" 
                 icon="el-icon-cloudy" 
                 type="info" 
                 @click="queryCloudRecords(row)">
                 云端录像
               </el-button>
               <el-button 
-                size="mini" 
+                size="small" 
                 icon="el-icon-delete" 
                 type="danger" 
                 @click="deletePush(row.id)">
@@ -287,16 +287,16 @@
             </div>
             
             <div class="stream-card-actions">
-              <el-button size="mini" type="primary" icon="el-icon-video-play" :loading="stream.playLoading" @click="playPush(stream)">
+              <el-button size="small" type="primary" icon="el-icon-video-play" :loading="stream.playLoading" @click="playPush(stream)">
                 播放
               </el-button>
-              <el-button size="mini" type="success" icon="el-icon-edit" @click="edit(stream)">
+              <el-button size="small" type="success" icon="el-icon-edit" @click="edit(stream)">
                 编辑
               </el-button>
-              <el-button size="mini" type="info" icon="el-icon-cloudy" @click="queryCloudRecords(stream)">
+              <el-button size="small" type="info" icon="el-icon-cloudy" @click="queryCloudRecords(stream)">
                 云端录像
               </el-button>
-              <el-button size="mini" type="danger" icon="el-icon-delete" @click="deletePush(stream.id)">
+              <el-button size="small" type="danger" icon="el-icon-delete" @click="deletePush(stream.id)">
                 删除
               </el-button>
             </div>

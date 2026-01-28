@@ -16,6 +16,8 @@ import { Status, EntityWithTimestamp, TenantScoped, StatusEnabled } from './comm
 export interface TenantAPI {
   /** 租户ID */
   id: number;
+  /** 租户ID（别名，用于关联） */
+  tenant_id: number;
   /** 租户名称 */
   tenant_name: string;
   /** 企业名称 */
@@ -97,6 +99,8 @@ export interface Tenant extends EntityWithTimestamp, TenantScoped, StatusEnabled
   id: number;
   /** 租户编码 */
   companyCode: string;
+  /** 租户编码（别名，用于 TenantScoped） */
+  tenantCode: string;
   /** 租户名称 */
   tenantName: string;
   /** 企业名称 */
@@ -181,8 +185,6 @@ export interface CreateTenantRequest {
  * 更新租户请求参数
  */
 export interface UpdateTenantRequest {
-  /** 租户ID（必填） */
-  id: number;
   /** 租户名称 */
   tenant_name?: string;
   /** 企业名称 */
@@ -273,8 +275,8 @@ export function convertAPIToTenant(api: TenantAPI): Tenant {
     address: api.address,
     description: api.description,
     status: api.status,
-    createTime: api.create_time,
-    updateTime: api.update_time,
+    create_time: api.create_time,
+    update_time: api.update_time,
     createBy: api.create_by,
     updateBy: api.update_by,
     remark: api.remark,

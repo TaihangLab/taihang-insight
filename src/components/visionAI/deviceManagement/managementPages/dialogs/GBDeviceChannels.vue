@@ -42,7 +42,7 @@
             @input="search"
             placeholder="关键字"
             style="margin-right: 1rem; width: auto;"
-            size="mini"
+            size="small"
             prefix-icon="el-icon-search"
             clearable>
           </el-input>
@@ -55,7 +55,7 @@
             @change="search"
             placeholder="请选择"
             style="width: 8rem; margin-right: 1rem;"
-            size="mini"
+            size="small"
             default-first-option>
             <el-option label="全部" value=""></el-option>
             <el-option label="设备" value="false"></el-option>
@@ -70,7 +70,7 @@
             @change="search"
             placeholder="请选择"
             style="width: 8rem; margin-right: 1rem;"
-            size="mini"
+            size="small"
             default-first-option>
             <el-option label="全部" value=""></el-option>
             <el-option label="在线" value="true"></el-option>
@@ -85,7 +85,7 @@
             @change="subStreamChange"
             placeholder="请选择码流类型"
             style="width: 16rem; margin-right: 1rem;"
-            size="mini"
+            size="small"
             default-first-option>
             <el-option label="stream:0(主码流)" value="stream:0"></el-option>
             <el-option label="stream:1(子码流)" value="stream:1"></el-option>
@@ -99,7 +99,7 @@
         </div>
         
         <div class="filter-actions">
-          <el-button icon="el-icon-refresh-right" circle size="mini" @click="refresh()"></el-button>
+          <el-button icon="el-icon-refresh-right" circle size="small" @click="refresh()"></el-button>
         </div>
       </div>
     </div>
@@ -125,7 +125,7 @@
           <template #default="{ row }">
             <div class="channel-name">
               <span>{{ row.name || '未命名通道' }}</span>
-              <el-tag v-if="row.parental" size="mini" type="warning">父节点</el-tag>
+              <el-tag v-if="row.parental" size="small" type="warning">父节点</el-tag>
             </div>
           </template>
         </el-table-column>
@@ -178,7 +178,7 @@
         <el-table-column label="码流类型" min-width="180" align="center">
           <template #default="{ row }">
             <el-select 
-              size="mini" 
+              size="small" 
               style="width: 160px;" 
               @change="channelSubStreamChange(row)" 
               v-model="row.streamIdentification"

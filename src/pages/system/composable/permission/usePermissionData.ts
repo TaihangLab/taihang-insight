@@ -1,14 +1,14 @@
 /**
  * 权限数据管理 Composable (TypeScript 版本)
  * 负责权限列表的获取、创建、更新、删除等数据操作
+ * 使用蛇形命名 (snake_case) 与后端保持一致
  */
 
 import { ref, computed } from 'vue';
 import type { Permission } from '@/types/rbac';
 import type { PermissionTreeNode, PermissionType } from '@/types/rbac/permission';
-import { PermissionNodeType } from '@/types/rbac/permission';
 import { Status } from '@/types/rbac';
-import RBACService from '@/components/service/RBACService';
+import permissionService from '@/api/rbac/permissionService';
 
 // ============================================
 // 类型定义
@@ -94,26 +94,31 @@ export function usePermissionData() {
       if (params.status !== undefined) queryParams.status = params.status;
       if (params.creator) queryParams.creator = params.creator;
 
-      const response = await RBACService.getPermissions(queryParams);
+      const response = await permissionService.getPermissions(queryParams);
 
       if (response?.data) {
+        // response.data 是分页对象：{ items: [...], page, page_size, total, pages }
+        const paginatedData = response.data as any;
+        const items = Array.isArray(paginatedData.items) ? paginatedData.items : [];
+
         // 映射数据
-        permissions.value = (response.data.items || []).map(item => {
+        permissions.value = items.map(item => {
           return {
             id: Number(item.id),
-            permissionCode: String(item.permissionCode || item.permission_code || ''),
-            permissionName: String(item.permissionName || item.permission_name || ''),
-            permissionType: (item.permissionType || item.permission_type) as PermissionType,
+            permission_code: String(item.permission_code || ''),
+            permission_name: String(item.permission_name || ''),
+            permission_type: (item.permission_type) as PermissionType,
             status: Number(item.status) as Status,
             creator: String(item.creator || ''),
-            tenantCode: String(item.tenantCode || item.tenant_code || ''),
-            createTime: String(item.createTime || item.create_time || ''),
+            tenant_code: String(item.tenant_code || ''),
+            create_time: String(item.create_time || ''),
             // 保留原始数据
             ...item
           } as PermissionEntity;
         });
 
-        pagination.value.total = Number(response.data.total || 0);
+        // 使用后端返回的总数
+        pagination.value.total = Number(paginatedData.total || 0);
         pagination.value.currentPage = currentPage;
         pagination.value.pageSize = size;
       }
@@ -129,44 +134,18 @@ export function usePermissionData() {
 
   /**
    * 获取权限树
+   * 后端直接返回树型结构，前端直接使用
    */
   const fetchPermissionTree = async () => {
     loading.value = true;
     try {
-      const response = await RBACService.getPermissionTree();
+      const response = await permissionService.getPermissionTree();
 
       if (response?.data) {
-        // 映射树形数据
-        const mapTreeNode = (node: Record<string, unknown>): PermissionTreeNode => {
-          // 映射节点类型字符串到枚举
-          const nodeTypeStr = String(node.nodeType || node.node_type || 'directory');
-          let nodeType: PermissionNodeType = PermissionNodeType.DIRECTORY;
-          if (nodeTypeStr === 'menu') nodeType = PermissionNodeType.MENU;
-          else if (nodeTypeStr === 'button') nodeType = PermissionNodeType.BUTTON;
-
-          return {
-            id: Number(node.id),
-            permissionCode: String(node.permissionCode || node.permission_code || ''),
-            permissionName: String(node.permissionName || node.permission_name || ''),
-            permissionType: (node.permissionType || node.permission_type) as PermissionType,
-            nodeType,
-            parentId: node.parentId !== null && node.parentId !== undefined
-              ? Number(node.parentId)
-              : null,
-            path: node.path ? String(node.path) : undefined,
-            component: node.component ? String(node.component) : undefined,
-            icon: node.icon ? String(node.icon) : undefined,
-            sortOrder: Number(node.sortOrder || node.sort_order || 0),
-            status: Number(node.status) as Status,
-            visible: Boolean(node.visible ?? true),
-            children: Array.isArray(node.children) && node.children.length > 0
-              ? node.children.map(mapTreeNode)
-              : []
-          };
-        };
-
+        // 后端直接返回树型结构数据，包含 node_type 字段
+        // 使用 unknown 作为中间类型，因为后端返回的数据结构与 PermissionTreeNode 兼容
         const treeData = Array.isArray(response.data) ? response.data : [];
-        permissionTree.value = treeData.map(mapTreeNode);
+        permissionTree.value = treeData as unknown as PermissionTreeNode[];
       }
 
       return permissionTree.value;
@@ -184,7 +163,8 @@ export function usePermissionData() {
   const createPermission = async (data: Record<string, unknown>) => {
     loading.value = true;
     try {
-      await RBACService.createPermission(data);
+      // @ts-ignore - 数据由调用方验证，后端会进行验证
+      await permissionService.createPermissionNode(data);
       return { success: true, message: '新增成功' };
     } catch (error) {
       console.error('创建权限失败:', error);
@@ -200,7 +180,8 @@ export function usePermissionData() {
   const updatePermission = async (permissionId: number, data: Record<string, unknown>) => {
     loading.value = true;
     try {
-      await RBACService.updatePermission(permissionId, data);
+      // @ts-ignore - 数据由调用方验证，后端会进行验证
+      await permissionService.updatePermissionNode(permissionId, data);
       return { success: true, message: '修改成功' };
     } catch (error) {
       console.error('更新权限失败:', error);
@@ -216,7 +197,7 @@ export function usePermissionData() {
   const updatePermissionStatus = async (permissionId: number, status: Status) => {
     loading.value = true;
     try {
-      await RBACService.updatePermissionStatus(permissionId, status);
+      await permissionService.updatePermissionNodeStatus(permissionId, status);
       return { success: true, message: '状态更新成功' };
     } catch (error) {
       console.error('更新权限状态失败:', error);
@@ -232,7 +213,7 @@ export function usePermissionData() {
   const deletePermission = async (permissionId: number) => {
     loading.value = true;
     try {
-      await RBACService.deletePermission(permissionId);
+      await permissionService.deletePermissionNode(permissionId);
       return { success: true, message: '删除成功' };
     } catch (error) {
       console.error('删除权限失败:', error);

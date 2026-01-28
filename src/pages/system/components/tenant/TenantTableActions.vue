@@ -18,21 +18,13 @@
       <el-icon><Delete /></el-icon>
       <span>删除</span>
     </el-button>
-    <el-button
-      size="default"
-      data-testid="btn-export"
-      @click="handleExport"
-    >
-      <el-icon><Download /></el-icon>
-      <span>导出</span>
-    </el-button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Plus, Delete, Download } from '@element-plus/icons-vue'
+import { Plus, Delete } from '@element-plus/icons-vue'
 
 const props = defineProps<{
   selectedCount: number
@@ -41,7 +33,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   add: []
   batchDelete: []
-  export: []
 }>()
 
 const hasSelection = computed(() => props.selectedCount > 0)
@@ -59,10 +50,6 @@ const handleBatchDelete = () => {
     return
   }
   emit('batchDelete')
-}
-
-const handleExport = () => {
-  emit('export')
 }
 </script>
 

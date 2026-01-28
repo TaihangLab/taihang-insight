@@ -6,7 +6,7 @@
       </div>
       <div class="page-header-btn">
         <div style="display: inline;">
-          <el-button icon="el-icon-close" size="mini" style="font-size: 20px; color: #000;" link @click="close" ></el-button>
+          <el-button icon="el-icon-close" size="small" style="font-size: 20px; color: #000;" link @click="close" ></el-button>
         </div>
       </div>
     </div>

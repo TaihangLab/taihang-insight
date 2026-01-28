@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-defineProps<{
+const props = defineProps<{
   visible: boolean
   targetType?: 'single' | 'batch'
 }>()

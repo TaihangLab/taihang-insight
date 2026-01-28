@@ -5,6 +5,8 @@
     width="600px"
     @close="closeDialog"
   >
+    <DevTools v-if="dialogVisible" v-model="deptForm" type="department" :enabled="isDev" />
+
     <el-form :model="deptForm" :rules="deptRules" ref="deptFormRef" label-width="100px">
       <el-row :gutter="20">
         <el-col :span="24">
@@ -50,8 +52,8 @@
         <el-col :span="12">
           <el-form-item label="部门状态">
             <el-radio-group v-model="deptForm.status">
-              <el-radio :label="0">启用</el-radio>
-              <el-radio :label="1">停用</el-radio>
+              <el-radio :value="0">启用</el-radio>
+              <el-radio :value="1">停用</el-radio>
             </el-radio-group>
           </el-form-item>
         </el-col>
@@ -67,6 +69,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
 import type { FormInstance } from 'element-plus'
+import DevTools from '@/components/common/DevTools.vue'
 
 interface DeptForm {
   id: string | number | null
@@ -130,6 +133,11 @@ const dialogTitle = computed(() => {
 })
 
 const isEdit = computed(() => !!props.currentDept && !props.currentDept.isSubDept)
+
+// 检测是否为开发环境
+const isDev = computed(() => {
+  return import.meta.env.DEV
+})
 
 const deptRules = {
   name: [

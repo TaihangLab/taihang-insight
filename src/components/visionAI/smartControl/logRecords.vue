@@ -66,7 +66,7 @@
           <template #default="scope">
             <el-tag 
               :type="getLogTypeTag(scope.row.type)"
-              size="mini"
+              size="small"
             >
               {{ scope.row.type }}
             </el-tag>
@@ -76,7 +76,7 @@
           <template #default="scope">
             <el-tag 
               :type="getLevelTag(scope.row.level)"
-              size="mini"
+              size="small"
             >
               {{ scope.row.level }}
             </el-tag>
@@ -127,13 +127,13 @@
         <div class="detail-item">
           <span class="detail-label">类型：</span>
           <span class="detail-value">
-            <el-tag :type="getLogTypeTag(currentLog.type)" size="mini">{{ currentLog.type }}</el-tag>
+            <el-tag :type="getLogTypeTag(currentLog.type)" size="small">{{ currentLog.type }}</el-tag>
           </span>
         </div>
         <div class="detail-item">
           <span class="detail-label">级别：</span>
           <span class="detail-value">
-            <el-tag :type="getLevelTag(currentLog.level)" size="mini">{{ currentLog.level }}</el-tag>
+            <el-tag :type="getLevelTag(currentLog.level)" size="small">{{ currentLog.level }}</el-tag>
           </span>
         </div>
         <div class="detail-item">

@@ -40,11 +40,13 @@ interface Pagination {
 }
 
 interface PositionItem {
+  id: string | number
+  status: number
   _selected?: boolean
   [key: string]: any
 }
 
-defineProps<{
+const props = defineProps<{
   data: PositionItem[]
   loading: boolean
   pagination: Pagination

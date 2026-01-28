@@ -34,7 +34,7 @@
 
 import ShowErrorData from './importChannelShowErrorData.vue'
 
-import userService from "../service/UserService.js";
+import userService from "../service/UserService";
 
 export default {
   name: "importChannel",

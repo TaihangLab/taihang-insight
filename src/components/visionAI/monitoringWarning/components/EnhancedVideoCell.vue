@@ -16,7 +16,7 @@
            class="ai-task-selector">
         <el-select 
           v-model="selectedTaskId" 
-          size="mini" 
+          size="small" 
           placeholder="选择AI任务"
           @change="onTaskChange"
           clearable>

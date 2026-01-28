@@ -56,7 +56,8 @@
  */
 import { ref, onMounted, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
-import RBACService from '@/components/service/RBACService';
+import departmentService from '@/api/rbac/departmentService';
+import tenantService from '@/api/rbac/tenantService';
 import {
   useDepartmentData,
   type DepartmentSearchConditions,
@@ -67,11 +68,11 @@ import {
 // 组件引入
 // ============================================
 
-import DepartmentSearchBar from './components/department/DepartmentSearchBar.vue';
-import DepartmentTableActions from './components/department/DepartmentTableActions.vue';
-import DepartmentTreeTable from './components/department/DepartmentTreeTable.vue';
-import DepartmentEditDialog from './components/department/DepartmentEditDialog.vue';
-import DeleteConfirmDialog from './components/department/DeleteConfirmDialog.vue';
+import DepartmentSearchBar from '@/pages/system/components/department/DepartmentSearchBar.vue';
+import DepartmentTableActions from '@/pages/system/components/department/DepartmentTableActions.vue';
+import DepartmentTreeTable from '@/pages/system/components/department/DepartmentTreeTable.vue';
+import DepartmentEditDialog from '@/pages/system/components/department/DepartmentEditDialog.vue';
+import DeleteConfirmDialog from '@/pages/system/components/department/DeleteConfirmDialog.vue';
 
 // ============================================
 // Composables
@@ -94,10 +95,11 @@ const {
 
 // 搜索条件
 const searchConditions = ref<DepartmentSearchConditions>({
-  tenant_id: undefined,
+  tenant_id: null as string | number | null,
+  dept_name: '',
   name: '',
   id: undefined,
-  status: undefined
+  status: null as number | null
 });
 
 // 展开控制
@@ -124,10 +126,10 @@ const treeTableRef = ref<{
  */
 const getDefaultTenant = async () => {
   try {
-    const response = await RBACService.getTenants();
-    if (response?.data?.items && response.data.items.length > 0) {
-      const firstTenant = response.data.items[0];
-      searchConditions.value.tenant_id = firstTenant.tenant_id || firstTenant.id;
+    const response = await tenantService.getTenants();
+    if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
+      const firstTenant = response.data[0];
+      searchConditions.value.tenant_id = firstTenant.id;
     }
   } catch (error) {
     console.error('获取租户信息失败:', error);
@@ -139,7 +141,7 @@ const getDefaultTenant = async () => {
  */
 const loadData = async () => {
   try {
-    await fetchDepartments(searchConditions.value);
+    departments.value = await fetchDepartments(searchConditions.value);
 
     // 数据加载完成后展开所有节点
     nextTick(() => {
@@ -167,10 +169,11 @@ const handleSearch = (conditions: DepartmentSearchConditions) => {
  */
 const handleReset = () => {
   searchConditions.value = {
-    tenant_id: '',
+    tenant_id: null as string | number | null,
+    dept_name: '',
     name: '',
-    id: '',
-    status: undefined
+    id: undefined,
+    status: null as number | null
   };
   loadData();
 };
@@ -203,7 +206,7 @@ const handleAdd = () => {
 /**
  * 添加子部门处理
  */
-const handleAddSub = (row: DepartmentEntity) => {
+const handleAddSub = (row: any) => {
   currentDept.value = {
     ...row,
     isSubDept: true,
@@ -215,18 +218,18 @@ const handleAddSub = (row: DepartmentEntity) => {
 /**
  * 编辑部门处理
  */
-const handleEdit = (row: DepartmentEntity) => {
+const handleEdit = (row: any) => {
   console.log('handleEdit', row);
-  currentDept.value = row;
+  currentDept.value = row as DepartmentEntity;
   editDialogVisible.value = true;
 };
 
 /**
  * 提交部门表单处理
  */
-const handleSubmit = async (formData: Record<string, unknown>) => {
+const handleSubmit = async (formData: any) => {
   try {
-    const submitData = { ...formData };
+    const submitData: Record<string, unknown> = { ...formData };
 
     // 处理 parent_id
     if (submitData.parent_id === null || submitData.parent_id === undefined || submitData.parent_id === '') {
@@ -261,9 +264,10 @@ const handleSubmit = async (formData: Record<string, unknown>) => {
 /**
  * 删除部门处理
  */
-const handleDelete = (row: DepartmentEntity) => {
-  deleteTargetName.value = row.name || String(row.id);
-  currentDept.value = row;
+const handleDelete = (row: any) => {
+  const dept = row as DepartmentEntity;
+  deleteTargetName.value = dept.dept_name || String(dept.id);
+  currentDept.value = dept;
   deleteDialogVisible.value = true;
 };
 

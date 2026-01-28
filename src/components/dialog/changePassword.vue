@@ -35,7 +35,7 @@
 
 <script>
 import crypto from 'crypto'
-import userService from "../service/UserService.js";
+import userService from "../service/UserService";
 import { changePassword } from '@/api/dialog'
 
 export default {

@@ -1,34 +1,39 @@
 <template>
   <div class="user-table-actions">
     <div class="left-buttons">
-      <el-button type="primary" icon="el-icon-plus" size="small" data-testid="btn-add-user" @click="handleAdd">新增</el-button>
-      <el-button icon="el-icon-delete" size="small" data-testid="btn-batch-delete" @click="handleBatchDelete">删除</el-button>
-      <el-dropdown @command="handleMoreAction" class="more-dropdown">
-        <el-button size="small">
-          更多<i class="el-icon-arrow-down el-icon--right"></i>
-        </el-button>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item command="download_template">下载模板</el-dropdown-item>
-            <el-dropdown-item command="import_data">导入数据</el-dropdown-item>
-            <el-dropdown-item command="export_data">导出数据</el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
+      <el-button type="primary" size="small" data-testid="btn-add-user" @click="handleAdd">
+        <i class="i-carbon-add"></i>新增
+      </el-button>
+      <el-button size="small" data-testid="btn-batch-delete" @click="handleBatchDelete">
+        <i class="i-carbon-trash-can"></i>删除
+      </el-button>
     </div>
     <div class="right-buttons">
-      <el-button icon="el-icon-search" size="small" circle @click="handleAdvancedSearch"></el-button>
-      <el-button icon="el-icon-refresh" size="small" circle @click="handleRefresh"></el-button>
-      <el-button icon="el-icon-setting" size="small" circle @click="handleTableSetting"></el-button>
+      <el-button size="small" circle @click="handleAdvancedSearch">
+        <i class="i-carbon-search"></i>
+      </el-button>
+      <el-button size="small" circle @click="handleRefresh">
+        <i class="i-carbon-renew"></i>
+      </el-button>
+      <el-button size="small" circle @click="handleTableSetting">
+        <i class="i-carbon-settings"></i>
+      </el-button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+interface Props {
+  selectedCount?: number
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  selectedCount: 0
+})
+
 const emit = defineEmits<{
   add: []
   batchDelete: []
-  moreAction: [command: string]
   advancedSearch: []
   refresh: []
   tableSetting: []
@@ -39,11 +44,10 @@ const handleAdd = () => {
 }
 
 const handleBatchDelete = () => {
+  if (props.selectedCount === 0) {
+    return
+  }
   emit('batchDelete')
-}
-
-const handleMoreAction = (command: string) => {
-  emit('moreAction', command)
 }
 
 const handleAdvancedSearch = () => {
@@ -76,11 +80,5 @@ const handleTableSetting = () => {
 .right-buttons {
   display: flex;
   gap: 10px;
-}
-
-.more-dropdown :deep(.el-button) {
-  border: 1px solid #dcdfe6;
-  background: white;
-  color: #606266;
 }
 </style>

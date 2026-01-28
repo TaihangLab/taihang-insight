@@ -71,12 +71,12 @@
             <el-table-column prop="name" label="摄像头名称" width="150" align="center" />
             <el-table-column prop="camera_type" label="类型" width="100" align="center">
               <template #default="{ row }">
-                <el-tag size="mini" effect="plain" type="">{{ getCameraTypeText(row.camera_type) }}</el-tag>
+                <el-tag size="small" effect="plain" type="">{{ getCameraTypeText(row.camera_type) }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="status" label="状态" width="100" align="center">
               <template #default="{ row }">
-                <el-tag :type="row.status === true ? 'success' : 'danger'" size="mini">
+                <el-tag :type="row.status === true ? 'success' : 'danger'" size="small">
                   <template v-if="row.camera_type === 1">
                     {{ row.status === true ? '在线' : '离线' }}
                   </template>
@@ -108,11 +108,11 @@
             <el-table-column label="操作" width="280" align="center">
               <template #default="{ row }">
                 <div class="operation-buttons">
-                  <el-button link size="mini" icon="el-icon-setting" class="config-skill-btn"
+                  <el-button link size="small" icon="el-icon-setting" class="config-skill-btn"
                     @click="handleConfigSkill(row)">配置技能</el-button>
-                  <el-button link size="mini" icon="el-icon-magic-stick" class="config-llm-skill-btn"
+                  <el-button link size="small" icon="el-icon-magic-stick" class="config-llm-skill-btn"
                     @click="handleConfigLlmSkillForCamera(row)">配置大模型技能</el-button>
-                  <el-button link size="mini" icon="el-icon-view" class="view-detail-btn"
+                  <el-button link size="small" icon="el-icon-view" class="view-detail-btn"
                     @click="handleViewDetails(row)">查看详情</el-button>
                 </div>
               </template>
@@ -204,7 +204,7 @@
                   </div>
                   <div class="skill-meta">
                     <span class="skill-type">{{ skill.type }}</span>
-                    <el-tag size="mini" :type="skill.status !== false ? 'success' : 'danger'" class="skill-status-tag">
+                    <el-tag size="small" :type="skill.status !== false ? 'success' : 'danger'" class="skill-status-tag">
                       {{ skill.status !== false ? '已启用' : '未启用' }}
                     </el-tag>
                   </div>
@@ -232,14 +232,14 @@
                       @click.native="handleTaskClick(task)">
                 <div class="task-header">
                   <div class="task-name">{{ task.name }}</div>
-                  <el-tag size="mini" :type="task.status ? 'success' : 'info'" class="task-status-tag">
+                  <el-tag size="small" :type="task.status ? 'success' : 'info'" class="task-status-tag">
                     {{ task.status ? '运行中' : '已停止' }}
                   </el-tag>
                 </div>
                 <div class="task-info">
                   <div class="task-desc">{{ task.description }}</div>
                   <div class="task-alert">
-                    <el-tag size="mini" :type="getAlertLevelType(task.alert_level)">
+                    <el-tag size="small" :type="getAlertLevelType(task.alert_level)">
                       {{ getAlertLevelName(task.alert_level) }}
                     </el-tag>
                   </div>
@@ -266,13 +266,13 @@
             <div class="skill-info-content">
               <div class="skill-name-row">
                 <span class="skill-info-name">{{ currentSkillInfo.name_zh || currentSkill }}</span>
-                <el-tag size="mini" type="info" class="skill-eng-name-tag" v-if="currentSkillInfo.value && currentSkillInfo.value !== currentSkillInfo.name_zh">
+                <el-tag size="small" type="info" class="skill-eng-name-tag" v-if="currentSkillInfo.value && currentSkillInfo.value !== currentSkillInfo.name_zh">
                   {{ currentSkillInfo.value }}
                 </el-tag>
-                <el-tag size="mini" type="success" class="skill-version-tag" v-if="currentSkillInfo.version">
+                <el-tag size="small" type="success" class="skill-version-tag" v-if="currentSkillInfo.version">
                   v{{ currentSkillInfo.version }}
                 </el-tag>
-                <el-tag size="mini" effect="plain" class="skill-type-tag" v-if="currentSkillInfo.type">
+                <el-tag size="small" effect="plain" class="skill-type-tag" v-if="currentSkillInfo.type">
                   {{ currentSkillInfo.type }}
                 </el-tag>
                 <el-button link icon="el-icon-setting" @click.stop="showSkillParamsConfig" style="margin-left: 5px;" title="技能参数配置"></el-button>
@@ -589,7 +589,7 @@
                   <div class="param-name">
                     <i :class="getParamTypeIcon(value)"></i>
                     <span class="name-text">{{ key }}</span>
-                    <el-tag size="mini" :type="getParamTypeColor(value)" class="param-type-tag">
+                    <el-tag size="small" :type="getParamTypeColor(value)" class="param-type-tag">
                       {{ getParamTypeLabel(value) }}{{ Array.isArray(value) ? ` (${value.length}项)` : '' }}
                     </el-tag>
                   </div>

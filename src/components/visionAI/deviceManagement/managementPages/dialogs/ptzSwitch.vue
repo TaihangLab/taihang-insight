@@ -1,6 +1,6 @@
 <template>
   <div id="ptzSwitch">
-    <el-form size="mini" :inline="true" >
+    <el-form size="small" :inline="true" >
       <el-form-item >
         <el-input
           min="1"
@@ -9,13 +9,13 @@
           addonBefore="开关编号"
           addonAfter="(2-255)"
           v-model="switchId"
-          size="mini"
+          size="small"
         >
         </el-input>
       </el-form-item>
       <el-form-item>
-        <el-button size="mini" @click="open('on')">开启</el-button>
-        <el-button size="mini" @click="open('off')">关闭</el-button>
+        <el-button size="small" @click="open('on')">开启</el-button>
+        <el-button size="small" @click="open('off')">关闭</el-button>
       </el-form-item>
     </el-form>
   </div>

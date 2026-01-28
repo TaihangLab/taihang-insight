@@ -1,10 +1,26 @@
 import axios from 'axios';
 import userService from '@/components/service/UserService'
 
-import config from '../../../config/index.js';
+// 获取 API 基础 URL
+// 开发环境使用代理（baseURL 为空），生产环境使用环境变量
+const getApiBaseURL = () => {
+  if (import.meta.env.MODE === 'development') {
+    // 开发环境：使用代理，baseURL 为空
+    return ''
+  } else {
+    // 生产环境：使用环境变量配置的完整 URL
+    return import.meta.env.VITE_API_BASE_URL || ''
+  }
+}
+
+// 获取完整的 API 地址（用于 SSE、fetch 等不经过 axios 代理的请求）
+const getFullApiUrl = () => {
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+}
+
 // 创建专用于visionAI模块的axios实例
 const visionAIAxios = axios.create({
-  baseURL: config.API_BASE_URL,
+  baseURL: getApiBaseURL(),
   timeout: 15000,
   withCredentials: false,  // 将withCredentials设置为false，避免CORS错误
 });
@@ -1614,7 +1630,8 @@ export const alertAPI = {
    * @returns {EventSource} SSE连接对象
    */
   createAlertSSEConnection(onMessage, onError, onClose) {
-    const sseUrl = `${visionAIAxios.defaults.baseURL}/api/v1/alerts/stream`;
+    // SSE 不经过 axios 代理，需要使用完整的 API 地址
+    const sseUrl = `${getFullApiUrl()}/api/v1/alerts/stream`;
     console.log('创建SSE连接:', sseUrl);
 
     const eventSource = new EventSource(sseUrl);
@@ -2292,8 +2309,8 @@ const chatAssistantAPI = {
         conversation_id: chatData.conversation_id || null
       };
 
-      // 发起POST请求（使用完整的chat端点）
-      const response = await fetch(`${visionAIAxios.defaults.baseURL}/api/chat/chat`, {
+      // 发起POST请求（fetch 不经过 axios 代理，使用完整 URL）
+      const response = await fetch(`${getFullApiUrl()}/api/chat/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -4044,92 +4061,25 @@ export const alertStatisticsAPI = {
   async getLatestImages(limit = 10) {
     console.log('[统计API] 获取最新预警图片, 限制:', limit);
 
-    // 模拟预警图片数据
-    const mockImages = [
-      {
-        id: 1,
-        image: new URL('../monitoringWarning/images/5.jpg', import.meta.url).href,
-        event: '未戴安全帽',
-        time: '2024-01-15 10:30',
-        alert_time: '2024-01-15 10:30:25',
-        level: 'urgent',
-        levelText: '一级',
-        location: '工地东北角',
-        camera_name: '摄像头01-工地东北角'
-      },
-      {
-        id: 2,
-        image: new URL('../monitoringWarning/images/4.jpg', import.meta.url).href,
-        event: '未穿工作服',
-        time: '2024-01-15 10:28',
-        alert_time: '2024-01-15 10:28:15',
-        level: 'high',
-        levelText: '二级',
-        location: '工地南侧',
-        camera_name: '摄像头03-工地南侧'
-      },
-      {
-        id: 3,
-        image: new URL('../monitoringWarning/images/5.jpg', import.meta.url).href,
-        event: '区域入侵',
-        time: '2024-01-15 10:15',
-        alert_time: '2024-01-15 10:15:42',
-        level: 'medium',
-        levelText: '三级',
-        location: '材料区',
-        camera_name: '摄像头02-材料区'
-      },
-      {
-        id: 4,
-        image: new URL('../monitoringWarning/images/6.jpg', import.meta.url).href,
-        event: '违规吸烟',
-        time: '2024-01-15 09:58',
-        alert_time: '2024-01-15 09:58:30',
-        level: 'high',
-        levelText: '二级',
-        location: '休息区',
-        camera_name: '摄像头05-休息区'
-      },
-      {
-        id: 5,
-        image: new URL('../monitoringWarning/images/1.jpg', import.meta.url).href,
-        event: '高空作业未系安全带',
-        time: '2024-01-15 09:45',
-        alert_time: '2024-01-15 09:45:12',
-        level: 'urgent',
-        levelText: '一级',
-        location: '施工作业区',
-        camera_name: '摄像头04-施工作业区'
-      },
-      {
-        id: 6,
-        image: new URL('../monitoringWarning/images/3.jpg', import.meta.url).href,
-        event: '未穿反光背心',
-        time: '2024-01-15 09:32',
-        alert_time: '2024-01-15 09:32:18',
-        level: 'medium',
-        levelText: '三级',
-        location: '工地东北角',
-        camera_name: '摄像头01-工地东北角'
-      }
-    ];
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          data: {
-            code: 0,
-            msg: 'success',
-            data: mockImages.slice(0, limit)
-          }
-        });
-      }, 300);
-    });
-
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/alerts/latest-images', {
-    //   params: { limit }
-    // });
+    try {
+      const response = await visionAIAxios.get('/api/v1/alerts/latest-images', {
+        params: { limit }
+      });
+      console.log('[统计API] 获取最新预警图片成功, 返回数量:', response.data?.data?.length || 0);
+      return response;
+    } catch (error) {
+      console.error('[统计API] 获取最新预警图片失败:', error);
+
+      // 失败时返回空数组
+      return {
+        data: {
+          code: 0,
+          msg: 'success',
+          data: []
+        }
+      };
+    }
   },
 
   /**

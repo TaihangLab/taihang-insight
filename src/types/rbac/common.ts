@@ -1,6 +1,8 @@
 /**
  * RBAC 通用类型定义
  * 包含所有模块共享的基础类型
+ *
+ * 字段统一使用蛇形命名（snake_case），与后端保持一致
  */
 
 // ============================================
@@ -12,9 +14,9 @@
  */
 export interface PaginationParams {
   /** 跳过的记录数，计算公式：(currentPage - 1) × pageSize，默认为0 */
-  skip?: number;
+  skip?: number
   /** 每页记录数，默认为10 */
-  limit?: number;
+  limit?: number
 }
 
 /**
@@ -22,9 +24,9 @@ export interface PaginationParams {
  */
 export interface PaginatedResponse<T> {
   /** 总记录数 */
-  total: number;
+  total: number
   /** 数据列表 */
-  items: T[];
+  items: T[]
 }
 
 /**
@@ -32,13 +34,13 @@ export interface PaginatedResponse<T> {
  */
 export interface ApiResponse<T = unknown> {
   /** 请求是否成功 */
-  success: boolean;
+  success: boolean
   /** 响应状态码 */
-  code: number;
+  code: number
   /** 响应消息 */
-  message: string;
+  message: string
   /** 响应数据 */
-  data?: T;
+  data?: T
 }
 
 // ============================================
@@ -61,10 +63,12 @@ export enum Status {
  * 性别枚别
  */
 export enum Gender {
+  /** 未知 */
+  UNKNOWN = 0,
   /** 男 */
-  MALE = 'male',
+  MALE = 1,
   /** 女 */
-  FEMALE = 'female'
+  FEMALE = 2
 }
 
 // ============================================
@@ -72,11 +76,11 @@ export enum Gender {
 // ============================================
 
 /**
- * 租户范围查询参数 - 包含租户编码
+ * 租户范围查询参数 - 包含租户ID
  */
 export interface TenantScopedParams {
-  /** 租户编码 */
-  tenant_code?: string;
+  /** 租户ID */
+  tenant_id?: number
 }
 
 /**
@@ -84,7 +88,7 @@ export interface TenantScopedParams {
  */
 export interface StatusQueryParams {
   /** 状态（0启用/1停用） */
-  status?: Status;
+  status?: Status
 }
 
 /**
@@ -98,12 +102,13 @@ export interface BaseQueryParams extends PaginationParams, TenantScopedParams, S
 
 /**
  * 基础实体字段
+ * 字段统一使用蛇形命名（snake_case）
  */
 export interface BaseEntity {
   /** ID */
-  id: number;
+  id: number
   /** 创建时间 */
-  createTime: string;
+  create_time?: string
 }
 
 /**
@@ -111,15 +116,15 @@ export interface BaseEntity {
  */
 export interface EntityWithTimestamp extends BaseEntity {
   /** 更新时间 */
-  updateTime: string;
+  update_time?: string
 }
 
 /**
- * 带租户编码的实体
+ * 带租户ID的实体
  */
 export interface TenantScoped {
-  /** 租户编码 */
-  tenantCode: string;
+  /** 租户ID */
+  tenant_id?: number
 }
 
 /**
@@ -127,5 +132,21 @@ export interface TenantScoped {
  */
 export interface StatusEnabled {
   /** 状态（0启用/1停用） */
-  status: Status;
+  status: Status
+}
+
+// ============================================
+// 前端分页状态类型
+// ============================================
+
+/**
+ * 前端分页状态（用于 UI 组件分页控制）
+ */
+export interface PaginationState {
+  /** 当前页码 */
+  currentPage: number
+  /** 每页记录数 */
+  pageSize: number
+  /** 总记录数 */
+  total: number
 }

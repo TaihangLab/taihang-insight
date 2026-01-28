@@ -70,8 +70,8 @@
         <el-col :span="12">
           <el-form-item label="岗位状态">
             <el-radio-group v-model="positionForm.status">
-              <el-radio :label="1">正常</el-radio>
-              <el-radio :label="0">停用</el-radio>
+              <el-radio :value="1">正常</el-radio>
+              <el-radio :value="0">停用</el-radio>
             </el-radio-group>
           </el-form-item>
         </el-col>

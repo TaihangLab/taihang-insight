@@ -9,15 +9,15 @@
         addonBefore="扫描组号"
         addonAfter="(1-255)"
         v-model="scanId"
-        size="mini"
+        size="small"
       >
       </el-input>
     </div>
 
-    <el-button size="mini" @click="setScanLeft">设置左边界</el-button>
-    <el-button size="mini" @click="setScanRight">设置右边界</el-button>
+    <el-button size="small" @click="setScanLeft">设置左边界</el-button>
+    <el-button size="small" @click="setScanRight">设置右边界</el-button>
 
-    <el-form size="mini" :inline="true" v-if="setSpeedVisible">
+    <el-form size="small" :inline="true" v-if="setSpeedVisible">
       <el-form-item >
         <el-input
           min="1"
@@ -27,7 +27,7 @@
           addonAfter="(1-4095)"
           v-if="setSpeedVisible"
           v-model="speed"
-          size="mini"
+          size="small"
         >
         </el-input>
       </el-form-item>
@@ -36,10 +36,10 @@
         <el-button @click="cancelSetSpeed">取消</el-button>
       </el-form-item>
     </el-form>
-    <el-button v-else size="mini" @click="setSpeedVisible = true">设置扫描速度</el-button>
+    <el-button v-else size="small" @click="setSpeedVisible = true">设置扫描速度</el-button>
 
-    <el-button size="mini" @click="startScan">开始自动扫描</el-button>
-    <el-button size="mini" @click="stopScan">停止自动扫描</el-button>
+    <el-button size="small" @click="startScan">开始自动扫描</el-button>
+    <el-button size="small" @click="stopScan">停止自动扫描</el-button>
   </div>
 </template>
 

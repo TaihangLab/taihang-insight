@@ -4,23 +4,16 @@
 -->
 <template>
   <div class="role-management-page">
-    <!-- 角色编辑对话框 -->
-    <RoleEditDialog
-      v-model:visible="editDialogVisible"
-      :current-role="currentRole"
-      @submit="handleRoleSubmit"
-    />
-
-    <!-- 角色权限分配对话框 -->
-    <RolePermissionDialog
-      v-model:visible="permissionDialogVisible"
-      :current-role="currentRole"
-      @submit="handlePermissionSubmit"
-    />
-
     <!-- 搜索表单 -->
     <el-card class="search-card" shadow="never">
       <el-form :model="queryForm" inline>
+        <el-form-item label="租户">
+          <TenantSelector
+            v-model="queryForm.tenant_id"
+            @change="handleSearch"
+          />
+        </el-form-item>
+
         <el-form-item label="角色名称">
           <el-input
             v-model="queryForm.role_name"
@@ -140,6 +133,21 @@
         />
       </div>
     </el-card>
+
+    <!-- 角色编辑对话框 -->
+    <RoleEditDialog
+      v-model:visible="editDialogVisible"
+      :current-role="currentRole"
+      :tenant-id="queryForm.tenant_id"
+      @submit="handleRoleSubmit"
+    />
+
+    <!-- 角色权限分配对话框 -->
+    <RolePermissionDialog
+      v-model:visible="permissionDialogVisible"
+      :current-role="currentRole"
+      @submit="handlePermissionSubmit"
+    />
   </div>
 </template>
 
@@ -151,8 +159,10 @@
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import type { Role } from '@/types/rbac';
+import type { RoleEntity } from '@/pages/system/composable/role/useRoleData';
 import { Status, DataScope } from '@/types/rbac';
 import { useRoleData } from '@/pages/system/composable/role/useRoleData';
+import TenantSelector from '@/pages/system/components/commons/TenantSelector.vue';
 import RoleEditDialog from '@/pages/system/components/role/RoleEditDialog.vue';
 import RolePermissionDialog from '@/pages/system/components/role/RolePermissionDialog.vue';
 
@@ -177,11 +187,13 @@ const {
 
 // 查询表单
 const queryForm = reactive<{
+  tenant_id?: string | number | null;
   role_name?: string;
   role_code?: string;
   data_scope?: DataScope;
   status?: Status;
 }>({
+  tenant_id: null,
   role_name: '',
   role_code: '',
   data_scope: undefined,
@@ -191,7 +203,7 @@ const queryForm = reactive<{
 // 对话框状态
 const editDialogVisible = ref(false);
 const permissionDialogVisible = ref(false);
-const currentRole = ref<Role | null>(null);
+const currentRole = ref<RoleEntity | null>(null);
 
 // ============================================
 // 辅助函数
@@ -232,7 +244,7 @@ const getDataScopeLabel = (scope: DataScope) => {
  */
 const loadRoles = async () => {
   try {
-    await fetchRoles(queryForm);
+    roles.value = await fetchRoles(queryForm);
   } catch (error: unknown) {
     const err = error as Error;
     ElMessage.error(`加载角色列表失败: ${err.message}`);
@@ -251,6 +263,7 @@ const handleSearch = () => {
  * 重置处理
  */
 const handleReset = () => {
+  queryForm.tenant_id = null;
   queryForm.role_name = '';
   queryForm.role_code = '';
   queryForm.data_scope = undefined;
@@ -287,7 +300,7 @@ const handleAdd = () => {
 /**
  * 编辑角色处理
  */
-const handleEdit = (row: Role) => {
+const handleEdit = (row: RoleEntity) => {
   currentRole.value = row;
   editDialogVisible.value = true;
 };
@@ -295,7 +308,7 @@ const handleEdit = (row: Role) => {
 /**
  * 删除角色处理
  */
-const handleDelete = async (row: Role) => {
+const handleDelete = async (row: RoleEntity) => {
   try {
     await ElMessageBox.confirm(
       `确定要删除角色 "${row.roleName}" 吗？`,
@@ -318,7 +331,7 @@ const handleDelete = async (row: Role) => {
 /**
  * 分配权限处理
  */
-const handleAssignPermissions = (row: Role) => {
+const handleAssignPermissions = (row: RoleEntity) => {
   currentRole.value = row;
   permissionDialogVisible.value = true;
 };

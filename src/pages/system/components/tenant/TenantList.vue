@@ -35,7 +35,7 @@ import { ref } from 'vue'
 import TenantTableActions from '@/pages/system/components/tenant/TenantTableActions.vue'
 import TenantTable from '@/pages/system/components/tenant/TenantTable.vue'
 import TenantPagination from '@/pages/system/components/tenant/TenantPagination.vue'
-import type { Tenant } from '@/types/rbac/tenant'
+import type { TenantAPI } from '@/types/rbac/tenant'
 
 interface Pagination {
   currentPage: number
@@ -43,7 +43,7 @@ interface Pagination {
 }
 
 defineProps<{
-  tenants: Tenant[]
+  tenants: TenantAPI[]
   loading: boolean
   pagination: Pagination
   total: number
@@ -52,10 +52,10 @@ defineProps<{
 const emit = defineEmits<{
   selectionChange: [codes: number[]]
   add: []
-  edit: [row: Tenant]
-  delete: [row: Tenant]
+  edit: [row: TenantAPI]
+  delete: [row: TenantAPI]
   batchDelete: [codes: number[]]
-  statusChange: [row: Tenant]
+  statusChange: [row: TenantAPI]
   pageChange: [page: number]
   sizeChange: [size: number]
   export: [codes: number[]]
@@ -72,11 +72,11 @@ const handleAdd = () => {
   emit('add')
 }
 
-const handleEdit = (row: Tenant) => {
+const handleEdit = (row: TenantAPI) => {
   emit('edit', row)
 }
 
-const handleDelete = (row: Tenant) => {
+const handleDelete = (row: TenantAPI) => {
   emit('delete', row)
 }
 
@@ -84,7 +84,7 @@ const handleBatchDelete = () => {
   emit('batchDelete', selectedCodes.value)
 }
 
-const handleStatusChange = (row: Tenant) => {
+const handleStatusChange = (row: TenantAPI) => {
   emit('statusChange', row)
 }
 

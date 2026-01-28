@@ -5,23 +5,7 @@
     width="700px"
     @close="closeDialog"
   >
-    <!-- 智能填充助手 -->
-    <div style="position: relative; z-index: 9999; margin-bottom: 20px;">
-      <SmartFillAssistant
-        currentPage="tenant"
-        :form-ref="dialogVisible ? { tenantForm } : null"
-        v-if="dialogVisible"
-      />
-      <!-- 测试按钮 -->
-      <el-button
-        type="primary"
-        size="small"
-        @click="testSmartFill"
-        style="margin-bottom: 10px;"
-      >
-        测试智能填充
-      </el-button>
-    </div>
+    <DevTools v-if="dialogVisible && isDev" v-model="tenantForm" type="tenant" :enabled="true" />
 
     <el-form :model="tenantForm" :rules="tenantRules" ref="tenantFormRef" label-width="100px">
       <el-row :gutter="20">
@@ -93,7 +77,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="用户数量">
-            <el-input v-model.number="tenantForm.userCount" placeholder="0" type="number"></el-input>
+            <el-input v-model.number="tenantForm.user_count" placeholder="0" type="number"></el-input>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -106,7 +90,7 @@
         <el-input v-model="tenantForm.address" placeholder="请输入企业地址"></el-input>
       </el-form-item>
       <el-form-item label="企业代码">
-        <el-input v-model="tenantForm.companyCode" placeholder="请输入统一社会信用代码"></el-input>
+        <el-input v-model="tenantForm.company_code" placeholder="请输入统一社会信用代码"></el-input>
       </el-form-item>
       <el-form-item label="企业简介">
         <el-input
@@ -131,8 +115,9 @@
 import { ref, reactive, computed, watch, nextTick } from 'vue'
 import { ElMessage, ElNotification } from 'element-plus'
 import type { FormInstance } from 'element-plus'
-import RBACService from '@/components/service/RBACService'
-import SmartFillAssistant from '@/mock/components/SmartFillAssistant.vue'
+import DevTools from '@/components/common/DevTools.vue'
+import tenantService from '@/api/rbac/tenantService'
+import type { TenantAPI } from '@/types/rbac/tenant'
 
 interface TenantForm {
   tenant_id: string
@@ -144,38 +129,17 @@ interface TenantForm {
   password: string
   package: string
   expire_time: string | null
-  userCount: number
+  user_count: number
   domain: string
   address: string
-  companyCode: string
+  company_code: string
   description: string
   remark: string
 }
 
-interface Tenant {
-  tenant_id?: string
-  id?: string
-  tenant_name?: string
-  company_name?: string
-  contact_person?: string
-  contact_phone?: string
-  username?: string
-  package?: string
-  expire_time?: string | null
-  expireTime?: string | null
-  user_count?: number
-  userCount?: number
-  domain?: string
-  address?: string
-  company_code?: string
-  companyCode?: string
-  description?: string
-  remark?: string
-}
-
 const props = defineProps<{
   visible: boolean
-  currentTenant: Tenant | null
+  currentTenant: TenantAPI | null
 }>()
 
 const emit = defineEmits<{
@@ -207,10 +171,10 @@ const createDefaultForm = (): TenantForm => ({
   password: '',
   package: 'standard',
   expire_time: getDefaultExpireTime(),
-  userCount: 10,
+  user_count: 10,
   domain: '',
   address: '',
-  companyCode: '',
+  company_code: '',
   description: '',
   remark: ''
 })
@@ -244,6 +208,11 @@ const dialogVisible = computed({
 
 const dialogTitle = computed(() => (props.currentTenant ? '编辑租户' : '添加租户'))
 
+// 检测是否为开发环境
+const isDev = computed(() => {
+  return import.meta.env.DEV
+})
+
 const resetForm = () => {
   Object.assign(tenantForm, createDefaultForm())
 }
@@ -253,7 +222,7 @@ watch(
   (newVal) => {
     if (newVal) {
       Object.assign(tenantForm, {
-        tenant_id: newVal.tenant_id || newVal.id || '',
+        tenant_id: String(newVal.tenant_id || newVal.id || ''),
         tenant_name: newVal.tenant_name || '',
         company_name: newVal.company_name || '',
         contact_person: newVal.contact_person || '',
@@ -261,11 +230,11 @@ watch(
         username: newVal.username || '',
         password: '',
         package: newVal.package || 'standard',
-        expire_time: newVal.expire_time || newVal.expireTime || null,
-        userCount: newVal.user_count || newVal.userCount || 10,
+        expire_time: newVal.expire_time || null,
+        user_count: newVal.user_count || 10,
         domain: newVal.domain || '',
         address: newVal.address || '',
-        companyCode: newVal.company_code || newVal.companyCode || '',
+        company_code: newVal.company_code || '',
         description: newVal.description || '',
         remark: newVal.remark || ''
       })
@@ -274,7 +243,7 @@ watch(
       nextTick(() => {
         tenantForm.package = 'standard'
         tenantForm.expire_time = getDefaultExpireTime()
-        tenantForm.userCount = 10
+        tenantForm.user_count = 10
       })
     }
   },
@@ -288,7 +257,13 @@ const submitForm = async () => {
     await tenantFormRef.value.validate()
 
     if (props.currentTenant) {
+      const tenantId = Number(props.currentTenant.tenant_id || props.currentTenant.id)
+      if (!tenantId) {
+        throw new Error('租户ID不能为空')
+      }
+
       const updateData: Record<string, any> = {
+        id: tenantId,
         tenant_name: tenantForm.tenant_name,
         company_name: tenantForm.company_name,
         contact_person: tenantForm.contact_person,
@@ -296,10 +271,10 @@ const submitForm = async () => {
         username: tenantForm.username,
         package: tenantForm.package,
         expire_time: tenantForm.expire_time || null,
-        user_count: tenantForm.userCount || 0,
+        user_count: tenantForm.user_count || 0,
         domain: tenantForm.domain,
         address: tenantForm.address,
-        company_code: tenantForm.companyCode,
+        company_code: tenantForm.company_code,
         description: tenantForm.description,
         remark: tenantForm.remark
       }
@@ -308,12 +283,7 @@ const submitForm = async () => {
         updateData.password = tenantForm.password
       }
 
-      const tenantId = props.currentTenant.tenant_id || props.currentTenant.id
-      if (!tenantId) {
-        throw new Error('租户ID不能为空')
-      }
-
-      await RBACService.updateTenant(tenantId, updateData)
+      await tenantService.updateTenant(tenantId, updateData)
       ElMessage({
         message: '租户信息修改成功',
         type: 'success'
@@ -329,15 +299,15 @@ const submitForm = async () => {
         password: tenantForm.password,
         package: tenantForm.package,
         expire_time: tenantForm.expire_time || null,
-        user_count: tenantForm.userCount || 0,
+        user_count: tenantForm.user_count || 0,
         domain: tenantForm.domain,
         address: tenantForm.address,
-        company_code: tenantForm.companyCode,
+        company_code: tenantForm.company_code,
         description: tenantForm.description,
         remark: tenantForm.remark
       }
 
-      await RBACService.createTenant(createData)
+      await tenantService.createTenant(createData)
       ElMessage({
         message: '租户添加成功',
         type: 'success'
@@ -361,69 +331,22 @@ const submitForm = async () => {
       errorMessage = error.message
     }
 
-    ElNotification({
-      title: '保存失败',
-      message: errorMessage,
-      type: 'error',
-      duration: 5000,
-      offset: 50
-    })
+    ElMessage.error(`保存失败: ${errorMessage}`)
   }
 }
 
 const closeDialog = () => {
   emit('update:visible', false)
   nextTick(() => {
-    if (tenantFormRef.value) {
-      tenantFormRef.value.clearValidate()
-    }
+    tenantFormRef.value?.clearValidate()
   })
 }
 
 const cancel = () => {
   closeDialog()
 }
-
-const testSmartFill = () => {
-  try {
-    const testData: Partial<TenantForm> = {
-      tenant_id: 'TEST' + Math.floor(Math.random() * 10000),
-      tenant_name: '测试租户' + Math.floor(Math.random() * 1000),
-      company_name: '测试公司' + Math.floor(Math.random() * 1000),
-      contact_person: '张三',
-      contact_phone: '138' + Math.floor(100000000 + Math.random() * 900000000).toString().substring(0, 8),
-      username: 'testuser' + Math.floor(Math.random() * 1000),
-      password: 'TestPass123!',
-      package: ['basic', 'standard', 'premium', 'enterprise'][Math.floor(Math.random() * 4)],
-      expire_time: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      userCount: Math.floor(Math.random() * 100),
-      domain: 'test' + Math.floor(Math.random() * 1000) + '.com',
-      address: '北京市朝阳区测试街道' + Math.floor(Math.random() * 1000) + '号',
-      companyCode: '91' + Math.random().toString().substring(2, 16),
-      description: '这是一个测试公司的简介',
-      remark: '测试备注信息'
-    }
-
-    Object.keys(testData).forEach((key) => {
-      if (key in tenantForm) {
-        ;(tenantForm as any)[key] = (testData as any)[key]
-      }
-    })
-
-    ElMessage({
-      message: '智能填充测试成功！已填充测试数据',
-      type: 'success'
-    })
-  } catch (error: any) {
-    console.error('智能填充测试失败:', error)
-    ElMessage({
-      message: '智能填充测试失败: ' + error.message,
-      type: 'error'
-    })
-  }
-}
 </script>
 
 <style scoped>
-/* 组件样式 */
+/* 组件样式继承自父组件的全局样式 */
 </style>

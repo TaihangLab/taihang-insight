@@ -1,7 +1,7 @@
 <template>
   <div class="layout-container">
     <!-- 左侧菜单 -->
-    <side-menu @collapse-change="handleCollapseChange" />
+    <dynamic-menu @collapse-change="handleCollapseChange" />
 
     <!-- 右侧内容区域 -->
     <div class="layout-main" :class="{ 'layout-collapsed': isMenuCollapsed }">
@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import SideMenu from '@/layout/SideMenu.vue'
+import DynamicMenu from '@/components/common/DynamicMenu.vue'
 import UiHeader from '@/layout/UiHeader.vue'
 import IntelligentAssistant from '@/components/visionAI/chatAssistant/IntelligentAssistant.vue'
 

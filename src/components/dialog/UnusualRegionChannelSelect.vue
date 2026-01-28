@@ -13,26 +13,26 @@
       <div class="page-header" style="width: 100%">
         <div class="page-header-btn" style="width: 100%; text-align: left">
           搜索:
-          <el-input @input="getChannelList" style="margin-right: 1rem; width: auto;" size="mini" placeholder="关键字"
+          <el-input @input="getChannelList" style="margin-right: 1rem; width: auto;" size="small" placeholder="关键字"
                     prefix-icon="el-icon-search" v-model="searchSrt" clearable></el-input>
           在线状态:
-          <el-select size="mini" style="width: 8rem; margin-right: 1rem;" @change="getChannelList" v-model="online" placeholder="请选择"
+          <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="getChannelList" v-model="online" placeholder="请选择"
                      default-first-option>
             <el-option label="全部" value=""></el-option>
             <el-option label="在线" value="true"></el-option>
             <el-option label="离线" value="false"></el-option>
           </el-select>
           类型:
-          <el-select size="mini" style="width: 8rem; margin-right: 1rem;" @change="getChannelList" v-model="channelType" placeholder="请选择"
+          <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="getChannelList" v-model="channelType" placeholder="请选择"
                      default-first-option>
             <el-option label="全部" value=""></el-option>
             <el-option v-for="item in Object.values($channelTypeList)" :key="item.id" :label="item.name" :value="item.id"></el-option>
           </el-select>
-          <el-button size="mini" type="primary" :loading="getChannelListLoading" :disabled="multipleSelection.length ===0"
+          <el-button size="small" type="primary" :loading="getChannelListLoading" :disabled="multipleSelection.length ===0"
                      @click="clearUnusualRegion()">清除</el-button>
-          <el-button size="mini" :loading="getChannelListLoading"
+          <el-button size="small" :loading="getChannelListLoading"
                      @click="clearUnusualRegion(true)">全部清除</el-button>
-          <el-button size="mini" :loading="getChannelListLoading"
+          <el-button size="small" :loading="getChannelListLoading"
                      @click="getChannelList()">刷新</el-button>
 
         </div>

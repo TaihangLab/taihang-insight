@@ -8,11 +8,19 @@
     <div v-loading="loading" class="permission-dialog-content">
       <div class="role-info">
         <span class="label">角色：</span>
-        <span class="value">{{ currentRole?.roleName }}</span>
-        <span class="code">({{ currentRole?.roleCode }})</span>
+        <span class="value">{{ currentRole?.role_name }}</span>
+        <span class="code">({{ currentRole?.role_code }})</span>
       </div>
 
       <el-divider />
+
+      <!-- 辅助操作按钮 -->
+      <div class="action-bar">
+        <el-button size="small" @click="checkAll">全选</el-button>
+        <el-button size="small" @click="uncheckAll">全不选</el-button>
+        <el-button size="small" @click="expandAll">展开全部</el-button>
+        <el-button size="small" @click="collapseAll">收起全部</el-button>
+      </div>
 
       <div class="permission-tree-container">
         <el-tree
@@ -22,17 +30,17 @@
           show-checkbox
           node-key="id"
           :default-checked-keys="checkedPermissions"
-          :default-expand-all="true"
+          :default-expand-all="false"
           :check-strictly="false"
           @check="handleCheck"
         >
           <template #default="{ node, data }">
             <span class="custom-tree-node">
-              <el-icon v-if="data.permissionType === 'page'"><Folder /></el-icon>
-              <el-icon v-else-if="data.permissionType === 'button'"><Operation /></el-icon>
-              <el-icon v-else><Document /></el-icon>
+              <el-icon v-if="data.node_type === 'folder'"><Folder /></el-icon>
+              <el-icon v-else-if="data.node_type === 'menu'"><Menu /></el-icon>
+              <el-icon v-else><Operation /></el-icon>
               <span class="node-label">{{ node.label }}</span>
-              <span v-if="data.permissionCode" class="node-code">({{ data.permissionCode }})</span>
+              <span v-if="data.permission_code" class="node-code">({{ data.permission_code }})</span>
             </span>
           </template>
         </el-tree>
@@ -49,10 +57,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Folder, Operation, Document } from '@element-plus/icons-vue'
+import { Folder, Operation, Menu } from '@element-plus/icons-vue'
 import type { Role } from '@/types/rbac'
 import type { PermissionTreeNode } from '@/types/rbac/permission'
-import RBACService from '@/components/service/RBACService'
+import associationService from '@/api/rbac/associationService'
 
 interface TreeProps {
   children: string
@@ -77,7 +85,7 @@ const checkedPermissions = ref<number[]>([])
 
 const treeProps: TreeProps = {
   children: 'children',
-  label: 'permissionName'
+  label: 'permission_name'
 }
 
 const dialogVisible = computed({
@@ -95,14 +103,15 @@ const loadPermissions = async () => {
   loading.value = true
   try {
     // Load permission tree
-    const treeResponse = await RBACService.getPermissionTree({ include_disabled: false })
+    const treeResponse = await associationService.getPermissionTree()
     if (treeResponse?.data) {
-      permissionTree.value = treeResponse.data as PermissionTreeNode[]
+      // Map Permission to PermissionTreeNode by adding missing fields
+      permissionTree.value = (treeResponse.data as unknown as PermissionTreeNode[])
     }
 
     // Load role's current permissions
     if (props.currentRole) {
-      const rolePermsResponse = await RBACService.getRolePermissions(props.currentRole.id)
+      const rolePermsResponse = await associationService.getRolePermissions(props.currentRole.id)
       if (rolePermsResponse?.data) {
         checkedPermissions.value = (Array.isArray(rolePermsResponse.data)
           ? rolePermsResponse.data
@@ -123,6 +132,58 @@ const loadPermissions = async () => {
 
 const handleCheck = () => {
   // Handle check changes
+}
+
+/**
+ * 获取所有节点ID（递归）
+ */
+const getAllNodeIds = (nodes: PermissionTreeNode[]): number[] => {
+  const ids: number[] = []
+  const traverse = (nodeList: PermissionTreeNode[]) => {
+    nodeList.forEach(node => {
+      ids.push(node.id)
+      if (node.children && node.children.length > 0) {
+        traverse(node.children)
+      }
+    })
+  }
+  traverse(nodes)
+  return ids
+}
+
+/**
+ * 全选所有权限
+ */
+const checkAll = () => {
+  const allIds = getAllNodeIds(permissionTree.value)
+  permissionTreeRef.value?.setCheckedKeys(allIds)
+}
+
+/**
+ * 全不选
+ */
+const uncheckAll = () => {
+  permissionTreeRef.value?.setCheckedKeys([])
+}
+
+/**
+ * 展开全部节点
+ */
+const expandAll = () => {
+  const allKeys = getAllNodeIds(permissionTree.value)
+  allKeys.forEach(key => {
+    permissionTreeRef.value?.setExpanded(key, true)
+  })
+}
+
+/**
+ * 收起全部节点
+ */
+const collapseAll = () => {
+  const allKeys = getAllNodeIds(permissionTree.value)
+  allKeys.forEach(key => {
+    permissionTreeRef.value?.setExpanded(key, false)
+  })
 }
 
 const submitPermissions = () => {
@@ -185,8 +246,13 @@ const cancel = () => {
   font-size: 12px;
 }
 
+.action-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 .permission-tree-container {
-  margin-top: 16px;
   max-height: 400px;
   overflow-y: auto;
   border: 1px solid var(--el-border-color);

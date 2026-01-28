@@ -9,7 +9,7 @@
         addonBefore="巡航组号"
         addonAfter="(1-255)"
         v-model="cruiseId"
-        size="mini"
+        size="small"
       >
       </el-input>
     </div>
@@ -24,7 +24,7 @@
       </el-tag>
     </p>
 
-    <el-form size="mini" :inline="true" v-if="selectPresetVisible">
+    <el-form size="small" :inline="true" v-if="selectPresetVisible">
       <el-form-item >
         <el-select v-model="selectPreset" placeholder="请选择预置点">
           <el-option
@@ -40,9 +40,9 @@
         <el-button type="primary" @click="cancelAddCruisePoint">取消</el-button>
       </el-form-item>
     </el-form>
-    <el-button size="mini" v-else @click="selectPresetVisible=true">添加巡航点</el-button>
+    <el-button size="small" v-else @click="selectPresetVisible=true">添加巡航点</el-button>
 
-    <el-form size="mini" :inline="true" v-if="setSpeedVisible">
+    <el-form size="small" :inline="true" v-if="setSpeedVisible">
       <el-form-item >
         <el-input
           min="1"
@@ -52,7 +52,7 @@
           addonAfter="(1-4095)"
           v-if="setSpeedVisible"
           v-model="cruiseSpeed"
-          size="mini"
+          size="small"
         >
         </el-input>
       </el-form-item>
@@ -61,11 +61,11 @@
         <el-button @click="cancelSetCruiseSpeed">取消</el-button>
       </el-form-item>
     </el-form>
-    <el-button v-else size="mini" @click="setSpeedVisible = true">设置巡航速度</el-button>
+    <el-button v-else size="small" @click="setSpeedVisible = true">设置巡航速度</el-button>
 
 
 
-    <el-form size="mini" :inline="true" v-if="setTimeVisible">
+    <el-form size="small" :inline="true" v-if="setTimeVisible">
       <el-form-item >
         <el-input
           min="1"
@@ -83,10 +83,10 @@
         <el-button @click="cancelSetCruiseTime">取消</el-button>
       </el-form-item>
     </el-form>
-    <el-button v-else size="mini" @click="setTimeVisible = true">设置巡航时间</el-button>
-    <el-button size="mini" @click="startCruise">开始巡航</el-button>
-    <el-button size="mini" @click="stopCruise">停止巡航</el-button>
-    <el-button size="mini" type="danger" @click="deleteCruise">删除巡航</el-button>
+    <el-button v-else size="small" @click="setTimeVisible = true">设置巡航时间</el-button>
+    <el-button size="small" @click="startCruise">开始巡航</el-button>
+    <el-button size="small" @click="stopCruise">停止巡航</el-button>
+    <el-button size="small" type="danger" @click="deleteCruise">删除巡航</el-button>
   </div>
 </template>
 

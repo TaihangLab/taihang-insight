@@ -458,7 +458,7 @@ const alarmLegends = ref<AlarmLegend[]>([
 // Tooltip
 const tooltipVisible = ref<boolean>(false);
 const tooltipText = ref<string>('');
-const tooltipStyle = reactive({
+const tooltipStyle = reactive<Record<string, string | number>>({
   position: 'absolute',
   top: '0',
   left: '0',

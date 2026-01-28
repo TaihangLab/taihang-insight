@@ -419,14 +419,14 @@
           <!-- 简化的视频控制条 - 关闭按钮和显示模式切换 -->
           <div class="simple-video-controls">
             <el-button
-              size="mini"
+              size="small"
               :icon="videoFitMode === 'cover' ? 'el-icon-full-screen' : 'el-icon-crop'"
               circle
               @click="toggleVideoFitMode"
               :title="videoFitMode === 'cover' ? '切换到完整显示' : '切换到填满显示'">
             </el-button>
             <el-button
-              size="mini"
+              size="small"
               icon="el-icon-close"
               circle
               @click="closeVideoViewer"

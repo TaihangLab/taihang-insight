@@ -166,7 +166,7 @@
             <template #default="{ row }">
               <el-select
                 v-model="row.streamMode"
-                size="mini"
+                size="small"
                 @change="handleStreamModeChange(row)"
                 style="width: 120px">
                 <el-option label="UDP" value="UDP"></el-option>
@@ -199,19 +199,19 @@
                   <el-checkbox 
                     :checked="row.subscribeCycleForCatalog > 0"
                     @change="(e) => handleSubscribeForCatalog(row.id, e)"
-                    size="mini">目录</el-checkbox>
+                    size="small">目录</el-checkbox>
                 </el-tooltip>
                 <el-tooltip content="位置订阅" placement="top">
                   <el-checkbox 
                     :checked="row.subscribeCycleForMobilePosition > 0"
                     @change="(e) => handleSubscribeForMobilePosition(row.id, e)"
-                    size="mini">位置</el-checkbox>
+                    size="small">位置</el-checkbox>
                 </el-tooltip>
                 <el-tooltip content="报警订阅" placement="top">
                   <el-checkbox 
                     :checked="row.subscribeCycleForAlarm > 0"
                     disabled
-                    size="mini">报警</el-checkbox>
+                    size="small">报警</el-checkbox>
                 </el-tooltip>
               </div>
             </template>
@@ -226,7 +226,7 @@
                 <el-tooltip content="刷新设备" placement="top">
                   <el-button 
                     type="primary" 
-                    size="mini" 
+                    size="small" 
                     icon="el-icon-refresh" 
                     :disabled="!row.onLine"
                     @click="handleRefreshDevice(row)">刷新</el-button>
@@ -235,7 +235,7 @@
                 <el-tooltip content="查看通道" placement="top">
                   <el-button 
                     type="success" 
-                    size="mini" 
+                    size="small" 
                     icon="el-icon-video-camera"
                     @click="handleViewChannels(row)">通道</el-button>
                 </el-tooltip>
@@ -243,13 +243,13 @@
                 <el-tooltip content="编辑设备" placement="top">
                   <el-button 
                     type="info" 
-                    size="mini" 
+                    size="small" 
                     icon="el-icon-edit"
                     @click="handleEditDevice(row)">编辑</el-button>
                 </el-tooltip>
                 
                 <el-dropdown @command="(command) => handleMoreActions(command, row)" trigger="click">
-                  <el-button size="mini" link>
+                  <el-button size="small" link>
                     更多<i class="el-icon-arrow-down el-icon--right"></i>
                   </el-button>
                   <el-dropdown-menu slot="dropdown">
@@ -311,13 +311,13 @@
             </div>
             
             <div class="device-card-actions">
-              <el-button size="mini" type="primary" icon="el-icon-video-camera" @click="handleViewChannels(device)">
+              <el-button size="small" type="primary" icon="el-icon-video-camera" @click="handleViewChannels(device)">
                 通道
               </el-button>
-              <el-button size="mini" type="info" icon="el-icon-edit" @click="handleEditDevice(device)">
+              <el-button size="small" type="info" icon="el-icon-edit" @click="handleEditDevice(device)">
                 编辑
               </el-button>
-              <el-button size="mini" type="success" icon="el-icon-refresh" :disabled="!device.onLine" @click="handleRefreshDevice(device)">
+              <el-button size="small" type="success" icon="el-icon-refresh" :disabled="!device.onLine" @click="handleRefreshDevice(device)">
                 刷新
               </el-button>
             </div>

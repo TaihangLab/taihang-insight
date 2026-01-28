@@ -96,19 +96,69 @@ const handleReset = () => {
 
 <style scoped>
 .tenant-search-bar {
-  padding: 18px 24px;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #ebeef5;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.05);
+  padding: var(--design-spacing-md) var(--design-spacing-lg);
+  background: var(--design-bg-primary);
+  border-radius: var(--design-radius-lg);
+  border: 1px solid var(--design-border-color);
+  box-shadow: var(--design-shadow-sm);
+  margin-bottom: var(--design-spacing-md);
 }
 
 .tenant-search-bar .el-form-item {
   margin-bottom: 0;
+  margin-right: var(--design-spacing-md);
 }
 
 .tenant-search-bar .el-form-item__label {
-  color: #303133;
-  font-weight: 500;
+  color: var(--design-text-primary);
+  font-weight: var(--design-font-weight-medium);
+  font-size: var(--design-font-size-sm);
+}
+
+.tenant-search-bar :deep(.el-input__wrapper) {
+  border-radius: var(--design-radius-md);
+  transition: all var(--design-transition-base);
+}
+
+.tenant-search-bar :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--design-primary-color) inset;
+}
+
+.tenant-search-bar :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px var(--design-primary-color) inset;
+}
+
+.tenant-search-bar :deep(.el-select .el-input__wrapper) {
+  width: 140px;
+}
+
+.tenant-search-bar :deep(.el-button) {
+  border-radius: var(--design-radius-md);
+  font-weight: var(--design-font-weight-medium);
+  padding: 8px 20px;
+  transition: all var(--design-transition-base);
+}
+
+.tenant-search-bar :deep(.el-button--primary) {
+  background: var(--design-gradient-primary);
+  border: none;
+  box-shadow: var(--design-shadow-primary);
+}
+
+.tenant-search-bar :deep(.el-button--primary:hover) {
+  background: linear-gradient(135deg, var(--design-primary-hover) 0%, #1a45c9 100%);
+  box-shadow: var(--design-shadow-primary-hover);
+  transform: translateY(-1px);
+}
+
+.tenant-search-bar :deep(.el-button--default) {
+  border-color: var(--design-border-color);
+  color: var(--design-text-primary);
+}
+
+.tenant-search-bar :deep(.el-button--default:hover) {
+  border-color: var(--design-primary-color);
+  color: var(--design-primary-color);
+  background-color: var(--design-primary-light);
 }
 </style>

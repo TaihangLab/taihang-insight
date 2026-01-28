@@ -1,30 +1,3 @@
-<!--
-  DeptTreeSelect - 部门树级联选择器组件
-
-  功能特性：
-  - 支持部门树级联选择（多级部门）
-  - 自动根据租户ID加载部门数据
-  - 支持按状态过滤部门（默认只显示启用部门）
-  - 自动转换API数据格式（name -> label）
-  - 支持自定义级联选择器配置
-
-  使用示例：
-  <DeptTreeSelect
-    v-model="formValue.dept_id"
-    :tenant-id="formValue.tenant_id"
-    :status="0"
-    placeholder="选择部门"
-    custom-style="width: 200px;"
-  />
-
-  API端点：
-  GET /api/v1/rbac/depts/tree?status={status}&tenant_id={tenantId}
-
-  注意事项：
-  - tenantId 为必填项
-  - status: 0=启用, 1=停用，默认为0
-  - 返回值为数组，表示选择的部门路径
--->
 <template>
   <el-cascader
     v-model="innerValue"
@@ -41,11 +14,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import RBACService from '@/components/service/RBACService'
+import departmentService from '@/api/rbac/departmentService'
+import type { Department } from '@/types/rbac/department'
 
 interface DeptNode {
   id: string | number
-  name: string
+  dept_name?: string
+  name?: string
   children?: DeptNode[]
 }
 
@@ -58,7 +33,8 @@ interface TransformedDeptNode {
 
 const props = withDefaults(
   defineProps<{
-    value: any
+    modelValue?: any
+    value?: any  // For backward compatibility with Options API v-model
     tenantId: string | number
     status?: number
     placeholder?: string
@@ -77,11 +53,9 @@ const props = withDefaults(
   }
 )
 
-defineExpose({
-  refresh
-})
-
 const emit = defineEmits<{
+  'update:modelValue': [value: any]
+  'update:value': [value: any]
   input: [value: any]
   change: [value: any]
 }>()
@@ -90,10 +64,17 @@ const treeData = ref<TransformedDeptNode[]>([])
 const loading = ref(false)
 const loaded = ref(false)
 
+// Support both Vue 3 modelValue and legacy value prop
 const innerValue = computed({
-  get: () => props.value,
+  get: () => props.modelValue !== undefined ? props.modelValue : props.value,
   set: (val) => {
-    emit('input', val)
+    // Emit both events for compatibility
+    if (props.modelValue !== undefined) {
+      emit('update:modelValue', val)
+    } else {
+      emit('update:value', val)
+      emit('input', val)
+    }
   }
 })
 
@@ -114,6 +95,40 @@ const cascaderProps = computed(() => {
     ...props.props
   }
 })
+
+const transformDeptTree = (depts: DeptNode[] | Department[]): TransformedDeptNode[] => {
+  if (!Array.isArray(depts)) return []
+  return depts.map((dept) => ({
+    id: parseInt(String(dept.id)),
+    label: dept.dept_name || dept.name || '',
+    code: dept.id,
+    children: dept.children ? transformDeptTree(dept.children) : []
+  }))
+}
+
+const fetchDepartmentTree = async () => {
+  if (!props.tenantId) {
+    treeData.value = []
+    return
+  }
+
+  loading.value = true
+  try {
+    const tenantIdNum = typeof props.tenantId === 'number' ? props.tenantId : parseInt(String(props.tenantId))
+    const response = await departmentService.getDepartmentTreeByTenantAndStatus(
+      tenantIdNum,
+      props.status
+    )
+    treeData.value = transformDeptTree(response.data)
+    loaded.value = true
+  } catch (error: any) {
+    console.error('获取部门树失败:', error)
+    ElMessage.error(`获取部门树失败: ${error.message}`)
+    treeData.value = []
+  } finally {
+    loading.value = false
+  }
+}
 
 watch(
   () => props.tenantId,
@@ -136,39 +151,6 @@ watch(
   }
 )
 
-const fetchDepartmentTree = async () => {
-  if (!props.tenantId) {
-    treeData.value = []
-    return
-  }
-
-  loading.value = true
-  try {
-    const response = await RBACService.getDepartmentTreeByTenantAndStatus(
-      props.tenantId,
-      props.status
-    )
-    treeData.value = transformDeptTree(response.data)
-    loaded.value = true
-  } catch (error: any) {
-    console.error('获取部门树失败:', error)
-    ElMessage.error(`获取部门树失败: ${error.message}`)
-    treeData.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-const transformDeptTree = (depts: DeptNode[]): TransformedDeptNode[] => {
-  if (!Array.isArray(depts)) return []
-  return depts.map((dept) => ({
-    id: parseInt(String(dept.id)),
-    label: dept.name,
-    code: dept.id,
-    children: dept.children ? transformDeptTree(dept.children) : []
-  }))
-}
-
 const handleChange = (value: any) => {
   emit('change', value)
 }
@@ -177,6 +159,10 @@ const refresh = () => {
   loaded.value = false
   fetchDepartmentTree()
 }
+
+defineExpose({
+  refresh
+})
 </script>
 
 <style scoped>

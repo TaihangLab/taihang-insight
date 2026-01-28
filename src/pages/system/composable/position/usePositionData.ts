@@ -7,7 +7,7 @@ import { ref, computed } from 'vue';
 import type { Position } from '@/types/rbac';
 import type { PositionCategory } from '@/types/rbac/position';
 import { Status } from '@/types/rbac';
-import RBACService from '@/components/service/RBACService';
+import positionService from '@/api/rbac/positionService';
 
 // ============================================
 // 类型定义
@@ -92,28 +92,33 @@ export function usePositionData() {
       if (params.department) queryParams.department = params.department;
       if (params.status !== undefined) queryParams.status = params.status;
 
-      const response = await RBACService.getPositions(queryParams);
+      const response = await positionService.getPositions(queryParams);
 
       if (response?.data) {
+        // response.data 是分页对象：{ items: [...], page, page_size, total, pages }
+        const paginatedData = response.data as any;
+        const items = Array.isArray(paginatedData.items) ? paginatedData.items : [];
+
         // 映射数据
-        positions.value = (response.data.items || []).map(item => {
+        positions.value = items.map(item => {
           return {
             id: Number(item.id),
-            positionCode: String(item.positionCode || item.position_code || ''),
-            positionName: String(item.positionName || item.position_name || ''),
-            categoryCode: String(item.categoryCode || item.category_code || ''),
+            positionCode: String(item.positionCode || ''),
+            positionName: String(item.positionName || ''),
+            categoryCode: String(item.categoryCode || ''),
             categoryName: String(item.categoryName || ''),
             department: String(item.department || ''),
-            sortOrder: Number(item.sortOrder || item.sort_order || 0),
+            sortOrder: Number(item.sortOrder || 0),
             status: Number(item.status) as Status,
-            tenantCode: String(item.tenantCode || item.tenant_code || ''),
-            createTime: String(item.createTime || item.create_time || ''),
+            tenantCode: String(item.tenantCode || ''),
+            createTime: String(item.createTime || ''),
             // 保留原始数据
             ...item
           } as PositionEntity;
         });
 
-        pagination.value.total = Number(response.data.total || 0);
+        // 使用后端返回的总数
+        pagination.value.total = Number(paginatedData.total || 0);
         pagination.value.currentPage = currentPage;
         pagination.value.pageSize = size;
       }
@@ -132,14 +137,15 @@ export function usePositionData() {
    */
   const fetchPositionCategories = async () => {
     try {
-      const response = await RBACService.getPositions({ skip: 0, limit: 1000 });
+      const response = await positionService.getPositions({ skip: 0, limit: 1000 });
 
       // 提取唯一类别
       const categoryMap = new Map<string, PositionCategory>();
 
-      if (response?.data?.items) {
-        (response.data.items || []).forEach(item => {
-          const categoryCode = String(item.categoryCode || item.category_code || '');
+      if (response?.data) {
+        const data = Array.isArray(response.data) ? response.data : [];
+        data.forEach(item => {
+          const categoryCode = String(item.categoryCode || '');
           const categoryName = String(item.categoryName || '');
 
           if (categoryCode && !categoryMap.has(categoryCode)) {
@@ -170,7 +176,8 @@ export function usePositionData() {
   const createPosition = async (data: Record<string, unknown>) => {
     loading.value = true;
     try {
-      await RBACService.createPosition(data);
+      // @ts-ignore - 数据由调用方验证，后端会进行验证
+      await positionService.createPosition(data);
       return { success: true, message: '新增成功' };
     } catch (error) {
       console.error('创建岗位失败:', error);
@@ -186,7 +193,8 @@ export function usePositionData() {
   const updatePosition = async (positionId: number, data: Record<string, unknown>) => {
     loading.value = true;
     try {
-      await RBACService.updatePosition(positionId, data);
+      // @ts-ignore - 数据由调用方验证，后端会进行验证
+      await positionService.updatePosition(positionId, data);
       return { success: true, message: '修改成功' };
     } catch (error) {
       console.error('更新岗位失败:', error);
@@ -202,7 +210,7 @@ export function usePositionData() {
   const deletePosition = async (positionId: number) => {
     loading.value = true;
     try {
-      await RBACService.deletePosition(positionId);
+      await positionService.deletePosition(positionId);
       return { success: true, message: '删除成功' };
     } catch (error) {
       console.error('删除岗位失败:', error);

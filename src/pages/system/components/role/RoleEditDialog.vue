@@ -5,6 +5,8 @@
     width="600px"
     @close="closeDialog"
   >
+    <DevTools v-if="dialogVisible" v-model="roleForm" type="role" :enabled="isDev" />
+
     <el-form :model="roleForm" :rules="roleRules" ref="roleFormRef" label-width="100px">
       <el-form-item label="角色编码" prop="role_code" required>
         <el-input
@@ -40,8 +42,8 @@
 
       <el-form-item label="状态" prop="status">
         <el-radio-group v-model="roleForm.status">
-          <el-radio :label="0">正常</el-radio>
-          <el-radio :label="1">停用</el-radio>
+          <el-radio :value="0">正常</el-radio>
+          <el-radio :value="1">停用</el-radio>
         </el-radio-group>
       </el-form-item>
 
@@ -65,7 +67,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
-import { ElMessage } from 'element-plus'
+import DevTools from '@/components/common/DevTools.vue'
 import type { Role } from '@/types/rbac'
 
 interface RoleForm {
@@ -118,6 +120,11 @@ const dialogTitle = computed(() => props.currentRole ? '编辑角色' : '新增�
 
 const isEdit = computed(() => !!props.currentRole)
 
+// 检测是否为开发环境
+const isDev = computed(() => {
+  return import.meta.env.DEV
+})
+
 const resetForm = () => {
   roleForm.value = {
     role_code: '',
@@ -135,9 +142,9 @@ const resetForm = () => {
 watch(() => props.currentRole, (newVal) => {
   if (newVal) {
     roleForm.value = {
-      role_code: newVal.roleCode || '',
-      role_name: newVal.roleName || '',
-      data_scope: newVal.dataScope || '1',
+      role_code: newVal.role_code || '',
+      role_name: newVal.role_name || '',
+      data_scope: newVal.data_scope || '1',
       sort_order: 0,
       status: newVal.status ?? 0,
       remark: ''

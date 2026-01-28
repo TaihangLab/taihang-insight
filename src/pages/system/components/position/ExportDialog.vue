@@ -47,7 +47,7 @@ interface ExportForm {
   fields: string[]
 }
 
-defineProps<{
+const props = defineProps<{
   visible: boolean
 }>()
 

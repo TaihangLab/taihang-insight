@@ -219,7 +219,7 @@
                 <el-select
                   v-model="ptzMethod"
                   style="width: 100%"
-                  size="mini"
+                  size="small"
                   placeholder="请选择云台功能"
                 >
                   <el-option label="预置点" value="preset"></el-option>

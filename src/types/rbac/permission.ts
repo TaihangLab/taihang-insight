@@ -1,6 +1,7 @@
 /**
  * 权限管理类型定义
  * Permission Management Types
+ * 使用蛇形命名 (snake_case) 与后端保持一致
  */
 
 import type { BaseQueryParams, PaginatedResponse, ApiResponse } from './common';
@@ -12,25 +13,27 @@ import { Status } from './common';
 
 /**
  * 权限类型枚举
+ * 三级权限结构：folder（文件夹）> menu（页面菜单）> button（操作按钮）
  */
 export enum PermissionType {
-  /** 页面权限 */
-  PAGE = 'page',
-  /** 按钮权限 */
-  BUTTON = 'button',
-  /** 数据权限 */
-  DATA = 'data'
+  /** 文件夹/目录权限 - 一级分类 */
+  FOLDER = 'folder',
+  /** 页面菜单权限 - 二级页面 */
+  MENU = 'menu',
+  /** 操作按钮权限 - 三级按钮 */
+  BUTTON = 'button'
 }
 
 /**
  * 权限树节点类型枚举
+ * 与 PermissionType 保持一致
  */
 export enum PermissionNodeType {
-  /** 目录 */
-  DIRECTORY = 'directory',
-  /** 菜单 */
+  /** 文件夹 */
+  FOLDER = 'folder',
+  /** 页面菜单 */
   MENU = 'menu',
-  /** 按钮 */
+  /** 操作按钮 */
   BUTTON = 'button'
 }
 
@@ -63,7 +66,7 @@ export type PermissionQueryParams = BaseQueryParams & PermissionQueryFields;
 export type PermissionQueryForm = Partial<PermissionQueryFields>;
 
 // ============================================
-// 实体类型
+// 实体类型（使用蛇形命名）
 // ============================================
 
 /**
@@ -73,19 +76,19 @@ export interface PermissionBase {
   /** 权限ID */
   id: number;
   /** 权限标识/权限码 */
-  permissionCode: string;
+  permission_code: string;
   /** 权限名称 */
-  permissionName: string;
+  permission_name: string;
   /** 权限类型 */
-  permissionType: PermissionType;
-  /** 状态（1正常/0停用） */
+  permission_type: PermissionType;
+  /** 状态（0启用/1停用） */
   status: Status;
   /** 创建者 */
   creator: string;
   /** 租户编码 */
-  tenantCode: string;
+  tenant_code: string;
   /** 创建时间 */
-  createTime: string;
+  create_time: string;
 }
 
 /**
@@ -100,49 +103,61 @@ export interface PermissionDetail extends PermissionBase {
   /** 权限描述 */
   description?: string;
   /** 父级权限ID */
-  parentId?: number | null;
-  /** 路由地址 */
+  parent_id?: number | null;
+  /**
+   * 路径字段（根据权限类型复用）
+   * - folder/menu: 路由路径，如 /system/user
+   * - button: API 路径，如 /api/v1/rbac/users
+   */
   path?: string;
-  /** 组件路径 */
+  /** 组件路径（仅 folder/menu 有效） */
   component?: string;
-  /** 图标 */
+  /** 图标（仅 folder/menu 有效） */
   icon?: string;
+  /** HTTP 方法（仅 button 有效） */
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   /** 排序 */
-  sortOrder?: number;
+  sort_order?: number;
   /** 是否可见 */
   visible?: boolean;
   /** 是否缓存 */
-  keepAlive?: boolean;
+  keep_alive?: boolean;
   /** 更新时间 */
-  updateTime?: string;
+  update_time?: string;
   /** 备注 */
   remark?: string;
 }
 
 /**
- * 权限树节点
+ * 权限树节点（使用蛇形命名）
  */
 export interface PermissionTreeNode {
   /** 权限ID */
   id: number;
   /** 权限标识/权限码 */
-  permissionCode: string;
+  permission_code: string;
   /** 权限名称 */
-  permissionName: string;
+  permission_name: string;
   /** 权限类型 */
-  permissionType: PermissionType;
+  permission_type: PermissionType;
   /** 节点类型 */
-  nodeType: PermissionNodeType;
+  node_type: PermissionNodeType;
   /** 父级权限ID */
-  parentId: number | null;
-  /** 路由地址 */
+  parent_id: number | null;
+  /**
+   * 路径字段（根据权限类型复用）
+   * - folder/menu: 路由路径，如 /system/user
+   * - button: API 路径，如 /api/v1/rbac/users
+   */
   path?: string;
-  /** 组件路径 */
+  /** 组件路径（仅 folder/menu 有效） */
   component?: string;
-  /** 图标 */
+  /** 图标（仅 folder/menu 有效） */
   icon?: string;
+  /** HTTP 方法（仅 button 有效） */
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   /** 排序 */
-  sortOrder: number;
+  sort_order: number;
   /** 状态 */
   status: Status;
   /** 是否可见 */
@@ -160,27 +175,33 @@ export interface PermissionTreeNode {
  */
 export interface CreatePermissionRequest {
   /** 权限标识/权限码（必填） */
-  permissionCode: string;
+  permission_code: string;
   /** 权限名称（必填） */
-  permissionName: string;
+  permission_name: string;
   /** 权限类型（必填） */
-  permissionType: PermissionType;
+  permission_type: PermissionType;
   /** 父级权限ID */
-  parentId?: number | null;
+  parent_id?: number | null;
   /** 权限描述 */
   description?: string;
-  /** 路由地址 */
+  /**
+   * 路径字段（根据权限类型复用）
+   * - folder/menu: 路由路径，如 /system/user
+   * - button: API 路径，如 /api/v1/rbac/users
+   */
   path?: string;
-  /** 组件路径 */
+  /** 组件路径（仅 folder/menu 有效） */
   component?: string;
-  /** 图标 */
+  /** 图标（仅 folder/menu 有效） */
   icon?: string;
+  /** HTTP 方法（仅 button 有效） */
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   /** 排序 */
-  sortOrder?: number;
+  sort_order?: number;
   /** 是否可见 */
   visible?: boolean;
   /** 是否缓存 */
-  keepAlive?: boolean;
+  keep_alive?: boolean;
   /** 状态 */
   status?: Status;
   /** 备注 */
@@ -194,25 +215,31 @@ export interface UpdatePermissionRequest {
   /** 权限ID（必填） */
   id: number;
   /** 权限名称 */
-  permissionName?: string;
+  permission_name?: string;
   /** 权限类型 */
-  permissionType?: PermissionType;
+  permission_type?: PermissionType;
   /** 父级权限ID */
-  parentId?: number | null;
+  parent_id?: number | null;
   /** 权限描述 */
   description?: string;
-  /** 路由地址 */
+  /**
+   * 路径字段（根据权限类型复用）
+   * - folder/menu: 路由路径，如 /system/user
+   * - button: API 路径，如 /api/v1/rbac/users
+   */
   path?: string;
-  /** 组件路径 */
+  /** 组件路径（仅 folder/menu 有效） */
   component?: string;
-  /** 图标 */
+  /** 图标（仅 folder/menu 有效） */
   icon?: string;
+  /** HTTP 方法（仅 button 有效） */
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   /** 排序 */
-  sortOrder?: number;
+  sort_order?: number;
   /** 是否可见 */
   visible?: boolean;
   /** 是否缓存 */
-  keepAlive?: boolean;
+  keep_alive?: boolean;
   /** 状态 */
   status?: Status;
   /** 备注 */

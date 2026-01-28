@@ -5,16 +5,33 @@
     width="800px"
     @close="closeDialog"
   >
+    <DevTools v-if="dialogVisible" v-model="permissionForm" type="permission" :enabled="isDev" />
+
     <el-form :model="permissionForm" :rules="permissionRules" ref="permissionFormRef" label-width="110px">
+      <!-- 父节点选择（仅编辑模式） -->
+      <el-form-item v-if="!isCreate && dialogVisible" label="父节点" prop="parent_id">
+        <el-tree-select
+          v-model="permissionForm.parent_id"
+          :data="parentOptions"
+          :props="{ label: 'permission_name', value: 'id', children: 'children' }"
+          :render-after-expand="false"
+          check-strictly
+          clearable
+          placeholder="可重新选择父节点调整结构"
+          style="width: 100%;"
+        />
+        <div class="form-tip">重新选择父节点可调整权限树结构</div>
+      </el-form-item>
+
       <!-- 权限类型 -->
       <el-form-item label="权限类型" prop="permission_type">
         <el-radio-group v-model="permissionForm.permission_type" @change="handleTypeChange">
           <el-radio value="folder">文件夹</el-radio>
-          <el-radio value="menu">页面</el-radio>
-          <el-radio value="button">按钮</el-radio>
+          <el-radio value="menu">页面菜单</el-radio>
+          <el-radio value="button">操作按钮</el-radio>
         </el-radio-group>
-        <div v-if="parentNode" class="form-tip">
-          父节点：{{ parentNode.permission_name }} ({{ getTypeLabel(parentNode.permission_type) }})
+        <div v-if="parentNode && isCreate" class="form-tip">
+          父节点：{{ parentNode.permission_name }} ({{ getTypeLabel(parentNode.node_type) }})
         </div>
       </el-form-item>
 
@@ -25,13 +42,19 @@
         <el-input v-model="permissionForm.permission_name" placeholder="如：用户管理"></el-input>
       </el-form-item>
 
-      <!-- 路由路径 -->
-      <el-form-item label="路由路径" prop="path">
+      <!-- 路由路径 / API 路径 -->
+      <el-form-item
+        :label="permissionForm.permission_type === 'button' ? 'API 路径' : '路由路径'"
+        prop="path"
+      >
         <el-input
           v-model="permissionForm.path"
-          placeholder="如：/system/user-management"
+          :placeholder="permissionForm.permission_type === 'button' ? '如：/api/v1/rbac/users' : '如：/system/user-management'"
           @input="handlePathInput"
         ></el-input>
+        <div class="form-tip">
+          {{ permissionForm.permission_type === 'button' ? '接口请求路径，用于前端权限校验' : '前端路由路径，如 /system/user' }}
+        </div>
       </el-form-item>
 
       <!-- 权限编码 -->
@@ -46,9 +69,9 @@
         </div>
       </el-form-item>
 
-      <!-- 组件路径 (仅菜单类型) -->
+      <!-- 组件路径 (仅 folder 和 menu 类型) -->
       <el-form-item
-        v-if="permissionForm.permission_type === 'menu'"
+        v-if="permissionForm.permission_type !== 'button'"
         label="组件路径"
         prop="component"
       >
@@ -56,8 +79,12 @@
         <div class="form-tip">支持 @ 别名，相对路径</div>
       </el-form-item>
 
-      <!-- 图标 -->
-      <el-form-item label="图标" prop="icon">
+      <!-- 图标 (仅 folder 和 menu 类型) -->
+      <el-form-item
+        v-if="permissionForm.permission_type !== 'button'"
+        label="图标"
+        prop="icon"
+      >
         <el-input v-model="permissionForm.icon" placeholder="如：User"></el-input>
       </el-form-item>
 
@@ -81,32 +108,28 @@
         ></el-input>
       </el-form-item>
 
-      <!-- API配置 (仅按钮类型) -->
-      <template v-if="permissionForm.permission_type === 'button'">
-        <el-divider content-position="left">API 配置</el-divider>
-
-        <el-form-item label="API 地址" prop="api_path">
-          <el-input v-model="permissionForm.api_path" placeholder="/api/system/user"></el-input>
-          <div class="form-tip">必须以 /api/ 开头</div>
-        </el-form-item>
-
-        <el-form-item label="请求方式" prop="methods">
-          <el-radio-group v-model="permissionForm.methods">
-            <el-radio value="GET">GET</el-radio>
-            <el-radio value="POST">POST</el-radio>
-            <el-radio value="PUT">PUT</el-radio>
-            <el-radio value="PATCH">PATCH</el-radio>
-            <el-radio value="DELETE">DELETE</el-radio>
-          </el-radio-group>
-        </el-form-item>
-      </template>
+      <!-- HTTP 方法 (仅按钮类型) -->
+      <el-form-item
+        v-if="permissionForm.permission_type === 'button'"
+        label="HTTP 方法"
+        prop="method"
+      >
+        <el-select v-model="permissionForm.method" placeholder="请选择请求方法" style="width: 100%;">
+          <el-option label="GET" value="GET" />
+          <el-option label="POST" value="POST" />
+          <el-option label="PUT" value="PUT" />
+          <el-option label="DELETE" value="DELETE" />
+          <el-option label="PATCH" value="PATCH" />
+        </el-select>
+        <div class="form-tip">按钮权限对应的 HTTP 请求方法</div>
+      </el-form-item>
 
       <el-divider content-position="left">显示设置</el-divider>
 
       <!-- 显示选项 -->
       <el-form-item label="显示选项" v-if="permissionForm.permission_type !== 'button'">
         <el-checkbox v-model="permissionForm.visible">在菜单中显示</el-checkbox>
-        <el-checkbox v-if="permissionForm.permission_type === 'menu'" v-model="permissionForm.layout">需要 Layout</el-checkbox>
+        <el-checkbox v-if="permissionForm.permission_type === 'folder'" v-model="permissionForm.layout">需要 Layout</el-checkbox>
       </el-form-item>
 
       <!-- 状态 -->
@@ -128,11 +151,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
-import { ElMessage } from 'element-plus'
+import DevTools from '@/components/common/DevTools.vue'
 import type { PermissionTreeNode, PermissionType } from '@/types/rbac/permission'
+import { PermissionNodeType } from '@/types/rbac/permission'
 
 interface PermissionForm {
-  permission_type: PermissionType
+  permission_type: 'folder' | 'menu' | 'button'
   permission_name: string
   permission_code: string
   path: string
@@ -140,11 +164,10 @@ interface PermissionForm {
   icon?: string
   sort_order: number
   description?: string
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   visible?: boolean
   layout?: boolean
   status: number
-  api_path?: string
-  methods?: string
   parent_id?: number | null
 }
 
@@ -165,7 +188,7 @@ const permissionFormRef = ref<FormInstance>()
 const submitting = ref(false)
 
 const permissionForm = ref<PermissionForm>({
-  permission_type: 'menu',
+  permission_type: 'folder',
   permission_name: '',
   permission_code: '',
   path: '',
@@ -173,11 +196,10 @@ const permissionForm = ref<PermissionForm>({
   icon: '',
   sort_order: 1,
   description: '',
+  method: 'POST',
   visible: true,
   layout: true,
   status: 0,
-  api_path: '',
-  methods: '',
   parent_id: null
 })
 
@@ -193,7 +215,7 @@ const permissionRules: FormRules<PermissionForm> = {
   ],
   path: [
     { required: true, message: '请输入路由路径', trigger: 'blur' },
-    { pattern: /^[a-z0-9/-/]+$/, message: '路由路径只能包含小写字母、数字、斜杠和短横线', trigger: 'blur' }
+    { pattern: /^[a-z0-9/{}-]+$/, message: '路由路径只能包含小写字母、数字、斜杠、短横线和路径参数', trigger: 'blur' }
   ]
 }
 
@@ -205,11 +227,68 @@ const dialogVisible = computed({
 const isCreate = computed(() => props.mode === 'create')
 const parentNode = computed(() => props.parentNode)
 
+// 检测是否为开发环境
+const isDev = computed(() => {
+  return import.meta.env.DEV
+})
+
 const dialogTitle = computed(() => {
   if (isCreate.value) {
-    return parentNode ? `新增子权限 - ${parentNode.permission_name}` : '新增权限'
+    return parentNode.value ? `新增子权限 - ${parentNode.value.permission_name}` : '新增权限'
   }
   return `编辑权限 - ${props.node?.permission_name || ''}`
+})
+
+/**
+ * 获取所有子节点ID（递归）
+ */
+const getAllChildIds = (node: PermissionTreeNode): number[] => {
+  const ids = [node.id]
+  if (node.children && node.children.length > 0) {
+    node.children.forEach(child => {
+      ids.push(...getAllChildIds(child))
+    })
+  }
+  return ids
+}
+
+/**
+ * 父节点选择器选项类型（简化版，只需要显示和选择用）
+ */
+interface ParentOption {
+  id: number
+  permission_name: string
+  children?: ParentOption[]
+}
+
+/**
+ * 过滤父节点选项（排除当前节点及其子节点）
+ */
+const parentOptions = computed((): ParentOption[] => {
+  // 如果没有权限树数据，返回只有根节点选项
+  if (!props.permissionTree || props.permissionTree.length === 0) {
+    return [{ id: -1, permission_name: '（作为根节点）' }]
+  }
+
+  // 获取当前节点的所有子节点ID
+  const excludeIds = props.node ? getAllChildIds(props.node) : []
+
+  // 递归过滤节点
+  const filterTree = (nodes: PermissionTreeNode[]): ParentOption[] => {
+    return nodes
+      .filter(node => !excludeIds.includes(node.id))
+      .map(node => ({
+        id: node.id,
+        permission_name: node.permission_name,
+        children: node.children ? filterTree(node.children) : undefined
+      }))
+  }
+
+  // 添加一个"根节点"选项，使用 -1 作为特殊标识
+  return [
+    { id: -1, permission_name: '（作为根节点）' },
+    ...filterTree(props.permissionTree)
+  ]
 })
 
 watch(() => props.visible, (newVal) => {
@@ -218,22 +297,21 @@ watch(() => props.visible, (newVal) => {
   }
 })
 
-const getTypeLabel = (type: PermissionType) => {
-  const labels: Record<PermissionType, string> = {
+const getTypeLabel = (type: 'folder' | 'menu' | 'button' | PermissionNodeType) => {
+  const labels: Record<string, string> = {
     folder: '文件夹',
-    menu: '页面',
-    button: '按钮',
-    page: '页面'
+    menu: '页面菜单',
+    button: '操作按钮'
   }
-  return labels[type] || type
+  return labels[type as string] || type
 }
 
 const initForm = () => {
   if (isCreate.value) {
-    // 新增模式
+    // 新增模式 - folder > menu > button 三级结构
     permissionForm.value = {
-      permission_type: parentNode?.permission_type === 'folder' ? 'menu'
-                    : parentNode?.permission_type === 'menu' ? 'button'
+      permission_type: parentNode.value?.node_type === 'folder' ? 'menu'
+                    : parentNode.value?.node_type === 'menu' ? 'button'
                     : 'folder',
       permission_name: '',
       permission_code: '',
@@ -242,12 +320,11 @@ const initForm = () => {
       icon: '',
       sort_order: 1,
       description: '',
+      method: 'POST',
       visible: true,
       layout: true,
       status: 0,
-      api_path: '',
-      methods: '',
-      parent_id: parentNode?.id || null
+      parent_id: parentNode.value?.id || null
     }
 
     // 如果有父节点，生成默认的权限码前缀
@@ -255,23 +332,28 @@ const initForm = () => {
       generateCode()
     }
   } else if (props.node) {
-    // 编辑模式
+    // 编辑模式 - 从节点类型映射到表单类型
     const node = props.node
+    const nodeTypeToFormType = (nodeType: PermissionNodeType): 'folder' | 'menu' | 'button' => {
+      if (nodeType === 'folder') return 'folder'
+      if (nodeType === 'menu') return 'menu'
+      return 'button'
+    }
+
     permissionForm.value = {
-      permission_type: node.permissionType || 'menu',
-      permission_name: node.permissionName || '',
-      permission_code: node.permissionCode || '',
+      permission_type: nodeTypeToFormType(node.node_type),
+      permission_name: node.permission_name || '',
+      permission_code: node.permission_code || '',
       path: node.path || '',
       component: node.component || '',
       icon: node.icon || '',
-      sort_order: node.sortOrder || 1,
+      sort_order: node.sort_order || 1,
       description: '', // 后端没有这个字段，留空
+      method: 'POST', // 默认 POST
       visible: node.visible ?? true,
-      layout: node.layout ?? true,
+      layout: true, // 默认值
       status: node.status ?? 0,
-      api_path: '', // 后端可能没有
-      methods: '', // 后端可能没有
-      parent_id: node.parentId || null
+      parent_id: node.parent_id ?? null
     }
   }
 }
@@ -290,7 +372,7 @@ const handlePathInput = () => {
 
 const generateCode = () => {
   let path = permissionForm.value.path
-  const parentCode = parentNode.value?.permissionCode || ''
+  const parentCode = parentNode.value?.permission_code || ''
 
   if (!path && parentNode.value?.path) {
     path = parentNode.value.path
@@ -308,11 +390,11 @@ const generateCode = () => {
       code = code.replace(/\//g, ':').replace(/-/g, '_')
       break
     case 'menu':
-      // 页面：添加 :view 后缀
+      // 页面菜单：添加 :view 后缀
       code = code.replace(/\//g, ':') + ':view'
       break
     case 'button':
-      // 按钮：基于父页面
+      // 操作按钮：基于父页面菜单
       if (parentCode) {
         if (parentCode.endsWith(':view')) {
           code = parentCode.replace(':view', ':create')
@@ -334,7 +416,10 @@ const submitForm = async () => {
 
     submitting.value = true
 
-    // 构建提交数据
+    console.log('[PermissionEditDialog] 表单数据:', permissionForm.value)
+    console.log('[PermissionEditDialog] parent_id:', permissionForm.value.parent_id, typeof permissionForm.value.parent_id)
+
+    // 构建提交数据，使用蛇形命名
     const submitData: Record<string, unknown> = {
       permission_type: permissionForm.value.permission_type,
       permission_name: permissionForm.value.permission_name,
@@ -353,18 +438,19 @@ const submitForm = async () => {
     if (permissionForm.value.icon) {
       submitData.icon = permissionForm.value.icon
     }
-    if (permissionForm.value.parent_id !== null) {
-      submitData.parent_id = permissionForm.value.parent_id
+    // button 类型添加 method 字段
+    if (permissionForm.value.permission_type === 'button' && permissionForm.value.method) {
+      submitData.method = permissionForm.value.method
     }
-    if (permissionForm.value.permission_type === 'button') {
-      if (permissionForm.value.api_path) {
-        submitData.api_path = permissionForm.value.api_path
-      }
-      if (permissionForm.value.methods) {
-        submitData.methods = permissionForm.value.methods
-      }
+    // parent_id 处理：-1 表示根节点（传递 null），其他值正常传递
+    if (permissionForm.value.parent_id !== null && permissionForm.value.parent_id !== undefined) {
+      submitData.parent_id = permissionForm.value.parent_id === -1 ? null : permissionForm.value.parent_id
+      console.log('[PermissionEditDialog] 设置 parent_id:', submitData.parent_id)
+    } else {
+      console.log('[PermissionEditDialog] parent_id 为 null/undefined，不传递')
     }
 
+    console.log('[PermissionEditDialog] 提交数据:', submitData)
     emit('submit', submitData)
   } catch (error) {
     console.error('表单验证失败:', error)

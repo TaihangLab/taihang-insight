@@ -20,7 +20,6 @@
       @status-change="handleStatusChange"
       @page-change="handlePageChange"
       @size-change="handleSizeChange"
-      @export="handleExport"
     />
 
     <!-- 租户编辑表单 -->
@@ -43,12 +42,11 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useTenantData } from './composable/tenant/useTenantData.js'
-import { useTenantExport } from './composable/tenant/useTenantExport.js'
-import TenantSearchBar from './components/tenant/TenantSearchBar.vue'
-import TenantList from './components/tenant/TenantList.vue'
-import DeleteConfirmDialog from './components/tenant/DeleteConfirmDialog.vue'
-import TenantEditForm from './components/tenant/tenantEditForm.vue'
+import { useTenantData } from '@/pages/system/composable/tenant/useTenantData'
+import TenantSearchBar from '@/pages/system/components/tenant/TenantSearchBar.vue'
+import TenantList from '@/pages/system/components/tenant/TenantList.vue'
+import DeleteConfirmDialog from '@/pages/system/components/tenant/DeleteConfirmDialog.vue'
+import TenantEditForm from '@/pages/system/components/tenant/tenantEditForm.vue'
 
 // ============================================
 // Composables
@@ -62,8 +60,6 @@ const {
   deleteTenant,
   batchDeleteTenants
 } = useTenantData()
-
-const { exportTenants } = useTenantExport()
 
 // ============================================
 // 响应式状态
@@ -138,7 +134,7 @@ const buildParams = () => {
  */
 const loadData = async () => {
   try {
-    await fetchTenants(
+    tenants.value = await fetchTenants(
       buildParams(),
       pagination.value.currentPage,
       pagination.value.pageSize
@@ -256,12 +252,9 @@ const handleDeleteConfirm = async () => {
  * 状态切换
  */
 const handleStatusChange = async (row: any) => {
-  // 先备份原始状态
-  const originalStatus = row.status
-  // 立即更新本地状态，提供即时反馈
-  const newStatus = row.status === 0 ? 1 : 0
-  row.status = newStatus
-
+  // v-model 已经自动更新了 row.status，直接使用即可
+  const newStatus = row.status
+  
   try {
     await updateTenant(row.id, { status: newStatus })
     ElMessage({
@@ -271,9 +264,6 @@ const handleStatusChange = async (row: any) => {
     // 成功更新后刷新数据以显示最新状态
     loadData()
   } catch (error: any) {
-    // 如果更新失败，恢复原始状态
-    row.status = originalStatus
-
     // 提取错误消息，优先使用后端返回的具体错误信息
     let errorMessage = '更新租户状态失败'
     if (error.message && !error.message.includes('Network Error')) {
@@ -321,29 +311,10 @@ const handleSizeChange = (size: number) => {
   loadData()
 }
 
-/**
- * 导出
- */
-const handleExport = async () => {
-  const result = await exportTenants({
-    selectedCodes: selectedCodes.value,
-    searchConditions
-  })
-
-  if (result.success) {
-    ElMessage({
-      message: result.message,
-      type: 'success'
-    })
-  } else {
-    ElMessage({
-      message: result.message,
-      type: 'error'
-    })
-  }
-}
 </script>
 
 <style scoped>
-
+.tenant-management-page {
+  padding: var(--design-spacing-md);
+}
 </style>

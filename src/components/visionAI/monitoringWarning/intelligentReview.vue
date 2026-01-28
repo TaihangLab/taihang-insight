@@ -105,7 +105,7 @@
         <el-table-column prop="name" label="任务名称" width="300">
           <template #default="scope">
             <div class="task-name-cell">
-              <el-tag :type="scope.row.task_type === 'ai_task' ? 'primary' : 'success'" size="mini" style="margin-right: 8px;">
+              <el-tag :type="scope.row.task_type === 'ai_task' ? 'primary' : 'success'" size="small" style="margin-right: 8px;">
                 {{ scope.row.task_type === 'ai_task' ? 'AI' : 'LLM' }}
               </el-tag>
               <span class="task-name-text">{{ scope.row.name }}</span>
@@ -216,7 +216,7 @@
             >
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span>{{ skill.skill_name }}</span>
-                <el-tag :type="skill.status ? 'success' : 'info'" size="mini">
+                <el-tag :type="skill.status ? 'success' : 'info'" size="small">
                   {{ skill.status ? '在线' : '离线' }}
                 </el-tag>
               </div>

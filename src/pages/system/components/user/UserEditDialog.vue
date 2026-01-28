@@ -5,23 +5,9 @@
     width="700px"
     @close="closeDialog"
   >
-    <!-- 智能填充助手 -->
-    <SmartFillAssistant
-      currentPage="user"
-      :form-ref="dialogVisible ? { userForm: this.userForm } : null"
-      v-if="dialogVisible"
-    />
-    <!-- 测试填充数据按钮 -->
-    <el-button
-      type="primary"
-      size="small"
-      @click="testSmartFill"
-      style="margin-bottom: 10px;"
-    >
-      测试填充数据
-    </el-button>
+    <DevTools v-if="dialogVisible" v-model="userForm" type="user" :enabled="isDev" />
 
-    <el-form :model="userForm" :rules="userRules" ref="userForm" label-width="80px">
+    <el-form :model="userForm" :rules="userRules" ref="userFormRef" label-width="80px">
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="用户昵称" prop="nick_name" required>
@@ -30,8 +16,13 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="归属部门" prop="dept_id">
-            <!-- DeptTreeSelect 暂时禁用 -->
-            <el-input v-model="userForm.dept_id_text" placeholder="请输入部门ID" type="number"></el-input>
+            <DeptTreeSelect
+              v-model="userForm.dept_id"
+              :tenant-id="userForm.tenant_id || props.tenantId"
+              :status="0"
+              placeholder="选择部门"
+              style="width: 100%;"
+            />
           </el-form-item>
         </el-col>
       </el-row>
@@ -54,12 +45,13 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="用户密码" :prop="currentUser ? '' : 'password'" :required="!currentUser">
+          <el-form-item label="用户密码" :prop="props.currentUser ? '' : 'password'" :required="!props.currentUser">
             <el-input
               v-model="userForm.password"
-              :placeholder="currentUser ? '留空则不修改密码' : '请输入用户密码'"
+              :placeholder="props.currentUser ? '留空则不修改密码' : '请输入用户密码'"
               type="password"
-              show-password>
+              show-password
+            >
             </el-input>
           </el-form-item>
         </el-col>
@@ -77,22 +69,9 @@
         <el-col :span="12">
           <el-form-item label="状态" prop="status">
             <el-radio-group v-model="userForm.status">
-              <el-radio :label="0">正常</el-radio>
-              <el-radio :label="1">停用</el-radio>
+              <el-radio :value="0">正常</el-radio>
+              <el-radio :value="1">停用</el-radio>
             </el-radio-group>
-          </el-form-item>
-        </el-col>
-      </el-row>
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="岗位" prop="position">
-            <el-select v-model="userForm.position" placeholder="请选择" style="width: 100%;">
-              <el-option label="开发工程师" value="developer"></el-option>
-              <el-option label="测试工程师" value="tester"></el-option>
-              <el-option label="产品经理" value="pm"></el-option>
-              <el-option label="UI设计师" value="designer"></el-option>
-              <el-option label="运维工程师" value="ops"></el-option>
-            </el-select>
           </el-form-item>
         </el-col>
       </el-row>
@@ -103,221 +82,190 @@
               v-model="userForm.remark"
               type="textarea"
               :rows="3"
-              placeholder="请输入内容">
+              placeholder="请输入内容"
+            >
             </el-input>
           </el-form-item>
         </el-col>
       </el-row>
     </el-form>
-    <span slot="footer" class="dialog-footer">
-      <el-button @click="cancel">取消</el-button>
-      <el-button type="primary" @click="submitForm">确定</el-button>
-    </span>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="cancel">取消</el-button>
+        <el-button type="primary" @click="submitForm">确定</el-button>
+      </span>
+    </template>
   </el-dialog>
 </template>
 
-<script>
-import { ref } from 'vue'
-import SmartFillAssistant from '@/mock/components/SmartFillAssistant.vue'
+<script setup lang="ts">
+import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
+import DevTools from '@/components/common/DevTools.vue'
+import DeptTreeSelect from '@/pages/system/components/commons/DeptTreeSelect.vue'
+import type { User } from '@/types/rbac/user'
 
-export default {
-  name: 'UserEditDialog',
-  components: {
-    SmartFillAssistant
-  },
-  props: {
-    visible: {
-      type: Boolean,
-      default: false
-    },
-    currentUser: {
-      type: Object,
-      default: null
-    },
-    tenantId: {
-      type: [String, Number],
-      required: true
-    }
-  },
-  data() {
-    return {
-      userForm: {
-        tenant_id: 1, // Default tenant ID
-        user_name: '',
-        nick_name: '',
-        phone: '',
-        email: '',
-        dept_id: null,
-        dept_id_text: '',
-        password: '',
-        gender: null,
-        status: 0,
-        position: '',
-        remark: ''
-      },
-      userRules: {
-        user_name: [
-          { required: true, message: '请输入用户名称', trigger: 'blur' }
-        ],
-        nick_name: [
-          { required: true, message: '请输入用户昵称', trigger: 'blur' }
-        ],
-        phone: [
-          { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
-        ],
-        email: [
-          { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-        ]
-      }
-    }
-  },
-  computed: {
-    dialogVisible: {
-      get() {
-        return this.visible
-      },
-      set(value) {
-        this.$emit('update:visible', value)
-      }
-    },
-    dialogTitle() {
-      return this.currentUser ? '编辑用户' : '新增用户'
-    }
-  },
-  watch: {
-    currentUser: {
-      handler(newVal) {
-        if (newVal) {
-          this.userForm = {
-            ...newVal,
-            tenant_id: newVal.tenant_id || this.tenantId,
-            dept_id: newVal.dept_id || null,
-            dept_id_text: newVal.dept_id ? String(newVal.dept_id) : '',
-            password: '',
-            gender: this.normalizeGenderValue(newVal.gender),
-            position: newVal.position || '',
-            status: newVal.status || 0
-          }
-        } else {
-          this.resetForm()
-        }
-      },
-      immediate: true
-    }
-  },
-  mounted() {
-    // Initialize tenant_id from prop - only if it's a number
-    // Backend expects int or null, not string
-    if (this.tenantId && typeof this.tenantId === 'number' && !this.userForm.tenant_id) {
-      this.userForm.tenant_id = this.tenantId
-    }
-  },
-  methods: {
-    resetForm() {
-      this.userForm = {
-        tenant_id: (typeof this.tenantId === 'number') ? this.tenantId : 1, // Default to tenant 1
-        user_name: '',
-        nick_name: '',
-        phone: '',
-        email: '',
-        dept_id: null,
-        dept_id_text: '',
-        password: '',
-        gender: null,
-        status: 0,
-        position: '',
-        remark: ''
-      }
-    },
-    normalizeGenderValue(gender) {
-      if (typeof gender === 'string') {
-        switch (gender.toLowerCase()) {
-          case 'male':
-          case '男':
-            return 1
-          case 'female':
-          case '女':
-            return 2
-          default:
-            return 0
-        }
-      }
-      if (typeof gender === 'number') {
-        return [0, 1, 2].includes(gender) ? gender : 0
-      }
-      return 0
-    },
-    submitForm() {
-      this.$refs.userForm.validate((valid) => {
-        if (valid) {
-          // Transform data to match backend API
-          const submitData = { ...this.userForm }
-          // Remove dept_id_text (not used by backend)
-          delete submitData.dept_id_text
-          // Remove position field (backend expects position_id which is optional)
-          delete submitData.position
-          // Convert dept_id to number or null
-          if (submitData.dept_id === '') {
-            submitData.dept_id = null
-          } else if (submitData.dept_id !== null) {
-            submitData.dept_id = parseInt(submitData.dept_id) || null
-          }
-          this.$emit('submit', submitData)
-        }
-      })
-    },
-    closeDialog() {
-      this.$emit('update:visible', false)
-      this.$nextTick(() => {
-        if (this.$refs.userForm) {
-          this.$refs.userForm.clearValidate()
-        }
-      })
-    },
-    cancel() {
-      this.closeDialog()
-    },
+interface UserForm {
+  tenant_id: number | null
+  user_name: string
+  nick_name: string
+  phone: string
+  email: string
+  dept_id: number | number[] | null
+  password: string
+  gender: number | null
+  status: number
+  remark: string
+}
 
-    // 测试智能填充功能
-    testSmartFill() {
-      try {
-        // 直接填充测试数据
-        const testData = {
-          tenant_id: 1, // Default tenant ID (required by backend, 0 is invalid)
-          user_name: 'testuser' + Math.floor(Math.random() * 10000),
-          nick_name: '测试用户' + Math.floor(Math.random() * 10000),
-          phone: '138' + Math.floor(100000000 + Math.random() * 900000000).toString().substring(0, 8),
-          email: 'test' + Math.floor(Math.random() * 10000) + '@example.com',
-          dept_id: null,
-          dept_id_text: '',
-          password: 'TestPass123!',
-          gender: [0, 1, 2][Math.floor(Math.random() * 3)],
-          status: Math.round(Math.random()),
-          position: '',
-          remark: '这是测试用户的备注信息'
-        };
+const props = withDefaults(
+  defineProps<{
+    visible: boolean
+    currentUser?: User | null
+    tenantId: string | number | null
+  }>(),
+  {
+    visible: false,
+    currentUser: null,
+    tenantId: null
+  }
+)
 
-        // 将测试数据填充到表单
-        Object.keys(testData).forEach(key => {
-          if (this.userForm.hasOwnProperty(key)) {
-            this.userForm[key] = testData[key];
-          }
-        });
+const emit = defineEmits<{
+  'update:visible': [value: boolean]
+  submit: [data: Partial<User>]
+}>()
 
-        this.$message({
-          message: '智能填充测试成功！已填充测试数据',
-          type: 'success'
-        });
-      } catch (error) {
-        console.error('智能填充测试失败:', error);
-        this.$message({
-          message: '智能填充测试失败: ' + error.message,
-          type: 'error'
-        });
-      }
+const userFormRef = ref<FormInstance>()
+
+const defaultForm: UserForm = {
+  tenant_id: typeof props.tenantId === 'number' ? props.tenantId : null,
+  user_name: '',
+  nick_name: '',
+  phone: '',
+  email: '',
+  dept_id: null,
+  password: '',
+  gender: null,
+  status: 0,
+  remark: ''
+}
+
+const userForm = reactive<UserForm>({ ...defaultForm })
+
+const userRules: FormRules<UserForm> = {
+  user_name: [
+    { required: true, message: '请输入用户名称', trigger: 'blur' }
+  ],
+  nick_name: [
+    { required: true, message: '请输入用户昵称', trigger: 'blur' }
+  ],
+  phone: [
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
+  ],
+  email: [
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+  ]
+}
+
+const dialogVisible = computed({
+  get: () => props.visible,
+  set: (value) => emit('update:visible', value)
+})
+
+const dialogTitle = computed(() => {
+  return props.currentUser ? '编辑用户' : '新增用户'
+})
+
+// 检测是否为开发环境
+const isDev = computed(() => {
+  return import.meta.env.DEV
+})
+
+const normalizeGenderValue = (gender: any): number => {
+  if (typeof gender === 'string') {
+    switch (gender.toLowerCase()) {
+      case 'male':
+      case '男':
+        return 1
+      case 'female':
+      case '女':
+        return 2
+      default:
+        return 0
     }
   }
+  if (typeof gender === 'number') {
+    return [0, 1, 2].includes(gender) ? gender : 0
+  }
+  return 0
 }
+
+const resetForm = () => {
+  Object.assign(userForm, {
+    ...defaultForm,
+    tenant_id: typeof props.tenantId === 'number' ? props.tenantId : null
+  })
+}
+
+const closeDialog = () => {
+  emit('update:visible', false)
+  nextTick(() => {
+    userFormRef.value?.clearValidate()
+  })
+}
+
+const cancel = () => {
+  closeDialog()
+}
+
+const submitForm = async () => {
+  if (!userFormRef.value) return
+
+  try {
+    await userFormRef.value.validate()
+
+    // Transform data to match backend API
+    const submitData: Partial<UserForm> = { ...userForm }
+
+    // 处理 dept_id：级联选择器返回数组，取最后一个元素作为最终选择的部门ID
+    if (Array.isArray(submitData.dept_id)) {
+      if (submitData.dept_id.length > 0) {
+        submitData.dept_id = submitData.dept_id[submitData.dept_id.length - 1]
+      } else {
+        submitData.dept_id = null
+      }
+    } else if (submitData.dept_id === undefined || submitData.dept_id === null) {
+      submitData.dept_id = null
+    } else if (typeof submitData.dept_id === 'string') {
+      submitData.dept_id = submitData.dept_id === '' ? null : (parseInt(submitData.dept_id) || null)
+    }
+
+    emit('submit', submitData as Partial<User>)
+  } catch (error) {
+    console.error('表单验证失败:', error)
+  }
+}
+
+watch(
+  () => props.currentUser,
+  (newVal) => {
+    if (newVal) {
+      Object.assign(userForm, {
+        ...newVal,
+        tenant_id: newVal.tenant_id || props.tenantId,
+        dept_id: newVal.dept_id || null,
+        password: '',
+        gender: normalizeGenderValue(newVal.gender),
+        status: newVal.status || 0
+      })
+    } else {
+      resetForm()
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>

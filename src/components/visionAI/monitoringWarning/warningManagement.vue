@@ -2362,7 +2362,7 @@ export default {
                 <el-checkbox 
                   :value="selectedWarnings.includes(item.id)"
                   @change="toggleSelect(item.id)"
-                  size="mini"
+                  size="small"
                 >
                 </el-checkbox>
               </div>
@@ -2400,7 +2400,7 @@ export default {
                   <div class="item-actions">
                     <!-- 按钮排列顺序与预警详情对话框保持一致：上报、归档、误报、处理 -->
                     <el-button 
-                      size="mini" 
+                      size="small" 
                       class="action-btn report-btn"
                       @click.stop="handleWarning(item.id, 'report')"
                       :disabled="isProcessingDisabled(item)"
@@ -2409,7 +2409,7 @@ export default {
                     </el-button>
                     
                     <el-button 
-                      size="mini" 
+                      size="small" 
                       class="action-btn archive-btn"
                       @click.stop="handleWarning(item.id, 'archive')"
                       :disabled="isArchiveDisabled(item)"
@@ -2418,7 +2418,7 @@ export default {
                     </el-button>
                     
                     <el-button 
-                      size="mini" 
+                      size="small" 
                       class="action-btn false-alarm-btn"
                       @click.stop="handleWarning(item.id, 'falseAlarm')"
                       :disabled="isFalseAlarmDisabled(item)"
@@ -2427,7 +2427,7 @@ export default {
                     </el-button>
                     
                     <el-button 
-                      size="mini" 
+                      size="small" 
                       class="action-btn process-btn"
                       @click.stop="handleWarning(item.id, 'markProcessed')"
                       :disabled="isProcessingDisabled(item)"
@@ -2515,31 +2515,31 @@ export default {
             <template v-if="hasActiveFilters()">
               <el-tag 
                 v-if="searchForm.deviceName" 
-                size="mini" 
+                size="small" 
                 type="info" 
                 style="margin: 2px;"
               >设备: {{ searchForm.deviceName }}</el-tag>
               <el-tag 
                 v-if="searchForm.warningType" 
-                size="mini" 
+                size="small" 
                 type="info" 
                 style="margin: 2px;"
               >类型: {{ searchForm.warningType }}</el-tag>
               <el-tag 
                 v-if="searchForm.warningLevel" 
-                size="mini" 
+                size="small" 
                 type="info" 
                 style="margin: 2px;"
               >等级: {{ searchForm.warningLevel }}</el-tag>
               <el-tag 
                 v-if="searchForm.status" 
-                size="mini" 
+                size="small" 
                 type="info" 
                 style="margin: 2px;"
               >状态: {{ searchForm.status }}</el-tag>
               <el-tag 
                 v-if="searchForm.startDate || searchForm.endDate" 
-                size="mini" 
+                size="small" 
                 type="info" 
                 style="margin: 2px;"
               >时间范围</el-tag>

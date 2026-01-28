@@ -91,9 +91,9 @@
         <el-table-column label="视频信息" min-width="200">
           <template #default="scope">
             <div class="video-info-cell">
-              <el-tag size="mini" type="info">{{ scope.row.width }}x{{ scope.row.height }}</el-tag>
-              <el-tag size="mini" type="info">{{ scope.row.fps.toFixed(1) }} fps</el-tag>
-              <el-tag size="mini" type="info">{{ formatDuration(scope.row.duration) }}</el-tag>
+              <el-tag size="small" type="info">{{ scope.row.width }}x{{ scope.row.height }}</el-tag>
+              <el-tag size="small" type="info">{{ scope.row.fps.toFixed(1) }} fps</el-tag>
+              <el-tag size="small" type="info">{{ formatDuration(scope.row.duration) }}</el-tag>
             </div>
           </template>
         </el-table-column>
@@ -117,7 +117,7 @@
             <div v-if="scope.row.is_streaming && scope.row.rtsp_url" class="rtsp-url-cell">
               <el-input
                 :value="scope.row.rtsp_url"
-                size="mini"
+                size="small"
                 readonly
               >
                 <el-button
@@ -142,7 +142,7 @@
               <el-button
                 v-if="!scope.row.is_streaming"
                 type="success"
-                size="mini"
+                size="small"
                 icon="el-icon-video-play"
                 :loading="streamingOperations.has(scope.row.id)"
                 :disabled="streamingOperations.has(scope.row.id)"
@@ -153,14 +153,14 @@
               <el-button
                 v-else
                 type="warning"
-                size="mini"
+                size="small"
                 icon="el-icon-video-pause"
                 @click="stopStream(scope.row)"
               >
                 停止推流
               </el-button>
               <el-button
-                size="mini"
+                size="small"
                 icon="el-icon-edit"
                 @click="showEditDialog(scope.row)"
               >
@@ -168,7 +168,7 @@
               </el-button>
               <el-button
                 type="danger"
-                size="mini"
+                size="small"
                 icon="el-icon-delete"
                 @click="deleteVideo(scope.row)"
                 :disabled="scope.row.is_streaming"

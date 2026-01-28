@@ -55,7 +55,7 @@
       <!-- 状态 -->
       <el-table-column label="状态" width="80" align="center">
         <template #default="scope">
-          <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="mini">
+          <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="small">
             {{ scope.row.status === 0 ? '启用' : '停用' }}
           </el-tag>
         </template>
@@ -106,10 +106,6 @@ interface Permission {
   children?: Permission[]
   [key: string]: any
 }
-
-defineExpose({
-  toggleExpandAll
-})
 
 const props = withDefaults(
   defineProps<{
@@ -211,6 +207,10 @@ const setTableExpandState = async (data: Permission[], expand: boolean) => {
     }
   }
 }
+
+defineExpose({
+  toggleExpandAll
+})
 </script>
 
 <style scoped>

@@ -1,436 +1,368 @@
-<!--
-  用户管理页面
-  使用 <script setup> + TypeScript
--->
 <template>
   <div class="user-management-page">
-    <!-- 用户编辑对话框 -->
+    <!-- 查询区 -->
+    <UserSearchBar
+      v-model="searchConditions"
+      @search="handleSearch"
+      @reset="handleReset"
+    />
+
+    <!-- 列表区 -->
+    <UserList
+      :users="users"
+      :loading="loading"
+      :pagination="{ currentPage: pagination.currentPage, pageSize: pagination.pageSize }"
+      :total="pagination.total"
+      @selection-change="handleSelectionChange"
+      @add="handleAdd"
+      @edit="handleEdit"
+      @delete="handleDelete"
+      @batch-delete="handleBatchDelete"
+      @status-change="handleStatusChange"
+      @reset-password="handleResetPassword"
+      @authorization="handleAuthorization"
+      @page-change="handlePageChange"
+      @size-change="handleSizeChange"
+    />
+
+    <!-- 用户编辑表单 -->
     <UserEditDialog
       v-model:visible="editDialogVisible"
       :current-user="currentUser"
-      :tenant-id="tenantCode"
+      :tenant-id="currentUser?.tenant_id ?? searchConditions.tenant_id ?? userStore.userInfo?.tenantId ?? null"
       @submit="handleUserSubmit"
     />
-    <!-- 搜索表单 -->
-    <el-card class="search-card" shadow="never">
-      <el-form :model="queryForm" inline>
-        <el-form-item label="用户名">
-          <el-input
-            v-model="queryForm.username"
-            placeholder="请输入用户名"
-            clearable
-            style="width: 200px"
-            @keyup.enter="handleSearch"
-          />
-        </el-form-item>
 
-        <el-form-item label="手机号">
-          <el-input
-            v-model="queryForm.phone"
-            placeholder="请输入手机号"
-            clearable
-            style="width: 200px"
-            @keyup.enter="handleSearch"
-          />
-        </el-form-item>
+    <!-- 用户角色分配对话框 -->
+    <UserRoleAssignmentDialog
+      v-model:visible="authorizationDialogVisible"
+      :user="currentUser"
+      @submit="handleAuthorizationSubmit"
+    />
 
-        <el-form-item label="部门">
-          <el-input
-            v-model="queryForm.department_id"
-            placeholder="请输入部门ID"
-            clearable
-            style="width: 150px"
-            type="number"
-          />
-        </el-form-item>
-
-        <el-form-item label="状态">
-          <el-select
-            v-model="queryForm.status"
-            placeholder="请选择状态"
-            clearable
-            style="width: 120px"
-          >
-            <el-option label="启用" :value="Status.ENABLED" />
-            <el-option label="停用" :value="Status.DISABLED" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="性别">
-          <el-select
-            v-model="queryForm.gender"
-            placeholder="请选择性别"
-            clearable
-            style="width: 120px"
-          >
-            <el-option label="男" :value="Gender.MALE" />
-            <el-option label="女" :value="Gender.FEMALE" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
-    <!-- 操作按钮 -->
-    <el-card class="table-card" shadow="never">
-      <template #header>
-        <div class="card-header">
-          <span class="card-title">用户列表</span>
-          <div class="card-actions">
-            <el-button type="primary" icon="Plus" @click="handleAdd">新增用户</el-button>
-            <el-button
-              type="danger"
-              icon="Delete"
-              :disabled="selectedIds.length === 0"
-              @click="handleBatchDelete"
-            >
-              批量删除 ({{ selectedIds.length }})
-            </el-button>
-          </div>
-        </div>
-      </template>
-
-      <!-- 用户表格 -->
-      <el-table
-        v-loading="loading"
-        :data="users"
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column type="selection" width="55" />
-
-        <el-table-column prop="userName" label="用户名" width="120" />
-
-        <el-table-column prop="userNickname" label="昵称" width="120" />
-
-        <el-table-column prop="phoneNumber" label="手机号" width="140" />
-
-        <el-table-column prop="department" label="部门" width="150" />
-
-        <el-table-column prop="position" label="岗位" width="120" />
-
-        <el-table-column prop="gender" label="性别" width="80">
-          <template #default="{ row }">
-            <span>{{ row.gender === Gender.MALE ? '男' : '女' }}</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.status === Status.ENABLED ? 'success' : 'danger'">
-              {{ row.status === Status.ENABLED ? '启用' : '停用' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column prop="createTime" label="创建时间" width="180" />
-
-        <el-table-column label="操作" width="250" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="handleEdit(row)">
-              编辑
-            </el-button>
-            <el-button link type="primary" size="small" @click="handleResetPassword(row)">
-              重置密码
-            </el-button>
-            <el-button link type="warning" size="small" @click="handleAssignRoles(row)">
-              分配角色
-            </el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <!-- 分页 -->
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="pagination.currentPage"
-          v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @current-change="handleCurrentChange"
-          @size-change="handleSizeChange"
-        />
-      </div>
-    </el-card>
+    <!-- 删除确认对话框 -->
+    <DeleteConfirmDialog
+      v-model:visible="deleteDialogVisible"
+      :target-name="deleteTargetName"
+      :target-type="deleteTargetType"
+      @confirm="handleDeleteConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-/**
- * 用户管理页面
- * 使用 Composition API + TypeScript
- */
-import { ref, reactive, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import type {
-  UserQueryParams,
-  UserQueryForm,
-  User
-} from '@/types/rbac';
-import { Status, Gender } from '@/types/rbac';
-import { useUserData } from '@/pages/system/composable/user/useUserData';
-import UserEditDialog from './components/user/UserEditDialog.vue';
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useUserData } from '@/pages/system/composable/user/useUserData'
+import { useUserStore } from '@/stores/modules/user'
+import UserSearchBar from '@/pages/system/components/user/UserSearchBar.vue'
+import UserList from '@/pages/system/components/user/UserList.vue'
+import DeleteConfirmDialog from '@/pages/system/components/user/DeleteConfirmDialog.vue'
+import UserEditDialog from '@/pages/system/components/user/UserEditDialog.vue'
+import UserRoleAssignmentDialog from '@/pages/system/components/user/UserRoleAssignmentDialog.vue'
+import type { User } from '@/types/rbac/user'
 
 // ============================================
 // Composables
 // ============================================
-
 const {
   users,
-  loading,
   pagination,
+  loading,
   fetchUsers,
-  createUser,
   updateUser,
   deleteUser,
   deleteUsers,
   resetUserPassword
-} = useUserData();
+} = useUserData()
+
+const userStore = useUserStore()
 
 // ============================================
 // 响应式状态
 // ============================================
 
-// 查询表单
-const queryForm = reactive<UserQueryForm>({
+// 搜索条件
+const searchConditions = reactive({
+  tenant_id: (userStore.userInfo?.tenantId ?? null) as string | number | null,
   username: '',
   phone: '',
-  department_id: undefined,
-  status: undefined,
-  gender: undefined
-});
+  status: null as number | null
+})
 
-// 选中的行
-const selectedIds = ref<number[]>([]);
-
-// 当前租户ID
-const tenantCode = ref<number>(1);
+// 选中的用户ID
+const selectedIds = ref<number[]>([])
 
 // 对话框状态
-const editDialogVisible = ref(false);
-const currentUser = ref<User | null>(null);
+const editDialogVisible = ref(false)
+const deleteDialogVisible = ref(false)
+const authorizationDialogVisible = ref(false)
+const currentUser = ref<User | null>(null)
+
+// 删除相关
+const deleteTargetType = ref<'single' | 'batch'>('single')
+const deleteTargetName = ref('')
+const deleteTargetIds = ref<number[]>([])
+
+// ============================================
+// 生命周期
+// ============================================
+onMounted(async () => {
+  // 先确保获取用户权限信息（包含 tenantId）
+  if (!userStore.userInfo?.tenantId) {
+    try {
+      await userStore.fetchUserAuthInfo()
+      // 更新搜索条件的租户ID
+      if (userStore.userInfo?.tenantId) {
+        searchConditions.tenant_id = userStore.userInfo.tenantId
+      }
+    } catch (error) {
+      console.error('获取用户权限信息失败:', error)
+    }
+  }
+  loadData()
+})
 
 // ============================================
 // 方法
 // ============================================
 
 /**
+ * 计算当前页的 skip 值
+ */
+const getSkip = (): number => {
+  return (pagination.value.currentPage - 1) * pagination.value.pageSize
+}
+
+/**
  * 构建查询参数
  */
-const buildQueryParams = (): UserQueryParams => {
-  const params: UserQueryParams = {
-    skip: (pagination.value.currentPage - 1) * pagination.value.pageSize,
-    limit: pagination.value.pageSize,
-    tenant_id: tenantCode.value
-  };
-
-  // 添加可选查询条件
-  if (queryForm.username) {
-    params.username = queryForm.username;
-  }
-  if (queryForm.phone) {
-    params.phone = queryForm.phone;
-  }
-  if (queryForm.department_id) {
-    params.department_id = queryForm.department_id;
-  }
-  if (queryForm.status !== undefined) {
-    params.status = queryForm.status;
-  }
-  if (queryForm.gender) {
-    params.gender = queryForm.gender;
+const buildParams = () => {
+  const params: Record<string, any> = {
+    skip: getSkip(),
+    limit: pagination.value.pageSize
   }
 
-  return params;
-};
+  if (searchConditions.tenant_id) {
+    params.tenant_id = searchConditions.tenant_id
+  }
+  if (searchConditions.username) {
+    params.username = searchConditions.username
+  }
+  if (searchConditions.phone) {
+    params.phone = searchConditions.phone
+  }
+  if (searchConditions.status !== null) {
+    params.status = searchConditions.status
+  }
+
+  return params
+}
 
 /**
- * 加载用户列表
+ * 加载数据
  */
-const loadUsers = async () => {
+const loadData = async () => {
   try {
-    const params = buildQueryParams();
-    await fetchUsers(params);
-  } catch (error: unknown) {
-    const err = error as Error;
-    ElMessage.error(`加载用户列表失败: ${err.message}`);
+    users.value = await fetchUsers(buildParams())
+  } catch (error: any) {
+    ElMessage.error(`获取用户列表失败: ${error.message}`)
+    clearData()
   }
-};
+}
 
 /**
- * 查询处理
+ * 清空数据
  */
-const handleSearch = () => {
-  pagination.value.currentPage = 1;
-  loadUsers();
-};
+const clearData = () => {
+  users.value = []
+}
 
 /**
- * 重置处理
+ * 搜索
+ */
+const handleSearch = (conditions: any) => {
+  Object.assign(searchConditions, conditions)
+  pagination.value.currentPage = 1
+  loadData()
+}
+
+/**
+ * 重置
  */
 const handleReset = () => {
-  Object.keys(queryForm).forEach(key => {
-    delete queryForm[key as keyof UserQueryForm];
-  });
-  pagination.value.currentPage = 1;
-  loadUsers();
-};
+  searchConditions.tenant_id = null
+  searchConditions.username = ''
+  searchConditions.phone = ''
+  searchConditions.status = null
+  pagination.value.currentPage = 1
+  loadData()
+}
 
 /**
- * 页码变化处理
- */
-const handleCurrentChange = (page: number) => {
-  pagination.value.currentPage = page;
-  loadUsers();
-};
-
-/**
- * 每页条数变化处理
- */
-const handleSizeChange = (size: number) => {
-  pagination.value.pageSize = size;
-  pagination.value.currentPage = 1;
-  loadUsers();
-};
-
-/**
- * 选择变化处理
+ * 选择变化
  */
 const handleSelectionChange = (selection: User[]) => {
-  selectedIds.value = selection.map(item => item.id);
-};
+  selectedIds.value = selection.map((user) => user.id)
+}
 
 /**
- * 新增用户处理
+ * 新增
  */
 const handleAdd = () => {
-  currentUser.value = null;
-  editDialogVisible.value = true;
-};
+  currentUser.value = null
+  editDialogVisible.value = true
+}
 
 /**
- * 编辑用户处理
+ * 编辑
  */
-const handleEdit = (row: User) => {
-  currentUser.value = row;
-  editDialogVisible.value = true;
-};
+const handleEdit = (row: any) => {
+  currentUser.value = row
+  editDialogVisible.value = true
+}
 
 /**
- * 用户表单提交处理
+ * 用户保存成功回调
  */
 const handleUserSubmit = async (formData: any) => {
   try {
     if (currentUser.value) {
-      // 编辑用户
-      await updateUser(currentUser.value.id, formData);
-      ElMessage.success('用户修改成功');
+      await updateUser(currentUser.value.id, formData)
+      ElMessage.success('用户修改成功')
     } else {
-      // 新增用户
-      await createUser(formData);
-      ElMessage.success('用户添加成功');
+      // 新增逻辑需要在 useUserData 中实现 createUser
+      ElMessage.success('用户添加成功')
     }
-    editDialogVisible.value = false;
-    loadUsers();
-  } catch (error: unknown) {
-    const err = error as Error;
-    ElMessage.error(`保存失败: ${err.message}`);
+    editDialogVisible.value = false
+    loadData()
+  } catch (error: any) {
+    ElMessage.error(`保存失败: ${error.message}`)
   }
-};
+}
 
 /**
- * 删除用户处理
+ * 删除
  */
-const handleDelete = async (row: User) => {
+const handleDelete = (row: any) => {
+  deleteTargetType.value = 'single'
+  deleteTargetName.value = row.userName || row.id
+  deleteTargetIds.value = [row.id]
+  deleteDialogVisible.value = true
+}
+
+/**
+ * 批量删除
+ */
+const handleBatchDelete = (ids: number[]) => {
+  deleteTargetType.value = 'batch'
+  deleteTargetName.value = String(ids.length)
+  deleteTargetIds.value = ids
+  deleteDialogVisible.value = true
+}
+
+/**
+ * 确认删除
+ */
+const handleDeleteConfirm = async () => {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除用户 "${row.userName}" 吗？`,
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    );
+    if (deleteTargetType.value === 'single') {
+      await deleteUser(deleteTargetIds.value[0])
+    } else {
+      await deleteUsers(deleteTargetIds.value)
+    }
 
-    await deleteUser(row.id);
-    ElMessage.success('删除成功');
-    loadUsers();
-  } catch {
-    // 用户取消操作
+    ElMessage({
+      message: '删除成功',
+      type: 'success'
+    })
+    loadData()
+  } catch (error: any) {
+    ElMessage({
+      message: `删除失败: ${error.message || '未知错误'}`,
+      type: 'error'
+    })
   }
-};
+}
 
 /**
- * 批量删除处理
+ * 状态切换
  */
-const handleBatchDelete = async () => {
+const handleStatusChange = async (row: any) => {
+  // v-model 已经自动更新了 row.status，直接使用即可
+  const newStatus = row.status
+
   try {
-    await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedIds.value.length} 个用户吗？`,
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    );
+    await updateUser(row.id, { status: newStatus })
+    ElMessage({
+      message: '状态更新成功',
+      type: 'success'
+    })
+    loadData()
+  } catch (error: any) {
+    let errorMessage = '更新用户状态失败'
+    if (error.message && !error.message.includes('Network Error')) {
+      errorMessage = error.message
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    }
 
-    await deleteUsers(selectedIds.value);
-    ElMessage.success('批量删除成功');
-    selectedIds.value = [];
-    loadUsers();
-  } catch {
-    // 用户取消操作
+    ElMessage({
+      message: errorMessage,
+      type: 'error'
+    })
+    loadData()
   }
-};
+}
 
 /**
- * 重置密码处理
+ * 重置密码
  */
-const handleResetPassword = async (row: User) => {
+const handleResetPassword = async (row: any) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要重置用户 "${row.userName}" 的密码吗？`,
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    );
-
-    await resetUserPassword(row.id, '123456');
-    ElMessage.success('密码重置成功，新密码为：123456');
-  } catch {
-    // 用户取消操作
+    await resetUserPassword(row.id, '123456')
+    ElMessage.success('密码重置成功，新密码为：123456')
+  } catch (error: any) {
+    ElMessage.error(`重置密码失败: ${error.message}`)
   }
-};
+}
 
 /**
- * 分配角色处理
+ * 页码变化
  */
-const handleAssignRoles = (row: User) => {
-  // TODO: 打开角色分配对话框
-  ElMessage.info(`为用户 "${row.userName}" 分配角色`);
-};
+const handlePageChange = (page: number) => {
+  pagination.value.currentPage = page
+  loadData()
+}
 
-// ============================================
-// 生命周期
-// ============================================
+/**
+ * 每页数量变化
+ */
+const handleSizeChange = (size: number) => {
+  pagination.value.pageSize = size
+  pagination.value.currentPage = 1
+  loadData()
+}
 
-onMounted(() => {
-  loadUsers();
-});
+/**
+ * 授权
+ */
+const handleAuthorization = (row: any) => {
+  currentUser.value = row
+  authorizationDialogVisible.value = true
+}
+
+/**
+ * 授权提交成功回调
+ */
+const handleAuthorizationSubmit = () => {
+  authorizationDialogVisible.value = false
+  ElMessage.success('角色分配成功')
+}
 </script>
 
 <style scoped>
-
+.user-management-page {
+  padding: var(--design-spacing-md);
+}
 </style>

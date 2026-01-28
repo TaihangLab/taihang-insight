@@ -1,41 +1,43 @@
 <template>
   <el-select
-    :value="value"
+    v-if="shouldShow"
+    :model-value="modelValue"
     :placeholder="placeholder"
     :clearable="clearable"
     :style="customStyle"
+    @update:model-value="handleUpdate"
     @change="handleChange"
     @focus="loadTenantsIfNeeded">
     <el-option
       v-for="tenant in tenants"
-      :key="getTenantValue(tenant)"
+      :key="tenant.id"
       :label="tenant.tenant_name"
-      :value="getTenantValue(tenant)">
+      :value="tenant.id">
     </el-option>
   </el-select>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import RBACService from '@/components/service/RBACService'
+import tenantService from '@/api/rbac/tenantService'
+import { useUserStore } from '@/stores/modules/user'
 
 interface Tenant {
-  id?: string | number
-  tenant_code?: string
+  id: number
   tenant_name: string
 }
 
 const props = withDefaults(
   defineProps<{
-    value: string | number | null
+    modelValue: string | number | null
     placeholder?: string
     clearable?: boolean
     customStyle?: Record<string, any>
     autoSelectFirst?: boolean
   }>(),
   {
-    value: null,
+    modelValue: null,
     placeholder: '请选择租户',
     clearable: true,
     customStyle: () => ({ width: '200px' }),
@@ -44,12 +46,21 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  input: [value: string | number]
-  change: [value: string | number]
+  'update:modelValue': [value: string | number | null]
+  change: [value: string | number | null]
 }>()
+
+const userStore = useUserStore()
 
 const tenants = ref<Tenant[]>([])
 const loaded = ref(false)
+
+// 判断是否应该显示租户选择器
+// 有 tenant:list:view 权限的用户（超级管理员）不显示选择器
+// 没有 tenant:list:view 权限的用户（普通租户用户）显示选择器
+const shouldShow = computed(() => {
+  return !userStore.hasPermission('tenant:list:view')
+})
 
 onMounted(async () => {
   await loadTenantsIfNeeded()
@@ -59,29 +70,22 @@ const loadTenants = async () => {
   if (loaded.value) return
 
   try {
-    const response = await RBACService.getTenants()
-    if (response && response.data && Array.isArray(response.data.items)) {
+    const response = await tenantService.getTenants()
+    if (response?.data?.items && Array.isArray(response.data.items)) {
       tenants.value = response.data.items
       loaded.value = true
 
-      if (props.autoSelectFirst && (props.value === null || props.value === undefined || props.value === '') && tenants.value.length > 0) {
-        const firstTenantCode = getTenantValue(tenants.value[0])
-        emit('input', firstTenantCode)
-        emit('change', firstTenantCode)
-      } else if (props.autoSelectFirst && (props.value === null || props.value === undefined || props.value === '') && tenants.value.length === 0) {
-        console.warn('没有可用的租户，请先创建租户')
-        ElMessage({
-          message: '没有可用的租户，请先创建租户',
-          type: 'warning'
-        })
+      if (props.autoSelectFirst && !props.modelValue && tenants.value.length > 0) {
+        const firstTenantId = tenants.value[0].id
+        emit('update:modelValue', firstTenantId)
+        emit('change', firstTenantId)
+      } else if (props.autoSelectFirst && !props.modelValue && tenants.value.length === 0) {
+        ElMessage.warning('没有可用的租户，请先创建租户')
       }
     }
   } catch (error: any) {
     console.error('获取租户列表失败:', error)
-    ElMessage({
-      message: error.message || '获取租户列表失败',
-      type: 'error'
-    })
+    ElMessage.error(error.message || '获取租户列表失败')
   }
 }
 
@@ -91,20 +95,20 @@ const loadTenantsIfNeeded = async () => {
   }
 }
 
-const handleChange = (value: string | number) => {
-  emit('input', value)
+const handleUpdate = (value: string | number | null) => {
+  emit('update:modelValue', value)
+}
+
+const handleChange = (value: string | number | null) => {
+  emit('update:modelValue', value)
   emit('change', value)
 }
 
-const getTenantValue = (tenant: Tenant) => {
-  return tenant.id !== undefined ? tenant.id : (tenant.tenant_code || '')
-}
-
 watch(
-  () => props.value,
+  () => props.modelValue,
   (newValue) => {
-    if (loaded.value && newValue && !tenants.value.some((t) => getTenantValue(t) === newValue)) {
-      console.warn(`租户代码 "${newValue}" 不存在于租户列表中`)
+    if (loaded.value && newValue && !tenants.value.some((t) => t.id === newValue)) {
+      console.warn(`租户ID "${newValue}" 不存在于租户列表中`)
     }
   },
   { immediate: true }

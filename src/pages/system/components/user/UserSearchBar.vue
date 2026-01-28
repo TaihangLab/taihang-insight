@@ -1,6 +1,6 @@
 <template>
   <div class="user-search-bar">
-    <el-form :inline="true" :model="formValue" class="search-form">
+    <el-form :inline="true" :model="formValue" @submit.native.prevent="handleSearch">
       <el-form-item label="租户">
         <TenantSelector
           ref="tenantSelectorRef"
@@ -8,150 +8,173 @@
           @change="handleTenantChange"
         />
       </el-form-item>
-      <el-form-item label="用户名称">
+      <el-form-item label="用户名">
         <el-input
-          v-model="formValue.user_name"
-          placeholder="请输入用户名称"
+          v-model="formValue.username"
+          placeholder="请输入用户名"
           clearable
-          style="width: 200px;"
+          @clear="handleSearch"
         ></el-input>
       </el-form-item>
-      <el-form-item label="用户昵称">
-        <el-input
-          v-model="formValue.nick_name"
-          placeholder="请输入用户昵称"
-          clearable
-          style="width: 200px;"
-        ></el-input>
-      </el-form-item>
-      <el-form-item label="手机号码">
+      <el-form-item label="手机号">
         <el-input
           v-model="formValue.phone"
-          placeholder="请输入手机号码"
+          placeholder="请输入手机号"
           clearable
-          style="width: 200px;"
+          @clear="handleSearch"
         ></el-input>
       </el-form-item>
       <el-form-item label="状态">
-        <el-select v-model="formValue.status" placeholder="用户状态" clearable style="width: 120px;">
+        <el-select
+          v-model="formValue.status"
+          placeholder="请选择状态"
+          clearable
+          @clear="handleSearch"
+          style="width: 120px"
+        >
           <el-option label="启用" :value="0"></el-option>
-          <el-option label="禁用" :value="1"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="部门">
-        <DeptTreeSelect
-          v-model="formValue.dept_id"
-          :tenant-id="formValue.tenant_id"
-          :status="0"
-          placeholder="选择部门"
-          custom-style="width: 200px;"
-        />
-      </el-form-item>
-      <el-form-item label="性别">
-        <el-select v-model="formValue.gender" placeholder="选择性别" clearable style="width: 100px;">
-          <el-option label="未知" :value="0"></el-option>
-          <el-option label="男" :value="1"></el-option>
-          <el-option label="女" :value="2"></el-option>
+          <el-option label="停用" :value="1"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" data-testid="btn-search" @click="handleSearch">搜索</el-button>
-        <el-button icon="el-icon-refresh" data-testid="btn-reset" @click="handleReset">重置</el-button>
+        <el-button type="primary" data-testid="btn-search" @click="handleSearch">搜索</el-button>
+        <el-button data-testid="btn-reset" @click="handleReset">重置</el-button>
       </el-form-item>
     </el-form>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, ref } from 'vue'
+import { ref, watch, onScopeDispose } from 'vue'
 import TenantSelector from '@/pages/system/components/commons/TenantSelector.vue'
-import DeptTreeSelect from '@/pages/system/components/commons/DeptTreeSelect.vue'
 
 interface SearchValue {
   tenant_id: string | number | null
-  user_name: string
-  nick_name: string
+  username: string
   phone: string
   status: number | null
-  dept_id: any
-  position?: string
-  gender: number | null
 }
 
-const props = withDefaults(
-  defineProps<{
-    value: SearchValue
-  }>(),
-  {
-    value: () => ({
-      tenant_id: null,
-      user_name: '',
-      nick_name: '',
-      phone: '',
-      status: null,
-      dept_id: [],
-      gender: null
-    })
-  }
-)
+const props = defineProps<{
+  modelValue: SearchValue
+}>()
 
 const emit = defineEmits<{
+  'update:modelValue': [value: SearchValue]
   search: [value: SearchValue]
-  reset: [value: SearchValue]
-  input: [value: SearchValue]
+  reset: []
   tenantChange: []
 }>()
 
 const tenantSelectorRef = ref()
-const formValue = reactive<SearchValue>({ ...props.value })
 
-watch(
-  () => props.value,
+// 使用 ref 替代 reactive，避免潜在的响应式问题
+const formValue = ref<SearchValue>({ ...props.modelValue })
+
+// 使用 watch 并添加清理逻辑
+const stopWatch = watch(
+  () => props.modelValue,
   (newVal) => {
-    console.log('value change', newVal)
-    Object.assign(formValue, newVal)
+    if (newVal) {
+      Object.assign(formValue.value, newVal)
+    }
   },
   { deep: true }
 )
 
+// 组件卸载时停止监听
+onScopeDispose(() => {
+  stopWatch()
+})
+
 const handleSearch = () => {
-  emit('search', formValue)
+  emit('update:modelValue', { ...formValue.value })
+  emit('search', formValue.value)
 }
 
 const handleReset = () => {
-  const currentTenantCode = formValue.tenant_id
-  Object.assign(formValue, {
-    tenant_id: currentTenantCode || null,
-    user_name: '',
-    nick_name: '',
+  const currentTenantId = formValue.value.tenant_id
+  Object.assign(formValue.value, {
+    tenant_id: currentTenantId || null,
+    username: '',
     phone: '',
-    status: null,
-    dept_id: [],
-    position: '',
-    gender: null
+    status: null
   })
-  emit('reset', formValue)
+  emit('update:modelValue', { ...formValue.value })
+  emit('reset')
 }
 
 const handleTenantChange = () => {
-  emit('input', formValue)
+  emit('update:modelValue', { ...formValue.value })
   emit('tenantChange')
 }
 </script>
 
 <style scoped>
 .user-search-bar {
-  margin-bottom: 20px;
+  padding: var(--design-spacing-md) var(--design-spacing-lg);
+  background: var(--design-bg-primary);
+  border-radius: var(--design-radius-lg);
+  border: 1px solid var(--design-border-color);
+  box-shadow: var(--design-shadow-sm);
+  margin-bottom: var(--design-spacing-md);
 }
 
-.search-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.user-search-bar .el-form-item {
+  margin-bottom: 0;
+  margin-right: var(--design-spacing-md);
 }
 
-.search-form .el-form-item {
-  margin-bottom: 10px;
-  margin-right: 10px;
+.user-search-bar .el-form-item__label {
+  color: var(--design-text-primary);
+  font-weight: var(--design-font-weight-medium);
+  font-size: var(--design-font-size-sm);
+}
+
+.user-search-bar :deep(.el-input__wrapper) {
+  border-radius: var(--design-radius-md);
+  transition: all var(--design-transition-base);
+}
+
+.user-search-bar :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--design-primary-color) inset;
+}
+
+.user-search-bar :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px var(--design-primary-color) inset;
+}
+
+.user-search-bar :deep(.el-select .el-input__wrapper) {
+  width: 140px;
+}
+
+.user-search-bar :deep(.el-button) {
+  border-radius: var(--design-radius-md);
+  font-weight: var(--design-font-weight-medium);
+  padding: 8px 20px;
+  transition: all var(--design-transition-base);
+}
+
+.user-search-bar :deep(.el-button--primary) {
+  background: var(--design-gradient-primary);
+  border: none;
+  box-shadow: var(--design-shadow-primary);
+}
+
+.user-search-bar :deep(.el-button--primary:hover) {
+  background: linear-gradient(135deg, var(--design-primary-hover) 0%, #1a45c9 100%);
+  box-shadow: var(--design-shadow-primary-hover);
+  transform: translateY(-1px);
+}
+
+.user-search-bar :deep(.el-button--default) {
+  border-color: var(--design-border-color);
+  color: var(--design-text-primary);
+}
+
+.user-search-bar :deep(.el-button--default:hover) {
+  border-color: var(--design-primary-color);
+  color: var(--design-primary-color);
+  background-color: var(--design-primary-light);
 }
 </style>

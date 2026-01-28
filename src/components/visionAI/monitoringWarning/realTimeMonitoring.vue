@@ -88,7 +88,7 @@
                            class="ai-task-selector">
                         <el-select 
                           v-model="selectedAITasks[index-1]" 
-                          size="mini" 
+                          size="small" 
                           placeholder="选择AI任务"
                           @change="onTaskSelectionChange(index-1)"
                           clearable>
@@ -174,7 +174,7 @@
                            class="ai-task-selector">
                         <el-select 
                           v-model="selectedAITasks[index-1]" 
-                          size="mini" 
+                          size="small" 
                           placeholder="选择AI任务"
                           @change="onTaskSelectionChange(index-1)"
                           clearable>
@@ -286,10 +286,10 @@
               </div>
             </div>
             <div class="warning-actions">
-              <el-button size="mini" plain class="report-btn" @click="viewWarningDetail(warning)">查看详情</el-button>
+              <el-button size="small" plain class="report-btn" @click="viewWarningDetail(warning)">查看详情</el-button>
               <!-- 处理按钮根据状态禁用，使用与上报按钮相同的样式 -->
               <el-button
-                size="mini"
+                size="small"
                 plain
                 class="process-btn"
                 :disabled="isProcessingDisabled(warning)"

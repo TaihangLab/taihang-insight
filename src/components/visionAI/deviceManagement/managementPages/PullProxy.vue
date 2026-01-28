@@ -209,11 +209,11 @@
           <el-table-column label="操作" width="350" fixed="right" align="center">
             <template #default="{ row }">
               <div class="operation-buttons">
-                <el-button size="mini" :loading="row.playLoading" icon="el-icon-video-play" type="primary" @click="play(row)">播放</el-button>
-                <el-button size="mini" icon="el-icon-switch-button" type="danger" v-if="row.pulling" @click="stopPlay(row)">停止</el-button>
-                <el-button size="mini" icon="el-icon-edit" type="warning" @click="edit(row)">编辑</el-button>
-                <el-button size="mini" icon="el-icon-cloudy" type="info" @click="queryCloudRecords(row)">云端录像</el-button>
-                <el-button size="mini" icon="el-icon-delete" type="danger" @click="deleteStreamProxy(row)">删除</el-button>
+                <el-button size="small" :loading="row.playLoading" icon="el-icon-video-play" type="primary" @click="play(row)">播放</el-button>
+                <el-button size="small" icon="el-icon-switch-button" type="danger" v-if="row.pulling" @click="stopPlay(row)">停止</el-button>
+                <el-button size="small" icon="el-icon-edit" type="warning" @click="edit(row)">编辑</el-button>
+                <el-button size="small" icon="el-icon-cloudy" type="info" @click="queryCloudRecords(row)">云端录像</el-button>
+                <el-button size="small" icon="el-icon-delete" type="danger" @click="deleteStreamProxy(row)">删除</el-button>
               </div>
             </template>
           </el-table-column>
@@ -255,9 +255,9 @@
           </div>
           
           <div class="proxy-card-actions">
-            <el-button size="mini" :loading="proxy.playLoading" icon="el-icon-video-play" type="primary" @click="play(proxy)">播放</el-button>
-            <el-button size="mini" icon="el-icon-edit" type="warning" @click="edit(proxy)">编辑</el-button>
-            <el-button size="mini" icon="el-icon-delete" type="danger" @click="deleteStreamProxy(proxy)">删除</el-button>
+            <el-button size="small" :loading="proxy.playLoading" icon="el-icon-video-play" type="primary" @click="play(proxy)">播放</el-button>
+            <el-button size="small" icon="el-icon-edit" type="warning" @click="edit(proxy)">编辑</el-button>
+            <el-button size="small" icon="el-icon-delete" type="danger" @click="deleteStreamProxy(proxy)">删除</el-button>
           </div>
         </el-card>
       </div>
