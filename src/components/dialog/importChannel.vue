@@ -34,7 +34,7 @@
 
 import ShowErrorData from './importChannelShowErrorData.vue'
 
-import userService from "../service/UserService";
+import { storage } from '@/stores/modules/storage'
 
 export default {
   name: "importChannel",
@@ -51,7 +51,7 @@ export default {
       errorStreams: [],
       errorGBIds: [],
       headers: {
-        "access-token": userService.getToken()
+        "access-token": storage.getWvpToken()
       },
       uploadUrl: import.meta.env.MODE === 'development'? `/debug/api/push/upload`: (window.baseUrl ? window.baseUrl : "") + `/api/push/upload`,
     };

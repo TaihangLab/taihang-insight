@@ -1,10 +1,9 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { type UnifiedResponse } from './base'
 /**
  * 设备统计管理 API
  * 提供设备状态统计和设备树结构
  */
-
-import { AxiosResponse } from 'axios'
-import { type UnifiedResponse, UnifiedResponse } from './base'
 
 /**
  * 设备状态统计

@@ -1,11 +1,10 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { type UnifiedResponse, PageParams } from './base'
 /**
  * Chat Assistant API
  *
  * 智能助手相关API接口
  */
-
-import visionAIAxios from './base'
-import type { UnifiedResponse, PageParams } from './types'
 
 /**
  * 聊天消息数据

@@ -11,8 +11,6 @@ import permission from './permission'
 export function setupDirectives(app: App) {
   // 注册权限指令
   app.directive('permission', permission)
-
-  console.log('✅ 自定义指令注册完成')
 }
 
 // 导出单个指令（按需导入）

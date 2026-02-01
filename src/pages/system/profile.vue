@@ -120,7 +120,7 @@
 
 <script>
 import userService from '@/api/system/userService'
-import localUserService from '@/components/service/UserService'
+import { storage } from '@/stores/modules/storage'
 
 export default {
   name: 'Profile',
@@ -149,7 +149,7 @@ export default {
     async loadUserInfo() {
       try {
         // 从userService获取当前用户信息
-        const currentUser = localUserService.getUser();
+        const currentUser = storage.getWvpUser();
         if (currentUser) {
           this.userInfo.user_name = currentUser.user_name || currentUser.user_code;
           this.userInfo.tenant_id = currentUser.tenant_id;

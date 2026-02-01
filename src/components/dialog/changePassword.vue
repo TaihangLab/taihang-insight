@@ -35,7 +35,7 @@
 
 <script>
 import crypto from 'crypto'
-import userService from "../service/UserService";
+import { storage, StorageKey } from '@/stores/modules/storage'
 import { changePassword } from '@/api/dialog'
 
 export default {
@@ -103,7 +103,9 @@ export default {
           });
           this.showDialog = false;
           setTimeout(()=>{
-            userService.clearToken();
+            storage.remove(StorageKey.ADMIN_TOKEN)
+storage.remove(StorageKey.WVP_TOKEN)
+storage.remove(StorageKey.WVP_USER)
             this.$router.push('/login');
             this.sseSource.close();
           },800)

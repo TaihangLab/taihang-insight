@@ -1,10 +1,9 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { type UnifiedResponse } from './base'
 /**
  * 实时检测管理 API
  * 提供 OSD 检测框叠加功能
  */
-
-import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse, UnifiedResponse } from './base'
 
 /**
  * AI 任务信息

@@ -15,24 +15,27 @@ import './styles/theme.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import ElementPlus, { ElNotification } from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import dataV from 'data-view-vue3'
 // import Contextmenu from 'vue-contextmenujs' // 暂时注释 - Vue 3 不兼容
 import App from './App.vue'
 import router from './router'
-import FpJS from '@fingerprintjs/fingerprintjs'
 import axios from 'axios'
-
-// 【已替换】FontAwesome 已替换为 UnoCSS Carbon 图标
 
 // 导入配置
 const config = {
-  API_BASE_URL: 'http://172.16.201.80/prod-api/smart-engine'
+  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://172.16.201.80/prod-api/smart-engine'
 }
 
 // Axios 配置
-axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp'
+// 如果API_BASE_URL已经包含了路径，则不重复添加
+if (!config.API_BASE_URL.includes('/api/v1/wvp')) {
+  axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp'
+} else {
+  axios.defaults.baseURL = config.API_BASE_URL
+}
 axios.defaults.withCredentials = false
 
 // 创建应用实例
@@ -45,16 +48,12 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 // 使用插件
 const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate)
 app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
 app.use(dataV)
 // app.use(Contextmenu) // 暂时注释 - vue-contextmenujs 不兼容 Vue 3，待后续使用 UnoCSS 重写
-
-// 初始化 User Store（从 localStorage 恢复状态）
-import { useUserStore } from '@/stores/modules/user'
-const userStore = useUserStore()
-userStore.initFromCache()
 
 // 注册自定义指令
 import { setupDirectives } from '@/directives'
@@ -70,83 +69,51 @@ app.config.globalProperties.$channelTypeList = {
   3: { id: 3, name: '拉流代理', style: { color: '#e6a23c', borderColor: '#f5dab1' } }
 }
 
-// 生成备用ID
-function generateFallbackId() {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36)
+// ========== 用户态同步初始化 ==========
+// 【关键】用户态是强诉求，必须在应用挂载前完成初始化
+// Pinia 持久化插件会自动从 localStorage 恢复基本数据
+// 但我们需要验证数据完整性，如果数据不完整则同步等待恢复完成
+
+import { useUserStore } from '@/stores/modules/user'
+const userStore = useUserStore()
+
+// 从 localStorage 检查持久化状态
+const persistedAuth = localStorage.getItem('taihang-auth')
+if (persistedAuth) {
+  try {
+    const authData = JSON.parse(persistedAuth)
+    // 【关键】如果 token 存在但数据不完整，需要从后端同步恢复
+    // 这必须在应用挂载前完成，因为用户态是强诉求
+    if (authData.token && (!authData.userInfo || !authData.permissions?.length || !authData.menuTree?.length)) {
+      console.log('⚠️ 检测到数据不完整，开始从后端同步...')
+
+      // 同步等待恢复完成（用户态强诉求）
+      // 注意：这里使用 await 会阻塞应用挂载，但这是预期的行为
+      // 因为我们需要确保用户态数据完整后再渲染应用
+      const restoreResult = await userStore.initFromCache({ force: true })
+
+      if (!restoreResult.success) {
+        console.warn('⚠️ 数据恢复失败，token 可能已过期')
+        // 不自动清除 token，让用户在访问时通过 401 错误处理
+      } else {
+        console.log('✅ 用户态数据初始化完成:', {
+          userInfo: restoreResult.userInfo,
+          permissions: restoreResult.permissions,
+          menuTree: restoreResult.menuTree
+        })
+      }
+    } else if (authData.token) {
+      console.log('✅ 用户态数据完整，无需同步')
+    } else {
+      console.log('ℹ️ 无 token，跳过初始化')
+    }
+  } catch (e) {
+    console.warn('⚠️ 解析持久化数据失败:', e)
+  }
+} else {
+  console.log('ℹ️ 无持久化认证数据')
 }
 
-// 【性能优化】立即挂载应用，后台异步初始化
+// 【关键】挂载应用
+// 此时用户态数据已完整初始化，路由守卫和组件可以安全访问
 app.mount('#app')
-
-// 后台异步初始化 - 不阻塞应用挂载
-queueMicrotask(async () => {
-  // 1. 异步生成浏览器指纹
-  try {
-    const fp = await FpJS.load()
-    const result = await fp.get()
-    const visitorId = result.visitorId
-    app.config.globalProperties.$browserId = visitorId
-    console.log('✅ 浏览器 ID:', visitorId)
-  } catch (error) {
-    console.warn('⚠️ 生成浏览器指纹失败，使用备用ID')
-    app.config.globalProperties.$browserId = generateFallbackId()
-  }
-
-  // 2. 异步获取服务ID
-  try {
-    const res = await axios({
-      method: 'get',
-      url: config.API_BASE_URL + '/api/v1/server/system/configInfo'
-    })
-    if (res.data.code === 0) {
-      console.log('✅ 当前服务ID:', res.data.data.addOn.serverId)
-      app.config.globalProperties.$myServerId = res.data.data.addOn.serverId
-    }
-  } catch (error) {
-    console.warn('⚠️ 获取服务ID失败（非关键错误）')
-  }
-
-  // 3. 同步权限和菜单数据（如果已登录但缓存为空）
-  try {
-    const token = localStorage.getItem('token')
-    // 直接检查 token 而不是 isLoggedIn，因为响应式更新可能还没完成
-    if (token) {
-      // 检查缓存是否存在
-      const cachedPermissions = localStorage.getItem('auth_permissions')
-      const cachedMenu = localStorage.getItem('auth_menu')
-
-      // 如果缓存为空，从后端同步获取
-      if (!cachedPermissions || !cachedMenu) {
-        console.log('🔄 本地缓存为空，从后端同步权限和菜单数据...')
-
-        // 导入 auth 模块
-        const { getPermissions, getMenuTree } = await import('@/api/auth')
-
-        // 并行获取权限和菜单
-        const [perms, menu] = await Promise.all([
-          getPermissions(true),
-          getMenuTree(true)
-        ])
-
-        // 存储到 localStorage
-        if (perms && perms.length > 0) {
-          localStorage.setItem('auth_permissions', JSON.stringify(perms))
-          localStorage.setItem('auth_permissions_timestamp', Date.now().toString())
-        }
-        if (menu && menu.length > 0) {
-          localStorage.setItem('auth_menu', JSON.stringify(menu))
-          localStorage.setItem('auth_menu_timestamp', Date.now().toString())
-        }
-
-        // 重新初始化 userStore 以加载新数据
-        // @ts-ignore - 忽略类型错误，运行时存在
-        userStore.initFromCache()
-        console.log('✅ 权限和菜单数据已同步')
-      } else {
-        console.log('✅ 使用本地缓存的权限和菜单数据')
-      }
-    }
-  } catch (error) {
-    console.error('⚠️ 同步权限和菜单数据失败:', error)
-  }
-})

@@ -1,10 +1,9 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { type UnifiedResponse, PageParams } from './base'
 /**
  * 任务复判管理 API
  * 提供任务复判配置的管理功能
  */
-
-import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse, UnifiedResponse } from './base'
 
 /**
  * 任务复判配置

@@ -1,12 +1,10 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { handleSimpleResponse, type UnifiedResponse, PageParams } from './base'
+import type { ReviewSkill, CreateReviewSkillRequest, UpdateReviewSkillRequest, PreviewTestResponse } from './types'
 /**
  * 复判技能管理 API
  * 提供多模态复判技能的增删改查操作
  */
-
-import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse, UnifiedResponse } from './base'
-import type { ReviewSkill, CreateReviewSkillRequest, UpdateReviewSkillRequest, PreviewTestResponse } from './base'
-import type { PageParams } from './base'
 
 /**
  * 复判技能查询参数

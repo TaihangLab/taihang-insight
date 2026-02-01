@@ -12,14 +12,23 @@ export interface LoginRequest {
 }
 
 /**
- * 用户信息
+ * 用户信息（Store版本）
  */
 export interface UserInfo {
-  id: number
+  id: number | string
   username: string
-  user_name: string
-  tenant_id?: number
-  [key: string]: any
+  user_name?: string
+  nick_name?: string
+  email?: string
+  phone?: string
+  avatar?: string
+  role?: string
+  tenantId?: string | number
+  tenant_id?: string | number
+  dept_id?: number
+  position_id?: number
+  status?: number
+  gender?: number
 }
 
 /**
@@ -65,8 +74,9 @@ export interface AuthInfoResponse {
  * 权限码响应
  */
 export interface AuthPermissionsResponse {
-  permissions: string[]
-  total?: number
+  permission_codes: string[]
+  user_id: number
+  user_name: string
 }
 
 /**

@@ -39,9 +39,8 @@ import alertForwardAPI from './alertForward'
 import chatAssistantAPI from './chatAssistant'
 
 // 导出基础配置
-export { default as visionAIAxios } from './base'
-export { handleSimpleResponse } from './base'
-export type { UnifiedResponse, PageParams, APIError } from './base'
+export { default as visionAIAxios, handleSimpleResponse } from './base'
+export type { APIError } from './base'
 
 /**
  * VisionAI Center API 统一接口

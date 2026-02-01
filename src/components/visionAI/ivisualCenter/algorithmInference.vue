@@ -509,8 +509,71 @@ async function loadAllData(): Promise<void> {
     loadResourceData(),
     loadDeviceStatistics(),
     loadAlertTrendData(),
-    loadForwardData()
+    loadForwardData(),
+    loadAlertStatistics(),  // 加载报警统计
+    loadLatestEvent()       // 加载最新事件
   ]);
+}
+
+/**
+ * 加载报警统计数据（圆环图）
+ */
+async function loadAlertStatistics(): Promise<void> {
+  try {
+    const response = await centerAPI.alertStatistics.getByType('day');
+    if (response.data?.code === 0 && response.data?.data) {
+      const stats = response.data.data;
+      // 更新报警统计数据
+      alarmSections.value = stats.slice(0, 4).map((item: any) => ({
+        name: item.name,
+        value: item.count || item.value || 0
+      }));
+      alarmLegends.value = stats.slice(0, 4).map((item: any) => ({
+        name: item.name
+      }));
+    }
+  } catch (error) {
+    console.error('加载报警统计失败:', error);
+    // 保留默认值作为后备
+  }
+}
+
+/**
+ * 加载最新事件
+ */
+async function loadLatestEvent(): Promise<void> {
+  try {
+    const response = await centerAPI.alertStatistics.getLatestImages(1);
+    if (response.data?.code === 0 && response.data?.data && response.data.data.length > 0) {
+      const alert = response.data.data[0];
+      latestEvent.value = {
+        time: alert.alert_time || new Date().toLocaleString('zh-CN'),
+        location: alert.camera_name || alert.location || '未知位置',
+        event: alert.alert_type || '未知事件'
+      };
+    }
+  } catch (error) {
+    console.error('加载最新事件失败:', error);
+    // 保留默认值作为后备
+  }
+}
+
+/**
+ * 加载位置信息（从统计中获取第一个位置）
+ */
+async function loadLocationInfo(): Promise<void> {
+  try {
+    const response = await centerAPI.alertStatistics.getByLocation('day', 1);
+    if (response.data?.code === 0 && response.data?.data && response.data.data.length > 0) {
+      const location = response.data.data[0].name;
+      // 提取纯位置名称（去掉摄像头前缀）
+      const locationName = location.replace(/^摄像头\d+-/, '');
+      locationInfo.location = locationName;
+    }
+  } catch (error) {
+    console.error('加载位置信息失败:', error);
+    // 保留默认值
+  }
 }
 
 /**
@@ -659,6 +722,9 @@ onMounted(() => {
 
   // 加载数据
   loadAllData();
+
+  // 加载位置信息
+  loadLocationInfo();
 
   // 定时刷新资源数据
   resourceRefreshTimer = window.setInterval(loadResourceData, 5000);

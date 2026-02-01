@@ -4,30 +4,42 @@
  */
 
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
-import userService from '@/components/service/UserService'
-import type { UnifiedResponse, PageParams, PaginatedResponse } from './types'
+import { storage } from '@/stores/modules/storage'
 
-// 重新导出类型，方便其他文件使用
-export type { UnifiedResponse, PageParams, PaginatedResponse }
+/**
+ * 统一响应格式
+ */
+export interface UnifiedResponse<T = any> {
+  code: number
+  msg: string
+  data: T
+  total?: number
+  page?: number
+  limit?: number
+  pages?: number
+  pagination?: any
+}
 
+/**
+ * 分页参数
+ */
+export interface PageParams {
+  page?: number
+  limit?: number
+}
 
 // 获取 API 基础 URL
-// 开发环境为空（路径中包含 /api/v1 前缀，由 vite 代理转发）
-// 生产环境使用环境变量配置的完整 URL
 const getApiBaseURL = () => {
-  // 生产环境使用完整 URL，开发环境为空
   if (import.meta.env.MODE === 'production') {
     return import.meta.env.VITE_API_BASE_URL || ''
   }
   return ''
 }
+
 /**
  * 创建专用于 VisionAI 模块的 axios 实例
- * 开发环境使用 Vite proxy，生产环境使用完整 URL
  */
 const visionAIAxios: AxiosInstance = axios.create({
-  // 开发环境：使用 /api/v1，由 Vite proxy 转发
-  // 生产环境：从环境变量获取完整 URL
   baseURL: getApiBaseURL(),
   timeout: 15000,
   withCredentials: false
@@ -35,7 +47,6 @@ const visionAIAxios: AxiosInstance = axios.create({
 
 /**
  * 自定义参数序列化函数
- * 支持数组以重复键名形式传递
  */
 visionAIAxios.defaults.paramsSerializer = function (params) {
   const queryParams: string[] = []
@@ -43,7 +54,6 @@ visionAIAxios.defaults.paramsSerializer = function (params) {
   for (const key in params) {
     if (params[key] !== undefined) {
       if (Array.isArray(params[key])) {
-        // 对于数组参数，使用重复的键名传递每个值
         params[key].forEach((value: any) => {
           queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
         })
@@ -75,15 +85,13 @@ export class APIError extends Error {
 /**
  * 通用响应处理函数
  */
-const handleSimpleResponse = (response: AxiosResponse, apiName: string): AxiosResponse => {
+export const handleSimpleResponse = (response: AxiosResponse, apiName: string): AxiosResponse => {
   const originalData = response.data
 
-  // 如果已经是期望的格式，直接返回
   if (originalData && originalData.code !== undefined) {
     return response
   }
 
-  // 转换为前端期望的格式
   const transformedData = {
     code: 0,
     msg: 'success',
@@ -91,7 +99,6 @@ const handleSimpleResponse = (response: AxiosResponse, apiName: string): AxiosRe
     total: 0
   }
 
-  // 检查是否为通用操作响应
   if (originalData && originalData.success !== undefined) {
     transformedData.code = originalData.success ? 0 : -1
     transformedData.msg = originalData.message || (originalData.success ? 'success' : 'failed')
@@ -109,8 +116,7 @@ const handleSimpleResponse = (response: AxiosResponse, apiName: string): AxiosRe
 // 添加请求拦截器
 visionAIAxios.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // 添加 token 等通用请求头
-    const token = userService.getAdminToken()
+    const token = storage.getAdminToken()
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
@@ -125,11 +131,9 @@ visionAIAxios.interceptors.request.use(
 // 添加响应拦截器
 visionAIAxios.interceptors.response.use(
   (response: AxiosResponse) => {
-    // 直接返回原始响应，不进行数据转换
     return response
   },
   (error) => {
-    // 处理响应错误
     if (error.response && error.response.status === 401) {
       console.log('认证失败，请重新登录')
     }
@@ -138,4 +142,3 @@ visionAIAxios.interceptors.response.use(
 )
 
 export default visionAIAxios
-export { handleSimpleResponse }

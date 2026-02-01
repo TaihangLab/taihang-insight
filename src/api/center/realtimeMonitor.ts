@@ -1,10 +1,9 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { type UnifiedResponse } from './base'
 /**
  * 实时监控管理 API
  * 提供实时监控页面的通道管理和视频播放功能
  */
-
-import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse, UnifiedResponse } from './base'
 
 /**
  * 通道查询参数

@@ -1,11 +1,10 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { handleSimpleResponse, type UnifiedResponse } from './base'
+import type { Alert, AlertQueryParams, AlertStatusUpdate } from './types'
 /**
  * 预警管理 API
  * 提供预警的查询、更新、删除以及SSE实时推送功能
  */
-
-import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse, UnifiedResponse } from './base'
-import type { Alert, AlertQueryParams, AlertStatusUpdate } from './base'
 
 /**
  * SSE消息回调类型

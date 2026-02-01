@@ -130,6 +130,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/modules/user'
 import authAPI from '@/api/auth/authAPI'
+import storage from '@/stores/modules/storage'
 
 const router = useRouter()
 const route = useRoute()
@@ -155,7 +156,7 @@ function getParticleStyle() {
 
 // 从本地缓存恢复租户信息
 function restoreTenantFromCache(): void {
-  const cachedTenant = localStorage.getItem('selectedTenant')
+  const cachedTenant = storage.getSelectedTenant()
   if (cachedTenant) {
     selectedTenant.value = cachedTenant
   }
@@ -207,18 +208,11 @@ async function login(): Promise<void> {
         // 登录成功，处理返回的数据
         const { token, adminToken, userInfo } = result.data
 
-        // 存储token到 localStorage（与 User Store 兼容）
-        localStorage.setItem('token', token)
+        // 【关键】通过 Pinia Store 设置 token，触发持久化插件
+        userStore.setToken(token)
 
-        // 存储旧的wvp-token（兼容旧系统）
-        localStorage.setItem('wvp-token', token)
-
-        // 存储用户信息和Admin-Token
-        localStorage.setItem('wvp-user', JSON.stringify(userInfo))
-        localStorage.setItem('Admin-Token', adminToken)
-
-        // 将租户信息存储到本地缓存
-        localStorage.setItem('selectedTenant', selectedTenant.value)
+        // 存储租户信息用于下次登录自动填充
+        storage.setSelectedTenant(selectedTenant.value)
 
         ElMessage.success({
           message: '登录成功',
@@ -229,45 +223,116 @@ async function login(): Promise<void> {
 
         // 调用认证 API 获取用户权限和菜单信息
         try {
-          const authInfoResult = await authAPI.getUserInfo()
+          // 并行获取所有认证数据：用户信息、权限列表、菜单树
+          const [userInfoResult, permissionsResult, menuTreeResult] = await Promise.all([
+            authAPI.getUserInfo(),
+            authAPI.getPermissions(),
+            authAPI.getMenuTree()
+          ])
 
-          if (authInfoResult.code === 200) {
-            const userData = authInfoResult.data
+          console.log('📡 后端 API 返回结果:', {
+            userInfo: userInfoResult.code === 200 ? '成功' : '失败',
+            permissions: permissionsResult.code === 200 ? '成功' : '失败',
+            menuTree: menuTreeResult.code === 200 ? '成功' : '失败'
+          })
 
-            // 存储用户信息到缓存
-            localStorage.setItem('auth_user_info', JSON.stringify(userData))
-            localStorage.setItem('auth_user_info_timestamp', Date.now().toString())
+          // 处理用户信息
+          if (userInfoResult.code === 200) {
+            const userData = userInfoResult.data
 
-            // 存储权限码列表
-            if (userData.permission_codes && userData.permission_codes.length > 0) {
-              localStorage.setItem('auth_permissions', JSON.stringify(userData.permission_codes))
-              localStorage.setItem('auth_permissions_timestamp', Date.now().toString())
-            }
+            userStore.setUserInfo({
+              id: userData.user_id,
+              username: userData.user_name,
+              user_name: userData.user_name,
+              nick_name: userData.nick_name,
+              email: userData.email,
+              phone: userData.phone,
+              avatar: userData.avatar,
+              tenantId: userData.tenant_id,
+              tenant_id: userData.tenant_id,
+              dept_id: userData.dept_id,
+              position_id: userData.position_id,
+              status: userData.status,
+              gender: userData.gender
+            })
+          }
 
-            // 存储菜单树
-            if (userData.menu_tree && userData.menu_tree.length > 0) {
-              localStorage.setItem('auth_menu', JSON.stringify(userData.menu_tree))
-              localStorage.setItem('auth_menu_timestamp', Date.now().toString())
-            }
+          // 处理权限列表 - 从独立的 /api/v1/permissions 接口获取
+          if (permissionsResult.code === 200 && permissionsResult.data) {
+            const perms = permissionsResult.data.permissions || []
+            userStore.setPermissions(perms)
+            console.log('✅ 权限列表已设置，数量:', perms.length)
+            console.log('🔍 检查 userStore.permissions.value:', userStore.permissions)
+          } else {
+            // 即使接口失败，也设置空数组
+            userStore.setPermissions([])
+            console.warn('⚠️ 权限接口返回失败，设置为空数组')
+          }
 
-            console.log('✅ 认证信息已加载:', {
-              user: userData.user_name,
-              permissions: userData.permission_codes?.length || 0,
-              menuItems: userData.menu_tree?.length || 0
+          // 处理菜单树 - 从独立的 /api/v1/menu 接口获取
+          if (menuTreeResult.code === 200 && menuTreeResult.data) {
+            const menu = menuTreeResult.data.menu_tree || []
+            userStore.setMenuTree(menu)
+            console.log('✅ 菜单树已设置，数量:', menu.length)
+            console.log('🔍 检查 userStore.menuTree.value:', userStore.menuTree)
+          } else {
+            // 即使接口失败，也设置空数组
+            userStore.setMenuTree([])
+            console.warn('⚠️ 菜单接口返回失败，设置为空数组')
+          }
+
+          // 【关键】立即检查 Store 状态是否正确设置
+          console.log('🔍 立即检查 Store 状态:', {
+            hasToken: !!userStore.token,
+            permissions: userStore.permissions,
+            menuTree: userStore.menuTree,
+            permissionsLength: userStore.permissions.length,
+            menuTreeLength: userStore.menuTree.length
+          })
+
+          // 等待 Pinia 持久化插件完成同步
+          await new Promise(resolve => setTimeout(resolve, 100))
+
+          // 验证数据已正确持久化到 localStorage
+          const persistedAuth = localStorage.getItem('taihang-auth')
+          console.log('📦 localStorage 原始数据:', persistedAuth?.substring(0, 300) + '...')
+
+          if (persistedAuth) {
+            const authData = JSON.parse(persistedAuth)
+            console.log('✅ Pinia 已持久化到 localStorage:', {
+              hasToken: !!authData.token,
+              hasUserInfo: !!authData.userInfo,
+              permissionsCount: authData.permissions?.length || 0,
+              menuTreeCount: authData.menuTree?.length || 0
             })
 
-            // 重新初始化 userStore 以加载刚刚存储的菜单数据
-            userStore.initFromCache()
-            console.log('✅ userStore 已重新初始化，菜单数据已加载到 store')
+            // 断言：验证关键数据已持久化
+            if (!authData.permissions) {
+              console.error('❌ 断言失败：permissions 字段不存在！')
+            } else if (authData.permissions.length === 0) {
+              console.warn('⚠️ 警告：permissions 为空数组（可能是正常的，如果用户没有任何权限）')
+            } else {
+              console.log('✅ 断言成功：permissions 存在且包含', authData.permissions.length, '个权限')
+            }
+
+            if (!authData.menuTree) {
+              console.error('❌ 断言失败：menuTree 字段不存在！')
+            } else if (authData.menuTree.length === 0) {
+              console.warn('⚠️ 警告：menuTree 为空数组（可能是正常的，如果用户没有任何菜单）')
+            } else {
+              console.log('✅ 断言成功：menuTree 存在且包含', authData.menuTree.length, '个菜单项')
+            }
+          } else {
+            console.error('❌ 持久化数据尚未写入 localStorage！')
           }
         } catch (error) {
           console.error('加载认证信息失败:', error)
-          // 即使出错，也尝试从缓存初始化 store
-          userStore.initFromCache()
+          // 即使出错，token 已经设置，可以正常跳转
         }
 
         // 获取重定向路径（如果有）
         const redirect = (route.query.redirect as string) || '/'
+        console.log('🔄 准备跳转到:', redirect)
         router.push(redirect)
       } else {
         // 登录失败

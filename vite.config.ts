@@ -20,9 +20,7 @@ export default defineConfig(({ mode }) => {
       UnoCSS(),
     ],
     define: {
-      // Global polyfills for webpack compatibility
-      'process.env.NODE_ENV': JSON.stringify(env.NODE_ENV || mode),
-      'process.env.BASE_API': JSON.stringify(env.VITE_API_BASE_URL || ''),
+      // 全局变量 polyfill
       global: 'globalThis',
     },
     resolve: {
@@ -65,6 +63,23 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ['element-plus', 'vue-echarts', 'data-view-vue3']
+    },
+    test: {
+      globals: true,
+      environment: 'happy-dom',
+      setupFiles: ['./tests/setup.ts'],
+      include: ['tests/vitest/**/*.{test,spec}.{js,ts}'],
+      reporter: ['verbose'],
+      resolve: {
+        alias: {
+          '@': resolve(__dirname, 'src'),
+          '@static': resolve(__dirname, 'static')
+        }
+      },
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'json', 'html']
+      }
     }
   };
 })

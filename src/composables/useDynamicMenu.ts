@@ -8,6 +8,45 @@ import { useUserStore } from '@/stores/modules/user'
 import type { MenuItem } from '@/types/auth'
 
 /**
+ * 后端返回的原始菜单项类型（使用 permission 前缀）
+ */
+interface RawMenuItem {
+  id: number | string
+  parent_id?: number | string | null
+  permission_name?: string        // 后端字段
+  menu_name?: string               // 前端期望字段
+  permission_type?: string         // 后端字段
+  menu_type?: string               // 前端期望字段
+  permission_code?: string
+  menu_code?: string
+  path?: string
+  component?: string
+  icon?: string
+  sort_order: number
+  visible?: boolean
+  status: number
+  method?: string
+  children?: RawMenuItem[]
+  create_time?: string
+  update_time?: string
+  node_type?: string
+  has_children?: boolean
+}
+
+/**
+ * 标准化菜单项：将后端字段名转换为前端期望的字段名
+ */
+function normalizeMenuItem(item: RawMenuItem): MenuItem {
+  return {
+    ...item,
+    menu_name: item.permission_name || item.menu_name || '',
+    menu_type: (item.permission_type || item.menu_type || 'menu') as 'folder' | 'menu' | 'button',
+    menu_code: item.permission_code || item.menu_code,
+    children: item.children ? item.children.map(normalizeMenuItem) : undefined
+  }
+}
+
+/**
  * 菜单类型映射
  */
 const MenuType = {
@@ -86,15 +125,27 @@ function getIconName(icon?: string): string {
 /**
  * 过滤菜单项（只显示文件夹和菜单，隐藏按钮）
  */
-function filterMenuItems(items: MenuItem[]): MenuItem[] {
+function filterMenuItems(items: RawMenuItem[] | null | undefined): RawMenuItem[] {
+  // 安全检查：确保 items 是数组
+  if (!Array.isArray(items)) {
+    console.warn('[useDynamicMenu] menuTree is not an array:', items)
+    return []
+  }
+
   return items.filter(item => {
-    // 只显示启用的菜单项
-    if (item.status !== 0) return false
+    // 只显示启用的菜单项（status 为 0 或未设置时显示）
+    // 注意：后端可能使用 0 表示启用，或 1 表示启用，这里兼容两种情况
+    if (item.status !== undefined && item.status !== 0 && item.status !== 1) {
+      return false
+    }
+
+    // 获取菜单类型（支持 permission_type 和 menu_type 两种字段名）
+    const menuType = item.permission_type || item.menu_type
 
     // 过滤掉按钮类型
-    if (item.menu_type === MenuType.BUTTON) return false
+    if (menuType === MenuType.BUTTON) return false
 
-    // 过滤掉设置为不可见的菜单
+    // 过滤掉设置为不可见的菜单（visible 显式设置为 false）
     if (item.visible === false) return false
 
     return true
@@ -104,14 +155,17 @@ function filterMenuItems(items: MenuItem[]): MenuItem[] {
 /**
  * 递归处理菜单树
  */
-function processMenuTree(items: MenuItem[]): MenuItem[] {
+function processMenuTree(items: RawMenuItem[] | null | undefined): MenuItem[] {
   const filteredItems = filterMenuItems(items)
 
-  return filteredItems.map(item => ({
-    ...item,
-    icon: getIconName(item.icon),
-    children: item.children ? processMenuTree(item.children) : undefined
-  }))
+  return filteredItems.map(item => {
+    const normalized = normalizeMenuItem(item)
+    return {
+      ...normalized,
+      icon: getIconName(normalized.icon),
+      children: Array.isArray(item.children) ? processMenuTree(item.children) : undefined
+    }
+  })
 }
 
 /**

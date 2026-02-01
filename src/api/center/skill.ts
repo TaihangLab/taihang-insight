@@ -1,17 +1,10 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { handleSimpleResponse, type UnifiedResponse } from './base'
+import type { SkillClass, SkillQueryParams, Skill, AITask, LlmSkill, LlmTask } from './types'
 /**
  * 技能管理 API
  * 提供技能类、AI任务、多模态LLM技能的增删改查操作
  */
-
-import { AxiosResponse } from 'axios'
-import visionAIAxios, { handleSimpleResponse } from './base'
-import type {
-  SkillClass,
-  SkillQueryParams,
-  AITask,
-  LlmSkill,
-  LlmTask
-} from './base'
 
 /**
  * 技能管理 API 类

@@ -1,11 +1,10 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { handleSimpleResponse, type UnifiedResponse } from './base'
+import type { Camera, CameraQueryParams, AITask } from './types'
 /**
  * 摄像头管理 API
  * 提供摄像头的增删改查操作
  */
-
-import { AxiosResponse } from 'axios'
-import visionAIAxios, { handleSimpleResponse } from './base'
-import type { Camera, CameraQueryParams, AITask } from './base'
 
 /**
  * 摄像头管理 API 类

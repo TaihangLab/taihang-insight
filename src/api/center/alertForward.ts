@@ -1,10 +1,9 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { type UnifiedResponse } from './base'
 /**
  * 预警转发统计 API
  * 提供预警转发相关统计数据
  */
-
-import { AxiosResponse } from 'axios'
-import { type UnifiedResponse, UnifiedResponse } from './base'
 
 /**
  * 时间范围

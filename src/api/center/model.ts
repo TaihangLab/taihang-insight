@@ -1,11 +1,10 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { handleSimpleResponse, type UnifiedResponse } from './base'
+import type { Model, ModelQueryParams } from './types'
 /**
  * 模型管理 API
  * 提供模型的增删改查、加载卸载等操作
  */
-
-import { AxiosResponse } from 'axios'
-import visionAIAxios, { handleSimpleResponse } from './base'
-import type { Model, ModelQueryParams } from './base'
 
 /**
  * 模型管理 API 类

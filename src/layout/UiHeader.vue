@@ -68,21 +68,21 @@ import {
   SwitchButton
 } from '@element-plus/icons-vue'
 import ChangePasswordDialog from '../components/dialog/changePassword.vue'
-import userService from '../components/service/UserService'
+import { storage, StorageKey } from '@/stores/modules/storage'
 import cacheManager from '@/utils/cacheManager'
+import { useUserStore } from '@/stores'
 
 // 路由
 const route = useRoute()
 const router = useRouter()
+// Store
+const userStore = useUserStore() 
 
 // 修改密码对话框引用
 const changePasswordDialogRef = ref<InstanceType<typeof ChangePasswordDialog>>()
 
 // 用户名
-const username = ref(userService.getUser().username || '访客')
-
-// 登录状态
-const isLoggedIn = ref(userService.getToken() != null)
+const username = ref(userStore.userInfo.nick_name || '访客')
 
 // 当前时间
 const currentTime = ref('')
@@ -216,7 +216,9 @@ const clearCache = () => {
 
 // 退出登录
 const logout = () => {
-  userService.clearToken()
+  storage.remove(StorageKey.ADMIN_TOKEN)
+storage.remove(StorageKey.WVP_TOKEN)
+storage.remove(StorageKey.WVP_USER)
 
   ElMessage({
     showClose: true,

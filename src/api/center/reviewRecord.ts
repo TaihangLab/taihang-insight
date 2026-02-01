@@ -1,10 +1,9 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { type UnifiedResponse } from './base'
 /**
  * 复判记录管理 API
  * 提供复判记录的增删改查操作
  */
-
-import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse, UnifiedResponse } from './base'
 
 /**
  * 复判记录查询参数

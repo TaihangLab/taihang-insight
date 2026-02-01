@@ -1,12 +1,11 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { handleSimpleResponse, type UnifiedResponse, PageParams } from './base'
+import type { AlertArchive, ArchiveQueryParams, CreateArchiveRequest, Alert } from './types'
+
 /**
  * 档案管理 API
  * 提供预警档案和预警记录的管理功能
  */
-
-import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse, UnifiedResponse } from './base'
-import type { AlertArchive, ArchiveQueryParams, CreateArchiveRequest, Alert } from './base'
-import type { PageParams } from './base'
 
 /**
  * 预警记录查询参数

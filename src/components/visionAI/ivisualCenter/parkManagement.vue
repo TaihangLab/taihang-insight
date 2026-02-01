@@ -86,7 +86,13 @@
             <div class="video-grid">
               <div v-for="i in 4" :key="i" class="video-item">
                 <div class="video-content">
-                  <img :src="getRandomImage(i)" alt="监控画面">
+                  <div class="video-placeholder">
+                    <div class="placeholder-icon">
+                      <i class="el-icon-video-camera"></i>
+                    </div>
+                    <div class="placeholder-text">无视频信号</div>
+                    <div class="placeholder-hint">请配置视频通道</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -347,41 +353,16 @@ async function loadAlertSnapshots(): Promise<void> {
     const response = await centerAPI.alertStatistics.getLatestImages(4);
     if (response.data?.code === 0 && response.data?.data) {
       alertSnapshots.value = response.data.data.map((item: any) => ({
-        image: item.image,
-        category: item.event || '未知类型',
+        image: item.image_url || item.image,
+        category: item.alert_type || '未知类型',
         time: item.alert_time || item.time,
         location: item.camera_name || item.location || '未知位置'
       }));
     }
   } catch (error) {
     console.error('加载预警抓拍失败:', error);
-    // 使用模拟数据作为后备
-    alertSnapshots.value = [
-      {
-        image: 'https://images.unsplash.com/photo-1531974863696-5fa64260d75b?w=400&h=300&fit=crop',
-        category: '在岗检测',
-        time: '2023-04-14 17:23:12',
-        location: '115号探头'
-      },
-      {
-        image: 'https://images.unsplash.com/photo-1531974863696-5fa64260d75b?w=400&h=300&fit=crop',
-        category: '安全帽检测',
-        time: '2023-04-14 17:23:12',
-        location: '115号探头'
-      },
-      {
-        image: 'https://images.unsplash.com/photo-1531974863696-5fa64260d75b?w=400&h=300&fit=crop',
-        category: '安全帽检测',
-        time: '2023-04-14 17:23:12',
-        location: '115号探头'
-      },
-      {
-        image: 'https://images.unsplash.com/photo-1531974863696-5fa64260d75b?w=400&h=300&fit=crop',
-        category: '在岗检测',
-        time: '2023-04-14 17:23:12',
-        location: '115号探头'
-      }
-    ];
+    // 失败时使用空数组，不再使用 Unsplash 降级
+    alertSnapshots.value = [];
   }
 }
 
@@ -630,16 +611,11 @@ function updateDeviceStatusCharts(): void {
 // ============================================================================
 
 /**
- * 获取随机图片
+ * 获取视频占位符（无信号时显示）
  */
-function getRandomImage(index: number): string {
-  const images = [
-    'https://images.unsplash.com/photo-157417236756-c4617579486?w=800&h=450&fit=crop',
-    'https://images.unsplash.com/photo-1581518640467707-6811f4a6ab73?w=800&h=450&fit=crop',
-    'https://images.unsplash.com/photo-1631651738795-b89747292eb0?w=800&h=450&fit=crop',
-    'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&h=450&fit=crop'
-  ];
-  return images[index % images.length];
+function getVideoPlaceholder(): string {
+  // 返回空字符串，由模板中的占位符元素处理
+  return '';
 }
 
 /**
@@ -950,11 +926,33 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-.video-content img {
+.video-placeholder {
   flex: 1;
   width: 100%;
-  height: auto;
-  object-fit: cover;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #000814 0%, #001529 100%);
+  border: 1px dashed rgba(27, 150, 255, 0.3);
+}
+
+.placeholder-icon {
+  font-size: 48px;
+  color: rgba(27, 150, 255, 0.4);
+  margin-bottom: 12px;
+}
+
+.placeholder-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 4px;
+}
+
+.placeholder-hint {
+  font-size: 12px;
+  color: rgba(27, 150, 255, 0.4);
 }
 
 .right-panel {

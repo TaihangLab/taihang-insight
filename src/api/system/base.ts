@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
-import userService from '@/components/service/UserService.ts'
+import { storage } from '@/stores/modules/storage'
 
 // 获取 API 基础 URL
 // 开发环境为空（路径中包含 /api/v1 前缀，由 vite 代理转发）
@@ -84,7 +84,7 @@ export class APIError extends Error {
 rbacAxios.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // 添加token等通用请求头
-    const token = userService.getAdminToken()
+    const token = storage.getAdminToken()
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }

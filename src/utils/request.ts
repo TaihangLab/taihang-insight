@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import router from '@/router'
-import userService from '@/components/service/UserService'
+import { storage, StorageKey } from '@/stores/modules/storage'
 
 // 扩展 Window 接口以支持 baseUrl 属性
 declare global {
@@ -19,8 +19,13 @@ const service: AxiosInstance = axios.create({
 
 // 设备管理模块使用的axios配置（走WVP代理）
 // 导入API配置
-const API_BASE_URL = 'http://172.16.201.80/prod-api/smart-engine'
-axios.defaults.baseURL = API_BASE_URL + '/api/v1/wvp'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://172.16.201.80/prod-api/smart-engine'
+// 如果环境变量中已经包含了/api/v1/wvp路径，则不再重复添加
+if (!import.meta.env.VITE_API_BASE_URL || !import.meta.env.VITE_API_BASE_URL.includes('/api/v1/wvp')) {
+  axios.defaults.baseURL = API_BASE_URL + '/api/v1/wvp'
+} else {
+  axios.defaults.baseURL = API_BASE_URL
+}
 axios.defaults.withCredentials = false  // 关闭withCredentials，避免CORS错误
 
 // 是否正在刷新token的标志
@@ -29,7 +34,7 @@ let isRefreshing = false
 // 请求拦截器
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = userService.getAdminToken()
+    const token = storage.getAdminToken()
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
     }
@@ -71,7 +76,9 @@ service.interceptors.response.use(
               type: 'warning'
             }).then(() => {
               // 清除用户信息
-              userService.clearToken()
+              storage.remove(StorageKey.ADMIN_TOKEN)
+storage.remove(StorageKey.WVP_TOKEN)
+storage.remove(StorageKey.WVP_USER)
               router.push('/login')
             }).catch(() => {
               // 用户取消
@@ -108,7 +115,9 @@ service.interceptors.response.use(
           if (!isRefreshing) {
             isRefreshing = true
             setTimeout(() => {
-              userService.clearToken()
+              storage.remove(StorageKey.ADMIN_TOKEN)
+storage.remove(StorageKey.WVP_TOKEN)
+storage.remove(StorageKey.WVP_USER)
               router.push('/login')
               isRefreshing = false
             }, 1500)

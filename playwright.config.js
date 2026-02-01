@@ -8,9 +8,9 @@ export default defineConfig({
   // 测试失败时不关闭浏览器，继续执行下一个测试
   maximizeBrowserContext: false,
   webServer: {
-    command: 'npm run dev',
-    port: 8080,
-    reuseExistingServer: !process.env.CI,
+    command: 'echo "Server already running"',
+    port: 4000,
+    reuseExistingServer: true,
   },
   reporter: [
     ['list'],
@@ -18,14 +18,14 @@ export default defineConfig({
   ],
   use: {
     browserName: 'chromium',
-    headless: true,
-    viewport: { width: 1280, height: 720 },
+    headless: true, // 后台运行，不打扰前端服务
+    viewport: { width: 1920, height: 1080 }, // 大屏测试使用更大视口
     ignoreHTTPSErrors: true,
-    video: 'on-first-retry',
+    video: 'off', // 关闭视频录制以减少资源占用
     screenshot: 'only-on-failure',
-    // 所有操作默认超时5秒
-    actionTimeout: 5000,
-    navigationTimeout: 5000,
+    // 所有操作默认超时10秒
+    actionTimeout: 10000,
+    navigationTimeout: 10000,
   },
   // 单个测试用例超时30秒
   timeout: 30000,

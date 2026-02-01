@@ -1,10 +1,9 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { type UnifiedResponse } from './base'
 /**
  * 预警统计管理 API
  * 提供预警相关的统计数据，包括摘要、趋势、分类统计等
  */
-
-import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse, UnifiedResponse } from './base'
 
 /**
  * 预警统计摘要

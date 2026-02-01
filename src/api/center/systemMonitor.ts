@@ -1,10 +1,9 @@
+import { AxiosResponse } from 'axios'
+import visionAIAxios, { type UnifiedResponse } from './base'
 /**
  * 系统资源监控 API
  * 提供系统资源使用率监控数据
  */
-
-import { AxiosResponse } from 'axios'
-import { type UnifiedResponse, UnifiedResponse } from './base'
 
 /**
  * 资源类型

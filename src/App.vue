@@ -4,43 +4,6 @@
   </div>
 </template>
 
-<script>
-import  userService from './components/service/UserService'
-export default {
-  name: 'app',
-  data(){
-    return {
-      isLogin: false,
-      excludeLoginCheck: ["/play/wasm", "/play/rtc"],
-      userInfo: { //保存用户信息
-        nick: null,
-        ulevel: null,
-        uid: null,
-        portrait: null
-      }
-    }
-  },
-  created() {
-    // 🔓 已移除强制登录检查 - 允许访客访问所有页面
-    // 用户可以选择在登录页面登录，登录后可以使用用户相关功能
-    if (userService.getToken() != null) {
-      console.log('检测到已登录用户:', userService.getUser().username);
-    } else {
-      console.log('当前为访客模式');
-    }
-  },
-
-  mounted(){
-    //组件开始挂载时获取用户信息
-    // getUserInfo 方法已移除 - 用户信息在需要时从 localStorage 读取
-    console.log('App mounted - 访客模式');
-  },
-  methods: {
-  },
-  components: {}
-};
-</script>
-
 <style>
 /* 全局样式重置 */
 html,

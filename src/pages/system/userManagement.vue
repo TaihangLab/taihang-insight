@@ -111,7 +111,7 @@ onMounted(async () => {
   // 先确保获取用户权限信息（包含 tenantId）
   if (!userStore.userInfo?.tenantId) {
     try {
-      await userStore.fetchUserAuthInfo()
+      await userStore.fetchAllAuthInfo()
       // 更新搜索条件的租户ID
       if (userStore.userInfo?.tenantId) {
         searchConditions.tenant_id = userStore.userInfo.tenantId
