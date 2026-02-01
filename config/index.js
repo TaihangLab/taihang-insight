@@ -3,8 +3,7 @@
 // see http://vuejs-templates.github.io/webpack for documentation.
 
 // 后端API基础地址配置
-const API_BASE_URL = 'http://localhost:5000';//本地Flask后端服务
-// const API_BASE_URL = 'http://172.16.201.80/prod-api/smart-engine';//综治平台地址（生产环境）
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://172.16.201.80/prod-api/smart-engine';//综治平台地址（生产环境）
 const RBAC_API_BASE_URL = 'http://127.0.0.1:8000';//RBAC服务地址
 
 const config = {
