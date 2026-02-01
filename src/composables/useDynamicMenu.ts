@@ -4,34 +4,8 @@
  */
 
 import { computed } from 'vue'
-import { useUserStore } from '@/stores/modules/user'
-import type { MenuItem } from '@/types/auth'
-
-/**
- * 后端返回的原始菜单项类型（使用 permission 前缀）
- */
-interface RawMenuItem {
-  id: number | string
-  parent_id?: number | string | null
-  permission_name?: string        // 后端字段
-  menu_name?: string               // 前端期望字段
-  permission_type?: string         // 后端字段
-  menu_type?: string               // 前端期望字段
-  permission_code?: string
-  menu_code?: string
-  path?: string
-  component?: string
-  icon?: string
-  sort_order: number
-  visible?: boolean
-  status: number
-  method?: string
-  children?: RawMenuItem[]
-  create_time?: string
-  update_time?: string
-  node_type?: string
-  has_children?: boolean
-}
+import { useMenusStore } from '@/stores/modules/menus'
+import type { MenuItem, RawMenuItem } from '@/types/auth'
 
 /**
  * 标准化菜单项：将后端字段名转换为前端期望的字段名
@@ -172,13 +146,13 @@ function processMenuTree(items: RawMenuItem[] | null | undefined): MenuItem[] {
  * 使用动态菜单
  */
 export function useDynamicMenu() {
-  const userStore = useUserStore()
+  const menusStore = useMenusStore()
 
   /**
    * 处理后的菜单树
    */
   const menuTree = computed(() => {
-    const rawMenuTree = userStore.menuTree || []
+    const rawMenuTree = menusStore.menuTree || []
 
     if (rawMenuTree.length === 0) {
       return []

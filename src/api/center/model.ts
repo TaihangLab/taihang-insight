@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { handleSimpleResponse, type UnifiedResponse } from './base'
+import  { authAxios, handleSimpleResponse, type UnifiedResponse } from '@/api/commons'
 import type { Model, ModelQueryParams } from './types'
 /**
  * 模型管理 API
@@ -32,7 +32,7 @@ class ModelAPI {
     }
 
     try {
-      const response = await visionAIAxios.get('/api/v1/api/v1/models/list', { params: apiParams })
+      const response = await authAxios.get('/api/v1/api/v1/models/list', { params: apiParams })
       return this.transformModelListResponse(response)
     } catch (error) {
       console.error('获取模型列表失败:', error)
@@ -89,7 +89,7 @@ class ModelAPI {
    */
   async getModelDetail(modelId: number): Promise<AxiosResponse<UnifiedResponse<Model>>> {
     try {
-      const response = await visionAIAxios.get(`/api/v1/models/${modelId}`)
+      const response = await authAxios.get(`/api/v1/models/${modelId}`)
       return this.transformModelDetailResponse(response)
     } catch (error) {
       console.error('获取模型详情失败:', error)
@@ -157,7 +157,7 @@ class ModelAPI {
    */
   async updateModel(modelId: number, modelData: Partial<Model>): Promise<AxiosResponse> {
     try {
-      return await visionAIAxios.put(`/api/v1/models/${modelId}`, modelData)
+      return await authAxios.put(`/api/v1/models/${modelId}`, modelData)
         .then(response => handleSimpleResponse(response, '更新模型'))
     } catch (error) {
       console.error('更新模型失败:', error)
@@ -172,7 +172,7 @@ class ModelAPI {
    */
   async deleteModel(modelId: number): Promise<AxiosResponse> {
     try {
-      return await visionAIAxios.delete(`/api/v1/models/${modelId}`)
+      return await authAxios.delete(`/api/v1/models/${modelId}`)
         .then(response => handleSimpleResponse(response, '删除模型'))
     } catch (error) {
       console.error('删除模型失败:', error)
@@ -187,7 +187,7 @@ class ModelAPI {
    */
   async batchDeleteModels(ids: number[]): Promise<AxiosResponse> {
     try {
-      const response = await visionAIAxios.delete('/api/v1/models/batch-delete', {
+      const response = await authAxios.delete('/api/v1/models/batch-delete', {
         data: { model_ids: ids }
       })
 
@@ -236,7 +236,7 @@ class ModelAPI {
    */
   async loadModel(modelId: number): Promise<AxiosResponse> {
     try {
-      return await visionAIAxios.post(`/api/v1/models/${modelId}/load`)
+      return await authAxios.post(`/api/v1/models/${modelId}/load`)
         .then(response => handleSimpleResponse(response, '加载模型'))
     } catch (error) {
       console.error('加载模型失败:', error)
@@ -251,7 +251,7 @@ class ModelAPI {
    */
   async unloadModel(modelId: number): Promise<AxiosResponse> {
     try {
-      return await visionAIAxios.post(`/api/v1/models/${modelId}/unload`)
+      return await authAxios.post(`/api/v1/models/${modelId}/unload`)
         .then(response => handleSimpleResponse(response, '卸载模型'))
     } catch (error) {
       console.error('卸载模型失败:', error)

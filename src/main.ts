@@ -71,48 +71,75 @@ app.config.globalProperties.$channelTypeList = {
 
 // ========== 用户态同步初始化 ==========
 // 【关键】用户态是强诉求，必须在应用挂载前完成初始化
-// Pinia 持久化插件会自动从 localStorage 恢复基本数据
+// Pinia 持久化插件会自动从 localStorage 恢复基本数据（4 个独立的 key）
 // 但我们需要验证数据完整性，如果数据不完整则同步等待恢复完成
 
-import { useUserStore } from '@/stores/modules/user'
-const userStore = useUserStore()
+import { useUserInfoStore, usePermissionsStore, useMenusStore } from '@/stores'
+import authAPI from '@/api/auth/authAPI'
+import { StorageKey } from '@/stores/modules/storageKeys'
 
-// 从 localStorage 检查持久化状态
-const persistedAuth = localStorage.getItem('taihang-auth')
-if (persistedAuth) {
-  try {
-    const authData = JSON.parse(persistedAuth)
-    // 【关键】如果 token 存在但数据不完整，需要从后端同步恢复
-    // 这必须在应用挂载前完成，因为用户态是强诉求
-    if (authData.token && (!authData.userInfo || !authData.permissions?.length || !authData.menuTree?.length)) {
-      console.log('⚠️ 检测到数据不完整，开始从后端同步...')
+const userInfoStore = useUserInfoStore()
+const permissionsStore = usePermissionsStore()
+const menusStore = useMenusStore()
 
-      // 同步等待恢复完成（用户态强诉求）
-      // 注意：这里使用 await 会阻塞应用挂载，但这是预期的行为
-      // 因为我们需要确保用户态数据完整后再渲染应用
-      const restoreResult = await userStore.initFromCache({ force: true })
+// 从 4 个独立的 localStorage key 检查持久化状态
+const persistedUserInfo = localStorage.getItem(StorageKey.USER_INFO)
+const persistedPermissions = localStorage.getItem(StorageKey.PERMISSION)
+const persistedMenus = localStorage.getItem(StorageKey.MENUS)
 
-      if (!restoreResult.success) {
-        console.warn('⚠️ 数据恢复失败，token 可能已过期')
-        // 不自动清除 token，让用户在访问时通过 401 错误处理
-      } else {
-        console.log('✅ 用户态数据初始化完成:', {
-          userInfo: restoreResult.userInfo,
-          permissions: restoreResult.permissions,
-          menuTree: restoreResult.menuTree
+try {
+  if ((!persistedUserInfo || !persistedPermissions || !persistedMenus)) {
+    console.log('⚠️ 检测到数据不完整，开始从后端同步...')
+
+    // 同步等待恢复完成（用户态强诉求）
+    // 注意：这里使用 await 会阻塞应用挂载，但这是预期的行为
+    // 因为我们需要确保用户态数据完整后再渲染应用
+    try {
+      const [userInfoResult, permissionsResult, menuTreeResult] = await Promise.all([
+        authAPI.getUserInfo(),
+        authAPI.getPermissions(),
+        authAPI.getMenuTree()
+      ])
+
+      if (userInfoResult.code === 200) {
+        const userData = userInfoResult.data
+        userInfoStore.setUserInfo({
+          id: userData.user_id,
+          username: userData.user_name,
+          user_name: userData.user_name,
+          nick_name: userData.nick_name,
+          email: userData.email,
+          phone: userData.phone,
+          avatar: userData.avatar,
+          tenantId: userData.tenant_id,
+          tenant_id: userData.tenant_id,
+          dept_id: userData.dept_id,
+          position_id: userData.position_id,
+          status: userData.status,
+          gender: userData.gender
         })
       }
-    } else if (authData.token) {
-      console.log('✅ 用户态数据完整，无需同步')
-    } else {
-      console.log('ℹ️ 无 token，跳过初始化')
+
+      if (permissionsResult.code === 200 && permissionsResult.data) {
+        const perms = permissionsResult.data.permission_codes || []
+        permissionsStore.setPermissions(perms)
+      }
+
+      if (menuTreeResult.code === 200 && menuTreeResult.data) {
+        const menu = menuTreeResult.data.menu_tree || []
+        menusStore.setMenuTree(menu)
+      }
+
+      console.log('✅ 用户态数据初始化完成')
+    } catch (error) {
+      console.warn('⚠️ 数据恢复失败，token 可能已过期:', error)
+      // 不自动清除 token，让用户在访问时通过 401 错误处理
     }
-  } catch (e) {
-    console.warn('⚠️ 解析持久化数据失败:', e)
-  }
-} else {
-  console.log('ℹ️ 无持久化认证数据')
+  } 
+} catch (e) {
+  console.warn('⚠️ 解析持久化数据失败:', e)
 }
+
 
 // 【关键】挂载应用
 // 此时用户态数据已完整初始化，路由守卫和组件可以安全访问

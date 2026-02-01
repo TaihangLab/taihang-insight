@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { handleSimpleResponse, type UnifiedResponse, PageParams } from './base'
+import { authAxios, handleSimpleResponse,  type UnifiedResponse, PageParams } from '@/api/commons'
 import type { ReviewSkill, CreateReviewSkillRequest, UpdateReviewSkillRequest, PreviewTestResponse } from './types'
 /**
  * 复判技能管理 API
@@ -35,7 +35,7 @@ class ReviewSkillAPI {
     console.log('创建多模态复判技能:', skillData)
 
     try {
-      const response = await visionAIAxios.post('/api/v1/llm-skill-review/review-skills', skillData)
+      const response = await authAxios.post('/api/v1/llm-skill-review/review-skills', skillData)
       console.log('创建复判技能成功:', response.data)
       return response
     } catch (error) {
@@ -73,7 +73,7 @@ class ReviewSkillAPI {
     console.log('预览测试复判技能:', { fileName: testImage.name, userPrompt })
 
     try {
-      const response = await visionAIAxios.post('/api/v1/llm-skill-review/review-skills/preview-test', formData, {
+      const response = await authAxios.post('/api/v1/llm-skill-review/review-skills/preview-test', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
@@ -112,7 +112,7 @@ class ReviewSkillAPI {
     console.log('更新复判技能:', skillId, updateData)
 
     try {
-      const response = await visionAIAxios.put(`/api/v1/llm-skill-review/review-skills/${skillId}`, updateData)
+      const response = await authAxios.put(`/api/v1/llm-skill-review/review-skills/${skillId}`, updateData)
       console.log('更新复判技能成功:', response.data)
       return response
     } catch (error) {
@@ -201,7 +201,7 @@ class ReviewSkillAPI {
     console.log('获取复判技能列表, 处理后的参数:', apiParams)
 
     try {
-      const response = await visionAIAxios.get('/api/v1/llm-skill-review/review-skills', { params: apiParams })
+      const response = await authAxios.get('/api/v1/llm-skill-review/review-skills', { params: apiParams })
       console.log('获取复判技能列表成功:', response.data)
       return response
     } catch (error) {
@@ -234,7 +234,7 @@ class ReviewSkillAPI {
     console.log('获取复判技能详情:', skillId)
 
     try {
-      const response = await visionAIAxios.get(`/api/v1/llm-skill-review/review-skills/${skillId}`)
+      const response = await authAxios.get(`/api/v1/llm-skill-review/review-skills/${skillId}`)
       console.log('获取复判技能详情成功:', response.data)
       return response
     } catch (error) {
@@ -267,7 +267,7 @@ class ReviewSkillAPI {
     console.log('发布复判技能:', skillId)
 
     try {
-      const response = await visionAIAxios.post(`/api/v1/llm-skill-review/review-skills/${skillId}/publish`)
+      const response = await authAxios.post(`/api/v1/llm-skill-review/review-skills/${skillId}/publish`)
       console.log('发布复判技能成功:', response.data)
       return response
     } catch (error) {
@@ -300,7 +300,7 @@ class ReviewSkillAPI {
     console.log('下线复判技能:', skillId)
 
     try {
-      const response = await visionAIAxios.post(`/api/v1/llm-skill-review/review-skills/${skillId}/unpublish`)
+      const response = await authAxios.post(`/api/v1/llm-skill-review/review-skills/${skillId}/unpublish`)
       console.log('下线复判技能成功:', response.data)
       return response
     } catch (error) {
@@ -333,7 +333,7 @@ class ReviewSkillAPI {
     console.log('删除复判技能:', skillId)
 
     try {
-      const response = await visionAIAxios.delete(`/api/v1/llm-skill-review/review-skills/${skillId}`)
+      const response = await authAxios.delete(`/api/v1/llm-skill-review/review-skills/${skillId}`)
       console.log('删除复判技能成功:', response.data)
       return response
     } catch (error) {
@@ -371,7 +371,7 @@ class ReviewSkillAPI {
     console.log('批量删除复判技能, skill_ids:', skillIds)
 
     try {
-      const response = await visionAIAxios.post('/api/v1/llm-skill-review/review-skills/batch-delete', skillIds)
+      const response = await authAxios.post('/api/v1/llm-skill-review/review-skills/batch-delete', skillIds)
       console.log('批量删除复判技能成功:', response.data)
       return response
     } catch (error) {

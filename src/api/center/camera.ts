@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { handleSimpleResponse, type UnifiedResponse } from './base'
+import  { authAxios, handleSimpleResponse, type UnifiedResponse } from '@/api/commons'
 import type { Camera, CameraQueryParams, AITask } from './types'
 /**
  * 摄像头管理 API
@@ -31,7 +31,7 @@ class CameraAPI {
     console.log('获取摄像头列表 - API调用参数:', apiParams)
 
     try {
-      const response = await visionAIAxios.get('/api/v1/cameras/ai/list', { params: apiParams })
+      const response = await authAxios.get('/api/v1/cameras/ai/list', { params: apiParams })
       return this.transformCameraListResponse(response)
     } catch (error) {
       console.error('获取摄像头列表失败:', error)
@@ -106,7 +106,7 @@ class CameraAPI {
    */
   async getCameraDetail(cameraId: number | string): Promise<AxiosResponse> {
     try {
-      return await visionAIAxios.get(`/api/v1/cameras/${cameraId}`)
+      return await authAxios.get(`/api/v1/cameras/${cameraId}`)
     } catch (error) {
       console.error('获取摄像头详情失败:', error)
       throw error
@@ -127,7 +127,7 @@ class CameraAPI {
     console.log('更新摄像头数据:', cameraId, updateData)
 
     try {
-      return await visionAIAxios.put(`/api/v1/cameras/${cameraId}`, updateData)
+      return await authAxios.put(`/api/v1/cameras/${cameraId}`, updateData)
         .then(response => handleSimpleResponse(response, '更新摄像头'))
     } catch (error) {
       console.error('更新摄像头失败:', error)
@@ -146,7 +146,7 @@ class CameraAPI {
     }
 
     try {
-      return await visionAIAxios.get(`/api/v1/ai-tasks/camera/id/${cameraId}`)
+      return await authAxios.get(`/api/v1/ai-tasks/camera/id/${cameraId}`)
     } catch (error) {
       console.error('获取摄像头关联任务失败:', error)
       throw error

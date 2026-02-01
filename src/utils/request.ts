@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import router from '@/router'
-import { storage, StorageKey } from '@/stores/modules/storage'
+import { storage } from '@/stores/modules/storage'
+import { StorageKey } from '@/stores/modules/storageKeys'
 
 // 扩展 Window 接口以支持 baseUrl 属性
 declare global {
@@ -77,8 +78,6 @@ service.interceptors.response.use(
             }).then(() => {
               // 清除用户信息
               storage.remove(StorageKey.ADMIN_TOKEN)
-storage.remove(StorageKey.WVP_TOKEN)
-storage.remove(StorageKey.WVP_USER)
               router.push('/login')
             }).catch(() => {
               // 用户取消
@@ -116,8 +115,6 @@ storage.remove(StorageKey.WVP_USER)
             isRefreshing = true
             setTimeout(() => {
               storage.remove(StorageKey.ADMIN_TOKEN)
-storage.remove(StorageKey.WVP_TOKEN)
-storage.remove(StorageKey.WVP_USER)
               router.push('/login')
               isRefreshing = false
             }, 1500)

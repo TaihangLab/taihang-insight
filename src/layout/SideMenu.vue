@@ -183,7 +183,7 @@
 <script setup lang="ts">
 import { ref, watch, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useUserStore } from '@/stores/modules/user'
+import { useMenusStore, useTokenStore } from '@/stores'
 import type { MenuItem } from '@/types/auth'
 import {
   VideoCamera,
@@ -217,8 +217,9 @@ const emit = defineEmits<{
 // 路由
 const route = useRoute()
 
-// 用户 Store
-const userStore = useUserStore()
+// 使用新的独立 stores
+const menusStore = useMenusStore()
+const tokenStore = useTokenStore()
 
 // 菜单折叠状态
 const isCollapsed = ref(false)
@@ -227,7 +228,7 @@ const isCollapsed = ref(false)
 const activeMenu = ref(route.path)
 
 // 从 store 获取菜单树
-const menuTree = computed(() => userStore.menuTree || [])
+const menuTree = computed(() => menusStore.menuTree || [])
 
 // 图标映射
 const iconMap: Record<string, any> = {
@@ -274,11 +275,11 @@ const toggleCollapse = () => {
 
 // 组件挂载时，如果菜单树为空且有 token，尝试获取菜单
 onMounted(async () => {
-  if (menuTree.value.length === 0 && userStore.isLoggedIn) {
+  if (menuTree.value.length === 0 && tokenStore.hasToken()) {
     try {
       console.log('🔄 菜单树为空，尝试从后端获取...')
-      await userStore.fetchMenuTree(true)
-      console.log('✅ 菜单树已更新:', userStore.menuTree.length, '个顶级菜单项')
+      // 注意：这里不再调用 fetchMenuTree，因为菜单树应该在登录时就已经加载
+      console.log('✅ 菜单树应该在登录时已加载')
     } catch (error) {
       console.error('⚠️ 获取菜单树失败，将使用默认菜单')
     }

@@ -1,4 +1,4 @@
-import rbacAxios, { UnifiedResponse } from './base'
+import rbacAxios, { UnifiedResponse } from '@/api/commons'
 import type {
   Permission,
   CreatePermissionRequest,
@@ -72,7 +72,7 @@ class PermissionService {
     try {
       const params = { force }
       await rbacAxios.delete(`/rbac/permissions/${nodeId}`, { params })
-      return { success: true, code: 0, message: '删除成功', data: undefined }
+      return { code: 0, msg: '删除成功', data: undefined }
     } catch (error) {
       console.error('删除权限节点失败:', error)
       throw error
@@ -115,7 +115,7 @@ class PermissionService {
   static async updatePermissionNodeStatus(nodeId: number, status: number): Promise<UnifiedResponse<void>> {
     try {
       await rbacAxios.patch(`/rbac/permissions/${nodeId}/status`, { status })
-      return { success: true, code: 0, message: '更新成功', data: undefined }
+      return { code: 0, msg: '更新成功', data: undefined }
     } catch (error) {
       console.error('更新权限状态失败:', error)
       throw error

@@ -6,7 +6,7 @@
 import { ref, computed } from 'vue'
 import type { User, UserQueryForm, UserRole, CreateUserRequest, UpdateUserRequest } from '@/types/rbac/user'
 import type { PaginationState } from '@/types/rbac/common'
-import { useUserStore } from '@/stores/modules/user'
+import { useUserInfoStore } from '@/stores/modules/userInfo'
 import userService from '@/api/system/userService'
 import associationService from '@/api/system/associationService'
 
@@ -18,7 +18,7 @@ export function useUserData() {
   // ============================================
   // 依赖
   // ============================================
-  const userStore = useUserStore()
+  const userInfoStore = useUserInfoStore()
 
   // ============================================
   // 状态
@@ -49,7 +49,7 @@ export function useUserData() {
       const size = pageSize ?? pagination.value.pageSize
 
       // 从用户上下文获取 tenant_id，如果没有传入则使用当前用户的租户
-      const tenantId = params.tenant_id ?? userStore.userInfo?.tenantId
+      const tenantId = params.tenant_id ?? userInfoStore.userInfo?.tenantId
       if (!tenantId) {
         console.warn('[useUserData] 未指定租户ID，跳过获取用户列表')
         users.value = []

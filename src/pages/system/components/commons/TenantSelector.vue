@@ -21,7 +21,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import tenantService from '@/api/system/tenantService'
-import { useUserStore } from '@/stores/modules/user'
+import { usePermissionsStore } from '@/stores/modules/permissions'
 
 interface Tenant {
   id: number
@@ -50,7 +50,7 @@ const emit = defineEmits<{
   change: [value: string | number | null]
 }>()
 
-const userStore = useUserStore()
+const permissionsStore = usePermissionsStore()
 
 const tenants = ref<Tenant[]>([])
 const loaded = ref(false)
@@ -59,7 +59,7 @@ const loaded = ref(false)
 // 有 tenant:list:view 权限的用户（超级管理员）不显示选择器
 // 没有 tenant:list:view 权限的用户（普通租户用户）显示选择器
 const shouldShow = computed(() => {
-  return !userStore.hasPermission('tenant:list:view')
+  return !permissionsStore.hasPermission('tenant:list:view')
 })
 
 onMounted(async () => {

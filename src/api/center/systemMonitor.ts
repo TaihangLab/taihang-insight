@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse } from './base'
+import { authAxios,  type UnifiedResponse } from '@/api/commons'
 /**
  * 系统资源监控 API
  * 提供系统资源使用率监控数据
@@ -110,7 +110,7 @@ class SystemMonitorAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/system/resources')
+    // return authAxios.get('/api/v1/system/resources')
   }
 
   /**
@@ -180,7 +180,7 @@ class SystemMonitorAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/system/resources/history', {
+    // return authAxios.get('/api/v1/system/resources/history', {
     //   params: { metric, time_range: timeRange }
     // })
   }
@@ -219,7 +219,7 @@ class SystemMonitorAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/storage/usage')
+    // return authAxios.get('/api/v1/storage/usage')
   }
 
   /**
@@ -264,7 +264,7 @@ class SystemMonitorAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/bandwidth/usage', {
+    // return authAxios.get('/api/v1/bandwidth/usage', {
     //   params: { time_range: timeRange }
     // })
   }

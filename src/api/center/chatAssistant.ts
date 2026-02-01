@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse, PageParams } from './base'
+import { authAxios,  type UnifiedResponse, PageParams } from '@/api/commons'
 /**
  * Chat Assistant API
  *
@@ -100,7 +100,7 @@ const chatAssistantAPI = {
       }
 
       // 获取baseURL
-      const baseURL = visionAIAxios.defaults.baseURL || ''
+      const baseURL = authAxios.defaults.baseURL || ''
 
       // 发起POST请求
       const response = await fetch(`${baseURL}/api/chat/chat`, {
@@ -221,7 +221,7 @@ const chatAssistantAPI = {
    * @returns axios响应
    */
   getChatConversations(params: PageParams = {}) {
-    return visionAIAxios.get('/api/chat/conversations', {
+    return authAxios.get('/api/chat/conversations', {
       params: {
         limit: params.limit || 20
       }
@@ -236,7 +236,7 @@ const chatAssistantAPI = {
    */
   getChatMessages(conversationId: string, params: PageParams = {}) {
     console.log('获取会话消息:', conversationId, params)
-    return visionAIAxios.get(`/api/chat/conversations/${conversationId}/messages`, {
+    return authAxios.get(`/api/chat/conversations/${conversationId}/messages`, {
       params: {
         limit: params.limit || 50
       }
@@ -250,7 +250,7 @@ const chatAssistantAPI = {
    */
   deleteChatConversation(conversationId: string) {
     console.log('删除会话:', conversationId)
-    return visionAIAxios.delete(`/api/chat/conversations/${conversationId}`)
+    return authAxios.delete(`/api/chat/conversations/${conversationId}`)
   },
 
   /**
@@ -259,7 +259,7 @@ const chatAssistantAPI = {
    * @returns Promise
    */
   autoGenerateTitle(conversationId: string) {
-    return visionAIAxios.post(`/api/chat/conversations/${conversationId}/auto-title`)
+    return authAxios.post(`/api/chat/conversations/${conversationId}/auto-title`)
   },
 
   /**
@@ -271,7 +271,7 @@ const chatAssistantAPI = {
   updateConversationTitle(conversationId: string, title: string) {
     const formData = new FormData()
     formData.append('title', title)
-    return visionAIAxios.put(`/api/chat/conversations/${conversationId}/title`, formData)
+    return authAxios.put(`/api/chat/conversations/${conversationId}/title`, formData)
   },
 
   /**
@@ -285,7 +285,7 @@ const chatAssistantAPI = {
     if (groupId) {
       formData.append('group_id', groupId)
     }
-    return visionAIAxios.put(`/api/chat/conversations/${conversationId}/group`, formData)
+    return authAxios.put(`/api/chat/conversations/${conversationId}/group`, formData)
   },
 
   /**
@@ -300,7 +300,7 @@ const chatAssistantAPI = {
     const formData = new FormData()
     formData.append('message_id', messageId)
     formData.append('partial_content', partialContent)
-    return visionAIAxios.post(`/api/chat/conversations/${conversationId}/stop-generation`, formData)
+    return authAxios.post(`/api/chat/conversations/${conversationId}/stop-generation`, formData)
   },
 
   /**
@@ -311,7 +311,7 @@ const chatAssistantAPI = {
   createGroup(name: string) {
     const formData = new FormData()
     formData.append('name', name)
-    return visionAIAxios.post('/api/chat/groups', formData)
+    return authAxios.post('/api/chat/groups', formData)
   },
 
   /**
@@ -319,7 +319,7 @@ const chatAssistantAPI = {
    * @returns Promise
    */
   getGroups() {
-    return visionAIAxios.get('/api/chat/groups')
+    return authAxios.get('/api/chat/groups')
   },
 
   /**
@@ -328,7 +328,7 @@ const chatAssistantAPI = {
    * @returns Promise
    */
   deleteGroup(groupId: string) {
-    return visionAIAxios.delete(`/api/chat/groups/${groupId}`)
+    return authAxios.delete(`/api/chat/groups/${groupId}`)
   }
 }
 

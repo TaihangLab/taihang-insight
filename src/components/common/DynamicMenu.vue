@@ -60,7 +60,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useUserStore } from '@/stores/modules/user'
 import { useDynamicMenu } from '@/composables/useDynamicMenu'
 import MenuItem from './MenuItem.vue'
 import {
@@ -78,8 +77,6 @@ const emit = defineEmits<{
 // 路由
 const route = useRoute()
 
-// Store
-const userStore = useUserStore()
 
 // 动态菜单
 const { menuTree, hasMenu } = useDynamicMenu()
@@ -91,7 +88,7 @@ const isCollapsed = ref(false)
 const activeMenu = ref(route.path)
 
 // 加载状态
-const loading = computed(() => !userStore.isLoggedIn || (userStore.isLoggedIn && menuTree.value.length === 0))
+const loading = computed(() => menuTree.value.length === 0)
 
 // 监听路由变化
 watch(

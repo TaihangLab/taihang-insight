@@ -68,21 +68,25 @@ import {
   SwitchButton
 } from '@element-plus/icons-vue'
 import ChangePasswordDialog from '../components/dialog/changePassword.vue'
-import { storage, StorageKey } from '@/stores/modules/storage'
+import { storage } from '@/stores/modules/storage'
+import { StorageKey } from '@/stores/modules/storageKeys'
 import cacheManager from '@/utils/cacheManager'
-import { useUserStore } from '@/stores'
+import { useUserInfoStore, useTokenStore, useMenusStore, usePermissionsStore } from '@/stores'
 
 // 路由
 const route = useRoute()
 const router = useRouter()
-// Store
-const userStore = useUserStore() 
+// 使用新的独立 stores
+const userInfoStore = useUserInfoStore()
+const tokenStore = useTokenStore()
+const menusStore = useMenusStore()
+const permissionsStore = usePermissionsStore() 
 
 // 修改密码对话框引用
 const changePasswordDialogRef = ref<InstanceType<typeof ChangePasswordDialog>>()
 
 // 用户名
-const username = ref(userStore.userInfo.nick_name || '访客')
+const username = ref(userInfoStore.userInfo?.nick_name || userInfoStore.userInfo?.user_name || '访客')
 
 // 当前时间
 const currentTime = ref('')
@@ -216,10 +220,8 @@ const clearCache = () => {
 
 // 退出登录
 const logout = () => {
-  storage.remove(StorageKey.ADMIN_TOKEN)
-storage.remove(StorageKey.WVP_TOKEN)
-storage.remove(StorageKey.WVP_USER)
-
+  // 清除所有认证相关的 localStorage 数据
+  storage.logout()
   ElMessage({
     showClose: true,
     message: '已安全退出登录',

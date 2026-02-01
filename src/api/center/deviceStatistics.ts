@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse } from './base'
+import { authAxios,  type UnifiedResponse } from '@/api/commons'
 /**
  * 设备统计管理 API
  * 提供设备状态统计和设备树结构
@@ -81,7 +81,7 @@ class DeviceStatisticsAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/devices/statistics')
+    // return authAxios.get('/api/v1/devices/statistics')
   }
 
   /**
@@ -127,7 +127,7 @@ class DeviceStatisticsAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/devices/tree')
+    // return authAxios.get('/api/v1/devices/tree')
   }
 
   /**
@@ -157,7 +157,7 @@ class DeviceStatisticsAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/devices/summary')
+    // return authAxios.get('/api/v1/devices/summary')
   }
 }
 

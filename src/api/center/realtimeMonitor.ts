@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse } from './base'
+import { authAxios,  type UnifiedResponse } from '@/api/commons'
 /**
  * 实时监控管理 API
  * 提供实时监控页面的通道管理和视频播放功能
@@ -78,7 +78,7 @@ class RealtimeMonitorAPI {
     console.log('📤 获取实时监控通道列表 - 参数:', params)
 
     try {
-      const response = await visionAIAxios.get('/api/v1/realtime-monitor/channels', { params })
+      const response = await authAxios.get('/api/v1/realtime-monitor/channels', { params })
       console.log('📥 获取实时监控通道列表成功:', response.data)
       return response
     } catch (error) {
@@ -100,7 +100,7 @@ class RealtimeMonitorAPI {
     console.log('📤 获取通道详情 - 通道ID:', channelId)
 
     try {
-      const response = await visionAIAxios.get(`/api/v1/realtime-monitor/channels/${channelId}`)
+      const response = await authAxios.get(`/api/v1/realtime-monitor/channels/${channelId}`)
       console.log('📥 获取通道详情成功:', response.data)
       return response
     } catch (error) {
@@ -122,7 +122,7 @@ class RealtimeMonitorAPI {
     console.log('📤 播放通道 - 通道ID:', channelId)
 
     try {
-      const response = await visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`)
+      const response = await authAxios.get(`/api/v1/realtime-monitor/play/${channelId}`)
       console.log('📥 播放通道成功:', response.data)
       return response
     } catch (error) {
@@ -144,7 +144,7 @@ class RealtimeMonitorAPI {
     console.log('📤 停止播放通道 - 通道ID:', channelId)
 
     try {
-      const response = await visionAIAxios.get(`/api/v1/realtime-monitor/stop/${channelId}`)
+      const response = await authAxios.get(`/api/v1/realtime-monitor/stop/${channelId}`)
       console.log('📥 停止播放成功:', response.data)
       return response
     } catch (error) {
@@ -161,7 +161,7 @@ class RealtimeMonitorAPI {
     console.log('📤 获取通道树 - 参数:', params)
 
     try {
-      const response = await visionAIAxios.get('/api/v1/realtime-monitor/channels/tree', { params })
+      const response = await authAxios.get('/api/v1/realtime-monitor/channels/tree', { params })
       console.log('📥 获取通道树成功:', response.data)
       return response
     } catch (error) {
@@ -178,7 +178,7 @@ class RealtimeMonitorAPI {
     console.log('📤 获取行政区划树 - 参数:', params)
 
     try {
-      const response = await visionAIAxios.get('/api/v1/realtime-monitor/region/tree', { params })
+      const response = await authAxios.get('/api/v1/realtime-monitor/region/tree', { params })
       console.log('📥 获取行政区划树成功:', response.data)
       return response
     } catch (error) {
@@ -195,7 +195,7 @@ class RealtimeMonitorAPI {
     console.log('📤 获取业务分组树 - 参数:', params)
 
     try {
-      const response = await visionAIAxios.get('/api/v1/realtime-monitor/group/tree', { params })
+      const response = await authAxios.get('/api/v1/realtime-monitor/group/tree', { params })
       console.log('📥 获取业务分组树成功:', response.data)
       return response
     } catch (error) {

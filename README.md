@@ -607,7 +607,7 @@ queueMicrotask(async () => {
 ```javascript
 // VisionAIService.js - 极简SSE连接
 createAlertSSEConnection(onMessage, onError, onClose) {
-  const sseUrl = `${visionAIAxios.defaults.baseURL}/api/v1/alerts/stream`;
+  const sseUrl = `${authAxios.defaults.baseURL}/api/v1/alerts/stream`;
   const eventSource = new EventSource(sseUrl);
   
   eventSource.onopen = () => console.log('SSE连接已建立');

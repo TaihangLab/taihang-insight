@@ -101,6 +101,33 @@ export interface MenuItem {
 }
 
 /**
+ * 后端返回的原始菜单项类型（使用 permission 前缀）
+ * 用于接收后端数据，字段名可能与前端期望不同
+ */
+export interface RawMenuItem {
+  id: number | string
+  parent_id?: number | string | null
+  permission_name?: string        // 后端字段（对应前端的 menu_name）
+  menu_name?: string               // 前端期望字段
+  permission_type?: string         // 后端字段（对应前端的 menu_type）
+  menu_type?: string               // 前端期望字段
+  permission_code?: string         // 后端字段（对应前端的 menu_code）
+  menu_code?: string
+  path?: string
+  component?: string
+  icon?: string
+  sort_order: number
+  visible?: boolean
+  status: number
+  method?: string
+  children?: RawMenuItem[]
+  create_time?: string
+  update_time?: string
+  node_type?: string
+  has_children?: boolean
+}
+
+/**
  * 菜单树响应
  */
 export interface AuthMenuResponse {

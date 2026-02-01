@@ -128,13 +128,20 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/stores/modules/user'
+import { useUserInfoStore } from '@/stores/modules/userInfo'
+import { usePermissionsStore } from '@/stores/modules/permissions'
+import { useMenusStore } from '@/stores/modules/menus'
 import authAPI from '@/api/auth/authAPI'
 import storage from '@/stores/modules/storage'
+import { StorageKey } from '@/stores/modules/storageKeys'
 
 const router = useRouter()
 const route = useRoute()
-const userStore = useUserStore()
+
+// 使用 3 个独立的 store
+const userInfoStore = useUserInfoStore()
+const permissionsStore = usePermissionsStore()
+const menusStore = useMenusStore()
 
 // 表单数据
 const isLoging = ref(false)
@@ -209,7 +216,7 @@ async function login(): Promise<void> {
         const { token, adminToken, userInfo } = result.data
 
         // 【关键】通过 Pinia Store 设置 token，触发持久化插件
-        userStore.setToken(token)
+        storage.setAdminToken(adminToken)
 
         // 存储租户信息用于下次登录自动填充
         storage.setSelectedTenant(selectedTenant.value)
@@ -240,7 +247,7 @@ async function login(): Promise<void> {
           if (userInfoResult.code === 200) {
             const userData = userInfoResult.data
 
-            userStore.setUserInfo({
+            userInfoStore.setUserInfo({
               id: userData.user_id,
               username: userData.user_name,
               user_name: userData.user_name,
@@ -259,68 +266,68 @@ async function login(): Promise<void> {
 
           // 处理权限列表 - 从独立的 /api/v1/permissions 接口获取
           if (permissionsResult.code === 200 && permissionsResult.data) {
-            const perms = permissionsResult.data.permissions || []
-            userStore.setPermissions(perms)
-            console.log('✅ 权限列表已设置，数量:', perms.length)
-            console.log('🔍 检查 userStore.permissions.value:', userStore.permissions)
+            const perms = permissionsResult.data.permission_codes || []
+            permissionsStore.setPermissions(perms)
           } else {
             // 即使接口失败，也设置空数组
-            userStore.setPermissions([])
+            permissionsStore.setPermissions([])
             console.warn('⚠️ 权限接口返回失败，设置为空数组')
           }
 
           // 处理菜单树 - 从独立的 /api/v1/menu 接口获取
           if (menuTreeResult.code === 200 && menuTreeResult.data) {
             const menu = menuTreeResult.data.menu_tree || []
-            userStore.setMenuTree(menu)
-            console.log('✅ 菜单树已设置，数量:', menu.length)
-            console.log('🔍 检查 userStore.menuTree.value:', userStore.menuTree)
+            menusStore.setMenuTree(menu)
           } else {
             // 即使接口失败，也设置空数组
-            userStore.setMenuTree([])
+            menusStore.setMenuTree([])
             console.warn('⚠️ 菜单接口返回失败，设置为空数组')
           }
-
-          // 【关键】立即检查 Store 状态是否正确设置
-          console.log('🔍 立即检查 Store 状态:', {
-            hasToken: !!userStore.token,
-            permissions: userStore.permissions,
-            menuTree: userStore.menuTree,
-            permissionsLength: userStore.permissions.length,
-            menuTreeLength: userStore.menuTree.length
-          })
 
           // 等待 Pinia 持久化插件完成同步
           await new Promise(resolve => setTimeout(resolve, 100))
 
-          // 验证数据已正确持久化到 localStorage
-          const persistedAuth = localStorage.getItem('taihang-auth')
-          console.log('📦 localStorage 原始数据:', persistedAuth?.substring(0, 300) + '...')
+          // 验证数据已正确持久化到 localStorage（检查 4 个独立的 key）
+          const persistedToken = localStorage.getItem(StorageKey.ADMIN_TOKEN)
+          const persistedUserInfo = localStorage.getItem(StorageKey.USER_INFO)
+          const persistedPermissions = localStorage.getItem(StorageKey.PERMISSION)
+          const persistedMenus = localStorage.getItem(StorageKey.MENUS)
 
-          if (persistedAuth) {
-            const authData = JSON.parse(persistedAuth)
+          console.log('📦 localStorage 数据检查:', {
+            hasToken: !!persistedToken,
+            hasUserInfo: !!persistedUserInfo,
+            hasPermissions: !!persistedPermissions,
+            hasMenus: !!persistedMenus
+          })
+
+          if (persistedToken && persistedUserInfo && persistedPermissions && persistedMenus) {
+            const tokenData = JSON.parse(persistedToken)
+            const userInfoData = JSON.parse(persistedUserInfo)
+            const permissionsData = JSON.parse(persistedPermissions)
+            const menusData = JSON.parse(persistedMenus)
+
             console.log('✅ Pinia 已持久化到 localStorage:', {
-              hasToken: !!authData.token,
-              hasUserInfo: !!authData.userInfo,
-              permissionsCount: authData.permissions?.length || 0,
-              menuTreeCount: authData.menuTree?.length || 0
+              hasToken: !!tokenData.token,
+              hasUserInfo: !!userInfoData.userInfo,
+              permissionsCount: permissionsData.permissions?.length || 0,
+              menuTreeCount: menusData.menuTree?.length || 0
             })
 
             // 断言：验证关键数据已持久化
-            if (!authData.permissions) {
+            if (!permissionsData.permissions) {
               console.error('❌ 断言失败：permissions 字段不存在！')
-            } else if (authData.permissions.length === 0) {
+            } else if (permissionsData.permissions.length === 0) {
               console.warn('⚠️ 警告：permissions 为空数组（可能是正常的，如果用户没有任何权限）')
             } else {
-              console.log('✅ 断言成功：permissions 存在且包含', authData.permissions.length, '个权限')
+              console.log('✅ 断言成功：permissions 存在且包含', permissionsData.permissions.length, '个权限')
             }
 
-            if (!authData.menuTree) {
+            if (!menusData.menuTree) {
               console.error('❌ 断言失败：menuTree 字段不存在！')
-            } else if (authData.menuTree.length === 0) {
+            } else if (menusData.menuTree.length === 0) {
               console.warn('⚠️ 警告：menuTree 为空数组（可能是正常的，如果用户没有任何菜单）')
             } else {
-              console.log('✅ 断言成功：menuTree 存在且包含', authData.menuTree.length, '个菜单项')
+              console.log('✅ 断言成功：menuTree 存在且包含', menusData.menuTree.length, '个菜单项')
             }
           } else {
             console.error('❌ 持久化数据尚未写入 localStorage！')

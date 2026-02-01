@@ -3,6 +3,7 @@ import type { RouteRecordRaw } from 'vue-router'
 
 // 导入布局组件（保留同步，因为它是必须的）
 import Layout from '@/layout/index.vue'
+import { StorageKey } from '@/stores/modules/storageKeys'
 
 // 使用懒加载导入页面组件 - 优化启动性能
 const gbRecordDetail = () => import('../components/visionAI/deviceManagement/managementPages/GBRecordDetail.vue')
@@ -81,17 +82,17 @@ const routes: RouteRecordRaw[] = [
     children: [
       // 可视化中心
       {
-        path: '/visualCenter',
+        path: '/visual',
         component: visualCenter,
         meta: { title: '可视化中心', permission: 'visual_center' }
       },
       {
-        path: '/algorithmInference',
+        path: '/visual/algorithm',
         component: algorithmInference,
         meta: { title: '算法推理', permission: 'algorithm_inference' }
       },
       {
-        path: '/visualCenter/parkManagement',
+        path: '/visual/park',
         name: 'parkManagement',
         component: parkManagement,
         meta: { title: '园区管理', permission: 'park_management' }
@@ -356,9 +357,13 @@ router.beforeEach(async (to, _from, next) => {
     return
   }
 
-  // 从 Pinia 持久化存储中获取认证数据
-  const authDataStr = localStorage.getItem('taihang-auth')
-  if (!authDataStr) {
+  // 从 Pinia 持久化存储中获取认证数据（4 个独立的 key）
+  const tokenDataStr = localStorage.getItem(StorageKey.ADMIN_TOKEN)
+  const permissionsDataStr = localStorage.getItem(StorageKey.PERMISSION)
+  const menusDataStr = localStorage.getItem(StorageKey.MENUS)
+
+  // 检查 token 是否存在
+  if (!tokenDataStr) {
     console.warn('⚠️ 未登录，重定向到登录页')
     next({
       path: '/login',
@@ -367,9 +372,7 @@ router.beforeEach(async (to, _from, next) => {
     return
   }
 
-  const authData = JSON.parse(authDataStr)
-  const token = authData.token
-  const permissions: string[] = authData.permissions || []
+  const token = tokenDataStr
 
   // 没有 token，重定向到登录页
   if (!token) {
@@ -379,6 +382,13 @@ router.beforeEach(async (to, _from, next) => {
       query: { redirect: to.fullPath }
     })
     return
+  }
+
+  // 解析权限数据
+  let permissions: string[] = []
+  if (permissionsDataStr) {
+    const permissionsData = JSON.parse(permissionsDataStr)
+    permissions = permissionsData.permissions || []
   }
 
   // 检查路由权限
@@ -393,7 +403,11 @@ router.beforeEach(async (to, _from, next) => {
       console.warn(`⚠️ 无访问权限: ${to.path}，需要权限: ${JSON.stringify(requiredPermission)}`)
 
       // 查找用户有权限的第一个菜单项
-      const menuTree: any[] = authData.menuTree || []
+      let menuTree: any[] = []
+      if (menusDataStr) {
+        const menusData = JSON.parse(menusDataStr)
+        menuTree = menusData.menuTree || []
+      }
 
       // 递归查找第一个可访问的菜单项（只返回 menu 类型，跳过 folder 和 button）
       function findFirstAccessibleMenu(items: any[]): string | null {

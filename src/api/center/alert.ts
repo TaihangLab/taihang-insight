@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { handleSimpleResponse, type UnifiedResponse } from './base'
+import { authAxios, handleSimpleResponse, type UnifiedResponse } from '@/api/commons'
 import type { Alert, AlertQueryParams, AlertStatusUpdate } from './types'
 /**
  * 预警管理 API
@@ -103,7 +103,7 @@ class AlertAPI {
     console.log('获取实时预警列表 - API调用参数:', apiParams)
 
     try {
-      const response = await visionAIAxios.get('/api/v1/alerts/real-time', { params: apiParams })
+      const response = await authAxios.get('/api/v1/alerts/real-time', { params: apiParams })
       return this.transformAlertListResponse(response)
     } catch (error) {
       console.error('获取实时预警列表失败:', error)
@@ -162,7 +162,7 @@ class AlertAPI {
     console.log('更新预警状态:', alertId, updateData)
 
     try {
-      return await visionAIAxios.put(`/api/v1/alerts/${alertId}/status`, updateData)
+      return await authAxios.put(`/api/v1/alerts/${alertId}/status`, updateData)
     } catch (error) {
       console.error('更新预警状态失败:', error)
       throw error
@@ -183,7 +183,7 @@ class AlertAPI {
     console.log('批量更新预警状态:', alertIds, updateData)
 
     try {
-      return await visionAIAxios.put('/api/v1/alerts/batch-update', {
+      return await authAxios.put('/api/v1/alerts/batch-update', {
         alert_ids: alertIds,
         ...updateData
       })
@@ -206,7 +206,7 @@ class AlertAPI {
     console.log('删除预警:', alertId)
 
     try {
-      return await visionAIAxios.delete(`/api/v1/alerts/${alertId}`)
+      return await authAxios.delete(`/api/v1/alerts/${alertId}`)
     } catch (error) {
       console.error('删除预警失败:', error)
       throw error
@@ -226,7 +226,7 @@ class AlertAPI {
     console.log('批量删除预警:', alertIds)
 
     try {
-      return await visionAIAxios.post('/api/v1/alerts/batch-delete', {
+      return await authAxios.post('/api/v1/alerts/batch-delete', {
         alert_ids: alertIds
       })
     } catch (error) {
@@ -248,7 +248,7 @@ class AlertAPI {
     console.log('获取预警详情:', alertId)
 
     try {
-      return await visionAIAxios.get(`/api/v1/alerts/${alertId}`)
+      return await authAxios.get(`/api/v1/alerts/${alertId}`)
     } catch (error) {
       console.error('获取预警详情失败:', error)
       throw error
@@ -267,7 +267,7 @@ class AlertAPI {
     onError?: SSEErrorCallback,
     onClose?: SSECloseCallback
   ): EventSource {
-    const sseUrl = `${visionAIAxios.defaults.baseURL}/api/v1/alerts/stream`
+    const sseUrl = `${authAxios.defaults.baseURL}/api/v1/alerts/stream`
     console.log('创建SSE连接:', sseUrl)
 
     const eventSource = new EventSource(sseUrl)
@@ -328,7 +328,7 @@ class AlertAPI {
   async getSSEStatus(): Promise<AxiosResponse> {
     console.log('获取SSE连接状态')
     try {
-      return await visionAIAxios.get('/api/v1/alerts/sse/status')
+      return await authAxios.get('/api/v1/alerts/sse/status')
     } catch (error) {
       console.error('获取SSE连接状态失败:', error)
       throw error
@@ -341,7 +341,7 @@ class AlertAPI {
   async getConnectedClients(): Promise<AxiosResponse> {
     console.log('获取连接客户端信息')
     try {
-      return await visionAIAxios.get('/api/v1/alerts/connected')
+      return await authAxios.get('/api/v1/alerts/connected')
     } catch (error) {
       console.error('获取连接客户端信息失败:', error)
       throw error
@@ -354,7 +354,7 @@ class AlertAPI {
   async sendTestAlert(): Promise<AxiosResponse> {
     console.log('发送测试预警')
     try {
-      return await visionAIAxios.post('/api/v1/alerts/test')
+      return await authAxios.post('/api/v1/alerts/test')
     } catch (error) {
       console.error('发送测试预警失败:', error)
       throw error
@@ -368,7 +368,7 @@ class AlertAPI {
   async getAlertStatistics(days = 7): Promise<AxiosResponse> {
     console.log('获取预警统计信息，天数:', days)
     try {
-      return await visionAIAxios.get('/api/v1/alerts/statistics', {
+      return await authAxios.get('/api/v1/alerts/statistics', {
         params: { days }
       })
     } catch (error) {
@@ -392,7 +392,7 @@ class AlertAPI {
     console.log('标记预警为误报:', { alertId, reviewNotes, reviewerName })
 
     try {
-      const response = await visionAIAxios.post(`/api/v1/alerts/${alertId}/false-alarm`, null, {
+      const response = await authAxios.post(`/api/v1/alerts/${alertId}/false-alarm`, null, {
         params: {
           review_notes: reviewNotes,
           reviewer_name: reviewerName
@@ -430,7 +430,7 @@ class AlertAPI {
     console.log('批量标记预警为误报:', { alertIds, reviewNotes, reviewerName })
 
     try {
-      const response = await visionAIAxios.post('/api/v1/alerts/batch-false-alarm', {
+      const response = await authAxios.post('/api/v1/alerts/batch-false-alarm', {
         alert_ids: alertIds
       }, {
         params: {
@@ -469,7 +469,7 @@ class AlertAPI {
     }
 
     try {
-      const response = await visionAIAxios.get('/api/v1/alerts/export', {
+      const response = await authAxios.get('/api/v1/alerts/export', {
         params: exportParams,
         responseType: 'blob',
         timeout: 60000

@@ -29,7 +29,7 @@
     <UserEditDialog
       v-model:visible="editDialogVisible"
       :current-user="currentUser"
-      :tenant-id="currentUser?.tenant_id ?? searchConditions.tenant_id ?? userStore.userInfo?.tenantId ?? null"
+      :tenant-id="currentUser?.tenant_id ?? searchConditions.tenant_id ?? userInfoStore.userInfo?.tenantId ?? null"
       @submit="handleUserSubmit"
     />
 
@@ -54,7 +54,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserData } from '@/pages/system/composable/user/useUserData'
-import { useUserStore } from '@/stores/modules/user'
+import { useUserInfoStore } from '@/stores/modules/userInfo'
 import UserSearchBar from '@/pages/system/components/user/UserSearchBar.vue'
 import UserList from '@/pages/system/components/user/UserList.vue'
 import DeleteConfirmDialog from '@/pages/system/components/user/DeleteConfirmDialog.vue'
@@ -76,7 +76,7 @@ const {
   resetUserPassword
 } = useUserData()
 
-const userStore = useUserStore()
+const userInfoStore = useUserInfoStore()
 
 // ============================================
 // 响应式状态
@@ -84,7 +84,7 @@ const userStore = useUserStore()
 
 // 搜索条件
 const searchConditions = reactive({
-  tenant_id: (userStore.userInfo?.tenantId ?? null) as string | number | null,
+  tenant_id: (userInfoStore.userInfo?.tenantId ?? null) as string | number | null,
   username: '',
   phone: '',
   status: null as number | null
@@ -107,19 +107,8 @@ const deleteTargetIds = ref<number[]>([])
 // ============================================
 // 生命周期
 // ============================================
-onMounted(async () => {
-  // 先确保获取用户权限信息（包含 tenantId）
-  if (!userStore.userInfo?.tenantId) {
-    try {
-      await userStore.fetchAllAuthInfo()
-      // 更新搜索条件的租户ID
-      if (userStore.userInfo?.tenantId) {
-        searchConditions.tenant_id = userStore.userInfo.tenantId
-      }
-    } catch (error) {
-      console.error('获取用户权限信息失败:', error)
-    }
-  }
+onMounted(() => {
+  // 用户信息已在 main.ts 中初始化，直接加载数据
   loadData()
 })
 

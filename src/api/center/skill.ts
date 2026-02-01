@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { handleSimpleResponse, type UnifiedResponse } from './base'
+import  { authAxios, handleSimpleResponse, type UnifiedResponse } from '@/api/commons'
 import type { SkillClass, SkillQueryParams, Skill, AITask, LlmSkill, LlmTask } from './types'
 /**
  * 技能管理 API
@@ -52,7 +52,7 @@ class SkillAPI {
     }
 
     try {
-      const response = await visionAIAxios.get('/api/v1/skill-classes', { params: apiParams })
+      const response = await authAxios.get('/api/v1/skill-classes', { params: apiParams })
       return this.transformSkillListResponse(response)
     } catch (error) {
       console.error('获取技能列表失败:', error)
@@ -99,7 +99,7 @@ class SkillAPI {
    */
   async reloadSkillClasses(): Promise<AxiosResponse> {
     try {
-      return await visionAIAxios.post('/api/v1/skill-classes/reload')
+      return await authAxios.post('/api/v1/skill-classes/reload')
         .then(response => handleSimpleResponse(response, '热加载技能类'))
     } catch (error) {
       console.error('热加载技能类失败:', error)
@@ -133,7 +133,7 @@ class SkillAPI {
     }
 
     try {
-      const response = await visionAIAxios.get('/api/v1/ai-tasks/api/v1/skill-classes', { params: apiParams })
+      const response = await authAxios.get('/api/v1/ai-tasks/api/v1/skill-classes', { params: apiParams })
       return this.transformSkillListResponse(response)
     } catch (error) {
       console.error('获取AI任务技能类列表失败:', error)
@@ -147,7 +147,7 @@ class SkillAPI {
    */
   async getSkillDetail(skillClassId: number): Promise<AxiosResponse> {
     try {
-      return await visionAIAxios.get(`/api/v1/skill-classes/${skillClassId}`)
+      return await authAxios.get(`/api/v1/skill-classes/${skillClassId}`)
         .then(response => handleSimpleResponse(response, '获取技能详情'))
     } catch (error) {
       console.error('获取技能详情失败:', error)
@@ -161,7 +161,7 @@ class SkillAPI {
    */
   async deleteSkill(skillClassId: number): Promise<AxiosResponse> {
     try {
-      return await visionAIAxios.delete(`/api/v1/skill-classes/${skillClassId}`)
+      return await authAxios.delete(`/api/v1/skill-classes/${skillClassId}`)
         .then(response => handleSimpleResponse(response, '删除技能'))
     } catch (error) {
       console.error('删除技能失败:', error)
@@ -175,7 +175,7 @@ class SkillAPI {
    */
   async batchDeleteSkills(ids: number[]): Promise<AxiosResponse> {
     try {
-      const response = await visionAIAxios.delete('/api/v1/skill-classes/batch-delete', {
+      const response = await authAxios.delete('/api/v1/skill-classes/batch-delete', {
         data: { skill_class_ids: ids }
       })
 
@@ -220,7 +220,7 @@ class SkillAPI {
    */
   async importSkill(skillData: Partial<SkillClass>): Promise<AxiosResponse> {
     try {
-      return await visionAIAxios.post('/api/v1/skill-classes', skillData)
+      return await authAxios.post('/api/v1/skill-classes', skillData)
         .then(response => handleSimpleResponse(response, '导入技能'))
     } catch (error) {
       console.error('导入技能失败:', error)
@@ -235,7 +235,7 @@ class SkillAPI {
    */
   async updateSkill(skillClassId: number, skillData: Partial<SkillClass>): Promise<AxiosResponse> {
     try {
-      return await visionAIAxios.put(`/api/v1/skill-classes/${skillClassId}`, skillData)
+      return await authAxios.put(`/api/v1/skill-classes/${skillClassId}`, skillData)
         .then(response => handleSimpleResponse(response, '更新技能'))
     } catch (error) {
       console.error('更新技能失败:', error)
@@ -270,7 +270,7 @@ class SkillAPI {
     }
 
     try {
-      return await visionAIAxios.post(`/api/v1/skill-classes/${skillClassId}/image`, formData, config)
+      return await authAxios.post(`/api/v1/skill-classes/${skillClassId}/image`, formData, config)
         .then(response => {
           console.log('图片上传成功:', response.data)
           return handleSimpleResponse(response, '上传技能图片')
@@ -292,7 +292,7 @@ class SkillAPI {
     }
 
     try {
-      return await visionAIAxios.get(`/api/v1/skill-classes/${skillClassId}/devices`)
+      return await authAxios.get(`/api/v1/skill-classes/${skillClassId}/devices`)
         .then(response => handleSimpleResponse(response, '获取技能关联设备'))
     } catch (error) {
       console.error('获取技能关联设备失败:', error)
@@ -333,7 +333,7 @@ class SkillAPI {
     console.log('创建AI任务请求数据:', data)
 
     try {
-      return await visionAIAxios.post('/api/v1/ai-tasks', data)
+      return await authAxios.post('/api/v1/ai-tasks', data)
         .then(response => handleSimpleResponse(response, '创建AI任务'))
     } catch (error) {
       console.error('创建AI任务失败:', error)
@@ -352,7 +352,7 @@ class SkillAPI {
     }
 
     try {
-      return await visionAIAxios.get(`/api/v1/ai-tasks/${taskId}`)
+      return await authAxios.get(`/api/v1/ai-tasks/${taskId}`)
         .then(response => handleSimpleResponse(response, '获取AI任务详情'))
     } catch (error) {
       console.error('获取AI任务详情失败:', error)
@@ -366,7 +366,7 @@ class SkillAPI {
    */
   async getAITaskSkillDetail(skillClassId: number): Promise<AxiosResponse> {
     try {
-      return await visionAIAxios.get(`/api/v1/ai-tasks/api/v1/skill-classes/${skillClassId}`)
+      return await authAxios.get(`/api/v1/ai-tasks/api/v1/skill-classes/${skillClassId}`)
         .then(response => handleSimpleResponse(response, '获取AI任务技能详情'))
     } catch (error) {
       console.error('获取AI任务技能详情失败:', error)
@@ -388,7 +388,7 @@ class SkillAPI {
     console.log('更新AI任务请求数据:', taskData)
 
     try {
-      return await visionAIAxios.put(`/api/v1/ai-tasks/${taskId}`, taskData)
+      return await authAxios.put(`/api/v1/ai-tasks/${taskId}`, taskData)
         .then(response => handleSimpleResponse(response, '更新AI任务'))
     } catch (error) {
       console.error('更新AI任务失败:', error)
@@ -409,7 +409,7 @@ class SkillAPI {
     console.log('删除AI任务:', taskId)
 
     try {
-      return await visionAIAxios.delete(`/api/v1/ai-tasks/${taskId}`)
+      return await authAxios.delete(`/api/v1/ai-tasks/${taskId}`)
         .then(response => handleSimpleResponse(response, '删除AI任务'))
     } catch (error) {
       console.error('删除AI任务失败:', error)
@@ -441,7 +441,7 @@ class SkillAPI {
     console.log('获取多模态技能列表API调用参数:', apiParams)
 
     try {
-      const response = await visionAIAxios.get('/api/v1/llm-skills/api/v1/skill-classes', { params: apiParams })
+      const response = await authAxios.get('/api/v1/llm-skills/api/v1/skill-classes', { params: apiParams })
       console.log('获取多模态技能列表成功:', response.data)
       return response
     } catch (error) {
@@ -463,7 +463,7 @@ class SkillAPI {
     console.log('获取多模态技能详情, skill_id:', skillId)
 
     try {
-      const response = await visionAIAxios.get(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`)
+      const response = await authAxios.get(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`)
       console.log('获取多模态技能详情成功:', response.data)
       return response
     } catch (error) {
@@ -500,7 +500,7 @@ class SkillAPI {
     console.log('创建多模态大模型技能请求数据:', data)
 
     try {
-      return await visionAIAxios.post('/api/v1/llm-skills/api/v1/skill-classes', data)
+      return await authAxios.post('/api/v1/llm-skills/api/v1/skill-classes', data)
     } catch (error) {
       console.error('创建多模态技能失败:', error)
       throw error
@@ -521,7 +521,7 @@ class SkillAPI {
     console.log('更新多模态技能, skill_id:', skillId, '数据:', skillData)
 
     try {
-      const response = await visionAIAxios.put(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`, skillData)
+      const response = await authAxios.put(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`, skillData)
       console.log('更新多模态技能成功:', response.data)
       return response
     } catch (error) {
@@ -543,7 +543,7 @@ class SkillAPI {
     console.log('发布多模态技能, skill_id:', skillId)
 
     try {
-      const response = await visionAIAxios.post(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}/publish`)
+      const response = await authAxios.post(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}/publish`)
       console.log('发布多模态技能成功:', response.data)
       return response
     } catch (error) {
@@ -565,7 +565,7 @@ class SkillAPI {
     console.log('下架多模态技能, skill_id:', skillId)
 
     try {
-      const response = await visionAIAxios.post(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}/unpublish`)
+      const response = await authAxios.post(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}/unpublish`)
       console.log('下架多模态技能成功:', response.data)
       return response
     } catch (error) {
@@ -587,7 +587,7 @@ class SkillAPI {
     console.log('删除多模态技能, skill_id:', skillId)
 
     try {
-      const response = await visionAIAxios.delete(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`)
+      const response = await authAxios.delete(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`)
       console.log('删除多模态技能成功:', response.data)
       return response
     } catch (error) {
@@ -609,7 +609,7 @@ class SkillAPI {
     console.log('批量删除多模态技能, skill_ids:', skillIds)
 
     try {
-      const response = await visionAIAxios.post('/api/v1/llm-skills/api/v1/skill-classes/batch-delete', skillIds)
+      const response = await authAxios.post('/api/v1/llm-skills/api/v1/skill-classes/batch-delete', skillIds)
       console.log('批量删除多模态技能成功:', response.data)
       return response
     } catch (error) {
@@ -658,7 +658,7 @@ class SkillAPI {
     }
 
     try {
-      const response = await visionAIAxios.post('/api/v1/llm-skills/upload/skill-icon', formData, config)
+      const response = await authAxios.post('/api/v1/llm-skills/upload/skill-icon', formData, config)
       console.log('技能图标上传成功:', response.data)
       return response
     } catch (error) {
@@ -707,7 +707,7 @@ class SkillAPI {
     }
 
     try {
-      const response = await visionAIAxios.post('/api/v1/llm-skills/api/v1/skill-classes/preview-test', formData, config)
+      const response = await authAxios.post('/api/v1/llm-skills/api/v1/skill-classes/preview-test', formData, config)
       console.log('技能预览测试成功:', response.data)
       return response
     } catch (error) {
@@ -747,7 +747,7 @@ class SkillAPI {
     console.log('创建大模型任务请求数据:', data)
 
     try {
-      const response = await visionAIAxios.post('/api/v1/llm-skills/tasks', data)
+      const response = await authAxios.post('/api/v1/llm-skills/tasks', data)
       console.log('创建大模型任务成功:', response.data)
       return response
     } catch (error) {
@@ -769,7 +769,7 @@ class SkillAPI {
     console.log('删除大模型任务:', taskId)
 
     try {
-      const response = await visionAIAxios.delete(`/api/v1/llm-skills/tasks/${taskId}`)
+      const response = await authAxios.delete(`/api/v1/llm-skills/tasks/${taskId}`)
       console.log('删除大模型任务成功:', response.data)
       return response
     } catch (error) {
@@ -795,7 +795,7 @@ class SkillAPI {
     console.log('获取大模型任务列表API调用参数:', apiParams)
 
     try {
-      const response = await visionAIAxios.get('/api/v1/llm-skills/tasks', { params: apiParams })
+      const response = await authAxios.get('/api/v1/llm-skills/tasks', { params: apiParams })
       console.log('获取大模型任务列表成功:', response.data)
       return response
     } catch (error) {
@@ -827,7 +827,7 @@ class SkillAPI {
     console.log('更新大模型任务请求数据:', { taskId, data })
 
     try {
-      const response = await visionAIAxios.put(`/api/v1/llm-skills/tasks/${taskId}`, data)
+      const response = await authAxios.put(`/api/v1/llm-skills/tasks/${taskId}`, data)
       console.log('更新大模型任务成功:', response.data)
       return response
     } catch (error) {

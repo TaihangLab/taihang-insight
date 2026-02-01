@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { handleSimpleResponse, type UnifiedResponse, PageParams } from './base'
+import { authAxios, handleSimpleResponse,  type UnifiedResponse, PageParams } from '@/api/commons'
 import type { AlertArchive, ArchiveQueryParams, CreateArchiveRequest, Alert } from './types'
 
 /**
@@ -64,7 +64,7 @@ class ArchiveAPI {
     console.log('获取预警档案列表 - API调用参数:', apiParams)
 
     try {
-      const response = await visionAIAxios.get('/api/v1/alert-archives', { params: apiParams })
+      const response = await authAxios.get('/api/v1/alert-archives', { params: apiParams })
       console.log('获取预警档案列表成功:', response.data)
       return response
     } catch (error) {
@@ -86,7 +86,7 @@ class ArchiveAPI {
     console.log('获取预警档案详情:', archiveId)
 
     try {
-      const response = await visionAIAxios.get(`/api/v1/alert-archives/${archiveId}`)
+      const response = await authAxios.get(`/api/v1/alert-archives/${archiveId}`)
       console.log('获取预警档案详情成功:', response.data)
       return response
     } catch (error) {
@@ -108,7 +108,7 @@ class ArchiveAPI {
     console.log('创建预警档案:', archiveData)
 
     try {
-      const response = await visionAIAxios.post('/api/v1/alert-archives', archiveData)
+      const response = await authAxios.post('/api/v1/alert-archives', archiveData)
       console.log('创建预警档案成功:', response.data)
       return response
     } catch (error) {
@@ -131,7 +131,7 @@ class ArchiveAPI {
     console.log('更新预警档案:', archiveId, archiveData)
 
     try {
-      const response = await visionAIAxios.put(`/api/v1/alert-archives/${archiveId}`, archiveData)
+      const response = await authAxios.put(`/api/v1/alert-archives/${archiveId}`, archiveData)
       console.log('更新预警档案成功:', response.data)
       return response
     } catch (error) {
@@ -153,7 +153,7 @@ class ArchiveAPI {
     console.log('删除预警档案:', archiveId)
 
     try {
-      const response = await visionAIAxios.delete(`/api/v1/alert-archives/${archiveId}`)
+      const response = await authAxios.delete(`/api/v1/alert-archives/${archiveId}`)
       console.log('删除预警档案成功:', response.data)
       return response
     } catch (error) {
@@ -175,7 +175,7 @@ class ArchiveAPI {
     console.log('批量删除预警档案:', archiveIds)
 
     try {
-      const response = await visionAIAxios.delete('/api/v1/alert-archives/batch', {
+      const response = await authAxios.delete('/api/v1/alert-archives/batch', {
         data: { archive_ids: archiveIds }
       })
       console.log('批量删除预警档案成功:', response.data)
@@ -210,7 +210,7 @@ class ArchiveAPI {
     console.log('获取档案预警记录列表 - API调用参数:', archiveId, apiParams)
 
     try {
-      const response = await visionAIAxios.get(`/api/v1/alert-archives/${archiveId}/alerts`, { params: apiParams })
+      const response = await authAxios.get(`/api/v1/alert-archives/${archiveId}/alerts`, { params: apiParams })
       console.log('获取档案预警记录列表成功:', response.data)
       return response
     } catch (error) {
@@ -232,7 +232,7 @@ class ArchiveAPI {
     console.log('添加预警记录:', recordData)
 
     try {
-      const response = await visionAIAxios.post('/api/v1/alert-archives/alerts', recordData)
+      const response = await authAxios.post('/api/v1/alert-archives/alerts', recordData)
       console.log('添加预警记录成功:', response.data)
       return response
     } catch (error) {
@@ -254,7 +254,7 @@ class ArchiveAPI {
     console.log('获取预警记录详情:', recordId)
 
     try {
-      const response = await visionAIAxios.get(`/api/v1/alert-archives/alerts/${recordId}`)
+      const response = await authAxios.get(`/api/v1/alert-archives/alerts/${recordId}`)
       console.log('获取预警记录详情成功:', response.data)
       return response
     } catch (error) {
@@ -277,7 +277,7 @@ class ArchiveAPI {
     console.log('更新预警记录:', recordId, recordData)
 
     try {
-      const response = await visionAIAxios.put(`/api/v1/alert-archives/alerts/${recordId}`, recordData)
+      const response = await authAxios.put(`/api/v1/alert-archives/alerts/${recordId}`, recordData)
       console.log('更新预警记录成功:', response.data)
       return response
     } catch (error) {
@@ -305,7 +305,7 @@ class ArchiveAPI {
     }
 
     try {
-      const response = await visionAIAxios.delete(url)
+      const response = await authAxios.delete(url)
       console.log('删除预警记录成功:', response.data)
       return response
     } catch (error) {
@@ -327,7 +327,7 @@ class ArchiveAPI {
     console.log('批量删除预警记录:', recordIds)
 
     try {
-      const response = await visionAIAxios.post('/api/v1/alert-archives/alerts/batch-delete', {
+      const response = await authAxios.post('/api/v1/alert-archives/alerts/batch-delete', {
         record_ids: recordIds
       })
       console.log('批量删除预警记录成功:', response.data)
@@ -365,7 +365,7 @@ class ArchiveAPI {
     }
 
     try {
-      const response = await visionAIAxios.post(`/api/v1/alert-archives/${archiveId}/upload/image`, formData, config)
+      const response = await authAxios.post(`/api/v1/alert-archives/${archiveId}/upload/image`, formData, config)
       console.log('档案图片上传成功:', response.data)
       return response
     } catch (error) {
@@ -401,7 +401,7 @@ class ArchiveAPI {
     }
 
     try {
-      const response = await visionAIAxios.post(`/api/v1/alert-archives/alerts/${recordId}/upload/image`, formData, config)
+      const response = await authAxios.post(`/api/v1/alert-archives/alerts/${recordId}/upload/image`, formData, config)
       console.log('预警记录图片上传成功:', response.data)
       return response
     } catch (error) {
@@ -437,7 +437,7 @@ class ArchiveAPI {
     }
 
     try {
-      const response = await visionAIAxios.post(`/api/v1/alert-archives/alerts/${recordId}/upload/video`, formData, config)
+      const response = await authAxios.post(`/api/v1/alert-archives/alerts/${recordId}/upload/video`, formData, config)
       console.log('预警记录视频上传成功:', response.data)
       return response
     } catch (error) {

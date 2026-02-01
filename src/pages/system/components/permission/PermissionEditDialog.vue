@@ -211,11 +211,11 @@ const permissionRules: FormRules<PermissionForm> = {
   ],
   permission_code: [
     { required: true, message: '请输入权限编码', trigger: 'blur' },
-    { pattern: /^[a-z:_/]+$/, message: '权限编码只能包含小写字母、冒号、下划线和斜杠', trigger: 'blur' }
+    { pattern: /^[a-zA-Z:_/]+$/, message: '权限编码只能包含字母、冒号、下划线和斜杠', trigger: 'blur' }
   ],
   path: [
     { required: true, message: '请输入路由路径', trigger: 'blur' },
-    { pattern: /^[a-z0-9/{}-]+$/, message: '路由路径只能包含小写字母、数字、斜杠、短横线和路径参数', trigger: 'blur' }
+    { pattern: /^[a-zA-Z0-9/{}-]+$/, message: '路由路径只能包含字母、数字、斜杠、短横线和路径参数', trigger: 'blur' }
   ]
 }
 

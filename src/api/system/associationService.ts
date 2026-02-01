@@ -1,4 +1,4 @@
-import rbacAxios, { UnifiedResponse } from './base'
+import rbacAxios, { UnifiedResponse } from '@/api/commons'
 import type { User } from '@/types/rbac/user'
 import type { Role } from '@/types/rbac/role'
 import type { Permission } from '@/types/rbac/permission'

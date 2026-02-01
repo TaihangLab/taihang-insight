@@ -9,43 +9,10 @@
  * 5. 支持默认值
  */
 
-/**
- * localStorage 键名枚举
- * 所有 localStorage 的键名必须在此定义
- */
-export enum StorageKey {
-  // ========== 认证相关 (已由 pinia-plugin-persistedstate 管理) ==========
-  /** 认证数据（自动由 user store 管理） */
-  AUTH = 'taihang-auth',
-
-  // ========== 旧系统兼容 (用于向后兼容) ==========
-  /** WVP Token (旧系统) */
-  WVP_TOKEN = 'wvp-token',
-  /** WVP 用户信息 (旧系统) */
-  WVP_USER = 'wvp-user',
-  /** 管理员 Token */
-  ADMIN_TOKEN = 'Admin-Token',
-  /** 通用 Token */
-  TOKEN = 'token',
-
-  // ========== 用户偏好设置 ==========
-  /** 选中的租户 ID */
-  SELECTED_TENANT = 'selectedTenant',
-  /** 当前用户昵称（用于预警操作记录） */
-  CURRENT_USER_NAME = 'nick_name',
-
-  // ========== 临时数据（跨页面传递） ==========
-  /** 技能编辑信息 */
-  EDIT_SKILL_INFO = 'editSkillInfo',
-  /** 临时技能信息 */
-  TEMP_SKILL_INFO = 'tempSkillInfo',
-
-  // ========== 业务数据 ==========
-  /** 智能复判记录列表 */
-  INTELLIGENT_REVIEW_RECORDS = 'intelligentReviewRecords',
-  /** 还原的预警列表 */
-  RESTORED_WARNINGS = 'restoredWarnings',
-}
+import { useUserInfoStore } from "./userInfo"
+import { usePermissionsStore } from "./permissions"
+import { useMenusStore } from "./menus"
+import { StorageKey } from "./storageKeys"
 
 /**
  * 存储助手类
@@ -176,23 +143,27 @@ export const storage = {
 
   // ========== 快捷访问方法 ==========
 
-  // --- 旧系统兼容 ---
+  // --- 认证相关 ---
+  /** 获取管理员 Token（base64 字符串） */
+  getAdminToken: () => storageHelper.getString(StorageKey.ADMIN_TOKEN),
+  /** 设置管理员 Token（直接存储 base64 字符串） */
+  setAdminToken: (token: string) => storageHelper.setString(StorageKey.ADMIN_TOKEN, token),
+  /** 移除管理员 Token */
+  removeAdminToken: () => storageHelper.remove(StorageKey.ADMIN_TOKEN),
+
+  // --- WVP 认证相关 ---
   /** 获取 WVP Token */
   getWvpToken: () => storageHelper.getString(StorageKey.WVP_TOKEN),
   /** 设置 WVP Token */
   setWvpToken: (token: string) => storageHelper.setString(StorageKey.WVP_TOKEN, token),
+  /** 移除 WVP Token */
+  removeWvpToken: () => storageHelper.remove(StorageKey.WVP_TOKEN),
   /** 获取 WVP 用户信息 */
   getWvpUser: () => storageHelper.getJSON<any>(StorageKey.WVP_USER),
   /** 设置 WVP 用户信息 */
   setWvpUser: (user: any) => storageHelper.setJSON(StorageKey.WVP_USER, user),
-  /** 获取管理员 Token */
-  getAdminToken: () => storageHelper.getString(StorageKey.ADMIN_TOKEN),
-  /** 设置管理员 Token */
-  setAdminToken: (token: string) => storageHelper.setString(StorageKey.ADMIN_TOKEN, token),
-  /** 获取通用 Token */
-  getToken: () => storageHelper.getString(StorageKey.TOKEN),
-  /** 设置通用 Token */
-  setToken: (token: string) => storageHelper.setString(StorageKey.TOKEN, token),
+  /** 移除 WVP 用户信息 */
+  removeWvpUser: () => storageHelper.remove(StorageKey.WVP_USER),
 
   // --- 用户偏好 ---
   /** 获取选中的租户 */
@@ -246,6 +217,16 @@ export const storage = {
       restoredFrom: 'reviewRecords'
     })
     storage.setRestoredWarnings(warnings)
+  },
+  logout: () => {
+    storage.removeAdminToken()
+    storage.removeWvpToken()
+    storage.removeWvpUser()
+    storage.removeEditSkillInfo()
+    storage.removeTempSkillInfo()
+    useUserInfoStore().clearUserInfo()
+    usePermissionsStore().clearPermissions()
+    useMenusStore().clearMenuTree()
   },
 }
 

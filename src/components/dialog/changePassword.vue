@@ -35,7 +35,7 @@
 
 <script>
 import crypto from 'crypto'
-import { storage, StorageKey } from '@/stores/modules/storage'
+import { storage } from '@/stores/modules/storage'
 import { changePassword } from '@/api/dialog'
 
 export default {

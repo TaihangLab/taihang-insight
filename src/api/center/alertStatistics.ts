@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse } from './base'
+import { authAxios,  type UnifiedResponse } from '@/api/commons'
 /**
  * 预警统计管理 API
  * 提供预警相关的统计数据，包括摘要、趋势、分类统计等
@@ -168,7 +168,7 @@ class AlertStatisticsAPI {
     })
 
     // 真实API调用（后端就绪后取消注释）
-    // return visionAIAxios.get('/api/v1/alerts/statistics/summary', {
+    // return authAxios.get('/api/v1/alerts/statistics/summary', {
     //   params: { time_range: timeRange }
     // })
   }
@@ -212,7 +212,7 @@ class AlertStatisticsAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/alerts/statistics/trend', {
+    // return authAxios.get('/api/v1/alerts/statistics/trend', {
     //   params: { time_range: timeRange, granularity }
     // })
   }
@@ -247,7 +247,7 @@ class AlertStatisticsAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/alerts/statistics/by-type', {
+    // return authAxios.get('/api/v1/alerts/statistics/by-type', {
     //   params: { time_range: timeRange }
     // })
   }
@@ -279,7 +279,7 @@ class AlertStatisticsAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/alerts/statistics/by-level', {
+    // return authAxios.get('/api/v1/alerts/statistics/by-level', {
     //   params: { time_range: timeRange }
     // })
   }
@@ -318,7 +318,7 @@ class AlertStatisticsAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/alerts/statistics/by-location', {
+    // return authAxios.get('/api/v1/alerts/statistics/by-location', {
     //   params: { time_range: timeRange, limit }
     // })
   }
@@ -328,10 +328,8 @@ class AlertStatisticsAPI {
    * @param limit 返回数量限制
    */
   async getLatestImages(limit = 10): Promise<AxiosResponse<UnifiedResponse<AlertImage[]>>> {
-    console.log('[统计API] 获取最新预警图片, 限制:', limit)
-
     try {
-      const response = await visionAIAxios.get('/api/v1/alerts/latest-images', {
+      const response = await authAxios.get('/api/v1/alerts/latest-images', {
         params: { limit }
       })
       console.log('[统计API] 获取最新预警图片成功, 返回数量:', response.data?.data?.length || 0)
@@ -387,7 +385,7 @@ class AlertStatisticsAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/alerts/statistics/processing-status', {
+    // return authAxios.get('/api/v1/alerts/statistics/processing-status', {
     //   params: { time_range: timeRange }
     // })
   }

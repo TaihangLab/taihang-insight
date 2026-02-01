@@ -2,13 +2,14 @@
  * 认证 API 实现
  *
  * 注意：
- * 1. 从 Pinia Store 获取 token，而不是直接访问 localStorage
- * 2. login 接口不需要 Authorization header
- * 3. 其他接口需要 token，没有 token 时不应调用
+ * 1. 使用两个独立的 axios 实例：unAuthAxios（无需认证）和 authAxios（需要认证）
+ * 2. login 等公开接口使用 unAuthAxios
+ * 3. 其他接口使用 authAxios，自动添加 token
+ * 4. 使用自定义响应拦截器处理 401 错误和登录页面跳转
  */
 
-import axios from 'axios'
 import router from '@/router'
+import { authAxios, createAxiosInstance } from '@/api/commons'
 import type {
   AuthInfoResponse,
   AuthPermissionsResponse,
@@ -18,92 +19,57 @@ import type {
   MenuItem
 } from '@/types/auth'
 
-// 获取 API 基础 URL
-// 使用与主应用相同的后端地址
-const getApiBaseURL = () => {
-  // 开发环境和生产环境都使用完整的后端 URL
-  // 与 main.ts 中的 API_BASE_URL 保持一致
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+/**
+ * 响应拦截器工厂
+ * 处理 401 错误和登录页面跳转
+ */
+const createAuthResponseInterceptor = (instance: any) => {
+  instance.interceptors.response.use(
+    (response: any) => {
+      return response.data
+    },
+    (error: any) => {
+      if (error.response?.status === 401) {
+        // 清除认证缓存数据（保留 token，等待用户重新登录）
+        try {
+          const authData = localStorage.getItem('taihang-auth')
+          if (authData) {
+            const parsed = JSON.parse(authData)
+            // 清除 userInfo, permissions, menuTree，保留 token
+            parsed.userInfo = null
+            parsed.permissions = []
+            parsed.menuTree = []
+            parsed.isLoggedIn = false
+            localStorage.setItem('taihang-auth', JSON.stringify(parsed))
+          }
+        } catch (e) {
+          console.warn('清除认证数据失败:', e)
+        }
 
-  if (import.meta.env.MODE === 'production') {
-    return import.meta.env.VITE_API_BASE_URL || API_BASE_URL
-  }
-  return API_BASE_URL
+        // 使用 router 跳转到登录页，避免页面刷新导致日志丢失
+        router.push('/login')
+      }
+      return Promise.reject(error)
+    }
+  )
 }
 
-// 创建独立的 axios 实例用于认证接口
-const authAxios = axios.create({
-  baseURL: getApiBaseURL(),
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-})
-
-// 请求拦截器：添加 token 和 clientid
-authAxios.interceptors.request.use(
-  (config) => {
-    // 登录接口不需要 token
-    if (config.url === '/api/v1/login') {
-      // 添加 clientid 请求头（后端认证必需）
-      config.headers.clientid = import.meta.env.VITE_CLIENT_ID
-      return config
-    }
-
-    // 其他接口需要从 Pinia Store 获取 token
-    // 注意：这里无法直接使用 useUserStore()，因为这是在 axios 拦截器中
-    // 需要从 localStorage 读取 Pinia 持久化的数据
-    try {
-      const authData = localStorage.getItem('taihang-auth')
-      const token = authData ? JSON.parse(authData).token : null
-
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-      // 如果没有 token，继续请求（让后端返回 401）
-    } catch (e) {
-      console.warn('读取 token 失败:', e)
-    }
-
-    // 添加 clientid 请求头（后端认证必需）
-    config.headers.clientid = import.meta.env.VITE_CLIENT_ID
-    return config
+/**
+ * 无需认证的 axios 实例
+ * 用于 login 等公开接口，只添加 clientid
+ */
+const unAuthAxios = createAxiosInstance(
+  {
+    baseURL: import.meta.env.VITE_API_BASE_URL || '',
+    timeout: 10000
   },
-  (error) => {
-    return Promise.reject(error)
+  {
+    skipAuth: true, // 跳过 Authorization
+    customResponseInterceptor: createAuthResponseInterceptor
   }
 )
 
-// 响应拦截器：统一处理 401 错误
-authAxios.interceptors.response.use(
-  (response) => {
-    return response.data
-  },
-  (error) => {
-    if (error.response?.status === 401) {
-      // 清除认证缓存数据（保留 token，等待用户重新登录）
-      // 注意：这里无法直接使用 useUserStore()，需要操作 localStorage
-      try {
-        const authData = localStorage.getItem('taihang-auth')
-        if (authData) {
-          const parsed = JSON.parse(authData)
-          // 清除 userInfo, permissions, menuTree，保留 token
-          parsed.userInfo = null
-          parsed.permissions = []
-          parsed.menuTree = []
-          parsed.isLoggedIn = false
-          localStorage.setItem('taihang-auth', JSON.stringify(parsed))
-        }
-      } catch (e) {
-        console.warn('清除认证数据失败:', e)
-      }
 
-      // 使用 router 跳转到登录页，避免页面刷新导致日志丢失
-      router.push('/login')
-    }
-    return Promise.reject(error)
-  }
-)
 
 /**
  * 认证 API 类
@@ -114,7 +80,7 @@ class AuthAPI {
    * POST /api/v1/login
    */
   async login(params: LoginRequest): Promise<LoginResponse> {
-    return authAxios.post('/api/v1/login', params)
+    return unAuthAxios.post('/api/v1/login', params)
   }
 
   /**

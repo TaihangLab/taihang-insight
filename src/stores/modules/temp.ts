@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import storage, { StorageKey } from './storage'
+import storage from './storage'
+import { StorageKey } from './storageKeys'
 
 /**
  * 临时数据 Store

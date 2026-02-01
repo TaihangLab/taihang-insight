@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse } from './base'
+import { authAxios,  type UnifiedResponse } from '@/api/commons'
 /**
  * 预警转发统计 API
  * 提供预警转发相关统计数据
@@ -76,7 +76,7 @@ class AlertForwardAPI {
     })
 
     // 真实API调用
-    // return visionAIAxios.get('/api/v1/alerts/forward-statistics', {
+    // return authAxios.get('/api/v1/alerts/forward-statistics', {
     //   params: { time_range: timeRange }
     // })
   }

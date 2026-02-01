@@ -4,20 +4,20 @@
  */
 
 import type { Directive, DirectiveBinding } from 'vue'
-import { useUserStore } from '@/stores/modules/user'
+import { usePermissionsStore } from '@/stores/modules/permissions'
 
 /**
  * 检查是否有权限
  */
 function hasPermission(value: string | string[]): boolean {
-  const userStore = useUserStore()
+  const permissionsStore = usePermissionsStore()
 
   if (!value) {
     console.warn('[v-permission] 权限码不能为空')
     return false
   }
 
-  const permissions = userStore.permissions || []
+  const permissions = permissionsStore.permissions || []
 
   // 如果权限列表为空，认为有权限（兼容未配置权限的情况）
   if (permissions.length === 0) {

@@ -1,4 +1,4 @@
-import rbacAxios, { UnifiedResponse } from './base'
+import rbacAxios, { UnifiedResponse } from '@/api/commons'
 import type { PaginatedResponse } from '@/types/rbac/common'
 import type {
   TenantAPI,

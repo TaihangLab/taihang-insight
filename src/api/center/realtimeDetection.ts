@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse } from './base'
+import { authAxios,  type UnifiedResponse } from '@/api/commons'
 /**
  * 实时检测管理 API
  * 提供 OSD 检测框叠加功能
@@ -61,7 +61,7 @@ class RealtimeDetectionAPI {
     }
 
     try {
-      const response = await visionAIAxios.get(`/api/v1/realtime-detection/detection/tasks/by_camera/${cameraId}`)
+      const response = await authAxios.get(`/api/v1/realtime-detection/detection/tasks/by_camera/${cameraId}`)
       console.log('获取AI任务列表成功:', response.data)
       return response
     } catch (error) {
@@ -81,7 +81,7 @@ class RealtimeDetectionAPI {
     }
 
     try {
-      const response = await visionAIAxios.get(`/api/v1/realtime-detection/detection/result/${taskId}`)
+      const response = await authAxios.get(`/api/v1/realtime-detection/detection/result/${taskId}`)
       console.log('获取检测结果成功:', response.data)
       return response
     } catch (error) {

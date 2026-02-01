@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios'
-import visionAIAxios, { type UnifiedResponse } from './base'
+import { authAxios,  type UnifiedResponse } from '@/api/commons'
 /**
  * 复判记录管理 API
  * 提供复判记录的增删改查操作
@@ -54,7 +54,7 @@ class ReviewRecordAPI {
     console.log('获取复判记录列表:', params)
 
     try {
-      const response = await visionAIAxios.get('/api/v1/review-records/', { params })
+      const response = await authAxios.get('/api/v1/review-records/', { params })
       console.log('获取复判记录列表成功:', response.data)
       return response
     } catch (error) {
@@ -76,7 +76,7 @@ class ReviewRecordAPI {
     console.log('获取复判记录详情:', reviewId)
 
     try {
-      const response = await visionAIAxios.get(`/api/v1/review-records/${reviewId}`)
+      const response = await authAxios.get(`/api/v1/review-records/${reviewId}`)
       console.log('获取复判记录详情成功:', response.data)
       return response
     } catch (error) {
@@ -98,7 +98,7 @@ class ReviewRecordAPI {
     console.log('获取预警复判记录列表:', alertId)
 
     try {
-      const response = await visionAIAxios.get(`/api/v1/review-records/alert/${alertId}`)
+      const response = await authAxios.get(`/api/v1/review-records/alert/${alertId}`)
       console.log('获取预警复判记录列表成功:', response.data)
       return response
     } catch (error) {
@@ -120,7 +120,7 @@ class ReviewRecordAPI {
     console.log('创建复判记录:', reviewData)
 
     try {
-      const response = await visionAIAxios.post('/api/v1/review-records/', reviewData)
+      const response = await authAxios.post('/api/v1/review-records/', reviewData)
       console.log('创建复判记录成功:', response.data)
       return response
     } catch (error) {
@@ -143,7 +143,7 @@ class ReviewRecordAPI {
     console.log('更新复判记录:', reviewId, updateData)
 
     try {
-      const response = await visionAIAxios.put(`/api/v1/review-records/${reviewId}`, updateData)
+      const response = await authAxios.put(`/api/v1/review-records/${reviewId}`, updateData)
       console.log('更新复判记录成功:', response.data)
       return response
     } catch (error) {
@@ -165,7 +165,7 @@ class ReviewRecordAPI {
     console.log('删除复判记录:', reviewId)
 
     try {
-      const response = await visionAIAxios.delete(`/api/v1/review-records/${reviewId}`)
+      const response = await authAxios.delete(`/api/v1/review-records/${reviewId}`)
       console.log('删除复判记录成功:', response.data)
       return response
     } catch (error) {
@@ -182,7 +182,7 @@ class ReviewRecordAPI {
     console.log('获取复判记录统计信息:', params)
 
     try {
-      const response = await visionAIAxios.get('/api/v1/review-records/statistics', { params })
+      const response = await authAxios.get('/api/v1/review-records/statistics', { params })
       console.log('获取复判记录统计信息成功:', response.data)
       return response
     } catch (error) {
