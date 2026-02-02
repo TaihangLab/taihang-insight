@@ -158,7 +158,7 @@ export default {
     // 动态上传地址配置
     uploadAction() {
       // 根据当前上传的类型和ID返回对应的上传地址
-      const baseUrl = 'http://127.0.0.1:8000'
+      const baseUrl = window.baseUrl ? window.baseUrl : ''
 
       if (this.addDialogVisible && this.currentRecordId) {
         // 添加预警记录时的图片上传
@@ -174,7 +174,7 @@ export default {
 
     // 视频上传地址
     videoUploadAction() {
-      const baseUrl = 'http://127.0.0.1:8000'
+      const baseUrl = window.baseUrl ? window.baseUrl : ''
 
       if (this.currentRecordId) {
         return `${baseUrl}/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/video`
@@ -759,16 +759,7 @@ export default {
 
       // 2. 根据API状态添加相应记录，与warningManagement页面逻辑一致
       if (apiData.status === 2) {
-        // 处理中状态
-        history.push({
-          id: Date.now() + 2,
-          status: 'active',
-          statusText: '处理中',
-          time: this.formatApiTime(apiData.updated_at || apiData.created_at),
-          description: '预警正在处理中',
-          operationType: 'processing',
-          operator: apiData.processed_by || '处理人员'
-        });
+        // 🔧 处理中状态 - 不在时间线中显示，通过预警状态标签体现
       } else if (apiData.status === 3) {
         // 已处理状态
         history.push({
