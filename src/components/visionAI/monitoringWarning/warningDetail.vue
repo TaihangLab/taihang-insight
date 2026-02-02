@@ -2723,43 +2723,43 @@ export default {
   transition: all 0.3s ease;
 }
 
-/* 所有历史时间线项目（除第一个外）使用灰色样式 */
-.timeline-container .timeline-item:not(:first-child) .timeline-dot {
+/* 所有历史时间线项目（除最后一个外）使用灰色样式 */
+.timeline-container .timeline-item:not(:last-child) .timeline-dot {
   border-color: #e4e7ed !important;
   background: #e4e7ed !important;
   box-shadow: 0 2px 6px rgba(228, 231, 237, 0.3) !important;
   animation: none !important;
 }
 
-.timeline-container .timeline-item:not(:first-child) .timeline-content {
+.timeline-container .timeline-item:not(:last-child) .timeline-content {
   background: #fafbfc !important;
   border-color: #f0f2f5 !important;
 }
 
-.timeline-container .timeline-item:not(:first-child) .timeline-status {
+.timeline-container .timeline-item:not(:last-child) .timeline-status {
   color: #909399 !important;
 }
 
-.timeline-container .timeline-item:not(:first-child) .timeline-time {
+.timeline-container .timeline-item:not(:last-child) .timeline-time {
   color: #c0c4cc !important;
 }
 
-.timeline-container .timeline-item:not(:first-child) .timeline-desc {
+.timeline-container .timeline-item:not(:last-child) .timeline-desc {
   color: #c0c4cc !important;
 }
 
-.timeline-container .timeline-item:not(:first-child) .timeline-operator {
+.timeline-container .timeline-item:not(:last-child) .timeline-operator {
   color: #c0c4cc !important;
   background: rgba(192, 196, 204, 0.1) !important;
 }
 
 /* 所有历史时间线项目的左边框都显示为灰色 */
-.timeline-container .timeline-item:not(:first-child) .timeline-content::before {
+.timeline-container .timeline-item:not(:last-child) .timeline-content::before {
   background: #e4e7ed !important;
 }
 
-/* 最新的时间线项目（第一个）使用动态蓝色圆点 - 优先级最高 */
-.timeline-container .timeline-item:first-child .timeline-dot {
+/* 最新的时间线项目（最后一个）使用动态蓝色圆点 - 优先级最高 */
+.timeline-container .timeline-item:last-child .timeline-dot {
   border-color: #409EFF !important;
   background: #409EFF !important;
   box-shadow: 0 0 0 4px rgba(64, 158, 255, 0.2), 0 2px 6px rgba(64, 158, 255, 0.3) !important;
