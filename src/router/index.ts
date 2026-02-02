@@ -145,7 +145,7 @@ const constantRoutes: RouteRecordRaw[] = [
     path: '/',
     name: 'Layout',
     component: Layout,
-    redirect: '/visualCenter',
+    redirect: '/visual',
     children: [] // 占位，动态路由会添加到这里
   }
 ]
