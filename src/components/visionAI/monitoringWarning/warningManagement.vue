@@ -367,7 +367,8 @@ export default {
           
           // 预警详细信息
           device: item.camera_name || '未知摄像头',
-          type: item.alert_type || item.alert_name || '未知类型',
+          alertName: item.alert_name || '未知预警',  // 预警名称（如：未佩戴安全带）
+          type: item.alert_type || '未知类型',        // 预警类型（如：安全生产预警）
           location: item.location || '未知位置',
           locationId: `loc_${item.camera_id || 'unknown'}`,
           description: item.alert_description || '未知描述',

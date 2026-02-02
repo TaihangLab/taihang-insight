@@ -49,13 +49,13 @@
                     </div>
                     <div class="info-cell">
                       <span class="label">预警名称</span>
-                      <span class="value">{{ internalWarning.type }}</span>
+                      <span class="value">{{ internalWarning.alertName || internalWarning.type }}</span>
                     </div>
                   </div>
                   <div class="info-row">
                     <div class="info-cell">
                       <span class="label">预警类型</span>
-                      <span class="value">{{ getWarningTypeText(internalWarning.type) }}</span>
+                      <span class="value">{{ internalWarning.type }}</span>
                     </div>
                   </div>
                   <!-- 复判信息行 (仅在复判记录页面显示) -->
@@ -806,7 +806,8 @@ export default {
         },
 
         // 预警详细信息
-        type: apiData.alert_type || apiData.alert_name || '未知类型',
+        alertName: apiData.alert_name || '未知预警',  // 预警名称（如：未佩戴安全带）
+        type: apiData.alert_type || '未知类型',        // 预警类型（如：安全生产预警）
         location: apiData.location || '未知位置',
         description: apiData.alert_description || '未知描述',
         skill: apiData.alert_type || 'unknown_skill',
