@@ -36,8 +36,9 @@ class AlertForwardAPI {
   /**
    * 获取报警转发统计
    * @param timeRange 时间范围: '7d' | '30d'
+   * 注意：响应拦截器会提取 data 字段，返回类型是 AlertForwardStatistics
    */
-  async getForwardStatistics(timeRange: ForwardTimeRange = '7d'): Promise<AxiosResponse<UnifiedResponse<AlertForwardStatistics>>> {
+  async getForwardStatistics(timeRange: ForwardTimeRange = '7d'): Promise<AlertForwardStatistics> {
     console.log('[转发API] 获取报警转发统计, 时间范围:', timeRange)
 
     // 生成模拟统计数据
@@ -65,20 +66,14 @@ class AlertForwardAPI {
 
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({
-          data: {
-            code: 0,
-            msg: 'success',
-            data: mockData
-          }
-        } as any)
+        resolve(mockData)
       }, 200)
     })
 
-    // 真实API调用
+    // 真实API调用（会经过响应拦截器处理）
     // return authAxios.get('/api/v1/alerts/forward-statistics', {
     //   params: { time_range: timeRange }
-    // })
+    // }) as Promise<AlertForwardStatistics>
   }
 }
 

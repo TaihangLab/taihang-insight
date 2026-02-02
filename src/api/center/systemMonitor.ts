@@ -73,8 +73,9 @@ export interface BandwidthUsage {
 class SystemMonitorAPI {
   /**
    * 获取当前资源使用率
+   * 注意：响应拦截器会提取 data 字段，返回类型是 CurrentResources
    */
-  async getCurrentResources(): Promise<AxiosResponse<UnifiedResponse<CurrentResources>>> {
+  async getCurrentResources(): Promise<CurrentResources> {
     console.log('[监控API] 获取当前资源使用率')
 
     // 模拟实时资源数据（带小幅波动）
@@ -99,26 +100,21 @@ class SystemMonitorAPI {
 
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({
-          data: {
-            code: 0,
-            msg: 'success',
-            data: mockData
-          }
-        } as any)
+        resolve(mockData)
       }, 200)
     })
 
-    // 真实API调用
-    // return authAxios.get('/api/v1/system/resources')
+    // 真实API调用（会经过响应拦截器处理）
+    // return authAxios.get('/api/v1/system/resources') as Promise<CurrentResources>
   }
 
   /**
    * 获取资源历史数据（用于图表展示）
    * @param metric 资源类型: 'cpu' | 'memory' | 'disk' | 'network'
    * @param timeRange 时间范围: '1h' | '6h' | '24h' | '7d'
+   * 注意：响应拦截器会提取 data 字段，返回类型是 ResourceHistory
    */
-  async getResourceHistory(metric: ResourceMetric = 'cpu', timeRange: TimeRange = '1h'): Promise<AxiosResponse<UnifiedResponse<ResourceHistory>>> {
+  async getResourceHistory(metric: ResourceMetric = 'cpu', timeRange: TimeRange = '1h'): Promise<ResourceHistory> {
     console.log('[监控API] 获取资源历史数据, 指标:', metric, '时间范围:', timeRange)
 
     // 生成模拟历史数据
@@ -165,30 +161,25 @@ class SystemMonitorAPI {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
-          data: {
-            code: 0,
-            msg: 'success',
-            data: {
-              metric,
-              time_range: timeRange,
-              time_labels: timeLabels,
-              data_points: dataPoints
-            }
-          }
-        } as any)
+          metric,
+          time_range: timeRange,
+          time_labels: timeLabels,
+          data_points: dataPoints
+        })
       }, 200)
     })
 
-    // 真实API调用
+    // 真实API调用（会经过响应拦截器处理）
     // return authAxios.get('/api/v1/system/resources/history', {
     //   params: { metric, time_range: timeRange }
-    // })
+    // }) as Promise<ResourceHistory>
   }
 
   /**
    * 获取存储使用情况
+   * 注意：响应拦截器会提取 data 字段，返回类型是 StorageUsage
    */
-  async getStorageUsage(): Promise<AxiosResponse<UnifiedResponse<StorageUsage>>> {
+  async getStorageUsage(): Promise<StorageUsage> {
     console.log('[监控API] 获取存储使用情况')
 
     const mockData: StorageUsage = {
@@ -208,25 +199,20 @@ class SystemMonitorAPI {
 
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({
-          data: {
-            code: 0,
-            msg: 'success',
-            data: mockData
-          }
-        } as any)
+        resolve(mockData)
       }, 200)
     })
 
-    // 真实API调用
-    // return authAxios.get('/api/v1/storage/usage')
+    // 真实API调用（会经过响应拦截器处理）
+    // return authAxios.get('/api/v1/storage/usage') as Promise<StorageUsage>
   }
 
   /**
    * 获取带宽使用情况
    * @param timeRange 时间范围
+   * 注意：响应拦截器会提取 data 字段，返回类型是 BandwidthUsage
    */
-  async getBandwidthUsage(timeRange: TimeRange = '1h'): Promise<AxiosResponse<UnifiedResponse<BandwidthUsage>>> {
+  async getBandwidthUsage(timeRange: TimeRange = '1h'): Promise<BandwidthUsage> {
     console.log('[监控API] 获取带宽使用情况, 时间范围:', timeRange)
 
     const pointCount = 12
@@ -253,20 +239,14 @@ class SystemMonitorAPI {
 
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({
-          data: {
-            code: 0,
-            msg: 'success',
-            data: mockData
-          }
-        } as any)
+        resolve(mockData)
       }, 200)
     })
 
-    // 真实API调用
+    // 真实API调用（会经过响应拦截器处理）
     // return authAxios.get('/api/v1/bandwidth/usage', {
     //   params: { time_range: timeRange }
-    // })
+    // }) as Promise<BandwidthUsage>
   }
 }
 

@@ -1,7 +1,7 @@
 <template>
   <div class="position-search-bar">
     <el-form :inline="true" :model="formValue" class="search-form">
-      <el-form-item label="租户">
+      <el-form-item v-permission="'tenant:list:view'" label="租户">
         <TenantSelector
           ref="tenantSelectorRef"
           v-model="formValue.tenant_id"
@@ -47,58 +47,70 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, ref } from 'vue'
+import { ref, watch, onScopeDispose } from 'vue'
 import TenantSelector from '@/pages/system/components/commons/TenantSelector.vue'
 import DeptTreeSelect from '@/pages/system/components/commons/DeptTreeSelect.vue'
 
 interface SearchValue {
-  tenant_id: string | number | null
-  position_code: string
-  position_name: string
-  category_code: string
-  status: number | null
+  tenant_id?: string | number | null
+  position_code?: string
+  position_name?: string
+  category_code?: string
+  status?: number | null
 }
 
 const props = defineProps<{
-  value: SearchValue
+  modelValue: SearchValue
 }>()
 
 const emit = defineEmits<{
+  'update:modelValue': [value: SearchValue]
   search: [value: SearchValue]
   reset: [value: SearchValue]
-  input: [value: SearchValue]
   tenantChange: []
 }>()
 
 const tenantSelectorRef = ref()
-const formValue = reactive<SearchValue>({ ...props.value })
 
-watch(
-  () => props.value,
+// 使用 ref 替代 reactive，避免潜在的响应式问题
+const formValue = ref<SearchValue>({ ...props.modelValue })
+
+// 使用 watch 并添加清理逻辑
+const stopWatch = watch(
+  () => props.modelValue,
   (newVal) => {
-    Object.assign(formValue, newVal)
+    if (newVal) {
+      Object.assign(formValue.value, newVal)
+    }
   },
   { deep: true }
 )
 
+// 组件卸载时停止监听
+onScopeDispose(() => {
+  stopWatch()
+})
+
 const handleSearch = () => {
-  emit('search', formValue)
+  emit('update:modelValue', { ...formValue.value })
+  emit('search', formValue.value)
 }
 
 const handleReset = () => {
-  const currentTenantCode = formValue.tenant_id
-  Object.assign(formValue, {
-    tenant_id: currentTenantCode,
+  const currentTenantId = formValue.value.tenant_id
+  Object.assign(formValue.value, {
+    tenant_id: currentTenantId,
     position_code: '',
     position_name: '',
     category_code: '',
     status: null
   })
-  emit('reset', formValue)
+  emit('update:modelValue', { ...formValue.value })
+  emit('reset', formValue.value)
 }
 
 const handleTenantChange = () => {
-  emit('input', formValue)
+  emit('update:modelValue', { ...formValue.value })
   emit('tenantChange')
 }
 </script>

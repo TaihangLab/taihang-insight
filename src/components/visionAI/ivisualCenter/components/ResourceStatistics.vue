@@ -1,9 +1,9 @@
 <template>
-  <div class="dashboard-card resource-statistics">
+  <div class="dashboard-card  h-full">
     <div class="card-header">
       <div class="title">资源统计</div>
     </div>
-    <div class="card-content">
+    <div class="card-content h-full">
       <div class="server-info">
         <div class="server-type">
           <i class="el-icon-s-platform server-icon"></i>
@@ -148,6 +148,7 @@
 
 <script setup lang="ts">
 interface Props {
+  resizeTrigger?: number;
   cpuUsage?: number;
   memoryUsage?: number;
   diskUsage?: number;
@@ -156,6 +157,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  resizeTrigger: 0,
   cpuUsage: 0,
   memoryUsage: 0,
   diskUsage: 0,

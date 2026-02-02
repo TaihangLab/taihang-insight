@@ -1272,6 +1272,16 @@ export default {
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
 }
 
+/* 确保 Element Plus 的 el-row 和 el-col 正确传递高度 */
+:deep(.el-row) {
+  display: flex;
+}
+
+:deep(.el-col) {
+  display: flex;
+  flex-direction: column;
+}
+
 .panel-title {
   color: #00ffff;
   font-size: 16px;

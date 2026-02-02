@@ -21,7 +21,7 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import dataV from 'data-view-vue3'
 // import Contextmenu from 'vue-contextmenujs' // 暂时注释 - Vue 3 不兼容
 import App from './App.vue'
-import router from './router'
+// import router from './router'  // ❌ 移除静态导入，改为动态导入
 import axios from 'axios'
 
 // 导入配置
@@ -50,7 +50,6 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 app.use(pinia)
-app.use(router)
 app.use(ElementPlus)
 app.use(dataV)
 // app.use(Contextmenu) // 暂时注释 - vue-contextmenujs 不兼容 Vue 3，待后续使用 UnoCSS 重写
@@ -70,9 +69,8 @@ app.config.globalProperties.$channelTypeList = {
 }
 
 // ========== 用户态同步初始化 ==========
-// 【关键】用户态是强诉求，必须在应用挂载前完成初始化
-// Pinia 持久化插件会自动从 localStorage 恢复基本数据（4 个独立的 key）
-// 但我们需要验证数据完整性，如果数据不完整则同步等待恢复完成
+// 【关键】用户态是强诉求，必须在路由创建之前完成初始化
+// 这样路由守卫和组件才能正确访问用户态数据
 
 import { useUserInfoStore, usePermissionsStore, useMenusStore } from '@/stores'
 import authAPI from '@/api/auth/authAPI'
@@ -82,65 +80,93 @@ const userInfoStore = useUserInfoStore()
 const permissionsStore = usePermissionsStore()
 const menusStore = useMenusStore()
 
-// 从 4 个独立的 localStorage key 检查持久化状态
+// 从 3 个独立的 localStorage key 检查持久化状态
 const persistedUserInfo = localStorage.getItem(StorageKey.USER_INFO)
 const persistedPermissions = localStorage.getItem(StorageKey.PERMISSION)
 const persistedMenus = localStorage.getItem(StorageKey.MENUS)
 
-try {
-  if ((!persistedUserInfo || !persistedPermissions || !persistedMenus)) {
-    console.log('⚠️ 检测到数据不完整，开始从后端同步...')
+// ========== 异步初始化函数 ==========
+async function initializeApp() {
+  try {
+    // 1️⃣ 先建立用户态（同步等待）
+    if (!persistedUserInfo || !persistedPermissions || !persistedMenus) {
+      console.log('⚠️ 检测到数据不完整，开始从后端同步...')
 
-    // 同步等待恢复完成（用户态强诉求）
-    // 注意：这里使用 await 会阻塞应用挂载，但这是预期的行为
-    // 因为我们需要确保用户态数据完整后再渲染应用
-    try {
-      const [userInfoResult, permissionsResult, menuTreeResult] = await Promise.all([
-        authAPI.getUserInfo(),
-        authAPI.getPermissions(),
-        authAPI.getMenuTree()
-      ])
+      try {
+        const [userInfoResult, permissionsResult, menuTreeResult] = await Promise.all([
+          authAPI.getUserInfo(),
+          authAPI.getPermissions(),
+          authAPI.getMenuTree()
+        ])
 
-      if (userInfoResult.code === 200) {
-        const userData = userInfoResult.data
-        userInfoStore.setUserInfo({
-          id: userData.user_id,
-          username: userData.user_name,
-          user_name: userData.user_name,
-          nick_name: userData.nick_name,
-          email: userData.email,
-          phone: userData.phone,
-          avatar: userData.avatar,
-          tenantId: userData.tenant_id,
-          tenant_id: userData.tenant_id,
-          dept_id: userData.dept_id,
-          position_id: userData.position_id,
-          status: userData.status,
-          gender: userData.gender
-        })
+        if (userInfoResult.code === 200) {
+          const userData = userInfoResult.data
+          userInfoStore.setUserInfo({
+            id: userData.user_id,
+            username: userData.user_name,
+            user_name: userData.user_name,
+            nick_name: userData.nick_name,
+            email: userData.email,
+            phone: userData.phone,
+            avatar: userData.avatar,
+            tenantId: userData.tenant_id,
+            tenant_id: userData.tenant_id,
+            dept_id: userData.dept_id,
+            position_id: userData.position_id,
+            status: userData.status,
+            gender: userData.gender
+          })
+        }
+
+        if (permissionsResult.code === 200 && permissionsResult.data) {
+          const perms = permissionsResult.data.permission_codes || []
+          permissionsStore.setPermissions(perms)
+        }
+
+        if (menuTreeResult.code === 200 && menuTreeResult.data) {
+          const menu = menuTreeResult.data.menu_tree || []
+          menusStore.setMenuTree(menu)
+        }
+      } catch (error) {
+        console.warn('⚠️ 数据恢复失败，token 可能已过期:', error)
       }
-
-      if (permissionsResult.code === 200 && permissionsResult.data) {
-        const perms = permissionsResult.data.permission_codes || []
-        permissionsStore.setPermissions(perms)
-      }
-
-      if (menuTreeResult.code === 200 && menuTreeResult.data) {
-        const menu = menuTreeResult.data.menu_tree || []
-        menusStore.setMenuTree(menu)
-      }
-
-      console.log('✅ 用户态数据初始化完成')
-    } catch (error) {
-      console.warn('⚠️ 数据恢复失败，token 可能已过期:', error)
-      // 不自动清除 token，让用户在访问时通过 401 错误处理
     }
-  } 
-} catch (e) {
-  console.warn('⚠️ 解析持久化数据失败:', e)
+    // 2️⃣ 动态导入路由模块
+    const { default: router, setupAsyncRoutes } = await import('./router')
+
+    // 3️⃣ 从 localStorage 直接读取菜单数据（确保不受 Pinia 持久化延迟影响）
+    let menuTree = menusStore.menuTree || []
+
+    // 如果 store 为空，直接从 localStorage 读取
+    if (menuTree.length === 0 && persistedMenus) {
+      try {
+        const parsed = JSON.parse(persistedMenus)
+        menuTree = parsed.menuTree || []
+      } catch (e) {
+        console.warn('⚠️ 解析 localStorage 菜单数据失败:', e)
+      }
+    }
+
+    // 4️⃣ 根据菜单建立动态路由（在 app.use(router) 之前！）
+    if (menuTree.length > 0) {
+      setupAsyncRoutes(menuTree)
+    } else {
+      console.warn('⚠️ 菜单树为空，跳过动态路由建立')
+    }
+
+    // 5️⃣ 注册路由（此时动态路由已存在）
+    app.use(router)
+
+    // 6️⃣ 挂载应用
+    app.mount('#app')
+
+  } catch (e) {
+    console.error('❌ 应用初始化失败:', e)
+    // 即使失败也尝试挂载应用，让用户看到错误界面
+    app.mount('#app')
+  }
 }
 
+// ========== 启动应用 ==========
+initializeApp()
 
-// 【关键】挂载应用
-// 此时用户态数据已完整初始化，路由守卫和组件可以安全访问
-app.mount('#app')

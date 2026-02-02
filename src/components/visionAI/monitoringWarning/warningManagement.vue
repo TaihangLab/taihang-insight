@@ -195,26 +195,27 @@ export default {
 
         console.log('获取预警列表 - 请求参数:', apiParams)
 
-        // 调用API获取数据
-        const response = await centerAPI.alert.getRealTimeAlerts(apiParams)
-        console.log('获取预警列表 - API响应:', response.data)
+        // 调用API获取数据（现在返回 { data, pagination } 格式）
+        const apiResponse = await centerAPI.alert.getRealTimeAlerts(apiParams)
+        console.log('获取预警列表 - API响应:', apiResponse)
 
-        if (response.data && response.data.code === 0) {
+        // 后端返回 { success: true, code: 200, data: [...], pagination: {...} }
+        if (apiResponse && apiResponse.data) {
           // 转换API数据为页面数据格式
-          this.warningList = this.transformApiDataToPageData(response.data.data || [])
-          
+          this.warningList = this.transformApiDataToPageData(apiResponse.data || [])
+
           // 更新分页信息
-          if (response.data.pagination) {
-            this.totalCount = response.data.pagination.total || 0
-            this.currentPage = response.data.pagination.page || 1
-            this.pageSize = response.data.pagination.limit || 10
+          if (apiResponse.pagination) {
+            this.totalCount = apiResponse.pagination.total || 0
+            this.currentPage = apiResponse.pagination.page || 1
+            this.pageSize = apiResponse.pagination.page_size || 10
           } else {
-            this.totalCount = response.data.total || 0
+            this.totalCount = apiResponse.data?.length || 0
           }
-          
+
           console.log('预警列表转换完成:', this.warningList.length, '条数据，总数:', this.totalCount)
         } else {
-          console.error('获取预警列表失败:', response.data)
+          console.error('获取预警列表失败:', apiResponse)
           this.$message.error('获取预警列表失败')
           this.warningList = []
           this.totalCount = 0

@@ -1,6 +1,5 @@
 <template>
   <el-select
-    v-if="shouldShow"
     :model-value="modelValue"
     :placeholder="placeholder"
     :clearable="clearable"
@@ -18,10 +17,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import tenantService from '@/api/system/tenantService'
-import { usePermissionsStore } from '@/stores/modules/permissions'
 
 interface Tenant {
   id: number
@@ -50,17 +48,8 @@ const emit = defineEmits<{
   change: [value: string | number | null]
 }>()
 
-const permissionsStore = usePermissionsStore()
-
 const tenants = ref<Tenant[]>([])
 const loaded = ref(false)
-
-// 判断是否应该显示租户选择器
-// 有 tenant:list:view 权限的用户（超级管理员）不显示选择器
-// 没有 tenant:list:view 权限的用户（普通租户用户）显示选择器
-const shouldShow = computed(() => {
-  return !permissionsStore.hasPermission('tenant:list:view')
-})
 
 onMounted(async () => {
   await loadTenantsIfNeeded()

@@ -227,6 +227,10 @@ export const storage = {
     useUserInfoStore().clearUserInfo()
     usePermissionsStore().clearPermissions()
     useMenusStore().clearMenuTree()
+    // 重置动态路由标记，下次登录时重新添加
+    import('@/router').then(({ resetAsyncRoutes }) => {
+      resetAsyncRoutes()
+    })
   },
 }
 

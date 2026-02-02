@@ -1,6 +1,7 @@
-import { AxiosResponse } from 'axios'
-import { authAxios, handleSimpleResponse, type UnifiedResponse } from '@/api/commons'
+import type { AxiosResponse } from 'axios'
+import { authAxios, type UnifiedResponse } from '@/api/commons'
 import type { Alert, AlertQueryParams, AlertStatusUpdate } from './types'
+import storage from '@/stores/modules/storage'
 /**
  * 预警管理 API
  * 提供预警的查询、更新、删除以及SSE实时推送功能
@@ -20,9 +21,9 @@ class AlertAPI {
   /**
    * 获取实时预警列表
    * @param params 查询参数
-   * @returns 预警列表响应
+   * @returns 预警响应数据 { data, pagination }
    */
-  async getRealTimeAlerts(params: AlertQueryParams = {}): Promise<AxiosResponse<UnifiedResponse<Alert[]>>> {
+  async getRealTimeAlerts(params: AlertQueryParams = {}): Promise<{ data: Alert[]; pagination?: { total: number; page: number; page_size: number; pages: number; has_next: boolean; has_prev: boolean } }> {
     const apiParams = { ...params }
 
     if (!apiParams.page) {
@@ -100,52 +101,14 @@ class AlertAPI {
       delete apiParams.statusFilter
     }
 
-    console.log('获取实时预警列表 - API调用参数:', apiParams)
-
     try {
       const response = await authAxios.get('/api/v1/alerts/real-time', { params: apiParams })
-      return this.transformAlertListResponse(response)
+      // 响应拦截器已处理 { success, code, message } 格式，返回 { data, pagination }
+      return response as any
     } catch (error) {
       console.error('获取实时预警列表失败:', error)
       throw error
     }
-  }
-
-  /**
-   * 转换预警列表响应数据
-   */
-  private transformAlertListResponse(response: AxiosResponse): AxiosResponse {
-    const originalData = response.data
-
-    if (originalData && originalData.code !== undefined) {
-      return response
-    }
-
-    const transformedData: UnifiedResponse<Alert[]> = {
-      code: 0,
-      msg: 'success',
-      data: [],
-      total: 0
-    }
-
-    if (originalData && originalData.alerts) {
-      transformedData.data = originalData.alerts
-      transformedData.total = originalData.total || transformedData.data.length
-
-      if (originalData.page) transformedData.page = originalData.page
-      if (originalData.limit) transformedData.limit = originalData.limit
-      if (originalData.pages) transformedData.pages = originalData.pages
-      if (originalData.pagination) {
-        transformedData.pagination = originalData.pagination
-      }
-    } else {
-      transformedData.data = originalData
-    }
-
-    response.data = transformedData
-    console.log('实时预警列表响应转换完成:', response.data)
-
-    return response
   }
 
   /**
@@ -267,7 +230,11 @@ class AlertAPI {
     onError?: SSEErrorCallback,
     onClose?: SSECloseCallback
   ): EventSource {
-    const sseUrl = `${authAxios.defaults.baseURL}/api/v1/alerts/stream`
+    // 获取认证token
+    const token = storage.getAdminToken()
+
+    // 将token作为URL参数传递（EventSource不支持自定义请求头）
+    const sseUrl = `${authAxios.defaults.baseURL}/api/v1/alerts/stream?token=${encodeURIComponent(token)}`
     console.log('创建SSE连接:', sseUrl)
 
     const eventSource = new EventSource(sseUrl)

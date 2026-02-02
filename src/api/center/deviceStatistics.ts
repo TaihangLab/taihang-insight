@@ -53,8 +53,9 @@ export interface ConnectionSummary {
 class DeviceStatisticsAPI {
   /**
    * 获取设备状态统计
+   * 注意：响应拦截器会提取 data 字段，返回类型是 DeviceStatusStatistics
    */
-  async getStatusStatistics(): Promise<AxiosResponse<UnifiedResponse<DeviceStatusStatistics>>> {
+  async getStatusStatistics(): Promise<DeviceStatusStatistics> {
     console.log('[设备API] 获取设备状态统计')
 
     const mockData: DeviceStatusStatistics = {
@@ -70,24 +71,19 @@ class DeviceStatisticsAPI {
 
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({
-          data: {
-            code: 0,
-            msg: 'success',
-            data: mockData
-          }
-        } as any)
+        resolve(mockData)
       }, 200)
     })
 
-    // 真实API调用
-    // return authAxios.get('/api/v1/devices/statistics')
+    // 真实API调用（会经过响应拦截器处理）
+    // return authAxios.get('/api/v1/devices/statistics') as Promise<DeviceStatusStatistics>
   }
 
   /**
    * 获取设备树状结构
+   * 注意：响应拦截器会提取 data 字段，返回类型是 DeviceTreeNode[]
    */
-  async getDeviceTree(): Promise<AxiosResponse<UnifiedResponse<DeviceTreeNode[]>>> {
+  async getDeviceTree(): Promise<DeviceTreeNode[]> {
     console.log('[设备API] 获取设备树状结构')
 
     const mockData: DeviceTreeNode[] = [{
@@ -116,24 +112,19 @@ class DeviceStatisticsAPI {
 
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({
-          data: {
-            code: 0,
-            msg: 'success',
-            data: mockData
-          }
-        } as any)
+        resolve(mockData)
       }, 300)
     })
 
-    // 真实API调用
-    // return authAxios.get('/api/v1/devices/tree')
+    // 真实API调用（会经过响应拦截器处理）
+    // return authAxios.get('/api/v1/devices/tree') as Promise<DeviceTreeNode[]>
   }
 
   /**
    * 获取设备接入摘要
+   * 注意：响应拦截器会提取 data 字段，返回类型是 ConnectionSummary
    */
-  async getConnectionSummary(): Promise<AxiosResponse<UnifiedResponse<ConnectionSummary>>> {
+  async getConnectionSummary(): Promise<ConnectionSummary> {
     console.log('[设备API] 获取设备接入摘要')
 
     const mockData: ConnectionSummary = {
@@ -146,18 +137,12 @@ class DeviceStatisticsAPI {
 
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({
-          data: {
-            code: 0,
-            msg: 'success',
-            data: mockData
-          }
-        } as any)
+        resolve(mockData)
       }, 200)
     })
 
-    // 真实API调用
-    // return authAxios.get('/api/v1/devices/summary')
+    // 真实API调用（会经过响应拦截器处理）
+    // return authAxios.get('/api/v1/devices/summary') as Promise<ConnectionSummary>
   }
 }
 

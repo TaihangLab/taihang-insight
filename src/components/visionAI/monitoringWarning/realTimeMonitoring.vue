@@ -2317,32 +2317,53 @@ export default {
 
         const response = await centerAPI.alert.getRealTimeAlerts(params);
 
-        if (response.data && response.data.code === 0) {
-          // 修正数据结构 - 数据直接在data字段中（是一个数组）
-          let apiWarnings = [];
-          if (Array.isArray(response.data.data)) {
-            // 数据直接是数组
-            apiWarnings = response.data.data;
-          } else if (response.data.data && Array.isArray(response.data.data.alerts)) {
-            // 数据在data.alerts中
-            apiWarnings = response.data.data.alerts;
-          } else if (Array.isArray(response.data.alerts)) {
-            // 数据在alerts字段中
-            apiWarnings = response.data.alerts;
-          }
+        console.log('loadWarningData - 原始响应:', response);
 
-          const convertedWarnings = apiWarnings.map(warning =>
-            this.convertAPIWarningToFrontend(warning)
-          ).filter(warning => warning !== null);
+        // 处理响应数据 - 后端返回 { success: true, code: 200, data: [...], pagination: {...} }
+        // 响应拦截器返回 { data, pagination }
+        let apiWarnings = [];
+        let totalCount = 0;
 
-          // 更新预警列表
-          this.warningList = convertedWarnings;
-          this.totalWarnings = response.data.total || apiWarnings.length;
-        } else {
-          this.$message.warning('获取预警数据失败，将显示空列表');
-          this.warningList = [];
+        // 情况1: 新格式 { data, pagination }
+        if (response && response.data && Array.isArray(response.data)) {
+          apiWarnings = response.data;
+          totalCount = response.pagination?.total || response.data.length;
         }
+        // 情况2: 响应拦截器返回了 data.data (alerts 数组)
+        else if (Array.isArray(response)) {
+          apiWarnings = response;
+          totalCount = response.length;
+        }
+        // 情况3: 完整的响应对象 { code, data, total }
+        else if (response && response.code === 0) {
+          if (Array.isArray(response.data)) {
+            apiWarnings = response.data;
+          } else if (response.data && Array.isArray(response.data.alerts)) {
+            apiWarnings = response.data.alerts;
+          } else if (Array.isArray(response.alerts)) {
+            apiWarnings = response.alerts;
+          }
+          totalCount = response.total || apiWarnings.length;
+        }
+        // 情况4: 响应对象但有 alerts 字段
+        else if (response && Array.isArray(response.alerts)) {
+          apiWarnings = response.alerts;
+          totalCount = response.total || response.alerts.length;
+        }
+
+        console.log('loadWarningData - 提取的预警数据:', apiWarnings.length, '条');
+
+        const convertedWarnings = apiWarnings.map(warning =>
+          this.convertAPIWarningToFrontend(warning)
+        ).filter(warning => warning !== null);
+
+        console.log('loadWarningData - 转换后的预警数据:', convertedWarnings.length, '条');
+
+        // 更新预警列表
+        this.warningList = convertedWarnings;
+        this.totalWarnings = totalCount;
       } catch (error) {
+        console.error('loadWarningData - 错误:', error);
         this.$message.error('加载预警数据失败，请检查网络连接');
         this.warningList = [];
       } finally {
@@ -2512,27 +2533,39 @@ export default {
 
         const response = await centerAPI.alert.getRealTimeAlerts(params);
 
-        if (response.data && response.data.code === 0) {
-          // 修正数据结构 - 数据直接在data字段中（是一个数组）
-          let apiWarnings = [];
-          if (Array.isArray(response.data.data)) {
-            // 数据直接是数组
-            apiWarnings = response.data.data;
-          } else if (response.data.data && Array.isArray(response.data.data.alerts)) {
-            // 数据在data.alerts中
-            apiWarnings = response.data.data.alerts;
-          } else if (Array.isArray(response.data.alerts)) {
-            // 数据在alerts字段中
-            apiWarnings = response.data.alerts;
-          }
+        // 处理响应数据 - 后端返回 { success: true, code: 200, data: [...], pagination: {...} }
+        // 响应拦截器返回 { data, pagination }
+        let apiWarnings = [];
 
-          const convertedWarnings = apiWarnings.map(warning =>
-            this.convertAPIWarningToFrontend(warning)
-          ).filter(warning => warning !== null);
-
-          // 追加到现有列表
-          this.warningList.push(...convertedWarnings);
+        // 情况1: 新格式 { data, pagination }
+        if (response && response.data && Array.isArray(response.data)) {
+          apiWarnings = response.data;
         }
+        // 情况2: 响应拦截器返回了 data.data (alerts 数组)
+        else if (Array.isArray(response)) {
+          apiWarnings = response;
+        }
+        // 情况3: 完整的响应对象 { code, data, total }
+        else if (response && response.code === 0) {
+          if (Array.isArray(response.data)) {
+            apiWarnings = response.data;
+          } else if (response.data && Array.isArray(response.data.alerts)) {
+            apiWarnings = response.data.alerts;
+          } else if (Array.isArray(response.alerts)) {
+            apiWarnings = response.alerts;
+          }
+        }
+        // 情况4: 响应对象但有 alerts 字段
+        else if (response && Array.isArray(response.alerts)) {
+          apiWarnings = response.alerts;
+        }
+
+        const convertedWarnings = apiWarnings.map(warning =>
+          this.convertAPIWarningToFrontend(warning)
+        ).filter(warning => warning !== null);
+
+        // 追加到现有列表
+        this.warningList.push(...convertedWarnings);
       } catch (error) {
         this.currentPage--; // 回退页码
         this.$message.error('加载更多预警失败');

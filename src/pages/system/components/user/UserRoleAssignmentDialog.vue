@@ -94,9 +94,13 @@ watch(
 
 const loadRolesAndUserRoles = async () => {
   try {
+    // 获取用户的租户ID
+    const tenantId = props.user?.tenant_id
+
     // 并行加载所有角色和用户已有角色
     const [rolesRes, userRolesRes] = await Promise.all([
-      associationService.getRoles({ skip: 0, limit: 1000 }),
+      // 传递 tenant_id 参数，确保只获取同一租户的角色
+      associationService.getRoles({ skip: 0, limit: 1000, tenant_id: tenantId }),
       associationService.getUserRoles(props.user.id)
     ])
 

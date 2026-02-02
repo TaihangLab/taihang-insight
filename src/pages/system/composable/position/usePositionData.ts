@@ -17,6 +17,7 @@ import positionService from '@/api/system/positionService';
  * 岗位查询条件
  */
 export interface PositionSearchConditions {
+  tenant_id?: number | null;
   tenant_code?: string;
   position_code?: string;
   position_name?: string;
@@ -85,6 +86,7 @@ export function usePositionData() {
       };
 
       // 添加可选查询条件
+      if (params.tenant_id !== undefined && params.tenant_id !== null) queryParams.tenant_id = params.tenant_id;
       if (params.tenant_code) queryParams.tenant_code = params.tenant_code;
       if (params.position_code) queryParams.position_code = params.position_code;
       if (params.position_name) queryParams.position_name = params.position_name;

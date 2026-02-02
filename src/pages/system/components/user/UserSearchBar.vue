@@ -1,7 +1,7 @@
 <template>
   <div class="user-search-bar">
     <el-form :inline="true" :model="formValue" @submit.native.prevent="handleSearch">
-      <el-form-item label="租户">
+      <el-form-item v-permission="'tenant:list:view'" label="租户">
         <TenantSelector
           ref="tenantSelectorRef"
           v-model="formValue.tenant_id"

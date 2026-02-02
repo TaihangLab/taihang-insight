@@ -138,7 +138,7 @@ import { StorageKey } from '@/stores/modules/storageKeys'
 const router = useRouter()
 const route = useRoute()
 
-// 使用 3 个独立的 store
+// 使用 stores（登录成功后设置数据）
 const userInfoStore = useUserInfoStore()
 const permissionsStore = usePermissionsStore()
 const menusStore = useMenusStore()
@@ -369,7 +369,48 @@ async function login(): Promise<void> {
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown)
   restoreTenantFromCache()
+
+  // 检查是否已登录，优先从 localStorage 检查（避免 Pinia 持久化延迟）
+  const tokenData = localStorage.getItem(StorageKey.ADMIN_TOKEN)
+  const menusData = localStorage.getItem(StorageKey.MENUS)
+
+  if (tokenData && menusData) {
+    try {
+      // token 是直接存储的字符串，不需要解析
+      const token = tokenData
+      const menuTree = JSON.parse(menusData).menuTree
+
+      if (token && menuTree?.length > 0) {
+        // 已登录且有菜单，重定向到用户有权限的第一个页面
+        const firstMenuPath = findFirstAccessibleMenu(menuTree)
+        const targetPath = (route.query.redirect as string) || firstMenuPath || '/visualCenter'
+        console.log('✅ 检测到已登录，重定向到:', targetPath)
+        router.replace(targetPath)
+      }
+    } catch (error) {
+      console.error('解析本地存储数据失败:', error)
+    }
+  }
 })
+
+/**
+ * 从菜单树中查找第一个可访问的菜单路径
+ */
+function findFirstAccessibleMenu(menuItems: any[]): string | null {
+  function search(items: any[]): string | null {
+    for (const item of items) {
+      if (item.path && item.menu_type === 'menu') {
+        return item.path
+      }
+      if (item.children?.length) {
+        const found = search(item.children)
+        if (found) return found
+      }
+    }
+    return null
+  }
+  return search(menuItems)
+}
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown)

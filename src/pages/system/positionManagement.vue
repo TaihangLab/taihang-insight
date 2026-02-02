@@ -4,72 +4,13 @@
 -->
 <template>
   <div class="position-management-page">
-    <!-- 搜索表单 -->
-    <el-card class="search-card" shadow="never">
-      <el-form :model="queryForm" inline>
-        <el-form-item label="岗位编号">
-          <el-input
-            v-model="queryForm.position_code"
-            placeholder="请输入岗位编号"
-            clearable
-            style="width: 200px"
-            @keyup.enter="handleSearch"
-          />
-        </el-form-item>
-
-        <el-form-item label="岗位名称">
-          <el-input
-            v-model="queryForm.position_name"
-            placeholder="请输入岗位名称"
-            clearable
-            style="width: 200px"
-            @keyup.enter="handleSearch"
-          />
-        </el-form-item>
-
-        <el-form-item label="岗位类别">
-          <el-select
-            v-model="queryForm.category_code"
-            placeholder="请选择岗位类别"
-            clearable
-            style="width: 180px"
-          >
-            <el-option
-              v-for="category in positionCategories"
-              :key="category.categoryCode"
-              :label="category.categoryName"
-              :value="category.categoryCode"
-            />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="部门">
-          <el-input
-            v-model="queryForm.department"
-            placeholder="请输入部门"
-            clearable
-            style="width: 150px"
-          />
-        </el-form-item>
-
-        <el-form-item label="状态">
-          <el-select
-            v-model="queryForm.status"
-            placeholder="请选择状态"
-            clearable
-            style="width: 120px"
-          >
-            <el-option label="启用" :value="Status.ENABLED" />
-            <el-option label="停用" :value="Status.DISABLED" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+    <!-- 查询区 -->
+    <PositionSearchBar
+      v-model="searchConditions"
+      @search="handleSearch"
+      @reset="handleReset"
+      @tenant-change="handleTenantChange"
+    />
 
     <!-- 操作按钮 -->
     <el-card class="table-card" shadow="never">
@@ -145,6 +86,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import type { Position } from '@/types/rbac';
 import { Status } from '@/types/rbac';
 import { usePositionData, type PositionSearchConditions } from '@/pages/system/composable/position/usePositionData';
+import PositionSearchBar from '@/pages/system/components/position/PositionSearchBar.vue';
 
 // ============================================
 // Composables
@@ -164,13 +106,13 @@ const {
 // 响应式状态
 // ============================================
 
-// 查询表单
-const queryForm = reactive<PositionSearchConditions>({
+// 搜索条件
+const searchConditions = reactive<PositionSearchConditions>({
+  tenant_id: null,
   position_code: '',
   position_name: '',
-  category_code: undefined,
-  department: '',
-  status: undefined
+  category_code: '',
+  status: null
 });
 
 // ============================================
@@ -182,7 +124,7 @@ const queryForm = reactive<PositionSearchConditions>({
  */
 const loadPositions = async () => {
   try {
-    await fetchPositions(queryForm);
+    await fetchPositions(searchConditions);
   } catch (error: unknown) {
     const err = error as Error;
     ElMessage.error(`加载岗位列表失败: ${err.message}`);
@@ -213,11 +155,22 @@ const handleSearch = () => {
  * 重置处理
  */
 const handleReset = () => {
-  queryForm.position_code = '';
-  queryForm.position_name = '';
-  queryForm.category_code = undefined;
-  queryForm.department = '';
-  queryForm.status = undefined;
+  const currentTenantId = searchConditions.tenant_id;
+  Object.assign(searchConditions, {
+    tenant_id: currentTenantId,
+    position_code: '',
+    position_name: '',
+    category_code: '',
+    status: null
+  });
+  pagination.value.currentPage = 1;
+  loadPositions();
+};
+
+/**
+ * 租户变更处理
+ */
+const handleTenantChange = () => {
   pagination.value.currentPage = 1;
   loadPositions();
 };
@@ -291,10 +244,6 @@ onMounted(() => {
 <style scoped>
 .position-management-page {
   padding: 20px;
-}
-
-.search-card {
-  margin-bottom: 20px;
 }
 
 .table-card {

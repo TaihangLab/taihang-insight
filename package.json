@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "route-check": "node scripts/quick-route-check.js",
     "route-fix": "node scripts/route-fixer.js",
-    "type-check": "vue-tsc --noEmit",
+    "type-check": "tsc --build --incremental",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "test": "vitest",

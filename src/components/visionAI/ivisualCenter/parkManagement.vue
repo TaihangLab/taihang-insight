@@ -292,8 +292,9 @@ async function loadAllData(): Promise<void> {
 async function loadDeviceTree(): Promise<void> {
   try {
     const response = await centerAPI.deviceStatistics.getDeviceTree();
-    if (response.data?.code === 0 && response.data?.data) {
-      treeData.value = response.data.data;
+    // 响应拦截器已经提取了 data 字段，response 直接是数据对象
+    if (response) {
+      treeData.value = response;
     }
   } catch (error) {
     console.error('加载设备树失败:', error);
@@ -306,9 +307,9 @@ async function loadDeviceTree(): Promise<void> {
 async function loadResourceHistory(): Promise<void> {
   try {
     const response = await centerAPI.systemMonitor.getResourceHistory('cpu', '1h');
-    if (response.data?.code === 0 && response.data?.data) {
-      const data = response.data.data;
-      initCpuChart(data.time_labels || [], data.data_points || []);
+    // 响应拦截器已经提取了 data 字段，response 直接是数据对象
+    if (response) {
+      initCpuChart(response.time_labels || [], response.data_points || []);
     }
   } catch (error) {
     console.error('加载CPU数据失败:', error);
@@ -321,9 +322,9 @@ async function loadResourceHistory(): Promise<void> {
 async function loadStorageUsage(): Promise<void> {
   try {
     const response = await centerAPI.systemMonitor.getStorageUsage();
-    if (response.data?.code === 0 && response.data?.data) {
-      const data = response.data.data;
-      initStorageChart(data.storage_list || []);
+    // 响应拦截器已经提取了 data 字段，response 直接是数据对象
+    if (response) {
+      initStorageChart(response.storage_list || []);
     }
   } catch (error) {
     console.error('加载存储数据失败:', error);
@@ -336,9 +337,9 @@ async function loadStorageUsage(): Promise<void> {
 async function loadBandwidthUsage(): Promise<void> {
   try {
     const response = await centerAPI.systemMonitor.getBandwidthUsage('1h');
-    if (response.data?.code === 0 && response.data?.data) {
-      const data = response.data.data;
-      initBandwidthChart(data.time_labels || [], data.upstream_bandwidth || [], data.downstream_bandwidth || []);
+    // 响应拦截器已经提取了 data 字段，response 直接是数据对象
+    if (response) {
+      initBandwidthChart(response.time_labels || [], response.upstream_bandwidth || [], response.downstream_bandwidth || []);
     }
   } catch (error) {
     console.error('加载带宽数据失败:', error);
@@ -350,18 +351,20 @@ async function loadBandwidthUsage(): Promise<void> {
  */
 async function loadAlertSnapshots(): Promise<void> {
   try {
-    const response = await centerAPI.alertStatistics.getLatestImages(4);
-    if (response.data?.code === 0 && response.data?.data) {
-      alertSnapshots.value = response.data.data.map((item: any) => ({
+    const images = await centerAPI.alertStatistics.getLatestImages(4);
+    if (images && images.length > 0) {
+      alertSnapshots.value = images.map((item: any) => ({
         image: item.image_url || item.image,
         category: item.alert_type || '未知类型',
         time: item.alert_time || item.time,
         location: item.camera_name || item.location || '未知位置'
       }));
+    } else {
+      alertSnapshots.value = [];
     }
   } catch (error) {
     console.error('加载预警抓拍失败:', error);
-    // 失败时使用空数组，不再使用 Unsplash 降级
+    // 失败时使用空数组
     alertSnapshots.value = [];
   }
 }
@@ -372,13 +375,13 @@ async function loadAlertSnapshots(): Promise<void> {
 async function loadDeviceStatus(): Promise<void> {
   try {
     const response = await centerAPI.deviceStatistics.getStatusStatistics();
-    if (response.data?.code === 0 && response.data?.data) {
-      const data = response.data.data;
+    // 响应拦截器已经提取了 data 字段，response 直接是数据对象
+    if (response) {
       deviceStatus.value = {
-        total: data.total_devices || 0,
-        online: data.online_devices || 0,
-        total2: data.device_groups?.[0]?.total || 0,
-        online2: data.device_groups?.[0]?.online || 0
+        total: response.total_devices || 0,
+        online: response.online_devices || 0,
+        total2: response.device_groups?.[0]?.total || 0,
+        online2: response.device_groups?.[0]?.online || 0
       };
       // 更新设备状态图表
       updateDeviceStatusCharts();

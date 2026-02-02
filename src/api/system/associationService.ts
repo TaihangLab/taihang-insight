@@ -1,4 +1,5 @@
-import rbacAxios, { UnifiedResponse } from '@/api/commons'
+import rbacAxios from '@/api/system/base'
+import type { UnifiedResponse } from '@/api/commons'
 import type { User } from '@/types/rbac/user'
 import type { Role } from '@/types/rbac/role'
 import type { Permission } from '@/types/rbac/permission'
@@ -265,7 +266,7 @@ class AssociationService {
    */
   static async getUserRoles(userId: number): Promise<UnifiedResponse<Role[]>> {
     try {
-      return await rbacAxios.get(`/rbac/user-roles/${userId}`)
+      return await rbacAxios.get(`/api/v1/rbac/user-roles/${userId}`)
     } catch (error) {
       console.error('获取用户角色失败:', error)
       throw error

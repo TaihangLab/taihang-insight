@@ -37,6 +37,7 @@ import systemMonitorAPI from './systemMonitor'
 import deviceStatisticsAPI from './deviceStatistics'
 import alertForwardAPI from './alertForward'
 import chatAssistantAPI from './chatAssistant'
+import dashboardAPI from './dashboard'
 
 // 导出基础配置
 // APIError is now exported from commons
@@ -89,7 +90,10 @@ const centerAPI = {
   alertForward: alertForwardAPI,
 
   // 智能助手管理
-  chatAssistant: chatAssistantAPI
+  chatAssistant: chatAssistantAPI,
+
+  // 大屏监控统一接口
+  dashboard: dashboardAPI
 }
 
 // 导出默认实例
@@ -111,5 +115,6 @@ export {
   systemMonitorAPI,
   deviceStatisticsAPI,
   alertForwardAPI,
-  chatAssistantAPI
+  chatAssistantAPI,
+  dashboardAPI
 }

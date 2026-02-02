@@ -58,6 +58,7 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { resetAsyncRoutes } from '@/router'
 import {
   Clock,
   User,
@@ -220,8 +221,12 @@ const clearCache = () => {
 
 // 退出登录
 const logout = () => {
+  // 重置动态路由标记
+  resetAsyncRoutes()
+
   // 清除所有认证相关的 localStorage 数据
   storage.logout()
+
   ElMessage({
     showClose: true,
     message: '已安全退出登录',

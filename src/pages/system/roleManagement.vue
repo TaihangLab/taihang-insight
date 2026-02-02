@@ -7,7 +7,7 @@
     <!-- 搜索表单 -->
     <el-card class="search-card" shadow="never">
       <el-form :model="queryForm" inline>
-        <el-form-item label="租户">
+        <el-form-item v-permission="'tenant:list:view'" label="租户">
           <TenantSelector
             v-model="queryForm.tenant_id"
             @change="handleSearch"

@@ -195,8 +195,8 @@
                 :row-style="{ background: 'transparent' }"
                 :row-class-name="'transparent-row'"
                 :height="tableHeight">
-                <el-table-column prop="event" label="预警事件" min-width="120" />
-                <el-table-column prop="time" label="预警时间" width="180" />
+                <el-table-column prop="event" label="预警事件"  />
+                <el-table-column prop="time" label="预警时间" idth="120"/>
                 <el-table-column prop="status" label="处理状态" width="120">
                   <template #default="scope">
                     <span :class="['status-tag', scope.row.status]">{{ scope.row.statusText }}</span>

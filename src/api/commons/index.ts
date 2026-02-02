@@ -255,7 +255,12 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
           throw error
         }
       }
-      // 非 RBACResponse 格式，直接返回
+      // 检查是否为 UnifiedResponse 格式 { code, msg, data }
+      if (data && typeof data === 'object' && 'code' in data && 'msg' in data) {
+        // 请求成功（code === 0），返回 data 字段
+        return data.data
+      }
+      // 其他格式，直接返回
       return data
     },
     (error) => {
