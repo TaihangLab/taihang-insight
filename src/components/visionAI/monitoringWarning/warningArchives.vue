@@ -1491,7 +1491,8 @@ export default {
               name: alert.camera_name,
               position: alert.location || ''
             },
-            type: alert.alert_name || alert.alert_type,
+            alertName: alert.alert_name || '未知预警',  // 预警名称（如：未佩戴安全带）
+            type: alert.alert_type || '未知类型',        // 预警类型（如：安全生产预警）
             time: alert.alert_time,
             level: levelMap[alert.alert_level] || 'level1',
             location: alert.location || '',

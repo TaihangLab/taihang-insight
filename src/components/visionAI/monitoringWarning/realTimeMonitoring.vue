@@ -2353,7 +2353,8 @@ export default {
           id: apiWarning.alert_id || `temp_${Date.now()}`,
           time: this.formatAPITime(apiWarning.alert_time) || '时间未知',
           device: apiWarning.camera_name || `摄像头${apiWarning.camera_id || '未知'}`,
-          type: apiWarning.alert_name || this.convertAlertTypeToDisplayName(apiWarning.alert_type) || '未知预警类型',
+          alertName: apiWarning.alert_name || '未知预警',  // 预警名称（如：未佩戴安全带）
+          type: apiWarning.alert_type || '未知类型',        // 预警类型（如：安全生产预警）
           level: this.convertAlertLevel(apiWarning.alert_level) || 'level4',
           location: apiWarning.location || '未知位置',
           status: this.convertAlertStatus(apiWarning.status, apiWarning.status_display) || 'pending',
