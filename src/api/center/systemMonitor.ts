@@ -16,7 +16,66 @@ export type ResourceMetric = 'cpu' | 'memory' | 'disk' | 'network'
 export type TimeRange = '1h' | '6h' | '24h' | '7d'
 
 /**
- * 当前资源使用率
+ * CPU 资源信息
+ */
+export interface CPUInfo {
+  usage: number
+  cores: number
+  avg_temp: number
+  max_temp: number
+}
+
+/**
+ * 内存资源信息
+ */
+export interface MemoryInfo {
+  usage: number
+  total: string
+  used: string
+}
+
+/**
+ * 磁盘资源信息
+ */
+export interface DiskInfo {
+  usage: number
+  total: string
+  used: string
+  type: string
+}
+
+/**
+ * GPU 资源信息
+ */
+export interface GPUInfo {
+  usage: number
+  model: string
+  vram_total: string
+  temperature: number
+}
+
+/**
+ * 服务器信息
+ */
+export interface ServerInfo {
+  master: number
+  nodes: number
+}
+
+/**
+ * 系统资源数据（完整）
+ */
+export interface SystemResourcesData {
+  cpu: CPUInfo
+  memory: MemoryInfo
+  disk: DiskInfo
+  gpu: GPUInfo
+  servers: ServerInfo
+  timestamp: string
+}
+
+/**
+ * 当前资源使用率（简化版，用于旧接口兼容）
  */
 export interface CurrentResources {
   cpu_usage: number
@@ -71,6 +130,56 @@ export interface BandwidthUsage {
  * 系统资源监控 API 类
  */
 class SystemMonitorAPI {
+  /**
+   * 获取系统资源数据（完整版）
+   * GET /api/v1/server/system/resources
+   * 注意：响应拦截器会提取 data 字段，返回类型是 SystemResourcesData
+   */
+  async getSystemResources(): Promise<SystemResourcesData> {
+    console.log('[监控API] 获取系统资源数据')
+
+    // 模拟数据（后端接口未实现时使用）
+    const mockData: SystemResourcesData = {
+      cpu: {
+        usage: 45.5,
+        cores: 32,
+        avg_temp: 46.5,
+        max_temp: 68.2
+      },
+      memory: {
+        usage: 60.2,
+        total: '64.0GB',
+        used: '38.5GB'
+      },
+      disk: {
+        usage: 54.7,
+        total: '2.0TB',
+        used: '1.1TB',
+        type: 'SSD'
+      },
+      gpu: {
+        usage: 30.0,
+        model: 'RTX 3090',
+        vram_total: '24.0GB',
+        temperature: 65.0
+      },
+      servers: {
+        master: 1,
+        nodes: 10
+      },
+      timestamp: new Date().toISOString()
+    }
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(mockData)
+      }, 300)
+    })
+
+    // 真实API调用（会经过响应拦截器处理）
+    // return authAxios.get('/server/system/resources') as Promise<SystemResourcesData>
+  }
+
   /**
    * 获取当前资源使用率
    * 注意：响应拦截器会提取 data 字段，返回类型是 CurrentResources
