@@ -1731,16 +1731,20 @@ export const alertAPI = {
    * @param {Function} onMessage - 接收到消息时的回调函数
    * @param {Function} onError - 发生错误时的回调函数
    * @param {Function} onClose - 连接关闭时的回调函数
+   * @param {Function} onOpen - 连接建立/重连成功时的回调函数
    * @returns {EventSource} SSE连接对象
    */
-  createAlertSSEConnection(onMessage, onError, onClose) {
+  createAlertSSEConnection(onMessage, onError, onClose, onOpen) {
     const sseUrl = `${visionAIAxios.defaults.baseURL}/api/v1/alerts/stream`;
     console.log('创建SSE连接:', sseUrl);
 
     const eventSource = new EventSource(sseUrl);
 
     eventSource.onopen = function() {
-      console.log('SSE连接已建立');
+      console.log('SSE连接已建立（含重连成功）');
+      if (onOpen) {
+        onOpen();
+      }
     };
 
     eventSource.onmessage = function(event) {
