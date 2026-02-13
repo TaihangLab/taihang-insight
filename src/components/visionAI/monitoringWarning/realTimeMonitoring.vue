@@ -236,7 +236,7 @@
       <div class="list-header">
         <div class="header-left">
           <span>实时预警</span>
-          <div class="sse-status-indicator" :class="getSSSStatusClass()">
+          <div class="sse-status-indicator" :class="getSSEStatusClass()">
             <span class="status-dot"></span>
             <span class="status-text">{{ getSSEStatusText() }}</span>
           </div>
@@ -2595,16 +2595,13 @@ export default {
         this.sseConnection = null;
       }
 
-      // 创建新的SSE连接
+      // 创建新的SSE连接，通过 onOpen 回调在连接真正建立（含断线重连成功）时更新状态
       this.sseConnection = alertAPI.createAlertSSEConnection(
         this.handleSSEMessage.bind(this),   // 消息处理
         this.handleSSEError.bind(this),     // 错误处理
-        this.handleSSEClose.bind(this)      // 连接关闭处理
+        this.handleSSEClose.bind(this),     // 连接关闭处理
+        this.handleSSEOpen.bind(this)       // 连接建立/重连成功处理
       );
-
-      if (this.sseConnection) {
-        this.sseStatus.connected = true;
-      }
     },
 
     // 处理SSE消息
@@ -2938,8 +2935,15 @@ export default {
       }
     },
 
-    // 处理SSE错误
+    // 处理SSE连接建立/重连成功
+    handleSSEOpen() {
+      console.log('SSE连接已建立（含重连成功），更新状态为已连接');
+      this.sseStatus.connected = true;
+    },
+
+    // 处理SSE错误（EventSource断线后会自动重连，此时readyState为CONNECTING）
     handleSSEError(error) {
+      console.log('SSE连接错误，等待自动重连...');
       this.sseStatus.connected = false;
     },
 
@@ -2972,7 +2976,7 @@ export default {
     },
 
     // 获取SSE状态样式类
-    getSSSStatusClass() {
+    getSSEStatusClass() {
       return this.sseStatus.connected ? 'status-connected' : 'status-disconnected';
     },
 
