@@ -48,7 +48,6 @@ const hasChildren = computed(() => {
  */
 const iconName = computed(() => {
   const icon = props.item.icon
-
   if (!icon) {
     return null
   }
@@ -57,7 +56,11 @@ const iconName = computed(() => {
   if (ElementPlusIcons[icon]) {
     return icon
   }
+  if (ElementPlusIcons[icon.toUpperCase()]) {
+    return icon.toUpperCase()
+  }
 
+  console.warn(`[Element Plus Icons Warn]: "${props.item.menu_name}" Icon "${icon}" not found.`)
   // 否则返回 null，让父级处理
   return null
 })

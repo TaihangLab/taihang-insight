@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import DynamicMenu from '@/components/common/DynamicMenu.vue'
+import DynamicMenu from '@/layout/DynamicMenu.vue'
 import UiHeader from '@/layout/UiHeader.vue'
 import IntelligentAssistant from '@/components/visionAI/chatAssistant/IntelligentAssistant.vue'
 

@@ -73,79 +73,41 @@ app.config.globalProperties.$channelTypeList = {
 // 这样路由守卫和组件才能正确访问用户态数据
 
 import { useUserInfoStore, usePermissionsStore, useMenusStore } from '@/stores'
-import authAPI from '@/api/auth/authAPI'
-import { StorageKey } from '@/stores/modules/storageKeys'
 
 const userInfoStore = useUserInfoStore()
 const permissionsStore = usePermissionsStore()
 const menusStore = useMenusStore()
 
-// 从 3 个独立的 localStorage key 检查持久化状态
-const persistedUserInfo = localStorage.getItem(StorageKey.USER_INFO)
-const persistedPermissions = localStorage.getItem(StorageKey.PERMISSION)
-const persistedMenus = localStorage.getItem(StorageKey.MENUS)
-
 // ========== 异步初始化函数 ==========
 async function initializeApp() {
   try {
-    // 1️⃣ 先建立用户态（同步等待）
-    if (!persistedUserInfo || !persistedPermissions || !persistedMenus) {
+    // 1️⃣ 先建立用户态（使用 Store 的方法检查和刷新数据）
+    // 使用 hasData() 方法检查持久化状态，而非直接访问 localStorage
+    const hasUserInfo = userInfoStore.hasData()
+    const hasPermissions = permissionsStore.hasData()
+    const hasMenus = menusStore.hasData()
+
+    if (!hasUserInfo || !hasPermissions || !hasMenus) {
       console.log('⚠️ 检测到数据不完整，开始从后端同步...')
 
       try {
-        const [userInfoResult, permissionsResult, menuTreeResult] = await Promise.all([
-          authAPI.getUserInfo(),
-          authAPI.getPermissions(),
-          authAPI.getMenuTree()
+        // 使用 Store 的 refresh() 方法，将 API 调用封装在 Store 内部
+        await Promise.all([
+          userInfoStore.refresh(),
+          permissionsStore.refresh(),
+          menusStore.refresh()
         ])
-
-        if (userInfoResult.code === 200) {
-          const userData = userInfoResult.data
-          userInfoStore.setUserInfo({
-            id: userData.user_id,
-            username: userData.user_name,
-            user_name: userData.user_name,
-            nick_name: userData.nick_name,
-            email: userData.email,
-            phone: userData.phone,
-            avatar: userData.avatar,
-            tenantId: userData.tenant_id,
-            tenant_id: userData.tenant_id,
-            dept_id: userData.dept_id,
-            position_id: userData.position_id,
-            status: userData.status,
-            gender: userData.gender
-          })
-        }
-
-        if (permissionsResult.code === 200 && permissionsResult.data) {
-          const perms = permissionsResult.data.permission_codes || []
-          permissionsStore.setPermissions(perms)
-        }
-
-        if (menuTreeResult.code === 200 && menuTreeResult.data) {
-          const menu = menuTreeResult.data.menu_tree || []
-          menusStore.setMenuTree(menu)
-        }
       } catch (error) {
         console.warn('⚠️ 数据恢复失败，token 可能已过期:', error)
       }
     }
+
     // 2️⃣ 动态导入路由模块
     const { default: router, setupAsyncRoutes } = await import('./router')
 
-    // 3️⃣ 从 localStorage 直接读取菜单数据（确保不受 Pinia 持久化延迟影响）
-    let menuTree = menusStore.menuTree || []
-
-    // 如果 store 为空，直接从 localStorage 读取
-    if (menuTree.length === 0 && persistedMenus) {
-      try {
-        const parsed = JSON.parse(persistedMenus)
-        menuTree = parsed.menuTree || []
-      } catch (e) {
-        console.warn('⚠️ 解析 localStorage 菜单数据失败:', e)
-      }
-    }
+    // 3️⃣ 获取菜单树（使用 Store 的 getter 方法）
+    // 此时数据已从持久化加载或从后端获取
+    const menuTree = menusStore.getMenuTreeSync() || []
 
     // 4️⃣ 根据菜单建立动态路由（在 app.use(router) 之前！）
     if (menuTree.length > 0) {

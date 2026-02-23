@@ -136,7 +136,7 @@ function processMenuTree(items: RawMenuItem[] | null | undefined): MenuItem[] {
     const normalized = normalizeMenuItem(item)
     return {
       ...normalized,
-      icon: getIconName(normalized.icon),
+      icon: normalized.icon,
       children: Array.isArray(item.children) ? processMenuTree(item.children) : undefined
     }
   })
@@ -152,7 +152,7 @@ export function useDynamicMenu() {
    * 处理后的菜单树
    */
   const menuTree = computed(() => {
-    const rawMenuTree = menusStore.menuTree || []
+    const rawMenuTree = menusStore.getMenuTreeSync() || []
 
     if (rawMenuTree.length === 0) {
       return []

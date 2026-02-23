@@ -85,10 +85,10 @@
 
         <el-table-column prop="permission_name" label="权限名称" width="220" >
           <template #default="{ row }">
-            <span v-if="row.icon">
+            <div v-if="row.icon" class="permission-name-with-icon">
               <el-icon><component :is="row.icon" /></el-icon>
-              {{ row.permission_name }}
-            </span>
+              <span>{{ row.permission_name }}</span>
+            </div>
             <span v-else>{{ row.permission_name }}</span>
           </template>
         </el-table-column>
@@ -419,5 +419,16 @@ onMounted(() => {
 .card-actions {
   display: flex;
   gap: 10px;
+}
+
+/* 权限名称图标与文字对齐 */
+.permission-name-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.permission-name-with-icon .el-icon {
+  font-size: 16px;
 }
 </style>

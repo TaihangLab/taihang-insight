@@ -29,7 +29,7 @@
     <UserEditDialog
       v-model:visible="editDialogVisible"
       :current-user="currentUser"
-      :tenant-id="currentUser?.tenant_id ?? searchConditions.tenant_id ?? userInfoStore.userInfo?.tenantId ?? null"
+      :tenant-id="currentUser?.tenant_id ?? searchConditions.tenant_id ?? currentUserTenantId ?? null"
       @submit="handleUserSubmit"
     />
 
@@ -82,9 +82,12 @@ const userInfoStore = useUserInfoStore()
 // 响应式状态
 // ============================================
 
+// 当前用户的租户ID（使用 getter 方法）
+const currentUserTenantId = userInfoStore.getUserInfoSync()?.tenantId ?? null
+
 // 搜索条件
 const searchConditions = reactive({
-  tenant_id: (userInfoStore.userInfo?.tenantId ?? null) as string | number | null,
+  tenant_id: (currentUserTenantId ?? null) as string | number | null,
   username: '',
   phone: '',
   status: null as number | null

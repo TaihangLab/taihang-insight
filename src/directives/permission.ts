@@ -17,7 +17,8 @@ function hasPermission(value: string | string[]): boolean {
     return false
   }
 
-  const permissions = permissionsStore.permissions || []
+  // 使用 getter 方法获取权限列表
+  const permissions = permissionsStore.getPermissionsSync() || []
 
   // 如果权限列表为空，认为有权限（兼容未配置权限的情况）
   if (permissions.length === 0) {

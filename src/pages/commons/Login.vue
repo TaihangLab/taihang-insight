@@ -229,65 +229,21 @@ async function login(): Promise<void> {
         isLoging.value = false
 
         // 调用认证 API 获取用户权限和菜单信息
+        // 使用 Store 的 refresh 方法，将 API 调用和缓存逻辑封装在 Store 内部
         try {
-          // 并行获取所有认证数据：用户信息、权限列表、菜单树
-          const [userInfoResult, permissionsResult, menuTreeResult] = await Promise.all([
-            authAPI.getUserInfo(),
-            authAPI.getPermissions(),
-            authAPI.getMenuTree()
+          // 并行刷新所有认证数据：用户信息、权限列表、菜单树
+          await Promise.all([
+            userInfoStore.refresh(),
+            permissionsStore.refresh(),
+            menusStore.refresh()
           ])
 
-          console.log('📡 后端 API 返回结果:', {
-            userInfo: userInfoResult.code === 200 ? '成功' : '失败',
-            permissions: permissionsResult.code === 200 ? '成功' : '失败',
-            menuTree: menuTreeResult.code === 200 ? '成功' : '失败'
-          })
-
-          // 处理用户信息
-          if (userInfoResult.code === 200) {
-            const userData = userInfoResult.data
-
-            userInfoStore.setUserInfo({
-              id: userData.user_id,
-              username: userData.user_name,
-              user_name: userData.user_name,
-              nick_name: userData.nick_name,
-              email: userData.email,
-              phone: userData.phone,
-              avatar: userData.avatar,
-              tenantId: userData.tenant_id,
-              tenant_id: userData.tenant_id,
-              dept_id: userData.dept_id,
-              position_id: userData.position_id,
-              status: userData.status,
-              gender: userData.gender
-            })
-          }
-
-          // 处理权限列表 - 从独立的 /api/v1/permissions 接口获取
-          if (permissionsResult.code === 200 && permissionsResult.data) {
-            const perms = permissionsResult.data.permission_codes || []
-            permissionsStore.setPermissions(perms)
-          } else {
-            // 即使接口失败，也设置空数组
-            permissionsStore.setPermissions([])
-            console.warn('⚠️ 权限接口返回失败，设置为空数组')
-          }
-
-          // 处理菜单树 - 从独立的 /api/v1/menu 接口获取
-          if (menuTreeResult.code === 200 && menuTreeResult.data) {
-            const menu = menuTreeResult.data.menu_tree || []
-            menusStore.setMenuTree(menu)
-          } else {
-            // 即使接口失败，也设置空数组
-            menusStore.setMenuTree([])
-            console.warn('⚠️ 菜单接口返回失败，设置为空数组')
-          }
+          console.log('✅ 认证信息刷新完成')
 
           // 等待 Pinia 持久化插件完成同步
           await new Promise(resolve => setTimeout(resolve, 100))
 
-          // 验证数据已正确持久化到 localStorage（检查 4 个独立的 key）
+          // 验证数据已正确持久化到 localStorage
           const persistedToken = localStorage.getItem(StorageKey.ADMIN_TOKEN)
           const persistedUserInfo = localStorage.getItem(StorageKey.USER_INFO)
           const persistedPermissions = localStorage.getItem(StorageKey.PERMISSION)
@@ -299,39 +255,6 @@ async function login(): Promise<void> {
             hasPermissions: !!persistedPermissions,
             hasMenus: !!persistedMenus
           })
-
-          if (persistedToken && persistedUserInfo && persistedPermissions && persistedMenus) {
-            // Token 是原始 JWT 字符串，不需要 JSON.parse()
-            const userInfoData = JSON.parse(persistedUserInfo)
-            const permissionsData = JSON.parse(persistedPermissions)
-            const menusData = JSON.parse(persistedMenus)
-
-            console.log('✅ Pinia 已持久化到 localStorage:', {
-              hasToken: !!persistedToken,
-              hasUserInfo: !!userInfoData.userInfo,
-              permissionsCount: permissionsData.permissions?.length || 0,
-              menuTreeCount: menusData.menuTree?.length || 0
-            })
-
-            // 断言：验证关键数据已持久化
-            if (!permissionsData.permissions) {
-              console.error('❌ 断言失败：permissions 字段不存在！')
-            } else if (permissionsData.permissions.length === 0) {
-              console.warn('⚠️ 警告：permissions 为空数组（可能是正常的，如果用户没有任何权限）')
-            } else {
-              console.log('✅ 断言成功：permissions 存在且包含', permissionsData.permissions.length, '个权限')
-            }
-
-            if (!menusData.menuTree) {
-              console.error('❌ 断言失败：menuTree 字段不存在！')
-            } else if (menusData.menuTree.length === 0) {
-              console.warn('⚠️ 警告：menuTree 为空数组（可能是正常的，如果用户没有任何菜单）')
-            } else {
-              console.log('✅ 断言成功：menuTree 存在且包含', menusData.menuTree.length, '个菜单项')
-            }
-          } else {
-            console.error('❌ 持久化数据尚未写入 localStorage！')
-          }
         } catch (error) {
           console.error('加载认证信息失败:', error)
           // 即使出错，token 已经设置，可以正常跳转

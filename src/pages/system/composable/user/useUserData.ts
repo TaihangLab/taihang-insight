@@ -49,7 +49,8 @@ export function useUserData() {
       const size = pageSize ?? pagination.value.pageSize
 
       // 从用户上下文获取 tenant_id，如果没有传入则使用当前用户的租户
-      const tenantId = params.tenant_id ?? userInfoStore.userInfo?.tenantId
+      const currentUserInfo = userInfoStore.getUserInfoSync()
+      const tenantId = params.tenant_id ?? currentUserInfo?.tenantId
       if (!tenantId) {
         console.warn('[useUserData] 未指定租户ID，跳过获取用户列表')
         users.value = []

@@ -86,8 +86,8 @@ const permissionsStore = usePermissionsStore()
 // 修改密码对话框引用
 const changePasswordDialogRef = ref<InstanceType<typeof ChangePasswordDialog>>()
 
-// 用户名
-const username = ref(userInfoStore.userInfo?.nick_name || userInfoStore.userInfo?.user_name || '访客')
+// 用户名（使用 getter 方法）
+const username = ref(userInfoStore.getNickName() || '访客')
 
 // 当前时间
 const currentTime = ref('')
@@ -182,7 +182,7 @@ const handleCommand = (command: Command) => {
 // 清除缓存
 const clearCache = () => {
   ElMessageBox.confirm(
-    '确定要清除所有本地缓存吗？包括部门缓存、租户缓存等数据。',
+    '确定要清除所有本地缓存吗？包括菜单、权限、用户信息、部门缓存、租户缓存等数据（不会清除登录状态）。',
     '清除缓存',
     {
       confirmButtonText: '确定',
@@ -192,8 +192,20 @@ const clearCache = () => {
   )
     .then(() => {
       try {
-        // 清除所有 RBAC 缓存（部门树、租户等）
+        // 1. 清除所有 RBAC 缓存（部门树、租户等）
         cacheManager.clear()
+
+        // 2. 清除 Pinia stores 中的数据
+        menusStore.clearMenuTree()
+        permissionsStore.clearPermissions()
+        userInfoStore.clearUserInfo()
+
+        // 3. 清除 localStorage 中的对应数据
+        storage.removeMultiple(
+          StorageKey.MENUS,
+          StorageKey.PERMISSION,
+          StorageKey.USER_INFO
+        )
 
         ElMessage({
           showClose: true,
