@@ -40,7 +40,10 @@
             </template>
             <!-- 递归渲染子菜单 -->
             <template v-for="child in menuItem.children" :key="child.id">
-              <el-menu-item v-if="child.menu_type !== 'button'" :index="String(child.path || child.id)">
+              <el-menu-item
+                v-if="child.menu_type !== 'button' && child.path"
+                :index="String(child.path)"
+              >
                 <span>{{ child.menu_name }}</span>
               </el-menu-item>
             </template>
@@ -276,13 +279,7 @@ const toggleCollapse = () => {
 // 组件挂载时，如果菜单树为空且有 token，尝试获取菜单
 onMounted(async () => {
   if (menuTree.value.length === 0 && tokenStore.hasToken()) {
-    try {
-      console.log('🔄 菜单树为空，尝试从后端获取...')
-      // 注意：这里不再调用 fetchMenuTree，因为菜单树应该在登录时就已经加载
-      console.log('✅ 菜单树应该在登录时已加载')
-    } catch (error) {
-      console.error('⚠️ 获取菜单树失败，将使用默认菜单')
-    }
+    // 菜单树应该在登录时已加载
   }
 })
 </script>

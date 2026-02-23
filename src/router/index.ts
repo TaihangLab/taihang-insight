@@ -207,7 +207,6 @@ export function setupAsyncRoutes(menuItems: any[]): void {
       const menuType = item.menu_type || item.permission_type || item.type
       const path = item.path
 
-
       // 只处理 menu 类型的菜单项（跳过 folder 和 button）
       // menu_type 可能是: 'menu', 'folder', 'button' 或数字 1, 2, 3
       const isMenu = menuType === 'menu' || menuType === 1 || (!menuType && path)
@@ -215,7 +214,7 @@ export function setupAsyncRoutes(menuItems: any[]): void {
       if (isMenu && path) {
         const component = componentMap[path]
         if (!component) {
-          console.warn(`⚠️ 路径 "${path}" 没有对应的组件，跳过`)
+          console.warn(`⚠️ 路径 "${path}" (${menuName}) 没有对应的组件，跳过`)
         } else {
           const route: RouteRecordRaw = {
             path: path,
@@ -246,7 +245,6 @@ export function setupAsyncRoutes(menuItems: any[]): void {
   })
 
   asyncRoutesAdded = true
-
 }
 
 // 创建路由实例

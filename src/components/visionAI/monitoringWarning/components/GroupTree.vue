@@ -1,117 +1,124 @@
 <template>
   <div id="MonitorGroupTree">
-    <div>
-      <vue-easy-tree
-        class="flow-tree"
-        ref="veTree"
-        node-key="treeId"
-        :height="treeHeight?treeHeight:'78vh'"
-        lazy
-        style="padding: 0 0 2rem 0.5rem"
-        :load="loadNode"
-        :data="treeData"
-        :props="props"
-        :default-expanded-keys="['']"
-        @node-click="nodeClickHandler"
-      >
-        <template v-slot:default="{ node, data }">
-          <span class="custom-tree-node">
-            <span v-if="node.data.type === 0 && chooseId !== node.data.deviceId" style="color: #409EFF" class="iconfont icon-bianzubeifen3"></span>
-            <span v-if="node.data.type === 0 && chooseId === node.data.deviceId" style="color: #c60135;" class="iconfont icon-bianzubeifen3"></span>
-            <span v-if="node.data.type === 1 && node.data.status === 'ON'" style="color: #409EFF" class="iconfont icon-shexiangtou2"></span>
-            <span v-if="node.data.type === 1 && node.data.status !== 'ON'" style="color: #808181" class="iconfont icon-shexiangtou2"></span>
-            <span style=" padding-left: 1px" v-if="node.data.deviceId !=='' && showCode" :title="node.data.deviceId">{{ node.label }}（编号：{{ node.data.deviceId }}）</span>
-            <span style=" padding-left: 1px" v-if="node.data.deviceId ==='' || !showCode" :title="node.data.deviceId">{{ node.label }}</span>
-          </span>
-        </template>
-      </vue-easy-tree>
-    </div>
+    <el-tree
+      ref="treeRef"
+      :data="treeData"
+      :props="treeProps"
+      :load="loadNode"
+      lazy
+      node-key="treeId"
+      :default-expand-keys="['']"
+      :expand-on-click-node="false"
+      @node-click="nodeClickHandler"
+      class="flow-tree"
+      :style="{ height: treeHeight || '78vh', padding: '0 0 2rem 0.5rem' }"
+    >
+      <template #default="{ node, data }">
+        <span class="custom-tree-node">
+          <span v-if="data.type === 0 && chooseId !== data.deviceId" style="color: #409EFF" class="iconfont icon-bianzubeifen3"></span>
+          <span v-if="data.type === 0 && chooseId === data.deviceId" style="color: #c60135;" class="iconfont icon-bianzubeifen3"></span>
+          <span v-if="data.type === 1 && data.status === 'ON'" style="color: #409EFF" class="iconfont icon-shexiangtou2"></span>
+          <span v-if="data.type === 1 && data.status !== 'ON'" style="color: #808181" class="iconfont icon-shexiangtou2"></span>
+          <span style="padding-left: 1px" v-if="data.deviceId !== '' && showCode" :title="data.deviceId">{{ data.name }}（编号：{{ data.deviceId }}）</span>
+          <span style="padding-left: 1px" v-if="data.deviceId === '' || !showCode" :title="data.deviceId">{{ data.name }}</span>
+        </span>
+      </template>
+    </el-tree>
   </div>
 </template>
 
 <script>
-import VueEasyTree from "@wchbrad/vue-easy-tree";
-import centerAPI from '@/api/center';
+import { ElMessage } from 'element-plus'
+import centerAPI from '@/api/center'
 
 export default {
   name: 'MonitorGroupTree',
-  components: {
-    VueEasyTree
-  },
   data() {
     return {
-      props: {
-        label: "name",
-        id: "treeId"
+      treeProps: {
+        label: 'name',
+        children: 'children',
+        isLeaf: (data) => data.leaf
       },
       showCode: false,
-      searchSrt: "",
-      chooseId: "",
-      treeData: [],
+      searchSrt: '',
+      chooseId: '',
+      treeData: [{
+        treeId: '',
+        deviceId: '',
+        name: '根资源组',
+        isLeaf: false,
+        type: 0
+      }]
     }
   },
   props: ['clickEvent', 'hasChannel', 'treeHeight'],
   methods: {
     loadNode: async function (node, resolve) {
       try {
+        // 根节点已初始化，直接返回
         if (node.level === 0) {
-          resolve([{
-            treeId: "",
-            deviceId: "",
-            name: "根资源组",
-            isLeaf: false,
-            type: 0
-          }]);
-        } else {
-          if (node.data.leaf) {
-            resolve([]);
-            return;
-          }
-          
-          // 使用专用的实时监控API
-          const response = await centerAPI.realtimeMonitor.getGroupTree({
-            query: this.searchSrt,
-            parent: node.data.id,
-            hasChannel: this.hasChannel
-          });
-          
-          // 解包后端响应: response.data = {code: 0, msg: "成功", data: [...]}
-          const treeData = (response.data && response.data.data) || [];
-          resolve(treeData);
+          return
         }
+
+        // 如果是叶子节点，返回空数组
+        if (node.data.leaf) {
+          resolve([])
+          return
+        }
+
+        // 使用专用的实时监控API
+        const response = await centerAPI.realtimeMonitor.getGroupTree({
+          query: this.searchSrt,
+          parent: node.data.id,
+          hasChannel: this.hasChannel
+        })
+
+        // 解包后端响应: response.data = {code: 0, msg: "成功", data: [...]}
+        const treeData = (response.data && response.data.data) || []
+        resolve(treeData)
       } catch (error) {
-        console.error('加载业务分组树失败:', error);
-        this.$message.error('加载业务分组树失败');
-        resolve([]);
+        console.error('加载业务分组树失败:', error)
+        ElMessage.error('加载业务分组树失败')
+        resolve([])
       }
     },
     reset: function () {
-      this.$forceUpdate();
+      this.$forceUpdate()
     },
     refreshNode: function (node) {
-      node.loaded = false;
-      node.expand();
+      node.loaded = false
+      node.expand()
     },
     refresh: function (id) {
-      let node = this.$refs.veTree.getNode(id);
-      if (node) {
-        node.loaded = false;
-        node.expand();
+      const tree = this.$refs.treeRef
+      if (tree) {
+        const node = tree.getNode(id)
+        if (node) {
+          node.loaded = false
+          node.expand()
+        }
       }
     },
-    nodeClickHandler: function (data, node, tree) {
-      this.chooseId = data.deviceId;
+    nodeClickHandler: function (data, node) {
+      this.chooseId = data.deviceId
       if (this.clickEvent) {
-        this.clickEvent(data);
+        this.clickEvent(data)
       }
     }
-  },
+  }
 }
 </script>
 
 <style scoped>
-.custom-tree-node .el-radio__label {
-  padding-left: 4px !important;
+.custom-tree-node {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.flow-tree {
+  background-color: transparent;
 }
 </style>
 

@@ -301,13 +301,13 @@ async function login(): Promise<void> {
           })
 
           if (persistedToken && persistedUserInfo && persistedPermissions && persistedMenus) {
-            const tokenData = JSON.parse(persistedToken)
+            // Token 是原始 JWT 字符串，不需要 JSON.parse()
             const userInfoData = JSON.parse(persistedUserInfo)
             const permissionsData = JSON.parse(persistedPermissions)
             const menusData = JSON.parse(persistedMenus)
 
             console.log('✅ Pinia 已持久化到 localStorage:', {
-              hasToken: !!tokenData.token,
+              hasToken: !!persistedToken,
               hasUserInfo: !!userInfoData.userInfo,
               permissionsCount: permissionsData.permissions?.length || 0,
               menuTreeCount: menusData.menuTree?.length || 0

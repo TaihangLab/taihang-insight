@@ -22,6 +22,8 @@ export default defineConfig(({ mode }) => {
     define: {
       // 全局变量 polyfill
       global: 'globalThis',
+      // process polyfill (用于某些第三方库)
+      'process.env': '{}',
     },
     resolve: {
       alias: {
