@@ -64,7 +64,7 @@ export interface Role {
   /** 角色ID */
   id: number
   /** 租户ID */
-  tenant_id?: number
+  tenant_id?: string
   /** 角色编码 */
   role_code: string
   /** 角色名称 */
@@ -114,7 +114,7 @@ export interface CreateRoleRequest {
   /** 角色描述 */
   description?: string
   /** 租户ID */
-  tenant_id: number
+  tenant_id: string
 }
 
 /**

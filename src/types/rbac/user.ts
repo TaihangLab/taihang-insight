@@ -35,14 +35,14 @@ export interface UserQueryFields {
  */
 export interface UserQueryParams extends BaseQueryParams, UserQueryFields {
   /** 租户ID（多租户隔离必填） */
-  tenant_id: number
+  tenant_id: string
 }
 
 /**
  * 用户查询参数表单类型（用于表单筛选，所有字段可选）
  */
 export type UserQueryForm = Partial<UserQueryFields> & {
-  tenant_id?: number
+  tenant_id?: string
   status?: Status
 }
 
@@ -58,7 +58,7 @@ export interface User {
   /** 用户ID */
   id: number
   /** 租户ID */
-  tenant_id?: number
+  tenant_id?: string
   /** 用户名 */
   user_name: string
   /** 用户昵称 */
@@ -124,7 +124,7 @@ export interface CreateUserRequest {
   /** 备注 */
   remark?: string
   /** 租户ID */
-  tenant_id: number
+  tenant_id: string
 }
 
 /**

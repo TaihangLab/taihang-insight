@@ -23,8 +23,8 @@ export interface UserInfo {
   phone?: string
   avatar?: string
   role?: string
-  tenantId?: string | number
-  tenant_id?: string | number
+  tenantId?: string
+  tenant_id?: string
   dept_id?: number
   position_id?: number
   status?: number
@@ -59,7 +59,7 @@ export interface AuthInfoResponse {
   email?: string
   phone?: string
   avatar?: string
-  tenant_id?: number | string
+  tenant_id?: string
   dept_id?: number
   position_id?: number
   status?: number

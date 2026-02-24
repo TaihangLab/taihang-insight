@@ -80,7 +80,7 @@ export enum Gender {
  */
 export interface TenantScopedParams {
   /** 租户ID */
-  tenant_id?: number
+  tenant_id?: string
 }
 
 /**
@@ -124,7 +124,7 @@ export interface EntityWithTimestamp extends BaseEntity {
  */
 export interface TenantScoped {
   /** 租户ID */
-  tenant_id?: number
+  tenant_id?: string
 }
 
 /**

@@ -60,7 +60,7 @@ export function useUserData() {
       const queryParams = {
         skip: (currentPage - 1) * size,
         limit: size,
-        tenant_id: typeof tenantId === 'number' ? tenantId : Number(tenantId),
+        tenant_id: typeof tenantId === 'string' ? tenantId : String(tenantId),
         ...(params.username && { username: params.username }),
         ...(params.nick_name && { nick_name: params.nick_name }),
         ...(params.phone && { phone: params.phone }),
@@ -88,7 +88,7 @@ export function useUserData() {
             dept_id: Number(data.dept_id || 0),
             gender: data.gender ?? 0,
             status: Number(data.status),
-            tenant_id: Number(data.tenant_id || 0),
+            tenant_id: String(data.tenant_id || ''),
             create_time: String(data.create_time || ''),
             update_time: String(data.update_time || ''),
             ...(data.dept_name && { dept_name: String(data.dept_name) })

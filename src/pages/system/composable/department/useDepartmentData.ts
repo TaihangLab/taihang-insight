@@ -107,7 +107,7 @@ export function useDepartmentData() {
             dept_name: deptName,
             name: deptName, // 兼容 DepartmentTreeTable 的本地 Department 接口
             tenant_id: node.tenant_id !== null && node.tenant_id !== undefined
-              ? Number(node.tenant_id)
+              ? String(node.tenant_id)
               : undefined,
             parent_id: node.parent_id !== null && node.parent_id !== undefined
               ? Number(node.parent_id)
@@ -152,7 +152,7 @@ export function useDepartmentData() {
    */
   const fetchParentDeptOptions = async (tenantId?: string | number) => {
     try {
-      const params = tenantId ? { tenant_id: Number(tenantId) } : {};
+      const params = tenantId ? { tenant_id: String(tenantId) } : {};
       const response = await departmentService.getDepartmentTree(params);
 
       let depts: unknown[] = [];

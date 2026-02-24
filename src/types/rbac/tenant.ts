@@ -17,7 +17,7 @@ export interface TenantAPI {
   /** 租户ID */
   id: number;
   /** 租户ID（别名，用于关联） */
-  tenant_id: number;
+  tenant_id: string;
   /** 租户名称 */
   tenant_name: string;
   /** 企业名称 */

@@ -30,7 +30,7 @@ export interface DepartmentQueryParams extends DepartmentQueryFields {
   /** 部门状态（0启用/1停用） */
   status?: Status
   /** 租户ID（多租户隔离必填） */
-  tenant_id?: number
+  tenant_id?: string
 }
 
 /**
@@ -38,7 +38,7 @@ export interface DepartmentQueryParams extends DepartmentQueryFields {
  */
 export type DepartmentQueryForm = Partial<DepartmentQueryFields> & {
   status?: Status
-  tenant_id?: number
+  tenant_id?: string
 }
 
 // ============================================
@@ -53,7 +53,7 @@ export interface DepartmentBase {
   /** 部门ID */
   id: number
   /** 租户ID */
-  tenant_id?: number
+  tenant_id?: string
   /** 部门编码 */
   dept_code: string
   /** 部门名称 */
@@ -131,7 +131,7 @@ export interface CreateDepartmentRequest {
   /** 状态 */
   status?: Status
   /** 租户ID */
-  tenant_id: number
+  tenant_id: string
   /** 备注 */
   remark?: string
 }
