@@ -52,6 +52,11 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   (response: AxiosResponse) => {
+    // 204 No Content - 无响应体（用于 DELETE 操作）
+    if (response.status === 204) {
+      return response
+    }
+
     const res = response.data
 
     // 如果是Blob类型（如文件下载、图片），直接返回
@@ -59,11 +64,10 @@ service.interceptors.response.use(
       return response
     }
 
-    // 如果返回的状态码为200，说明接口请求成功，可以正常拿到数据
-    // 否则的话抛出错误
-    if (response.status === 200) {
+    // 200 OK 或 201 Created - 接口请求成功
+    if (response.status === 200 || response.status === 201) {
       // 根据后端返回的code判断
-      if (res.code === 0 || res.code === 200) {
+      if (res.code === 0 || res.code === 200 || res.code === 201) {
         return response
       } else {
         // 业务错误处理

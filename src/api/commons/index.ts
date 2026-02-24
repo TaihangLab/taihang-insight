@@ -238,11 +238,19 @@ export const createAxiosInstance = (
 /**
  * 附加通用响应拦截器
  * 处理统一的 RBACResponse 格式和常见错误
+ * 支持 200/201/204 状态码
  */
 export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
   instance.interceptors.response.use(
     (response: AxiosResponse) => {
+      // 204 No Content - 无响应体（用于 DELETE 操作）
+      // 返回默认成功对象
+      if (response.status === 204) {
+        return { success: true, code: 204, message: '删除成功', data: null }
+      }
+
       const data = response.data
+
       // 检查是否为 RBACResponse 格式 { success, code, message, data }
       if (data && typeof data === 'object' && 'success' in data && 'code' in data && 'message' in data) {
         if (data.success) {
@@ -257,7 +265,7 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
       }
       // 检查是否为 UnifiedResponse 格式 { code, msg, data }
       if (data && typeof data === 'object' && 'code' in data && 'msg' in data) {
-        // 请求成功（code === 0），返回 data 字段
+        // 请求成功（code === 0/200/201），返回 data 字段
         return data.data
       }
       // 其他格式，直接返回
