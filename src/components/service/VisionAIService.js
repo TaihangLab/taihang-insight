@@ -3894,6 +3894,71 @@ export const realtimeDetectionAPI = {
   }
 };
 
+/**
+ * ML Pipeline API - 标注-训练-推理-服务化
+ */
+export const mlPipelineAPI = {
+  // ---- Label Studio 状态 ----
+  getLabelStudioStatus() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/annotation/label-studio/status');
+  },
+
+  // ---- 数据集 ----
+  listDatasets() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/annotation/datasets');
+  },
+  createDataset(data) {
+    return visionAIAxios.post('/api/v1/ml-pipeline/annotation/datasets', data);
+  },
+  getDataset(id) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${id}`);
+  },
+  deleteDataset(id) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/annotation/datasets/${id}`);
+  },
+  addImages(datasetId, data) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images`, data);
+  },
+  uploadImages(datasetId, files) {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f.raw || f));
+    return visionAIAxios.post(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/upload`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 }
+    );
+  },
+  listImages(datasetId) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images`);
+  },
+  syncAnnotations(datasetId) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/sync`);
+  },
+  checkLsProject(datasetId) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/check-ls`);
+  },
+  exportDataset(datasetId, valRatio = 0.2) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/export?val_ratio=${valRatio}`);
+  },
+
+  // ---- 训练任务 ----
+  listTrainingTasks() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/tasks');
+  },
+  createTrainingTask(data) {
+    return visionAIAxios.post('/api/v1/ml-pipeline/training/tasks', data);
+  },
+  getTrainingTask(id) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${id}`);
+  },
+  startTrainingTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/start`);
+  },
+  cancelTrainingTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/cancel`);
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
@@ -3906,5 +3971,6 @@ export default {
   taskReviewAPI,
   realtimeMonitorAPI,
   realtimeDetectionAPI,
+  mlPipelineAPI,
   visionAIAxios
 };
