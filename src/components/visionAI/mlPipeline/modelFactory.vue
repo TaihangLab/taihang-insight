@@ -134,13 +134,16 @@
                   <h4>前往 Label Studio 标注</h4>
                   <p class="anno-hint">在 Label Studio 中设置标注类型、标注类别并完成标注后，回到此处点击「同步」拉取结果。</p>
                   <el-button
-                    v-if="selectedDataset.ls_project_url"
+                    v-if="selectedDataset.ls_project_id"
                     type="primary"
                     size="medium"
                     icon="el-icon-link"
                     @click="openLabelStudio">
                     打开 Label Studio 标注项目
                   </el-button>
+                  <p v-if="selectedDataset.ls_project_id" class="anno-hint" style="margin-top: 6px;">
+                    登录账号：<b>admin@admin.com</b> &nbsp; 密码：<b>admin123456</b>
+                  </p>
                   <el-alert
                     v-else
                     title="此数据集未关联 Label Studio 项目（可能创建时 LS 未连接），请删除重建或检查 LS 连接状态。"
@@ -506,9 +509,10 @@ export default {
       }
     },
     openLabelStudio() {
-      if (this.selectedDataset && this.selectedDataset.ls_project_url) {
-        window.open(this.selectedDataset.ls_project_url, '_blank');
-      }
+      if (!this.selectedDataset || !this.selectedDataset.ls_project_id) return;
+      const projectPath = `/projects/${this.selectedDataset.ls_project_id}/`;
+      const lsBase = this.lsUrl || this.selectedDataset.ls_project_url.replace(/\/projects\/\d+\/?$/, '');
+      window.open(`${lsBase}${projectPath}`, '_blank');
     },
 
     // ---- 数据集列表 ----
@@ -570,9 +574,12 @@ export default {
       try {
         const res = await mlPipelineAPI.syncAnnotations(this.selectedDataset.id);
         const d = res.data.data;
-        this.syncResult = `同步完成：${d.synced_labels} 个标注，${d.labeled_images}/${d.total_images} 张已标注`;
-        this.loadDatasets();
-        this.loadImages();
+        const parts = [`${d.labeled_images}/${d.total_images} 张已标注`];
+        if (d.synced_labels) parts.push(`${d.synced_labels} 个标注框`);
+        if (d.new_images_from_ls) parts.push(`新发现 ${d.new_images_from_ls} 张图片`);
+        this.syncResult = `同步完成：${parts.join('，')}`;
+        await this.loadDatasets();
+        await this.loadImages();
       } catch (e) {
         this.$message.error('同步失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
       } finally {
@@ -588,7 +595,7 @@ export default {
         const res = await mlPipelineAPI.exportDataset(this.selectedDataset.id, this.valRatioPercent / 100);
         this.exportResult = res.data.data;
         this.$message.success('导出完成');
-        this.loadDatasets();
+        await this.loadDatasets();
       } catch (e) {
         this.$message.error('导出失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
       } finally {
@@ -703,8 +710,8 @@ export default {
           this.$message.success(msg);
         }
         this.addImagesDialogVisible = false;
-        this.loadDatasets();
-        this.loadImages();
+        await this.loadDatasets();
+        await this.loadImages();
       } catch (e) {
         this.$message.error('上传失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
       } finally {
@@ -744,7 +751,7 @@ export default {
         this.$message.success('删除成功');
         this.selectedDataset = null;
         this.images = [];
-        this.loadDatasets();
+        await this.loadDatasets();
       } catch (e) {
         this.$message.error('删除失败');
       }
@@ -758,7 +765,7 @@ export default {
         this.loadDatasets(),
         this.loadAllTrainingTasks(),
       ]);
-      if (this.selectedDataset) this.loadImages();
+      if (this.selectedDataset) await this.loadImages();
       this.refreshing = false;
     },
 
