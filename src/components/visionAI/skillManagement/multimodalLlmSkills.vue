@@ -92,12 +92,10 @@
         <div class="skills-container">
           <!-- 加载状态 -->
           <div v-if="loading" class="loading-container">
-            <el-loading 
-              :loading="loading"
-              text="正在加载技能列表..."
-              spinner="el-icon-loading"
-              background="rgba(255, 255, 255, 0.8)">
-            </el-loading>
+            <div class="loading-spinner">
+              <i class="el-icon-loading"></i>
+              <p>正在加载技能列表...</p>
+            </div>
           </div>
           
           <!-- 空状态 -->
@@ -116,7 +114,7 @@
           </div>
           
           <!-- 技能卡片列表 -->
-          <div v-else class="skills-grid">
+          <div v-else class="llm-skills-grid">
             <div 
               v-for="skill in paginatedSkills" 
               :key="skill.id" 
@@ -783,7 +781,6 @@ export default {
             image_url: skill.skill_icon_url || '/static/logo.png' // 直接使用后端返回的临时访问URL
           }))
 
-          // 更新总数和分页信息
           this.totalCount = response.data.total || 0
           
           console.log('技能列表加载成功:', this.skills.length, '条记录')
@@ -1779,10 +1776,7 @@ export default {
   },
 
   mounted() {
-    // 初始化数据
     this.searchKeyword = this.searchInput
-  
-    // 加载技能列表
     this.loadSkillList()
   }
 }
@@ -1798,7 +1792,7 @@ export default {
 .multimodal-llm-skills {
   padding: 20px;
   background-color: #f5f5f5;
-  min-height: 90vh-10px;
+  min-height: calc(90vh - 10px);
 }
 
 .page-container {
@@ -2045,7 +2039,6 @@ export default {
   overflow-y: auto;
   padding: 20px 24px 24px 24px;
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  position: relative;
 }
 
 /* 加载状态 */
@@ -2055,6 +2048,27 @@ export default {
   justify-content: center;
   height: 400px;
   width: 100%;
+}
+
+.loading-spinner {
+  text-align: center;
+  color: #3b82f6;
+}
+
+.loading-spinner i {
+  font-size: 32px;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner p {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* 空状态 */
@@ -2123,7 +2137,7 @@ export default {
   transform: translateY(-2px);
 }
 
-.skills-grid {
+.llm-skills-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 16px;
@@ -2138,7 +2152,6 @@ export default {
   aspect-ratio: 16/19;
   display: flex;
   flex-direction: column;
-  min-height: 0;
   border: 1px solid #f3f4f6;
   position: relative;
   overflow: hidden;
@@ -2667,25 +2680,25 @@ export default {
 
 /* 响应式设计 */
 @media (max-width: 1600px) {
-  .skills-grid {
+  .llm-skills-grid {
     grid-template-columns: repeat(5, 1fr);
   }
 }
 
 @media (max-width: 1400px) {
-  .skills-grid {
+  .llm-skills-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
 @media (max-width: 1200px) {
-  .skills-grid {
+  .llm-skills-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 1024px) {
-  .skills-grid {
+  .llm-skills-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -2712,10 +2725,6 @@ export default {
 
   .skills-container {
     padding: 16px;
-  }
-
-  .skills-grid {
-    grid-template-columns: 1fr;
   }
 
   .filter-tabs {
@@ -3213,7 +3222,7 @@ export default {
     flex-wrap: wrap;
   }
 
-  .skills-grid {
+  .llm-skills-grid {
     grid-template-columns: 1fr;
   }
 
@@ -3424,78 +3433,3 @@ export default {
 }
 </style>
 
-<style>
-/* 全局MessageBox确认弹框样式 - 与 warningManagement.vue 一致 */
-.el-message-box {
-  border-radius: 12px !important;
-  overflow: hidden !important;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
-}
-
-.el-message-box__header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
-  padding: 16px 20px !important;
-}
-
-.el-message-box__title {
-  color: #1f2937 !important;
-  font-weight: 600 !important;
-}
-
-.el-message-box__headerbtn {
-  color: #6b7280 !important;
-  transition: color 0.3s ease !important;
-}
-
-.el-message-box__headerbtn:hover {
-  color: #3b82f6 !important;
-}
-
-.el-message-box__content {
-  padding: 20px !important;
-  background: #ffffff !important;
-}
-
-.el-message-box__btns {
-  padding: 10px 20px 20px !important;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  border-top: 1px solid rgba(59, 130, 246, 0.1) !important;
-}
-
-.el-message-box__btns .el-button {
-  border-radius: 6px !important;
-  font-weight: 500 !important;
-  transition: all 0.3s ease !important;
-  padding: 8px 20px !important;
-  margin-left: 12px !important;
-}
-
-.el-message-box__btns .el-button--primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
-  border: none !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
-  color: white !important;
-}
-
-.el-message-box__btns .el-button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
-  transform: translateY(-1px) !important;
-}
-
-.el-message-box__btns .el-button--default {
-  background: white !important;
-  border: 1px solid #d1d5db !important;
-  color: #4b5563 !important;
-  transition: all 0.3s ease !important;
-}
-
-.el-message-box__btns .el-button--default:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-  transform: translateY(-1px) !important;
-}
-</style>

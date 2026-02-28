@@ -4,7 +4,7 @@
       <ui-header/>
     </el-header>
     <el-main style="padding: 0; width: 100%;">
-      <router-view></router-view>
+      <router-view :key="$route.fullPath"></router-view>
     </el-main>
     <!-- 太行智能助手 -->
     <intelligent-assistant />
