@@ -3940,6 +3940,29 @@ export const mlPipelineAPI = {
     return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/export?val_ratio=${valRatio}`);
   },
 
+  // ---- 训练信息 ----
+  getSupportedModels() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/models');
+  },
+  getExportFormats() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/export-formats');
+  },
+  getGpuInfo() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/gpu-info');
+  },
+
+  // ---- TensorBoard ----
+  startTensorBoard(taskId) {
+    const params = taskId ? { task_id: taskId } : {};
+    return visionAIAxios.post('/api/v1/ml-pipeline/training/tensorboard/start', null, { params });
+  },
+  stopTensorBoard() {
+    return visionAIAxios.post('/api/v1/ml-pipeline/training/tensorboard/stop');
+  },
+  getTensorBoardStatus() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/tensorboard/status');
+  },
+
   // ---- 训练任务 ----
   listTrainingTasks() {
     return visionAIAxios.get('/api/v1/ml-pipeline/training/tasks');
@@ -3950,11 +3973,33 @@ export const mlPipelineAPI = {
   getTrainingTask(id) {
     return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${id}`);
   },
+  getTrainingTaskLog(id, tail = 200) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${id}/log`, { params: { tail } });
+  },
   startTrainingTask(id) {
     return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/start`);
   },
   cancelTrainingTask(id) {
     return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/cancel`);
+  },
+  interruptTrainingTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/interrupt`);
+  },
+  deleteTrainingTask(id) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/training/tasks/${id}`);
+  },
+
+  // ---- 模型导出 ----
+  exportModel(taskId, format) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${taskId}/export`, { format });
+  },
+  getExportStatus(taskId) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${taskId}/export-status`);
+  },
+
+  // ---- 模型下载 ----
+  getModelDownloadUrl(taskId, type = 'export') {
+    return `${config.API_BASE_URL}/api/v1/ml-pipeline/training/tasks/${taskId}/download?type=${type}`;
   }
 };
 

@@ -224,49 +224,80 @@
                 <div class="training-section">
                   <div class="section-header">
                     <h4>训练任务</h4>
-                    <el-button
-                      type="primary"
-                      size="small"
-                      icon="el-icon-video-play"
-                      :disabled="selectedDataset.status !== 'exported'"
-                      @click="showCreateTrainingDialog">
-                      创建训练任务
-                    </el-button>
+                    <div>
+                      <el-button
+                        size="small"
+                        :type="tbStatus.running ? 'warning' : 'default'"
+                        icon="el-icon-data-analysis"
+                        @click="toggleTensorBoard">
+                        {{ tbStatus.running ? '关闭 TensorBoard' : 'TensorBoard' }}
+                      </el-button>
+                      <el-button
+                        type="primary"
+                        size="small"
+                        icon="el-icon-video-play"
+                        :disabled="selectedDataset.status !== 'exported'"
+                        @click="showCreateTrainingDialog">
+                        创建训练任务
+                      </el-button>
+                    </div>
                   </div>
                   <p v-if="selectedDataset.status !== 'exported'" class="anno-hint">请先导出数据集后才能创建训练任务。</p>
 
                   <el-table :data="datasetTrainingTasks" border stripe size="small" style="width: 100%; margin-top: 8px;" empty-text="暂无训练任务" v-loading="tasksLoading">
-                    <el-table-column prop="name" label="任务名称" min-width="140" />
-                    <el-table-column prop="base_model" label="模型" width="110" />
-                    <el-table-column label="参数" width="180">
+                    <el-table-column prop="name" label="任务名称" min-width="120" />
+                    <el-table-column label="类型" width="85">
+                      <template slot-scope="scope">
+                        <el-tag size="mini" effect="plain">{{ taskTypeLabel(scope.row.task_type) }}</el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="base_model" label="模型" width="130" />
+                    <el-table-column label="参数" width="170">
                       <template slot-scope="scope">
                         e{{ scope.row.epochs }} b{{ scope.row.batch_size }} img{{ scope.row.image_size }}
                       </template>
                     </el-table-column>
-                    <el-table-column label="进度" width="140">
+                    <el-table-column label="进度" width="130">
                       <template slot-scope="scope">
-                        <el-progress :percentage="scope.row.progress || 0" :status="progressStatus(scope.row.status)" :stroke-width="14" :text-inside="true" />
+                        <el-progress :percentage="Math.round(scope.row.progress || 0)" :status="progressStatus(scope.row.status)" :stroke-width="14" :text-inside="true" />
                       </template>
                     </el-table-column>
-                    <el-table-column label="状态" width="90">
+                    <el-table-column label="状态" width="80">
                       <template slot-scope="scope">
                         <el-tag :type="trainStatusType(scope.row.status)" size="mini">{{ trainStatusLabel(scope.row.status) }}</el-tag>
                       </template>
                     </el-table-column>
-                    <el-table-column label="模型路径" min-width="160">
+                    <el-table-column label="模型产出" min-width="140">
                       <template slot-scope="scope">
-                        <span v-if="scope.row.output_model_path" style="font-size: 12px; word-break: break-all;">{{ scope.row.output_model_path }}</span>
+                        <div v-if="scope.row.output_model_path" style="font-size: 12px; word-break: break-all;">
+                          <div>{{ scope.row.output_model_path.split(/[/\\]/).pop() }}</div>
+                          <el-tag v-if="scope.row.export_format" size="mini" type="success" style="margin-top: 2px;">
+                            已导出 {{ scope.row.export_format.toUpperCase() }}
+                          </el-tag>
+                        </div>
                         <span v-else style="color: #ccc;">-</span>
                       </template>
                     </el-table-column>
-                    <el-table-column label="操作" width="150" fixed="right">
-                      <template slot-scope="scope">
-                        <el-button v-if="scope.row.status === 'pending' || scope.row.status === 'failed'"
+                    <el-table-column label="操作" min-width="340" fixed="right">
+                      <template slot-scope="scope"><div style="white-space: nowrap;">
+                        <el-button v-if="scope.row.status === 'pending' || scope.row.status === 'failed' || scope.row.status === 'cancelled'"
                           size="mini" type="primary" @click="handleStartTraining(scope.row)">启动</el-button>
+                        <el-button v-if="scope.row.status === 'interrupted'"
+                          size="mini" type="success" @click="handleStartTraining(scope.row)">恢复</el-button>
                         <el-button v-if="scope.row.status === 'running'"
-                          size="mini" type="warning" @click="handleCancelTraining(scope.row)">取消</el-button>
+                          size="mini" type="warning" @click="handleInterruptTraining(scope.row)">中断</el-button>
+                        <el-button v-if="scope.row.status === 'running'"
+                          size="mini" type="danger" @click="handleCancelTraining(scope.row)">取消</el-button>
+                        <el-button v-if="scope.row.status === 'completed'"
+                          size="mini" type="success" :loading="exportingTaskIds.includes(scope.row.id)" @click="showExportDialog(scope.row)">{{ exportingTaskIds.includes(scope.row.id) ? '导出中' : '导出' }}</el-button>
+                        <el-button v-if="scope.row.export_model_path || scope.row.output_model_path"
+                          size="mini" type="info" @click="handleDownloadModel(scope.row)">下载</el-button>
+                        <el-button v-if="scope.row.status === 'completed'"
+                          size="mini" @click="handleStartTraining(scope.row)">重训</el-button>
                         <el-button size="mini" @click="showTrainingDetail(scope.row)">详情</el-button>
-                      </template>
+                        <el-button v-if="scope.row.status !== 'running'"
+                          size="mini" type="danger" @click="handleDeleteTraining(scope.row)">删除</el-button>
+                      </div></template>
                     </el-table-column>
                   </el-table>
                 </div>
@@ -321,7 +352,7 @@
     </el-dialog>
 
     <!-- ===== 创建训练任务弹窗 ===== -->
-    <el-dialog title="创建训练任务" :visible.sync="createTrainingDialogVisible" width="480px" :close-on-click-modal="false" append-to-body>
+    <el-dialog title="创建训练任务" :visible.sync="createTrainingDialogVisible" width="540px" :close-on-click-modal="false" append-to-body>
       <el-form :model="trainingForm" ref="trainingForm" label-width="90px" :rules="trainingRules" size="small">
         <el-form-item label="任务名称" prop="name">
           <el-input v-model="trainingForm.name" placeholder="如：安全帽训练v1" maxlength="200" />
@@ -329,13 +360,23 @@
         <el-form-item label="数据集">
           <el-input :value="selectedDataset ? selectedDataset.name + ' (ID:' + selectedDataset.id + ')' : ''" disabled />
         </el-form-item>
+        <el-form-item label="任务类型">
+          <el-radio-group v-model="trainingForm.task_type" size="small" @change="onTaskTypeChange">
+            <el-radio-button label="detect">目标检测</el-radio-button>
+            <el-radio-button label="segment">实例分割</el-radio-button>
+            <el-radio-button label="classify">图像分类</el-radio-button>
+            <el-radio-button label="pose">姿态估计</el-radio-button>
+            <el-radio-button label="obb">旋转检测</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="基础模型">
-          <el-select v-model="trainingForm.base_model" style="width: 100%;">
-            <el-option label="yolo11n.pt (Nano)" value="yolo11n.pt" />
-            <el-option label="yolo11s.pt (Small)" value="yolo11s.pt" />
-            <el-option label="yolo11m.pt (Medium)" value="yolo11m.pt" />
-            <el-option label="yolo11l.pt (Large)" value="yolo11l.pt" />
-            <el-option label="yolo11x.pt (XLarge)" value="yolo11x.pt" />
+          <el-select v-model="trainingForm.base_model" style="width: 100%;" placeholder="选择预训练模型">
+            <el-option-group v-for="(models, family) in filteredModels" :key="family" :label="family">
+              <el-option v-for="m in models" :key="m.value" :label="m.label" :value="m.value">
+                <span style="float: left;">{{ m.label }}</span>
+                <span style="float: right; color: #909399; font-size: 12px;">{{ m.params }} · mAP {{ m.map }}</span>
+              </el-option>
+            </el-option-group>
           </el-select>
         </el-form-item>
         <el-form-item label="训练轮数">
@@ -343,30 +384,85 @@
         </el-form-item>
         <el-form-item label="批量大小">
           <el-input-number v-model="trainingForm.batch_size" :min="1" :max="128" style="width: 160px;" />
+          <span class="form-tip" style="margin-left: 8px;">显存不足时调小此值</span>
         </el-form-item>
         <el-form-item label="图片尺寸">
           <el-input-number v-model="trainingForm.image_size" :min="320" :max="1280" :step="32" style="width: 160px;" />
         </el-form-item>
       </el-form>
+      <div v-if="gpuInfo" class="gpu-info-bar">
+        <i :class="gpuInfo.cuda_available ? 'el-icon-monitor' : 'el-icon-warning-outline'" :style="{ color: gpuInfo.cuda_available ? '#67c23a' : '#e6a23c' }"></i>
+        <span v-if="gpuInfo.cuda_available && gpuInfo.devices && gpuInfo.devices.length">
+          GPU: {{ gpuInfo.devices[0].name }} ({{ gpuInfo.devices[0].memory_total_mb }} MB)
+        </span>
+        <span v-else style="color: #e6a23c;">{{ gpuInfo.message || '将使用 CPU 训练（较慢）' }}</span>
+      </div>
       <div slot="footer">
         <el-button size="small" @click="createTrainingDialogVisible = false">取消</el-button>
         <el-button type="primary" size="small" :loading="creatingTraining" @click="confirmCreateTraining">创建</el-button>
       </div>
     </el-dialog>
 
+    <!-- ===== 模型导出弹窗 ===== -->
+    <el-dialog title="导出模型" :visible.sync="exportDialogVisible" width="460px" :close-on-click-modal="false" append-to-body>
+      <el-form label-width="90px" size="small">
+        <el-form-item label="导出格式">
+          <el-select v-model="exportForm.format" style="width: 100%;" placeholder="选择部署格式">
+            <el-option v-for="f in exportFormats" :key="f.value" :label="f.label" :value="f.value">
+              <span style="float: left;">{{ f.label }}</span>
+              <span style="float: right; color: #909399; font-size: 12px;">{{ f.desc }}</span>
+            </el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div class="export-format-tip">
+        <p v-if="exportForm.format === 'onnx'">ONNX：通用格式，支持 CPU/GPU，跨平台部署首选</p>
+        <p v-else-if="exportForm.format === 'engine'">TensorRT：NVIDIA GPU 专属，推理速度最快</p>
+        <p v-else-if="exportForm.format === 'openvino'">OpenVINO：Intel CPU/GPU/VPU 优化</p>
+        <p v-else-if="exportForm.format === 'torchscript'">TorchScript：PyTorch 原生格式</p>
+        <p v-else-if="exportForm.format === 'ncnn'">NCNN：腾讯开源，适合安卓/嵌入式/ARM 设备</p>
+        <p v-else-if="exportForm.format === 'coreml'">CoreML：Apple 设备专用 (iPhone/iPad/Mac)</p>
+        <p v-else-if="exportForm.format === 'tflite'">TFLite：Google 移动端框架，适合安卓/IoT</p>
+        <p v-else-if="exportForm.format === 'paddle'">PaddlePaddle：百度飞桨框架格式</p>
+      </div>
+      <div slot="footer">
+        <el-button size="small" @click="exportDialogVisible = false">取消</el-button>
+        <el-button type="primary" size="small" :disabled="exportingTaskIds.includes(exportingTaskId)" @click="confirmExportModel">开始导出</el-button>
+      </div>
+    </el-dialog>
+
     <!-- ===== 训练详情弹窗 ===== -->
-    <el-dialog title="训练任务详情" :visible.sync="trainingDetailVisible" width="580px" append-to-body>
+    <el-dialog title="训练任务详情" :visible.sync="trainingDetailVisible" width="720px" append-to-body @open="onDetailOpen" @close="onDetailClose">
       <div v-if="trainingDetailTask">
         <el-descriptions :column="2" border size="small">
           <el-descriptions-item label="任务ID">{{ trainingDetailTask.id }}</el-descriptions-item>
           <el-descriptions-item label="名称">{{ trainingDetailTask.name }}</el-descriptions-item>
+          <el-descriptions-item label="任务类型">{{ taskTypeLabel(trainingDetailTask.task_type) }}</el-descriptions-item>
           <el-descriptions-item label="基础模型">{{ trainingDetailTask.base_model }}</el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag :type="trainStatusType(trainingDetailTask.status)" size="small">{{ trainStatusLabel(trainingDetailTask.status) }}</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="epochs">{{ trainingDetailTask.epochs }}</el-descriptions-item>
-          <el-descriptions-item label="进度">{{ trainingDetailTask.progress }}%</el-descriptions-item>
-          <el-descriptions-item label="模型路径" :span="2">{{ trainingDetailTask.output_model_path || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="进度">{{ Math.round(trainingDetailTask.progress || 0) }}%</el-descriptions-item>
+          <el-descriptions-item label="训练参数" :span="2">
+            epochs={{ trainingDetailTask.epochs }} &nbsp; batch={{ trainingDetailTask.batch_size }} &nbsp; imgsz={{ trainingDetailTask.image_size }}
+          </el-descriptions-item>
+          <el-descriptions-item label="模型文件" :span="2">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="word-break: break-all;">{{ trainingDetailTask.output_model_path || '-' }}</span>
+              <el-button v-if="trainingDetailTask.output_model_path" size="mini" type="primary" icon="el-icon-download"
+                @click="handleDownloadModel(trainingDetailTask, 'best')">下载</el-button>
+            </div>
+          </el-descriptions-item>
+          <el-descriptions-item v-if="trainingDetailTask.export_format" label="已导出格式">
+            <el-tag type="success" size="small">{{ trainingDetailTask.export_format.toUpperCase() }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item v-if="trainingDetailTask.export_model_path" label="导出模型" :span="2">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 12px; word-break: break-all;">{{ trainingDetailTask.export_model_path }}</span>
+              <el-button size="mini" type="success" icon="el-icon-download"
+                @click="handleDownloadModel(trainingDetailTask, 'export')">下载</el-button>
+            </div>
+          </el-descriptions-item>
           <el-descriptions-item label="创建时间" :span="2">{{ trainingDetailTask.created_at }}</el-descriptions-item>
         </el-descriptions>
         <div v-if="trainingDetailTask.error_message" style="margin-top: 12px;">
@@ -377,6 +473,20 @@
         <div v-if="trainingDetailTask.metrics" style="margin-top: 12px;">
           <h4 style="margin-bottom: 8px;">训练指标</h4>
           <el-tag v-for="(val, key) in trainingDetailTask.metrics" :key="key" size="small" style="margin: 2px 4px;">{{ key }}: {{ val }}</el-tag>
+        </div>
+        <!-- 训练日志 -->
+        <div style="margin-top: 16px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <h4 style="margin: 0;">训练日志</h4>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <el-button size="mini" icon="el-icon-data-analysis" @click="openTensorBoard">TensorBoard</el-button>
+              <span v-if="trainingDetailTask.status === 'running'" style="color: #67c23a; font-size: 12px;">
+                <i class="el-icon-loading"></i> 实时刷新中
+              </span>
+              <el-button v-else size="mini" icon="el-icon-refresh" @click="loadTrainingLog">刷新</el-button>
+            </div>
+          </div>
+          <pre ref="logBox" class="training-log-box">{{ trainingLog || '暂无日志' }}</pre>
         </div>
       </div>
     </el-dialog>
@@ -440,14 +550,29 @@ export default {
       // 创建训练弹窗
       createTrainingDialogVisible: false,
       creatingTraining: false,
-      trainingForm: { name: '', base_model: 'yolo11n.pt', epochs: 100, batch_size: 16, image_size: 640 },
+      trainingForm: { name: '', task_type: 'detect', base_model: 'yolo26n.pt', epochs: 100, batch_size: 16, image_size: 640 },
       trainingRules: {
         name: [{ required: true, message: '请输入名称', trigger: 'blur' }]
       },
 
+      // 模型 & 导出 & GPU & TensorBoard
+      supportedModels: {},
+      exportFormats: [],
+      gpuInfo: null,
+      tbStatus: { running: false, url: null },
+
       // 训练详情
       trainingDetailVisible: false,
       trainingDetailTask: null,
+      trainingLog: '',
+      logPollTimer: null,
+
+      // 导出
+      exportingTaskId: null,
+      exportDialogVisible: false,
+      exportForm: { format: 'onnx' },
+      exportPollTimer: null,
+      exportingTaskIds: [],
 
       // 轮询
       pollTimer: null,
@@ -478,11 +603,24 @@ export default {
       if (!this.selectedDataset) return [];
       return this.allTrainingTasks.filter(t => t.dataset_id === this.selectedDataset.id);
     },
+    filteredModels() {
+      const models = this.supportedModels[this.trainingForm.task_type] || [];
+      const grouped = {};
+      models.forEach(m => {
+        if (!grouped[m.family]) grouped[m.family] = [];
+        grouped[m.family].push(m);
+      });
+      return grouped;
+    },
   },
   mounted() {
     this.checkLabelStudio();
     this.loadDatasets();
     this.loadAllTrainingTasks();
+    this.loadSupportedModels();
+    this.loadExportFormats();
+    this.loadGpuInfo();
+    this.loadTbStatus();
     this.pollTimer = setInterval(() => {
       if (this.allTrainingTasks.some(t => t.status === 'running')) {
         this.silentLoadTrainingTasks();
@@ -491,6 +629,8 @@ export default {
   },
   beforeDestroy() {
     if (this.pollTimer) clearInterval(this.pollTimer);
+    if (this.logPollTimer) clearInterval(this.logPollTimer);
+    if (this.exportPollTimer) clearInterval(this.exportPollTimer);
   },
   methods: {
     imageProxyUrl(imageId) {
@@ -622,19 +762,36 @@ export default {
       } catch (_) { /* ignore */ }
     },
     handleStartTraining(row) {
-      this.$confirm(`确定启动训练任务「${row.name}」？`, '确认启动', { type: 'info' })
+      const isResume = row.status === 'interrupted';
+      const title = isResume ? '确认恢复训练' : '确认启动';
+      const msg = isResume
+        ? `确定从断点恢复训练任务「${row.name}」？将从上次中断处继续。`
+        : `确定启动训练任务「${row.name}」？`;
+      this.$confirm(msg, title, { type: 'info' })
         .then(async () => {
           try {
             await mlPipelineAPI.startTrainingTask(row.id);
-            this.$message.success('训练已启动');
+            this.$message.success(isResume ? '训练已恢复' : '训练已启动');
             this.loadAllTrainingTasks();
           } catch (e) {
             this.$message.error('启动失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
           }
         }).catch(() => {});
     },
+    handleInterruptTraining(row) {
+      this.$confirm('中断后可从断点恢复训练，确定中断？', '中断训练', { type: 'warning' })
+        .then(async () => {
+          try {
+            await mlPipelineAPI.interruptTrainingTask(row.id);
+            this.$message.success('已中断，可稍后恢复训练');
+            this.loadAllTrainingTasks();
+          } catch (e) {
+            this.$message.error('中断失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
+          }
+        }).catch(() => {});
+    },
     handleCancelTraining(row) {
-      this.$confirm('确定取消训练任务？', '确认', { type: 'warning' })
+      this.$confirm('取消后需从头重新训练，确定取消？', '取消训练', { type: 'warning' })
         .then(async () => {
           try {
             await mlPipelineAPI.cancelTrainingTask(row.id);
@@ -647,11 +804,49 @@ export default {
     },
     showTrainingDetail(row) {
       this.trainingDetailTask = row;
+      this.trainingLog = '';
       this.trainingDetailVisible = true;
+    },
+    async loadTrainingLog() {
+      if (!this.trainingDetailTask) return;
+      try {
+        const res = await mlPipelineAPI.getTrainingTaskLog(this.trainingDetailTask.id);
+        this.trainingLog = (res.data.data && res.data.data.log) || '';
+        this.$nextTick(() => {
+          const el = this.$refs.logBox;
+          if (el) el.scrollTop = el.scrollHeight;
+        });
+      } catch (_) { /* ignore */ }
+    },
+    async refreshDetailTask() {
+      if (!this.trainingDetailTask) return;
+      try {
+        const res = await mlPipelineAPI.getTrainingTask(this.trainingDetailTask.id);
+        if (res.data.data) this.trainingDetailTask = res.data.data;
+      } catch (_) { /* ignore */ }
+    },
+    onDetailOpen() {
+      this.loadTrainingLog();
+      this.logPollTimer = setInterval(async () => {
+        if (!this.trainingDetailTask) return;
+        await this.refreshDetailTask();
+        await this.loadTrainingLog();
+        if (this.trainingDetailTask.status !== 'running') {
+          // 停止了就最后拉一次，不再轮询
+          clearInterval(this.logPollTimer);
+          this.logPollTimer = null;
+        }
+      }, 3000);
+    },
+    onDetailClose() {
+      if (this.logPollTimer) {
+        clearInterval(this.logPollTimer);
+        this.logPollTimer = null;
+      }
     },
     progressStatus(status) {
       if (status === 'completed') return 'success';
-      if (status === 'failed') return 'exception';
+      if (status === 'failed' || status === 'interrupted') return 'exception';
       return undefined;
     },
 
@@ -719,9 +914,74 @@ export default {
       }
     },
 
+    // ---- 模型 & GPU 信息 ----
+    async loadSupportedModels() {
+      try {
+        const res = await mlPipelineAPI.getSupportedModels();
+        this.supportedModels = res.data.data || {};
+      } catch (_) { /* ignore */ }
+    },
+    async loadExportFormats() {
+      try {
+        const res = await mlPipelineAPI.getExportFormats();
+        this.exportFormats = res.data.data || [];
+      } catch (_) { /* ignore */ }
+    },
+    async loadGpuInfo() {
+      try {
+        const res = await mlPipelineAPI.getGpuInfo();
+        this.gpuInfo = res.data.data || null;
+      } catch (_) { /* ignore */ }
+    },
+    async loadTbStatus() {
+      try {
+        const res = await mlPipelineAPI.getTensorBoardStatus();
+        this.tbStatus = res.data.data || { running: false };
+      } catch (_) { /* ignore */ }
+    },
+    getTbUrl() {
+      const port = (this.tbStatus && this.tbStatus.port) || 6006;
+      return `http://${window.location.hostname}:${port}`;
+    },
+    async openTensorBoard() {
+      if (this.tbStatus.running) {
+        window.open(this.getTbUrl(), '_blank');
+        return;
+      }
+      const loading = this.$loading({ text: '正在启动 TensorBoard...', background: 'rgba(0,0,0,0.5)' });
+      try {
+        const res = await mlPipelineAPI.startTensorBoard();
+        const data = res.data.data;
+        this.tbStatus = data;
+        if (data.running) {
+          this.$message.success('TensorBoard 已启动');
+          setTimeout(() => window.open(this.getTbUrl(), '_blank'), 1500);
+        } else {
+          this.$message.error(data.message || '启动失败');
+        }
+      } catch (e) {
+        this.$message.error('启动失败');
+      } finally {
+        loading.close();
+      }
+    },
+    async toggleTensorBoard() {
+      if (this.tbStatus.running) {
+        await mlPipelineAPI.stopTensorBoard();
+        this.tbStatus = { running: false, url: null };
+        this.$message.success('TensorBoard 已关闭');
+      } else {
+        await this.openTensorBoard();
+      }
+    },
+    onTaskTypeChange() {
+      const models = this.supportedModels[this.trainingForm.task_type] || [];
+      if (models.length) this.trainingForm.base_model = models[0].value;
+    },
+
     // ---- 创建训练任务 ----
     showCreateTrainingDialog() {
-      this.trainingForm = { name: '', base_model: 'yolo11n.pt', epochs: 100, batch_size: 16, image_size: 640 };
+      this.trainingForm = { name: '', task_type: 'detect', base_model: 'yolo26n.pt', epochs: 100, batch_size: 16, image_size: 640 };
       this.createTrainingDialogVisible = true;
     },
     confirmCreateTraining() {
@@ -742,6 +1002,83 @@ export default {
           this.creatingTraining = false;
         }
       });
+    },
+
+    // ---- 模型导出 ----
+    showExportDialog(row) {
+      this.exportingTaskId = row.id;
+      this.exportForm = { format: 'onnx' };
+      this.exportDialogVisible = true;
+    },
+    async confirmExportModel() {
+      if (!this.exportingTaskId) return;
+      try {
+        await mlPipelineAPI.exportModel(this.exportingTaskId, this.exportForm.format);
+        this.$message.info(`${this.exportForm.format.toUpperCase()} 导出已提交，完成后会通知您`);
+        this.exportDialogVisible = false;
+        if (!this.exportingTaskIds.includes(this.exportingTaskId)) this.exportingTaskIds.push(this.exportingTaskId);
+        this.startExportPolling();
+      } catch (e) {
+        this.$message.error('导出失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
+      }
+    },
+    startExportPolling() {
+      if (this.exportPollTimer) return;
+      this.exportPollTimer = setInterval(() => this.checkExportStatus(), 3000);
+    },
+    async checkExportStatus() {
+      if (this.exportingTaskIds.length === 0) {
+        clearInterval(this.exportPollTimer);
+        this.exportPollTimer = null;
+        return;
+      }
+      for (const taskId of this.exportingTaskIds.slice()) {
+        try {
+          const res = await mlPipelineAPI.getExportStatus(taskId);
+          const d = res.data.data;
+          if (d.status === 'done') {
+            this.$notify({ title: '导出完成', message: d.message, type: 'success', duration: 5000 });
+            this.exportingTaskIds = this.exportingTaskIds.filter(id => id !== taskId);
+            this.loadAllTrainingTasks();
+          } else if (d.status === 'error') {
+            this.$notify({ title: '导出失败', message: d.message, type: 'error', duration: 8000 });
+            this.exportingTaskIds = this.exportingTaskIds.filter(id => id !== taskId);
+          }
+        } catch (_) { /* ignore */ }
+      }
+      if (this.exportingTaskIds.length === 0) {
+        clearInterval(this.exportPollTimer);
+        this.exportPollTimer = null;
+      }
+    },
+
+    // ---- 模型下载 ----
+    handleDownloadModel(row, type) {
+      const downloadType = type || (row.export_model_path ? 'export' : 'best');
+      const url = mlPipelineAPI.getModelDownloadUrl(row.id, downloadType);
+      window.open(url, '_blank');
+    },
+
+    // ---- 操作下拉菜单 ----
+    handleTaskCommand(cmd, row) {
+      if (cmd === 'detail') this.showTrainingDetail(row);
+      else if (cmd === 'restart') this.handleStartTraining(row);
+      else if (cmd === 'cancel') this.handleCancelTraining(row);
+      else if (cmd === 'delete') this.handleDeleteTraining(row);
+    },
+
+    // ---- 删除训练任务 ----
+    handleDeleteTraining(row) {
+      this.$confirm(`确定删除训练任务「${row.name}」？模型文件也将被清除。`, '确认删除', { type: 'warning' })
+        .then(async () => {
+          try {
+            await mlPipelineAPI.deleteTrainingTask(row.id);
+            this.$message.success('已删除');
+            this.loadAllTrainingTasks();
+          } catch (e) {
+            this.$message.error('删除失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
+          }
+        }).catch(() => {});
     },
 
     // ---- 删除数据集 ----
@@ -777,10 +1114,13 @@ export default {
       return { created: '已创建', labeling: '标注中', completed: '已完成', exported: '已导出' }[status] || status;
     },
     trainStatusType(status) {
-      return { pending: 'info', running: 'warning', completed: 'success', failed: 'danger', cancelled: 'info' }[status] || 'info';
+      return { pending: 'info', running: 'warning', completed: 'success', failed: 'danger', cancelled: 'info', interrupted: 'warning' }[status] || 'info';
     },
     trainStatusLabel(status) {
-      return { pending: '待启动', running: '训练中', completed: '已完成', failed: '失败', cancelled: '已取消' }[status] || status;
+      return { pending: '待启动', running: '训练中', completed: '已完成', failed: '失败', cancelled: '已取消', interrupted: '已中断' }[status] || status;
+    },
+    taskTypeLabel(type) {
+      return { detect: '目标检测', segment: '实例分割', classify: '图像分类', pose: '姿态估计', obb: '旋转检测' }[type] || type;
     },
   }
 };
@@ -977,6 +1317,47 @@ export default {
 .export-controls { display: flex; align-items: center; margin-top: 8px; }
 .export-label { font-size: 13px; color: #606266; }
 .export-result { margin-top: 10px; }
+
+/* ---- GPU 信息栏 ---- */
+.gpu-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  font-size: 13px;
+  color: #606266;
+  background: #f4f4f5;
+  border-radius: 4px;
+  margin: 0 20px;
+}
+
+/* ---- 导出格式提示 ---- */
+.export-format-tip {
+  padding: 8px 16px;
+  margin-top: 4px;
+}
+.export-format-tip p {
+  margin: 0;
+  font-size: 13px;
+  color: #909399;
+  line-height: 1.6;
+}
+
+/* ---- 训练日志 ---- */
+.training-log-box {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 12px 14px;
+  border-radius: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+}
 
 /* ---- 其他 ---- */
 .form-tip { font-size: 12px; color: #909399; line-height: 1.4; margin-top: 4px; }
