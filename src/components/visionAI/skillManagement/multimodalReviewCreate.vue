@@ -870,8 +870,15 @@ export default {
         if (response.data && response.data.success) {
           const testData = response.data.data || response.data
           
-          // 格式化显示结果
-          const reviewResult = testData.review_result || '无复判结果'
+          // 格式化显示结果（注意：review_result 是布尔值，false 不能用 || 判断）
+          let reviewResult
+          if (testData.review_result === true) {
+            reviewResult = '确认预警 (True)'
+          } else if (testData.review_result === false) {
+            reviewResult = '非预警/误报 (False)'
+          } else {
+            reviewResult = '无复判结果'
+          }
           const analysisResult = testData.analysis_result || {}
           
           // 构建显示内容
