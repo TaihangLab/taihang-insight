@@ -1731,16 +1731,20 @@ export const alertAPI = {
    * @param {Function} onMessage - 接收到消息时的回调函数
    * @param {Function} onError - 发生错误时的回调函数
    * @param {Function} onClose - 连接关闭时的回调函数
+   * @param {Function} onOpen - 连接建立/重连成功时的回调函数
    * @returns {EventSource} SSE连接对象
    */
-  createAlertSSEConnection(onMessage, onError, onClose) {
+  createAlertSSEConnection(onMessage, onError, onClose, onOpen) {
     const sseUrl = `${visionAIAxios.defaults.baseURL}/api/v1/alerts/stream`;
     console.log('创建SSE连接:', sseUrl);
 
     const eventSource = new EventSource(sseUrl);
 
     eventSource.onopen = function() {
-      console.log('SSE连接已建立');
+      console.log('SSE连接已建立（含重连成功）');
+      if (onOpen) {
+        onOpen();
+      }
     };
 
     eventSource.onmessage = function(event) {
@@ -3890,6 +3894,115 @@ export const realtimeDetectionAPI = {
   }
 };
 
+/**
+ * ML Pipeline API - 标注-训练-推理-服务化
+ */
+export const mlPipelineAPI = {
+  // ---- Label Studio 状态 ----
+  getLabelStudioStatus() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/annotation/label-studio/status');
+  },
+  // ---- 数据集 ----
+  listDatasets() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/annotation/datasets');
+  },
+  createDataset(data) {
+    return visionAIAxios.post('/api/v1/ml-pipeline/annotation/datasets', data);
+  },
+  getDataset(id) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${id}`);
+  },
+  deleteDataset(id) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/annotation/datasets/${id}`);
+  },
+  addImages(datasetId, data) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images`, data);
+  },
+  uploadImages(datasetId, files) {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f.raw || f));
+    return visionAIAxios.post(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/upload`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 }
+    );
+  },
+  listImages(datasetId) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images`);
+  },
+  syncAnnotations(datasetId) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/sync`);
+  },
+  checkLsProject(datasetId) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/check-ls`);
+  },
+  exportDataset(datasetId, valRatio = 0.2) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/export?val_ratio=${valRatio}`);
+  },
+
+  // ---- 训练信息 ----
+  getSupportedModels() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/models');
+  },
+  getExportFormats() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/export-formats');
+  },
+  getGpuInfo() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/gpu-info');
+  },
+
+  // ---- TensorBoard ----
+  startTensorBoard(taskId) {
+    const params = taskId ? { task_id: taskId } : {};
+    return visionAIAxios.post('/api/v1/ml-pipeline/training/tensorboard/start', null, { params });
+  },
+  stopTensorBoard() {
+    return visionAIAxios.post('/api/v1/ml-pipeline/training/tensorboard/stop');
+  },
+  getTensorBoardStatus() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/tensorboard/status');
+  },
+
+  // ---- 训练任务 ----
+  listTrainingTasks() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/tasks');
+  },
+  createTrainingTask(data) {
+    return visionAIAxios.post('/api/v1/ml-pipeline/training/tasks', data);
+  },
+  getTrainingTask(id) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${id}`);
+  },
+  getTrainingTaskLog(id, tail = 200) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${id}/log`, { params: { tail } });
+  },
+  startTrainingTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/start`);
+  },
+  cancelTrainingTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/cancel`);
+  },
+  interruptTrainingTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/interrupt`);
+  },
+  deleteTrainingTask(id) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/training/tasks/${id}`);
+  },
+
+  // ---- 模型导出 ----
+  exportModel(taskId, format) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${taskId}/export`, { format });
+  },
+  getExportStatus(taskId) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${taskId}/export-status`);
+  },
+
+  // ---- 模型下载 ----
+  getModelDownloadUrl(taskId, type = 'export') {
+    return `${config.API_BASE_URL}/api/v1/ml-pipeline/training/tasks/${taskId}/download?type=${type}`;
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
@@ -3902,5 +4015,6 @@ export default {
   taskReviewAPI,
   realtimeMonitorAPI,
   realtimeDetectionAPI,
+  mlPipelineAPI,
   visionAIAxios
 };

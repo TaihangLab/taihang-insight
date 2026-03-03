@@ -84,6 +84,12 @@
         <el-menu-item index="/systemManage/knowledgeBase">知识库管理</el-menu-item>
       </el-submenu>
 
+      <!-- ML Pipeline 模块（模型工厂） -->
+      <el-menu-item index="/mlPipeline">
+        <i class="el-icon-s-platform"></i>
+        <span>模型工厂</span>
+      </el-menu-item>
+
       <!-- 可视中心菜单 -->
       <el-submenu index="/visualAI" popper-class="modern-submenu">
         <template slot="title">

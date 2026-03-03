@@ -1361,6 +1361,7 @@ export default {
   border: 1px solid #f3f4f6;
   position: relative;
   overflow: hidden;
+  height: auto;
 }
 
 .skill-card::before {
