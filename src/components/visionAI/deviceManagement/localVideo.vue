@@ -306,10 +306,10 @@
       >
          <el-form-item label="推流地址">
            <el-input
-             :value="`video_${currentVideo ? currentVideo.id : ''}`"
+             :value="currentVideo && currentVideo.stream_id ? currentVideo.stream_id : '首次推流时自动生成'"
              disabled
            />
-           <span class="form-tip">推流ID固定为 video_视频ID，重启后地址不变</span>
+           <span class="form-tip">首次推流自动生成随机ID，之后固定不变</span>
          </el-form-item>
          <el-form-item label="推流帧率（可选）">
            <el-input-number
@@ -447,6 +447,7 @@ export default {
     
      // 加载推流状态
      async loadStreamingStatus() {
+       let statusChanged = false;
        for (const video of this.videoList) {
          if (video.is_streaming) {
            try {
@@ -454,14 +455,20 @@ export default {
                `/api/v1/local-videos/${video.id}/stream-status`
              );
              if (response.data) {
-               // 使用 $set 确保Vue能追踪新属性的变化
                this.$set(video, 'rtsp_url', response.data.rtsp_url);
                this.$set(video, 'stream_stats', response.data.stats);
+             } else {
+               // 后端已确认流不存在（如服务重启后），同步前端状态
+               this.$set(video, 'is_streaming', false);
+               statusChanged = true;
              }
            } catch (error) {
              console.error(`获取视频${video.id}推流状态失败:`, error);
            }
          }
+       }
+       if (statusChanged) {
+         this.streamingVideos = this.videoList.filter(v => v.is_streaming).length;
        }
      },
     
