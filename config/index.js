@@ -5,7 +5,7 @@
 const path = require('path')
 
 // 后端API基础地址配置
-const API_BASE_URL = 'http://192.168.27.42:8000'
+const API_BASE_URL = 'http://172.18.1.1:8000'
 
 module.exports = {
   // 导出API配置供前端使用
@@ -19,7 +19,7 @@ module.exports = {
     // Various Dev Server settings
     host:"0.0.0.0",
     useLocalIp: true, // can be overwritten by process.env.HOST
-    port: 8080, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
+    port: 8086, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
     autoOpenBrowser: false,
     errorOverlay: true,
     notifyOnErrors: true,
