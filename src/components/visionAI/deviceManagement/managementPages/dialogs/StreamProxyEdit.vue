@@ -111,6 +111,7 @@
 <script>
 import CommonChannelEdit from './CommonChannelEdit.vue'
 import MediaServer from '../service/MediaServer.js'
+import wvpAxios from '@/api/camera/base'
 
 export default {
   name: "streamProxyEdit",
@@ -154,9 +155,9 @@ export default {
     
     mediaServerIdChange() {
       if (this.proxyParam.relatesMediaServerId !== "auto"){
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url:`/api/proxy/ffmpeg_cmd/list`,
+          url:`proxy/ffmpeg_cmd/list`,
           params: {
             mediaServerId: this.proxyParam.relatesMediaServerId
           }
@@ -174,9 +175,9 @@ export default {
       this.dialogLoading = true;
       this.noneReaderHandler();
       if (this.proxyParam.id) {
-        this.$axios({
+        wvpAxios({
           method: 'post',
-          url:`/api/proxy/update`,
+          url:`proxy/update`,
           data: this.proxyParam
         }).then((res)=> {
           this.dialogLoading = false;
@@ -204,9 +205,9 @@ export default {
           this.dialogLoading = false;
         })
       }else {
-        this.$axios({
+        wvpAxios({
           method: 'post',
-          url:`/api/proxy/add`,
+          url:`proxy/add`,
           data: this.proxyParam
         }).then((res)=> {
           this.dialogLoading = false;

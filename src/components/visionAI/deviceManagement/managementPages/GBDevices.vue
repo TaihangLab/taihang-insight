@@ -359,6 +359,7 @@ import GBDeviceChannels from './dialogs/GBDeviceChannels.vue'
 import SyncChannelProgress from './dialogs/SyncChannelProgress.vue'
 import configInfo from '../../../dialog/configInfo.vue'
 import { getCurrentInstance } from 'vue'
+import wvpAxios from '@/api/camera/base'
 
 export default {
   name: 'GBDevices',
@@ -465,9 +466,9 @@ export default {
       
 
       
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: '/api/device/query/devices',
+        url: '/device/query/devices',
         params: params
       }).then((res) => {
         if (res.data.code === 0) {
@@ -531,9 +532,9 @@ export default {
     
     // 显示平台信息
     showInfo() {
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: `/api/server/system/configInfo`,
+        url: `/server/system/configInfo`,
       }).then((res) => {
         if (res.data.code === 0) {
           this.serverId = res.data.data.addOn.serverId;
@@ -572,9 +573,9 @@ export default {
     
     // 刷新单个设备
     handleRefreshDevice(row) {
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: `/api/device/query/devices/${row.deviceId}/sync`
+        url: `/device/query/devices/${row.deviceId}/sync`
       }).then((res) => {
         if (res.data.code !== 0) {
           this.$message.error(res.data.msg);
@@ -600,9 +601,9 @@ export default {
     
     // 流传输模式改变
     handleStreamModeChange(row) {
-      this.$axios({
+      wvpAxios({
         method: 'post',
-        url: `/api/device/query/transport/${row.deviceId}/${row.streamMode}`
+        url: `/device/query/transport/${row.deviceId}/${row.streamMode}`
       }).then((res) => {
         if (res.data.code === 0) {
           this.$message.success('传输模式修改成功');
@@ -617,9 +618,9 @@ export default {
     
     // 订阅目录
     handleSubscribeForCatalog(deviceId, value) {
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: '/api/device/query/subscribe/catalog',
+        url: '/device/query/subscribe/catalog',
         params: {
           id: deviceId,
           cycle: value ? 60 : 0
@@ -637,9 +638,9 @@ export default {
     
     // 订阅位置
     handleSubscribeForMobilePosition(deviceId, value) {
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: '/api/device/query/subscribe/mobile-position',
+        url: '/device/query/subscribe/mobile-position',
         params: {
           id: deviceId,
           cycle: value ? 60 : 0,
@@ -689,9 +690,9 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.$axios({
+        wvpAxios({
           method: 'delete',
-          url: `/api/device/query/devices/${row.deviceId}/delete`
+          url: `/device/query/devices/${row.deviceId}/delete`
         }).then((res) => {
           if (res.data.code === 0) {
             this.$message.success('删除成功');
@@ -708,9 +709,9 @@ export default {
     
     // 布防
     handleSetGuard(row) {
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: `/api/device/control/guard/${row.deviceId}/SetGuard`
+        url: `/device/control/guard/${row.deviceId}/SetGuard`
       }).then((res) => {
         if (res.data.code === 0) {
           this.$message.success('布防成功');
@@ -724,9 +725,9 @@ export default {
     
     // 撤防
     handleResetGuard(row) {
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: `/api/device/control/guard/${row.deviceId}/ResetGuard`
+        url: `/device/control/guard/${row.deviceId}/ResetGuard`
       }).then((res) => {
         if (res.data.code === 0) {
           this.$message.success('撤防成功');
@@ -740,9 +741,9 @@ export default {
     
     // 同步基础参数
     handleSyncBasicParam(row) {
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: `/api/device/config/query/${row.deviceId}/BasicParam`
+        url: `/device/config/query/${row.deviceId}/BasicParam`
       }).then((res) => {
         if (res.data.code === 0) {
           const basicParam = res.data.data.BasicParam;

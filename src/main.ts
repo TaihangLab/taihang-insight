@@ -22,21 +22,6 @@ import dataV from 'data-view-vue3'
 // import Contextmenu from 'vue-contextmenujs' // 暂时注释 - Vue 3 不兼容
 import App from './App.vue'
 // import router from './router'  // ❌ 移除静态导入，改为动态导入
-import axios from 'axios'
-
-// 导入配置
-const config = {
-  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://172.16.201.80/prod-api/smart-engine'
-}
-
-// Axios 配置
-// 如果API_BASE_URL已经包含了路径，则不重复添加
-if (!config.API_BASE_URL.includes('/api/v1/wvp')) {
-  axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp'
-} else {
-  axios.defaults.baseURL = config.API_BASE_URL
-}
-axios.defaults.withCredentials = false
 
 // 创建应用实例
 const app = createApp(App)
@@ -59,7 +44,6 @@ import { setupDirectives } from '@/directives'
 setupDirectives(app)
 
 // 全局属性
-app.config.globalProperties.$axios = axios
 app.config.globalProperties.$notify = ElNotification
 app.config.globalProperties.$tableHeght = window.innerHeight - 170
 app.config.globalProperties.$channelTypeList = {
@@ -81,6 +65,27 @@ const menusStore = useMenusStore()
 // ========== 异步初始化函数 ==========
 async function initializeApp() {
   try {
+    // 0️⃣ 后端服务健康检查（异步，不阻塞启动）
+    import('@/api/commons/healthCheck').then(({ performStartupHealthCheck }) => {
+      performStartupHealthCheck().then((result) => {
+        // 如果有兼容性问题，显示通知
+        if (!result.compatibility.isCompatible) {
+          ElNotification({
+            title: '后端服务警告',
+            message: result.compatibility.issues.join('\n'),
+            type: 'warning',
+            duration: 0,
+            showClose: true
+          })
+        }
+      }).catch((err) => {
+        console.error('[HealthCheck] 健康检查执行失败:', err)
+      })
+    }).catch(() => {
+      // 健康检查模块加载失败，不影响应用启动
+      console.warn('[HealthCheck] 无法加载健康检查模块')
+    })
+
     // 1️⃣ 先建立用户态（使用 Store 的方法检查和刷新数据）
     // 使用 hasData() 方法检查持久化状态，而非直接访问 localStorage
     const hasUserInfo = userInfoStore.hasData()

@@ -45,6 +45,7 @@
 
 <script>
 import CommonChannelEdit from './CommonChannelEdit.vue'
+import wvpAxios from '@/api/camera/base'
 
 export default {
   name: "channelEdit",
@@ -67,7 +68,7 @@ export default {
       console.log(this.streamPush)
       this.locading = true
       if (this.streamPush.id) {
-        this.$axios({
+        wvpAxios({
           method: 'post',
           url: "/api/push/update",
           data: this.streamPush
@@ -93,7 +94,7 @@ export default {
           this.locading = false
         })
       }else {
-        this.$axios({
+        wvpAxios({
           method: 'post',
           url: "/api/push/add",
           data: this.streamPush

@@ -100,7 +100,7 @@
 </template>
 
 <script>
-
+import wvpAxios from '@/api/camera/base'
 
 export default {
   name: "UnusualRegionChannelSelect",
@@ -138,9 +138,9 @@ export default {
     },
     getChannelList: function () {
       this.getChannelListLoading = true;
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: `/api/common/channel/civilCode/unusual/list`,
+        url: `common/channel/civilCode/unusual/list`,
         params: {
           page: this.currentPage,
           count: this.count,
@@ -178,9 +178,9 @@ export default {
           channels.push(this.multipleSelection[i].gbId)
         }
       }
-      this.$axios({
+      wvpAxios({
         method: 'post',
-        url: `/api/common/channel/civilCode/unusual/clear`,
+        url: `common/channel/civilCode/unusual/clear`,
         data: {
           all: all,
           channelIds: channels
@@ -210,9 +210,9 @@ export default {
     },
     addRegion: function (row) {
       row.addRegionLoading = true;
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: `/api/region/description`,
+        url: `region/description`,
         params: {
           civilCode: row.gbCivilCode,
         }
@@ -223,9 +223,9 @@ export default {
             cancelButtonText: '取消',
             type: 'info'
           }).then(() => {
-            this.$axios({
+            wvpAxios({
               method: 'get',
-              url: `/api/region/addByCivilCode`,
+              url: `region/addByCivilCode`,
               params: {
                 civilCode: row.gbCivilCode,
               }

@@ -42,6 +42,8 @@
 </template>
 
 <script>
+import wvpAxios from '@/api/camera/base'
+
 export default {
   name: "pushStreamEdit",
   props: {},
@@ -107,9 +109,9 @@ export default {
     onSubmit: function () {
       console.log("onSubmit");
       if (this.edit) {
-        this.$axios({
+        wvpAxios({
           method:"post",
-          url:`/api/push/save_to_gb`,
+          url:`push/save_to_gb`,
           data: this.proxyParam
         }).then( (res) => {
           if (res.data.code === 0) {
@@ -127,9 +129,9 @@ export default {
           console.log(error);
         });
       }else {
-        this.$axios({
+        wvpAxios({
           method:"post",
-          url:`/api/push/add`,
+          url:`push/add`,
           data: this.proxyParam
         }).then( (res) => {
           if (res.data.code === 0) {
@@ -157,9 +159,9 @@ export default {
     deviceGBIdExit: async function (deviceGbId) {
       var result = false;
       var that = this;
-      await that.$axios({
+      await wvpAxios({
         method:"get",
-        url:`/api/platform/exit/${deviceGbId}`
+        url:`platform/exit/${deviceGbId}`
       }).then(function (res) {
         result = res.data;
       }).catch(function (error) {

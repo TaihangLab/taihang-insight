@@ -79,6 +79,7 @@
 </template>
 
 <script>
+import wvpAxios from '@/api/camera/base'
 
 export default {
   props: {},
@@ -235,7 +236,7 @@ export default {
     queryChildList: function(parent){
       console.log("queryChildList")
       this.regionList = []
-      this.$axios({
+      wvpAxios({
         method: 'get',
         url: "/api/region/base/child/list",
         params: {
@@ -285,7 +286,7 @@ export default {
     },
     handleOk: function() {
       if (this.form.id) {
-        this.$axios({
+        wvpAxios({
           method: 'post',
           url: "/api/region/update",
           data: this.form
@@ -308,7 +309,7 @@ export default {
           });
         });
       }else {
-        this.$axios({
+        wvpAxios({
           method: 'post',
           url: "/api/region/add",
           data: this.form

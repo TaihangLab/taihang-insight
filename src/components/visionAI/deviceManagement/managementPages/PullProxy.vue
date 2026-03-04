@@ -289,11 +289,12 @@
 </template>
 
 <script>
-import { deleteStreamProxyById, startStreamProxyById, stopStreamProxyById } from '@/api/stream'
+import { deleteStreamProxyById, startStreamProxyById, stopStreamProxyById } from '@stream'
 import StreamProxyEdit from './dialogs/StreamProxyEdit.vue'
 import onvifEdit from './dialogs/onvifEdit.vue'
 import devicePlayer from './dialogs/devicePlayer.vue'
 import MediaServer from "./service/MediaServer.js";
+import wvpAxios from '@/api/camera/base'
 // import Vue from "vue"; // Vue 3中不再需要这种方式
 
 export default {
@@ -374,9 +375,9 @@ export default {
         this.getStreamProxyListLoading = true;
       }
       
-      return this.$axios({
+      return wvpAxios({
         method: 'get',
-        url: `/api/proxy/list`,
+        url: `proxy/list`,
         params: {
           page: this.currentPage,
           count: this.count,
@@ -416,9 +417,9 @@ export default {
     },
     
     handleSearchOnvif() {
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: `/api/onvif/search?timeout=3000`,
+        url: `onvif/search?timeout=3000`,
       }).then((res) => {
         if (res.data.code === 0) {
           if (res.data.data.length > 0) {

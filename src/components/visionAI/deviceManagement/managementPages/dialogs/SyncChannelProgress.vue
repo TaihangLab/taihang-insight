@@ -92,6 +92,8 @@
 </template>
 
 <script>
+import wvpAxios from '@/api/camera/base'
+
 export default {
   name: 'SyncChannelProgress',
   data() {
@@ -218,9 +220,9 @@ export default {
     
     // 检查同步状态
     checkSyncStatus() {
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: `/api/device/query/${this.deviceId}/sync_status`
+        url: `device/query/${this.deviceId}/sync_status`
       }).then((res) => {
         if (res.data.code === 0) {
           const data = res.data.data;
@@ -348,9 +350,9 @@ export default {
         type: 'warning'
       }).then(() => {
         // 调用取消同步API
-        this.$axios({
+        wvpAxios({
           method: 'post',
-          url: `/api/device/query/${this.deviceId}/cancel_sync`
+          url: `device/query/${this.deviceId}/cancel_sync`
         }).then((res) => {
           if (res.data.code === 0) {
             this.addLog('warning', '用户取消了同步操作');

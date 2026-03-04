@@ -52,6 +52,7 @@ import VueEasyTree from "@wchbrad/vue-easy-tree";
 import groupEdit from './groupEdit.vue'
 import gbDeviceSelect from './GbDeviceSelect.vue'
 import GbChannelSelect from "./GbChannelSelect.vue";
+import wvpAxios from '@/api/camera/base'
 
 export default {
   name: 'DeviceTree',
@@ -93,9 +94,9 @@ export default {
           resolve([]);
           return
         }
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url: `/api/group/tree/list`,
+          url: `group/tree/list`,
           params: {
             query: this.searchSrt,
             parent: node.data.id,
@@ -211,9 +212,9 @@ export default {
       return false;
     },
     removeGroup: function (id, node) {
-      this.$axios({
+      wvpAxios({
         method: "delete",
-        url: `/api/group/delete`,
+        url: `group/delete`,
         params: {
           id: node.data.id,
         }
@@ -236,9 +237,9 @@ export default {
         for (let i = 0; i < rows.length; i++) {
           deviceIds.push(rows[i].id)
         }
-        this.$axios({
+        wvpAxios({
           method: 'post',
-          url: `/api/common/channel/group/device/add`,
+          url: `common/channel/group/device/add`,
           data: {
             parentId: node.data.deviceId,
             businessGroup: node.data.businessGroup,
@@ -278,9 +279,9 @@ export default {
         for (let i = 0; i < rows.length; i++) {
           deviceIds.push(rows[i].id)
         }
-        this.$axios({
+        wvpAxios({
           method: 'post',
-          url: `/api/common/channel/group/device/delete`,
+          url: `common/channel/group/device/delete`,
           data: {
             deviceIds: deviceIds,
           }

@@ -133,10 +133,10 @@
 
 <script>
   // TODO 根据查询的时间列表设置滑轨的最大值与最小值，
-	
+
 import player from '../../../common/easyPlayer.vue'
   import moment  from 'moment'
-  import axios from "axios";
+  import wvpAxios from '@/api/camera/base'
 	export default {
 		name: 'app',
 		components: {player
@@ -276,9 +276,9 @@ import player from '../../../common/easyPlayer.vue'
         }
       },
       queryRecordDetails: function (callback){
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url: `/api/cloud/record/list`,
+          url: `cloud/record/list`,
           params: {
             app: this.app,
             stream: this.stream,
@@ -315,9 +315,9 @@ import player from '../../../common/easyPlayer.vue'
           this.choosedFile = "";
         }else {
           this.choosedFile = file.fileName;
-          this.$axios({
+          wvpAxios({
             method: 'get',
-            url: `/api/cloud/record/play/path`,
+            url: `cloud/record/play/path`,
             params: {
               recordId: file.id,
             }
@@ -337,9 +337,9 @@ import player from '../../../common/easyPlayer.vue'
       },
       downloadFile(file){
         console.log(file)
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url: `/api/cloud/record/play/path`,
+          url: `cloud/record/play/path`,
           params: {
             recordId: file.id,
           }
@@ -442,9 +442,9 @@ import player from '../../../common/easyPlayer.vue'
       deleteRecord(){
 			  // TODO
         let that = this;
-        this.$axios({
+        wvpAxios({
           method: 'delete',
-          url:`/record_proxy/${that.mediaServerId}/api/record/delete`,
+          url:`/record_proxy/${that.mediaServerId}record/delete`,
           params: {
             page: that.currentPage,
             count: that.count
@@ -460,9 +460,9 @@ import player from '../../../common/easyPlayer.vue'
       },
       getDateInYear(callback){
         this.dateFilesObj = {};
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url: `/api/cloud/record/date/list`,
+          url: `cloud/record/date/list`,
           params: {
             app: this.app,
             stream: this.stream,
@@ -513,9 +513,9 @@ import player from '../../../common/easyPlayer.vue'
       },
       addTaskToServer(){
         let that = this;
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url:`/api/cloud/record/task/add`,
+          url:`cloud/record/task/add`,
           params: {
               app: this.app,
               stream: this.stream,
@@ -539,9 +539,9 @@ import player from '../../../common/easyPlayer.vue'
       },
       getTaskList(isEnd){
         let that = this;
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url:`/api/cloud/record/task/list`,
+          url:`cloud/record/task/list`,
           params: {
             mediaServerId: this.mediaServerId,
             isEnd: isEnd,

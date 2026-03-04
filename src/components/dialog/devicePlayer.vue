@@ -282,6 +282,7 @@ import ptzWiper from "../common/ptzWiper.vue";
 import ptzSwitch from "../common/ptzSwitch.vue";
 import mediaInfo from "../common/mediaInfo.vue";
 import H265web from "../common/h265web.vue";
+import wvpAxios from '@/api/camera/base'
 
 export default {
   name: 'devicePlayer',
@@ -473,21 +474,21 @@ export default {
     ptzCamera: function (command) {
       console.log('云台控制：' + command);
       let that = this;
-      this.$axios({
+      wvpAxios({
         method: 'get',
         url: '/api/v1/front-end/ptz/' + this.deviceId + '/' + this.channelId + '?command=' + command + '&horizonSpeed=' + parseInt(this.controSpeed * 255/100) + '&verticalSpeed=' + parseInt(this.controSpeed * 255/100) + '&zoomSpeed=' + parseInt(this.controSpeed * 16/100)
       }).then(function (res) {
       });
     },
     irisCamera: function (command) {
-      this.$axios({
+      wvpAxios({
         method: 'get',
         url: '/api/v1/front-end/fi/iris/' + this.deviceId + '/' + this.channelId + '?command=' + command + '&speed=' + parseInt(this.controSpeed * 255/100)
       }).then(function (res) {
       });
     },
     focusCamera: function (command) {
-      this.$axios({
+      wvpAxios({
         method: 'get',
         url: '/api/v1/front-end/fi/focus/' + this.deviceId + '/' + this.channelId + '?command=' + command + '&speed=' + parseInt(this.controSpeed * 255/100)
       }).then(function (res) {
@@ -528,7 +529,7 @@ export default {
         // 默认状态， 开始
         this.broadcastStatus = 0
         // 发起语音对讲
-        this.$axios({
+        wvpAxios({
           method: 'get',
           url: '/api/v1/play/broadcast/' + this.deviceId + '/' + this.channelId + "?timeout=30&broadcastMode=" + this.broadcastMode
         }).then((res) => {
@@ -554,7 +555,7 @@ export default {
     },
     startBroadcast(url) {
       // 获取推流鉴权Key
-      this.$axios({
+      wvpAxios({
         method: 'post',
         url: '/api/v1/user/userInfo',
       }).then((res) => {
@@ -643,7 +644,7 @@ export default {
     stopBroadcast() {
       this.broadcastRtc.close();
       this.broadcastStatus = -1;
-      this.$axios({
+      wvpAxios({
         method: 'get',
         url: '/api/v1/play/broadcast/stop/' + this.deviceId + '/' + this.channelId
       }).then((res) => {

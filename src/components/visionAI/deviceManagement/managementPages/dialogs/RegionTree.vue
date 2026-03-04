@@ -51,6 +51,7 @@ import VueEasyTree from "@wchbrad/vue-easy-tree";
 import regionEdit from './regionEdit.vue'
 import gbDeviceSelect from './GbDeviceSelect.vue'
 import GbChannelSelect from "./GbChannelSelect.vue";
+import wvpAxios from '@/api/camera/base'
 
 export default {
   name: 'DeviceTree',
@@ -91,9 +92,9 @@ export default {
           resolve([]);
           return
         }
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url: `/api/region/tree/list`,
+          url: `region/tree/list`,
           params: {
             query: this.searchSrt,
             parent: node.data.id,
@@ -212,9 +213,9 @@ export default {
       return false;
     },
     removeRegion: function (id, node) {
-      this.$axios({
+      wvpAxios({
         method: "delete",
-        url: `/api/region/delete`,
+        url: `region/delete`,
         params: {
           id: node.data.id,
         }
@@ -234,9 +235,9 @@ export default {
         for (let i = 0; i < rows.length; i++) {
           deviceIds.push(rows[i].id)
         }
-        this.$axios({
+        wvpAxios({
           method: 'post',
-          url: `/api/common/channel/region/device/add`,
+          url: `common/channel/region/device/add`,
           data: {
             civilCode: node.data.deviceId,
             deviceIds: deviceIds,
@@ -274,9 +275,9 @@ export default {
         for (let i = 0; i < rows.length; i++) {
           deviceIds.push(rows[i].id)
         }
-        this.$axios({
+        wvpAxios({
           method: 'post',
-          url: `/api/common/channel/region/device/delete`,
+          url: `common/channel/region/device/delete`,
           data: {
             deviceIds: deviceIds,
           }

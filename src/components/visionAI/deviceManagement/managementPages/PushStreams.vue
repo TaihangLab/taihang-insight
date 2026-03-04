@@ -326,12 +326,13 @@
 </template>
 
 <script>
-import { startPushStream, removePushStream, batchRemovePushStream } from '@/api/stream'
+import { startPushStream, removePushStream, batchRemovePushStream } from '@stream'
 import devicePlayer from './dialogs/devicePlayer.vue'
 import importChannel from './dialogs/importChannel.vue'
 import MediaServer from './service/MediaServer.js'
 import StreamPushEdit from "./dialogs/StreamPushEdit.vue";
 import { getCurrentInstance } from 'vue'
+import wvpAxios from '@/api/camera/base'
 
 export default {
   name: 'PushStreams',
@@ -420,9 +421,9 @@ export default {
     
     getPushList: function () {
       let that = this;
-      this.$axios({
+      wvpAxios({
         method: 'get',
-        url: `/api/push/list`,
+        url: `push/list`,
         params: {
           page: that.currentPage,
           count: that.count,

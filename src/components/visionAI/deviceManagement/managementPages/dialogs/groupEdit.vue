@@ -44,6 +44,7 @@
 <script>
 import channelCode from "./channelCode.vue";
 import ChooseCivilCode from "./chooseCivilCode.vue";
+import wvpAxios from '@/api/camera/base'
 
 export default {
   name: "groupEdit",
@@ -80,9 +81,9 @@ export default {
     },
     onSubmit: function () {
 
-      this.$axios({
+      wvpAxios({
         method:"post",
-        url: this.group.id ? '/api/group/update':'/api/group/add',
+        url: this.group.id ? '/group/update':'/group/add',
         data: this.group
       }).then((res)=> {
         if (res.data.code === 0) {

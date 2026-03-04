@@ -98,10 +98,11 @@
 
 
 <script>
-	
+
   import player from './dialogs/jessibuca.vue'
   import moment  from 'moment'
   import recordDownload from '../../../dialog/recordDownload.vue'
+  import wvpAxios from '@/api/camera/base'
 	export default {
 		name: 'app',
 		components: {player,recordDownload
@@ -196,9 +197,9 @@
         this.setTime(this.chooseDate + " 00:00:00", this.chooseDate + " 23:59:59");
         this.recordsLoading = true;
         this.detailFiles = [];
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url: '/api/gb_record/query/' + this.deviceId + '/' + this.channelId + '?startTime=' + this.startTime + '&endTime=' + this.endTime
+          url: '/gb_record/query/' + this.deviceId + '/' + this.channelId + '?startTime=' + this.startTime + '&endTime=' + this.endTime
         }).then((res)=>{
           this.recordsLoading = false;
           if(res.data.code === 0) {
@@ -248,9 +249,9 @@
             this.playRecord();
           })
         } else {
-          this.$axios({
+          wvpAxios({
             method: 'get',
-            url: '/api/playback/start/' + this.deviceId + '/' + this.channelId + '?startTime=' + this.startTime + '&endTime=' +
+            url: '/playback/start/' + this.deviceId + '/' + this.channelId + '?startTime=' + this.startTime + '&endTime=' +
               this.endTime
           }).then((res)=> {
             if (res.data.code === 0) {
@@ -272,9 +273,9 @@
         }
       },
       getDownloadSpeedArray(){
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url: '/api/device/query/channel/one',
+          url: '/device/query/channel/one',
           params: {
             deviceId: this.deviceId,
             channelDeviceId: this.channelId,
@@ -294,25 +295,25 @@
       },
       gbPlay(){
         console.log('前端控制：播放');
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url: '/api/playback/resume/' + this.streamId
+          url: '/playback/resume/' + this.streamId
         }).then((res)=> {
           this.$refs["recordVideoPlayer"].play(this.videoUrl)
         });
       },
       gbPause(){
         console.log('前端控制：暂停');
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url: '/api/playback/pause/' + this.streamId
+          url: '/playback/pause/' + this.streamId
         }).then(function (res) {});
       },
       gbScale(command){
         console.log('前端控制：倍速 ' + command);
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url: `/api/playback/speed/${this.streamId }/${command}`
+          url: `/playback/speed/${this.streamId }/${command}`
         }).then(function (res) {});
       },
       downloadRecord: function (row) {
@@ -332,9 +333,9 @@
             this.downloadRecord(row);
           })
         }else {
-          this.$axios({
+          wvpAxios({
             method: 'get',
-            url: '/api/gb_record/download/start/' + this.deviceId + '/' + this.channelId + '?startTime=' + row.startTime + '&endTime=' +
+            url: '/gb_record/download/start/' + this.deviceId + '/' + this.channelId + '?startTime=' + row.startTime + '&endTime=' +
               row.endTime + '&downloadSpeed='+ this.downloadSpeedArray[this.downloadSpeedArray.length - 1]
           }).then( (res)=> {
             if (res.data.code === 0) {
@@ -353,9 +354,9 @@
       stopDownloadRecord: function (callback) {
         this.$refs["recordVideoPlayer"].pause();
         this.videoUrl = '';
-        this.$axios({
+        wvpAxios({
           method: 'get',
-          url: '/api/gb_record/download/stop/' + this.deviceId + "/" + this.channelId+ "/" + this.streamId
+          url: '/gb_record/download/stop/' + this.deviceId + "/" + this.channelId+ "/" + this.streamId
         }).then((res)=> {
           if (callback) callback(res)
         });
@@ -365,9 +366,9 @@
         if (this.streamId !== "") {
           this.$refs["recordVideoPlayer"].pause();
           this.videoUrl = '';
-          this.$axios({
+          wvpAxios({
             method: 'get',
-            url: '/api/playback/stop/' + this.deviceId + "/" + this.channelId + "/" + this.streamId
+            url: '/playback/stop/' + this.deviceId + "/" + this.channelId + "/" + this.streamId
           }).then(function (res) {
             if (callback) callback()
           });
