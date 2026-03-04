@@ -102,6 +102,12 @@
             {{ formatFileSize(scope.row.file_size) }}
           </template>
         </el-table-column>
+        <el-table-column label="流ID" width="140" align="center">
+          <template slot-scope="scope">
+            <span v-if="scope.row.stream_id">{{ scope.row.stream_id }}</span>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="推流状态" width="120" align="center">
           <template slot-scope="scope">
             <el-tag v-if="scope.row.is_streaming" type="success" effect="dark">
