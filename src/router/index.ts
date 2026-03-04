@@ -1,16 +1,25 @@
 /**
  * 太行视觉AI平台 - 路由配置
  * 使用 Vue Router 4 + 动态路由权限控制
+ *
+ * 最佳实践改进：
+ * 1. 移除模块级全局状态，使用 Store 管理路由状态
+ * 2. 添加通配符 404 路由
+ * 3. 完善动态路由清理逻辑
+ * 4. 解耦 localStorage 依赖
+ * 5. 改进白名单匹配逻辑
  */
-import { createRouter, createWebHashHistory, type RouteRecordRaw, type RouterOptions } from 'vue-router'
-import type { MenuItem } from '@/types/auth'
+import { createRouter, createWebHashHistory, type RouteRecordRaw, type RouterOptions, type RouteLocationNormalized } from 'vue-router'
+import { useAppStore } from '@/stores/modules/app'
+import { useUserInfoStore } from '@/stores/modules/userInfo'
 
 // 导入布局组件（同步加载，必须）
 import Layout from '@/layout/index.vue'
-import { StorageKey } from '@/stores/modules/storageKeys'
 
 // ============== 基础路由（不需要权限） ==============
 const login = () => import('../pages/commons/Login.vue')
+const forbidden = () => import('../pages/error/Forbidden.vue')
+const notFound = () => import('../pages/error/NotFound.vue')
 
 // 通用组件路由（懒加载）
 const gbRecordDetail = () => import('../components/visionAI/deviceManagement/managementPages/GBRecordDetail.vue')
@@ -21,7 +30,7 @@ const rtcPlayer = () => import('../components/dialog/rtcPlayer.vue')
 
 // ============== 业务路由组件映射（懒加载） ==============
 // 路由路径 -> 组件的映射关系，用于动态路由生成
-const componentMap: Record<string, () => Promise<any>> = {
+export const componentMap: Record<string, () => Promise<any>> = {
   // 可视化中心
   '/visualCenter': () => import('../pages/center/visualCenter.vue'),
   '/visual': () => import('../pages/center/visualCenter.vue'),
@@ -40,6 +49,13 @@ const componentMap: Record<string, () => Promise<any>> = {
   '/monitoring/warnings': () => import('../components/visionAI/monitoringWarning/warningArchives.vue'),
   '/monitoring/review': () => import('../components/visionAI/monitoringWarning/reviewRecords.vue'),
   '/monitoring/intelligent-review': () => import('../components/visionAI/monitoringWarning/intelligentReview.vue'),
+
+  // 复判相关（支持后端返回的路径）
+  '/review': () => import('../components/visionAI/monitoringWarning/reviewRecords.vue'),
+  '/task-review': () => import('../pages/error/UnderConstruction.vue'),
+
+  // AI 任务（开发中）
+  '/ai-task': () => import('../pages/error/UnderConstruction.vue'),
 
   // 设备管理（支持后端返回的路径）
   '/deviceManage/camera': () => import('../components/visionAI/deviceManagement/camera.vue'),
@@ -93,6 +109,36 @@ const componentMap: Record<string, () => Promise<any>> = {
 }
 
 /**
+ * 白名单路由配置
+ * 使用精确路径匹配，避免 startsWith 过于宽泛
+ */
+const WHITE_LIST_ROUTES = [
+  '/login',
+  '/403',
+  '/404',
+  '/test',
+  // 播放器路由（支持动态参数）
+  /^\/play\/wasm\//,
+  /^\/play\/rtc\//,
+  // 录像详情路由（支持动态参数）
+  /^\/gbRecordDetail\//,
+  /^\/cloudRecordDetail\//
+]
+
+/**
+ * 检查路径是否在白名单中
+ */
+function isWhitelisted(path: string): boolean {
+  return WHITE_LIST_ROUTES.some(whitelistPath => {
+    if (whitelistPath instanceof RegExp) {
+      return whitelistPath.test(path)
+    }
+    // 精确匹配
+    return path === whitelistPath
+  })
+}
+
+/**
  * 基础路由配置（不需要认证的白名单路由）
  */
 const constantRoutes: RouteRecordRaw[] = [
@@ -103,6 +149,18 @@ const constantRoutes: RouteRecordRaw[] = [
     meta: { title: '登录' }
   },
   {
+    path: '/403',
+    name: 'Forbidden',
+    component: forbidden,
+    meta: { title: '访问被拒绝', hidden: true }
+  },
+  {
+    path: '/404',
+    name: 'NotFound',
+    component: notFound,
+    meta: { title: '页面不存在', hidden: true }
+  },
+  {
     path: '/test',
     name: 'Test',
     component: deviceTree,
@@ -110,13 +168,13 @@ const constantRoutes: RouteRecordRaw[] = [
   },
   // 播放器路由
   {
-    path: '/play/wasm/:url',
+    path: '/play/wasm/:url(.*)',
     name: 'WasmPlayer',
     component: wasmPlayer,
     meta: { hidden: true }
   },
   {
-    path: '/play/rtc/:url',
+    path: '/play/rtc/:url(.*)',
     name: 'RtcPlayer',
     component: rtcPlayer,
     meta: { hidden: true }
@@ -150,52 +208,44 @@ const constantRoutes: RouteRecordRaw[] = [
   }
 ]
 
-// 动态路由是否已添加的标记
-let asyncRoutesAdded = false
+// 创建路由实例
+const router = createRouter({
+  history: createWebHashHistory(),
+  routes: constantRoutes
+} as RouterOptions)
 
 /**
- * ============== localStorage 辅助函数 ==============
- * 直接从 localStorage 读取数据，避免 Pinia 持久化延迟问题
+ * 修复 router.push 的重复导航错误
  */
+const originalPush = router.push
+router.push = function push(location) {
+  return originalPush.call(this, location).catch((err: Error) => {
+    if (err.name !== 'NavigationDuplicated') {
+      throw err
+    }
+  })
+} as typeof router.push
 
 /**
- * 从 localStorage 获取 token
- * token 是直接存储的字符串（JWT 格式）
- */
-function getTokenFromStorage(): string | null {
-  try {
-    const token = localStorage.getItem(StorageKey.ADMIN_TOKEN)
-    return token || null
-  } catch {
-    return null
-  }
-}
-
-/**
- * 从 localStorage 获取菜单树
- */
-function getMenuTreeFromStorage(): MenuItem[] {
-  try {
-    const menusData = localStorage.getItem(StorageKey.MENUS)
-    if (!menusData) return []
-
-    const parsed = JSON.parse(menusData)
-    return parsed.menuTree || []
-  } catch {
-    return []
-  }
-}
+ * ============== 动态路由管理 ==============
 
 /**
  * 动态生成并添加业务路由
  * 根据后端返回的菜单树生成路由配置并添加到路由器
+ *
+ * @param menuItems - 后端返回的菜单树
+ * @returns 返回实际添加的路由数量
  */
-export function setupAsyncRoutes(menuItems: any[]): void {
-  if (asyncRoutesAdded) {
-    return
+export function setupAsyncRoutes(menuItems: any[]): number {
+  const appStore = useAppStore()
+
+  // 检查是否已添加
+  if (appStore.isAsyncRoutesAdded()) {
+    console.warn('[Router] 动态路由已添加，跳过重复添加')
+    return 0
   }
 
-  const routes: RouteRecordRaw[] = []
+  const addedRoutes: RouteRecordRaw[] = []
 
   /**
    * 递归处理菜单树
@@ -225,7 +275,7 @@ export function setupAsyncRoutes(menuItems: any[]): void {
               icon: item.icon
             }
           }
-          routes.push(route)
+          addedRoutes.push(route)
         }
       }
 
@@ -240,62 +290,81 @@ export function setupAsyncRoutes(menuItems: any[]): void {
   processMenuItems(menuItems)
 
   // 添加所有动态路由到 Layout 下
-  routes.forEach(route => {
+  addedRoutes.forEach(route => {
     router.addRoute('Layout', route)
+    // 记录已添加的路由，用于清理
+    appStore.addDynamicRouteRecord({ name: route.name as string, path: route.path })
   })
 
-  asyncRoutesAdded = true
+  // 标记已添加
+  appStore.setAsyncRoutesAdded(true)
+
+  console.log(`[Router] 成功添加 ${addedRoutes.length} 条动态路由`)
+  return addedRoutes.length
 }
 
-// 创建路由实例
-const router = createRouter({
-  history: createWebHashHistory(),
-  routes: constantRoutes
-} as RouterOptions)
+/**
+ * 重置动态路由（用于登出时清除动态路由）
+ * 真正移除已添加的路由，而不是仅重置标记
+ */
+export function resetAsyncRoutes(): void {
+  const appStore = useAppStore()
 
-// 修复 router.push 的重复导航错误
-const originalPush = router.push
-router.push = function push(location) {
-  return originalPush.call(this, location).catch((err: Error) => {
-    if (err.name !== 'NavigationDuplicated') {
-      throw err
+  // 获取所有已添加的动态路由记录
+  const records = appStore.getDynamicRouteRecords()
+
+  // 倒序移除路由（避免索引问题）
+  for (let i = records.length - 1; i >= 0; i--) {
+    const record = records[i]
+    if (router.hasRoute(record.name)) {
+      router.removeRoute(record.name)
+      console.log(`[Router] 移除路由: ${record.name} (${record.path})`)
     }
-  })
-} as typeof router.push
+  }
+
+  // 清空状态
+  appStore.resetDynamicRoutes()
+
+  console.log('[Router] 动态路由已重置')
+}
 
 /**
- * 全局前置守卫 - 认证检查（简化版）
- * 动态路由已在 main.ts 中根据菜单创建，无需重复校验
+ * ============== 路由守卫 ==============
+
+/**
+ * 全局前置守卫 - 认证与权限检查
+ *
+ * 最佳实践：
+ * 1. 避免在守卫中使用 next() 参数（Vue Router 4 推荐）
+ * 2. 使用 return 或抛出错误进行导航控制
  */
-router.beforeEach((to, _from, next) => {
-  // 白名单路径（不需要认证）
-  const whiteList = ['/login', '/test', '/play/wasm', '/play/rtc', '/gbRecordDetail', '/cloudRecordDetail']
-
-  // 检查是否在白名单中
-  const isWhitelisted = whiteList.some(path => to.path.startsWith(path))
-
-  if (isWhitelisted) {
-    next()
-    return
+router.beforeEach(async (to: RouteLocationNormalized) => {
+  // 1. 检查白名单
+  if (isWhitelisted(to.path)) {
+    return true
   }
 
-  // ========== 检查认证状态 ==========
-  const token = getTokenFromStorage()
+  // 2. 检查认证状态
+  const userInfoStore = useUserInfoStore()
+  const userInfo = userInfoStore.getUserInfoSync()
 
-  // 未登录，重定向到登录页
-  if (!token) {
-    console.warn('⚠️ 未登录，重定向到登录页')
-    next({
+  if (!userInfo) {
+    console.warn('[Router] 未登录，重定向到登录页')
+    return {
       path: '/login',
       query: { redirect: to.fullPath }
-    })
-    return
+    }
   }
 
-  // 已登录，直接放行
-  // 动态路由已在 main.ts 中根据菜单创建完成
-  // Vue Router 会自动处理路由匹配，不存在路由会返回 404
-  next()
+  // 3. 检查路由是否存在
+  // 注意：动态路由在 main.ts 中已经添加，这里只需要验证
+  if (to.matched.length === 0) {
+    console.warn('[Router] 路由不存在:', to.path)
+    return { path: '/404' }
+  }
+
+  // 4. 所有检查通过，放行
+  return true
 })
 
 /**
@@ -310,12 +379,4 @@ router.afterEach((to) => {
   }
 })
 
-/**
- * 重置动态路由（用于登出时清除动态路由）
- */
-export function resetAsyncRoutes(): void {
-  asyncRoutesAdded = false
-}
-
 export default router
-export { componentMap }

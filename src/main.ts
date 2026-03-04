@@ -55,12 +55,18 @@ app.config.globalProperties.$channelTypeList = {
 // ========== 用户态同步初始化 ==========
 // 【关键】用户态是强诉求，必须在路由创建之前完成初始化
 // 这样路由守卫和组件才能正确访问用户态数据
+//
+// 【最佳实践】动态路由管理：
+// - 使用 useAppStore 管理路由状态，避免模块级全局变量
+// - 登录时调用 resetAsyncRoutes() 清除旧路由
+// - 使用 setupAsyncRoutes() 建立新的动态路由
 
-import { useUserInfoStore, usePermissionsStore, useMenusStore } from '@/stores'
+import { useUserInfoStore, usePermissionsStore, useMenusStore, useAppStore } from '@/stores'
 
 const userInfoStore = useUserInfoStore()
 const permissionsStore = usePermissionsStore()
 const menusStore = useMenusStore()
+const appStore = useAppStore()
 
 // ========== 异步初始化函数 ==========
 async function initializeApp() {

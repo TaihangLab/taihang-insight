@@ -39,6 +39,11 @@ export default defineConfig({
             'tests/vitest/**/*.{test,spec}.{js,ts}'
           ],
           exclude: ['node_modules', 'dist'],
+          alias: {
+            '@': resolve(__dirname, 'src'),
+            '@static': resolve(__dirname, 'static')
+          },
+          setupFiles: ['./tests/setup.node.ts'],
           env: {
             VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
             VITE_CLIENT_ID: process.env.VITE_CLIENT_ID || '02bb9cfe8d7844ecae8dbe62b1ba971a',
@@ -49,6 +54,8 @@ export default defineConfig({
           testTimeout: 30000,
           hookTimeout: 30000,
         },
+        // 集成测试也需要处理 .vue 文件
+        plugins: [vue(), UnoCSS()],
       }
     ],
 
@@ -77,8 +84,8 @@ export default defineConfig({
     // 监听模式配置
     watch: true,
 
-    // UI 界面
-    ui: true,
+    // UI 界面（禁用，避免打开浏览器）
+    ui: false,
   },
   resolve: {
     alias: {
