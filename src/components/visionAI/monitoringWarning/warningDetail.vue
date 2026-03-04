@@ -170,8 +170,8 @@
             </div>
           </div>
 
-          <!-- 右侧：处理进展时间线 (复判记录页面不显示) -->
-          <div class="warning-right-content" v-if="source !== 'reviewRecords'">
+          <!-- 右侧：处理进展时间线 -->
+          <div class="warning-right-content">
             <div class="process-timeline">
               <h4 class="timeline-title">
                 <i class="el-icon-time"></i>

@@ -694,23 +694,100 @@ export default {
       )
     },
     
-    // 查看复判详情
-    viewDetail(item) {
-      // 将复判记录数据转换为预警详情格式
-      this.currentWarningDetail = this.convertToWarningFormat(item)
-      this.warningDetailVisible = true
+    // 查看复判详情 - 通过alertId从后端获取完整预警数据（含图片/视频/合并/处理进展）
+    async viewDetail(item) {
+      if (!item.alertId) {
+        this.$message.warning('该复判记录缺少关联的预警ID，无法获取完整详情')
+        this.currentWarningDetail = this.buildFallbackWarningFormat(item)
+        this.warningDetailVisible = true
+        return
+      }
+      
+      this.loading = true
+      try {
+        const { alertAPI } = await import('../../service/VisionAIService.js')
+        const response = await alertAPI.getAlertDetail(item.alertId)
+        
+        if (response.data && response.data.alert_id) {
+          const apiData = response.data
+          this.currentWarningDetail = this.transformAlertApiData(apiData, item)
+        } else {
+          console.warn('预警详情API返回异常，使用本地数据', response.data)
+          this.currentWarningDetail = this.buildFallbackWarningFormat(item)
+        }
+        this.warningDetailVisible = true
+      } catch (error) {
+        console.error('获取预警详情失败:', error)
+        this.currentWarningDetail = this.buildFallbackWarningFormat(item)
+        this.warningDetailVisible = true
+      } finally {
+        this.loading = false
+      }
     },
     
-    // 将复判记录数据转换为预警详情格式
-    convertToWarningFormat(reviewItem) {
-      // 计算预警产生时间（比开始时间早一些）
-      const startTime = new Date(reviewItem.startTime)
-      const warningTime = new Date(startTime.getTime() - 5 * 60 * 1000) // 提前5分钟
-      const reviewCompleteTime = new Date(startTime.getTime() + 10 * 60 * 1000) // 复判完成时间（开始时间后10分钟）
+    // 将后端预警详情API数据 + 复判记录信息 转换为warningDetail组件所需格式
+    transformAlertApiData(apiData, reviewItem) {
+      const levelMap = { 1: '一级预警', 2: '二级预警', 3: '三级预警', 4: '四级预警' }
+      const statusMap = { 1: 'pending', 2: 'processing', 3: 'completed', 4: 'archived', 5: 'false_alarm' }
       
       return {
         id: reviewItem.id,
-        alert_id: reviewItem.alertId, // 添加预警ID（用于在详情中显示）
+        alert_id: apiData.alert_id,
+        type: apiData.alert_type || reviewItem.title,
+        alertName: apiData.alert_name || reviewItem.title,
+        device: apiData.camera_name || reviewItem.cameraName,
+        deviceInfo: {
+          name: apiData.camera_name || reviewItem.cameraName,
+          position: apiData.location || reviewItem.location
+        },
+        location: apiData.location || reviewItem.location,
+        time: this.formatDateTimeToStandard(apiData.alert_time || apiData.created_at),
+        level: levelMap[apiData.alert_level] || '二级预警',
+        status: statusMap[apiData.status] || 'completed',
+        description: apiData.alert_description || `复判记录：${reviewItem.title}`,
+        
+        // 媒体数据 - 从API获取真实URL
+        imageUrl: apiData.minio_frame_url || reviewItem.image,
+        videoUrl: apiData.minio_video_url || null,
+        minio_frame_url: apiData.minio_frame_url || null,
+        minio_video_url: apiData.minio_video_url || null,
+        
+        // 合并预警数据
+        is_merged: apiData.is_merged || false,
+        alert_count: apiData.alert_count || 1,
+        alert_duration: apiData.alert_duration || 0,
+        first_alert_time: apiData.first_alert_time || null,
+        last_alert_time: apiData.last_alert_time || null,
+        alert_images: apiData.alert_images || [],
+        
+        // 任务/技能信息
+        task_id: apiData.task_id,
+        skill_class_id: apiData.skill_class_id,
+        skillNameZh: apiData.skill_name_zh,
+        
+        // 处理信息
+        remark: apiData.processing_notes || '',
+        processedAt: apiData.processed_at,
+        processedBy: apiData.processed_by,
+        createdAt: apiData.created_at,
+        updatedAt: apiData.updated_at,
+        
+        // 复判专属信息
+        reviewType: reviewItem.reviewType,
+        reviewTypeText: this.getReviewTypeText(reviewItem.reviewType),
+        reviewNotes: reviewItem.reviewNotes,
+        reviewerName: reviewItem.reviewerName,
+        
+        // 原始API数据（供warningDetail组件内部使用，如处理进展解析）
+        _apiData: apiData
+      }
+    },
+    
+    // 备用方案：当API获取失败时，使用本地数据构建基本格式
+    buildFallbackWarningFormat(reviewItem) {
+      return {
+        id: reviewItem.id,
+        alert_id: reviewItem.alertId,
         type: reviewItem.title,
         device: reviewItem.cameraName,
         deviceInfo: {
@@ -718,45 +795,15 @@ export default {
           position: reviewItem.location
         },
         location: reviewItem.location,
-        time: this.formatDateTimeToStandard(warningTime),
-        level: this.getWarningLevelByType(reviewItem.title), // 根据类型判断等级
+        time: reviewItem.startTime,
+        level: this.getWarningLevelByType(reviewItem.title),
         imageUrl: reviewItem.image,
         description: `复判记录：${reviewItem.title}`,
-        reviewType: reviewItem.reviewType, // 添加复判类型
-        reviewTypeText: this.getReviewTypeText(reviewItem.reviewType), // 添加复判类型文本
-        reviewNotes: reviewItem.reviewNotes, // 添加复判意见
-        reviewerName: reviewItem.reviewerName, // 添加复判人员
-        status: 'completed',
-        // 添加操作历史（按时间倒序）
-        operationHistory: [
-          {
-            id: 1,
-            status: 'completed',
-            statusText: '复判完成',
-            time: this.formatDateTimeToStandard(reviewCompleteTime),
-            description: `${this.getReviewTypeText(reviewItem.reviewType)}已完成，复判结果：${this.getReviewResult(reviewItem)}`,
-            operationType: 'review_completed',
-            operator: reviewItem.reviewType === 'auto' ? '多模态大模型' : '复判人员'
-          },
-          {
-            id: 2,
-            status: 'completed',
-            statusText: '开始复判',
-            time: this.formatDateTimeToStandard(new Date(reviewItem.startTime)),
-            description: `开始进行${this.getReviewTypeText(reviewItem.reviewType)}`,
-            operationType: 'review_start',
-            operator: reviewItem.reviewType === 'auto' ? '智能复判系统' : '复判人员'
-          },
-          {
-            id: 3,
-            status: 'completed',
-            statusText: '预警触发',
-            time: this.formatDateTimeToStandard(warningTime),
-            description: `${reviewItem.title}：检测到异常情况，已记录预警信息并排队等待复判`,
-            operationType: 'create',
-            operator: '监控系统'
-          }
-        ]
+        reviewType: reviewItem.reviewType,
+        reviewTypeText: this.getReviewTypeText(reviewItem.reviewType),
+        reviewNotes: reviewItem.reviewNotes,
+        reviewerName: reviewItem.reviewerName,
+        status: 'completed'
       }
     },
     
@@ -783,21 +830,6 @@ export default {
       }
       
       return '二级预警' // 默认等级
-    },
-    
-    // 获取复判结果
-    getReviewResult(reviewItem) {
-      const results = [
-        '确认为真实预警，已记录',
-        '预警信息准确，处理完成',
-        '检测结果有效，已归档',
-        '复判通过，预警成立',
-        '验证完成，信息属实'
-      ]
-      
-      // 根据ID生成固定的结果
-      const index = parseInt(reviewItem.id) % results.length
-      return results[index]
     },
     
     // 格式化时间显示
@@ -985,6 +1017,11 @@ export default {
     // 隐藏卡片选择框
     hideCardCheckbox(recordId) {
       this.$set(this.cardHoverStates, recordId, false)
+    },
+    
+    // 卡片图片加载失败时标记，触发占位符显示
+    handleImageError(item) {
+      this.$set(item, '_imageError', true)
     }
   }
 }
@@ -1229,7 +1266,16 @@ export default {
             </div>
             
             <div class="card-image">
-              <img :src="item.image" :alt="item.title" />
+              <img 
+                v-if="item.image && !item._imageError" 
+                :src="item.image" 
+                :alt="item.title" 
+                @error="handleImageError(item)"
+              />
+              <div v-else class="image-placeholder">
+                <i class="el-icon-picture-outline"></i>
+                <span>暂无截图</span>
+              </div>
             </div>
             
             <div class="card-content">
@@ -1708,8 +1754,27 @@ export default {
   height: 140px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(45deg, #0a1526, #1e3c72);
+  background: linear-gradient(135deg, #0a1526, #1e3c72);
   flex-shrink: 0;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  gap: 6px;
+}
+
+.image-placeholder i {
+  font-size: 32px;
+}
+
+.image-placeholder span {
+  font-size: 12px;
 }
 
 .card-image img {
