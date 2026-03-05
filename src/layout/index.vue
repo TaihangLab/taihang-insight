@@ -1,6 +1,7 @@
 <template>
-  <el-container style="height: 100%; width: 100%;">
-    <el-header style="padding: 0; width: 100%;">
+  <!-- 标题与内容一体占满一屏，不产生页面上下滚动 -->
+  <el-container class="layout-container">
+    <el-header class="layout-header">
       <ui-header/>
     </el-header>
     <el-main class="layout-main">
@@ -53,18 +54,52 @@ body{
 }
 </style>
 <style scoped>
+/* 一屏布局：标题与内容一体，自适应填满视口、不溢出 */
+.layout-container {
+  height: 100%;
+  min-height: 0;
+  max-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+.layout-header {
+  flex-shrink: 0;
+  padding: 0;
+  width: 100%;
+  height: auto;
+}
 .layout-main {
   padding: 0;
   width: 100%;
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .layout-main-inner {
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+</style>
+<style>
+/* 非 scoped：子页面根节点填满内容区，强制不滚动（标题与内容一体，整块都不动） */
+.layout-main-inner > * {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden !important;
+}
+/* 禁止内容区出现滚动条，覆盖子页面自带的 overflow:auto */
+.layout-main-inner,
+.layout-main {
+  overflow: hidden !important;
 }
 
 .fade-enter {

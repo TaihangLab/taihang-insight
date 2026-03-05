@@ -51,15 +51,45 @@ export default {
 </script>
 
 <style>
+/* 整站一屏：标题与内容一体，自适应填满、不溢出 */
 html,
-body,
-#app {
+body {
   margin: 0;
   padding: 0;
   background-color: #e9eef3;
   height: 100%;
   width: 100%;
-  overflow-x: hidden;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+html {
+  height: 100vh;
+  max-height: 100vh;
+}
+body {
+  max-height: 100vh;
+}
+#app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  min-height: 0;
+  max-height: 100vh;
+  width: 100%;
+  overflow: hidden !important;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+#app > * {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
 }
 .el-header,
 .el-footer {

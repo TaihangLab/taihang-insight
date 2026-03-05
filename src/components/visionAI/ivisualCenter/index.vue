@@ -1087,14 +1087,15 @@ export default {
   display: none; /* Chrome, Safari, Opera */
 }
 
+/* 标题与内容一体：整屏不滚动 */
 .visual-center {
   height: 100%;
-  min-height: 100%;
+  min-height: 0;
   background: linear-gradient(135deg, #001529 0%, #000B18 100%);
   color: #fff;
-  padding: 10px 14px 10px 14px; /* 非全屏收紧内边距，避免底部被裁需滚动 */
+  padding: 10px 14px;
   position: relative;
-  overflow-x: hidden; /* 隐藏水平滚动条 */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -1200,13 +1201,13 @@ export default {
   color: #00FFFF;
 }
 
-/* 主内容区铺满剩余视口，消除底部空白 */
+/* 主内容区与顶栏一体，不单独滚动 */
 .main-content {
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .panel-box {
@@ -1214,7 +1215,7 @@ export default {
   border: 1px solid rgba(35, 88, 148, 0.5);
   border-radius: 4px;
   padding: 12px;
-  margin-bottom: 12px; /* 非全屏收紧间距，一屏内完整显示 */
+  margin-bottom: 12px;
   position: relative;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -1241,25 +1242,20 @@ export default {
 }
 
 .map-panel {
-  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height) + 0px); /* 精确对齐：上面板 + 间距 + 下面板 */
-  margin-bottom: 12px; /* 与非全屏面板间距一致，便于一屏显示 */
+  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height) + 0px);
+  margin-bottom: 12px;
   display: flex;
   flex-direction: column;
 }
 
-/* 全屏模式下的中间面板 */
-.visual-center:fullscreen .map-panel {
-  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height) + 0px); /* 全屏下使用相同的52px间距 */
-}
-
 .map-container {
-  height: var(--map-container-height);
+  flex: 1;
+  min-height: 0;
   background: rgba(6, 30, 93, 0.3);
   position: relative;
   overflow: hidden;
   border-radius: 4px;
   box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.2);
-  flex: 1;
 }
 
 .stat-value {
@@ -1496,8 +1492,8 @@ export default {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 /* 隐藏自定义滚动条 */
@@ -1561,6 +1557,12 @@ export default {
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
 }
 
+.trend-chart,
+.level-chart {
+  height: calc(100% - 20px);
+  width: 100%;
+  position: relative;
+}
 .status-chart {
   height: calc(var(--panel-top-height) - 80px);
   width: 100%;
@@ -1600,15 +1602,15 @@ export default {
 
 /* 全屏模式下的特殊样式 */
 .visual-center:fullscreen .warning-viewer {
-  height: calc(100% - 30px); /* 保持一致的高度计算 */
+  height: calc(100% - 30px);
 }
 
 .visual-center:fullscreen .main-image-container {
-  min-height: 350px; /* 全屏下适中的主图片区域高度 */
+  min-height: 350px;
 }
 
 .visual-center:fullscreen .thumbnail-container-bottom {
-  height: 100px; /* 全屏下保持适中的缩略图区域高度 */
+  height: 100px;
 }
 
 .visual-center:fullscreen .thumbnail-item {
@@ -1617,16 +1619,16 @@ export default {
 }
 
 .main-image-container {
-  flex: 1; /* 占据剩余空间 */
-  background: transparent; /* 改为透明背景，去掉黑色边框 */
+  flex: 1;
+  min-height: 0;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden; /* 恢复hidden，防止内容溢出 */
-  height: calc(100% - 160px); /* 减去信息条60px和缩略图区域100px */
-  border-radius: 25px; /* 容器圆角与图片保持一致 */
-  padding: 15px; /* 增加内边距，为圆角留出空间 */
+  overflow: hidden;
+  border-radius: 25px;
+  padding: 15px;
 }
 
   .main-warning-image {
@@ -1906,20 +1908,11 @@ export default {
   margin-left: 2px;
 }
 
-.trend-chart,
-.level-chart,
-.status-chart {
-  height: calc(100% - 20px);
-  width: 100%;
-  position: relative;
-  flex: 1;
-}
-
-/* 全屏模式下图表高度调整 */
+/* 全屏模式下图表高度 */
 .visual-center:fullscreen .trend-chart,
 .visual-center:fullscreen .level-chart,
 .visual-center:fullscreen .status-chart {
-  height: calc(100% - 15px); /* 全屏下稍微减少图表高度 */
+  height: calc(100% - 15px);
 }
 
 /* 全屏模式：与算法推理页一致，根 100vh + 顶栏 fixed + 主内容 100vh 铺满 */
@@ -1951,18 +1944,77 @@ export default {
   background: linear-gradient(180deg, rgba(0, 20, 45, 0.95) 0%, rgba(0, 10, 25, 0.9) 100%);
 }
 
-/* 全屏下主内容区占满视口，顶部留出顶栏高度 */
+/* 全屏下主内容区 flex 填满视口，无底部空白 */
 .visual-center:fullscreen .main-content,
 .visual-center:-webkit-full-screen .main-content,
 .visual-center:-moz-full-screen .main-content,
 .visual-center:-ms-fullscreen .main-content {
-  height: 100vh !important;
-  min-height: 0;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
   margin: 0 !important;
   padding: 52px 12px 12px 12px !important;
-  box-sizing: border-box;
-  overflow-y: auto;
-  overflow-x: hidden;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+/* 全屏下两行按比例分配：上排约 55%，下排约 45%，避免下排被拉得过长 */
+.visual-center:fullscreen .main-content > .el-row:first-child {
+  flex: 1.2 1 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+}
+.visual-center:fullscreen .main-content > .el-row.bottom-section {
+  flex: 0.85 1 0 !important; /* 下排占比略小，避免图标被拉长 */
+  min-height: 0 !important;
+  display: flex !important;
+}
+.visual-center:fullscreen .main-content > .el-row .el-col {
+  display: flex !important;
+  flex-direction: column !important;
+}
+.visual-center:fullscreen .main-content .panel-box {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  margin-bottom: 8px !important;
+}
+.visual-center:fullscreen .main-content .panel-equal-height,
+.visual-center:fullscreen .main-content .panel-bottom-equal-height {
+  height: auto !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+}
+.visual-center:fullscreen .main-content .map-panel {
+  height: auto !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+}
+.visual-center:fullscreen .main-content .trend-chart,
+.visual-center:fullscreen .main-content .level-chart,
+.visual-center:fullscreen .main-content .status-chart {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+.visual-center:fullscreen .main-content .type-list,
+.visual-center:fullscreen .main-content .top-list {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow-y: auto !important;
+}
+.visual-center:fullscreen .main-content .warning-viewer {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+.visual-center:fullscreen .main-content .main-image-container {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+}
+.visual-center:fullscreen .main-content .thumbnail-container-bottom {
+  flex-shrink: 0 !important;
 }
 
 .visual-center:fullscreen .panel-box,
