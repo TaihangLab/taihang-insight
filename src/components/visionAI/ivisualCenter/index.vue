@@ -1241,11 +1241,17 @@ export default {
   overflow: hidden;
 }
 
+/* 上排总高度：与左右两列底部对齐，使用 52px 间距填满 */
 .map-panel {
-  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height) + 0px);
+  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height));
   margin-bottom: 12px;
   display: flex;
   flex-direction: column;
+}
+/* 左、右列第二个面板（预警类型排名、组织预警TOP5）拉高填满，与中间列底部对齐 */
+.main-content > .el-row:first-child .el-col:first-child .panel-box:nth-child(2),
+.main-content > .el-row:first-child .el-col:last-child .panel-box:nth-child(2) {
+  height: calc(var(--panel-top-height) + 40px);
 }
 
 .map-container {
@@ -1563,8 +1569,9 @@ export default {
   width: 100%;
   position: relative;
 }
+/* 预警处理情况在底部面板，用 panel-bottom-height 计算图表高度 */
 .status-chart {
-  height: calc(var(--panel-top-height) - 80px);
+  height: calc(var(--panel-bottom-height) - 80px);
   width: 100%;
   position: relative;
   display: flex;
