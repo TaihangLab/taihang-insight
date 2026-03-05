@@ -3,8 +3,10 @@
     <el-header style="padding: 0; width: 100%;">
       <ui-header/>
     </el-header>
-    <el-main style="padding: 0; width: 100%;">
-      <router-view :key="$route.fullPath"></router-view>
+    <el-main class="layout-main">
+      <div class="layout-main-inner">
+        <router-view :key="$route.fullPath"></router-view>
+      </div>
     </el-main>
     <!-- 太行智能助手 -->
     <intelligent-assistant />
@@ -51,6 +53,20 @@ body{
 }
 </style>
 <style scoped>
+.layout-main {
+  padding: 0;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.layout-main-inner {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
 .fade-enter {
   visibility: hidden;
   opacity: 0;

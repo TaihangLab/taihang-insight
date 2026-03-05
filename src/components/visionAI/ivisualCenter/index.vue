@@ -1088,23 +1088,28 @@ export default {
 }
 
 .visual-center {
-  min-height: 100vh;
+  height: 100%;
+  min-height: 100%;
   background: linear-gradient(135deg, #001529 0%, #000B18 100%);
   color: #fff;
-  padding: 20px;
+  padding: 10px 14px 10px 14px; /* 非全屏收紧内边距，避免底部被裁需滚动 */
   position: relative;
   overflow-x: hidden; /* 隐藏水平滚动条 */
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   position: relative;
   z-index: 2;
-  padding: 0 20px;
+  padding: 0 12px;
   height: 30px;
+  flex-shrink: 0;
 }
 
 .top-bar .time {
@@ -1195,12 +1200,21 @@ export default {
   color: #00FFFF;
 }
 
+/* 主内容区铺满剩余视口，消除底部空白 */
+.main-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
 .panel-box {
   background: linear-gradient(180deg, rgba(6, 30, 93, 0.8) 0%, rgba(4, 20, 63, 0.9) 100%);
   border: 1px solid rgba(35, 88, 148, 0.5);
   border-radius: 4px;
-  padding: 15px;
-  margin-bottom: 20px;
+  padding: 12px;
+  margin-bottom: 12px; /* 非全屏收紧间距，一屏内完整显示 */
   position: relative;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -1228,7 +1242,7 @@ export default {
 
 .map-panel {
   height: calc(var(--panel-top-height) + 52px + var(--panel-top-height) + 0px); /* 精确对齐：上面板 + 间距 + 下面板 */
-  margin-bottom: 20px; /* 确保与其他面板保持一致的底部间距 */
+  margin-bottom: 12px; /* 与非全屏面板间距一致，便于一屏显示 */
   display: flex;
   flex-direction: column;
 }
@@ -1908,21 +1922,62 @@ export default {
   height: calc(100% - 15px); /* 全屏下稍微减少图表高度 */
 }
 
-/* 全屏模式下整体布局优化 */
-.visual-center:fullscreen {
-  padding: 15px; /* 减少全屏下的内边距 */
+/* 全屏模式：与算法推理页一致，根 100vh + 顶栏 fixed + 主内容 100vh 铺满 */
+.visual-center:fullscreen,
+.visual-center:-webkit-full-screen,
+.visual-center:-moz-full-screen,
+.visual-center:-ms-fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: linear-gradient(135deg, #001529 0%, #000B18 100%);
 }
 
-.visual-center:fullscreen .main-content {
-  margin-bottom: 15px; /* 减少内容区域底部间距 */
+/* 全屏下顶栏固定到顶部，不占文档流，避免底部留白 */
+.visual-center:fullscreen .top-bar,
+.visual-center:-webkit-full-screen .top-bar,
+.visual-center:-moz-full-screen .top-bar,
+.visual-center:-ms-fullscreen .top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin-bottom: 0;
+  padding: 10px 20px;
+  background: linear-gradient(180deg, rgba(0, 20, 45, 0.95) 0%, rgba(0, 10, 25, 0.9) 100%);
 }
 
-.visual-center:fullscreen .panel-box {
-  margin-bottom: 15px; /* 减少面板间距 */
+/* 全屏下主内容区占满视口，顶部留出顶栏高度 */
+.visual-center:fullscreen .main-content,
+.visual-center:-webkit-full-screen .main-content,
+.visual-center:-moz-full-screen .main-content,
+.visual-center:-ms-fullscreen .main-content {
+  height: 100vh !important;
+  min-height: 0;
+  margin: 0 !important;
+  padding: 52px 12px 12px 12px !important;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.visual-center:fullscreen .top-bar {
-  margin-bottom: 8px; /* 减少顶部栏底部间距 */
+.visual-center:fullscreen .panel-box,
+.visual-center:-webkit-full-screen .panel-box,
+.visual-center:-moz-full-screen .panel-box,
+.visual-center:-ms-fullscreen .panel-box {
+  margin-bottom: 12px;
+}
+
+/* 全屏下最后一排面板贴底 */
+.visual-center:fullscreen .main-content > .el-row:last-child .panel-box,
+.visual-center:-webkit-full-screen .main-content > .el-row:last-child .panel-box,
+.visual-center:-moz-full-screen .main-content > .el-row:last-child .panel-box,
+.visual-center:-ms-fullscreen .main-content > .el-row:last-child .panel-box {
+  margin-bottom: 0;
 }
 
 /* 表格透明样式 */

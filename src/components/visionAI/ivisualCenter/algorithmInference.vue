@@ -45,14 +45,14 @@
             </div>
           </div>
 
-          <div class="resource-labels">
-            <div class="resource-label">CPU</div>
-            <div class="resource-label">内存</div>
-            <div class="resource-label">存储</div>
-            <div class="resource-label">GPU显存</div>
-          </div>
-
-          <div class="resource-charts">
+          <div class="resource-charts-wrap">
+            <div class="resource-labels">
+              <div class="resource-label">CPU</div>
+              <div class="resource-label">内存</div>
+              <div class="resource-label">存储</div>
+              <div class="resource-label">GPU显存</div>
+            </div>
+            <div class="resource-charts">
             <div class="chart-item">
               <div class="chart-container">
                 <div class="percentage-ring cpu"
@@ -102,20 +102,6 @@
               </div>
             </div>
           </div>
-
-          <div class="resource-summary">
-            <div class="summary-item">
-              <span class="summary-label">已加载模型</span>
-              <span class="summary-value highlight">{{ loadedModels }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">运行中任务</span>
-              <span class="summary-value highlight">{{ runningTasks }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">GPU型号</span>
-              <span class="summary-value">RTX 3090</span>
-            </div>
           </div>
         </div>
       </div>
@@ -180,6 +166,7 @@
               <img :src="selectedAlert ? selectedAlert.image : ''" alt="" />
               <div class="alert-image-overlay">
                 <span class="alert-image-timestamp">{{ selectedAlert ? selectedAlert.time : '' }}</span>
+                <span v-if="selectedAlert" class="alert-image-level-tag" :class="'alarm-level-' + selectedAlert.level">{{ selectedAlert.levelText }}</span>
               </div>
             </div>
             <div class="alert-thumb-column">
@@ -203,13 +190,12 @@
             <div class="alert-info-row">
               <span class="alert-info-label">事件</span>
               <span class="alert-info-value alert-event-name">{{ selectedAlert.name }}</span>
-              <span class="alert-alarm-tag" :class="'alarm-level-' + selectedAlert.level">{{ selectedAlert.levelText }}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 预警类型分布：饼图扇区上已有名称和百分比，不再单独图例 -->
+      <!-- 预警类型分布：饼图 + 底部图例 -->
       <div class="dashboard-card alarm-statistics">
         <div class="card-header">
           <div class="title">预警类型分布</div>
@@ -277,19 +263,32 @@
         <div class="card-content">
           <div class="date-filter">
             <div class="date-filter-left">
-              <span class="date-btn">今日</span>
-              <span class="date-btn active">近7天</span>
-              <span class="date-btn">本月</span>
+              <span
+                class="date-btn"
+                :class="{ active: alertTrendRange === 'today' }"
+                @click.stop.prevent="setAlertTrendRange('today')"
+              >今日</span>
+              <span
+                class="date-btn"
+                :class="{ active: alertTrendRange === 'week' }"
+                @click.stop.prevent="setAlertTrendRange('week')"
+              >近7天</span>
+              <span
+                class="date-btn"
+                :class="{ active: alertTrendRange === 'month' }"
+                @click.stop.prevent="setAlertTrendRange('month')"
+              >本月</span>
             </div>
           </div>
           <div class="trend-chart">
             <div class="chart-header">
               <div class="trend-total">
                 <span class="label">预警总数</span>
-                <span class="value">{{ alertTrendTotal }}</span>
+                <span class="value">{{ alertTrendLoading ? '加载中...' : alertTrendTotal }}</span>
               </div>
             </div>
-            <svg width="100%" height="150" viewBox="0 0 600 150" preserveAspectRatio="none">
+            <div class="trend-chart-svg-wrap">
+            <svg viewBox="0 0 600 150" preserveAspectRatio="none">
               <!-- 横线 -->
               <g class="grid-lines">
                 <line x1="0" y1="0" x2="600" y2="0" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
@@ -355,6 +354,7 @@
                 <text x="560" y="165">31</text>
               </g>
             </svg>
+            </div>
           </div>
 
         </div>
@@ -397,6 +397,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import * as echarts from 'echarts';
+import { alertAPI } from '@/components/service/VisionAIService.js';
 
 export default {
   name: 'AlgorithmInference',
@@ -465,7 +466,10 @@ export default {
         { name: '火焰检测', camera: '焊接车间', location: '焊接工位', time: '2025-03-05 14:15:10', level: 1, levelText: '一级预警', image: '/static/img/ai-brain.png' },
         { name: '护目镜未佩戴', camera: '喷漆车间', location: '喷漆车间', time: '2025-03-05 14:10:33', level: 4, levelText: '四级预警', image: '/static/img/ai-brain.png' }
       ],
-      alertTrendTotal: 1280,
+      alertTrendTotal: 0,
+      /** 预警趋势时间范围：today=今日, week=近7天, month=本月 */
+      alertTrendRange: 'week',
+      alertTrendLoading: false,
       skillCallStats: [
         { name: '安全帽复判', count: 1280, percent: 100, color: 'linear-gradient(90deg, #29de9c, #1abc9c)' },
         { name: '人员闯入复判', count: 960, percent: 75, color: 'linear-gradient(90deg, #3eaef9, #1e90ff)' },
@@ -545,6 +549,7 @@ export default {
     document.addEventListener('fullscreenchange', this.handleFullscreenChange);
 
     this.selectedAlert = this.latestAlerts[0];
+    this.fetchAlertTrendStats();
 
     this.$nextTick(() => {
       this.initBrainScene();
@@ -598,6 +603,40 @@ export default {
     this.disposeBrainScene();
   },
   methods: {
+    /** 根据范围得到统计天数：今日=1，近7天=7，本月=当月总天数(28-31) */
+    getAlertTrendDays(range) {
+      if (range === 'today') return 1;
+      if (range === 'week') return 7;
+      if (range === 'month') {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        return new Date(year, month + 1, 0).getDate();
+      }
+      return 7;
+    },
+    /** 拉取预警趋势统计并更新总数 */
+    async fetchAlertTrendStats() {
+      const days = this.getAlertTrendDays(this.alertTrendRange);
+      this.alertTrendLoading = true;
+      try {
+        const res = await alertAPI.getAlertStatistics(days);
+        const data = res && res.data;
+        if (data && data.success && data.statistics && typeof data.statistics.total_alerts === 'number') {
+          this.alertTrendTotal = data.statistics.total_alerts;
+        }
+      } catch (e) {
+        console.warn('预警趋势统计请求失败', e);
+      } finally {
+        this.alertTrendLoading = false;
+      }
+    },
+    /** 切换预警趋势时间范围：today=今日, week=近7天, month=本月 */
+    setAlertTrendRange(range) {
+      if (this.alertTrendRange === range) return;
+      this.alertTrendRange = range;
+      this.fetchAlertTrendStats();
+    },
     updateTime() {
       const now = new Date();
       const year = now.getFullYear();
@@ -980,10 +1019,20 @@ export default {
       this.alarmDistChart.setOption({
         backgroundColor: 'transparent',
         tooltip: { trigger: 'item', formatter: '{b}: {d}%' },
+        legend: {
+          orient: 'horizontal',
+          bottom: '2%',
+          left: 'center',
+          textStyle: { color: '#9eb3d4', fontSize: 11 },
+          itemWidth: 10,
+          itemHeight: 10,
+          itemGap: 14,
+          data: data.map(d => d.name)
+        },
         series: [{
           type: 'pie',
-          radius: ['42%', '68%'],
-          center: ['50%', '48%'],
+          radius: ['40%', '62%'],
+          center: ['50%', '44%'],
           data: data,
           label: {
             show: true,
@@ -3202,10 +3251,11 @@ export default {
 </script>
 
 <style scoped>
-/* 基础样式和全局设置 */
+/* 基础样式和全局设置：非全屏用 100% 填满布局主区域，避免底部被裁需滚动 */
 .algorithm-inference-platform {
   width: 100%;
-  height: 100vh;
+  height: 100%;
+  min-height: 100%;
   background: linear-gradient(135deg, #001529 0%, #000B18 50%, #001020 100%);
   color: #ffffff;
   font-family: "Microsoft YaHei", Arial, sans-serif;
@@ -3218,6 +3268,7 @@ export default {
   flex-direction: column;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  box-sizing: border-box;
 }
 
 /* 为 Chrome、Safari 和 Opera 隐藏滚动条 */
@@ -3226,30 +3277,27 @@ export default {
   width: 0;
 }
 
-/* 确保所有内容容器也使用同样的滚动条隐藏方式 */
+/* 确保所有内容容器也使用同样的滚动条隐藏方式；非全屏收紧间距便于一屏显示 */
 .dashboard-container {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
-  grid-gap: 10px;
+  grid-gap: 6px;
   flex: 1;
-  padding: 10px;
+  min-height: 0;
+  padding: 6px;
   overflow: hidden;
 }
 
 /* 所有卡片的内容区域隐藏滚动条但保留滚动功能 */
 .card-content {
-  padding: 5px 10px;
-  height: calc(100% - 40px);
-  /* 减去标题高度 */
+  padding: 4px 8px;
+  height: calc(100% - 36px);
+  /* 减去标题高度，与 card-header 收紧后一致 */
   overflow-y: auto !important;
-  /* 启用垂直滚动 */
   overflow-x: hidden !important;
-  /* 隐藏水平滚动 */
   scrollbar-width: none !important;
-  /* Firefox 隐藏滚动条 */
   -ms-overflow-style: none !important;
-  /* IE and Edge 隐藏滚动条 */
 }
 
 .card-content::-webkit-scrollbar {
@@ -3292,9 +3340,10 @@ export default {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
-  grid-gap: 10px;
+  grid-gap: 6px;
   flex: 1;
-  padding: 10px;
+  min-height: 0;
+  padding: 6px;
   overflow: hidden;
 }
 
@@ -3344,7 +3393,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 15px;
+  padding: 6px 12px;
+  flex-shrink: 0;
   background: linear-gradient(180deg, rgba(6, 30, 93, 0.9) 0%, rgba(4, 20, 63, 0.95) 100%);
   border-bottom: 1px solid rgba(0, 255, 255, 0.15);
 }
@@ -3382,9 +3432,9 @@ export default {
 }
 
 .card-content {
-  padding: 5px 10px;
-  height: calc(100% - 40px);
-  /* 减去标题高度 */
+  padding: 4px 8px;
+  height: calc(100% - 36px);
+  /* 减去标题高度，与 card-header 收紧后一致 */
   overflow: auto;
 }
 
@@ -3404,22 +3454,10 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  /* 启用垂直滚动 */
-  padding: 0 10px;
-  scrollbar-width: none;
-  /* Firefox 隐藏滚动条 */
-  -ms-overflow-style: none;
-  /* IE and Edge 隐藏滚动条 */
-  max-height: 100%;
-  /* 确保内容不会超出卡片高度 */
-}
-
-.resource-statistics .card-content::-webkit-scrollbar {
-  display: none;
-  /* Chrome, Safari and Opera 隐藏滚动条 */
-  width: 0;
-  /* 确保滚动条宽度为0 */
+  overflow: hidden;
+  padding: 0 8px;
+  min-height: 0;
+  justify-content: center;
 }
 
 .server-info {
@@ -3430,6 +3468,52 @@ export default {
   padding: 0 5px;
   flex-shrink: 0;
   /* 防止顶部元素收缩 */
+}
+
+/* 推理服务资源卡片：占满高度，无底部 summary 时图表区撑满 */
+.resource-statistics .server-info {
+  margin-bottom: 0;
+  margin-top: 12px;
+  flex-shrink: 0;
+}
+/* 标签+图表为一组紧贴，与上方「运行中」只留小间距；不撑满避免下方空白过大 */
+.resource-statistics .resource-charts-wrap {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: 24px;
+}
+.resource-statistics .resource-labels {
+  margin: 0 0 4px 0;
+  flex-shrink: 0;
+}
+.resource-statistics .resource-label {
+  font-size: 11px;
+}
+.resource-statistics .resource-charts {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0;
+  padding: 0 0 4px 0;
+}
+.resource-statistics .chart-container {
+  width: 56px;
+  height: 56px;
+  padding-bottom: 2px;
+  flex-shrink: 0;
+}
+.resource-statistics .percentage-text {
+  font-size: 15px;
+}
+.resource-statistics .percentage-text .percentage-symbol {
+  font-size: 11px;
+}
+.resource-statistics .server-type {
+  font-size: 12px;
+  padding: 4px 10px;
 }
 
 .server-type {
@@ -5070,16 +5154,19 @@ export default {
 .date-filter {
   display: flex;
   justify-content: space-between;
-  /* 两端对齐 */
   align-items: center;
   margin-bottom: 10px;
   font-size: 11px;
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 .date-filter-left {
   display: flex;
   align-items: center;
-  /* 垂直居中 */
+  position: relative;
+  z-index: 2;
 }
 
 .date-btn {
@@ -5091,6 +5178,9 @@ export default {
   border: 1px solid rgba(30, 80, 150, 0.5);
   border-radius: 2px;
   transition: all 0.2s ease;
+  position: relative;
+  z-index: 3;
+  user-select: none;
 }
 
 .date-btn:hover {
@@ -5127,15 +5217,30 @@ export default {
   padding: 10px;
   border: 1px solid rgba(30, 80, 150, 0.5);
   flex: 1;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.trend-chart-svg-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.trend-chart-svg-wrap svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .chart-header {
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .trend-total {
@@ -5398,6 +5503,7 @@ export default {
 .alarm-forwarding .card-content,
 .device-statistics .card-content {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -5410,6 +5516,7 @@ export default {
   padding: 5px;
   border: 1px solid rgba(30, 80, 150, 0.5);
   flex: 1;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -5659,8 +5766,8 @@ export default {
   align-items: center;
   position: relative;
   z-index: 2;
-  padding: 12px 20px;
-  height: 50px;
+  padding: 8px 14px;
+  height: 42px;
   background: linear-gradient(180deg, rgba(0, 30, 60, 0.95) 0%, rgba(0, 15, 35, 0.85) 100%);
   border-bottom: 1px solid rgba(0, 255, 255, 0.15);
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(0, 255, 255, 0.1);
@@ -6785,6 +6892,10 @@ export default {
   right: 0;
   padding: 6px 8px;
   background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .alert-image-timestamp {
@@ -6793,6 +6904,19 @@ export default {
   font-family: monospace;
   text-shadow: 0 1px 3px rgba(0,0,0,0.8);
 }
+
+.alert-image-level-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 500;
+  flex-shrink: 0;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.alert-image-level-tag.alarm-level-1 { color: #fff; background: #ff2d55; }
+.alert-image-level-tag.alarm-level-2 { color: #fff; background: #ff9500; }
+.alert-image-level-tag.alarm-level-3 { color: #fff; background: #3eaef9; }
+.alert-image-level-tag.alarm-level-4 { color: #fff; background: #44FF9B; }
 
 .alert-thumb-column {
   display: flex;
@@ -6884,7 +7008,17 @@ export default {
 .alert-alarm-tag.alarm-level-3 { color: #fff; background: #3eaef9; }
 .alert-alarm-tag.alarm-level-4 { color: #fff; background: #44FF9B; }
 
-/* 技能调用统计样式 */
+/* 技能调用统计样式：填满卡片区域 */
+.alarm-forwarding .skill-stats-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  gap: 6px;
+  padding: 5px 0;
+}
+
 .skill-stats-list {
   display: flex;
   flex-direction: column;
@@ -6896,6 +7030,8 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+  min-height: 24px;
 }
 
 .skill-stat-name {
