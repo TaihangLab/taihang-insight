@@ -6,7 +6,7 @@
         <div class="time">{{ currentTime }}</div>
       </div>
       <div class="title">
-        <span>太行AI算法推理平台</span>
+        <span>太行AI智算中心</span>
       </div>
       <div class="right-controls">
         <div class="location-info">
@@ -32,29 +32,24 @@
     </div>
 
     <div class="dashboard-container">
-      <!-- 资源统计模块 -->
+      <!-- 推理服务资源模块 -->
       <div class="dashboard-card resource-statistics">
         <div class="card-header">
-          <div class="title">资源统计</div>
+          <div class="title">推理服务资源</div>
         </div>
         <div class="card-content">
           <div class="server-info">
             <div class="server-type">
-              <i class="el-icon-s-platform server-icon"></i>
-              <span>Marster: 1个</span>
-            </div>
-            <div class="server-type">
-              <i class="el-icon-s-grid server-icon"></i>
-              <span>Node: 10个</span>
+              <i class="el-icon-connection server-icon"></i>
+              <span>AI推理服务: <em style="color:#44FF9B;font-style:normal">运行中</em></span>
             </div>
           </div>
 
-          <!-- 添加资源标签区域 -->
           <div class="resource-labels">
-            <div class="resource-label">CPU使用率</div>
-            <div class="resource-label">磁盘使用率</div>
-            <div class="resource-label">内存使用率</div>
-            <div class="resource-label">显存使用率</div>
+            <div class="resource-label">CPU</div>
+            <div class="resource-label">内存</div>
+            <div class="resource-label">存储</div>
+            <div class="resource-label">GPU显存</div>
           </div>
 
           <div class="resource-charts">
@@ -69,327 +64,229 @@
                 </div>
                 <div class="percentage-text cpu">{{ cpuUsage }}<span class="percentage-symbol">%</span></div>
               </div>
-              <div class="chart-title">CPU</div>
-            </div>
-            <div class="chart-item">
-              <div class="chart-container">
-                <div class="percentage-ring disk"
-                  :style="{ background: `conic-gradient(#ff9c38 ${memoryUsage * 3.6}deg, transparent 0deg)` }"></div>
-                <div class="inner-circle">
-                  <div class="liquid-container disk">
-                    <div class="liquid-wave"></div>
-                  </div>
-                </div>
-                <div class="percentage-text disk">{{ memoryUsage }}<span class="percentage-symbol">%</span></div>
-              </div>
-              <div class="chart-title">磁盘</div>
             </div>
             <div class="chart-item">
               <div class="chart-container">
                 <div class="percentage-ring memory"
-                  :style="{ background: `conic-gradient(#29de9c ${diskUsage * 3.6}deg, transparent 0deg)` }"></div>
+                  :style="{ background: `conic-gradient(#29de9c ${memoryUsage * 3.6}deg, transparent 0deg)` }"></div>
                 <div class="inner-circle">
                   <div class="liquid-container memory">
                     <div class="liquid-wave"></div>
                   </div>
                 </div>
-                <div class="percentage-text memory">{{ diskUsage }}<span class="percentage-symbol">%</span></div>
+                <div class="percentage-text memory">{{ memoryUsage }}<span class="percentage-symbol">%</span></div>
               </div>
-              <div class="chart-title">内存</div>
+            </div>
+            <div class="chart-item">
+              <div class="chart-container">
+                <div class="percentage-ring disk"
+                  :style="{ background: `conic-gradient(#ff9c38 ${diskUsage * 3.6}deg, transparent 0deg)` }"></div>
+                <div class="inner-circle">
+                  <div class="liquid-container disk">
+                    <div class="liquid-wave"></div>
+                  </div>
+                </div>
+                <div class="percentage-text disk">{{ diskUsage }}<span class="percentage-symbol">%</span></div>
+              </div>
             </div>
             <div class="chart-item">
               <div class="chart-container">
                 <div class="percentage-ring gpu"
-                  :style="{ background: `conic-gradient(#ff5a5a ${networkUsage * 3.6}deg, transparent 0deg)` }"></div>
+                  :style="{ background: `conic-gradient(#ff5a5a ${gpuUsage * 3.6}deg, transparent 0deg)` }"></div>
                 <div class="inner-circle">
                   <div class="liquid-container gpu">
                     <div class="liquid-wave"></div>
                   </div>
                 </div>
-                <div class="percentage-text gpu">{{ networkUsage }}<span class="percentage-symbol">%</span></div>
+                <div class="percentage-text gpu">{{ gpuUsage }}<span class="percentage-symbol">%</span></div>
               </div>
-              <div class="chart-title">显存</div>
             </div>
           </div>
 
-          <div class="resource-details-container">
-            <div class="expanded-header">
-              <div class="resource-detail-title">资源详情</div>
-              <div class="resource-time">更新时间: {{ currentTime }}</div>
+          <div class="resource-summary">
+            <div class="summary-item">
+              <span class="summary-label">已加载模型</span>
+              <span class="summary-value highlight">{{ loadedModels }}</span>
             </div>
-            <div class="resource-details">
-              <div class="detail-group">
-                <div class="detail-item">
-                  <div class="detail-label">CPU平均温度</div>
-                  <div class="detail-value">46.5°C</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">CPU峰值温度</div>
-                  <div class="detail-value">68.2°C</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">CPU核心数</div>
-                  <div class="detail-value">32</div>
-                </div>
-              </div>
-              <div class="detail-group">
-                <div class="detail-item">
-                  <div class="detail-label">内存总量</div>
-                  <div class="detail-value">64GB</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">已用内存</div>
-                  <div class="detail-value">29.2GB</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">内存频率</div>
-                  <div class="detail-value">3200MHz</div>
-                </div>
-              </div>
-              <div class="detail-group">
-                <div class="detail-item">
-                  <div class="detail-label">存储总量</div>
-                  <div class="detail-value">2TB</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">已用存储</div>
-                  <div class="detail-value">1.2TB</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">存储类型</div>
-                  <div class="detail-value">NVMe SSD</div>
-                </div>
-              </div>
-              <div class="detail-group">
-                <div class="detail-item">
-                  <div class="detail-label">GPU型号</div>
-                  <div class="detail-value">RTX 3090</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">显存总量</div>
-                  <div class="detail-value">24GB</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">温度</div>
-                  <div class="detail-value">72.5°C</div>
-                </div>
-              </div>
+            <div class="summary-item">
+              <span class="summary-label">运行中任务</span>
+              <span class="summary-value highlight">{{ runningTasks }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">GPU型号</span>
+              <span class="summary-value">RTX 3090</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 中间部分 - 数据展示 -->
+      <!-- 中间部分 - AI智慧大脑：可切换 3D 或 大脑图片 -->
       <div class="center-container">
-        <!-- 上部数据展示和立方体模型 -->
-        <div class="central-visualization">
-          <!-- Three.js 3D场景容器占据整个区域 -->
-          <div id="threejs-cube" class="threejs-container"></div>
-
-          <!-- 底层平台结构（作为背景） -->
-          <div class="platform-structure-bg"></div>
+        <div class="ai-brain-section">
+          <div class="brain-display-wrap">
+            <div id="threejs-brain" class="threejs-brain-container" v-show="!brainShowImage"></div>
+            <div class="brain-image-wrap" v-show="brainShowImage">
+              <div class="brain-image-bg"></div>
+              <img :src="brainImageUrl" alt="智慧大脑" class="brain-static-img" />
+            </div>
+            <div class="brain-view-toggle" @click="brainShowImage = !brainShowImage" title="切换 2D / 3D">
+              {{ brainShowImage ? '3D' : '2D' }}
+            </div>
+          </div>
+          <div class="brain-stats">
+            <div class="brain-stat-item">
+              <div class="stat-value">{{ runningTasks }}</div>
+              <div class="stat-label">运行任务</div>
+            </div>
+            <div class="brain-stat-item">
+              <div class="stat-value">{{ loadedModels }}</div>
+              <div class="stat-label">加载模型</div>
+            </div>
+            <div class="brain-stat-item">
+              <div class="stat-value">{{ cameraStats.analyzing }}</div>
+              <div class="stat-label">分析中</div>
+            </div>
+            <div class="brain-stat-item">
+              <div class="stat-value">{{ alertTrendTotal }}</div>
+              <div class="stat-label">今日预警</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- 我的算法模块 -->
+      <!-- AI技能：卡片网格 -->
       <div class="dashboard-card my-algorithms">
         <div class="card-header">
-          <div class="title">我的算法</div>
+          <div class="title">AI技能</div>
+          <span class="skill-count-badge">{{ myAlgorithms.length }}个</span>
         </div>
         <div class="card-content">
-          <div id="algorithm-sphere-container" class="algorithm-bubbles">
-            <!-- Three.js 会渲染到这个容器 -->
+          <div class="skill-card-grid">
+            <div class="skill-card" v-for="item in displayedSkills" :key="item.id">
+              <div class="skill-card-name">{{ item.name }}</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 实时事件模块 -->
+      <!-- 最新预警模块 -->
       <div class="dashboard-card realtime-events">
         <div class="card-header">
-          <div class="title">实时事件</div>
+          <div class="title">最新预警</div>
         </div>
         <div class="card-content">
-          <div class="event-layout">
-            <!-- 上方视频区域 - 合并为一个大框 -->
-            <div class="main-video-area"></div>
-            <!-- 右侧缩略图列表 -->
-            <div class="thumbnail-list">
-              <div class="thumbnail-item"></div>
-              <div class="thumbnail-item"></div>
-              <div class="thumbnail-item"></div>
+          <div class="alert-preview-layout">
+            <div class="alert-main-image" @click="showAlertImageDialog = true">
+              <img :src="selectedAlert ? selectedAlert.image : ''" alt="" />
+              <div class="alert-image-overlay">
+                <span class="alert-image-timestamp">{{ selectedAlert ? selectedAlert.time : '' }}</span>
+              </div>
             </div>
-            <!-- 下方事件信息 -->
-            <div class="event-info-area">
-              <div class="event-info-row">
-                <span class="info-label">时间</span>
-                <span class="info-value">2022-12-12 15:28:46</span>
+            <div class="alert-thumb-column">
+              <div class="alert-thumb-item"
+                   v-for="(alert, index) in latestAlerts" :key="index"
+                   :class="{ active: selectedAlert === alert }"
+                   @click="selectedAlert = alert">
+                <img :src="alert.image" alt="" />
               </div>
-              <div class="event-info-row">
-                <span class="info-label">地点</span>
-                <span class="info-value">机场马路</span>
-              </div>
-              <div class="event-info-row">
-                <span class="info-label">事件</span>
-                <span class="info-value">机动车超时停车</span>
-                <span class="alarm-tag">报警</span>
-              </div>
+            </div>
+          </div>
+          <div class="alert-info-bar" v-if="selectedAlert">
+            <div class="alert-info-row">
+              <span class="alert-info-label">时间</span>
+              <span class="alert-info-value">{{ selectedAlert.time }}</span>
+            </div>
+            <div class="alert-info-row">
+              <span class="alert-info-label">地点</span>
+              <span class="alert-info-value">{{ selectedAlert.camera }}</span>
+            </div>
+            <div class="alert-info-row">
+              <span class="alert-info-label">事件</span>
+              <span class="alert-info-value alert-event-name">{{ selectedAlert.name }}</span>
+              <span class="alert-alarm-tag" :class="'alarm-level-' + selectedAlert.level">{{ selectedAlert.levelText }}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 报警统计模块 -->
+      <!-- 预警类型分布：饼图扇区上已有名称和百分比，不再单独图例 -->
       <div class="dashboard-card alarm-statistics">
         <div class="card-header">
-          <div class="title">报警统计</div>
+          <div class="title">预警类型分布</div>
         </div>
         <div class="card-content">
-          <!-- 报警类型统计 -->
           <div class="alarm-chart-section">
-            <!-- 圆环饼图 -->
-            <div class="donut-container">
-              <div class="donut-chart">
-                <div class="chart-section section-1" @mouseover="showTooltip('人员检测', 5, $event)" @mouseout="hideTooltip"></div>
-                <div class="chart-section section-2" @mouseover="showTooltip('交通拥堵', 40, $event)" @mouseout="hideTooltip"></div>
-                <div class="chart-section section-3" @mouseover="showTooltip('非机动车违规', 20, $event)" @mouseout="hideTooltip"></div>
-                <div class="chart-section section-4" @mouseover="showTooltip('违章停车', 35, $event)" @mouseout="hideTooltip"></div>
-                <div class="chart-tooltip" v-if="tooltipVisible" :style="tooltipStyle">
-                  {{ tooltipText }}
-                </div>
-              </div>
-            </div>
-
-            <!-- 图例 -->
-            <div class="chart-legends">
-              <div class="legend-item">
-                <div class="legend-color type-1"></div>
-                <span class="legend-name">人员检测</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-color type-2"></div>
-                <span class="legend-name">交通拥堵</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-color type-3"></div>
-                <span class="legend-name">非机动车违规</span>
-              </div>
-              <div class="legend-item">
-                <div class="legend-color type-4"></div>
-                <span class="legend-name">违章停车</span>
-              </div>
-            </div>
+            <div ref="alarmDistChart" class="alarm-dist-chart"></div>
           </div>
         </div>
       </div>
 
-      <!-- 设备统计模块 -->
+      <!-- 摄像头概览模块 -->
       <div class="dashboard-card device-statistics">
         <div class="card-header">
-          <div class="title">设备统计</div>
+          <div class="title">摄像头概览</div>
         </div>
         <div class="card-content">
-          <!-- 设备接入总数 -->
-          <div class="device-total">
-            <div class="total-label">设备接入总数</div>
-            <div class="digital-counter">
-              <span class="digit">2</span>
-              <span class="digit">8</span>
-              <span class="digit">6</span>
-              <span class="digit">5</span>
-              <span class="digit">8</span>
-              <span class="digit">9</span>
-
-            </div>
+          <div class="cam-total">
+            <span class="cam-total-label">接入总数</span>
+            <span class="cam-total-num">{{ cameraStats.total }}</span>
           </div>
-          <!-- 设备类型统计 -->
-          <div class="device-types">
-            <div class="type-item">
-              <div class="type-circle">
-                <div class="ripple-container">
-                  <div class="ripple"></div>
-                  <div class="ripple"></div>
-                  <div class="ripple"></div>
-                </div>
-                <div class="circle-content">
-                  <span class="number">562</span>
-
-                </div>
+          <div class="cam-circles">
+            <div class="cam-circle-item">
+              <div class="cam-ring online-ring">
+                <svg viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="34" class="ring-bg" />
+                  <circle cx="40" cy="40" r="34" class="ring-fg online-fg"
+                    :style="{ strokeDasharray: (2 * Math.PI * 34), strokeDashoffset: (2 * Math.PI * 34) * (1 - cameraStats.online / cameraStats.total) }" />
+                </svg>
+                <span class="cam-ring-num online-num">{{ cameraStats.online }}</span>
               </div>
-              <div class="type-name">视频流</div>
+              <span class="cam-circle-label">在线</span>
             </div>
-            <div class="type-item">
-              <div class="type-circle">
-                <div class="ripple-container">
-                  <div class="ripple"></div>
-                  <div class="ripple"></div>
-                  <div class="ripple"></div>
-                </div>
-                <div class="circle-content">
-                  <span class="number">23108</span>
-
-                </div>
+            <div class="cam-circle-item">
+              <div class="cam-ring analyzing-ring">
+                <svg viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="34" class="ring-bg" />
+                  <circle cx="40" cy="40" r="34" class="ring-fg analyzing-fg"
+                    :style="{ strokeDasharray: (2 * Math.PI * 34), strokeDashoffset: (2 * Math.PI * 34) * (1 - cameraStats.analyzing / cameraStats.total) }" />
+                </svg>
+                <span class="cam-ring-num analyzing-num">{{ cameraStats.analyzing }}</span>
               </div>
-              <div class="type-name">抓图服务</div>
+              <span class="cam-circle-label">分析中</span>
             </div>
-            <div class="type-item">
-              <div class="type-circle">
-                <div class="ripple-container">
-                  <div class="ripple"></div>
-                  <div class="ripple"></div>
-                  <div class="ripple"></div>
-                </div>
-                <div class="circle-content">
-                  <span class="number">2389</span>
-
-                </div>
+            <div class="cam-circle-item">
+              <div class="cam-ring offline-ring">
+                <svg viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="34" class="ring-bg" />
+                  <circle cx="40" cy="40" r="34" class="ring-fg offline-fg"
+                    :style="{ strokeDasharray: (2 * Math.PI * 34), strokeDashoffset: (2 * Math.PI * 34) * (1 - cameraStats.offline / cameraStats.total) }" />
+                </svg>
+                <span class="cam-ring-num offline-num">{{ cameraStats.offline }}</span>
               </div>
-              <div class="type-name">NVR调用</div>
+              <span class="cam-circle-label">离线</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 报警信息模块 -->
+      <!-- 预警趋势模块 -->
       <div class="dashboard-card alarm-info">
         <div class="card-header">
-          <div class="title">报警信息</div>
+          <div class="title">预警趋势</div>
         </div>
         <div class="card-content">
-          <!-- 日期筛选 -->
           <div class="date-filter">
             <div class="date-filter-left">
               <span class="date-btn">今日</span>
-              <span class="date-btn">近7天</span>
-              <span class="date-btn active">本月</span>
-              <span class="date-range">2021/05/01 - 2021/05/31</span>
-            </div>
-            <!-- 图表切换，移到右边 -->
-            <div class="date-filter-right">
-              <div class="chart-tabs">
-                <div class="tab active">
-                  <i class="el-icon-data-line"></i>
-                  报警趋势
-                </div>
-                <div class="tab">
-                  <i class="el-icon-map-location"></i>
-                  报警位置
-                </div>
-              </div>
+              <span class="date-btn active">近7天</span>
+              <span class="date-btn">本月</span>
             </div>
           </div>
-          <!-- 趋势图表 -->
           <div class="trend-chart">
             <div class="chart-header">
               <div class="trend-total">
-                <span class="label">报警数量</span>
-                <span class="value">25000</span>
-              </div>
-              <div class="trend-time-selector">
-                <span class="time-selector-label">时间范围:</span>
-                <div class="selector-dropdown">
-                  <span>近30天</span>
-                  <i class="el-icon-arrow-down"></i>
-                </div>
+                <span class="label">预警总数</span>
+                <span class="value">{{ alertTrendTotal }}</span>
               </div>
             </div>
             <svg width="100%" height="150" viewBox="0 0 600 150" preserveAspectRatio="none">
@@ -463,83 +360,43 @@
         </div>
       </div>
 
-      <!-- 报警转发模块 -->
+      <!-- 任务运行统计模块 -->
       <div class="dashboard-card alarm-forwarding">
         <div class="card-header">
-          <div class="title">报警转发</div>
+          <div class="title">复判调用统计</div>
         </div>
         <div class="card-content">
-          <!-- 柱状图 -->
-          <div class="bar-chart">
-            <svg width="100%" height="150" viewBox="0 0 350 150" preserveAspectRatio="none">
-              <!-- 横线 -->
-              <g class="grid-lines">
-                <line x1="0" y1="0" x2="350" y2="0" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="30" x2="350" y2="30" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="60" x2="350" y2="60" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="90" x2="350" y2="90" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="120" x2="350" y2="120" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="150" x2="350" y2="150" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-              </g>
-
-              <!-- 柱状图 -->
-              <g class="bars">
-                <rect x="25" y="50" width="20" height="100" fill="url(#bar-gradient)" rx="2" />
-                <rect x="75" y="70" width="20" height="80" fill="url(#bar-gradient)" rx="2" />
-                <rect x="125" y="30" width="20" height="120" fill="url(#bar-gradient)" rx="2" />
-                <rect x="175" y="80" width="20" height="70" fill="url(#bar-gradient)" rx="2" />
-                <rect x="225" y="60" width="20" height="90" fill="url(#bar-gradient)" rx="2" />
-                <rect x="275" y="100" width="20" height="50" fill="url(#bar-gradient)" rx="2" />
-                <rect x="325" y="70" width="20" height="80" fill="url(#bar-gradient)" rx="2" />
-              </g>
-
-              <!-- 柱状图渐变 -->
-              <defs>
-                <linearGradient id="bar-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#1e90ff" stop-opacity="1" />
-                  <stop offset="100%" stop-color="#1e90ff" stop-opacity="0.5" />
-                </linearGradient>
-              </defs>
-
-              <!-- 数值标签 -->
-              <g class="bar-values" fill="#ffffff" font-size="10" text-anchor="middle">
-                <text x="35" y="45">24917</text>
-                <text x="85" y="65">16585</text>
-                <text x="135" y="25">25000</text>
-                <text x="185" y="75">12532</text>
-                <text x="235" y="55">15072</text>
-                <text x="285" y="95">6023</text>
-                <text x="335" y="65">14311</text>
-              </g>
-
-              <!-- 底部日期标签 -->
-              <g class="x-labels" fill="#7888a8" font-size="10" text-anchor="middle">
-                <text x="35" y="165">4日</text>
-                <text x="85" y="165">5日</text>
-                <text x="135" y="165">6日</text>
-                <text x="185" y="165">7日</text>
-                <text x="235" y="165">8日</text>
-                <text x="285" y="165">9日</text>
-                <text x="335" y="165">10日</text>
-              </g>
-            </svg>
-          </div>
-          <!-- 图表底部说明 -->
-          <div class="chart-footer">
-            <div class="chart-hint">
-              <i class="el-icon-info"></i>
-              <span>报警转发量表示每日处理的报警事件数量</span>
+          <div class="skill-stats-list">
+            <div class="skill-stat-item" v-for="(skill, index) in skillCallStats" :key="index">
+              <div class="skill-stat-name">{{ skill.name }}</div>
+              <div class="skill-stat-bar-wrap">
+                <div class="skill-stat-bar" :style="{ width: skill.percent + '%', background: skill.color }"></div>
+              </div>
+              <div class="skill-stat-count">{{ skill.count }}</div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 图片放大弹窗 -->
+    <el-dialog :visible.sync="showAlertImageDialog" width="70%" top="5vh" custom-class="alert-image-dialog" append-to-body>
+      <div class="dialog-image-wrap" v-if="selectedAlert">
+        <img :src="selectedAlert.image" alt="预警截图" />
+        <div class="dialog-alert-info">
+          <span>{{ selectedAlert.name }}</span>
+          <span>{{ selectedAlert.camera }}</span>
+          <span>{{ selectedAlert.time }}</span>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import * as echarts from 'echarts';
 
 export default {
   name: 'AlgorithmInference',
@@ -547,9 +404,11 @@ export default {
     return {
       currentTime: '',
       cpuUsage: 20.69,
-      memoryUsage: 64.35,
-      diskUsage: 45.60,
-      networkUsage: 92.34,
+      memoryUsage: 45.60,
+      diskUsage: 64.35,
+      gpuUsage: 72.34,
+      loadedModels: 8,
+      runningTasks: 5,
       timerID: null,
       cubeRotateID: null,
       locationInfo: {
@@ -559,23 +418,62 @@ export default {
         loading: false
       },
       myAlgorithms: [
-        { id: '9934', name: '打手识别', size: 1.2 },
-        { id: '9926', name: '渣土车识别', size: 1.3 },
-        { id: '9677', name: '人员闯入', size: 1.1 },
-        { id: '9650', name: '消防通道堵塞', size: 1.2 },
-        { id: '9768', name: '厨房夜间老鼠识别', size: 1.4 },
-        { id: '9610', name: '火焰识别', size: 1.3 },
-        { id: '9762', name: '街道垃圾识别', size: 1.2 },
-        { id: '9758', name: '积水识别', size: 1.3 },
-        { id: '9688', name: '其它检测', size: 1.2 },
-        { id: '9684', name: '烟雾检测', size: 1.2 }
+        { id: '1', name: '人员追踪', size: 1 },
+        { id: '2', name: '安全帽检测', size: 1 },
+        { id: '3', name: '火焰检测', size: 1 },
+        { id: '4', name: '烟雾检测', size: 1 },
+        { id: '5', name: '有限空间监测', size: 1 },
+        { id: '6', name: '护目镜检测', size: 1 },
+        { id: '7', name: '人员闯入', size: 1 },
+        { id: '8', name: '通用目标检测', size: 1 },
+        { id: '9', name: '反光衣检测', size: 1 },
+        { id: '10', name: '区域人数统计', size: 1 },
+        { id: '11', name: '离岗检测', size: 1 },
+        { id: '12', name: '睡岗检测', size: 1 },
+        { id: '13', name: '口罩佩戴检测', size: 1 },
+        { id: '14', name: '工服识别', size: 1 },
+        { id: '15', name: '车辆违停检测', size: 1 },
+        { id: '16', name: '周界入侵检测', size: 1 },
+        { id: '17', name: '安全绳检测', size: 1 },
+        { id: '18', name: '明火识别', size: 1 },
+        { id: '19', name: '危险区域逗留', size: 1 },
+        { id: '20', name: '异常行为分析', size: 1 }
       ],
-      deviceStatistics: {
-        total: 286589,
-        videoStreams: 562,
-        captureServices: 23108,
-        wvpCalls: 2389
+      alarmDistChart: null,
+      skillDisplayOffset: 0,
+      skillCarouselTimer: null,
+      brainShowImage: false,
+      brainImageUrl: '/static/img/ai-brain.png',
+      cameraStats: {
+        total: 36,
+        online: 28,
+        analyzing: 12,
+        offline: 8
       },
+      selectedAlert: null,
+      showAlertImageDialog: false,
+      skillIcons: [
+        'el-icon-aim', 'el-icon-view', 'el-icon-lightning',
+        'el-icon-warning-outline', 'el-icon-lock', 'el-icon-discover',
+        'el-icon-position', 'el-icon-search'
+      ],
+      latestAlerts: [
+        { name: '未佩戴安全帽', camera: '3号厂房入口', location: '非机动车道', time: '2025-03-05 14:28:05', level: 3, levelText: '三级预警', image: '/static/img/ai-brain.png' },
+        { name: '人员闯入禁区', camera: '危化品仓库', location: '禁区通道', time: '2025-03-05 14:25:32', level: 1, levelText: '一级预警', image: '/static/img/ai-brain.png' },
+        { name: '烟雾检测', camera: '配电室', location: '配电室B区', time: '2025-03-05 14:22:18', level: 2, levelText: '二级预警', image: '/static/img/ai-brain.png' },
+        { name: '有限空间超时', camera: '地下管廊', location: '管廊3段', time: '2025-03-05 14:18:46', level: 3, levelText: '三级预警', image: '/static/img/ai-brain.png' },
+        { name: '火焰检测', camera: '焊接车间', location: '焊接工位', time: '2025-03-05 14:15:10', level: 1, levelText: '一级预警', image: '/static/img/ai-brain.png' },
+        { name: '护目镜未佩戴', camera: '喷漆车间', location: '喷漆车间', time: '2025-03-05 14:10:33', level: 4, levelText: '四级预警', image: '/static/img/ai-brain.png' }
+      ],
+      alertTrendTotal: 1280,
+      skillCallStats: [
+        { name: '安全帽复判', count: 1280, percent: 100, color: 'linear-gradient(90deg, #29de9c, #1abc9c)' },
+        { name: '人员闯入复判', count: 960, percent: 75, color: 'linear-gradient(90deg, #3eaef9, #1e90ff)' },
+        { name: '火焰烟雾复判', count: 820, percent: 64, color: 'linear-gradient(90deg, #ff5a5a, #ff2d55)' },
+        { name: '有限空间复判', count: 650, percent: 51, color: 'linear-gradient(90deg, #ff9c38, #ff7b00)' },
+        { name: '护目镜复判', count: 380, percent: 30, color: 'linear-gradient(90deg, #b980ff, #9b59b6)' },
+        { name: '烟雾复判', count: 210, percent: 16, color: 'linear-gradient(90deg, #4BD8FF, #06b6d4)' }
+      ],
       // Three.js相关变量
       cubeScene: null,
       cubeCamera: null,
@@ -628,6 +526,16 @@ export default {
       }
     }
   },
+  computed: {
+    displayedSkills() {
+      const list = this.myAlgorithms || [];
+      const n = 8;
+      if (list.length <= n) return list;
+      const o = this.skillDisplayOffset % list.length;
+      if (o + n <= list.length) return list.slice(o, o + n);
+      return [...list.slice(o), ...list.slice(0, o + n - list.length)];
+    }
+  },
   mounted() {
     // 初始化时间更新
     this.updateTime();
@@ -636,24 +544,24 @@ export default {
     // 添加全屏变化事件监听器
     document.addEventListener('fullscreenchange', this.handleFullscreenChange);
 
+    this.selectedAlert = this.latestAlerts[0];
+
     this.$nextTick(() => {
-      this.initCubeScene();
-      this.initAlgorithmSphere(); // 添加初始化算法球体
-      this.initResourceChart();
-
-      // 添加窗口大小变化监听
+      this.initBrainScene();
+      this.initAlarmDistChart();
+      this.startSkillCarousel();
       window.addEventListener('resize', this.handleResize);
-
-      // 延迟300ms后再次初始化算法球体，确保容器大小已经正确计算
-      setTimeout(() => {
-        this.reinitAlgorithmSphere();
-      }, 300);
+      window.addEventListener('resize', this.handleAlarmDistChartResize);
     });
   },
   beforeDestroy() {
     // 清除定时器
     if (this.timer) {
       clearInterval(this.timer);
+    }
+    if (this.skillCarouselTimer) {
+      clearInterval(this.skillCarouselTimer);
+      this.skillCarouselTimer = null;
     }
 
     // 移除全屏变化事件监听器
@@ -666,10 +574,15 @@ export default {
     if (this.algoAnimationId) {
       cancelAnimationFrame(this.algoAnimationId);
     }
-
     // 移除窗口大小变化监听
     window.removeEventListener('resize', this.handleResize);
     window.removeEventListener('resize', this.handleAlgoResize);
+    window.removeEventListener('resize', this.handleAlarmDistChartResize);
+
+    if (this.alarmDistChart) {
+      this.alarmDistChart.dispose();
+      this.alarmDistChart = null;
+    }
 
     // 清除资源图表
     if (this.resourceChart) {
@@ -680,6 +593,9 @@ export default {
     if (this.algoRenderer) {
       this.algoRenderer.dispose();
     }
+
+    // 清除大脑场景
+    this.disposeBrainScene();
   },
   methods: {
     updateTime() {
@@ -713,6 +629,378 @@ export default {
         }
       }
     },
+    initBrainScene() {
+      const container = document.getElementById('threejs-brain');
+      if (!container) {
+        console.warn('[Brain] container #threejs-brain not found');
+        return;
+      }
+
+      const width = container.clientWidth || container.offsetWidth || 400;
+      const height = container.clientHeight || container.offsetHeight || 400;
+      if (width < 10 || height < 10) {
+        if (!this._brainRetries) this._brainRetries = 0;
+        if (this._brainRetries < 10) {
+          this._brainRetries++;
+          setTimeout(() => this.initBrainScene(), 300);
+        } else {
+          console.warn('[Brain] container still has no size after retries:', width, height);
+        }
+        return;
+      }
+
+      try {
+      this.brainScene = new THREE.Scene();
+
+      this.brainCamera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
+      this.brainCamera.position.set(0, 2, 18);
+      this.brainCamera.lookAt(0, 0, 0);
+
+      this.brainRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      this.brainRenderer.setSize(width, height);
+      this.brainRenderer.setPixelRatio(window.devicePixelRatio);
+      this.brainRenderer.setClearColor(0x000000, 0);
+      container.appendChild(this.brainRenderer.domElement);
+
+      this.brainControls = new OrbitControls(this.brainCamera, this.brainRenderer.domElement);
+      this.brainControls.enableDamping = true;
+      this.brainControls.dampingFactor = 0.05;
+      this.brainControls.enableZoom = true;
+      this.brainControls.enableRotate = true;
+      this.brainControls.minDistance = 12;
+      this.brainControls.maxDistance = 55;
+      this.brainControls.target.set(0, 1.5, 0);
+      this.brainControls.rotateSpeed = 0.5;
+
+      const brainGroup = new THREE.Group();
+      this.brainScene.add(brainGroup);
+      this.brainGroup = brainGroup;
+
+      const brainPoints = [];
+      const brainSurfacePoints = [];
+
+      const brainShape = (u, v) => {
+        const theta = u * Math.PI;
+        const phi = v * 2 * Math.PI;
+
+        let rx = 7.5, ry = 6.0, rz = 8.5;
+
+        const fissureDepth = 0.9 + 0.1 * Math.cos(phi * 3);
+        const topBulge = theta < Math.PI * 0.5 ? 1.0 + 0.25 * Math.sin(theta * 2) : 1.0;
+        const asymmetry = 1.0 + 0.08 * Math.sin(phi * 2 + 0.5);
+
+        let x = rx * Math.sin(theta) * Math.cos(phi) * fissureDepth * asymmetry;
+        let y = ry * Math.cos(theta) * topBulge;
+        let z = rz * Math.sin(theta) * Math.sin(phi);
+
+        const fissure = Math.abs(Math.cos(phi));
+        if (fissure < 0.15 && theta < Math.PI * 0.8) {
+          const indent = (0.15 - fissure) / 0.15 * 2.5;
+          y -= indent * Math.sin(theta);
+        }
+
+        const gyrus = 0.3 * Math.sin(theta * 6 + phi * 4) + 0.2 * Math.sin(theta * 8 - phi * 3);
+        x += gyrus * Math.sin(theta) * Math.cos(phi) * 0.5;
+        y += gyrus * Math.cos(theta) * 0.3;
+        z += gyrus * Math.sin(theta) * Math.sin(phi) * 0.5;
+
+        y += 1.5;
+
+        return new THREE.Vector3(x, y, z);
+      };
+
+      const surfRes = 50;
+      for (let i = 0; i <= surfRes; i++) {
+        for (let j = 0; j <= surfRes; j++) {
+          const p = brainShape(i / surfRes, j / surfRes);
+          brainSurfacePoints.push(p);
+        }
+      }
+
+      const particleCount = 3000;
+      for (let i = 0; i < particleCount; i++) {
+        const u = Math.random();
+        const v = Math.random();
+        const depth = 0.3 + Math.random() * 0.7;
+        const surfPoint = brainShape(u, v);
+        brainPoints.push(new THREE.Vector3(
+          surfPoint.x * depth,
+          surfPoint.y * depth + (1 - depth) * 1.5,
+          surfPoint.z * depth
+        ));
+      }
+      for (let i = 0; i < 1200; i++) {
+        const u = Math.random();
+        const v = Math.random();
+        const surfPoint = brainShape(u, v);
+        const jitter = 0.92 + Math.random() * 0.16;
+        brainPoints.push(new THREE.Vector3(
+          surfPoint.x * jitter,
+          surfPoint.y * jitter,
+          surfPoint.z * jitter
+        ));
+      }
+
+      const particleGeometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(brainPoints.length * 3);
+      const colors = new Float32Array(brainPoints.length * 3);
+      const sizes = new Float32Array(brainPoints.length);
+
+      brainPoints.forEach((p, i) => {
+        positions[i * 3] = p.x;
+        positions[i * 3 + 1] = p.y;
+        positions[i * 3 + 2] = p.z;
+
+        const dist = p.length() / 10;
+        const r = 0.05 + dist * 0.25;
+        const g = 0.75 + Math.random() * 0.25;
+        const b = 0.95 + Math.random() * 0.05;
+        colors[i * 3] = r;
+        colors[i * 3 + 1] = g;
+        colors[i * 3 + 2] = b;
+
+        sizes[i] = 0.15 + Math.random() * 0.25;
+      });
+
+      particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+      const particleMaterial = new THREE.ShaderMaterial({
+        uniforms: {},
+        vertexShader: [
+          'attribute float size;',
+          'attribute vec3 color;',
+          'varying vec3 vColor;',
+          'void main() {',
+          '  vColor = color;',
+          '  vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);',
+          '  gl_PointSize = size * (500.0 / -mvPosition.z);',
+          '  gl_Position = projectionMatrix * mvPosition;',
+          '}'
+        ].join('\n'),
+        fragmentShader: [
+          'varying vec3 vColor;',
+          'void main() {',
+          '  float d = length(gl_PointCoord - vec2(0.5));',
+          '  if (d > 0.5) discard;',
+          '  float alpha = 1.0 - smoothstep(0.0, 0.5, d);',
+          '  gl_FragColor = vec4(vColor * 1.5, alpha * 0.9);',
+          '}'
+        ].join('\n'),
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+
+      const particles = new THREE.Points(particleGeometry, particleMaterial);
+      brainGroup.add(particles);
+      this.brainParticles = particles;
+
+      const lineCount = 600;
+      const linePositions = [];
+      const lineColors = [];
+
+      for (let i = 0; i < lineCount; i++) {
+        const idx1 = Math.floor(Math.random() * brainPoints.length);
+        let idx2 = Math.floor(Math.random() * brainPoints.length);
+        const p1 = brainPoints[idx1];
+        const p2 = brainPoints[idx2];
+        const dist = p1.distanceTo(p2);
+        if (dist > 0.5 && dist < 4.0) {
+          linePositions.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+          const alpha = 1.0 - dist / 4.0;
+          lineColors.push(0.1, 0.85 * alpha, 1.0 * alpha, 0.1, 0.85 * alpha, 1.0 * alpha);
+        }
+      }
+
+      if (linePositions.length > 0) {
+        const lineGeometry = new THREE.BufferGeometry();
+        lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+        lineGeometry.setAttribute('color', new THREE.Float32BufferAttribute(lineColors, 3));
+        const lineMaterial = new THREE.LineBasicMaterial({
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.45,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        });
+        const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+        brainGroup.add(lines);
+        this.brainLines = lines;
+      }
+
+      const surfaceGeometry = new THREE.BufferGeometry();
+      const surfPositions = [];
+      const surfColors2 = [];
+      brainSurfacePoints.forEach(p => {
+        surfPositions.push(p.x, p.y, p.z);
+        surfColors2.push(0.1, 0.7, 1.0);
+      });
+      surfaceGeometry.setAttribute('position', new THREE.Float32BufferAttribute(surfPositions, 3));
+      surfaceGeometry.setAttribute('color', new THREE.Float32BufferAttribute(surfColors2, 3));
+
+      const surfMaterial = new THREE.PointsMaterial({
+        size: 0.06,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.25,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const surfaceParticles = new THREE.Points(surfaceGeometry, surfMaterial);
+      brainGroup.add(surfaceParticles);
+
+      const pulseCount = 15;
+      this.brainPulses = [];
+      for (let i = 0; i < pulseCount; i++) {
+        const idx = Math.floor(Math.random() * brainPoints.length);
+        const origin = brainPoints[idx].clone();
+        const pulseGeo = new THREE.SphereGeometry(0.15, 8, 8);
+        const pulseMat = new THREE.MeshBasicMaterial({
+          color: 0x00ffff,
+          transparent: true,
+          opacity: 0.8,
+          blending: THREE.AdditiveBlending
+        });
+        const pulseMesh = new THREE.Mesh(pulseGeo, pulseMat);
+        pulseMesh.position.copy(origin);
+        brainGroup.add(pulseMesh);
+        this.brainPulses.push({
+          mesh: pulseMesh,
+          origin: origin,
+          target: brainPoints[Math.floor(Math.random() * brainPoints.length)].clone(),
+          progress: Math.random(),
+          speed: 0.003 + Math.random() * 0.008
+        });
+      }
+
+      this.brainPoints = brainPoints;
+      this.brainClock = new THREE.Clock();
+
+      this.animateBrain();
+
+      window.addEventListener('resize', this.handleBrainResize);
+      } catch (e) {
+        console.error('[Brain] initBrainScene failed:', e);
+      }
+    },
+
+    animateBrain() {
+      this.brainAnimationId = requestAnimationFrame(this.animateBrain);
+
+      const elapsed = this.brainClock.getElapsedTime();
+
+      this.brainGroup.rotation.y = elapsed * 0.15;
+      this.brainGroup.rotation.x = Math.sin(elapsed * 0.2) * 0.05;
+
+      const sizes = this.brainParticles.geometry.attributes.size.array;
+      for (let i = 0; i < sizes.length; i++) {
+        sizes[i] = 0.15 + 0.12 * Math.sin(elapsed * 2 + i * 0.1);
+      }
+      this.brainParticles.geometry.attributes.size.needsUpdate = true;
+
+      if (this.brainLines) {
+        this.brainLines.material.opacity = 0.4 + 0.2 * Math.sin(elapsed * 1.5);
+      }
+
+      this.brainPulses.forEach(pulse => {
+        pulse.progress += pulse.speed;
+        if (pulse.progress >= 1) {
+          pulse.progress = 0;
+          pulse.origin = pulse.target.clone();
+          pulse.target = this.brainPoints[Math.floor(Math.random() * this.brainPoints.length)].clone();
+        }
+        pulse.mesh.position.lerpVectors(pulse.origin, pulse.target, pulse.progress);
+        pulse.mesh.material.opacity = 0.8 * Math.sin(pulse.progress * Math.PI);
+        const s = 0.8 + 0.4 * Math.sin(pulse.progress * Math.PI);
+        pulse.mesh.scale.setScalar(s);
+      });
+
+      if (this.brainControls) this.brainControls.update();
+      this.brainRenderer.render(this.brainScene, this.brainCamera);
+    },
+
+    handleBrainResize() {
+      const container = document.getElementById('threejs-brain');
+      if (!container || !this.brainRenderer) return;
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      this.brainCamera.aspect = w / h;
+      this.brainCamera.updateProjectionMatrix();
+      this.brainRenderer.setSize(w, h);
+    },
+
+    disposeBrainScene() {
+      if (this.brainAnimationId) {
+        cancelAnimationFrame(this.brainAnimationId);
+      }
+      window.removeEventListener('resize', this.handleBrainResize);
+      if (this.brainControls) {
+        this.brainControls.dispose();
+        this.brainControls = null;
+      }
+      if (this.brainRenderer) {
+        this.brainRenderer.dispose();
+        const container = document.getElementById('threejs-brain');
+        if (container && this.brainRenderer.domElement.parentNode === container) {
+          container.removeChild(this.brainRenderer.domElement);
+        }
+      }
+      if (this.brainScene) {
+        this.brainScene.traverse(obj => {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) {
+            if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+            else obj.material.dispose();
+          }
+        });
+      }
+    },
+
+    startSkillCarousel() {
+      if (this.skillCarouselTimer) return;
+      this.skillCarouselTimer = setInterval(() => {
+        const len = this.myAlgorithms.length;
+        if (len <= 8) return;
+        this.skillDisplayOffset = (this.skillDisplayOffset + 8) % len;
+      }, 3000);
+    },
+    initAlarmDistChart() {
+      const el = this.$refs.alarmDistChart;
+      if (!el) return;
+      const data = [
+        { value: 15, name: '人员追踪', itemStyle: { color: '#4CD964' } },
+        { value: 35, name: '安全帽检测', itemStyle: { color: '#447CF9' } },
+        { value: 25, name: '火焰烟雾', itemStyle: { color: '#FF9500' } },
+        { value: 25, name: '有限空间', itemStyle: { color: '#FF2D55' } }
+      ];
+      if (this.alarmDistChart) this.alarmDistChart.dispose();
+      this.alarmDistChart = echarts.init(el);
+      this.alarmDistChart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'item', formatter: '{b}: {d}%' },
+        series: [{
+          type: 'pie',
+          radius: ['42%', '68%'],
+          center: ['50%', '48%'],
+          data: data,
+          label: {
+            show: true,
+            formatter: '{b}\n{d}%',
+            fontSize: 12,
+            color: '#fff',
+            lineHeight: 18
+          },
+          labelLine: { show: false },
+          emphasis: { scale: true, itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,0.3)' } }
+        }]
+      });
+    },
+    handleAlarmDistChartResize() {
+      if (this.alarmDistChart) this.alarmDistChart.resize();
+    },
+
     initCubeScene() {
       // 获取容器
       const container = document.getElementById('threejs-cube');
@@ -2918,23 +3206,18 @@ export default {
 .algorithm-inference-platform {
   width: 100%;
   height: 100vh;
-  background-color: #000b18;
+  background: linear-gradient(135deg, #001529 0%, #000B18 50%, #001020 100%);
   color: #ffffff;
   font-family: "Microsoft YaHei", Arial, sans-serif;
   position: relative;
   overflow-y: auto;
-  /* 保留垂直滚动 */
   overflow-x: hidden;
-  /* 隐藏水平滚动 */
-  background-image: url('/static/img/bg-pattern.png');
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
   scrollbar-width: none;
-  /* Firefox 隐藏滚动条 */
   -ms-overflow-style: none;
-  /* IE 和 Edge 隐藏滚动条 */
 }
 
 /* 为 Chrome、Safari 和 Opera 隐藏滚动条 */
@@ -2948,9 +3231,9 @@ export default {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
-  grid-gap: 8px;
+  grid-gap: 10px;
   flex: 1;
-  padding: 8px;
+  padding: 10px;
   overflow: hidden;
 }
 
@@ -3002,42 +3285,33 @@ export default {
   z-index: 10;
 }
 
-.fullscreen-btn {
-  position: absolute;
-  top: 0px;
-  right: 20px;
-  color: #91a7cc;
-  font-size: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  z-index: 10;
-}
-
-.fullscreen-btn i {
-  margin-right: 5px;
-  font-size: 16px;
-}
+/* fullscreen-btn 样式在 top-bar 区域定义 */
 
 /* 仪表板布局 */
 .dashboard-container {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
-  grid-gap: 8px;
+  grid-gap: 10px;
   flex: 1;
-  padding: 8px;
+  padding: 10px;
   overflow: hidden;
 }
 
 /* 卡片样式 */
 .dashboard-card {
-  background-color: rgba(0, 11, 24, 0.8);
-  border-radius: 0;
+  background: linear-gradient(180deg, rgba(6, 30, 63, 0.85) 0%, rgba(3, 15, 35, 0.9) 100%);
+  border-radius: 4px;
   overflow: hidden;
-  border: 1px solid rgba(30, 80, 150, 0.5);
+  border: 1px solid rgba(35, 88, 148, 0.4);
   position: relative;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(75, 216, 255, 0.08);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboard-card:hover {
+  border-color: rgba(35, 88, 148, 0.6);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(75, 216, 255, 0.12);
 }
 
 /* 卡片头部蓝色边框 */
@@ -3048,7 +3322,8 @@ export default {
   left: 0;
   right: 0;
   height: 2px;
-  background: rgba(30, 80, 150, 0.8);
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.6), rgba(30, 144, 255, 0.8), rgba(0, 255, 255, 0.6), transparent);
+  z-index: 1;
 }
 
 /* 卡片蓝色边角 */
@@ -3057,27 +3332,30 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
-  width: 30px;
-  height: 30px;
-  border-top: 2px solid #1e90ff;
-  border-left: 2px solid #1e90ff;
+  width: 20px;
+  height: 20px;
+  border-top: 2px solid rgba(0, 255, 255, 0.6);
+  border-left: 2px solid rgba(0, 255, 255, 0.6);
+  border-radius: 4px 0 0 0;
+  z-index: 1;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 15px;
-  background-color: rgba(9, 30, 60, 0.9);
-  border-bottom: 1px solid rgba(30, 80, 150, 0.5);
+  padding: 8px 15px;
+  background: linear-gradient(180deg, rgba(6, 30, 93, 0.9) 0%, rgba(4, 20, 63, 0.95) 100%);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.15);
 }
 
 .card-header .title {
   font-size: 14px;
   font-weight: bold;
-  color: #3a9eff;
+  color: #00FFFF;
   position: relative;
   padding-left: 15px;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
 }
 
 .card-header .title::before {
@@ -3086,13 +3364,21 @@ export default {
   left: 0;
   top: 2px;
   height: 16px;
-  width: 4px;
-  background-color: #3a9eff;
+  width: 3px;
+  background: linear-gradient(180deg, #00FFFF, #1e90ff);
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(0, 255, 255, 0.5);
 }
 
 .card-header i {
-  color: #91a7cc;
+  color: #7EAEE5;
   cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.card-header i:hover {
+  color: #00FFFF;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
 }
 
 .card-content {
@@ -3644,7 +3930,7 @@ export default {
   font-weight: 500;
 }
 
-/* 中心显示区域 */
+/* 中心显示区域：负边距盖住网格缝隙，实色背景遮住两侧蓝条 */
 .center-container {
   grid-column: 2;
   grid-row: 1 / 3;
@@ -3652,9 +3938,13 @@ export default {
   flex-direction: column;
   position: relative;
   min-height: 0;
-  /* 确保内容不溢出 */
-  justify-content: flex-end;
-  /* 内容靠下对齐 */
+  overflow: hidden;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  margin: 0 -10px;
+  background: #000d1a;
+  z-index: 1;
 }
 
 .top-stats {
@@ -5367,11 +5657,24 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 10px 0 10px 0;
   position: relative;
   z-index: 2;
-  padding: 0 20px;
-  height: 30px;
+  padding: 12px 20px;
+  height: 50px;
+  background: linear-gradient(180deg, rgba(0, 30, 60, 0.95) 0%, rgba(0, 15, 35, 0.85) 100%);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(0, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.top-bar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.4), transparent);
 }
 
 .left-section {
@@ -5385,6 +5688,7 @@ export default {
   color: #00ffff;
   white-space: nowrap;
   line-height: 1;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 
 .top-bar .title {
@@ -5406,10 +5710,16 @@ export default {
 }
 
 .top-bar .title span {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: bold;
   color: #fff;
   position: relative;
+  letter-spacing: 4px;
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.6), 0 0 30px rgba(0, 150, 255, 0.3);
+  background: linear-gradient(180deg, #ffffff 0%, #b0d8ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .top-bar .title span::before,
@@ -5417,17 +5727,17 @@ export default {
   content: '';
   position: absolute;
   height: 2px;
-  width: 70px;
+  width: 80px;
   background: linear-gradient(90deg, transparent, #00ffff, transparent);
   top: 50%;
 }
 
 .top-bar .title span::before {
-  right: calc(100% + 15px);
+  right: calc(100% + 20px);
 }
 
 .top-bar .title span::after {
-  left: calc(100% + 15px);
+  left: calc(100% + 20px);
 }
 
 .location-info {
@@ -5449,6 +5759,7 @@ export default {
 .weather-info i {
   color: #00FFFF;
   font-size: 16px;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
 }
 
 .air-quality {
@@ -5460,9 +5771,9 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  background: rgba(0, 20, 40, 0.5);
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 20, 40, 0.6);
   border: 1px solid rgba(0, 255, 255, 0.3);
   border-radius: 4px;
   cursor: pointer;
@@ -5475,9 +5786,9 @@ export default {
 }
 
 .fullscreen-btn:hover {
-  background: rgba(0, 30, 60, 0.7);
+  background: rgba(0, 30, 60, 0.8);
   border-color: rgba(0, 255, 255, 0.6);
-  transform: scale(1.05);
+  transform: scale(1.08);
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
 }
 
@@ -5488,7 +5799,8 @@ export default {
 
 .realtime-events .card-content {
   height: calc(100% - 40px);
-  /* 减去头部高度 */
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -5780,6 +6092,14 @@ export default {
   white-space: nowrap;
 }
 
+.legend-percent {
+  font-size: 12px;
+  color: #00FFFF;
+  font-weight: 600;
+  margin-left: 4px;
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
+}
+
 /* 报警统计模块样式 */
 .alarm-statistics {
   grid-column: 3;
@@ -5805,7 +6125,13 @@ export default {
   overflow: hidden;
 }
 
-/* 圆环饼图容器 */
+.alarm-dist-chart {
+  width: 100%;
+  flex: 1;
+  min-height: 180px;
+}
+
+/* 圆环饼图容器（已改用 ECharts，保留样式兼容） */
 .donut-container {
   flex: 1;
   position: relative;
@@ -5852,8 +6178,8 @@ export default {
 :-webkit-full-screen .top-bar,
 :-moz-full-screen .top-bar,
 :-ms-fullscreen .top-bar {
-  padding: 15px 20px;
-  background-color: rgba(0, 0, 0, 0.5);
+  padding: 12px 20px;
+  background: linear-gradient(180deg, rgba(0, 20, 45, 0.95) 0%, rgba(0, 10, 25, 0.9) 100%);
   position: fixed;
   top: 0;
   left: 0;
@@ -5871,18 +6197,9 @@ export default {
   box-sizing: border-box;
 }
 
-/* 全屏按钮样式 */
+/* 全屏按钮补充样式 */
 .fullscreen-btn {
   cursor: pointer;
-  margin-left: 15px;
-  font-size: 22px;
-  color: #fff;
-  transition: all 0.3s ease;
-}
-
-.fullscreen-btn:hover {
-  color: #3a9eff;
-  transform: scale(1.1);
 }
 
 .resource-details-container {
@@ -6049,13 +6366,601 @@ export default {
   pointer-events: none;
 }
 
+/* ========== AI智慧大脑区域 ========== */
+.ai-brain-section {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #000d1a;
+  position: relative;
+  overflow: hidden;
+  border: none;
+}
+
+.brain-display-wrap {
+  width: 100%;
+  flex: 1;
+  min-height: 200px;
+  position: relative;
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.brain-display-wrap::-webkit-scrollbar {
+  display: none;
+  width: 0;
+}
+
+.threejs-brain-container {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.threejs-brain-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.brain-image-wrap {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+.brain-image-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: #000d1a;
+  z-index: 0;
+}
+
+.brain-static-img {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  animation: brain-2d-float 5s ease-in-out infinite;
+}
+
+@keyframes brain-2d-float {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.03) translateY(-4px); }
+}
+
+.brain-view-toggle {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: rgba(0, 255, 255, 0.95);
+  background: rgba(0, 40, 80, 0.7);
+  border: 1px solid rgba(0, 255, 255, 0.35);
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.brain-view-toggle:hover {
+  background: rgba(0, 60, 120, 0.8);
+  border-color: rgba(0, 255, 255, 0.6);
+}
+
+.brain-stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 10px;
+  padding: 10px 20px;
+  background: rgba(0, 20, 50, 0.4);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+  border-radius: 8px;
+  z-index: 2;
+}
+
+.brain-stat-item { text-align: center; }
+
+.brain-stat-item .stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #00FFFF;
+  text-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
+  line-height: 1.2;
+}
+
+.brain-stat-item .stat-label {
+  font-size: 12px;
+  color: #7EAEE5;
+  margin-top: 2px;
+}
+
+/* ========== 技能气泡 ========== */
+.skill-count-badge {
+  font-size: 12px;
+  color: #00FFFF;
+  background: rgba(0, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+/* AI技能：固定 4x2 共 8 个，定时换一批显示 */
+.skill-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  height: 100%;
+  min-height: 120px;
+}
+
+.skill-card {
+  background: linear-gradient(160deg, rgba(15, 45, 85, 0.75) 0%, rgba(8, 28, 52, 0.85) 100%);
+  border: 1px solid rgba(68, 124, 249, 0.35);
+  border-radius: 10px;
+  padding: 12px 10px;
+  text-align: center;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 20, 50, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.skill-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, rgba(0, 200, 255, 0.6), rgba(68, 124, 249, 0.4));
+  border-radius: 10px 0 0 10px;
+}
+
+.skill-card:hover {
+  border-color: rgba(100, 180, 255, 0.5);
+  box-shadow: 0 4px 16px rgba(68, 124, 249, 0.2), 0 0 20px rgba(0, 200, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.skill-card-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(230, 242, 255, 0.95);
+  line-height: 1.35;
+  word-break: break-all;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.my-algorithms .card-content {
+  padding: 8px 12px;
+  height: calc(100% - 40px);
+  min-height: 200px;
+}
+
+/* ========== 预警行内缩略图 ========== */
+.alert-thumb {
+  width: 52px;
+  height: 40px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid rgba(35, 88, 148, 0.3);
+  transition: all 0.3s ease;
+}
+
+.alert-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.alert-thumb .thumb-zoom {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+.alert-thumb:hover {
+  border-color: rgba(0, 255, 255, 0.5);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
+}
+
+.alert-thumb:hover .thumb-zoom {
+  opacity: 1;
+}
+
+.alert-thumb:hover img {
+  filter: brightness(0.7);
+}
+
+/* 图片放大弹窗 */
+.dialog-image-wrap {
+  position: relative;
+}
+
+.dialog-image-wrap img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.dialog-alert-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 20px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+  display: flex;
+  gap: 20px;
+  color: #fff;
+  font-size: 14px;
+}
+
+/* ========== 摄像头概览圆圈 ========== */
+.cam-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0 5px;
+  margin-bottom: 10px;
+}
+
+.cam-total-label {
+  color: #7EAEE5;
+  font-size: 13px;
+}
+
+.cam-total-num {
+  font-size: 28px;
+  font-weight: bold;
+  color: #00FFFF;
+  text-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
+}
+
+.cam-circles {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex: 1;
+}
+
+.cam-circle-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.cam-ring {
+  position: relative;
+  width: 68px;
+  height: 68px;
+}
+
+.cam-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  fill: none;
+  stroke: rgba(30, 80, 150, 0.2);
+  stroke-width: 5;
+}
+
+.ring-fg {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s ease;
+}
+
+.online-fg { stroke: #44FF9B; filter: drop-shadow(0 0 4px rgba(68, 255, 155, 0.5)); }
+.analyzing-fg { stroke: #3eaef9; filter: drop-shadow(0 0 4px rgba(62, 174, 249, 0.5)); }
+.offline-fg { stroke: #ff5a5a; filter: drop-shadow(0 0 4px rgba(255, 90, 90, 0.5)); }
+
+.cam-ring-num {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.cam-ring-num.online-num { color: #44FF9B; }
+.cam-ring-num.analyzing-num { color: #3eaef9; }
+.cam-ring-num.offline-num { color: #ff5a5a; }
+
+.cam-circle-label {
+  color: #7EAEE5;
+  font-size: 12px;
+}
+
+/* 资源概要区域 */
+.resource-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  background: rgba(0, 20, 50, 0.3);
+  border: 1px solid rgba(35, 88, 148, 0.3);
+  border-radius: 4px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.summary-label {
+  color: #7EAEE5;
+  font-size: 13px;
+}
+
+.summary-value {
+  color: #CCD6F6;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.summary-value.highlight {
+  color: #00FFFF;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+  font-size: 16px;
+}
+
+/* 预警预览布局 */
+.alert-preview-layout {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.alert-main-image {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(35, 88, 148, 0.4);
+  background: rgba(0, 10, 30, 0.5);
+}
+
+.alert-main-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.alert-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 8px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%);
+}
+
+.alert-image-timestamp {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  font-family: monospace;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.alert-thumb-column {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 60px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.alert-thumb-column::-webkit-scrollbar { display: none; }
+
+.alert-thumb-item {
+  width: 60px;
+  height: 42px;
+  border-radius: 3px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(35, 88, 148, 0.3);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.alert-thumb-item.active {
+  border-color: rgba(0, 200, 255, 0.6);
+  box-shadow: 0 0 8px rgba(0, 200, 255, 0.25);
+  opacity: 1;
+}
+
+.alert-thumb-item:hover {
+  opacity: 0.9;
+  border-color: rgba(0, 200, 255, 0.4);
+}
+
+.alert-thumb-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 预警信息栏 */
+.alert-info-bar {
+  padding: 8px 0 0;
+  border-top: 1px solid rgba(35, 88, 148, 0.3);
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.alert-info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.alert-info-label {
+  color: #7888a8;
+  width: 32px;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.alert-info-value {
+  color: #CCD6F6;
+  flex: 1;
+}
+
+.alert-event-name {
+  color: #ff4757;
+  font-weight: 600;
+}
+
+.alert-alarm-tag {
+  font-size: 11px;
+  padding: 1px 10px;
+  border-radius: 3px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.alert-alarm-tag.alarm-level-1 { color: #fff; background: #ff2d55; }
+.alert-alarm-tag.alarm-level-2 { color: #fff; background: #ff9500; }
+.alert-alarm-tag.alarm-level-3 { color: #fff; background: #3eaef9; }
+.alert-alarm-tag.alarm-level-4 { color: #fff; background: #44FF9B; }
+
+/* 技能调用统计样式 */
+.skill-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 5px 0;
+}
+
+.skill-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.skill-stat-name {
+  min-width: 96px;
+  width: 96px;
+  flex-shrink: 0;
+  color: #7EAEE5;
+  font-size: 12px;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.skill-stat-bar-wrap {
+  flex: 1;
+  height: 16px;
+  background: rgba(0, 20, 50, 0.4);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(35, 88, 148, 0.3);
+}
+
+.skill-stat-bar {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 1s ease;
+  position: relative;
+}
+
+.skill-stat-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%);
+  border-radius: 8px;
+}
+
+.skill-stat-count {
+  width: 45px;
+  flex-shrink: 0;
+  color: #00FFFF;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: right;
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
+}
+
+/* 摄像头圆环颜色 */
+.online-circle .ripple { border-color: rgba(68, 255, 155, 0.4) !important; }
+.analyzing-circle .ripple { border-color: rgba(62, 174, 249, 0.4) !important; }
+.offline-circle .ripple { border-color: rgba(255, 90, 90, 0.4) !important; }
+
+.online-circle .number { color: #44FF9B !important; }
+.analyzing-circle .number { color: #3eaef9 !important; }
+.offline-circle .number { color: #ff5a5a !important; }
+
 /* 修复整个页面的滚动条 */
 html,
 body {
   scrollbar-width: none !important;
-  /* Firefox */
   -ms-overflow-style: none !important;
-  /* IE and Edge */
   overflow-x: hidden !important;
 }
 
@@ -6063,5 +6968,22 @@ html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
+}
+</style>
+
+<style>
+.alert-image-dialog .el-dialog {
+  background: linear-gradient(180deg, #001529 0%, #000B18 100%) !important;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.alert-image-dialog .el-dialog__header {
+  display: none;
+}
+
+.alert-image-dialog .el-dialog__body {
+  padding: 0 !important;
 }
 </style>

@@ -69,21 +69,6 @@
         <el-menu-item index="/skillManage/multimodalReview">多模态大模型复判</el-menu-item>
       </el-submenu>
 
-      <!-- 系统管理菜单 -->
-      <el-submenu index="/systemManage" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-setting"></i>
-          <span>系统管理</span>
-        </template>
-        <el-menu-item index="/systemManage/appSettings">应用设置</el-menu-item>
-        <el-menu-item index="/systemManage/userManagement">用户管理</el-menu-item>
-        <el-menu-item index="/systemManage/roleManagement">角色管理</el-menu-item>
-        <el-menu-item index="/systemManage/tenantManagement">租户管理</el-menu-item>
-        <el-menu-item index="/systemManage/departmentManagement">部门管理</el-menu-item>
-        <el-menu-item index="/systemManage/positionManagement">岗位管理</el-menu-item>
-        <el-menu-item index="/systemManage/knowledgeBase">知识库管理</el-menu-item>
-      </el-submenu>
-
       <!-- ML Pipeline 模块（模型工厂） -->
       <el-menu-item index="/mlPipeline">
         <i class="el-icon-s-platform"></i>
@@ -97,8 +82,7 @@
           <span>可视中心</span>
         </template>
         <el-menu-item index="/visualCenter">可视中心首页</el-menu-item>
-        <el-menu-item index="/algorithmInference">算法推理平台</el-menu-item>
-        <el-menu-item index="/visualCenter/parkManagement">园区封闭管理平台</el-menu-item>
+        <el-menu-item index="/algorithmInference">AI智算中心</el-menu-item>
       </el-submenu>
 
 
@@ -136,19 +120,19 @@ export default {
   name: "UiHeader",
   components: {Notification, changePasswordDialog},
   data() {
+    const user = userService.getUser() || {};
+    const path = (this.$route && this.$route.path) || '/';
+    const secondSlash = path.indexOf('/', 1);
+    const activeIndex = secondSlash > 0 ? path.substring(0, secondSlash) : path;
     return {
-      username: userService.getUser().username,
-      activeIndex: this.$route.path.indexOf("/", 1)>0?this.$route.path.substring(0, this.$route.path.indexOf("/", 1)):this.$route.path,
-      editUser: userService.getUser() ? userService.getUser().role.id === 1 : false
+      username: (user.username != null ? user.username : '') || '未登录',
+      activeIndex,
+      editUser: !!(user.role && user.role.id === 1)
     };
   },
   created() {
-    console.log(34334)
-    console.log(this.$route.path)
-    console.log(this.$route.path.indexOf("/", 1))
-    console.log(this.activeIndex)
     if (this.$route.path.startsWith("/channelList")) {
-      this.activeIndex = "/deviceList"
+      this.activeIndex = "/deviceList";
     }
   },
   mounted() {

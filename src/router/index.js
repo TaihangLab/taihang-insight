@@ -47,19 +47,7 @@ import multimodalReviewCreate from '../components/visionAI/skillManagement/multi
 import logRecords from '../components/visionAI/smartControl/logRecords.vue'
 import edgeServer from '../components/visionAI/edgeManagement/edgeServer.vue'
 import edgeBox from '../components/visionAI/edgeManagement/edgeBox.vue'
-import applicationSettings from '../components/visionAI/systemManagement/applicationSettings.vue'
-import userManagement from '../components/visionAI/systemManagement/userManagement.vue'
-import roleManagement from '../components/visionAI/systemManagement/roleManagement.vue'
-import roleAssignment from '../components/visionAI/systemManagement/roleAssignment.vue'
-import userAssignment from '../components/visionAI/systemManagement/userAssignment.vue'
-import tenantManagement from '../components/visionAI/systemManagement/tenantManagement.vue'
-import departmentManagement from '../components/visionAI/systemManagement/departmentManagement.vue'
-import positionManagement from '../components/visionAI/systemManagement/positionManagement.vue'
 import profile from '../components/visionAI/systemManagement/profile.vue'
-import parkManagement from '../components/visionAI/ivisualCenter/parkManagement.vue'
-import knowledgeBase from '../components/visionAI/systemManagement/knowledgeBase.vue'
-import knowledgeBaseDetail from '../components/visionAI/systemManagement/knowledgeBaseDetail.vue'
-// 知识库管理
 
 // ML Pipeline 模块（模型工厂）
 import modelFactory from '../components/visionAI/mlPipeline/modelFactory.vue'
@@ -93,11 +81,6 @@ export default new VueRouter({
         {
           path: '/algorithmInference',
           component: algorithmInference,
-        },
-        {
-          path: '/visualCenter/parkManagement',
-          name: 'parkManagement',
-          component: parkManagement,
         },
         {
           path: '/monitoring/realtime',
@@ -192,56 +175,6 @@ export default new VueRouter({
           path: '/edgeManage/edgeBox',
           name: 'edgeBox',
           component: edgeBox,
-        },
-        {
-          path: '/systemManage/appSettings',
-          name: 'applicationSettings',
-          component: applicationSettings,
-        },
-        {
-          path: '/systemManage/userManagement',
-          name: 'userManagement',
-          component: userManagement,
-        },
-        {
-          path: '/systemManage/roleManagement',
-          name: 'roleManagement',
-          component: roleManagement,
-        },
-              {
-        path: '/systemManage/roleAssignment/:userId/:userName',
-        name: 'RoleAssignment',
-        component: roleAssignment,
-        },
-        {
-          path: '/visionAI/systemManagement/userAssignment',
-          name: 'userAssignment',
-          component: userAssignment,
-        },
-        {
-          path: '/systemManage/tenantManagement',
-          name: 'tenantManagement',
-          component: tenantManagement,
-        },
-        {
-          path: '/systemManage/departmentManagement',
-          name: 'departmentManagement',
-          component: departmentManagement,
-        },
-        {
-          path: '/systemManage/positionManagement',
-          name: 'positionManagement',
-          component: positionManagement,
-        },
-        {
-          path: '/systemManage/knowledgeBase',
-          name: 'knowledgeBase',
-          component: knowledgeBase,
-        },
-        {
-          path: '/system/knowledge-detail',
-          name: 'knowledgeBaseDetail',
-          component: knowledgeBaseDetail,
         },
         {
           path: '/systemManage/profile',

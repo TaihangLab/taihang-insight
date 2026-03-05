@@ -3,7 +3,7 @@
     <div class="top-bar">
       <div class="time">{{ currentDetailTime }}</div>
       <div class="title">
-        <span>太行视觉AI监控中心</span>
+        <span>太行视觉AI平台</span>
       </div>
       <div class="right-controls">
         <div class="location-info">
