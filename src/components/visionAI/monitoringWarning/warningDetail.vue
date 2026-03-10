@@ -272,7 +272,8 @@
       title="上报确认"
       :visible.sync="reportDialogVisible"
       width="400px"
-      center>
+      center
+      append-to-body>
       <div class="confirm-content">
         <p>确定要上报此预警吗？</p>
         <p style="color: #909399; font-size: 12px;">上报后预警将提交给上级部门处理</p>
@@ -289,6 +290,7 @@
       :visible.sync="archiveDialogVisible"
       width="40%"
       center
+      append-to-body
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
@@ -358,6 +360,7 @@
       :visible.sync="remarkDialogVisible"
       width="30%"
       center
+      append-to-body
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
@@ -579,6 +582,7 @@ export default {
       archiveDialogVisible: false,
       selectedArchiveId: '',
       archivesList: [],
+      archivesListLoading: false,
       currentCameraId: '',
       // 上报相关
       reportDialogVisible: false,
@@ -869,13 +873,14 @@ export default {
 
     // 初始化档案列表 - 调用真实API
     async initArchivesList() {
+      if (this.archivesListLoading) return;
+      this.archivesListLoading = true;
       try {
         const { archiveAPI } = await import('../../service/VisionAIService.js');
 
         const response = await archiveAPI.getArchiveList({
           page: 1,
           limit: 100,
-          // status: 1 // 获取所有正常状态的档案
         });
 
         console.log('📥 获取档案列表响应:', response.data);
@@ -886,7 +891,7 @@ export default {
             name: archive.name,
             cameraId: archive.camera_id || 'unknown',
             cameraName: archive.location || '未知位置',
-            isDefault: false, // 真实API中可能没有isDefault字段
+            isDefault: false,
             createTime: archive.created_at
           }));
           console.log('✅ 加载档案列表成功:', this.archivesList.length, '个档案');
@@ -897,7 +902,8 @@ export default {
       } catch (error) {
         console.error('❌ 加载档案列表失败:', error);
         this.archivesList = [];
-        // 不显示错误提示,避免影响页面主要功能
+      } finally {
+        this.archivesListLoading = false;
       }
     },
 
@@ -1733,9 +1739,8 @@ export default {
       allRecords.sort((a, b) => {
         const timeA = new Date(a.time).getTime();
         const timeB = new Date(b.time).getTime();
-        // 如果时间无效，保持原有顺序
         if (isNaN(timeA) || isNaN(timeB)) return 0;
-        return timeA - timeB; // 升序排列，最新的在最下面
+        return timeA - timeB;
       });
 
       // 添加到操作历史

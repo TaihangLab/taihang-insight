@@ -61,6 +61,10 @@ export default {
       archivesList: [],
       // 当前选中的档案ID
       currentArchiveId: null,
+      // 页面数据是否就绪（首屏加载完成前隐藏内容，防止闪烁）
+      pageReady: false,
+      // 档案切换中（防重入）
+      archiveSwitching: false,
       // 列表相关
       allArchiveList: [],
       archiveList: [],
@@ -196,6 +200,9 @@ export default {
     this.initData();
   },
   methods: {
+    normalizeId(id) {
+      return (id === null || id === undefined || id === '') ? null : String(id);
+    },
     // 获取预览图片URL
     getPreviewImage() {
       // 这里返回一个实际的图片URL，可以是本地资源或远程URL
@@ -203,7 +210,7 @@ export default {
     },
     // 显示图片预览
     showImagePreview(row) {
-      const imageUrl = row.violationImage || row.image;
+      const imageUrl = this.getAlertImageUrl(row);
       if (imageUrl) {
         this.currentPreviewImage = imageUrl;
         this.imagePreviewVisible = true;
@@ -211,213 +218,249 @@ export default {
         this.$message.warning('该预警暂无图片');
       }
     },
-     // 初始化数据 - 直接使用真实API
-     async initData() {
-       try {
-         // 加载档案列表
-         await this.loadArchivesList();
+    // 兼容不同接口字段，解析预警图片地址
+    getAlertImageUrl(row) {
+      if (!row) return '';
 
-         // 如果有档案，加载第一个档案的详情
-         if (this.archivesList.length > 0) {
-           const firstArchive = this.archivesList[0];
-           this.currentArchiveId = firstArchive.archive_id || firstArchive.id;
+      const candidates = [
+        row.violationImage,
+        row.image,
+        row.imageUrl,
+        row.minio_frame_url,
+        row.violation_image_url,
+        row._apiData && row._apiData.minio_frame_url,
+        row._apiData && row._apiData.violation_image_url,
+        row._apiData && row._apiData.alert_image_url,
+        row._apiData && row._apiData.image_url,
+        row._apiData && row._apiData.snapshot_url
+      ];
 
-           await Promise.all([
-             this.loadArchiveDetail(this.currentArchiveId),
-             this.loadArchiveAlerts(this.currentArchiveId)
-           ]);
-         }
-       } catch (error) {
-         console.error('初始化数据失败:', error);
-         this.$message.error('加载数据失败: ' + error.message);
-       }
-     },
+      for (const candidate of candidates) {
+        const normalizedUrl = this.normalizeMediaUrl(candidate);
+        if (normalizedUrl) {
+          return normalizedUrl;
+        }
+      }
+      return '';
+    },
+    // 处理媒体地址，支持相对路径自动拼接 baseUrl
+    normalizeMediaUrl(url) {
+      if (!url || typeof url !== 'string') {
+        return '';
+      }
 
+      const trimmedUrl = url.trim();
+      if (!trimmedUrl) {
+        return '';
+      }
 
-    // 加载档案列表
-    async loadArchivesList(params = {}) {
+      if (
+        trimmedUrl.startsWith('http://') ||
+        trimmedUrl.startsWith('https://') ||
+        trimmedUrl.startsWith('data:') ||
+        trimmedUrl.startsWith('blob:')
+      ) {
+        return trimmedUrl;
+      }
+
+      const baseUrl = window.baseUrl || '';
+      if (trimmedUrl.startsWith('/')) {
+        return `${baseUrl}${trimmedUrl}`;
+      }
+
+      return trimmedUrl;
+    },
+    // 预警缩略图显示判断
+    shouldShowAlertThumbnail(row) {
+      return !!(this.getAlertImageUrl(row) && !row._thumbLoadError);
+    },
+    // 缩略图加载失败后回退占位图
+    handleAlertThumbError(row) {
+      if (!row || row._thumbLoadError) {
+        return;
+      }
+      this.$set(row, '_thumbLoadError', true);
+    },
+    async initData() {
       try {
-        const queryParams = {
-          page: this.archivesPagination.currentPage,
-          limit: this.archivesPagination.pageSize,
-          ...params
-        };
+        // 1. 拉取档案列表
+        const list = await this.fetchArchivesList();
+        this.archivesList = list;
 
-        console.log('获取档案列表参数:', queryParams);
+        if (list.length > 0) {
+          // 2. 同步确定选中ID（不触发渲染）
+          this.currentArchiveId = list[0].id;
+          // 3. 并行加载详情和预警记录
+          await Promise.all([
+            this.fetchAndApplyArchiveDetail(this.currentArchiveId),
+            this.fetchAndApplyArchiveAlerts(this.currentArchiveId)
+          ]);
+        }
+      } catch (error) {
+        console.error('初始化数据失败:', error);
+        this.$message.error('加载数据失败: ' + (error.message || '未知错误'));
+      } finally {
+        // 4. 所有数据就绪后才允许渲染
+        this.pageReady = true;
+      }
+    },
 
-        const response = await archiveAPI.getArchiveList(queryParams);
+    // ---- 档案列表 ----
 
-        // 适配新的API响应格式：检查是否为包装格式或直接数据格式
-        let archiveData;
-        let paginationData;
+    parseArchiveListResponse(response) {
+      let archiveData = [];
+      let paginationData = null;
 
-        if (response.data.code !== undefined) {
-          // 包装格式 {code, msg, data, pagination}
-          if (response.data.code === 0) {
-            archiveData = response.data.data || [];
-            paginationData = response.data.pagination;
-          } else {
-            throw new Error(response.data.msg || '获取档案列表失败');
-          }
-        } else if (response.data.data) {
-          // 新的包装格式 {data, pagination}
+      if (response.data.code !== undefined) {
+        if (response.data.code === 0) {
           archiveData = response.data.data || [];
           paginationData = response.data.pagination;
-        } else if (Array.isArray(response.data)) {
-          // 直接数组格式
-          archiveData = response.data;
         } else {
-          // 单个对象格式，转为数组
-          archiveData = [response.data];
+          throw new Error(response.data.msg || '获取档案列表失败');
         }
-
-        // 更新档案列表数据，转换格式以适配前端显示
-        this.archivesList = archiveData.map(archive => ({
-          id: archive.archive_id,
-          archive_id: archive.archive_id,
-          name: archive.name,
-          location: archive.location,
-          timeRange: `${archive.start_time}-${archive.end_time}`,
-          createTime: archive.created_at,
-          description: archive.description || '-',
-          image: archive.image_url || ''
-        }));
-
-        // 更新分页信息
-        if (paginationData) {
-          this.archivesPagination.total = paginationData.total || 0;
-          this.archivesPagination.currentPage = paginationData.page || 1;
-          this.archivesPagination.pageSize = paginationData.limit || 20;
-        }
-
-        console.log('档案列表加载成功:', this.archivesList);
-        console.log('分页信息:', this.archivesPagination);
-      } catch (error) {
-        console.error('加载档案列表失败:', error);
-        throw error;
+      } else if (response.data.data) {
+        archiveData = response.data.data || [];
+        paginationData = response.data.pagination;
+      } else if (Array.isArray(response.data)) {
+        archiveData = response.data;
+      } else {
+        archiveData = [response.data];
       }
+
+      const items = archiveData.map(a => ({
+        id: this.normalizeId(a.archive_id || a.id),
+        archive_id: this.normalizeId(a.archive_id || a.id),
+        name: a.name,
+        location: a.location,
+        timeRange: `${a.start_time}-${a.end_time}`,
+        createTime: a.created_at,
+        description: a.description || '-',
+        image: a.image_url || ''
+      }));
+
+      return { items, paginationData };
     },
 
-    // 加载档案详情
-    async loadArchiveDetail(archiveId) {
-      try {
-        if (!archiveId) return;
+    async fetchArchivesList(params = {}) {
+      const queryParams = {
+        page: this.archivesPagination.currentPage,
+        limit: this.archivesPagination.pageSize,
+        ...params
+      };
+      const response = await archiveAPI.getArchiveList(queryParams);
+      const { items, paginationData } = this.parseArchiveListResponse(response);
 
-        const response = await archiveAPI.getArchiveDetail(archiveId);
-
-        // 适配新的API响应格式
-        let archiveData;
-        if (response.data.code !== undefined) {
-          // 包装格式 {code, msg, data}
-          if (response.data.code === 0) {
-            archiveData = response.data.data;
-          } else {
-            throw new Error(response.data.msg || '获取档案详情失败');
-          }
-        } else {
-          // 直接数据格式
-          archiveData = response.data;
-        }
-
-        this.archiveInfo = {
-          id: archiveData.archive_id,
-          archive_id: archiveData.archive_id,
-          name: archiveData.name,
-          location: archiveData.location,
-          timeRange: `${archiveData.start_time}-${archiveData.end_time}`,
-          createTime: archiveData.created_at,
-          description: archiveData.description || '-',
-          image: archiveData.image_url || ''
-        };
-
-        console.log('档案详情加载成功:', this.archiveInfo);
-      } catch (error) {
-        console.error('加载档案详情失败:', error);
-        throw error;
+      if (paginationData) {
+        this.archivesPagination.total = paginationData.total || 0;
+        this.archivesPagination.currentPage = paginationData.page || 1;
+        this.archivesPagination.pageSize = paginationData.limit || 20;
       }
+
+      return items;
     },
 
-    // 加载档案下的预警记录 - 真分页
-    async loadArchiveAlerts(archiveId, params = {}) {
-      try {
-        if (!archiveId) return;
+    async reloadArchivesList(params = {}) {
+      const list = await this.fetchArchivesList(params);
+      this.archivesList = list;
 
-        // 使用当前分页配置，但限制在后端允许的范围内
-        const limit = Math.min(this.pagination.pageSize, 100); // 不超过后端限制100
-        const queryParams = {
-          page: this.pagination.currentPage,
-          limit: limit,
-          ...params
-        };
-
-        console.log(`加载第${this.pagination.currentPage}页预警记录，每页${limit}条...`);
-        const response = await archiveAPI.getArchiveLinkedAlerts(archiveId, queryParams);
-
-        // 适配新的API响应格式
-        let alertRecords = [];
-        let totalCount = 0;
-        let pages = 0;
-
-        if (response.data.code !== undefined) {
-          // 包装格式 {code, message, data}
-          if (response.data.code === 0) {
-            const data = response.data.data || {};
-            alertRecords = data.items || [];
-            totalCount = data.total || 0;
-            pages = data.pages || 1;
-          } else {
-            throw new Error(response.data.message || '获取预警记录失败');
-          }
-        } else if (response.data.data) {
-          // 新的包装格式 {data, pagination}
-          alertRecords = response.data.data || [];
-          if (response.data.pagination) {
-            totalCount = response.data.pagination.total;
-            pages = response.data.pagination.pages;
-          } else {
-            totalCount = alertRecords.length;
-            pages = 1;
-          }
-        } else if (Array.isArray(response.data)) {
-          // 直接数组格式
-          alertRecords = response.data;
-          totalCount = alertRecords.length;
-          pages = 1;
-        } else {
-          // 单个对象格式，转为数组
-          alertRecords = [response.data];
-          totalCount = 1;
-          pages = 1;
+      if (list.length > 0) {
+        const stillExists = list.some(a => a.id === this.currentArchiveId);
+        if (!stillExists) {
+          await this.switchToArchive(list[0].id);
         }
-
-        // 转换数据格式以适配前端显示，同时保留原始API数据
-        this.archiveList = alertRecords.map(record => ({
-          id: record.alert_id,
-          name: record.alert_name,
-          deviceName: record.camera_name,
-          warningTime: record.alert_time,
-          warningLevel: this.convertAlertLevel(record.alert_level),
-          warningType: record.alert_type || '',
-          location: record.location || '',
-          description: record.alert_description || '',
-          remark: record.processing_notes || '',
-          violationImage: record.minio_frame_url || '',
-          violationVideo: record.minio_video_url || '',
-          status: record.status || 1,
-          createTime: record.created_at,
-          // 保留原始API数据供详情页面构建完整的处理进展使用
-          _apiData: record
-        }));
-
-        // 更新分页信息
-        this.pagination.total = totalCount;
-
-        console.log(`预警记录加载成功，第${this.pagination.currentPage}页，共${totalCount}条记录`);
-      } catch (error) {
-        console.error('加载预警记录失败:', error);
+      } else {
+        this.currentArchiveId = null;
+        this.archiveInfo = { name: '', location: '', timeRange: '', createTime: '', description: '', image: '' };
         this.archiveList = [];
         this.pagination.total = 0;
       }
+    },
+
+    // ---- 档案详情 ----
+
+    parseArchiveDetailResponse(response) {
+      if (response.data.code !== undefined) {
+        if (response.data.code === 0) return response.data.data;
+        throw new Error(response.data.msg || '获取档案详情失败');
+      }
+      return response.data;
+    },
+
+    async fetchAndApplyArchiveDetail(archiveId) {
+      if (!archiveId) return;
+      const response = await archiveAPI.getArchiveDetail(archiveId);
+      const d = this.parseArchiveDetailResponse(response);
+
+      if (this.currentArchiveId !== this.normalizeId(archiveId)) return;
+
+      this.archiveInfo = {
+        id: this.normalizeId(d.archive_id || d.id),
+        archive_id: this.normalizeId(d.archive_id || d.id),
+        name: d.name,
+        location: d.location,
+        timeRange: `${d.start_time}-${d.end_time}`,
+        createTime: d.created_at,
+        description: d.description || '-',
+        image: d.image_url || ''
+      };
+    },
+
+    // ---- 预警记录 ----
+
+    parseArchiveAlertsResponse(response) {
+      let alertRecords = [];
+      let totalCount = 0;
+
+      if (response.data.code !== undefined) {
+        if (response.data.code === 0) {
+          const data = response.data.data || {};
+          alertRecords = data.items || [];
+          totalCount = data.total || 0;
+        } else {
+          throw new Error(response.data.message || '获取预警记录失败');
+        }
+      } else if (response.data.data) {
+        alertRecords = response.data.data || [];
+        totalCount = response.data.pagination ? response.data.pagination.total : alertRecords.length;
+      } else if (Array.isArray(response.data)) {
+        alertRecords = response.data;
+        totalCount = alertRecords.length;
+      } else {
+        alertRecords = [response.data];
+        totalCount = 1;
+      }
+
+      return { alertRecords, totalCount };
+    },
+
+    async fetchAndApplyArchiveAlerts(archiveId, params = {}) {
+      if (!archiveId) return;
+
+      const limit = Math.min(this.pagination.pageSize, 100);
+      const queryParams = { page: this.pagination.currentPage, limit, ...params };
+
+      const response = await archiveAPI.getArchiveLinkedAlerts(archiveId, queryParams);
+      const { alertRecords, totalCount } = this.parseArchiveAlertsResponse(response);
+
+      if (this.currentArchiveId !== this.normalizeId(archiveId)) return;
+
+      this.archiveList = alertRecords.map(record => ({
+        id: record.alert_id,
+        name: record.alert_name,
+        deviceName: record.camera_name,
+        warningTime: record.alert_time,
+        warningLevel: this.convertAlertLevel(record.alert_level),
+        warningType: record.alert_type || '',
+        location: record.location || '',
+        description: record.alert_description || '',
+        remark: record.processing_notes || '',
+        violationImage: record.minio_frame_url || '',
+        violationVideo: record.minio_video_url || '',
+        status: record.status || 1,
+        createTime: record.created_at,
+        _apiData: record
+      }));
+      this.pagination.total = totalCount;
     },
 
      // 转换预警等级格式（从后端的1-4转换为前端的level1-level4）
@@ -541,49 +584,50 @@ export default {
       };
       return descriptionMap[type] || `检测到${type}违规行为，请及时处理并加强现场管理`;
     },
-    // 切换到指定档案 - 直接使用API调用
     async switchToArchive(archiveId) {
+      const nid = this.normalizeId(archiveId);
+      if (!nid || this.currentArchiveId === nid || this.archiveSwitching) return;
+
+      this.archiveSwitching = true;
       try {
-        this.currentArchiveId = archiveId;
-
-        // 并行加载档案详情和预警记录
-        await Promise.all([
-          this.loadArchiveDetail(archiveId),
-          this.loadArchiveAlerts(archiveId)
-        ]);
-
-        // 重置分页到第一页
+        this.currentArchiveId = nid;
         this.pagination.currentPage = 1;
+        await Promise.all([
+          this.fetchAndApplyArchiveDetail(nid),
+          this.fetchAndApplyArchiveAlerts(nid)
+        ]);
       } catch (error) {
         console.error('切换档案失败:', error);
-        this.$message.error('切换档案失败: ' + error.message);
+        this.$message.error('切换档案失败: ' + (error.message || '未知错误'));
+      } finally {
+        this.archiveSwitching = false;
       }
     },
-    // 页码改变 - 重新加载数据
+
     async handleCurrentChange(page) {
       this.pagination.currentPage = page;
       if (this.currentArchiveId) {
-        await this.loadArchiveAlerts(this.currentArchiveId);
+        await this.fetchAndApplyArchiveAlerts(this.currentArchiveId);
       }
     },
-    // 每页条数改变 - 重新加载数据
+
     async handleSizeChange(size) {
       this.pagination.pageSize = size;
-      this.pagination.currentPage = 1; // 重置到第一页
+      this.pagination.currentPage = 1;
       if (this.currentArchiveId) {
-        await this.loadArchiveAlerts(this.currentArchiveId);
+        await this.fetchAndApplyArchiveAlerts(this.currentArchiveId);
       }
     },
-    // 档案列表分页 - 页码改变
+
     async handleArchivesCurrentChange(page) {
       this.archivesPagination.currentPage = page;
-      await this.loadArchivesList();
+      await this.reloadArchivesList();
     },
-    // 档案列表分页 - 每页条数改变
+
     async handleArchivesSizeChange(size) {
       this.archivesPagination.pageSize = size;
-      this.archivesPagination.currentPage = 1; // 重置到第一页
-      await this.loadArchivesList();
+      this.archivesPagination.currentPage = 1;
+      await this.reloadArchivesList();
     },
     // 表格选择事件
     handleSelectionChange(selection) {
@@ -1060,8 +1104,7 @@ export default {
           this.selectedRows = [];
         }
 
-        // 重新加载当前页数据
-        await this.loadArchiveAlerts(this.currentArchiveId);
+        await this.fetchAndApplyArchiveAlerts(this.currentArchiveId);
         this.deleteConfirmVisible = false;
       } catch (error) {
         console.error('删除操作失败:', error);
@@ -1147,9 +1190,8 @@ export default {
 
         this.$message.success('档案信息更新成功');
 
-        // 重新加载档案列表和详情以获取最新数据
-        await this.loadArchivesList();
-        await this.loadArchiveDetail(this.currentArchiveId);
+        await this.reloadArchivesList();
+        await this.fetchAndApplyArchiveDetail(this.currentArchiveId);
 
         // 关闭编辑对话框
         this.isEditing = false;
@@ -1241,9 +1283,7 @@ export default {
         }
 
         this.$message.success('预警记录添加成功');
-
-        // 重新加载当前档案的预警记录
-        await this.loadArchiveAlerts(this.currentArchiveId);
+        await this.fetchAndApplyArchiveAlerts(this.currentArchiveId);
 
         // 关闭对话框并重置表单
         this.addDialogVisible = false;
@@ -1389,8 +1429,7 @@ export default {
             if (result.success_count > 0) {
               this.$message.success(`成功添加 ${result.success_count} 个预警到档案`);
 
-              // 重新加载当前档案的预警记录
-              await this.loadArchiveAlerts(this.currentArchiveId);
+              await this.fetchAndApplyArchiveAlerts(this.currentArchiveId);
             }
 
             if (result.failed_count > 0) {
@@ -1665,15 +1704,16 @@ export default {
 
         this.$message.success('档案创建成功');
 
-        // 重置档案分页到第一页并重新加载档案列表
         this.archivesPagination.currentPage = 1;
-        await this.loadArchivesList();
+        await this.reloadArchivesList();
 
-        // 如果创建成功，切换到新创建的档案
         if (newArchive && newArchive.archive_id) {
-          this.currentArchiveId = newArchive.archive_id;
-          await this.loadArchiveDetail(newArchive.archive_id);
-          await this.loadArchiveAlerts(newArchive.archive_id);
+          const nid = this.normalizeId(newArchive.archive_id);
+          this.currentArchiveId = nid;
+          await Promise.all([
+            this.fetchAndApplyArchiveDetail(nid),
+            this.fetchAndApplyArchiveAlerts(nid)
+          ]);
         }
 
         // 关闭对话框并重置表单
@@ -1777,7 +1817,12 @@ export default {
     },
     // 预览图片
     previewImage(imageUrl) {
-      this.currentPreviewImage = imageUrl;
+      const normalizedImageUrl = this.normalizeMediaUrl(imageUrl);
+      if (!normalizedImageUrl) {
+        this.$message.warning('该预警暂无图片');
+        return;
+      }
+      this.currentPreviewImage = normalizedImageUrl;
       this.imagePreviewVisible = true;
     },
     // 处理视频片段上传
@@ -1873,15 +1918,13 @@ export default {
           this.$message.success('档案删除成功');
         }
 
-        // 如果删除的是当前选中的档案，清空详情
-        if (this.currentArchiveId === this.deleteArchiveId) {
+        if (this.currentArchiveId === this.normalizeId(this.deleteArchiveId)) {
           this.currentArchiveId = null;
-          this.archiveInfo = {};
+          this.archiveInfo = { name: '', location: '', timeRange: '', createTime: '', description: '', image: '' };
           this.archiveList = [];
         }
 
-        // 重新加载档案列表
-        await this.loadArchivesList();
+        await this.reloadArchivesList();
 
         // 关闭确认对话框
         this.deleteArchiveConfirmVisible = false;
@@ -1899,8 +1942,13 @@ export default {
 
 <template>
   <div class="page-container">
-    <!-- 内容区域 -->
-    <div class="content-wrapper">
+    <!-- 首屏加载完成前不渲染内容，从根本上防止选中态闪烁 -->
+    <div v-if="!pageReady" class="page-loading" style="display:flex;align-items:center;justify-content:center;height:300px;">
+      <i class="el-icon-loading" style="font-size:28px;color:#3b82f6;"></i>
+      <span style="margin-left:8px;color:#6b7280;">加载中...</span>
+    </div>
+
+    <div v-else class="content-wrapper">
 
       <!-- 左侧档案信息区域 -->
       <div class="detail-section">
@@ -2008,7 +2056,14 @@ export default {
               <template slot-scope="scope">
                 <div class="preview-image-cell">
                   <div class="mini-image-preview" @click="showImagePreview(scope.row)">
-                    <div class="mini-blue-box">
+                    <img
+                      v-if="shouldShowAlertThumbnail(scope.row)"
+                      :src="getAlertImageUrl(scope.row)"
+                      class="mini-preview-image"
+                      alt="预警缩略图"
+                      @error="handleAlertThumbError(scope.row)"
+                    />
+                    <div v-else class="mini-blue-box">
                       <i class="el-icon-picture-outline"></i>
                       <span>预警图片</span>
                     </div>
@@ -2077,9 +2132,15 @@ export default {
     <!-- 图片预览弹框 -->
     <el-dialog title="预警图片预览" :visible.sync="imagePreviewVisible" width="50%" custom-class="image-preview-dialog">
       <div class="image-preview-wrapper">
-        <div class="preview-blue-box">
+        <img
+          v-if="currentPreviewImage"
+          :src="currentPreviewImage"
+          alt="预警图片预览"
+          class="preview-image"
+        />
+        <div v-else class="no-image-placeholder">
           <i class="el-icon-picture-outline"></i>
-          <p>预警图片</p>
+          <p>暂无预警图片</p>
         </div>
       </div>
     </el-dialog>
@@ -2466,6 +2527,13 @@ export default {
   overflow: hidden;
   transition: all 0.2s;
   border: 1px solid #dcdfe6;
+}
+
+.mini-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .mini-image-preview:hover {
