@@ -1714,10 +1714,6 @@ export default {
     padding: 0 2px 18px 0;
   }
   
-  .record-card {
-    height: 260px;
-  }
-  
   .card-image {
     height: 140px;
   }
@@ -1731,7 +1727,6 @@ export default {
   transition: all 0.3s ease;
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  height: 260px;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -1784,11 +1779,7 @@ export default {
 }
 
 .card-content {
-  padding: 12px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  padding: 10px 12px;
 }
 
 .card-header {
@@ -1846,9 +1837,7 @@ export default {
 }
 
 .time-item {
-  margin-top: 8px;
-  display: flex;
-  justify-content: flex-start;
+  margin-top: 4px;
 }
 
 .time-item .time {
@@ -1967,21 +1956,12 @@ export default {
     padding: 0 2px 16px 0;
   }
   
-  .record-card {
-    height: 220px;
-  }
-  
   .card-image {
     height: 110px;
   }
   
   .card-content {
     padding: 10px;
-  }
-  
-  .card-title {
-    font-size: 12px;
-    margin-bottom: 4px;
   }
   
   .info-item {
@@ -2009,21 +1989,12 @@ export default {
     padding: 0 0 16px 0;
   }
   
-  .record-card {
-    height: 200px;
-  }
-  
   .card-image {
     height: 100px;
   }
   
   .card-content {
     padding: 8px;
-  }
-  
-  .card-title {
-    font-size: 12px;
-    margin-bottom: 4px;
   }
   
   .info-item {
@@ -2043,21 +2014,12 @@ export default {
     gap: 12px;
   }
   
-  .record-card {
-    height: 220px;
-  }
-  
   .card-image {
     height: 110px;
   }
   
   .card-content {
     padding: 10px;
-  }
-  
-  .card-title {
-    font-size: 12px;
-    margin-bottom: 4px;
   }
   
   .info-item {
