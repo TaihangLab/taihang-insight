@@ -1,6 +1,6 @@
 <script>
 import WarningDetail from './warningDetail.vue'
-import { alertAPI } from '@/components/service/VisionAIService.js'
+import { alertAPI, archiveAPI } from '@/components/service/VisionAIService.js'
 
 export default {
   name: "WarningManagement",
@@ -82,10 +82,8 @@ export default {
       },
       
       // 档案管理数据
-      archivesList: [],
       availableArchives: [],
       selectedArchiveId: '',
-      currentCameraId: '',
       archiveListLoading: false,
       
       // 预警详情对话框
@@ -118,16 +116,6 @@ export default {
     }
   },
   computed: {
-    
-    // 当前摄像头可用的档案列表
-    availableArchives() {
-      return this.archivesList.filter(archive => archive.cameraId === this.currentCameraId)
-    },
-    
-    // 当前摄像头的默认档案
-    defaultArchive() {
-      return this.availableArchives.find(archive => archive.isDefault)
-    }
   },
   watch: {
     dateRange(newVal) {
@@ -460,9 +448,7 @@ export default {
             await this.handleArchiveProcess()
             return // 不关闭loading，等确认后再关闭
           } else if (action === 'falseAlarm') {
-            // 误报 - 显示输入对话框
             this.archiveWarningId = id
-            this.currentCameraId = this.warningList[index].cameraId || ''
             this.falseAlarmDialogVisible = true
             return // 不关闭loading，等用户输入完成后再关闭
           }
@@ -481,122 +467,71 @@ export default {
       }
     },
     
-    // 加载可用档案列表 - 与 realtime 页面使用相同的接口
     async loadAvailableArchives() {
+      this.archiveListLoading = true
       try {
-        this.archiveListLoading = true
-        const { archiveAPI } = await import('../../service/VisionAIService.js')
-
         const response = await archiveAPI.getArchiveList({
           page: 1,
           limit: 100,
-          status: 1 // 只获取正常状态的档案
+          status: 1
         })
 
-        console.log('📥 预警管理 - 获取档案列表响应:', response.data)
-
-        // 后端返回格式：{ code: 0, msg: "获取成功", data: [...], pagination: {...} }
-        if (response.data && response.data.code === 0 && response.data.data) {
-          this.availableArchives = response.data.data
-          console.log('✅ 预警管理 - 加载档案列表成功:', this.availableArchives.length, '个档案')
-        } else if (response.data && response.data.archives) {
-          // 兼容其他可能的返回格式
-          this.availableArchives = response.data.archives
-          console.log('✅ 预警管理 - 加载档案列表成功(archives):', this.availableArchives.length, '个档案')
-        } else if (response.data && Array.isArray(response.data)) {
-          // 兼容直接返回数组的格式
-          this.availableArchives = response.data
-          console.log('✅ 预警管理 - 加载档案列表成功(数组):', this.availableArchives.length, '个档案')
+        const resData = response.data
+        if (resData && resData.code === 0 && Array.isArray(resData.data)) {
+          this.availableArchives = resData.data
+        } else if (resData && Array.isArray(resData.archives)) {
+          this.availableArchives = resData.archives
+        } else if (Array.isArray(resData)) {
+          this.availableArchives = resData
         } else {
-          console.warn('⚠️ 预警管理 - 获取档案列表格式异常:', response.data)
           this.availableArchives = []
         }
-
-        // 如果没有档案，提示用户
-        if (this.availableArchives.length === 0) {
-          console.warn('⚠️ 预警管理 - 当前没有可用档案，请先在预警档案页面创建档案')
-        }
       } catch (error) {
-        console.error('❌ 预警管理 - 加载档案列表失败:', error)
+        console.error('加载档案列表失败:', error)
         this.availableArchives = []
-        this.$message.warning('加载档案列表失败，请检查网络连接或联系管理员')
+        this.$message.warning('加载档案列表失败，请检查网络连接')
       } finally {
         this.archiveListLoading = false
       }
     },
 
-    // 处理归档流程 - 显示档案选择对话框
     async handleArchiveProcess() {
       try {
-        // 获取当前预警信息
         const index = this.warningList.findIndex(item => item.id === this.archiveWarningId)
         if (index === -1) {
           this.$message.error('未找到预警信息')
+          this.loading = false
           return
         }
 
         const warningInfo = this.warningList[index]
 
-        // 检查预警状态，只有已处理状态（status=3）才能归档
         if (warningInfo._apiData && warningInfo._apiData.status !== 3) {
-          const statusNames = {
-            1: '待处理',
-            2: '处理中',
-            3: '已处理',
-            4: '已归档',
-            5: '误报'
-          }
-          const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态'
-          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${currentStatusName}`)
+          const statusNames = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' }
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[warningInfo._apiData.status] || '未知'}`)
           this.loading = false
           return
         }
 
-        console.log('📁 开始归档流程，当前档案列表长度:', this.availableArchives.length)
+        this.selectedArchiveId = null
+        this.availableArchives = []
 
-        // 刷新档案列表
         await this.loadAvailableArchives()
 
-        console.log('📁 刷新后档案列表长度:', this.availableArchives.length)
-        if (this.availableArchives.length > 0) {
-          console.log('📁 档案列表第一项数据结构:', this.availableArchives[0])
-          console.log('📁 档案列表所有ID:', this.availableArchives.map(a => ({
-            archive_id: a.archive_id,
-            id: a.id,
-            name: a.name
-          })))
-        }
-
-        // 显示档案选择对话框
-        this.archiveDialogVisible = true
-        this.selectedArchiveId = null // 重置选择
-
-        console.log('📁 显示档案选择对话框，可用档案数:', this.availableArchives.length)
-        console.log('📁 selectedArchiveId:', this.selectedArchiveId)
-        console.log('📁 archiveDialogVisible:', this.archiveDialogVisible)
-
-        // 如果没有档案，提示用户
-        if (this.availableArchives.length === 0) {
-          this.$message.warning('当前没有可用档案，请先创建档案')
-        }
+        this.$nextTick(() => {
+          this.archiveDialogVisible = true
+          if (this.availableArchives.length === 0) {
+            this.$message.warning('当前没有可用档案，请先创建档案')
+          }
+        })
       } catch (error) {
-        console.error('❌ 打开归档对话框失败:', error)
-        this.$message.error('打开归档对话框失败: ' + (error.message || '未知错误'))
-      }
-    },
-
-    // 初始化归档选择
-    initArchiveSelection() {
-      // 自动选择默认档案（如果存在）
-      if (this.defaultArchive) {
-        this.selectedArchiveId = this.defaultArchive.id
-      } else {
-        // 如果没有默认档案，则准备创建
-        this.selectedArchiveId = ''
+        console.error('打开归档对话框失败:', error)
+        this.$message.error('打开归档对话框失败')
+      } finally {
+        this.loading = false
       }
     },
     
-    // 确认归档
     async confirmArchive() {
       if (!this.selectedArchiveId) {
         this.$message.warning('请选择要归档到的档案')
@@ -606,24 +541,12 @@ export default {
       try {
         this.loading = true
 
-        let targetArchiveId = this.selectedArchiveId
-        let archiveName = ''
-        
-        // 获取选中档案的名称（兼容archive_id和id两种字段名）
-        const selectedArchive = this.availableArchives.find(archive => 
-          (archive.archive_id || archive.id) === targetArchiveId
+        const targetArchiveId = this.selectedArchiveId
+        const selectedArchive = this.availableArchives.find(a =>
+          (a.archive_id || a.id) === targetArchiveId
         )
-        archiveName = selectedArchive ? selectedArchive.name : '未知档案'
-        
-        console.log('🔍 confirmArchive - 选中的档案ID:', targetArchiveId)
-        console.log('🔍 confirmArchive - 找到的档案:', selectedArchive)
-        
-        if (!targetArchiveId) {
-          this.$message.error('请选择要归档的档案')
-          return
-        }
-        
-        // 获取当前预警信息
+        const archiveName = selectedArchive ? selectedArchive.name : '未知档案'
+
         const index = this.warningList.findIndex(item => item.id === this.archiveWarningId)
         if (index === -1) {
           this.$message.error('未找到预警信息')
@@ -632,150 +555,64 @@ export default {
 
         const warning = this.warningList[index]
 
-        // 再次检查预警状态，只有已处理状态（status=3）才能归档
         if (warning._apiData && warning._apiData.status !== 3) {
-          const statusNames = {
-            1: '待处理',
-            2: '处理中',
-            3: '已处理',
-            4: '已归档',
-            5: '误报'
-          }
-          const currentStatusName = statusNames[warning._apiData.status] || '未知状态'
-          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${currentStatusName}`)
+          const statusNames = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' }
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[warning._apiData.status] || '未知'}`)
           this.closeArchiveDialog()
           return
         }
 
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(this.archiveWarningId)
-        
-        // 1. 先调用updateAlertStatus更新预警状态为已归档
-        const updateData = {
-          status: 4, // 已归档状态
+
+        await alertAPI.updateAlertStatus(apiAlertId, {
+          status: 4,
           processing_notes: `预警已归档到：${archiveName}`,
           processed_by: this.getCurrentUserName()
-        }
-        
-        console.log('📤 更新预警状态为已归档:', apiAlertId, updateData)
-        const updateResponse = await alertAPI.updateAlertStatus(apiAlertId, updateData)
-        console.log('✅ 预警状态更新成功:', updateResponse)
-        
-        // 2. 更新本地的_apiData.status字段
-        if (this.warningList[index]._apiData) {
-          this.$set(this.warningList[index]._apiData, 'status', 4)
-        }
-        this.$set(this.warningList[index], 'status', 'archived')
-        this.$set(this.warningList[index], 'archiveId', targetArchiveId)
-        this.$set(this.warningList[index], 'archiveTime', new Date().toLocaleString())
+        })
 
-        // 3. 添加归档记录到操作历史
-        if (!this.warningList[index].operationHistory) {
-          this.$set(this.warningList[index], 'operationHistory', [])
-        }
-        
-        const archiveRecord = {
-          id: Date.now() + Math.random(),
-          status: 'completed',
-          statusText: '预警归档',
-          time: this.getCurrentTime(),
-          description: `预警已归档到：${archiveName}，可在预警档案中查看`,
-          operationType: 'archive',
-          operator: this.getCurrentUserName(),
-          archiveInfo: {
-            archiveId: targetArchiveId,
-            archiveName: archiveName
-          }
-        }
-        
-        this.warningList[index].operationHistory.push(archiveRecord)
-
-        console.log('✅ 本地状态已更新为已归档')
-        
-        // 4. 调用归档API关联预警到档案
-        const { archiveAPI } = await import('../../service/VisionAIService.js')
         const response = await archiveAPI.linkAlertsToArchive(
           targetArchiveId,
           [apiAlertId],
           `预警管理归档 - 预警类型: ${warning.type || warning.alert_type}`
         )
 
-        console.log('📤 归档API响应:', response.data)
-
         if (response.data && response.data.code === 0) {
-          // 5. 延迟移除记录，让用户能看到状态变化
-          setTimeout(() => {
-            const currentIndex = this.warningList.findIndex(item => item.id === this.archiveWarningId)
-            if (currentIndex !== -1) {
-              // 从预警列表中移除已归档的预警
-              this.warningList.splice(currentIndex, 1)
-            }
-          }, 500)
+          if (this.warningList[index]._apiData) {
+            this.$set(this.warningList[index]._apiData, 'status', 4)
+          }
+          this.$set(this.warningList[index], 'status', 'archived')
+
+          if (!this.warningList[index].operationHistory) {
+            this.$set(this.warningList[index], 'operationHistory', [])
+          }
+          this.warningList[index].operationHistory.push({
+            id: Date.now() + Math.random(),
+            status: 'completed',
+            statusText: '预警归档',
+            time: this.getCurrentTime(),
+            description: `预警已归档到：${archiveName}，可在预警档案中查看`,
+            operationType: 'archive',
+            operator: this.getCurrentUserName(),
+            archiveInfo: { archiveId: targetArchiveId, archiveName }
+          })
 
           this.$message.success('预警已成功归档')
-          console.log('✅ 预警管理 - 预警归档成功:', apiAlertId, '档案ID:', targetArchiveId)
-
-          // 关闭对话框
           this.closeArchiveDialog()
-          
-          // 刷新列表以获取最新数据
           await this.getWarningList()
         } else {
-          const errorMessage = (response.data && response.data.message) || '归档失败'
-          this.$message.error(errorMessage)
-          console.warn('⚠️ 预警管理 - 预警归档失败:', response.data)
+          this.$message.error((response.data && response.data.message) || '归档失败')
         }
-        
-        // 如果在选中列表中，也移除
+
         const selectedIndex = this.selectedWarnings.indexOf(this.archiveWarningId)
         if (selectedIndex !== -1) {
           this.selectedWarnings.splice(selectedIndex, 1)
         }
       } catch (error) {
-        console.error('❌ 预警管理 - 预警归档异常:', error)
+        console.error('预警归档异常:', error)
         this.$message.error('归档失败: ' + (error.message || '未知错误'))
       } finally {
         this.loading = false
       }
-    },
-    
-    // 自动创建默认档案
-    async createDefaultArchive() {
-      try {
-        // 这里是创建本地默认档案，通常不需要后端API
-        console.log('📁 创建默认档案');
-        
-        const newArchive = {
-          id: `archive_${Date.now()}`,
-          name: `${this.getCurrentCameraName()}默认档案`,
-          cameraId: this.currentCameraId,
-          cameraName: this.getCurrentCameraName(),
-          isDefault: true,
-          createTime: new Date().toLocaleString()
-        }
-        
-        this.archivesList.push(newArchive)
-        
-        return newArchive.id
-      } catch (error) {
-        console.error('创建默认档案失败:', error)
-        this.$message.error('创建默认档案失败')
-        return null
-      }
-    },
-    
-    // 获取当前摄像头名称
-    getCurrentCameraName() {
-      // 从实际的预警数据中获取摄像头名称
-      if (this.currentCameraId) {
-        const warning = this.warningList.find(item => item.cameraId === this.currentCameraId)
-        if (warning && warning.deviceInfo && warning.deviceInfo.name) {
-          return warning.deviceInfo.name
-        }
-        if (warning && warning.device) {
-          return warning.device
-        }
-      }
-      return '摄像头'
     },
     
     // 获取当前时间
@@ -1267,11 +1104,12 @@ export default {
       this.reportWarningId = ''
     },
     
-    // 关闭归档对话框
     closeArchiveDialog() {
       this.archiveDialogVisible = false
       this.archiveWarningId = ''
       this.selectedArchiveId = ''
+      this.availableArchives = []
+      this.archiveListLoading = false
     },
     
     // 显示预警详情
@@ -2635,6 +2473,8 @@ export default {
       center
       :close-on-click-modal="false"
       :close-on-press-escape="false"
+      destroy-on-close
+      @close="closeArchiveDialog"
     >
       <div class="archive-dialog-content">
         <div class="archive-info">
@@ -2649,10 +2489,9 @@ export default {
                 v-model="selectedArchiveId" 
                 placeholder="请选择档案"
                 style="width: 100%"
-                :disabled="availableArchives.length === 0"
+                :disabled="archiveListLoading || availableArchives.length === 0"
                 :loading="archiveListLoading"
                 popper-append-to-body
-                :popper-class="'archive-select-dropdown'"
               >
                 <el-option
                   v-for="archive in availableArchives"
@@ -2661,22 +2500,20 @@ export default {
                   :value="archive.archive_id || archive.id"
                 >
                   <span style="float: left">{{ archive.name }}</span>
-                  <span style="float: right; color: #8492a6; font-size: 13px">{{ archive.location || '未知位置' }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ archive.location || '' }}</span>
                 </el-option>
               </el-select>
             </el-form-item>
             
-            <el-form-item v-if="availableArchives.length === 0">
+            <el-form-item v-if="!archiveListLoading && availableArchives.length === 0">
               <el-alert
-                title="当前摄像头位置没有可用档案"
-                description="系统将自动创建默认档案进行归档"
+                title="当前没有可用档案"
+                description="请先在预警档案页面创建档案后再进行归档操作"
                 type="info"
                 :closable="false"
                 show-icon
               />
             </el-form-item>
-            
-
           </el-form>
         </div>
         
@@ -2693,7 +2530,7 @@ export default {
       
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeArchiveDialog">取 消</el-button>
-        <el-button type="danger" @click="confirmArchive">确认归档</el-button>
+        <el-button type="danger" @click="confirmArchive" :loading="loading" :disabled="!selectedArchiveId">确认归档</el-button>
       </span>
     </el-dialog>
     
