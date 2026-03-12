@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios'
 import { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { ReviewRecordQueryParams, ReviewRecord, ReviewRecordStatistics } from '@/types/center'
+import type { ReviewRecordQueryParams, ReviewRecord, ReviewRecordStatistics } from '@/types/center.d'
 /**
  * 复判记录管理 API
  * 提供复判记录的增删改查操作

@@ -1,6 +1,7 @@
 import { AxiosResponse } from 'axios'
 import { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { ReviewSkill, CreateReviewSkillRequest, UpdateReviewSkillRequest, PreviewTestResponse, ReviewSkillQueryParams } from '@/types/center'
+import type { ReviewSkill, CreateReviewSkillRequest, UpdateReviewSkillRequest, PreviewTestResponse, ReviewSkillQueryParams } from '@/types/center.d'
+import { normalizePageParams } from '@/api/utils/pageUtils'
 
 /**
  * 复判技能管理 API
@@ -111,16 +112,12 @@ class ReviewSkillAPI {
    * @param params 查询参数
    */
   async getReviewSkillList(params: ReviewSkillQueryParams = {}): Promise<AxiosResponse<UnifiedResponse<ReviewSkill[]>>> {
-    const apiParams = { ...params }
-
-    if (!apiParams.page) {
-      apiParams.page = 1
-    }
-
-    if (!apiParams.limit) {
-      apiParams.limit = 10
-    } else {
-      apiParams.limit = Math.min(params.limit || 10, 100)
+    // 复制所有参数并应用分页默认值
+    const { page, limit } = normalizePageParams(params)
+    const apiParams = {
+      ...params,
+      page,
+      limit: Math.min(limit, 100)  // 复判技能列表限制最大值为 100
     }
 
     // 处理状态过滤参数

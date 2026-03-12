@@ -1,130 +1,10 @@
-import { AxiosResponse } from 'axios'
-import { authAxios,  type UnifiedResponse } from '@/api/commons'
+import { authAxios } from '@/api/commons'
+import type { ResourceMetric, TimeRange, SystemResourcesData, CurrentResources, ResourceHistory, StorageUsage, BandwidthUsage } from '@/types/center.d'
+
 /**
  * 系统资源监控 API
  * 提供系统资源使用率监控数据
  */
-
-/**
- * 资源类型
- */
-export type ResourceMetric = 'cpu' | 'memory' | 'disk' | 'network'
-
-/**
- * 时间范围
- */
-export type TimeRange = '1h' | '6h' | '24h' | '7d'
-
-/**
- * CPU 资源信息
- */
-export interface CPUInfo {
-  usage: number
-  cores: number
-  avg_temp: number
-  max_temp: number
-}
-
-/**
- * 内存资源信息
- */
-export interface MemoryInfo {
-  usage: number
-  total: string
-  used: string
-}
-
-/**
- * 磁盘资源信息
- */
-export interface DiskInfo {
-  usage: number
-  total: string
-  used: string
-  type: string
-}
-
-/**
- * GPU 资源信息
- */
-export interface GPUInfo {
-  usage: number
-  model: string
-  vram_total: string
-  temperature: number
-}
-
-/**
- * 服务器信息
- */
-export interface ServerInfo {
-  master: number
-  nodes: number
-}
-
-/**
- * 系统资源数据（完整）
- */
-export interface SystemResourcesData {
-  cpu: CPUInfo
-  memory: MemoryInfo
-  disk: DiskInfo
-  gpu: GPUInfo
-  servers: ServerInfo
-  timestamp: string
-}
-
-/**
- * 当前资源使用率（简化版，用于旧接口兼容）
- */
-export interface CurrentResources {
-  cpu_usage: number
-  memory_usage: number
-  disk_usage: number
-  network_usage: number
-  timestamp: string
-}
-
-/**
- * 资源历史数据
- */
-export interface ResourceHistory {
-  metric: ResourceMetric
-  time_range: TimeRange
-  time_labels: string[]
-  data_points: number[]
-}
-
-/**
- * 存储使用情况
- */
-export interface StorageUsage {
-  total_storage: number
-  used_storage: number
-  storage_usage: number
-  storage_list: StorageItem[]
-}
-
-/**
- * 存储项
- */
-export interface StorageItem {
-  name: string
-  usage: number
-  total: number
-}
-
-/**
- * 带宽使用情况
- */
-export interface BandwidthUsage {
-  time_range: TimeRange
-  time_labels: string[]
-  upstream_bandwidth: number[]
-  downstream_bandwidth: number[]
-  current_upstream: number
-  current_downstream: number
-}
 
 /**
  * 系统资源监控 API 类
@@ -133,229 +13,68 @@ class SystemMonitorAPI {
   /**
    * 获取系统资源数据（完整版）
    * GET /api/v1/server/system/resources
-   * 注意：响应拦截器会提取 data 字段，返回类型是 SystemResourcesData
+   *
+   * 注意：响应拦截器会自动提取 data.data 字段
+   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
-  async getSystemResources(): Promise<SystemResourcesData> {
-    console.log('[监控API] 获取系统资源数据')
-
-    // 模拟数据（后端接口未实现时使用）
-    const mockData: SystemResourcesData = {
-      cpu: {
-        usage: 45.5,
-        cores: 32,
-        avg_temp: 46.5,
-        max_temp: 68.2
-      },
-      memory: {
-        usage: 60.2,
-        total: '64.0GB',
-        used: '38.5GB'
-      },
-      disk: {
-        usage: 54.7,
-        total: '2.0TB',
-        used: '1.1TB',
-        type: 'SSD'
-      },
-      gpu: {
-        usage: 30.0,
-        model: 'RTX 3090',
-        vram_total: '24.0GB',
-        temperature: 65.0
-      },
-      servers: {
-        master: 1,
-        nodes: 10
-      },
-      timestamp: new Date().toISOString()
-    }
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(mockData)
-      }, 300)
-    })
-
-    // 真实API调用（会经过响应拦截器处理）
-    // return authAxios.get('/server/system/resources') as Promise<SystemResourcesData>
+  getSystemResources(): Promise<SystemResourcesData> {
+    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 SystemResourcesData
+    return authAxios.get<any, SystemResourcesData>('/api/v1/server/system/resources')
   }
 
   /**
    * 获取当前资源使用率
-   * 注意：响应拦截器会提取 data 字段，返回类型是 CurrentResources
+   * GET /api/v1/system/resources
+   *
+   * 注意：响应拦截器会自动提取 data.data 字段
+   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
-  async getCurrentResources(): Promise<CurrentResources> {
-    console.log('[监控API] 获取当前资源使用率')
-
-    // 模拟实时资源数据（带小幅波动）
-    const baseData = {
-      cpu: 20.69,
-      memory: 64.35,
-      disk: 45.60,
-      network: 92.34
-    }
-
-    const addFluctuation = (value: number, range = 5) => {
-      return Math.max(0, Math.min(100, value + (Math.random() - 0.5) * range))
-    }
-
-    const mockData: CurrentResources = {
-      cpu_usage: parseFloat(addFluctuation(baseData.cpu).toFixed(2)),
-      memory_usage: parseFloat(addFluctuation(baseData.memory, 2).toFixed(2)),
-      disk_usage: baseData.disk,
-      network_usage: parseFloat(addFluctuation(baseData.network, 10).toFixed(2)),
-      timestamp: new Date().toISOString()
-    }
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(mockData)
-      }, 200)
-    })
-
-    // 真实API调用（会经过响应拦截器处理）
-    // return authAxios.get('/api/v1/system/resources') as Promise<CurrentResources>
+  getCurrentResources(): Promise<CurrentResources> {
+    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 CurrentResources
+    return authAxios.get<any, CurrentResources>('/api/v1/system/resources')
   }
 
   /**
    * 获取资源历史数据（用于图表展示）
+   * GET /api/v1/system/resources/history
    * @param metric 资源类型: 'cpu' | 'memory' | 'disk' | 'network'
    * @param timeRange 时间范围: '1h' | '6h' | '24h' | '7d'
-   * 注意：响应拦截器会提取 data 字段，返回类型是 ResourceHistory
+   *
+   * 注意：响应拦截器会自动提取 data.data 字段
+   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
-  async getResourceHistory(metric: ResourceMetric = 'cpu', timeRange: TimeRange = '1h'): Promise<ResourceHistory> {
-    console.log('[监控API] 获取资源历史数据, 指标:', metric, '时间范围:', timeRange)
-
-    // 生成模拟历史数据
-    let pointCount: number, interval: number
-
-    if (timeRange === '1h') {
-      pointCount = 12
-      interval = 5
-    } else if (timeRange === '6h') {
-      pointCount = 24
-      interval = 15
-    } else if (timeRange === '24h') {
-      pointCount = 24
-      interval = 60
-    } else {
-      pointCount = 7
-      interval = 1440
-    }
-
-    const baseValues: Record<ResourceMetric, number> = {
-      cpu: 20,
-      memory: 64,
-      disk: 45,
-      network: 85
-    }
-
-    const baseValue = baseValues[metric] || 50
-    const timeLabels: string[] = []
-    const dataPoints: number[] = []
-    const now = new Date()
-
-    for (let i = pointCount - 1; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * interval * 60 * 1000)
-
-      if (timeRange === '7d') {
-        timeLabels.push(`${time.getMonth() + 1}/${time.getDate()}`)
-      } else {
-        timeLabels.push(`${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`)
-      }
-
-      dataPoints.push(parseFloat(Math.max(0, Math.min(100, baseValue + (Math.random() - 0.5) * 20)).toFixed(2)))
-    }
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          metric,
-          time_range: timeRange,
-          time_labels: timeLabels,
-          data_points: dataPoints
-        })
-      }, 200)
+  getResourceHistory(metric: ResourceMetric = 'cpu', timeRange: TimeRange = '1h'): Promise<ResourceHistory> {
+    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 ResourceHistory
+    return authAxios.get<any, ResourceHistory>('/api/v1/system/resources/history', {
+      params: { metric, time_range: timeRange }
     })
-
-    // 真实API调用（会经过响应拦截器处理）
-    // return authAxios.get('/api/v1/system/resources/history', {
-    //   params: { metric, time_range: timeRange }
-    // }) as Promise<ResourceHistory>
   }
 
   /**
    * 获取存储使用情况
-   * 注意：响应拦截器会提取 data 字段，返回类型是 StorageUsage
+   * GET /api/v1/storage/usage
+   *
+   * 注意：响应拦截器会自动提取 data.data 字段
+   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
-  async getStorageUsage(): Promise<StorageUsage> {
-    console.log('[监控API] 获取存储使用情况')
-
-    const mockData: StorageUsage = {
-      total_storage: 1024,
-      used_storage: 467,
-      storage_usage: 45.6,
-      storage_list: [
-        { name: '内存1', usage: 60, total: 100 },
-        { name: '内存2', usage: 40, total: 100 },
-        { name: '内存3', usage: 20, total: 100 },
-        { name: '内存4', usage: 70, total: 100 },
-        { name: '内存5', usage: 30, total: 100 },
-        { name: '内存6', usage: 50, total: 100 },
-        { name: '内存7', usage: 10, total: 100 }
-      ]
-    }
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(mockData)
-      }, 200)
-    })
-
-    // 真实API调用（会经过响应拦截器处理）
-    // return authAxios.get('/api/v1/storage/usage') as Promise<StorageUsage>
+  getStorageUsage(): Promise<StorageUsage> {
+    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 StorageUsage
+    return authAxios.get<any, StorageUsage>('/api/v1/storage/usage')
   }
 
   /**
    * 获取带宽使用情况
+   * GET /api/v1/bandwidth/usage
    * @param timeRange 时间范围
-   * 注意：响应拦截器会提取 data 字段，返回类型是 BandwidthUsage
+   *
+   * 注意：响应拦截器会自动提取 data.data 字段
+   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
-  async getBandwidthUsage(timeRange: TimeRange = '1h'): Promise<BandwidthUsage> {
-    console.log('[监控API] 获取带宽使用情况, 时间范围:', timeRange)
-
-    const pointCount = 12
-    const timeLabels: string[] = []
-    const upstreamData: number[] = []
-    const downstreamData: number[] = []
-
-    const now = new Date()
-    for (let i = pointCount - 1; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * 5 * 60 * 1000)
-      timeLabels.push(`${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`)
-      upstreamData.push(parseFloat((2 + Math.random() * 0.5).toFixed(2)))
-      downstreamData.push(parseFloat((2 + Math.random() * 0.5).toFixed(2)))
-    }
-
-    const mockData: BandwidthUsage = {
-      time_range: timeRange,
-      time_labels: timeLabels,
-      upstream_bandwidth: upstreamData,
-      downstream_bandwidth: downstreamData,
-      current_upstream: upstreamData[upstreamData.length - 1],
-      current_downstream: downstreamData[downstreamData.length - 1]
-    }
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(mockData)
-      }, 200)
+  getBandwidthUsage(timeRange: TimeRange = '1h'): Promise<BandwidthUsage> {
+    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 BandwidthUsage
+    return authAxios.get<any, BandwidthUsage>('/api/v1/bandwidth/usage', {
+      params: { time_range: timeRange }
     })
-
-    // 真实API调用（会经过响应拦截器处理）
-    // return authAxios.get('/api/v1/bandwidth/usage', {
-    //   params: { time_range: timeRange }
-    // }) as Promise<BandwidthUsage>
   }
 }
 

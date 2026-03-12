@@ -21,58 +21,14 @@ const reLogin = () => {
   // 跳转到登录页
   router.push('/login')
 }
-
-// 粒子样式生成
-const particleCount = 40
-const particles = ref<Array<{ id: number; style: Record<string, string> }>>([])
-
-// 生成粒子样式
-function generateParticles() {
-  const result: Array<{ id: number; style: Record<string, string> }> = []
-  for (let i = 0; i < particleCount; i++) {
-    result.push({
-      id: i,
-      style: {
-        left: Math.random() * 100 + '%',
-        top: Math.random() * 100 + '%',
-        animationDelay: Math.random() * 3 + 's',
-        animationDuration: (Math.random() * 3 + 2) + 's'
-      }
-    })
-  }
-  return result
-}
-
-particles.value = generateParticles()
 </script>
 
 <template>
   <div class="error-container">
-    <!-- 背景粒子效果 -->
-    <div class="particles-background">
-      <div
-        v-for="particle in particles"
-        :key="particle.id"
-        class="particle"
-        :style="particle.style"
-      ></div>
-    </div>
-
-    <!-- 装饰线条 -->
-    <div class="decoration-lines">
-      <div class="line line-1"></div>
-      <div class="line line-2"></div>
-      <div class="line line-3"></div>
-    </div>
-
     <!-- 主内容区域 -->
     <div class="error-content">
-      <!-- 左侧装饰圆环 -->
+      <!-- 左侧装饰区域 - 极致优化：静态版本 -->
       <div class="decoration-area">
-        <div class="tech-circle">
-          <div class="inner-circle"></div>
-          <div class="core-circle"></div>
-        </div>
         <div class="error-code-bg">403</div>
       </div>
 
@@ -119,7 +75,6 @@ particles.value = generateParticles()
           <button class="tech-btn tech-btn-primary" @click="goHome">
             <i class="i-carbon-home btn-icon"></i>
             返回首页
-            <div class="btn-glow"></div>
           </button>
           <button class="tech-btn tech-btn-secondary" @click="reLogin">
             <i class="i-carbon-logout btn-icon"></i>
@@ -140,100 +95,20 @@ particles.value = generateParticles()
 </template>
 
 <style scoped>
+/* 🔥 极致优化：移除所有动态效果，保证流畅 */
+
 /* 主容器 */
 .error-container {
   position: relative;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(135deg, #0c1929 0%, #1a2f47 50%, #2d4563 100%);
+  /* 简化背景：移除渐变，使用纯色 */
+  background: #0c1929;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-family-base);
-}
-
-/* 粒子背景 */
-.particles-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.particle {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  background: var(--design-primary-color, #4185F7);
-  border-radius: 50%;
-  box-shadow: 0 0 10px var(--design-primary-color, #4185F7);
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px) scale(1);
-    opacity: 0.7;
-  }
-  50% {
-    transform: translateY(-20px) scale(1.1);
-    opacity: 1;
-  }
-}
-
-/* 装饰线条 */
-.decoration-lines {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.line {
-  position: absolute;
-  background: linear-gradient(90deg, transparent, var(--design-primary-color, #4185F7), transparent);
-  opacity: 0.4;
-}
-
-.line-1 {
-  width: 100%;
-  height: 1px;
-  top: 20%;
-  animation: slideRight 3s ease-in-out infinite;
-}
-
-.line-2 {
-  width: 1px;
-  height: 100%;
-  left: 30%;
-  animation: slideDown 4s ease-in-out infinite;
-}
-
-.line-3 {
-  width: 100%;
-  height: 1px;
-  bottom: 20%;
-  animation: slideLeft 3.5s ease-in-out infinite;
-}
-
-@keyframes slideRight {
-  0%, 100% { transform: translateX(-100%); }
-  50% { transform: translateX(100%); }
-}
-
-@keyframes slideDown {
-  0%, 100% { transform: translateY(-100%); }
-  50% { transform: translateY(100%); }
-}
-
-@keyframes slideLeft {
-  0%, 100% { transform: translateX(100%); }
-  50% { transform: translateX(-100%); }
 }
 
 /* 主内容区域 */
@@ -243,89 +118,35 @@ particles.value = generateParticles()
   width: 85%;
   max-width: 1100px;
   min-height: 550px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
+  /* 简化背景：移除 backdrop-filter，使用纯色半透明 */
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  /* 移除 box-shadow */
   z-index: 2;
   overflow: hidden;
-  animation: fadeInUp 0.6s ease-out;
+  /* 移除入场动画 */
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 左侧装饰区域 */
+/* 左侧装饰区域 - 静态版本 */
 .decoration-area {
   flex: 1;
   position: relative;
-  background: linear-gradient(45deg, rgba(65, 133, 247, 0.1), rgba(90, 150, 248, 0.1));
+  /* 简化背景：纯色替代渐变 */
+  background: rgba(65, 133, 247, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
-.tech-circle {
-  width: 280px;
-  height: 280px;
-  border: 2px solid rgba(65, 133, 247, 0.3);
-  border-radius: 50%;
-  position: relative;
-  animation: rotate 20s linear infinite;
-}
-
-.inner-circle {
-  width: 180px;
-  height: 180px;
-  border: 1px solid rgba(90, 150, 248, 0.3);
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  animation: rotate 15s linear infinite reverse;
-}
-
-.core-circle {
-  width: 80px;
-  height: 80px;
-  border: 2px solid rgba(65, 133, 247, 0.5);
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(65, 133, 247, 0.1);
-  box-shadow: 0 0 30px rgba(65, 133, 247, 0.3);
-}
-
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 .error-code-bg {
   position: absolute;
   font-size: 150px;
   font-weight: bold;
-  color: rgba(65, 133, 247, 0.05);
+  color: rgba(65, 133, 247, 0.08);
   letter-spacing: 10px;
-  animation: pulse 3s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.5; }
+  /* 移除动画 */
 }
 
 /* 右侧信息区域 */
@@ -346,22 +167,9 @@ particles.value = generateParticles()
   font-size: 72px;
   font-weight: bold;
   color: var(--design-primary-color, #4185F7);
-  text-shadow: 0 0 30px rgba(65, 133, 247, 0.6);
+  /* 移除 text-shadow */
   line-height: 1;
   margin-bottom: 15px;
-  animation: glitch 0.5s ease-in-out;
-}
-
-@keyframes glitch {
-  0% {
-    text-shadow: 0 0 30px rgba(65, 133, 247, 0.6);
-  }
-  50% {
-    text-shadow: 2px 2px 0 rgba(255, 0, 0, 0.3), -2px -2px 0 rgba(0, 255, 255, 0.3);
-  }
-  100% {
-    text-shadow: 0 0 30px rgba(65, 133, 247, 0.6);
-  }
 }
 
 .error-title {
@@ -369,13 +177,12 @@ particles.value = generateParticles()
   font-weight: 600;
   color: #ffffff;
   margin: 0 0 15px 0;
-  text-shadow: 0 0 20px rgba(65, 133, 247, 0.4);
 }
 
 .error-divider {
   width: 60px;
   height: 3px;
-  background: linear-gradient(90deg, var(--design-primary-color, #4185F7), transparent);
+  background: var(--design-primary-color, #4185F7);
   border-radius: 2px;
 }
 
@@ -454,19 +261,17 @@ particles.value = generateParticles()
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.3s ease;
-  overflow: hidden;
+  /* 简化 transition */
+  transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
 .tech-btn-primary {
   background: linear-gradient(45deg, var(--design-primary-color, #4185F7), #2d5fd9);
   color: #ffffff;
-  box-shadow: 0 8px 20px rgba(65, 133, 247, 0.3);
 }
 
 .tech-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(65, 133, 247, 0.4);
 }
 
 .tech-btn-secondary {
@@ -482,20 +287,6 @@ particles.value = generateParticles()
 
 .btn-icon {
   font-size: 18px;
-}
-
-.btn-glow {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s ease;
-}
-
-.tech-btn-primary:hover .btn-glow {
-  left: 100%;
 }
 
 /* 底部信息 */
@@ -529,21 +320,6 @@ particles.value = generateParticles()
   .decoration-area {
     padding: 40px 20px;
     min-height: 250px;
-  }
-
-  .tech-circle {
-    width: 200px;
-    height: 200px;
-  }
-
-  .inner-circle {
-    width: 130px;
-    height: 130px;
-  }
-
-  .core-circle {
-    width: 60px;
-    height: 60px;
   }
 
   .error-code-bg {

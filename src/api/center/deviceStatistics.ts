@@ -1,4 +1,5 @@
-import type { DeviceStatusStatistics, DeviceTreeNode, ConnectionSummary } from '@/types/center'
+import { authAxios } from '@/api/commons'
+import type { DeviceStatusStatistics, DeviceTreeNode, ConnectionSummary } from '@/types/center.d'
 
 /**
  * 设备统计管理 API
@@ -11,90 +12,38 @@ import type { DeviceStatusStatistics, DeviceTreeNode, ConnectionSummary } from '
 class DeviceStatisticsAPI {
   /**
    * 获取设备状态统计
-   * 注意：响应拦截器会提取 data 字段，返回类型是 DeviceStatusStatistics
+   * GET /api/v1/devices/statistics
+   *
+   * 注意：响应拦截器会自动提取 data.data 字段
+   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
-  async getStatusStatistics(): Promise<DeviceStatusStatistics> {
-    const mockData: DeviceStatusStatistics = {
-      total_devices: 150,
-      online_devices: 120,
-      offline_devices: 30,
-      online_rate: 80,
-      device_groups: [
-        { name: '总数量', online: 27, offline: 3, total: 30 },
-        { name: '摄像头组A', online: 18, offline: 9, total: 27 }
-      ]
-    }
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(mockData)
-      }, 200)
-    })
-
-    // 真实API调用（会经过响应拦截器处理）
-    // return authAxios.get('/api/v1/devices/statistics') as Promise<DeviceStatusStatistics>
+  getStatusStatistics(): Promise<DeviceStatusStatistics> {
+    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 DeviceStatusStatistics
+    return authAxios.get<any, DeviceStatusStatistics>('/api/v1/devices/statistics')
   }
 
   /**
    * 获取设备树状结构
-   * 注意：响应拦截器会提取 data 字段，返回类型是 DeviceTreeNode[]
+   * GET /api/v1/devices/tree
+   *
+   * 注意：响应拦截器会自动提取 data.data 字段
+   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
-  async getDeviceTree(): Promise<DeviceTreeNode[]> {
-    const mockData: DeviceTreeNode[] = [{
-      id: '1',
-      label: '市直单位',
-      children: [{
-        id: '2',
-        label: '清江园区',
-        children: [{
-          id: '3',
-          label: '清江园区-南',
-          children: [
-            { id: '4', label: '监控点1号探头', status: 'online' },
-            { id: '5', label: '监控点2号探头', status: 'online' }
-          ]
-        }, {
-          id: '6',
-          label: '清江园区-西',
-          children: [
-            { id: '7', label: '监控点19号探头', status: 'offline' },
-            { id: '8', label: '监控点21号探头', status: 'online' }
-          ]
-        }]
-      }]
-    }]
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(mockData)
-      }, 300)
-    })
-
-    // 真实API调用（会经过响应拦截器处理）
-    // return authAxios.get('/api/v1/devices/tree') as Promise<DeviceTreeNode[]>
+  getDeviceTree(): Promise<DeviceTreeNode[]> {
+    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 DeviceTreeNode[]
+    return authAxios.get<any, DeviceTreeNode[]>('/api/v1/devices/tree')
   }
 
   /**
    * 获取设备接入摘要
-   * 注意：响应拦截器会提取 data 字段，返回类型是 ConnectionSummary
+   * GET /api/v1/devices/summary
+   *
+   * 注意：响应拦截器会自动提取 data.data 字段
+   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
-  async getConnectionSummary(): Promise<ConnectionSummary> {
-    const mockData: ConnectionSummary = {
-      total_connections: 286589,
-      video_streams: 562,
-      capture_services: 23108,
-      nvr_calls: 2389,
-      other_connections: 260530
-    }
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(mockData)
-      }, 200)
-    })
-
-    // 真实API调用（会经过响应拦截器处理）
-    // return authAxios.get('/api/v1/devices/summary') as Promise<ConnectionSummary>
+  getConnectionSummary(): Promise<ConnectionSummary> {
+    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 ConnectionSummary
+    return authAxios.get<any, ConnectionSummary>('/api/v1/devices/summary')
   }
 }
 

@@ -1,7 +1,17 @@
 import type { AxiosResponse } from 'axios'
 import { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { Alert, AlertQueryParams, AlertStatusUpdate, SSEMessageCallback, SSEErrorCallback, SSECloseCallback } from '@/types/center'
-import storage from '@/stores/modules/storage'
+import type {
+  Alert,
+  AlertQueryParams,
+  AlertStatusUpdate,
+  ListWithPagination,
+  SSEMessageCallback,
+  SSEErrorCallback,
+  SSECloseCallback
+} from '@/types/center.d'
+import { useTokenStore } from '@/stores/modules/token'
+import { normalizePageParams } from '@/api/utils/pageUtils'
+import { apiGet } from '@/api/utils/apiHelpers'
 /**
  * 预警管理 API
  * 提供预警的查询、更新、删除以及SSE实时推送功能
@@ -14,20 +24,16 @@ class AlertAPI {
   /**
    * 获取实时预警列表
    * @param params 查询参数
-   * @returns 预警响应数据 { data, pagination }
+   * @returns 包含数据和分页信息的响应
+   *
+   * 注意：分页和不分页使用相同的 apiGet 方法
+   * 后端返回结构应该是一致的，分页信息是响应对象的一个字段
    */
-  async getRealTimeAlerts(params: AlertQueryParams = {}): Promise<{ data: Alert[]; pagination?: { total: number; page: number; page_size: number; pages: number; has_next: boolean; has_prev: boolean } }> {
-    const apiParams = { ...params }
+  getRealTimeAlerts(params: AlertQueryParams = {}): Promise<ListWithPagination<Alert>> {
+    const { page, limit } = normalizePageParams(params)
+    const apiParams = { ...params, page, limit }
 
-    if (!apiParams.page) {
-      apiParams.page = 1
-    }
-
-    if (!apiParams.limit) {
-      apiParams.limit = 10
-    }
-
-    return authAxios.get('/api/v1/alerts/real-time', { params: apiParams }) as any
+    return apiGet<ListWithPagination<Alert>>('/api/v1/alerts/real-time', { params: apiParams })
   }
 
   /**
@@ -110,7 +116,8 @@ class AlertAPI {
     onClose?: SSECloseCallback
   ): EventSource {
     // 获取认证token
-    const token = storage.getAdminToken()
+    const tokenStore = useTokenStore()
+    const token = tokenStore.getAdminToken()
 
     // 将token作为URL参数传递（EventSource不支持自定义请求头）
     const sseUrl = `${authAxios.defaults.baseURL}/api/v1/alerts/stream?token=${encodeURIComponent(token)}`

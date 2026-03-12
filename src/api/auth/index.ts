@@ -59,7 +59,9 @@ export async function getMenuTree(forceRefresh = false): Promise<MenuItem[] | nu
     const response = await authAPI.getMenuTree()
     if (response.code === 200 && response.data) {
       // 后端返回的数据结构可能是 { menu_tree: MenuItem[] } 或直接是 MenuItem[]
-      const menuData = 'menu_tree' in response.data ? (response.data as any).menu_tree : response.data
+      const menuData = 'menu_tree' in response.data
+        ? (response.data as { menu_tree: MenuItem[] }).menu_tree
+        : response.data
       return menuData
     }
     return null

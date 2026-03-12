@@ -1,6 +1,7 @@
 import { AxiosResponse } from 'axios'
 import  { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { Camera, CameraQueryParams, AITask } from '@/types/center'
+import type { Camera, CameraQueryParams, AITask } from '@/types/center.d'
+import { normalizePageParams } from '@/api/utils/pageUtils'
 /**
  * 摄像头管理 API
  * 提供摄像头的增删改查操作
@@ -16,16 +17,12 @@ class CameraAPI {
    * @returns 摄像头列表响应
    */
   async getCameraList(params: CameraQueryParams = {}): Promise<UnifiedResponse<Camera[]>> {
-    const apiParams = { ...params }
-
-    if (!apiParams.page) {
-      apiParams.page = 1
-    }
-
-    if (!apiParams.limit) {
-      apiParams.limit = 10
-    } else {
-      apiParams.limit = Math.min(params.limit || 10, 100)
+    // 复制所有参数并应用分页默认值
+    const { page, limit } = normalizePageParams(params)
+    const apiParams = {
+      ...params,
+      page,
+      limit: Math.min(limit, 100)  // 摄像头列表限制最大值为 100
     }
 
     return authAxios.get('/api/v1/cameras/ai/list', { params: apiParams })

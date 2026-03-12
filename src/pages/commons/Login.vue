@@ -1,24 +1,14 @@
 <template>
 <div class="tech-login-container" id="login">
-  <!-- 背景粒子效果 -->
-  <div class="particles-background">
-    <div class="particle" v-for="n in 50" :key="n" :style="getParticleStyle()"></div>
-  </div>
-  
   <!-- 主要登录区域 -->
   <div class="login-main-area">
-    <!-- 左侧装饰区域 -->
+    <!-- 左侧装饰区域 - 极致优化：移除所有动画 -->
     <div class="login-decoration">
-      <div class="decoration-lines">
-        <div class="line line-1"></div>
-        <div class="line line-2"></div>
-        <div class="line line-3"></div>
-      </div>
       <div class="tech-circle">
         <div class="inner-circle"></div>
       </div>
     </div>
-    
+
     <!-- 登录表单区域 -->
     <div class="login-form-container">
       <div class="login-form-wrapper">
@@ -60,9 +50,9 @@
           <div class="input-group">
             <div class="input-wrapper">
               <i class="input-icon i-carbon-user"></i>
-              <input 
-                link 
-                v-model="username" 
+              <input
+                link
+                v-model="username"
                 placeholder="请输入用户名"
                 class="tech-input"
                 @focus="focusInput"
@@ -76,9 +66,9 @@
           <div class="input-group">
             <div class="input-wrapper">
               <i class="input-icon i-carbon-locked"></i>
-              <input 
+              <input
                 :type="showPassword ? 'text' : 'password'"
-                v-model="password" 
+                v-model="password"
                 placeholder="请输入密码"
                 class="tech-input"
                 @focus="focusInput"
@@ -95,8 +85,8 @@
 
           <!-- 登录按钮 -->
           <div class="login-btn-container">
-            <button 
-              class="tech-login-btn" 
+            <button
+              class="tech-login-btn"
               :class="{'loading': isLoging}"
               @click="login"
               :disabled="isLoging"
@@ -106,7 +96,6 @@
                 <i class="i-carbon-circle-dash animate-spin"></i>
                 登录中...
               </span>
-              <div class="btn-glow"></div>
             </button>
           </div>
         </div>
@@ -131,9 +120,9 @@ import { ElMessage } from 'element-plus'
 import { useUserInfoStore } from '@/stores/modules/userInfo'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import { useMenusStore } from '@/stores/modules/menus'
+import { logout, isLoggedIn } from '@/stores/modules/auth'
 import authAPI from '@/api/auth/authAPI'
 import storage from '@/stores/modules/storage'
-import { StorageKey } from '@/stores/modules/storageKeys'
 import { setupAsyncRoutes, resetAsyncRoutes } from '@/router'
 
 const router = useRouter()
@@ -151,16 +140,6 @@ const username = ref('')
 const password = ref('')
 const selectedTenant = ref('')
 const tenantInputFocused = ref(false)
-
-// 粒子样式生成函数
-function getParticleStyle() {
-  return {
-    left: Math.random() * 100 + '%',
-    top: Math.random() * 100 + '%',
-    animationDelay: Math.random() * 3 + 's',
-    animationDuration: (Math.random() * 3 + 2) + 's'
-  }
-}
 
 // 从本地缓存恢复租户信息
 function restoreTenantFromCache(): void {
@@ -193,6 +172,7 @@ function handleKeyDown(event: KeyboardEvent): void {
 
 // 登录功能
 async function login(): Promise<void> {
+  // 先检查租户编码
   if (selectedTenant.value === '') {
     ElMessage.warning({
       message: '请输入租户编码',
@@ -201,102 +181,112 @@ async function login(): Promise<void> {
     return
   }
 
-  if (username.value !== '' && password.value !== '') {
-    isLoging.value = true
+  // 精确的表单验证：分别提示缺失的字段
+  if (username.value === '') {
+    ElMessage.warning({
+      message: '请输入用户名',
+      showClose: true
+    })
+    return
+  }
 
-    try {
-      // 调用登录 API
-      const result = await authAPI.login({
-        username: username.value,
-        password: password.value,
-        tenantCode: selectedTenant.value
+  if (password.value === '') {
+    ElMessage.warning({
+      message: '请输入密码',
+      showClose: true
+    })
+    return
+  }
+
+  // 所有字段都已填写，执行登录
+  isLoging.value = true
+
+  try {
+    // 调用登录 API
+    const result = await authAPI.login({
+      username: username.value,
+      password: password.value,
+      tenant_id: selectedTenant.value  // 后端期望蛇形命名
+    })
+
+    if (result.code === 200) {
+      // 登录成功，处理返回的数据
+      const { token, adminToken, userInfo } = result.data
+
+      // 【关键】通过 Pinia Store 设置 token，触发持久化插件
+      storage.setAdminToken(adminToken)
+
+      // 存储租户信息用于下次登录自动填充
+      storage.setSelectedTenant(selectedTenant.value)
+
+      ElMessage.success({
+        message: '登录成功',
+        showClose: true
       })
 
-      if (result.code === 200) {
-        // 登录成功，处理返回的数据
-        const { token, adminToken, userInfo } = result.data
+      isLoging.value = false
 
-        // 【关键】通过 Pinia Store 设置 token，触发持久化插件
-        storage.setAdminToken(adminToken)
+      // 调用认证 API 获取用户权限和菜单信息
+      // 使用 Store 的 refresh 方法，将 API 调用和缓存逻辑封装在 Store 内部
+      try {
+        // 1️⃣ 重置动态路由标记（清除之前的路由状态）
+        resetAsyncRoutes()
 
-        // 存储租户信息用于下次登录自动填充
-        storage.setSelectedTenant(selectedTenant.value)
+        // 2️⃣ 并行刷新所有认证数据：用户信息、权限列表、菜单树
+        await Promise.all([
+          userInfoStore.refresh(),
+          permissionsStore.refresh(),
+          menusStore.refresh()
+        ])
 
-        ElMessage.success({
-          message: '登录成功',
-          showClose: true
-        })
-
-        isLoging.value = false
-
-        // 调用认证 API 获取用户权限和菜单信息
-        // 使用 Store 的 refresh 方法，将 API 调用和缓存逻辑封装在 Store 内部
-        try {
-          // 1️⃣ 重置动态路由标记（清除之前的路由状态）
-          resetAsyncRoutes()
-
-          // 2️⃣ 并行刷新所有认证数据：用户信息、权限列表、菜单树
-          await Promise.all([
-            userInfoStore.refresh(),
-            permissionsStore.refresh(),
-            menusStore.refresh()
-          ])
-
-          console.log('✅ 认证信息刷新完成')
-
-          // 3️⃣ 根据菜单树重新建立动态路由
-          const menuTree = menusStore.getMenuTreeSync() || []
-          if (menuTree.length > 0) {
-            setupAsyncRoutes(menuTree)
-          } else {
-            console.warn('⚠️ 菜单树为空，无法建立动态路由')
-          }
-
-          // 等待 Pinia 持久化插件完成同步
-          await new Promise(resolve => setTimeout(resolve, 100))
-
-          // 验证数据已正确持久化到 localStorage
-          const persistedToken = localStorage.getItem(StorageKey.ADMIN_TOKEN)
-          const persistedUserInfo = localStorage.getItem(StorageKey.USER_INFO)
-          const persistedPermissions = localStorage.getItem(StorageKey.PERMISSION)
-          const persistedMenus = localStorage.getItem(StorageKey.MENUS)
-
-          console.log('📦 localStorage 数据检查:', {
-            hasToken: !!persistedToken,
-            hasUserInfo: !!persistedUserInfo,
-            hasPermissions: !!persistedPermissions,
-            hasMenus: !!persistedMenus
-          })
-        } catch (error) {
-          console.error('加载认证信息失败:', error)
-          // 即使出错，token 已经设置，可以正常跳转
+        // 3️⃣ 根据菜单树重新建立动态路由
+        const menuTree = menusStore.getMenuTreeSync() || []
+        if (menuTree.length > 0) {
+          setupAsyncRoutes(menuTree)
         }
 
-        // 获取重定向路径（如果有）
-        const redirect = (route.query.redirect as string) || '/'
-        console.log('🔄 准备跳转到:', redirect)
-        router.push(redirect)
-      } else {
-        // 登录失败
-        ElMessage.error({
-          message: result.message || '登录失败',
+      } catch (error: any) {
+        console.error('加载认证信息失败:', error)
+
+        // 🔥 处理 403 错误：权限不足，清除认证数据并提示用户
+        if (error?.status === 403) {
+          // 使用统一的 logout 函数清除所有认证数据
+          await logout()
+
+          isLoging.value = false
+          ElMessage.error({
+            message: '登录成功，但获取权限信息失败。可能是因为您的账号权限配置有问题，请联系管理员',
+            duration: 5000,
+            showClose: true
+          })
+          return
+        }
+
+        // 其他错误：显示警告，但允许继续跳转
+        ElMessage.warning({
+          message: '获取用户信息失败，但已成功登录。部分功能可能不可用',
           showClose: true
         })
-        isLoging.value = false
       }
-    } catch (error) {
-      console.error('登录请求失败:', error)
+
+      // 获取重定向路径（如果有）
+      const redirect = (route.query.redirect as string) || '/'
+      router.push(redirect)
+    } else {
+      // 登录失败
       ElMessage.error({
-        message: '网络错误，请稍后重试',
+        message: result.message || '登录失败',
         showClose: true
       })
       isLoging.value = false
     }
-  } else {
-    ElMessage.warning({
-      message: '请输入用户名和密码',
+  } catch (error) {
+    console.error('登录请求失败:', error)
+    ElMessage.error({
+      message: '网络错误，请稍后重试',
       showClose: true
     })
+    isLoging.value = false
   }
 }
 
@@ -305,25 +295,16 @@ onMounted(() => {
   document.addEventListener('keydown', handleKeyDown)
   restoreTenantFromCache()
 
-  // 检查是否已登录，优先从 localStorage 检查（避免 Pinia 持久化延迟）
-  const tokenData = localStorage.getItem(StorageKey.ADMIN_TOKEN)
-  const menusData = localStorage.getItem(StorageKey.MENUS)
+  // 检查是否已登录，使用统一的 isLoggedIn 函数
+  if (isLoggedIn()) {
+    // 从 Store 获取菜单树（已通过持久化插件恢复）
+    const menuTree = menusStore.getMenuTreeSync() || []
 
-  if (tokenData && menusData) {
-    try {
-      // token 是直接存储的字符串，不需要解析
-      const token = tokenData
-      const menuTree = JSON.parse(menusData).menuTree
-
-      if (token && menuTree?.length > 0) {
-        // 已登录且有菜单，重定向到用户有权限的第一个页面
-        const firstMenuPath = findFirstAccessibleMenu(menuTree)
-        const targetPath = (route.query.redirect as string) || firstMenuPath || '/visualCenter'
-        console.log('✅ 检测到已登录，重定向到:', targetPath)
-        router.replace(targetPath)
-      }
-    } catch (error) {
-      console.error('解析本地存储数据失败:', error)
+    if (menuTree.length > 0) {
+      // 已登录且有菜单，重定向到用户有权限的第一个页面
+      const firstMenuPath = findFirstAccessibleMenu(menuTree)
+      const targetPath = (route.query.redirect as string) || firstMenuPath || '/visualCenter'
+      router.replace(targetPath)
     }
   }
 })
@@ -353,49 +334,20 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* 🔥 极致优化：移除所有动态效果，保证流畅 */
+
 /* 主容器样式 */
 .tech-login-container {
   position: relative;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(135deg, #0c1929 0%, #1a2f47 50%, #2d4563 100%);
+  /* 简化背景：移除渐变，使用纯色 */
+  background: #0c1929;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-family-base);
-}
-
-/* 粒子背景效果 */
-.particles-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.particle {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  background: var(--primary-color);
-  border-radius: 50%;
-  box-shadow: 0 0 10px var(--primary-color);
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px) scale(1);
-    opacity: 0.7;
-  }
-  50% {
-    transform: translateY(-20px) scale(1.1);
-    opacity: 1;
-  }
 }
 
 /* 主登录区域 */
@@ -405,98 +357,46 @@ onUnmounted(() => {
   width: 90%;
   max-width: 1200px;
   height: 600px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
+  /* 简化背景：移除 backdrop-filter，使用纯色半透明 */
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  /* 移除 box-shadow */
   z-index: 2;
   overflow: hidden;
 }
 
-/* 左侧装饰区域 */
+/* 左侧装饰区域 - 静态版本，无动画 */
 .login-decoration {
   flex: 1;
   position: relative;
-  background: linear-gradient(45deg, rgba(65, 133, 247, 0.1), rgba(90, 150, 248, 0.1));
+  /* 简化背景：纯色替代渐变 */
+  background: rgba(65, 133, 247, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
-.decoration-lines {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-}
-
-.line {
-  position: absolute;
-  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
-  opacity: 0.6;
-}
-
-.line-1 {
-  width: 100%;
-  height: 1px;
-  top: 20%;
-  animation: slideRight 3s ease-in-out infinite;
-}
-
-.line-2 {
-  width: 1px;
-  height: 100%;
-  left: 30%;
-  animation: slideDown 4s ease-in-out infinite;
-}
-
-.line-3 {
-  width: 100%;
-  height: 1px;
-  bottom: 20%;
-  animation: slideLeft 3.5s ease-in-out infinite;
-}
-
-@keyframes slideRight {
-  0%, 100% { transform: translateX(-100%); }
-  50% { transform: translateX(100%); }
-}
-
-@keyframes slideDown {
-  0%, 100% { transform: translateY(-100%); }
-  50% { transform: translateY(100%); }
-}
-
-@keyframes slideLeft {
-  0%, 100% { transform: translateX(100%); }
-  50% { transform: translateX(-100%); }
-}
-
 .tech-circle {
   width: 300px;
   height: 300px;
-  border: 2px solid rgba(65, 133, 247, 0.3);
+  border: 2px solid rgba(65, 133, 247, 0.25);
   border-radius: 50%;
   position: relative;
-  animation: rotate 20s linear infinite;
+  /* 移除动画：静态圆环 */
 }
 
 .inner-circle {
   width: 200px;
   height: 200px;
-  border: 1px solid rgba(90, 150, 248, 0.3);
+  border: 1px solid rgba(90, 150, 248, 0.25);
   border-radius: 50%;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  animation: rotate 15s linear infinite reverse;
-}
-
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  /* 移除动画：静态圆环 */
 }
 
 /* 登录表单容器 */
@@ -519,8 +419,6 @@ onUnmounted(() => {
   margin-bottom: 40px;
 }
 
-
-
 .title-container {
   display: flex;
   flex-direction: row;
@@ -537,7 +435,7 @@ onUnmounted(() => {
   color: var(--primary-color);
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
-  text-shadow: 0 0 15px rgba(65, 133, 247, 0.6);
+  /* 移除 text-shadow */
   border-right: 3px solid rgba(65, 133, 247, 0.4);
   padding-right: var(--spacing-sm);
   height: 70px;
@@ -549,12 +447,11 @@ onUnmounted(() => {
   height: 50px;
   object-fit: contain;
   margin-right: var(--spacing-xs);
-  filter: drop-shadow(0 0 10px rgba(65, 133, 247, 0.5));
-  transition: all var(--transition-base);
+  /* 移除 filter */
+  transition: transform 0.3s ease;
 }
 
 .brand-logo:hover {
-  filter: drop-shadow(0 0 15px rgba(65, 133, 247, 0.8));
   transform: scale(1.05);
 }
 
@@ -568,7 +465,6 @@ onUnmounted(() => {
 .brand-name .brand-dot {
   font-size: var(--font-size-xs);
   color: var(--primary-color);
-  text-shadow: 0 0 15px rgba(65, 133, 247, 0.8);
   margin: 0;
   line-height: 1;
   align-self: center;
@@ -589,7 +485,7 @@ onUnmounted(() => {
   color: #ffffff;
   margin: 0;
   letter-spacing: 2px;
-  text-shadow: 0 0 20px rgba(65, 133, 247, 0.5);
+  /* 移除 text-shadow */
 }
 
 .platform-subtitle {
@@ -597,14 +493,12 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.7);
   margin: 0;
   letter-spacing: 0.5px;
-  text-shadow: 0 0 10px rgba(65, 133, 247, 0.3);
 }
 
 .subtitle-highlight {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   color: var(--primary-color);
-  text-shadow: 0 0 15px rgba(65, 133, 247, 0.6);
 }
 
 /* 表单样式 */
@@ -621,7 +515,8 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.08);
   border-radius: var(--input-border-radius);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all var(--transition-base);
+  /* 使用 transform 替代其他属性以获得更好性能 */
+  transition: border-color 0.2s ease, background-color 0.2s ease;
   overflow: hidden;
 }
 
@@ -633,7 +528,6 @@ onUnmounted(() => {
 .input-wrapper.focused {
   background: rgba(255, 255, 255, 0.15);
   border-color: var(--primary-color);
-  box-shadow: 0 0 20px rgba(65, 133, 247, 0.3);
 }
 
 .input-icon {
@@ -643,7 +537,7 @@ onUnmounted(() => {
   transform: translateY(-50%);
   color: rgba(255, 255, 255, 0.6);
   font-size: var(--font-size-base);
-  transition: color var(--transition-base);
+  transition: color 0.2s ease;
   z-index: 2;
 }
 
@@ -685,25 +579,6 @@ onUnmounted(() => {
   background-color: rgba(0, 212, 255, 0.2);
 }
 
-
-
-.select-arrow {
-  position: absolute;
-  right: var(--spacing-base);
-  top: 50%;
-  transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.6);
-  font-size: var(--font-size-sm);
-  pointer-events: none;
-  transition: color var(--transition-base), transform var(--transition-base);
-  z-index: 2;
-}
-
-.input-wrapper.focused .select-arrow {
-  color: var(--primary-color);
-  transform: translateY(-50%) rotate(180deg);
-}
-
 .password-toggle {
   position: absolute;
   right: var(--spacing-base);
@@ -712,7 +587,7 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.6);
   font-size: var(--font-size-base);
   cursor: pointer;
-  transition: color var(--transition-base);
+  transition: color 0.2s ease;
   z-index: 2;
 }
 
@@ -727,7 +602,7 @@ onUnmounted(() => {
   width: 0;
   height: 2px;
   background: linear-gradient(90deg, var(--primary-color), var(--primary-color-hover));
-  transition: width var(--transition-base);
+  transition: width 0.2s ease;
 }
 
 .input-wrapper.focused .input-border {
@@ -743,7 +618,7 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   height: var(--button-height-lg);
-  background: linear-gradient(45deg, var(--primary-color), var(--primary-color-hover));
+  background: linear-gradient(45deg, #4185F7, #2d5fd9);
   border: none;
   border-radius: var(--button-border-radius);
   color: #ffffff;
@@ -751,13 +626,13 @@ onUnmounted(() => {
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
   overflow: hidden;
-  transition: all var(--transition-base);
-  box-shadow: 0 10px 30px rgba(65, 133, 247, 0.3);
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 15px rgba(65, 133, 247, 0.3);
 }
 
 .tech-login-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 40px rgba(65, 133, 247, 0.4);
+  box-shadow: 0 6px 20px rgba(65, 133, 247, 0.4);
 }
 
 .tech-login-btn:active {
@@ -767,20 +642,6 @@ onUnmounted(() => {
 .tech-login-btn.loading {
   pointer-events: none;
   opacity: 0.8;
-}
-
-.btn-glow {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left var(--transition-slow);
-}
-
-.tech-login-btn:hover .btn-glow {
-  left: 100%;
 }
 
 .loading-text {
@@ -817,20 +678,20 @@ onUnmounted(() => {
     height: auto;
     min-height: 600px;
   }
-  
+
   .login-decoration {
     display: none;
   }
-  
+
   .login-form-container {
     padding: 30px 20px;
   }
-  
+
   .title-container {
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .brand-name {
     flex-direction: row;
     border-right: none;
@@ -842,25 +703,15 @@ onUnmounted(() => {
     justify-content: center;
     gap: 6px;
   }
-  
+
   .brand-logo {
     width: 40px;
     height: 40px;
     margin-right: 6px;
   }
-  
+
   .platform-title {
     font-size: 24px;
-  }
-  
-  .tech-circle {
-    width: 200px;
-    height: 200px;
-  }
-  
-  .inner-circle {
-    width: 120px;
-    height: 120px;
   }
 }
 
@@ -869,14 +720,13 @@ onUnmounted(() => {
     margin: 20px;
     width: calc(100% - 40px);
   }
-  
+
   .platform-title {
     font-size: 20px;
   }
-  
+
   .login-form-container {
     padding: 20px 15px;
   }
 }
 </style>
-

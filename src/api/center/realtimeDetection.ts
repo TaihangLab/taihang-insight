@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios'
 import { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { AITask, DetectionResult } from '@/types/center'
+import type { AITask, DetectionResult } from '@/types/center.d'
 
 /**
  * 实时检测管理 API

@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios'
 import { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { ChannelQueryParams, Channel, PlayStreamInfo, TreeQueryParams, TreeNode } from '@/types/center'
+import type { ChannelQueryParams, Channel, PlayStreamInfo, TreeQueryParams, TreeNode } from '@/types/center.d'
 /**
  * 实时监控管理 API
  * 提供实时监控页面的通道管理和视频播放功能

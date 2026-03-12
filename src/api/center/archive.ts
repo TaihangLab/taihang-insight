@@ -1,6 +1,7 @@
 import { AxiosResponse } from 'axios'
 import { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { AlertArchive, ArchiveQueryParams, CreateArchiveRequest, Alert, AlertRecordQueryParams, AlertRecord } from '@/types/center'
+import type { AlertArchive, ArchiveQueryParams, CreateArchiveRequest, Alert, AlertRecordQueryParams, AlertRecord } from '@/types/center.d'
+import { normalizePageParams } from '@/api/utils/pageUtils'
 
 /**
  * 档案管理 API
@@ -16,15 +17,8 @@ class ArchiveAPI {
    * @param params 查询参数
    */
   async getArchiveList(params: ArchiveQueryParams = {}): Promise<AxiosResponse<UnifiedResponse<AlertArchive[]>>> {
-    const apiParams = { ...params }
-
-    if (!apiParams.page) {
-      apiParams.page = 1
-    }
-
-    if (!apiParams.limit) {
-      apiParams.limit = 20
-    }
+    const { page, limit } = normalizePageParams(params)
+    const apiParams = { ...params, page, limit }
 
     return authAxios.get('/api/v1/alert-archives', { params: apiParams })
   }
@@ -102,15 +96,8 @@ class ArchiveAPI {
       return Promise.reject(new Error('缺少档案ID'))
     }
 
-    const apiParams = { ...params }
-
-    if (!apiParams.page) {
-      apiParams.page = 1
-    }
-
-    if (!apiParams.limit) {
-      apiParams.limit = 20
-    }
+    const { page, limit } = normalizePageParams(params)
+    const apiParams = { ...params, page, limit }
 
     return authAxios.get(`/api/v1/alert-archives/${archiveId}/alerts`, { params: apiParams })
   }
@@ -260,11 +247,8 @@ class ArchiveAPI {
       return Promise.reject(new Error('缺少档案ID'))
     }
 
-    const apiParams = {
-      page: 1,
-      limit: 20,
-      ...params
-    }
+    const { page, limit } = normalizePageParams(params)
+    const apiParams = { ...params, page, limit }
 
     return authAxios.get(`/api/v1/alert-archives/linked-alerts/${archiveId}`, { params: apiParams })
   }
@@ -287,12 +271,8 @@ class ArchiveAPI {
    * @param params 查询参数
    */
   async getAvailableAlerts(params: AlertRecordQueryParams = {}): Promise<AxiosResponse<UnifiedResponse<any>>> {
-    const apiParams = {
-      page: 1,
-      limit: 20,
-      exclude_archived: true,
-      ...params
-    }
+    const { page, limit } = normalizePageParams(params)
+    const apiParams = { ...params, page, limit, exclude_archived: true }
 
     return authAxios.get('/api/v1/alert-archives/available-alerts', { params: apiParams })
   }

@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios'
 import { type UnifiedResponse, authAxios } from '@/api/commons'
-import type { TaskReviewConfig } from '@/types/center'
+import type { TaskReviewConfig } from '@/types/center.d'
 /**
  * 任务复判管理 API
  * 提供任务复判配置的管理功能

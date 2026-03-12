@@ -1,4 +1,5 @@
-import type { ForwardTimeRange, AlertForwardStatistics } from '@/types/center'
+import { authAxios } from '@/api/commons'
+import type { ForwardTimeRange, AlertForwardStatistics } from '@/types/center.d'
 
 /**
  * 预警转发统计 API
@@ -11,43 +12,20 @@ import type { ForwardTimeRange, AlertForwardStatistics } from '@/types/center'
 class AlertForwardAPI {
   /**
    * 获取报警转发统计
+   * GET /api/v1/alerts/forward-statistics
    * @param timeRange 时间范围: '7d' | '30d'
-   * 注意：响应拦截器会提取 data 字段，返回类型是 AlertForwardStatistics
+   *
+   * 注意：响应拦截器会自动提取 data.data 字段
+   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
-  async getForwardStatistics(timeRange: ForwardTimeRange = '7d'): Promise<AlertForwardStatistics> {
-    // 生成模拟统计数据
-    const days = timeRange === '7d' ? 7 : 30
-    const dateLabels: string[] = []
-    const forwardCounts: number[] = []
-
-    const now = new Date()
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
-      dateLabels.push(`${date.getMonth() + 1}/${date.getDate()}`)
-      forwardCounts.push(Math.floor(Math.random() * 20000) + 5000)
-    }
-
-    const mockData: AlertForwardStatistics = {
-      time_range: timeRange,
-      total_forwards: forwardCounts.reduce((a, b) => a + b, 0),
-      daily_statistics: dateLabels.map((label, index) => ({
-        date: label,
-        count: forwardCounts[index]
-      })),
-      date_labels: dateLabels,
-      forward_counts: forwardCounts
-    }
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(mockData)
-      }, 200)
-    })
-
-    // 真实API调用（会经过响应拦截器处理）
-    // return authAxios.get('/api/v1/alerts/forward-statistics', {
-    //   params: { time_range: timeRange }
-    // }) as Promise<AlertForwardStatistics>
+  getForwardStatistics(timeRange: ForwardTimeRange = '7d'): Promise<AlertForwardStatistics> {
+    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 AlertForwardStatistics
+    return authAxios.get<any, AlertForwardStatistics>(
+      '/api/v1/alerts/forward-statistics',
+      {
+        params: { time_range: timeRange }
+      }
+    )
   }
 }
 

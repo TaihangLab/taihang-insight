@@ -4,11 +4,14 @@
  */
 
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
-import { storage } from '@/stores/modules/storage'
+import { useTokenStore } from '@/stores/modules/token'
 
 // ========== 类型导出 ==========
 // 重新导出全局类型
-export type { UnifiedResponse, RBACResponse, PageParams, PaginationData } from '@/types/global'
+export type { UnifiedResponse, RBACResponse, PaginationData } from '@/types/global'
+
+// 导出 center API 相关类型（从 .d.ts 文件）
+export type { PageParams, RequiredPageParams } from '@/types/center.d'
 
 // ========== API 错误类 ==========
 /**
@@ -82,7 +85,8 @@ export const paramsSerializer = function (params: Record<string, any>): string {
 export const addAuthHeaders = (
   config: InternalAxiosRequestConfig
 ): InternalAxiosRequestConfig => {
-  const token = storage.getAdminToken()
+  const tokenStore = useTokenStore()
+  const token = tokenStore.getAdminToken()
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`
   }
@@ -254,8 +258,8 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
       // 检查是否为 RBACResponse 格式 { success, code, message, data }
       if (data && typeof data === 'object' && 'success' in data && 'code' in data && 'message' in data) {
         if (data.success) {
-          // 请求成功，返回 data 字段
-          return data
+          // 请求成功，返回 data.data（内层数据，包含分页信息）
+          return data.data
         } else {
           // 请求失败，抛出错误
           const error = new APIError(data.message || 'API请求失败', data.code)
@@ -274,19 +278,11 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
     (error) => {
       console.error('API 请求错误:', error)
 
-      if (error.status === 403) {
-        const customError = new APIError('无权限访问该资源', 403)
-        customError.code = 403
-        customError.status = 403
-        customError.response = error.response?.data
-        customError.originalError = error
-        return Promise.reject(customError)
-      }
-
       // 处理有响应的 HTTP 错误
       if (error.response) {
         const status = error.response.status
 
+        // 403 权限错误
         if (status === 403) {
           let errorMessage = '无权限访问该资源'
           if (error.response.data) {
@@ -302,6 +298,15 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
             }
           }
 
+          // 🔥 登录页面不自动跳转 403，让业务层处理
+          const isLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login'
+          if (!isLoginPage) {
+            // 跳转到 403 页面
+            if (typeof window !== 'undefined' && window.location.pathname !== '/403') {
+              window.location.href = '/#/403'
+            }
+          }
+
           const customError = new APIError(errorMessage, 403)
           customError.status = 403
           customError.response = error.response.data
@@ -309,6 +314,7 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
           return Promise.reject(customError)
         }
 
+        // 401 未授权错误
         if (status === 401) {
           const customError = new APIError('登录已过期，请重新登录', 401)
           customError.status = 401
@@ -316,6 +322,7 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
           return Promise.reject(customError)
         }
 
+        // 404 资源不存在错误
         if (status === 404) {
           const customError = new APIError('请求的资源不存在', 404)
           customError.status = 404
@@ -338,6 +345,19 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
 
         const customError = new APIError(error.response.statusText || `请求失败 (${status})`, status)
         customError.status = status
+        customError.originalError = error
+        return Promise.reject(customError)
+      }
+
+      // 处理 error.status 为 403 的情况（可能在其他地方设置的）
+      if (error.status === 403) {
+        if (typeof window !== 'undefined' && window.location.pathname !== '/403') {
+          window.location.href = '/#/403'
+        }
+        const customError = new APIError('无权限访问该资源', 403)
+        customError.code = 403
+        customError.status = 403
+        customError.response = error.response?.data
         customError.originalError = error
         return Promise.reject(customError)
       }
@@ -370,6 +390,20 @@ export const authAxios = createAxiosInstance(
   {
     timeout: 15000
   },
+)
+
+/**
+ * 原始响应的 axios 实例
+ * 返回完整的 response 对象，不经过响应拦截器处理
+ * 用于需要访问完整响应数据的场景（如 warningArchives.vue）
+ */
+export const rawAuthAxios = createAxiosInstance(
+  {
+    timeout: 15000
+  },
+  {
+    skipResponseInterceptor: true
+  }
 )
 
 // 默认导出，方便其他模块使用

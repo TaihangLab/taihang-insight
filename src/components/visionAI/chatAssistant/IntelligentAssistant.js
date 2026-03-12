@@ -606,84 +606,78 @@ export default {
           this.isConnecting = false;
           this.isGenerating = true; // 开始生成，用户可以停止
           this.scrollToBottom();
-          
-          // 创建流式连接
-          this.currentEventSource = await centerAPI.chatAssistant.createChatStream(
-            chatData,
-            // onMessage回调 - 接收流式数据
-            async (chunk, fullResponse, conversationId) => {
+
+          // 创建 AbortController 用于取消请求
+          this.currentEventSource = new AbortController();
+
+          // 使用 AsyncIterable 遍历聊天流
+          for await (const chunk of centerAPI.chatAssistant.createChatStream(chatData, {
+            signal: this.currentEventSource.signal
+          })) {
+            // 处理数据块
+            if (chunk.content) {
               // 如果获取到新的会话ID，立即更新UI状态
-              if (conversationId && !this.currentChatId) {
-                this.currentChatId = conversationId;
+              if (chunk.conversationId && !this.currentChatId) {
+                this.currentChatId = chunk.conversationId;
                 console.log('设置新的会话ID:', this.currentChatId);
-                
+
                 // 后端现在自动保存消息，前端不需要再手动保存
                 console.log('后端已自动保存消息，前端跳过手动保存');
-                
+
                 // 立即加载会话列表以显示新会话
                 await this.loadChatConversations();
-                
+
                 // 设置当前会话为选中状态
                 this.updateCurrentChatSelection();
               }
-              
+
               // 实时解析思考状态
-              this.parseThinkingState(assistantMessage, fullResponse);
+              this.parseThinkingState(assistantMessage, chunk.fullResponse);
               this.scrollToBottom();
-              
+
               // 重新绑定事件（特别是当思考完成时）
               this.$nextTick(() => {
                 this.bindThinkBlockEvents();
               });
-            },
-            // onError回调 - 处理错误
-            (error) => {
-              console.error('聊天API错误:', error);
-              this.handleChatError(error, assistantMessage);
-            },
-            // onComplete回调 - 完成响应
-            async (fullResponse, conversationId) => {
+            }
+
+            // 检查是否完成
+            if (chunk.done) {
               // 确保会话ID设置正确
-              if (conversationId && !this.currentChatId) {
-                this.currentChatId = conversationId;
+              if (chunk.conversationId && !this.currentChatId) {
+                this.currentChatId = chunk.conversationId;
                 console.log('完成时设置会话ID:', this.currentChatId);
               }
-              
+
               // 最后一次解析，确保所有状态正确
-              this.parseThinkingState(assistantMessage, fullResponse);
-              
+              this.parseThinkingState(assistantMessage, chunk.fullResponse);
+
               // 保存完整内容（包含think标签，用于后续重新加载）
-              assistantMessage.content = fullResponse;
-              
+              assistantMessage.content = chunk.fullResponse;
+
               // 确保事件绑定生效
               this.$nextTick(() => {
                 this.bindThinkBlockEvents();
               });
               // 显示内容只包含正常内容（不含think标签）
-              assistantMessage.displayContent = assistantMessage.normalContent || fullResponse;
-              
+              assistantMessage.displayContent = assistantMessage.normalContent || chunk.fullResponse;
+
               this.isTypingResponse = false;
               this.isConnecting = false;
               this.isGenerating = false; // 生成完成
               this.currentEventSource = null;
               this.retryCount = 0;
-              
+
               // 后端现在自动保存消息，前端不需要再手动保存
               console.log('后端已自动保存用户消息和助手消息');
-              
+
               // 保存当前聊天（主要是本地状态管理）
               this.saveCurrentChat();
               this.scrollToBottom();
-              
-              // 如果还没有会话ID，这里可能是第一次获取
-              if (!this.currentChatId && conversationId) {
-                this.currentChatId = conversationId;
-                console.log('onComplete中设置会话ID:', this.currentChatId);
-              }
-              
-              // 确保会话列表是最新的（可能在onMessage中已经加载过了）
+
+              // 确保会话列表是最新的（可能在处理中已经加载过了）
               await this.loadChatConversations();
-              
+
               // 如果是新对话（只有2条消息：用户+助手），自动生成标题
               if (this.messages.length === 2 && this.currentChatId) {
                 try {
@@ -698,10 +692,11 @@ export default {
                   // 不阻断正常流程，只记录警告
                 }
               }
-              
-              console.log('聊天完成:', fullResponse);
+
+              console.log('聊天完成:', chunk.fullResponse);
+              break;
             }
-          );
+          }
           
         } catch (error) {
           console.error('发送消息失败:', error);
@@ -726,7 +721,7 @@ export default {
         
         // 关闭当前连接
         if (this.currentEventSource) {
-          this.currentEventSource.close();
+          this.currentEventSource.abort();
           this.currentEventSource = null;
         }
         
@@ -796,7 +791,7 @@ export default {
        */
       stopCurrentChat() {
         if (this.currentEventSource) {
-          this.currentEventSource.close();
+          this.currentEventSource.abort();
           this.currentEventSource = null;
         }
         this.isTypingResponse = false;

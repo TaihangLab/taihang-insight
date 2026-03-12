@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios'
 import { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { Model, ModelQueryParams } from '@/types/center'
+import type { Model, ModelQueryParams } from '@/types/center.d'
 /**
  * 模型管理 API
  * 提供模型的增删改查、加载卸载等操作

@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios'
 import { authAxios } from '@/api/commons'
-import type { LocalVideo, StreamStatus } from '@/types/center'
+import type { LocalVideo, StreamStatus } from '@/types/center.d'
 
 /**
  * 本地视频 API 类

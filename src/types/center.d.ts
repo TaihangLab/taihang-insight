@@ -8,11 +8,63 @@
 // ============================================================================
 
 /**
- * 分页参数
+ * 分页参数（带默认值的实际使用类型）
  */
-export interface PageParams {
+export type PageParams = {
+  /** 页码，从 1 开始 */
   page?: number
+  /** 每页数量 */
   limit?: number
+}
+
+/**
+ * 必填的分页参数
+ */
+export type RequiredPageParams = {
+  /** 页码，从 1 开始 */
+  page: number
+  /** 每页数量 */
+  limit: number
+}
+
+/**
+ * 带分页信息的列表响应（标准格式）
+ *
+ * 注意：这是后端返回的标准格式，分页信息直接在响应对象中
+ * 不需要特殊的 "PaginatedResponse" 包装类型
+ *
+ * @example
+ * ```typescript
+ * // 分页列表
+ * type AlertListResponse = {
+ *   data: Alert[]
+ *   total: number
+ *   page: number
+ *   limit: number
+ *   pages: number
+ * }
+ *
+ * // 单个对象
+ * type UserResponse = {
+ *   data: User
+ *   total: number
+ *   page: number
+ *   limit: number
+ *   pages: number
+ * }
+ * ```
+ */
+export type ListWithPagination<T> = {
+  /** 数据列表 */
+  data: T[]
+  /** 总记录数 */
+  total: number
+  /** 当前页码 */
+  page: number
+  /** 每页数量 */
+  limit: number
+  /** 总页数 */
+  pages: number
 }
 
 // ============================================================================
@@ -460,17 +512,25 @@ export interface Group {
 }
 
 /**
- * 流式回调函数类型
+ * 流式聊天数据块
  */
-export type StreamCallback = (chunk: string, fullResponse: string, conversationId: string) => void
-export type StreamErrorCallback = (error: Error) => void
-export type StreamCompleteCallback = (fullResponse: string, conversationId: string) => void
+export interface ChatChunk {
+  /** 本次接收的内容片段 */
+  content: string
+  /** 完整的响应内容（累计） */
+  fullResponse: string
+  /** 会话ID */
+  conversationId: string
+  /** 是否完成 */
+  done: boolean
+}
 
 /**
- * 流式控制器
+ * 流式聊天选项
  */
-export interface StreamController {
-  close: () => void
+export interface ChatStreamOptions {
+  /** 取消信号 */
+  signal?: AbortSignal
 }
 
 // ============================================================================

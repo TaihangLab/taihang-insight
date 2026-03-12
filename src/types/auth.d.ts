@@ -4,11 +4,12 @@
 
 /**
  * 登录请求参数
+ * 注意：后端字段使用蛇形命名（snake_case），需与后端保持一致
  */
 export interface LoginRequest {
   username: string
   password: string
-  tenantCode: string
+  tenant_id: string  // 后端期望 tenant_id 而非 tenantCode
 }
 
 /**

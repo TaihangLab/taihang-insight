@@ -150,3 +150,19 @@ service.interceptors.response.use(
     } else if (error.message) {
       if (error.message.includes('timeout')) {
         message = '请求超时，请检查网络连接'
+      } else if (error.message.includes('Network Error')) {
+        message = '网络连接异常，请检查网络'
+      }
+    }
+
+    ElMessage({
+      message: message,
+      type: 'error',
+      duration: 3 * 1000
+    })
+
+    return Promise.reject(error)
+  }
+)
+
+export default service

@@ -1,217 +1,153 @@
-import { AxiosResponse } from 'axios'
-import { authAxios,  type UnifiedResponse, PageParams } from '@/api/commons'
+import { authAxios, type PageParams } from '@/api/commons'
+import type { ChatMessage, ChatChunk, ChatStreamOptions } from '@/types/center.d'
+import { normalizePageParams } from '@/api/utils/pageUtils'
+
 /**
  * Chat Assistant API
  *
  * 智能助手相关API接口
  */
-
-/**
- * 聊天消息数据
- */
-export interface ChatMessage {
-  message: string
-  conversation_id?: string | null
-  system_prompt?: string | null
-  stream?: boolean
-  temperature?: number | null
-  max_tokens?: number | null
-  context_length?: number
-  model?: string | null
-}
-
-/**
- * 会话消息
- */
-export interface ConversationMessage {
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  message_id?: string
-  timestamp?: string
-}
-
-/**
- * 会话信息
- */
-export interface Conversation {
-  conversation_id: string
-  title: string
-  message_count: number
-  last_message_time: string
-  created_at: string
-  group_id?: string | null
-}
-
-/**
- * 分组信息
- */
-export interface Group {
-  id: string
-  name: string
-  conversation_count: number
-  created_at: string
-  updated_at: string
-}
-
-/**
- * 流式回调函数类型
- */
-export type StreamCallback = (chunk: string, fullResponse: string, conversationId: string) => void
-export type StreamErrorCallback = (error: Error) => void
-export type StreamCompleteCallback = (fullResponse: string, conversationId: string) => void
-
-/**
- * 流式控制器
- */
-export interface StreamController {
-  close: () => void
-}
-
-/**
- * Chat Assistant API
- */
 const chatAssistantAPI = {
   /**
    * 创建流式聊天连接
    * @param chatData 聊天数据
-   * @param onMessage 接收消息回调
-   * @param onError 错误回调
-   * @param onComplete 完成回调
-   * @returns 包含abort方法的控制器对象
+   * @param options 流式选项（包含取消信号）
+   * @returns 异步迭代器，用于遍历聊天数据块
+   *
+   * @example
+   * ```typescript
+   * const abortController = new AbortController()
+   * try {
+   *   for await (const chunk of chatAssistantAPI.createChatStream(data, { signal: abortController.signal })) {
+   *     console.log(chunk.content)
+   *     if (chunk.done) break
+   *   }
+   * } catch (error) {
+   *   console.error('聊天失败:', error)
+   * }
+   * ```
    */
-  async createChatStream(
+  async *createChatStream(
     chatData: ChatMessage,
-    onMessage: StreamCallback,
-    onError: StreamErrorCallback,
-    onComplete: StreamCompleteCallback
-  ): Promise<StreamController> {
+    options?: ChatStreamOptions
+  ): AsyncIterable<ChatChunk> {
+    const abortController = new AbortController()
+
+    // 支持外部传入的取消信号
+    if (options?.signal) {
+      options.signal.addEventListener('abort', () => abortController.abort())
+    }
+
+    // 构建JSON请求体
+    const requestBody = {
+      message: chatData.message,
+      stream: true,
+      system_prompt: chatData.system_prompt,
+      conversation_id: chatData.conversation_id || null
+    }
+
+    // 获取baseURL
+    const baseURL = authAxios.defaults.baseURL || ''
+
+    // 发起POST请求
+    const response = await fetch(`${baseURL}/api/v1/chat/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'text/plain',
+        // 添加认证头（如果有）
+        ...(localStorage.getItem('token') && {
+          'access-token': localStorage.getItem('token') || ''
+        })
+      },
+      body: JSON.stringify(requestBody),
+      signal: abortController.signal
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP错误! 状态: ${response.status}`)
+    }
+
+    // 获取流式读取器
+    const reader = response.body?.getReader()
+    if (!reader) {
+      throw new Error('无法获取响应流')
+    }
+
+    const decoder = new TextDecoder()
+    let fullResponse = ''
+    let buffer = ''
+
+    // 用于存储会话ID的变量
+    let conversationId = chatData.conversation_id || ''
+
     try {
-      console.log('创建流式聊天连接:', chatData)
+      while (true) {
+        const { done, value } = await reader.read()
 
-      // 创建AbortController用于取消请求
-      const abortController = new AbortController()
-
-      // 构建JSON请求体
-      const requestBody = {
-        message: chatData.message,
-        stream: true,
-        system_prompt: chatData.system_prompt,
-        conversation_id: chatData.conversation_id || null
-      }
-
-      // 获取baseURL
-      const baseURL = authAxios.defaults.baseURL || ''
-
-      // 发起POST请求
-      const response = await fetch(`${baseURL}/api/chat/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/plain',
-          // 添加认证头（如果有）
-          ...(localStorage.getItem('token') && {
-            'access-token': localStorage.getItem('token') || ''
-          })
-        },
-        body: JSON.stringify(requestBody),
-        signal: abortController.signal
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP错误! 状态: ${response.status}`)
-      }
-
-      // 获取流式读取器
-      const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error('无法获取响应流')
-      }
-
-      const decoder = new TextDecoder()
-      let fullResponse = ''
-      let buffer = ''
-
-      // 用于存储会话ID的变量
-      let conversationId = chatData.conversation_id || ''
-
-      // 创建返回的控制器对象
-      const controller: StreamController = {
-        close: () => {
-          abortController.abort()
-          reader.cancel()
+        if (done) {
+          // 流结束，yield 最后一个数据块
+          yield {
+            content: '',
+            fullResponse,
+            conversationId,
+            done: true
+          }
+          return
         }
-      }
 
-      // 开始读取流式数据
-      const readStream = async () => {
-        try {
-          while (true) {
-            const { done, value } = await reader.read()
+        // 解码数据块
+        const chunk = decoder.decode(value, { stream: true })
+        buffer += chunk
 
-            if (done) {
-              if (onComplete) onComplete(fullResponse, conversationId)
-              break
+        // 处理完整的数据行
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || '' // 保留最后不完整的行
+
+        for (const line of lines) {
+          if (line.trim() === '') continue
+
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6) // 去掉 "data: " 前缀
+
+            if (data === '[DONE]') {
+              yield {
+                content: '',
+                fullResponse,
+                conversationId,
+                done: true
+              }
+              return
             }
 
-            // 解码数据块
-            const chunk = decoder.decode(value, { stream: true })
-            buffer += chunk
+            try {
+              const parsed = JSON.parse(data)
 
-            // 处理完整的数据行
-            const lines = buffer.split('\n')
-            buffer = lines.pop() || '' // 保留最后不完整的行
+              // 提取会话ID（如果存在）
+              if (parsed.conversation_id && !conversationId) {
+                conversationId = parsed.conversation_id
+              }
 
-            for (const line of lines) {
-              if (line.trim() === '') continue
+              // 提取消息内容
+              if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
+                const content = parsed.choices[0].delta.content
+                fullResponse += content
 
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6) // 去掉 "data: " 前缀
-
-                if (data === '[DONE]') {
-                  if (onComplete) onComplete(fullResponse, conversationId)
-                  return
-                }
-
-                try {
-                  const parsed = JSON.parse(data)
-
-                  // 提取会话ID（如果存在）
-                  if (parsed.conversation_id && !conversationId) {
-                    conversationId = parsed.conversation_id
-                    console.log('获取到新的会话ID:', conversationId)
-                  }
-
-                  // 提取消息内容
-                  if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
-                    const content = parsed.choices[0].delta.content
-                    fullResponse += content
-                    if (onMessage) onMessage(content, fullResponse, conversationId)
-                  }
-                } catch (parseError) {
-                  console.error('解析JSON数据错误:', parseError, 'data:', data)
+                yield {
+                  content,
+                  fullResponse,
+                  conversationId,
+                  done: false
                 }
               }
+            } catch {
+              // JSON解析错误，忽略
             }
           }
-        } catch (error) {
-          if (error instanceof Error && error.name === 'AbortError') {
-            console.log('流式聊天请求被取消')
-            return
-          }
-          console.error('读取流式数据错误:', error)
-          if (onError) onError(error as Error)
         }
       }
-
-      // 开始读取
-      readStream()
-
-      return controller
-
-    } catch (error) {
-      console.error('创建流式聊天连接失败:', error)
-      if (onError) onError(error as Error)
-      throw error
+    } finally {
+      reader.cancel()
     }
   },
 
@@ -221,10 +157,8 @@ const chatAssistantAPI = {
    * @returns axios响应
    */
   getChatConversations(params: PageParams = {}) {
-    return authAxios.get('/api/chat/conversations', {
-      params: {
-        limit: params.limit || 20
-      }
+    return authAxios.get('/api/v1/chat/conversations', {
+      params: normalizePageParams(params)
     })
   },
 
@@ -235,10 +169,11 @@ const chatAssistantAPI = {
    * @returns axios响应
    */
   getChatMessages(conversationId: string, params: PageParams = {}) {
-    console.log('获取会话消息:', conversationId, params)
-    return authAxios.get(`/api/chat/conversations/${conversationId}/messages`, {
+    const normalized = normalizePageParams(params)
+    return authAxios.get(`/api/v1/chat/conversations/${conversationId}/messages`, {
       params: {
-        limit: params.limit || 50
+        ...normalized,
+        limit: normalized.limit * 2  // 消息列表默认显示更多
       }
     })
   },
@@ -249,8 +184,7 @@ const chatAssistantAPI = {
    * @returns axios响应
    */
   deleteChatConversation(conversationId: string) {
-    console.log('删除会话:', conversationId)
-    return authAxios.delete(`/api/chat/conversations/${conversationId}`)
+    return authAxios.delete(`/api/v1/chat/conversations/${conversationId}`)
   },
 
   /**
@@ -259,7 +193,7 @@ const chatAssistantAPI = {
    * @returns Promise
    */
   autoGenerateTitle(conversationId: string) {
-    return authAxios.post(`/api/chat/conversations/${conversationId}/auto-title`)
+    return authAxios.post(`/api/v1/chat/conversations/${conversationId}/auto-title`)
   },
 
   /**
@@ -271,7 +205,7 @@ const chatAssistantAPI = {
   updateConversationTitle(conversationId: string, title: string) {
     const formData = new FormData()
     formData.append('title', title)
-    return authAxios.put(`/api/chat/conversations/${conversationId}/title`, formData)
+    return authAxios.put(`/api/v1/chat/conversations/${conversationId}/title`, formData)
   },
 
   /**
@@ -285,7 +219,7 @@ const chatAssistantAPI = {
     if (groupId) {
       formData.append('group_id', groupId)
     }
-    return authAxios.put(`/api/chat/conversations/${conversationId}/group`, formData)
+    return authAxios.put(`/api/v1/chat/conversations/${conversationId}/group`, formData)
   },
 
   /**
@@ -296,11 +230,10 @@ const chatAssistantAPI = {
    * @returns Promise
    */
   stopGeneration(conversationId: string, messageId: string, partialContent = '') {
-    console.log('停止生成并保存:', conversationId, messageId, partialContent.length)
     const formData = new FormData()
     formData.append('message_id', messageId)
     formData.append('partial_content', partialContent)
-    return authAxios.post(`/api/chat/conversations/${conversationId}/stop-generation`, formData)
+    return authAxios.post(`/api/v1/chat/conversations/${conversationId}/stop-generation`, formData)
   },
 
   /**
@@ -311,7 +244,7 @@ const chatAssistantAPI = {
   createGroup(name: string) {
     const formData = new FormData()
     formData.append('name', name)
-    return authAxios.post('/api/chat/groups', formData)
+    return authAxios.post('/api/v1/chat/groups', formData)
   },
 
   /**
@@ -319,7 +252,7 @@ const chatAssistantAPI = {
    * @returns Promise
    */
   getGroups() {
-    return authAxios.get('/api/chat/groups')
+    return authAxios.get('/api/v1/chat/groups')
   },
 
   /**
@@ -328,7 +261,7 @@ const chatAssistantAPI = {
    * @returns Promise
    */
   deleteGroup(groupId: string) {
-    return authAxios.delete(`/api/chat/groups/${groupId}`)
+    return authAxios.delete(`/api/v1/chat/groups/${groupId}`)
   }
 }
 
