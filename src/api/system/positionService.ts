@@ -15,24 +15,14 @@ class PositionService {
    * 获取岗位列表
    */
   static async getPositions(params?: PositionQueryParams): Promise<UnifiedResponse<Position[]>> {
-    try {
-      return await rbacAxios.get('/api/v1/rbac/positions', { params })
-    } catch (error) {
-      console.error('获取岗位列表失败:', error)
-      throw error
-    }
+    return rbacAxios.get('/api/v1/rbac/positions', { params })
   }
 
   /**
    * 创建岗位
    */
   static async createPosition(posData: CreatePositionRequest): Promise<UnifiedResponse<Position>> {
-    try {
-      return await rbacAxios.post('/api/v1/rbac/positions', posData)
-    } catch (error) {
-      console.error('创建岗位失败:', error)
-      throw error
-    }
+    return rbacAxios.post('/api/v1/rbac/positions', posData)
   }
 
   /**
@@ -42,24 +32,14 @@ class PositionService {
     positionId: number,
     posData: UpdatePositionRequest
   ): Promise<UnifiedResponse<Position>> {
-    try {
-      return await rbacAxios.put(`/rbac/positions/${positionId}`, posData)
-    } catch (error) {
-      console.error('更新岗位失败:', error)
-      throw error
-    }
+    return rbacAxios.put(`/api/v1/rbac/positions/${positionId}`, posData)
   }
 
   /**
    * 删除岗位
    */
   static async deletePosition(positionId: number): Promise<UnifiedResponse<void>> {
-    try {
-      return await rbacAxios.delete(`/rbac/positions/${positionId}`)
-    } catch (error) {
-      console.error('删除岗位失败:', error)
-      throw error
-    }
+    return rbacAxios.delete(`/api/v1/rbac/positions/${positionId}`)
   }
 }
 

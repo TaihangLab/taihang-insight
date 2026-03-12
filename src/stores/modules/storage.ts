@@ -7,11 +7,9 @@
  * 3. 支持 JSON 序列化/反序列化
  * 4. 统一错误处理
  * 5. 支持默认值
+ * 6. 解耦 logout 逻辑：storage 只管理非 store 数据，store 由自己管理
  */
 
-import { useUserInfoStore } from "./userInfo"
-import { usePermissionsStore } from "./permissions"
-import { useMenusStore } from "./menus"
 import { StorageKey } from "./storageKeys"
 
 /**
@@ -117,6 +115,7 @@ const storageHelper = new StorageHelper()
 
 /**
  * 导出类型安全的存储操作接口
+ * 注意：Token 相关操作已迁移到 token store，请使用 useTokenStore()
  */
 export const storage = {
   // ========== 基础操作 ==========
@@ -141,31 +140,7 @@ export const storage = {
   /** 批量移除 */
   removeMultiple: (...keys: StorageKey[]) => storageHelper.removeMultiple(...keys),
 
-  // ========== 快捷访问方法 ==========
-
-  // --- 认证相关 ---
-  /** 获取管理员 Token（base64 字符串） */
-  getAdminToken: () => storageHelper.getString(StorageKey.ADMIN_TOKEN),
-  /** 设置管理员 Token（直接存储 base64 字符串） */
-  setAdminToken: (token: string) => storageHelper.setString(StorageKey.ADMIN_TOKEN, token),
-  /** 移除管理员 Token */
-  removeAdminToken: () => storageHelper.remove(StorageKey.ADMIN_TOKEN),
-
-  // --- WVP 认证相关 ---
-  /** 获取 WVP Token */
-  getWvpToken: () => storageHelper.getString(StorageKey.WVP_TOKEN),
-  /** 设置 WVP Token */
-  setWvpToken: (token: string) => storageHelper.setString(StorageKey.WVP_TOKEN, token),
-  /** 移除 WVP Token */
-  removeWvpToken: () => storageHelper.remove(StorageKey.WVP_TOKEN),
-  /** 获取 WVP 用户信息 */
-  getWvpUser: () => storageHelper.getJSON<any>(StorageKey.WVP_USER),
-  /** 设置 WVP 用户信息 */
-  setWvpUser: (user: any) => storageHelper.setJSON(StorageKey.WVP_USER, user),
-  /** 移除 WVP 用户信息 */
-  removeWvpUser: () => storageHelper.remove(StorageKey.WVP_USER),
-
-  // --- 用户偏好 ---
+  // ========== 用户偏好设置 ==========
   /** 获取选中的租户 */
   getSelectedTenant: () => storageHelper.getString(StorageKey.SELECTED_TENANT),
   /** 设置选中的租户 */
@@ -175,7 +150,7 @@ export const storage = {
   /** 设置当前用户昵称 */
   setCurrentUserName: (name: string) => storageHelper.setString(StorageKey.CURRENT_USER_NAME, name),
 
-  // --- 临时数据 ---
+  // ========== 临时数据（跨页面传递） ==========
   /** 获取技能编辑信息 */
   getEditSkillInfo: () => storageHelper.getJSON<any>(StorageKey.EDIT_SKILL_INFO),
   /** 设置技能编辑信息 */
@@ -189,7 +164,7 @@ export const storage = {
   /** 移除临时技能信息 */
   removeTempSkillInfo: () => storageHelper.remove(StorageKey.TEMP_SKILL_INFO),
 
-  // --- 业务数据 ---
+  // ========== 业务数据 ==========
   /** 获取智能复判记录 */
   getIntelligentReviewRecords: () => storageHelper.getJSON<any[]>(StorageKey.INTELLIGENT_REVIEW_RECORDS, []),
   /** 设置智能复判记录 */
@@ -218,20 +193,25 @@ export const storage = {
     })
     storage.setRestoredWarnings(warnings)
   },
-  logout: () => {
-    storage.removeAdminToken()
-    storage.removeWvpToken()
-    storage.removeWvpUser()
-    storage.removeEditSkillInfo()
-    storage.removeTempSkillInfo()
-    useUserInfoStore().clearUserInfo()
-    usePermissionsStore().clearPermissions()
-    useMenusStore().clearMenuTree()
-    // 重置动态路由标记，下次登录时重新添加
-    import('@/router').then(({ resetAsyncRoutes }) => {
-      resetAsyncRoutes()
-    })
-  },
+
+  // ========== 清理操作 ==========
+  /**
+   * 清除 storage 管理的数据（用户偏好、临时数据、业务数据）
+   * 注意：不包含 token/userInfo/permissions/menus，由各 store 自己管理
+   */
+  clearUserData: () => {
+    // 清除用户偏好
+    storage.remove(StorageKey.SELECTED_TENANT)
+    storage.remove(StorageKey.CURRENT_USER_NAME)
+
+    // 清除临时数据
+    storage.remove(StorageKey.EDIT_SKILL_INFO)
+    storage.remove(StorageKey.TEMP_SKILL_INFO)
+
+    // 清除业务数据
+    storage.remove(StorageKey.INTELLIGENT_REVIEW_RECORDS)
+    storage.remove(StorageKey.RESTORED_WARNINGS)
+  }
 }
 
 export default storage

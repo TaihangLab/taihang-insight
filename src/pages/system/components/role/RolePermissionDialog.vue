@@ -95,6 +95,8 @@ const dialogVisible = computed({
 
 watch(() => props.visible, async (newVal) => {
   if (newVal && props.currentRole) {
+    // 对话框打开时重置提交状态
+    submitting.value = false
     await loadPermissions()
   }
 })
@@ -208,6 +210,8 @@ const submitPermissions = () => {
 }
 
 const closeDialog = () => {
+  // 关闭对话框时重置所有状态
+  submitting.value = false
   emit('update:visible', false)
   nextTick(() => {
     permissionTree.value = []

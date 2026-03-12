@@ -6,6 +6,7 @@
  * 1. 将 API 调用和缓存逻辑封装在 Store 内部
  * 2. get 操作时自动判断是否需要刷新（数据为空时自动加载）
  * 3. 组件只需调用 refresh() 或直接使用数据，无需关心缓存
+ * 4. 支持 TTL 过期机制，防止使用过期数据
  */
 
 import { defineStore } from 'pinia'
@@ -13,13 +14,26 @@ import { ref } from 'vue'
 import { StorageKey } from './storageKeys'
 import authAPI from '@/api/auth/authAPI'
 
+/** TTL 配置：权限缓存 30 分钟 */
+const PERMISSIONS_TTL = 30 * 60 * 1000
+
 export const usePermissionsStore = defineStore('permissions', () => {
   // ==================== 私有状态（不返回，外部无法直接访问） ====================
   const permissions = ref<string[]>([])
   const loading = ref(false)
   const initialized = ref(false)
+  /** 最后刷新时间戳（用于 TTL 检查） */
+  const lastRefresh = ref<number>(0)
 
   // ==================== 公共方法 ====================
+
+  /**
+   * 检查缓存是否过期
+   */
+  function isExpired(): boolean {
+    if (!lastRefresh.value) return true
+    return Date.now() - lastRefresh.value > PERMISSIONS_TTL
+  }
 
   /**
    * 从后端刷新权限列表
@@ -35,6 +49,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
         const perms = result.data.permission_codes || []
         permissions.value = perms
         initialized.value = true
+        lastRefresh.value = Date.now()
         console.log('[PermissionsStore] 刷新成功:', perms.length, '个权限')
       } else {
         permissions.value = []
@@ -53,11 +68,13 @@ export const usePermissionsStore = defineStore('permissions', () => {
 
   /**
    * 确保数据已加载（内部方法）
-   * 如果未初始化，自动触发刷新
+   * 如果数据过期或未初始化，自动触发刷新
    */
   async function ensureInitialized(): Promise<void> {
-    if (!initialized.value && !loading.value) {
-      await refresh()
+    if (!initialized.value || isExpired()) {
+      if (!loading.value) {
+        await refresh()
+      }
     }
   }
 
@@ -92,6 +109,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
   function setPermissions(perms: string[]) {
     permissions.value = perms
     initialized.value = true
+    lastRefresh.value = Date.now()
   }
 
   /**
@@ -100,6 +118,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
   function clearPermissions() {
     permissions.value = []
     initialized.value = false
+    lastRefresh.value = 0
   }
 
   /**
@@ -133,7 +152,21 @@ export const usePermissionsStore = defineStore('permissions', () => {
     return initialized.value
   }
 
+  /**
+   * 获取缓存剩余时间（秒）
+   */
+  function getCacheTimeRemaining(): number {
+    if (!lastRefresh.value) return 0
+    const elapsed = Date.now() - lastRefresh.value
+    return Math.max(0, Math.floor((PERMISSIONS_TTL - elapsed) / 1000))
+  }
+
   return {
+    // 状态（用于持久化和模板访问）
+    permissions,
+    initialized,
+    loading,
+    // 方法
     refresh,
     setPermissions,
     clearPermissions,
@@ -143,11 +176,14 @@ export const usePermissionsStore = defineStore('permissions', () => {
     hasPermission,
     hasAnyPermission,
     hasPermissionSync,
-    hasData
+    hasData,
+    getCacheTimeRemaining,
+    isExpired
   }
 }, {
   persist: {
     key: StorageKey.PERMISSION,
-    storage: localStorage
+    storage: localStorage,
+    pick: ['permissions', 'initialized', 'lastRefresh']
   }
 })

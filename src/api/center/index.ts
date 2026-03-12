@@ -38,6 +38,7 @@ import deviceStatisticsAPI from './deviceStatistics'
 import alertForwardAPI from './alertForward'
 import chatAssistantAPI from './chatAssistant'
 import dashboardAPI from './dashboard'
+import localVideoAPI from './localVideo'
 
 // 导出基础配置
 // APIError is now exported from commons
@@ -93,7 +94,10 @@ const centerAPI = {
   chatAssistant: chatAssistantAPI,
 
   // 大屏监控统一接口
-  dashboard: dashboardAPI
+  dashboard: dashboardAPI,
+
+  // 本地视频管理
+  localVideo: localVideoAPI
 }
 
 // 导出默认实例
@@ -116,5 +120,6 @@ export {
   deviceStatisticsAPI,
   alertForwardAPI,
   chatAssistantAPI,
-  dashboardAPI
+  dashboardAPI,
+  localVideoAPI
 }

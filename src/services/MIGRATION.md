@@ -203,28 +203,43 @@ const eventSource = alertService.createAlertSSEConnection(
 )
 ```
 
-### 示例 4: 流式聊天
+### 示例 4: 流式聊天（AsyncIterable 模式）
 
-**旧代码:**
+**旧代码（回调模式）:**
 ```javascript
+import VisionAIService from '@/components/service/VisionAIService'
+
 const service = new VisionAIService()
 await service.createChatStream(
   { message: '你好' },
   (chunk) => console.log(chunk),
-  null,
+  (error) => console.error(error),
   () => console.log('完成')
 )
 ```
 
-**新代码:**
+**新代码（AsyncIterable 模式）:**
 ```typescript
-import { chatService } from '@/services'
+import centerAPI from '@/api/center'
 
-await chatService.sendChatMessage(
-  { message: '你好', stream: true },
-  (chunk) => console.log(chunk),
-  (error) => console.error(error)
-)
+const abortController = new AbortController()
+
+try {
+  for await (const chunk of centerAPI.chatAssistant.createChatStream(
+    { message: '你好' },
+    { signal: abortController.signal }
+  )) {
+    console.log('收到数据:', chunk.content)
+    console.log('完整响应:', chunk.fullResponse)
+
+    if (chunk.done) {
+      console.log('聊天完成')
+      break
+    }
+  }
+} catch (error) {
+  console.error('聊天失败:', error)
+}
 ```
 
 ## 主要改进

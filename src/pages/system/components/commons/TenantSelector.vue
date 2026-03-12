@@ -61,7 +61,10 @@ const loadTenants = async () => {
   try {
     const response = await tenantService.getTenants()
     if (response?.data?.items && Array.isArray(response.data.items)) {
-      tenants.value = response.data.items
+      // 过滤掉 id 或 tenant_name 为空的租户记录
+      tenants.value = response.data.items.filter(
+        (tenant) => tenant.id != null && tenant.tenant_name != null
+      )
       loaded.value = true
 
       if (props.autoSelectFirst && !props.modelValue && tenants.value.length > 0) {

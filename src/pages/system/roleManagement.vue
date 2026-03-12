@@ -369,6 +369,11 @@ const handlePermissionSubmit = async (roleId: number, permissionIds: number[]) =
   } catch (error: unknown) {
     const err = error as Error;
     ElMessage.error(`权限分配失败: ${err.message}`);
+    // 失败时也关闭对话框，重置 submitting 状态
+    // 延迟关闭以让用户看到错误消息
+    setTimeout(() => {
+      permissionDialogVisible.value = false;
+    }, 500);
   }
 };
 

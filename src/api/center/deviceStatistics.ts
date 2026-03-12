@@ -1,51 +1,9 @@
-import { AxiosResponse } from 'axios'
-import { authAxios,  type UnifiedResponse } from '@/api/commons'
+import type { DeviceStatusStatistics, DeviceTreeNode, ConnectionSummary } from '@/types/center'
+
 /**
  * 设备统计管理 API
  * 提供设备状态统计和设备树结构
  */
-
-/**
- * 设备状态统计
- */
-export interface DeviceStatusStatistics {
-  total_devices: number
-  online_devices: number
-  offline_devices: number
-  online_rate: number
-  device_groups: DeviceGroup[]
-}
-
-/**
- * 设备分组
- */
-export interface DeviceGroup {
-  name: string
-  online: number
-  offline: number
-  total: number
-}
-
-/**
- * 设备树节点
- */
-export interface DeviceTreeNode {
-  id: string
-  label: string
-  status?: string
-  children?: DeviceTreeNode[]
-}
-
-/**
- * 设备接入摘要
- */
-export interface ConnectionSummary {
-  total_connections: number
-  video_streams: number
-  capture_services: number
-  nvr_calls: number
-  other_connections: number
-}
 
 /**
  * 设备统计管理 API 类
@@ -56,8 +14,6 @@ class DeviceStatisticsAPI {
    * 注意：响应拦截器会提取 data 字段，返回类型是 DeviceStatusStatistics
    */
   async getStatusStatistics(): Promise<DeviceStatusStatistics> {
-    console.log('[设备API] 获取设备状态统计')
-
     const mockData: DeviceStatusStatistics = {
       total_devices: 150,
       online_devices: 120,
@@ -84,8 +40,6 @@ class DeviceStatisticsAPI {
    * 注意：响应拦截器会提取 data 字段，返回类型是 DeviceTreeNode[]
    */
   async getDeviceTree(): Promise<DeviceTreeNode[]> {
-    console.log('[设备API] 获取设备树状结构')
-
     const mockData: DeviceTreeNode[] = [{
       id: '1',
       label: '市直单位',
@@ -125,8 +79,6 @@ class DeviceStatisticsAPI {
    * 注意：响应拦截器会提取 data 字段，返回类型是 ConnectionSummary
    */
   async getConnectionSummary(): Promise<ConnectionSummary> {
-    console.log('[设备API] 获取设备接入摘要')
-
     const mockData: ConnectionSummary = {
       total_connections: 286589,
       video_streams: 562,

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { StorageKey } from './storageKeys'
 
 /**
  * 动态路由记录
@@ -131,5 +132,11 @@ export const useAppStore = defineStore('app', () => {
     clearDynamicRouteRecords,
     getDynamicRouteRecords,
     resetDynamicRoutes
+  }
+}, {
+  persist: {
+    key: StorageKey.APP,
+    storage: localStorage,
+    pick: ['sidebarCollapsed'] // 只持久化 UI 偏好状态
   }
 })

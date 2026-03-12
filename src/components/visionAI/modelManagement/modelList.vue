@@ -394,9 +394,9 @@ export default {
         params.name = this.searchForm.keyword
       }
 
-      // 添加状态筛选参数
+      // 添加状态筛选参数 - 使用 snake_case 与后端保持一致
       if (this.searchForm.status !== 'all') {
-        params.usage_status = this.searchForm.status
+        params.query_used = this.searchForm.status === 'using'
       }
 
       // 使用modelAPI服务发送请求

@@ -24,6 +24,8 @@ export default defineConfig(({ mode }) => {
       global: 'globalThis',
       // process polyfill (用于某些第三方库)
       'process.env': '{}',
+      // 构建时间
+      'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
     },
     resolve: {
       alias: {

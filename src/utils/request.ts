@@ -1,8 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import router from '@/router'
-import { storage } from '@/stores/modules/storage'
-import { StorageKey } from '@/stores/modules/storageKeys'
+import { useTokenStore } from '@/stores/modules/token'
 
 // 扩展 Window 接口以支持 baseUrl 属性
 declare global {
@@ -35,7 +34,8 @@ let isRefreshing = false
 // 请求拦截器
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = storage.getAdminToken()
+    const tokenStore = useTokenStore()
+    const token = tokenStore.getAdminToken()
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
     }
@@ -80,8 +80,9 @@ service.interceptors.response.use(
               cancelButtonText: '取消',
               type: 'warning'
             }).then(() => {
-              // 清除用户信息
-              storage.remove(StorageKey.ADMIN_TOKEN)
+              // 清除 token
+              const tokenStore = useTokenStore()
+              tokenStore.clearTokens()
               router.push('/login')
             }).catch(() => {
               // 用户取消
@@ -118,7 +119,8 @@ service.interceptors.response.use(
           if (!isRefreshing) {
             isRefreshing = true
             setTimeout(() => {
-              storage.remove(StorageKey.ADMIN_TOKEN)
+              const tokenStore = useTokenStore()
+              tokenStore.clearTokens()
               router.push('/login')
               isRefreshing = false
             }, 1500)
@@ -148,19 +150,3 @@ service.interceptors.response.use(
     } else if (error.message) {
       if (error.message.includes('timeout')) {
         message = '请求超时，请检查网络连接'
-      } else if (error.message.includes('Network Error')) {
-        message = '网络连接异常，请检查网络'
-      }
-    }
-
-    ElMessage({
-      message: message,
-      type: 'error',
-      duration: 3 * 1000
-    })
-
-    return Promise.reject(error)
-  }
-)
-
-export default service

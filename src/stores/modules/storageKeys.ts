@@ -6,17 +6,13 @@
  */
 export enum StorageKey {
   // ========== 认证相关 ==========
-  /** 管理员 Token（直接存储 base64 字符串） */
-  ADMIN_TOKEN = 'Admin-Token',
-  /** WVP Token */
-  WVP_TOKEN = 'wvp-token',
-  /** WVP 用户信息 */
-  WVP_USER = 'wvp-user',
+  /** 认证数据（由 token store 管理） */
+  AUTH = 'taihang-auth',
   PERMISSION = 'taihang-permissions',
   MENUS = 'taihang-menus',
   USER_INFO = 'taihang-user-info',
-  /** 认证数据（自动由 user store 管理） */
-  AUTH = 'taihang-auth',
+  /** 应用 UI 状态（由 app store 管理） */
+  APP = 'taihang-app',
 
   // ========== 用户偏好设置 ==========
   /** 选中的租户 ID */

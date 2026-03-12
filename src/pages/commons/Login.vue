@@ -134,6 +134,7 @@ import { useMenusStore } from '@/stores/modules/menus'
 import authAPI from '@/api/auth/authAPI'
 import storage from '@/stores/modules/storage'
 import { StorageKey } from '@/stores/modules/storageKeys'
+import { setupAsyncRoutes, resetAsyncRoutes } from '@/router'
 
 const router = useRouter()
 const route = useRoute()
@@ -231,7 +232,10 @@ async function login(): Promise<void> {
         // 调用认证 API 获取用户权限和菜单信息
         // 使用 Store 的 refresh 方法，将 API 调用和缓存逻辑封装在 Store 内部
         try {
-          // 并行刷新所有认证数据：用户信息、权限列表、菜单树
+          // 1️⃣ 重置动态路由标记（清除之前的路由状态）
+          resetAsyncRoutes()
+
+          // 2️⃣ 并行刷新所有认证数据：用户信息、权限列表、菜单树
           await Promise.all([
             userInfoStore.refresh(),
             permissionsStore.refresh(),
@@ -239,6 +243,14 @@ async function login(): Promise<void> {
           ])
 
           console.log('✅ 认证信息刷新完成')
+
+          // 3️⃣ 根据菜单树重新建立动态路由
+          const menuTree = menusStore.getMenuTreeSync() || []
+          if (menuTree.length > 0) {
+            setupAsyncRoutes(menuTree)
+          } else {
+            console.warn('⚠️ 菜单树为空，无法建立动态路由')
+          }
 
           // 等待 Pinia 持久化插件完成同步
           await new Promise(resolve => setTimeout(resolve, 100))

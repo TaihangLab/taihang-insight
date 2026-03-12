@@ -1,33 +1,9 @@
-import { AxiosResponse } from 'axios'
-import { authAxios,  type UnifiedResponse } from '@/api/commons'
+import type { ForwardTimeRange, AlertForwardStatistics } from '@/types/center'
+
 /**
  * 预警转发统计 API
  * 提供预警转发相关统计数据
  */
-
-/**
- * 时间范围
- */
-export type ForwardTimeRange = '7d' | '30d'
-
-/**
- * 预警转发统计
- */
-export interface AlertForwardStatistics {
-  time_range: ForwardTimeRange
-  total_forwards: number
-  daily_statistics: DailyStatistic[]
-  date_labels: string[]
-  forward_counts: number[]
-}
-
-/**
- * 日统计
- */
-export interface DailyStatistic {
-  date: string
-  count: number
-}
 
 /**
  * 预警转发统计 API 类
@@ -39,8 +15,6 @@ class AlertForwardAPI {
    * 注意：响应拦截器会提取 data 字段，返回类型是 AlertForwardStatistics
    */
   async getForwardStatistics(timeRange: ForwardTimeRange = '7d'): Promise<AlertForwardStatistics> {
-    console.log('[转发API] 获取报警转发统计, 时间范围:', timeRange)
-
     // 生成模拟统计数据
     const days = timeRange === '7d' ? 7 : 30
     const dateLabels: string[] = []

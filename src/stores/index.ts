@@ -14,3 +14,6 @@ export { useMenusStore } from './modules/menus'
 
 // 导出 storage 工具模块
 export { default as storage } from './modules/storage'
+
+// 导出统一的认证管理函数
+export { logout, isLoggedIn, refreshAuthData } from './modules/auth'

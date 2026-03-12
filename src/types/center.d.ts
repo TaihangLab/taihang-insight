@@ -1,569 +1,853 @@
 /**
  * VisionAI Center API 类型定义
- * 包含所有 API 的请求和响应类型
+ * 所有 API 模块共享的类型定义
  */
 
-// ============================================
-// 基础类型
-// ============================================
+// ============================================================================
+// 通用类型
+// ============================================================================
 
 /**
- * 统一响应格式
- */
-export interface UnifiedResponse<T = any> {
-  code: number
-  msg: string
-  data: T
-  total?: number
-  page?: number
-  limit?: number
-  pages?: number
-  pagination?: any
-}
-
-/**
- * 分页查询参数
+ * 分页参数
  */
 export interface PageParams {
   page?: number
   limit?: number
 }
 
-/**
- * 分页响应数据
- */
-export interface PaginatedResponse<T> {
-  data: T[]
-  total: number
-  page: number
-  limit: number
-  pages?: number
-  pagination?: any
-}
-
-// ============================================
-// 模型管理类型
-// ============================================
+// ============================================================================
+// 模型相关类型
+// ============================================================================
 
 /**
- * 模型状态
- */
-export type ModelStatus = 'loaded' | 'unloaded'
-
-/**
- * 模型使用状态
- */
-export type UsageStatus = 'using' | 'unused'
-
-/**
- * 模型实体
+ * 模型数据
  */
 export interface Model {
   id: number
   name: string
-  version: string
+  version?: string
+  file_path?: string
+  framework?: string
+  device_type?: string
+  status?: string
+  model_status?: string
+  usage_status?: string
+  loaded?: boolean
   description?: string
-  model_status: ModelStatus
-  usage_status: UsageStatus
-  created_at: string
-  updated_at: string
   config?: any
   server_metadata?: any
   model_config?: any
-  skill_classes?: string[]
+  skill_classes?: any
+  created_at?: string
+  updated_at?: string
 }
 
 /**
- * 模型列表查询参数
+ * 模型查询参数
  */
 export interface ModelQueryParams extends PageParams {
-  name?: string
-  usage_status?: UsageStatus
+  query_name?: string
+  framework?: string
+  device_type?: string
+  status?: string
+  query_used?: boolean
 }
 
-// ============================================
-// 技能管理类型
-// ============================================
+// ============================================================================
+// 技能相关类型
+// ============================================================================
 
 /**
- * 技能状态
- */
-export type SkillStatus = 'published' | 'unpublished'
-
-/**
- * 应用场景
- */
-export type ApplicationScenario = 'video_analysis' | 'image_processing'
-
-/**
- * 技能类实体
+ * 技能类
  */
 export interface SkillClass {
   id: number
-  skill_name: string
-  skill_type?: string
+  name: string
   description?: string
-  status?: boolean | SkillStatus
-  version?: string
+  category?: string
+  icon_url?: string
   created_at?: string
   updated_at?: string
-  prompt_template?: string
-  skill_tags?: string[]
-  config?: any
 }
 
 /**
- * 技能列表查询参数
+ * 技能查询参数
  */
 export interface SkillQueryParams extends PageParams {
-  name?: string
-  type?: string
-  type_filter?: string
-  status?: boolean | SkillStatus
+  query_name?: string
+  category?: string
+  status?: string | boolean
+  query_type?: string
   query?: string
 }
 
 /**
- * AI任务实体
+ * AI 技能
+ */
+export interface Skill {
+  id: number
+  name: string
+  display_name?: string
+  skill_class_id: number
+  skill_class_name?: string
+  description?: string
+  status: string
+  config?: any
+  created_at?: string
+  updated_at?: string
+}
+
+/**
+ * AI 任务
  */
 export interface AITask {
   id: number
+  name: string
+  skill_id: number
+  skill_class_id?: number
+  skill_name: string
   camera_id: number
-  skill_class_id: number
-  status?: string | boolean
+  camera_name?: string
+  status: string
+  running: boolean
+  running_period?: string
+  electronic_fence?: any
   created_at?: string
   updated_at?: string
-  running_period?: RunningPeriod
-  confidence_threshold?: number
-  enabled?: boolean
-  electronic_fence?: ElectronicFence
 }
 
 /**
- * 运行时段配置
- */
-export interface RunningPeriod {
-  enabled: boolean
-  periods: Array<{
-    start: string
-    end: string
-  }>
-}
-
-/**
- * 电子围栏配置
- */
-export interface ElectronicFence {
-  enabled: boolean
-  points: Array<[number, number]>
-}
-
-/**
- * 多模态LLM技能实体
+ * LLM 技能
  */
 export interface LlmSkill {
+  id: string
+  skill_id?: string
   skill_name: string
-  skill_id: string
-  application_scenario: ApplicationScenario
-  skill_tags: string[]
+  display_name?: string
+  description?: string
+  skill_description?: string
+  system_prompt?: string
+  user_prompt_template?: string
+  prompt_template?: string
+  provider?: string
+  model_name?: string
+  temperature?: number
+  max_tokens?: number
+  status: boolean
+  icon_url?: string
   skill_icon?: string
-  skill_description: string
-  prompt_template: string
-  output_parameters: OutputParameter[]
+  skill_tags?: string[]
+  application_scenario?: string
+  output_parameters?: any
   alert_conditions?: any
-  status?: boolean
   created_at?: string
   updated_at?: string
 }
 
 /**
- * 输出参数配置
- */
-export interface OutputParameter {
-  name: string
-  type: string
-  description?: string
-  required?: boolean
-  enum_values?: any[]
-}
-
-/**
- * 多模态LLM任务实体
+ * LLM 任务
  */
 export interface LlmTask {
   id: number
   name: string
+  skill_id?: string
+  llm_skill_id: string
+  llm_skill_name?: string
+  camera_id: number
+  status: string
+  running: boolean
   description?: string
-  skill_id: string
-  camera_id?: number
-  frame_rate: number
-  status: boolean
-  alert_level: number
-  running_period?: RunningPeriod
+  frame_rate?: number
+  alert_level?: number
+  running_period?: string
   created_at?: string
   updated_at?: string
 }
 
-// ============================================
-// 摄像头管理类型
-// ============================================
+// ============================================================================
+// 摄像头相关类型
+// ============================================================================
 
 /**
- * 摄像头实体
+ * 摄像头
  */
 export interface Camera {
   id: number
   name: string
   camera_uuid: string
-  location: string
+  location?: string
   status: boolean
-  tags: string[]
-  camera_type: string
-  skill_names: string[]
+  tags?: string[]
+  camera_type?: string
+  skill_names?: string[]
+  created_at?: string
+  updated_at?: string
 }
 
 /**
- * 摄像头列表查询参数
+ * 摄像头查询参数
  */
 export interface CameraQueryParams extends PageParams {
   name?: string
   location?: string
-  tags?: string[] | string
-  match_all?: boolean
+  status?: boolean
+  camera_type?: string
 }
 
-// ============================================
-// 预警管理类型
-// ============================================
+// ============================================================================
+// 预警相关类型
+// ============================================================================
 
 /**
- * 预警等级
- */
-export type AlertLevel = 1 | 2 | 3 | 4
-
-/**
- * 预警状态
- */
-export type AlertStatus = 1 | 2 | 3 // 1-待处理, 2-处理中, 3-已处理
-
-/**
- * 预警状态字符串
- */
-export type AlertStatusString = '待处理' | '处理中' | '已处理' | '已归档' | '误报'
-
-/**
- * 预警实体
+ * 预警
  */
 export interface Alert {
   id: number
-  camera_id: number
-  camera_name?: string
-  alert_type: string
-  alert_name?: string
-  alert_level?: AlertLevel
-  status?: AlertStatus | AlertStatusString
-  task_id?: number
-  location?: string
-  alert_time?: string
-  image_url?: string
-  processing_notes?: string
-  processed_by?: string
-  confidence?: number
-  bounding_boxes?: any[]
-  metadata?: any
-  created_at?: string
-  updated_at?: string
-}
-
-/**
- * 预警列表查询参数
- */
-export interface AlertQueryParams extends PageParams {
+  name: string
+  device_id?: number
+  device_name?: string
   camera_id?: number
   camera_name?: string
+  alert_time: string
+  alert_level: number
   alert_type?: string
-  alert_level?: AlertLevel | string
-  alert_name?: string
-  task_id?: number
+  status?: string
   location?: string
-  status?: AlertStatus | AlertStatusString | string
-  start_date?: string
-  end_date?: string
-  start_time?: string
-  end_time?: string
-  startDate?: string
-  endDate?: string
-  warningLevel?: string
-  warningType?: string
-  warningSkill?: string
-  warningName?: string
-  warningId?: string
-  statusFilter?: string
-}
-
-/**
- * 预警状态更新数据
- */
-export interface AlertStatusUpdate {
-  status?: AlertStatus | AlertStatusString
-  processing_notes?: string
-  processed_by?: string
-}
-
-// ============================================
-// 复判技能类型
-// ============================================
-
-/**
- * 复判技能实体
- */
-export interface ReviewSkill {
-  id: number
-  skill_name: string
-  skill_tags?: string[]
-  description: string
-  prompt_template: string
+  description?: string
+  violation_image_url?: string
+  violation_video_url?: string
+  extra_data?: any
   created_at?: string
   updated_at?: string
 }
 
 /**
- * 复判技能创建数据
+ * 预警查询参数
+ */
+export interface AlertQueryParams extends PageParams {
+  name?: string
+  device_name?: string
+  alert_level?: number
+  alert_type?: string
+  alert_name?: string
+  alert_id?: number
+  status?: string
+  start_date?: string
+  end_date?: string
+}
+
+/**
+ * 预警状态更新
+ */
+export interface AlertStatusUpdate {
+  status: string
+  handler?: string
+  notes?: string
+}
+
+// ============================================================================
+// 档案相关类型
+// ============================================================================
+
+/**
+ * 预警档案
+ */
+export interface AlertArchive {
+  id: number
+  name: string
+  location: string
+  start_time: string
+  end_time: string
+  description?: string
+  alert_count?: number
+  created_at?: string
+  updated_at?: string
+}
+
+/**
+ * 档案查询参数
+ */
+export interface ArchiveQueryParams extends PageParams {
+  name?: string
+  location?: string
+  start_date?: string
+  end_date?: string
+}
+
+/**
+ * 创建档案请求
+ */
+export interface CreateArchiveRequest {
+  name: string
+  location: string
+  start_time: string
+  end_time: string
+  description?: string
+}
+
+// ============================================================================
+// 复判技能相关类型
+// ============================================================================
+
+/**
+ * 复判技能
+ */
+export interface ReviewSkill {
+  id: string
+  skill_name: string
+  display_name?: string
+  description: string
+  prompt_template: string
+  category?: string
+  provider?: string
+  model_name?: string
+  status: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+/**
+ * 创建复判技能请求
  */
 export interface CreateReviewSkillRequest {
   skill_name: string
-  skill_tags?: string[]
   description: string
   prompt_template: string
+  category?: string
 }
 
 /**
- * 复判技能更新数据
+ * 更新复判技能请求
  */
 export interface UpdateReviewSkillRequest {
   skill_name?: string
-  skill_tags?: string[]
   description?: string
   prompt_template?: string
+  category?: string
+  status?: boolean
 }
 
 /**
  * 预览测试响应
  */
 export interface PreviewTestResponse {
-  analysis_result: string
+  result: string
   confidence?: number
 }
 
-// ============================================
-// 档案管理类型
-// ============================================
+// ============================================================================
+// 本地视频相关类型
+// ============================================================================
 
 /**
- * 档案状态
+ * 本地视频数据
  */
-export type ArchiveStatus = 1 | 2 | 3 // 1=正常，2=归档，3=删除
-
-/**
- * 预警档案实体
- */
-export interface AlertArchive {
+export interface LocalVideo {
   id: number
   name: string
-  location: string
   description?: string
-  start_time: string
-  end_time: string
-  image_url?: string
-  status?: ArchiveStatus
-  created_by?: string
-  created_at?: string
-  updated_at?: string
-  alert_count?: number
+  file_path: string
+  file_size: number
+  duration?: number
+  fps?: number
+  width?: number
+  height?: number
+  is_streaming: boolean
+  stream_id?: string
+  stream_fps?: number
+  created_at: string
 }
 
 /**
- * 档案列表查询参数
+ * 推流状态
  */
-export interface ArchiveQueryParams extends PageParams {
-  name?: string
-  location?: string
-  status?: ArchiveStatus
-  start_time?: string
-  end_time?: string
+export interface StreamStatus {
+  stream_id: string
+  video_id: number
+  video_name: string
+  rtsp_url?: string
+  stats?: any
 }
 
-/**
- * 档案创建数据
- */
-export interface CreateArchiveRequest {
-  name: string
-  location: string
-  description?: string
-  start_time: string
-  end_time: string
-  image_url?: string
-  created_by?: string
-}
-
-// ============================================
-// 任务复判类型
-// ============================================
+// ============================================================================
+// SSE 相关类型
+// ============================================================================
 
 /**
- * 任务类型
+ * SSE消息回调类型
  */
-export type TaskType = 'ai_task' | 'llm_task'
+export type SSEMessageCallback = (data: any) => void
+export type SSEErrorCallback = (event: Event) => void
+export type SSECloseCallback = () => void
 
-/**
- * 复判配置
- */
-export interface ReviewConfig {
-  review_enabled: boolean
-  review_skill_class_id?: number
-  review_confidence_threshold?: number
-  review_conditions?: any
-}
-
-// ============================================
-// 复判记录类型
-// ============================================
-
-/**
- * 复判记录实体
- */
-export interface ReviewRecord {
-  id: number
-  task_type: TaskType
-  task_id: number
-  alert_id?: number
-  review_skill_id: number
-  original_result: any
-  review_result: string
-  confidence?: number
-  reviewed_by?: string
-  reviewed_at?: string
-  created_at?: string
-}
-
-// ============================================
-// 实时监控类型
-// ============================================
-
-/**
- * SSE连接状态
- */
-export type SSEStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
-
-/**
- * 监控区域
- */
-export interface MonitorArea {
-  id: number
-  name: string
-  camera_count: number
-  alert_count?: number
-}
-
-// ============================================
-// 统计数据类型
-// ============================================
+// ============================================================================
+// 预警转发相关类型
+// ============================================================================
 
 /**
  * 时间范围
  */
-export type TimeRange = 'day' | 'week' | 'month' | '7d' | '30d'
+export type ForwardTimeRange = '7d' | '30d'
 
 /**
- * 统计条目
+ * 预警转发统计
  */
-export interface StatItem {
-  name: string
-  count: number
-  value: number
-}
-
-/**
- * 预警统计摘要
- */
-export interface AlertStatisticsSummary {
-  total_alerts: number
-  pending_count: number
-  processing_count: number
-  completed_count: number
-  online_devices: number
-  total_devices: number
-  top_alert_types: StatItem[]
-  top_locations: StatItem[]
-}
-
-/**
- * 转发统计数据
- */
-export interface ForwardStatistics {
-  time_range: TimeRange
+export interface AlertForwardStatistics {
+  time_range: ForwardTimeRange
   total_forwards: number
-  daily_statistics: Array<{
-    date: string
-    count: number
-  }>
+  daily_statistics: DailyStatistic[]
   date_labels: string[]
   forward_counts: number[]
 }
 
 /**
- * 预警等级统计
+ * 日统计
  */
-export interface AlertLevelStat {
-  alert_level: number
-  alert_level_name: string
+export interface DailyStatistic {
+  date: string
   count: number
 }
 
+// ============================================================================
+// 聊天助手相关类型
+// ============================================================================
+
 /**
- * 位置统计
+ * 聊天消息数据
  */
-export interface LocationStat {
-  location: string
-  count: number
+export interface ChatMessage {
+  message: string
+  conversation_id?: string | null
+  system_prompt?: string | null
+  stream?: boolean
+  temperature?: number | null
+  max_tokens?: number | null
+  context_length?: number
+  model?: string | null
 }
 
-// ============================================
-// 系统监控类型
-// ============================================
-
 /**
- * 系统监控指标
+ * 会话消息
  */
-export interface SystemMonitorMetrics {
-  cpu_usage: number
-  memory_usage: number
-  gpu_usage?: number
-  disk_usage: number
-  network_in?: number
-  network_out?: number
-  active_tasks: number
-  queued_tasks: number
-  system_status: 'healthy' | 'warning' | 'critical'
+export interface ConversationMessage {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  message_id?: string
+  timestamp?: string
 }
 
-// ============================================
-// 设备统计类型
-// ============================================
+/**
+ * 会话信息
+ */
+export interface Conversation {
+  conversation_id: string
+  title: string
+  message_count: number
+  last_message_time: string
+  created_at: string
+  group_id?: string | null
+}
 
 /**
- * 设备统计数据
+ * 分组信息
  */
-export interface DeviceStatistics {
+export interface Group {
+  id: string
+  name: string
+  conversation_count: number
+  created_at: string
+  updated_at: string
+}
+
+/**
+ * 流式回调函数类型
+ */
+export type StreamCallback = (chunk: string, fullResponse: string, conversationId: string) => void
+export type StreamErrorCallback = (error: Error) => void
+export type StreamCompleteCallback = (fullResponse: string, conversationId: string) => void
+
+/**
+ * 流式控制器
+ */
+export interface StreamController {
+  close: () => void
+}
+
+// ============================================================================
+// 设备统计相关类型
+// ============================================================================
+
+/**
+ * 设备状态统计
+ */
+export interface DeviceStatusStatistics {
   total_devices: number
   online_devices: number
   offline_devices: number
-  device_types: Array<{
-    type: string
-    count: number
-  }>
-  top_alert_devices: Array<{
-    device_name: string
-    alert_count: number
-  }>
+  online_rate: number
+  device_groups: DeviceGroup[]
+}
+
+/**
+ * 设备分组
+ */
+export interface DeviceGroup {
+  name: string
+  online: number
+  offline: number
+  total: number
+}
+
+/**
+ * 设备树节点
+ */
+export interface DeviceTreeNode {
+  id: string
+  label: string
+  status?: string
+  children?: DeviceTreeNode[]
+}
+
+/**
+ * 设备接入摘要
+ */
+export interface ConnectionSummary {
+  total_connections: number
+  video_streams: number
+  capture_services: number
+  nvr_calls: number
+  other_connections: number
+}
+
+// ============================================================================
+// 实时检测相关类型
+// ============================================================================
+
+/**
+ * 检测结果
+ */
+export interface DetectionResult {
+  task_id: number
+  detections: Detection[]
+  timestamp: string
+}
+
+/**
+ * 单个检测结果
+ */
+export interface Detection {
+  class_name: string
+  confidence: number
+  bbox: BBox
+  track_id?: number
+}
+
+/**
+ * 边界框
+ */
+export interface BBox {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+// ============================================================================
+// 实时监控相关类型
+// ============================================================================
+
+/**
+ * 通道查询参数
+ */
+export interface ChannelQueryParams {
+  page?: number
+  count?: number
+  query?: string
+  online?: boolean
+  has_record_plan?: boolean
+  channel_type?: number
+  civil_code?: string
+  parent_device_id?: string
+}
+
+/**
+ * 通道数据
+ */
+export interface Channel {
+  id: number
+  name: string
+  channel_id: string
+  status: boolean
+  online: boolean
+  channel_type: number
+  civil_code?: string
+  device_id?: string
+}
+
+/**
+ * 播放流信息
+ */
+export interface PlayStreamInfo {
+  stream_url: string
+  stream_type: string
+  rtsp_url?: string
+  flv_url?: string
+  hls_url?: string
+}
+
+/**
+ * 树节点查询参数
+ */
+export interface TreeQueryParams {
+  query?: string
+  parent?: number
+  hasChannel?: boolean
+  online?: boolean
+  channel_type?: number
+}
+
+/**
+ * 树节点
+ */
+export interface TreeNode {
+  id: string | number
+  label: string
+  children?: TreeNode[]
+  status?: string
+  type?: string
+}
+
+// ============================================================================
+// 复判记录相关类型
+// ============================================================================
+
+/**
+ * 复判记录查询参数
+ */
+export interface ReviewRecordQueryParams {
+  page?: number
+  limit?: number
+  alert_id?: number
+  reviewer_id?: number
+  start_time?: string
+  end_time?: string
+}
+
+/**
+ * 复判记录数据
+ */
+export interface ReviewRecord {
+  id: number
+  alert_id: number
+  reviewer_id: number
+  reviewer_name: string
+  review_result: string
+  review_notes?: string
+  confidence?: number
+  created_at?: string
+  updated_at?: string
+}
+
+/**
+ * 复判记录统计
+ */
+export interface ReviewRecordStatistics {
+  total_reviews: number
+  correct_reviews: number
+  false_alarm_reviews: number
+  accuracy_rate: number
+}
+
+// ============================================================================
+// 复判技能相关类型
+// ============================================================================
+
+/**
+ * 复判技能查询参数
+ */
+export interface ReviewSkillQueryParams extends PageParams {
+  status?: boolean | string
+  name?: string
+  tag?: string
+  searchKeyword?: string
+  selectedCategory?: string
+  selectedProvider?: string
+}
+
+// ============================================================================
+// 系统监控相关类型
+// ============================================================================
+
+/**
+ * 资源类型
+ */
+export type ResourceMetric = 'cpu' | 'memory' | 'disk' | 'network'
+
+/**
+ * 时间范围
+ */
+export type TimeRange = '1h' | '6h' | '24h' | '7d'
+
+/**
+ * CPU 资源信息
+ */
+export interface CPUInfo {
+  usage: number
+  cores: number
+  avg_temp: number
+  max_temp: number
+}
+
+/**
+ * 内存资源信息
+ */
+export interface MemoryInfo {
+  usage: number
+  total: string
+  used: string
+}
+
+/**
+ * 磁盘资源信息
+ */
+export interface DiskInfo {
+  usage: number
+  total: string
+  used: string
+  type: string
+}
+
+/**
+ * GPU 资源信息
+ */
+export interface GPUInfo {
+  usage: number
+  model: string
+  vram_total: string
+  temperature: number
+}
+
+/**
+ * 服务器信息
+ */
+export interface ServerInfo {
+  master: number
+  nodes: number
+}
+
+/**
+ * 系统资源数据（完整）
+ */
+export interface SystemResourcesData {
+  cpu: CPUInfo
+  memory: MemoryInfo
+  disk: DiskInfo
+  gpu: GPUInfo
+  servers: ServerInfo
+  timestamp: string
+}
+
+/**
+ * 当前资源使用率（简化版，用于旧接口兼容）
+ */
+export interface CurrentResources {
+  cpu_usage: number
+  memory_usage: number
+  disk_usage: number
+  network_usage: number
+  timestamp: string
+}
+
+/**
+ * 资源历史数据
+ */
+export interface ResourceHistory {
+  metric: ResourceMetric
+  time_range: TimeRange
+  time_labels: string[]
+  data_points: number[]
+}
+
+/**
+ * 存储使用情况
+ */
+export interface StorageUsage {
+  total_storage: number
+  used_storage: number
+  storage_usage: number
+  storage_list: StorageItem[]
+}
+
+/**
+ * 存储项
+ */
+export interface StorageItem {
+  name: string
+  usage: number
+  total: number
+}
+
+/**
+ * 带宽使用情况
+ */
+export interface BandwidthUsage {
+  time_range: TimeRange
+  time_labels: string[]
+  upstream_bandwidth: number[]
+  downstream_bandwidth: number[]
+  current_upstream: number
+  current_downstream: number
+}
+
+// ============================================================================
+// 任务复判相关类型
+// ============================================================================
+
+/**
+ * 任务复判配置
+ */
+export interface TaskReviewConfig {
+  review_enabled: boolean
+  review_skill_class_id?: number
+  review_confidence_threshold?: number
+  review_conditions?: Record<string, any>
+}
+
+// ============================================================================
+// 档案记录相关类型
+// ============================================================================
+
+/**
+ * 预警记录查询参数
+ */
+export interface AlertRecordQueryParams extends PageParams {
+  name?: string
+  device_name?: string
+  alert_level?: number
+  alert_type?: string
+  status?: number
+  start_time?: string
+  end_time?: string
+}
+
+/**
+ * 预警记录数据
+ */
+export interface AlertRecord {
+  id: number
+  archive_id: number
+  name: string
+  device_name: string
+  alert_time: string
+  alert_level: number
+  alert_type?: string
+  location?: string
+  description?: string
+  remark?: string
+  violation_image_url?: string
+  violation_video_url?: string
+  extra_data?: any
+  created_by?: string
+  created_at?: string
+  updated_at?: string
 }

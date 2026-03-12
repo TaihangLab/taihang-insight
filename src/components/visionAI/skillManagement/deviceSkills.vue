@@ -778,20 +778,20 @@ export default {
           page: this.currentPage,
           limit: this.pageSize
         };
-        
-        // 添加搜索和筛选条件
+
+        // 添加搜索和筛选条件 - 使用 snake_case 与后端保持一致
         if (this.searchQuery) {
-          params.name = this.searchQuery;
+          params.query_name = this.searchQuery;
         }
-        
+
         if (this.filterType) {
-          params.type = this.filterType;
+          params.query_type = this.filterType;
         }
-        
+
         if (this.filterStatus) {
           params.status = this.filterStatus;
         }
-        
+
         // 调用API获取技能列表
         const response = await centerAPI.skill.getSkillList(params);
         

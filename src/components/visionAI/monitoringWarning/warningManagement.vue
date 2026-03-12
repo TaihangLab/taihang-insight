@@ -9,18 +9,16 @@ export default {
   },
   data() {
     return {
-      // 定义搜索条件
+      // 定义搜索条件 - 使用 snake_case 与后端保持一致
       searchForm: {
-        deviceName: '',
-        startDate: '',
-        endDate: '',
-        warningType: '',
-        warningLevel: '',
-        warningSkill: '', // 预警技能
-        warningName: '', // 预警名称
-        warningId: '', // 预警ID
+        device_name: '',
+        start_date: '',
+        end_date: '',
+        alert_type: '',
+        alert_level: '',
+        alert_name: '', // 预警名称
+        alert_id: '', // 预警ID
         status: '', // 处理状态
-        location: '' // 违规位置
       },
       
       // 预警列表数据
@@ -132,8 +130,8 @@ export default {
   watch: {
     dateRange(newVal) {
       if (newVal) {
-        this.searchForm.startDate = newVal[0]
-        this.searchForm.endDate = newVal[1]
+        this.searchForm.start_date = newVal[0]
+        this.searchForm.end_date = newVal[1]
       }
     }
   },
@@ -174,16 +172,15 @@ export default {
         const apiParams = {
           page: this.currentPage,
           limit: this.pageSize,
-          // 搜索条件映射
-          startDate: this.searchForm.startDate,
-          endDate: this.searchForm.endDate,
-          warningLevel: this.searchForm.warningLevel,
-          warningType: this.searchForm.warningType,
-          warningSkill: this.searchForm.warningSkill,
-          warningName: this.searchForm.warningName,
-          warningId: this.searchForm.warningId,
-          location: this.searchForm.location,
-          statusFilter: this.searchForm.status
+          // 搜索条件 - 直接使用 snake_case 与后端保持一致
+          start_date: this.searchForm.start_date,
+          end_date: this.searchForm.end_date,
+          alert_level: this.searchForm.alert_level,
+          alert_type: this.searchForm.alert_type,
+          alert_name: this.searchForm.alert_name,
+          alert_id: this.searchForm.alert_id,
+          device_name: this.searchForm.device_name,
+          status: this.searchForm.status
         }
 
         // 过滤空值参数
@@ -935,15 +932,15 @@ export default {
     hasActiveFilters() {
       return !!(
         this.searchForm.deviceName ||
-        this.searchForm.warningType ||
-        this.searchForm.warningLevel ||
+        this.searchForm.alert_type ||
+        this.searchForm.alert_level ||
         this.searchForm.warningSkill ||
         this.searchForm.warningName ||
         this.searchForm.warningId ||
         this.searchForm.status ||
         this.searchForm.location ||
-        this.searchForm.startDate ||
-        this.searchForm.endDate
+        this.searchForm.start_date ||
+        this.searchForm.end_date
       );
     },
     
@@ -2184,7 +2181,7 @@ export default {
           
           <div class="select-wrapper">
             <el-select 
-              v-model="searchForm.warningLevel" 
+              v-model="searchForm.alert_level" 
               placeholder="预警等级" 
               size="small"
               clearable
@@ -2199,7 +2196,7 @@ export default {
           
           <div class="select-wrapper">
             <el-select 
-              v-model="searchForm.warningType" 
+              v-model="searchForm.alert_type" 
               placeholder="预警类型" 
               size="small"
               clearable
@@ -2521,17 +2518,17 @@ export default {
                 style="margin: 2px;"
               >设备: {{ searchForm.deviceName }}</el-tag>
               <el-tag 
-                v-if="searchForm.warningType" 
+                v-if="searchForm.alert_type" 
                 size="small" 
                 type="info" 
                 style="margin: 2px;"
-              >类型: {{ searchForm.warningType }}</el-tag>
+              >类型: {{ searchForm.alert_type }}</el-tag>
               <el-tag 
-                v-if="searchForm.warningLevel" 
+                v-if="searchForm.alert_level" 
                 size="small" 
                 type="info" 
                 style="margin: 2px;"
-              >等级: {{ searchForm.warningLevel }}</el-tag>
+              >等级: {{ searchForm.alert_level }}</el-tag>
               <el-tag 
                 v-if="searchForm.status" 
                 size="small" 
@@ -2539,7 +2536,7 @@ export default {
                 style="margin: 2px;"
               >状态: {{ searchForm.status }}</el-tag>
               <el-tag 
-                v-if="searchForm.startDate || searchForm.endDate" 
+                v-if="searchForm.start_date || searchForm.end_date" 
                 size="small" 
                 type="info" 
                 style="margin: 2px;"
