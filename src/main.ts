@@ -61,56 +61,32 @@ app.config.globalProperties.$channelTypeList = {
 // - 登录时调用 resetAsyncRoutes() 清除旧路由
 // - 使用 setupAsyncRoutes() 建立新的动态路由
 
-import { useUserInfoStore, usePermissionsStore, useMenusStore, useAppStore } from '@/stores'
+import { useUserInfoStore, usePermissionsStore, useMenusStore } from '@/stores'
 
 const userInfoStore = useUserInfoStore()
 const permissionsStore = usePermissionsStore()
 const menusStore = useMenusStore()
-const appStore = useAppStore()
 
 // ========== 异步初始化函数 ==========
 async function initializeApp() {
   try {
-    // 0️⃣ 后端服务健康检查（异步，不阻塞启动）
-    import('@/api/commons/healthCheck').then(({ performStartupHealthCheck }) => {
-      performStartupHealthCheck().then((result) => {
-        // 如果有兼容性问题，显示通知
-        if (!result.compatibility.isCompatible) {
-          ElNotification({
-            title: '后端服务警告',
-            message: result.compatibility.issues.join('\n'),
-            type: 'warning',
-            duration: 0,
-            showClose: true
-          })
-        }
-      }).catch((err) => {
-        console.error('[HealthCheck] 健康检查执行失败:', err)
-      })
-    }).catch(() => {
-      // 健康检查模块加载失败，不影响应用启动
-      console.warn('[HealthCheck] 无法加载健康检查模块')
-    })
-
-    // 1️⃣ 先建立用户态（使用 Store 的方法检查和刷新数据）
-    // 使用 hasData() 方法检查持久化状态，而非直接访问 localStorage
+    // 1️⃣ 先建立用户态（智能加载，检查 TTL 缓存）
+    // 只有在确认用户处于有效登录状态时才恢复数据
     const hasUserInfo = userInfoStore.hasData()
     const hasPermissions = permissionsStore.hasData()
     const hasMenus = menusStore.hasData()
 
-    if (!hasUserInfo || !hasPermissions || !hasMenus) {
-      console.log('⚠️ 检测到数据不完整，开始从后端同步...')
+    console.log('[main.ts] 数据检查:', {
+      hasUserInfo,
+      hasPermissions,
+      hasMenus
+    })
 
-      try {
-        // 使用 Store 的 refresh() 方法，将 API 调用封装在 Store 内部
-        await Promise.all([
-          userInfoStore.refresh(),
-          permissionsStore.refresh(),
-          menusStore.refresh()
-        ])
-      } catch (error) {
-        console.warn('⚠️ 数据恢复失败，token 可能已过期:', error)
-      }
+    // 数据完整时才跳过恢复，否则不尝试恢复（避免无效请求）
+    if (hasUserInfo && hasPermissions && hasMenus) {
+      console.log('✅ 数据完整，跳过后端同步')
+    } else {
+      console.log('⚠️ 数据不完整，跳过后端同步（用户可能未登录）')
     }
 
     // 2️⃣ 动态导入路由模块
@@ -124,7 +100,7 @@ async function initializeApp() {
     if (menuTree.length > 0) {
       setupAsyncRoutes(menuTree)
     } else {
-      console.warn('⚠️ 菜单树为空，跳过动态路由建立')
+      console.info('⚠️ 菜单树为空，跳过动态路由建立')
     }
 
     // 5️⃣ 注册路由（此时动态路由已存在）

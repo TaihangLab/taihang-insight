@@ -31,7 +31,8 @@ export const usePermissionsStore = defineStore('permissions', () => {
    * 检查缓存是否过期
    */
   function isExpired(): boolean {
-    if (!lastRefresh.value) return true
+    // lastRefresh 为 0 表示从未刷新过，视为过期
+    if (lastRefresh.value === 0) return true
     return Date.now() - lastRefresh.value > PERMISSIONS_TTL
   }
 
@@ -149,7 +150,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
    * 检查是否有已加载的权限数据
    */
   function hasData(): boolean {
-    return initialized.value
+    return initialized.value && permissions.value.length > 0
   }
 
   /**

@@ -120,6 +120,7 @@ import { ElMessage } from 'element-plus'
 import { useUserInfoStore } from '@/stores/modules/userInfo'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import { useMenusStore } from '@/stores/modules/menus'
+import { useTokenStore } from '@/stores/modules/token'
 import { logout, isLoggedIn } from '@/stores/modules/auth'
 import authAPI from '@/api/auth/authAPI'
 import storage from '@/stores/modules/storage'
@@ -132,6 +133,7 @@ const route = useRoute()
 const userInfoStore = useUserInfoStore()
 const permissionsStore = usePermissionsStore()
 const menusStore = useMenusStore()
+const tokenStore = useTokenStore()
 
 // 表单数据
 const isLoging = ref(false)
@@ -213,8 +215,8 @@ async function login(): Promise<void> {
       // 登录成功，处理返回的数据
       const { token, adminToken, userInfo } = result.data
 
-      // 【关键】通过 Pinia Store 设置 token，触发持久化插件
-      storage.setAdminToken(adminToken)
+      // 【关键】通过 Pinia TokenStore 设置 token，触发持久化插件
+      tokenStore.setAdminToken(adminToken)
 
       // 存储租户信息用于下次登录自动填充
       storage.setSelectedTenant(selectedTenant.value)
@@ -232,11 +234,11 @@ async function login(): Promise<void> {
         // 1️⃣ 重置动态路由标记（清除之前的路由状态）
         resetAsyncRoutes()
 
-        // 2️⃣ 并行刷新所有认证数据：用户信息、权限列表、菜单树
+        // 2️⃣ 智能加载认证数据（内部检查 TTL，避免重复请求）
         await Promise.all([
-          userInfoStore.refresh(),
-          permissionsStore.refresh(),
-          menusStore.refresh()
+          userInfoStore.getUserInfo(),
+          permissionsStore.getPermissions(),
+          menusStore.getMenuTree()
         ])
 
         // 3️⃣ 根据菜单树重新建立动态路由

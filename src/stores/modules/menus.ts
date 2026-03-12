@@ -32,7 +32,8 @@ export const useMenusStore = defineStore('menus', () => {
    * 检查缓存是否过期
    */
   function isExpired(): boolean {
-    if (!lastRefresh.value) return true
+    // lastRefresh 为 0 表示从未刷新过，视为过期
+    if (lastRefresh.value === 0) return true
     return Date.now() - lastRefresh.value > MENUS_TTL
   }
 
