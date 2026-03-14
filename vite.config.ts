@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import UnoCSS from 'unocss/vite'
+import VueDevTools from 'vite-plugin-vue-devtools'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -16,6 +17,8 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       vue(),
+      // Vue DevTools - 开发调试工具
+      VueDevTools(),
       // UnoCSS - 原子化 CSS 引擎
       UnoCSS(),
     ],
@@ -35,7 +38,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 4000,
-      host: 'localhost',
+      host: true, // 监听所有地址，包括 localhost、127.0.0.1 和局域网 IP
       open: false,
       // 代理配置 - 统一代理所有 /api 开头的请求
       proxy: {

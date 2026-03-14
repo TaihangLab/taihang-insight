@@ -47,8 +47,10 @@ export const useUserInfoStore = defineStore('userInfo', () => {
     loading.value = true
     try {
       const result = await authAPI.getUserInfo()
-      if (result.code === 200 && result.data) {
-        const userData = result.data
+      // 响应拦截器已提取 data.data，result 直接是内层数据
+      // { user_id, user_name, nick_name, email, ... }
+      if (result && result.user_id) {
+        const userData = result
 
         // 转换为 UserInfo 格式
         userInfo.value = {

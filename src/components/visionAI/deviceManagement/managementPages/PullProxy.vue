@@ -289,7 +289,7 @@
 </template>
 
 <script>
-import { deleteStreamProxyById, startStreamProxyById, stopStreamProxyById } from '@stream'
+import { deleteStreamProxyById, startStreamProxyById, stopStreamProxyById } from '@/api/stream'
 import StreamProxyEdit from './dialogs/StreamProxyEdit.vue'
 import onvifEdit from './dialogs/onvifEdit.vue'
 import devicePlayer from './dialogs/devicePlayer.vue'

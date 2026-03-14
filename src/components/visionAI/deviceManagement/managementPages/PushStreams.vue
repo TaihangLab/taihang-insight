@@ -326,7 +326,7 @@
 </template>
 
 <script>
-import { startPushStream, removePushStream, batchRemovePushStream } from '@stream'
+import { startPushStream, removePushStream, batchRemovePushStream } from '@/api/stream'
 import devicePlayer from './dialogs/devicePlayer.vue'
 import importChannel from './dialogs/importChannel.vue'
 import MediaServer from './service/MediaServer.js'

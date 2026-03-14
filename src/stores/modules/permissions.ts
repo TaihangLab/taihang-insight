@@ -46,8 +46,10 @@ export const usePermissionsStore = defineStore('permissions', () => {
     loading.value = true
     try {
       const result = await authAPI.getPermissions()
-      if (result.code === 200 && result.data) {
-        const perms = result.data.permission_codes || []
+      // 响应拦截器已提取 data.data，result 直接是内层数据
+      // { user_id, user_name, permission_codes }
+      if (result && result.permission_codes) {
+        const perms = result.permission_codes || []
         permissions.value = perms
         initialized.value = true
         lastRefresh.value = Date.now()

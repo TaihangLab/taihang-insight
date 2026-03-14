@@ -47,8 +47,10 @@ export const useMenusStore = defineStore('menus', () => {
     loading.value = true
     try {
       const result = await authAPI.getMenuTree()
-      if (result.code === 200 && result.data) {
-        const menu = result.data.menu_tree || []
+      // 响应拦截器已提取 data.data，result 直接是内层数据
+      // { user_id, user_name, menu_tree }
+      if (result && result.menu_tree) {
+        const menu = result.menu_tree || []
         menuTree.value = menu
         initialized.value = true
         lastRefresh.value = Date.now()

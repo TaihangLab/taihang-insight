@@ -15,7 +15,6 @@ import type {
   AuthPermissionsResponse,
   LoginRequest,
   LoginResponse,
-  UnifiedResponse,
   MenuItem
 } from '@/types/auth'
 
@@ -86,16 +85,20 @@ class AuthAPI {
   /**
    * 获取用户基本信息（需要 token）
    * GET /api/v1/info
+   *
+   * 注意：响应拦截器已提取 data.data，直接返回内层数据
    */
-  async getUserInfo(): Promise<UnifiedResponse<AuthInfoResponse>> {
+  async getUserInfo(): Promise<AuthInfoResponse> {
     return authAxios.get('/api/v1/info')
   }
 
   /**
    * 获取权限码列表（需要 token）
    * GET /api/v1/permissions
+   *
+   * 注意：响应拦截器已提取 data.data，直接返回内层数据
    */
-  async getPermissions(): Promise<UnifiedResponse<AuthPermissionsResponse>> {
+  async getPermissions(): Promise<AuthPermissionsResponse> {
     return authAxios.get('/api/v1/permissions')
   }
 
@@ -105,15 +108,19 @@ class AuthAPI {
    *
    * 后端返回结构：
    * {
+   *   success: true,
    *   code: 200,
+   *   message: "获取菜单树成功（超管）",
    *   data: {
    *     user_id: number,
    *     user_name: string,
    *     menu_tree: MenuItem[]
    *   }
    * }
+   *
+   * 注意：响应拦截器已提取 data.data，直接返回内层数据
    */
-  async getMenuTree(): Promise<UnifiedResponse<{ user_id: number; user_name: string; menu_tree: MenuItem[] }>> {
+  async getMenuTree(): Promise<{ user_id: number | string; user_name: string; menu_tree: MenuItem[] }> {
     return authAxios.get('/api/v1/menu')
   }
 }

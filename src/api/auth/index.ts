@@ -19,12 +19,13 @@ export type * from '@/types/auth'
 
 /**
  * 获取用户基本信息
+ * 注意：响应拦截器已提取 data.data，response 直接是内层数据
  */
 export async function getUserInfo(forceRefresh = false): Promise<AuthInfoResponse | null> {
   try {
     const response = await authAPI.getUserInfo()
-    if (response.code === 200 && response.data) {
-      return response.data
+    if (response && response.user_id) {
+      return response
     }
     return null
   } catch (error) {
@@ -35,13 +36,13 @@ export async function getUserInfo(forceRefresh = false): Promise<AuthInfoRespons
 
 /**
  * 获取权限码列表
+ * 注意：响应拦截器已提取 data.data，response 直接是内层数据
  */
 export async function getPermissions(forceRefresh = false): Promise<string[]> {
   try {
     const response = await authAPI.getPermissions()
-    console.log('response:', response)
-    if (response.code === 200 && response.data) {
-      return response.data.permission_codes || []
+    if (response && response.permission_codes) {
+      return response.permission_codes || []
     }
     return []
   } catch (error) {
@@ -53,16 +54,13 @@ export async function getPermissions(forceRefresh = false): Promise<string[]> {
 /**
  * 获取菜单树
  * 后端返回结构：{ code: 200, data: { user_id, user_name, menu_tree: MenuItem[] } }
+ * 注意：响应拦截器已提取 data.data，response 直接是内层数据
  */
 export async function getMenuTree(forceRefresh = false): Promise<MenuItem[] | null> {
   try {
     const response = await authAPI.getMenuTree()
-    if (response.code === 200 && response.data) {
-      // 后端返回的数据结构可能是 { menu_tree: MenuItem[] } 或直接是 MenuItem[]
-      const menuData = 'menu_tree' in response.data
-        ? (response.data as { menu_tree: MenuItem[] }).menu_tree
-        : response.data
-      return menuData
+    if (response && response.menu_tree) {
+      return response.menu_tree
     }
     return null
   } catch (error) {
