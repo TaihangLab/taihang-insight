@@ -60,9 +60,10 @@ const loadTenants = async () => {
 
   try {
     const response = await tenantService.getTenants()
-    if (response?.data?.items && Array.isArray(response.data.items)) {
+    // 响应拦截器已处理格式转换，直接使用数据
+    if (Array.isArray(response)) {
       // 过滤掉 id 或 tenant_name 为空的租户记录
-      tenants.value = response.data.items.filter(
+      tenants.value = response.filter(
         (tenant) => tenant.id != null && tenant.tenant_name != null
       )
       loaded.value = true

@@ -248,18 +248,21 @@ export default {
         // 调用API获取用户列表
         const response = await associationService.getUsers(params)
 
-        if (response && response.data && Array.isArray(response.data.items)) {
+        // 响应拦截器已处理格式转换，直接使用数据
+        if (response && Array.isArray(response)) {
           // API调用成功，使用API数据
           console.log('✅ 使用API数据获取用户列表')
 
           // 将API返回的数据映射到表格期望的字段
-          this.tableData = response.data.items.map(item => ({
+          this.tableData = response.map(item => ({
             ...item,
             user_name: item.user_name || item.user_code || item.id.toString(),
             tenant_id: item.tenant_id || 'default'
           }))
 
-          this.pagination.total = response.data.total || response.data.items.length || 0
+          // 从响应中获取 total（如果有）
+          const responseWithTotal = response as any
+          this.pagination.total = responseWithTotal.total || response.length || 0
         } else {
           // API返回格式异常
           throw new Error('API返回格式异常')
@@ -326,18 +329,21 @@ export default {
         // 调用API获取用户列表
         const response = await associationService.getUsers(params)
 
-        if (response && response.data && Array.isArray(response.data.items)) {
+        // 响应拦截器已处理格式转换，直接使用数据
+        if (response && Array.isArray(response)) {
           // API调用成功，使用API数据
           console.log('✅ 使用API数据获取可选用户列表')
 
           // 将API返回的数据映射到表格期望的字段
-          this.availableUsersData = response.data.items.map(item => ({
+          this.availableUsersData = response.map(item => ({
             ...item,
             user_name: item.user_name || item.user_code || item.id.toString(),
             tenant_id: item.tenant_id || 'default'
           }))
 
-          this.userPagination.total = response.data.total || response.data.items.length || 0
+          // 从响应中获取 total（如果有）
+          const responseWithTotal = response as any
+          this.userPagination.total = responseWithTotal.total || response.length || 0
         } else {
           // API返回格式异常
           throw new Error('API返回格式异常')

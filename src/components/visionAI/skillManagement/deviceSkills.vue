@@ -794,16 +794,14 @@ export default {
 
         // 调用API获取技能列表
         const response = await centerAPI.skill.getSkillList(params);
-        
-        if (response.data.code === 0) {
-          this.processSkillsData(response.data.data);
-          // 更新总数和分页信息
-          this.total = response.data.total;
-          // 删除数据获取成功的消息提示
-          // this.$message.success('数据获取成功');
-        } else {
-          this.$message.error(response.data.msg || '获取技能列表失败');
-        }
+
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        this.processSkillsData(response);
+        // 更新总数和分页信息
+        const responseWithTotal = response as any;
+        this.total = responseWithTotal.total || 0;
+        // 删除数据获取成功的消息提示
+        // this.$message.success('数据获取成功');
       } catch (error) {
         console.error('获取技能列表失败:', error);
         this.$message.error('获取技能列表失败，请检查网络连接');
@@ -853,19 +851,15 @@ export default {
       try {
         // 加载详细数据
         const response = await centerAPI.skill.getSkillDetail(skill.id);
-        if (response.data.code === 0) {
-          this.currentSkill = {
-            ...skill,
-            aiTasks: response.data.data.ai_tasks || [],
-            deviceCount: response.data.data.total_device_count || 0,
-            models: response.data.data.model_info ? response.data.data.model_info.map(model => model[1]) : []
-          };
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        this.currentSkill = {
+          ...skill,
+          aiTasks: response.ai_tasks || [],
+          deviceCount: response.total_device_count || 0,
+          models: response.model_info ? response.model_info.map(model => model[1]) : []
+        };
 
-          this.detailsDialogVisible = true;
-        } else {
-          // 保留错误信息但简化
-          this.$message.error('获取技能详情失败');
-        }
+        this.detailsDialogVisible = true;
       } catch (error) {
         console.error('获取技能详情失败:', error);
         // 简化重复的错误提示
