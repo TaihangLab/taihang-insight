@@ -332,11 +332,26 @@ export function resetAsyncRoutes(): void {
  * ============== 路由守卫 ==============
 
 /**
+ * 动态路由就绪标志
+ * 用于路由守卫判断是否需要等待动态路由添加
+ */
+let isDynamicRoutesReady = false
+
+/**
+ * 设置动态路由就绪标志（由 main.ts 调用）
+ */
+export function markDynamicRoutesReady() {
+  isDynamicRoutesReady = true
+  console.log('[Router] 动态路由就绪')
+}
+
+/**
  * 全局前置守卫 - 认证与权限检查
  *
  * 最佳实践：
  * 1. 避免在守卫中使用 next() 参数（Vue Router 4 推荐）
  * 2. 使用 return 或抛出错误进行导航控制
+ * 3. 等待动态路由添加完成后再进行路由匹配检查
  */
 router.beforeEach(async (to: RouteLocationNormalized) => {
   // 1. 检查白名单
@@ -356,14 +371,31 @@ router.beforeEach(async (to: RouteLocationNormalized) => {
     }
   }
 
-  // 3. 检查路由是否存在
-  // 注意：动态路由在 main.ts 中已经添加，这里只需要验证
+  // 3. 等待动态路由添加完成
+  // 如果动态路由还没就绪，等待最多 3 秒
+  if (!isDynamicRoutesReady) {
+    console.log('[Router] 等待动态路由添加...')
+    const startTime = Date.now()
+    const timeout = 3000 // 3 秒超时
+
+    while (!isDynamicRoutesReady && Date.now() - startTime < timeout) {
+      await new Promise(resolve => setTimeout(resolve, 50))
+    }
+
+    if (!isDynamicRoutesReady) {
+      console.error('[Router] 动态路由添加超时，重定向到首页')
+      return { path: '/' }
+    }
+  }
+
+  // 4. 检查路由是否存在
+  // 动态路由已就绪，现在可以安全检查路由匹配
   if (to.matched.length === 0) {
     console.warn('[Router] 路由不存在:', to.path)
     return { path: '/404' }
   }
 
-  // 4. 所有检查通过，放行
+  // 5. 所有检查通过，放行
   return true
 })
 

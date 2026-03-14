@@ -1,17 +1,7 @@
 <template>
-<div class="tech-login-container" id="login">
-  <!-- 主要登录区域 -->
-  <div class="login-main-area">
-    <!-- 左侧装饰区域 - 极致优化：移除所有动画 -->
-    <div class="login-decoration">
-      <div class="tech-circle">
-        <div class="inner-circle"></div>
-      </div>
-    </div>
-
-    <!-- 登录表单区域 -->
-    <div class="login-form-container">
-      <div class="login-form-wrapper">
+<TechPageContainer id="login">
+  <template #default>
+    <div class="login-form-wrapper">
         <!-- 标题 -->
         <div class="login-header">
           <div class="title-container">
@@ -35,7 +25,6 @@
             <div class="input-wrapper" :class="{'focused': tenantInputFocused}">
               <i class="input-icon i-carbon-enterprise"></i>
               <input
-                link
                 v-model="selectedTenant"
                 placeholder="请输入租户编码"
                 class="tech-input"
@@ -51,7 +40,6 @@
             <div class="input-wrapper">
               <i class="input-icon i-carbon-user"></i>
               <input
-                link
                 v-model="username"
                 placeholder="请输入用户名"
                 class="tech-input"
@@ -108,15 +96,15 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
+    </template>
+</TechPageContainer>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import TechPageContainer from '@/components/common/TechPageContainer.vue'
 import { useUserInfoStore } from '@/stores/modules/userInfo'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import { useMenusStore } from '@/stores/modules/menus'
@@ -337,79 +325,9 @@ onUnmounted(() => {
 
 <style scoped>
 /* 🔥 极致优化：移除所有动态效果，保证流畅 */
+/* 容器样式已由 TechPageContainer 组件提供 */
 
-/* 主容器样式 */
-.tech-login-container {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  /* 简化背景：移除渐变，使用纯色 */
-  background: #0c1929;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-family-base);
-}
-
-/* 主登录区域 */
-.login-main-area {
-  position: relative;
-  display: flex;
-  width: 90%;
-  max-width: 1200px;
-  height: 600px;
-  /* 简化背景：移除 backdrop-filter，使用纯色半透明 */
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  /* 移除 box-shadow */
-  z-index: 2;
-  overflow: hidden;
-}
-
-/* 左侧装饰区域 - 静态版本，无动画 */
-.login-decoration {
-  flex: 1;
-  position: relative;
-  /* 简化背景：纯色替代渐变 */
-  background: rgba(65, 133, 247, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.tech-circle {
-  width: 300px;
-  height: 300px;
-  border: 2px solid rgba(65, 133, 247, 0.25);
-  border-radius: 50%;
-  position: relative;
-  /* 移除动画：静态圆环 */
-}
-
-.inner-circle {
-  width: 200px;
-  height: 200px;
-  border: 1px solid rgba(90, 150, 248, 0.25);
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  /* 移除动画：静态圆环 */
-}
-
-/* 登录表单容器 */
-.login-form-container {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-}
-
+/* 登录表单包装器 */
 .login-form-wrapper {
   width: 100%;
   max-width: 400px;
@@ -515,7 +433,7 @@ onUnmounted(() => {
 .input-wrapper {
   position: relative;
   background: rgba(255, 255, 255, 0.08);
-  border-radius: var(--input-border-radius);
+  border-radius: var(--border-radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.1);
   /* 使用 transform 替代其他属性以获得更好性能 */
   transition: border-color 0.2s ease, background-color 0.2s ease;
@@ -622,7 +540,7 @@ onUnmounted(() => {
   height: var(--button-height-lg);
   background: linear-gradient(45deg, #4185F7, #2d5fd9);
   border: none;
-  border-radius: var(--button-border-radius);
+  border-radius: var(--border-radius-lg);
   color: #ffffff;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
@@ -672,23 +590,8 @@ onUnmounted(() => {
   color: var(--primary-color);
 }
 
-/* 响应式设计 */
+/* 响应式设计 - 容器响应式已由 TechPageContainer 处理 */
 @media (max-width: 768px) {
-  .login-main-area {
-    flex-direction: column;
-    width: 95%;
-    height: auto;
-    min-height: 600px;
-  }
-
-  .login-decoration {
-    display: none;
-  }
-
-  .login-form-container {
-    padding: 30px 20px;
-  }
-
   .title-container {
     flex-direction: column;
     gap: 15px;
@@ -714,21 +617,6 @@ onUnmounted(() => {
 
   .platform-title {
     font-size: 24px;
-  }
-}
-
-@media (max-width: 480px) {
-  .login-main-area {
-    margin: 20px;
-    width: calc(100% - 40px);
-  }
-
-  .platform-title {
-    font-size: 20px;
-  }
-
-  .login-form-container {
-    padding: 20px 15px;
   }
 }
 </style>

@@ -13,7 +13,7 @@ import './styles/theme.css'
 // 【按需加载】video.js 样式移到组件内导入
 // import 'video.js/dist/video-js.css'
 
-import { createApp } from 'vue'
+import { createApp, nextTick } from 'vue'
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import ElementPlus, { ElNotification } from 'element-plus'
@@ -61,53 +61,45 @@ app.config.globalProperties.$channelTypeList = {
 // - 登录时调用 resetAsyncRoutes() 清除旧路由
 // - 使用 setupAsyncRoutes() 建立新的动态路由
 
-import { useUserInfoStore, usePermissionsStore, useMenusStore } from '@/stores'
-
-const userInfoStore = useUserInfoStore()
-const permissionsStore = usePermissionsStore()
-const menusStore = useMenusStore()
-
 // ========== 异步初始化函数 ==========
 async function initializeApp() {
   try {
-    // 1️⃣ 先建立用户态（智能加载，检查 TTL 缓存）
-    // 只有在确认用户处于有效登录状态时才恢复数据
-    const hasUserInfo = userInfoStore.hasData()
-    const hasPermissions = permissionsStore.hasData()
-    const hasMenus = menusStore.hasData()
-
-    console.log('[main.ts] 数据检查:', {
-      hasUserInfo,
-      hasPermissions,
-      hasMenus
-    })
-
-    // 数据完整时才跳过恢复，否则不尝试恢复（避免无效请求）
-    if (hasUserInfo && hasPermissions && hasMenus) {
-      console.log('✅ 数据完整，跳过后端同步')
-    } else {
-      console.log('⚠️ 数据不完整，跳过后端同步（用户可能未登录）')
-    }
-
-    // 2️⃣ 动态导入路由模块
+    // 1️⃣ 动态导入路由模块
     const { default: router, setupAsyncRoutes } = await import('./router')
 
-    // 3️⃣ 获取菜单树（使用 Store 的 getter 方法）
-    // 此时数据已从持久化加载或从后端获取
-    const menuTree = menusStore.getMenuTreeSync() || []
-
-    // 4️⃣ 根据菜单建立动态路由（在 app.use(router) 之前！）
-    if (menuTree.length > 0) {
-      setupAsyncRoutes(menuTree)
-    } else {
-      console.info('⚠️ 菜单树为空，跳过动态路由建立')
-    }
-
-    // 5️⃣ 注册路由（此时动态路由已存在）
+    // 2️⃣ 注册路由到应用
     app.use(router)
 
-    // 6️⃣ 挂载应用
+    // 3️⃣ 挂载应用
+    // Pinia 实例已在 app.use(pinia) 时注册，DevTools 连接已建立
     app.mount('#app')
+
+    // 4️⃣ 挂载后立即创建 store 并建立动态路由
+    // 此时应用已挂载，Pinia DevTools 已完全初始化
+    await nextTick()
+
+    // 创建 store 实例
+    const { useMenusStore } = await import('@/stores')
+    const menusStore = useMenusStore()
+
+    // 获取菜单树（持久化插件已自动恢复数据）
+    const menuTree = menusStore.getMenuTreeSync() || []
+
+    console.log('[main.ts] 菜单树检查:', menuTree.length, '个菜单')
+
+    // 根据菜单建立动态路由
+    if (menuTree.length > 0) {
+      setupAsyncRoutes(menuTree)
+      // 标记动态路由就绪，让路由守卫知道可以开始检查路由了
+      const { markDynamicRoutesReady } = await import('./router')
+      markDynamicRoutesReady()
+      console.log('✅ 动态路由已建立')
+    } else {
+      console.info('⚠️ 菜单树为空，跳过动态路由建立')
+      // 即使没有动态路由，也要标记就绪，避免路由守卫一直等待
+      const { markDynamicRoutesReady } = await import('./router')
+      markDynamicRoutesReady()
+    }
 
   } catch (e) {
     console.error('❌ 应用初始化失败:', e)
