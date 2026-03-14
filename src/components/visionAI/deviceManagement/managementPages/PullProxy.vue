@@ -386,14 +386,12 @@ export default {
           mediaServerId: this.mediaServerId,
         }
       }).then((res) => {
-        if (res.data.code === 0) {
-          this.total = res.data.data.total;
-          for (let i = 0; i < res.data.data.list.length; i++) {
-            res.data.data.list[i]["playLoading"] = false;
-          }
-          this.streamProxyList = res.data.data.list;
-          this.updateProxyStats();
+        this.total = res.data.total;
+        for (let i = 0; i < res.data.data.list.length; i++) {
+          res.data.data.list[i]["playLoading"] = false;
         }
+        this.streamProxyList = res.data.data.list;
+        this.updateProxyStats();
       }).catch((error) => {
         console.log(error);
       }).finally(() => {
@@ -421,30 +419,23 @@ export default {
         method: 'get',
         url: `onvif/search?timeout=3000`,
       }).then((res) => {
-        if (res.data.code === 0) {
-          if (res.data.data.length > 0) {
-            this.$refs.onvifEdit.openDialog(res.data.data, (url) => {
-              if (url != null) {
-                this.$refs.onvifEdit.close();
-                this.streamProxy = {type: "default", url: url, srcUrl: url};
-              }
-            })
-          } else {
-            this.$message.success({
-              showClose: true,
-              message: "未找到可用设备"
-            });
-          }
-        } else {
-          this.$message.error({
-            showClose: true,
-            message: res.data.msg
+        if (res.data.length > 0) {
+          this.$refs.onvifEdit.openDialog(res.data, (url) => {
+            if (url != null) {
+              this.$refs.onvifEdit.close();
+              this.streamProxy = {type: "default", url: url, srcUrl: url};
+            }
           })
+        } else {
+          this.$message.success({
+            showClose: true,
+            message: "未找到可用设备"
+          });
         }
       }).catch((error) => {
         this.$message.error({
           showClose: true,
-          message: error
+          message: error.message || '搜索失败'
         })
       });
     },
@@ -456,19 +447,11 @@ export default {
     
     play(row) {
       row.playLoading = true;
-      startStreamProxyById(row.id, this.mediaServerId).then((res) => {
-        if (res.data.code === 0) {
-          this.$refs.devicePlayer.openDialog("streamPlay", null, null, {
-            streamInfo: res.data.data,
-            hasAudio: true
-          });
-        } else {
-          this.$message({
-            showClose: true,
-            message: "获取地址失败：" + res.data.msg,
-            type: "error",
-          });
-        }
+      startStreamProxyById(row.id, this.mediaServerId).then((data) => {
+        this.$refs.devicePlayer.openDialog("streamPlay", null, null, {
+          streamInfo: data,
+          hasAudio: true
+        });
       }).catch((error) => {
         console.log(error);
       }).finally(() => {
@@ -477,12 +460,8 @@ export default {
     },
     
     stopPlay(row) {
-      stopStreamProxyById(row.id, this.mediaServerId).then((res) => {
-        if (res.data.code === 0) {
-          this.$message.success('停止成功');
-        } else {
-          this.$message.error(res.data.msg);
-        }
+      stopStreamProxyById(row.id, this.mediaServerId).then(() => {
+        this.$message.success('停止成功');
       }).catch((error) => {
         console.log(error);
       });

@@ -573,52 +573,40 @@ export default {
         console.log('技能列表API完整响应:', response);
         console.log('响应数据结构:', response.data);
         
-        // 兼容多种可能的响应格式
-        if (response.data) {
-          let skillsData = [];
-          let total = 0;
-          
-          // 检查不同的数据结构
-          if (response.data.success === true) {
-            // 大模型技能API格式: {success: true, data: [], total: 12}
-            if (Array.isArray(response.data.data)) {
-              skillsData = response.data.data;
-              total = response.data.total || skillsData.length;
-            }
-          } else if (response.data.code === 0) {
-            // 标准格式: {code: 0, data: {skills: [], total: 0}}
-            if (response.data.data && response.data.data.skills) {
-              skillsData = response.data.data.skills;
-              total = response.data.data.total || skillsData.length;
-            } else if (response.data.data && Array.isArray(response.data.data)) {
-              // 数据直接在data字段中: {code: 0, data: []}
-              skillsData = response.data.data;
-              total = response.data.total || skillsData.length;
-            }
-          } else if (Array.isArray(response.data)) {
-            // 直接返回数组: []
-            skillsData = response.data;
-            total = skillsData.length;
-          } else if (response.data.skills) {
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        let skillsData = [];
+        let total = 0;
+
+        if (Array.isArray(response.data)) {
+          // 直接数组格式
+          skillsData = response.data;
+          total = response.total || skillsData.length;
+        } else if (response.data && typeof response.data === 'object') {
+          if (response.data.skills) {
             // 技能直接在根级别: {skills: [], total: 0}
             skillsData = response.data.skills;
             total = response.data.total || skillsData.length;
+          } else if (Array.isArray(response.data.data)) {
+            // 数据在data字段中: {data: []}
+            skillsData = response.data.data;
+            total = response.total || skillsData.length;
+          } else {
+            // 单个对象格式
+            skillsData = [response.data];
+            total = 1;
           }
-          
-          console.log('解析后的技能数据:', skillsData);
-          console.log('技能总数:', total);
-          console.log('当前页:', this.skillCurrentPage);
-          console.log('每页条数:', this.skillPageSize);
-          
-          this.skillList = skillsData;
-          this.skillTotal = total;
-          
-          if (skillsData.length === 0) {
-            console.warn('未获取到任何技能数据');
-          }
-        } else {
-          console.error('无法解析技能数据，响应格式不符合预期');
-          this.$message.error('获取技能列表失败：数据格式不正确');
+        }
+
+        console.log('解析后的技能数据:', skillsData);
+        console.log('技能总数:', total);
+        console.log('当前页:', this.skillCurrentPage);
+        console.log('每页条数:', this.skillPageSize);
+
+        this.skillList = skillsData;
+        this.skillTotal = total;
+
+        if (skillsData.length === 0) {
+          console.warn('未获取到任何技能数据');
         }
       } catch (error) {
         console.error('获取技能列表失败:', error);
@@ -713,13 +701,9 @@ export default {
         const response = await centerAPI.skill.getLlmSkillDetail(skillId);
         console.log('技能详情API响应:', response.data);
         
-        if (response.data && response.data.success) {
-          // 技能详情API格式: {success: true, data: {...}}
-          this.skillDetail = response.data.data;
-          console.log('技能详情加载成功:', this.skillDetail);
-        } else {
-          throw new Error('获取技能详情失败');
-        }
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        this.skillDetail = response.data || response;
+        console.log('技能详情加载成功:', this.skillDetail);
       } catch (error) {
         console.error('获取技能详情失败:', error);
         // 失败时使用原有数据
@@ -742,23 +726,15 @@ export default {
         const response = await centerAPI.skill.getLlmTaskList();
         console.log('大模型任务列表响应:', response.data);
         
+        // 响应拦截器已处理成功/失败判断，直接使用数据
         let allTasks = [];
-        if (response.data) {
-          if (response.data.success === true) {
-            // 大模型技能API格式: {success: true, data: [], total: 12}
-            if (Array.isArray(response.data.data)) {
-              allTasks = response.data.data;
-            }
-          } else if (response.data.code === 0) {
-            // 标准格式: {code: 0, data: {tasks: [], total: 0}}
-            if (response.data.data && response.data.data.tasks) {
-              allTasks = response.data.data.tasks;
-            } else if (response.data.data && Array.isArray(response.data.data)) {
-              allTasks = response.data.data;
-            }
-          } else if (Array.isArray(response.data)) {
-            // 直接返回数组: []
-            allTasks = response.data;
+        if (Array.isArray(response.data)) {
+          allTasks = response.data;
+        } else if (response.data && typeof response.data === 'object') {
+          if (response.data.tasks) {
+            allTasks = response.data.tasks;
+          } else if (Array.isArray(response.data.data)) {
+            allTasks = response.data.data;
           }
         }
 
@@ -784,26 +760,14 @@ export default {
         const response = await centerAPI.skill.getLlmSkillDetail(skillId);
         console.log('技能详情API响应:', response.data);
         
-        // 兼容不同的响应格式
-        if (response.data) {
-          if (response.data.success === true) {
-            // 大模型技能API格式: {success: true, data: {...}}
-            this.skillDetail = response.data.data || response.data;
-          } else if (response.data.code === 0) {
-            // 标准格式: {code: 0, data: {...}}
-            this.skillDetail = response.data.data;
-          } else if (response.data.id) {
-            // 直接返回技能对象
-            this.skillDetail = response.data;
-          } else {
-            this.$message.error('获取技能详情失败：数据格式不正确');
-            return;
-          }
-          
-          console.log('解析后的技能详情:', this.skillDetail);
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        if (response.data && typeof response.data === 'object') {
+          this.skillDetail = response.data.data || response.data;
         } else {
-          this.$message.error('获取技能详情失败：响应数据为空');
+          this.skillDetail = response.data || response;
         }
+
+        console.log('解析后的技能详情:', this.skillDetail);
       } catch (error) {
         console.error('获取技能详情失败:', error);
         this.$message.error('获取技能详情失败: ' + (error.message || '未知错误'));
@@ -886,27 +850,15 @@ export default {
           response = await centerAPI.skill.createLlmTask(taskData);
         }
         
-        // 检查不同的响应格式
-        let isSuccess = false;
-        if (response.data) {
-          if (response.data.success === true || response.data.code === 0 || response.data.id) {
-            isSuccess = true;
-          }
-        }
-        
-         if (isSuccess) {
-           const successMessage = this.isEditMode ? '更新大模型任务成功' : '配置大模型技能成功';
-           this.$message.success(successMessage);
-           // 关闭配置弹窗
-           this.closeConfigDialog();
-           // 重新加载关联任务
-           this.loadRelatedTasks();
-           // 触发配置成功事件
-           this.$emit('config-success');
-         } else {
-           const errorPrefix = this.isEditMode ? '更新失败' : '配置失败';
-           this.$message.error(errorPrefix + ': ' + (response.data && response.data.message ? response.data.message : '未知错误'));
-         }
+        // 响应拦截器已处理成功/失败判断，直接处理成功逻辑
+        const successMessage = this.isEditMode ? '更新大模型任务成功' : '配置大模型技能成功';
+        this.$message.success(successMessage);
+        // 关闭配置弹窗
+        this.closeConfigDialog();
+        // 重新加载关联任务
+        this.loadRelatedTasks();
+        // 触发配置成功事件
+        this.$emit('config-success');
       } catch (error) {
         console.error('配置大模型技能失败:', error);
         this.$message.error('配置失败: ' + (error.message || '表单验证失败'));

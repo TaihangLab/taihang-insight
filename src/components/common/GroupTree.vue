@@ -98,13 +98,11 @@ export default {
           query: this.searchSrt,
           parent: node.data.id,
           hasChannel: this.hasChannel
-        }).then((res) => {
-          if (res.data.code === 0) {
-            if (res.data.data.length > 0) {
-              this.showAlert = false
-            }
-            resolve(res.data.data);
+        }).then((data) => {
+          if (data.length > 0) {
+            this.showAlert = false
           }
+          resolve(data);
         }).catch(function (error) {
           console.log(error);
         });
@@ -207,14 +205,12 @@ export default {
       return false;
     },
     removeGroup: function (id, node) {
-      deleteGroup(node.data.id).then((res) => {
-        if (res.data.code === 0) {
-          console.log("移除成功")
-          node.parent.loaded = false
-          node.parent.expand();
-          if (this.onChannelChange) {
-            this.onChannelChange(node.data.deviceId)
-          }
+      deleteGroup(node.data.id).then(() => {
+        console.log("移除成功")
+        node.parent.loaded = false
+        node.parent.expand();
+        if (this.onChannelChange) {
+          this.onChannelChange(node.data.deviceId)
         }
       }).catch(function (error) {
         console.log(error);
@@ -230,31 +226,22 @@ export default {
           parentId: node.data.deviceId,
           businessGroup: node.data.businessGroup,
           deviceIds: deviceIds,
-        }).then((res) => {
-          if (res.data.code === 0) {
-            this.$message.success({
-              showClose: true,
-              message: "保存成功"
-            })
-            if (this.onChannelChange) {
-              this.onChannelChange()
-            }
-            console.log(node)
-            node.loaded = false
-            node.expand();
-          } else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
+        }).then(() => {
+          this.$message.success({
+            showClose: true,
+            message: "保存成功"
+          })
+          if (this.onChannelChange) {
+            this.onChannelChange()
           }
-          this.loading = false
+          console.log(node)
+          node.loaded = false
+          node.expand();
         }).catch((error) => {
           this.$message.error({
             showClose: true,
-            message: error
+            message: error.message || '保存失败'
           })
-          this.loading = false
         });
       })
     },
@@ -266,30 +253,21 @@ export default {
         }
         removeDeviceFromGroup({
           deviceIds: deviceIds,
-        }).then((res) => {
-          if (res.data.code === 0) {
-            this.$message.success({
-              showClose: true,
-              message: "保存成功"
-            })
-            if (this.onChannelChange) {
-              this.onChannelChange()
-            }
-            node.loaded = false
-            node.expand();
-          } else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
+        }).then(() => {
+          this.$message.success({
+            showClose: true,
+            message: "保存成功"
+          })
+          if (this.onChannelChange) {
+            this.onChannelChange()
           }
-          this.loading = false
+          node.loaded = false
+          node.expand();
         }).catch((error) => {
           this.$message.error({
             showClose: true,
-            message: error
+            message: error.message || '保存失败'
           })
-          this.loading = false
         });
       })
     },

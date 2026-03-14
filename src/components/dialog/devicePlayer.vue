@@ -532,20 +532,13 @@ export default {
         wvpAxios({
           method: 'get',
           url: '/api/v1/play/broadcast/' + this.deviceId + '/' + this.channelId + "?timeout=30&broadcastMode=" + this.broadcastMode
-        }).then((res) => {
-          if (res.data.code === 0) {
-            let streamInfo = res.data.data.streamInfo;
-            if (document.location.protocol.includes("https")) {
-              this.startBroadcast(streamInfo.rtcs)
-            } else {
-              this.startBroadcast(streamInfo.rtc)
-            }
+        }).then((data) => {
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          let streamInfo = data.streamInfo;
+          if (document.location.protocol.includes("https")) {
+            this.startBroadcast(streamInfo.rtcs)
           } else {
-            this.$message({
-              showClose: true,
-              message: res.data.msg,
-              type: "error",
-            });
+            this.startBroadcast(streamInfo.rtc)
           }
         });
       } else if (this.broadcastStatus === 1) {
@@ -558,78 +551,70 @@ export default {
       wvpAxios({
         method: 'post',
         url: '/api/v1/user/userInfo',
-      }).then((res) => {
-        if (res.data.code !== 0) {
+      }).then((data) => {
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        let pushKey = data.pushKey;
+        // 获取推流鉴权KEY
+        url += "&sign=" + crypto.createHash('md5').update(pushKey, "utf8").digest('hex')
+        console.log("开始语音喊话： " + url)
+        this.broadcastRtc = new ZLMRTCClient.Endpoint({
+          debug: true, // 是否打印日志
+          zlmsdpUrl: url, //流地址
+          simulecast: false,
+          useCamera: false,
+          audioEnable: true,
+          videoEnable: false,
+          recvOnly: false,
+        })
+
+        this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_NOT_SUPPORT, (e) => {// 获取到了本地流
+          console.error('不支持webrtc', e)
           this.$message({
             showClose: true,
-            message: "获取推流鉴权Key失败",
-            type: "error",
+            message: '不支持webrtc, 无法进行语音喊话',
+            type: 'error'
           });
           this.broadcastStatus = -1;
-        } else {
-          let pushKey = res.data.data.pushKey;
-          // 获取推流鉴权KEY
-          url += "&sign=" + crypto.createHash('md5').update(pushKey, "utf8").digest('hex')
-          console.log("开始语音喊话： " + url)
-          this.broadcastRtc = new ZLMRTCClient.Endpoint({
-            debug: true, // 是否打印日志
-            zlmsdpUrl: url, //流地址
-            simulecast: false,
-            useCamera: false,
-            audioEnable: true,
-            videoEnable: false,
-            recvOnly: false,
-          })
+        });
 
-          this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_NOT_SUPPORT, (e) => {// 获取到了本地流
-            console.error('不支持webrtc', e)
-            this.$message({
-              showClose: true,
-              message: '不支持webrtc, 无法进行语音喊话',
-              type: 'error'
-            });
-            this.broadcastStatus = -1;
+        this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_ICE_CANDIDATE_ERROR, (e) => {// ICE 协商出错
+          console.error('ICE 协商出错')
+          this.$message({
+            showClose: true,
+            message: 'ICE 协商出错',
+            type: 'error'
           });
+          this.broadcastStatus = -1;
+        });
 
-          this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_ICE_CANDIDATE_ERROR, (e) => {// ICE 协商出错
-            console.error('ICE 协商出错')
-            this.$message({
-              showClose: true,
-              message: 'ICE 协商出错',
-              type: 'error'
-            });
+        this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_OFFER_ANWSER_EXCHANGE_FAILED, (e) => {// offer anwser 交换失败
+          console.error('offer anwser 交换失败', e)
+          this.$message({
+            showClose: true,
+            message: 'offer anwser 交换失败' + e,
+            type: 'error'
+          });
+          this.broadcastStatus = -1;
+        });
+        this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_ON_CONNECTION_STATE_CHANGE, (e) => {// offer anwser 交换失败
+          console.log('状态改变', e)
+          if (e === "connecting") {
+            this.broadcastStatus = 0;
+          } else if (e === "connected") {
+            this.broadcastStatus = 1;
+          } else if (e === "disconnected") {
             this.broadcastStatus = -1;
+          }
+        });
+        this.broadcastRtc.on(ZLMRTCClient.Events.CAPTURE_STREAM_FAILED, (e) => {// offer anwser 交换失败
+          console.log('捕获流失败', e)
+          this.$message({
+            showClose: true,
+            message: '捕获流失败' + e,
+            type: 'error'
           });
-
-          this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_OFFER_ANWSER_EXCHANGE_FAILED, (e) => {// offer anwser 交换失败
-            console.error('offer anwser 交换失败', e)
-            this.$message({
-              showClose: true,
-              message: 'offer anwser 交换失败' + e,
-              type: 'error'
-            });
-            this.broadcastStatus = -1;
-          });
-          this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_ON_CONNECTION_STATE_CHANGE, (e) => {// offer anwser 交换失败
-            console.log('状态改变', e)
-            if (e === "connecting") {
-              this.broadcastStatus = 0;
-            } else if (e === "connected") {
-              this.broadcastStatus = 1;
-            } else if (e === "disconnected") {
-              this.broadcastStatus = -1;
-            }
-          });
-          this.broadcastRtc.on(ZLMRTCClient.Events.CAPTURE_STREAM_FAILED, (e) => {// offer anwser 交换失败
-            console.log('捕获流失败', e)
-            this.$message({
-              showClose: true,
-              message: '捕获流失败' + e,
-              type: 'error'
-            });
-            this.broadcastStatus = -1;
-          });
-        }
+          this.broadcastStatus = -1;
+        });
       }).catch((e) => {
         this.$message({
           showClose: true,
@@ -647,17 +632,12 @@ export default {
       wvpAxios({
         method: 'get',
         url: '/api/v1/play/broadcast/stop/' + this.deviceId + '/' + this.channelId
-      }).then((res) => {
-        if (res.data.code == 0) {
-          // this.broadcastStatus = -1;
-          // this.broadcastRtc.close()
-        } else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: "error",
-          });
-        }
+      }).then((data) => {
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        // this.broadcastStatus = -1;
+        // this.broadcastRtc.close()
+      }).catch((error) => {
+        // 错误已在拦截器中处理
       });
     }
   }

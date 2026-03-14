@@ -124,10 +124,8 @@ export default {
   },
   methods: {
     getPresetList: function () {
-      getFrontEndPresetList(this.deviceId, this.channelDeviceId).then((res)=> {
-        if (res.data.code === 0) {
-          this.allPresetList = res.data.data;
-        }
+      getFrontEndPresetList(this.deviceId, this.channelDeviceId).then((data)=> {
+        this.allPresetList = data;
       }).catch((error)=> {
         console.log(error);
       });
@@ -143,20 +141,12 @@ export default {
       addCruisePoint(this.deviceId, this.channelDeviceId, {
         cruiseId: this.cruiseId,
         presetId: this.selectPreset.presetId
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.presetList.push(this.selectPreset)
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.presetList.push(this.selectPreset)
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '添加失败',
           type: 'error'
         });
       }).finally(()=>{
@@ -180,20 +170,12 @@ export default {
       deleteCruisePoint(this.deviceId, this.channelDeviceId, {
         cruiseId: this.cruiseId,
         presetId: preset.presetId
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.presetList.splice(index, 1)
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.presetList.splice(index, 1)
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '删除失败',
           type: 'error'
         });
       }).finally(()=>{
@@ -217,20 +199,12 @@ export default {
         deleteCruisePoint(this.deviceId, this.channelDeviceId, {
           cruiseId: this.cruiseId,
           presetId: 0
-        }).then((res)=> {
-          if (res.data.code === 0) {
-            this.presetList = []
-          }else {
-            this.$message({
-              showClose: true,
-              message: res.data.msg,
-              type: 'error'
-            });
-          }
+        }).then(()=> {
+          this.presetList = []
         }).catch((error)=> {
           this.$message({
             showClose: true,
-            message: error,
+            message: error.message || '删除失败',
             type: 'error'
           });
         }).finally(()=>{
@@ -249,24 +223,16 @@ export default {
       setCruiseSpeed(this.deviceId, this.channelDeviceId, {
         cruiseId: this.cruiseId,
         speed: this.cruiseSpeed
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "保存成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.$message({
+          showClose: true,
+          message: "保存成功",
+          type: 'success'
+        });
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '保存失败',
           type: 'error'
         });
       }).finally(()=>{
@@ -290,24 +256,16 @@ export default {
       setCruiseTime(this.deviceId, this.channelDeviceId, {
         cruiseId: this.cruiseId,
         time: this.cruiseTime
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "保存成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.$message({
+          showClose: true,
+          message: "保存成功",
+          type: 'success'
+        });
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '保存失败',
           type: 'error'
         });
       }).finally(()=>{
@@ -330,24 +288,16 @@ export default {
       })
       startFrontEndCruise(this.deviceId, this.channelDeviceId, {
         cruiseId: this.cruiseId
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "发送成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.$message({
+          showClose: true,
+          message: "发送成功",
+          type: 'success'
+        });
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '发送失败',
           type: 'error'
         });
       }).finally(()=>{
@@ -364,24 +314,16 @@ export default {
       })
       stopFrontEndCruise(this.deviceId, this.channelDeviceId, {
         cruiseId: this.cruiseId
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "发送成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.$message({
+          showClose: true,
+          message: "发送成功",
+          type: 'success'
+        });
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '发送失败',
           type: 'error'
         });
       }).finally(()=>{

@@ -77,24 +77,16 @@ export default {
       setScanSpeed(this.deviceId, this.channelDeviceId, {
         scanId: this.scanId,
         speed: this.speed
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "保存成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.$message({
+          showClose: true,
+          message: "保存成功",
+          type: 'success'
+        });
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '保存失败',
           type: 'error'
         });
       }).finally(()=>{
@@ -117,24 +109,16 @@ export default {
       })
       setScanLeft(this.deviceId, this.channelDeviceId, {
         scanId: this.scanId,
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "保存成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.$message({
+          showClose: true,
+          message: "保存成功",
+          type: 'success'
+        });
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '保存失败',
           type: 'error'
         });
       }).finally(()=>{
@@ -151,24 +135,16 @@ export default {
       })
       setScanRight(this.deviceId, this.channelDeviceId, {
         scanId: this.scanId,
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "保存成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.$message({
+          showClose: true,
+          message: "保存成功",
+          type: 'success'
+        });
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '保存失败',
           type: 'error'
         });
       }).finally(()=>{
@@ -187,24 +163,16 @@ export default {
       })
       startFrontEndScan(this.deviceId, this.channelDeviceId, {
         scanId: this.scanId
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "发送成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.$message({
+          showClose: true,
+          message: "发送成功",
+          type: 'success'
+        });
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '发送失败',
           type: 'error'
         });
       }).finally(()=>{
@@ -221,24 +189,16 @@ export default {
       })
       stopFrontEndScan(this.deviceId, this.channelDeviceId, {
         scanId: this.scanId
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "发送成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.$message({
+          showClose: true,
+          message: "发送成功",
+          type: 'success'
+        });
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '发送失败',
           type: 'error'
         });
       }).finally(()=>{

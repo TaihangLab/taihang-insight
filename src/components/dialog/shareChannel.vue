@@ -56,14 +56,13 @@ export default {
             updatePlatformChannelForGb({
                 platformId:  this.platformId,
                 channelReduces:  this.chooseData
-            }).then((res)=>{
-              if (res.data.code === 0) {
-                this.$message({
+            }).then((data)=>{
+              // 响应拦截器已处理成功/失败判断，直接使用数据
+              this.$message({
                         showClose: true,
                         message: '保存成功,',
                         type: 'success'
                     });
-                }
             }).catch(function (error) {
                 console.log(error);
             });

@@ -86,22 +86,20 @@ export default {
     },
     onSubmit: function () {
       changePasswordForAdmin(this.newPassword, this.form.id).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: '修改成功',
-            type: 'success'
-          });
-          this.showDialog = false;
-        }else {
-          this.$message({
-            showClose: true,
-            message: '修改密码失败，是否已登录（接口鉴权关闭无法修改密码）',
-            type: 'error'
-          });
-        }
+        // 响应拦截器已处理成功/失败判断，直接处理成功逻辑
+        this.$message({
+          showClose: true,
+          message: '修改成功',
+          type: 'success'
+        });
+        this.showDialog = false;
       }).catch((error)=> {
-        console.error(error)
+        console.error(error);
+        this.$message({
+          showClose: true,
+          message: '修改密码失败，是否已登录（接口鉴权关闭无法修改密码）',
+          type: 'error'
+        });
       });
     },
     close: function () {

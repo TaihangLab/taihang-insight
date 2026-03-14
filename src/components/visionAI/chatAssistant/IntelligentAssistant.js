@@ -262,13 +262,10 @@ export default {
           
           console.log('会话消息API响应:', response.data); // 添加调试日志
           
-          // 适配后端返回的格式: {code: 0, msg: 'success', data: Array}
+          // 响应拦截器已处理成功/失败判断，直接使用数据
           let messagesData = [];
-          
-          if (response.data && response.data.code === 0 && Array.isArray(response.data.data)) {
-            messagesData = response.data.data;
-          } else if (response.data && Array.isArray(response.data)) {
-            // 兼容直接返回数组的格式
+
+          if (Array.isArray(response.data)) {
             messagesData = response.data;
           } else {
             console.error('会话消息格式错误:', response.data);
@@ -682,11 +679,9 @@ export default {
               if (this.messages.length === 2 && this.currentChatId) {
                 try {
                   const response = await centerAPI.chatAssistant.autoGenerateTitle(this.currentChatId);
-                  if (response.data && (response.data.success || response.data.code === 0)) {
-                    // 再次更新对话列表以显示新标题
-                    await this.loadChatConversations();
-                    console.log('自动生成标题成功');
-                  }
+                  // 响应拦截器已处理成功/失败判断，成功则更新对话列表
+                  await this.loadChatConversations();
+                  console.log('自动生成标题成功');
                 } catch (error) {
                   console.warn('自动生成标题失败:', error);
                   // 不阻断正常流程，只记录警告
@@ -879,28 +874,23 @@ export default {
             );
             
             console.log('停止API响应:', response.data);
-            
-            if (response.data && (response.data.success || response.data.code === 0)) {
-              console.log('停止生成并保存成功');
-              
-              // 重新加载会话内容以获取最新状态
-              await this.loadChatHistory(this.currentChatId);
-              await this.loadChatConversations();
-              
-              // 如果是新对话的第一轮，尝试生成标题
-              if (this.messages.length === 2) {
-                try {
-                  const titleResponse = await centerAPI.chatAssistant.autoGenerateTitle(this.currentChatId);
-                  if (titleResponse.data && (titleResponse.data.success || titleResponse.data.code === 0)) {
-                    await this.loadChatConversations();
-                    console.log('停止后自动生成标题成功');
-                  }
-                } catch (error) {
-                  console.warn('停止后自动生成标题失败:', error);
-                }
+
+            // 响应拦截器已处理成功/失败判断，直接处理成功逻辑
+            console.log('停止生成并保存成功');
+
+            // 重新加载会话内容以获取最新状态
+            await this.loadChatHistory(this.currentChatId);
+            await this.loadChatConversations();
+
+            // 如果是新对话的第一轮，尝试生成标题
+            if (this.messages.length === 2) {
+              try {
+                await centerAPI.chatAssistant.autoGenerateTitle(this.currentChatId);
+                await this.loadChatConversations();
+                console.log('停止后自动生成标题成功');
+              } catch (error) {
+                console.warn('停止后自动生成标题失败:', error);
               }
-            } else {
-              console.warn('停止API调用失败:', response.data);
             }
             
           } catch (error) {
@@ -950,26 +940,21 @@ export default {
               currentContent
             );
             
-            if (response.data && (response.data.success || response.data.code === 0)) {
-              console.log('切换前停止生成并保存成功');
-              
-              // 更新会话列表（不重新加载当前会话，因为要切换了）
-              await this.loadChatConversations();
-              
-              // 如果是新对话的第一轮，尝试生成标题
-              if (this.messages.length === 2) {
-                try {
-                  const titleResponse = await centerAPI.chatAssistant.autoGenerateTitle(this.currentChatId);
-                  if (titleResponse.data && (titleResponse.data.success || titleResponse.data.code === 0)) {
-                    await this.loadChatConversations();
-                    console.log('切换前自动生成标题成功');
-                  }
-                } catch (error) {
-                  console.warn('切换前自动生成标题失败:', error);
-                }
+            // 响应拦截器已处理成功/失败判断，直接处理成功逻辑
+            console.log('切换前停止生成并保存成功');
+
+            // 更新会话列表（不重新加载当前会话，因为要切换了）
+            await this.loadChatConversations();
+
+            // 如果是新对话的第一轮，尝试生成标题
+            if (this.messages.length === 2) {
+              try {
+                await centerAPI.chatAssistant.autoGenerateTitle(this.currentChatId);
+                await this.loadChatConversations();
+                console.log('切换前自动生成标题成功');
+              } catch (error) {
+                console.warn('切换前自动生成标题失败:', error);
               }
-            } else {
-              console.warn('切换前停止API调用失败:', response.data);
             }
             
           } catch (error) {
@@ -1445,27 +1430,16 @@ export default {
               const response = await centerAPI.chatAssistant.createGroup(this.groupForm.name.trim());
               
               console.log('创建分组API响应:', response.data); // 添加调试日志
-              
-              // 适配后端返回的格式
-              let isSuccess = false;
-              if (response.data && response.data.code === 0) {
-                isSuccess = true;
-              } else if (response.data && response.data.success) {
-                isSuccess = true;
-              }
-              
-              if (isSuccess) {
-                // 重新加载分组列表和会话列表
-                await this.loadUserGroups();
-                await this.loadChatConversations();
-                
-                this.showGroupDialog = false;
-                this.$message.success(`分组"${this.groupForm.name}"创建成功`);
-                
-                console.log('创建新分组成功:', response.data);
-              } else {
-                throw new Error(response.data && response.data.msg ? response.data.msg : '创建分组失败');
-              }
+
+              // 响应拦截器已处理成功/失败判断，直接处理成功逻辑
+              // 重新加载分组列表和会话列表
+              await this.loadUserGroups();
+              await this.loadChatConversations();
+
+              this.showGroupDialog = false;
+              this.$message.success(`分组"${this.groupForm.name}"创建成功`);
+
+              console.log('创建新分组成功:', response.data);
             } catch (error) {
               console.error('创建分组失败:', error);
               this.$message.error('创建分组失败：' + (error.message || '请稍后重试'));
@@ -1528,31 +1502,20 @@ export default {
           const response = await centerAPI.chatAssistant.deleteGroup(groupId);
           
           console.log('删除分组API响应:', response.data); // 添加调试日志
-          
-          // 适配后端返回的格式
-          let isSuccess = false;
-          if (response.data && response.data.code === 0) {
-            isSuccess = true;
-          } else if (response.data && response.data.success) {
-            isSuccess = true;
+
+          // 响应拦截器已处理成功/失败判断，直接处理成功逻辑
+          // 重新加载分组列表和对话列表
+          await this.loadUserGroups();
+          await this.loadChatConversations();
+
+          // 如果当前选中的是被删除的分组，切换到无分组
+          if (this.selectedGroupId === groupId) {
+            this.selectedGroupId = null;
           }
-          
-          if (isSuccess) {
-            // 重新加载分组列表和对话列表
-            await this.loadUserGroups();
-            await this.loadChatConversations();
-            
-            // 如果当前选中的是被删除的分组，切换到无分组
-            if (this.selectedGroupId === groupId) {
-              this.selectedGroupId = null;
-            }
-            
-            this.$message.success(`分组"${group.name}"已删除，相关对话已移动到无分组`);
-            
-            console.log('删除分组成功：', group);
-          } else {
-            throw new Error(response.data && response.data.msg ? response.data.msg : '删除分组失败');
-          }
+
+          this.$message.success(`分组"${group.name}"已删除，相关对话已移动到无分组`);
+
+          console.log('删除分组成功：', group);
         } catch (error) {
           console.error('删除分组失败:', error);
           this.$message.error('删除分组失败：' + (error.message || '请稍后重试'));
@@ -1632,28 +1595,17 @@ export default {
               );
               
               console.log('更新标题API响应:', response.data); // 添加调试日志
-              
-              // 适配后端返回的格式
-              let isSuccess = false;
-              if (response.data && response.data.code === 0) {
-                isSuccess = true;
-              } else if (response.data && response.data.success) {
-                isSuccess = true;
-              }
-              
-              if (isSuccess) {
-                // 更新本地状态
-                chat.title = value.trim();
-                chat.updatedAt = new Date().toISOString();
-                
-                // 重新加载会话列表以同步数据
-                await this.loadChatConversations();
-                
-                this.$message.success('标题修改成功');
-                console.log('标题修改成功:', value.trim());
-              } else {
-                throw new Error(response.data && response.data.msg ? response.data.msg : '标题修改失败');
-              }
+
+              // 响应拦截器已处理成功/失败判断，直接处理成功逻辑
+              // 更新本地状态
+              chat.title = value.trim();
+              chat.updatedAt = new Date().toISOString();
+
+              // 重新加载会话列表以同步数据
+              await this.loadChatConversations();
+
+              this.$message.success('标题修改成功');
+              console.log('标题修改成功:', value.trim());
             } catch (error) {
               console.error('修改标题失败:', error);
               this.$message.error('修改标题失败：' + (error.message || '请稍后重试'));
@@ -1726,36 +1678,25 @@ export default {
           );
           
           console.log('移动对话API响应:', response.data); // 添加调试日志
-          
-          // 适配后端返回的格式
-          let isSuccess = false;
-          if (response.data && response.data.code === 0) {
-            isSuccess = true;
-          } else if (response.data && response.data.success) {
-            isSuccess = true;
-          }
-          
-          if (isSuccess) {
-            // 重新加载对话列表和分组列表
-            await this.loadChatConversations();
-            await this.loadUserGroups();
-            
-            // 显示成功消息
-            if (this.selectedGroupForMove === null) {
-              this.$message.success('已移动到无分组');
-            } else {
-              const targetGroup = this.userGroups.find(g => g.id === this.selectedGroupForMove);
-              this.$message.success(`已移动到"${targetGroup ? targetGroup.name : '未知分组'}"`);
-            }
-            
-            this.showMoveDialog = false;
-            this.selectedGroupForMove = null;
-            this.selectedChatId = null;
-            
-            console.log('移动操作完成');
+
+          // 响应拦截器已处理成功/失败判断，直接处理成功逻辑
+          // 重新加载对话列表和分组列表
+          await this.loadChatConversations();
+          await this.loadUserGroups();
+
+          // 显示成功消息
+          if (this.selectedGroupForMove === null) {
+            this.$message.success('已移动到无分组');
           } else {
-            throw new Error(response.data && response.data.msg ? response.data.msg : '移动对话失败');
+            const targetGroup = this.userGroups.find(g => g.id === this.selectedGroupForMove);
+            this.$message.success(`已移动到"${targetGroup ? targetGroup.name : '未知分组'}"`);
           }
+
+          this.showMoveDialog = false;
+          this.selectedGroupForMove = null;
+          this.selectedChatId = null;
+
+          console.log('移动操作完成');
         } catch (error) {
           console.error('移动对话失败:', error);
           this.$message.error('移动对话失败：' + (error.message || '请稍后重试'));
@@ -1812,14 +1753,11 @@ export default {
           const response = await centerAPI.chatAssistant.getChatConversations({ limit: 50 });
           
           console.log('会话API响应:', response.data); // 添加调试日志
-          
-          // 适配后端返回的格式: {code: 0, msg: 'success', data: Array}
+
+          // 响应拦截器已处理成功/失败判断，直接使用数据
           let conversationsData = [];
-          
-          if (response.data && response.data.code === 0 && Array.isArray(response.data.data)) {
-            conversationsData = response.data.data;
-          } else if (response.data && Array.isArray(response.data)) {
-            // 兼容直接返回数组的格式
+
+          if (Array.isArray(response.data)) {
             conversationsData = response.data;
           } else {
             console.warn('会话列表格式错误或为空:', response.data);
@@ -1869,17 +1807,11 @@ export default {
           const response = await centerAPI.chatAssistant.getGroups();
           
           console.log('分组API响应:', response.data); // 添加调试日志
-          
-          // 适配后端返回的格式: {code: 0, msg: 'success', data: Array}
+
+          // 响应拦截器已处理成功/失败判断，直接使用数据
           let groupsData = [];
-          
-          if (response.data && response.data.code === 0 && Array.isArray(response.data.data)) {
-            groupsData = response.data.data;
-          } else if (response.data && response.data.success && Array.isArray(response.data.data)) {
-            // 兼容 {success: true, data: Array} 格式
-            groupsData = response.data.data;
-          } else if (response.data && Array.isArray(response.data)) {
-            // 兼容直接返回数组的格式
+
+          if (Array.isArray(response.data)) {
             groupsData = response.data;
           } else {
             console.warn('分组列表格式错误或为空:', response.data);

@@ -48,11 +48,9 @@ export default {
         app: this.app,
         stream: this.stream,
         mediaServerId: this.mediaServerId,
-      }).then((res)=> {
-        console.log(res.data.data);
-        if (res.data.code === 0) {
-          this.info = res.data.data
-        }
+      }).then((data)=> {
+        console.log(data);
+        this.info = data
       }).catch((error)=> {
         console.log(error);
       });

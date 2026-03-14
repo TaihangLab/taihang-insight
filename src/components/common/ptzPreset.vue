@@ -55,14 +55,12 @@ export default {
   },
   methods: {
     getPresetList: function () {
-      getFrontEndPresetList(this.deviceId, this.channelDeviceId).then((res)=> {
-        if (res.data.code === 0) {
-          this.presetList = res.data.data;
-          // 防止出现表格错位
-          this.$nextTick(() => {
-            this.$refs.channelListTable.doLayout();
-          })
-        }
+      getFrontEndPresetList(this.deviceId, this.channelDeviceId).then((data)=> {
+        this.presetList = data;
+        // 防止出现表格错位
+        this.$nextTick(() => {
+          this.$refs.channelListTable.doLayout();
+        })
       }).catch((error)=> {
         console.log(error);
       });
@@ -83,31 +81,20 @@ export default {
       })
       addFrontEndPreset(this.deviceId, this.channelDeviceId, {
         presetId: this.ptzPresetId
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          setTimeout(()=>{
-            loading.close()
-            this.inputVisible = false;
-            this.ptzPresetId = ""
-            this.getPresetList()
-          }, 1000)
-        }else {
+      }).then((data)=>{
+        setTimeout(()=>{
           loading.close()
           this.inputVisible = false;
           this.ptzPresetId = ""
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+          this.getPresetList()
+        }, 1000)
       }).catch((error)=> {
         loading.close()
         this.inputVisible = false;
         this.ptzPresetId = ""
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '添加失败',
           type: 'error'
         });
       });
@@ -120,24 +107,16 @@ export default {
       console.log(preset)
       callFrontEndPreset(this.deviceId, this.channelDeviceId, {
         presetId: preset.presetId
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: '调用成功',
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.$message({
+          showClose: true,
+          message: '调用成功',
+          type: 'success'
+        });
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '调用失败',
           type: 'error'
         });
       });
@@ -158,25 +137,16 @@ export default {
         })
         deleteFrontEndPreset(this.deviceId, this.channelDeviceId, {
           presetId: preset.presetId
-        }).then((res)=> {
-          if (res.data.code === 0) {
-            setTimeout(()=>{
-              loading.close()
-              this.getPresetList()
-            }, 1000)
-          }else {
+        }).then(()=> {
+          setTimeout(()=>{
             loading.close()
-            this.$message({
-              showClose: true,
-              message: res.data.msg,
-              type: 'error'
-            });
-          }
+            this.getPresetList()
+          }, 1000)
         }).catch((error)=> {
           loading.close()
           this.$message({
             showClose: true,
-            message: error,
+            message: error.message || '删除失败',
             type: 'error'
           });
         });
