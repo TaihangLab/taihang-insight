@@ -340,19 +340,10 @@ export default {
         let totalCount = 0;
         let pages = 0;
 
-        if (Array.isArray(response.data)) {
-          alertRecords = response.data;
-          totalCount = response.total || response.data.length;
-          pages = response.pages || Math.ceil(totalCount / (response.page_size || 20));
-        } else if (response.data && typeof response.data === 'object') {
-          alertRecords = response.data.items || response.data || [];
-          totalCount = response.total || response.data.total || 0;
-          pages = response.pages || Math.ceil(totalCount / (response.page_size || 20));
-        } else {
-          alertRecords = [];
-          totalCount = 0;
-          pages = 0;
-        }
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        alertRecords = Array.isArray(response.data) ? response.data : [];
+        totalCount = response.total || 0;
+        pages = response.pages || Math.ceil(totalCount / (response.page_size || response.limit || 20));
         
         // 转换数据格式以适配前端显示，同时保留原始API数据
         this.archiveList = alertRecords.map(record => ({
@@ -1228,13 +1219,7 @@ export default {
           const response = await centerAPI.archive.getAvailableAlerts(params);
 
           // 响应拦截器已处理成功/失败判断，直接使用数据
-          if (Array.isArray(response.data)) {
-            this.availableAlerts = response.data;
-          } else if (response.data && typeof response.data === 'object') {
-            this.availableAlerts = response.data.items || response.data || [];
-          } else {
-            this.availableAlerts = [];
-          }
+          this.availableAlerts = Array.isArray(response.data) ? response.data : [];
           this.availableAlertsPagination.total = response.total || 0;
           this.availableAlertsPagination.currentPage = response.page || 1;
           console.log('可用预警列表加载成功:', this.availableAlerts);
