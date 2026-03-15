@@ -122,7 +122,7 @@ export default {
       this.getMediaServerList();
     },
     getMediaServerList: function () {
-      const that = this; // eslint-disable-line @typescript-eslint/no-this-alias // eslint-disable-line @typescript-eslint/no-this-alias
+      const that = this; // eslint-disable-line @typescript-eslint/no-this-alias
       that.mediaServerObj.getOnlineMediaServerList((data) => {
         that.mediaServerList = data.data;
       });

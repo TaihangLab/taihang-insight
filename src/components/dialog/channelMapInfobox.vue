@@ -43,7 +43,7 @@ export default {
       this.isLoging = true;
       let channelId = this.channel.channelId;
       console.log("通知设备推流1：" + deviceId + " : " + channelId);
-      const that = this; // eslint-disable-line @typescript-eslint/no-this-alias // eslint-disable-line @typescript-eslint/no-this-alias
+      const that = this; // eslint-disable-line @typescript-eslint/no-this-alias
       startPlay(deviceId, channelId)
         .then(function (res) {
           that.isLoging = false;
