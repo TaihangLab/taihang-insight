@@ -18,7 +18,7 @@
           ></el-date-picker>
           <div class="record-list-box" v-loading="recordsLoading" :style="recordListStyle">
             <ul v-if="detailFiles.length > 0" class="infinite-list record-list">
-              <li v-for="item in detailFiles" class="infinite-list-item record-list-item">
+              <li v-for="(item, index) in detailFiles" :key="index" class="infinite-list-item record-list-item">
                 <el-tag v-if="chooseFile != item" @click="checkedFile(item)">
                   <i class="el-icon-video-camera"></i>
                   {{ moment(item.startTime).format("HH:mm:ss") }}-{{
@@ -139,7 +139,8 @@
           <div class="slider-val-box">
             <div
               class="slider-val"
-              v-for="item of detailFiles"
+              v-for="(item, index) in detailFiles"
+              :key="index"
               :style="'width:' + getDataWidth(item) + '%; left:' + getDataLeft(item) + '%'"
             ></div>
           </div>

@@ -24,7 +24,7 @@
           复制
         </el-button>
         <ul class="errDataBox">
-          <li v-for="id in gbIds">
+          <li v-for="id in gbIds" :key="id">
             {{ id }}
           </li>
         </ul>
@@ -44,7 +44,7 @@
           复制
         </el-button>
         <ul class="errDataBox">
-          <li v-for="id in streams">
+          <li v-for="id in streams" :key="id">
             {{ id }}
           </li>
         </ul>
