@@ -3097,19 +3097,19 @@ export default {
             const data = JSON.parse(event.data)
 
             // 更新检测结果
-            this.$set(this.detectionResults, index, {
+            this.detectionResults[index] = {
               detections: data.detections || [],
               frame_size: data.frame_size || {width: 1920, height: 1080}
             })
 
             // 更新时间戳
             const now = new Date()
-            this.$set(this.detectionUpdateTime, index,
+            this.detectionUpdateTime[index] =
               `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`)
 
             // 更新视频分辨率
             if (data.frame_size) {
-              this.$set(this.videoResolutions, index, {
+              this.videoResolutions[index] = {
                 width: data.frame_size.width,
                 height: data.frame_size.height
               })

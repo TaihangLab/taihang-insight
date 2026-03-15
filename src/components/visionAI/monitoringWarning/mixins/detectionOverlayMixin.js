@@ -82,14 +82,14 @@ export default {
             const data = JSON.parse(event.data);
 
             // 更新检测结果
-            this.$set(this.detectionResults, index, {
+            this.detectionResults[index] = {
               detections: data.detections || [],
               frame_size: data.frame_size || { width: 1920, height: 1080 },
             });
 
             // 更新视频分辨率
             if (data.frame_size) {
-              this.$set(this.videoResolutions, index, {
+              this.videoResolutions[index] = {
                 width: data.frame_size.width,
                 height: data.frame_size.height,
               });
