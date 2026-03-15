@@ -642,7 +642,7 @@ export default {
       console.log("复制内容：" + data);
       this.coverPlaying = false;
       this.tracks = [];
-      let _this = this;
+      const _this = this; // eslint-disable-line @typescript-eslint/no-this-alias // eslint-disable-line @typescript-eslint/no-this-alias
       this.$copyText(data).then(
         function (e) {
           _this.$message({

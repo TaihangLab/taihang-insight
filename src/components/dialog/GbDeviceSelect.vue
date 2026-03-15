@@ -59,7 +59,7 @@
         <el-table-column prop="manufacturer" label="厂家" min-width="120"></el-table-column>
         <el-table-column label="地址" min-width="160">
           <template v-slot:default="scope">
-            <div slot="reference" class="name-wrapper">
+            <div class="name-wrapper">
               <el-tag v-if="scope.row.hostAddress" size="medium">
                 {{ scope.row.hostAddress }}
               </el-tag>
@@ -69,7 +69,7 @@
         </el-table-column>
         <el-table-column label="状态" min-width="120">
           <template v-slot:default="scope">
-            <div slot="reference" class="name-wrapper">
+            <div class="name-wrapper">
               <el-tag size="medium" v-if="scope.row.onLine">在线</el-tag>
               <el-tag size="medium" type="info" v-if="!scope.row.onLine">离线</el-tag>
             </div>

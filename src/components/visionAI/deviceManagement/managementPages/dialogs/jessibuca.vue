@@ -166,7 +166,7 @@ export default {
       jessibucaPlayer[this._uid] = new window.Jessibuca({ ...options });
 
       let jessibuca = jessibucaPlayer[this._uid];
-      let _this = this;
+      const _this = this; // eslint-disable-line @typescript-eslint/no-this-alias
       jessibuca.on("pause", function () {
         _this.playing = false;
       });

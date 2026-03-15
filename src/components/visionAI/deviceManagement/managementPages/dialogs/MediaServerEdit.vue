@@ -487,7 +487,7 @@ export default {
       }
     },
     checkServer: function () {
-      let that = this;
+      const that = this; // eslint-disable-line @typescript-eslint/no-this-alias // eslint-disable-line @typescript-eslint/no-this-alias
       that.serverCheck = 0;
       that.mediaServer.checkServer(that.mediaServerForm, (data) => {
         if (data.code === 0) {
@@ -524,7 +524,7 @@ export default {
       this.setDialogWidth();
     },
     checkRecordServer: function () {
-      let that = this;
+      const that = this; // eslint-disable-line @typescript-eslint/no-this-alias // eslint-disable-line @typescript-eslint/no-this-alias
       that.recordServerCheck = 2;
       if (
         that.mediaServerForm.recordAssistPort <= 0 ||
@@ -553,7 +553,7 @@ export default {
     },
     onSubmit: function () {
       this.dialogLoading = true;
-      let that = this;
+      const that = this; // eslint-disable-line @typescript-eslint/no-this-alias // eslint-disable-line @typescript-eslint/no-this-alias
       that.mediaServer.addServer(this.mediaServerForm, (data) => {
         if (data.code === 0) {
           that.$message({

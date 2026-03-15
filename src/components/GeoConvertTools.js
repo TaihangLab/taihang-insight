@@ -2,9 +2,9 @@
  * 经纬度转换
  */
 export default {
-  PI: 3.1415926535897932384626,
+  PI: 3.1415926535897932384626, // eslint-disable-line no-loss-of-precision
   //PI: 3.14159265358979324,
-  x_pi: (3.1415926535897932384626 * 3000.0) / 180.0,
+  x_pi: (3.1415926535897932384626 * 3000.0) / 180.0, // eslint-disable-line no-loss-of-precision
   delta: function (lat, lng) {
     // Krasovsky 1940
     //
@@ -12,7 +12,7 @@ export default {
     // b = a * (1 - f)
     // ee = (a^2 - b^2) / a^2;
     var a = 6378245.0; //  a: 卫星椭球坐标投影到平面地图坐标系的投影因子。
-    var ee = 0.00669342162296594323; //  ee: 椭球的偏心率。
+    var ee = 0.00669342162296594323; // eslint-disable-line no-loss-of-precision  ee: 椭球的偏心率。
     var dLat = this.transformLat(lng - 105.0, lat - 35.0);
     var dLng = this.transformLng(lng - 105.0, lat - 35.0);
     var radLat = (lat / 180.0) * this.PI;

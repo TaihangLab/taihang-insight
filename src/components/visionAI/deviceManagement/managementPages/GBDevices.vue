@@ -221,7 +221,7 @@
 
           <el-table-column label="状态" width="100" align="center">
             <template #default="{ row }">
-              <div slot="reference" class="name-wrapper">
+              <div class="name-wrapper">
                 <el-tag
                   size="medium"
                   v-if="row.onLine && myServerId !== row.serverId"

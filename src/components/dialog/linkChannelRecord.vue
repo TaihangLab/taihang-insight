@@ -100,7 +100,7 @@
             <el-table-column prop="gbManufacturer" label="厂家" min-width="100"></el-table-column>
             <el-table-column label="类型" min-width="100">
               <template v-slot:default="scope">
-                <div slot="reference" class="name-wrapper">
+                <div class="name-wrapper">
                   <el-tag
                     size="medium"
                     effect="plain"
@@ -114,7 +114,7 @@
             </el-table-column>
             <el-table-column label="状态" min-width="100">
               <template v-slot:default="scope">
-                <div slot="reference" class="name-wrapper">
+                <div class="name-wrapper">
                   <el-tag size="medium" v-if="scope.row.gbStatus === 'ON'">在线</el-tag>
                   <el-tag size="medium" type="info" v-if="scope.row.gbStatus !== 'ON'">离线</el-tag>
                 </div>

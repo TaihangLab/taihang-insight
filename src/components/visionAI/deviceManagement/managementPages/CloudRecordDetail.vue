@@ -499,7 +499,7 @@ export default {
     },
     deleteRecord() {
       // TODO
-      let that = this;
+      const that = this; // eslint-disable-line @typescript-eslint/no-this-alias // eslint-disable-line @typescript-eslint/no-this-alias
       wvpAxios({
         method: "delete",
         url: `/record_proxy/${that.mediaServerId}record/delete`,
@@ -577,7 +577,7 @@ export default {
       this.taskTimeRange[1] = new Date(endTimeStr);
     },
     addTaskToServer() {
-      let that = this;
+      const that = this; // eslint-disable-line @typescript-eslint/no-this-alias // eslint-disable-line @typescript-eslint/no-this-alias
       wvpAxios({
         method: "get",
         url: `cloud/record/task/add`,
@@ -605,7 +605,7 @@ export default {
       this.getTaskList(this.tabVal === "ended");
     },
     getTaskList(isEnd) {
-      let that = this;
+      const that = this; // eslint-disable-line @typescript-eslint/no-this-alias // eslint-disable-line @typescript-eslint/no-this-alias
       wvpAxios({
         method: "get",
         url: `cloud/record/task/list`,
