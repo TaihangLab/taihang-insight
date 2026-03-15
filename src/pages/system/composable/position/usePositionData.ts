@@ -106,22 +106,26 @@ export function usePositionData() {
         // 拦截器已将 { data: [...], total, page, page_size } 转换为 { data, total, page, limit }
         const items = Array.isArray(response.data) ? response.data : [];
 
-        // 映射数据
+        // 映射数据 - 处理后端 snake_case 到前端 camelCase 的转换
         positions.value = items.map((item) => {
+          const record = item as Record<string, unknown>;
           return {
-            id: Number(item.id),
-            positionCode: String(item.positionCode || ""),
-            positionName: String(item.positionName || ""),
-            categoryCode: String(item.categoryCode || ""),
-            categoryName: String(item.categoryName || ""),
-            department: String(item.department || ""),
-            sortOrder: Number(item.sortOrder || 0),
-            status: Number(item.status) as Status,
-            tenantCode: String(item.tenantCode || ""),
-            createTime: String(item.createTime || ""),
+            id: Number(record.id),
+            // 后端 snake_case → 前端 camelCase
+            positionCode: String(record.position_code || ""),
+            positionName: String(record.position_name || ""),
+            categoryCode: String(record.category_code || ""),
+            categoryName: String(record.category_name || ""),
+            department: String(record.department || ""),
+            sortOrder: Number(record.order_num || 0),
+            status: Number(record.status) as Status,
+            tenantId: String(record.tenant_id || ""),
+            tenantCode: String(record.tenant_code || ""),
+            createTime: String(record.create_time || ""),
+            remark: String(record.remark || ""),
             // 保留原始数据
-            ...item,
-          } as PositionEntity;
+            ...(record as Partial<PositionEntity>),
+          };
         });
 
         // 使用后端返回的总数
@@ -152,17 +156,18 @@ export function usePositionData() {
       if (response?.data) {
         const data = Array.isArray(response.data) ? response.data : [];
         data.forEach((item) => {
-          const categoryCode = String(item.categoryCode || "");
-          const categoryName = String(item.categoryName || "");
+          const record = item as unknown as Record<string, unknown>;
+          const categoryCode = String(record.category_code || "");
+          const categoryName = String(record.category_name || "");
 
           if (categoryCode && !categoryMap.has(categoryCode)) {
             categoryMap.set(categoryCode, {
-              id: Number(item.id),
+              id: Number(record.id),
               categoryCode,
               categoryName,
               sortOrder: 0,
-              status: Number(item.status) as Status,
-              tenantCode: String(item.tenantCode || ""),
+              status: Number(record.status) as Status,
+              tenantCode: String(record.tenant_code || ""),
               createTime: "",
             });
           }

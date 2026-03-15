@@ -138,7 +138,7 @@ export function usePermissionData() {
 
   /**
    * 获取权限树
-   * 后端直接返回树型结构，前端直接使用
+   * 后端直接返回树型结构，前端需要处理 node_type 映射
    */
   const fetchPermissionTree = async () => {
     loading.value = true;
@@ -147,9 +147,9 @@ export function usePermissionData() {
 
       if (response?.data) {
         // 后端直接返回树型结构数据，包含 node_type 字段
-        // 使用 unknown 作为中间类型，因为后端返回的数据结构与 PermissionTreeNode 兼容
+        // 需要处理 node_type 映射：后端返回 "directory"，前端期望 "folder"
         const treeData = Array.isArray(response.data) ? response.data : [];
-        permissionTree.value = treeData as unknown as PermissionTreeNode[];
+        permissionTree.value = normalizePermissionTree(treeData);
       }
 
       return permissionTree.value;
@@ -159,6 +159,31 @@ export function usePermissionData() {
     } finally {
       loading.value = false;
     }
+  };
+
+  /**
+   * 规范化权限树数据，处理后端与前端的数据格式差异
+   * 1. node_type: "directory" → "folder"
+   * 2. 递归处理子节点
+   */
+  const normalizePermissionTree = (
+    nodes: unknown[]
+  ): PermissionTreeNode[] => {
+    return nodes.map((node: unknown) => {
+      const n = node as Record<string, unknown>;
+
+      // 处理 node_type 映射
+      if (n.node_type === "directory") {
+        n.node_type = "folder";
+      }
+
+      // 递归处理子节点
+      if (n.children && Array.isArray(n.children)) {
+        n.children = normalizePermissionTree(n.children);
+      }
+
+      return n as unknown as PermissionTreeNode;
+    });
   };
 
   /**
