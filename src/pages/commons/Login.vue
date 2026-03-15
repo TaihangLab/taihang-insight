@@ -207,7 +207,8 @@ async function login(): Promise<void> {
       tenant_id: selectedTenant.value, // 后端期望蛇形命名
     });
 
-    if (result.code === 200) {
+    // 后端返回 code: 0 表示成功
+    if (result.code === 0) {
       // 登录成功，处理返回的数据
       const { token, adminToken, userInfo } = result.data;
 

@@ -47,8 +47,9 @@ axiosInstance.interceptors.response.use(
     const originalData = response.data;
 
     // 处理 code 格式的响应
+    // 后端统一使用 code: 0 表示成功
     if (originalData && typeof originalData.code !== "undefined") {
-      if (originalData.code === 0 || originalData.code === 200) {
+      if (originalData.code === 0) {
         return originalData;
       }
       return Promise.reject(new Error(originalData.message || "请求失败"));

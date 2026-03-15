@@ -74,8 +74,8 @@ service.interceptors.response.use(
 
     // 200 OK 或 201 Created - 接口请求成功
     if (response.status === 200 || response.status === 201) {
-      // 根据后端返回的code判断
-      if (res.code === 0 || res.code === 200 || res.code === 201) {
+      // 根据后端返回的code判断（后端使用 code: 0 表示成功）
+      if (res.code === 0) {
         return response;
       } else {
         // 业务错误处理

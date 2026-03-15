@@ -29,7 +29,7 @@
         <el-select v-model="selectPreset" placeholder="请选择预置点">
           <el-option
             v-for="item in allPresetList"
-            ::key="item.presetId"
+            :key="item.presetId"
             :label="item.presetName"
             :value="item"
           ></el-option>
