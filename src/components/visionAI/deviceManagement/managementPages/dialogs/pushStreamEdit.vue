@@ -165,7 +165,7 @@ export default {
     },
     deviceGBIdExit: async function (deviceGbId) {
       var result = false;
-      var that = this;
+      var that = this; // eslint-disable-line @typescript-eslint/no-this-alias
       await wvpAxios({
         method: "get",
         url: `platform/exit/${deviceGbId}`,

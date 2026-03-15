@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-mutating-props -->
 <template>
   <div v-if="enabled">
     <el-icon><MagicStick /></el-icon>
