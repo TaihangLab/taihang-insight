@@ -17,7 +17,7 @@
                   v-model="searchKeyword"
                   class="search-input"
                   suffix-icon="el-icon-search"
-                  @keyup.enter.native="handleSearch"
+                  @keyup.enter="handleSearch"
                 ></el-input>
               </el-form-item>
               <el-form-item>
@@ -458,7 +458,7 @@ export default {
         }
 
         // 更新列表中的对应项
-        this.$set(this.skillList, index, updatedSkill);
+        this.skillList[index] = updatedSkill;
 
         // 提示更新成功
         this.$message({

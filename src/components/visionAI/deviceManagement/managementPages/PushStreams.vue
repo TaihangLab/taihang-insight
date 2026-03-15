@@ -39,7 +39,7 @@
               style="width: 220px"
               clearable
               @input="getPushList"
-              @keyup.enter.native="getPushList"
+              @keyup.enter="getPushList"
               @clear="getPushList"
             >
               <template v-slot:prefix>

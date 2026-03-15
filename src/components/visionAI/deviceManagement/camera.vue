@@ -330,7 +330,7 @@
                 v-for="task in cameraRelatedTasks"
                 :key="task.id"
                 class="task-card"
-                @click.native="handleTaskClick(task)"
+                @click="handleTaskClick(task)"
               >
                 <div class="task-header">
                   <div class="task-name">{{ task.name }}</div>

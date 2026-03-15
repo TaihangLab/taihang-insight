@@ -1,6 +1,6 @@
 <template>
   <div class="role-search-bar">
-    <el-form :inline="true" :model="formValue" @submit.native.prevent="handleSearch">
+    <el-form :inline="true" :model="formValue" @submit.prevent="handleSearch">
       <el-form-item v-permission="'tenant:list:view'" label="租户">
         <TenantSelector
           ref="tenantSelectorRef"

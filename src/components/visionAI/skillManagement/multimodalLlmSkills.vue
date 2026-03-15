@@ -930,22 +930,22 @@ export default {
 
     // 显示卡片复选框
     showCardCheckbox(skillId) {
-      this.$set(this.cardHoverStates, skillId, true);
+      this.cardHoverStates[skillId] = true;
     },
 
     // 隐藏卡片复选框
     hideCardCheckbox(skillId) {
-      this.$set(this.cardHoverStates, skillId, false);
+      this.cardHoverStates[skillId] = false;
     },
 
     // 显示复制按钮
     showCopyButton(skillId) {
-      this.$set(this.copyButtonVisible, skillId, true);
+      this.copyButtonVisible[skillId] = true;
     },
 
     // 隐藏复制按钮
     hideCopyButton(skillId) {
-      this.$set(this.copyButtonVisible, skillId, false);
+      this.copyButtonVisible[skillId] = false;
     },
 
     // 复制到剪贴板
@@ -1247,7 +1247,7 @@ export default {
         });
 
         // 设置loading状态
-        this.$set(this.skillStatusLoading, skill.id, true);
+        this.skillStatusLoading[skill.id] = true;
 
         console.log(`正在${action}技能:`, skill.name, "(skill_id:", skill.skillId, ")");
 
@@ -1296,7 +1296,7 @@ export default {
         }
       } finally {
         // 清除loading状态
-        this.$set(this.skillStatusLoading, skill.id, false);
+        this.skillStatusLoading[skill.id] = false;
       }
     },
 

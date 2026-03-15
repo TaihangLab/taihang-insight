@@ -34,7 +34,7 @@
               placeholder="设备编号、名称"
               style="width: 220px"
               clearable
-              @keyup.enter.native="handleSearch"
+              @keyup.enter="handleSearch"
               @clear="handleSearch"
             >
               <template v-slot:prefix>

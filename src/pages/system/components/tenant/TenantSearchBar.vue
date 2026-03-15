@@ -1,6 +1,6 @@
 <template>
   <div class="tenant-search-bar">
-    <el-form :inline="true" :model="formValue" @submit.native.prevent="handleSearch">
+    <el-form :inline="true" :model="formValue" @submit.prevent="handleSearch">
       <el-form-item label="租户名称">
         <el-input
           v-model="formValue.tenant_name"

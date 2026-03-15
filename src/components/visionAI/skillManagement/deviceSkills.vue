@@ -101,9 +101,9 @@
               :body-style="{ padding: '0px' }"
               shadow="hover"
               :class="{ selected: isSelected(skill.id) }"
-              @click.native="viewSkillDetails(skill)"
-              @mouseenter.native="showCardCheckbox(skill.id)"
-              @mouseleave.native="hideCardCheckbox(skill.id)"
+              @click="viewSkillDetails(skill)"
+              @mouseenter="showCardCheckbox(skill.id)"
+              @mouseleave="hideCardCheckbox(skill.id)"
             >
               <div class="selection-overlay" v-if="isSelected(skill.id)"></div>
 

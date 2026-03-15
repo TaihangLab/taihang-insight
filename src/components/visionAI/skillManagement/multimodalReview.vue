@@ -1040,11 +1040,11 @@ export default {
 
     // 选择相关方法
     showCardCheckbox(skillId) {
-      this.$set(this.cardHoverStates, skillId, true);
+      this.cardHoverStates[skillId] = true;
     },
 
     hideCardCheckbox(skillId) {
-      this.$set(this.cardHoverStates, skillId, false);
+      this.cardHoverStates[skillId] = false;
     },
 
     handleSkillSelect(skillId, checked) {

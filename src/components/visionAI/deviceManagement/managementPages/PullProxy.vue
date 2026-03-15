@@ -37,7 +37,7 @@
                 placeholder="代理名称、流地址"
                 style="width: 220px"
                 clearable
-                @keyup.enter.native="handleSearch"
+                @keyup.enter="handleSearch"
                 @clear="handleSearch"
               >
                 <template v-slot:prefix>

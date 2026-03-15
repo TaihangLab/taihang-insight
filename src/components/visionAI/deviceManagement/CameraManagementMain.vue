@@ -124,7 +124,7 @@
                 :key="key"
                 class="feature-card"
                 shadow="hover"
-                @click.native="handleMenuSelect(key)"
+                @click="handleMenuSelect(key)"
               >
                 <div class="feature-content">
                   <div class="feature-icon">
