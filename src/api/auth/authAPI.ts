@@ -9,26 +9,26 @@
  */
 
 import router from "@/router";
-import { authAxios, createAxiosInstance } from "@/api/commons";
+import { authAxios, createAxiosInstance, type AxiosInstance } from "@/api/commons";
 import type {
   AuthInfoResponse,
-  AuthPermissionsResponse,
   LoginRequest,
   LoginResponse,
   MenuItem,
 } from "@/types/auth";
+import type { AxiosResponse } from "axios";
 
 /**
  * 响应拦截器工厂
  * 处理 401 错误和登录页面跳转
  */
-const createAuthResponseInterceptor = (instance: any) => {
+const createAuthResponseInterceptor = (instance: AxiosInstance) => {
   instance.interceptors.response.use(
-    (response: any) => {
+    (response: AxiosResponse) => {
       return response.data;
     },
-    (error: any) => {
-      if (error.response?.status === 401) {
+    (error: unknown) => {
+      if ((error as { response?: { status?: number } })?.response?.status === 401) {
         // 清除认证缓存数据（保留 token，等待用户重新登录）
         try {
           const authData = localStorage.getItem("taihang-auth");

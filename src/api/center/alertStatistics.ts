@@ -23,7 +23,7 @@ class AlertStatisticsAPI {
    */
   async getSummary(range: TimeRange = "24h"): Promise<AlertSummary> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 AlertSummary
-    return authAxios.get<any, AlertSummary>("/api/v1/alerts/statistics", {
+    return authAxios.get<unknown, AlertSummary>("/api/v1/alerts/statistics", {
       params: { range },
     });
   }
@@ -38,7 +38,7 @@ class AlertStatisticsAPI {
    */
   async getTrend(range: TimeRange = "24h", granularity: Granularity = "hour"): Promise<AlertTrend> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 AlertTrend
-    return authAxios.get<any, AlertTrend>("/api/v1/alerts/statistics/trend", {
+    return authAxios.get<unknown, AlertTrend>("/api/v1/alerts/statistics/trend", {
       params: { range, granularity },
     });
   }
@@ -53,7 +53,7 @@ class AlertStatisticsAPI {
    */
   async getByType(range: TimeRange = "7d", topN: number = 10): Promise<AlertTypeStat[]> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 AlertTypeStat[]
-    return authAxios.get<any, AlertTypeStat[]>("/api/v1/alerts/statistics/by-type", {
+    return authAxios.get<unknown, AlertTypeStat[]>("/api/v1/alerts/statistics/by-type", {
       params: { range, top_n: topN },
     });
   }
@@ -67,7 +67,7 @@ class AlertStatisticsAPI {
    */
   async getByLevel(range: TimeRange = "7d"): Promise<AlertLevelStat[]> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 AlertLevelStat[]
-    return authAxios.get<any, AlertLevelStat[]>("/api/v1/alerts/statistics/level", {
+    return authAxios.get<unknown, AlertLevelStat[]>("/api/v1/alerts/statistics/level", {
       params: { range },
     });
   }
@@ -82,7 +82,7 @@ class AlertStatisticsAPI {
    */
   async getByLocation(range: TimeRange = "7d", topN: number = 10): Promise<LocationStat[]> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 LocationStat[]
-    return authAxios.get<any, LocationStat[]>("/api/v1/alerts/statistics/location", {
+    return authAxios.get<unknown, LocationStat[]>("/api/v1/alerts/statistics/location", {
       params: { range, top_n: topN },
     });
   }
@@ -93,7 +93,7 @@ class AlertStatisticsAPI {
    */
   async getLatestImages(limit = 10): Promise<AlertImage[]> {
     try {
-      const response = await authAxios.get<any, AlertImage[]>("/api/v1/alerts/latest-images", {
+      const response = await authAxios.get<unknown, AlertImage[]>("/api/v1/alerts/latest-images", {
         params: { limit },
       });
 
@@ -126,7 +126,7 @@ class AlertStatisticsAPI {
    */
   async getProcessingStatus(range: TimeRange = "7d"): Promise<AlertLevelStat[]> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 AlertLevelStat[]
-    return authAxios.get<any, AlertLevelStat[]>("/api/v1/alerts/statistics/processing-status", {
+    return authAxios.get<unknown, AlertLevelStat[]>("/api/v1/alerts/statistics/processing-status", {
       params: { range },
     });
   }

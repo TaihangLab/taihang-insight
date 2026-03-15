@@ -27,7 +27,7 @@ class SystemMonitorAPI {
    */
   getSystemResources(): Promise<SystemResourcesData> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 SystemResourcesData
-    return authAxios.get<any, SystemResourcesData>("/api/v1/server/system/resources");
+    return authAxios.get<unknown, SystemResourcesData>("/api/v1/server/system/resources");
   }
 
   /**
@@ -39,7 +39,7 @@ class SystemMonitorAPI {
    */
   getCurrentResources(): Promise<CurrentResources> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 CurrentResources
-    return authAxios.get<any, CurrentResources>("/api/v1/system/resources");
+    return authAxios.get<unknown, CurrentResources>("/api/v1/system/resources");
   }
 
   /**
@@ -56,7 +56,7 @@ class SystemMonitorAPI {
     timeRange: TimeRange = "1h",
   ): Promise<ResourceHistory> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 ResourceHistory
-    return authAxios.get<any, ResourceHistory>("/api/v1/system/resources/history", {
+    return authAxios.get<unknown, ResourceHistory>("/api/v1/system/resources/history", {
       params: { metric, time_range: timeRange },
     });
   }
@@ -70,7 +70,7 @@ class SystemMonitorAPI {
    */
   getStorageUsage(): Promise<StorageUsage> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 StorageUsage
-    return authAxios.get<any, StorageUsage>("/api/v1/storage/usage");
+    return authAxios.get<unknown, StorageUsage>("/api/v1/storage/usage");
   }
 
   /**
@@ -83,7 +83,7 @@ class SystemMonitorAPI {
    */
   getBandwidthUsage(timeRange: TimeRange = "1h"): Promise<BandwidthUsage> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 BandwidthUsage
-    return authAxios.get<any, BandwidthUsage>("/api/v1/bandwidth/usage", {
+    return authAxios.get<unknown, BandwidthUsage>("/api/v1/bandwidth/usage", {
       params: { time_range: timeRange },
     });
   }

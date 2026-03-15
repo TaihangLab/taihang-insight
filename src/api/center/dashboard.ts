@@ -19,7 +19,7 @@ class DashboardAPI {
    */
   getSummary(): Promise<DashboardSummary> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 DashboardSummary
-    return authAxios.get<any, DashboardSummary>("/api/v1/monitor/dashboard/summary");
+    return authAxios.get<unknown, DashboardSummary>("/api/v1/monitor/dashboard/summary");
   }
 }
 
