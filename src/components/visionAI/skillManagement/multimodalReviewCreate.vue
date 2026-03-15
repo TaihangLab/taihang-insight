@@ -363,12 +363,10 @@ export default {
         let skillData = null
         
         // 后端的获取技能详情接口直接返回技能对象
-        if (response.data && response.data.skill_id) {
-          skillData = response.data
-        } else if (response.data && response.data.data) {
-          skillData = response.data.data
-        } else if (response.data && response.data.id) {
-          skillData = response.data
+        if (response.skill_id) {
+          skillData = response
+        } else if (response.id) {
+          skillData = response
         }
         
         if (skillData) {
@@ -594,9 +592,9 @@ export default {
           console.log('创建技能响应:', response.data)
           
           // 根据后端实际响应格式进行解析
-          if (response.data && response.data.skill) {
+          if (response.skill) {
             // 后端返回格式：{ success: true, message: "...", skill: {...} }
-            const newSkill = response.data.skill
+            const newSkill = response.skill
             this.skillData = {
               id: newSkill.skill_id,
               name: newSkill.name,
@@ -611,25 +609,9 @@ export default {
             this.currentSkillId = newSkill.skill_id
             skillId = newSkill.skill_id
             success = true
-          } else if (response.data && response.data.data) {
-            const newSkill = response.data.data
-            this.skillData = {
-              id: newSkill.skill_id,
-              name: newSkill.name,
-              description: newSkill.description,
-              status: newSkill.status ? 'online' : 'offline',
-              categories: newSkill.tags || [],
-              skill_id: newSkill.skill_id,
-              internal_id: newSkill.id,
-              created_at: newSkill.created_at,
-              version: newSkill.version
-            }
-            this.currentSkillId = newSkill.skill_id
-            skillId = newSkill.skill_id
-            success = true
-          } else if (response.data && response.data.skill_id) {
+          } else if (response.skill_id) {
             // 兼容不同的响应格式
-            const newSkill = response.data
+            const newSkill = response
             this.skillData = {
               id: newSkill.skill_id,
               name: newSkill.name,
@@ -679,16 +661,11 @@ export default {
           console.log('准备发布技能:', skillId, '发布标记:', shouldPublish, '表单状态:', this.skillForm.status)
           try {
             const publishResponse = await centerAPI.reviewSkill.publishReviewSkill(skillId)
-            console.log('发布技能响应:', publishResponse.data)
-            
-            // 检查发布是否成功
-            if (publishResponse.data && publishResponse.data.success) {
-              this.skillData.status = 'online'
-              console.log('技能发布成功，状态已更新为online')
-            } else {
-              console.error('技能发布失败:', publishResponse.data)
-              throw new Error('技能发布失败')
-            }
+            console.log('发布技能响应:', publishResponse)
+
+            // 发布成功，更新状态
+            this.skillData.status = 'online'
+            console.log('技能发布成功，状态已更新为online')
           } catch (publishError) {
             console.error('发布技能时出错:', publishError)
             throw publishError
@@ -866,39 +843,32 @@ export default {
         
         // 调用预览测试API
         const response = await centerAPI.reviewSkill.previewTestReviewSkill(imageFile, userPrompt)
-        
-        if (response.data && response.data.success) {
-          const testData = response.data.data || response.data
-          
-          // 格式化显示结果
-          const reviewResult = testData.review_result || '无复判结果'
-          const analysisResult = testData.analysis_result || {}
-          
-          // 构建显示内容
-          let displayText = `复判结果: ${reviewResult}\n`
-          
-          // 格式化分析结果
-          if (typeof analysisResult === 'object' && analysisResult !== null) {
-            displayText += '详细分析:\n'
-            // 遍历所有键值对
-            Object.keys(analysisResult).forEach(key => {
-              const value = analysisResult[key]
-              if (typeof value === 'boolean') {
-                displayText += `• ${key}: ${value}\n`
-              } else {
-                displayText += `• ${key}: ${value}\n`
-              }
-            })
-          } else {
-            displayText += `详细分析: ${analysisResult}`
-          }
-          
-          this.analysisResult = displayText
-          this.$message.success('AI分析完成')
-          
+
+        // 格式化显示结果
+        const reviewResult = response.review_result || '无复判结果'
+        const analysisResult = response.analysis_result || {}
+
+        // 构建显示内容
+        let displayText = `复判结果: ${reviewResult}\n`
+
+        // 格式化分析结果
+        if (typeof analysisResult === 'object' && analysisResult !== null) {
+          displayText += '详细分析:\n'
+          // 遍历所有键值对
+          Object.keys(analysisResult).forEach(key => {
+            const value = analysisResult[key]
+            if (typeof value === 'boolean') {
+              displayText += `• ${key}: ${value}\n`
+            } else {
+              displayText += `• ${key}: ${value}\n`
+            }
+          })
         } else {
-          throw new Error(response.data && response.data.message ? response.data.message : '分析失败')
+          displayText += `详细分析: ${analysisResult}`
         }
+
+        this.analysisResult = displayText
+        this.$message.success('AI分析完成')
         
       } catch (error) {
         console.error('预览测试失败:', error)

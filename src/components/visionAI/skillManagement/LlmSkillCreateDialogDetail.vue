@@ -1052,16 +1052,14 @@
           const validOutputParams = this.outputParams.filter(param => param.name.trim())
           
           console.log('正在进行AI分析...')
-          const response = await centerAPI.skill.previewTestLlmSkill(
+          const resultData = await centerAPI.skill.previewTestLlmSkill(
             testImageFile,
             this.promptTemplate,
             null, // 系统提示词暂时为null
             validOutputParams.length > 0 ? validOutputParams : null
           )
-          
-          if (response.data && response.data.success) {
-            // 获取实际的数据（后端API将结果包装在data.data中）
-            const resultData = response.data.data || response.data
+
+          // 响应拦截器已处理成功/失败判断，直接使用数据即可
             
             // 格式化分析结果 - 更紧凑的格式
             let formattedResult = ''
@@ -1170,21 +1168,17 @@
             }
             
             console.log('正在更新多模态技能:', this.skillInfo.skillId, skillData)
-            
-            // 调用API更新技能
-            const response = await centerAPI.skill.updateLlmSkill(this.skillInfo.skillId, skillData)
-            
-            if (response.data && response.data.success) {
-              this.$message.success('技能更新成功！')
-              
-              // 清除临时数据
-              localStorage.removeItem('editSkillInfo')
-              
-              // 返回技能列表
-              this.$router.push('/skillManage/multimodalLlmSkills')
-            } else {
-              throw new Error('更新响应格式异常')
-            }
+
+            // 调用API更新技能（响应拦截器已处理成功/失败判断）
+            await centerAPI.skill.updateLlmSkill(this.skillInfo.skillId, skillData)
+
+            this.$message.success('技能更新成功！')
+
+            // 清除临时数据
+            localStorage.removeItem('editSkillInfo')
+
+            // 返回技能列表
+            this.$router.push('/skillManage/multimodalLlmSkills')
           } else {
             // 创建模式：创建技能
             const skillData = {
@@ -1203,15 +1197,14 @@
             }
             
             console.log('正在创建多模态技能:', skillData)
-            
-            // 调用API创建技能
-            const response = await centerAPI.skill.createLlmSkill(skillData)
-            
-            if (response.data && response.data.success) {
-              this.$message.success('技能创建成功！')
-              
-              // 清除临时数据
-              localStorage.removeItem('tempSkillInfo')
+
+            // 调用API创建技能（响应拦截器已处理成功/失败判断）
+            await centerAPI.skill.createLlmSkill(skillData)
+
+            this.$message.success('技能创建成功！')
+
+            // 清除临时数据
+            localStorage.removeItem('tempSkillInfo')
               
               // 返回技能列表
               this.$router.push('/skillManage/multimodalLlmSkills')
@@ -1272,26 +1265,21 @@
           }
           
           console.log('正在创建并发布多模态技能:', skillData)
-          
-          // 第一步：创建技能
+
+          // 第一步：创建技能（响应拦截器已处理成功/失败判断）
           this.$message.info('正在创建技能...')
-          const createResponse = await centerAPI.skill.createLlmSkill(skillData)
-          
-          if (!createResponse.data || !createResponse.data.success) {
-            throw new Error('创建技能失败')
-          }
-          
-          const createdSkillId = createResponse.data.data.skill_id
-          
-          // 第二步：发布技能
+          const createdSkill = await centerAPI.skill.createLlmSkill(skillData)
+
+          const createdSkillId = createdSkill.skill_id
+
+          // 第二步：发布技能（响应拦截器已处理成功/失败判断）
           this.$message.info('技能创建成功，正在发布...')
-          const publishResponse = await centerAPI.skill.publishLlmSkill(createdSkillId)
-          
-          if (!publishResponse.data || !publishResponse.data.success) {
+          try {
+            await centerAPI.skill.publishLlmSkill(createdSkillId)
+            this.$message.success('技能创建并发布成功！')
+          } catch {
             // 发布失败，但技能已创建成功
             this.$message.warning('技能创建成功，但发布失败，您可以在技能列表中手动发布')
-          } else {
-            this.$message.success('技能创建并发布成功！')
           }
           
           // 清除临时数据

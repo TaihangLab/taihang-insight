@@ -586,10 +586,6 @@ export default {
             // 技能直接在根级别: {skills: [], total: 0}
             skillsData = response.data.skills;
             total = response.data.total || skillsData.length;
-          } else if (Array.isArray(response.data.data)) {
-            // 数据在data字段中: {data: []}
-            skillsData = response.data.data;
-            total = response.total || skillsData.length;
           } else {
             // 单个对象格式
             skillsData = [response.data];
@@ -733,8 +729,6 @@ export default {
         } else if (response.data && typeof response.data === 'object') {
           if (response.data.tasks) {
             allTasks = response.data.tasks;
-          } else if (Array.isArray(response.data.data)) {
-            allTasks = response.data.data;
           }
         }
 
@@ -759,10 +753,10 @@ export default {
       try {
         const response = await centerAPI.skill.getLlmSkillDetail(skillId);
         console.log('技能详情API响应:', response.data);
-        
+
         // 响应拦截器已处理成功/失败判断，直接使用数据
         if (response.data && typeof response.data === 'object') {
-          this.skillDetail = response.data.data || response.data;
+          this.skillDetail = response.data;
         } else {
           this.skillDetail = response.data || response;
         }

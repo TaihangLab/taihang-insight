@@ -409,15 +409,12 @@ export default {
             if (this.form.iconFile) {
               console.log('正在上传技能图标...')
               const uploadResponse = await centerAPI.skill.uploadLlmSkillIcon(this.form.iconFile, this.form.skillId)
-              
-              console.log('图标上传响应:', uploadResponse.data)
-              
-              if (uploadResponse.data && uploadResponse.data.success && uploadResponse.data.data) {
-                skillIcon = uploadResponse.data.data.object_name
-                console.log('图标上传成功:', skillIcon)
-              } else {
-                throw new Error('图标上传失败')
-              }
+
+              console.log('图标上传响应:', uploadResponse)
+
+              // 响应拦截器已处理成功/失败判断，直接使用数据
+              skillIcon = uploadResponse.object_name
+              console.log('图标上传成功:', skillIcon)
             }
             
             if (this.isEditMode) {

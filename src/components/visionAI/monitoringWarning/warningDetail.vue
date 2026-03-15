@@ -702,10 +702,11 @@ export default {
           // status: 1 // 获取所有正常状态的档案
         });
 
-        console.log('📥 获取档案列表响应:', response.data);
+        console.log('📥 获取档案列表响应:', response);
 
-        if (response.data && response.data.data) {
-          this.archivesList = response.data.data.map(archive => ({
+        // 响应拦截器已处理，分页数据格式为 { data: [], total, page, limit }
+        if (response.data && Array.isArray(response.data)) {
+          this.archivesList = response.data.map(archive => ({
             id: archive.archive_id,
             name: archive.name,
             cameraId: archive.camera_id || 'unknown',
