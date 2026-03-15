@@ -2204,12 +2204,12 @@ export default {
 
     // 显示卡片选择框
     showCardCheckbox(warningId) {
-      this.$set(this.cardHoverStates, warningId, true);
+      this.cardHoverStates[warningId] = true;
     },
 
     // 隐藏卡片选择框
     hideCardCheckbox(warningId) {
-      this.$set(this.cardHoverStates, warningId, false);
+      this.cardHoverStates[warningId] = false;
     },
 
     // 分页处理

@@ -1466,12 +1466,12 @@ export default {
 
     // 显示卡片复选框
     showCardCheckbox(skillId) {
-      this.$set(this.cardHoverStates, skillId, true)
+      this.cardHoverStates[skillId] = true
     },
 
     // 隐藏卡片复选框
     hideCardCheckbox(skillId) {
-      this.$set(this.cardHoverStates, skillId, false)
+      this.cardHoverStates[skillId] = false
     },
 
     // 技能选择

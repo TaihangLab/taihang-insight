@@ -562,11 +562,11 @@ export default {
 
     // 选择相关方法
     showCardCheckbox(knowledgeId) {
-      this.$set(this.cardHoverStates, knowledgeId, true);
+      this.cardHoverStates[knowledgeId] = true;
     },
 
     hideCardCheckbox(knowledgeId) {
-      this.$set(this.cardHoverStates, knowledgeId, false);
+      this.cardHoverStates[knowledgeId] = false;
     },
 
     handleKnowledgeSelect(knowledgeId, checked) {

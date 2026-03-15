@@ -31,7 +31,7 @@ export default {
         );
         // 响应拦截器已处理成功/失败判断，直接使用数据
         const tasks = response.data || response || [];
-        this.$set(this.availableAITasks, cameraId, tasks);
+        this.availableAITasks[cameraId] = tasks;
         console.log(`✅ 摄像头${cameraId}的AI任务列表:`, tasks);
       } catch (error) {
         console.error(`❌ 获取摄像头${cameraId}的AI任务列表失败:`, error);
@@ -51,7 +51,7 @@ export default {
       }
 
       // 清空检测结果
-      this.$set(this.detectionResults, index, null);
+      this.detectionResults[index] = null;
 
       // 如果选择了任务，建立WebSocket连接
       if (taskId) {
@@ -151,9 +151,9 @@ export default {
       }
 
       // 清空数据
-      this.$set(this.selectedAITasks, index, null);
-      this.$set(this.detectionResults, index, null);
-      this.$set(this.videoResolutions, index, null);
+      this.selectedAITasks[index] = null;
+      this.detectionResults[index] = null;
+      this.videoResolutions[index] = null;
     },
 
     /**

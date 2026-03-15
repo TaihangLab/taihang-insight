@@ -981,12 +981,12 @@ export default {
 
     // 显示卡片选择框
     showCardCheckbox(recordId) {
-      this.$set(this.cardHoverStates, recordId, true);
+      this.cardHoverStates[recordId] = true;
     },
 
     // 隐藏卡片选择框
     hideCardCheckbox(recordId) {
-      this.$set(this.cardHoverStates, recordId, false);
+      this.cardHoverStates[recordId] = false;
     },
   },
 };

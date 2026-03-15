@@ -1050,19 +1050,19 @@ export default {
     },
     // 清除播放数据
     clear(idx) {
-      this.$set(this.videoUrl, idx - 1, '');
-      this.$set(this.videoTip, idx - 1, '');
+      this.videoUrl[idx - 1] = '';
+      this.videoTip[idx - 1] = '';
     },
     // 设置播放URL
     setPlayUrl(url, idx) {
-      this.$set(this.videoUrl, idx, url);
+      this.videoUrl[idx] = url;
     },
     // 设备树点击事件
     treeNodeClickEvent(data) {
       if (data.leaf) {
         // 🆕 保存摄像头名称
         const idx = this.playerIdx
-        this.$set(this.cameraNames, idx, data.name || `摄像头 ${idx+1}`)
+        this.cameraNames[idx] = data.name || `摄像头 ${idx+1}`
 
         this.sendDevicePush(data.id);
       }
@@ -1075,10 +1075,10 @@ export default {
     async sendDevicePush(channelId) {
       let idxTmp = this.playerIdx;
       this.setPlayUrl("", idxTmp);
-      this.$set(this.videoTip, idxTmp, "正在拉流...");
+      this.videoTip[idxTmp] = "正在拉流...";
 
       // 🆕 保存摄像头ID映射
-      this.$set(this.cameraIdMapping, idxTmp, channelId);
+      this.cameraIdMapping[idxTmp] = channelId;
 
       this.loading = true;
 
@@ -1115,17 +1115,17 @@ export default {
             }, 200);
           } else {
             console.warn('⚠️ 未找到可用的流地址');
-            this.$set(this.videoTip, idxTmp, "播放失败: 未找到可用的流地址");
+            this.videoTip[idxTmp] = "播放失败: 未找到可用的流地址";
           }
         } else {
           const errorMsg = (response.data && response.data.msg) || '播放失败';
           console.error('❌ 播放失败:', errorMsg);
-          this.$set(this.videoTip, idxTmp, "播放失败: " + errorMsg);
+          this.videoTip[idxTmp] = "播放失败: " + errorMsg;
         }
       } catch (error) {
         console.error('❌ 播放通道异常:', error);
         const errorMsg = error.message || '网络错误';
-        this.$set(this.videoTip, idxTmp, "播放失败: " + errorMsg);
+        this.videoTip[idxTmp] = "播放失败: " + errorMsg;
       } finally {
         this.loading = false;
       }
@@ -2839,7 +2839,7 @@ export default {
             return;
           }
 
-          this.$set(this.warningList, index, updatedWarning);
+          this.warningList[index] = updatedWarning;
         }
       } catch (error) {
         // 静默处理错误
@@ -3043,7 +3043,7 @@ export default {
       try {
         const response = await centerAPI.realtimeDetection.getTasksByCamera(cameraId)
         // 响应拦截器已处理成功/失败判断，直接使用数据
-        this.$set(this.availableAITasks, cameraId, response || [])
+        this.availableAITasks[cameraId] = response || []
       } catch (error) {
         console.error(`❌ 获取摄像头AI任务列表失败:`, error)
       }
@@ -3062,7 +3062,7 @@ export default {
       }
 
       // 清空检测结果
-      this.$set(this.detectionResults, index, null)
+      this.detectionResults[index] = null
 
       // 如果选择了任务，建立WebSocket连接
       if (taskId) {
@@ -3085,11 +3085,11 @@ export default {
         const ws = new WebSocket(wsUrl)
 
         // 先设置为未连接状态
-        this.$set(this.wsConnections, index, null)
+        this.wsConnections[index] = null
 
         ws.onopen = () => {
           // 连接成功后才设置
-          this.$set(this.wsConnections, index, ws)
+          this.wsConnections[index] = ws
         }
 
         ws.onmessage = (event) => {
@@ -3246,9 +3246,9 @@ export default {
       }
 
       // 清空数据
-      this.$set(this.selectedAITasks, index, null)
-      this.$set(this.detectionResults, index, null)
-      this.$set(this.videoResolutions, index, null)
+      this.selectedAITasks[index] = null
+      this.detectionResults[index] = null
+      this.videoResolutions[index] = null
     },
 
     /**

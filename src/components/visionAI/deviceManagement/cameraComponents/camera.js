@@ -1260,7 +1260,7 @@ export default {
           currentConfig.customParams = { ...this.skillDetailData.params };
 
           // 保存回设备配置
-          this.$set(this.deviceList[deviceIndex].config, skillKey, currentConfig);
+          this.deviceList[deviceIndex].config[skillKey] = currentConfig;
 
           // 更新原始列表
           this.originalDeviceList = [...this.deviceList];
@@ -2109,7 +2109,7 @@ export default {
             // 只有当deviceIndex有效时才更新设备的技能配置
             if (deviceIndex !== -1 && deviceIndex !== undefined && this.deviceList[deviceIndex]) {
               // 更新设备的技能配置 - 仅在内存中保存
-              this.$set(this.deviceList[deviceIndex].config, skillKey, config);
+              this.deviceList[deviceIndex].config[skillKey] = config;
             } else {
               console.log("设备索引无效，跳过在设备列表中保存配置");
             }
@@ -2605,7 +2605,7 @@ export default {
             // 只有当deviceIndex有效时才更新设备的技能配置
             if (deviceIndex !== -1 && deviceIndex !== undefined && this.deviceList[deviceIndex]) {
               // 更新设备的技能配置 - 仅在内存中保存
-              this.$set(this.deviceList[deviceIndex].config, skillKey, config);
+              this.deviceList[deviceIndex].config[skillKey] = config;
             } else {
               console.log("设备索引无效，跳过在设备列表中保存配置");
             }
