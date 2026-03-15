@@ -1,6 +1,6 @@
-import { AxiosResponse } from 'axios'
-import { type UnifiedResponse, authAxios } from '@/api/commons'
-import type { TaskReviewConfig } from '@/types/center.d'
+import { AxiosResponse } from "axios";
+import { type UnifiedResponse, authAxios } from "@/api/commons";
+import type { TaskReviewConfig } from "@/types/center.d";
 /**
  * 任务复判管理 API
  * 提供任务复判配置的管理功能
@@ -15,12 +15,15 @@ class TaskReviewAPI {
    * @param taskType 任务类型 ('ai_task' 或 'llm_task')
    * @param taskId 任务ID
    */
-  async getTaskReviewConfig(taskType: string, taskId: string | number): Promise<AxiosResponse<UnifiedResponse<TaskReviewConfig>>> {
+  async getTaskReviewConfig(
+    taskType: string,
+    taskId: string | number,
+  ): Promise<AxiosResponse<UnifiedResponse<TaskReviewConfig>>> {
     if (!taskType || !taskId) {
-      return Promise.reject(new Error('缺少任务类型或任务ID'))
+      return Promise.reject(new Error("缺少任务类型或任务ID"));
     }
 
-    return authAxios.get(`/api/v1/tasks/${taskType}/${taskId}/review-config`)
+    return authAxios.get(`/api/v1/tasks/${taskType}/${taskId}/review-config`);
   }
 
   /**
@@ -29,12 +32,16 @@ class TaskReviewAPI {
    * @param taskId 任务ID
    * @param config 复判配置
    */
-  async updateTaskReviewConfig(taskType: string, taskId: string | number, config: TaskReviewConfig): Promise<AxiosResponse> {
+  async updateTaskReviewConfig(
+    taskType: string,
+    taskId: string | number,
+    config: TaskReviewConfig,
+  ): Promise<AxiosResponse> {
     if (!taskType || !taskId) {
-      return Promise.reject(new Error('缺少任务类型或任务ID'))
+      return Promise.reject(new Error("缺少任务类型或任务ID"));
     }
 
-    return authAxios.put(`/api/v1/tasks/${taskType}/${taskId}/review-config`, config)
+    return authAxios.put(`/api/v1/tasks/${taskType}/${taskId}/review-config`, config);
   }
 
   /**
@@ -44,24 +51,24 @@ class TaskReviewAPI {
    */
   async deleteTaskReviewConfig(taskType: string, taskId: string | number): Promise<AxiosResponse> {
     if (!taskType || !taskId) {
-      return Promise.reject(new Error('缺少任务类型或任务ID'))
+      return Promise.reject(new Error("缺少任务类型或任务ID"));
     }
 
-    return authAxios.delete(`/api/v1/tasks/${taskType}/${taskId}/review-config`)
+    return authAxios.delete(`/api/v1/tasks/${taskType}/${taskId}/review-config`);
   }
 
   /**
    * 获取可用的复判技能列表
    */
   async getAvailableReviewSkills(): Promise<AxiosResponse> {
-    return authAxios.get('/api/v1/review-skills/available')
+    return authAxios.get("/api/v1/review-skills/available");
   }
 
   /**
    * 获取启用复判的任务列表
    */
   async getReviewEnabledTasks(): Promise<AxiosResponse> {
-    return authAxios.get('/api/v1/tasks/review-enabled')
+    return authAxios.get("/api/v1/tasks/review-enabled");
   }
 
   /**
@@ -70,31 +77,31 @@ class TaskReviewAPI {
    */
   async triggerAlertReview(alertId: number): Promise<AxiosResponse> {
     if (!alertId) {
-      return Promise.reject(new Error('缺少预警ID'))
+      return Promise.reject(new Error("缺少预警ID"));
     }
 
-    return authAxios.post('/api/v1/alerts/review', { alert_id: alertId })
+    return authAxios.post("/api/v1/alerts/review", { alert_id: alertId });
   }
 
   /**
    * 获取复判服务状态
    */
   async getReviewServiceStatus(): Promise<AxiosResponse> {
-    return authAxios.get('/api/v1/review-service/status')
+    return authAxios.get("/api/v1/review-service/status");
   }
 
   /**
    * 启动复判服务
    */
   async startReviewService(): Promise<AxiosResponse> {
-    return authAxios.post('/api/v1/review-service/start')
+    return authAxios.post("/api/v1/review-service/start");
   }
 
   /**
    * 停止复判服务
    */
   async stopReviewService(): Promise<AxiosResponse> {
-    return authAxios.post('/api/v1/review-service/stop')
+    return authAxios.post("/api/v1/review-service/stop");
   }
 
   /**
@@ -102,9 +109,9 @@ class TaskReviewAPI {
    * @param params 查询参数
    */
   async getAITasksForReview(params: Record<string, any> = {}): Promise<AxiosResponse> {
-    return authAxios.get('/api/v1/ai-tasks', { params })
+    return authAxios.get("/api/v1/ai-tasks", { params });
   }
 }
 
 // 导出单例实例
-export default new TaskReviewAPI()
+export default new TaskReviewAPI();

@@ -8,10 +8,7 @@
     <el-card class="search-card" shadow="never">
       <el-form :model="queryForm" inline>
         <el-form-item v-permission="'tenant:list:view'" label="租户">
-          <TenantSelector
-            v-model="queryForm.tenant_id"
-            @change="handleSearch"
-          />
+          <TenantSelector v-model="queryForm.tenant_id" @change="handleSearch" />
         </el-form-item>
 
         <el-form-item label="角色名称">
@@ -79,10 +76,7 @@
       </template>
 
       <!-- 角色表格 -->
-      <el-table
-        v-loading="loading"
-        :data="roles"
-      >
+      <el-table v-loading="loading" :data="roles">
         <el-table-column prop="roleName" label="角色名称" width="150" />
 
         <el-table-column prop="roleCode" label="角色编码" width="150" />
@@ -98,7 +92,7 @@
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === Status.ENABLED ? 'success' : 'danger'">
-              {{ row.status === Status.ENABLED ? '正常' : '停用' }}
+              {{ row.status === Status.ENABLED ? "正常" : "停用" }}
             </el-tag>
           </template>
         </el-table-column>
@@ -107,15 +101,11 @@
 
         <el-table-column label="操作" width="250" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="handleEdit(row)">
-              编辑
-            </el-button>
+            <el-button link type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
             <el-button link type="primary" size="small" @click="handleAssignPermissions(row)">
               分配权限
             </el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -156,15 +146,15 @@
  * 角色管理页面
  * 使用 Composition API + TypeScript
  */
-import { ref, reactive, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import type { Role } from '@/types/rbac';
-import type { RoleEntity } from '@/pages/system/composable/role/useRoleData';
-import { Status, DataScope } from '@/types/rbac';
-import { useRoleData } from '@/pages/system/composable/role/useRoleData';
-import TenantSelector from '@/pages/system/components/commons/TenantSelector.vue';
-import RoleEditDialog from '@/pages/system/components/role/RoleEditDialog.vue';
-import RolePermissionDialog from '@/pages/system/components/role/RolePermissionDialog.vue';
+import { ref, reactive, onMounted } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import type { Role } from "@/types/rbac";
+import type { RoleEntity } from "@/pages/system/composable/role/useRoleData";
+import { Status, DataScope } from "@/types/rbac";
+import { useRoleData } from "@/pages/system/composable/role/useRoleData";
+import TenantSelector from "@/pages/system/components/commons/TenantSelector.vue";
+import RoleEditDialog from "@/pages/system/components/role/RoleEditDialog.vue";
+import RolePermissionDialog from "@/pages/system/components/role/RolePermissionDialog.vue";
 
 // ============================================
 // Composables
@@ -178,7 +168,7 @@ const {
   createRole,
   updateRole,
   deleteRole,
-  assignPermissionsToRole
+  assignPermissionsToRole,
 } = useRoleData();
 
 // ============================================
@@ -194,10 +184,10 @@ const queryForm = reactive<{
   status?: Status;
 }>({
   tenant_id: null,
-  role_name: '',
-  role_code: '',
+  role_name: "",
+  role_code: "",
   data_scope: undefined,
-  status: undefined
+  status: undefined,
 });
 
 // 对话框状态
@@ -214,12 +204,12 @@ const currentRole = ref<RoleEntity | null>(null);
  */
 const getDataScopeTagType = (scope: DataScope) => {
   const typeMap: Record<DataScope, string> = {
-    [DataScope.ALL]: 'danger',
-    [DataScope.CUSTOM]: 'warning',
-    [DataScope.DEPARTMENT]: 'info',
-    [DataScope.DEPARTMENT_AND_BELOW]: 'success'
+    [DataScope.ALL]: "danger",
+    [DataScope.CUSTOM]: "warning",
+    [DataScope.DEPARTMENT]: "info",
+    [DataScope.DEPARTMENT_AND_BELOW]: "success",
   };
-  return typeMap[scope] || '';
+  return typeMap[scope] || "";
 };
 
 /**
@@ -227,12 +217,12 @@ const getDataScopeTagType = (scope: DataScope) => {
  */
 const getDataScopeLabel = (scope: DataScope) => {
   const labelMap: Record<DataScope, string> = {
-    [DataScope.ALL]: '全部数据',
-    [DataScope.CUSTOM]: '自定义',
-    [DataScope.DEPARTMENT]: '本部门',
-    [DataScope.DEPARTMENT_AND_BELOW]: '本部门及以下'
+    [DataScope.ALL]: "全部数据",
+    [DataScope.CUSTOM]: "自定义",
+    [DataScope.DEPARTMENT]: "本部门",
+    [DataScope.DEPARTMENT_AND_BELOW]: "本部门及以下",
   };
-  return labelMap[scope] || '';
+  return labelMap[scope] || "";
 };
 
 // ============================================
@@ -264,8 +254,8 @@ const handleSearch = () => {
  */
 const handleReset = () => {
   queryForm.tenant_id = null;
-  queryForm.role_name = '';
-  queryForm.role_code = '';
+  queryForm.role_name = "";
+  queryForm.role_code = "";
   queryForm.data_scope = undefined;
   queryForm.status = undefined;
   pagination.value.currentPage = 1;
@@ -310,18 +300,14 @@ const handleEdit = (row: RoleEntity) => {
  */
 const handleDelete = async (row: RoleEntity) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除角色 "${row.roleName}" 吗？`,
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    );
+    await ElMessageBox.confirm(`确定要删除角色 "${row.roleName}" 吗？`, "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
 
     await deleteRole(row.id);
-    ElMessage.success('删除成功');
+    ElMessage.success("删除成功");
     loadRoles();
   } catch {
     // 用户取消操作
@@ -344,11 +330,11 @@ const handleRoleSubmit = async (formData: Record<string, unknown>) => {
     if (currentRole.value) {
       // 编辑角色
       await updateRole(currentRole.value.id, formData);
-      ElMessage.success('角色修改成功');
+      ElMessage.success("角色修改成功");
     } else {
       // 新增角色
       await createRole(formData);
-      ElMessage.success('角色添加成功');
+      ElMessage.success("角色添加成功");
     }
     editDialogVisible.value = false;
     loadRoles();
@@ -364,7 +350,7 @@ const handleRoleSubmit = async (formData: Record<string, unknown>) => {
 const handlePermissionSubmit = async (roleId: number, permissionIds: number[]) => {
   try {
     await assignPermissionsToRole(roleId, permissionIds);
-    ElMessage.success('权限分配成功');
+    ElMessage.success("权限分配成功");
     permissionDialogVisible.value = false;
   } catch (error: unknown) {
     const err = error as Error;

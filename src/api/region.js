@@ -1,7 +1,7 @@
 /**
  * 行政区域相关API
  */
-import request from '@/utils/request'
+import request from "@/utils/request";
 
 /**
  * 获取行政区域列表
@@ -9,10 +9,10 @@ import request from '@/utils/request'
  */
 export function getRegionList(params) {
   return request({
-    url: '/api/v1/region/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/region/list",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -21,10 +21,10 @@ export function getRegionList(params) {
  */
 export function getRegionTree(parentId) {
   return request({
-    url: '/api/v1/region/tree',
-    method: 'get',
-    params: { parentId }
-  })
+    url: "/api/v1/region/tree",
+    method: "get",
+    params: { parentId },
+  });
 }
 
 /**
@@ -33,10 +33,10 @@ export function getRegionTree(parentId) {
  */
 export function addRegion(data) {
   return request({
-    url: '/api/v1/region/add',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/region/add",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -45,10 +45,10 @@ export function addRegion(data) {
  */
 export function updateRegion(data) {
   return request({
-    url: '/api/v1/region/update',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/region/update",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -57,10 +57,10 @@ export function updateRegion(data) {
  */
 export function deleteRegion(id) {
   return request({
-    url: '/api/v1/region/delete',
-    method: 'delete',
-    params: { id }
-  })
+    url: "/api/v1/region/delete",
+    method: "delete",
+    params: { id },
+  });
 }
 
 /**
@@ -72,10 +72,10 @@ export function deleteRegion(id) {
  */
 export function getRegionTreeList(params) {
   return request({
-    url: '/api/v1/region/tree/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/region/tree/list",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -86,10 +86,10 @@ export function getRegionTreeList(params) {
  */
 export function addDeviceToRegion(data) {
   return request({
-    url: '/api/v1/common/channel/region/device/add',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/common/channel/region/device/add",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -99,10 +99,10 @@ export function addDeviceToRegion(data) {
  */
 export function removeDeviceFromRegion(data) {
   return request({
-    url: '/api/v1/common/channel/region/device/delete',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/common/channel/region/device/delete",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -112,10 +112,10 @@ export function removeDeviceFromRegion(data) {
  */
 export function getRegionChildList(params) {
   return request({
-    url: '/api/v1/region/base/child/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/region/base/child/list",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -124,9 +124,8 @@ export function getRegionChildList(params) {
  */
 export function getRegionPath(deviceId) {
   return request({
-    url: '/api/v1/region/path',
-    method: 'get',
-    params: { deviceId }
-  })
+    url: "/api/v1/region/path",
+    method: "get",
+    params: { deviceId },
+  });
 }
-

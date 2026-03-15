@@ -1,61 +1,61 @@
 <script>
 // 导入API服务
-import centerAPI from '@/api/center'
+import centerAPI from "@/api/center";
 
 // 解构获取archive和alert（用于拉取预警详情）
-const { archive, alert } = centerAPI
+const { archive, alert } = centerAPI;
 
 export default {
   name: "WarningArchives",
   components: {
-    WarningDetail: () => import('./warningDetail.vue')
+    WarningDetail: () => import("./warningDetail.vue"),
   },
   data() {
     return {
       // 接口定义
       WarningArchive: {
         id: 0,
-        name: '',
-        image: '',
-        deviceName: '',
-        warningTime: '',
-        warningLevel: ''
+        name: "",
+        image: "",
+        deviceName: "",
+        warningTime: "",
+        warningLevel: "",
       },
       ArchiveInfo: {
-        name: '',
-        location: '',
-        timeRange: '',
-        createTime: '',
-        description: '',
-        image: ''
+        name: "",
+        location: "",
+        timeRange: "",
+        createTime: "",
+        description: "",
+        image: "",
       },
       // 预警等级枚举
       WARNING_LEVELS: {
-        Red: { label: '一级预警', value: 'red', color: '#ff4d4f' },
-        Orange: { label: '二级预警', value: 'orange', color: '#faad14' },
-        Yellow: { label: '三级预警', value: 'yellow', color: '#faad14' },
-        Blue: { label: '四级预警', value: 'blue', color: '#52c41a' }
+        Red: { label: "一级预警", value: "red", color: "#ff4d4f" },
+        Orange: { label: "二级预警", value: "orange", color: "#faad14" },
+        Yellow: { label: "三级预警", value: "yellow", color: "#faad14" },
+        Blue: { label: "四级预警", value: "blue", color: "#52c41a" },
       },
       // 分页配置（用于预警记录）
       pagination: {
         currentPage: 1,
         pageSize: 20,
-        total: 0
+        total: 0,
       },
       // 档案列表分页配置
       archivesPagination: {
         currentPage: 1,
         pageSize: 20,
-        total: 0
+        total: 0,
       },
       // 档案基本信息
       archiveInfo: {
-        name: '',
-        location: '',
-        timeRange: '',
-        createTime: '',
-        description: '',
-        image: ''
+        name: "",
+        location: "",
+        timeRange: "",
+        createTime: "",
+        description: "",
+        image: "",
       },
       // 多个档案列表
       archivesList: [],
@@ -72,18 +72,18 @@ export default {
       // 图片预览
       imagePreviewVisible: false,
       currentPreviewImage: null,
-       // 文件上传相关
-       currentRecordId: null, // 当前操作的记录ID
+      // 文件上传相关
+      currentRecordId: null, // 当前操作的记录ID
       // 编辑相关
       isEditing: false,
       editingArchive: null,
       // 添加预警对话框
       showAddDialog: false,
       newArchive: {
-        name: '',
-        deviceName: '',
-        warningLevel: '',
-        description: ''
+        name: "",
+        deviceName: "",
+        warningLevel: "",
+        description: "",
       },
       // 已发生预警选择对话框
       selectAlertDialogVisible: false,
@@ -93,103 +93,103 @@ export default {
       availableAlertsPagination: {
         currentPage: 1,
         pageSize: 20,
-        total: 0
+        total: 0,
       },
       // 已发生预警筛选条件
       alertFilters: {
-        alert_level: '',
-        alert_type: '',
-        camera_name: '',
+        alert_level: "",
+        alert_type: "",
+        camera_name: "",
         status: 3, // 默认只显示已处理状态的预警
-        start_time: '',
-        end_time: '',
-        skill_name: '',
-        location: '',
-        alert_id: ''
+        start_time: "",
+        end_time: "",
+        skill_name: "",
+        location: "",
+        alert_id: "",
       },
       // 编辑档案表单
       editForm: {
-        name: '',
-        location: '',
+        name: "",
+        location: "",
         timeRange: [],
-        createTime: '',
-        description: '',
-        image: ''
+        createTime: "",
+        description: "",
+        image: "",
       },
       // 添加预警表单
       addForm: {
-        name: '',
-        deviceName: '',
-        warningLevel: '',
-        warningType: '',
-        location: '',
-        description: '',
-        warningTime: '',
-        violationImage: '',
-        violationVideo: ''
+        name: "",
+        deviceName: "",
+        warningLevel: "",
+        warningType: "",
+        location: "",
+        description: "",
+        warningTime: "",
+        violationImage: "",
+        violationVideo: "",
       },
       // 对话框控制
       editDialogVisible: false,
       addDialogVisible: false,
       // 删除相关
       deleteConfirmVisible: false,
-      deleteConfirmMessage: '',
-      deleteType: '', // 'single' 或 'batch' 或 'archive'
+      deleteConfirmMessage: "",
+      deleteType: "", // 'single' 或 'batch' 或 'archive'
       deleteId: null,
       // 删除档案相关
       deleteArchiveConfirmVisible: false,
       deleteArchiveId: null,
-      deleteArchiveName: '',
+      deleteArchiveName: "",
       // 添加档案对话框
       addArchiveDialogVisible: false,
       newArchiveForm: {
-        name: '',
-        location: '',
+        name: "",
+        location: "",
         timeRange: [],
-        description: '',
-        image: ''
+        description: "",
+        image: "",
       },
       // 预警详情相关
       warningDetailVisible: false,
-      currentWarning: null
-    }
+      currentWarning: null,
+    };
   },
   computed: {
     // 动态上传地址配置
     uploadAction() {
       // 根据当前上传的类型和ID返回对应的上传地址
-      const baseUrl = 'http://127.0.0.1:8000'
-      
+      const baseUrl = "http://127.0.0.1:8000";
+
       if (this.addDialogVisible && this.currentRecordId) {
         // 添加预警记录时的图片上传
-        return `${baseUrl}/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/image`
+        return `${baseUrl}/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/image`;
       } else if (this.addArchiveDialogVisible && this.currentArchiveId) {
         // 添加档案时的图片上传
-        return `${baseUrl}/api/v1/alert-archives/${this.currentArchiveId}/upload/image`
+        return `${baseUrl}/api/v1/alert-archives/${this.currentArchiveId}/upload/image`;
         // 临时上传地址（新建时还没有ID）
-        return `${baseUrl}/api/v1/alert-archives/upload/temp`
+        return `${baseUrl}/api/v1/alert-archives/upload/temp`;
       }
     },
-    
+
     // 视频上传地址
     videoUploadAction() {
-      const baseUrl = 'http://127.0.0.1:8000'
-      
+      const baseUrl = "http://127.0.0.1:8000";
+
       if (this.currentRecordId) {
-        return `${baseUrl}/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/video`
-        return `${baseUrl}/api/v1/alert-archives/upload/temp-video`
+        return `${baseUrl}/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/video`;
+        return `${baseUrl}/api/v1/alert-archives/upload/temp-video`;
       }
     },
-    
+
     // 上传请求头
     uploadHeaders() {
       return {
-        'Authorization': 'Bearer ' + (localStorage.getItem('Admin-Token') || ''),
-        'Accept': 'application/json'
-      }
-    }
+        Authorization: "Bearer " + (localStorage.getItem("Admin-Token") || ""),
+        Accept: "application/json",
+      };
+    },
   },
-  
+
   mounted() {
     this.initData();
   },
@@ -197,7 +197,7 @@ export default {
     // 获取预览图片URL
     getPreviewImage() {
       // 这里返回一个实际的图片URL，可以是本地资源或远程URL
-      return 'https://via.placeholder.com/300x200/ecf5ff/409eff?text=预览图片';
+      return "https://via.placeholder.com/300x200/ecf5ff/409eff?text=预览图片";
     },
     // 显示图片预览
     showImagePreview(row) {
@@ -205,31 +205,30 @@ export default {
       if (imageUrl) {
         this.currentPreviewImage = imageUrl;
         this.imagePreviewVisible = true;
-        this.$message.warning('该预警暂无图片');
+        this.$message.warning("该预警暂无图片");
       }
     },
-     // 初始化数据 - 直接使用真实API
-     async initData() {
-       try {
-         // 加载档案列表
-         await this.loadArchivesList();
-         
-         // 如果有档案，加载第一个档案的详情
-         if (this.archivesList.length > 0) {
-           const firstArchive = this.archivesList[0];
-           this.currentArchiveId = firstArchive.archive_id || firstArchive.id;
-           
-           await Promise.all([
-             this.loadArchiveDetail(this.currentArchiveId),
-             this.loadArchiveAlerts(this.currentArchiveId)
-           ]);
-         }
-       } catch (error) {
-         console.error('初始化数据失败:', error);
-         this.$message.error('加载数据失败: ' + error.message);
-       }
-     },
+    // 初始化数据 - 直接使用真实API
+    async initData() {
+      try {
+        // 加载档案列表
+        await this.loadArchivesList();
 
+        // 如果有档案，加载第一个档案的详情
+        if (this.archivesList.length > 0) {
+          const firstArchive = this.archivesList[0];
+          this.currentArchiveId = firstArchive.archive_id || firstArchive.id;
+
+          await Promise.all([
+            this.loadArchiveDetail(this.currentArchiveId),
+            this.loadArchiveAlerts(this.currentArchiveId),
+          ]);
+        }
+      } catch (error) {
+        console.error("初始化数据失败:", error);
+        this.$message.error("加载数据失败: " + error.message);
+      }
+    },
 
     // 加载档案列表
     async loadArchivesList(params = {}) {
@@ -237,13 +236,13 @@ export default {
         const queryParams = {
           page: this.archivesPagination.currentPage,
           limit: this.archivesPagination.pageSize,
-          ...params
+          ...params,
         };
 
-        console.log('获取档案列表参数:', queryParams);
+        console.log("获取档案列表参数:", queryParams);
 
         const response = await centerAPI.archive.getArchiveList(queryParams);
-        
+
         // 响应拦截器已处理成功/失败判断，直接使用数据
         // 分页格式: { data: [], total, page, page_size }
         let archiveData;
@@ -254,38 +253,38 @@ export default {
           paginationData = {
             total: response.total || 0,
             page: response.page || 1,
-            limit: response.page_size || response.limit || 20
+            limit: response.page_size || response.limit || 20,
           };
-        } else if (response.data && typeof response.data === 'object') {
+        } else if (response.data && typeof response.data === "object") {
           // 单个对象格式，转为数组
           archiveData = [response.data];
         } else {
           archiveData = [];
         }
-        
+
         // 更新档案列表数据，转换格式以适配前端显示
-        this.archivesList = archiveData.map(archive => ({
+        this.archivesList = archiveData.map((archive) => ({
           id: archive.archive_id,
           archive_id: archive.archive_id,
           name: archive.name,
           location: archive.location,
           timeRange: `${archive.start_time}-${archive.end_time}`,
           createTime: archive.created_at,
-          description: archive.description || '-',
-          image: archive.image_url || ''
+          description: archive.description || "-",
+          image: archive.image_url || "",
         }));
-        
+
         // 更新分页信息
         if (paginationData) {
           this.archivesPagination.total = paginationData.total || 0;
           this.archivesPagination.currentPage = paginationData.page || 1;
           this.archivesPagination.pageSize = paginationData.limit || 20;
         }
-        
-        console.log('档案列表加载成功:', this.archivesList);
-        console.log('分页信息:', this.archivesPagination);
+
+        console.log("档案列表加载成功:", this.archivesList);
+        console.log("分页信息:", this.archivesPagination);
       } catch (error) {
-        console.error('加载档案列表失败:', error);
+        console.error("加载档案列表失败:", error);
         throw error;
       }
     },
@@ -296,10 +295,10 @@ export default {
         if (!archiveId) return;
 
         const response = await centerAPI.archive.getArchiveDetail(archiveId);
-        
+
         // 响应拦截器已处理成功/失败判断，直接使用数据
         const archiveData = response.data || response;
-        
+
         this.archiveInfo = {
           id: archiveData.archive_id,
           archive_id: archiveData.archive_id,
@@ -307,13 +306,13 @@ export default {
           location: archiveData.location,
           timeRange: `${archiveData.start_time}-${archiveData.end_time}`,
           createTime: archiveData.created_at,
-          description: archiveData.description || '-',
-          image: archiveData.image_url || ''
+          description: archiveData.description || "-",
+          image: archiveData.image_url || "",
         };
-        
-        console.log('档案详情加载成功:', this.archiveInfo);
+
+        console.log("档案详情加载成功:", this.archiveInfo);
       } catch (error) {
-        console.error('加载档案详情失败:', error);
+        console.error("加载档案详情失败:", error);
         throw error;
       }
     },
@@ -328,12 +327,12 @@ export default {
         const queryParams = {
           page: this.pagination.currentPage,
           limit: limit,
-          ...params
+          ...params,
         };
 
         console.log(`加载第${this.pagination.currentPage}页预警记录，每页${limit}条...`);
         const response = await centerAPI.archive.getArchiveLinkedAlerts(archiveId, queryParams);
-        
+
         // 响应拦截器已处理成功/失败判断，直接使用数据
         // 分页格式: { data: [], total, page, page_size }
         let alertRecords = [];
@@ -343,121 +342,122 @@ export default {
         // 响应拦截器已处理成功/失败判断，直接使用数据
         alertRecords = Array.isArray(response.data) ? response.data : [];
         totalCount = response.total || 0;
-        pages = response.pages || Math.ceil(totalCount / (response.page_size || response.limit || 20));
-        
+        pages =
+          response.pages || Math.ceil(totalCount / (response.page_size || response.limit || 20));
+
         // 转换数据格式以适配前端显示，同时保留原始API数据
-        this.archiveList = alertRecords.map(record => ({
+        this.archiveList = alertRecords.map((record) => ({
           id: record.alert_id,
           name: record.alert_name,
           deviceName: record.camera_name,
           warningTime: record.alert_time,
           warningLevel: this.convertAlertLevel(record.alert_level),
-          warningType: record.alert_type || '',
-          location: record.location || '',
-          description: record.alert_description || '',
-          remark: record.processing_notes || '',
-          violationImage: record.minio_frame_url || '',
-          violationVideo: record.minio_video_url || '',
+          warningType: record.alert_type || "",
+          location: record.location || "",
+          description: record.alert_description || "",
+          remark: record.processing_notes || "",
+          violationImage: record.minio_frame_url || "",
+          violationVideo: record.minio_video_url || "",
           status: record.status || 1,
           createTime: record.created_at,
           // 保留原始API数据供详情页面构建完整的处理进展使用
-          _apiData: record
+          _apiData: record,
         }));
 
         // 更新分页信息
         this.pagination.total = totalCount;
-        
+
         console.log(`预警记录加载成功，第${this.pagination.currentPage}页，共${totalCount}条记录`);
       } catch (error) {
-        console.error('加载预警记录失败:', error);
+        console.error("加载预警记录失败:", error);
         this.archiveList = [];
         this.pagination.total = 0;
       }
     },
 
-     // 转换预警等级格式（从后端的1-4转换为前端的level1-level4）
-     convertAlertLevel(backendLevel) {
-       const levelMap = {
-         1: 'level1',
-         2: 'level2', 
-         3: 'level3',
-         4: 'level4'
-       };
-       return levelMap[backendLevel] || 'level1';
-     },
+    // 转换预警等级格式（从后端的1-4转换为前端的level1-level4）
+    convertAlertLevel(backendLevel) {
+      const levelMap = {
+        1: "level1",
+        2: "level2",
+        3: "level3",
+        4: "level4",
+      };
+      return levelMap[backendLevel] || "level1";
+    },
     // 生成特定档案的模拟数据
     generateMockDataForArchive(archive) {
       const data = [];
       const devices = [
-        'EF两区特检测区10社',
-        '降盐水泵废水站',
-        '东15风机',
-        '齐心爱A20储产',
-        'EF两区特检测区10社'
+        "EF两区特检测区10社",
+        "降盐水泵废水站",
+        "东15风机",
+        "齐心爱A20储产",
+        "EF两区特检测区10社",
       ];
-      
+
       const warningNames = [
-        '安全帽识别',
-        '工服识别',
-        '安全帽识别',
-        '玻璃运输车打卡',
-        '烟火检测',
-        '安全帽识别',
-        '工服识别',
-        '安全帽识别',
-        '玻璃运输车打卡'
+        "安全帽识别",
+        "工服识别",
+        "安全帽识别",
+        "玻璃运输车打卡",
+        "烟火检测",
+        "安全帽识别",
+        "工服识别",
+        "安全帽识别",
+        "玻璃运输车打卡",
       ];
 
       const warningTypes = [
-        '安全违规',
-        '安全违规',
-        '安全违规',
-        '车辆违规',
-        '消防违规',
-        '安全违规',
-        '安全违规',
-        '安全违规',
-        '车辆违规'
+        "安全违规",
+        "安全违规",
+        "安全违规",
+        "车辆违规",
+        "消防违规",
+        "安全违规",
+        "安全违规",
+        "安全违规",
+        "车辆违规",
       ];
 
       const locations = [
-        '厂区A10车间东区',
-        '废水处理站入口',
-        '东15风机房',
-        '储产区域A20',
-        'EF两区特检测区'
+        "厂区A10车间东区",
+        "废水处理站入口",
+        "东15风机房",
+        "储产区域A20",
+        "EF两区特检测区",
       ];
 
       const remarks = [
-        '已现场提醒，工人已佩戴安全帽',
-        '已督促整改，现已规范穿着',
-        '已加强现场监督管理',
-        '车辆已完成打卡登记',
-        '已清理现场，加强禁烟宣传',
-        '',
-        '现场已整改完毕',
-        '',
-        ''
+        "已现场提醒，工人已佩戴安全帽",
+        "已督促整改，现已规范穿着",
+        "已加强现场监督管理",
+        "车辆已完成打卡登记",
+        "已清理现场，加强禁烟宣传",
+        "",
+        "现场已整改完毕",
+        "",
+        "",
       ];
-      
+
       // 根据档案ID决定生成多少条数据
-      const count = archive.id === 1 ? 9 : (archive.id === 2 ? 6 : (archive.id === 3 ? 8 : 5));
-      
+      const count = archive.id === 1 ? 9 : archive.id === 2 ? 6 : archive.id === 3 ? 8 : 5;
+
       for (let i = 1; i <= count; i++) {
         const randomLevel = Math.floor(Math.random() * 4);
-        const level = ['level1', 'level2', 'level3', 'level4'][randomLevel];
+        const level = ["level1", "level2", "level3", "level4"][randomLevel];
         let deviceName;
-        
+
         // 根据档案类型选择对应的设备名
         if (archive.id === 1) {
-          deviceName = i % 3 === 0 ? '厂区A10车间' : '厂区A10车间区域' + (i % 5 + 1);
+          deviceName = i % 3 === 0 ? "厂区A10车间" : "厂区A10车间区域" + ((i % 5) + 1);
         } else if (archive.id === 2) {
-          deviceName = '东15风机';
+          deviceName = "东15风机";
         } else if (archive.id === 3) {
-          deviceName = 'EF两区特检测区10社';
-          deviceName = '降盐水泵废水站';
+          deviceName = "EF两区特检测区10社";
+          deviceName = "降盐水泵废水站";
         }
-        
+
         // 生成时间
         const currentYear = 2024;
         const randomMonth = Math.floor(Math.random() * 6) + 7; // 7-12月，更接近现在
@@ -465,22 +465,23 @@ export default {
         const randomHour = Math.floor(Math.random() * 24);
         const randomMinute = Math.floor(Math.random() * 60);
         const randomSecond = Math.floor(Math.random() * 60);
-        
-        const warningTime = `${currentYear}-${randomMonth.toString().padStart(2, '0')}-${randomDay.toString().padStart(2, '0')} ${randomHour.toString().padStart(2, '0')}:${randomMinute.toString().padStart(2, '0')}:${randomSecond.toString().padStart(2, '0')}`;
-        
+
+        const warningTime = `${currentYear}-${randomMonth.toString().padStart(2, "0")}-${randomDay.toString().padStart(2, "0")} ${randomHour.toString().padStart(2, "0")}:${randomMinute.toString().padStart(2, "0")}:${randomSecond.toString().padStart(2, "0")}`;
+
         data.push({
           id: i,
           name: warningNames[(i - 1) % warningNames.length] || `预警${i}`,
           image: this.getPreviewImage(),
           deviceName: deviceName,
           warningTime: warningTime,
-          warningLevel: i % 4 === 0 ? 'level1' : (i % 4 === 1 ? 'level2' : (i % 4 === 2 ? 'level3' : 'level4')),
-          warningType: warningTypes[(i - 1) % warningTypes.length] || '其他违规',
+          warningLevel:
+            i % 4 === 0 ? "level1" : i % 4 === 1 ? "level2" : i % 4 === 2 ? "level3" : "level4",
+          warningType: warningTypes[(i - 1) % warningTypes.length] || "其他违规",
           location: locations[(i - 1) % locations.length] || archive.location,
-          remark: remarks[(i - 1) % remarks.length] || '',
+          remark: remarks[(i - 1) % remarks.length] || "",
           description: this.getDescriptionByType(warningNames[(i - 1) % warningNames.length]),
           violationImage: this.getPreviewImage(),
-          violationVideo: ''
+          violationVideo: "",
         });
       }
       return data;
@@ -488,10 +489,10 @@ export default {
     // 根据预警类型生成默认描述
     getDescriptionByType(type) {
       const descriptionMap = {
-        '安全帽识别': '检测到工作人员未佩戴安全帽，存在严重安全隐患，请立即整改并加强安全教育',
-        '工服识别': '发现工作人员未按规定穿着工作服，违反现场作业安全规范，需要立即纠正',
-        '玻璃运输车打卡': '玻璃运输车辆未按规定进行打卡登记，违反车辆管理规定，请督促司机规范操作',
-        '烟火检测': '检测到禁烟区域有吸烟行为，存在火灾隐患，请立即制止并进行安全教育',
+        安全帽识别: "检测到工作人员未佩戴安全帽，存在严重安全隐患，请立即整改并加强安全教育",
+        工服识别: "发现工作人员未按规定穿着工作服，违反现场作业安全规范，需要立即纠正",
+        玻璃运输车打卡: "玻璃运输车辆未按规定进行打卡登记，违反车辆管理规定，请督促司机规范操作",
+        烟火检测: "检测到禁烟区域有吸烟行为，存在火灾隐患，请立即制止并进行安全教育",
       };
       return descriptionMap[type] || `检测到${type}违规行为，请及时处理并加强现场管理`;
     },
@@ -499,18 +500,15 @@ export default {
     async switchToArchive(archiveId) {
       try {
         this.currentArchiveId = archiveId;
-        
+
         // 并行加载档案详情和预警记录
-        await Promise.all([
-          this.loadArchiveDetail(archiveId),
-          this.loadArchiveAlerts(archiveId)
-        ]);
-        
+        await Promise.all([this.loadArchiveDetail(archiveId), this.loadArchiveAlerts(archiveId)]);
+
         // 重置分页到第一页
         this.pagination.currentPage = 1;
       } catch (error) {
-        console.error('切换档案失败:', error);
-        this.$message.error('切换档案失败: ' + error.message);
+        console.error("切换档案失败:", error);
+        this.$message.error("切换档案失败: " + error.message);
       }
     },
     // 页码改变 - 重新加载数据
@@ -547,33 +545,33 @@ export default {
     // 查看详情（对齐warningManagement：拉取详情并构建时间线）
     async showDetail(record) {
       try {
-        console.log('warningArchives showDetail - 原始记录数据:', record);
+        console.log("warningArchives showDetail - 原始记录数据:", record);
 
         // 先构建基础对象（立即展示基本信息）
         const baseWarning = {
-        id: record.id,
-        device: record.deviceName,
+          id: record.id,
+          device: record.deviceName,
           deviceInfo: {
             name: record.deviceName,
-            position: record.location || this.archiveInfo.location
+            position: record.location || this.archiveInfo.location,
           },
-        type: record.name,
-        time: record.warningTime,
-        level: record.warningLevel,
-        location: record.location || this.archiveInfo.location,
-        remark: record.remark,
+          type: record.name,
+          time: record.warningTime,
+          level: record.warningLevel,
+          location: record.location || this.archiveInfo.location,
+          remark: record.remark,
           description: record.description || this.getDescriptionByType(record.name),
           imageUrl: record.violationImage || null,
           videoUrl: record.violationVideo || null,
           minio_frame_url: record.violationImage || null,
           minio_video_url: record.violationVideo || null,
-          status: 'completed',
+          status: "completed",
           operationHistory: [],
-          _apiData: record._apiData || null
+          _apiData: record._apiData || null,
         };
 
         this.currentWarning = baseWarning;
-      this.warningDetailVisible = true;
+        this.warningDetailVisible = true;
 
         // 获取详情以还原完整process，与管理页一致
         const apiAlertId = (record._apiData && record._apiData.alert_id) || record.id;
@@ -594,403 +592,424 @@ export default {
         this.currentWarning = {
           ...this.currentWarning,
           operationHistory: history,
-          _apiData: apiDetail
+          _apiData: apiDetail,
         };
 
-        console.log('warningArchives showDetail - 详情拉取完成，时间线条数:', history.length);
+        console.log("warningArchives showDetail - 详情拉取完成，时间线条数:", history.length);
       } catch (error) {
-        console.error('warningArchives showDetail 获取详情失败，使用基础时间线:', error);
+        console.error("warningArchives showDetail 获取详情失败，使用基础时间线:", error);
         // 回退：如果没有详情，则用本地构建
         this.currentWarning = {
           ...this.currentWarning,
-          operationHistory: this.buildOperationHistory(record)
+          operationHistory: this.buildOperationHistory(record),
         };
       }
     },
-    
+
     // 为档案预警构建完整的操作历史，参考warningManagement页面的逻辑
     buildOperationHistory(record) {
-      console.log('构建操作历史，记录数据:', record);
-      
+      console.log("构建操作历史，记录数据:", record);
+
       // 如果记录中有原始API数据且包含process字段，优先使用真实数据
       if (record._apiData && record._apiData.process) {
-        console.log('发现API数据中的process字段，使用真实处理进展:', record._apiData.process);
+        console.log("发现API数据中的process字段，使用真实处理进展:", record._apiData.process);
         return this.processApiDataHistory(record._apiData);
       }
-      
+
       // 如果有原始API数据但没有process字段，从其他API字段构建
-      if (record._apiData && (record._apiData.processing_notes || record._apiData.processed_by || record._apiData.status)) {
-        console.log('从API数据的其他字段构建操作历史');
+      if (
+        record._apiData &&
+        (record._apiData.processing_notes || record._apiData.processed_by || record._apiData.status)
+      ) {
+        console.log("从API数据的其他字段构建操作历史");
         return this.buildFromApiData(record._apiData);
       }
-      
+
       // 如果没有API数据，使用档案记录本身的信息构建基本历史
-      console.log('使用档案记录构建基本操作历史');
+      console.log("使用档案记录构建基本操作历史");
       return this.buildBasicHistory(record);
     },
-    
+
     // 处理API数据中的process字段，与warningManagement页面保持一致
     processApiDataHistory(apiData) {
       const allRecords = [];
       const processData = apiData.process;
-      
+
       // 处理steps数组
       if (processData.steps && Array.isArray(processData.steps)) {
-        processData.steps.forEach(step => {
+        processData.steps.forEach((step) => {
           // 根据步骤状态确定显示状态
-          let recordStatus = 'completed';
-          if (step.status === 'active' || step.status === 'processing' || step.status === 'in_progress') {
-            recordStatus = 'active';
-          } else if (step.status === 'pending' || step.status === 'waiting') {
-            recordStatus = 'pending';
+          let recordStatus = "completed";
+          if (
+            step.status === "active" ||
+            step.status === "processing" ||
+            step.status === "in_progress"
+          ) {
+            recordStatus = "active";
+          } else if (step.status === "pending" || step.status === "waiting") {
+            recordStatus = "pending";
           }
-          
+
           const record = {
             id: Date.now() + Math.random(),
             status: recordStatus,
-            statusText: step.step || step.title || '处理步骤',
+            statusText: step.step || step.title || "处理步骤",
             time: this.formatApiTime(step.time || step.timestamp),
-            description: step.desc || step.description || '处理描述',
-            operationType: step.step === '预警产生' ? 'create' : 'process',
-            operator: step.operator || step.handler || '系统'
+            description: step.desc || step.description || "处理描述",
+            operationType: step.step === "预警产生" ? "create" : "process",
+            operator: step.operator || step.handler || "系统",
           };
           allRecords.push(record);
         });
       }
-      
+
       // 处理其他process字段（records, logs, timeline等）
-      ['records', 'logs', 'timeline', 'status_updates'].forEach(fieldName => {
+      ["records", "logs", "timeline", "status_updates"].forEach((fieldName) => {
         if (processData[fieldName] && Array.isArray(processData[fieldName])) {
           processData[fieldName].forEach((item, index) => {
             // 根据项目状态确定显示状态
-            let recordStatus = 'completed';
-            if (item.status === 'active' || item.status === 'processing' || item.status === 'in_progress') {
-              recordStatus = 'active';
-            } else if (item.status === 'pending' || item.status === 'waiting') {
-              recordStatus = 'pending';
+            let recordStatus = "completed";
+            if (
+              item.status === "active" ||
+              item.status === "processing" ||
+              item.status === "in_progress"
+            ) {
+              recordStatus = "active";
+            } else if (item.status === "pending" || item.status === "waiting") {
+              recordStatus = "pending";
             }
-            
+
             const record = {
               id: Date.now() + Math.random() + index + 1000,
               status: recordStatus,
-              statusText: item.action || item.event || item.step || item.title || fieldName.slice(0, -1),
+              statusText:
+                item.action || item.event || item.step || item.title || fieldName.slice(0, -1),
               time: this.formatApiTime(item.time || item.timestamp),
-              description: item.description || item.message || item.detail || item.notes || '',
+              description: item.description || item.message || item.detail || item.notes || "",
               operationType: item.type || fieldName.slice(0, -1),
-              operator: item.operator || item.user || item.handler || '系统'
+              operator: item.operator || item.user || item.handler || "系统",
             };
             allRecords.push(record);
           });
         }
       });
-      
+
       // 按时间排序（最新的在前面）
       allRecords.sort((a, b) => {
         const timeA = new Date(a.time).getTime();
         const timeB = new Date(b.time).getTime();
         return timeB - timeA;
       });
-      
-      console.log('从process字段构建的操作历史:', allRecords);
+
+      console.log("从process字段构建的操作历史:", allRecords);
       return allRecords;
     },
-    
+
     // 从API数据的其他字段构建操作历史
     buildFromApiData(apiData) {
       const history = [];
-      
+
       // 1. 预警产生记录
       history.push({
         id: Date.now() + 1,
-        status: 'completed',
-        statusText: '预警产生',
+        status: "completed",
+        statusText: "预警产生",
         time: this.formatApiTime(apiData.alert_time || apiData.created_at),
-        description: `系统检测到${apiData.alert_name || '违规行为'}`,
-        operationType: 'create',
-        operator: '系统'
+        description: `系统检测到${apiData.alert_name || "违规行为"}`,
+        operationType: "create",
+        operator: "系统",
       });
-      
+
       // 2. 根据API状态添加相应记录，与warningManagement页面逻辑一致
       if (apiData.status === 2) {
         // 处理中状态
         history.push({
           id: Date.now() + 2,
-          status: 'active',
-          statusText: '处理中',
+          status: "active",
+          statusText: "处理中",
           time: this.formatApiTime(apiData.updated_at || apiData.created_at),
-          description: '预警正在处理中',
-          operationType: 'processing',
-          operator: apiData.processed_by || '处理人员'
+          description: "预警正在处理中",
+          operationType: "processing",
+          operator: apiData.processed_by || "处理人员",
         });
       } else if (apiData.status === 3) {
         // 已处理状态
         history.push({
           id: Date.now() + 2,
-          status: 'completed',
-          statusText: '已处理',
+          status: "completed",
+          statusText: "已处理",
           time: this.formatApiTime(apiData.processed_at || apiData.updated_at),
-          description: `预警处理已完成${apiData.processing_notes ? '，处理意见：' + apiData.processing_notes : ''}`,
-          operationType: 'completed',
-          operator: apiData.processed_by || '处理人员'
+          description: `预警处理已完成${apiData.processing_notes ? "，处理意见：" + apiData.processing_notes : ""}`,
+          operationType: "completed",
+          operator: apiData.processed_by || "处理人员",
         });
       } else if (apiData.status === 4) {
         // 已归档状态
         history.push({
           id: Date.now() + 2,
-          status: 'completed',
-          statusText: '已归档',
+          status: "completed",
+          statusText: "已归档",
           time: this.formatApiTime(apiData.archived_at || apiData.updated_at),
-          description: '预警已归档',
-          operationType: 'archive',
-          operator: apiData.archived_by || '管理员'
+          description: "预警已归档",
+          operationType: "archive",
+          operator: apiData.archived_by || "管理员",
         });
       } else if (apiData.status === 5) {
         // 误报状态
         history.push({
           id: Date.now() + 2,
-          status: 'completed',
-          statusText: '误报',
+          status: "completed",
+          statusText: "误报",
           time: this.formatApiTime(apiData.processed_at || apiData.updated_at),
-          description: '预警已标记为误报',
-          operationType: 'falseAlarm',
-          operator: apiData.processed_by || '管理员'
+          description: "预警已标记为误报",
+          operationType: "falseAlarm",
+          operator: apiData.processed_by || "管理员",
         });
       }
-      
+
       // 按时间倒序排列（最新的在前面）
       return history.reverse();
     },
-    
+
     // 构建基本操作历史（当没有API数据时）
     buildBasicHistory(record) {
       const history = [];
-      
+
       // 1. 预警产生记录
       history.push({
         id: Date.now() + 1,
-        status: 'completed',
-        statusText: '预警产生',
+        status: "completed",
+        statusText: "预警产生",
         time: record.warningTime || record.createTime || this.getCurrentTime(),
         description: `系统检测到${record.name}违规行为：${record.description || this.getDescriptionByType(record.name)}`,
-        operationType: 'create',
-        operator: '系统'
+        operationType: "create",
+        operator: "系统",
       });
-      
+
       // 2. 处理开始记录
-      const processStartTime = this.addSecondsToTime(record.warningTime || record.createTime || this.getCurrentTime(), 120);
+      const processStartTime = this.addSecondsToTime(
+        record.warningTime || record.createTime || this.getCurrentTime(),
+        120,
+      );
       history.push({
         id: Date.now() + 2,
-        status: 'completed',
-        statusText: '开始处理',
+        status: "completed",
+        statusText: "开始处理",
         time: processStartTime,
-        description: '预警已确认，处理人员开始进行现场处理',
-        operationType: 'processing',
-        operator: '处理人员'
+        description: "预警已确认，处理人员开始进行现场处理",
+        operationType: "processing",
+        operator: "处理人员",
       });
-      
+
       // 3. 如果有备注信息，添加处理记录
       if (record.remark && record.remark.trim()) {
         const processRecordTime = this.addSecondsToTime(processStartTime, 300);
         history.push({
           id: Date.now() + 3,
-          status: 'completed',
-          statusText: '处理记录',
+          status: "completed",
+          statusText: "处理记录",
           time: processRecordTime,
           description: `处理意见：${record.remark}`,
-          operationType: 'processing',
-          operator: '处理人员'
+          operationType: "processing",
+          operator: "处理人员",
         });
       }
-      
+
       // 4. 处理完成记录
       const completedTime = this.addSecondsToTime(processStartTime, record.remark ? 600 : 300);
       history.push({
         id: Date.now() + 4,
-        status: 'completed',
-        statusText: '处理完成',
+        status: "completed",
+        statusText: "处理完成",
         time: completedTime,
-        description: '预警处理已完成，违规行为得到有效控制',
-        operationType: 'completed',
-        operator: '处理人员'
+        description: "预警处理已完成，违规行为得到有效控制",
+        operationType: "completed",
+        operator: "处理人员",
       });
-      
+
       // 5. 归档记录
       const archiveTime = this.addSecondsToTime(completedTime, 180);
       history.push({
         id: Date.now() + 5,
-        status: 'completed',
-        statusText: '预警归档',
+        status: "completed",
+        statusText: "预警归档",
         time: archiveTime,
-        description: `预警已归档到：${this.archiveInfo.name || '当前档案'}，可在预警档案中查看`,
-        operationType: 'archive',
-        operator: '系统'
+        description: `预警已归档到：${this.archiveInfo.name || "当前档案"}，可在预警档案中查看`,
+        operationType: "archive",
+        operator: "系统",
       });
-      
+
       // 按时间倒序排列（最新的在前面）
       return history.reverse();
     },
-    
+
     // 格式化API时间，与warningManagement页面保持一致
     formatApiTime(timeString) {
       if (!timeString) return this.getCurrentTime();
-      
+
       try {
         let date;
-        if (timeString.includes('T')) {
+        if (timeString.includes("T")) {
           // ISO格式: "2025-06-30T17:05:35"
           date = new Date(timeString);
-        } else if (timeString.includes(' ')) {
+        } else if (timeString.includes(" ")) {
           // 标准格式 YYYY-MM-DD HH:mm:ss
           date = new Date(timeString);
           // 其他格式
           date = new Date(timeString);
         }
-        
+
         if (isNaN(date.getTime())) {
           return timeString; // 如果解析失败，返回原字符串
         }
-        
+
         const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        const seconds = String(date.getSeconds()).padStart(2, "0");
+
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
       } catch (error) {
         return timeString || this.getCurrentTime();
       }
     },
-    
+
     // 获取当前时间
     getCurrentTime() {
       const now = new Date();
       const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     },
-    
+
     // 给时间添加指定秒数
     addSecondsToTime(timeString, seconds) {
       try {
         let date;
-        if (timeString.includes('T')) {
+        if (timeString.includes("T")) {
           date = new Date(timeString);
-        } else if (timeString.includes(' ')) {
+        } else if (timeString.includes(" ")) {
           date = new Date(timeString);
           date = new Date();
         }
-        
+
         if (isNaN(date.getTime())) {
           return timeString;
         }
-        
+
         date.setSeconds(date.getSeconds() + seconds);
-        
+
         const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const secs = String(date.getSeconds()).padStart(2, '0');
-        
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        const secs = String(date.getSeconds()).padStart(2, "0");
+
         return `${year}-${month}-${day} ${hours}:${minutes}:${secs}`;
       } catch (error) {
         return timeString;
       }
     },
-    
+
     // 从预警详情组件处理预警
     handleWarningFromDetail(warning) {
       this.$message({
         message: `正在处理 ${warning.device} 的 ${warning.type} 预警`,
-        type: 'success'
+        type: "success",
       });
       this.warningDetailVisible = false;
     },
     // 处理单条删除
     handleDelete(id) {
-      console.log('单条删除被触发，ID:', id, '当前档案ID:', this.currentArchiveId);
-      
+      console.log("单条删除被触发，ID:", id, "当前档案ID:", this.currentArchiveId);
+
       if (!id) {
-        this.$message.error('删除失败：缺少记录ID');
+        this.$message.error("删除失败：缺少记录ID");
         return;
       }
-      
+
       if (!this.currentArchiveId) {
-        this.$message.error('删除失败：未选择档案');
+        this.$message.error("删除失败：未选择档案");
         return;
       }
-      
-      this.deleteType = 'single';
+
+      this.deleteType = "single";
       this.deleteId = id;
-      this.deleteConfirmMessage = '确定要删除该预警记录吗？';
+      this.deleteConfirmMessage = "确定要删除该预警记录吗？";
       this.deleteConfirmVisible = true;
     },
     // 处理批量删除
     handleBatchDelete() {
-      console.log('批量删除被触发，选中行数:', this.selectedRows.length);
-      console.log('选中的行数据:', this.selectedRows);
-      
+      console.log("批量删除被触发，选中行数:", this.selectedRows.length);
+      console.log("选中的行数据:", this.selectedRows);
+
       if (this.selectedRows.length === 0) {
-        this.$message.warning('请至少选择一条记录');
+        this.$message.warning("请至少选择一条记录");
         return;
       }
 
       if (!this.currentArchiveId) {
-        this.$message.error('删除失败：未选择档案');
+        this.$message.error("删除失败：未选择档案");
         return;
       }
 
-      this.deleteType = 'batch';
+      this.deleteType = "batch";
       this.deleteConfirmMessage = `确定要删除选中的 ${this.selectedRows.length} 条记录吗？`;
       this.deleteConfirmVisible = true;
     },
     // 确认删除 - 调用后端API
     async confirmDelete() {
       try {
-        if (this.deleteType === 'single') {
+        if (this.deleteType === "single") {
           // 单条删除 - 从档案中移除预警关联
-          console.log('🗑️ 移除预警关联:', {
+          console.log("🗑️ 移除预警关联:", {
             archiveId: this.currentArchiveId,
-            alertId: this.deleteId
+            alertId: this.deleteId,
           });
-          
-          const response = await centerAPI.archive.unlinkAlertFromArchive(this.currentArchiveId, this.deleteId);
-          
+
+          const response = await centerAPI.archive.unlinkAlertFromArchive(
+            this.currentArchiveId,
+            this.deleteId,
+          );
+
           // 响应拦截器已处理成功/失败判断
-          this.$message.success('已从档案中移除该预警');
+          this.$message.success("已从档案中移除该预警");
           // 批量删除 - 提取ID数组并逐个解除关联
-          const recordIds = this.selectedRows.map(row => row.id);
-          
-          console.log('选中的行对象:', this.selectedRows);
-          console.log('提取的批量删除IDs:', recordIds);
-          
+          const recordIds = this.selectedRows.map((row) => row.id);
+
+          console.log("选中的行对象:", this.selectedRows);
+          console.log("提取的批量删除IDs:", recordIds);
+
           // 验证ID是否有效
-          if (recordIds.some(id => id === null || id === undefined)) {
-            console.error('检测到无效的记录ID:', recordIds);
-            this.$message.error('选中的记录包含无效ID，请刷新页面后重试');
+          if (recordIds.some((id) => id === null || id === undefined)) {
+            console.error("检测到无效的记录ID:", recordIds);
+            this.$message.error("选中的记录包含无效ID，请刷新页面后重试");
             return;
           }
-          
+
           // 批量解除关联
-          console.log('🗑️ 批量移除预警关联:', {
+          console.log("🗑️ 批量移除预警关联:", {
             archiveId: this.currentArchiveId,
-            alertIds: recordIds
+            alertIds: recordIds,
           });
-          
+
           let successCount = 0;
           let failCount = 0;
-          
+
           for (const alertId of recordIds) {
             try {
-              const response = await centerAPI.archive.unlinkAlertFromArchive(this.currentArchiveId, alertId);
+              const response = await centerAPI.archive.unlinkAlertFromArchive(
+                this.currentArchiveId,
+                alertId,
+              );
               // 响应拦截器已处理成功/失败判断，如果到这里说明成功
               successCount++;
             } catch (error) {
@@ -998,41 +1017,42 @@ export default {
               failCount++;
             }
           }
-          
+
           if (failCount > 0) {
             this.$message.warning(`已成功移除 ${successCount} 条，失败 ${failCount} 条`);
             this.$message.success(`已成功从档案中移除 ${successCount} 条预警`);
           }
-          
+
           this.selectedRows = [];
         }
-        
+
         // 重新加载当前页数据
         await this.loadArchiveAlerts(this.currentArchiveId);
         this.deleteConfirmVisible = false;
       } catch (error) {
-        console.error('删除操作失败:', error);
-        this.$message.error('删除失败: ' + error.message);
+        console.error("删除操作失败:", error);
+        this.$message.error("删除失败: " + error.message);
       }
     },
     // 编辑档案
     editArchive() {
       this.isEditing = true;
       this.editForm = { ...this.archiveInfo };
-      
+
       // 处理时间范围：将字符串格式转换为数组格式
-      if (this.editForm.timeRange && typeof this.editForm.timeRange === 'string') {
+      if (this.editForm.timeRange && typeof this.editForm.timeRange === "string") {
         // 使用正则表达式精确匹配时间范围格式
-        const rangePattern = /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})-(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/;
+        const rangePattern =
+          /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})-(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/;
         const match = this.editForm.timeRange.match(rangePattern);
-        
+
         if (match) {
           this.editForm.timeRange = [match[1], match[2]];
           this.editForm.timeRange = [];
         }
         this.editForm.timeRange = [];
       }
-      
+
       // 确保编辑时显示原有图片
       if (!this.editForm.image) {
         this.editForm.image = this.getPreviewImage();
@@ -1044,13 +1064,17 @@ export default {
       try {
         // 表单验证
         if (!this.editForm.name || !this.editForm.location) {
-          this.$message.warning('请填写必要的信息（档案名称和所属位置必须填写）');
+          this.$message.warning("请填写必要的信息（档案名称和所属位置必须填写）");
           return;
         }
 
         // 处理时间范围：将数组格式转换为字符串格式
         let startTime, endTime;
-        if (this.editForm.timeRange && Array.isArray(this.editForm.timeRange) && this.editForm.timeRange.length === 2) {
+        if (
+          this.editForm.timeRange &&
+          Array.isArray(this.editForm.timeRange) &&
+          this.editForm.timeRange.length === 2
+        ) {
           startTime = this.editForm.timeRange[0];
           endTime = this.editForm.timeRange[1];
           // 默认设置为当年完整时间范围
@@ -1063,22 +1087,22 @@ export default {
         const updateData = {
           name: this.editForm.name,
           location: this.editForm.location,
-          description: this.editForm.description || '',
+          description: this.editForm.description || "",
           start_time: startTime,
           end_time: endTime,
-          image_url: this.editForm.image || '',
-          updated_by: '当前用户' // 这里应该从用户信息中获取
+          image_url: this.editForm.image || "",
+          updated_by: "当前用户", // 这里应该从用户信息中获取
         };
 
-        console.log('更新档案数据:', updateData);
+        console.log("更新档案数据:", updateData);
 
         // 调用后端API更新档案
         const response = await centerAPI.archive.updateArchive(this.currentArchiveId, updateData);
-        
+
         // 响应拦截器已处理成功/失败判断，直接使用数据
         const updatedArchive = response.data || response;
 
-        this.$message.success('档案信息更新成功');
+        this.$message.success("档案信息更新成功");
 
         // 重新加载档案列表和详情以获取最新数据
         await this.loadArchivesList();
@@ -1088,10 +1112,10 @@ export default {
         this.isEditing = false;
         this.editDialogVisible = false;
 
-        console.log('档案更新成功:', updatedArchive);
+        console.log("档案更新成功:", updatedArchive);
       } catch (error) {
-        console.error('更新档案失败:', error);
-        this.$message.error('更新档案失败: ' + error.message);
+        console.error("更新档案失败:", error);
+        this.$message.error("更新档案失败: " + error.message);
       }
     },
     // 取消编辑
@@ -1102,444 +1126,450 @@ export default {
     // 添加新预警 - 改为从已发生预警列表选择
     addWarning() {
       if (!this.currentArchiveId) {
-        this.$message.warning('请先选择一个档案');
+        this.$message.warning("请先选择一个档案");
         return;
       }
-      
+
       this.selectAlertDialogVisible = true;
       this.selectedAlerts = [];
       this.resetAlertFilters();
       this.loadAvailableAlerts();
     },
-     // 提交新预警 - 调用真实API
-     async submitNewWarning() {
-       try {
-         // 表单验证
-         if (!this.addForm.name || !this.addForm.deviceName || !this.addForm.warningLevel || 
-             !this.addForm.warningTime || !this.addForm.warningType || !this.addForm.location) {
-           this.$message.warning('请填写必要的信息（预警名称、设备名称、预警等级、预警时间、预警类型、违规位置）');
-           return;
-         }
+    // 提交新预警 - 调用真实API
+    async submitNewWarning() {
+      try {
+        // 表单验证
+        if (
+          !this.addForm.name ||
+          !this.addForm.deviceName ||
+          !this.addForm.warningLevel ||
+          !this.addForm.warningTime ||
+          !this.addForm.warningType ||
+          !this.addForm.location
+        ) {
+          this.$message.warning(
+            "请填写必要的信息（预警名称、设备名称、预警等级、预警时间、预警类型、违规位置）",
+          );
+          return;
+        }
 
-         // 检查是否选择了档案
-         if (!this.currentArchiveId) {
-           this.$message.warning('请先选择一个档案再添加预警记录');
-           return;
-         }
+        // 检查是否选择了档案
+        if (!this.currentArchiveId) {
+          this.$message.warning("请先选择一个档案再添加预警记录");
+          return;
+        }
 
-         // 转换预警等级格式（从前端的level1-level4转换为后端的1-4）
-         const convertToBackendLevel = (frontendLevel) => {
-           const levelMap = {
-             'level1': 1,
-             'level2': 2,
-             'level3': 3,
-             'level4': 4
-           };
-           return levelMap[frontendLevel] || 1;
-         };
+        // 转换预警等级格式（从前端的level1-level4转换为后端的1-4）
+        const convertToBackendLevel = (frontendLevel) => {
+          const levelMap = {
+            level1: 1,
+            level2: 2,
+            level3: 3,
+            level4: 4,
+          };
+          return levelMap[frontendLevel] || 1;
+        };
 
-         // 构造后端API需要的数据格式
-         const recordData = {
-           archive_id: this.currentArchiveId,
-           name: this.addForm.name,
-           device_name: this.addForm.deviceName,
-           alert_time: this.addForm.warningTime,
-           alert_level: convertToBackendLevel(this.addForm.warningLevel),
-           alert_type: this.addForm.warningType || '',
-           location: this.addForm.location || '',
-           description: this.addForm.description || '',
-           remark: '', // 新建时备注为空
-           violation_image_url: this.addForm.violationImage || '',
-           violation_video_url: this.addForm.violationVideo || '',
-           created_by: '当前用户' // 这里应该从用户信息中获取
-         };
+        // 构造后端API需要的数据格式
+        const recordData = {
+          archive_id: this.currentArchiveId,
+          name: this.addForm.name,
+          device_name: this.addForm.deviceName,
+          alert_time: this.addForm.warningTime,
+          alert_level: convertToBackendLevel(this.addForm.warningLevel),
+          alert_type: this.addForm.warningType || "",
+          location: this.addForm.location || "",
+          description: this.addForm.description || "",
+          remark: "", // 新建时备注为空
+          violation_image_url: this.addForm.violationImage || "",
+          violation_video_url: this.addForm.violationVideo || "",
+          created_by: "当前用户", // 这里应该从用户信息中获取
+        };
 
-         console.log('添加预警记录数据:', recordData);
+        console.log("添加预警记录数据:", recordData);
 
         // 调用后端API添加预警记录
         const response = await centerAPI.archive.addAlertRecord(recordData);
-        
+
         // 响应拦截器已处理成功/失败判断，直接使用数据
         const newRecord = response.data || response;
-        
-        this.$message.success('预警记录添加成功');
-        
+
+        this.$message.success("预警记录添加成功");
+
         // 重新加载当前档案的预警记录
         await this.loadArchiveAlerts(this.currentArchiveId);
-        
+
         // 关闭对话框并重置表单
         this.addDialogVisible = false;
         this.resetAddForm();
-        
-        console.log('预警记录添加成功:', newRecord);
-       } catch (error) {
-         console.error('添加预警记录失败:', error);
-         this.$message.error('添加预警记录失败: ' + error.message);
-       }
-     },
 
-      // 重置添加预警表单
-      resetAddForm() {
-        this.addForm = {
-          name: '',
-          deviceName: '',
-          warningLevel: '',
-          warningType: '',
-          location: '',
-          description: '',
-          warningTime: '',
-          violationImage: '',
-          violationVideo: ''
+        console.log("预警记录添加成功:", newRecord);
+      } catch (error) {
+        console.error("添加预警记录失败:", error);
+        this.$message.error("添加预警记录失败: " + error.message);
+      }
+    },
+
+    // 重置添加预警表单
+    resetAddForm() {
+      this.addForm = {
+        name: "",
+        deviceName: "",
+        warningLevel: "",
+        warningType: "",
+        location: "",
+        description: "",
+        warningTime: "",
+        violationImage: "",
+        violationVideo: "",
+      };
+    },
+
+    // ======================== 已发生预警选择相关方法 ========================
+
+    // 加载可用的预警列表
+    async loadAvailableAlerts() {
+      try {
+        this.availableAlertsLoading = true;
+
+        const params = {
+          page: this.availableAlertsPagination.currentPage,
+          limit: this.availableAlertsPagination.pageSize,
+          exclude_archived: true,
+          ...this.alertFilters,
         };
-      },
 
-      // ======================== 已发生预警选择相关方法 ========================
-
-      // 加载可用的预警列表
-      async loadAvailableAlerts() {
-        try {
-          this.availableAlertsLoading = true;
-          
-          const params = {
-            page: this.availableAlertsPagination.currentPage,
-            limit: this.availableAlertsPagination.pageSize,
-            exclude_archived: true,
-            ...this.alertFilters
-          };
-
-          // 过滤空值
-          Object.keys(params).forEach(key => {
-            if (params[key] === '' || params[key] === null || params[key] === undefined) {
-              delete params[key];
-            }
-          });
-
-          console.log('加载可用预警列表参数:', params);
-
-          const response = await centerAPI.archive.getAvailableAlerts(params);
-
-          // 响应拦截器已处理成功/失败判断，直接使用数据
-          this.availableAlerts = Array.isArray(response.data) ? response.data : [];
-          this.availableAlertsPagination.total = response.total || 0;
-          this.availableAlertsPagination.currentPage = response.page || 1;
-          console.log('可用预警列表加载成功:', this.availableAlerts);
-        } catch (error) {
-          console.error('加载可用预警列表失败:', error);
-          this.$message.error('加载预警列表失败: ' + error.message);
-        } finally {
-          this.availableAlertsLoading = false;
-        }
-      },
-
-      // 重置筛选条件
-      resetAlertFilters() {
-        this.alertFilters = {
-          alert_level: '',
-          alert_type: '',
-          camera_name: '',
-          status: 3, // 重置时也默认为已处理状态
-          start_time: '',
-          end_time: '',
-          skill_name: '',
-          location: '',
-          alert_id: ''
-        };
-        this.availableAlertsPagination.currentPage = 1;
-      },
-
-      // 应用筛选条件
-      applyAlertFilters() {
-        this.availableAlertsPagination.currentPage = 1;
-        this.loadAvailableAlerts();
-      },
-
-      // 处理预警选择变化
-      handleAlertSelectionChange(selection) {
-        this.selectedAlerts = selection;
-      },
-
-      // 可用预警分页变化
-      handleAvailableAlertsCurrentChange(page) {
-        this.availableAlertsPagination.currentPage = page;
-        this.loadAvailableAlerts();
-      },
-
-      // 可用预警每页条数变化
-      handleAvailableAlertsSizeChange(size) {
-        this.availableAlertsPagination.pageSize = size;
-        this.availableAlertsPagination.currentPage = 1;
-        this.loadAvailableAlerts();
-      },
-
-      // 确认添加选中的预警到档案
-      async confirmAddSelectedAlerts() {
-        if (this.selectedAlerts.length === 0) {
-          this.$message.warning('请至少选择一个预警');
-          return;
-        }
-
-        if (!this.currentArchiveId) {
-          this.$message.error('未选择档案');
-          return;
-        }
-
-        try {
-          this.availableAlertsLoading = true;
-          
-          const alertIds = this.selectedAlerts.map(alert => alert.alert_id);
-          const linkReason = `批量添加预警到档案：${this.currentArchiveName || ''}`;
-
-          console.log('批量关联预警到档案:', { 
-            archiveId: this.currentArchiveId, 
-            alertIds, 
-            linkReason 
-          });
-
-          const response = await centerAPI.archive.linkAlertsToArchive(
-            this.currentArchiveId,
-            alertIds,
-            linkReason
-          );
-
-          // 响应拦截器已处理成功/失败判断，直接使用数据
-          const result = response.data || response;
-
-          // 显示结果信息
-          if (result.success_count > 0) {
-            this.$message.success(`成功添加 ${result.success_count} 个预警到档案`);
-
-            // 重新加载当前档案的预警记录
-            await this.loadArchiveAlerts(this.currentArchiveId);
+        // 过滤空值
+        Object.keys(params).forEach((key) => {
+          if (params[key] === "" || params[key] === null || params[key] === undefined) {
+            delete params[key];
           }
+        });
 
-          if (result.failed_count > 0) {
-            const failedDetails = result.failed_alerts.map(item =>
-              `预警${item.alert_id}: ${item.error}`
-            ).join('; ');
-            this.$message.warning(`${result.failed_count} 个预警添加失败: ${failedDetails}`);
-          }
+        console.log("加载可用预警列表参数:", params);
 
-          // 关闭对话框
-          this.selectAlertDialogVisible = false;
-          this.selectedAlerts = [];
+        const response = await centerAPI.archive.getAvailableAlerts(params);
 
-        } catch (error) {
-          console.error('批量添加预警失败:', error);
-          this.$message.error('添加预警失败: ' + error.message);
-        } finally {
-          this.availableAlertsLoading = false;
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        this.availableAlerts = Array.isArray(response.data) ? response.data : [];
+        this.availableAlertsPagination.total = response.total || 0;
+        this.availableAlertsPagination.currentPage = response.page || 1;
+        console.log("可用预警列表加载成功:", this.availableAlerts);
+      } catch (error) {
+        console.error("加载可用预警列表失败:", error);
+        this.$message.error("加载预警列表失败: " + error.message);
+      } finally {
+        this.availableAlertsLoading = false;
+      }
+    },
+
+    // 重置筛选条件
+    resetAlertFilters() {
+      this.alertFilters = {
+        alert_level: "",
+        alert_type: "",
+        camera_name: "",
+        status: 3, // 重置时也默认为已处理状态
+        start_time: "",
+        end_time: "",
+        skill_name: "",
+        location: "",
+        alert_id: "",
+      };
+      this.availableAlertsPagination.currentPage = 1;
+    },
+
+    // 应用筛选条件
+    applyAlertFilters() {
+      this.availableAlertsPagination.currentPage = 1;
+      this.loadAvailableAlerts();
+    },
+
+    // 处理预警选择变化
+    handleAlertSelectionChange(selection) {
+      this.selectedAlerts = selection;
+    },
+
+    // 可用预警分页变化
+    handleAvailableAlertsCurrentChange(page) {
+      this.availableAlertsPagination.currentPage = page;
+      this.loadAvailableAlerts();
+    },
+
+    // 可用预警每页条数变化
+    handleAvailableAlertsSizeChange(size) {
+      this.availableAlertsPagination.pageSize = size;
+      this.availableAlertsPagination.currentPage = 1;
+      this.loadAvailableAlerts();
+    },
+
+    // 确认添加选中的预警到档案
+    async confirmAddSelectedAlerts() {
+      if (this.selectedAlerts.length === 0) {
+        this.$message.warning("请至少选择一个预警");
+        return;
+      }
+
+      if (!this.currentArchiveId) {
+        this.$message.error("未选择档案");
+        return;
+      }
+
+      try {
+        this.availableAlertsLoading = true;
+
+        const alertIds = this.selectedAlerts.map((alert) => alert.alert_id);
+        const linkReason = `批量添加预警到档案：${this.currentArchiveName || ""}`;
+
+        console.log("批量关联预警到档案:", {
+          archiveId: this.currentArchiveId,
+          alertIds,
+          linkReason,
+        });
+
+        const response = await centerAPI.archive.linkAlertsToArchive(
+          this.currentArchiveId,
+          alertIds,
+          linkReason,
+        );
+
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        const result = response.data || response;
+
+        // 显示结果信息
+        if (result.success_count > 0) {
+          this.$message.success(`成功添加 ${result.success_count} 个预警到档案`);
+
+          // 重新加载当前档案的预警记录
+          await this.loadArchiveAlerts(this.currentArchiveId);
         }
-      },
 
-      // 关闭选择预警对话框
-      closeSelectAlertDialog() {
+        if (result.failed_count > 0) {
+          const failedDetails = result.failed_alerts
+            .map((item) => `预警${item.alert_id}: ${item.error}`)
+            .join("; ");
+          this.$message.warning(`${result.failed_count} 个预警添加失败: ${failedDetails}`);
+        }
+
+        // 关闭对话框
         this.selectAlertDialogVisible = false;
         this.selectedAlerts = [];
-        this.resetAlertFilters();
-      },
+      } catch (error) {
+        console.error("批量添加预警失败:", error);
+        this.$message.error("添加预警失败: " + error.message);
+      } finally {
+        this.availableAlertsLoading = false;
+      }
+    },
 
-      // 转换预警等级显示
-      convertAlertLevelDisplay(level) {
-        const levelMap = {
-          1: '一级预警',
-          2: '二级预警',
-          3: '三级预警',
-          4: '四级预警'
-        };
-        return levelMap[level] || '未知等级';
-      },
+    // 关闭选择预警对话框
+    closeSelectAlertDialog() {
+      this.selectAlertDialogVisible = false;
+      this.selectedAlerts = [];
+      this.resetAlertFilters();
+    },
 
-      // 转换处理状态显示
-      convertStatusDisplay(status) {
-        const statusMap = {
-          1: '待处理',
-          2: '处理中',
-          3: '已处理',
-          4: '已归档',
-          5: '误报'
-        };
-        return statusMap[status] || '未知状态';
-      },
+    // 转换预警等级显示
+    convertAlertLevelDisplay(level) {
+      const levelMap = {
+        1: "一级预警",
+        2: "二级预警",
+        3: "三级预警",
+        4: "四级预警",
+      };
+      return levelMap[level] || "未知等级";
+    },
 
-      // 获取状态样式类
-      getStatusClass(status) {
-        const classMap = {
-          1: 'status-pending',
-          2: 'status-processing', 
-          3: 'status-completed',
-          4: 'status-archived',
-          5: 'status-false-alarm'
-        };
-        return classMap[status] || 'status-unknown';
-      },
+    // 转换处理状态显示
+    convertStatusDisplay(status) {
+      const statusMap = {
+        1: "待处理",
+        2: "处理中",
+        3: "已处理",
+        4: "已归档",
+        5: "误报",
+      };
+      return statusMap[status] || "未知状态";
+    },
 
-      // 获取预警等级样式类
-      getAlertLevelClass(level) {
-        const classMap = {
-          1: 'level1-tag',
-          2: 'level2-tag',
-          3: 'level3-tag',
-          4: 'level4-tag'
-        };
-        return classMap[level] || 'level1-tag';
-      },
+    // 获取状态样式类
+    getStatusClass(status) {
+      const classMap = {
+        1: "status-pending",
+        2: "status-processing",
+        3: "status-completed",
+        4: "status-archived",
+        5: "status-false-alarm",
+      };
+      return classMap[status] || "status-unknown";
+    },
 
+    // 获取预警等级样式类
+    getAlertLevelClass(level) {
+      const classMap = {
+        1: "level1-tag",
+        2: "level2-tag",
+        3: "level3-tag",
+        4: "level4-tag",
+      };
+      return classMap[level] || "level1-tag";
+    },
 
-      // 预览预警详情
-      previewAlert(alert) {
-        // 这里可以打开预警详情弹框或跳转到详情页面
-        console.log('预览预警详情:', alert);
-        this.$message.info(`预警详情：${alert.alert_name} (ID: ${alert.alert_id})`);
-        
-        // 可以根据需要实现详情弹框或其他预览方式
-        // 例如：this.showAlertDetailDialog(alert);
-      },
+    // 预览预警详情
+    previewAlert(alert) {
+      // 这里可以打开预警详情弹框或跳转到详情页面
+      console.log("预览预警详情:", alert);
+      this.$message.info(`预警详情：${alert.alert_name} (ID: ${alert.alert_id})`);
+
+      // 可以根据需要实现详情弹框或其他预览方式
+      // 例如：this.showAlertDetailDialog(alert);
+    },
     // 添加新档案
     addNewArchive() {
       this.addArchiveDialogVisible = true;
       this.newArchiveForm = {
-        name: '',
-        location: '',
+        name: "",
+        location: "",
         timeRange: [],
-        description: '',
-        image: ''
+        description: "",
+        image: "",
       };
     },
-     // 提交新档案 - 调用真实API
-     async submitNewArchive() {
-       try {
-         // 表单验证
-         if (!this.newArchiveForm.name || !this.newArchiveForm.location) {
-           this.$message.warning('请填写必要的信息（档案名称和所属位置必须填写）');
-           return;
-         }
+    // 提交新档案 - 调用真实API
+    async submitNewArchive() {
+      try {
+        // 表单验证
+        if (!this.newArchiveForm.name || !this.newArchiveForm.location) {
+          this.$message.warning("请填写必要的信息（档案名称和所属位置必须填写）");
+          return;
+        }
 
-         // 处理时间范围
-         let startTime, endTime;
-         if (this.newArchiveForm.timeRange && this.newArchiveForm.timeRange.length === 2) {
-           startTime = this.newArchiveForm.timeRange[0];
-           endTime = this.newArchiveForm.timeRange[1];
-           // 默认设置为当年完整时间范围
-           const currentYear = new Date().getFullYear();
-           startTime = `${currentYear}-01-01 00:00:00`;
-           endTime = `${currentYear}-12-31 23:59:59`;
-         }
+        // 处理时间范围
+        let startTime, endTime;
+        if (this.newArchiveForm.timeRange && this.newArchiveForm.timeRange.length === 2) {
+          startTime = this.newArchiveForm.timeRange[0];
+          endTime = this.newArchiveForm.timeRange[1];
+          // 默认设置为当年完整时间范围
+          const currentYear = new Date().getFullYear();
+          startTime = `${currentYear}-01-01 00:00:00`;
+          endTime = `${currentYear}-12-31 23:59:59`;
+        }
 
-         // 构造后端API需要的数据格式
-         const archiveData = {
-           name: this.newArchiveForm.name,
-           location: this.newArchiveForm.location,
-           description: this.newArchiveForm.description || '',
-           start_time: startTime,
-           end_time: endTime,
-           image_url: this.newArchiveForm.image || '',
-           created_by: '当前用户' // 这里应该从用户信息中获取
-         };
+        // 构造后端API需要的数据格式
+        const archiveData = {
+          name: this.newArchiveForm.name,
+          location: this.newArchiveForm.location,
+          description: this.newArchiveForm.description || "",
+          start_time: startTime,
+          end_time: endTime,
+          image_url: this.newArchiveForm.image || "",
+          created_by: "当前用户", // 这里应该从用户信息中获取
+        };
 
-         console.log('创建档案数据:', archiveData);
+        console.log("创建档案数据:", archiveData);
 
         // 调用后端API创建档案
         const response = await centerAPI.archive.createArchive(archiveData);
 
         // 响应拦截器已处理成功/失败判断，直接使用数据
         const newArchive = response.data || response;
-        
-        this.$message.success('档案创建成功');
-        
+
+        this.$message.success("档案创建成功");
+
         // 重置档案分页到第一页并重新加载档案列表
         this.archivesPagination.currentPage = 1;
         await this.loadArchivesList();
-        
+
         // 如果创建成功，切换到新创建的档案
         if (newArchive && newArchive.archive_id) {
           this.currentArchiveId = newArchive.archive_id;
           await this.loadArchiveDetail(newArchive.archive_id);
           await this.loadArchiveAlerts(newArchive.archive_id);
         }
-        
+
         // 关闭对话框并重置表单
         this.addArchiveDialogVisible = false;
         this.resetNewArchiveForm();
-        
-        console.log('档案创建成功:', newArchive);
-       } catch (error) {
-         console.error('创建档案失败:', error);
-         this.$message.error('创建档案失败: ' + error.message);
-       }
-     },
 
-     // 重置新档案表单
-     resetNewArchiveForm() {
-       this.newArchiveForm = {
-         name: '',
-         location: '',
-         timeRange: [],
-         description: '',
-         image: ''
-       };
-     },
+        console.log("档案创建成功:", newArchive);
+      } catch (error) {
+        console.error("创建档案失败:", error);
+        this.$message.error("创建档案失败: " + error.message);
+      }
+    },
+
+    // 重置新档案表单
+    resetNewArchiveForm() {
+      this.newArchiveForm = {
+        name: "",
+        location: "",
+        timeRange: [],
+        description: "",
+        image: "",
+      };
+    },
     // 处理上传成功后的逻辑
     handleUploadSuccess(response, file) {
       // 实际项目中应从服务器响应中获取图片URL
       // 这里使用本地文件预览URL作为演示
       const imageUrl = URL.createObjectURL(file.raw);
-      
+
       // 根据上下文设置不同表单的图片
       if (this.editDialogVisible) {
         this.editForm.image = imageUrl;
       } else if (this.addArchiveDialogVisible) {
         this.newArchiveForm.image = imageUrl;
       }
-      
-      this.$message.success('图片上传成功');
+
+      this.$message.success("图片上传成功");
     },
     // 处理上传前的图片校验
     beforeUpload(file) {
       // 检查文件类型
-      const isImage = file.type.indexOf('image/') === 0;
+      const isImage = file.type.indexOf("image/") === 0;
       if (!isImage) {
-        this.$message.error('只能上传图片文件!');
+        this.$message.error("只能上传图片文件!");
         return false;
       }
-      
+
       // 检查文件大小，限制为2MB
       const isLt2M = file.size / 1024 / 1024 < 2;
       if (!isLt2M) {
-        this.$message.error('图片不能超过2MB!');
+        this.$message.error("图片不能超过2MB!");
         return false;
       }
-      
+
       return true;
     },
     // 处理上传错误
     handleUploadError(error) {
-      console.error('上传错误', error);
-      this.$message.error('图片上传失败，请重试');
+      console.error("上传错误", error);
+      this.$message.error("图片上传失败，请重试");
     },
     // 处理移除图片
     handleRemove() {
       if (this.editDialogVisible) {
-        this.editForm.image = '';
+        this.editForm.image = "";
       } else if (this.addArchiveDialogVisible) {
-        this.newArchiveForm.image = '';
+        this.newArchiveForm.image = "";
       }
     },
     // 处理违规截图上传
     beforeImageUpload(file) {
       // 检查文件类型
-      const isImage = file.type.indexOf('image/') === 0;
+      const isImage = file.type.indexOf("image/") === 0;
       if (!isImage) {
-        this.$message.error('只能上传图片文件!');
+        this.$message.error("只能上传图片文件!");
         return false;
       }
-      
+
       // 检查文件大小，限制为2MB
       const isLt2M = file.size / 1024 / 1024 < 2;
       if (!isLt2M) {
-        this.$message.error('图片不能超过2MB!');
+        this.$message.error("图片不能超过2MB!");
         return false;
       }
-      
+
       return true;
     },
     // 处理违规截图上传成功
@@ -1547,14 +1577,14 @@ export default {
       // 实际项目中应从服务器响应中获取图片URL
       // 这里使用本地文件预览URL作为演示
       const imageUrl = URL.createObjectURL(file.raw);
-      
+
       this.addForm.violationImage = imageUrl;
-      
-      this.$message.success('违规截图上传成功');
+
+      this.$message.success("违规截图上传成功");
     },
     // 处理违规截图移除
     removeImage() {
-      this.addForm.violationImage = '';
+      this.addForm.violationImage = "";
     },
     // 预览图片
     previewImage(imageUrl) {
@@ -1564,19 +1594,19 @@ export default {
     // 处理视频片段上传
     beforeVideoUpload(file) {
       // 检查文件类型
-      const isVideo = file.type.indexOf('video/') === 0;
+      const isVideo = file.type.indexOf("video/") === 0;
       if (!isVideo) {
-        this.$message.error('只能上传视频文件!');
+        this.$message.error("只能上传视频文件!");
         return false;
       }
-      
+
       // 检查文件大小，限制为10MB
       const isLt10M = file.size / 1024 / 1024 < 10;
       if (!isLt10M) {
-        this.$message.error('视频不能超过10MB!');
+        this.$message.error("视频不能超过10MB!");
         return false;
       }
-      
+
       return true;
     },
     // 处理视频片段上传成功
@@ -1584,49 +1614,50 @@ export default {
       // 实际项目中应从服务器响应中获取视频URL
       // 这里使用本地文件预览URL作为演示
       const videoUrl = URL.createObjectURL(file.raw);
-      
+
       this.addForm.violationVideo = videoUrl;
-      
-      this.$message.success('视频片段上传成功');
+
+      this.$message.success("视频片段上传成功");
     },
     // 处理视频片段移除
     removeVideo() {
-      this.addForm.violationVideo = '';
+      this.addForm.violationVideo = "";
     },
     // 格式化时间
     formatTime(timeString) {
       try {
         if (!timeString) return timeString;
-        
+
         // 检查是否是时间范围格式（包含" HH:mm:ss-"这样的模式）
-        const rangePattern = /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})-(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/;
+        const rangePattern =
+          /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})-(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/;
         const match = timeString.match(rangePattern);
-        
+
         if (match) {
           // 这是时间范围格式
           const startTime = match[1];
           const endTime = match[2];
-          
+
           // 格式化开始时间
-          const [startDate, startTimeStr] = startTime.split(' ');
-          const [startYear, startMonth, startDay] = startDate.split('-');
+          const [startDate, startTimeStr] = startTime.split(" ");
+          const [startYear, startMonth, startDay] = startDate.split("-");
           const formattedStart = `${startYear}年${startMonth}月${startDay}日 ${startTimeStr}`;
-          
+
           // 格式化结束时间
-          const [endDate, endTimeStr] = endTime.split(' ');
-          const [endYear, endMonth, endDay] = endDate.split('-');
+          const [endDate, endTimeStr] = endTime.split(" ");
+          const [endYear, endMonth, endDay] = endDate.split("-");
           const formattedEnd = `${endYear}年${endMonth}月${endDay}日 ${endTimeStr}`;
-          
+
           return `${formattedStart} 至 ${formattedEnd}`;
         }
-        
+
         // 如果是单个完整的时间字符串，格式化为更友好的显示
-        if (timeString.includes(' ')) {
-          const [date, time] = timeString.split(' ');
-          const [year, month, day] = date.split('-');
+        if (timeString.includes(" ")) {
+          const [date, time] = timeString.split(" ");
+          const [year, month, day] = date.split("-");
           return `${year}年${month}月${day}日 ${time}`;
         }
-        
+
         return timeString;
       } catch (error) {
         return timeString;
@@ -1642,39 +1673,37 @@ export default {
     async confirmDeleteArchive() {
       try {
         const response = await centerAPI.archive.deleteArchive(this.deleteArchiveId);
-        
+
         // 响应拦截器已处理成功/失败判断
-        this.$message.success('档案删除成功');
-        
+        this.$message.success("档案删除成功");
+
         // 如果删除的是当前选中的档案，清空详情
         if (this.currentArchiveId === this.deleteArchiveId) {
           this.currentArchiveId = null;
           this.archiveInfo = {};
           this.archiveList = [];
         }
-        
+
         // 重新加载档案列表
         await this.loadArchivesList();
-        
+
         // 关闭确认对话框
         this.deleteArchiveConfirmVisible = false;
         this.deleteArchiveId = null;
-        this.deleteArchiveName = '';
-        
+        this.deleteArchiveName = "";
       } catch (error) {
-        console.error('删除档案失败:', error);
-        this.$message.error('删除档案失败: ' + error.message);
+        console.error("删除档案失败:", error);
+        this.$message.error("删除档案失败: " + error.message);
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <template>
   <div class="page-container">
     <!-- 内容区域 -->
     <div class="content-wrapper">
- 
       <!-- 左侧档案信息区域 -->
       <div class="detail-section">
         <div class="detail-header">
@@ -1686,11 +1715,11 @@ export default {
 
         <!-- 档案列表 -->
         <div class="archives-list">
-          <div 
-            v-for="archive in archivesList" 
-            :key="archive.id" 
+          <div
+            v-for="archive in archivesList"
+            :key="archive.id"
             class="archive-item"
-            :class="{'active': currentArchiveId === archive.id}"
+            :class="{ active: currentArchiveId === archive.id }"
           >
             <div class="archive-content" @click="switchToArchive(archive.id)">
               <div class="archive-name">{{ archive.name }}</div>
@@ -1698,20 +1727,21 @@ export default {
               <div class="archive-time">创建: {{ formatTime(archive.createTime) }}</div>
             </div>
             <div class="archive-actions">
-              <el-button 
-                link 
-                size="small" 
+              <el-button
+                link
+                size="small"
                 @click.stop="handleDeleteArchive(archive.id, archive.name)"
                 class="delete-archive-btn"
-                title="删除档案">
+                title="删除档案"
+              >
                 <i class="el-icon-delete"></i>
               </el-button>
             </div>
           </div>
         </div>
-        
+
         <!-- 档案列表分页区域 -->
-         <!-- layout="total, sizes, prev, pager, next, jumper" -->
+        <!-- layout="total, sizes, prev, pager, next, jumper" -->
         <div class="archives-pagination">
           <el-pagination
             :current-page.sync="archivesPagination.currentPage"
@@ -1746,12 +1776,14 @@ export default {
                 </div>
                 <div class="info-item">
                   <span class="label">档案描述：</span>
-                  <span class="value">{{ archiveInfo.description || '-' }}</span>
+                  <span class="value">{{ archiveInfo.description || "-" }}</span>
                 </div>
               </div>
             </div>
             <div class="archive-detail-footer">
-              <el-button type="primary" class="edit-archive-btn" @click="editArchive">编辑档案</el-button>
+              <el-button type="primary" class="edit-archive-btn" @click="editArchive">
+                编辑档案
+              </el-button>
             </div>
           </div>
         </div>
@@ -1763,21 +1795,37 @@ export default {
         <div class="table-header">
           <div class="table-title">预警列表 - {{ archiveInfo.name }}</div>
           <div class="table-actions">
-            <el-button type="danger" size="small" class="batch-delete-btn" @click="handleBatchDelete" :disabled="selectedRows.length === 0">
+            <el-button
+              type="danger"
+              size="small"
+              class="batch-delete-btn"
+              @click="handleBatchDelete"
+              :disabled="selectedRows.length === 0"
+            >
               批量删除
             </el-button>
             <el-button type="primary" size="small" class="add-btn" @click="addWarning">
-              <i class="el-icon-plus"></i> 添加预警
+              <i class="el-icon-plus"></i>
+              添加预警
             </el-button>
           </div>
         </div>
-        
+
         <!-- 表格卡片 -->
         <div class="table-section">
-          <el-table :data="archiveList" @selection-change="handleSelectionChange" style="width: 100%">
+          <el-table
+            :data="archiveList"
+            @selection-change="handleSelectionChange"
+            style="width: 100%"
+          >
             <el-table-column type="selection" width="55" align="center"></el-table-column>
             <el-table-column label="序号" prop="id" width="80" align="center"></el-table-column>
-            <el-table-column label="预警名称" prop="name" min-width="120" align="center"></el-table-column>
+            <el-table-column
+              label="预警名称"
+              prop="name"
+              min-width="120"
+              align="center"
+            ></el-table-column>
             <el-table-column label="预警图片" width="100" align="center">
               <template #default="scope">
                 <div class="preview-image-cell">
@@ -1790,7 +1838,12 @@ export default {
                 </div>
               </template>
             </el-table-column>
-            <el-table-column label="设备名称" prop="deviceName" min-width="150" align="center"></el-table-column>
+            <el-table-column
+              label="设备名称"
+              prop="deviceName"
+              min-width="150"
+              align="center"
+            ></el-table-column>
             <el-table-column label="预警时间" prop="warningTime" min-width="180" align="center">
               <template #default="scope">
                 {{ formatTime(scope.row.warningTime) }}
@@ -1798,32 +1851,54 @@ export default {
             </el-table-column>
             <el-table-column label="预警等级" width="100" align="center">
               <template #default="scope">
-                <span class="level-tag" :class="{
-                  'level1-tag': scope.row.warningLevel === 'level1',
-                  'level2-tag': scope.row.warningLevel === 'level2',
-                  'level3-tag': scope.row.warningLevel === 'level3',
-                  'level4-tag': scope.row.warningLevel === 'level4'
-                }">
-                  {{ 
-                    scope.row.warningLevel === 'level1' ? '一级预警' :
-                    scope.row.warningLevel === 'level2' ? '二级预警' :
-                    scope.row.warningLevel === 'level3' ? '三级预警' : 
-                    scope.row.warningLevel === 'level4' ? '四级预警' :
-                    '未知预警' }}
+                <span
+                  class="level-tag"
+                  :class="{
+                    'level1-tag': scope.row.warningLevel === 'level1',
+                    'level2-tag': scope.row.warningLevel === 'level2',
+                    'level3-tag': scope.row.warningLevel === 'level3',
+                    'level4-tag': scope.row.warningLevel === 'level4',
+                  }"
+                >
+                  {{
+                    scope.row.warningLevel === "level1"
+                      ? "一级预警"
+                      : scope.row.warningLevel === "level2"
+                        ? "二级预警"
+                        : scope.row.warningLevel === "level3"
+                          ? "三级预警"
+                          : scope.row.warningLevel === "level4"
+                            ? "四级预警"
+                            : "未知预警"
+                  }}
                 </span>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="120" align="center">
               <template #default="scope">
                 <div class="operation-buttons">
-                  <el-button link size="small" @click="showDetail(scope.row)" class="operation-btn detail-btn">详情</el-button>
-                  <el-button link size="small" @click="handleDelete(scope.row.id)" class="operation-btn delete-btn">删除</el-button>
+                  <el-button
+                    link
+                    size="small"
+                    @click="showDetail(scope.row)"
+                    class="operation-btn detail-btn"
+                  >
+                    详情
+                  </el-button>
+                  <el-button
+                    link
+                    size="small"
+                    @click="handleDelete(scope.row.id)"
+                    class="operation-btn delete-btn"
+                  >
+                    删除
+                  </el-button>
                 </div>
               </template>
             </el-table-column>
           </el-table>
         </div>
-        
+
         <!-- 分页区域 - 改为与 deviceSkills.vue 一致的样式 -->
         <div class="archives-pagination">
           <el-pagination
@@ -1837,11 +1912,10 @@ export default {
           />
         </div>
       </div>
-
     </div>
 
     <!-- 替换原有的预警详情弹框 -->
-    <WarningDetail 
+    <WarningDetail
       :visible.sync="warningDetailVisible"
       :warning="currentWarning"
       source="warningArchives"
@@ -1849,7 +1923,12 @@ export default {
     />
 
     <!-- 图片预览弹框 -->
-    <el-dialog title="预警图片预览" :visible.sync="imagePreviewVisible" width="50%" custom-class="image-preview-dialog">
+    <el-dialog
+      title="预警图片预览"
+      :visible.sync="imagePreviewVisible"
+      width="50%"
+      custom-class="image-preview-dialog"
+    >
       <div class="image-preview-wrapper">
         <div class="preview-blue-box">
           <i class="el-icon-picture-outline"></i>
@@ -1859,8 +1938,13 @@ export default {
     </el-dialog>
 
     <!-- 编辑档案弹框 -->
-    <el-dialog title="编辑档案信息" :visible.sync="editDialogVisible" width="30%" :before-close="cancelEdit"
-      custom-class="edit-archive-dialog">
+    <el-dialog
+      title="编辑档案信息"
+      :visible.sync="editDialogVisible"
+      width="30%"
+      :before-close="cancelEdit"
+      custom-class="edit-archive-dialog"
+    >
       <el-form :model="editForm" label-width="100px" class="edit-form">
         <el-form-item label="档案名称">
           <el-input v-model="editForm.name"></el-input>
@@ -1877,8 +1961,8 @@ export default {
             end-placeholder="结束时间"
             style="width: 100%"
             format="yyyy-MM-dd HH:mm:ss"
-            value-format="yyyy-MM-dd HH:mm:ss">
-          </el-date-picker>
+            value-format="yyyy-MM-dd HH:mm:ss"
+          ></el-date-picker>
           <div class="form-tip">
             <i class="el-icon-info"></i>
             <span>可选项：不填写将自动设置为当年完整时间范围</span>
@@ -1895,18 +1979,23 @@ export default {
     </el-dialog>
 
     <!-- 选择已发生预警弹框 -->
-    <el-dialog 
-      title="选择预警添加到档案" 
-      :visible.sync="selectAlertDialogVisible" 
-      width="85%" 
+    <el-dialog
+      title="选择预警添加到档案"
+      :visible.sync="selectAlertDialogVisible"
+      width="85%"
       custom-class="select-alert-dialog"
-      :close-on-click-modal="false">
-      
+      :close-on-click-modal="false"
+    >
       <!-- 筛选条件 -->
       <div class="alert-filters">
         <el-form :model="alertFilters" inline class="filter-form">
           <el-form-item label="预警等级">
-            <el-select v-model="alertFilters.alert_level" placeholder="全部等级" clearable style="width: 120px">
+            <el-select
+              v-model="alertFilters.alert_level"
+              placeholder="全部等级"
+              clearable
+              style="width: 120px"
+            >
               <el-option label="一级预警" :value="1"></el-option>
               <el-option label="二级预警" :value="2"></el-option>
               <el-option label="三级预警" :value="3"></el-option>
@@ -1914,13 +2003,28 @@ export default {
             </el-select>
           </el-form-item>
           <el-form-item label="预警类型">
-            <el-input v-model="alertFilters.alert_type" placeholder="预警类型" clearable style="width: 150px"></el-input>
+            <el-input
+              v-model="alertFilters.alert_type"
+              placeholder="预警类型"
+              clearable
+              style="width: 150px"
+            ></el-input>
           </el-form-item>
           <el-form-item label="摄像头名称">
-            <el-input v-model="alertFilters.camera_name" placeholder="摄像头名称" clearable style="width: 150px"></el-input>
+            <el-input
+              v-model="alertFilters.camera_name"
+              placeholder="摄像头名称"
+              clearable
+              style="width: 150px"
+            ></el-input>
           </el-form-item>
           <el-form-item label="处理状态">
-            <el-select v-model="alertFilters.status" placeholder="请选择状态" clearable style="width: 120px">
+            <el-select
+              v-model="alertFilters.status"
+              placeholder="请选择状态"
+              clearable
+              style="width: 120px"
+            >
               <el-option label="待处理" :value="1"></el-option>
               <el-option label="处理中" :value="2"></el-option>
               <el-option label="已处理" :value="3"></el-option>
@@ -1929,17 +2033,43 @@ export default {
             </el-select>
           </el-form-item>
           <el-form-item label="技能名称">
-            <el-input v-model="alertFilters.skill_name" placeholder="技能名称" clearable style="width: 120px"></el-input>
+            <el-input
+              v-model="alertFilters.skill_name"
+              placeholder="技能名称"
+              clearable
+              style="width: 120px"
+            ></el-input>
           </el-form-item>
           <el-form-item label="位置">
-            <el-input v-model="alertFilters.location" placeholder="位置" clearable style="width: 120px"></el-input>
+            <el-input
+              v-model="alertFilters.location"
+              placeholder="位置"
+              clearable
+              style="width: 120px"
+            ></el-input>
           </el-form-item>
           <el-form-item label="预警ID">
-            <el-input v-model="alertFilters.alert_id" placeholder="输入预警ID" clearable style="width: 150px" type="number"></el-input>
+            <el-input
+              v-model="alertFilters.alert_id"
+              placeholder="输入预警ID"
+              clearable
+              style="width: 150px"
+              type="number"
+            ></el-input>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="applyAlertFilters" icon="el-icon-search">筛选</el-button>
-            <el-button @click="resetAlertFilters(); loadAvailableAlerts()" icon="el-icon-refresh">重置</el-button>
+            <el-button type="primary" @click="applyAlertFilters" icon="el-icon-search">
+              筛选
+            </el-button>
+            <el-button
+              @click="
+                resetAlertFilters();
+                loadAvailableAlerts();
+              "
+              icon="el-icon-refresh"
+            >
+              重置
+            </el-button>
           </el-form-item>
         </el-form>
 
@@ -1952,32 +2082,45 @@ export default {
               placeholder="开始时间"
               format="yyyy-MM-dd HH:mm:ss"
               value-format="yyyy-MM-dd HH:mm:ss"
-              style="width: 180px; margin-right: 10px;">
-            </el-date-picker>
-            <span style="margin: 0 8px;">至</span>
+              style="width: 180px; margin-right: 10px"
+            ></el-date-picker>
+            <span style="margin: 0 8px">至</span>
             <el-date-picker
               v-model="alertFilters.end_time"
               type="datetime"
               placeholder="结束时间"
               format="yyyy-MM-dd HH:mm:ss"
               value-format="yyyy-MM-dd HH:mm:ss"
-              style="width: 180px;">
-            </el-date-picker>
+              style="width: 180px"
+            ></el-date-picker>
           </el-form-item>
         </el-form>
       </div>
 
       <!-- 预警列表表格 -->
-      <el-table 
-        :data="availableAlerts" 
+      <el-table
+        :data="availableAlerts"
         v-loading="availableAlertsLoading"
         @selection-change="handleAlertSelectionChange"
-        style="width: 100%; margin-top: 16px;"
-        max-height="450">
+        style="width: 100%; margin-top: 16px"
+        max-height="450"
+      >
         <el-table-column type="selection" width="55" align="center"></el-table-column>
         <el-table-column label="预警ID" prop="alert_id" width="80" align="center"></el-table-column>
-        <el-table-column label="预警名称" prop="alert_name" min-width="140" align="center" show-overflow-tooltip></el-table-column>
-        <el-table-column label="摄像头名称" prop="camera_name" min-width="150" align="center" show-overflow-tooltip></el-table-column>
+        <el-table-column
+          label="预警名称"
+          prop="alert_name"
+          min-width="140"
+          align="center"
+          show-overflow-tooltip
+        ></el-table-column>
+        <el-table-column
+          label="摄像头名称"
+          prop="camera_name"
+          min-width="150"
+          align="center"
+          show-overflow-tooltip
+        ></el-table-column>
         <el-table-column label="预警等级" width="100" align="center">
           <template #default="scope">
             <span class="level-tag" :class="getAlertLevelClass(scope.row.alert_level)">
@@ -1985,8 +2128,19 @@ export default {
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="预警类型" prop="alert_type" width="100" align="center"></el-table-column>
-        <el-table-column label="技能名称" prop="skill_name_zh" min-width="120" align="center" show-overflow-tooltip></el-table-column>
+        <el-table-column
+          label="预警类型"
+          prop="alert_type"
+          width="100"
+          align="center"
+        ></el-table-column>
+        <el-table-column
+          label="技能名称"
+          prop="skill_name_zh"
+          min-width="120"
+          align="center"
+          show-overflow-tooltip
+        ></el-table-column>
         <el-table-column label="预警时间" prop="alert_time" min-width="160" align="center">
           <template #default="scope">
             {{ formatTime(scope.row.alert_time) }}
@@ -1999,14 +2153,16 @@ export default {
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="位置" prop="location" min-width="120" align="center" show-overflow-tooltip></el-table-column>
+        <el-table-column
+          label="位置"
+          prop="location"
+          min-width="120"
+          align="center"
+          show-overflow-tooltip
+        ></el-table-column>
         <el-table-column label="操作" width="80" align="center">
           <template #default="scope">
-            <el-button 
-              link 
-              size="small" 
-              @click="previewAlert(scope.row)"
-              title="查看详情">
+            <el-button link size="small" @click="previewAlert(scope.row)" title="查看详情">
               <i class="el-icon-view"></i>
             </el-button>
           </template>
@@ -2014,7 +2170,7 @@ export default {
       </el-table>
 
       <!-- 分页 -->
-        <div class="archives-pagination">
+      <div class="archives-pagination">
         <el-pagination
           :current-page.sync="availableAlertsPagination.currentPage"
           :page-size.sync="availableAlertsPagination.pageSize"
@@ -2022,27 +2178,24 @@ export default {
           :page-sizes="[10, 20, 50, 100]"
           layout="total, sizes, prev, pager, next, jumper"
           @size-change="handleAvailableAlertsSizeChange"
-          @current-change="handleAvailableAlertsCurrentChange">
-        </el-pagination>
+          @current-change="handleAvailableAlertsCurrentChange"
+        ></el-pagination>
       </div>
 
       <div slot="footer" class="dialog-footer">
         <div class="selected-info">
-          <span v-if="selectedAlerts.length > 0">
-            已选择 {{ selectedAlerts.length }} 个预警
-          </span>
-          <span v-else class="no-selection">
-            请选择要添加到档案的预警
-          </span>
+          <span v-if="selectedAlerts.length > 0">已选择 {{ selectedAlerts.length }} 个预警</span>
+          <span v-else class="no-selection">请选择要添加到档案的预警</span>
         </div>
         <div class="dialog-buttons">
           <el-button @click="closeSelectAlertDialog" class="cancel-btn">取 消</el-button>
-          <el-button 
-            type="primary" 
-            @click="confirmAddSelectedAlerts" 
+          <el-button
+            type="primary"
+            @click="confirmAddSelectedAlerts"
             :disabled="selectedAlerts.length === 0"
             :loading="availableAlertsLoading"
-            class="confirm-btn">
+            class="confirm-btn"
+          >
             确认添加 ({{ selectedAlerts.length }})
           </el-button>
         </div>
@@ -2050,19 +2203,33 @@ export default {
     </el-dialog>
 
     <!-- 删除确认对话框 -->
-    <el-dialog title="删除确认" :visible.sync="deleteConfirmVisible" width="25%" custom-class="delete-confirm-dialog"
-      center>
+    <el-dialog
+      title="删除确认"
+      :visible.sync="deleteConfirmVisible"
+      width="25%"
+      custom-class="delete-confirm-dialog"
+      center
+    >
       <div class="confirm-content">
         <p>{{ deleteConfirmMessage }}</p>
       </div>
       <div slot="footer" class="dialog-footer">
-        <el-button size="small" @click="deleteConfirmVisible = false" class="cancel-btn">取 消</el-button>
-        <el-button size="small" type="danger" @click="confirmDelete" class="confirm-btn">确 定</el-button>
+        <el-button size="small" @click="deleteConfirmVisible = false" class="cancel-btn">
+          取 消
+        </el-button>
+        <el-button size="small" type="danger" @click="confirmDelete" class="confirm-btn">
+          确 定
+        </el-button>
       </div>
     </el-dialog>
 
     <!-- 添加档案对话框 -->
-    <el-dialog title="添加新档案" :visible.sync="addArchiveDialogVisible" width="30%" custom-class="add-archive-dialog">
+    <el-dialog
+      title="添加新档案"
+      :visible.sync="addArchiveDialogVisible"
+      width="30%"
+      custom-class="add-archive-dialog"
+    >
       <el-form :model="newArchiveForm" label-width="100px" class="add-form">
         <el-form-item label="档案名称" required>
           <el-input v-model="newArchiveForm.name" placeholder="请输入档案名称"></el-input>
@@ -2079,15 +2246,20 @@ export default {
             end-placeholder="结束时间"
             style="width: 100%"
             format="yyyy-MM-dd HH:mm:ss"
-            value-format="yyyy-MM-dd HH:mm:ss">
-          </el-date-picker>
+            value-format="yyyy-MM-dd HH:mm:ss"
+          ></el-date-picker>
           <div class="form-tip">
             <i class="el-icon-info"></i>
             <span>可选项：不填写将自动设置为当年完整时间范围</span>
           </div>
         </el-form-item>
         <el-form-item label="备注描述">
-          <el-input type="textarea" v-model="newArchiveForm.description" rows="4" placeholder="请输入备注描述"></el-input>
+          <el-input
+            type="textarea"
+            v-model="newArchiveForm.description"
+            rows="4"
+            placeholder="请输入备注描述"
+          ></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -2097,17 +2269,33 @@ export default {
     </el-dialog>
 
     <!-- 删除档案确认对话框 -->
-    <el-dialog title="删除档案确认" :visible.sync="deleteArchiveConfirmVisible" width="25%" custom-class="delete-confirm-dialog" center>
+    <el-dialog
+      title="删除档案确认"
+      :visible.sync="deleteArchiveConfirmVisible"
+      width="25%"
+      custom-class="delete-confirm-dialog"
+      center
+    >
       <div class="confirm-content">
         <div class="confirm-icon">
-          <i class="el-icon-warning" style="color: #f56c6c; font-size: 24px;"></i>
+          <i class="el-icon-warning" style="color: #f56c6c; font-size: 24px"></i>
         </div>
-        <p>确定要删除档案 "<strong>{{ deleteArchiveName }}</strong>" 吗？</p>
-        <p style="color: #909399; font-size: 12px; margin-top: 8px;">删除后该档案及其关联的所有预警记录都将被删除，此操作不可恢复！</p>
+        <p>
+          确定要删除档案 "
+          <strong>{{ deleteArchiveName }}</strong>
+          " 吗？
+        </p>
+        <p style="color: #909399; font-size: 12px; margin-top: 8px">
+          删除后该档案及其关联的所有预警记录都将被删除，此操作不可恢复！
+        </p>
       </div>
       <div slot="footer" class="dialog-footer">
-        <el-button size="small" @click="deleteArchiveConfirmVisible = false" class="cancel-btn">取 消</el-button>
-        <el-button size="small" type="danger" @click="confirmDeleteArchive" class="confirm-btn">确认删除</el-button>
+        <el-button size="small" @click="deleteArchiveConfirmVisible = false" class="cancel-btn">
+          取 消
+        </el-button>
+        <el-button size="small" type="danger" @click="confirmDeleteArchive" class="confirm-btn">
+          确认删除
+        </el-button>
       </div>
     </el-dialog>
 
@@ -2145,8 +2333,6 @@ export default {
   flex-direction: column;
   height: 100%;
 }
-
-
 
 /* 表格头部 */
 .table-header {
@@ -2219,7 +2405,11 @@ export default {
 }
 
 :deep(.table-section .el-table__row:hover > td) {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.03) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.05) 0%,
+    rgba(147, 197, 253, 0.03) 100%
+  ) !important;
 }
 
 :deep(.table-section .el-table__row) {
@@ -2406,8 +2596,6 @@ export default {
   color: #dc2626;
 }
 
-
-
 /* 左侧详情部分 */
 .detail-section {
   width: 330px;
@@ -2421,8 +2609,6 @@ export default {
   overflow: hidden;
   height: 100%;
 }
-
-
 
 .detail-header {
   display: flex;
@@ -2462,8 +2648,8 @@ export default {
   display: flex;
   justify-content: center;
   background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  margin-top: 0 !important;
+  padding-bottom: 10px !important;
 }
 
 .archives-pagination :deep(.el-pagination__total) {
@@ -2583,7 +2769,8 @@ export default {
   color: #1e40af;
 }
 
-.archive-location, .archive-time {
+.archive-location,
+.archive-time {
   font-size: 12px;
   color: #6b7280;
 }
@@ -2607,14 +2794,12 @@ export default {
   align-items: center;
   justify-content: center;
   color: #0066cc;
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(64, 158, 255, 0.2),
     inset 0 2px 16px rgba(255, 255, 255, 0.3);
   position: relative;
   overflow: hidden;
 }
-
-
 
 .preview-blue-box i {
   font-size: 80px;
@@ -2634,7 +2819,8 @@ export default {
 }
 
 @keyframes shimmer {
-  0%, 100% {
+  0%,
+  100% {
     transform: rotate(0deg) scale(1);
     opacity: 0.3;
   }
@@ -2769,7 +2955,11 @@ export default {
 }
 
 .page-container :deep(.el-table__row:hover > td) {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.03) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.05) 0%,
+    rgba(147, 197, 253, 0.03) 100%
+  ) !important;
 }
 
 /* 科技感 Radio 样式 */
@@ -3049,7 +3239,6 @@ export default {
   font-weight: 600;
 }
 
-
 /* 上传组件样式 */
 .upload-container {
   width: 100%;
@@ -3145,11 +3334,13 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to bottom, 
-    transparent 0%, 
-    transparent 60%, 
-    rgba(0, 0, 0, 0.3) 80%, 
-    rgba(0, 0, 0, 0.6) 100%);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 60%,
+    rgba(0, 0, 0, 0.3) 80%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -3189,7 +3380,6 @@ export default {
 .overlay-actions .el-button i {
   margin-right: 4px;
 }
-
 
 /* 表单提示文字样式 */
 .form-tip {
@@ -3285,8 +3475,6 @@ export default {
   border-radius: 6px !important;
 } */
 
-
-
 /* .page-container :deep(.el-button--primary:hover),
 .page-container :deep(.add-btn:hover),
 .page-container :deep(.edit-archive-btn:hover) {
@@ -3294,8 +3482,6 @@ export default {
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4) !important;
   transform: translateY(-2px) !important;
 } */
-
-
 
 /* 批量删除按钮改为刷新按钮样式 */
 .page-container :deep(.batch-delete-btn) {
@@ -3345,15 +3531,11 @@ export default {
   border-radius: 6px !important;
 } */
 
-
-
 /* .page-container :deep(.el-button--danger:not(.batch-delete-btn):hover {
   background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
   box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5), 0 4px 8px rgba(185, 28, 28, 0.4) !important;
   transform: translateY(-2px) !important;
 } */
-
-
 
 /* .page-container :deep(.el-button:not(.el-button--primary):not(.el-button--danger):not(.add-btn):not(.edit-archive-btn):not(.batch-delete-btn) {
   background: #f5f7fa !important;
@@ -3433,8 +3615,6 @@ export default {
   z-index: 10001 !important;
 }
 
-
-
 /* 输入框和选择器样式 - 与 deviceSkills.vue 一致 */
 .page-container :deep(.el-input__inner) {
   border: 1px solid #e2e8f0 !important;
@@ -3498,8 +3678,6 @@ export default {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
-
-
 </style>
 
 <!-- 全局样式修复Element UI时间选择器z-index问题 -->

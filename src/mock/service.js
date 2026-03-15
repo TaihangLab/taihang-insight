@@ -1,21 +1,21 @@
 // Mock服务管理器
 class MockService {
   constructor() {
-    console.log('正在初始化Mock服务...');
-    this._enabled = true  // 使用私有属性避免方法名冲突
+    console.log("正在初始化Mock服务...");
+    this._enabled = true; // 使用私有属性避免方法名冲突
     this.mockData = {};
   }
 
   // 启用Mock服务
   enable() {
     this._enabled = true;
-    console.log('Mock服务已启用');
+    console.log("Mock服务已启用");
   }
 
   // 禁用Mock服务
   disable() {
     this._enabled = false;
-    console.log('Mock服务已禁用');
+    console.log("Mock服务已禁用");
   }
 
   // 检查Mock服务是否启用
@@ -38,7 +38,7 @@ class MockService {
 
   // 模拟API延迟
   async delay(ms = 1000) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   // 模拟API调用
@@ -55,12 +55,12 @@ class MockService {
       getTenants: {
         data: {
           items: [
-            { tenant_id: 'TNT001', tenant_name: '测试租户1', company_name: '测试公司1' },
-            { tenant_id: 'TNT002', tenant_name: '测试租户2', company_name: '测试公司2' }
+            { tenant_id: "TNT001", tenant_name: "测试租户1", company_name: "测试公司1" },
+            { tenant_id: "TNT002", tenant_name: "测试租户2", company_name: "测试公司2" },
           ],
-          total: 2
-        }
-      }
+          total: 2,
+        },
+      },
     };
 
     return mockResponses[apiName] || { data: {} };

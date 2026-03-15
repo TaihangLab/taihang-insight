@@ -3,7 +3,8 @@
     <!-- 顶部操作栏 -->
     <div class="operation-bar">
       <el-button type="primary" @click="handleAddBox">
-        <i class="el-icon-plus"></i>添加边缘盒子
+        <i class="el-icon-plus"></i>
+        添加边缘盒子
       </el-button>
       <div class="search-box">
         <el-input
@@ -18,18 +19,19 @@
     </div>
 
     <!-- 边缘盒子列表 -->
-    <el-table 
-      :data="tableData" 
+    <el-table
+      :data="tableData"
       :border="false"
       class="custom-table"
-      style="width: 100%; margin-top: 20px;">
+      style="width: 100%; margin-top: 20px"
+    >
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column prop="name" label="盒子名称" min-width="150" align="center" />
       <el-table-column prop="serialNumber" label="序列号" min-width="150" align="center" />
       <el-table-column prop="status" label="状态" width="100" align="center">
         <template #default="{ row }">
           <el-tag :type="row.status === 'online' ? 'success' : 'danger'">
-            {{ row.status === 'online' ? '在线' : '离线' }}
+            {{ row.status === "online" ? "在线" : "离线" }}
           </el-tag>
         </template>
       </el-table-column>
@@ -89,11 +91,7 @@
     </el-dialog>
 
     <!-- 绑定服务器弹窗 -->
-    <el-dialog
-      title="绑定边缘服务器"
-      :visible.sync="bindDialogVisible"
-      width="40%"
-    >
+    <el-dialog title="绑定边缘服务器" :visible.sync="bindDialogVisible" width="40%">
       <el-form :model="bindForm" label-width="100px">
         <el-form-item label="选择服务器">
           <el-select v-model="bindForm.serverId" placeholder="请选择边缘服务器" style="width: 100%">
@@ -115,103 +113,95 @@
 </template>
 
 <script>
-import { 
-  getEdgeBoxList, 
-  addEdgeBox, 
-  updateEdgeBox, 
-  deleteEdgeBox, 
+import {
+  getEdgeBoxList,
+  addEdgeBox,
+  updateEdgeBox,
+  deleteEdgeBox,
   bindEdgeServer,
-  getAvailableServerList
-} from '@/api/edgeManagement'
+  getAvailableServerList,
+} from "@/api/edgeManagement";
 
 export default {
-  name: 'EdgeBox',
-  
+  name: "EdgeBox",
+
   data() {
     return {
       // 搜索关键字
-      searchKeyword: '',
-      
+      searchKeyword: "",
+
       // 表格数据
       tableData: [],
-      
+
       // 分页
       currentPage: 1,
       pageSize: 10,
       total: 0,
-      
+
       // 弹窗控制
       dialogVisible: false,
-      dialogType: 'add', // add 或 edit
+      dialogType: "add", // add 或 edit
       bindDialogVisible: false,
-      
+
       // 表单数据
       formData: {
-        name: '',
-        serialNumber: '',
-        ipAddress: '',
-        location: ''
+        name: "",
+        serialNumber: "",
+        ipAddress: "",
+        location: "",
       },
-      
+
       // 表单验证规则
       formRules: {
-        name: [
-          { required: true, message: '请输入盒子名称', trigger: 'blur' }
-        ],
-        serialNumber: [
-          { required: true, message: '请输入序列号', trigger: 'blur' }
-        ],
-        ipAddress: [
-          { required: true, message: '请输入IP地址', trigger: 'blur' }
-        ],
-        location: [
-          { required: true, message: '请输入安装位置', trigger: 'blur' }
-        ]
+        name: [{ required: true, message: "请输入盒子名称", trigger: "blur" }],
+        serialNumber: [{ required: true, message: "请输入序列号", trigger: "blur" }],
+        ipAddress: [{ required: true, message: "请输入IP地址", trigger: "blur" }],
+        location: [{ required: true, message: "请输入安装位置", trigger: "blur" }],
       },
-      
+
       // 绑定服务器表单
       bindForm: {
-        serverId: ''
+        serverId: "",
       },
-      
+
       // 服务器列表
       serverList: [
-        { id: '1', name: '边缘服务器1' },
-        { id: '2', name: '边缘服务器2' },
-        { id: '3', name: '边缘服务器3' }
+        { id: "1", name: "边缘服务器1" },
+        { id: "2", name: "边缘服务器2" },
+        { id: "3", name: "边缘服务器3" },
       ],
-      
+
       // 模拟数据
       mockData: [
         {
-          id: '1',
-          name: '边缘盒子A',
-          serialNumber: 'EB001',
-          status: 'online',
-          ipAddress: '192.168.1.100',
-          location: '1号厂房东侧',
-          bindServer: '边缘服务器1',
-          lastOnlineTime: '2024-03-19 15:30:00'
+          id: "1",
+          name: "边缘盒子A",
+          serialNumber: "EB001",
+          status: "online",
+          ipAddress: "192.168.1.100",
+          location: "1号厂房东侧",
+          bindServer: "边缘服务器1",
+          lastOnlineTime: "2024-03-19 15:30:00",
         },
         {
-          id: '2',
-          name: '边缘盒子B',
-          serialNumber: 'EB002',
-          status: 'offline',
-          ipAddress: '192.168.1.101',
-          location: '2号厂房西侧',
-          bindServer: '边缘服务器2',
-          lastOnlineTime: '2024-03-19 14:20:00'
-        }
-      ]
-    }
+          id: "2",
+          name: "边缘盒子B",
+          serialNumber: "EB002",
+          status: "offline",
+          ipAddress: "192.168.1.101",
+          location: "2号厂房西侧",
+          bindServer: "边缘服务器2",
+          lastOnlineTime: "2024-03-19 14:20:00",
+        },
+      ],
+    };
   },
-  
+
   mounted() {
-    this.loadData()
-    this.loadServerList()
+    this.loadData();
+    this.loadServerList();
   },
-  
+
   methods: {
     // 加载数据
     async loadData() {
@@ -220,9 +210,9 @@ export default {
         const response = await getEdgeBoxList({
           pageNum: this.currentPage,
           pageSize: this.pageSize,
-          keyword: this.searchKeyword
+          keyword: this.searchKeyword,
         }).catch(() => null);
-        
+
         if (response && response.data) {
           this.tableData = response.data.list || response.data.rows || [];
           this.total = response.data.total || 0;
@@ -232,13 +222,13 @@ export default {
           this.total = this.mockData.length;
         }
       } catch (error) {
-        console.error('加载边缘盒子列表失败:', error);
+        console.error("加载边缘盒子列表失败:", error);
         // 使用模拟数据作为降级方案
         this.tableData = this.mockData;
         this.total = this.mockData.length;
       }
     },
-    
+
     // 加载服务器列表
     async loadServerList() {
       try {
@@ -247,7 +237,7 @@ export default {
           this.serverList = response.data;
         }
       } catch (error) {
-        console.error('加载服务器列表失败:', error);
+        console.error("加载服务器列表失败:", error);
       }
     },
 
@@ -256,26 +246,26 @@ export default {
       this.currentPage = 1;
       this.loadData();
     },
-    
+
     // 添加边缘盒子
     handleAddBox() {
-      this.dialogType = 'add'
-      this.dialogVisible = true
+      this.dialogType = "add";
+      this.dialogVisible = true;
     },
-    
+
     // 编辑边缘盒子
     handleEdit(row) {
-      this.dialogType = 'edit'
-      this.formData = { ...row }
-      this.dialogVisible = true
+      this.dialogType = "edit";
+      this.formData = { ...row };
+      this.dialogVisible = true;
     },
-    
+
     // 绑定服务器
     async handleBind(row) {
-      this.currentEditingBox = row
-      this.bindForm.serverId = ''
-      this.bindDialogVisible = true
-      
+      this.currentEditingBox = row;
+      this.bindForm.serverId = "";
+      this.bindDialogVisible = true;
+
       // 加载可用的服务器列表
       try {
         const response = await getAvailableServerList().catch(() => null);
@@ -283,97 +273,99 @@ export default {
           this.serverList = response.data;
         }
       } catch (error) {
-        console.error('加载服务器列表失败:', error);
+        console.error("加载服务器列表失败:", error);
       }
     },
-    
+
     // 删除边缘盒子
     handleDelete(row) {
-      this.$confirm('确认删除该边缘盒子?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        try {
-          await deleteEdgeBox(row.id);
-          this.$message.success('删除成功');
-          this.loadData();
-        } catch (error) {
-          console.error('删除失败:', error);
-          this.$message.error('删除失败');
-        }
-      }).catch(() => {})
+      this.$confirm("确认删除该边缘盒子?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(async () => {
+          try {
+            await deleteEdgeBox(row.id);
+            this.$message.success("删除成功");
+            this.loadData();
+          } catch (error) {
+            console.error("删除失败:", error);
+            this.$message.error("删除失败");
+          }
+        })
+        .catch(() => {});
     },
-    
+
     // 提交表单
     handleSubmit() {
       this.$refs.boxForm.validate(async (valid) => {
         if (valid) {
           try {
             // 根据对话框类型调用不同的API
-            if (this.dialogType === 'add') {
+            if (this.dialogType === "add") {
               await addEdgeBox(this.formData);
-              this.$message.success('添加成功');
+              this.$message.success("添加成功");
             } else {
               await updateEdgeBox(this.formData);
-              this.$message.success('编辑成功');
+              this.$message.success("编辑成功");
             }
             this.dialogVisible = false;
             this.loadData();
           } catch (error) {
-            console.error('操作失败:', error);
-            this.$message.error(this.dialogType === 'add' ? '添加失败' : '编辑失败');
+            console.error("操作失败:", error);
+            this.$message.error(this.dialogType === "add" ? "添加失败" : "编辑失败");
           }
         }
-      })
+      });
     },
-    
+
     // 提交绑定
     async handleBindSubmit() {
       if (!this.bindForm.serverId) {
-        this.$message.warning('请选择要绑定的服务器');
+        this.$message.warning("请选择要绑定的服务器");
         return;
       }
       try {
         await bindEdgeServer({
           boxId: this.currentEditingBox.id,
-          serverId: this.bindForm.serverId
+          serverId: this.bindForm.serverId,
         });
-        this.$message.success('绑定成功');
+        this.$message.success("绑定成功");
         this.bindDialogVisible = false;
         this.loadData();
       } catch (error) {
-        console.error('绑定失败:', error);
-        this.$message.error('绑定失败');
+        console.error("绑定失败:", error);
+        this.$message.error("绑定失败");
       }
     },
-    
+
     // 重置表单
     resetForm() {
       if (this.$refs.boxForm) {
-        this.$refs.boxForm.resetFields()
+        this.$refs.boxForm.resetFields();
       }
       this.formData = {
-        name: '',
-        serialNumber: '',
-        ipAddress: '',
-        location: ''
-      }
+        name: "",
+        serialNumber: "",
+        ipAddress: "",
+        location: "",
+      };
     },
-    
+
     // 分页大小改变
     handleSizeChange(val) {
-      this.pageSize = val
-      this.loadData()
+      this.pageSize = val;
+      this.loadData();
     },
-    
+
     // 当前页改变
     handleCurrentChange(val) {
-      this.currentPage = val
-      this.loadData()
-    }
-  }
-}
+      this.currentPage = val;
+      this.loadData();
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -419,7 +411,9 @@ export default {
 .operation-bar :deep(.el-button--primary) {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
+  box-shadow:
+    0 4px 12px rgba(59, 130, 246, 0.4),
+    0 2px 4px rgba(30, 64, 175, 0.3);
   color: white;
   font-weight: 600;
   border-radius: 8px;
@@ -427,7 +421,9 @@ export default {
 }
 .operation-bar :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4);
+  box-shadow:
+    0 6px 20px rgba(59, 130, 246, 0.5),
+    0 4px 8px rgba(30, 64, 175, 0.4);
   transform: translateY(-2px);
 }
 

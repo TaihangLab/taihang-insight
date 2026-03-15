@@ -5,21 +5,32 @@
         <el-page-header @back="close" content="编辑通道"></el-page-header>
       </div>
       <div class="page-header-btn">
-        <div style="display: inline;">
-          <el-button icon="el-icon-close" size="small" style="font-size: 20px; color: #000;" link @click="close" ></el-button>
+        <div style="display: inline">
+          <el-button
+            icon="el-icon-close"
+            size="small"
+            style="font-size: 20px; color: #000"
+            link
+            @click="close"
+          ></el-button>
         </div>
       </div>
     </div>
-    <CommonChannelEdit ref="commonChannelEdit" :id="id" :saveSuccess="close" :cancel="close"></CommonChannelEdit>
+    <CommonChannelEdit
+      ref="commonChannelEdit"
+      :id="id"
+      :saveSuccess="close"
+      :cancel="close"
+    ></CommonChannelEdit>
   </div>
 </template>
 
 <script>
-import CommonChannelEdit from '@/components/common/CommonChannelEdit'
+import CommonChannelEdit from "@/components/common/CommonChannelEdit";
 
 export default {
   name: "channelEdit",
-  props: [ 'id', 'closeEdit'],
+  props: ["id", "closeEdit"],
   components: {
     CommonChannelEdit,
   },
@@ -28,7 +39,7 @@ export default {
   },
   methods: {
     close: function () {
-      this.closeEdit()
+      this.closeEdit();
     },
   },
 };

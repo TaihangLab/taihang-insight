@@ -24,10 +24,7 @@
       </template>
 
       <!-- 岗位表格 -->
-      <el-table
-        v-loading="loading"
-        :data="positions"
-      >
+      <el-table v-loading="loading" :data="positions">
         <el-table-column prop="positionCode" label="岗位编号" width="150" />
 
         <el-table-column prop="positionName" label="岗位名称" width="150" />
@@ -41,7 +38,7 @@
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === Status.ENABLED ? 'success' : 'danger'">
-              {{ row.status === Status.ENABLED ? '启用' : '停用' }}
+              {{ row.status === Status.ENABLED ? "启用" : "停用" }}
             </el-tag>
           </template>
         </el-table-column>
@@ -50,12 +47,8 @@
 
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="handleEdit(row)">
-              编辑
-            </el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <el-button link type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -81,12 +74,15 @@
  * 岗位管理页面
  * 使用 Composition API + TypeScript
  */
-import { reactive, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import type { Position } from '@/types/rbac';
-import { Status } from '@/types/rbac';
-import { usePositionData, type PositionSearchConditions } from '@/pages/system/composable/position/usePositionData';
-import PositionSearchBar from '@/pages/system/components/position/PositionSearchBar.vue';
+import { reactive, onMounted } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import type { Position } from "@/types/rbac";
+import { Status } from "@/types/rbac";
+import {
+  usePositionData,
+  type PositionSearchConditions,
+} from "@/pages/system/composable/position/usePositionData";
+import PositionSearchBar from "@/pages/system/components/position/PositionSearchBar.vue";
 
 // ============================================
 // Composables
@@ -99,7 +95,7 @@ const {
   pagination,
   fetchPositions,
   fetchPositionCategories,
-  deletePosition
+  deletePosition,
 } = usePositionData();
 
 // ============================================
@@ -109,10 +105,10 @@ const {
 // 搜索条件
 const searchConditions = reactive<PositionSearchConditions>({
   tenant_id: null,
-  position_code: '',
-  position_name: '',
-  category_code: '',
-  status: null
+  position_code: "",
+  position_name: "",
+  category_code: "",
+  status: null,
 });
 
 // ============================================
@@ -139,7 +135,7 @@ const loadPositionCategories = async () => {
     await fetchPositionCategories();
   } catch (error: unknown) {
     const err = error as Error;
-    console.error('加载岗位类别失败:', err.message);
+    console.error("加载岗位类别失败:", err.message);
   }
 };
 
@@ -158,10 +154,10 @@ const handleReset = () => {
   const currentTenantId = searchConditions.tenant_id;
   Object.assign(searchConditions, {
     tenant_id: currentTenantId,
-    position_code: '',
-    position_name: '',
-    category_code: '',
-    status: null
+    position_code: "",
+    position_name: "",
+    category_code: "",
+    status: null,
   });
   pagination.value.currentPage = 1;
   loadPositions();
@@ -197,7 +193,7 @@ const handleSizeChange = (size: number) => {
  */
 const handleAdd = () => {
   // TODO: 打开新增对话框
-  ElMessage.info('打开新增岗位对话框');
+  ElMessage.info("打开新增岗位对话框");
 };
 
 /**
@@ -213,18 +209,14 @@ const handleEdit = (row: Position) => {
  */
 const handleDelete = async (row: Position) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除岗位 "${row.positionName}" 吗？`,
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    );
+    await ElMessageBox.confirm(`确定要删除岗位 "${row.positionName}" 吗？`, "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
 
     await deletePosition(row.id);
-    ElMessage.success('删除成功');
+    ElMessage.success("删除成功");
     loadPositions();
   } catch {
     // 用户取消操作

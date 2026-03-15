@@ -3,30 +3,30 @@
  * 提供所有 API 模块共享的方法、类型和工具函数
  */
 
-import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
-import { useTokenStore } from '@/stores/modules/token'
+import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import { useTokenStore } from "@/stores/modules/token";
 
 // ========== 类型导出 ==========
 // 重新导出全局类型
-export type { UnifiedResponse, RBACResponse, PaginationData } from '@/types/global'
+export type { UnifiedResponse, RBACResponse, PaginationData } from "@/types/global";
 
 // 导出 center API 相关类型（从 .d.ts 文件）
-export type { PageParams, RequiredPageParams } from '@/types/center.d'
+export type { PageParams, RequiredPageParams } from "@/types/center.d";
 
 // ========== API 错误类 ==========
 /**
  * 自定义 API 错误类
  */
 export class APIError extends Error {
-  code?: number | string
-  status?: number
-  response?: any
-  originalError?: any
+  code?: number | string;
+  status?: number;
+  response?: any;
+  originalError?: any;
 
   constructor(message: string, code?: number | string) {
-    super(message)
-    this.name = 'APIError'
-    this.code = code
+    super(message);
+    this.name = "APIError";
+    this.code = code;
   }
 }
 
@@ -37,19 +37,19 @@ export class APIError extends Error {
  * 生产环境：使用环境变量配置的完整 URL
  */
 export const getApiBaseURL = () => {
-  if (import.meta.env.MODE === 'production') {
-    return import.meta.env.VITE_API_BASE_URL || ''
+  if (import.meta.env.MODE === "production") {
+    return import.meta.env.VITE_API_BASE_URL || "";
   }
-  return ''
-}
+  return "";
+};
 
 /**
  * 获取认证 API 基础 URL（始终使用完整 URL）
  * 用于认证相关接口，开发环境也需要完整 URL
  */
 export const getAuthApiBaseURL = () => {
-  return import.meta.env.VITE_API_BASE_URL || ''
-}
+  return import.meta.env.VITE_API_BASE_URL || "";
+};
 
 // ========== 参数序列化 ==========
 
@@ -58,23 +58,23 @@ export const getAuthApiBaseURL = () => {
  * @param params 参数对象
  */
 export const paramsSerializer = function (params: Record<string, any>): string {
-  const queryParams: string[] = []
+  const queryParams: string[] = [];
 
   for (const key in params) {
     if (params[key] !== undefined) {
       if (Array.isArray(params[key])) {
         // 数组参数：使用重复的键名传递每个值
         params[key].forEach((value: any) => {
-          queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-        })
+          queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+        });
       } else {
-        queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+        queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`);
       }
     }
   }
 
-  return queryParams.join('&')
-}
+  return queryParams.join("&");
+};
 
 // ========== 请求头配置 ==========
 
@@ -82,64 +82,64 @@ export const paramsSerializer = function (params: Record<string, any>): string {
  * 添加认证请求头（Authorization + clientid）
  * @param config Axios 请求配置
  */
-export const addAuthHeaders = (
-  config: InternalAxiosRequestConfig
-): InternalAxiosRequestConfig => {
-  const tokenStore = useTokenStore()
-  const token = tokenStore.getAdminToken()
+export const addAuthHeaders = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+  const tokenStore = useTokenStore();
+  const token = tokenStore.getAdminToken();
   if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`
+    config.headers["Authorization"] = `Bearer ${token}`;
   }
   // 始终添加 clientid
-  config.headers['clientid'] = import.meta.env.VITE_CLIENT_ID
-  return config
-}
+  config.headers["clientid"] = import.meta.env.VITE_CLIENT_ID;
+  return config;
+};
 
 /**
  * 仅添加 clientid 请求头（用于完全不需要认证的接口）
  */
-export const addClientIdHeader = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
-  config.headers['clientid'] = import.meta.env.VITE_CLIENT_ID
-  return config
-}
+export const addClientIdHeader = (
+  config: InternalAxiosRequestConfig,
+): InternalAxiosRequestConfig => {
+  config.headers["clientid"] = import.meta.env.VITE_CLIENT_ID;
+  return config;
+};
 
 // ========== 错误处理 ==========
 
 /**
  * 创建 403 错误
  */
-export const create403Error = (message = '无权限访问该资源'): APIError => {
-  const error = new APIError(message, 403)
-  error.code = 403
-  error.status = 403
-  return error
-}
+export const create403Error = (message = "无权限访问该资源"): APIError => {
+  const error = new APIError(message, 403);
+  error.code = 403;
+  error.status = 403;
+  return error;
+};
 
 /**
  * 创建 401 错误
  */
-export const create401Error = (message = '登录已过期，请重新登录'): APIError => {
-  const error = new APIError(message, 401)
-  error.status = 401
-  return error
-}
+export const create401Error = (message = "登录已过期，请重新登录"): APIError => {
+  const error = new APIError(message, 401);
+  error.status = 401;
+  return error;
+};
 
 /**
  * 创建 404 错误
  */
-export const create404Error = (message = '请求的资源不存在'): APIError => {
-  const error = new APIError(message, 404)
-  error.status = 404
-  return error
-}
+export const create404Error = (message = "请求的资源不存在"): APIError => {
+  const error = new APIError(message, 404);
+  error.status = 404;
+  return error;
+};
 
 /**
  * 创建网络错误
  */
-export const createNetworkError = (message = '网络连接失败'): APIError => {
-  const error = new APIError(message, 'NETWORK_ERROR')
-  return error
-}
+export const createNetworkError = (message = "网络连接失败"): APIError => {
+  const error = new APIError(message, "NETWORK_ERROR");
+  return error;
+};
 
 // ========== 响应处理 ==========
 
@@ -147,36 +147,33 @@ export const createNetworkError = (message = '网络连接失败'): APIError => 
  * 通用响应处理函数
  * 将非标准响应转换为 UnifiedResponse 格式
  */
-export const handleSimpleResponse = (
-  response: AxiosResponse,
-  apiName: string
-): AxiosResponse => {
-  const originalData = response.data
+export const handleSimpleResponse = (response: AxiosResponse, apiName: string): AxiosResponse => {
+  const originalData = response.data;
 
   if (originalData && originalData.code !== undefined) {
-    return response
+    return response;
   }
 
   const transformedData = {
     code: 0,
-    msg: 'success',
+    msg: "success",
     data: {},
-    total: 0
-  }
+    total: 0,
+  };
 
   if (originalData && originalData.success !== undefined) {
-    transformedData.code = originalData.success ? 0 : -1
-    transformedData.msg = originalData.message || (originalData.success ? 'success' : 'failed')
-    transformedData.data = originalData
+    transformedData.code = originalData.success ? 0 : -1;
+    transformedData.msg = originalData.message || (originalData.success ? "success" : "failed");
+    transformedData.data = originalData;
   } else {
-    transformedData.data = originalData
+    transformedData.data = originalData;
   }
 
-  response.data = transformedData
-  console.log(`${apiName}响应转换完成:`, response.data)
+  response.data = transformedData;
+  console.log(`${apiName}响应转换完成:`, response.data);
 
-  return response
-}
+  return response;
+};
 
 // ========== Axios 实例创建工厂 ==========
 
@@ -187,25 +184,25 @@ export const handleSimpleResponse = (
  */
 export const createAxiosInstance = (
   config: {
-    baseURL?: string
-    timeout?: number
-    withCredentials?: boolean
+    baseURL?: string;
+    timeout?: number;
+    withCredentials?: boolean;
   } = {},
   options: {
-    skipAuth?: boolean // 跳过添加认证头（完全不需要认证）
-    skipClientId?: boolean // 跳过添加 clientid
-    skipResponseInterceptor?: boolean // 跳过响应拦截器
-    customResponseInterceptor?: (instance: AxiosInstance) => void // 自定义响应拦截器
-  } = {}
+    skipAuth?: boolean; // 跳过添加认证头（完全不需要认证）
+    skipClientId?: boolean; // 跳过添加 clientid
+    skipResponseInterceptor?: boolean; // 跳过响应拦截器
+    customResponseInterceptor?: (instance: AxiosInstance) => void; // 自定义响应拦截器
+  } = {},
 ): AxiosInstance => {
   const instance = axios.create({
     baseURL: config.baseURL ?? getApiBaseURL(),
     timeout: config.timeout ?? 15000,
     withCredentials: config.withCredentials ?? false,
-  })
+  });
 
   // 设置参数序列化
-  instance.defaults.paramsSerializer = paramsSerializer
+  instance.defaults.paramsSerializer = paramsSerializer;
 
   // 请求拦截器
   instance.interceptors.request.use(
@@ -213,31 +210,31 @@ export const createAxiosInstance = (
       // 完全跳过认证
       if (options.skipAuth) {
         if (!options.skipClientId) {
-          return addClientIdHeader(requestConfig)
+          return addClientIdHeader(requestConfig);
         }
-        return requestConfig
+        return requestConfig;
       }
 
       // 正常添加认证头
-      return addAuthHeaders(requestConfig)
+      return addAuthHeaders(requestConfig);
     },
     (error) => {
-      return Promise.reject(error)
-    }
-  )
+      return Promise.reject(error);
+    },
+  );
 
   // 添加通用响应拦截器（除非跳过）
   if (!options.skipResponseInterceptor && !options.customResponseInterceptor) {
-    attachCommonResponseInterceptor(instance)
+    attachCommonResponseInterceptor(instance);
   }
 
   // 添加自定义响应拦截器
   if (options.customResponseInterceptor) {
-    options.customResponseInterceptor(instance)
+    options.customResponseInterceptor(instance);
   }
 
-  return instance
-}
+  return instance;
+};
 
 /**
  * 附加通用响应拦截器
@@ -251,14 +248,14 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
       // 204 No Content - 无响应体（用于 DELETE 操作）
       // 返回默认成功对象
       if (response.status === 204) {
-        return { code: 0, message: '删除成功', data: null }
+        return { code: 0, message: "删除成功", data: null };
       }
 
-      const data = response.data
+      const data = response.data;
 
       // 后端统一响应格式：{ code, message, data }
       // code === 0 表示成功，非 0 表示失败
-      if (data && typeof data === 'object' && 'code' in data) {
+      if (data && typeof data === "object" && "code" in data) {
         if (data.code === 0) {
           // 请求成功，返回 data 字段
           // 如果是分页数据，将分页信息合并到返回值中
@@ -268,137 +265,153 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
               total: data.total,
               page: data.page,
               limit: data.page_size || data.limit,
-              pages: data.total && data.page_size ? Math.ceil(data.total / data.page_size) : 0
-            }
+              pages: data.total && data.page_size ? Math.ceil(data.total / data.page_size) : 0,
+            };
           }
-          return data.data
+          return data.data;
         } else {
           // 请求失败，抛出错误
-          const error = new APIError(data.message || 'API请求失败', data.code)
-          error.response = data
-          throw error
+          const error = new APIError(data.message || "API请求失败", data.code);
+          error.response = data;
+          throw error;
         }
       }
 
       // 其他格式，直接返回（兼容旧代码）
-      return data
+      return data;
     },
     (error) => {
-      console.error('API 请求错误:', error)
+      console.error("API 请求错误:", error);
 
       // 处理有响应的 HTTP 错误
       if (error.response) {
-        const status = error.response.status
+        const status = error.response.status;
 
         // 403 权限错误
         if (status === 403) {
-          let errorMessage = '无权限访问该资源'
+          let errorMessage = "无权限访问该资源";
           if (error.response.data) {
-            const data = error.response.data
-            if (typeof data === 'object' && 'success' in data && 'code' in data && 'message' in data) {
-              errorMessage = data.message || errorMessage
-            } else if (typeof data === 'object' && data.message) {
-              errorMessage = data.message
-            } else if (typeof data === 'object' && data.detail) {
-              errorMessage = data.detail
-            } else if (typeof data === 'string') {
-              errorMessage = data
+            const data = error.response.data;
+            if (
+              typeof data === "object" &&
+              "success" in data &&
+              "code" in data &&
+              "message" in data
+            ) {
+              errorMessage = data.message || errorMessage;
+            } else if (typeof data === "object" && data.message) {
+              errorMessage = data.message;
+            } else if (typeof data === "object" && data.detail) {
+              errorMessage = data.detail;
+            } else if (typeof data === "string") {
+              errorMessage = data;
             }
           }
 
           // 🔥 登录页面不自动跳转 403，让业务层处理
-          const isLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login'
+          const isLoginPage =
+            typeof window !== "undefined" && window.location.pathname === "/login";
           if (!isLoginPage) {
             // 跳转到 403 页面
-            if (typeof window !== 'undefined' && window.location.pathname !== '/403') {
-              window.location.href = '/#/403'
+            if (typeof window !== "undefined" && window.location.pathname !== "/403") {
+              window.location.href = "/#/403";
             }
           }
 
-          const customError = new APIError(errorMessage, 403)
-          customError.status = 403
-          customError.response = error.response.data
-          customError.originalError = error
-          return Promise.reject(customError)
+          const customError = new APIError(errorMessage, 403);
+          customError.status = 403;
+          customError.response = error.response.data;
+          customError.originalError = error;
+          return Promise.reject(customError);
         }
 
         // 401 未授权错误
         if (status === 401) {
-          const customError = new APIError('登录已过期，请重新登录', 401)
-          customError.status = 401
-          customError.originalError = error
-          return Promise.reject(customError)
+          const customError = new APIError("登录已过期，请重新登录", 401);
+          customError.status = 401;
+          customError.originalError = error;
+          return Promise.reject(customError);
         }
 
         // 404 资源不存在错误
         if (status === 404) {
-          const customError = new APIError('请求的资源不存在', 404)
-          customError.status = 404
-          customError.originalError = error
-          return Promise.reject(customError)
+          const customError = new APIError("请求的资源不存在", 404);
+          customError.status = 404;
+          customError.originalError = error;
+          return Promise.reject(customError);
         }
 
         if (error.response.data) {
-          const data = error.response.data
-          if (typeof data === 'object' && 'success' in data && 'code' in data && 'message' in data) {
-            const errorMessage = data.message || 'API请求失败'
-            const errorCode = data.code || status
-            const customError = new APIError(errorMessage, errorCode)
-            customError.status = status
-            customError.response = data
-            customError.originalError = error
-            return Promise.reject(customError)
+          const data = error.response.data;
+          if (
+            typeof data === "object" &&
+            "success" in data &&
+            "code" in data &&
+            "message" in data
+          ) {
+            const errorMessage = data.message || "API请求失败";
+            const errorCode = data.code || status;
+            const customError = new APIError(errorMessage, errorCode);
+            customError.status = status;
+            customError.response = data;
+            customError.originalError = error;
+            return Promise.reject(customError);
           }
         }
 
-        const customError = new APIError(error.response.statusText || `请求失败 (${status})`, status)
-        customError.status = status
-        customError.originalError = error
-        return Promise.reject(customError)
+        const customError = new APIError(
+          error.response.statusText || `请求失败 (${status})`,
+          status,
+        );
+        customError.status = status;
+        customError.originalError = error;
+        return Promise.reject(customError);
       }
 
       // 处理 error.status 为 403 的情况（可能在其他地方设置的）
       if (error.status === 403) {
-        if (typeof window !== 'undefined' && window.location.pathname !== '/403') {
-          window.location.href = '/#/403'
+        if (typeof window !== "undefined" && window.location.pathname !== "/403") {
+          window.location.href = "/#/403";
         }
-        const customError = new APIError('无权限访问该资源', 403)
-        customError.code = 403
-        customError.status = 403
-        customError.response = error.response?.data
-        customError.originalError = error
-        return Promise.reject(customError)
+        const customError = new APIError("无权限访问该资源", 403);
+        customError.code = 403;
+        customError.status = 403;
+        customError.response = error.response?.data;
+        customError.originalError = error;
+        return Promise.reject(customError);
       }
 
-      if (error.message === 'Network Error') {
-        const requestUrl = error.config?.url || ''
-        let errorMessage = '网络连接失败，可能是CORS跨域或后端服务未启动'
+      if (error.message === "Network Error") {
+        const requestUrl = error.config?.url || "";
+        let errorMessage = "网络连接失败，可能是CORS跨域或后端服务未启动";
 
-        if (requestUrl.includes('/permissions/') || requestUrl.includes('/roles/') || requestUrl.includes('/users/')) {
-          errorMessage = '无权限访问该功能，或后端服务未启动（请检查Network面板查看详情）'
+        if (
+          requestUrl.includes("/permissions/") ||
+          requestUrl.includes("/roles/") ||
+          requestUrl.includes("/users/")
+        ) {
+          errorMessage = "无权限访问该功能，或后端服务未启动（请检查Network面板查看详情）";
         }
 
-        const customError = new APIError(errorMessage, 'NETWORK_ERROR')
-        customError.originalError = error
-        return Promise.reject(customError)
+        const customError = new APIError(errorMessage, "NETWORK_ERROR");
+        customError.originalError = error;
+        return Promise.reject(customError);
       }
 
-      const customError = new APIError(error.message || '请求失败', 'REQUEST_ERROR')
-      customError.originalError = error
-      return Promise.reject(customError)
-    }
-  )
-}
+      const customError = new APIError(error.message || "请求失败", "REQUEST_ERROR");
+      customError.originalError = error;
+      return Promise.reject(customError);
+    },
+  );
+};
 
- /**
+/**
  * 需要认证的 axios 实例
  * 自动添加 Authorization 和 clientid
  */
-export const authAxios = createAxiosInstance(
-  {
-    timeout: 15000
-  },
-)
+export const authAxios = createAxiosInstance({
+  timeout: 15000,
+});
 
 // 默认导出，方便其他模块使用
-export default authAxios
+export default authAxios;

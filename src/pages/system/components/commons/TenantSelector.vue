@@ -6,106 +6,105 @@
     :style="customStyle"
     @update:model-value="handleUpdate"
     @change="handleChange"
-    @focus="loadTenantsIfNeeded">
+    @focus="loadTenantsIfNeeded"
+  >
     <el-option
       v-for="tenant in tenants"
       :key="tenant.id"
       :label="tenant.tenant_name"
-      :value="tenant.id">
-    </el-option>
+      :value="tenant.id"
+    ></el-option>
   </el-select>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import tenantService from '@/api/system/tenantService'
+import { ref, watch, onMounted } from "vue";
+import { ElMessage } from "element-plus";
+import tenantService from "@/api/system/tenantService";
 
 interface Tenant {
-  id: number
-  tenant_name: string
+  id: number;
+  tenant_name: string;
 }
 
 const props = withDefaults(
   defineProps<{
-    modelValue: string | number | null
-    placeholder?: string
-    clearable?: boolean
-    customStyle?: Record<string, any>
-    autoSelectFirst?: boolean
+    modelValue: string | number | null;
+    placeholder?: string;
+    clearable?: boolean;
+    customStyle?: Record<string, any>;
+    autoSelectFirst?: boolean;
   }>(),
   {
     modelValue: null,
-    placeholder: '请选择租户',
+    placeholder: "请选择租户",
     clearable: true,
-    customStyle: () => ({ width: '200px' }),
-    autoSelectFirst: true
-  }
-)
+    customStyle: () => ({ width: "200px" }),
+    autoSelectFirst: true,
+  },
+);
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | number | null]
-  change: [value: string | number | null]
-}>()
+  "update:modelValue": [value: string | number | null];
+  change: [value: string | number | null];
+}>();
 
-const tenants = ref<Tenant[]>([])
-const loaded = ref(false)
+const tenants = ref<Tenant[]>([]);
+const loaded = ref(false);
 
 onMounted(async () => {
-  await loadTenantsIfNeeded()
-})
+  await loadTenantsIfNeeded();
+});
 
 const loadTenants = async () => {
-  if (loaded.value) return
+  if (loaded.value) return;
 
   try {
-    const response = await tenantService.getTenants()
+    const response = await tenantService.getTenants();
     // 响应拦截器已处理格式转换，直接使用数据
     if (Array.isArray(response)) {
       // 过滤掉 id 或 tenant_name 为空的租户记录
-      tenants.value = response.filter(
-        (tenant) => tenant.id != null && tenant.tenant_name != null
-      )
-      loaded.value = true
+      tenants.value = response.filter((tenant) => tenant.id != null && tenant.tenant_name != null);
+      loaded.value = true;
 
       if (props.autoSelectFirst && !props.modelValue && tenants.value.length > 0) {
-        const firstTenantId = tenants.value[0].id
-        emit('update:modelValue', firstTenantId)
-        emit('change', firstTenantId)
+        const firstTenantId = tenants.value[0].id;
+        emit("update:modelValue", firstTenantId);
+        emit("change", firstTenantId);
       } else if (props.autoSelectFirst && !props.modelValue && tenants.value.length === 0) {
-        ElMessage.warning('没有可用的租户，请先创建租户')
+        ElMessage.warning("没有可用的租户，请先创建租户");
       }
     }
   } catch (error: any) {
-    console.error('获取租户列表失败:', error)
-    ElMessage.error(error.message || '获取租户列表失败')
+    console.error("获取租户列表失败:", error);
+    ElMessage.error(error.message || "获取租户列表失败");
   }
-}
+};
 
 const loadTenantsIfNeeded = async () => {
   if (!loaded.value) {
-    await loadTenants()
+    await loadTenants();
   }
-}
+};
 
 const handleUpdate = (value: string | number | null) => {
-  emit('update:modelValue', value)
-}
+  emit("update:modelValue", value);
+};
 
 const handleChange = (value: string | number | null) => {
-  emit('update:modelValue', value)
-  emit('change', value)
-}
+  emit("update:modelValue", value);
+  emit("change", value);
+};
 
 watch(
   () => props.modelValue,
   (newValue) => {
     if (loaded.value && newValue && !tenants.value.some((t) => t.id === newValue)) {
-      console.warn(`租户ID "${newValue}" 不存在于租户列表中`)
+      console.warn(`租户ID "${newValue}" 不存在于租户列表中`);
     }
   },
-  { immediate: true }
-)
+  { immediate: true },
+);
 </script>
 
 <style scoped>

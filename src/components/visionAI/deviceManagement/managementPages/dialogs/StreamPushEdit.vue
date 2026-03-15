@@ -9,17 +9,27 @@
     @close="close"
     class="stream-push-dialog"
     :fullscreen="false"
-    custom-class="large-dialog">
-    
+    custom-class="large-dialog"
+  >
     <div id="ChannelEdit" style="width: 100%">
       <el-tabs tab-position="top" v-model="activeTab">
-        <el-tab-pane label="推流信息编辑" name="push" style="background-color: #FFFFFF; padding: 1rem">
+        <el-tab-pane
+          label="推流信息编辑"
+          name="push"
+          style="background-color: #ffffff; padding: 1rem"
+        >
           <el-divider content-position="center">基础信息</el-divider>
-          <el-form ref="streamPushForm" status-icon label-width="120px" class="channel-form" v-loading="locading">
-            <el-form-item label="应用名" >
+          <el-form
+            ref="streamPushForm"
+            status-icon
+            label-width="120px"
+            class="channel-form"
+            v-loading="locading"
+          >
+            <el-form-item label="应用名">
               <el-input v-model="streamPush.app" placeholder="请输入应用名"></el-input>
             </el-form-item>
-            <el-form-item label="流ID" >
+            <el-form-item label="流ID">
               <el-input v-model="streamPush.stream" placeholder="请输入流ID"></el-input>
             </el-form-item>
           </el-form>
@@ -31,7 +41,11 @@
           </el-form>
         </el-tab-pane>
         <el-tab-pane label="国标通道配置" name="channel" v-if="streamPush.id">
-          <CommonChannelEdit ref="commonChannelEdit" :dataForm="streamPush" :cancel="close"></CommonChannelEdit>
+          <CommonChannelEdit
+            ref="commonChannelEdit"
+            :dataForm="streamPush"
+            :cancel="close"
+          ></CommonChannelEdit>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -44,87 +58,92 @@
 </template>
 
 <script>
-import CommonChannelEdit from './CommonChannelEdit.vue'
-import wvpAxios from '@/api/camera/base'
+import CommonChannelEdit from "./CommonChannelEdit.vue";
+import wvpAxios from "@/api/camera/base";
 
 export default {
   name: "channelEdit",
-  props: [ 'streamPush', 'closeEdit'],
+  props: ["streamPush", "closeEdit"],
   components: {
     CommonChannelEdit,
   },
   created() {
-    console.log(this.streamPush)
+    console.log(this.streamPush);
   },
   data() {
     return {
       locading: false,
-      activeTab: 'push',
-      visible:true,
+      activeTab: "push",
+      visible: true,
     };
   },
   methods: {
     onSubmit: function () {
-      console.log(this.streamPush)
-      this.locading = true
+      console.log(this.streamPush);
+      this.locading = true;
       if (this.streamPush.id) {
         wvpAxios({
-          method: 'post',
+          method: "post",
           url: "/api/push/update",
-          data: this.streamPush
-        }).then((res) => {
-          if (res.data.code === 0) {
-            this.$message.success({
-              showClose: true,
-              message: '保存成功',
-            });
-            this.visible = false
-          }else {
+          data: this.streamPush,
+        })
+          .then((res) => {
+            if (res.data.code === 0) {
+              this.$message.success({
+                showClose: true,
+                message: "保存成功",
+              });
+              this.visible = false;
+            } else {
+              this.$message.error({
+                showClose: true,
+                message: res.data.msg,
+              });
+            }
+          })
+          .catch((error) => {
             this.$message.error({
               showClose: true,
-              message: res.data.msg
-            })
-          }
-        }).catch((error) => {
-          this.$message.error({
-            showClose: true,
-            message: error
+              message: error,
+            });
           })
-        }).finally(()=>{
-          this.locading = false
-        })
-      }else {
+          .finally(() => {
+            this.locading = false;
+          });
+      } else {
         wvpAxios({
-          method: 'post',
+          method: "post",
           url: "/api/push/add",
-          data: this.streamPush
-        }).then((res) => {
-          if (res.data.code === 0) {
-            this.$message.success({
-              showClose: true,
-              message: '保存成功',
-            });
-this.visible = false
-            this.streamPush = res.data.data
-          }else {
+          data: this.streamPush,
+        })
+          .then((res) => {
+            if (res.data.code === 0) {
+              this.$message.success({
+                showClose: true,
+                message: "保存成功",
+              });
+              this.visible = false;
+              this.streamPush = res.data.data;
+            } else {
+              this.$message.error({
+                showClose: true,
+                message: res.data.msg,
+              });
+            }
+          })
+          .catch((error) => {
             this.$message.error({
               showClose: true,
-              message: res.data.msg
-            })
-          }
-        }).catch((error) => {
-          this.$message.error({
-            showClose: true,
-            message: error
+              message: error,
+            });
           })
-        }).finally(()=>{
-          this.locading = false
-        })
+          .finally(() => {
+            this.locading = false;
+          });
       }
-
     },
     close: function () {
-      this.closeEdit()
+      this.closeEdit();
     },
   },
 };
@@ -177,7 +196,7 @@ this.visible = false
 
 .channel-form {
   display: grid;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   padding: 0;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 24px;
@@ -260,11 +279,11 @@ this.visible = false
     grid-template-columns: 1fr 1fr;
     gap: 20px;
   }
-  
+
   .stream-push-dialog .el-dialog {
     width: 95% !important;
   }
-  
+
   .stream-push-dialog .el-dialog__body {
     padding: 24px;
   }
@@ -275,13 +294,13 @@ this.visible = false
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .stream-push-dialog .el-dialog {
     width: 100% !important;
     margin: 0;
     height: 100%;
   }
-  
+
   .stream-push-dialog .el-dialog__body {
     padding: 20px;
     max-height: calc(100vh - 120px);

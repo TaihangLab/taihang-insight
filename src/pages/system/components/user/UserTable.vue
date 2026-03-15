@@ -8,10 +8,30 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="50" align="center"></el-table-column>
-      <el-table-column prop="user_name" label="用户名称" min-width="140" align="center"></el-table-column>
-      <el-table-column prop="nick_name" label="用户昵称" min-width="150" align="center"></el-table-column>
-      <el-table-column prop="department" label="部门" min-width="80" align="center"></el-table-column>
-      <el-table-column prop="phone" label="手机号码" min-width="120" align="center"></el-table-column>
+      <el-table-column
+        prop="user_name"
+        label="用户名称"
+        min-width="140"
+        align="center"
+      ></el-table-column>
+      <el-table-column
+        prop="nick_name"
+        label="用户昵称"
+        min-width="150"
+        align="center"
+      ></el-table-column>
+      <el-table-column
+        prop="department"
+        label="部门"
+        min-width="80"
+        align="center"
+      ></el-table-column>
+      <el-table-column
+        prop="phone"
+        label="手机号码"
+        min-width="120"
+        align="center"
+      ></el-table-column>
       <el-table-column prop="status" label="状态" width="80" align="center">
         <template #default="scope">
           <el-switch
@@ -24,14 +44,23 @@
           ></el-switch>
         </template>
       </el-table-column>
-      <el-table-column prop="create_time" label="创建时间" min-width="140" align="center"></el-table-column>
+      <el-table-column
+        prop="create_time"
+        label="创建时间"
+        min-width="140"
+        align="center"
+      ></el-table-column>
       <el-table-column label="操作" min-width="240" fixed="right" align="center">
         <template #default="scope">
           <div class="operation-buttons">
-            <el-button link class="auth-btn" @click="handleAuthorization(scope.row)">授权</el-button>
+            <el-button link class="auth-btn" @click="handleAuthorization(scope.row)">
+              授权
+            </el-button>
             <el-button link class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
             <el-button link class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
-            <el-button link class="reset-btn" @click="handleResetPassword(scope.row)">重置</el-button>
+            <el-button link class="reset-btn" @click="handleResetPassword(scope.row)">
+              重置
+            </el-button>
           </div>
         </template>
       </el-table-column>
@@ -40,60 +69,60 @@
 </template>
 
 <script setup lang="ts">
-import type { User } from '@/types/rbac/user'
+import type { User } from "@/types/rbac/user";
 
 defineProps<{
-  data: User[]
-  loading: boolean
-}>()
+  data: User[];
+  loading: boolean;
+}>();
 
 const emit = defineEmits<{
-  selectionChange: [selection: User[]]
-  statusChange: [row: User, callback: (success: boolean) => void]
-  edit: [row: User]
-  delete: [row: User]
-  resetPassword: [row: User]
-  authorization: [row: User]
-}>()
+  selectionChange: [selection: User[]];
+  statusChange: [row: User, callback: (success: boolean) => void];
+  edit: [row: User];
+  delete: [row: User];
+  resetPassword: [row: User];
+  authorization: [row: User];
+}>();
 
 const handleSelectionChange = (selection: User[]) => {
-  emit('selectionChange', selection)
-}
+  emit("selectionChange", selection);
+};
 
 const handleStatusChange = (row: User) => {
   // 记录原始状态值
-  const originalStatus = row.status
+  const originalStatus = row.status;
 
   // 立即将状态切换，提供即时反馈
-  row.status = row.status === 0 ? 1 : 0
+  row.status = row.status === 0 ? 1 : 0;
 
   // 定义一个回调函数来处理状态更新结果
   const callback = (success: boolean) => {
     if (!success) {
       // 如果更新失败，恢复原始状态
-      row.status = originalStatus
+      row.status = originalStatus;
     }
-  }
+  };
 
   // 发送状态变更请求给父组件，并传递回调函数
-  emit('statusChange', row, callback)
-}
+  emit("statusChange", row, callback);
+};
 
 const handleEdit = (row: User) => {
-  emit('edit', row)
-}
+  emit("edit", row);
+};
 
 const handleDelete = (row: User) => {
-  emit('delete', row)
-}
+  emit("delete", row);
+};
 
 const handleResetPassword = (row: User) => {
-  emit('resetPassword', row)
-}
+  emit("resetPassword", row);
+};
 
 const handleAuthorization = (row: User) => {
-  emit('authorization', row)
-}
+  emit("authorization", row);
+};
 </script>
 
 <style scoped>

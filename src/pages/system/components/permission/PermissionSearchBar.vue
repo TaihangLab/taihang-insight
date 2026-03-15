@@ -6,7 +6,7 @@
           v-model="formValue.name"
           placeholder="请输入权限名称"
           clearable
-          style="width: 200px;"
+          style="width: 200px"
         ></el-input>
       </el-form-item>
       <el-form-item label="权限码">
@@ -14,18 +14,18 @@
           v-model="formValue.code"
           placeholder="请输入权限码"
           clearable
-          style="width: 200px;"
+          style="width: 200px"
         ></el-input>
       </el-form-item>
       <el-form-item label="类型">
-        <el-select v-model="formValue.type" placeholder="全部" clearable style="width: 120px;">
+        <el-select v-model="formValue.type" placeholder="全部" clearable style="width: 120px">
           <el-option label="文件夹" value="folder"></el-option>
           <el-option label="页面" value="menu"></el-option>
           <el-option label="按钮" value="button"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item label="状态">
-        <el-select v-model="formValue.status" placeholder="全部" clearable style="width: 100px;">
+        <el-select v-model="formValue.status" placeholder="全部" clearable style="width: 100px">
           <el-option label="启用" :value="0"></el-option>
           <el-option label="禁用" :value="1"></el-option>
         </el-select>
@@ -40,46 +40,46 @@
 
 <script>
 export default {
-  name: 'PermissionSearchBar',
+  name: "PermissionSearchBar",
   props: {
     value: {
       type: Object,
       default: () => ({
-        name: '',
-        code: '',
-        type: '',
-        status: null
-      })
-    }
+        name: "",
+        code: "",
+        type: "",
+        status: null,
+      }),
+    },
   },
   data() {
     return {
-      formValue: { ...this.value }
-    }
+      formValue: { ...this.value },
+    };
   },
   watch: {
     value: {
       handler(newVal) {
-        this.formValue = { ...newVal }
+        this.formValue = { ...newVal };
       },
-      deep: true
-    }
+      deep: true,
+    },
   },
   methods: {
     handleSearch() {
-      this.$emit('search', this.formValue)
+      this.$emit("search", this.formValue);
     },
     handleReset() {
       this.formValue = {
-        name: '',
-        code: '',
-        type: '',
-        status: null
-      }
-      this.$emit('reset', this.formValue)
-    }
-  }
-}
+        name: "",
+        code: "",
+        type: "",
+        status: null,
+      };
+      this.$emit("reset", this.formValue);
+    },
+  },
+};
 </script>
 
 <style scoped>

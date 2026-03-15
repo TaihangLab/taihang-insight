@@ -1,5 +1,5 @@
-import { authAxios } from '@/api/commons'
-import type { DeviceStatusStatistics, DeviceTreeNode, ConnectionSummary } from '@/types/center.d'
+import { authAxios } from "@/api/commons";
+import type { DeviceStatusStatistics, DeviceTreeNode, ConnectionSummary } from "@/types/center.d";
 
 /**
  * 设备统计管理 API
@@ -19,7 +19,7 @@ class DeviceStatisticsAPI {
    */
   getStatusStatistics(): Promise<DeviceStatusStatistics> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 DeviceStatusStatistics
-    return authAxios.get<any, DeviceStatusStatistics>('/api/v1/devices/statistics')
+    return authAxios.get<any, DeviceStatusStatistics>("/api/v1/devices/statistics");
   }
 
   /**
@@ -31,7 +31,7 @@ class DeviceStatisticsAPI {
    */
   getDeviceTree(): Promise<DeviceTreeNode[]> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 DeviceTreeNode[]
-    return authAxios.get<any, DeviceTreeNode[]>('/api/v1/devices/tree')
+    return authAxios.get<any, DeviceTreeNode[]>("/api/v1/devices/tree");
   }
 
   /**
@@ -43,9 +43,9 @@ class DeviceStatisticsAPI {
    */
   getConnectionSummary(): Promise<ConnectionSummary> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 ConnectionSummary
-    return authAxios.get<any, ConnectionSummary>('/api/v1/devices/summary')
+    return authAxios.get<any, ConnectionSummary>("/api/v1/devices/summary");
   }
 }
 
 // 导出单例实例
-export default new DeviceStatisticsAPI()
+export default new DeviceStatisticsAPI();

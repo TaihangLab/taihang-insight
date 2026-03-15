@@ -22,11 +22,7 @@
           ></el-input>
         </el-form-item>
         <el-form-item label="手机号">
-          <el-input
-            v-model="searchForm.phone"
-            placeholder="请输入手机号码"
-            clearable
-          ></el-input>
+          <el-input v-model="searchForm.phone" placeholder="请输入手机号码" clearable></el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="searchUsers">搜索</el-button>
@@ -34,14 +30,18 @@
         </el-form-item>
       </el-form>
     </div>
-    
+
     <!-- 用户列表表格 -->
     <div class="table-container">
       <div class="table-operations">
-        <el-button type="primary" icon="el-icon-plus" size="small" @click="addUser">添加用户</el-button>
-        <el-button icon="el-icon-delete" size="small" @click="batchCancelAuth">批量取消授权</el-button>
+        <el-button type="primary" icon="el-icon-plus" size="small" @click="addUser">
+          添加用户
+        </el-button>
+        <el-button icon="el-icon-delete" size="small" @click="batchCancelAuth">
+          批量取消授权
+        </el-button>
       </div>
-      
+
       <el-table
         :data="tableData"
         v-loading="loading"
@@ -51,27 +51,44 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" align="center"></el-table-column>
-        <el-table-column prop="user_name" label="用户名称" min-width="120" align="center"></el-table-column>
-        <el-table-column prop="nickName" label="用户昵称" min-width="120" align="center"></el-table-column>
+        <el-table-column
+          prop="user_name"
+          label="用户名称"
+          min-width="120"
+          align="center"
+        ></el-table-column>
+        <el-table-column
+          prop="nickName"
+          label="用户昵称"
+          min-width="120"
+          align="center"
+        ></el-table-column>
         <el-table-column prop="email" label="邮箱" min-width="200" align="center"></el-table-column>
         <el-table-column prop="phone" label="手机" min-width="140" align="center"></el-table-column>
-                     <el-table-column prop="status" label="状态" width="80" align="center">
-               <template #default="scope">
-                 <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="small">
-                   {{ scope.row.status === 0 ? '正常' : '停用' }}
-                 </el-tag>
-               </template>
-             </el-table-column>
-        <el-table-column prop="create_time" label="创建时间" min-width="160" align="center"></el-table-column>
+        <el-table-column prop="status" label="状态" width="80" align="center">
+          <template #default="scope">
+            <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="small">
+              {{ scope.row.status === 0 ? "正常" : "停用" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="create_time"
+          label="创建时间"
+          min-width="160"
+          align="center"
+        ></el-table-column>
         <el-table-column label="操作" width="100" fixed="right" align="center">
           <template #default="scope">
             <div class="operation-buttons">
-              <el-button link class="cancel-auth-btn" @click="cancelAuth(scope.row)">取消授权</el-button>
+              <el-button link class="cancel-auth-btn" @click="cancelAuth(scope.row)">
+                取消授权
+              </el-button>
             </div>
           </template>
         </el-table-column>
       </el-table>
-      
+
       <!-- 分页 -->
       <div class="user-pagination">
         <el-pagination
@@ -85,7 +102,7 @@
         ></el-pagination>
       </div>
     </div>
-    
+
     <!-- 添加用户对话框 -->
     <el-dialog
       title="选择用户"
@@ -129,20 +146,45 @@
             @selection-change="handleUserSelectionChange"
           >
             <el-table-column type="selection" width="55" align="center"></el-table-column>
-            <el-table-column prop="user_name" label="用户名称" min-width="120" align="center"></el-table-column>
-            <el-table-column prop="nickName" label="用户昵称" min-width="120" align="center"></el-table-column>
-            <el-table-column prop="email" label="邮箱" min-width="200" align="center"></el-table-column>
-            <el-table-column prop="phone" label="手机" min-width="140" align="center"></el-table-column>
+            <el-table-column
+              prop="user_name"
+              label="用户名称"
+              min-width="120"
+              align="center"
+            ></el-table-column>
+            <el-table-column
+              prop="nickName"
+              label="用户昵称"
+              min-width="120"
+              align="center"
+            ></el-table-column>
+            <el-table-column
+              prop="email"
+              label="邮箱"
+              min-width="200"
+              align="center"
+            ></el-table-column>
+            <el-table-column
+              prop="phone"
+              label="手机"
+              min-width="140"
+              align="center"
+            ></el-table-column>
             <el-table-column prop="status" label="状态" width="80" align="center">
               <template #default="scope">
                 <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="small">
-                  {{ scope.row.status === 1 ? '正常' : '停用' }}
+                  {{ scope.row.status === 1 ? "正常" : "停用" }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="create_time" label="创建时间" min-width="160" align="center"></el-table-column>
+            <el-table-column
+              prop="create_time"
+              label="创建时间"
+              min-width="160"
+              align="center"
+            ></el-table-column>
           </el-table>
-          
+
           <!-- 分页器 -->
           <div class="user-pagination">
             <el-pagination
@@ -217,12 +259,12 @@ export default {
       }
     }
   },
-  
+
   created() {
     this.initPageData()
     this.fetchUsers()
   },
-  
+
   methods: {
     // 初始化页面数据
     initPageData() {
@@ -230,7 +272,7 @@ export default {
       this.role_code = this.$route.query.role_code || ''
       this.role_name = this.$route.query.role_name || '未知角色'
     },
-    
+
     // 获取用户数据
     async fetchUsers() {
       this.loading = true
@@ -278,14 +320,14 @@ export default {
 
       this.loading = false
     },
-    
-    
+
+
     // 搜索用户
     searchUsers() {
       this.pagination.currentPage = 1
       this.fetchUsers()
     },
-    
+
     // 重置搜索
     resetSearch() {
       this.searchForm = {
@@ -295,7 +337,7 @@ export default {
       this.pagination.currentPage = 1
       this.fetchUsers()
     },
-    
+
     // 添加用户
     addUser() {
       this.selectedUsers = []
@@ -311,7 +353,7 @@ export default {
       this.addUserDialogVisible = true
       this.fetchAvailableUsers()
     },
-    
+
     // 获取可选用户数据
     async fetchAvailableUsers() {
       this.userSelectLoading = true
@@ -359,7 +401,7 @@ export default {
 
       this.userSelectLoading = false
     },
-    
+
     // 生成模拟可选用户数据
     generateAllAvailableUsers() {
       return [
@@ -455,13 +497,13 @@ export default {
         }
       ]
     },
-    
+
     // 搜索可选用户
     searchAvailableUsers() {
       this.userPagination.currentPage = 1
       this.fetchAvailableUsers()
     },
-    
+
     // 重置用户搜索
     resetUserSearch() {
       this.userSearchForm = {
@@ -471,24 +513,24 @@ export default {
       this.userPagination.currentPage = 1
       this.fetchAvailableUsers()
     },
-    
+
     // 处理用户选择变化
     handleUserSelectionChange(selection) {
       this.selectedUsers = selection
     },
-    
+
     // 处理用户分页大小变化
     handleUserSizeChange(newSize) {
       this.userPagination.pageSize = newSize
       this.fetchAvailableUsers()
     },
-    
+
     // 处理用户当前页变化
     handleUserCurrentChange(newPage) {
       this.userPagination.currentPage = newPage
       this.fetchAvailableUsers()
     },
-    
+
     // 保存添加用户
     async saveAddUser() {
       if (this.selectedUsers.length === 0) {
@@ -521,7 +563,7 @@ export default {
         this.loading = false
       }
     },
-    
+
     // 取消授权
     async cancelAuth(row) {
       this.$confirm(`确定要取消用户 "${row.user_name}" 的授权吗？`, '确认取消', {
@@ -550,7 +592,7 @@ export default {
         // 取消操作
       })
     },
-    
+
     // 批量取消授权
     async batchCancelAuth() {
       if (this.selectedRows.length === 0) {
@@ -594,23 +636,23 @@ export default {
         // 取消操作
       })
     },
-    
+
     // 返回角色管理页面
     goBack() {
       this.$router.push('/systemManage/roleManagement')
     },
-    
+
     // 处理选择变化
     handleSelectionChange(selection) {
       this.selectedRows = selection
     },
-    
+
     // 处理分页大小变化
     handleSizeChange(newSize) {
       this.pagination.pageSize = newSize
       this.fetchUsers()
     },
-    
+
     // 处理当前页变化
     handleCurrentChange(newPage) {
       this.pagination.currentPage = newPage
@@ -850,8 +892,8 @@ export default {
   display: flex;
   justify-content: center;
   background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  margin-top: 0 !important;
+  padding-bottom: 10px !important;
 }
 
 .user-pagination :deep(.el-pagination__total) {
@@ -1048,8 +1090,8 @@ export default {
   display: flex;
   justify-content: center;
   background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  margin-top: 0 !important;
+  padding-bottom: 10px !important;
 }
 
 .user-pagination :deep(.el-pagination__total) {
@@ -1327,4 +1369,4 @@ export default {
     border-radius: 8px;
   }
 }
-</style> 
+</style>

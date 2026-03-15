@@ -1,10 +1,10 @@
-import rbacAxios, { UnifiedResponse } from '@/api/commons'
+import rbacAxios, { UnifiedResponse } from "@/api/commons";
 import type {
   Department,
   CreateDepartmentRequest,
   UpdateDepartmentRequest,
-  DepartmentQueryParams
-} from '@/types/rbac/department'
+  DepartmentQueryParams,
+} from "@/types/rbac/department";
 
 // ============================================
 // DepartmentService 类
@@ -14,15 +14,19 @@ class DepartmentService {
   /**
    * 获取部门列表
    */
-  static async getDepartments(params?: DepartmentQueryParams & { parent_id?: number }): Promise<UnifiedResponse<Department[]>> {
-    return rbacAxios.get('/api/v1/rbac/depts', { params })
+  static async getDepartments(
+    params?: DepartmentQueryParams & { parent_id?: number },
+  ): Promise<UnifiedResponse<Department[]>> {
+    return rbacAxios.get("/api/v1/rbac/depts", { params });
   }
 
   /**
    * 获取部门树
    */
-  static async getDepartmentTree(params?: DepartmentQueryParams & { tree?: boolean }): Promise<UnifiedResponse<Department[]>> {
-    return rbacAxios.get('/api/v1/rbac/depts/tree', { params })
+  static async getDepartmentTree(
+    params?: DepartmentQueryParams & { tree?: boolean },
+  ): Promise<UnifiedResponse<Department[]>> {
+    return rbacAxios.get("/api/v1/rbac/depts/tree", { params });
   }
 
   /**
@@ -30,20 +34,22 @@ class DepartmentService {
    */
   static async getDepartmentTreeByTenantAndStatus(
     tenantId: number,
-    status: number = 0
+    status: number = 0,
   ): Promise<UnifiedResponse<Department[]>> {
     const params = {
       status: status,
-      tenant_id: tenantId
-    }
-    return rbacAxios.get('/api/v1/rbac/depts/tree', { params })
+      tenant_id: tenantId,
+    };
+    return rbacAxios.get("/api/v1/rbac/depts/tree", { params });
   }
 
   /**
    * 创建部门
    */
-  static async createDepartment(deptData: CreateDepartmentRequest): Promise<UnifiedResponse<Department>> {
-    return rbacAxios.post('/api/v1/rbac/depts', deptData)
+  static async createDepartment(
+    deptData: CreateDepartmentRequest,
+  ): Promise<UnifiedResponse<Department>> {
+    return rbacAxios.post("/api/v1/rbac/depts", deptData);
   }
 
   /**
@@ -51,20 +57,20 @@ class DepartmentService {
    */
   static async updateDepartment(
     deptId: number,
-    deptData: UpdateDepartmentRequest
+    deptData: UpdateDepartmentRequest,
   ): Promise<UnifiedResponse<Department>> {
-    return rbacAxios.put(`/api/v1/rbac/depts/${deptId}`, deptData)
+    return rbacAxios.put(`/api/v1/rbac/depts/${deptId}`, deptData);
   }
 
   /**
    * 删除部门
    */
   static async deleteDepartment(deptId: number): Promise<UnifiedResponse<void>> {
-    return rbacAxios.delete(`/api/v1/rbac/depts/${deptId}`)
+    return rbacAxios.delete(`/api/v1/rbac/depts/${deptId}`);
   }
 }
 
 // 重新导出类型，方便使用
-export type { Department, CreateDepartmentRequest, UpdateDepartmentRequest, DepartmentQueryParams }
+export type { Department, CreateDepartmentRequest, UpdateDepartmentRequest, DepartmentQueryParams };
 
-export default DepartmentService
+export default DepartmentService;

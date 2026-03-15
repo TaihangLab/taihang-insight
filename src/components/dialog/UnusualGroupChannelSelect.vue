@@ -13,47 +13,92 @@
       <div class="page-header" style="width: 100%">
         <div class="page-header-btn" style="width: 100%; text-align: left">
           搜索:
-          <el-input @input="getChannelList" style="margin-right: 1rem; width: auto;" size="small" placeholder="关键字"
-                    prefix-icon="el-icon-search" v-model="searchSrt" clearable></el-input>
+          <el-input
+            @input="getChannelList"
+            style="margin-right: 1rem; width: auto"
+            size="small"
+            placeholder="关键字"
+            prefix-icon="el-icon-search"
+            v-model="searchSrt"
+            clearable
+          ></el-input>
           在线状态:
-          <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="getChannelList" v-model="online" placeholder="请选择"
-                     default-first-option>
+          <el-select
+            size="small"
+            style="width: 8rem; margin-right: 1rem"
+            @change="getChannelList"
+            v-model="online"
+            placeholder="请选择"
+            default-first-option
+          >
             <el-option label="全部" value=""></el-option>
             <el-option label="在线" value="true"></el-option>
             <el-option label="离线" value="false"></el-option>
           </el-select>
           类型:
-          <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="getChannelList" v-model="channelType" placeholder="请选择"
-                     default-first-option>
+          <el-select
+            size="small"
+            style="width: 8rem; margin-right: 1rem"
+            @change="getChannelList"
+            v-model="channelType"
+            placeholder="请选择"
+            default-first-option
+          >
             <el-option label="全部" value=""></el-option>
-            <el-option v-for="item in Object.values($channelTypeList)" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            <el-option
+              v-for="item in Object.values($channelTypeList)"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            ></el-option>
           </el-select>
-          <el-button size="small" type="primary" :loading="getChannelListLoading" :disabled="multipleSelection.length ===0"
-                     @click="clearUnusualRegion()">清除</el-button>
-          <el-button size="small" :loading="getChannelListLoading"
-                     @click="clearUnusualRegion(true)">全部清除</el-button>
-          <el-button size="small" :loading="getChannelListLoading"
-                     @click="getChannelList()">刷新</el-button>
-
+          <el-button
+            size="small"
+            type="primary"
+            :loading="getChannelListLoading"
+            :disabled="multipleSelection.length === 0"
+            @click="clearUnusualRegion()"
+          >
+            清除
+          </el-button>
+          <el-button
+            size="small"
+            :loading="getChannelListLoading"
+            @click="clearUnusualRegion(true)"
+          >
+            全部清除
+          </el-button>
+          <el-button size="small" :loading="getChannelListLoading" @click="getChannelList()">
+            刷新
+          </el-button>
         </div>
       </div>
       <!--通道列表-->
-      <el-table size="small"  ref="channelListTable" :data="channelList" :height="winHeight" style="width: 100%;"
-                header-row-class-name="table-header" @selection-change="handleSelectionChange" >
-        <el-table-column type="selection" width="55" >
-        </el-table-column>
-        <el-table-column prop="gbName" label="名称" min-width="180">
-        </el-table-column>
-        <el-table-column prop="gbDeviceId" label="编号" min-width="180">
-        </el-table-column>
-        <el-table-column prop="gbManufacturer" label="厂家" min-width="100">
-        </el-table-column>
-        <el-table-column prop="gbCivilCode" label="行政区划" min-width="100">
-        </el-table-column>
+      <el-table
+        size="small"
+        ref="channelListTable"
+        :data="channelList"
+        :height="winHeight"
+        style="width: 100%"
+        header-row-class-name="table-header"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55"></el-table-column>
+        <el-table-column prop="gbName" label="名称" min-width="180"></el-table-column>
+        <el-table-column prop="gbDeviceId" label="编号" min-width="180"></el-table-column>
+        <el-table-column prop="gbManufacturer" label="厂家" min-width="100"></el-table-column>
+        <el-table-column prop="gbCivilCode" label="行政区划" min-width="100"></el-table-column>
         <el-table-column label="类型" min-width="100">
           <template v-slot:default="scope">
             <div slot="reference" class="name-wrapper">
-              <el-tag size="medium" effect="plain" type="success" :style="$channelTypeList[scope.row.dataType].style">{{$channelTypeList[scope.row.dataType].name}}</el-tag>
+              <el-tag
+                size="medium"
+                effect="plain"
+                type="success"
+                :style="$channelTypeList[scope.row.dataType].style"
+              >
+                {{ $channelTypeList[scope.row.dataType].name }}
+              </el-tag>
             </div>
           </template>
         </el-table-column>
@@ -68,7 +113,8 @@
       </el-table>
       <div style="display: grid; grid-template-columns: 1fr 1fr">
         <div style="text-align: left; line-height: 32px">
-          <i class="el-icon-info"></i> 清除后通道可正常添加到分组节点。
+          <i class="el-icon-info"></i>
+          清除后通道可正常添加到分组节点。
         </div>
         <el-pagination
           style="text-align: right"
@@ -78,21 +124,20 @@
           :page-size="count"
           :page-sizes="[10, 25, 35, 50, 200, 1000, 50000]"
           layout="total, sizes, prev, pager, next"
-          :total="total">
-        </el-pagination>
+          :total="total"
+        ></el-pagination>
       </div>
-
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { 
-  getUnusualParentChannelList, 
-  clearUnusualParentChannel, 
-  getRegionDescription, 
-  addRegionByCivilCode 
-} from '@/api/dialog'
+import {
+  getUnusualParentChannelList,
+  clearUnusualParentChannel,
+  getRegionDescription,
+  addRegionByCivilCode,
+} from "@/api/dialog";
 
 export default {
   name: "UnusualGroupChannelSelect",
@@ -125,7 +170,7 @@ export default {
       this.count = val;
       this.getChannelList();
     },
-    handleSelectionChange: function (val){
+    handleSelectionChange: function (val) {
       this.multipleSelection = val;
     },
     getChannelList: function () {
@@ -136,20 +181,22 @@ export default {
         channelType: this.channelType,
         query: this.searchSrt,
         online: this.online,
-      }).then( (res)=> {
-        // 响应拦截器已处理成功/失败判断，直接使用数据
-        this.total = res.total || 0;
-        const list = res.list || res.data || [];
-        for (let i = 0; i < list.length; i++) {
-          list[i]["addRegionLoading"] = false
-        }
-        this.channelList = list;
-      }).catch( (error)=> {
-        console.error(error);
-      }).finally(()=>{
-        this.getChannelListLoading = false;
       })
-
+        .then((res) => {
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          this.total = res.total || 0;
+          const list = res.list || res.data || [];
+          for (let i = 0; i < list.length; i++) {
+            list[i]["addRegionLoading"] = false;
+          }
+          this.channelList = list;
+        })
+        .catch((error) => {
+          console.error(error);
+        })
+        .finally(() => {
+          this.getChannelListLoading = false;
+        });
     },
     openDialog: function () {
       this.showDialog = true;
@@ -159,69 +206,75 @@ export default {
       this.showDialog = false;
     },
     clearUnusualRegion: function (all) {
-      let channels = null
-      if (all || this.multipleSelection.length > 0 ) {
-        channels = []
+      let channels = null;
+      if (all || this.multipleSelection.length > 0) {
+        channels = [];
         for (let i = 0; i < this.multipleSelection.length; i++) {
-          channels.push(this.multipleSelection[i].gbId)
+          channels.push(this.multipleSelection[i].gbId);
         }
       }
       clearUnusualParentChannel({
         all: all,
-        channelIds: channels
-      }).then((res) => {
-        // 响应拦截器已处理成功/失败判断，直接处理成功逻辑
-        this.$message.success({
-          showClose: true,
-          message: "清除成功"
-        })
-        this.getChannelList()
-      }).catch((error) => {
-        this.$message.error({
-          showClose: true,
-          message: error.message || error
-        })
-      }).finally(()=>{
-        this.loading = false
+        channelIds: channels,
       })
-
+        .then((res) => {
+          // 响应拦截器已处理成功/失败判断，直接处理成功逻辑
+          this.$message.success({
+            showClose: true,
+            message: "清除成功",
+          });
+          this.getChannelList();
+        })
+        .catch((error) => {
+          this.$message.error({
+            showClose: true,
+            message: error.message || error,
+          });
+        })
+        .finally(() => {
+          this.loading = false;
+        });
     },
     addRegion: function (row) {
       row.addRegionLoading = true;
-      getRegionDescription(row.gbCivilCode).then((res) => {
-        // 响应拦截器已处理成功/失败判断，直接使用数据
-        const description = res.data || res;
-        this.$confirm(`确定添加： ${description}`, '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'info'
-        }).then(() => {
-          addRegionByCivilCode(row.gbCivilCode).then((res) => {
-            // 响应拦截器已处理成功/失败判断，直接处理成功逻辑
-            this.$message.success({
-              showClose: true,
-              message: "添加成功"
+      getRegionDescription(row.gbCivilCode)
+        .then((res) => {
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          const description = res.data || res;
+          this.$confirm(`确定添加： ${description}`, "提示", {
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "info",
+          })
+            .then(() => {
+              addRegionByCivilCode(row.gbCivilCode)
+                .then((res) => {
+                  // 响应拦截器已处理成功/失败判断，直接处理成功逻辑
+                  this.$message.success({
+                    showClose: true,
+                    message: "添加成功",
+                  });
+                  this.initData();
+                })
+                .catch((error) => {
+                  this.$message.error({
+                    showClose: true,
+                    message: error.message || error,
+                  });
+                });
             })
-            this.initData()
-          }).catch((error) => {
-            this.$message.error({
-              showClose: true,
-              message: error.message || error
-            });
-          });
-        }).catch(() => {
-
-        });
-      }).catch((error) => {
-        this.$message.error({
-          showClose: true,
-          message: error.message || error
+            .catch(() => {});
         })
-      }).finally(()=>{
-        row.addRegionLoading = false;
-      })
+        .catch((error) => {
+          this.$message.error({
+            showClose: true,
+            message: error.message || error,
+          });
+        })
+        .finally(() => {
+          row.addRegionLoading = false;
+        });
     },
-
-  }
+  },
 };
 </script>

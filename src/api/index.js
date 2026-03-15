@@ -1,11 +1,11 @@
 // 边缘管理相关API
-export * from './edgeManagement'
+export * from "./edgeManagement";
 
 // 算法推理相关API
-export * from './algorithm'
+export * from "./algorithm";
 
 // 园区管理相关API
-export * from './parkManagement'
+export * from "./parkManagement";
 
 // 默认导出request实例，方便特殊场景使用
-export { default as request } from './request'
+export { default as request } from "./request";

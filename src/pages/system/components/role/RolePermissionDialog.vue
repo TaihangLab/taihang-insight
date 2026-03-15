@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    title="分配权限"
-    v-model="dialogVisible"
-    width="700px"
-    @close="closeDialog"
-  >
+  <el-dialog title="分配权限" v-model="dialogVisible" width="700px" @close="closeDialog">
     <div v-loading="loading" class="permission-dialog-content">
       <div class="role-info">
         <span class="label">角色：</span>
@@ -40,7 +35,9 @@
               <el-icon v-else-if="data.node_type === 'menu'"><Menu /></el-icon>
               <el-icon v-else><Operation /></el-icon>
               <span class="node-label">{{ node.label }}</span>
-              <span v-if="data.permission_code" class="node-code">({{ data.permission_code }})</span>
+              <span v-if="data.permission_code" class="node-code">
+                ({{ data.permission_code }})
+              </span>
             </span>
           </template>
         </el-tree>
@@ -55,173 +52,176 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Folder, Operation, Menu } from '@element-plus/icons-vue'
-import type { Role } from '@/types/rbac'
-import type { PermissionTreeNode } from '@/types/rbac/permission'
-import associationService from '@/api/system/associationService'
+import { ref, computed, watch, nextTick } from "vue";
+import { ElMessage } from "element-plus";
+import { Folder, Operation, Menu } from "@element-plus/icons-vue";
+import type { Role } from "@/types/rbac";
+import type { PermissionTreeNode } from "@/types/rbac/permission";
+import associationService from "@/api/system/associationService";
 
 interface TreeProps {
-  children: string
-  label: string
+  children: string;
+  label: string;
 }
 
 const props = defineProps<{
-  visible: boolean
-  currentRole: Role | null
-}>()
+  visible: boolean;
+  currentRole: Role | null;
+}>();
 
 const emit = defineEmits<{
-  'update:visible': [value: boolean]
-  submit: [roleId: number, permissionIds: number[]]
-}>()
+  "update:visible": [value: boolean];
+  submit: [roleId: number, permissionIds: number[]];
+}>();
 
-const loading = ref(false)
-const submitting = ref(false)
-const permissionTreeRef = ref()
-const permissionTree = ref<PermissionTreeNode[]>([])
-const checkedPermissions = ref<number[]>([])
+const loading = ref(false);
+const submitting = ref(false);
+const permissionTreeRef = ref();
+const permissionTree = ref<PermissionTreeNode[]>([]);
+const checkedPermissions = ref<number[]>([]);
 
 const treeProps: TreeProps = {
-  children: 'children',
-  label: 'permission_name'
-}
+  children: "children",
+  label: "permission_name",
+};
 
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (value) => emit('update:visible', value)
-})
+  set: (value) => emit("update:visible", value),
+});
 
-watch(() => props.visible, async (newVal) => {
-  if (newVal && props.currentRole) {
-    // 对话框打开时重置提交状态
-    submitting.value = false
-    await loadPermissions()
-  }
-})
+watch(
+  () => props.visible,
+  async (newVal) => {
+    if (newVal && props.currentRole) {
+      // 对话框打开时重置提交状态
+      submitting.value = false;
+      await loadPermissions();
+    }
+  },
+);
 
 const loadPermissions = async () => {
-  loading.value = true
+  loading.value = true;
   try {
     // Load permission tree
-    const treeResponse = await associationService.getPermissionTree()
+    const treeResponse = await associationService.getPermissionTree();
     if (treeResponse?.data) {
       // Map Permission to PermissionTreeNode by adding missing fields
-      permissionTree.value = (treeResponse.data as unknown as PermissionTreeNode[])
+      permissionTree.value = treeResponse.data as unknown as PermissionTreeNode[];
     }
 
     // Load role's current permissions
     if (props.currentRole) {
-      const rolePermsResponse = await associationService.getRolePermissions(props.currentRole.id)
+      const rolePermsResponse = await associationService.getRolePermissions(props.currentRole.id);
       if (rolePermsResponse?.data) {
-        checkedPermissions.value = (Array.isArray(rolePermsResponse.data)
-          ? rolePermsResponse.data
-          : []).map((p: any) => Number(p.permissionId || p.permission_id))
+        checkedPermissions.value = (
+          Array.isArray(rolePermsResponse.data) ? rolePermsResponse.data : []
+        ).map((p: any) => Number(p.permissionId || p.permission_id));
       }
     }
 
     nextTick(() => {
-      permissionTreeRef.value?.setCheckedKeys(checkedPermissions.value)
-    })
+      permissionTreeRef.value?.setCheckedKeys(checkedPermissions.value);
+    });
   } catch (error) {
-    console.error('加载权限失败:', error)
-    ElMessage.error('加载权限失败')
+    console.error("加载权限失败:", error);
+    ElMessage.error("加载权限失败");
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const handleCheck = () => {
   // Handle check changes
-}
+};
 
 /**
  * 获取所有节点ID（递归）
  */
 const getAllNodeIds = (nodes: PermissionTreeNode[]): number[] => {
-  const ids: number[] = []
+  const ids: number[] = [];
   const traverse = (nodeList: PermissionTreeNode[]) => {
-    nodeList.forEach(node => {
-      ids.push(node.id)
+    nodeList.forEach((node) => {
+      ids.push(node.id);
       if (node.children && node.children.length > 0) {
-        traverse(node.children)
+        traverse(node.children);
       }
-    })
-  }
-  traverse(nodes)
-  return ids
-}
+    });
+  };
+  traverse(nodes);
+  return ids;
+};
 
 /**
  * 全选所有权限
  */
 const checkAll = () => {
-  const allIds = getAllNodeIds(permissionTree.value)
-  permissionTreeRef.value?.setCheckedKeys(allIds)
-}
+  const allIds = getAllNodeIds(permissionTree.value);
+  permissionTreeRef.value?.setCheckedKeys(allIds);
+};
 
 /**
  * 全不选
  */
 const uncheckAll = () => {
-  permissionTreeRef.value?.setCheckedKeys([])
-}
+  permissionTreeRef.value?.setCheckedKeys([]);
+};
 
 /**
  * 展开全部节点
  */
 const expandAll = () => {
-  const allKeys = getAllNodeIds(permissionTree.value)
-  allKeys.forEach(key => {
-    permissionTreeRef.value?.setExpanded(key, true)
-  })
-}
+  const allKeys = getAllNodeIds(permissionTree.value);
+  allKeys.forEach((key) => {
+    permissionTreeRef.value?.setExpanded(key, true);
+  });
+};
 
 /**
  * 收起全部节点
  */
 const collapseAll = () => {
-  const allKeys = getAllNodeIds(permissionTree.value)
-  allKeys.forEach(key => {
-    permissionTreeRef.value?.setExpanded(key, false)
-  })
-}
+  const allKeys = getAllNodeIds(permissionTree.value);
+  allKeys.forEach((key) => {
+    permissionTreeRef.value?.setExpanded(key, false);
+  });
+};
 
 const submitPermissions = () => {
-  if (!props.currentRole) return
+  if (!props.currentRole) return;
 
   // Get all checked and half-checked nodes
-  const checkedKeys = permissionTreeRef.value?.getCheckedKeys() || []
-  const halfCheckedKeys = permissionTreeRef.value?.getHalfCheckedKeys() || []
+  const checkedKeys = permissionTreeRef.value?.getCheckedKeys() || [];
+  const halfCheckedKeys = permissionTreeRef.value?.getHalfCheckedKeys() || [];
 
   // Combine both checked and half-checked keys
-  const allCheckedKeys = [...checkedKeys, ...halfCheckedKeys]
+  const allCheckedKeys = [...checkedKeys, ...halfCheckedKeys];
 
   if (allCheckedKeys.length === 0) {
-    ElMessage.warning('请至少选择一个权限')
-    return
+    ElMessage.warning("请至少选择一个权限");
+    return;
   }
 
-  submitting.value = true
+  submitting.value = true;
 
   // Emit submit event with role ID and permission IDs
-  emit('submit', props.currentRole.id, allCheckedKeys as number[])
-}
+  emit("submit", props.currentRole.id, allCheckedKeys as number[]);
+};
 
 const closeDialog = () => {
   // 关闭对话框时重置所有状态
-  submitting.value = false
-  emit('update:visible', false)
+  submitting.value = false;
+  emit("update:visible", false);
   nextTick(() => {
-    permissionTree.value = []
-    checkedPermissions.value = []
-  })
-}
+    permissionTree.value = [];
+    checkedPermissions.value = [];
+  });
+};
 
 const cancel = () => {
-  closeDialog()
-}
+  closeDialog();
+};
 </script>
 
 <style scoped>

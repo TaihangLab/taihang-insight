@@ -14,23 +14,23 @@
 
 <script setup lang="ts">
 defineProps<{
-  currentPage: number
-  pageSize: number
-  total: number
-}>()
+  currentPage: number;
+  pageSize: number;
+  total: number;
+}>();
 
 const emit = defineEmits<{
-  sizeChange: [size: number]
-  pageChange: [page: number]
-}>()
+  sizeChange: [size: number];
+  pageChange: [page: number];
+}>();
 
 const handleSizeChange = (size: number) => {
-  emit('sizeChange', size)
-}
+  emit("sizeChange", size);
+};
 
 const handleCurrentChange = (page: number) => {
-  emit('pageChange', page)
-}
+  emit("pageChange", page);
+};
 </script>
 
 <style scoped>

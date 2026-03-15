@@ -1,7 +1,7 @@
 /**
  * 录像管理相关API
  */
-import request from '@/utils/request'
+import request from "@/utils/request";
 
 /**
  * 获取设备录像列表
@@ -12,9 +12,9 @@ import request from '@/utils/request'
 export function getRecordList(deviceId, channelId, params) {
   return request({
     url: `/api/v1/record/list/${deviceId}/${channelId}`,
-    method: 'get',
-    params: params
-  })
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -26,9 +26,9 @@ export function getRecordList(deviceId, channelId, params) {
 export function downloadRecord(deviceId, channelId, params) {
   return request({
     url: `/api/v1/record/download/${deviceId}/${channelId}`,
-    method: 'get',
-    params: params
-  })
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -37,10 +37,10 @@ export function downloadRecord(deviceId, channelId, params) {
  */
 export function getCloudRecordList(params) {
   return request({
-    url: '/api/v1/cloudRecord/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/cloudRecord/list",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -50,8 +50,8 @@ export function getCloudRecordList(params) {
 export function deleteCloudRecord(id) {
   return request({
     url: `/api/v1/cloudRecord/delete/${id}`,
-    method: 'delete'
-  })
+    method: "delete",
+  });
 }
 
 /**
@@ -61,7 +61,6 @@ export function deleteCloudRecord(id) {
 export function getDownloadProgress(downloadId) {
   return request({
     url: `/api/v1/record/download/progress/${downloadId}`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
-

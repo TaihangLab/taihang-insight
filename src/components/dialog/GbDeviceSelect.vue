@@ -13,36 +13,56 @@
       <div class="page-header" style="width: 100%">
         <div class="page-header-btn" style="width: 100%; text-align: left">
           搜索:
-          <el-input @input="getDeviceList" style="margin-right: 1rem; width: auto;" size="small" placeholder="关键字"
-                    prefix-icon="el-icon-search" v-model="searchSrt" clearable></el-input>
+          <el-input
+            @input="getDeviceList"
+            style="margin-right: 1rem; width: auto"
+            size="small"
+            placeholder="关键字"
+            prefix-icon="el-icon-search"
+            v-model="searchSrt"
+            clearable
+          ></el-input>
           在线状态:
-          <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="getDeviceList" v-model="online" placeholder="请选择"
-                     default-first-option>
+          <el-select
+            size="small"
+            style="width: 8rem; margin-right: 1rem"
+            @change="getDeviceList"
+            v-model="online"
+            placeholder="请选择"
+            default-first-option
+          >
             <el-option label="全部" value=""></el-option>
             <el-option label="在线" value="true"></el-option>
             <el-option label="离线" value="false"></el-option>
           </el-select>
-          <el-button size="small" :loading="getDeviceListLoading"
-                     @click="getDeviceList()">刷新</el-button>
-          <el-button type="primary" size="small" style="float: right" @click="onSubmit">确 定</el-button>
+          <el-button size="small" :loading="getDeviceListLoading" @click="getDeviceList()">
+            刷新
+          </el-button>
+          <el-button type="primary" size="small" style="float: right" @click="onSubmit">
+            确 定
+          </el-button>
         </div>
       </div>
       <!--设备列表-->
-      <el-table size="medium"  :data="deviceList" style="width: 100%;font-size: 12px;" :height="winHeight" header-row-class-name="table-header" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" >
-        </el-table-column>
-        <el-table-column prop="name" label="名称" min-width="160">
-        </el-table-column>
-        <el-table-column prop="deviceId" label="设备编号" min-width="200" >
-        </el-table-column>
-        <el-table-column prop="channelCount" label="通道数" min-width="120" >
-        </el-table-column>
-        <el-table-column prop="manufacturer" label="厂家" min-width="120" >
-        </el-table-column>
-        <el-table-column label="地址" min-width="160" >
+      <el-table
+        size="medium"
+        :data="deviceList"
+        style="width: 100%; font-size: 12px"
+        :height="winHeight"
+        header-row-class-name="table-header"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55"></el-table-column>
+        <el-table-column prop="name" label="名称" min-width="160"></el-table-column>
+        <el-table-column prop="deviceId" label="设备编号" min-width="200"></el-table-column>
+        <el-table-column prop="channelCount" label="通道数" min-width="120"></el-table-column>
+        <el-table-column prop="manufacturer" label="厂家" min-width="120"></el-table-column>
+        <el-table-column label="地址" min-width="160">
           <template v-slot:default="scope">
             <div slot="reference" class="name-wrapper">
-              <el-tag v-if="scope.row.hostAddress" size="medium">{{ scope.row.hostAddress }}</el-tag>
+              <el-tag v-if="scope.row.hostAddress" size="medium">
+                {{ scope.row.hostAddress }}
+              </el-tag>
               <el-tag v-if="!scope.row.hostAddress" size="medium">未知</el-tag>
             </div>
           </template>
@@ -64,14 +84,14 @@
         :page-size="count"
         :page-sizes="[10, 25, 35, 50, 200, 1000, 50000]"
         layout="total, sizes, prev, pager, next"
-        :total="total">
-      </el-pagination>
+        :total="total"
+      ></el-pagination>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { getGbDeviceList } from '@/api/dialog'
+import { getGbDeviceList } from "@/api/dialog";
 
 export default {
   name: "gbDeviceSelect",
@@ -110,7 +130,7 @@ export default {
       this.count = val;
       this.getDeviceList();
     },
-    handleSelectionChange: function (val){
+    handleSelectionChange: function (val) {
       this.multipleSelection = val;
     },
     getDeviceList: function () {
@@ -120,29 +140,30 @@ export default {
         count: this.count,
         query: this.searchSrt,
         status: this.online,
-      }).then( (res)=> {
-        this.total = res.total;
-        this.deviceList = res.list;
-        this.getDeviceListLoading = false;
-      }).catch( (error)=> {
-        console.error(error);
-        this.getDeviceListLoading = false;
-      });
+      })
+        .then((res) => {
+          this.total = res.total;
+          this.deviceList = res.list;
+          this.getDeviceListLoading = false;
+        })
+        .catch((error) => {
+          console.error(error);
+          this.getDeviceListLoading = false;
+        });
     },
     openDialog: function (callback) {
       this.listChangeCallback = callback;
       this.showDialog = true;
     },
     onSubmit: function () {
-      if (this.listChangeCallback ) {
-        this.listChangeCallback(this.multipleSelection)
+      if (this.listChangeCallback) {
+        this.listChangeCallback(this.multipleSelection);
       }
       this.showDialog = false;
     },
     close: function () {
       this.showDialog = false;
     },
-
-  }
+  },
 };
 </script>

@@ -3,11 +3,11 @@
  * 负责岗位列表的获取、创建、更新、删除等数据操作
  */
 
-import { ref, computed } from 'vue';
-import type { Position } from '@/types/rbac';
-import type { PositionCategory } from '@/types/rbac/position';
-import { Status } from '@/types/rbac';
-import positionService from '@/api/system/positionService';
+import { ref, computed } from "vue";
+import type { Position } from "@/types/rbac";
+import type { PositionCategory } from "@/types/rbac/position";
+import { Status } from "@/types/rbac";
+import positionService from "@/api/system/positionService";
 
 // ============================================
 // 类型定义
@@ -60,7 +60,7 @@ export function usePositionData() {
   const pagination = ref<PositionPagination>({
     currentPage: 1,
     pageSize: 10,
-    total: 0
+    total: 0,
   });
 
   // 计算属性
@@ -73,7 +73,11 @@ export function usePositionData() {
   /**
    * 获取岗位列表
    */
-  const fetchPositions = async (params: PositionSearchConditions, page?: number, pageSize?: number) => {
+  const fetchPositions = async (
+    params: PositionSearchConditions,
+    page?: number,
+    pageSize?: number,
+  ) => {
     loading.value = true;
     try {
       const currentPage = page ?? pagination.value.currentPage;
@@ -82,11 +86,12 @@ export function usePositionData() {
       // 构建查询参数
       const queryParams: Record<string, unknown> = {
         skip: (currentPage - 1) * size,
-        limit: size
+        limit: size,
       };
 
       // 添加可选查询条件
-      if (params.tenant_id !== undefined && params.tenant_id !== null) queryParams.tenant_id = params.tenant_id;
+      if (params.tenant_id !== undefined && params.tenant_id !== null)
+        queryParams.tenant_id = params.tenant_id;
       if (params.tenant_code) queryParams.tenant_code = params.tenant_code;
       if (params.position_code) queryParams.position_code = params.position_code;
       if (params.position_name) queryParams.position_name = params.position_name;
@@ -102,20 +107,20 @@ export function usePositionData() {
         const items = Array.isArray(response.data) ? response.data : [];
 
         // 映射数据
-        positions.value = items.map(item => {
+        positions.value = items.map((item) => {
           return {
             id: Number(item.id),
-            positionCode: String(item.positionCode || ''),
-            positionName: String(item.positionName || ''),
-            categoryCode: String(item.categoryCode || ''),
-            categoryName: String(item.categoryName || ''),
-            department: String(item.department || ''),
+            positionCode: String(item.positionCode || ""),
+            positionName: String(item.positionName || ""),
+            categoryCode: String(item.categoryCode || ""),
+            categoryName: String(item.categoryName || ""),
+            department: String(item.department || ""),
             sortOrder: Number(item.sortOrder || 0),
             status: Number(item.status) as Status,
-            tenantCode: String(item.tenantCode || ''),
-            createTime: String(item.createTime || ''),
+            tenantCode: String(item.tenantCode || ""),
+            createTime: String(item.createTime || ""),
             // 保留原始数据
-            ...item
+            ...item,
           } as PositionEntity;
         });
 
@@ -127,7 +132,7 @@ export function usePositionData() {
 
       return positions.value;
     } catch (error) {
-      console.error('获取岗位列表失败:', error);
+      console.error("获取岗位列表失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -146,9 +151,9 @@ export function usePositionData() {
 
       if (response?.data) {
         const data = Array.isArray(response.data) ? response.data : [];
-        data.forEach(item => {
-          const categoryCode = String(item.categoryCode || '');
-          const categoryName = String(item.categoryName || '');
+        data.forEach((item) => {
+          const categoryCode = String(item.categoryCode || "");
+          const categoryName = String(item.categoryName || "");
 
           if (categoryCode && !categoryMap.has(categoryCode)) {
             categoryMap.set(categoryCode, {
@@ -157,8 +162,8 @@ export function usePositionData() {
               categoryName,
               sortOrder: 0,
               status: Number(item.status) as Status,
-              tenantCode: String(item.tenantCode || ''),
-              createTime: ''
+              tenantCode: String(item.tenantCode || ""),
+              createTime: "",
             });
           }
         });
@@ -167,7 +172,7 @@ export function usePositionData() {
       positionCategories.value = Array.from(categoryMap.values());
       return positionCategories.value;
     } catch (error) {
-      console.error('获取岗位类别失败:', error);
+      console.error("获取岗位类别失败:", error);
       throw error;
     }
   };
@@ -180,9 +185,9 @@ export function usePositionData() {
     try {
       // @ts-ignore - 数据由调用方验证，后端会进行验证
       await positionService.createPosition(data);
-      return { success: true, message: '新增成功' };
+      return { success: true, message: "新增成功" };
     } catch (error) {
-      console.error('创建岗位失败:', error);
+      console.error("创建岗位失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -197,9 +202,9 @@ export function usePositionData() {
     try {
       // @ts-ignore - 数据由调用方验证，后端会进行验证
       await positionService.updatePosition(positionId, data);
-      return { success: true, message: '修改成功' };
+      return { success: true, message: "修改成功" };
     } catch (error) {
-      console.error('更新岗位失败:', error);
+      console.error("更新岗位失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -213,9 +218,9 @@ export function usePositionData() {
     loading.value = true;
     try {
       await positionService.deletePosition(positionId);
-      return { success: true, message: '删除成功' };
+      return { success: true, message: "删除成功" };
     } catch (error) {
-      console.error('删除岗位失败:', error);
+      console.error("删除岗位失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -231,7 +236,7 @@ export function usePositionData() {
     pagination.value = {
       currentPage: 1,
       pageSize: 10,
-      total: 0
+      total: 0,
     };
   };
 
@@ -249,6 +254,6 @@ export function usePositionData() {
     createPosition,
     updatePosition,
     deletePosition,
-    clearData
+    clearData,
   };
 }

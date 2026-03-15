@@ -10,21 +10,41 @@
       :destroy-on-close="true"
       @close="close()"
     >
-      <div >
+      <div>
         重复国标ID:
-        <el-button style="float: right;" type="primary" size="small" icon="el-icon-document-copy"  title="点击拷贝" v-clipboard="gbIds.join(',')" @success="$message({type:'success', message:'成功拷贝到粘贴板'})">复制</el-button>
+        <el-button
+          style="float: right"
+          type="primary"
+          size="small"
+          icon="el-icon-document-copy"
+          title="点击拷贝"
+          v-clipboard="gbIds.join(',')"
+          @success="$message({ type: 'success', message: '成功拷贝到粘贴板' })"
+        >
+          复制
+        </el-button>
         <ul class="errDataBox">
-          <li v-for="id in gbIds" >
+          <li v-for="id in gbIds">
             {{ id }}
           </li>
         </ul>
       </div>
 
-      <div >
+      <div>
         重复App/stream:
-        <el-button style="float: right;" type="primary" size="small" icon="el-icon-document-copy"  title="点击拷贝" v-clipboard="streams.join(',')" @success="$message({type:'success', message:'成功拷贝到粘贴板'})">复制</el-button>
+        <el-button
+          style="float: right"
+          type="primary"
+          size="small"
+          icon="el-icon-document-copy"
+          title="点击拷贝"
+          v-clipboard="streams.join(',')"
+          @success="$message({ type: 'success', message: '成功拷贝到粘贴板' })"
+        >
+          复制
+        </el-button>
         <ul class="errDataBox">
-          <li v-for="id in streams" >
+          <li v-for="id in streams">
             {{ id }}
           </li>
         </ul>
@@ -34,12 +54,11 @@
 </template>
 
 <script>
-
 export default {
   name: "importChannelShowErrorData",
   computed: {},
   created() {},
-  props: ['gbIds', 'streams'],
+  props: ["gbIds", "streams"],
   data() {
     return {
       isLoging: false,
@@ -57,7 +76,7 @@ export default {
 };
 </script>
 <style>
-.errDataBox{
+.errDataBox {
   max-height: 15rem;
   overflow: auto;
 }

@@ -1,7 +1,7 @@
 /**
  * 用户管理相关API
  */
-import request from '@/utils/request'
+import request from "@/utils/request";
 
 /**
  * 用户登录
@@ -9,10 +9,10 @@ import request from '@/utils/request'
  */
 export function login(data) {
   return request({
-    url: '/api/v1/user/login',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/user/login",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -20,9 +20,9 @@ export function login(data) {
  */
 export function logout() {
   return request({
-    url: '/api/v1/user/static/logout',
-    method: 'post'
-  })
+    url: "/api/v1/user/static/logout",
+    method: "post",
+  });
 }
 
 /**
@@ -30,9 +30,9 @@ export function logout() {
  */
 export function getUserInfo() {
   return request({
-    url: '/api/v1/auth/user-info',
-    method: 'get'
-  })
+    url: "/api/v1/auth/user-info",
+    method: "get",
+  });
 }
 
 /**
@@ -40,9 +40,9 @@ export function getUserInfo() {
  */
 export function getUserInfoOld() {
   return request({
-    url: '/api/v1/user/info',
-    method: 'get'
-  })
+    url: "/api/v1/user/info",
+    method: "get",
+  });
 }
 
 /**
@@ -51,10 +51,10 @@ export function getUserInfoOld() {
  */
 export function getUserList(params) {
   return request({
-    url: '/api/v1/user/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/user/list",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -63,10 +63,10 @@ export function getUserList(params) {
  */
 export function addUser(data) {
   return request({
-    url: '/api/v1/user/add',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/user/add",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -75,10 +75,10 @@ export function addUser(data) {
  */
 export function updateUser(data) {
   return request({
-    url: '/api/v1/user/update',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/user/update",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -88,8 +88,8 @@ export function updateUser(data) {
 export function deleteUser(id) {
   return request({
     url: `/api/v1/user/delete/${id}`,
-    method: 'delete'
-  })
+    method: "delete",
+  });
 }
 
 /**
@@ -98,10 +98,10 @@ export function deleteUser(id) {
  */
 export function changePassword(data) {
   return request({
-    url: '/api/v1/user/password/change',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/user/password/change",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -111,8 +111,8 @@ export function changePassword(data) {
 export function reset_password(userId) {
   return request({
     url: `/api/v1/user/password/reset/${userId}`,
-    method: 'post'
-  })
+    method: "post",
+  });
 }
 
 /**
@@ -120,8 +120,7 @@ export function reset_password(userId) {
  */
 export function getUserDetailInfo() {
   return request({
-    url: '/api/v1/user/userInfo',
-    method: 'post'
-  })
+    url: "/api/v1/user/userInfo",
+    method: "post",
+  });
 }
-

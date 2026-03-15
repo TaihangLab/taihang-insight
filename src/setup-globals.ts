@@ -4,14 +4,14 @@
  */
 
 // 导入 video.js 并立即设置为全局变量
-import videojs from 'video.js'
+import videojs from "video.js";
 
 // 确保 videojs 在 window 上可用（liveplayer-v3 依赖）
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const window: any
+declare const window: any;
 
-if (typeof window !== 'undefined') {
-  window.videojs = videojs
+if (typeof window !== "undefined") {
+  window.videojs = videojs;
 }
 
-export {}
+export {};

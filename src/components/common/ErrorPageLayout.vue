@@ -3,33 +3,33 @@
  * 通用错误页面布局组件
  * 用于 404、403 等错误页面，提供统一的视觉风格
  */
-import type { ErrorReasonItem, ErrorActionButton } from '@/types/components.d'
+import type { ErrorReasonItem, ErrorActionButton } from "@/types/components.d";
 
 interface Props {
   /** 错误代码，如 404、403 */
-  errorCode: string
+  errorCode: string;
   /** 错误标题 */
-  title: string
+  title: string;
   /** 错误描述 */
-  message: string
+  message: string;
   /** 次要描述 */
-  submessage?: string
+  submessage?: string;
   /** 可能的原因列表 */
-  reasons?: ErrorReasonItem[]
+  reasons?: ErrorReasonItem[];
   /** 操作按钮 */
-  actions: ErrorActionButton[]
+  actions: ErrorActionButton[];
   /** 底部帮助信息 */
-  footerInfo?: string
+  footerInfo?: string;
   /** 左侧背景大号错误代码 */
-  bgCode?: string
+  bgCode?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  submessage: '',
+  submessage: "",
   reasons: () => [],
-  footerInfo: '如有疑问，请联系系统管理员',
-  bgCode: ''
-})
+  footerInfo: "如有疑问，请联系系统管理员",
+  bgCode: "",
+});
 </script>
 
 <template>
@@ -73,7 +73,7 @@ const props = withDefaults(defineProps<Props>(), {
             :key="index"
             :class="[
               'tech-btn',
-              action.type === 'primary' ? 'tech-btn-primary' : 'tech-btn-secondary'
+              action.type === 'primary' ? 'tech-btn-primary' : 'tech-btn-secondary',
             ]"
             @click="action.onClick"
           >
@@ -162,7 +162,7 @@ const props = withDefaults(defineProps<Props>(), {
 .error-code {
   font-size: 72px;
   font-weight: bold;
-  color: var(--design-primary-color, #4185F7);
+  color: var(--design-primary-color, #4185f7);
   line-height: 1;
   margin-bottom: 15px;
 }
@@ -177,7 +177,7 @@ const props = withDefaults(defineProps<Props>(), {
 .error-divider {
   width: 60px;
   height: 3px;
-  background: var(--design-primary-color, #4185F7);
+  background: var(--design-primary-color, #4185f7);
   border-radius: 2px;
 }
 
@@ -232,7 +232,7 @@ const props = withDefaults(defineProps<Props>(), {
 }
 
 .reason-icon {
-  color: var(--design-primary-color, #4185F7);
+  color: var(--design-primary-color, #4185f7);
   font-size: 16px;
 }
 
@@ -256,11 +256,13 @@ const props = withDefaults(defineProps<Props>(), {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .tech-btn-primary {
-  background: linear-gradient(45deg, var(--design-primary-color, #4185F7), #2d5fd9);
+  background: linear-gradient(45deg, var(--design-primary-color, #4185f7), #2d5fd9);
   color: #ffffff;
 }
 
@@ -300,7 +302,7 @@ const props = withDefaults(defineProps<Props>(), {
 }
 
 .footer-info i {
-  color: var(--design-primary-color, #4185F7);
+  color: var(--design-primary-color, #4185f7);
 }
 
 /* 响应式设计 */

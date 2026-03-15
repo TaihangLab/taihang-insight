@@ -1,81 +1,83 @@
 <template>
-<div id="chooseChannel" >
-
-    <el-dialog title="通道共享" v-loading="loading" v-if="showDialog" top="2rem" width="80%" :close-on-click-modal="false" :visible.sync="showDialog" :destroy-on-close="true" @close="close()">
+  <div id="chooseChannel">
+    <el-dialog
+      title="通道共享"
+      v-loading="loading"
+      v-if="showDialog"
+      top="2rem"
+      width="80%"
+      :close-on-click-modal="false"
+      :visible.sync="showDialog"
+      :destroy-on-close="true"
+      @close="close()"
+    >
       <el-row>
         <el-col :span="24">
           <el-container>
-            <el-main v-bind:style="{backgroundColor: '#FFF', maxHeight:  winHeight + 'px'}">
+            <el-main v-bind:style="{ backgroundColor: '#FFF', maxHeight: winHeight + 'px' }">
               <shareChannelAdd ref="shareChannelAdd" :platformId="platformId"></shareChannelAdd>
             </el-main>
           </el-container>
         </el-col>
       </el-row>
     </el-dialog>
-</div>
+  </div>
 </template>
 
 <script>
 import shareChannelAdd from "./shareChannelAdd.vue";
-import { updatePlatformChannelForGb } from '@/api/dialog'
+import { updatePlatformChannelForGb } from "@/api/dialog";
 
 export default {
-    name: 'chooseChannel',
-    props: {},
-    components: {shareChannelAdd},
-    computed: {},
-    data() {
-        return {
-            loading: false,
-            tabActiveName: "gbChannel",
-            catalogTabActiveName: "addShare",
-            platformId: "",
-            showDialog: false,
-            chooseData: {},
-            winHeight: window.innerHeight - 250,
-
-        };
+  name: "chooseChannel",
+  props: {},
+  components: { shareChannelAdd },
+  computed: {},
+  data() {
+    return {
+      loading: false,
+      tabActiveName: "gbChannel",
+      catalogTabActiveName: "addShare",
+      platformId: "",
+      showDialog: false,
+      chooseData: {},
+      winHeight: window.innerHeight - 250,
+    };
+  },
+  methods: {
+    openDialog(platformId, closeCallback) {
+      this.platformId = platformId;
+      this.showDialog = true;
+      this.closeCallback = closeCallback;
     },
-    methods: {
-        openDialog(platformId, closeCallback) {
-            this.platformId = platformId
-            this.showDialog = true
-            this.closeCallback = closeCallback
-        },
-        tabClick (tab, event){
-
-        },
-        close: function() {
-          this.closeCallback()
-        },
-        search: function() {
-
-        },
-        save: function() {
-
-            updatePlatformChannelForGb({
-                platformId:  this.platformId,
-                channelReduces:  this.chooseData
-            }).then((data)=>{
-              // 响应拦截器已处理成功/失败判断，直接使用数据
-              this.$message({
-                        showClose: true,
-                        message: '保存成功,',
-                        type: 'success'
-                    });
-            }).catch(function (error) {
-                console.log(error);
-            });
-
-        },
-        catalogIdChange: function (id, name) {
-            this.catalogId = id;
-            this.catalogName = name;
-        },
-    }
+    tabClick(tab, event) {},
+    close: function () {
+      this.closeCallback();
+    },
+    search: function () {},
+    save: function () {
+      updatePlatformChannelForGb({
+        platformId: this.platformId,
+        channelReduces: this.chooseData,
+      })
+        .then((data) => {
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          this.$message({
+            showClose: true,
+            message: "保存成功,",
+            type: "success",
+          });
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+    },
+    catalogIdChange: function (id, name) {
+      this.catalogId = id;
+      this.catalogName = name;
+    },
+  },
 };
 </script>
 
-<style>
-
-</style>
+<style></style>

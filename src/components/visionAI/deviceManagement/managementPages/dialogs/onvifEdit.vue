@@ -9,16 +9,16 @@
       :destroy-on-close="true"
       @close="close()"
     >
-      <div id="shared" style="margin-top: 1rem;margin-right: 100px;">
-        <el-form ref="form" :rules="rules" :model="form" label-width="140px" >
-          <el-form-item label="地址" prop="hostName" >
-            <el-select v-model="form.hostName" style="float: left; width: 100%" >
+      <div id="shared" style="margin-top: 1rem; margin-right: 100px">
+        <el-form ref="form" :rules="rules" :model="form" label-width="140px">
+          <el-form-item label="地址" prop="hostName">
+            <el-select v-model="form.hostName" style="float: left; width: 100%">
               <el-option
                 v-for="item in hostNames"
                 :key="item"
                 :label="item.replace('http://', '')"
-                :value="item">
-              </el-option>
+                :value="item"
+              ></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="用户名" prop="username">
@@ -28,8 +28,8 @@
             <el-input v-model="form.password" clearable></el-input>
           </el-form-item>
           <el-form-item>
-            <div style="float: right;">
-              <el-button type="primary" @click="onSubmit" >确认</el-button>
+            <div style="float: right">
+              <el-button type="primary" @click="onSubmit">确认</el-button>
               <el-button @click="close">取消</el-button>
             </div>
           </el-form-item>
@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import { getOnvifRtsp } from '@/api/onvif'
+import { getOnvifRtsp } from "@/api/onvif";
 
 export default {
   name: "onvifEdit",
@@ -52,7 +52,7 @@ export default {
       listChangeCallback: null,
       showDialog: false,
       isLoging: false,
-      hostNames:[],
+      hostNames: [],
       form: {
         hostName: null,
         username: "admin",
@@ -67,7 +67,7 @@ export default {
   },
   methods: {
     openDialog: function (hostNamesParam, callback) {
-      console.log(hostNamesParam)
+      console.log(hostNamesParam);
       this.showDialog = true;
       this.listChangeCallback = callback;
       if (hostNamesParam != null) {
@@ -82,28 +82,30 @@ export default {
         timeout: 3000,
         username: this.form.username,
         password: this.form.password,
-      }).then((res) => {
-        console.log(res)
-        if (res.code === 0) {
-          if (res.data != null) {
-            this.listChangeCallback(res.data)
-          }else {
+      })
+        .then((res) => {
+          console.log(res);
+          if (res.code === 0) {
+            if (res.data != null) {
+              this.listChangeCallback(res.data);
+            } else {
+              this.$message({
+                showClose: true,
+                message: res.msg,
+                type: "error",
+              });
+            }
+          } else {
             this.$message({
               showClose: true,
               message: res.msg,
               type: "error",
             });
           }
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: "error",
-          });
-        }
-      }).catch(function (error) {
-        console.log(error);
-      });
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
     },
     close: function () {
       this.showDialog = false;

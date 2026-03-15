@@ -9,25 +9,25 @@
       :destroy-on-close="true"
       @close="close()"
     >
-      <div id="shared" style="margin-right: 18px;">
+      <div id="shared" style="margin-right: 18px">
         <el-form ref="pushKeyForm" :rules="rules" status-icon label-width="86px">
-              <el-form-item label="新pushKey" prop="newPushKey" >
-                <el-input v-model="newPushKey" autocomplete="off"></el-input>
-              </el-form-item>
-              <el-form-item>
-                <div style="float: right;">
-                  <el-button type="primary" @click="onSubmit">保存</el-button>
-                  <el-button @click="close">取消</el-button>
-                </div>
-              </el-form-item>
-            </el-form>
+          <el-form-item label="新pushKey" prop="newPushKey">
+            <el-input v-model="newPushKey" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item>
+            <div style="float: right">
+              <el-button type="primary" @click="onSubmit">保存</el-button>
+              <el-button @click="close">取消</el-button>
+            </div>
+          </el-form-item>
+        </el-form>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { changePushKey } from '@/api/dialog'
+import { changePushKey } from "@/api/dialog";
 
 export default {
   name: "changePushKey",
@@ -36,8 +36,8 @@ export default {
   created() {},
   data() {
     let validatePass1 = (rule, value, callback) => {
-      if (value === '') {
-        callback(new Error('请输入新pushKey'));
+      if (value === "") {
+        callback(new Error("请输入新pushKey"));
       } else {
         callback();
       }
@@ -57,7 +57,7 @@ export default {
   },
   methods: {
     openDialog: function (row, callback) {
-      console.log(row)
+      console.log(row);
       this.showDialog = true;
       this.listChangeCallback = callback;
       if (row != null) {
@@ -65,28 +65,30 @@ export default {
       }
     },
     onSubmit: function () {
-      changePushKey(this.newPushKey, this.form.id).then((res)=> {
-        this.$message({
-          showClose: true,
-          message: '修改成功',
-          type: 'success'
+      changePushKey(this.newPushKey, this.form.id)
+        .then((res) => {
+          this.$message({
+            showClose: true,
+            message: "修改成功",
+            type: "success",
+          });
+          this.showDialog = false;
+          this.listChangeCallback();
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: "修改pushKey失败，是否已登录（接口鉴权关闭无法修改pushKey）",
+            type: "error",
+          });
+          console.error(error);
         });
-        this.showDialog = false;
-        this.listChangeCallback();
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: '修改pushKey失败，是否已登录（接口鉴权关闭无法修改pushKey）',
-          type: 'error'
-        });
-        console.error(error)
-      });
     },
     close: function () {
       this.showDialog = false;
       this.newpushKey = null;
-      this.userId=null;
-      this.adminId=null;
+      this.userId = null;
+      this.adminId = null;
     },
   },
 };

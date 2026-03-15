@@ -1,10 +1,7 @@
 <template>
   <div class="department-list-container">
     <!-- 操作按钮区 -->
-    <DepartmentTableActions
-      :selected-count="selectedCodes.length"
-      @add="handleAdd"
-    />
+    <DepartmentTableActions :selected-count="selectedCodes.length" @add="handleAdd" />
 
     <!-- 表格 -->
     <DepartmentTreeTable
@@ -32,58 +29,58 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import DepartmentTableActions from '@/pages/system/components/department/DepartmentTableActions.vue'
-import DepartmentTreeTable from '@/pages/system/components/department/DepartmentTreeTable.vue'
-import DepartmentPagination from '@/pages/system/components/department/DepartmentPagination.vue'
+import { ref } from "vue";
+import DepartmentTableActions from "@/pages/system/components/department/DepartmentTableActions.vue";
+import DepartmentTreeTable from "@/pages/system/components/department/DepartmentTreeTable.vue";
+import DepartmentPagination from "@/pages/system/components/department/DepartmentPagination.vue";
 
 interface Pagination {
-  currentPage: number
-  pageSize: number
+  currentPage: number;
+  pageSize: number;
 }
 
 defineProps<{
-  departments: any[]
-  loading: boolean
-  pagination: Pagination
-  total: number
-}>()
+  departments: any[];
+  loading: boolean;
+  pagination: Pagination;
+  total: number;
+}>();
 
 const emit = defineEmits<{
-  selectionChange: [codes: number[], selection: any[]]
-  add: []
-  edit: [row: any]
-  delete: [row: any]
-  pageChange: [page: number]
-  sizeChange: [size: number]
-}>()
+  selectionChange: [codes: number[], selection: any[]];
+  add: [];
+  edit: [row: any];
+  delete: [row: any];
+  pageChange: [page: number];
+  sizeChange: [size: number];
+}>();
 
-const selectedCodes = ref<number[]>([])
+const selectedCodes = ref<number[]>([]);
 
 const handleSelectionChange = (selection: any[]) => {
-  const codes = selection.map((row) => row.id)
-  emit('selectionChange', codes, selection)
-}
+  const codes = selection.map((row) => row.id);
+  emit("selectionChange", codes, selection);
+};
 
 const handleAdd = () => {
-  emit('add')
-}
+  emit("add");
+};
 
 const handleEdit = (row: any) => {
-  emit('edit', row)
-}
+  emit("edit", row);
+};
 
 const handleDelete = (row: any) => {
-  emit('delete', row)
-}
+  emit("delete", row);
+};
 
 const handlePageChange = (page: number) => {
-  emit('pageChange', page)
-}
+  emit("pageChange", page);
+};
 
 const handleSizeChange = (size: number) => {
-  emit('sizeChange', size)
-}
+  emit("sizeChange", size);
+};
 </script>
 
 <style scoped>

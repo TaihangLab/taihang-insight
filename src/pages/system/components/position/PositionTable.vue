@@ -15,7 +15,7 @@
     <el-table-column prop="status" label="状态" width="80" align="center">
       <template #default="scope">
         <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="small">
-          {{ scope.row.status === 0 ? '启用' : '停用' }}
+          {{ scope.row.status === 0 ? "启用" : "停用" }}
         </el-tag>
       </template>
     </el-table-column>
@@ -34,33 +34,33 @@
 
 <script setup lang="ts">
 interface Position {
-  id: string | number
-  status: number
-  [key: string]: any
+  id: string | number;
+  status: number;
+  [key: string]: any;
 }
 
 defineProps<{
-  data: Position[]
-  loading: boolean
-}>()
+  data: Position[];
+  loading: boolean;
+}>();
 
 const emit = defineEmits<{
-  selectionChange: [selection: Position[]]
-  edit: [row: Position]
-  delete: [row: Position]
-}>()
+  selectionChange: [selection: Position[]];
+  edit: [row: Position];
+  delete: [row: Position];
+}>();
 
 const handleSelectionChange = (selection: Position[]) => {
-  emit('selectionChange', selection)
-}
+  emit("selectionChange", selection);
+};
 
 const handleEdit = (row: Position) => {
-  emit('edit', row)
-}
+  emit("edit", row);
+};
 
 const handleDelete = (row: Position) => {
-  emit('delete', row)
-}
+  emit("delete", row);
+};
 </script>
 
 <style scoped>
@@ -75,10 +75,10 @@ const handleDelete = (row: Position) => {
 }
 
 .edit-btn {
-  color: #409EFF;
+  color: #409eff;
 }
 
 .delete-btn {
-  color: #F56C6C;
+  color: #f56c6c;
 }
 </style>

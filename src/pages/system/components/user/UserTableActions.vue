@@ -2,10 +2,12 @@
   <div class="user-table-actions">
     <div class="left-buttons">
       <el-button type="primary" size="small" data-testid="btn-add-user" @click="handleAdd">
-        <i class="i-carbon-add"></i>新增
+        <i class="i-carbon-add"></i>
+        新增
       </el-button>
       <el-button size="small" data-testid="btn-batch-delete" @click="handleBatchDelete">
-        <i class="i-carbon-trash-can"></i>删除
+        <i class="i-carbon-trash-can"></i>
+        删除
       </el-button>
     </div>
     <div class="right-buttons">
@@ -24,43 +26,43 @@
 
 <script setup lang="ts">
 interface Props {
-  selectedCount?: number
+  selectedCount?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  selectedCount: 0
-})
+  selectedCount: 0,
+});
 
 const emit = defineEmits<{
-  add: []
-  batchDelete: []
-  advancedSearch: []
-  refresh: []
-  tableSetting: []
-}>()
+  add: [];
+  batchDelete: [];
+  advancedSearch: [];
+  refresh: [];
+  tableSetting: [];
+}>();
 
 const handleAdd = () => {
-  emit('add')
-}
+  emit("add");
+};
 
 const handleBatchDelete = () => {
   if (props.selectedCount === 0) {
-    return
+    return;
   }
-  emit('batchDelete')
-}
+  emit("batchDelete");
+};
 
 const handleAdvancedSearch = () => {
-  emit('advancedSearch')
-}
+  emit("advancedSearch");
+};
 
 const handleRefresh = () => {
-  emit('refresh')
-}
+  emit("refresh");
+};
 
 const handleTableSetting = () => {
-  emit('tableSetting')
-}
+  emit("tableSetting");
+};
 </script>
 
 <style scoped>

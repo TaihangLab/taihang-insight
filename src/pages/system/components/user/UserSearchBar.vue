@@ -45,69 +45,69 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onScopeDispose } from 'vue'
-import TenantSelector from '@/pages/system/components/commons/TenantSelector.vue'
+import { ref, watch, onScopeDispose } from "vue";
+import TenantSelector from "@/pages/system/components/commons/TenantSelector.vue";
 
 interface SearchValue {
-  tenant_id: string | number | null
-  username: string
-  phone: string
-  status: number | null
+  tenant_id: string | number | null;
+  username: string;
+  phone: string;
+  status: number | null;
 }
 
 const props = defineProps<{
-  modelValue: SearchValue
-}>()
+  modelValue: SearchValue;
+}>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: SearchValue]
-  search: [value: SearchValue]
-  reset: []
-  tenantChange: []
-}>()
+  "update:modelValue": [value: SearchValue];
+  search: [value: SearchValue];
+  reset: [];
+  tenantChange: [];
+}>();
 
-const tenantSelectorRef = ref()
+const tenantSelectorRef = ref();
 
 // 使用 ref 替代 reactive，避免潜在的响应式问题
-const formValue = ref<SearchValue>({ ...props.modelValue })
+const formValue = ref<SearchValue>({ ...props.modelValue });
 
 // 使用 watch 并添加清理逻辑
 const stopWatch = watch(
   () => props.modelValue,
   (newVal) => {
     if (newVal) {
-      Object.assign(formValue.value, newVal)
+      Object.assign(formValue.value, newVal);
     }
   },
-  { deep: true }
-)
+  { deep: true },
+);
 
 // 组件卸载时停止监听
 onScopeDispose(() => {
-  stopWatch()
-})
+  stopWatch();
+});
 
 const handleSearch = () => {
-  emit('update:modelValue', { ...formValue.value })
-  emit('search', formValue.value)
-}
+  emit("update:modelValue", { ...formValue.value });
+  emit("search", formValue.value);
+};
 
 const handleReset = () => {
-  const currentTenantId = formValue.value.tenant_id
+  const currentTenantId = formValue.value.tenant_id;
   Object.assign(formValue.value, {
     tenant_id: currentTenantId || null,
-    username: '',
-    phone: '',
-    status: null
-  })
-  emit('update:modelValue', { ...formValue.value })
-  emit('reset')
-}
+    username: "",
+    phone: "",
+    status: null,
+  });
+  emit("update:modelValue", { ...formValue.value });
+  emit("reset");
+};
 
 const handleTenantChange = () => {
-  emit('update:modelValue', { ...formValue.value })
-  emit('tenantChange')
-}
+  emit("update:modelValue", { ...formValue.value });
+  emit("tenantChange");
+};
 </script>
 
 <style scoped>

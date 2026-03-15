@@ -58,20 +58,14 @@
       <!-- 第3行第2-3列：预警记录 (1x2) -->
       <div class="grid-panel grid-span-1x2">
         <Panel title="预警记录">
-          <WarningList
-            :tableHeight="tableHeight"
-            :headerCellStyle="headerCellStyle"
-          />
+          <WarningList :tableHeight="tableHeight" :headerCellStyle="headerCellStyle" />
         </Panel>
       </div>
 
       <!-- 第3行第4列：设备预警数量Top10 (1x1) -->
       <div class="grid-panel">
         <Panel title="设备预警数量 Top 10">
-          <DeviceWarningList
-            :tableHeight="tableHeight"
-            :headerCellStyle="headerCellStyle"
-          />
+          <DeviceWarningList :tableHeight="tableHeight" :headerCellStyle="headerCellStyle" />
         </Panel>
       </div>
     </div>
@@ -79,41 +73,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import centerAPI from '@/api/center';
+import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from "vue";
+import centerAPI from "@/api/center";
 
 // 导入组件
-import TopBar from './components/TopBar.vue';
-import Panel from './components/Panel.vue';
-import TrendChart from './components/TrendChart.vue';
-import LevelChart from './components/LevelChart.vue';
-import StatusChart from './components/StatusChart.vue';
-import TypeRankList from './components/TypeRankList.vue';
-import TopLocationList from './components/TopLocationList.vue';
-import WarningViewer from './components/WarningViewer.vue';
-import WarningList from './components/WarningList.vue';
-import DeviceWarningList from './components/DeviceWarningList.vue';
+import TopBar from "./components/TopBar.vue";
+import Panel from "./components/Panel.vue";
+import TrendChart from "./components/TrendChart.vue";
+import LevelChart from "./components/LevelChart.vue";
+import StatusChart from "./components/StatusChart.vue";
+import TypeRankList from "./components/TypeRankList.vue";
+import TopLocationList from "./components/TopLocationList.vue";
+import WarningViewer from "./components/WarningViewer.vue";
+import WarningList from "./components/WarningList.vue";
+import DeviceWarningList from "./components/DeviceWarningList.vue";
 
 // 导入类型
-import type { LocationInfo } from '@/types/center/components';
-import type { DashboardSummary } from '@/types/center/dashboard';
+import type { LocationInfo } from "@/types/center/components";
+import type { DashboardSummary } from "@/types/center/dashboard";
 
 // ============================================================================
 // 响应式状态
 // ============================================================================
 
 // 当前时间
-const currentDetailTime = ref<string>('');
+const currentDetailTime = ref<string>("");
 
 // 大屏摘要数据
 const dashboardSummary = ref<DashboardSummary | null>(null);
 
 // 天气和位置信息
 const locationInfo = reactive<LocationInfo>({
-  location: '',
-  weather: '',
-  airQuality: '',
-  loading: true
+  location: "",
+  weather: "",
+  airQuality: "",
+  loading: true,
 });
 
 // 全屏状态
@@ -121,12 +115,12 @@ const isFullscreen = ref<boolean>(false);
 
 // 表格样式（保留，用于表格组件）
 const headerCellStyle = {
-  background: 'linear-gradient(180deg, rgba(6, 30, 93, 0.9) 0%, rgba(4, 20, 63, 1) 100%)',
-  color: '#00FFFF',
-  borderBottom: '1px solid rgba(0, 255, 255, 0.3)',
-  fontWeight: 'normal',
-  padding: '12px 0',
-  textShadow: '0 0 10px rgba(0, 255, 255, 0.3)'
+  background: "linear-gradient(180deg, rgba(6, 30, 93, 0.9) 0%, rgba(4, 20, 63, 1) 100%)",
+  color: "#00FFFF",
+  borderBottom: "1px solid rgba(0, 255, 255, 0.3)",
+  fontWeight: "normal",
+  padding: "12px 0",
+  textShadow: "0 0 10px rgba(0, 255, 255, 0.3)",
 };
 
 // 图表引用（保留，用于窗口resize时调用）
@@ -169,21 +163,21 @@ function calculateChartHeight(): void {
  * 格式化日期
  */
 function formatDate(date: Date, formatStr: string): string {
-  if (!date) return '';
+  if (!date) return "";
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
 
   return formatStr
-    .replace('yyyy', String(year))
-    .replace('MM', month)
-    .replace('dd', day)
-    .replace('HH', hours)
-    .replace('mm', minutes)
-    .replace('ss', seconds);
+    .replace("yyyy", String(year))
+    .replace("MM", month)
+    .replace("dd", day)
+    .replace("HH", hours)
+    .replace("mm", minutes)
+    .replace("ss", seconds);
 }
 
 /**
@@ -191,7 +185,7 @@ function formatDate(date: Date, formatStr: string): string {
  */
 function updateCurrentTime(): void {
   const now = new Date();
-  currentDetailTime.value = formatDate(now, 'yyyy-MM-dd HH:mm:ss');
+  currentDetailTime.value = formatDate(now, "yyyy-MM-dd HH:mm:ss");
 }
 
 /**
@@ -215,7 +209,7 @@ async function loadDashboardData(): Promise<void> {
   try {
     dashboardSummary.value = await centerAPI.dashboard.getSummary();
   } catch (error) {
-    console.error('加载大屏摘要数据失败:', error);
+    console.error("加载大屏摘要数据失败:", error);
   }
 }
 
@@ -226,11 +220,11 @@ async function fetchWeatherData(): Promise<void> {
   locationInfo.loading = true;
   try {
     // TODO: 接入真实天气API
-    locationInfo.location = '太行工业园区';
-    locationInfo.weather = '晴 26°C';
-    locationInfo.airQuality = '空气质量: 良';
+    locationInfo.location = "太行工业园区";
+    locationInfo.weather = "晴 26°C";
+    locationInfo.airQuality = "空气质量: 良";
   } catch (error) {
-    console.error('获取天气数据失败:', error);
+    console.error("获取天气数据失败:", error);
   } finally {
     locationInfo.loading = false;
   }
@@ -249,7 +243,7 @@ async function toggleFullscreen(): Promise<void> {
       isFullscreen.value = false;
     }
   } catch (err) {
-    console.error('全屏切换失败:', err);
+    console.error("全屏切换失败:", err);
   }
 }
 
@@ -259,8 +253,8 @@ async function toggleFullscreen(): Promise<void> {
 
 onMounted(() => {
   // 初始化CSS变量
-  document.documentElement.style.setProperty('--panel-top-height', '24vh');
-  document.documentElement.style.setProperty('--panel-bottom-height', '36vh');
+  document.documentElement.style.setProperty("--panel-top-height", "24vh");
+  document.documentElement.style.setProperty("--panel-bottom-height", "36vh");
 
   // 更新当前时间
   updateCurrentTime();
@@ -284,14 +278,14 @@ onMounted(() => {
   dashboardRefreshTimer = window.setInterval(loadDashboardData, 30 * 1000);
 
   // 监听全屏变化
-  document.addEventListener('fullscreenchange', () => {
+  document.addEventListener("fullscreenchange", () => {
     isFullscreen.value = !!document.fullscreenElement;
     setTimeout(() => {
       handleResize();
     }, 300);
   });
 
-  window.addEventListener('resize', handleResize);
+  window.addEventListener("resize", handleResize);
 });
 
 onBeforeUnmount(() => {
@@ -301,8 +295,8 @@ onBeforeUnmount(() => {
   if (dashboardRefreshTimer) clearInterval(dashboardRefreshTimer);
 
   // 移除事件监听
-  document.removeEventListener('fullscreenchange', () => {});
-  window.removeEventListener('resize', handleResize);
+  document.removeEventListener("fullscreenchange", () => {});
+  window.removeEventListener("resize", handleResize);
 });
 </script>
 
@@ -320,7 +314,7 @@ onBeforeUnmount(() => {
 .visual-center {
   flex: 1;
   min-height: 0;
-  background: linear-gradient(135deg, #001529 0%, #000B18 100%);
+  background: linear-gradient(135deg, #001529 0%, #000b18 100%);
   color: #fff;
   padding: 16px;
   margin: 0;

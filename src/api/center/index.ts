@@ -22,27 +22,27 @@
  */
 
 // 导出各个API模块
-import modelAPI from './model'
-import skillAPI from './skill'
-import cameraAPI from './camera'
-import alertAPI from './alert'
-import reviewSkillAPI from './reviewSkill'
-import archiveAPI from './archive'
-import taskReviewAPI from './taskReview'
-import reviewRecordAPI from './reviewRecord'
-import realtimeMonitorAPI from './realtimeMonitor'
-import realtimeDetectionAPI from './realtimeDetection'
-import alertStatisticsAPI from './alertStatistics'
-import systemMonitorAPI from './systemMonitor'
-import deviceStatisticsAPI from './deviceStatistics'
-import alertForwardAPI from './alertForward'
-import chatAssistantAPI from './chatAssistant'
-import dashboardAPI from './dashboard'
-import localVideoAPI from './localVideo'
+import modelAPI from "./model";
+import skillAPI from "./skill";
+import cameraAPI from "./camera";
+import alertAPI from "./alert";
+import reviewSkillAPI from "./reviewSkill";
+import archiveAPI from "./archive";
+import taskReviewAPI from "./taskReview";
+import reviewRecordAPI from "./reviewRecord";
+import realtimeMonitorAPI from "./realtimeMonitor";
+import realtimeDetectionAPI from "./realtimeDetection";
+import alertStatisticsAPI from "./alertStatistics";
+import systemMonitorAPI from "./systemMonitor";
+import deviceStatisticsAPI from "./deviceStatistics";
+import alertForwardAPI from "./alertForward";
+import chatAssistantAPI from "./chatAssistant";
+import dashboardAPI from "./dashboard";
+import localVideoAPI from "./localVideo";
 
 // 导出基础配置
 // APIError is now exported from commons
-export type { APIError } from '@/api/commons'
+export type { APIError } from "@/api/commons";
 
 /**
  * VisionAI Center API 统一接口
@@ -97,11 +97,11 @@ const centerAPI = {
   dashboard: dashboardAPI,
 
   // 本地视频管理
-  localVideo: localVideoAPI
-}
+  localVideo: localVideoAPI,
+};
 
 // 导出默认实例
-export default centerAPI
+export default centerAPI;
 
 // 同时也支持命名导出各个API模块
 export {
@@ -121,5 +121,5 @@ export {
   alertForwardAPI,
   chatAssistantAPI,
   dashboardAPI,
-  localVideoAPI
-}
+  localVideoAPI,
+};

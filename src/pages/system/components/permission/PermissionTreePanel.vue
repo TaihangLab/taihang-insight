@@ -17,10 +17,16 @@
             <i :class="getNodeIconClass(data.type)" class="node-icon"></i>
             <span class="node-label">{{ data.name }}</span>
             <span class="node-code">{{ data.code }}</span>
-            <el-tag v-if="data.type === 'button'" size="small" :type="getCategoryTagType(data.category)">
+            <el-tag
+              v-if="data.type === 'button'"
+              size="small"
+              :type="getCategoryTagType(data.category)"
+            >
               {{ getCategoryLabel(data.category) }}
             </el-tag>
-            <el-tag v-if="data.type === 'menu' && !data.visible" size="small" type="info">隐藏</el-tag>
+            <el-tag v-if="data.type === 'menu' && !data.visible" size="small" type="info">
+              隐藏
+            </el-tag>
             <el-tag v-if="data.status === 1" size="small" type="danger">禁用</el-tag>
           </span>
           <span class="node-actions">
@@ -31,14 +37,18 @@
               icon="el-icon-plus"
               @click.stop="handleAddChild(data)"
               title="添加子项"
-            >子项</el-button>
+            >
+              子项
+            </el-button>
             <el-button
               link
               size="small"
               icon="el-icon-edit"
               @click.stop="handleEdit(data)"
               title="编辑"
-            >编辑</el-button>
+            >
+              编辑
+            </el-button>
             <el-button
               link
               size="small"
@@ -46,7 +56,9 @@
               class="delete-btn"
               @click.stop="handleDelete(data)"
               title="删除"
-            >删除</el-button>
+            >
+              删除
+            </el-button>
           </span>
         </span>
       </template>
@@ -62,135 +74,135 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
-import type { ElTree } from 'element-plus'
+import { ref, reactive, watch } from "vue";
+import type { ElTree } from "element-plus";
 
 interface PermissionNode {
-  id: string | number
-  name: string
-  code: string
-  type: string
-  category?: string
-  visible?: boolean
-  status: number
-  children?: PermissionNode[]
+  id: string | number;
+  name: string;
+  code: string;
+  type: string;
+  category?: string;
+  visible?: boolean;
+  status: number;
+  children?: PermissionNode[];
 }
 
 const props = withDefaults(
   defineProps<{
-    treeData: PermissionNode[]
-    loading: boolean
-    filterText: string
+    treeData: PermissionNode[];
+    loading: boolean;
+    filterText: string;
   }>(),
   {
     treeData: () => [],
     loading: false,
-    filterText: ''
-  }
-)
+    filterText: "",
+  },
+);
 
 const emit = defineEmits<{
-  nodeClick: [data: PermissionNode]
-  addChild: [data: PermissionNode]
-  edit: [data: PermissionNode]
-  delete: [data: PermissionNode]
-  createFirst: []
-}>()
+  nodeClick: [data: PermissionNode];
+  addChild: [data: PermissionNode];
+  edit: [data: PermissionNode];
+  delete: [data: PermissionNode];
+  createFirst: [];
+}>();
 
-const permissionTreeRef = ref<InstanceType<typeof ElTree>>()
+const permissionTreeRef = ref<InstanceType<typeof ElTree>>();
 
 const treeProps = {
-  children: 'children',
-  label: 'name'
-}
+  children: "children",
+  label: "name",
+};
 
 watch(
   () => props.filterText,
   (val) => {
     if (permissionTreeRef.value) {
-      permissionTreeRef.value.filter(val)
+      permissionTreeRef.value.filter(val);
     }
-  }
-)
+  },
+);
 
 const handleNodeClick = (data: PermissionNode) => {
-  emit('nodeClick', data)
-}
+  emit("nodeClick", data);
+};
 
 const filterNode = (value: string, data: PermissionNode) => {
-  if (!value) return true
-  const searchText = value.toLowerCase()
+  if (!value) return true;
+  const searchText = value.toLowerCase();
   return (
     (data.name && data.name.toLowerCase().includes(searchText)) ||
     (data.code && data.code.toLowerCase().includes(searchText))
-  )
-}
+  );
+};
 
 const getNodeIconClass = (type: string) => {
   const icons: Record<string, string> = {
-    folder: 'el-icon-folder',
-    menu: 'el-icon-menu',
-    button: 'el-icon-document'
-  }
-  return icons[type] || 'el-icon-document'
-}
+    folder: "el-icon-folder",
+    menu: "el-icon-menu",
+    button: "el-icon-document",
+  };
+  return icons[type] || "el-icon-document";
+};
 
 const getCategoryTagType = (category?: string) => {
   const types: Record<string, string> = {
-    READ: 'primary',
-    WRITE: 'success',
-    DELETE: 'danger',
-    SPECIAL: 'warning'
-  }
-  return types[category || ''] || 'info'
-}
+    READ: "primary",
+    WRITE: "success",
+    DELETE: "danger",
+    SPECIAL: "warning",
+  };
+  return types[category || ""] || "info";
+};
 
 const getCategoryLabel = (category?: string) => {
   const labels: Record<string, string> = {
-    READ: '读取',
-    WRITE: '写入',
-    DELETE: '删除',
-    SPECIAL: '特殊'
-  }
-  return labels[category || ''] || category
-}
+    READ: "读取",
+    WRITE: "写入",
+    DELETE: "删除",
+    SPECIAL: "特殊",
+  };
+  return labels[category || ""] || category;
+};
 
 const handleAddChild = (data: PermissionNode) => {
-  emit('addChild', data)
-}
+  emit("addChild", data);
+};
 
 const handleEdit = (data: PermissionNode) => {
-  emit('edit', data)
-}
+  emit("edit", data);
+};
 
 const handleDelete = (data: PermissionNode) => {
-  emit('delete', data)
-}
+  emit("delete", data);
+};
 
 const handleCreateFirst = () => {
-  emit('createFirst')
-}
+  emit("createFirst");
+};
 
 const expandAll = () => {
-  if (!permissionTreeRef.value) return
-  const nodes = permissionTreeRef.value.store.nodesMap
+  if (!permissionTreeRef.value) return;
+  const nodes = permissionTreeRef.value.store.nodesMap;
   for (const key in nodes) {
-    nodes[key].expanded = true
+    nodes[key].expanded = true;
   }
-}
+};
 
 const collapseAll = () => {
-  if (!permissionTreeRef.value) return
-  const nodes = permissionTreeRef.value.store.nodesMap
+  if (!permissionTreeRef.value) return;
+  const nodes = permissionTreeRef.value.store.nodesMap;
   for (const key in nodes) {
-    nodes[key].expanded = false
+    nodes[key].expanded = false;
   }
-}
+};
 
 defineExpose({
   expandAll,
-  collapseAll
-})
+  collapseAll,
+});
 </script>
 
 <style scoped>
@@ -229,7 +241,7 @@ defineExpose({
 .node-code {
   font-size: 12px;
   color: #909399;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 .node-actions {

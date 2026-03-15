@@ -50,8 +50,7 @@
                 node-key="id"
                 :default-expanded-keys="['1']"
                 class="custom-tree"
-              >
-              </el-tree>
+              ></el-tree>
             </div>
           </div>
 
@@ -109,7 +108,7 @@
               <div v-for="(alert, index) in alertSnapshots" :key="index" class="alert-item">
                 <div class="category-label">{{ alert.category }}</div>
                 <div class="alert-image-container">
-                  <img :src="alert.image" alt="预警抓拍">
+                  <img :src="alert.image" alt="预警抓拍" />
                 </div>
                 <div class="alert-info single-line">
                   <div class="info-content">
@@ -173,7 +172,7 @@
           <span class="close-modal" @click="closeModal">&times;</span>
         </div>
         <div class="modal-body">
-          <img :src="largeImage" alt="大图查看">
+          <img :src="largeImage" alt="大图查看" />
         </div>
         <div class="modal-footer">
           <div class="info-row">
@@ -191,10 +190,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onBeforeUnmount, onUnmounted } from 'vue';
-import * as echarts from 'echarts';
-import type { ECharts } from 'echarts';
-import centerAPI from '@/api/center';
+import { ref, reactive, onMounted, onBeforeUnmount, onUnmounted } from "vue";
+import * as echarts from "echarts";
+import type { ECharts } from "echarts";
+import centerAPI from "@/api/center";
 
 // ============================================================================
 // 类型定义
@@ -233,8 +232,8 @@ const isFullScreen = ref<boolean>(false);
 const treeData = ref<TreeNode[]>([]);
 
 const defaultProps = {
-  children: 'children' as keyof TreeNode,
-  label: 'label'
+  children: "children" as keyof TreeNode,
+  label: "label",
 };
 
 // 图表引用
@@ -250,14 +249,14 @@ const alertSnapshots = ref<AlertSnapshot[]>([]);
 
 // 模态框状态
 const showModal = ref<boolean>(false);
-const largeImage = ref<string>('');
-const modalTitle = ref<string>('');
-const modalType = ref<string>('');
+const largeImage = ref<string>("");
+const modalTitle = ref<string>("");
+const modalType = ref<string>("");
 const currentAlert = ref<AlertSnapshot>({
-  image: '',
-  category: '',
-  time: '',
-  location: ''
+  image: "",
+  category: "",
+  time: "",
+  location: "",
 });
 
 // 设备状态
@@ -265,7 +264,7 @@ const deviceStatus = ref<DeviceStatus>({
   total: 30,
   online: 27,
   total2: 27,
-  online2: 18
+  online2: 18,
 });
 
 // ============================================================================
@@ -282,7 +281,7 @@ async function loadAllData(): Promise<void> {
     loadStorageUsage(),
     loadBandwidthUsage(),
     loadAlertSnapshots(),
-    loadDeviceStatus()
+    loadDeviceStatus(),
   ]);
 }
 
@@ -297,7 +296,7 @@ async function loadDeviceTree(): Promise<void> {
       treeData.value = response;
     }
   } catch (error) {
-    console.error('加载设备树失败:', error);
+    console.error("加载设备树失败:", error);
   }
 }
 
@@ -306,13 +305,13 @@ async function loadDeviceTree(): Promise<void> {
  */
 async function loadResourceHistory(): Promise<void> {
   try {
-    const response = await centerAPI.systemMonitor.getResourceHistory('cpu', '1h');
+    const response = await centerAPI.systemMonitor.getResourceHistory("cpu", "1h");
     // 响应拦截器已经提取了 data 字段，response 直接是数据对象
     if (response) {
       initCpuChart(response.time_labels || [], response.data_points || []);
     }
   } catch (error) {
-    console.error('加载CPU数据失败:', error);
+    console.error("加载CPU数据失败:", error);
   }
 }
 
@@ -327,7 +326,7 @@ async function loadStorageUsage(): Promise<void> {
       initStorageChart(response.storage_list || []);
     }
   } catch (error) {
-    console.error('加载存储数据失败:', error);
+    console.error("加载存储数据失败:", error);
   }
 }
 
@@ -336,13 +335,17 @@ async function loadStorageUsage(): Promise<void> {
  */
 async function loadBandwidthUsage(): Promise<void> {
   try {
-    const response = await centerAPI.systemMonitor.getBandwidthUsage('1h');
+    const response = await centerAPI.systemMonitor.getBandwidthUsage("1h");
     // 响应拦截器已经提取了 data 字段，response 直接是数据对象
     if (response) {
-      initBandwidthChart(response.time_labels || [], response.upstream_bandwidth || [], response.downstream_bandwidth || []);
+      initBandwidthChart(
+        response.time_labels || [],
+        response.upstream_bandwidth || [],
+        response.downstream_bandwidth || [],
+      );
     }
   } catch (error) {
-    console.error('加载带宽数据失败:', error);
+    console.error("加载带宽数据失败:", error);
   }
 }
 
@@ -355,15 +358,15 @@ async function loadAlertSnapshots(): Promise<void> {
     if (images && images.length > 0) {
       alertSnapshots.value = images.map((item: any) => ({
         image: item.image_url || item.image,
-        category: item.alert_type || '未知类型',
+        category: item.alert_type || "未知类型",
         time: item.alert_time || item.time,
-        location: item.camera_name || item.location || '未知位置'
+        location: item.camera_name || item.location || "未知位置",
       }));
     } else {
       alertSnapshots.value = [];
     }
   } catch (error) {
-    console.error('加载预警抓拍失败:', error);
+    console.error("加载预警抓拍失败:", error);
     // 失败时使用空数组
     alertSnapshots.value = [];
   }
@@ -381,13 +384,13 @@ async function loadDeviceStatus(): Promise<void> {
         total: response.total_devices || 0,
         online: response.online_devices || 0,
         total2: response.device_groups?.[0]?.total || 0,
-        online2: response.device_groups?.[0]?.online || 0
+        online2: response.device_groups?.[0]?.online || 0,
       };
       // 更新设备状态图表
       updateDeviceStatusCharts();
     }
   } catch (error) {
-    console.error('加载设备状态失败:', error);
+    console.error("加载设备状态失败:", error);
   }
 }
 
@@ -399,49 +402,51 @@ async function loadDeviceStatus(): Promise<void> {
  * 初始化CPU图表
  */
 function initCpuChart(timeLabels: string[], dataPoints: number[]): void {
-  if (!document.getElementById('cpuChart')) return;
+  if (!document.getElementById("cpuChart")) return;
 
-  cpuChart = echarts.init(document.getElementById('cpuChart'));
+  cpuChart = echarts.init(document.getElementById("cpuChart"));
 
   const option = {
     grid: {
-      left: '5%',
-      right: '5%',
-      top: '10%',
-      bottom: '20%',
-      containLabel: true
+      left: "5%",
+      right: "5%",
+      top: "10%",
+      bottom: "20%",
+      containLabel: true,
     },
     xAxis: {
-      type: 'category',
+      type: "category",
       boundaryGap: false,
       data: timeLabels,
       axisLine: {
-        lineStyle: { stroke: '#1B96FF' }
+        lineStyle: { stroke: "#1B96FF" },
       },
       axisLabel: {
-        textStyle: { color: '#fff' }
-      }
+        textStyle: { color: "#fff" },
+      },
     },
     yAxis: {
-      type: 'value',
+      type: "value",
       splitLine: {
         show: true,
-        lineStyle: { stroke: 'rgba(27,150,255,0.1)' }
+        lineStyle: { stroke: "rgba(27,150,255,0.1)" },
       },
       axisLine: {
-        lineStyle: { stroke: '#1B96FF' }
+        lineStyle: { stroke: "#1B96FF" },
       },
       axisLabel: {
-        textStyle: { color: '#fff' }
-      }
+        textStyle: { color: "#fff" },
+      },
     },
-    series: [{
-      type: 'line',
-      data: dataPoints,
-      smooth: true,
-      lineStyle: { stroke: '#1B96FF', width: 2 },
-      areaStyle: { fill: 'rgba(27,150,255,0.3)' }
-    }]
+    series: [
+      {
+        type: "line",
+        data: dataPoints,
+        smooth: true,
+        lineStyle: { stroke: "#1B96FF", width: 2 },
+        areaStyle: { fill: "rgba(27,150,255,0.3)" },
+      },
+    ],
   };
 
   cpuChart.setOption(option);
@@ -450,57 +455,64 @@ function initCpuChart(timeLabels: string[], dataPoints: number[]): void {
 /**
  * 初始化存储图表
  */
-function initStorageChart(storageList: Array<{ name: string; usage: number; total: number }>): void {
-  if (!document.getElementById('storageChart')) return;
+function initStorageChart(
+  storageList: Array<{ name: string; usage: number; total: number }>,
+): void {
+  if (!document.getElementById("storageChart")) return;
 
-  storageChart = echarts.init(document.getElementById('storageChart'));
+  storageChart = echarts.init(document.getElementById("storageChart"));
 
   const option = {
     grid: {
-      left: '5%',
-      right: '5%',
-      top: '10%',
-      bottom: '20%',
-      containLabel: true
+      left: "5%",
+      right: "5%",
+      top: "10%",
+      bottom: "20%",
+      containLabel: true,
     },
     xAxis: {
-      type: 'category',
-      data: storageList.map(item => item.name),
+      type: "category",
+      data: storageList.map((item) => item.name),
       axisLine: {
-        lineStyle: { stroke: '#1B96FF' }
+        lineStyle: { stroke: "#1B96FF" },
       },
       axisLabel: {
-        textStyle: { color: '#fff' }
-      }
+        textStyle: { color: "#fff" },
+      },
     },
     yAxis: {
-      type: 'value',
+      type: "value",
       splitLine: {
         show: true,
-        lineStyle: { stroke: 'rgba(27,150,255,0.1)' }
+        lineStyle: { stroke: "rgba(27,150,255,0.1)" },
       },
       axisLine: {
-        lineStyle: { stroke: '#1B96FF' }
+        lineStyle: { stroke: "#1B96FF" },
       },
       axisLabel: {
-        textStyle: { color: '#fff' }
-      }
+        textStyle: { color: "#fff" },
+      },
     },
-    series: [{
-      type: 'bar',
-      data: storageList.map(item => item.usage),
-      barWidth: 20,
-      itemStyle: {
-        color: {
-          type: 'linear',
-          x: 0, y: 0, x2: 0, y2: 1,
-          colorStops: [
-            { offset: 0, color: 'rgba(27,150,255,0.8)' },
-            { offset: 1, color: 'rgba(27,150,255,0.3)' }
-          ]
-        }
-      }
-    }]
+    series: [
+      {
+        type: "bar",
+        data: storageList.map((item) => item.usage),
+        barWidth: 20,
+        itemStyle: {
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: "rgba(27,150,255,0.8)" },
+              { offset: 1, color: "rgba(27,150,255,0.3)" },
+            ],
+          },
+        },
+      },
+    ],
   };
 
   storageChart.setOption(option);
@@ -509,65 +521,69 @@ function initStorageChart(storageList: Array<{ name: string; usage: number; tota
 /**
  * 初始化带宽图表
  */
-function initBandwidthChart(timeLabels: string[], upstreamData: number[], downstreamData: number[]): void {
-  if (!document.getElementById('bandwidthChart')) return;
+function initBandwidthChart(
+  timeLabels: string[],
+  upstreamData: number[],
+  downstreamData: number[],
+): void {
+  if (!document.getElementById("bandwidthChart")) return;
 
-  bandwidthChart = echarts.init(document.getElementById('bandwidthChart'));
+  bandwidthChart = echarts.init(document.getElementById("bandwidthChart"));
 
   const option = {
     grid: {
-      left: '5%',
-      right: '5%',
-      top: '5%',
-      bottom: '20%',
-      containLabel: true
+      left: "5%",
+      right: "5%",
+      top: "5%",
+      bottom: "20%",
+      containLabel: true,
     },
     legend: {
-      data: ['上行带宽', '下行带宽'],
-      textStyle: { fill: '#fff' },
+      data: ["上行带宽", "下行带宽"],
+      textStyle: { fill: "#fff" },
       right: 0,
-      top: 0
+      top: 0,
     },
     xAxis: {
-      type: 'category',
+      type: "category",
       boundaryGap: false,
       data: timeLabels,
       axisLine: {
-        lineStyle: { stroke: '#1B96FF' }
+        lineStyle: { stroke: "#1B96FF" },
       },
       axisLabel: {
-        textStyle: { color: '#fff' }
-      }
+        textStyle: { color: "#fff" },
+      },
     },
     yAxis: {
-      type: 'value',
+      type: "value",
       splitLine: {
         show: true,
-        lineStyle: { stroke: 'rgba(27,150,255,0.1)' }
+        lineStyle: { stroke: "rgba(27,150,255,0.1)" },
       },
       axisLine: {
-        lineStyle: { stroke: '#1B96FF' }
+        lineStyle: { stroke: "#1B96FF" },
       },
       axisLabel: {
-        textStyle: { color: '#fff' }
-      }
+        textStyle: { color: "#fff" },
+      },
     },
     series: [
       {
-        name: '上行带宽',
-        type: 'line',
+        name: "上行带宽",
+        type: "line",
         data: upstreamData,
         smooth: true,
-        lineStyle: { stroke: '#1B96FF' }
+        lineStyle: { stroke: "#1B96FF" },
       },
       {
-        name: '下行带宽',
-        type: 'line',
+        name: "下行带宽",
+        type: "line",
         data: downstreamData,
         smooth: true,
-        lineStyle: { stroke: '#FFD700' }
-      }
-    ]
+        lineStyle: { stroke: "#FFD700" },
+      },
+    ],
   };
 
   bandwidthChart.setOption(option);
@@ -583,28 +599,32 @@ function updateDeviceStatusCharts(): void {
   if (chart1Element) {
     const chart1 = echarts.init(chart1Element);
     chart1.setOption({
-      series: [{
-        type: 'pie',
-        radius: ['60%', '70%'],
-        data: [
-          { name: '在线', value: deviceStatus.value.online },
-          { name: '离线', value: deviceStatus.value.total - deviceStatus.value.online }
-        ]
-      }]
+      series: [
+        {
+          type: "pie",
+          radius: ["60%", "70%"],
+          data: [
+            { name: "在线", value: deviceStatus.value.online },
+            { name: "离线", value: deviceStatus.value.total - deviceStatus.value.online },
+          ],
+        },
+      ],
     });
   }
 
   if (chart2Element) {
     const chart2 = echarts.init(chart2Element);
     chart2.setOption({
-      series: [{
-        type: 'pie',
-        radius: ['60%', '70%'],
-        data: [
-          { name: '在线', value: deviceStatus.value.online2 },
-          { name: '离线', value: deviceStatus.value.total2 - deviceStatus.value.online2 }
-        ]
-      }]
+      series: [
+        {
+          type: "pie",
+          radius: ["60%", "70%"],
+          data: [
+            { name: "在线", value: deviceStatus.value.online2 },
+            { name: "离线", value: deviceStatus.value.total2 - deviceStatus.value.online2 },
+          ],
+        },
+      ],
     });
   }
 }
@@ -618,7 +638,7 @@ function updateDeviceStatusCharts(): void {
  */
 function getVideoPlaceholder(): string {
   // 返回空字符串，由模板中的占位符元素处理
-  return '';
+  return "";
 }
 
 /**
@@ -629,19 +649,19 @@ function showLargeImage(alert: AlertSnapshot): void {
   currentAlert.value = alert;
 
   // 设置标题和类型
-  if (alert.category.includes('在岗')) {
-    modalTitle.value = '在岗检测';
-    modalType.value = 'duty';
-  } else if (alert.category.includes('安全帽')) {
-    modalTitle.value = '安全帽检测';
-    modalType.value = 'helmet';
+  if (alert.category.includes("在岗")) {
+    modalTitle.value = "在岗检测";
+    modalType.value = "duty";
+  } else if (alert.category.includes("安全帽")) {
+    modalTitle.value = "安全帽检测";
+    modalType.value = "helmet";
   } else {
-    modalTitle.value = '预警详情';
-    modalType.value = 'parking';
+    modalTitle.value = "预警详情";
+    modalType.value = "parking";
   }
 
   showModal.value = true;
-  document.body.style.overflow = 'hidden';
+  document.body.style.overflow = "hidden";
 }
 
 /**
@@ -649,8 +669,8 @@ function showLargeImage(alert: AlertSnapshot): void {
  */
 function closeModal(): void {
   showModal.value = false;
-  largeImage.value = '';
-  document.body.style.overflow = 'auto';
+  largeImage.value = "";
+  document.body.style.overflow = "auto";
 }
 
 /**
@@ -659,21 +679,21 @@ function closeModal(): void {
 async function toggleFullScreen(): Promise<void> {
   isFullScreen.value = !isFullScreen.value;
 
-  const navBar = document.querySelector('.el-header');
-  const parkManagement = document.querySelector('.park-management');
+  const navBar = document.querySelector(".el-header");
+  const parkManagement = document.querySelector(".park-management");
 
   if (isFullScreen.value) {
     if (document.documentElement.requestFullscreen) {
       await document.documentElement.requestFullscreen();
     }
-    if (navBar) (navBar as HTMLElement).style.display = 'none';
-    if (parkManagement) parkManagement.classList.add('fullscreen-mode');
+    if (navBar) (navBar as HTMLElement).style.display = "none";
+    if (parkManagement) parkManagement.classList.add("fullscreen-mode");
   } else {
     if (document.exitFullscreen) {
       await document.exitFullscreen();
     }
-    if (navBar) (navBar as HTMLElement).style.display = '';
-    if (parkManagement) parkManagement.classList.remove('fullscreen-mode');
+    if (navBar) (navBar as HTMLElement).style.display = "";
+    if (parkManagement) parkManagement.classList.remove("fullscreen-mode");
   }
 }
 
@@ -686,7 +706,7 @@ onMounted(() => {
   loadAllData();
 
   // 窗口大小变化监听
-  window.addEventListener('resize', () => {
+  window.addEventListener("resize", () => {
     if (cpuChart) cpuChart.resize();
     if (storageChart) storageChart.resize();
     if (bandwidthChart) bandwidthChart.resize();
@@ -701,7 +721,7 @@ onBeforeUnmount(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', () => {});
+  window.removeEventListener("resize", () => {});
 });
 </script>
 
@@ -709,7 +729,7 @@ onUnmounted(() => {
 .park-management {
   width: 100%;
   height: 100vh;
-  background-color: #000B2A;
+  background-color: #000b2a;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -720,7 +740,7 @@ onUnmounted(() => {
   width: 100%;
   height: 80px;
   margin: 0;
-  background: linear-gradient(180deg, rgba(1,19,56,0.8) 0%, rgba(1,19,56,0.6) 100%);
+  background: linear-gradient(180deg, rgba(1, 19, 56, 0.8) 0%, rgba(1, 19, 56, 0.6) 100%);
 }
 
 .header-wrapper {
@@ -750,12 +770,12 @@ onUnmounted(() => {
 .decoration-line {
   width: 2px;
   height: 40px;
-  background: linear-gradient(180deg, rgba(51,255,255,0.8) 0%, rgba(51,255,255,0) 100%);
+  background: linear-gradient(180deg, rgba(51, 255, 255, 0.8) 0%, rgba(51, 255, 255, 0) 100%);
   position: relative;
 }
 
 .decoration-line::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 50%;
@@ -764,12 +784,20 @@ onUnmounted(() => {
   height: 6px;
   background: #33ffff;
   border-radius: 50%;
-  box-shadow: 0 0 10px rgba(51,255,255,0.8);
+  box-shadow: 0 0 10px rgba(51, 255, 255, 0.8);
 }
 
-.decoration-line.line1 { height: 40px; }
-.decoration-line.line2 { height: 25px; margin-top: 15px; }
-.decoration-line.line3 { height: 15px; margin-top: 25px; }
+.decoration-line.line1 {
+  height: 40px;
+}
+.decoration-line.line2 {
+  height: 25px;
+  margin-top: 15px;
+}
+.decoration-line.line3 {
+  height: 15px;
+  margin-top: 25px;
+}
 
 .right-decoration .decoration-line-group {
   transform: scaleX(-1);
@@ -790,7 +818,7 @@ onUnmounted(() => {
   font-size: 32px;
   font-weight: bold;
   color: #ffffff;
-  text-shadow: 0 0 10px rgba(51,255,255,0.5);
+  text-shadow: 0 0 10px rgba(51, 255, 255, 0.5);
   letter-spacing: 4px;
 }
 
@@ -824,7 +852,8 @@ onUnmounted(() => {
   flex: 3;
 }
 
-.cpu-panel, .storage-panel {
+.cpu-panel,
+.storage-panel {
   flex: 2;
 }
 
@@ -840,17 +869,17 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding: 0 15px;
-  background: linear-gradient(90deg, #001135 0%, rgba(0,17,53,0.8) 100%);
+  background: linear-gradient(90deg, #001135 0%, rgba(0, 17, 53, 0.8) 100%);
   border-bottom: 1px solid #0a2550;
   font-size: 14px;
   position: relative;
 }
 
 .panel-header::before {
-  content: '';
+  content: "";
   width: 4px;
   height: 16px;
-  background: #1B96FF;
+  background: #1b96ff;
   position: absolute;
   left: 0;
   margin-left: -15px;
@@ -872,11 +901,11 @@ onUnmounted(() => {
   background: transparent;
   color: #7a8baa;
   height: 32px;
-  border-bottom: 1px solid rgba(10,37,80,0.5);
+  border-bottom: 1px solid rgba(10, 37, 80, 0.5);
 }
 
 .custom-tree :deep(.el-tree-node__content:hover) {
-  background: rgba(27,150,255,0.1);
+  background: rgba(27, 150, 255, 0.1);
   color: #fff;
 }
 
@@ -980,7 +1009,7 @@ onUnmounted(() => {
 }
 
 .alert-item {
-  background: #000B2A;
+  background: #000b2a;
   border: 1px solid #0a2550;
   border-radius: 4px;
   overflow: hidden;
@@ -989,7 +1018,7 @@ onUnmounted(() => {
   flex-direction: column;
   height: auto;
   flex: 0 0 auto;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   position: relative;
   width: 100%;
 }
@@ -998,13 +1027,13 @@ onUnmounted(() => {
   position: absolute;
   top: 10px;
   left: 10px;
-  background-color: #000B2A;
+  background-color: #000b2a;
   color: #fff;
   padding: 4px 8px;
   font-size: 12px;
   border-radius: 2px;
   z-index: 1;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .alert-image-container {
@@ -1024,8 +1053,8 @@ onUnmounted(() => {
 .alert-info {
   padding: 8px 12px;
   font-size: 12px;
-  background: #000B2A;
-  border-top: 1px solid rgba(10,37,80,0.5);
+  background: #000b2a;
+  border-top: 1px solid rgba(10, 37, 80, 0.5);
 }
 
 .alert-info.single-line {
@@ -1049,7 +1078,7 @@ onUnmounted(() => {
 }
 
 .view-large {
-  color: #1B96FF;
+  color: #1b96ff;
   cursor: pointer;
   font-size: 12px;
   font-weight: normal;
@@ -1083,7 +1112,7 @@ onUnmounted(() => {
 }
 
 .screen-controls i.active {
-  color: #1B96FF;
+  color: #1b96ff;
 }
 
 .bottom-container {
@@ -1102,12 +1131,14 @@ onUnmounted(() => {
   width: calc(100% - 630px);
 }
 
-.status-panel, .bandwidth-panel {
+.status-panel,
+.bandwidth-panel {
   flex: 1;
   height: 100%;
 }
 
-.status-content, .bandwidth-content {
+.status-content,
+.bandwidth-content {
   height: calc(100% - 36px);
   display: flex;
   justify-content: space-around;
@@ -1170,7 +1201,7 @@ onUnmounted(() => {
 
 .modal-header {
   padding: 12px 15px;
-  background: linear-gradient(90deg, #001135 0%, rgba(0,17,53,0.8) 100%);
+  background: linear-gradient(90deg, #001135 0%, rgba(0, 17, 53, 0.8) 100%);
   color: #fff;
   display: flex;
   justify-content: space-between;
@@ -1199,7 +1230,7 @@ onUnmounted(() => {
 }
 
 .close-modal:hover {
-  color: #1B96FF;
+  color: #1b96ff;
   background: rgba(27, 150, 255, 0.1);
 }
 
@@ -1218,7 +1249,7 @@ onUnmounted(() => {
 
 .modal-footer {
   padding: 12px 15px;
-  background: rgba(0,17,53,0.9);
+  background: rgba(0, 17, 53, 0.9);
   border-top: 1px solid #0a2550;
 }
 
@@ -1248,15 +1279,15 @@ onUnmounted(() => {
 }
 
 .category-badge.parking {
-  background-color: #1B96FF;
+  background-color: #1b96ff;
 }
 
 .category-badge.helmet {
-  background-color: #FF6B00;
+  background-color: #ff6b00;
 }
 
 .category-badge.duty {
-  background-color: #00B42A;
+  background-color: #00b42a;
 }
 
 .fullscreen-btn {
@@ -1271,7 +1302,7 @@ onUnmounted(() => {
   background: rgba(0, 17, 53, 0.5);
   border: 1px solid #0a2550;
   border-radius: 4px;
-  color: #1B96FF;
+  color: #1b96ff;
   font-size: 22px;
   cursor: pointer;
   transition: all 0.3s;
@@ -1305,6 +1336,6 @@ onUnmounted(() => {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #1B96FF;
+  background: #1b96ff;
 }
 </style>

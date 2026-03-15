@@ -2,26 +2,30 @@
  * 模型管理服务
  */
 
-import axiosInstance from './config/axios'
-import type { ApiResponse, PaginatedResponse, Model, ModelListParams } from './types'
+import axiosInstance from "./config/axios";
+import type { ApiResponse, PaginatedResponse, Model, ModelListParams } from "./types";
 
 export class ModelService {
-  private readonly basePath = '/api/v1/models'
+  private readonly basePath = "/api/v1/models";
 
   /**
    * 获取模型列表
    */
   async getModelList(params?: ModelListParams): Promise<PaginatedResponse<Model>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<Model>>(this.basePath, { params })
-    return response
+    const response = await axiosInstance.get<any, PaginatedResponse<Model>>(this.basePath, {
+      params,
+    });
+    return response;
   }
 
   /**
    * 获取模型详情
    */
   async getModelDetail(modelId: string): Promise<ApiResponse<Model>> {
-    const response = await axiosInstance.get<any, ApiResponse<Model>>(`${this.basePath}/${modelId}`)
-    return response
+    const response = await axiosInstance.get<any, ApiResponse<Model>>(
+      `${this.basePath}/${modelId}`,
+    );
+    return response;
   }
 
   /**
@@ -30,17 +34,19 @@ export class ModelService {
   async updateModel(modelId: string, modelData: Partial<Model>): Promise<ApiResponse<Model>> {
     const response = await axiosInstance.put<any, ApiResponse<Model>>(
       `${this.basePath}/${modelId}`,
-      modelData
-    )
-    return response
+      modelData,
+    );
+    return response;
   }
 
   /**
    * 删除模型
    */
   async deleteModel(modelId: string): Promise<ApiResponse<void>> {
-    const response = await axiosInstance.delete<any, ApiResponse<void>>(`${this.basePath}/${modelId}`)
-    return response
+    const response = await axiosInstance.delete<any, ApiResponse<void>>(
+      `${this.basePath}/${modelId}`,
+    );
+    return response;
   }
 
   /**
@@ -49,9 +55,9 @@ export class ModelService {
   async batchDeleteModels(ids: string[]): Promise<ApiResponse<void>> {
     const response = await axiosInstance.post<any, ApiResponse<void>>(
       `${this.basePath}/batch-delete`,
-      { ids }
-    )
-    return response
+      { ids },
+    );
+    return response;
   }
 
   /**
@@ -59,9 +65,9 @@ export class ModelService {
    */
   async loadModel(modelId: string): Promise<ApiResponse<{ message: string }>> {
     const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
-      `${this.basePath}/${modelId}/load`
-    )
-    return response
+      `${this.basePath}/${modelId}/load`,
+    );
+    return response;
   }
 
   /**
@@ -69,11 +75,11 @@ export class ModelService {
    */
   async unloadModel(modelId: string): Promise<ApiResponse<{ message: string }>> {
     const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
-      `${this.basePath}/${modelId}/unload`
-    )
-    return response
+      `${this.basePath}/${modelId}/unload`,
+    );
+    return response;
   }
 }
 
 // 导出单例
-export default new ModelService()
+export default new ModelService();

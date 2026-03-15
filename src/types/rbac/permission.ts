@@ -4,8 +4,8 @@
  * 使用蛇形命名 (snake_case) 与后端保持一致
  */
 
-import type { BaseQueryParams, PaginatedResponse, ApiResponse } from './common';
-import { Status } from './common';
+import type { BaseQueryParams, PaginatedResponse, ApiResponse } from "./common";
+import { Status } from "./common";
 
 // ============================================
 // 枚举类型
@@ -17,11 +17,11 @@ import { Status } from './common';
  */
 export enum PermissionType {
   /** 文件夹/目录权限 - 一级分类 */
-  FOLDER = 'folder',
+  FOLDER = "folder",
   /** 页面菜单权限 - 二级页面 */
-  MENU = 'menu',
+  MENU = "menu",
   /** 操作按钮权限 - 三级按钮 */
-  BUTTON = 'button'
+  BUTTON = "button",
 }
 
 /**
@@ -30,11 +30,11 @@ export enum PermissionType {
  */
 export enum PermissionNodeType {
   /** 文件夹 */
-  FOLDER = 'folder',
+  FOLDER = "folder",
   /** 页面菜单 */
-  MENU = 'menu',
+  MENU = "menu",
   /** 操作按钮 */
-  BUTTON = 'button'
+  BUTTON = "button",
 }
 
 // ============================================
@@ -115,7 +115,7 @@ export interface PermissionDetail extends PermissionBase {
   /** 图标（仅 folder/menu 有效） */
   icon?: string;
   /** HTTP 方法（仅 button 有效） */
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   /** 排序 */
   sort_order?: number;
   /** 是否可见 */
@@ -155,7 +155,7 @@ export interface PermissionTreeNode {
   /** 图标（仅 folder/menu 有效） */
   icon?: string;
   /** HTTP 方法（仅 button 有效） */
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   /** 排序 */
   sort_order: number;
   /** 状态 */
@@ -195,7 +195,7 @@ export interface CreatePermissionRequest {
   /** 图标（仅 folder/menu 有效） */
   icon?: string;
   /** HTTP 方法（仅 button 有效） */
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   /** 排序 */
   sort_order?: number;
   /** 是否可见 */
@@ -233,7 +233,7 @@ export interface UpdatePermissionRequest {
   /** 图标（仅 folder/menu 有效） */
   icon?: string;
   /** HTTP 方法（仅 button 有效） */
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   /** 排序 */
   sort_order?: number;
   /** 是否可见 */

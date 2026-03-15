@@ -7,13 +7,13 @@
     style="width: 100%"
     @selection-change="handleSelectionChange"
   >
-    <el-table-column type="selection"  align="center"></el-table-column>
+    <el-table-column type="selection" align="center"></el-table-column>
     <el-table-column prop="id" label="租户编号" align="center"></el-table-column>
     <el-table-column prop="tenant_name" label="租户名称" align="center"></el-table-column>
-    <el-table-column prop="company_name" label="企业名称"  align="center"></el-table-column>
+    <el-table-column prop="company_name" label="企业名称" align="center"></el-table-column>
     <el-table-column prop="package" label="租户套餐" align="center">
       <template #default="scope">
-        {{ packageLabels[scope.row.package] || scope.row.package || '-' }}
+        {{ packageLabels[scope.row.package] || scope.row.package || "-" }}
       </template>
     </el-table-column>
     <el-table-column prop="expire_time" label="过期时间" width="140" align="center">
@@ -53,54 +53,54 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Edit, Delete } from '@element-plus/icons-vue'
-import type { TenantAPI } from '@/types/rbac/tenant'
+import { ref } from "vue";
+import { Edit, Delete } from "@element-plus/icons-vue";
+import type { TenantAPI } from "@/types/rbac/tenant";
 
 const PACKAGE_LABELS: Record<string, string> = {
-  basic: '基础版',
-  standard: '标准版',
-  premium: '高级版',
-  enterprise: '企业版'
-}
+  basic: "基础版",
+  standard: "标准版",
+  premium: "高级版",
+  enterprise: "企业版",
+};
 
 defineProps<{
-  data: TenantAPI[]
-  loading: boolean
-  selectedCodes: number[]
-}>()
+  data: TenantAPI[];
+  loading: boolean;
+  selectedCodes: number[];
+}>();
 
 const emit = defineEmits<{
-  selectionChange: [codes: number[], selection: TenantAPI[]]
-  statusChange: [row: TenantAPI]
-  edit: [row: TenantAPI]
-  delete: [row: TenantAPI]
-}>()
+  selectionChange: [codes: number[], selection: TenantAPI[]];
+  statusChange: [row: TenantAPI];
+  edit: [row: TenantAPI];
+  delete: [row: TenantAPI];
+}>();
 
-const packageLabels = ref(PACKAGE_LABELS)
+const packageLabels = ref(PACKAGE_LABELS);
 
 const formatDate = (timestamp: string | null | undefined): string => {
-  if (!timestamp) return '-'
-  const date = new Date(timestamp)
-  return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
-}
+  if (!timestamp) return "-";
+  const date = new Date(timestamp);
+  return date.toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" });
+};
 
 const handleSelectionChange = (selection: TenantAPI[]) => {
-  const codes = selection.map((row) => row.id)
-  emit('selectionChange', codes, selection)
-}
+  const codes = selection.map((row) => row.id);
+  emit("selectionChange", codes, selection);
+};
 
 const handleStatusChange = (row: TenantAPI) => {
-  emit('statusChange', row)
-}
+  emit("statusChange", row);
+};
 
 const handleEdit = (row: TenantAPI) => {
-  emit('edit', row)
-}
+  emit("edit", row);
+};
 
 const handleDelete = (row: TenantAPI) => {
-  emit('delete', row)
-}
+  emit("delete", row);
+};
 </script>
 
 <style scoped>

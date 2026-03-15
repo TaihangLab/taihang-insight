@@ -55,10 +55,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { resetAsyncRoutes } from '@/router'
+import { ref, watch, onMounted, onUnmounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { resetAsyncRoutes } from "@/router";
 import {
   Clock,
   User,
@@ -66,212 +66,208 @@ import {
   ArrowDown,
   Key,
   Delete,
-  SwitchButton
-} from '@element-plus/icons-vue'
-import ChangePasswordDialog from '../components/dialog/changePassword.vue'
-import { storage } from '@/stores/modules/storage'
-import { StorageKey } from '@/stores/modules/storageKeys'
-import cacheManager from '@/utils/cacheManager'
-import { useUserInfoStore, useTokenStore, useMenusStore, usePermissionsStore } from '@/stores'
+  SwitchButton,
+} from "@element-plus/icons-vue";
+import ChangePasswordDialog from "../components/dialog/changePassword.vue";
+import { storage } from "@/stores/modules/storage";
+import { StorageKey } from "@/stores/modules/storageKeys";
+import cacheManager from "@/utils/cacheManager";
+import { useUserInfoStore, useTokenStore, useMenusStore, usePermissionsStore } from "@/stores";
 
 // 路由
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const router = useRouter();
 // 使用新的独立 stores
-const userInfoStore = useUserInfoStore()
-const tokenStore = useTokenStore()
-const menusStore = useMenusStore()
-const permissionsStore = usePermissionsStore() 
+const userInfoStore = useUserInfoStore();
+const tokenStore = useTokenStore();
+const menusStore = useMenusStore();
+const permissionsStore = usePermissionsStore();
 
 // 修改密码对话框引用
-const changePasswordDialogRef = ref<InstanceType<typeof ChangePasswordDialog>>()
+const changePasswordDialogRef = ref<InstanceType<typeof ChangePasswordDialog>>();
 
 // 用户名（使用 getter 方法）
-const username = ref(userInfoStore.getNickName() || '访客')
+const username = ref(userInfoStore.getNickName() || "访客");
 
 // 当前时间
-const currentTime = ref('')
+const currentTime = ref("");
 
 // 当前菜单名称
-const currentMenuName = ref('')
+const currentMenuName = ref("");
 
 // 当前页面名称
-const currentPageName = ref('')
+const currentPageName = ref("");
 
 // 定时器
-let timeInterval: number | null = null
+let timeInterval: number | null = null;
 
 // 路由映射表
 interface RouteInfo {
-  menu: string
-  page: string
+  menu: string;
+  page: string;
 }
 
 const routeMap: Record<string, RouteInfo> = {
-  '/monitoring': { menu: '监控预警', page: '' },
-  '/monitoring/realtime': { menu: '监控预警', page: '实时监控' },
-  '/monitoring/statistics': { menu: '监控预警', page: '统计分析' },
-  '/monitoring/warningArchive': { menu: '监控预警', page: '预警档案' },
-  '/monitoring/warningManage': { menu: '监控预警', page: '预警管理' },
-  '/monitoring/intelligentReview': { menu: '监控预警', page: '智能复判' },
-  '/deviceManage/camera': { menu: '设备配置', page: '摄像头' },
-  '/deviceManage/localVideo': { menu: '设备配置', page: '本地视频' },
-  '/modelManage/modelList': { menu: '模型管理', page: '模型列表' },
-  '/skillManage/deviceSkills': { menu: '技能管理', page: '视觉模型技能' },
-  '/skillManage/multimodalLlmSkills': { menu: '技能管理', page: '多模态大模型技能' },
-  '/skillManage/multimodalReview': { menu: '技能管理', page: '多模态大模型复判' },
-  '/systemManage/appSettings': { menu: '系统管理', page: '应用设置' },
-  '/systemManage/userManagement': { menu: '系统管理', page: '用户管理' },
-  '/systemManage/roleManagement': { menu: '系统管理', page: '角色管理' },
-  '/systemManage/permissionManagement': { menu: '系统管理', page: '权限管理' },
-  '/systemManage/tenantManagement': { menu: '系统管理', page: '租户管理' },
-  '/systemManage/departmentManagement': { menu: '系统管理', page: '部门管理' },
-  '/systemManage/positionManagement': { menu: '系统管理', page: '岗位管理' },
-  '/systemManage/knowledgeBase': { menu: '系统管理', page: '知识库管理' },
-  '/visualCenter': { menu: '可视中心', page: '可视中心首页' },
-  '/algorithmInference': { menu: '可视中心', page: '算法推理平台' },
-  '/visualCenter/parkManagement': { menu: '可视中心', page: '园区封闭管理平台' }
-}
+  "/monitoring": { menu: "监控预警", page: "" },
+  "/monitoring/realtime": { menu: "监控预警", page: "实时监控" },
+  "/monitoring/statistics": { menu: "监控预警", page: "统计分析" },
+  "/monitoring/warningArchive": { menu: "监控预警", page: "预警档案" },
+  "/monitoring/warningManage": { menu: "监控预警", page: "预警管理" },
+  "/monitoring/intelligentReview": { menu: "监控预警", page: "智能复判" },
+  "/deviceManage/camera": { menu: "设备配置", page: "摄像头" },
+  "/deviceManage/localVideo": { menu: "设备配置", page: "本地视频" },
+  "/modelManage/modelList": { menu: "模型管理", page: "模型列表" },
+  "/skillManage/deviceSkills": { menu: "技能管理", page: "视觉模型技能" },
+  "/skillManage/multimodalLlmSkills": { menu: "技能管理", page: "多模态大模型技能" },
+  "/skillManage/multimodalReview": { menu: "技能管理", page: "多模态大模型复判" },
+  "/systemManage/appSettings": { menu: "系统管理", page: "应用设置" },
+  "/systemManage/userManagement": { menu: "系统管理", page: "用户管理" },
+  "/systemManage/roleManagement": { menu: "系统管理", page: "角色管理" },
+  "/systemManage/permissionManagement": { menu: "系统管理", page: "权限管理" },
+  "/systemManage/tenantManagement": { menu: "系统管理", page: "租户管理" },
+  "/systemManage/departmentManagement": { menu: "系统管理", page: "部门管理" },
+  "/systemManage/positionManagement": { menu: "系统管理", page: "岗位管理" },
+  "/systemManage/knowledgeBase": { menu: "系统管理", page: "知识库管理" },
+  "/visualCenter": { menu: "可视中心", page: "可视中心首页" },
+  "/algorithmInference": { menu: "可视中心", page: "算法推理平台" },
+  "/visualCenter/parkManagement": { menu: "可视中心", page: "园区封闭管理平台" },
+};
 
 // 更新时间
 const updateTime = () => {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  const seconds = String(now.getSeconds()).padStart(2, '0')
-  currentTime.value = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-}
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+  currentTime.value = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
 
 // 更新面包屑
 const updateBreadcrumb = () => {
-  const path = route.path
-  const routeInfo = routeMap[path]
+  const path = route.path;
+  const routeInfo = routeMap[path];
 
   if (routeInfo) {
-    currentMenuName.value = routeInfo.menu
-    currentPageName.value = routeInfo.page
+    currentMenuName.value = routeInfo.menu;
+    currentPageName.value = routeInfo.page;
   } else {
-    currentMenuName.value = ''
-    currentPageName.value = ''
+    currentMenuName.value = "";
+    currentPageName.value = "";
   }
-}
+};
 
 // 处理下拉菜单命令
-type Command = 'profile' | 'password' | 'clearCache' | 'logout'
+type Command = "profile" | "password" | "clearCache" | "logout";
 
 const handleCommand = (command: Command) => {
   switch (command) {
-    case 'profile':
-      router.push('/systemManage/profile')
-      break
-    case 'password':
-      changePasswordDialogRef.value?.openDialog()
-      break
-    case 'clearCache':
-      clearCache()
-      break
-    case 'logout':
-      logout()
-      break
+    case "profile":
+      router.push("/systemManage/profile");
+      break;
+    case "password":
+      changePasswordDialogRef.value?.openDialog();
+      break;
+    case "clearCache":
+      clearCache();
+      break;
+    case "logout":
+      logout();
+      break;
   }
-}
+};
 
 // 清除缓存
 const clearCache = () => {
   ElMessageBox.confirm(
-    '确定要清除所有本地缓存吗？包括菜单、权限、用户信息、部门缓存、租户缓存等数据（不会清除登录状态）。',
-    '清除缓存',
+    "确定要清除所有本地缓存吗？包括菜单、权限、用户信息、部门缓存、租户缓存等数据（不会清除登录状态）。",
+    "清除缓存",
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    },
   )
     .then(() => {
       try {
         // 1. 清除所有 RBAC 缓存（部门树、租户等）
-        cacheManager.clear()
+        cacheManager.clear();
 
         // 2. 清除 Pinia stores 中的数据
-        menusStore.clearMenuTree()
-        permissionsStore.clearPermissions()
-        userInfoStore.clearUserInfo()
+        menusStore.clearMenuTree();
+        permissionsStore.clearPermissions();
+        userInfoStore.clearUserInfo();
 
         // 3. 清除 localStorage 中的对应数据
-        storage.removeMultiple(
-          StorageKey.MENUS,
-          StorageKey.PERMISSION,
-          StorageKey.USER_INFO
-        )
+        storage.removeMultiple(StorageKey.MENUS, StorageKey.PERMISSION, StorageKey.USER_INFO);
 
         ElMessage({
           showClose: true,
-          message: '缓存已清除',
-          type: 'success'
-        })
+          message: "缓存已清除",
+          type: "success",
+        });
 
         // 刷新页面以重新加载数据
         setTimeout(() => {
-          location.reload()
-        }, 500)
+          location.reload();
+        }, 500);
       } catch (error) {
-        console.error('清除缓存失败:', error)
+        console.error("清除缓存失败:", error);
         ElMessage({
           showClose: true,
-          message: '清除缓存失败: ' + (error as Error).message,
-          type: 'error'
-        })
+          message: "清除缓存失败: " + (error as Error).message,
+          type: "error",
+        });
       }
     })
     .catch(() => {
       // 用户取消
-    })
-}
+    });
+};
 
 // 退出登录
 const logout = () => {
   // 重置动态路由标记
-  resetAsyncRoutes()
+  resetAsyncRoutes();
 
   // 清除所有认证相关的 localStorage 数据
-  storage.logout()
+  storage.logout();
 
   ElMessage({
     showClose: true,
-    message: '已安全退出登录',
-    type: 'success'
-  })
+    message: "已安全退出登录",
+    type: "success",
+  });
 
   setTimeout(() => {
-    router.push('/login')
-  }, 500)
-}
+    router.push("/login");
+  }, 500);
+};
 
 // 监听路由变化
 watch(
   () => route.path,
   () => {
-    updateBreadcrumb()
-  }
-)
+    updateBreadcrumb();
+  },
+);
 
 // 组件挂载
 onMounted(() => {
-  updateTime()
-  updateBreadcrumb()
+  updateTime();
+  updateBreadcrumb();
   // 每秒更新时间
-  timeInterval = window.setInterval(updateTime, 1000)
-})
+  timeInterval = window.setInterval(updateTime, 1000);
+});
 
 // 组件卸载
 onUnmounted(() => {
   if (timeInterval !== null) {
-    clearInterval(timeInterval)
+    clearInterval(timeInterval);
   }
-})
+});
 </script>
 
 <style scoped>

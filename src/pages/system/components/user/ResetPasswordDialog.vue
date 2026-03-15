@@ -1,20 +1,15 @@
 <template>
-  <el-dialog
-    title="提示"
-    v-model="dialogVisible"
-    width="400px"
-    @close="handleClose"
-  >
+  <el-dialog title="提示" v-model="dialogVisible" width="400px" @close="handleClose">
     <div class="reset-password-content">
       <div class="reset-password-message">
-        请输入"{{ resetPasswordUser ? resetPasswordUser.user_name : '' }}"的新密码
+        请输入"{{ resetPasswordUser ? resetPasswordUser.user_name : "" }}"的新密码
       </div>
       <el-input
         v-model="newPassword"
         type="password"
         placeholder="请输入新密码"
         show-password
-        style="margin-top: 15px;"
+        style="margin-top: 15px"
       ></el-input>
     </div>
     <span slot="footer" class="dialog-footer">
@@ -25,59 +20,59 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, watch } from "vue";
+import { ElMessage } from "element-plus";
 
 interface User {
-  user_name?: string
-  [key: string]: any
+  user_name?: string;
+  [key: string]: any;
 }
 
 const props = defineProps<{
-  visible: boolean
-  resetPasswordUser: User | null
-}>()
+  visible: boolean;
+  resetPasswordUser: User | null;
+}>();
 
 const emit = defineEmits<{
-  'update:visible': [value: boolean]
-  confirm: [password: string]
-}>()
+  "update:visible": [value: boolean];
+  confirm: [password: string];
+}>();
 
-const newPassword = ref('')
+const newPassword = ref("");
 
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (value) => emit('update:visible', value)
-})
+  set: (value) => emit("update:visible", value),
+});
 
 watch(
   () => props.visible,
   (newVal) => {
     if (!newVal) {
-      newPassword.value = ''
+      newPassword.value = "";
     }
-  }
-)
+  },
+);
 
 const handleConfirm = () => {
   if (!newPassword.value) {
     ElMessage({
-      message: '请输入新密码',
-      type: 'warning'
-    })
-    return
+      message: "请输入新密码",
+      type: "warning",
+    });
+    return;
   }
-  emit('confirm', newPassword.value)
-  dialogVisible.value = false
-}
+  emit("confirm", newPassword.value);
+  dialogVisible.value = false;
+};
 
 const handleCancel = () => {
-  dialogVisible.value = false
-}
+  dialogVisible.value = false;
+};
 
 const handleClose = () => {
-  dialogVisible.value = false
-}
+  dialogVisible.value = false;
+};
 </script>
 
 <style scoped>

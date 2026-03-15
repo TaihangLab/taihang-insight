@@ -61,7 +61,7 @@ class CacheManager {
       // 是否启用sessionStorage
       enableSessionStorage: options.enableSessionStorage !== false,
       // 缓存键前缀
-      prefix: options.prefix ?? 'cache_'
+      prefix: options.prefix ?? "cache_",
     };
 
     // 内存缓存存储
@@ -136,7 +136,7 @@ class CacheManager {
           }
         }
       } catch (error) {
-        console.warn('从sessionStorage获取缓存失败:', error);
+        console.warn("从sessionStorage获取缓存失败:", error);
       }
     }
 
@@ -158,7 +158,7 @@ class CacheManager {
     const cacheItem: CacheItem<T> = {
       value,
       expiry: expiryTime,
-      ttl: itemTTL
+      ttl: itemTTL,
     };
 
     // 存储到内存缓存
@@ -179,13 +179,13 @@ class CacheManager {
       try {
         sessionStorage.setItem(cacheKey, JSON.stringify(cacheItem));
       } catch (error) {
-        console.warn('存储到sessionStorage失败:', error);
+        console.warn("存储到sessionStorage失败:", error);
         // 如果sessionStorage满了，尝试清理过期项
         this.cleanupExpiredSessionStorage();
         try {
           sessionStorage.setItem(cacheKey, JSON.stringify(cacheItem));
         } catch (retryError) {
-          console.error('再次尝试存储到sessionStorage失败:', retryError);
+          console.error("再次尝试存储到sessionStorage失败:", retryError);
         }
       }
     }
@@ -209,7 +209,7 @@ class CacheManager {
       try {
         sessionStorage.removeItem(cacheKey);
       } catch (error) {
-        console.warn('从sessionStorage删除缓存失败:', error);
+        console.warn("从sessionStorage删除缓存失败:", error);
       }
     }
   }
@@ -233,9 +233,9 @@ class CacheManager {
             keysToRemove.push(key);
           }
         }
-        keysToRemove.forEach(key => sessionStorage.removeItem(key));
+        keysToRemove.forEach((key) => sessionStorage.removeItem(key));
       } catch (error) {
-        console.warn('清空sessionStorage缓存失败:', error);
+        console.warn("清空sessionStorage缓存失败:", error);
       }
     }
   }
@@ -285,9 +285,9 @@ class CacheManager {
           }
         }
       }
-      keysToRemove.forEach(key => sessionStorage.removeItem(key));
+      keysToRemove.forEach((key) => sessionStorage.removeItem(key));
     } catch (error) {
-      console.warn('清理sessionStorage过期项失败:', error);
+      console.warn("清理sessionStorage过期项失败:", error);
     }
   }
 
@@ -298,7 +298,7 @@ class CacheManager {
     return {
       memoryCacheSize: this.memorySize,
       sessionStorageKeysCount: this.getSessionStorageKeysCount(),
-      prefix: this.options.prefix
+      prefix: this.options.prefix,
     };
   }
 
@@ -320,7 +320,7 @@ class CacheManager {
       }
       return count;
     } catch (error) {
-      console.warn('获取sessionStorage键数量失败:', error);
+      console.warn("获取sessionStorage键数量失败:", error);
       return 0;
     }
   }

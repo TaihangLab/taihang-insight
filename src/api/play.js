@@ -1,7 +1,7 @@
 /**
  * 播放和语音对讲相关API
  */
-import request from '@/utils/request'
+import request from "@/utils/request";
 
 /**
  * 启动播放
@@ -11,8 +11,8 @@ import request from '@/utils/request'
 export function startPlay(deviceId, channelId) {
   return request({
     url: `/api/v1/play/start/${deviceId}/${channelId}`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
 
 /**
@@ -23,8 +23,8 @@ export function startPlay(deviceId, channelId) {
 export function stopPlay(deviceId, channelId) {
   return request({
     url: `/api/v1/play/stop/${deviceId}/${channelId}`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
 
 /**
@@ -38,9 +38,9 @@ export function stopPlay(deviceId, channelId) {
 export function startBroadcast(deviceId, channelId, params) {
   return request({
     url: `/api/v1/play/broadcast/${deviceId}/${channelId}`,
-    method: 'get',
-    params: params
-  })
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -51,8 +51,6 @@ export function startBroadcast(deviceId, channelId, params) {
 export function stopBroadcast(deviceId, channelId) {
   return request({
     url: `/api/v1/play/broadcast/stop/${deviceId}/${channelId}`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
-
-

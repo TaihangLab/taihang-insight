@@ -2,32 +2,34 @@
  * 大模型任务管理服务
  */
 
-import axiosInstance from './config/axios'
+import axiosInstance from "./config/axios";
 import type {
   ApiResponse,
   PaginatedResponse,
   LlmTask,
   CreateLlmTaskParams,
-  LlmTaskListParams
-} from './types'
+  LlmTaskListParams,
+} from "./types";
 
 export class LlmTaskService {
-  private readonly basePath = '/api/v1/llm-skills/tasks'
+  private readonly basePath = "/api/v1/llm-skills/tasks";
 
   /**
    * 创建 LLM 任务
    */
   async createLlmTask(taskData: CreateLlmTaskParams): Promise<ApiResponse<LlmTask>> {
-    const response = await axiosInstance.post<any, ApiResponse<LlmTask>>(this.basePath, taskData)
-    return response
+    const response = await axiosInstance.post<any, ApiResponse<LlmTask>>(this.basePath, taskData);
+    return response;
   }
 
   /**
    * 删除 LLM 任务
    */
   async deleteLlmTask(taskId: string): Promise<ApiResponse<void>> {
-    const response = await axiosInstance.delete<any, ApiResponse<void>>(`${this.basePath}/${taskId}`)
-    return response
+    const response = await axiosInstance.delete<any, ApiResponse<void>>(
+      `${this.basePath}/${taskId}`,
+    );
+    return response;
   }
 
   /**
@@ -36,36 +38,43 @@ export class LlmTaskService {
   async batchDeleteLlmTasks(taskIds: string[]): Promise<ApiResponse<void>> {
     const response = await axiosInstance.post<any, ApiResponse<void>>(
       `${this.basePath}/batch-delete`,
-      { ids: taskIds }
-    )
-    return response
+      { ids: taskIds },
+    );
+    return response;
   }
 
   /**
    * 获取 LLM 任务列表
    */
   async getLlmTaskList(params?: LlmTaskListParams): Promise<PaginatedResponse<LlmTask>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<LlmTask>>(this.basePath, { params })
-    return response
+    const response = await axiosInstance.get<any, PaginatedResponse<LlmTask>>(this.basePath, {
+      params,
+    });
+    return response;
   }
 
   /**
    * 获取 LLM 任务详情
    */
   async getLlmTaskDetail(taskId: string): Promise<ApiResponse<LlmTask>> {
-    const response = await axiosInstance.get<any, ApiResponse<LlmTask>>(`${this.basePath}/${taskId}`)
-    return response
+    const response = await axiosInstance.get<any, ApiResponse<LlmTask>>(
+      `${this.basePath}/${taskId}`,
+    );
+    return response;
   }
 
   /**
    * 更新 LLM 任务
    */
-  async updateLlmTask(taskId: string, taskData: Partial<CreateLlmTaskParams>): Promise<ApiResponse<LlmTask>> {
+  async updateLlmTask(
+    taskId: string,
+    taskData: Partial<CreateLlmTaskParams>,
+  ): Promise<ApiResponse<LlmTask>> {
     const response = await axiosInstance.put<any, ApiResponse<LlmTask>>(
       `${this.basePath}/${taskId}`,
-      taskData
-    )
-    return response
+      taskData,
+    );
+    return response;
   }
 
   /**
@@ -73,9 +82,9 @@ export class LlmTaskService {
    */
   async startLlmTask(taskId: string): Promise<ApiResponse<{ message: string }>> {
     const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
-      `${this.basePath}/${taskId}/start`
-    )
-    return response
+      `${this.basePath}/${taskId}/start`,
+    );
+    return response;
   }
 
   /**
@@ -83,11 +92,11 @@ export class LlmTaskService {
    */
   async stopLlmTask(taskId: string): Promise<ApiResponse<{ message: string }>> {
     const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
-      `${this.basePath}/${taskId}/stop`
-    )
-    return response
+      `${this.basePath}/${taskId}/stop`,
+    );
+    return response;
   }
 }
 
 // 导出单例
-export default new LlmTaskService()
+export default new LlmTaskService();

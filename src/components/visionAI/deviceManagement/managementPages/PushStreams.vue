@@ -10,15 +10,16 @@
         <p class="page-subtitle">管理和监控所有推流通道</p>
       </div>
       <div class="header-right">
-        <el-button type="primary" icon="el-icon-plus" @click="addStream">
-          添加推流
-        </el-button>
-        <el-button type="info" icon="el-icon-info" @click="importChannel">
-          通道导入
-        </el-button>
+        <el-button type="primary" icon="el-icon-plus" @click="addStream">添加推流</el-button>
+        <el-button type="info" icon="el-icon-info" @click="importChannel">通道导入</el-button>
         <el-button icon="el-icon-download" type="primary">
-          <a style="color: #FFFFFF; text-align: center; text-decoration: none" href="/static/file/推流通道导入.zip"
-             download='推流通道导入.zip'>下载模板</a>
+          <a
+            style="color: #ffffff; text-align: center; text-decoration: none"
+            href="/static/file/推流通道导入.zip"
+            download="推流通道导入.zip"
+          >
+            下载模板
+          </a>
         </el-button>
         <el-button type="success" icon="el-icon-refresh" @click="refresh" :loading="loading">
           刷新列表
@@ -35,30 +36,32 @@
             <el-input
               v-model="searchSrt"
               placeholder="应用名、流ID、名称"
-              style="width: 220px;"
+              style="width: 220px"
               clearable
               @input="getPushList"
               @keyup.enter.native="getPushList"
-              @clear="getPushList">
+              @clear="getPushList"
+            >
               <i slot="prefix" class="el-icon-search"></i>
             </el-input>
           </div>
-          
+
           <div class="search-item">
             <label>流媒体：</label>
             <el-select
               v-model="mediaServerId"
               placeholder="请选择"
-              style="width: 120px;"
+              style="width: 120px"
               clearable
-              @change="getPushList">
+              @change="getPushList"
+            >
               <el-option label="全部" value=""></el-option>
               <el-option
                 v-for="item in mediaServerList"
                 :key="item.id"
                 :label="item.id"
-                :value="item.id">
-              </el-option>
+                :value="item.id"
+              ></el-option>
             </el-select>
           </div>
 
@@ -67,9 +70,10 @@
             <el-select
               v-model="pushing"
               placeholder="请选择"
-              style="width: 120px;"
+              style="width: 120px"
               clearable
-              @change="getPushList">
+              @change="getPushList"
+            >
               <el-option label="全部" value=""></el-option>
               <el-option label="推流中" value="true"></el-option>
               <el-option label="已停止" value="false"></el-option>
@@ -97,7 +101,7 @@
           </div>
         </div>
       </el-card>
-      
+
       <el-card class="stat-card management-stat-card" shadow="hover">
         <div class="stat-content">
           <div class="stat-icon offline">
@@ -109,7 +113,7 @@
           </div>
         </div>
       </el-card>
-      
+
       <el-card class="stat-card management-stat-card" shadow="hover">
         <div class="stat-content">
           <div class="stat-icon total">
@@ -129,16 +133,29 @@
         <span class="card-title">推流列表</span>
         <div class="card-actions">
           <el-button-group>
-            <el-button :type="viewMode === 'table' ? 'primary' : ''" icon="el-icon-menu" @click="viewMode = 'table'">列表</el-button>
-            <el-button :type="viewMode === 'card' ? 'primary' : ''" icon="el-icon-s-grid" @click="viewMode = 'card'">卡片</el-button>
+            <el-button
+              :type="viewMode === 'table' ? 'primary' : ''"
+              icon="el-icon-menu"
+              @click="viewMode = 'table'"
+            >
+              列表
+            </el-button>
+            <el-button
+              :type="viewMode === 'card' ? 'primary' : ''"
+              icon="el-icon-s-grid"
+              @click="viewMode = 'card'"
+            >
+              卡片
+            </el-button>
           </el-button-group>
           <el-button
             icon="el-icon-delete"
             size="small"
             :disabled="multipleSelection.length === 0"
             type="danger"
-            @click="batchDel">
-            批量删除 ({{multipleSelection.length}})
+            @click="batchDel"
+          >
+            批量删除 ({{ multipleSelection.length }})
           </el-button>
         </div>
       </div>
@@ -158,86 +175,125 @@
           stripe
           border
           @selection-change="handleSelectionChange"
-          :row-key="(row)=> row.app + row.stream">
-        
-        <el-table-column type="selection" :reserve-selection="true" width="55" align="center"></el-table-column>
-        <el-table-column type="index" label="序号" width="60" align="center"></el-table-column>
-        
-        <el-table-column prop="gbName" label="名称" min-width="160" show-overflow-tooltip>
-          <template #default="{ row }">
-            <div class="stream-name">
-              <i class="el-icon-video-camera stream-icon"></i>
-              <span>{{ row.gbName || '-' }}</span>
-            </div>
-          </template>
-        </el-table-column>
-        
-        <el-table-column prop="app" label="应用名" min-width="100" align="center" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="stream" label="流ID" min-width="180" align="center" show-overflow-tooltip></el-table-column>
-        
-        <el-table-column label="推流状态" min-width="100" align="center">
-          <template #default="{ row }">
-            <el-tag size="medium" v-if="row.pushing && Vue.prototype.$myServerId !== row.serverId" style="border-color: #ecf1af">推流中</el-tag>
-            <el-tag size="medium" v-if="row.pushing && Vue.prototype.$myServerId === row.serverId">推流中</el-tag>
-            <el-tag size="medium" type="info" v-if="!row.pushing">已停止</el-tag>
-          </template>
-        </el-table-column>
-        
-        <el-table-column prop="gbDeviceId" label="国标编码" min-width="180" align="center" show-overflow-tooltip></el-table-column>
-        
-        <el-table-column label="位置信息" min-width="150" align="center">
-          <template #default="{ row }">
-            <div v-if="row.gbLongitude && row.gbLatitude" class="location-info">
-              <div>{{ row.gbLongitude }}</div>
-              <div>{{ row.gbLatitude }}</div>
-            </div>
-            <el-tag v-else size="small" type="info">无</el-tag>
-          </template>
-        </el-table-column>
-        
-        <el-table-column prop="mediaServerId" label="流媒体" min-width="120" align="center" show-overflow-tooltip></el-table-column>
-        
-        <el-table-column label="开始时间" min-width="160" align="center">
-          <template #default="{ row }">
-            <span>{{ row.pushTime || '-' }}</span>
-          </template>
-        </el-table-column>
+          :row-key="(row) => row.app + row.stream"
+        >
+          <el-table-column
+            type="selection"
+            :reserve-selection="true"
+            width="55"
+            align="center"
+          ></el-table-column>
+          <el-table-column type="index" label="序号" width="60" align="center"></el-table-column>
 
-        <el-table-column label="操作" width="350" align="center" fixed="right">
-          <template #default="{ row }">
-            <div class="operation-buttons">
-              <el-button 
-                size="small" 
-                :loading="row.playLoading" 
-                icon="el-icon-video-play" 
-                @click="playPush(row)" 
-                type="primary">
-                播放
-              </el-button>
-              <el-button 
-                size="small" 
-                icon="el-icon-edit" 
-                type="success" 
-                @click="edit(row)">
-                编辑
-              </el-button>
-              <el-button 
-                size="small" 
-                icon="el-icon-cloudy" 
-                type="info" 
-                @click="queryCloudRecords(row)">
-                云端录像
-              </el-button>
-              <el-button 
-                size="small" 
-                icon="el-icon-delete" 
-                type="danger" 
-                @click="deletePush(row.id)">
-                删除
-              </el-button>
-            </div>
-          </template>
-        </el-table-column>
+          <el-table-column prop="gbName" label="名称" min-width="160" show-overflow-tooltip>
+            <template #default="{ row }">
+              <div class="stream-name">
+                <i class="el-icon-video-camera stream-icon"></i>
+                <span>{{ row.gbName || "-" }}</span>
+              </div>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            prop="app"
+            label="应用名"
+            min-width="100"
+            align="center"
+            show-overflow-tooltip
+          ></el-table-column>
+          <el-table-column
+            prop="stream"
+            label="流ID"
+            min-width="180"
+            align="center"
+            show-overflow-tooltip
+          ></el-table-column>
+
+          <el-table-column label="推流状态" min-width="100" align="center">
+            <template #default="{ row }">
+              <el-tag
+                size="medium"
+                v-if="row.pushing && Vue.prototype.$myServerId !== row.serverId"
+                style="border-color: #ecf1af"
+              >
+                推流中
+              </el-tag>
+              <el-tag
+                size="medium"
+                v-if="row.pushing && Vue.prototype.$myServerId === row.serverId"
+              >
+                推流中
+              </el-tag>
+              <el-tag size="medium" type="info" v-if="!row.pushing">已停止</el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            prop="gbDeviceId"
+            label="国标编码"
+            min-width="180"
+            align="center"
+            show-overflow-tooltip
+          ></el-table-column>
+
+          <el-table-column label="位置信息" min-width="150" align="center">
+            <template #default="{ row }">
+              <div v-if="row.gbLongitude && row.gbLatitude" class="location-info">
+                <div>{{ row.gbLongitude }}</div>
+                <div>{{ row.gbLatitude }}</div>
+              </div>
+              <el-tag v-else size="small" type="info">无</el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            prop="mediaServerId"
+            label="流媒体"
+            min-width="120"
+            align="center"
+            show-overflow-tooltip
+          ></el-table-column>
+
+          <el-table-column label="开始时间" min-width="160" align="center">
+            <template #default="{ row }">
+              <span>{{ row.pushTime || "-" }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="操作" width="350" align="center" fixed="right">
+            <template #default="{ row }">
+              <div class="operation-buttons">
+                <el-button
+                  size="small"
+                  :loading="row.playLoading"
+                  icon="el-icon-video-play"
+                  @click="playPush(row)"
+                  type="primary"
+                >
+                  播放
+                </el-button>
+                <el-button size="small" icon="el-icon-edit" type="success" @click="edit(row)">
+                  编辑
+                </el-button>
+                <el-button
+                  size="small"
+                  icon="el-icon-cloudy"
+                  type="info"
+                  @click="queryCloudRecords(row)"
+                >
+                  云端录像
+                </el-button>
+                <el-button
+                  size="small"
+                  icon="el-icon-delete"
+                  type="danger"
+                  @click="deletePush(row.id)"
+                >
+                  删除
+                </el-button>
+              </div>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
 
@@ -247,56 +303,72 @@
           <el-card shadow="hover" class="stream-card">
             <div class="stream-card-header">
               <div class="stream-status-badge">
-                <el-badge 
-                  :type="stream.pushing ? 'success' : 'danger'" 
-                  is-dot 
-                  class="status-dot">
-                </el-badge>
+                <el-badge
+                  :type="stream.pushing ? 'success' : 'danger'"
+                  is-dot
+                  class="status-dot"
+                ></el-badge>
               </div>
               <div class="stream-title">
-                <h4>{{ stream.gbName || '未命名推流' }}</h4>
+                <h4>{{ stream.gbName || "未命名推流" }}</h4>
                 <p>{{ stream.app }}/{{ stream.stream }}</p>
               </div>
             </div>
-            
+
             <div class="stream-card-content">
               <div class="stream-info-row">
                 <span class="info-label">应用名：</span>
-                <span class="info-value">{{ stream.app || '未知' }}</span>
+                <span class="info-value">{{ stream.app || "未知" }}</span>
               </div>
               <div class="stream-info-row">
                 <span class="info-label">流ID：</span>
-                <span class="info-value">{{ stream.stream || '未知' }}</span>
+                <span class="info-value">{{ stream.stream || "未知" }}</span>
               </div>
               <div class="stream-info-row">
                 <span class="info-label">国标编码：</span>
-                <span class="info-value">{{ stream.gbDeviceId || '无' }}</span>
+                <span class="info-value">{{ stream.gbDeviceId || "无" }}</span>
               </div>
               <div class="stream-info-row">
                 <span class="info-label">流媒体：</span>
-                <span class="info-value">{{ stream.mediaServerId || '未知' }}</span>
+                <span class="info-value">{{ stream.mediaServerId || "未知" }}</span>
               </div>
               <div class="stream-info-row">
                 <span class="info-label">开始时间：</span>
-                <span class="info-value">{{ stream.pushTime || '无' }}</span>
+                <span class="info-value">{{ stream.pushTime || "无" }}</span>
               </div>
               <div class="stream-info-row" v-if="stream.gbLongitude && stream.gbLatitude">
                 <span class="info-label">位置信息：</span>
                 <span class="info-value">{{ stream.gbLongitude }}, {{ stream.gbLatitude }}</span>
               </div>
             </div>
-            
+
             <div class="stream-card-actions">
-              <el-button size="small" type="primary" icon="el-icon-video-play" :loading="stream.playLoading" @click="playPush(stream)">
+              <el-button
+                size="small"
+                type="primary"
+                icon="el-icon-video-play"
+                :loading="stream.playLoading"
+                @click="playPush(stream)"
+              >
                 播放
               </el-button>
               <el-button size="small" type="success" icon="el-icon-edit" @click="edit(stream)">
                 编辑
               </el-button>
-              <el-button size="small" type="info" icon="el-icon-cloudy" @click="queryCloudRecords(stream)">
+              <el-button
+                size="small"
+                type="info"
+                icon="el-icon-cloudy"
+                @click="queryCloudRecords(stream)"
+              >
                 云端录像
               </el-button>
-              <el-button size="small" type="danger" icon="el-icon-delete" @click="deletePush(stream.id)">
+              <el-button
+                size="small"
+                type="danger"
+                icon="el-icon-delete"
+                @click="deletePush(stream.id)"
+              >
                 删除
               </el-button>
             </div>
@@ -313,29 +385,33 @@
           layout="total, sizes, prev, pager, next, jumper"
           :total="total"
           @size-change="handleSizeChange"
-          @current-change="currentChange">
-        </el-pagination>
+          @current-change="currentChange"
+        ></el-pagination>
       </div>
     </el-card>
 
     <!-- 弹窗组件 -->
     <devicePlayer ref="devicePlayer"></devicePlayer>
     <importChannel ref="importChannel"></importChannel>
-    <stream-push-edit v-if="streamPush" :streamPush="streamPush" :closeEdit="closeEdit"></stream-push-edit>
+    <stream-push-edit
+      v-if="streamPush"
+      :streamPush="streamPush"
+      :closeEdit="closeEdit"
+    ></stream-push-edit>
   </div>
 </template>
 
 <script>
-import { startPushStream, removePushStream, batchRemovePushStream } from '@/api/stream'
-import devicePlayer from './dialogs/devicePlayer.vue'
-import importChannel from './dialogs/importChannel.vue'
-import MediaServer from './service/MediaServer.js'
+import { startPushStream, removePushStream, batchRemovePushStream } from "@/api/stream";
+import devicePlayer from "./dialogs/devicePlayer.vue";
+import importChannel from "./dialogs/importChannel.vue";
+import MediaServer from "./service/MediaServer.js";
 import StreamPushEdit from "./dialogs/StreamPushEdit.vue";
-import { getCurrentInstance } from 'vue'
-import wvpAxios from '@/api/camera/base'
+import { getCurrentInstance } from "vue";
+import wvpAxios from "@/api/camera/base";
 
 export default {
-  name: 'PushStreams',
+  name: "PushStreams",
   components: {
     StreamPushEdit,
     devicePlayer,
@@ -357,45 +433,45 @@ export default {
       updateLooper: 0, //数据刷新轮训标志
       mediaServerObj: new MediaServer(),
       tableHeight: 400,
-      viewMode: 'table' // table | card
-    }
+      viewMode: "table", // table | card
+    };
   },
-  
+
   computed: {
     Vue() {
-      return Vue
+      return Vue;
     },
     streamStats() {
-      const pushing = this.pushList.filter(item => item.pushing).length;
-      const stopped = this.pushList.filter(item => !item.pushing).length;
+      const pushing = this.pushList.filter((item) => item.pushing).length;
+      const stopped = this.pushList.filter((item) => !item.pushing).length;
       return {
         pushing,
-        stopped
-      }
-    }
+        stopped,
+      };
+    },
   },
-  
+
   mounted() {
     this.initData();
     this.updateLooper = setInterval(this.getPushList, 2000);
     this.calculateTableHeight();
-    window.addEventListener('resize', this.calculateTableHeight);
+    window.addEventListener("resize", this.calculateTableHeight);
   },
-  
+
   destroyed() {
     clearTimeout(this.updateLooper);
-    window.removeEventListener('resize', this.calculateTableHeight);
+    window.removeEventListener("resize", this.calculateTableHeight);
   },
-  
+
   methods: {
     initData: function () {
       this.loading = true;
       this.mediaServerObj.getOnlineMediaServerList((data) => {
         this.mediaServerList = data.data;
-      })
+      });
       this.getPushList();
     },
-    
+
     calculateTableHeight() {
       this.$nextTick(() => {
         const windowHeight = window.innerHeight;
@@ -404,25 +480,26 @@ export default {
         const statsHeight = 120; // 统计卡片高度
         const paginationHeight = 80; // 分页高度
         const padding = 60; // 额外间距
-        this.tableHeight = windowHeight - headerHeight - searchHeight - statsHeight - paginationHeight - padding;
+        this.tableHeight =
+          windowHeight - headerHeight - searchHeight - statsHeight - paginationHeight - padding;
         if (this.tableHeight < 300) this.tableHeight = 300;
       });
     },
-    
+
     currentChange: function (val) {
       this.currentPage = val;
       this.getPushList();
     },
-    
+
     handleSizeChange: function (val) {
       this.count = val;
       this.getPushList();
     },
-    
+
     getPushList: function () {
       let that = this;
       wvpAxios({
-        method: 'get',
+        method: "get",
         url: `push/list`,
         params: {
           page: that.currentPage,
@@ -430,12 +507,13 @@ export default {
           query: that.searchSrt,
           pushing: that.pushing,
           mediaServerId: that.mediaServerId,
-        }
-      }).then(function (res) {
+        },
+      })
+        .then(function (res) {
           if (res.data.code === 0) {
             that.total = res.data.data.total;
             that.pushList = res.data.data.list;
-            that.pushList.forEach(e => {
+            that.pushList.forEach((e) => {
               that.$set(e, "location", "");
               that.$set(e, "playLoading", false);
               if (e.gbLongitude && e.gbLatitude) {
@@ -443,117 +521,124 @@ export default {
               }
             });
           }
-      }).catch(function (error) {
-        console.error(error);
-      }).finally(()=>{
-        this.loading = false;
-      })
+        })
+        .catch(function (error) {
+          console.error(error);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
     },
 
     playPush: function (row) {
       row.playLoading = true;
-      startPushStream(row.id).then((res) =>{
-        if (res.data.code === 0 ) {
-          this.$refs.devicePlayer.openDialog("streamPlay", null, null, {
-            streamInfo: res.data.data,
-            hasAudio: true
-          });
-        }else {
-          this.$message.error(res.data.msg);
-        }
-      }).catch(function (error) {
-        console.error(error);
-      }).finally(()=>{
-        row.playLoading = false;
-      })
-    },
-    
-    deletePush: function (id) {
-      this.$confirm(`确定删除通道?`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.loading = true;
-        removePushStream(id, this.mediaServerId).then((res) => {
+      startPushStream(row.id)
+        .then((res) => {
           if (res.data.code === 0) {
-            this.initData()
+            this.$refs.devicePlayer.openDialog("streamPlay", null, null, {
+              streamInfo: res.data.data,
+              hasAudio: true,
+            });
+          } else {
+            this.$message.error(res.data.msg);
           }
-        }).catch(function (error) {
+        })
+        .catch(function (error) {
           console.error(error);
+        })
+        .finally(() => {
+          row.playLoading = false;
         });
-      }).catch(() => {
+    },
 
-      });
-    },
-    
-    edit: function (row) {
-      this.streamPush = row
-    },
-    
-    // 结束编辑
-    closeEdit: function (){
-      this.streamPush = null
-      this.getPushList()
-    },
-    
-    queryCloudRecords: function (row) {
-      this.$router.push(`/cloudRecordDetail/${row.app}/${row.stream}`)
-    },
-    
-    importChannel: function () {
-      this.$refs.importChannel.openDialog(() => {
-
+    deletePush: function (id) {
+      this.$confirm(`确定删除通道?`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
       })
+        .then(() => {
+          this.loading = true;
+          removePushStream(id, this.mediaServerId)
+            .then((res) => {
+              if (res.data.code === 0) {
+                this.initData();
+              }
+            })
+            .catch(function (error) {
+              console.error(error);
+            });
+        })
+        .catch(() => {});
     },
-    
-    addStream: function (){
-      this.streamPush = {}
-    },
-    
-    batchDel: function () {
-      this.$confirm(`确定删除选中的${this.multipleSelection.length}个通道?`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        let ids = []
-        for (let i = 0; i < this.multipleSelection.length; i++) {
-          ids.push(this.multipleSelection[i].id)
-        }
-        let that = this;
-        batchRemovePushStream(ids, that.mediaServerId).then((res) => {
-          this.initData();
-          this.$refs.pushListTable.clearSelection();
-        }).catch(function (error) {
-          console.error(error);
-        });
-      }).catch(() => {
 
-      });
+    edit: function (row) {
+      this.streamPush = row;
     },
-    
+
+    // 结束编辑
+    closeEdit: function () {
+      this.streamPush = null;
+      this.getPushList();
+    },
+
+    queryCloudRecords: function (row) {
+      this.$router.push(`/cloudRecordDetail/${row.app}/${row.stream}`);
+    },
+
+    importChannel: function () {
+      this.$refs.importChannel.openDialog(() => {});
+    },
+
+    addStream: function () {
+      this.streamPush = {};
+    },
+
+    batchDel: function () {
+      this.$confirm(`确定删除选中的${this.multipleSelection.length}个通道?`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          let ids = [];
+          for (let i = 0; i < this.multipleSelection.length; i++) {
+            ids.push(this.multipleSelection[i].id);
+          }
+          let that = this;
+          batchRemovePushStream(ids, that.mediaServerId)
+            .then((res) => {
+              this.initData();
+              this.$refs.pushListTable.clearSelection();
+            })
+            .catch(function (error) {
+              console.error(error);
+            });
+        })
+        .catch(() => {});
+    },
+
     handleSelectionChange: function (val) {
       this.multipleSelection = val;
     },
-    
+
     refresh: function () {
       this.initData();
     },
-    
+
     handleReset() {
-      this.searchSrt = '';
-      this.pushing = '';
-      this.mediaServerId = '';
+      this.searchSrt = "";
+      this.pushing = "";
+      this.mediaServerId = "";
       this.getPushList();
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
 /* 引入通用管理页面样式 */
-@import './common-style.css';
+@import "./common-style.css";
 .push-streams-container {
   height: 100%;
   padding: 20px;
@@ -637,8 +722,8 @@ export default {
 
 /* 搜索框布局混乱 */
 .search-item :deep(.el-input__prefix) {
-  top:7px;
-  left:5px;
+  top: 7px;
+  left: 5px;
 }
 
 .search-actions {
@@ -767,7 +852,7 @@ export default {
 
 .stream-icon {
   margin-right: 8px;
-  color: #409EFF;
+  color: #409eff;
 }
 
 .location-info {
@@ -856,7 +941,7 @@ export default {
   margin: 0;
   font-size: 13px;
   color: #909399;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 .stream-card-content {
@@ -917,53 +1002,53 @@ export default {
   .push-streams-container {
     padding: 10px;
   }
-  
+
   .page-header {
     flex-direction: column;
     text-align: center;
     gap: 16px;
   }
-  
+
   .search-form .search-row {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-item {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .search-actions {
     margin-left: 0;
     margin-top: 16px;
   }
-  
+
   .stats-cards {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 12px;
   }
-  
+
   .operation-buttons {
     flex-direction: column;
     gap: 2px;
   }
-  
+
   .operation-buttons .el-button--mini {
     padding: 6px 8px;
     font-size: 12px;
   }
-  
+
   .stream-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .action-row {
     flex-direction: column;
   }
-  
+
   .action-row .el-button {
     margin-bottom: 4px;
   }
 }
-</style> 
+</style>

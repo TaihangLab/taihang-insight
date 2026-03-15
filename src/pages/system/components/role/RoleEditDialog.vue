@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    :title="dialogTitle"
-    v-model="dialogVisible"
-    width="600px"
-    @close="closeDialog"
-  >
+  <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" @close="closeDialog">
     <DevTools v-if="dialogVisible" v-model="roleForm" type="role" :enabled="isDev" />
 
     <el-form :model="roleForm" :rules="roleRules" ref="roleFormRef" label-width="100px">
@@ -22,7 +17,7 @@
       </el-form-item>
 
       <el-form-item label="数据权限" prop="data_scope">
-        <el-select v-model="roleForm.data_scope" placeholder="请选择数据权限" style="width: 100%;">
+        <el-select v-model="roleForm.data_scope" placeholder="请选择数据权限" style="width: 100%">
           <el-option label="全部数据权限" :value="'1'"></el-option>
           <el-option label="自定数据权限" :value="'2'"></el-option>
           <el-option label="本部门数据权限" :value="'3'"></el-option>
@@ -36,7 +31,7 @@
           :min="0"
           :max="9999"
           placeholder="请输入排序号"
-          style="width: 100%;"
+          style="width: 100%"
         ></el-input-number>
       </el-form-item>
 
@@ -52,8 +47,8 @@
           v-model="roleForm.remark"
           type="textarea"
           :rows="3"
-          placeholder="请输入备注信息">
-        </el-input>
+          placeholder="请输入备注信息"
+        ></el-input>
       </el-form-item>
     </el-form>
 
@@ -65,102 +60,108 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
-import type { FormInstance, FormRules } from 'element-plus'
-import DevTools from '@/components/common/DevTools.vue'
-import type { Role } from '@/types/rbac'
+import { ref, computed, watch, nextTick } from "vue";
+import type { FormInstance, FormRules } from "element-plus";
+import DevTools from "@/components/common/DevTools.vue";
+import type { Role } from "@/types/rbac";
 
 interface RoleForm {
-  role_code: string
-  role_name: string
-  data_scope: string
-  sort_order: number
-  status: number
-  remark: string
+  role_code: string;
+  role_name: string;
+  data_scope: string;
+  sort_order: number;
+  status: number;
+  remark: string;
 }
 
 const props = defineProps<{
-  visible: boolean
-  currentRole: Role | null
-}>()
+  visible: boolean;
+  currentRole: Role | null;
+}>();
 
 const emit = defineEmits<{
-  'update:visible': [value: boolean]
-  submit: [data: Record<string, unknown>]
-}>()
+  "update:visible": [value: boolean];
+  submit: [data: Record<string, unknown>];
+}>();
 
-const roleFormRef = ref<FormInstance>()
-const submitting = ref(false)
+const roleFormRef = ref<FormInstance>();
+const submitting = ref(false);
 
 const roleForm = ref<RoleForm>({
-  role_code: '',
-  role_name: '',
-  data_scope: '1',
+  role_code: "",
+  role_name: "",
+  data_scope: "1",
   sort_order: 0,
   status: 0,
-  remark: ''
-})
+  remark: "",
+});
 
 const roleRules: FormRules<RoleForm> = {
   role_code: [
-    { required: true, message: '请输入角色编码', trigger: 'blur' },
-    { pattern: /^[A-Z][A-Z0-9_]*$/, message: '角色编码必须以大写字母开头，只能包含大写字母、数字和下划线', trigger: 'blur' }
+    { required: true, message: "请输入角色编码", trigger: "blur" },
+    {
+      pattern: /^[A-Z][A-Z0-9_]*$/,
+      message: "角色编码必须以大写字母开头，只能包含大写字母、数字和下划线",
+      trigger: "blur",
+    },
   ],
-  role_name: [
-    { required: true, message: '请输入角色名称', trigger: 'blur' }
-  ]
-}
+  role_name: [{ required: true, message: "请输入角色名称", trigger: "blur" }],
+};
 
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (value) => emit('update:visible', value)
-})
+  set: (value) => emit("update:visible", value),
+});
 
-const dialogTitle = computed(() => props.currentRole ? '编辑角色' : '新增角色')
+const dialogTitle = computed(() => (props.currentRole ? "编辑角色" : "新增角色"));
 
-const isEdit = computed(() => !!props.currentRole)
+const isEdit = computed(() => !!props.currentRole);
 
 // 检测是否为开发环境
 const isDev = computed(() => {
-  return import.meta.env.DEV
-})
+  return import.meta.env.DEV;
+});
 
 const resetForm = () => {
   roleForm.value = {
-    role_code: '',
-    role_name: '',
-    data_scope: '1',
+    role_code: "",
+    role_name: "",
+    data_scope: "1",
     sort_order: 0,
     status: 0,
-    remark: ''
-  }
+    remark: "",
+  };
   nextTick(() => {
-    roleFormRef.value?.clearValidate()
-  })
-}
+    roleFormRef.value?.clearValidate();
+  });
+};
 
-watch(() => props.currentRole, (newVal) => {
-  if (newVal) {
-    roleForm.value = {
-      role_code: newVal.role_code || '',
-      role_name: newVal.role_name || '',
-      data_scope: newVal.data_scope || '1',
-      sort_order: 0,
-      status: newVal.status ?? 0,
-      remark: ''
+watch(
+  () => props.currentRole,
+  (newVal) => {
+    if (newVal) {
+      roleForm.value = {
+        role_code: newVal.role_code || "",
+        role_name: newVal.role_name || "",
+        data_scope: newVal.data_scope || "1",
+        sort_order: 0,
+        status: newVal.status ?? 0,
+        remark: "",
+      };
+    } else {
+      resetForm();
     }
-  } else {
-    resetForm()
-  }
-}, { immediate: true })
+  },
+  { immediate: true },
+);
 
 const submitForm = async () => {
-  if (!roleFormRef.value) return
+  if (!roleFormRef.value) return;
 
   try {
-    await roleFormRef.value.validate()
+    await roleFormRef.value.validate();
 
-    submitting.value = true
+    submitting.value = true;
 
     // Transform data to match backend API
     const submitData: Record<string, unknown> = {
@@ -168,32 +169,32 @@ const submitForm = async () => {
       role_name: roleForm.value.role_name,
       data_scope: roleForm.value.data_scope,
       sort_order: roleForm.value.sort_order,
-      status: roleForm.value.status
-    }
+      status: roleForm.value.status,
+    };
 
     // Add remark only if not empty
     if (roleForm.value.remark) {
-      submitData.remark = roleForm.value.remark
+      submitData.remark = roleForm.value.remark;
     }
 
-    emit('submit', submitData)
+    emit("submit", submitData);
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error("表单验证失败:", error);
   } finally {
-    submitting.value = false
+    submitting.value = false;
   }
-}
+};
 
 const closeDialog = () => {
-  emit('update:visible', false)
+  emit("update:visible", false);
   nextTick(() => {
-    resetForm()
-  })
-}
+    resetForm();
+  });
+};
 
 const cancel = () => {
-  closeDialog()
-}
+  closeDialog();
+};
 </script>
 
 <style scoped>

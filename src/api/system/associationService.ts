@@ -1,38 +1,38 @@
-import rbacAxios from '@/api/system/base'
-import type { UnifiedResponse } from '@/api/commons'
-import type { User } from '@/types/rbac/user'
-import type { Role } from '@/types/rbac/role'
-import type { Permission } from '@/types/rbac/permission'
+import rbacAxios from "@/api/system/base";
+import type { UnifiedResponse } from "@/api/commons";
+import type { User } from "@/types/rbac/user";
+import type { Role } from "@/types/rbac/role";
+import type { Permission } from "@/types/rbac/permission";
 
 // 重新导出类型，方便外部使用
-export type { User } from '@/types/rbac/user'
-export type { Role } from '@/types/rbac/role'
-export type { Permission } from '@/types/rbac/permission'
+export type { User } from "@/types/rbac/user";
+export type { Role } from "@/types/rbac/role";
+export type { Permission } from "@/types/rbac/permission";
 
 export interface AssignRoleToUserRequest {
-  user_id: number
-  role_id: number
+  user_id: number;
+  role_id: number;
 }
 
 export interface AssignRolesToUserRequest {
-  user_id: number
-  role_ids: number[]
+  user_id: number;
+  role_ids: number[];
 }
 
 export interface AssignPermissionToRoleRequest {
-  role_id: number
-  permission_id: number
+  role_id: number;
+  permission_id: number;
 }
 
 export interface CheckPermissionRequest {
-  user_id: number
-  url: string
-  method: string
+  user_id: number;
+  url: string;
+  method: string;
 }
 
 export interface CheckPermissionResponse {
-  has_permission: boolean
-  [key: string]: any
+  has_permission: boolean;
+  [key: string]: any;
 }
 
 // ============================================
@@ -45,14 +45,11 @@ class AssociationService {
   /**
    * 分配角色给用户
    */
-  static async assignRoleToUser(
-    userId: number,
-    roleId: number
-  ): Promise<UnifiedResponse<void>> {
-    return rbacAxios.post('/api/v1/rbac/user-roles', {
+  static async assignRoleToUser(userId: number, roleId: number): Promise<UnifiedResponse<void>> {
+    return rbacAxios.post("/api/v1/rbac/user-roles", {
       user_id: userId,
-      role_id: roleId
-    })
+      role_id: roleId,
+    });
   }
 
   /**
@@ -60,36 +57,33 @@ class AssociationService {
    */
   static async assignRolesToUser(
     userId: number,
-    roleIds: number[]
+    roleIds: number[],
   ): Promise<UnifiedResponse<void>> {
-    return rbacAxios.post('/api/v1/rbac/user-roles', {
+    return rbacAxios.post("/api/v1/rbac/user-roles", {
       user_id: userId,
-      role_ids: roleIds
-    })
+      role_ids: roleIds,
+    });
   }
 
   /**
    * 移除用户角色
    */
-  static async removeUserRole(
-    userId: number,
-    roleId: number
-  ): Promise<UnifiedResponse<void>> {
-    return rbacAxios.delete('/api/v1/rbac/user-roles', {
+  static async removeUserRole(userId: number, roleId: number): Promise<UnifiedResponse<void>> {
+    return rbacAxios.delete("/api/v1/rbac/user-roles", {
       params: {
         user_id: userId,
-        role_id: roleId
-      }
-    })
+        role_id: roleId,
+      },
+    });
   }
 
   /**
    * 获取拥有指定角色的用户列表
    */
   static async getUsersByRole(roleId: number): Promise<UnifiedResponse<User[]>> {
-    return rbacAxios.get('/api/v1/rbac/users', {
-      params: { role_id: roleId }
-    })
+    return rbacAxios.get("/api/v1/rbac/users", {
+      params: { role_id: roleId },
+    });
   }
 
   // 角色权限关联API
@@ -99,12 +93,12 @@ class AssociationService {
    */
   static async assignPermissionToRole(
     roleId: number,
-    permissionId: number
+    permissionId: number,
   ): Promise<UnifiedResponse<void>> {
-    return rbacAxios.post('/api/v1/rbac/role-permissions', {
+    return rbacAxios.post("/api/v1/rbac/role-permissions", {
       role_id: roleId,
-      permission_id: permissionId
-    })
+      permission_id: permissionId,
+    });
   }
 
   /**
@@ -112,12 +106,12 @@ class AssociationService {
    */
   static async assignPermissionsToRole(
     roleId: number,
-    permissionIds: number[]
+    permissionIds: number[],
   ): Promise<UnifiedResponse<void>> {
-    return rbacAxios.post('/api/v1/rbac/role-permissions', {
+    return rbacAxios.post("/api/v1/rbac/role-permissions", {
       role_id: roleId,
-      permission_ids: permissionIds
-    })
+      permission_ids: permissionIds,
+    });
   }
 
   /**
@@ -125,15 +119,15 @@ class AssociationService {
    */
   static async removeRolePermission(
     roleId: number,
-    permissionId: number
+    permissionId: number,
   ): Promise<UnifiedResponse<void>> {
     // 使用正确的后端端点：DELETE /role-permissions-by-id
-    return rbacAxios.delete('/api/v1/rbac/role-permissions-by-id', {
+    return rbacAxios.delete("/api/v1/rbac/role-permissions-by-id", {
       params: {
         role_id: roleId,
-        permission_id: permissionId
-      }
-    })
+        permission_id: permissionId,
+      },
+    });
   }
 
   // 权限验证API
@@ -144,69 +138,77 @@ class AssociationService {
   static async checkUserPermission(
     userId: number,
     url: string,
-    method: string
+    method: string,
   ): Promise<UnifiedResponse<CheckPermissionResponse>> {
-    return rbacAxios.post('/api/v1/rbac/permissions/check', {
+    return rbacAxios.post("/api/v1/rbac/permissions/check", {
       user_id: userId,
       url,
-      method
-    })
+      method,
+    });
   }
 
   /**
    * 获取用户权限列表
    */
   static async getUserPermissions(userId: number): Promise<UnifiedResponse<Permission[]>> {
-    return rbacAxios.get(`/api/v1/rbac/permissions/user/${userId}`)
+    return rbacAxios.get(`/api/v1/rbac/permissions/user/${userId}`);
   }
 
   /**
    * 获取权限树
    */
-  static async getPermissionTree(params?: number | { include_disabled?: boolean; tenant_id?: number }): Promise<UnifiedResponse<Permission[]>> {
+  static async getPermissionTree(
+    params?: number | { include_disabled?: boolean; tenant_id?: number },
+  ): Promise<UnifiedResponse<Permission[]>> {
     let queryParams: Record<string, unknown> = {};
 
-    if (typeof params === 'number') {
+    if (typeof params === "number") {
       queryParams = { tenant_id: params };
-    } else if (params && typeof params === 'object') {
-      if ('tenant_id' in params) queryParams.tenant_id = params.tenant_id;
-      if ('include_disabled' in params) queryParams.include_disabled = params.include_disabled;
+    } else if (params && typeof params === "object") {
+      if ("tenant_id" in params) queryParams.tenant_id = params.tenant_id;
+      if ("include_disabled" in params) queryParams.include_disabled = params.include_disabled;
     }
 
-    return rbacAxios.get('/api/v1/rbac/permissions/tree', { params: queryParams })
+    return rbacAxios.get("/api/v1/rbac/permissions/tree", { params: queryParams });
   }
 
   /**
    * 获取角色权限列表
    */
   static async getRolePermissions(roleId: number): Promise<UnifiedResponse<Permission[]>> {
-    return rbacAxios.get(`/api/v1/rbac/permissions/role/${roleId}`)
+    return rbacAxios.get(`/api/v1/rbac/permissions/role/${roleId}`);
   }
 
   /**
    * 获取角色列表
    */
-  static async getRoles(params?: { tenant_id?: number; page?: number; size?: number; skip?: number; limit?: number }): Promise<UnifiedResponse<Role[]>> {
+  static async getRoles(params?: {
+    tenant_id?: number;
+    page?: number;
+    size?: number;
+    skip?: number;
+    limit?: number;
+  }): Promise<UnifiedResponse<Role[]>> {
     // 支持两种参数格式
     const queryParams: Record<string, unknown> = {};
 
     if (params) {
       // 支持 skip/limit 格式（映射到后端的 page/size）
-      if ('skip' in params) queryParams.page = (params.skip / 10) + 1; // 假设每页10条
-      if ('limit' in params) queryParams.size = params.limit;
+      if ("skip" in params) queryParams.page = params.skip / 10 + 1; // 假设每页10条
+      if ("limit" in params) queryParams.size = params.limit;
       // 租户ID
-      if ('tenant_id' in params) queryParams.tenant_id = params.tenant_id;
+      if ("tenant_id" in params) queryParams.tenant_id = params.tenant_id;
     }
 
-    return rbacAxios.get('/api/v1/rbac/roles', { params })
+    return rbacAxios.get("/api/v1/rbac/roles", { params });
   }
 
   /**
    * 获取用户角色列表
    */
   static async getUserRoles(userId: number): Promise<UnifiedResponse<Role[]>> {
-    return rbacAxios.get(`/api/v1/rbac/user-roles/${userId}`)
+    return rbacAxios.get(`/api/v1/rbac/user-roles/${userId}`);
   }
 }
 
-export default AssociationService
+export default AssociationService;

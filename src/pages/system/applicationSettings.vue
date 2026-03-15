@@ -4,7 +4,7 @@
     <div class="page-header">
       <h2 class="page-title">应用设置（监测预警）</h2>
     </div>
-    
+
     <!-- 下面内容直接平铺，无main-card卡片包裹 -->
     <div class="settings-tabs">
       <el-tabs type="border-card" class="custom-tabs">
@@ -17,19 +17,21 @@
                   v-model="searchKeyword"
                   class="search-input"
                   suffix-icon="el-icon-search"
-                  @keyup.enter.native="handleSearch">
-                </el-input>
+                  @keyup.enter.native="handleSearch"
+                ></el-input>
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
+                <el-button type="primary" icon="el-icon-search" @click="handleSearch">
+                  搜索
+                </el-button>
                 <el-button icon="el-icon-refresh" @click="refreshData">刷新</el-button>
               </el-form-item>
             </el-form>
           </div>
-          
+
           <!-- 分隔线 -->
           <el-divider class="section-divider"></el-divider>
-          
+
           <!-- 数据表格区域 -->
           <div class="table-section">
             <el-table
@@ -38,58 +40,48 @@
               stripe
               height="500px"
               class="custom-table"
-              row-key="id">
+              row-key="id"
+            >
               <el-table-column
                 prop="skillName"
                 label="技能名称"
                 width="180"
-                align="center">
-              </el-table-column>
-              <el-table-column
-                prop="skillStatus"
-                label="技能状态"
-                width="100"
-                align="center">
+                align="center"
+              ></el-table-column>
+              <el-table-column prop="skillStatus" label="技能状态" width="100" align="center">
                 <template #default="scope">
                   <div class="skill-status">
-                    <el-switch
-                      v-model="scope.row.isEnabled"
-                      active-color="#3b82f6">
-                    </el-switch>
+                    <el-switch v-model="scope.row.isEnabled" active-color="#3b82f6"></el-switch>
                   </div>
                 </template>
               </el-table-column>
               <el-table-column
                 prop="deviceCount"
                 label="运行设备数/部署数"
-                align="center">
-              </el-table-column>
+                align="center"
+              ></el-table-column>
               <el-table-column
                 prop="callbackPeriod"
                 label="预警周期 (s)"
-                align="center">
-              </el-table-column>
-              <el-table-column
-                prop="callbackUrl"
-                label="回调地址"
-                align="center">
-              </el-table-column>
-              <el-table-column
-                label="操作"
-                width="120"
-                align="center">
+                align="center"
+              ></el-table-column>
+              <el-table-column prop="callbackUrl" label="回调地址" align="center"></el-table-column>
+              <el-table-column label="操作" width="120" align="center">
                 <template #default="scope">
                   <div class="operation-buttons">
                     <el-button
                       size="small"
                       link
                       @click="handleEdit(scope.row)"
-                      class="operation-btn config-btn">更多设置</el-button>
+                      class="operation-btn config-btn"
+                    >
+                      更多设置
+                    </el-button>
                   </div>
                 </template>
               </el-table-column>
             </el-table>
-            
+
             <!-- 分页器 -->
             <div class="pagination-container">
               <el-pagination
@@ -99,12 +91,12 @@
                 :page-sizes="[10, 20, 30, 50]"
                 :page-size="pageSize"
                 layout="total, sizes, prev, pager, next, jumper"
-                :total="totalSkills">
-              </el-pagination>
+                :total="totalSkills"
+              ></el-pagination>
             </div>
           </div>
         </el-tab-pane>
-        
+
         <el-tab-pane label="预警设置">
           <el-tabs type="card" class="warning-tabs">
             <el-tab-pane label="预警等级">
@@ -139,17 +131,21 @@
                       </el-checkbox-group>
                     </el-form-item>
                     <el-form-item>
-                      <el-button type="primary" @click="saveWarningLevelSettings">保存设置</el-button>
+                      <el-button type="primary" @click="saveWarningLevelSettings">
+                        保存设置
+                      </el-button>
                     </el-form-item>
                   </el-form>
                 </div>
               </div>
             </el-tab-pane>
-            
+
             <el-tab-pane label="预警合并">
               <div class="warning-merge-settings">
                 <div class="settings-desc-card">
-                  <p class="settings-desc">对平台预警的展示进行配置，将同一时间段同类型预警合并展示</p>
+                  <p class="settings-desc">
+                    对平台预警的展示进行配置，将同一时间段同类型预警合并展示
+                  </p>
                 </div>
                 <div class="settings-form-card">
                   <el-form :model="warningMergeForm" label-width="180px">
@@ -158,8 +154,8 @@
                         v-model="warningMergeForm.enabled"
                         active-text="开启"
                         inactive-text="关闭"
-                        active-color="#3b82f6">
-                      </el-switch>
+                        active-color="#3b82f6"
+                      ></el-switch>
                     </el-form-item>
                     <el-form-item label="预警合并时间(分钟)" v-if="warningMergeForm.enabled">
                       <el-slider
@@ -167,8 +163,8 @@
                         :min="1"
                         :max="60"
                         :step="1"
-                        show-input>
-                      </el-slider>
+                        show-input
+                      ></el-slider>
                     </el-form-item>
                     <el-form-item label="预警合并方式" v-if="warningMergeForm.enabled">
                       <el-radio-group v-model="warningMergeForm.mergeType">
@@ -178,13 +174,15 @@
                       </el-radio-group>
                     </el-form-item>
                     <el-form-item>
-                      <el-button type="primary" @click="saveWarningMergeSettings">保存设置</el-button>
+                      <el-button type="primary" @click="saveWarningMergeSettings">
+                        保存设置
+                      </el-button>
                     </el-form-item>
                   </el-form>
                 </div>
               </div>
             </el-tab-pane>
-            
+
             <el-tab-pane label="预警发布">
               <div class="warning-publish-settings">
                 <div class="settings-desc-card">
@@ -197,8 +195,8 @@
                         v-model="warningPublishForm.enabled"
                         active-text="开启"
                         inactive-text="关闭"
-                        active-color="#3b82f6">
-                      </el-switch>
+                        active-color="#3b82f6"
+                      ></el-switch>
                     </el-form-item>
                     <el-form-item label="发布平台" v-if="warningPublishForm.enabled">
                       <el-select v-model="warningPublishForm.platform" placeholder="请选择">
@@ -208,13 +206,21 @@
                       </el-select>
                     </el-form-item>
                     <el-form-item label="API密钥" v-if="warningPublishForm.enabled">
-                      <el-input v-model="warningPublishForm.apiKey" placeholder="请输入API密钥"></el-input>
+                      <el-input
+                        v-model="warningPublishForm.apiKey"
+                        placeholder="请输入API密钥"
+                      ></el-input>
                     </el-form-item>
                     <el-form-item label="发布URL" v-if="warningPublishForm.enabled">
-                      <el-input v-model="warningPublishForm.publishUrl" placeholder="请输入发布URL"></el-input>
+                      <el-input
+                        v-model="warningPublishForm.publishUrl"
+                        placeholder="请输入发布URL"
+                      ></el-input>
                     </el-form-item>
                     <el-form-item>
-                      <el-button type="primary" @click="saveWarningPublishSettings">保存设置</el-button>
+                      <el-button type="primary" @click="saveWarningPublishSettings">
+                        保存设置
+                      </el-button>
                     </el-form-item>
                   </el-form>
                 </div>
@@ -224,7 +230,7 @@
         </el-tab-pane>
       </el-tabs>
     </div>
-    
+
     <!-- 技能设置弹窗 -->
     <el-dialog title="技能详细设置" :visible.sync="dialogVisible" width="40%" class="config-dialog">
       <div class="config-form">
@@ -233,25 +239,22 @@
             <el-input v-model="currentSkill.skillName" disabled></el-input>
           </el-form-item>
           <el-form-item label="技能状态">
-            <el-switch
-              v-model="currentSkill.isEnabled"
-              active-color="#3b82f6">
-            </el-switch>
+            <el-switch v-model="currentSkill.isEnabled" active-color="#3b82f6"></el-switch>
           </el-form-item>
           <el-form-item label="预警周期 (秒)">
-            <el-input-number 
-              v-model="currentSkill.callbackPeriod" 
-              :min="0" 
+            <el-input-number
+              v-model="currentSkill.callbackPeriod"
+              :min="0"
               :step="1"
-              controls-position="right">
-            </el-input-number>
+              controls-position="right"
+            ></el-input-number>
           </el-form-item>
           <el-form-item label="回调地址">
-            <el-input 
-              v-model="currentSkill.callbackUrl" 
+            <el-input
+              v-model="currentSkill.callbackUrl"
               placeholder="请输入回调URL"
-              clearable>
-            </el-input>
+              clearable
+            ></el-input>
           </el-form-item>
         </el-form>
       </div>
@@ -265,133 +268,133 @@
 
 <script>
 export default {
-  name: 'ApplicationSettings',
+  name: "ApplicationSettings",
   data() {
     return {
-      searchKeyword: '',
+      searchKeyword: "",
       currentPage: 1,
       pageSize: 10,
       totalSkills: 0,
       skillList: [
         {
           id: 1,
-          skillName: '室内打手机',
+          skillName: "室内打手机",
           isEnabled: false,
-          deviceCount: '-',
-          callbackPeriod: '-',
-          callbackUrl: '-'
+          deviceCount: "-",
+          callbackPeriod: "-",
+          callbackUrl: "-",
         },
         {
           id: 2,
-          skillName: '未穿救生衣',
+          skillName: "未穿救生衣",
           isEnabled: false,
-          deviceCount: '-',
-          callbackPeriod: '-',
-          callbackUrl: '-'
+          deviceCount: "-",
+          callbackPeriod: "-",
+          callbackUrl: "-",
         },
         {
           id: 3,
-          skillName: '打电话',
+          skillName: "打电话",
           isEnabled: false,
-          deviceCount: '-',
-          callbackPeriod: '-',
-          callbackUrl: '-'
+          deviceCount: "-",
+          callbackPeriod: "-",
+          callbackUrl: "-",
         },
         {
           id: 4,
-          skillName: '玩手机',
+          skillName: "玩手机",
           isEnabled: false,
-          deviceCount: '-',
-          callbackPeriod: '-',
-          callbackUrl: '-'
+          deviceCount: "-",
+          callbackPeriod: "-",
+          callbackUrl: "-",
         },
         {
           id: 5,
-          skillName: '人员徘徊',
+          skillName: "人员徘徊",
           isEnabled: false,
-          deviceCount: '-',
-          callbackPeriod: '-',
-          callbackUrl: '-'
+          deviceCount: "-",
+          callbackPeriod: "-",
+          callbackUrl: "-",
         },
         {
           id: 6,
-          skillName: '皮带跑偏',
+          skillName: "皮带跑偏",
           isEnabled: true,
-          deviceCount: '0/1',
-          callbackPeriod: '30',
-          callbackUrl: 'http://api.example.com/callback/belt'
+          deviceCount: "0/1",
+          callbackPeriod: "30",
+          callbackUrl: "http://api.example.com/callback/belt",
         },
         {
           id: 7,
-          skillName: '漂浮物检测',
+          skillName: "漂浮物检测",
           isEnabled: false,
-          deviceCount: '0/1',
-          callbackPeriod: '60',
-          callbackUrl: 'http://api.example.com/callback/floating'
+          deviceCount: "0/1",
+          callbackPeriod: "60",
+          callbackUrl: "http://api.example.com/callback/floating",
         },
         {
           id: 8,
-          skillName: '游泳检测',
+          skillName: "游泳检测",
           isEnabled: true,
-          deviceCount: '0/1',
-          callbackPeriod: '15',
-          callbackUrl: 'http://api.example.com/callback/swimming'
+          deviceCount: "0/1",
+          callbackPeriod: "15",
+          callbackUrl: "http://api.example.com/callback/swimming",
         },
         {
           id: 9,
-          skillName: '钓鱼检测',
+          skillName: "钓鱼检测",
           isEnabled: true,
-          deviceCount: '0/1',
-          callbackPeriod: '45',
-          callbackUrl: 'http://api.example.com/callback/fishing'
+          deviceCount: "0/1",
+          callbackPeriod: "45",
+          callbackUrl: "http://api.example.com/callback/fishing",
         },
         {
           id: 10,
-          skillName: '黑臭水体',
+          skillName: "黑臭水体",
           isEnabled: false,
-          deviceCount: '0/1',
-          callbackPeriod: '120',
-          callbackUrl: 'http://api.example.com/callback/water'
-        }
+          deviceCount: "0/1",
+          callbackPeriod: "120",
+          callbackUrl: "http://api.example.com/callback/water",
+        },
       ],
       dialogVisible: false,
       currentSkill: {},
-      
+
       // 预警等级设置
       warningLevelForm: {
-        highLevel: ['短信通知', '邮件通知', '系统通知'],
-        mediumLevel: ['邮件通知', '系统通知'],
-        lowLevel: ['系统通知']
+        highLevel: ["短信通知", "邮件通知", "系统通知"],
+        mediumLevel: ["邮件通知", "系统通知"],
+        lowLevel: ["系统通知"],
       },
-      
+
       // 预警合并设置
       warningMergeForm: {
         enabled: true,
         mergeTime: 5,
-        mergeType: 1
+        mergeType: 1,
       },
-      
+
       // 预警发布设置
       warningPublishForm: {
         enabled: false,
-        platform: '',
-        apiKey: '',
-        publishUrl: ''
-      }
-    }
+        platform: "",
+        apiKey: "",
+        publishUrl: "",
+      },
+    };
   },
   computed: {
     filteredSkillList() {
       if (!this.searchKeyword) {
-        return this.skillList
+        return this.skillList;
       }
-      return this.skillList.filter(item => 
-        item.skillName.toLowerCase().includes(this.searchKeyword.toLowerCase())
-      )
-    }
+      return this.skillList.filter((item) =>
+        item.skillName.toLowerCase().includes(this.searchKeyword.toLowerCase()),
+      );
+    },
   },
   mounted() {
-    this.totalSkills = this.skillList.length
+    this.totalSkills = this.skillList.length;
   },
   methods: {
     handleSearch() {
@@ -401,93 +404,96 @@ export default {
       // 刷新数据逻辑
     },
     handleSizeChange(val) {
-      this.pageSize = val
+      this.pageSize = val;
     },
     handleCurrentChange(val) {
-      this.currentPage = val
+      this.currentPage = val;
     },
     handleEdit(row) {
       // 深拷贝行数据，避免直接修改列表数据
-      this.currentSkill = JSON.parse(JSON.stringify(row))
-      
+      this.currentSkill = JSON.parse(JSON.stringify(row));
+
       // 处理预警周期数据
-      if (this.currentSkill.callbackPeriod === '-') {
-        this.currentSkill.callbackPeriod = 30
-      } else if (typeof this.currentSkill.callbackPeriod === 'string') {
-        this.currentSkill.callbackPeriod = parseInt(this.currentSkill.callbackPeriod) || 30
+      if (this.currentSkill.callbackPeriod === "-") {
+        this.currentSkill.callbackPeriod = 30;
+      } else if (typeof this.currentSkill.callbackPeriod === "string") {
+        this.currentSkill.callbackPeriod = parseInt(this.currentSkill.callbackPeriod) || 30;
       }
-      
+
       // 处理回调地址数据
-      if (this.currentSkill.callbackUrl === '-') {
-        this.currentSkill.callbackUrl = ''
+      if (this.currentSkill.callbackUrl === "-") {
+        this.currentSkill.callbackUrl = "";
       }
-      
-      this.dialogVisible = true
+
+      this.dialogVisible = true;
     },
     cancelEdit() {
-      this.dialogVisible = false
-      this.currentSkill = {}
+      this.dialogVisible = false;
+      this.currentSkill = {};
     },
     saveSkillSettings() {
       // 这里应该添加保存技能设置的API调用
       // 此处模拟API调用
-      const index = this.skillList.findIndex(item => item.id === this.currentSkill.id)
+      const index = this.skillList.findIndex((item) => item.id === this.currentSkill.id);
       if (index !== -1) {
         // 确保数值类型正确
-        if (typeof this.currentSkill.callbackPeriod === 'string' && this.currentSkill.callbackPeriod !== '-') {
-          this.currentSkill.callbackPeriod = parseInt(this.currentSkill.callbackPeriod) || 0
+        if (
+          typeof this.currentSkill.callbackPeriod === "string" &&
+          this.currentSkill.callbackPeriod !== "-"
+        ) {
+          this.currentSkill.callbackPeriod = parseInt(this.currentSkill.callbackPeriod) || 0;
         }
-        
+
         // 深拷贝当前编辑的技能对象
-        const updatedSkill = JSON.parse(JSON.stringify(this.currentSkill))
-        
+        const updatedSkill = JSON.parse(JSON.stringify(this.currentSkill));
+
         // 确保callbackPeriod是字符串类型，与原数据格式一致
-        updatedSkill.callbackPeriod = updatedSkill.callbackPeriod.toString()
-        
+        updatedSkill.callbackPeriod = updatedSkill.callbackPeriod.toString();
+
         // 如果回调地址为空，设置为"-"
         if (!updatedSkill.callbackUrl) {
-          updatedSkill.callbackUrl = '-'
+          updatedSkill.callbackUrl = "-";
         }
-        
+
         // 更新列表中的对应项
-        this.$set(this.skillList, index, updatedSkill)
-        
+        this.$set(this.skillList, index, updatedSkill);
+
         // 提示更新成功
         this.$message({
-          type: 'success',
-          message: '技能设置保存成功'
-        })
+          type: "success",
+          message: "技能设置保存成功",
+        });
       } else {
         this.$message({
-          type: 'error',
-          message: '未找到技能信息，保存失败'
-        })
+          type: "error",
+          message: "未找到技能信息，保存失败",
+        });
       }
-      this.dialogVisible = false
+      this.dialogVisible = false;
     },
     saveWarningLevelSettings() {
       // 这里应该添加保存预警等级设置的API调用
       this.$message({
-        type: 'success',
-        message: '预警等级设置保存成功'
-      })
+        type: "success",
+        message: "预警等级设置保存成功",
+      });
     },
     saveWarningMergeSettings() {
       // 这里应该添加保存预警合并设置的API调用
       this.$message({
-        type: 'success',
-        message: '预警合并设置保存成功'
-      })
+        type: "success",
+        message: "预警合并设置保存成功",
+      });
     },
     saveWarningPublishSettings() {
       // 这里应该添加保存预警发布设置的API调用
       this.$message({
-        type: 'success',
-        message: '预警发布设置保存成功'
-      })
-    }
-  }
-}
+        type: "success",
+        message: "预警发布设置保存成功",
+      });
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -628,8 +634,8 @@ export default {
   display: flex;
   justify-content: center;
   background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  margin-top: 0 !important;
+  padding-bottom: 10px !important;
 }
 
 .pagination-container :deep(.el-pagination__total) {
@@ -1073,45 +1079,45 @@ export default {
   .app-settings-container {
     padding: 12px;
   }
-  
+
   .page-header {
     padding: 12px 16px;
     border-radius: 8px;
   }
-  
+
   .page-title {
     font-size: 18px;
   }
-  
+
   .search-form {
     flex-direction: column;
     padding: 16px;
   }
-  
+
   .search-input {
     width: 100%;
     margin-right: 0;
     margin-bottom: 12px;
   }
-  
+
   .pagination-container {
     padding: 16px 12px;
     margin-left: -12px;
     margin-right: -12px;
     border-radius: 8px;
   }
-  
+
   .settings-desc-card,
   .settings-form-card {
     padding: 16px;
   }
-  
+
   .warning-level-settings,
   .warning-merge-settings,
   .warning-publish-settings {
     padding: 16px 0;
   }
-  
+
   .warning-tabs :deep(.el-tabs__item) {
     height: 36px;
     line-height: 36px;

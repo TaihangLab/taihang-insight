@@ -1,19 +1,21 @@
 <template>
-<TechPageContainer id="login">
-  <template #default>
-    <div class="login-form-wrapper">
+  <TechPageContainer id="login">
+    <template #default>
+      <div class="login-form-wrapper">
         <!-- 标题 -->
         <div class="login-header">
           <div class="title-container">
             <div class="brand-name">
-              <img src="/static/logo.png" alt="太行logo" class="brand-logo">
+              <img src="/static/logo.png" alt="太行logo" class="brand-logo" />
               <span class="brand-group">太行</span>
               <span class="brand-dot">·</span>
               <span class="brand-group">慧眼</span>
             </div>
             <div class="title-right">
               <h1 class="platform-title">太行视觉AI平台</h1>
-              <p class="platform-subtitle"><span class="subtitle-highlight">洞察万象，识图于微</span></p>
+              <p class="platform-subtitle">
+                <span class="subtitle-highlight">洞察万象，识图于微</span>
+              </p>
             </div>
           </div>
         </div>
@@ -22,15 +24,21 @@
         <div class="login-form">
           <!-- 租户输入框 -->
           <div class="input-group">
-            <div class="input-wrapper" :class="{'focused': tenantInputFocused}">
+            <div class="input-wrapper" :class="{ focused: tenantInputFocused }">
               <i class="input-icon i-carbon-enterprise"></i>
               <input
                 v-model="selectedTenant"
                 placeholder="请输入租户编码"
                 class="tech-input"
-                @focus="tenantInputFocused = true; focusInput($event)"
-                @blur="tenantInputFocused = false; blurInput($event)"
-              >
+                @focus="
+                  tenantInputFocused = true;
+                  focusInput($event);
+                "
+                @blur="
+                  tenantInputFocused = false;
+                  blurInput($event);
+                "
+              />
               <div class="input-border"></div>
             </div>
           </div>
@@ -45,7 +53,7 @@
                 class="tech-input"
                 @focus="focusInput"
                 @blur="blurInput"
-              >
+              />
               <div class="input-border"></div>
             </div>
           </div>
@@ -61,7 +69,7 @@
                 class="tech-input"
                 @focus="focusInput"
                 @blur="blurInput"
-              >
+              />
               <i
                 :class="showPassword ? 'i-carbon-view-off' : 'i-carbon-view'"
                 class="password-toggle"
@@ -75,7 +83,7 @@
           <div class="login-btn-container">
             <button
               class="tech-login-btn"
-              :class="{'loading': isLoging}"
+              :class="{ loading: isLoging }"
               @click="login"
               :disabled="isLoging"
             >
@@ -97,207 +105,206 @@
         </div>
       </div>
     </template>
-</TechPageContainer>
+  </TechPageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import TechPageContainer from '@/components/common/TechPageContainer.vue'
-import { useUserInfoStore } from '@/stores/modules/userInfo'
-import { usePermissionsStore } from '@/stores/modules/permissions'
-import { useMenusStore } from '@/stores/modules/menus'
-import { useTokenStore } from '@/stores/modules/token'
-import { logout, isLoggedIn } from '@/stores/modules/auth'
-import authAPI from '@/api/auth/authAPI'
-import storage from '@/stores/modules/storage'
-import { setupAsyncRoutes, resetAsyncRoutes } from '@/router'
+import { ref, onMounted, onUnmounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { ElMessage } from "element-plus";
+import TechPageContainer from "@/components/common/TechPageContainer.vue";
+import { useUserInfoStore } from "@/stores/modules/userInfo";
+import { usePermissionsStore } from "@/stores/modules/permissions";
+import { useMenusStore } from "@/stores/modules/menus";
+import { useTokenStore } from "@/stores/modules/token";
+import { logout, isLoggedIn } from "@/stores/modules/auth";
+import authAPI from "@/api/auth/authAPI";
+import storage from "@/stores/modules/storage";
+import { setupAsyncRoutes, resetAsyncRoutes } from "@/router";
 
-const router = useRouter()
-const route = useRoute()
+const router = useRouter();
+const route = useRoute();
 
 // 使用 stores（登录成功后设置数据）
-const userInfoStore = useUserInfoStore()
-const permissionsStore = usePermissionsStore()
-const menusStore = useMenusStore()
-const tokenStore = useTokenStore()
+const userInfoStore = useUserInfoStore();
+const permissionsStore = usePermissionsStore();
+const menusStore = useMenusStore();
+const tokenStore = useTokenStore();
 
 // 表单数据
-const isLoging = ref(false)
-const showPassword = ref(false)
-const username = ref('')
-const password = ref('')
-const selectedTenant = ref('')
-const tenantInputFocused = ref(false)
+const isLoging = ref(false);
+const showPassword = ref(false);
+const username = ref("");
+const password = ref("");
+const selectedTenant = ref("");
+const tenantInputFocused = ref(false);
 
 // 从本地缓存恢复租户信息
 function restoreTenantFromCache(): void {
-  const cachedTenant = storage.getSelectedTenant()
+  const cachedTenant = storage.getSelectedTenant();
   if (cachedTenant) {
-    selectedTenant.value = cachedTenant
+    selectedTenant.value = cachedTenant;
   }
 }
 
 // 输入框聚焦效果
 function focusInput(event: Event): void {
-  const target = event.target as HTMLElement
-  target.parentElement?.classList.add('focused')
+  const target = event.target as HTMLElement;
+  target.parentElement?.classList.add("focused");
 }
 
 // 输入框失焦效果
 function blurInput(event: Event): void {
-  const target = event.target as HTMLInputElement
+  const target = event.target as HTMLInputElement;
   if (!target.value) {
-    target.parentElement?.classList.remove('focused')
+    target.parentElement?.classList.remove("focused");
   }
 }
 
 // 回车键登录处理
 function handleKeyDown(event: KeyboardEvent): void {
-  if (event.key === 'Enter') {
-    login()
+  if (event.key === "Enter") {
+    login();
   }
 }
 
 // 登录功能
 async function login(): Promise<void> {
   // 先检查租户编码
-  if (selectedTenant.value === '') {
+  if (selectedTenant.value === "") {
     ElMessage.warning({
-      message: '请输入租户编码',
-      showClose: true
-    })
-    return
+      message: "请输入租户编码",
+      showClose: true,
+    });
+    return;
   }
 
   // 精确的表单验证：分别提示缺失的字段
-  if (username.value === '') {
+  if (username.value === "") {
     ElMessage.warning({
-      message: '请输入用户名',
-      showClose: true
-    })
-    return
+      message: "请输入用户名",
+      showClose: true,
+    });
+    return;
   }
 
-  if (password.value === '') {
+  if (password.value === "") {
     ElMessage.warning({
-      message: '请输入密码',
-      showClose: true
-    })
-    return
+      message: "请输入密码",
+      showClose: true,
+    });
+    return;
   }
 
   // 所有字段都已填写，执行登录
-  isLoging.value = true
+  isLoging.value = true;
 
   try {
     // 调用登录 API
     const result = await authAPI.login({
       username: username.value,
       password: password.value,
-      tenant_id: selectedTenant.value  // 后端期望蛇形命名
-    })
+      tenant_id: selectedTenant.value, // 后端期望蛇形命名
+    });
 
     if (result.code === 200) {
       // 登录成功，处理返回的数据
-      const { token, adminToken, userInfo } = result.data
+      const { token, adminToken, userInfo } = result.data;
 
       // 【关键】通过 Pinia TokenStore 设置 token，触发持久化插件
-      tokenStore.setAdminToken(adminToken)
+      tokenStore.setAdminToken(adminToken);
 
       // 存储租户信息用于下次登录自动填充
-      storage.setSelectedTenant(selectedTenant.value)
+      storage.setSelectedTenant(selectedTenant.value);
 
       ElMessage.success({
-        message: '登录成功',
-        showClose: true
-      })
+        message: "登录成功",
+        showClose: true,
+      });
 
-      isLoging.value = false
+      isLoging.value = false;
 
       // 调用认证 API 获取用户权限和菜单信息
       // 使用 Store 的 refresh 方法，将 API 调用和缓存逻辑封装在 Store 内部
       try {
         // 1️⃣ 重置动态路由标记（清除之前的路由状态）
-        resetAsyncRoutes()
+        resetAsyncRoutes();
 
         // 2️⃣ 智能加载认证数据（内部检查 TTL，避免重复请求）
         await Promise.all([
           userInfoStore.getUserInfo(),
           permissionsStore.getPermissions(),
-          menusStore.getMenuTree()
-        ])
+          menusStore.getMenuTree(),
+        ]);
 
         // 3️⃣ 根据菜单树重新建立动态路由
-        const menuTree = menusStore.getMenuTreeSync() || []
+        const menuTree = menusStore.getMenuTreeSync() || [];
         if (menuTree.length > 0) {
-          setupAsyncRoutes(menuTree)
+          setupAsyncRoutes(menuTree);
         }
-
       } catch (error: any) {
-        console.error('加载认证信息失败:', error)
+        console.error("加载认证信息失败:", error);
 
         // 🔥 处理 403 错误：权限不足，清除认证数据并提示用户
         if (error?.status === 403) {
           // 使用统一的 logout 函数清除所有认证数据
-          await logout()
+          await logout();
 
-          isLoging.value = false
+          isLoging.value = false;
           ElMessage.error({
-            message: '登录成功，但获取权限信息失败。可能是因为您的账号权限配置有问题，请联系管理员',
+            message: "登录成功，但获取权限信息失败。可能是因为您的账号权限配置有问题，请联系管理员",
             duration: 5000,
-            showClose: true
-          })
-          return
+            showClose: true,
+          });
+          return;
         }
 
         // 其他错误：显示警告，但允许继续跳转
         ElMessage.warning({
-          message: '获取用户信息失败，但已成功登录。部分功能可能不可用',
-          showClose: true
-        })
+          message: "获取用户信息失败，但已成功登录。部分功能可能不可用",
+          showClose: true,
+        });
       }
 
       // 获取重定向路径（如果有）
-      const redirect = (route.query.redirect as string) || '/'
-      router.push(redirect)
+      const redirect = (route.query.redirect as string) || "/";
+      router.push(redirect);
     } else {
       // 登录失败
       ElMessage.error({
-        message: result.message || '登录失败',
-        showClose: true
-      })
-      isLoging.value = false
+        message: result.message || "登录失败",
+        showClose: true,
+      });
+      isLoging.value = false;
     }
   } catch (error) {
-    console.error('登录请求失败:', error)
+    console.error("登录请求失败:", error);
     ElMessage.error({
-      message: '网络错误，请稍后重试',
-      showClose: true
-    })
-    isLoging.value = false
+      message: "网络错误，请稍后重试",
+      showClose: true,
+    });
+    isLoging.value = false;
   }
 }
 
 // 生命周期
 onMounted(() => {
-  document.addEventListener('keydown', handleKeyDown)
-  restoreTenantFromCache()
+  document.addEventListener("keydown", handleKeyDown);
+  restoreTenantFromCache();
 
   // 检查是否已登录，使用统一的 isLoggedIn 函数
   if (isLoggedIn()) {
     // 从 Store 获取菜单树（已通过持久化插件恢复）
-    const menuTree = menusStore.getMenuTreeSync() || []
+    const menuTree = menusStore.getMenuTreeSync() || [];
 
     if (menuTree.length > 0) {
       // 已登录且有菜单，重定向到用户有权限的第一个页面
-      const firstMenuPath = findFirstAccessibleMenu(menuTree)
-      const targetPath = (route.query.redirect as string) || firstMenuPath || '/visualCenter'
-      router.replace(targetPath)
+      const firstMenuPath = findFirstAccessibleMenu(menuTree);
+      const targetPath = (route.query.redirect as string) || firstMenuPath || "/visualCenter";
+      router.replace(targetPath);
     }
   }
-})
+});
 
 /**
  * 从菜单树中查找第一个可访问的菜单路径
@@ -305,22 +312,22 @@ onMounted(() => {
 function findFirstAccessibleMenu(menuItems: any[]): string | null {
   function search(items: any[]): string | null {
     for (const item of items) {
-      if (item.path && item.menu_type === 'menu') {
-        return item.path
+      if (item.path && item.menu_type === "menu") {
+        return item.path;
       }
       if (item.children?.length) {
-        const found = search(item.children)
-        if (found) return found
+        const found = search(item.children);
+        if (found) return found;
       }
     }
-    return null
+    return null;
   }
-  return search(menuItems)
+  return search(menuItems);
 }
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeyDown)
-})
+  document.removeEventListener("keydown", handleKeyDown);
+});
 </script>
 
 <style scoped>
@@ -436,7 +443,9 @@ onUnmounted(() => {
   border-radius: var(--border-radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.1);
   /* 使用 transform 替代其他属性以获得更好性能 */
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
   overflow: hidden;
 }
 
@@ -465,7 +474,8 @@ onUnmounted(() => {
   color: var(--primary-color);
 }
 
-.tech-input, .tech-select {
+.tech-input,
+.tech-select {
   width: 100%;
   height: var(--button-height-md);
   padding: 0 50px 0 45px;
@@ -538,7 +548,7 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   height: var(--button-height-lg);
-  background: linear-gradient(45deg, #4185F7, #2d5fd9);
+  background: linear-gradient(45deg, #4185f7, #2d5fd9);
   border: none;
   border-radius: var(--border-radius-lg);
   color: #ffffff;
@@ -546,7 +556,10 @@ onUnmounted(() => {
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
   overflow: hidden;
-  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease,
+    box-shadow 0.2s ease;
   box-shadow: 0 4px 15px rgba(65, 133, 247, 0.3);
 }
 

@@ -20,18 +20,18 @@ export interface TreeNode {
  */
 export function calculateTreeDepth<T extends TreeNode>(
   treeData: T[],
-  childrenField: string = 'children',
-  currentDepth: number = 0
+  childrenField: string = "children",
+  currentDepth: number = 0,
 ): T[] {
   if (!Array.isArray(treeData)) {
     return treeData;
   }
 
-  return treeData.map(node => {
+  return treeData.map((node) => {
     // 为当前节点添加深度信息
     const nodeWithDepth: T = {
       ...node,
-      depth: currentDepth
+      depth: currentDepth,
     };
 
     // 如果当前节点有子节点，则递归处理子节点，深度加1
@@ -39,7 +39,7 @@ export function calculateTreeDepth<T extends TreeNode>(
       nodeWithDepth[childrenField as keyof T] = calculateTreeDepth(
         node[childrenField] as T[],
         childrenField,
-        currentDepth + 1
+        currentDepth + 1,
       ) as T[keyof T];
     }
 
@@ -57,9 +57,9 @@ export function calculateTreeDepth<T extends TreeNode>(
  */
 export function flatDataToTreeWithDepth<T extends Record<string, any>>(
   flatData: T[],
-  idField: string = 'id',
-  parentIdField: string = 'parent_id',
-  childrenField: string = 'children'
+  idField: string = "id",
+  parentIdField: string = "parent_id",
+  childrenField: string = "children",
 ): T[] {
   if (!Array.isArray(flatData) || flatData.length === 0) {
     return [];
@@ -82,9 +82,9 @@ export function flatDataToTreeWithDepth<T extends Record<string, any>>(
  */
 function buildTreeFromFlatData<T extends Record<string, any>>(
   flatData: T[],
-  idField: string = 'id',
-  parentIdField: string = 'parent_id',
-  childrenField: string = 'children'
+  idField: string = "id",
+  parentIdField: string = "parent_id",
+  childrenField: string = "children",
 ): T[] {
   if (!Array.isArray(flatData) || flatData.length === 0) {
     return [];
@@ -98,7 +98,7 @@ function buildTreeFromFlatData<T extends Record<string, any>>(
   for (let i = 0; i < flatData.length; i++) {
     map[flatData[i][idField] as string | number] = {
       ...flatData[i],
-      [childrenField]: []
+      [childrenField]: [],
     };
   }
 

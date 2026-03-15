@@ -1,13 +1,13 @@
-import request from '@/utils/request'
+import request from "@/utils/request";
 
 /**
  * 获取设备树状图数据
  */
 export function getDeviceTree() {
   return request({
-    url: '/park/device/tree',
-    method: 'get'
-  })
+    url: "/park/device/tree",
+    method: "get",
+  });
 }
 
 /**
@@ -17,10 +17,10 @@ export function getDeviceTree() {
  */
 export function getCpuMemoryUsage(params) {
   return request({
-    url: '/park/resource/cpu-memory',
-    method: 'get',
-    params
-  })
+    url: "/park/resource/cpu-memory",
+    method: "get",
+    params,
+  });
 }
 
 /**
@@ -28,9 +28,9 @@ export function getCpuMemoryUsage(params) {
  */
 export function getStorageUsage() {
   return request({
-    url: '/park/resource/storage',
-    method: 'get'
-  })
+    url: "/park/resource/storage",
+    method: "get",
+  });
 }
 
 /**
@@ -41,10 +41,10 @@ export function getStorageUsage() {
  */
 export function getRealtimeVideoList(params) {
   return request({
-    url: '/park/video/realtime-list',
-    method: 'get',
-    params
-  })
+    url: "/park/video/realtime-list",
+    method: "get",
+    params,
+  });
 }
 
 /**
@@ -56,10 +56,10 @@ export function getRealtimeVideoList(params) {
  */
 export function getAlertCaptureList(params) {
   return request({
-    url: '/park/alert/capture-list',
-    method: 'get',
-    params
-  })
+    url: "/park/alert/capture-list",
+    method: "get",
+    params,
+  });
 }
 
 /**
@@ -69,8 +69,8 @@ export function getAlertCaptureList(params) {
 export function getAlertCaptureDetail(id) {
   return request({
     url: `/park/alert/capture/${id}`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
 
 /**
@@ -78,9 +78,9 @@ export function getAlertCaptureDetail(id) {
  */
 export function getDeviceStatusStatistics() {
   return request({
-    url: '/park/device/status-statistics',
-    method: 'get'
-  })
+    url: "/park/device/status-statistics",
+    method: "get",
+  });
 }
 
 /**
@@ -90,10 +90,10 @@ export function getDeviceStatusStatistics() {
  */
 export function getBandwidthUsage(params) {
   return request({
-    url: '/park/network/bandwidth',
-    method: 'get',
-    params
-  })
+    url: "/park/network/bandwidth",
+    method: "get",
+    params,
+  });
 }
 
 /**
@@ -103,8 +103,8 @@ export function getBandwidthUsage(params) {
 export function getVideoStreamUrl(deviceId) {
   return request({
     url: `/park/video/stream/${deviceId}`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
 
 /**
@@ -114,10 +114,10 @@ export function getVideoStreamUrl(deviceId) {
  */
 export function switchScreenMode(data) {
   return request({
-    url: '/park/video/screen-mode',
-    method: 'post',
-    data
-  })
+    url: "/park/video/screen-mode",
+    method: "post",
+    data,
+  });
 }
 
 /**
@@ -127,8 +127,8 @@ export function switchScreenMode(data) {
 export function getDeviceOnlineStatus(deviceId) {
   return request({
     url: `/park/device/online-status/${deviceId}`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
 
 /**
@@ -140,9 +140,8 @@ export function getDeviceOnlineStatus(deviceId) {
  */
 export function controlDevice(data) {
   return request({
-    url: '/park/device/control',
-    method: 'post',
-    data
-  })
+    url: "/park/device/control",
+    method: "post",
+    data,
+  });
 }
-

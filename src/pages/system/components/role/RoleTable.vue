@@ -4,7 +4,13 @@
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column prop="role_name" label="角色名称" min-width="150" align="center" />
       <el-table-column prop="role_code" label="角色代码" min-width="150" align="center" />
-      <el-table-column prop="description" label="描述" min-width="200" align="center" show-overflow-tooltip />
+      <el-table-column
+        prop="description"
+        label="描述"
+        min-width="200"
+        align="center"
+        show-overflow-tooltip
+      />
       <el-table-column prop="status" label="状态" width="100" align="center">
         <template #default="scope">
           <el-switch
@@ -20,7 +26,9 @@
       <el-table-column label="操作" min-width="250" fixed="right" align="center">
         <template #default="scope">
           <div class="operation-buttons">
-            <el-button link class="auth-btn" @click="handleAuthorization(scope.row)">授权</el-button>
+            <el-button link class="auth-btn" @click="handleAuthorization(scope.row)">
+              授权
+            </el-button>
             <el-button link class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
             <el-button link class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
           </div>
@@ -46,59 +54,59 @@
 
 <script setup lang="ts">
 interface Role {
-  id: string | number
-  status: number
-  [key: string]: any
+  id: string | number;
+  status: number;
+  [key: string]: any;
 }
 
 interface Pagination {
-  currentPage: number
-  pageSize: number
+  currentPage: number;
+  pageSize: number;
 }
 
 defineProps<{
-  data: Role[]
-  pagination: Pagination
-  total: number
-}>()
+  data: Role[];
+  pagination: Pagination;
+  total: number;
+}>();
 
 const emit = defineEmits<{
-  selectionChange: [selection: Role[]]
-  statusChange: [row: Role]
-  edit: [row: Role]
-  delete: [row: Role]
-  authorization: [row: Role]
-  sizeChange: [size: number]
-  pageChange: [page: number]
-}>()
+  selectionChange: [selection: Role[]];
+  statusChange: [row: Role];
+  edit: [row: Role];
+  delete: [row: Role];
+  authorization: [row: Role];
+  sizeChange: [size: number];
+  pageChange: [page: number];
+}>();
 
 const handleSelectionChange = (selection: Role[]) => {
-  emit('selectionChange', selection)
-}
+  emit("selectionChange", selection);
+};
 
 const handleStatusChange = (row: Role) => {
-  emit('statusChange', row)
-}
+  emit("statusChange", row);
+};
 
 const handleEdit = (row: Role) => {
-  emit('edit', row)
-}
+  emit("edit", row);
+};
 
 const handleDelete = (row: Role) => {
-  emit('delete', row)
-}
+  emit("delete", row);
+};
 
 const handleAuthorization = (row: Role) => {
-  emit('authorization', row)
-}
+  emit("authorization", row);
+};
 
 const handleSizeChange = (size: number) => {
-  emit('sizeChange', size)
-}
+  emit("sizeChange", size);
+};
 
 const handlePageChange = (page: number) => {
-  emit('pageChange', page)
-}
+  emit("pageChange", page);
+};
 </script>
 
 <style scoped>

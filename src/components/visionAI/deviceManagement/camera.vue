@@ -14,28 +14,32 @@
             <div
               class="filter-item"
               :class="{ active: currentCameraTypeFilter === 0 }"
-              @click="filterAllCameraTypes">
+              @click="filterAllCameraTypes"
+            >
               <i class="el-icon-check" v-if="currentCameraTypeFilter === 0"></i>
               <span>全部类型</span>
             </div>
             <div
               class="filter-item gb-device"
               :class="{ active: currentCameraTypeFilter === 1 }"
-              @click="filterByCameraType(1)">
+              @click="filterByCameraType(1)"
+            >
               <i class="el-icon-check" v-if="currentCameraTypeFilter === 1"></i>
               <span>国标设备</span>
             </div>
             <div
               class="filter-item push-device"
               :class="{ active: currentCameraTypeFilter === 2 }"
-              @click="filterByCameraType(2)">
+              @click="filterByCameraType(2)"
+            >
               <i class="el-icon-check" v-if="currentCameraTypeFilter === 2"></i>
               <span>推流设备</span>
             </div>
             <div
               class="filter-item pull-device"
               :class="{ active: currentCameraTypeFilter === 3 }"
-              @click="filterByCameraType(3)">
+              @click="filterByCameraType(3)"
+            >
               <i class="el-icon-check" v-if="currentCameraTypeFilter === 3"></i>
               <span>拉流设备</span>
             </div>
@@ -48,11 +52,20 @@
         <!-- 操作栏卡片 -->
         <div class="operation-card">
           <div class="operation-left">
-            <el-button type="primary" icon="el-icon-refresh" @click="handleRefresh">刷新列表</el-button>
-            <el-button type="success" icon="el-icon-setting" @click="handleCameraManagement">摄像头管理</el-button>
+            <el-button type="primary" icon="el-icon-refresh" @click="handleRefresh">
+              刷新列表
+            </el-button>
+            <el-button type="success" icon="el-icon-setting" @click="handleCameraManagement">
+              摄像头管理
+            </el-button>
           </div>
           <div class="operation-right">
-            <el-input v-model="searchKeyword" placeholder="请输入设备名称搜索" style="width: 250px" clearable>
+            <el-input
+              v-model="searchKeyword"
+              placeholder="请输入设备名称搜索"
+              style="width: 250px"
+              clearable
+            >
               <i slot="prefix" class="el-icon-search"></i>
             </el-input>
           </div>
@@ -65,29 +78,33 @@
             style="width: 100%"
             v-loading="loading"
             element-loading-text="加载中..."
-            empty-text="暂无摄像头数据">
+            empty-text="暂无摄像头数据"
+          >
             <el-table-column type="index" label="序号" width="70" align="center" />
             <el-table-column prop="id" label="ID" width="80" align="center" />
             <el-table-column prop="name" label="摄像头名称" width="150" align="center" />
             <el-table-column prop="camera_type" label="类型" width="100" align="center">
               <template #default="{ row }">
-                <el-tag size="small" effect="plain" type="">{{ getCameraTypeText(row.camera_type) }}</el-tag>
+                <el-tag size="small" effect="plain" type="">
+                  {{ getCameraTypeText(row.camera_type) }}
+                </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="status" label="状态" width="100" align="center">
               <template #default="{ row }">
                 <el-tag :type="row.status === true ? 'success' : 'danger'" size="small">
                   <template v-if="row.camera_type === 1">
-                    {{ row.status === true ? '在线' : '离线' }}
+                    {{ row.status === true ? "在线" : "离线" }}
                   </template>
                   <template v-else-if="row.camera_type === 2">
-                    {{ row.status === true ? '推流中' : '已停止' }}
+                    {{ row.status === true ? "推流中" : "已停止" }}
                   </template>
                   <template v-else-if="row.camera_type === 3">
-                    {{ row.status === true ? '正在拉流' : '尚未拉流' }}
+                    {{ row.status === true ? "正在拉流" : "尚未拉流" }}
                   </template>
-                  <template v-else>{{ row.status }}
-                    {{ row.status === true ? '启用' : '禁用' }}
+                  <template v-else>
+                    {{ row.status }}
+                    {{ row.status === true ? "启用" : "禁用" }}
                   </template>
                 </el-tag>
               </template>
@@ -96,8 +113,22 @@
             <el-table-column prop="skill" label="视频技能" min-width="220" align="center">
               <template #default="{ row }">
                 <div v-if="row.skill && row.skill !== '-'" class="skill-tags-container">
-                  <div v-for="(skillName, idx) in row.skill.split(',')" :key="idx" class="skill-tag-item">
-                    <span class="skill-name" :style="{color: row.config && row.config[skillName.trim()] && row.config[skillName.trim()].status ? '#67C23A' : '#909399'}">
+                  <div
+                    v-for="(skillName, idx) in row.skill.split(',')"
+                    :key="idx"
+                    class="skill-tag-item"
+                  >
+                    <span
+                      class="skill-name"
+                      :style="{
+                        color:
+                          row.config &&
+                          row.config[skillName.trim()] &&
+                          row.config[skillName.trim()].status
+                            ? '#67C23A'
+                            : '#909399',
+                      }"
+                    >
                       {{ skillName.trim() }}
                     </span>
                   </div>
@@ -108,12 +139,33 @@
             <el-table-column label="操作" width="280" align="center">
               <template #default="{ row }">
                 <div class="operation-buttons">
-                  <el-button link size="small" icon="el-icon-setting" class="config-skill-btn"
-                    @click="handleConfigSkill(row)">配置技能</el-button>
-                  <el-button link size="small" icon="el-icon-magic-stick" class="config-llm-skill-btn"
-                    @click="handleConfigLlmSkillForCamera(row)">配置大模型技能</el-button>
-                  <el-button link size="small" icon="el-icon-view" class="view-detail-btn"
-                    @click="handleViewDetails(row)">查看详情</el-button>
+                  <el-button
+                    link
+                    size="small"
+                    icon="el-icon-setting"
+                    class="config-skill-btn"
+                    @click="handleConfigSkill(row)"
+                  >
+                    配置技能
+                  </el-button>
+                  <el-button
+                    link
+                    size="small"
+                    icon="el-icon-magic-stick"
+                    class="config-llm-skill-btn"
+                    @click="handleConfigLlmSkillForCamera(row)"
+                  >
+                    配置大模型技能
+                  </el-button>
+                  <el-button
+                    link
+                    size="small"
+                    icon="el-icon-view"
+                    class="view-detail-btn"
+                    @click="handleViewDetails(row)"
+                  >
+                    查看详情
+                  </el-button>
                 </div>
               </template>
             </el-table-column>
@@ -121,17 +173,34 @@
 
           <!-- 分页区域 -->
           <div class="pagination-wrapper">
-            <el-pagination :current-page.sync="currentPage" :page-size.sync="pageSize" :page-sizes="[10, 20, 30, 50]"
-              layout="total, sizes, prev, pager, next, jumper" :total="total" @size-change="handleSizeChange"
-              @current-change="handleCurrentChange" />
+            <el-pagination
+              :current-page.sync="currentPage"
+              :page-size.sync="pageSize"
+              :page-sizes="[10, 20, 30, 50]"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="total"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
           </div>
         </div>
       </div>
 
       <!-- 选择技能对话框 -->
-      <el-dialog title="选择技能" :visible.sync="skillSelectDialogVisible" width="55%" :close-on-click-modal="false"
-        :destroy-on-close="false" :modal-append-to-body="true" :append-to-body="true" :show-close="true"
-        :lock-scroll="true" custom-class="skill-select-dialog" center @close="handleSkillSelectClose">
+      <el-dialog
+        title="选择技能"
+        :visible.sync="skillSelectDialogVisible"
+        width="55%"
+        :close-on-click-modal="false"
+        :destroy-on-close="false"
+        :modal-append-to-body="true"
+        :append-to-body="true"
+        :show-close="true"
+        :lock-scroll="true"
+        custom-class="skill-select-dialog"
+        center
+        @close="handleSkillSelectClose"
+      >
         <el-form :model="skillSelectForm" class="skill-form">
           <!-- 搜索和筛选工具栏 -->
           <div class="skill-toolbar">
@@ -141,11 +210,15 @@
                 placeholder="请输入技能名称搜索"
                 prefix-icon="el-icon-search"
                 clearable
-                @clear="clearSkillSearch">
-              </el-input>
+                @clear="clearSkillSearch"
+              ></el-input>
             </div>
             <div class="skill-filter-container">
-              <el-radio-group v-model="skillStatusFilter" size="small" @change="filterSkillsByStatus">
+              <el-radio-group
+                v-model="skillStatusFilter"
+                size="small"
+                @change="filterSkillsByStatus"
+              >
                 <el-radio-button label="all">全部</el-radio-button>
                 <el-radio-button label="true">已启用</el-radio-button>
                 <el-radio-button label="false">未启用</el-radio-button>
@@ -158,9 +231,16 @@
             <div class="skills-header-with-pagination">
               <div class="section-title">可用技能</div>
               <!-- 分页信息显示在标题右侧 -->
-              <div v-if="!skillOptionsLoading && skillOptionsTotal > 0" class="skill-pagination-info">
+              <div
+                v-if="!skillOptionsLoading && skillOptionsTotal > 0"
+                class="skill-pagination-info"
+              >
                 <span class="pagination-text">
-                  共 {{ skillOptionsTotal }} 个{{ skillTotalPages > 1 ? ' | ' + skillCurrentPage + '/' + skillTotalPages + ' 页' : '' }}
+                  共 {{ skillOptionsTotal }} 个{{
+                    skillTotalPages > 1
+                      ? " | " + skillCurrentPage + "/" + skillTotalPages + " 页"
+                      : ""
+                  }}
                 </span>
                 <el-pagination
                   v-if="skillOptionsTotal > skillPageSize"
@@ -172,23 +252,33 @@
                   @size-change="handleSkillSizeChange"
                   @current-change="handleSkillCurrentChange"
                   background
-                  small>
-                </el-pagination>
+                  small
+                ></el-pagination>
               </div>
             </div>
 
             <div v-if="skillOptionsLoading" class="skills-loading">
-              <i class="el-icon-loading"></i> 正在加载技能列表...
-          </div>
+              <i class="el-icon-loading"></i>
+              正在加载技能列表...
+            </div>
             <div v-else-if="filteredSkillOptions.length === 0" class="no-skills-tip">
-              <i class="el-icon-info"></i> 暂无可用技能
-          </div>
+              <i class="el-icon-info"></i>
+              暂无可用技能
+            </div>
             <div v-else class="skills-grid">
               <div
                 v-for="skill in filteredSkillOptions"
                 :key="skill.id"
-                :class="['skill-card', {selected: isSkillSelected(skill.value), disabled: skill.status === false}]"
-                @click="skill.status !== false ? toggleSkillSelection(skill.value) : $message.warning('该技能未启用，无法配置')">
+                :class="[
+                  'skill-card',
+                  { selected: isSkillSelected(skill.value), disabled: skill.status === false },
+                ]"
+                @click="
+                  skill.status !== false
+                    ? toggleSkillSelection(skill.value)
+                    : $message.warning('该技能未启用，无法配置')
+                "
+              >
                 <div class="skill-icon" :style="{ background: getSkillGradient(skill.value) }">
                   <i :class="getSkillIcon(skill.value)"></i>
                 </div>
@@ -204,8 +294,12 @@
                   </div>
                   <div class="skill-meta">
                     <span class="skill-type">{{ skill.type }}</span>
-                    <el-tag size="small" :type="skill.status !== false ? 'success' : 'danger'" class="skill-status-tag">
-                      {{ skill.status !== false ? '已启用' : '未启用' }}
+                    <el-tag
+                      size="small"
+                      :type="skill.status !== false ? 'success' : 'danger'"
+                      class="skill-status-tag"
+                    >
+                      {{ skill.status !== false ? "已启用" : "未启用" }}
                     </el-tag>
                   </div>
                 </div>
@@ -222,18 +316,28 @@
               <div class="skills-title">关联任务 ({{ cameraRelatedTasks.length }})</div>
             </div>
             <div v-if="taskLoading" class="task-loading">
-              <i class="el-icon-loading"></i> 正在加载关联任务...
+              <i class="el-icon-loading"></i>
+              正在加载关联任务...
             </div>
             <div v-else-if="cameraRelatedTasks.length === 0" class="no-tasks-tip">
-              <i class="el-icon-info"></i> 暂无关联任务
+              <i class="el-icon-info"></i>
+              暂无关联任务
             </div>
             <div v-else class="related-tasks-list">
-              <el-card v-for="task in cameraRelatedTasks" :key="task.id" class="task-card"
-                      @click.native="handleTaskClick(task)">
+              <el-card
+                v-for="task in cameraRelatedTasks"
+                :key="task.id"
+                class="task-card"
+                @click.native="handleTaskClick(task)"
+              >
                 <div class="task-header">
                   <div class="task-name">{{ task.name }}</div>
-                  <el-tag size="small" :type="task.status ? 'success' : 'info'" class="task-status-tag">
-                    {{ task.status ? '运行中' : '已停止' }}
+                  <el-tag
+                    size="small"
+                    :type="task.status ? 'success' : 'info'"
+                    class="task-status-tag"
+                  >
+                    {{ task.status ? "运行中" : "已停止" }}
                   </el-tag>
                 </div>
                 <div class="task-info">
@@ -248,16 +352,27 @@
             </div>
           </div>
         </el-form>
-                  <div slot="footer" class="dialog-footer">
+        <div slot="footer" class="dialog-footer">
           <el-button @click="closeSkillSelectDialog">取消</el-button>
           <el-button type="primary" @click="closeSkillSelectDialog">确定</el-button>
         </div>
       </el-dialog>
 
       <!-- 配置技能对话框 -->
-      <el-dialog :title="isUpdateMode ? '更新技能' : '配置技能'" :visible.sync="skillDialogVisible" width="60%" :close-on-click-modal="false"
-        :destroy-on-close="false" :modal-append-to-body="true" :append-to-body="true" :show-close="true"
-        :lock-scroll="true" custom-class="skill-config-dialog" center @close="handleClose">
+      <el-dialog
+        :title="isUpdateMode ? '更新技能' : '配置技能'"
+        :visible.sync="skillDialogVisible"
+        width="60%"
+        :close-on-click-modal="false"
+        :destroy-on-close="false"
+        :modal-append-to-body="true"
+        :append-to-body="true"
+        :show-close="true"
+        :lock-scroll="true"
+        custom-class="skill-config-dialog"
+        center
+        @close="handleClose"
+      >
         <div class="current-skill-header" v-if="currentSkill">
           <div class="skill-info-wrapper">
             <div class="skill-info-icon" :style="{ background: getSkillGradient(currentSkill) }">
@@ -266,39 +381,71 @@
             <div class="skill-info-content">
               <div class="skill-name-row">
                 <span class="skill-info-name">{{ currentSkillInfo.name_zh || currentSkill }}</span>
-                <el-tag size="small" type="info" class="skill-eng-name-tag" v-if="currentSkillInfo.value && currentSkillInfo.value !== currentSkillInfo.name_zh">
+                <el-tag
+                  size="small"
+                  type="info"
+                  class="skill-eng-name-tag"
+                  v-if="
+                    currentSkillInfo.value && currentSkillInfo.value !== currentSkillInfo.name_zh
+                  "
+                >
                   {{ currentSkillInfo.value }}
                 </el-tag>
-                <el-tag size="small" type="success" class="skill-version-tag" v-if="currentSkillInfo.version">
+                <el-tag
+                  size="small"
+                  type="success"
+                  class="skill-version-tag"
+                  v-if="currentSkillInfo.version"
+                >
                   v{{ currentSkillInfo.version }}
                 </el-tag>
-                <el-tag size="small" effect="plain" class="skill-type-tag" v-if="currentSkillInfo.type">
+                <el-tag
+                  size="small"
+                  effect="plain"
+                  class="skill-type-tag"
+                  v-if="currentSkillInfo.type"
+                >
                   {{ currentSkillInfo.type }}
                 </el-tag>
-                <el-button link icon="el-icon-setting" @click.stop="showSkillParamsConfig" style="margin-left: 5px;" title="技能参数配置"></el-button>
+                <el-button
+                  link
+                  icon="el-icon-setting"
+                  @click.stop="showSkillParamsConfig"
+                  style="margin-left: 5px"
+                  title="技能参数配置"
+                ></el-button>
                 <div class="skill-status">
-                  <el-switch v-model="skillForm.status" active-color="#67C23A" inactive-color="#909399">
-                  </el-switch>
+                  <el-switch
+                    v-model="skillForm.status"
+                    active-color="#67C23A"
+                    inactive-color="#909399"
+                  ></el-switch>
                   <span class="status-text" :class="{ 'status-active': skillForm.status }">
-                    {{ skillForm.status ? '已启用' : '已禁用' }}
+                    {{ skillForm.status ? "已启用" : "已禁用" }}
                   </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <el-form :model="skillForm" label-width="85px" :rules="rules" ref="skillForm" class="skill-form">
+        <el-form
+          :model="skillForm"
+          label-width="85px"
+          :rules="rules"
+          ref="skillForm"
+          class="skill-form"
+        >
           <el-form-item label="任务名称" prop="name">
             <el-input
               v-model="skillForm.name"
               placeholder="请输入任务名称"
               prefix-icon="el-icon-document-add"
-              style="width: 80%; max-width: 500px;"
+              style="width: 80%; max-width: 500px"
               :maxlength="50"
               show-word-limit
               clearable
-              class="custom-input">
-            </el-input>
+              class="custom-input"
+            ></el-input>
           </el-form-item>
 
           <el-form-item label="任务描述" prop="description">
@@ -307,33 +454,39 @@
               placeholder="请简要描述任务的检测目标和用途"
               type="textarea"
               :rows="3"
-              style="width: 80%; max-width: 500px;"
+              style="width: 80%; max-width: 500px"
               :maxlength="200"
               show-word-limit
               resize="none"
-              class="custom-textarea">
-            </el-input>
+              class="custom-textarea"
+            ></el-input>
           </el-form-item>
 
           <el-form-item label="预警等级" :required="alarmLevelOptions.length > 0" prop="alarmLevel">
             <!-- 有预警功能的技能 -->
             <div v-if="alarmLevelOptions.length > 0" class="alarm-level-container">
-              <el-select 
-                v-model="skillForm.alarmLevel" 
-                placeholder="请选择预警等级" 
-                style="width: 220px;"
-                @change="handleAlarmLevelChange">
-                <el-option v-for="item in alarmLevelOptions" :key="item.value" :label="item.label" :value="item.value">
+              <el-select
+                v-model="skillForm.alarmLevel"
+                placeholder="请选择预警等级"
+                style="width: 220px"
+                @change="handleAlarmLevelChange"
+              >
+                <el-option
+                  v-for="item in alarmLevelOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                >
                   <span :style="{ color: item.color }">{{ item.label }}</span>
                 </el-option>
               </el-select>
-              
+
               <!-- 预警等级描述显示在右侧 -->
               <div v-if="currentAlarmDescription" class="alarm-description-inline">
                 <span>{{ currentAlarmDescription }}</span>
               </div>
             </div>
-            
+
             <!-- 没有预警功能的技能提示 -->
             <div v-else class="no-alarm-tip">
               <div class="no-alarm-content">
@@ -347,12 +500,24 @@
           <el-form-item label="抽帧频率" required prop="frequency">
             <div class="frequency-input">
               <span>每</span>
-              <el-input-number v-model="skillForm.frequency.seconds" :min="1" :max="99" controls-position="right"
-                class="number-input" size="small" />
+              <el-input-number
+                v-model="skillForm.frequency.seconds"
+                :min="1"
+                :max="99"
+                controls-position="right"
+                class="number-input"
+                size="small"
+              />
               <span>秒</span>
               <span>抽取</span>
-              <el-input-number v-model="skillForm.frequency.frames" :min="1" :max="99" controls-position="right"
-                class="number-input" size="small" />
+              <el-input-number
+                v-model="skillForm.frequency.frames"
+                :min="1"
+                :max="99"
+                controls-position="right"
+                class="number-input"
+                size="small"
+              />
               <span>帧</span>
               <span class="frequency-tip">支持设置多秒1帧1秒多帧，不支持多秒多帧设置</span>
             </div>
@@ -360,38 +525,66 @@
 
           <el-form-item label="运行时段" required prop="timeRanges">
             <div v-for="(timeRange, index) in skillForm.timeRanges" :key="index" class="time-range">
-              <el-time-picker v-model="timeRange.start" placeholder="开始时间" format="HH:mm" class="time-picker" />
+              <el-time-picker
+                v-model="timeRange.start"
+                placeholder="开始时间"
+                format="HH:mm"
+                class="time-picker"
+              />
               <span class="time-separator">-</span>
-              <el-time-picker v-model="timeRange.end" placeholder="结束时间" format="HH:mm" class="time-picker" />
-              <el-button link icon="el-icon-delete" @click="removeTimeRange(index)" style="margin-left: 15px;" />
+              <el-time-picker
+                v-model="timeRange.end"
+                placeholder="结束时间"
+                format="HH:mm"
+                class="time-picker"
+              />
+              <el-button
+                link
+                icon="el-icon-delete"
+                @click="removeTimeRange(index)"
+                style="margin-left: 15px"
+              />
             </div>
             <div class="add-time">
-              <el-link type="primary" @click="addTimeRange" :disabled="skillForm.timeRanges.length >= 3"
-                class="add-time-link">
+              <el-link
+                type="primary"
+                @click="addTimeRange"
+                :disabled="skillForm.timeRanges.length >= 3"
+                class="add-time-link"
+              >
                 + 添加时间 ({{ skillForm.timeRanges.length }}/3)
               </el-link>
             </div>
           </el-form-item>
 
-          <el-form-item label="电子围栏" required style="margin-left: 0px;margin-top: -15px;">
+          <el-form-item label="电子围栏" required style="margin-left: 0px; margin-top: -15px">
             <div class="electronic-fence-container">
               <div class="fence-wrapper">
                 <div class="fence-preview">
                   <div class="image-editor">
                     <!-- 默认占位图 -->
-                    <div v-if="!skillForm.electronicFence.image || skillForm.electronicFence.image.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=')" 
-                         class="fence-placeholder">
+                    <div
+                      v-if="
+                        !skillForm.electronicFence.image ||
+                        skillForm.electronicFence.image.includes(
+                          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+                        )
+                      "
+                      class="fence-placeholder"
+                    >
                       <i class="el-icon-video-camera"></i>
                       <p>摄像头预览</p>
                     </div>
-                    
-                    <img v-else 
-                         :src="skillForm.electronicFence.image" 
-                         alt="围栏图片"
-                         :class="['fence-image', {'loading': skillForm.electronicFence.imageLoading}]"
-                         @click="handleImageClick" 
-                         @load="handleImageLoad" 
-                         @error="handleImageError">
+
+                    <img
+                      v-else
+                      :src="skillForm.electronicFence.image"
+                      alt="围栏图片"
+                      :class="['fence-image', { loading: skillForm.electronicFence.imageLoading }]"
+                      @click="handleImageClick"
+                      @load="handleImageLoad"
+                      @error="handleImageError"
+                    />
 
                     <!-- 图像加载中的状态显示 -->
                     <div v-if="skillForm.electronicFence.imageLoading" class="fence-image-loading">
@@ -399,38 +592,74 @@
                       <p>正在加载摄像头画面...</p>
                     </div>
 
-                    <div class="fence-polygon"
-                      v-if="skillForm.electronicFence.points.length > 0 || skillForm.electronicFence.currentPolygon.length > 0">
-                      <svg width="100%" height="100%" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
+                    <div
+                      class="fence-polygon"
+                      v-if="
+                        skillForm.electronicFence.points.length > 0 ||
+                        skillForm.electronicFence.currentPolygon.length > 0
+                      "
+                    >
+                      <svg
+                        width="100%"
+                        height="100%"
+                        style="position: absolute; top: 0; left: 0; right: 0; bottom: 0"
+                      >
                         <!-- 所有已完成的围栏 -->
-                        <g v-for="(polygon, polyIndex) in skillForm.electronicFence.points"
-                          :key="`polygon-${polyIndex}`">
-                          <polygon :points="formatPolygonPoints(polygon)" :fill="getPolygonColor(polyIndex)"
-                            stroke="#1890ff" stroke-width="2" />
+                        <g
+                          v-for="(polygon, polyIndex) in skillForm.electronicFence.points"
+                          :key="`polygon-${polyIndex}`"
+                        >
+                          <polygon
+                            :points="formatPolygonPoints(polygon)"
+                            :fill="getPolygonColor(polyIndex)"
+                            stroke="#1890ff"
+                            stroke-width="2"
+                          />
                           <!-- 每个多边形的顶点 -->
-                          <circle v-for="(point, pointIndex) in polygon" :key="`point-${polyIndex}-${pointIndex}`"
-                            :cx="point.x" :cy="point.y" r="8" fill="#fff" stroke="#1890ff" stroke-width="2"
+                          <circle
+                            v-for="(point, pointIndex) in polygon"
+                            :key="`point-${polyIndex}-${pointIndex}`"
+                            :cx="point.x"
+                            :cy="point.y"
+                            r="8"
+                            fill="#fff"
+                            stroke="#1890ff"
+                            stroke-width="2"
                             @mousedown.prevent="startDragPoint(polyIndex, pointIndex, $event)"
-                            style="cursor: move; z-index: 100;"
-                            title="拖动调整围栏形状" />
+                            style="cursor: move; z-index: 100"
+                            title="拖动调整围栏形状"
+                          />
                         </g>
 
                         <!-- 当前正在绘制的围栏 -->
-                        <g v-if="skillForm.electronicFence.isDrawing && skillForm.electronicFence.currentPolygon.length > 0">
+                        <g
+                          v-if="
+                            skillForm.electronicFence.isDrawing &&
+                            skillForm.electronicFence.currentPolygon.length > 0
+                          "
+                        >
                           <!-- 添加提示线连接最后一个点和第一个点 -->
-                          <polyline v-if="skillForm.electronicFence.currentPolygon.length > 2"
-                            :points="`${skillForm.electronicFence.currentPolygon[skillForm.electronicFence.currentPolygon.length-1].x},${skillForm.electronicFence.currentPolygon[skillForm.electronicFence.currentPolygon.length-1].y} ${skillForm.electronicFence.currentPolygon[0].x},${skillForm.electronicFence.currentPolygon[0].y}`"
+                          <polyline
+                            v-if="skillForm.electronicFence.currentPolygon.length > 2"
+                            :points="`${skillForm.electronicFence.currentPolygon[skillForm.electronicFence.currentPolygon.length - 1].x},${skillForm.electronicFence.currentPolygon[skillForm.electronicFence.currentPolygon.length - 1].y} ${skillForm.electronicFence.currentPolygon[0].x},${skillForm.electronicFence.currentPolygon[0].y}`"
                             fill="none"
                             stroke="#4caf50"
                             stroke-width="2"
-                            stroke-dasharray="5,5" />
+                            stroke-dasharray="5,5"
+                          />
 
-                          <polyline v-if="skillForm.electronicFence.currentPolygon.length > 1"
-                            :points="formatPolygonPoints(skillForm.electronicFence.currentPolygon)" fill="none"
-                            stroke="#f56c6c" stroke-width="2" stroke-dasharray="5,5" />
+                          <polyline
+                            v-if="skillForm.electronicFence.currentPolygon.length > 1"
+                            :points="formatPolygonPoints(skillForm.electronicFence.currentPolygon)"
+                            fill="none"
+                            stroke="#f56c6c"
+                            stroke-width="2"
+                            stroke-dasharray="5,5"
+                          />
 
                           <!-- 非第一个点 -->
-                          <circle v-for="(point, index) in skillForm.electronicFence.currentPolygon"
+                          <circle
+                            v-for="(point, index) in skillForm.electronicFence.currentPolygon"
                             v-if="index !== 0"
                             :key="`current-${index}`"
                             :cx="point.x"
@@ -440,29 +669,46 @@
                             stroke="#fff"
                             stroke-width="2"
                             @click.stop="handleCurrentPointClick(index)"
-                            style="cursor: pointer;" />
+                            style="cursor: pointer"
+                          />
 
                           <!-- 添加背景圆圈 -->
-                          <circle v-if="skillForm.electronicFence.currentPolygon.length > 2"
+                          <circle
+                            v-if="skillForm.electronicFence.currentPolygon.length > 2"
                             :cx="skillForm.electronicFence.currentPolygon[0].x"
                             :cy="skillForm.electronicFence.currentPolygon[0].y"
                             r="16"
                             fill="none"
                             stroke="#4caf50"
                             stroke-width="2"
-                            style="pointer-events: none;" />
+                            style="pointer-events: none"
+                          />
 
                           <!-- 第一个点单独渲染，没有hover效果 -->
-                          <circle v-if="skillForm.electronicFence.currentPolygon.length > 0"
+                          <circle
+                            v-if="skillForm.electronicFence.currentPolygon.length > 0"
                             :cx="skillForm.electronicFence.currentPolygon[0].x"
                             :cy="skillForm.electronicFence.currentPolygon[0].y"
                             r="10"
-                            :fill="skillForm.electronicFence.currentPolygon.length > 2 ? '#4caf50' : '#f56c6c'"
+                            :fill="
+                              skillForm.electronicFence.currentPolygon.length > 2
+                                ? '#4caf50'
+                                : '#f56c6c'
+                            "
                             stroke="#fff"
                             stroke-width="2"
-                            @click.stop="skillForm.electronicFence.currentPolygon.length > 2 ? completeFence() : null"
-                            style="cursor: pointer; pointer-events: all;"
-                            :title="skillForm.electronicFence.currentPolygon.length > 2 ? '点击闭合围栏' : ''" />
+                            @click.stop="
+                              skillForm.electronicFence.currentPolygon.length > 2
+                                ? completeFence()
+                                : null
+                            "
+                            style="cursor: pointer; pointer-events: all"
+                            :title="
+                              skillForm.electronicFence.currentPolygon.length > 2
+                                ? '点击闭合围栏'
+                                : ''
+                            "
+                          />
                         </g>
                       </svg>
                     </div>
@@ -471,21 +717,52 @@
 
                 <div class="fence-side-panel">
                   <div class="fence-tips">
-                    <el-alert title="电子围栏使用说明" type="info" description="在视频画面上绘制多边形区域作为电子围栏。当检测到目标在围栏内/外活动时触发报警。"
-                      :closable="false" show-icon />
+                    <el-alert
+                      title="电子围栏使用说明"
+                      type="info"
+                      description="在视频画面上绘制多边形区域作为电子围栏。当检测到目标在围栏内/外活动时触发报警。"
+                      :closable="false"
+                      show-icon
+                    />
                   </div>
                   <div class="fence-controls-panel">
                     <el-button-group v-if="!skillForm.electronicFence.isDrawing">
-                      <el-button size="small" type="primary" icon="el-icon-edit"
-                        @click="startDrawFence">绘制围栏</el-button>
-                      <el-button size="small" type="danger" icon="el-icon-delete" @click="clearFence"
-                        :disabled="skillForm.electronicFence.points.length === 0">清除围栏</el-button>
+                      <el-button
+                        size="small"
+                        type="primary"
+                        icon="el-icon-edit"
+                        @click="startDrawFence"
+                      >
+                        绘制围栏
+                      </el-button>
+                      <el-button
+                        size="small"
+                        type="danger"
+                        icon="el-icon-delete"
+                        @click="clearFence"
+                        :disabled="skillForm.electronicFence.points.length === 0"
+                      >
+                        清除围栏
+                      </el-button>
                     </el-button-group>
                     <el-button-group v-else>
-                      <el-button size="small" type="success" icon="el-icon-check" @click="completeFence"
-                        :disabled="skillForm.electronicFence.currentPolygon.length < 3">完成绘制</el-button>
-                      <el-button size="small" type="warning" icon="el-icon-close"
-                        @click="cancelDrawFence">取消绘制</el-button>
+                      <el-button
+                        size="small"
+                        type="success"
+                        icon="el-icon-check"
+                        @click="completeFence"
+                        :disabled="skillForm.electronicFence.currentPolygon.length < 3"
+                      >
+                        完成绘制
+                      </el-button>
+                      <el-button
+                        size="small"
+                        type="warning"
+                        icon="el-icon-close"
+                        @click="cancelDrawFence"
+                      >
+                        取消绘制
+                      </el-button>
                     </el-button-group>
                   </div>
                 </div>
@@ -494,8 +771,11 @@
           </el-form-item>
 
           <!-- 添加电子围栏的触发模式和灵敏度选项 -->
-          <el-form-item label="围栏设置" v-if="skillForm.electronicFence.points.length > 0"
-            style="margin-left: 10px; margin-top: 10px;">
+          <el-form-item
+            label="围栏设置"
+            v-if="skillForm.electronicFence.points.length > 0"
+            style="margin-left: 10px; margin-top: 10px"
+          >
             <div class="fence-settings">
               <div class="setting-item">
                 <span class="setting-label">触发机制：</span>
@@ -504,34 +784,46 @@
                   <el-radio-button label="outside">围栏外</el-radio-button>
                 </el-radio-group>
               </div>
-
             </div>
           </el-form-item>
 
-          <el-form-item label="实时推流" style="margin-left: 10px;">
+          <el-form-item label="实时推流" style="margin-left: 10px">
             <div class="rtsp-streaming-settings">
               <div class="setting-item">
                 <span class="setting-label">检测结果实时推流：</span>
-                <el-switch 
-                  v-model="skillForm.rtspStreaming.enabled" 
-                  active-color="#67C23A" 
-                  inactive-color="#909399">
-                </el-switch>
-                <span class="status-text" :class="{ 'status-active': skillForm.rtspStreaming.enabled }">
-                  {{ skillForm.rtspStreaming.enabled ? '已启用' : '已禁用' }}
+                <el-switch
+                  v-model="skillForm.rtspStreaming.enabled"
+                  active-color="#67C23A"
+                  inactive-color="#909399"
+                ></el-switch>
+                <span
+                  class="status-text"
+                  :class="{ 'status-active': skillForm.rtspStreaming.enabled }"
+                >
+                  {{ skillForm.rtspStreaming.enabled ? "已启用" : "已禁用" }}
                 </span>
-                <el-tooltip content="开启后将实时推流检测结果画面，会消耗较多系统资源，不推荐开启" placement="top">
-                  <i class="el-icon-question" style="margin-left: 8px; color: #909399; cursor: help;"></i>
+                <el-tooltip
+                  content="开启后将实时推流检测结果画面，会消耗较多系统资源，不推荐开启"
+                  placement="top"
+                >
+                  <i
+                    class="el-icon-question"
+                    style="margin-left: 8px; color: #909399; cursor: help"
+                  ></i>
                 </el-tooltip>
               </div>
-              <div v-if="skillForm.rtspStreaming.enabled" class="warning-tip" style="margin-top: 8px;">
-                <el-alert 
-                  title="注意：开启实时推流会显著增加系统资源消耗，建议仅在必要时使用" 
-                  type="warning" 
-                  :closable="false" 
+              <div
+                v-if="skillForm.rtspStreaming.enabled"
+                class="warning-tip"
+                style="margin-top: 8px"
+              >
+                <el-alert
+                  title="注意：开启实时推流会显著增加系统资源消耗，建议仅在必要时使用"
+                  type="warning"
+                  :closable="false"
                   show-icon
-                  effect="light">
-                </el-alert>
+                  effect="light"
+                ></el-alert>
               </div>
             </div>
           </el-form-item>
@@ -550,7 +842,8 @@
         :close-on-click-modal="false"
         custom-class="skill-params-dialog"
         :append-to-body="true"
-        center>
+        center
+      >
         <div slot="title" class="dialog-header">
           <div class="dialog-header-content">
             <div class="skill-icon-wrapper">
@@ -558,7 +851,9 @@
             </div>
             <div class="dialog-title-info">
               <h3 class="dialog-title">技能参数配置</h3>
-              <p class="dialog-subtitle" v-if="currentSkillInfo">{{ currentSkillInfo.name_zh || currentSkill }} 参数设置</p>
+              <p class="dialog-subtitle" v-if="currentSkillInfo">
+                {{ currentSkillInfo.name_zh || currentSkill }} 参数设置
+              </p>
             </div>
           </div>
         </div>
@@ -572,7 +867,9 @@
               <div class="overview-info">
                 <div class="overview-title">参数总览</div>
                 <div class="overview-stats">
-                  <span class="param-count">{{ Object.keys(skillDetailData.params).length }} 个参数</span>
+                  <span class="param-count">
+                    {{ Object.keys(skillDetailData.params).length }} 个参数
+                  </span>
                   <span class="param-types">{{ getParamTypesCount() }}</span>
                 </div>
               </div>
@@ -583,17 +880,23 @@
             <div
               v-for="(value, key, index) in skillDetailData.params"
               :key="index"
-              class="param-card">
+              class="param-card"
+            >
               <div class="param-header">
                 <div class="param-info">
                   <div class="param-name">
                     <i :class="getParamTypeIcon(value)"></i>
                     <span class="name-text">{{ key }}</span>
                     <el-tag size="small" :type="getParamTypeColor(value)" class="param-type-tag">
-                      {{ getParamTypeLabel(value) }}{{ Array.isArray(value) ? ` (${value.length}项)` : '' }}
+                      {{ getParamTypeLabel(value)
+                      }}{{ Array.isArray(value) ? ` (${value.length}项)` : "" }}
                     </el-tag>
                   </div>
-                  <el-tooltip v-if="getParamTooltip(key)" :content="getParamTooltip(key)" placement="top">
+                  <el-tooltip
+                    v-if="getParamTooltip(key)"
+                    :content="getParamTooltip(key)"
+                    placement="top"
+                  >
                     <i class="el-icon-question param-help"></i>
                   </el-tooltip>
                 </div>
@@ -609,7 +912,8 @@
                         :key="idx"
                         size="small"
                         type="info"
-                        class="array-tag">
+                        class="array-tag"
+                      >
                         <i class="el-icon-collection-tag"></i>
                         {{ item }}
                       </el-tag>
@@ -622,18 +926,15 @@
                     <el-select
                       v-model="skillDetailData.params[key]"
                       placeholder="请选择布尔值"
-                      class="boolean-select">
-                      <el-option
-                        :value="true"
-                        label="true">
+                      class="boolean-select"
+                    >
+                      <el-option :value="true" label="true">
                         <div class="boolean-option">
                           <i class="el-icon-check boolean-icon success"></i>
                           <span class="boolean-text success">true</span>
                         </div>
                       </el-option>
-                      <el-option
-                        :value="false"
-                        label="false">
+                      <el-option :value="false" label="false">
                         <div class="boolean-option">
                           <i class="el-icon-close boolean-icon danger"></i>
                           <span class="boolean-text danger">false</span>
@@ -659,8 +960,8 @@
                       class="number-input"
                       :step="getNumberStep(value)"
                       :precision="getNumberPrecision(value)"
-                      :controls-position="'right'">
-                    </el-input-number>
+                      :controls-position="'right'"
+                    ></el-input-number>
                   </div>
                 </template>
 
@@ -670,8 +971,8 @@
                       v-model="skillDetailData.params[key]"
                       :placeholder="`请输入参数值 (当前${String(value).length}字符)`"
                       class="string-input"
-                      :prefix-icon="'el-icon-edit'">
-                    </el-input>
+                      :prefix-icon="'el-icon-edit'"
+                    ></el-input>
                   </div>
                 </template>
               </div>
@@ -704,43 +1005,57 @@
           <el-button
             type="primary"
             @click="saveSkillDetails"
-            v-if="skillDetailData && skillDetailData.params">
+            v-if="skillDetailData && skillDetailData.params"
+          >
             保存配置
           </el-button>
         </div>
       </el-dialog>
 
       <!-- 设备详情对话框 -->
-      <el-dialog title="摄像头详情" :visible.sync="deviceDetailDialogVisible" width="60%" :close-on-click-modal="false">
+      <el-dialog
+        title="摄像头详情"
+        :visible.sync="deviceDetailDialogVisible"
+        width="60%"
+        :close-on-click-modal="false"
+      >
         <div v-if="deviceDetailData" class="device-detail-content">
           <el-descriptions title="基本信息" :column="2" border>
             <el-descriptions-item label="摄像头ID">{{ deviceDetailData.id }}</el-descriptions-item>
-            <el-descriptions-item label="摄像头名称">{{ deviceDetailData.name }}</el-descriptions-item>
+            <el-descriptions-item label="摄像头名称">
+              {{ deviceDetailData.name }}
+            </el-descriptions-item>
             <el-descriptions-item label="摄像头状态">
               <el-tag :type="deviceDetailData.status ? 'success' : 'danger'">
                 <!-- 根据摄像头类型显示不同的状态文字 -->
                 <template v-if="deviceDetailData.camera_type === 1">
-                  {{ deviceDetailData.status ? '在线' : '离线' }}
+                  {{ deviceDetailData.status ? "在线" : "离线" }}
                 </template>
                 <template v-else-if="deviceDetailData.camera_type === 2">
-                  {{ deviceDetailData.status ? '推流中' : '已停止' }}
+                  {{ deviceDetailData.status ? "推流中" : "已停止" }}
                 </template>
                 <template v-else-if="deviceDetailData.camera_type === 3">
-                  {{ deviceDetailData.status ? '正在拉流' : '尚未拉流' }}
+                  {{ deviceDetailData.status ? "正在拉流" : "尚未拉流" }}
                 </template>
                 <template v-else>
-                  {{ deviceDetailData.status ? '启用' : '禁用' }}
+                  {{ deviceDetailData.status ? "启用" : "禁用" }}
                 </template>
               </el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="设备来源">{{ deviceDetailData.location || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="设备来源">
+              {{ deviceDetailData.location || "-" }}
+            </el-descriptions-item>
             <el-descriptions-item label="摄像头类型">
               <el-tag>
                 {{ getCameraTypeText(deviceDetailData.camera_type) }}
               </el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="创建时间">{{ deviceDetailData.createTime || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="更新时间">{{ deviceDetailData.updateTime || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="创建时间">
+              {{ deviceDetailData.createTime || "-" }}
+            </el-descriptions-item>
+            <el-descriptions-item label="更新时间">
+              {{ deviceDetailData.updateTime || "-" }}
+            </el-descriptions-item>
           </el-descriptions>
 
           <el-divider content-position="left">设备详细信息</el-divider>
@@ -751,12 +1066,17 @@
               <el-descriptions-item
                 v-for="(value, key) in getDeviceSpecificInfo(deviceDetailData)"
                 :label="formatPropertyLabel(key)"
-                :key="key">
+                :key="key"
+              >
                 <!-- 根据属性类型显示不同的格式 -->
                 <template v-if="typeof value === 'boolean'">
-                  {{ value ? '是' : '否' }}
+                  {{ value ? "是" : "否" }}
                 </template>
-                <template v-else-if="key.includes('Longitude') || key.includes('Latitude') && value !== null">
+                <template
+                  v-else-if="
+                    key.includes('Longitude') || (key.includes('Latitude') && value !== null)
+                  "
+                >
                   {{ Number(value).toFixed(6) }}
                 </template>
                 <template v-else-if="value === null || value === undefined || value === ''">
@@ -771,13 +1091,17 @@
 
           <el-divider content-position="left">关联技能</el-divider>
 
-          <div v-if="deviceDetailData.skill_names && deviceDetailData.skill_names.length > 0" class="skills-list">
+          <div
+            v-if="deviceDetailData.skill_names && deviceDetailData.skill_names.length > 0"
+            class="skills-list"
+          >
             <el-tag
               v-for="skill in deviceDetailData.skill_names"
               :key="skill"
               effect="plain"
               type="success"
-              class="skill-tag">
+              class="skill-tag"
+            >
               {{ skill }}
             </el-tag>
           </div>
@@ -799,21 +1123,17 @@
 </template>
 
 <script>
-import cameraComponent from './cameraComponents/camera.js'
-import ConfigLlm from './cameraComponents/configLlm.vue'
+import cameraComponent from "./cameraComponents/camera.js";
+import ConfigLlm from "./cameraComponents/configLlm.vue";
 
 export default {
   ...cameraComponent,
   components: {
-    ConfigLlm
-  }
-}
+    ConfigLlm,
+  },
+};
 </script>
 
 <style scoped>
-@import './cameraComponents/camera.css';
+@import "./cameraComponents/camera.css";
 </style>
-
-
-
-

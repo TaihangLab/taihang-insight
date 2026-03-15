@@ -14,9 +14,9 @@
  */
 export interface PaginationParams {
   /** 跳过的记录数，计算公式：(currentPage - 1) × pageSize，默认为0 */
-  skip?: number
+  skip?: number;
   /** 每页记录数，默认为10 */
-  limit?: number
+  limit?: number;
 }
 
 /**
@@ -24,9 +24,9 @@ export interface PaginationParams {
  */
 export interface PaginatedResponse<T> {
   /** 总记录数 */
-  total: number
+  total: number;
   /** 数据列表 */
-  items: T[]
+  items: T[];
 }
 
 /**
@@ -34,13 +34,13 @@ export interface PaginatedResponse<T> {
  */
 export interface ApiResponse<T = unknown> {
   /** 请求是否成功 */
-  success: boolean
+  success: boolean;
   /** 响应状态码 */
-  code: number
+  code: number;
   /** 响应消息 */
-  message: string
+  message: string;
   /** 响应数据 */
-  data?: T
+  data?: T;
 }
 
 // ============================================
@@ -56,7 +56,7 @@ export enum Status {
   /** 启用/正常 */
   ENABLED = 0,
   /** 停用/禁用 */
-  DISABLED = 1
+  DISABLED = 1,
 }
 
 /**
@@ -68,7 +68,7 @@ export enum Gender {
   /** 男 */
   MALE = 1,
   /** 女 */
-  FEMALE = 2
+  FEMALE = 2,
 }
 
 // ============================================
@@ -80,7 +80,7 @@ export enum Gender {
  */
 export interface TenantScopedParams {
   /** 租户ID */
-  tenant_id?: string
+  tenant_id?: string;
 }
 
 /**
@@ -88,7 +88,7 @@ export interface TenantScopedParams {
  */
 export interface StatusQueryParams {
   /** 状态（0启用/1停用） */
-  status?: Status
+  status?: Status;
 }
 
 /**
@@ -106,9 +106,9 @@ export interface BaseQueryParams extends PaginationParams, TenantScopedParams, S
  */
 export interface BaseEntity {
   /** ID */
-  id: number
+  id: number;
   /** 创建时间 */
-  create_time?: string
+  create_time?: string;
 }
 
 /**
@@ -116,7 +116,7 @@ export interface BaseEntity {
  */
 export interface EntityWithTimestamp extends BaseEntity {
   /** 更新时间 */
-  update_time?: string
+  update_time?: string;
 }
 
 /**
@@ -124,7 +124,7 @@ export interface EntityWithTimestamp extends BaseEntity {
  */
 export interface TenantScoped {
   /** 租户ID */
-  tenant_id?: string
+  tenant_id?: string;
 }
 
 /**
@@ -132,7 +132,7 @@ export interface TenantScoped {
  */
 export interface StatusEnabled {
   /** 状态（0启用/1停用） */
-  status: Status
+  status: Status;
 }
 
 // ============================================
@@ -144,9 +144,9 @@ export interface StatusEnabled {
  */
 export interface PaginationState {
   /** 当前页码 */
-  currentPage: number
+  currentPage: number;
   /** 每页记录数 */
-  pageSize: number
+  pageSize: number;
   /** 总记录数 */
-  total: number
+  total: number;
 }

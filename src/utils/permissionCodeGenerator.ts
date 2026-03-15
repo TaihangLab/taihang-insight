@@ -6,7 +6,7 @@
 /**
  * 节点类型枚举
  */
-export type NodeType = 'folder' | 'menu' | 'button';
+export type NodeType = "folder" | "menu" | "button";
 
 /**
  * 按钮权限对象
@@ -32,9 +32,9 @@ class PermissionCodeGenerator {
    */
   static toSnakeCase(str: string): string {
     return str
-      .replace(/([A-Z])/g, '_$1')
+      .replace(/([A-Z])/g, "_$1")
       .toLowerCase()
-      .replace(/^_/, '');
+      .replace(/^_/, "");
   }
 
   /**
@@ -53,7 +53,7 @@ class PermissionCodeGenerator {
    * @returns 标准化后的路径段
    */
   static normalizeSegment(segment: string): string {
-    return this.toSnakeCase(segment).replace(/^\/+|\/+$/g, '');
+    return this.toSnakeCase(segment).replace(/^\/+|\/+$/g, "");
   }
 
   /**
@@ -65,7 +65,7 @@ class PermissionCodeGenerator {
   static extractResource(pageName: string): string {
     const normalized = this.normalizeSegment(pageName);
     // 移除常见的管理后缀
-    const suffixes = ['_management', '_manage', 'ment', 'manage'];
+    const suffixes = ["_management", "_manage", "ment", "manage"];
     let resource = normalized;
 
     for (const suffix of suffixes) {
@@ -89,30 +89,30 @@ class PermissionCodeGenerator {
    */
   static generateFromRoute(
     routePath: string,
-    nodeType: NodeType = 'menu',
-    action: string = 'view',
-    parentCode: string | null = null
+    nodeType: NodeType = "menu",
+    action: string = "view",
+    parentCode: string | null = null,
   ): string {
     if (!routePath && !parentCode) {
-      return '';
+      return "";
     }
 
     switch (nodeType) {
-      case 'folder':
+      case "folder":
         // 文件夹：使用路径首段，如 /systemManage -> system:manage
         if (routePath) {
-          const segments = routePath.split('/').filter(s => s);
+          const segments = routePath.split("/").filter((s) => s);
           if (segments.length > 0) {
             return this.normalizeSegment(segments[0]);
           }
         }
-        return '';
+        return "";
 
-      case 'menu':
+      case "menu":
         // 菜单/页面：模块:资源:view
         // 如 /systemManage/userManagement -> system:user:view
         if (routePath) {
-          const segments = routePath.split('/').filter(s => s);
+          const segments = routePath.split("/").filter((s) => s);
           if (segments.length >= 2) {
             const module = this.normalizeSegment(segments[0]);
             const page = this.extractResource(segments[segments.length - 1]);
@@ -122,29 +122,29 @@ class PermissionCodeGenerator {
           }
         } else if (parentCode) {
           // 基于父节点权限码生成
-          const parts = parentCode.split(':');
+          const parts = parentCode.split(":");
           if (parts.length >= 1) {
             return `${parts[0]}:view`;
           }
         }
-        return '';
+        return "";
 
-      case 'button':
+      case "button":
         // 按钮：模块:资源:操作
         // 如基于父节点 system:user:view -> system:user:create
         if (parentCode) {
-          const parts = parentCode.split(':');
+          const parts = parentCode.split(":");
           if (parts.length >= 2) {
             // 移除最后的 view/action，替换为新的 action
             parts[parts.length - 1] = action;
-            return parts.join(':');
+            return parts.join(":");
           }
           return `${parentCode}:${action}`;
         }
-        return '';
+        return "";
 
       default:
-        return '';
+        return "";
     }
   }
 
@@ -154,7 +154,7 @@ class PermissionCodeGenerator {
    * @returns 按钮权限码对象
    */
   static generateButtonPermissions(menuCode: string): ButtonPermissions {
-    const baseCode = menuCode.replace(':view', '');
+    const baseCode = menuCode.replace(":view", "");
     const buttons: ButtonPermissions = {
       view: `${baseCode}:view`,
       read: `${baseCode}:read`,
@@ -162,12 +162,12 @@ class PermissionCodeGenerator {
       update: `${baseCode}:update`,
       delete: `${baseCode}:delete`,
       export: `${baseCode}:export`,
-      import: `${baseCode}:import`
+      import: `${baseCode}:import`,
     };
 
     // 特殊处理：如果菜单权限码不包含 :view，则直接追加操作
-    if (!menuCode.includes(':')) {
-      (Object.keys(buttons) as Array<keyof ButtonPermissions>).forEach(key => {
+    if (!menuCode.includes(":")) {
+      (Object.keys(buttons) as Array<keyof ButtonPermissions>).forEach((key) => {
         buttons[key] = `${menuCode}:${key}`;
       });
     }
@@ -181,7 +181,7 @@ class PermissionCodeGenerator {
    * @returns 是否有效
    */
   static validatePermissionCode(code: string): boolean {
-    if (!code || typeof code !== 'string') {
+    if (!code || typeof code !== "string") {
       return false;
     }
     // 权限码格式：由小写字母、数字、冒号、下划线组成
@@ -195,17 +195,17 @@ class PermissionCodeGenerator {
    */
   static inferNodeTypeFromCode(code: string): NodeType {
     if (!code) {
-      return 'folder';
+      return "folder";
     }
 
-    const parts = code.split(':');
+    const parts = code.split(":");
 
     if (parts.length === 1) {
-      return 'folder';
-    } else if (parts.length === 2 || (parts.length === 3 && parts[2] === 'view')) {
-      return 'menu';
+      return "folder";
+    } else if (parts.length === 2 || (parts.length === 3 && parts[2] === "view")) {
+      return "menu";
     } else {
-      return 'button';
+      return "button";
     }
   }
 
@@ -215,12 +215,12 @@ class PermissionCodeGenerator {
    * @returns 格式化后的权限码
    */
   static formatCodeDisplay(code: string): string {
-    if (!code) return '';
+    if (!code) return "";
 
     return code
-      .split(':')
-      .map(part => this.toCamelCase(part))
-      .join(' : ');
+      .split(":")
+      .map((part) => this.toCamelCase(part))
+      .join(" : ");
   }
 }
 

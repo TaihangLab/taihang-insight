@@ -38,27 +38,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onScopeDispose } from 'vue'
+import { ref, watch, onScopeDispose } from "vue";
 
 interface SearchValue {
-  tenant_id: string
-  tenant_name: string
-  company_name: string
-  status: number | null
+  tenant_id: string;
+  tenant_name: string;
+  company_name: string;
+  status: number | null;
 }
 
 const props = defineProps<{
-  modelValue: SearchValue
-}>()
+  modelValue: SearchValue;
+}>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: SearchValue]
-  search: [value: SearchValue]
-  reset: []
-}>()
+  "update:modelValue": [value: SearchValue];
+  search: [value: SearchValue];
+  reset: [];
+}>();
 
 // 使用 ref 替代 reactive，避免潜在的响应式问题
-const formValue = ref<SearchValue>({ ...props.modelValue })
+const formValue = ref<SearchValue>({ ...props.modelValue });
 
 // 使用 watch 并添加清理逻辑
 const stopWatch = watch(
@@ -66,32 +66,32 @@ const stopWatch = watch(
   (newVal) => {
     // 确保在更新时检查组件是否仍然挂载
     if (newVal) {
-      Object.assign(formValue.value, newVal)
+      Object.assign(formValue.value, newVal);
     }
   },
-  { deep: true }
-)
+  { deep: true },
+);
 
 // 组件卸载时停止监听
 onScopeDispose(() => {
-  stopWatch()
-})
+  stopWatch();
+});
 
 const handleSearch = () => {
-  emit('update:modelValue', { ...formValue.value })
-  emit('search', formValue.value)
-}
+  emit("update:modelValue", { ...formValue.value });
+  emit("search", formValue.value);
+};
 
 const handleReset = () => {
   Object.assign(formValue.value, {
-    tenant_id: '',
-    tenant_name: '',
-    company_name: '',
-    status: null
-  })
-  emit('update:modelValue', { ...formValue.value })
-  emit('reset')
-}
+    tenant_id: "",
+    tenant_name: "",
+    company_name: "",
+    status: null,
+  });
+  emit("update:modelValue", { ...formValue.value });
+  emit("reset");
+};
 </script>
 
 <style scoped>

@@ -9,40 +9,44 @@
       :destroy-on-close="true"
       @close="close()"
     >
-      <div id="shared" style="margin-top: 1rem;margin-right: 100px;">
+      <div id="shared" style="margin-top: 1rem; margin-right: 100px">
         <el-form ref="streamProxy" :rules="rules" :model="proxyParam" label-width="140px">
-              <el-form-item label="名称" prop="name">
-                <el-input v-model="proxyParam.name" clearable></el-input>
-              </el-form-item>
-              <el-form-item label="流应用名" prop="app">
-                <el-input v-model="proxyParam.app" clearable :disabled="edit"></el-input>
-              </el-form-item>
-              <el-form-item label="流ID" prop="stream">
-                <el-input v-model="proxyParam.stream" clearable :disabled="edit"></el-input>
-              </el-form-item>
-              <el-form-item label="国标编码" prop="gbId">
-                <el-input v-model="proxyParam.gbId" placeholder="设置国标编码可推送到国标" clearable></el-input>
-              </el-form-item>
-              <el-form-item label="经度" prop="longitude" v-if="proxyParam.gbId">
-                <el-input v-model="proxyParam.longitude" placeholder="经度" clearable></el-input>
-              </el-form-item>
-              <el-form-item label="纬度" prop="latitude" v-if="proxyParam.gbId">
-                <el-input v-model="proxyParam.latitude" placeholder="经度" clearable></el-input>
-              </el-form-item>
-              <el-form-item>
-                <div style="float: right;">
-                  <el-button type="primary" @click="onSubmit">保存</el-button>
-                  <el-button @click="close">取消</el-button>
-                </div>
-              </el-form-item>
-            </el-form>
+          <el-form-item label="名称" prop="name">
+            <el-input v-model="proxyParam.name" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="流应用名" prop="app">
+            <el-input v-model="proxyParam.app" clearable :disabled="edit"></el-input>
+          </el-form-item>
+          <el-form-item label="流ID" prop="stream">
+            <el-input v-model="proxyParam.stream" clearable :disabled="edit"></el-input>
+          </el-form-item>
+          <el-form-item label="国标编码" prop="gbId">
+            <el-input
+              v-model="proxyParam.gbId"
+              placeholder="设置国标编码可推送到国标"
+              clearable
+            ></el-input>
+          </el-form-item>
+          <el-form-item label="经度" prop="longitude" v-if="proxyParam.gbId">
+            <el-input v-model="proxyParam.longitude" placeholder="经度" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="纬度" prop="latitude" v-if="proxyParam.gbId">
+            <el-input v-model="proxyParam.latitude" placeholder="经度" clearable></el-input>
+          </el-form-item>
+          <el-form-item>
+            <div style="float: right">
+              <el-button type="primary" @click="onSubmit">保存</el-button>
+              <el-button @click="close">取消</el-button>
+            </div>
+          </el-form-item>
+        </el-form>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import wvpAxios from '@/api/camera/base'
+import wvpAxios from "@/api/camera/base";
 
 export default {
   name: "pushStreamEdit",
@@ -72,12 +76,12 @@ export default {
       isLoging: false,
       edit: false,
       proxyParam: {
-          name: null,
-          app: null,
-          stream: null,
-          gbId: null,
-          longitude: null,
-          latitude: null,
+        name: null,
+        app: null,
+        stream: null,
+        gbId: null,
+        longitude: null,
+        latitude: null,
       },
       rules: {
         name: [{ required: true, message: "请输入名称", trigger: "blur" }],
@@ -93,63 +97,66 @@ export default {
       this.listChangeCallback = callback;
       if (proxyParam != null) {
         this.proxyParam = proxyParam;
-        this.edit = true
-      }else{
-        this.proxyParam= {
+        this.edit = true;
+      } else {
+        this.proxyParam = {
           name: null,
           app: null,
           stream: null,
           gbId: null,
           longitude: null,
           latitude: null,
-        }
-        this.edit = false
+        };
+        this.edit = false;
       }
     },
     onSubmit: function () {
       console.log("onSubmit");
       if (this.edit) {
         wvpAxios({
-          method:"post",
-          url:`push/save_to_gb`,
-          data: this.proxyParam
-        }).then( (res) => {
-          if (res.data.code === 0) {
-            this.$message({
-              showClose: true,
-              message: "保存成功",
-              type: "success",
-            });
-            this.showDialog = false;
-            if (this.listChangeCallback != null) {
-              this.listChangeCallback();
+          method: "post",
+          url: `push/save_to_gb`,
+          data: this.proxyParam,
+        })
+          .then((res) => {
+            if (res.data.code === 0) {
+              this.$message({
+                showClose: true,
+                message: "保存成功",
+                type: "success",
+              });
+              this.showDialog = false;
+              if (this.listChangeCallback != null) {
+                this.listChangeCallback();
+              }
             }
-          }
-        }).catch((error)=> {
-          console.log(error);
-        });
-      }else {
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      } else {
         wvpAxios({
-          method:"post",
-          url:`push/add`,
-          data: this.proxyParam
-        }).then( (res) => {
-          if (res.data.code === 0) {
-            this.$message({
-              showClose: true,
-              message: "保存成功",
-              type: "success",
-            });
-            this.showDialog = false;
-            if (this.listChangeCallback != null) {
-              this.listChangeCallback();
+          method: "post",
+          url: `push/add`,
+          data: this.proxyParam,
+        })
+          .then((res) => {
+            if (res.data.code === 0) {
+              this.$message({
+                showClose: true,
+                message: "保存成功",
+                type: "success",
+              });
+              this.showDialog = false;
+              if (this.listChangeCallback != null) {
+                this.listChangeCallback();
+              }
             }
-          }
-        }).catch((error)=> {
-          console.log(error);
-        });
+          })
+          .catch((error) => {
+            console.log(error);
+          });
       }
-
     },
     close: function () {
       console.log("关闭加入GB");
@@ -160,23 +167,23 @@ export default {
       var result = false;
       var that = this;
       await wvpAxios({
-        method:"get",
-        url:`platform/exit/${deviceGbId}`
-      }).then(function (res) {
-        result = res.data;
-      }).catch(function (error) {
-        console.log(error);
-      });
+        method: "get",
+        url: `platform/exit/${deviceGbId}`,
+      })
+        .then(function (res) {
+          result = res.data;
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
       return result;
     },
-    checkExpires: function() {
+    checkExpires: function () {
       if (this.platform.enable && this.platform.expires == "0") {
         this.platform.expires = "300";
       }
     },
-    handleNodeClick: function (node){
-
-    }
+    handleNodeClick: function (node) {},
   },
 };
 </script>

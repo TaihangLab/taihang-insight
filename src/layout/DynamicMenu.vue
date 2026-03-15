@@ -2,8 +2,8 @@
   <div class="side-menu-container" :class="{ collapsed: isCollapsed }">
     <!-- Logo 区域 -->
     <div class="logo-section">
-      <img src="@static/logo.png" alt="Logo" class="logo-img" v-if="!isCollapsed"/>
-      <img src="@static/logo.png" alt="Logo" class="logo-img-small" v-else/>
+      <img src="@static/logo.png" alt="Logo" class="logo-img" v-if="!isCollapsed" />
+      <img src="@static/logo.png" alt="Logo" class="logo-img-small" v-else />
       <div class="logo-text-container" v-if="!isCollapsed">
         <div class="brand-row">
           <span class="brand-name-text">太行·慧眼</span>
@@ -30,11 +30,7 @@
       >
         <!-- 动态菜单 -->
         <template v-if="hasMenu">
-          <MenuItem
-            v-for="item in menuTree"
-            :key="item.id"
-            :item="item"
-          />
+          <MenuItem v-for="item in menuTree" :key="item.id" :item="item" />
         </template>
 
         <!-- 加载状态 -->
@@ -58,51 +54,45 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { useDynamicMenu } from '@/composables/useDynamicMenu'
-import MenuItem from './MenuItem.vue'
-import {
-  Expand,
-  Fold,
-  Loading,
-  Warning
-} from '@element-plus/icons-vue'
+import { ref, watch, computed } from "vue";
+import { useRoute } from "vue-router";
+import { useDynamicMenu } from "@/composables/useDynamicMenu";
+import MenuItem from "./MenuItem.vue";
+import { Expand, Fold, Loading, Warning } from "@element-plus/icons-vue";
 
 // 定义 emit
 const emit = defineEmits<{
-  collapseChange: [collapsed: boolean]
-}>()
+  collapseChange: [collapsed: boolean];
+}>();
 
 // 路由
-const route = useRoute()
-
+const route = useRoute();
 
 // 动态菜单
-const { menuTree, hasMenu } = useDynamicMenu()
+const { menuTree, hasMenu } = useDynamicMenu();
 
 // 菜单折叠状态
-const isCollapsed = ref(false)
+const isCollapsed = ref(false);
 
 // 当前激活的菜单
-const activeMenu = ref(route.path)
+const activeMenu = ref(route.path);
 
 // 加载状态
-const loading = computed(() => menuTree.value.length === 0)
+const loading = computed(() => menuTree.value.length === 0);
 
 // 监听路由变化
 watch(
   () => route.path,
   (newPath) => {
-    activeMenu.value = newPath
-  }
-)
+    activeMenu.value = newPath;
+  },
+);
 
 // 切换折叠状态
 const toggleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value
-  emit('collapseChange', isCollapsed.value)
-}
+  isCollapsed.value = !isCollapsed.value;
+  emit("collapseChange", isCollapsed.value);
+};
 </script>
 
 <style scoped>

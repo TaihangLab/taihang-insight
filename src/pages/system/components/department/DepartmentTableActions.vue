@@ -6,29 +6,33 @@
       size="small"
       data-testid="btn-add-department"
       @click="handleAdd"
-    >新增</el-button>
+    >
+      新增
+    </el-button>
     <el-button
       icon="el-icon-s-unfold"
       size="small"
       data-testid="btn-toggle-expand"
       @click="handleToggleExpand"
-    >展开/折叠</el-button>
+    >
+      展开/折叠
+    </el-button>
   </div>
 </template>
 
 <script setup lang="ts">
 const emit = defineEmits<{
-  add: []
-  toggleExpand: []
-}>()
+  add: [];
+  toggleExpand: [];
+}>();
 
 const handleAdd = () => {
-  emit('add')
-}
+  emit("add");
+};
 
 const handleToggleExpand = () => {
-  emit('toggleExpand')
-}
+  emit("toggleExpand");
+};
 </script>
 
 <style scoped>

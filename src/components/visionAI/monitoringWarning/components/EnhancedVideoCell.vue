@@ -12,40 +12,39 @@
     <!-- 视频内容区域 -->
     <div class="video-content" ref="videoContent">
       <!-- AI任务选择下拉框 -->
-      <div v-if="videoUrl && availableTasks.length > 0" 
-           class="ai-task-selector">
-        <el-select 
-          v-model="selectedTaskId" 
-          size="small" 
+      <div v-if="videoUrl && availableTasks.length > 0" class="ai-task-selector">
+        <el-select
+          v-model="selectedTaskId"
+          size="small"
           placeholder="选择AI任务"
           @change="onTaskChange"
-          clearable>
+          clearable
+        >
           <el-option
             v-for="task in availableTasks"
             :key="task.task_id"
             :label="`${task.task_name}`"
-            :value="task.task_id">
+            :value="task.task_id"
+          >
             <span style="float: left">{{ task.task_name }}</span>
             <span style="float: right; color: #8492a6; font-size: 12px">{{ task.skill_name }}</span>
           </el-option>
         </el-select>
       </div>
-      
+
       <!-- 视频播放器容器 -->
-      <div class="video-placeholder" 
-           :data-timestamp="timestamp" 
-           :data-camera="cameraName">
+      <div class="video-placeholder" :data-timestamp="timestamp" :data-camera="cameraName">
         <!-- 无信号状态 -->
         <div v-if="!videoUrl" class="no-signal">
           <i class="el-icon-video-camera-solid"></i>
           <div>{{ tip || "无信号" }}</div>
         </div>
-        
+
         <!-- 视频播放器 + OSD叠加 -->
         <div v-else class="video-player-wrapper">
           <!-- 视频播放器 -->
           <slot name="player"></slot>
-          
+
           <!-- 检测框OSD叠加层 -->
           <detection-overlay
             v-if="selectedTaskId && detections.length > 0"
@@ -53,8 +52,8 @@
             :container-height="containerHeight"
             :video-width="videoWidth"
             :video-height="videoHeight"
-            :detections="detections">
-          </detection-overlay>
+            :detections="detections"
+          ></detection-overlay>
         </div>
       </div>
     </div>
@@ -62,54 +61,54 @@
 </template>
 
 <script>
-import DetectionOverlay from './DetectionOverlay.vue'
+import DetectionOverlay from "./DetectionOverlay.vue";
 
 export default {
-  name: 'EnhancedVideoCell',
+  name: "EnhancedVideoCell",
   components: {
-    DetectionOverlay
+    DetectionOverlay,
   },
   props: {
     // 摄像头名称
     cameraName: {
       type: String,
-      default: '摄像头'
+      default: "摄像头",
     },
     // 摄像头ID
     cameraId: {
       type: [Number, String],
-      default: null
+      default: null,
     },
     // 视频URL
     videoUrl: {
       type: String,
-      default: ''
+      default: "",
     },
     // 视频状态
     statusClass: {
       type: String,
-      default: 'offline'
+      default: "offline",
     },
     // 状态文本
     statusText: {
       type: String,
-      default: '离线'
+      default: "离线",
     },
     // 提示信息
     tip: {
       type: String,
-      default: ''
+      default: "",
     },
     // 时间戳
     timestamp: {
       type: String,
-      default: ''
+      default: "",
     },
     // 可用的AI任务列表
     availableTasks: {
       type: Array,
-      default: () => []
-    }
+      default: () => [],
+    },
   },
   data() {
     return {
@@ -120,34 +119,34 @@ export default {
       videoHeight: 1080,
       containerWidth: 640,
       containerHeight: 480,
-      resizeObserver: null
-    }
+      resizeObserver: null,
+    };
   },
   watch: {
     cameraId(newId, oldId) {
       if (newId !== oldId) {
         // 摄像头切换，清理资源
-        this.cleanup()
+        this.cleanup();
       }
     },
     videoUrl(newUrl, oldUrl) {
       if (!newUrl && oldUrl) {
         // 视频停止，清理资源
-        this.cleanup()
+        this.cleanup();
       }
-    }
+    },
   },
   mounted() {
     // 初始化容器尺寸
-    this.updateContainerSize()
-    
+    this.updateContainerSize();
+
     // 监听容器尺寸变化
-    this.setupResizeObserver()
+    this.setupResizeObserver();
   },
   beforeDestroy() {
-    this.cleanup()
+    this.cleanup();
     if (this.resizeObserver) {
-      this.resizeObserver.disconnect()
+      this.resizeObserver.disconnect();
     }
   },
   methods: {
@@ -156,111 +155,110 @@ export default {
      */
     onTaskChange(taskId) {
       // 断开旧连接
-      this.disconnectWebSocket()
-      
+      this.disconnectWebSocket();
+
       // 清空检测结果
-      this.detections = []
-      
+      this.detections = [];
+
       // 如果选择了任务，建立新连接
       if (taskId) {
-        this.connectWebSocket(taskId)
+        this.connectWebSocket(taskId);
       }
-      
+
       // 触发事件
-      this.$emit('task-change', taskId)
+      this.$emit("task-change", taskId);
     },
-    
+
     /**
      * 连接WebSocket
      */
     connectWebSocket(taskId) {
       try {
-        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsUrl = `${protocol}//${location.host}/api/realtime-detection/ws/detection/${taskId}`
-        
-        console.log(`🔌 连接检测WebSocket: ${wsUrl}`)
-        
-        this.wsConnection = new WebSocket(wsUrl)
-        
+        const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+        const wsUrl = `${protocol}//${location.host}/api/realtime-detection/ws/detection/${taskId}`;
+
+        console.log(`🔌 连接检测WebSocket: ${wsUrl}`);
+
+        this.wsConnection = new WebSocket(wsUrl);
+
         this.wsConnection.onopen = () => {
-          console.log(`✅ WebSocket连接成功: task_id=${taskId}`)
-        }
-        
+          console.log(`✅ WebSocket连接成功: task_id=${taskId}`);
+        };
+
         this.wsConnection.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data)
-            
+            const data = JSON.parse(event.data);
+
             // 更新检测结果
-            this.detections = data.detections || []
-            
+            this.detections = data.detections || [];
+
             // 更新视频分辨率
             if (data.frame_size) {
-              this.videoWidth = data.frame_size.width
-              this.videoHeight = data.frame_size.height
+              this.videoWidth = data.frame_size.width;
+              this.videoHeight = data.frame_size.height;
             }
           } catch (error) {
-            console.error('❌ 解析检测结果失败:', error)
+            console.error("❌ 解析检测结果失败:", error);
           }
-        }
-        
+        };
+
         this.wsConnection.onerror = (error) => {
-          console.error(`❌ WebSocket错误: task_id=${taskId}`, error)
-        }
-        
+          console.error(`❌ WebSocket错误: task_id=${taskId}`, error);
+        };
+
         this.wsConnection.onclose = () => {
-          console.log(`🔌 WebSocket已断开: task_id=${taskId}`)
-        }
-        
+          console.log(`🔌 WebSocket已断开: task_id=${taskId}`);
+        };
       } catch (error) {
-        console.error('❌ 创建WebSocket连接失败:', error)
+        console.error("❌ 创建WebSocket连接失败:", error);
       }
     },
-    
+
     /**
      * 断开WebSocket
      */
     disconnectWebSocket() {
       if (this.wsConnection) {
-        this.wsConnection.close()
-        this.wsConnection = null
+        this.wsConnection.close();
+        this.wsConnection = null;
       }
     },
-    
+
     /**
      * 更新容器尺寸
      */
     updateContainerSize() {
       if (this.$refs.videoContent) {
-        this.containerWidth = this.$refs.videoContent.clientWidth || 640
-        this.containerHeight = this.$refs.videoContent.clientHeight || 480
+        this.containerWidth = this.$refs.videoContent.clientWidth || 640;
+        this.containerHeight = this.$refs.videoContent.clientHeight || 480;
       }
     },
-    
+
     /**
      * 设置尺寸监听
      */
     setupResizeObserver() {
-      if (!window.ResizeObserver) return
-      
+      if (!window.ResizeObserver) return;
+
       this.resizeObserver = new ResizeObserver(() => {
-        this.updateContainerSize()
-      })
-      
+        this.updateContainerSize();
+      });
+
       if (this.$refs.videoContent) {
-        this.resizeObserver.observe(this.$refs.videoContent)
+        this.resizeObserver.observe(this.$refs.videoContent);
       }
     },
-    
+
     /**
      * 清理资源
      */
     cleanup() {
-      this.disconnectWebSocket()
-      this.detections = []
-      this.selectedTaskId = null
-    }
-  }
-}
+      this.disconnectWebSocket();
+      this.detections = [];
+      this.selectedTaskId = null;
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -377,7 +375,8 @@ export default {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -385,4 +384,3 @@ export default {
   }
 }
 </style>
-

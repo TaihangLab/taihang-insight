@@ -29,76 +29,76 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import PositionTableActions from '@/pages/system/components/position/PositionTableActions.vue'
-import PositionTable from '@/pages/system/components/position/PositionTable.vue'
-import PositionPagination from '@/pages/system/components/position/PositionPagination.vue'
+import { computed } from "vue";
+import PositionTableActions from "@/pages/system/components/position/PositionTableActions.vue";
+import PositionTable from "@/pages/system/components/position/PositionTable.vue";
+import PositionPagination from "@/pages/system/components/position/PositionPagination.vue";
 
 interface Pagination {
-  currentPage: number
-  pageSize: number
+  currentPage: number;
+  pageSize: number;
 }
 
 interface PositionItem {
-  id: string | number
-  status: number
-  _selected?: boolean
-  [key: string]: any
+  id: string | number;
+  status: number;
+  _selected?: boolean;
+  [key: string]: any;
 }
 
 const props = defineProps<{
-  data: PositionItem[]
-  loading: boolean
-  pagination: Pagination
-  total: number
-}>()
+  data: PositionItem[];
+  loading: boolean;
+  pagination: Pagination;
+  total: number;
+}>();
 
 const emit = defineEmits<{
-  selectionChange: [selection: PositionItem[]]
-  add: []
-  edit: [row: PositionItem]
-  delete: [row: PositionItem]
-  batchDelete: []
-  export: []
-  pageChange: [page: number]
-  sizeChange: [size: number]
-}>()
+  selectionChange: [selection: PositionItem[]];
+  add: [];
+  edit: [row: PositionItem];
+  delete: [row: PositionItem];
+  batchDelete: [];
+  export: [];
+  pageChange: [page: number];
+  sizeChange: [size: number];
+}>();
 
-const currentPage = computed(() => props.pagination.currentPage)
-const pageSize = computed(() => props.pagination.pageSize)
-const selectedCount = computed(() => props.data.filter((item) => item._selected).length)
+const currentPage = computed(() => props.pagination.currentPage);
+const pageSize = computed(() => props.pagination.pageSize);
+const selectedCount = computed(() => props.data.filter((item) => item._selected).length);
 
 const handleSelectionChange = (selection: PositionItem[]) => {
-  emit('selectionChange', selection)
-}
+  emit("selectionChange", selection);
+};
 
 const handleAdd = () => {
-  emit('add')
-}
+  emit("add");
+};
 
 const handleEdit = (row: PositionItem) => {
-  emit('edit', row)
-}
+  emit("edit", row);
+};
 
 const handleDelete = (row: PositionItem) => {
-  emit('delete', row)
-}
+  emit("delete", row);
+};
 
 const handleBatchDelete = () => {
-  emit('batchDelete')
-}
+  emit("batchDelete");
+};
 
 const handleExport = () => {
-  emit('export')
-}
+  emit("export");
+};
 
 const handlePageChange = (page: number) => {
-  emit('pageChange', page)
-}
+  emit("pageChange", page);
+};
 
 const handleSizeChange = (size: number) => {
-  emit('sizeChange', size)
-}
+  emit("sizeChange", size);
+};
 </script>
 
 <style scoped>

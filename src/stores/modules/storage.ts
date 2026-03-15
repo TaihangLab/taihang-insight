@@ -10,7 +10,7 @@
  * 6. 解耦 logout 逻辑：storage 只管理非 store 数据，store 由自己管理
  */
 
-import { StorageKey } from "./storageKeys"
+import { StorageKey } from "./storageKeys";
 
 /**
  * 存储助手类
@@ -20,13 +20,13 @@ class StorageHelper {
   /**
    * 获取字符串值
    */
-  getString(key: StorageKey, defaultValue: string = ''): string {
+  getString(key: StorageKey, defaultValue: string = ""): string {
     try {
-      const value = localStorage.getItem(key)
-      return value ?? defaultValue
+      const value = localStorage.getItem(key);
+      return value ?? defaultValue;
     } catch (error) {
-      console.warn(`[Storage] 获取 ${key} 失败:`, error)
-      return defaultValue
+      console.warn(`[Storage] 获取 ${key} 失败:`, error);
+      return defaultValue;
     }
   }
 
@@ -35,9 +35,9 @@ class StorageHelper {
    */
   setString(key: StorageKey, value: string): void {
     try {
-      localStorage.setItem(key, value)
+      localStorage.setItem(key, value);
     } catch (error) {
-      console.error(`[Storage] 设置 ${key} 失败:`, error)
+      console.error(`[Storage] 设置 ${key} 失败:`, error);
     }
   }
 
@@ -46,12 +46,12 @@ class StorageHelper {
    */
   getJSON<T = any>(key: StorageKey, defaultValue: T | null = null): T | null {
     try {
-      const value = localStorage.getItem(key)
-      if (value === null) return defaultValue
-      return JSON.parse(value) as T
+      const value = localStorage.getItem(key);
+      if (value === null) return defaultValue;
+      return JSON.parse(value) as T;
     } catch (error) {
-      console.warn(`[Storage] 解析 ${key} JSON 失败:`, error)
-      return defaultValue
+      console.warn(`[Storage] 解析 ${key} JSON 失败:`, error);
+      return defaultValue;
     }
   }
 
@@ -60,9 +60,9 @@ class StorageHelper {
    */
   setJSON<T = any>(key: StorageKey, value: T): void {
     try {
-      localStorage.setItem(key, JSON.stringify(value))
+      localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
-      console.error(`[Storage] 设置 ${key} JSON 失败:`, error)
+      console.error(`[Storage] 设置 ${key} JSON 失败:`, error);
     }
   }
 
@@ -71,9 +71,9 @@ class StorageHelper {
    */
   remove(key: StorageKey): void {
     try {
-      localStorage.removeItem(key)
+      localStorage.removeItem(key);
     } catch (error) {
-      console.error(`[Storage] 移除 ${key} 失败:`, error)
+      console.error(`[Storage] 移除 ${key} 失败:`, error);
     }
   }
 
@@ -82,10 +82,10 @@ class StorageHelper {
    */
   has(key: StorageKey): boolean {
     try {
-      return localStorage.getItem(key) !== null
+      return localStorage.getItem(key) !== null;
     } catch (error) {
-      console.error(`[Storage] 检查 ${key} 失败:`, error)
-      return false
+      console.error(`[Storage] 检查 ${key} 失败:`, error);
+      return false;
     }
   }
 
@@ -94,9 +94,9 @@ class StorageHelper {
    */
   clear(): void {
     try {
-      localStorage.clear()
+      localStorage.clear();
     } catch (error) {
-      console.error('[Storage] 清空 localStorage 失败:', error)
+      console.error("[Storage] 清空 localStorage 失败:", error);
     }
   }
 
@@ -104,14 +104,14 @@ class StorageHelper {
    * 批量移除
    */
   removeMultiple(...keys: StorageKey[]): void {
-    keys.forEach(key => this.remove(key))
+    keys.forEach((key) => this.remove(key));
   }
 }
 
 /**
  * 存储管理器单例
  */
-const storageHelper = new StorageHelper()
+const storageHelper = new StorageHelper();
 
 /**
  * 导出类型安全的存储操作接口
@@ -120,17 +120,14 @@ const storageHelper = new StorageHelper()
 export const storage = {
   // ========== 基础操作 ==========
   /** 获取字符串 */
-  getString: (key: StorageKey, defaultValue?: string) =>
-    storageHelper.getString(key, defaultValue),
+  getString: (key: StorageKey, defaultValue?: string) => storageHelper.getString(key, defaultValue),
   /** 设置字符串 */
-  setString: (key: StorageKey, value: string) =>
-    storageHelper.setString(key, value),
+  setString: (key: StorageKey, value: string) => storageHelper.setString(key, value),
   /** 获取 JSON */
   getJSON: <T = any>(key: StorageKey, defaultValue?: T | null) =>
     storageHelper.getJSON<T>(key, defaultValue),
   /** 设置 JSON */
-  setJSON: <T = any>(key: StorageKey, value: T) =>
-    storageHelper.setJSON<T>(key, value),
+  setJSON: <T = any>(key: StorageKey, value: T) => storageHelper.setJSON<T>(key, value),
   /** 移除 */
   remove: (key: StorageKey) => storageHelper.remove(key),
   /** 检查是否存在 */
@@ -144,7 +141,8 @@ export const storage = {
   /** 获取选中的租户 */
   getSelectedTenant: () => storageHelper.getString(StorageKey.SELECTED_TENANT),
   /** 设置选中的租户 */
-  setSelectedTenant: (tenant: string) => storageHelper.setString(StorageKey.SELECTED_TENANT, tenant),
+  setSelectedTenant: (tenant: string) =>
+    storageHelper.setString(StorageKey.SELECTED_TENANT, tenant),
   /** 获取当前用户昵称 */
   getCurrentUserName: () => storageHelper.getString(StorageKey.CURRENT_USER_NAME),
   /** 设置当前用户昵称 */
@@ -166,32 +164,35 @@ export const storage = {
 
   // ========== 业务数据 ==========
   /** 获取智能复判记录 */
-  getIntelligentReviewRecords: () => storageHelper.getJSON<any[]>(StorageKey.INTELLIGENT_REVIEW_RECORDS, []),
+  getIntelligentReviewRecords: () =>
+    storageHelper.getJSON<any[]>(StorageKey.INTELLIGENT_REVIEW_RECORDS, []),
   /** 设置智能复判记录 */
-  setIntelligentReviewRecords: (records: any[]) => storageHelper.setJSON(StorageKey.INTELLIGENT_REVIEW_RECORDS, records),
+  setIntelligentReviewRecords: (records: any[]) =>
+    storageHelper.setJSON(StorageKey.INTELLIGENT_REVIEW_RECORDS, records),
   /** 添加智能复判记录 */
   addIntelligentReviewRecord: (record: any) => {
-    const records = storage.getIntelligentReviewRecords()
-    records.unshift(record)
+    const records = storage.getIntelligentReviewRecords();
+    records.unshift(record);
     // 限制记录数量
     if (records.length > 1000) {
-      records.splice(1000)
+      records.splice(1000);
     }
-    storage.setIntelligentReviewRecords(records)
+    storage.setIntelligentReviewRecords(records);
   },
   /** 获取还原的预警列表 */
   getRestoredWarnings: () => storageHelper.getJSON<any[]>(StorageKey.RESTORED_WARNINGS, []),
   /** 设置还原的预警列表 */
-  setRestoredWarnings: (warnings: any[]) => storageHelper.setJSON(StorageKey.RESTORED_WARNINGS, warnings),
+  setRestoredWarnings: (warnings: any[]) =>
+    storageHelper.setJSON(StorageKey.RESTORED_WARNINGS, warnings),
   /** 添加还原的预警 */
   addRestoredWarning: (warning: any) => {
-    const warnings = storage.getRestoredWarnings()
+    const warnings = storage.getRestoredWarnings();
     warnings.push({
       ...warning,
       restoredAt: new Date().toISOString(),
-      restoredFrom: 'reviewRecords'
-    })
-    storage.setRestoredWarnings(warnings)
+      restoredFrom: "reviewRecords",
+    });
+    storage.setRestoredWarnings(warnings);
   },
 
   // ========== 清理操作 ==========
@@ -201,17 +202,17 @@ export const storage = {
    */
   clearUserData: () => {
     // 清除用户偏好
-    storage.remove(StorageKey.SELECTED_TENANT)
-    storage.remove(StorageKey.CURRENT_USER_NAME)
+    storage.remove(StorageKey.SELECTED_TENANT);
+    storage.remove(StorageKey.CURRENT_USER_NAME);
 
     // 清除临时数据
-    storage.remove(StorageKey.EDIT_SKILL_INFO)
-    storage.remove(StorageKey.TEMP_SKILL_INFO)
+    storage.remove(StorageKey.EDIT_SKILL_INFO);
+    storage.remove(StorageKey.TEMP_SKILL_INFO);
 
     // 清除业务数据
-    storage.remove(StorageKey.INTELLIGENT_REVIEW_RECORDS)
-    storage.remove(StorageKey.RESTORED_WARNINGS)
-  }
-}
+    storage.remove(StorageKey.INTELLIGENT_REVIEW_RECORDS);
+    storage.remove(StorageKey.RESTORED_WARNINGS);
+  },
+};
 
-export default storage
+export default storage;

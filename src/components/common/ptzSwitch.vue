@@ -1,7 +1,7 @@
 <template>
   <div id="ptzScan">
-    <el-form size="small" :inline="true" >
-      <el-form-item >
+    <el-form size="small" :inline="true">
+      <el-form-item>
         <el-input
           min="1"
           max="4095"
@@ -10,59 +10,59 @@
           addonAfter="(2-255)"
           v-model="switchId"
           size="small"
-        >
-        </el-input>
+        ></el-input>
       </el-form-item>
       <el-form-item>
         <el-button size="small" @click="open('on')">开启</el-button>
         <el-button size="small" @click="open('off')">关闭</el-button>
       </el-form-item>
     </el-form>
-
   </div>
 </template>
 
 <script>
-import { controlAuxiliary } from '@/api/ptz'
+import { controlAuxiliary } from "@/api/ptz";
 
 export default {
   name: "ptzScan",
-  props: [ 'channelDeviceId', 'deviceId'],
+  props: ["channelDeviceId", "deviceId"],
   components: {},
-  created() {
-  },
+  created() {},
   data() {
     return {
       switchId: 1,
     };
   },
   methods: {
-    open: function (command){
+    open: function (command) {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
       controlAuxiliary(this.deviceId, this.channelDeviceId, {
         command: command,
         switchId: this.switchId,
-      }).then(()=> {
-        this.$message({
-          showClose: true,
-          message: "保存成功",
-          type: 'success'
-        });
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error.message || '保存失败',
-          type: 'error'
-        });
-      }).finally(()=>{
-        loading.close()
       })
+        .then(() => {
+          this.$message({
+            showClose: true,
+            message: "保存成功",
+            type: "success",
+          });
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error.message || "保存失败",
+            type: "error",
+          });
+        })
+        .finally(() => {
+          loading.close();
+        });
     },
   },
 };
@@ -70,10 +70,9 @@ export default {
 <style>
 .channel-form {
   display: grid;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   padding: 1rem 2rem 0 2rem;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 1rem;
 }
-
 </style>

@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from "@/utils/request";
 
 // ==================== 边缘盒子管理 ====================
 
@@ -11,10 +11,10 @@ import request from '@/utils/request'
  */
 export function getEdgeBoxList(params) {
   return request({
-    url: '/edge/box/list',
-    method: 'get',
-    params
-  })
+    url: "/edge/box/list",
+    method: "get",
+    params,
+  });
 }
 
 /**
@@ -23,10 +23,10 @@ export function getEdgeBoxList(params) {
  */
 export function addEdgeBox(data) {
   return request({
-    url: '/edge/box',
-    method: 'post',
-    data
-  })
+    url: "/edge/box",
+    method: "post",
+    data,
+  });
 }
 
 /**
@@ -35,10 +35,10 @@ export function addEdgeBox(data) {
  */
 export function updateEdgeBox(data) {
   return request({
-    url: '/edge/box',
-    method: 'put',
-    data
-  })
+    url: "/edge/box",
+    method: "put",
+    data,
+  });
 }
 
 /**
@@ -48,8 +48,8 @@ export function updateEdgeBox(data) {
 export function deleteEdgeBox(id) {
   return request({
     url: `/edge/box/${id}`,
-    method: 'delete'
-  })
+    method: "delete",
+  });
 }
 
 /**
@@ -58,10 +58,10 @@ export function deleteEdgeBox(id) {
  */
 export function batchDeleteEdgeBox(ids) {
   return request({
-    url: '/edge/box/batch',
-    method: 'delete',
-    data: { ids }
-  })
+    url: "/edge/box/batch",
+    method: "delete",
+    data: { ids },
+  });
 }
 
 /**
@@ -72,10 +72,10 @@ export function batchDeleteEdgeBox(ids) {
  */
 export function bindEdgeServer(data) {
   return request({
-    url: '/edge/box/bind',
-    method: 'post',
-    data
-  })
+    url: "/edge/box/bind",
+    method: "post",
+    data,
+  });
 }
 
 // ==================== 边缘服务器管理 ====================
@@ -89,10 +89,10 @@ export function bindEdgeServer(data) {
  */
 export function getEdgeServerList(params) {
   return request({
-    url: '/edge/server/list',
-    method: 'get',
-    params
-  })
+    url: "/edge/server/list",
+    method: "get",
+    params,
+  });
 }
 
 /**
@@ -101,10 +101,10 @@ export function getEdgeServerList(params) {
  */
 export function registerEdgeServer(data) {
   return request({
-    url: '/edge/server',
-    method: 'post',
-    data
-  })
+    url: "/edge/server",
+    method: "post",
+    data,
+  });
 }
 
 /**
@@ -113,10 +113,10 @@ export function registerEdgeServer(data) {
  */
 export function updateEdgeServer(data) {
   return request({
-    url: '/edge/server',
-    method: 'put',
-    data
-  })
+    url: "/edge/server",
+    method: "put",
+    data,
+  });
 }
 
 /**
@@ -126,8 +126,8 @@ export function updateEdgeServer(data) {
 export function deleteEdgeServer(id) {
   return request({
     url: `/edge/server/${id}`,
-    method: 'delete'
-  })
+    method: "delete",
+  });
 }
 
 /**
@@ -137,8 +137,8 @@ export function deleteEdgeServer(id) {
 export function getEdgeServerDetail(id) {
   return request({
     url: `/edge/server/${id}`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
 
 /**
@@ -149,10 +149,10 @@ export function getEdgeServerDetail(id) {
  */
 export function updateServerAuthorization(data) {
   return request({
-    url: '/edge/server/authorization',
-    method: 'put',
-    data
-  })
+    url: "/edge/server/authorization",
+    method: "put",
+    data,
+  });
 }
 
 /**
@@ -160,8 +160,7 @@ export function updateServerAuthorization(data) {
  */
 export function getAvailableServerList() {
   return request({
-    url: '/edge/server/available',
-    method: 'get'
-  })
+    url: "/edge/server/available",
+    method: "get",
+  });
 }
-

@@ -5,7 +5,9 @@
     <div class="header-actions">
       <el-button type="primary" icon="el-icon-plus" @click="handleAdd">新增</el-button>
       <el-button icon="el-icon-edit" @click="handleEdit" :disabled="!selectedNode">编辑</el-button>
-      <el-button icon="el-icon-delete" @click="handleDelete" :disabled="!selectedNode">删除</el-button>
+      <el-button icon="el-icon-delete" @click="handleDelete" :disabled="!selectedNode">
+        删除
+      </el-button>
       <el-button icon="el-icon-refresh" @click="handleRefresh">刷新</el-button>
     </div>
   </div>
@@ -13,35 +15,35 @@
 
 <script setup lang="ts">
 interface PermissionNode {
-  [key: string]: any
+  [key: string]: any;
 }
 
 defineProps<{
-  selectedNode: PermissionNode | null
-}>()
+  selectedNode: PermissionNode | null;
+}>();
 
 const emit = defineEmits<{
-  add: []
-  edit: []
-  delete: []
-  refresh: []
-}>()
+  add: [];
+  edit: [];
+  delete: [];
+  refresh: [];
+}>();
 
 const handleAdd = () => {
-  emit('add')
-}
+  emit("add");
+};
 
 const handleEdit = () => {
-  emit('edit')
-}
+  emit("edit");
+};
 
 const handleDelete = () => {
-  emit('delete')
-}
+  emit("delete");
+};
 
 const handleRefresh = () => {
-  emit('refresh')
-}
+  emit("refresh");
+};
 </script>
 
 <style scoped>

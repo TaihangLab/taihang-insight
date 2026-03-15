@@ -1,11 +1,7 @@
 <template>
   <div class="tenant-management-page">
     <!-- 查询区 -->
-    <TenantSearchBar
-      v-model="searchConditions"
-      @search="handleSearch"
-      @reset="handleReset"
-    />
+    <TenantSearchBar v-model="searchConditions" @search="handleSearch" @reset="handleReset" />
     <!-- 列表区 -->
     <TenantList
       :tenants="tenants"
@@ -40,13 +36,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useTenantData } from '@/pages/system/composable/tenant/useTenantData'
-import TenantSearchBar from '@/pages/system/components/tenant/TenantSearchBar.vue'
-import TenantList from '@/pages/system/components/tenant/TenantList.vue'
-import DeleteConfirmDialog from '@/pages/system/components/tenant/DeleteConfirmDialog.vue'
-import TenantEditForm from '@/pages/system/components/tenant/tenantEditForm.vue'
+import { ref, reactive, onMounted } from "vue";
+import { ElMessage } from "element-plus";
+import { useTenantData } from "@/pages/system/composable/tenant/useTenantData";
+import TenantSearchBar from "@/pages/system/components/tenant/TenantSearchBar.vue";
+import TenantList from "@/pages/system/components/tenant/TenantList.vue";
+import DeleteConfirmDialog from "@/pages/system/components/tenant/DeleteConfirmDialog.vue";
+import TenantEditForm from "@/pages/system/components/tenant/tenantEditForm.vue";
 
 // ============================================
 // Composables
@@ -58,8 +54,8 @@ const {
   fetchTenants,
   updateTenant,
   deleteTenant,
-  batchDeleteTenants
-} = useTenantData()
+  batchDeleteTenants,
+} = useTenantData();
 
 // ============================================
 // 响应式状态
@@ -67,31 +63,31 @@ const {
 
 // 搜索条件
 const searchConditions = reactive({
-  tenant_id: '',
-  tenant_name: '',
-  company_name: '',
-  status: null as number | null
-})
+  tenant_id: "",
+  tenant_name: "",
+  company_name: "",
+  status: null as number | null,
+});
 
 // 选中的租户编码
-const selectedCodes = ref<number[]>([])
+const selectedCodes = ref<number[]>([]);
 
 // 对话框状态
-const editDialogVisible = ref(false)
-const deleteDialogVisible = ref(false)
-const currentTenant = ref<any>(null)
+const editDialogVisible = ref(false);
+const deleteDialogVisible = ref(false);
+const currentTenant = ref<any>(null);
 
 // 删除相关
-const deleteTargetType = ref<'single' | 'batch'>('single')
-const deleteTargetName = ref('')
-const deleteTargetCodes = ref<number[]>([])
+const deleteTargetType = ref<"single" | "batch">("single");
+const deleteTargetName = ref("");
+const deleteTargetCodes = ref<number[]>([]);
 
 // ============================================
 // 生命周期
 // ============================================
 onMounted(() => {
-  loadData()
-})
+  loadData();
+});
 
 // ============================================
 // 方法
@@ -101,8 +97,8 @@ onMounted(() => {
  * 计算当前页的 skip 值
  */
 const getSkip = (): number => {
-  return (pagination.value.currentPage - 1) * pagination.value.pageSize
-}
+  return (pagination.value.currentPage - 1) * pagination.value.pageSize;
+};
 
 /**
  * 构建查询参数
@@ -110,24 +106,24 @@ const getSkip = (): number => {
 const buildParams = () => {
   const params: Record<string, any> = {
     skip: getSkip(),
-    limit: pagination.value.pageSize
-  }
+    limit: pagination.value.pageSize,
+  };
 
   if (searchConditions.tenant_id) {
-    params.tenant_id = searchConditions.tenant_id
+    params.tenant_id = searchConditions.tenant_id;
   }
   if (searchConditions.tenant_name) {
-    params.tenant_name = searchConditions.tenant_name
+    params.tenant_name = searchConditions.tenant_name;
   }
   if (searchConditions.company_name) {
-    params.company_name = searchConditions.company_name
+    params.company_name = searchConditions.company_name;
   }
   if (searchConditions.status !== null) {
-    params.status = searchConditions.status
+    params.status = searchConditions.status;
   }
 
-  return params
-}
+  return params;
+};
 
 /**
  * 加载数据
@@ -137,180 +133,179 @@ const loadData = async () => {
     tenants.value = await fetchTenants(
       buildParams(),
       pagination.value.currentPage,
-      pagination.value.pageSize
-    )
+      pagination.value.pageSize,
+    );
   } catch (error: any) {
-    ElMessage.error(`获取租户列表失败: ${error.message}`)
-    clearData()
+    ElMessage.error(`获取租户列表失败: ${error.message}`);
+    clearData();
   }
-}
+};
 
 /**
  * 清空数据
  */
 const clearData = () => {
-  tenants.value = []
-}
+  tenants.value = [];
+};
 
 /**
  * 搜索
  */
 const handleSearch = (conditions: any) => {
-  Object.assign(searchConditions, conditions)
-  pagination.value.currentPage = 1
-  loadData()
-}
+  Object.assign(searchConditions, conditions);
+  pagination.value.currentPage = 1;
+  loadData();
+};
 
 /**
  * 重置
  */
 const handleReset = () => {
-  searchConditions.tenant_id = ''
-  searchConditions.tenant_name = ''
-  searchConditions.company_name = ''
-  searchConditions.status = null
-  pagination.value.currentPage = 1
-  loadData()
-}
+  searchConditions.tenant_id = "";
+  searchConditions.tenant_name = "";
+  searchConditions.company_name = "";
+  searchConditions.status = null;
+  pagination.value.currentPage = 1;
+  loadData();
+};
 
 /**
  * 选择变化
  */
 const handleSelectionChange = (codes: number[]) => {
-  selectedCodes.value = codes
-}
+  selectedCodes.value = codes;
+};
 
 /**
  * 新增
  */
 const handleAdd = () => {
-  currentTenant.value = null
-  editDialogVisible.value = true
-}
+  currentTenant.value = null;
+  editDialogVisible.value = true;
+};
 
 /**
  * 编辑
  */
 const handleEdit = (row: any) => {
-  currentTenant.value = row
-  editDialogVisible.value = true
-}
+  currentTenant.value = row;
+  editDialogVisible.value = true;
+};
 
 /**
  * 租户保存成功回调
  */
 const handleTenantSaved = () => {
-  loadData()
-}
+  loadData();
+};
 
 /**
  * 删除
  */
 const handleDelete = (row: any) => {
-  deleteTargetType.value = 'single'
-  deleteTargetName.value = row.tenant_name || row.id
-  deleteTargetCodes.value = [row.id]
-  deleteDialogVisible.value = true
-}
+  deleteTargetType.value = "single";
+  deleteTargetName.value = row.tenant_name || row.id;
+  deleteTargetCodes.value = [row.id];
+  deleteDialogVisible.value = true;
+};
 
 /**
  * 批量删除
  */
 const handleBatchDelete = (codes: number[]) => {
-  deleteTargetType.value = 'batch'
-  deleteTargetName.value = String(codes.length)
-  deleteTargetCodes.value = codes
-  deleteDialogVisible.value = true
-}
+  deleteTargetType.value = "batch";
+  deleteTargetName.value = String(codes.length);
+  deleteTargetCodes.value = codes;
+  deleteDialogVisible.value = true;
+};
 
 /**
  * 确认删除
  */
 const handleDeleteConfirm = async () => {
   try {
-    let result: any
-    if (deleteTargetType.value === 'single') {
-      result = await deleteTenant(deleteTargetCodes.value[0])
+    let result: any;
+    if (deleteTargetType.value === "single") {
+      result = await deleteTenant(deleteTargetCodes.value[0]);
     } else {
-      result = await batchDeleteTenants(deleteTargetCodes.value)
+      result = await batchDeleteTenants(deleteTargetCodes.value);
     }
 
     ElMessage({
       message: result.message,
-      type: 'success'
-    })
-    loadData()
+      type: "success",
+    });
+    loadData();
   } catch (error: any) {
     ElMessage({
-      message: `删除失败: ${error.message || '未知错误'}`,
-      type: 'error'
-    })
+      message: `删除失败: ${error.message || "未知错误"}`,
+      type: "error",
+    });
   }
-}
+};
 
 /**
  * 状态切换
  */
 const handleStatusChange = async (row: any) => {
   // v-model 已经自动更新了 row.status，直接使用即可
-  const newStatus = row.status
-  
+  const newStatus = row.status;
+
   try {
-    await updateTenant(row.id, { status: newStatus })
+    await updateTenant(row.id, { status: newStatus });
     ElMessage({
-      message: '状态更新成功',
-      type: 'success'
-    })
+      message: "状态更新成功",
+      type: "success",
+    });
     // 成功更新后刷新数据以显示最新状态
-    loadData()
+    loadData();
   } catch (error: any) {
     // 提取错误消息，优先使用后端返回的具体错误信息
-    let errorMessage = '更新租户状态失败'
-    if (error.message && !error.message.includes('Network Error')) {
-      errorMessage = error.message
+    let errorMessage = "更新租户状态失败";
+    if (error.message && !error.message.includes("Network Error")) {
+      errorMessage = error.message;
     } else if (error.response?.data) {
-      const data = error.response.data
-      if (typeof data === 'object') {
+      const data = error.response.data;
+      if (typeof data === "object") {
         if (data.message) {
-          errorMessage = data.message
+          errorMessage = data.message;
         } else if (data.detail) {
-          errorMessage = data.detail
+          errorMessage = data.detail;
         } else if (data.msg) {
-          errorMessage = data.msg
+          errorMessage = data.msg;
         }
-      } else if (typeof data === 'string') {
-        errorMessage = data
+      } else if (typeof data === "string") {
+        errorMessage = data;
       }
     } else if (error.message) {
-      errorMessage = error.message
+      errorMessage = error.message;
     }
 
     ElMessage({
       message: errorMessage,
-      type: 'error'
-    })
+      type: "error",
+    });
     // 恢复原状态
-    loadData()
+    loadData();
   }
-}
+};
 
 /**
  * 页码变化
  */
 const handlePageChange = (page: number) => {
-  pagination.value.currentPage = page
-  loadData()
-}
+  pagination.value.currentPage = page;
+  loadData();
+};
 
 /**
  * 每页数量变化
  */
 const handleSizeChange = (size: number) => {
-  pagination.value.pageSize = size
-  pagination.value.currentPage = 1
-  loadData()
-}
-
+  pagination.value.pageSize = size;
+  pagination.value.currentPage = 1;
+  loadData();
+};
 </script>
 
 <style scoped>

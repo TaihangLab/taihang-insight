@@ -1,6 +1,6 @@
-import { AxiosResponse } from 'axios'
-import { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { AITask, DetectionResult } from '@/types/center.d'
+import { AxiosResponse } from "axios";
+import { authAxios, type UnifiedResponse } from "@/api/commons";
+import type { AITask, DetectionResult } from "@/types/center.d";
 
 /**
  * 实时检测管理 API
@@ -17,24 +17,26 @@ class RealtimeDetectionAPI {
    */
   async getTasksByCamera(cameraId: number): Promise<AxiosResponse<UnifiedResponse<AITask[]>>> {
     if (!cameraId) {
-      return Promise.reject(new Error('缺少摄像头ID'))
+      return Promise.reject(new Error("缺少摄像头ID"));
     }
 
-    return authAxios.get(`/api/v1/realtime-detection/detection/tasks/by_camera/${cameraId}`)
+    return authAxios.get(`/api/v1/realtime-detection/detection/tasks/by_camera/${cameraId}`);
   }
 
   /**
    * 获取指定任务的当前检测结果（HTTP轮询方式）
    * @param taskId 任务ID
    */
-  async getDetectionResult(taskId: number): Promise<AxiosResponse<UnifiedResponse<DetectionResult>>> {
+  async getDetectionResult(
+    taskId: number,
+  ): Promise<AxiosResponse<UnifiedResponse<DetectionResult>>> {
     if (!taskId) {
-      return Promise.reject(new Error('缺少任务ID'))
+      return Promise.reject(new Error("缺少任务ID"));
     }
 
-    return authAxios.get(`/api/v1/realtime-detection/detection/result/${taskId}`)
+    return authAxios.get(`/api/v1/realtime-detection/detection/result/${taskId}`);
   }
 }
 
 // 导出单例实例
-export default new RealtimeDetectionAPI()
+export default new RealtimeDetectionAPI();

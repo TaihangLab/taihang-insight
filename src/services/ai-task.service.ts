@@ -2,40 +2,50 @@
  * AI 任务管理服务
  */
 
-import axiosInstance from './config/axios'
-import type { ApiResponse, PaginatedResponse, AITask, CreateAITaskParams, UpdateAITaskParams } from './types'
+import axiosInstance from "./config/axios";
+import type {
+  ApiResponse,
+  PaginatedResponse,
+  AITask,
+  CreateAITaskParams,
+  UpdateAITaskParams,
+} from "./types";
 
 export class AITaskService {
-  private readonly basePath = '/api/v1/ai-tasks'
+  private readonly basePath = "/api/v1/ai-tasks";
 
   /**
    * 获取 AI 任务列表
    */
   async getAITaskList(params?: {
-    page?: number
-    limit?: number
-    camera_id?: string
-    skill_class_id?: string
-    status?: boolean
+    page?: number;
+    limit?: number;
+    camera_id?: string;
+    skill_class_id?: string;
+    status?: boolean;
   }): Promise<PaginatedResponse<AITask>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<AITask>>(this.basePath, { params })
-    return response
+    const response = await axiosInstance.get<any, PaginatedResponse<AITask>>(this.basePath, {
+      params,
+    });
+    return response;
   }
 
   /**
    * 获取 AI 任务详情
    */
   async getAITaskDetail(taskId: string): Promise<ApiResponse<AITask>> {
-    const response = await axiosInstance.get<any, ApiResponse<AITask>>(`${this.basePath}/${taskId}`)
-    return response
+    const response = await axiosInstance.get<any, ApiResponse<AITask>>(
+      `${this.basePath}/${taskId}`,
+    );
+    return response;
   }
 
   /**
    * 创建 AI 任务
    */
   async createAITask(taskData: CreateAITaskParams): Promise<ApiResponse<AITask>> {
-    const response = await axiosInstance.post<any, ApiResponse<AITask>>(this.basePath, taskData)
-    return response
+    const response = await axiosInstance.post<any, ApiResponse<AITask>>(this.basePath, taskData);
+    return response;
   }
 
   /**
@@ -44,17 +54,19 @@ export class AITaskService {
   async updateAITask(taskId: string, taskData: UpdateAITaskParams): Promise<ApiResponse<AITask>> {
     const response = await axiosInstance.put<any, ApiResponse<AITask>>(
       `${this.basePath}/${taskId}`,
-      taskData
-    )
-    return response
+      taskData,
+    );
+    return response;
   }
 
   /**
    * 删除 AI 任务
    */
   async deleteAITask(taskId: string): Promise<ApiResponse<void>> {
-    const response = await axiosInstance.delete<any, ApiResponse<void>>(`${this.basePath}/${taskId}`)
-    return response
+    const response = await axiosInstance.delete<any, ApiResponse<void>>(
+      `${this.basePath}/${taskId}`,
+    );
+    return response;
   }
 
   /**
@@ -63,9 +75,9 @@ export class AITaskService {
   async batchDeleteAITasks(taskIds: string[]): Promise<ApiResponse<void>> {
     const response = await axiosInstance.post<any, ApiResponse<void>>(
       `${this.basePath}/batch-delete`,
-      { ids: taskIds }
-    )
-    return response
+      { ids: taskIds },
+    );
+    return response;
   }
 
   /**
@@ -73,9 +85,9 @@ export class AITaskService {
    */
   async startAITask(taskId: string): Promise<ApiResponse<{ message: string }>> {
     const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
-      `${this.basePath}/${taskId}/start`
-    )
-    return response
+      `${this.basePath}/${taskId}/start`,
+    );
+    return response;
   }
 
   /**
@@ -83,9 +95,9 @@ export class AITaskService {
    */
   async stopAITask(taskId: string): Promise<ApiResponse<{ message: string }>> {
     const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
-      `${this.basePath}/${taskId}/stop`
-    )
-    return response
+      `${this.basePath}/${taskId}/stop`,
+    );
+    return response;
   }
 
   /**
@@ -93,11 +105,11 @@ export class AITaskService {
    */
   async getCameraAITasks(cameraId: string): Promise<ApiResponse<AITask[]>> {
     const response = await axiosInstance.get<any, ApiResponse<AITask[]>>(
-      `/api/v1/cameras/${cameraId}/ai-tasks`
-    )
-    return response
+      `/api/v1/cameras/${cameraId}/ai-tasks`,
+    );
+    return response;
   }
 }
 
 // 导出单例
-export default new AITaskService()
+export default new AITaskService();

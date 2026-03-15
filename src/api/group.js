@@ -1,7 +1,7 @@
 /**
  * 业务分组相关API
  */
-import request from '@/utils/request'
+import request from "@/utils/request";
 
 /**
  * 获取业务分组列表
@@ -9,10 +9,10 @@ import request from '@/utils/request'
  */
 export function getGroupList(params) {
   return request({
-    url: '/api/v1/group/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/group/list",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -21,10 +21,10 @@ export function getGroupList(params) {
  */
 export function getGroupTree(parentId) {
   return request({
-    url: '/api/v1/group/tree',
-    method: 'get',
-    params: { parentId }
-  })
+    url: "/api/v1/group/tree",
+    method: "get",
+    params: { parentId },
+  });
 }
 
 /**
@@ -33,10 +33,10 @@ export function getGroupTree(parentId) {
  */
 export function addGroup(data) {
   return request({
-    url: '/api/v1/group/add',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/group/add",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -45,10 +45,10 @@ export function addGroup(data) {
  */
 export function updateGroup(data) {
   return request({
-    url: '/api/v1/group/update',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/group/update",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -57,10 +57,10 @@ export function updateGroup(data) {
  */
 export function deleteGroup(id) {
   return request({
-    url: '/api/v1/group/delete',
-    method: 'delete',
-    params: { id }
-  })
+    url: "/api/v1/group/delete",
+    method: "delete",
+    params: { id },
+  });
 }
 
 /**
@@ -72,10 +72,10 @@ export function deleteGroup(id) {
  */
 export function getGroupTreeList(params) {
   return request({
-    url: '/api/v1/group/tree/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/group/tree/list",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -87,10 +87,10 @@ export function getGroupTreeList(params) {
  */
 export function addDeviceToGroup(data) {
   return request({
-    url: '/api/v1/common/channel/group/device/add',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/common/channel/group/device/add",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -100,10 +100,10 @@ export function addDeviceToGroup(data) {
  */
 export function removeDeviceFromGroup(data) {
   return request({
-    url: '/api/v1/common/channel/group/device/delete',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/common/channel/group/device/delete",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -113,9 +113,8 @@ export function removeDeviceFromGroup(data) {
  */
 export function getGroupPath(deviceId, businessGroup) {
   return request({
-    url: '/api/v1/group/path',
-    method: 'get',
-    params: { deviceId, businessGroup }
-  })
+    url: "/api/v1/group/path",
+    method: "get",
+    params: { deviceId, businessGroup },
+  });
 }
-

@@ -9,34 +9,36 @@
       @input="handleFilterInput"
     />
     <div class="toolbar-actions">
-      <el-button size="small" icon="el-icon-folder-opened" @click="handleExpandAll">展开全部</el-button>
+      <el-button size="small" icon="el-icon-folder-opened" @click="handleExpandAll">
+        展开全部
+      </el-button>
       <el-button size="small" icon="el-icon-folder" @click="handleCollapseAll">收起全部</el-button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue";
 
 const emit = defineEmits<{
-  filter: [text: string]
-  expandAll: []
-  collapseAll: []
-}>()
+  filter: [text: string];
+  expandAll: [];
+  collapseAll: [];
+}>();
 
-const filterText = ref('')
+const filterText = ref("");
 
 const handleFilterInput = () => {
-  emit('filter', filterText.value)
-}
+  emit("filter", filterText.value);
+};
 
 const handleExpandAll = () => {
-  emit('expandAll')
-}
+  emit("expandAll");
+};
 
 const handleCollapseAll = () => {
-  emit('collapseAll')
-}
+  emit("collapseAll");
+};
 </script>
 
 <style scoped>

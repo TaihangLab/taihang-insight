@@ -2,8 +2,8 @@
  * 大屏监控统一 API
  * 提供一次性获取所有大屏所需数据的接口
  */
-import authAxios from '@/api/commons'
-import type { DashboardSummary } from '@/types/center/dashboard'
+import authAxios from "@/api/commons";
+import type { DashboardSummary } from "@/types/center/dashboard";
 
 /**
  * 大屏监控 API 类
@@ -19,9 +19,9 @@ class DashboardAPI {
    */
   getSummary(): Promise<DashboardSummary> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 DashboardSummary
-    return authAxios.get<any, DashboardSummary>('/api/v1/monitor/dashboard/summary')
+    return authAxios.get<any, DashboardSummary>("/api/v1/monitor/dashboard/summary");
   }
 }
 
 // 导出单例实例
-export default new DashboardAPI()
+export default new DashboardAPI();

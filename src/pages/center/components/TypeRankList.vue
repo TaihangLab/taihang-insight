@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import alertStatisticsAPI from '@/api/center/alertStatistics';
-import type { WarningType } from '@/types/center/components';
+import { ref, onMounted, onBeforeUnmount } from "vue";
+import alertStatisticsAPI from "@/api/center/alertStatistics";
+import type { WarningType } from "@/types/center/components";
 
 interface Props {
   // 不再需要 props，组件自己加载数据
@@ -22,17 +22,17 @@ let refreshTimer: number | null = null;
 async function loadData(): Promise<void> {
   loading.value = true;
   try {
-    const response = await alertStatisticsAPI.getByType('24h', 10);
+    const response = await alertStatisticsAPI.getByType("24h", 10);
     if (Array.isArray(response)) {
       warningTypes.value = response.map((item: any) => ({
         name: item.name,
         count: item.count,
         value: item.value,
-        color: item.color
+        color: item.color,
       }));
     }
   } catch (error) {
-    console.error('加载预警类型失败:', error);
+    console.error("加载预警类型失败:", error);
   } finally {
     loading.value = false;
   }
@@ -55,17 +55,13 @@ onBeforeUnmount(() => {
 
 defineExpose({
   refresh: loadData,
-  loading
+  loading,
 });
 </script>
 
 <template>
   <div class="flex-1 overflow-y-auto flex flex-col min-h-0">
-    <div
-      v-for="(item, index) in warningTypes"
-      :key="index"
-      class="flex items-center mb-2.5"
-    >
+    <div v-for="(item, index) in warningTypes" :key="index" class="flex items-center mb-2.5">
       <span class="w-25 text-[#7EAEE5]">{{ item.name }}</span>
       <div class="flex-1 h-1.5 bg-[rgba(126,174,229,0.1)] mx-2.5 rounded-3 overflow-hidden">
         <div class="h-full bg-[#00FFFF] rounded-3" :style="{ width: item.value + '%' }"></div>

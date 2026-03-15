@@ -9,25 +9,28 @@
     :append-to-body="true"
     :show-close="true"
     :lock-scroll="true"
-    custom-class="tag-dialog">
+    custom-class="tag-dialog"
+  >
     <el-form :model="tagForm" label-width="80px" class="tag-form">
       <el-form-item label="标签名称" required>
-        <el-input 
-          v-model="tagForm.name" 
+        <el-input
+          v-model="tagForm.name"
           placeholder="请输入标签名称"
           maxlength="20"
           show-word-limit
-          style="width: 200pt;" />
+          style="width: 200pt"
+        />
       </el-form-item>
       <el-form-item label="标签描述">
-        <el-input 
-          v-model="tagForm.description" 
+        <el-input
+          v-model="tagForm.description"
           type="textarea"
           placeholder="请输入标签描述（选填）"
           maxlength="100"
           show-word-limit
           :rows="3"
-          style="width: 200pt;" />
+          style="width: 200pt"
+        />
       </el-form-item>
     </el-form>
     <span slot="footer" class="dialog-footer">
@@ -38,34 +41,34 @@
 </template>
 
 <script>
-import centerAPI from '@/api/center';
+import centerAPI from "@/api/center";
 
 export default {
-  name: 'TagEdit',
+  name: "TagEdit",
   props: {
     visible: {
       type: Boolean,
-      default: false
+      default: false,
     },
     editTag: {
       type: Object,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
   data() {
     return {
       dialogVisible: this.visible,
       tagForm: {
-        name: '',
-        description: ''
+        name: "",
+        description: "",
       },
-      submitting: false
+      submitting: false,
     };
   },
   computed: {
     isEdit() {
       return this.editTag && this.editTag.id;
-    }
+    },
   },
   watch: {
     visible(val) {
@@ -73,22 +76,22 @@ export default {
       if (val && this.isEdit) {
         // 编辑模式，初始化表单数据
         this.tagForm = {
-          name: this.editTag.name || '',
-          description: this.editTag.description || ''
+          name: this.editTag.name || "",
+          description: this.editTag.description || "",
         };
       } else if (val) {
         // 新增模式，重置表单
         this.tagForm = {
-          name: '',
-          description: ''
+          name: "",
+          description: "",
         };
       }
     },
     dialogVisible(val) {
       if (!val) {
-        this.$emit('update:visible', false);
+        this.$emit("update:visible", false);
       }
-    }
+    },
   },
   methods: {
     closeDialog() {
@@ -97,7 +100,7 @@ export default {
     confirmTag() {
       // 表单验证
       if (!this.tagForm.name) {
-        this.$message.warning('标签名称不能为空');
+        this.$message.warning("标签名称不能为空");
         return;
       }
 
@@ -109,25 +112,25 @@ export default {
         : centerAPI.camera.createTag(this.tagForm);
 
       apiCall
-        .then(res => {
+        .then((res) => {
           const { code, msg, data } = res.data;
           if (code === 0) {
-            this.$message.success(this.isEdit ? '标签更新成功' : '标签添加成功');
-            this.$emit('success', data);
+            this.$message.success(this.isEdit ? "标签更新成功" : "标签添加成功");
+            this.$emit("success", data);
             this.closeDialog();
           } else {
-            this.$message.error(msg || (this.isEdit ? '标签更新失败' : '标签添加失败'));
+            this.$message.error(msg || (this.isEdit ? "标签更新失败" : "标签添加失败"));
           }
         })
-        .catch(err => {
-          console.error('标签操作失败', err);
-          this.$message.error(err.message || (this.isEdit ? '标签更新失败' : '标签添加失败'));
+        .catch((err) => {
+          console.error("标签操作失败", err);
+          this.$message.error(err.message || (this.isEdit ? "标签更新失败" : "标签添加失败"));
         })
         .finally(() => {
           this.submitting = false;
         });
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -135,4 +138,4 @@ export default {
 .tag-form {
   padding: 0 20px;
 }
-</style> 
+</style>

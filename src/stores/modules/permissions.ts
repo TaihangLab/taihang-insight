@@ -9,184 +9,188 @@
  * 4. 支持 TTL 过期机制，防止使用过期数据
  */
 
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import { StorageKey } from './storageKeys'
-import authAPI from '@/api/auth/authAPI'
+import { defineStore } from "pinia";
+import { ref } from "vue";
+import { StorageKey } from "./storageKeys";
+import authAPI from "@/api/auth/authAPI";
 
 /** TTL 配置：权限缓存 30 分钟 */
-const PERMISSIONS_TTL = 30 * 60 * 1000
+const PERMISSIONS_TTL = 30 * 60 * 1000;
 
-export const usePermissionsStore = defineStore('permissions', () => {
-  // ==================== 私有状态（不返回，外部无法直接访问） ====================
-  const permissions = ref<string[]>([])
-  const loading = ref(false)
-  const initialized = ref(false)
-  /** 最后刷新时间戳（用于 TTL 检查） */
-  const lastRefresh = ref<number>(0)
+export const usePermissionsStore = defineStore(
+  "permissions",
+  () => {
+    // ==================== 私有状态（不返回，外部无法直接访问） ====================
+    const permissions = ref<string[]>([]);
+    const loading = ref(false);
+    const initialized = ref(false);
+    /** 最后刷新时间戳（用于 TTL 检查） */
+    const lastRefresh = ref<number>(0);
 
-  // ==================== 公共方法 ====================
+    // ==================== 公共方法 ====================
 
-  /**
-   * 检查缓存是否过期
-   */
-  function isExpired(): boolean {
-    // lastRefresh 为 0 表示从未刷新过，视为过期
-    if (lastRefresh.value === 0) return true
-    return Date.now() - lastRefresh.value > PERMISSIONS_TTL
-  }
-
-  /**
-   * 从后端刷新权限列表
-   * 强制刷新，不判断缓存状态
-   */
-  async function refresh(): Promise<void> {
-    if (loading.value) return
-
-    loading.value = true
-    try {
-      const result = await authAPI.getPermissions()
-      // 响应拦截器已提取 data.data，result 直接是内层数据
-      // { user_id, user_name, permission_codes }
-      if (result && result.permission_codes) {
-        const perms = result.permission_codes || []
-        permissions.value = perms
-        initialized.value = true
-        lastRefresh.value = Date.now()
-        console.log('[PermissionsStore] 刷新成功:', perms.length, '个权限')
-      } else {
-        permissions.value = []
-        initialized.value = true
-        console.warn('[PermissionsStore] 接口返回失败，设置为空数组')
-      }
-    } catch (error) {
-      permissions.value = []
-      initialized.value = true
-      console.error('[PermissionsStore] 刷新失败:', error)
-      throw error
-    } finally {
-      loading.value = false
+    /**
+     * 检查缓存是否过期
+     */
+    function isExpired(): boolean {
+      // lastRefresh 为 0 表示从未刷新过，视为过期
+      if (lastRefresh.value === 0) return true;
+      return Date.now() - lastRefresh.value > PERMISSIONS_TTL;
     }
-  }
 
-  /**
-   * 确保数据已加载（内部方法）
-   * 如果数据过期或未初始化，自动触发刷新
-   */
-  async function ensureInitialized(): Promise<void> {
-    if (!initialized.value || isExpired()) {
-      if (!loading.value) {
-        await refresh()
+    /**
+     * 从后端刷新权限列表
+     * 强制刷新，不判断缓存状态
+     */
+    async function refresh(): Promise<void> {
+      if (loading.value) return;
+
+      loading.value = true;
+      try {
+        const result = await authAPI.getPermissions();
+        // 响应拦截器已提取 data.data，result 直接是内层数据
+        // { user_id, user_name, permission_codes }
+        if (result && result.permission_codes) {
+          const perms = result.permission_codes || [];
+          permissions.value = perms;
+          initialized.value = true;
+          lastRefresh.value = Date.now();
+          console.log("[PermissionsStore] 刷新成功:", perms.length, "个权限");
+        } else {
+          permissions.value = [];
+          initialized.value = true;
+          console.warn("[PermissionsStore] 接口返回失败，设置为空数组");
+        }
+      } catch (error) {
+        permissions.value = [];
+        initialized.value = true;
+        console.error("[PermissionsStore] 刷新失败:", error);
+        throw error;
+      } finally {
+        loading.value = false;
       }
     }
-  }
 
-  /**
-   * 获取所有权限（带自动加载）
-   * 如果数据为空，自动触发刷新
-   */
-  async function getAllPermissions(): Promise<string[]> {
-    await ensureInitialized()
-    return permissions.value
-  }
+    /**
+     * 确保数据已加载（内部方法）
+     * 如果数据过期或未初始化，自动触发刷新
+     */
+    async function ensureInitialized(): Promise<void> {
+      if (!initialized.value || isExpired()) {
+        if (!loading.value) {
+          await refresh();
+        }
+      }
+    }
 
-  /**
-   * 检查是否有指定权限（带自动加载）
-   */
-  async function hasPermission(permission: string): Promise<boolean> {
-    await ensureInitialized()
-    return permissions.value.includes(permission)
-  }
+    /**
+     * 获取所有权限（带自动加载）
+     * 如果数据为空，自动触发刷新
+     */
+    async function getAllPermissions(): Promise<string[]> {
+      await ensureInitialized();
+      return permissions.value;
+    }
 
-  /**
-   * 检查是否有多个权限中的任意一个（带自动加载）
-   */
-  async function hasAnyPermission(perms: string[]): Promise<boolean> {
-    await ensureInitialized()
-    return perms.some(p => permissions.value.includes(p))
-  }
+    /**
+     * 检查是否有指定权限（带自动加载）
+     */
+    async function hasPermission(permission: string): Promise<boolean> {
+      await ensureInitialized();
+      return permissions.value.includes(permission);
+    }
 
-  /**
-   * 设置权限列表（保留此方法用于兼容，但推荐使用 refresh）
-   */
-  function setPermissions(perms: string[]) {
-    permissions.value = perms
-    initialized.value = true
-    lastRefresh.value = Date.now()
-  }
+    /**
+     * 检查是否有多个权限中的任意一个（带自动加载）
+     */
+    async function hasAnyPermission(perms: string[]): Promise<boolean> {
+      await ensureInitialized();
+      return perms.some((p) => permissions.value.includes(p));
+    }
 
-  /**
-   * 清除权限列表
-   */
-  function clearPermissions() {
-    permissions.value = []
-    initialized.value = false
-    lastRefresh.value = 0
-  }
+    /**
+     * 设置权限列表（保留此方法用于兼容，但推荐使用 refresh）
+     */
+    function setPermissions(perms: string[]) {
+      permissions.value = perms;
+      initialized.value = true;
+      lastRefresh.value = Date.now();
+    }
 
-  /**
-   * 获取权限列表（带自动加载）
-   * 强制使用此方法访问，确保缓存逻辑生效
-   */
-  async function getPermissions(): Promise<string[]> {
-    await ensureInitialized()
-    return permissions.value
-  }
+    /**
+     * 清除权限列表
+     */
+    function clearPermissions() {
+      permissions.value = [];
+      initialized.value = false;
+      lastRefresh.value = 0;
+    }
 
-  /**
-   * 同步版本获取权限列表（不触发自动加载）
-   * 仅在确定数据已加载的场景使用
-   */
-  function getPermissionsSync(): string[] {
-    return permissions.value
-  }
+    /**
+     * 获取权限列表（带自动加载）
+     * 强制使用此方法访问，确保缓存逻辑生效
+     */
+    async function getPermissions(): Promise<string[]> {
+      await ensureInitialized();
+      return permissions.value;
+    }
 
-  /**
-   * 同步版本的 hasPermission（不触发自动加载，用于响应式场景）
-   */
-  function hasPermissionSync(permission: string): boolean {
-    return permissions.value.includes(permission)
-  }
+    /**
+     * 同步版本获取权限列表（不触发自动加载）
+     * 仅在确定数据已加载的场景使用
+     */
+    function getPermissionsSync(): string[] {
+      return permissions.value;
+    }
 
-  /**
-   * 检查是否有已加载的权限数据
-   */
-  function hasData(): boolean {
-    return initialized.value && permissions.value.length > 0
-  }
+    /**
+     * 同步版本的 hasPermission（不触发自动加载，用于响应式场景）
+     */
+    function hasPermissionSync(permission: string): boolean {
+      return permissions.value.includes(permission);
+    }
 
-  /**
-   * 获取缓存剩余时间（秒）
-   */
-  function getCacheTimeRemaining(): number {
-    if (!lastRefresh.value) return 0
-    const elapsed = Date.now() - lastRefresh.value
-    return Math.max(0, Math.floor((PERMISSIONS_TTL - elapsed) / 1000))
-  }
+    /**
+     * 检查是否有已加载的权限数据
+     */
+    function hasData(): boolean {
+      return initialized.value && permissions.value.length > 0;
+    }
 
-  return {
-    // 状态（用于持久化和模板访问）
-    permissions,
-    initialized,
-    loading,
-    // 方法
-    refresh,
-    setPermissions,
-    clearPermissions,
-    getPermissions,
-    getPermissionsSync,
-    getAllPermissions,
-    hasPermission,
-    hasAnyPermission,
-    hasPermissionSync,
-    hasData,
-    getCacheTimeRemaining,
-    isExpired
-  }
-}, {
-  persist: {
-    key: StorageKey.PERMISSION,
-    storage: localStorage,
-    pick: ['permissions', 'initialized', 'lastRefresh']
-  }
-})
+    /**
+     * 获取缓存剩余时间（秒）
+     */
+    function getCacheTimeRemaining(): number {
+      if (!lastRefresh.value) return 0;
+      const elapsed = Date.now() - lastRefresh.value;
+      return Math.max(0, Math.floor((PERMISSIONS_TTL - elapsed) / 1000));
+    }
+
+    return {
+      // 状态（用于持久化和模板访问）
+      permissions,
+      initialized,
+      loading,
+      // 方法
+      refresh,
+      setPermissions,
+      clearPermissions,
+      getPermissions,
+      getPermissionsSync,
+      getAllPermissions,
+      hasPermission,
+      hasAnyPermission,
+      hasPermissionSync,
+      hasData,
+      getCacheTimeRemaining,
+      isExpired,
+    };
+  },
+  {
+    persist: {
+      key: StorageKey.PERMISSION,
+      storage: localStorage,
+      pick: ["permissions", "initialized", "lastRefresh"],
+    },
+  },
+);

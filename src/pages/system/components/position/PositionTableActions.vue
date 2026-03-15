@@ -2,7 +2,14 @@
   <div class="position-table-actions">
     <div class="left-buttons">
       <el-button type="primary" icon="el-icon-plus" size="small" @click="handleAdd">新增</el-button>
-      <el-button icon="el-icon-delete" size="small" @click="handleBatchDelete" :disabled="selectedCount === 0">删除</el-button>
+      <el-button
+        icon="el-icon-delete"
+        size="small"
+        @click="handleBatchDelete"
+        :disabled="selectedCount === 0"
+      >
+        删除
+      </el-button>
       <el-button icon="el-icon-download" size="small" @click="handleExport">导出</el-button>
     </div>
   </div>
@@ -10,26 +17,26 @@
 
 <script setup lang="ts">
 defineProps<{
-  selectedCount: number
-}>()
+  selectedCount: number;
+}>();
 
 const emit = defineEmits<{
-  add: []
-  batchDelete: []
-  export: []
-}>()
+  add: [];
+  batchDelete: [];
+  export: [];
+}>();
 
 const handleAdd = () => {
-  emit('add')
-}
+  emit("add");
+};
 
 const handleBatchDelete = () => {
-  emit('batchDelete')
-}
+  emit("batchDelete");
+};
 
 const handleExport = () => {
-  emit('export')
-}
+  emit("export");
+};
 </script>
 
 <style scoped>

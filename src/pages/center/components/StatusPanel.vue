@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import type { UITimeRange } from '@/types/center/components';
+import type { UITimeRange } from "@/types/center/components";
 
 interface Props {
   statusTimeRange: UITimeRange;
 }
 
 interface Emits {
-  (e: 'changeStatusTimeRange', range: UITimeRange): void;
+  (e: "changeStatusTimeRange", range: UITimeRange): void;
 }
 
 defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const timeRangeLabels: Record<UITimeRange, string> = {
-  day: '本日',
-  week: '本周',
-  month: '本月'
+  day: "本日",
+  week: "本周",
+  month: "本月",
 };
 </script>
 
@@ -28,7 +28,7 @@ const timeRangeLabels: Record<UITimeRange, string> = {
         :key="key"
         :class="[
           'py-2 px-3 cursor-pointer text-13px relative transition-all duration-300',
-          statusTimeRange === key ? 'text-[#00FFFF]' : 'text-[#7EAEE5]'
+          statusTimeRange === key ? 'text-[#00FFFF]' : 'text-[#7EAEE5]',
         ]"
         @click="emit('changeStatusTimeRange', key)"
       >

@@ -2,190 +2,236 @@
   <div class="multimodal-review-wrapper">
     <div class="multimodal-review">
       <div class="page-container">
-      <!-- 头部操作区域 -->
-      <div class="header-section">
-        <div class="header-left">
-          <el-button type="primary" icon="el-icon-plus" @click="createSkill">
-            创建技能
-          </el-button>
-          <el-button @click="batchImport">
-            批量删除
-          </el-button>
+        <!-- 头部操作区域 -->
+        <div class="header-section">
+          <div class="header-left">
+            <el-button type="primary" icon="el-icon-plus" @click="createSkill">创建技能</el-button>
+            <el-button @click="batchImport">批量删除</el-button>
+          </div>
+
+          <div class="header-right">
+            <el-select
+              v-model="selectedProvider"
+              placeholder="请选择技能状态"
+              class="select-provider"
+              clearable
+              @change="handleFilter"
+            >
+              <el-option label="已上线" value="online"></el-option>
+              <el-option label="未上线" value="offline"></el-option>
+            </el-select>
+
+            <el-select
+              v-model="selectedCategory"
+              placeholder="请选择技能标签"
+              class="select-category"
+              clearable
+              @change="handleFilter"
+            >
+              <el-option label="图像识别" value="图像识别"></el-option>
+              <el-option label="安全监控" value="安全监控"></el-option>
+              <el-option label="异常检测" value="异常检测"></el-option>
+              <el-option label="行为分析" value="行为分析"></el-option>
+              <el-option label="合规检测" value="合规检测"></el-option>
+            </el-select>
+
+            <el-input
+              v-model="searchInput"
+              placeholder="请输入技能名称搜索"
+              class="search-input"
+              @input="handleSearchInput"
+              @keyup.enter="handleSearch"
+            >
+              <el-button slot="append" icon="el-icon-search" @click="handleSearch"></el-button>
+            </el-input>
+
+            <el-button icon="el-icon-refresh" class="action-btn" @click="refreshData"></el-button>
+          </div>
         </div>
 
-        <div class="header-right">
-                  <el-select v-model="selectedProvider" placeholder="请选择技能状态" class="select-provider" clearable @change="handleFilter">
-          <el-option label="已上线" value="online"></el-option>
-          <el-option label="未上线" value="offline"></el-option>
-        </el-select>
-        
-        <el-select v-model="selectedCategory" placeholder="请选择技能标签" class="select-category" clearable @change="handleFilter">
-          <el-option label="图像识别" value="图像识别"></el-option>
-          <el-option label="安全监控" value="安全监控"></el-option>
-          <el-option label="异常检测" value="异常检测"></el-option>
-          <el-option label="行为分析" value="行为分析"></el-option>
-          <el-option label="合规检测" value="合规检测"></el-option>
-        </el-select>
+        <!-- 过滤标签 -->
+        <div class="filter-tabs">
+          <div class="filter-buttons">
+            <el-button
+              :type="isAllSelected ? 'primary' : ''"
+              :plain="!isAllSelected"
+              @click="selectAll"
+            >
+              全选
+            </el-button>
+            <el-button
+              :type="isCurrentPageSelected ? 'primary' : ''"
+              :plain="!isCurrentPageSelected"
+              @click="selectCurrentPage"
+            >
+              选择本页
+            </el-button>
+          </div>
 
-          <el-input v-model="searchInput" placeholder="请输入技能名称搜索" class="search-input" @input="handleSearchInput" @keyup.enter="handleSearch">
-            <el-button slot="append" icon="el-icon-search" @click="handleSearch"></el-button>
-          </el-input>
-
-          <el-button icon="el-icon-refresh" class="action-btn" @click="refreshData"></el-button>
-        </div>
-      </div>
-
-      <!-- 过滤标签 -->
-      <div class="filter-tabs">
-        <div class="filter-buttons">
-          <el-button :type="isAllSelected ? 'primary' : ''" :plain="!isAllSelected"
-            @click="selectAll">
-            全选
-          </el-button>
-          <el-button :type="isCurrentPageSelected ? 'primary' : ''" :plain="!isCurrentPageSelected"
-            @click="selectCurrentPage">
-            选择本页
-          </el-button>
+          <div class="sort-section">
+            <span>{{ sortTypeText }}</span>
+            <el-button
+              link
+              :icon="sortOrder === 'desc' ? 'el-icon-caret-bottom' : 'el-icon-caret-top'"
+              @click="toggleSort"
+            ></el-button>
+          </div>
         </div>
 
-        <div class="sort-section">
-          <span>{{ sortTypeText }}</span>
-          <el-button link 
-                     :icon="sortOrder === 'desc' ? 'el-icon-caret-bottom' : 'el-icon-caret-top'" 
-                     @click="toggleSort"></el-button>
-        </div>
-      </div>
+        <!-- 技能卡片网格 -->
+        <div class="skills-container">
+          <!-- 加载状态 -->
+          <div
+            v-if="loading"
+            class="loading-container"
+            v-loading="loading"
+            element-loading-text="正在加载技能列表..."
+          >
+            <div class="loading-placeholder"></div>
+          </div>
 
-      <!-- 技能卡片网格 -->
-      <div class="skills-container">
-        <!-- 加载状态 -->
-        <div v-if="loading" class="loading-container" v-loading="loading" element-loading-text="正在加载技能列表...">
-          <div class="loading-placeholder"></div>
-        </div>
-        
-        <!-- 空状态 -->
-        <div v-else-if="!loading && skills.length === 0" class="empty-state">
-          <el-empty description="暂无技能数据" image-size="120">
-            <el-button type="primary" @click="createSkill">创建第一个技能</el-button>
-          </el-empty>
-        </div>
-        
-        <!-- 技能网格 -->
-        <div v-else class="skills-grid">
-          <div v-for="skill in paginatedSkills" :key="skill.id" 
-               class="skill-card"
-               @mouseenter="showCardCheckbox(skill.id)"
-               @mouseleave="hideCardCheckbox(skill.id)"
-               @click="viewSkillDetail(skill)">
-            
-            <!-- 选择框 -->
-            <div v-show="cardHoverStates[skill.id] || selectedSkills.includes(skill.id)" 
-                 class="card-checkbox"
-                 @click.stop>
-              <el-checkbox 
-                :value="selectedSkills.includes(skill.id)"
-                @input="handleSkillSelect(skill.id, $event)">
-              </el-checkbox>
-            </div>
-            
-            <div class="card-header">
-              <h3 class="skill-title">{{ skill.name }}</h3>
-              <div class="skill-id">
-                <span class="id-label">ID</span>
-                <span class="id-value">{{ skill.id }}</span>
+          <!-- 空状态 -->
+          <div v-else-if="!loading && skills.length === 0" class="empty-state">
+            <el-empty description="暂无技能数据" image-size="120">
+              <el-button type="primary" @click="createSkill">创建第一个技能</el-button>
+            </el-empty>
+          </div>
+
+          <!-- 技能网格 -->
+          <div v-else class="skills-grid">
+            <div
+              v-for="skill in paginatedSkills"
+              :key="skill.id"
+              class="skill-card"
+              @mouseenter="showCardCheckbox(skill.id)"
+              @mouseleave="hideCardCheckbox(skill.id)"
+              @click="viewSkillDetail(skill)"
+            >
+              <!-- 选择框 -->
+              <div
+                v-show="cardHoverStates[skill.id] || selectedSkills.includes(skill.id)"
+                class="card-checkbox"
+                @click.stop
+              >
+                <el-checkbox
+                  :value="selectedSkills.includes(skill.id)"
+                  @input="handleSkillSelect(skill.id, $event)"
+                ></el-checkbox>
               </div>
-            </div>
 
-            <div class="card-content">
-              <p class="skill-description" 
-                 @mouseenter="showTooltip($event, skill.description)" 
-                 @mouseleave="hideTooltip">
-                {{ skill.description }}
-              </p>
+              <div class="card-header">
+                <h3 class="skill-title">{{ skill.name }}</h3>
+                <div class="skill-id">
+                  <span class="id-label">ID</span>
+                  <span class="id-value">{{ skill.id }}</span>
+                </div>
+              </div>
 
-              <div class="skill-info">
-                <div class="info-row">
-                  <span class="label">技能状态</span>
-                  <div class="status-indicator">
-                    <span class="status-dot" :class="skill.status === 'online' ? 'online' : 'offline'"></span>
-                    <span class="status-text">
-                      {{ skill.status === 'online' ? '已上线' : '未上线' }}
-                    </span>
+              <div class="card-content">
+                <p
+                  class="skill-description"
+                  @mouseenter="showTooltip($event, skill.description)"
+                  @mouseleave="hideTooltip"
+                >
+                  {{ skill.description }}
+                </p>
+
+                <div class="skill-info">
+                  <div class="info-row">
+                    <span class="label">技能状态</span>
+                    <div class="status-indicator">
+                      <span
+                        class="status-dot"
+                        :class="skill.status === 'online' ? 'online' : 'offline'"
+                      ></span>
+                      <span class="status-text">
+                        {{ skill.status === "online" ? "已上线" : "未上线" }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="info-row">
+                    <span class="label">技能标签</span>
+                    <el-tag
+                      v-for="category in skill.categories"
+                      :key="category"
+                      size="small"
+                      class="category-tag"
+                    >
+                      {{ category }}
+                    </el-tag>
                   </div>
                 </div>
-
-                <div class="info-row">
-                  <span class="label">技能标签</span>
-                  <el-tag v-for="category in skill.categories" :key="category" size="small" class="category-tag">
-                    {{ category }}
-                  </el-tag>
-                </div>
               </div>
-            </div>
 
-            <div class="card-actions" @click.stop>
-              <el-button 
-                size="small" 
-                @click="editSkill(skill)"
-                :disabled="skill.status === 'online'"
-                :title="skill.status === 'online' ? '已上线技能不可编辑' : '编辑技能'">
-                编辑
-              </el-button>
-              <el-button size="small" @click="toggleSkillStatus(skill)">
-                {{ skill.status === 'online' ? '下线' : '上线' }}
-              </el-button>
-              <el-button 
-                size="small" 
-                @click="deleteSkill(skill)"
-                :disabled="skill.status === 'online'"
-                :title="skill.status === 'online' ? '已上线技能不可删除' : '删除技能'">
-                删除
-              </el-button>
+              <div class="card-actions" @click.stop>
+                <el-button
+                  size="small"
+                  @click="editSkill(skill)"
+                  :disabled="skill.status === 'online'"
+                  :title="skill.status === 'online' ? '已上线技能不可编辑' : '编辑技能'"
+                >
+                  编辑
+                </el-button>
+                <el-button size="small" @click="toggleSkillStatus(skill)">
+                  {{ skill.status === "online" ? "下线" : "上线" }}
+                </el-button>
+                <el-button
+                  size="small"
+                  @click="deleteSkill(skill)"
+                  :disabled="skill.status === 'online'"
+                  :title="skill.status === 'online' ? '已上线技能不可删除' : '删除技能'"
+                >
+                  删除
+                </el-button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 分页 -->
-      <div class="pagination-section">
-        <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage"
-          :page-sizes="[12, 24, 48, 96]" :page-size="pageSize" :total="totalCount"
-          layout="total, sizes, prev, pager, next, jumper" background>
-          <template slot="total">
-            <span>共 {{ totalCount }} 条数据</span>
-          </template>
-        </el-pagination>
+        <!-- 分页 -->
+        <div class="pagination-section">
+          <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="currentPage"
+            :page-sizes="[12, 24, 48, 96]"
+            :page-size="pageSize"
+            :total="totalCount"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+          >
+            <template slot="total">
+              <span>共 {{ totalCount }} 条数据</span>
+            </template>
+          </el-pagination>
 
-        <!-- <el-button type="primary" class="go-button" @click="goToPage">GO</el-button> -->
+          <!-- <el-button type="primary" class="go-button" @click="goToPage">GO</el-button> -->
+        </div>
       </div>
     </div>
-    
-    </div>
-    
+
     <!-- 描述信息悬浮提示框 - 移到最外层 -->
-    <div v-show="tooltipVisible" 
-         ref="tooltip"
-         class="skill-tooltip"
-         :style="tooltipStyle">
+    <div v-show="tooltipVisible" ref="tooltip" class="skill-tooltip" :style="tooltipStyle">
       {{ tooltipContent }}
     </div>
   </div>
 </template>
 
 <script>
-import centerAPI from '@/api/center'
+import centerAPI from "@/api/center";
 
 export default {
-  name: 'MultimodalReview',
+  name: "MultimodalReview",
   data() {
     return {
       // 搜索和过滤
-      searchInput: '', // 搜索输入框的值
-      searchKeyword: '', // 实际执行搜索的关键词
-      selectedProvider: '',
-      selectedCategory: '',
-      sortType: 'time', // 'time' 或 'name'
-      sortOrder: 'desc', // 'asc' 或 'desc'
+      searchInput: "", // 搜索输入框的值
+      searchKeyword: "", // 实际执行搜索的关键词
+      selectedProvider: "",
+      selectedCategory: "",
+      sortType: "time", // 'time' 或 'name'
+      sortOrder: "desc", // 'asc' 或 'desc'
 
       // 分页
       currentPage: 1,
@@ -198,471 +244,480 @@ export default {
 
       // tooltip相关
       tooltipVisible: false,
-      tooltipContent: '',
+      tooltipContent: "",
       tooltipStyle: {
-        left: '0px',
-        top: '0px'
+        left: "0px",
+        top: "0px",
       },
 
       // 技能数据
       skills: [],
       loading: false, // 加载状态
-      
+
       // 搜索防抖
       searchDebounceTimer: null,
 
       // 示例数据（保留作为参考，但不再使用）
       exampleSkills: [
         {
-          id: 'ab189acff35841d38b7f8575a4e5ab5a',
-          name: '明火识别',
-          description: '实时监测矿井下是否出现明火，及时发现火灾隐患，确保矿工安全',
-          status: 'online',
-          categories: ['异常检测', '安全监控']
+          id: "ab189acff35841d38b7f8575a4e5ab5a",
+          name: "明火识别",
+          description: "实时监测矿井下是否出现明火，及时发现火灾隐患，确保矿工安全",
+          status: "online",
+          categories: ["异常检测", "安全监控"],
         },
         {
-          id: 'b56c5d016b2e44bf8d533d7d03043cd8',
-          name: '烟雾检测',
-          description: '智能识别矿井环境中的烟雾情况，提前预警火灾风险，保障矿山作业安全',
-          status: 'online',
-          categories: ['异常检测', '安全监控']
+          id: "b56c5d016b2e44bf8d533d7d03043cd8",
+          name: "烟雾检测",
+          description: "智能识别矿井环境中的烟雾情况，提前预警火灾风险，保障矿山作业安全",
+          status: "online",
+          categories: ["异常检测", "安全监控"],
         },
         {
-          id: '82a3fbaa379442f8baa236699b2684bb',
-          name: '矿车识别',
-          description: '自动识别矿井内运输车辆类型、车牌信息，实现智能化车辆管理',
-          status: 'online',
-          categories: ['图像识别']
+          id: "82a3fbaa379442f8baa236699b2684bb",
+          name: "矿车识别",
+          description: "自动识别矿井内运输车辆类型、车牌信息，实现智能化车辆管理",
+          status: "online",
+          categories: ["图像识别"],
         },
         {
-          id: '26e15ed2d7be4800bb792d70106c730a',
-          name: '支护结构检测',
-          description: '检测矿井支护结构的完整性和稳定性，预防坍塌事故发生',
-          status: 'online',
-          categories: ['安全监控', '合规检测']
+          id: "26e15ed2d7be4800bb792d70106c730a",
+          name: "支护结构检测",
+          description: "检测矿井支护结构的完整性和稳定性，预防坍塌事故发生",
+          status: "online",
+          categories: ["安全监控", "合规检测"],
         },
         {
-          id: '48f64c95336642ea959120f42a996b',
-          name: '安全帽佩戴检测',
-          description: '智能识别矿工是否正确佩戴安全帽，确保作业人员安全防护到位',
-          status: 'online',
-          categories: ['合规检测']
+          id: "48f64c95336642ea959120f42a996b",
+          name: "安全帽佩戴检测",
+          description: "智能识别矿工是否正确佩戴安全帽，确保作业人员安全防护到位",
+          status: "online",
+          categories: ["合规检测"],
         },
         {
-          id: '46abbb20f6304d1d8fa47c61405e133f',
-          name: '瓦斯浓度监测',
-          description: '实时监测矿井瓦斯浓度变化，及时预警瓦斯超标情况，防止瓦斯爆炸',
-          status: 'offline',
-          categories: ['异常检测']
+          id: "46abbb20f6304d1d8fa47c61405e133f",
+          name: "瓦斯浓度监测",
+          description: "实时监测矿井瓦斯浓度变化，及时预警瓦斯超标情况，防止瓦斯爆炸",
+          status: "offline",
+          categories: ["异常检测"],
         },
         {
-          id: '3e7b2b7a98ff41e0bacecbe77debf99f',
-          name: '通风系统检测',
-          description: '监测矿井通风系统运行状态，确保井下空气流通正常',
-          status: 'online',
-          categories: ['异常检测']
+          id: "3e7b2b7a98ff41e0bacecbe77debf99f",
+          name: "通风系统检测",
+          description: "监测矿井通风系统运行状态，确保井下空气流通正常",
+          status: "online",
+          categories: ["异常检测"],
         },
         {
-          id: 'c7a1afe769224570bd594464ca1f5562',
-          name: '人员定位追踪',
-          description: '实时追踪矿工在井下的位置信息，确保人员安全管理',
-          status: 'online',
-          categories: ['行为分析']
+          id: "c7a1afe769224570bd594464ca1f5562",
+          name: "人员定位追踪",
+          description: "实时追踪矿工在井下的位置信息，确保人员安全管理",
+          status: "online",
+          categories: ["行为分析"],
         },
         {
-          id: 'f5de83736b2445756316c27ce18a4138',
-          name: '设备故障诊断',
-          description: '智能诊断矿山设备运行状态，预测设备故障，提高设备可靠性',
-          status: 'offline',
-          categories: ['异常检测']
+          id: "f5de83736b2445756316c27ce18a4138",
+          name: "设备故障诊断",
+          description: "智能诊断矿山设备运行状态，预测设备故障，提高设备可靠性",
+          status: "offline",
+          categories: ["异常检测"],
         },
         {
-          id: '9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d',
-          name: '粉尘浓度监测',
-          description: '监测矿井作业环境粉尘浓度，预防尘肺病发生，保护矿工健康',
-          status: 'online',
-          categories: ['异常检测']
+          id: "9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+          name: "粉尘浓度监测",
+          description: "监测矿井作业环境粉尘浓度，预防尘肺病发生，保护矿工健康",
+          status: "online",
+          categories: ["异常检测"],
         },
         {
-          id: '1f2e3d4c5b6a7b8c9d0e1f2a3b4c5d6e',
-          name: '巷道变形监测',
-          description: '实时监测矿井巷道变形情况，及时发现地质灾害隐患',
-          status: 'online',
-          categories: ['异常检测', '安全监控']
+          id: "1f2e3d4c5b6a7b8c9d0e1f2a3b4c5d6e",
+          name: "巷道变形监测",
+          description: "实时监测矿井巷道变形情况，及时发现地质灾害隐患",
+          status: "online",
+          categories: ["异常检测", "安全监控"],
         },
         {
-          id: '7f8e9d0c1b2a3b4c5d6e7f8a9b0c1d2e',
-          name: '违规行为识别',
-          description: '智能识别矿工违规操作行为，及时纠正不安全作业方式',
-          status: 'online',
-          categories: ['行为分析']
+          id: "7f8e9d0c1b2a3b4c5d6e7f8a9b0c1d2e",
+          name: "违规行为识别",
+          description: "智能识别矿工违规操作行为，及时纠正不安全作业方式",
+          status: "online",
+          categories: ["行为分析"],
         },
         {
-          id: '3g4h5i6j7k8l9m0n1o2p3q4r5s6t7u8v',
-          name: '爆破安全检测',
-          description: '监测爆破作业安全距离和防护措施，确保爆破作业安全',
-          status: 'offline',
-          categories: ['安全监控']
+          id: "3g4h5i6j7k8l9m0n1o2p3q4r5s6t7u8v",
+          name: "爆破安全检测",
+          description: "监测爆破作业安全距离和防护措施，确保爆破作业安全",
+          status: "offline",
+          categories: ["安全监控"],
         },
         {
-          id: '9w8x7y6z5a4b3c2d1e0f9g8h7i6j5k4l',
-          name: '提升机安全监控',
-          description: '实时监控矿井提升机运行状态，防止提升事故发生',
-          status: 'online',
-          categories: ['安全监控', '异常检测']
+          id: "9w8x7y6z5a4b3c2d1e0f9g8h7i6j5k4l",
+          name: "提升机安全监控",
+          description: "实时监控矿井提升机运行状态，防止提升事故发生",
+          status: "online",
+          categories: ["安全监控", "异常检测"],
         },
         {
-          id: '5m6n7o8p9q0r1s2t3u4v5w6x7y8z9a0b',
-          name: '电气设备检测',
-          description: '检测矿井电气设备绝缘状态和接地情况，防止触电事故',
-          status: 'online',
-          categories: ['异常检测']
+          id: "5m6n7o8p9q0r1s2t3u4v5w6x7y8z9a0b",
+          name: "电气设备检测",
+          description: "检测矿井电气设备绝缘状态和接地情况，防止触电事故",
+          status: "online",
+          categories: ["异常检测"],
         },
         {
-          id: '1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r',
-          name: '水害预警系统',
-          description: '监测矿井涌水情况，预警水害风险，保障矿井安全',
-          status: 'offline',
-          categories: ['异常检测']
+          id: "1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r",
+          name: "水害预警系统",
+          description: "监测矿井涌水情况，预警水害风险，保障矿井安全",
+          status: "offline",
+          categories: ["异常检测"],
         },
         {
-          id: '7s8t9u0v1w2x3y4z5a6b7c8d9e0f1g2h',
-          name: '应急救援定位',
-          description: '紧急情况下快速定位被困人员位置，提高救援效率',
-          status: 'online',
-          categories: ['图像识别']
+          id: "7s8t9u0v1w2x3y4z5a6b7c8d9e0f1g2h",
+          name: "应急救援定位",
+          description: "紧急情况下快速定位被困人员位置，提高救援效率",
+          status: "online",
+          categories: ["图像识别"],
         },
         {
-          id: '3i4j5k6l7m8n9o0p1q2r3s4t5u6v7w8x',
-          name: '噪声监测',
-          description: '监测矿井作业噪声水平，保护矿工听力健康',
-          status: 'online',
-          categories: ['异常检测']
+          id: "3i4j5k6l7m8n9o0p1q2r3s4t5u6v7w8x",
+          name: "噪声监测",
+          description: "监测矿井作业噪声水平，保护矿工听力健康",
+          status: "online",
+          categories: ["异常检测"],
         },
         {
-          id: '9y0z1a2b3c4d5e6f7g8h9i0j1k2l3m4n',
-          name: '温度监测',
-          description: '实时监测矿井温度变化，预防高温作业危害',
-          status: 'offline',
-          categories: ['异常检测']
+          id: "9y0z1a2b3c4d5e6f7g8h9i0j1k2l3m4n",
+          name: "温度监测",
+          description: "实时监测矿井温度变化，预防高温作业危害",
+          status: "offline",
+          categories: ["异常检测"],
         },
         {
-          id: '5o6p7q8r9s0t1u2v3w4x5y6z7a8b9c0d',
-          name: '有毒气体检测',
-          description: '检测矿井有害气体浓度，及时预警气体中毒风险',
-          status: 'online',
-          categories: ['异常检测']
+          id: "5o6p7q8r9s0t1u2v3w4x5y6z7a8b9c0d",
+          name: "有毒气体检测",
+          description: "检测矿井有害气体浓度，及时预警气体中毒风险",
+          status: "online",
+          categories: ["异常检测"],
         },
         {
-          id: '1e2f3g4h5i6j7k8l9m0n1o2p3q4r5s6t',
-          name: '机械设备监控',
-          description: '监控矿山机械设备运行参数，预防设备事故',
-          status: 'online',
-          categories: ['异常检测']
+          id: "1e2f3g4h5i6j7k8l9m0n1o2p3q4r5s6t",
+          name: "机械设备监控",
+          description: "监控矿山机械设备运行参数，预防设备事故",
+          status: "online",
+          categories: ["异常检测"],
         },
         {
-          id: '7u8v9w0x1y2z3a4b5c6d7e8f9g0h1i2j',
-          name: '井口安全管控',
-          description: '监控井口人员进出和车辆通行，确保井口安全秩序',
-          status: 'online',
-          categories: ['行为分析']
+          id: "7u8v9w0x1y2z3a4b5c6d7e8f9g0h1i2j",
+          name: "井口安全管控",
+          description: "监控井口人员进出和车辆通行，确保井口安全秩序",
+          status: "online",
+          categories: ["行为分析"],
         },
         {
-          id: '3k4l5m6n7o8p9q0r1s2t3u4v5w6x7y8z',
-          name: '照明系统检测',
-          description: '检测矿井照明系统工作状态，确保作业环境光照充足',
-          status: 'offline',
-          categories: ['异常检测']
+          id: "3k4l5m6n7o8p9q0r1s2t3u4v5w6x7y8z",
+          name: "照明系统检测",
+          description: "检测矿井照明系统工作状态，确保作业环境光照充足",
+          status: "offline",
+          categories: ["异常检测"],
         },
         {
-          id: '9a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p',
-          name: '围岩稳定性分析',
-          description: '分析矿井围岩稳定性，预测地质灾害风险',
-          status: 'online',
-          categories: ['图像识别', '异常检测']
+          id: "9a0b1c2d3e4f5g6h7i8j9k0l1m2n3o4p",
+          name: "围岩稳定性分析",
+          description: "分析矿井围岩稳定性，预测地质灾害风险",
+          status: "online",
+          categories: ["图像识别", "异常检测"],
         },
         {
-          id: '5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e0f',
-          name: '排水系统监控',
-          description: '监控矿井排水系统运行状态，防止积水事故',
-          status: 'online',
-          categories: ['异常检测']
+          id: "5q6r7s8t9u0v1w2x3y4z5a6b7c8d9e0f",
+          name: "排水系统监控",
+          description: "监控矿井排水系统运行状态，防止积水事故",
+          status: "online",
+          categories: ["异常检测"],
         },
         {
-          id: '1g2h3i4j5k6l7m8n9o0p1q2r3s4t5u6v',
-          name: '逃生路线规划',
-          description: '智能规划最优逃生路线，提高紧急撤离效率',
-          status: 'offline',
-          categories: ['图像识别']
+          id: "1g2h3i4j5k6l7m8n9o0p1q2r3s4t5u6v",
+          name: "逃生路线规划",
+          description: "智能规划最优逃生路线，提高紧急撤离效率",
+          status: "offline",
+          categories: ["图像识别"],
         },
         {
-          id: '7w8x9y0z1a2b3c4d5e6f7g8h9i0j1k2l',
-          name: '作业环境评估',
-          description: '综合评估矿井作业环境安全性，制定安全作业方案',
-          status: 'online',
-          categories: ['合规检测']
+          id: "7w8x9y0z1a2b3c4d5e6f7g8h9i0j1k2l",
+          name: "作业环境评估",
+          description: "综合评估矿井作业环境安全性，制定安全作业方案",
+          status: "online",
+          categories: ["合规检测"],
         },
         {
-          id: '3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8b',
-          name: '防护装备检查',
-          description: '检查矿工个人防护装备佩戴情况，确保防护到位',
-          status: 'online',
-          categories: ['合规检测']
+          id: "3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8b",
+          name: "防护装备检查",
+          description: "检查矿工个人防护装备佩戴情况，确保防护到位",
+          status: "online",
+          categories: ["合规检测"],
         },
         {
-          id: '9c0d1e2f3g4h5i6j7k8l9m0n1o2p3q4r',
-          name: '危险区域标识',
-          description: '自动识别和标记矿井危险区域，提醒作业人员注意安全',
-          status: 'offline',
-          categories: ['图像识别']
+          id: "9c0d1e2f3g4h5i6j7k8l9m0n1o2p3q4r",
+          name: "危险区域标识",
+          description: "自动识别和标记矿井危险区域，提醒作业人员注意安全",
+          status: "offline",
+          categories: ["图像识别"],
         },
         {
-          id: '5s6t7u8v9w0x1y2z3a4b5c6d7e8f9g0h',
-          name: '班组安全管理',
-          description: '管理班组安全作业状态，确保团队协作安全',
-          status: 'online',
-          categories: ['行为分析']
+          id: "5s6t7u8v9w0x1y2z3a4b5c6d7e8f9g0h",
+          name: "班组安全管理",
+          description: "管理班组安全作业状态，确保团队协作安全",
+          status: "online",
+          categories: ["行为分析"],
         },
         {
-          id: '1i2j3k4l5m6n7o8p9q0r1s2t3u4v5w6x',
-          name: '设备维护提醒',
-          description: '智能提醒设备维护保养时间，确保设备安全运行',
-          status: 'online',
-          categories: ['异常检测']
+          id: "1i2j3k4l5m6n7o8p9q0r1s2t3u4v5w6x",
+          name: "设备维护提醒",
+          description: "智能提醒设备维护保养时间，确保设备安全运行",
+          status: "online",
+          categories: ["异常检测"],
         },
         {
-          id: '7y8z9a0b1c2d3e4f5g6h7i8j9k0l1m2n',
-          name: '安全培训考核',
-          description: '智能化安全培训考核系统，提高矿工安全意识',
-          status: 'offline',
-          categories: ['合规检测']
+          id: "7y8z9a0b1c2d3e4f5g6h7i8j9k0l1m2n",
+          name: "安全培训考核",
+          description: "智能化安全培训考核系统，提高矿工安全意识",
+          status: "offline",
+          categories: ["合规检测"],
         },
         {
-          id: '3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d',
-          name: '事故预警分析',
-          description: '基于历史数据分析预测事故风险，提前采取预防措施',
-          status: 'online',
-          categories: ['异常检测', '安全监控']
+          id: "3o4p5q6r7s8t9u0v1w2x3y4z5a6b7c8d",
+          name: "事故预警分析",
+          description: "基于历史数据分析预测事故风险，提前采取预防措施",
+          status: "online",
+          categories: ["异常检测", "安全监控"],
         },
         {
-          id: '9e0f1g2h3i4j5k6l7m8n9o0p1q2r3s4t',
-          name: '智能调度系统',
-          description: '智能调度矿井作业任务，优化作业流程，提高安全效率',
-          status: 'online',
-          categories: ['行为分析']
+          id: "9e0f1g2h3i4j5k6l7m8n9o0p1q2r3s4t",
+          name: "智能调度系统",
+          description: "智能调度矿井作业任务，优化作业流程，提高安全效率",
+          status: "online",
+          categories: ["行为分析"],
         },
         {
-          id: '5u6v7w8x9y0z1a2b3c4d5e6f7g8h9i0j',
-          name: '环境质量监测',
-          description: '全面监测矿井环境质量指标，确保作业环境符合安全标准',
-          status: 'offline',
-          categories: ['异常检测', '合规检测']
+          id: "5u6v7w8x9y0z1a2b3c4d5e6f7g8h9i0j",
+          name: "环境质量监测",
+          description: "全面监测矿井环境质量指标，确保作业环境符合安全标准",
+          status: "offline",
+          categories: ["异常检测", "合规检测"],
         },
         {
-          id: '1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z',
-          name: '应急物资管理',
-          description: '智能管理应急救援物资配置和调度，提高应急响应能力',
-          status: 'online',
-          categories: ['图像识别']
+          id: "1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z",
+          name: "应急物资管理",
+          description: "智能管理应急救援物资配置和调度，提高应急响应能力",
+          status: "online",
+          categories: ["图像识别"],
         },
         {
-          id: '7a8b9c0d1e2f3g4h5i6j7k8l9m0n1o2p',
-          name: '安全风险评估',
-          description: '综合评估矿井各项安全风险，制定针对性安全措施',
-          status: 'online',
-          categories: ['异常检测', '安全监控']
-        }
-      ]
-    }
+          id: "7a8b9c0d1e2f3g4h5i6j7k8l9m0n1o2p",
+          name: "安全风险评估",
+          description: "综合评估矿井各项安全风险，制定针对性安全措施",
+          status: "online",
+          categories: ["异常检测", "安全监控"],
+        },
+      ],
+    };
   },
   created() {
     // 初始化数据
-    this.loadSkillsData()
+    this.loadSkillsData();
   },
-  
+
   mounted() {
     // 组件挂载后立即加载数据
-    this.refreshData()
+    this.refreshData();
   },
-  
+
   beforeDestroy() {
     // 清理搜索防抖定时器
     if (this.searchDebounceTimer) {
-      clearTimeout(this.searchDebounceTimer)
-      this.searchDebounceTimer = null
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
     }
   },
   computed: {
     // 当前页显示的技能列表（后端分页，直接使用skills数组）
     paginatedSkills() {
-      return this.skills
+      return this.skills;
     },
 
     // 是否全部选中（基于当前所有数据）
     isAllSelected() {
-      return this.skills.length > 0 && 
-             this.selectedSkills.length === this.totalCount &&
-             this.skills.every(skill => this.selectedSkills.includes(skill.id))
+      return (
+        this.skills.length > 0 &&
+        this.selectedSkills.length === this.totalCount &&
+        this.skills.every((skill) => this.selectedSkills.includes(skill.id))
+      );
     },
 
     // 是否当前页全部选中
     isCurrentPageSelected() {
-      return this.skills.length > 0 && 
-             this.skills.every(skill => this.selectedSkills.includes(skill.id))
+      return (
+        this.skills.length > 0 &&
+        this.skills.every((skill) => this.selectedSkills.includes(skill.id))
+      );
     },
 
     // 排序类型文本
     sortTypeText() {
-      const typeText = this.sortType === 'time' ? '按创建时间排序' : '按技能名称排序'
-      const orderText = this.sortOrder === 'desc' ? '降序' : '升序'
-      return `${typeText}`
-    }
+      const typeText = this.sortType === "time" ? "按创建时间排序" : "按技能名称排序";
+      const orderText = this.sortOrder === "desc" ? "降序" : "升序";
+      return `${typeText}`;
+    },
   },
   methods: {
     // 数据管理相关方法
     async loadSkillsData() {
       try {
-        this.loading = true
-        
+        this.loading = true;
+
         // 构建查询参数，使用后端分页和过滤
         const params = {
           page: this.currentPage,
-          limit: this.pageSize
-        }
-        
+          limit: this.pageSize,
+        };
+
         // 状态过滤
-        if (this.selectedProvider === 'online') {
-          params.status = true
-        } else if (this.selectedProvider === 'offline') {
-          params.status = false
+        if (this.selectedProvider === "online") {
+          params.status = true;
+        } else if (this.selectedProvider === "offline") {
+          params.status = false;
         }
-        
+
         // 名称搜索
         if (this.searchKeyword && this.searchKeyword.trim()) {
-          params.name = this.searchKeyword.trim()
+          params.name = this.searchKeyword.trim();
         }
-        
+
         // 标签过滤
         if (this.selectedCategory && this.selectedCategory.trim()) {
-          params.tag = this.selectedCategory.trim()
+          params.tag = this.selectedCategory.trim();
         }
-        
-        console.log('加载复判技能列表，参数:', params)
 
-        const response = await centerAPI.reviewSkill.getReviewSkillList(params)
+        console.log("加载复判技能列表，参数:", params);
+
+        const response = await centerAPI.reviewSkill.getReviewSkillList(params);
 
         // 响应拦截器已处理成功/失败判断，直接使用数据
-        const skillsData = Array.isArray(response.data) ? response.data : []
+        const skillsData = Array.isArray(response.data) ? response.data : [];
 
         // 分页信息在顶层
-        const totalCount = response.total || 0
+        const totalCount = response.total || 0;
 
         if (skillsData && Array.isArray(skillsData)) {
           // 转换数据格式以适配前端组件
-          this.skills = skillsData.map(skill => ({
+          this.skills = skillsData.map((skill) => ({
             id: skill.skill_id, // 使用skill_id作为前端ID
             name: skill.name,
             description: skill.description,
-            status: skill.status ? 'online' : 'offline',
+            status: skill.status ? "online" : "offline",
             categories: skill.tags || [],
             skill_id: skill.skill_id, // 保留原始skill_id用于API调用
             internal_id: skill.id, // 保留数据库ID
             created_at: skill.created_at,
             updated_at: skill.updated_at,
-            version: skill.version
-          }))
-          
+            version: skill.version,
+          }));
+
           // 更新总数
-          this.totalCount = totalCount
-          
-          console.log('加载复判技能列表成功，共', totalCount, '个技能，当前页', this.skills.length, '个技能')
-          console.log('分页信息:', pageInfo)
+          this.totalCount = totalCount;
+
+          console.log(
+            "加载复判技能列表成功，共",
+            totalCount,
+            "个技能，当前页",
+            this.skills.length,
+            "个技能",
+          );
+          console.log("分页信息:", pageInfo);
         } else {
-          console.warn('返回的技能数据为空或格式错误')
-          this.skills = []
-          this.totalCount = 0
+          console.warn("返回的技能数据为空或格式错误");
+          this.skills = [];
+          this.totalCount = 0;
         }
-        
       } catch (error) {
-        console.error('加载技能列表失败:', error)
-        this.$message.error('加载技能列表失败: ' + (error.message || '未知错误'))
-        this.skills = []
-        this.totalCount = 0
+        console.error("加载技能列表失败:", error);
+        this.$message.error("加载技能列表失败: " + (error.message || "未知错误"));
+        this.skills = [];
+        this.totalCount = 0;
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
     // 根据ID获取技能
     getSkillById(id) {
-      return this.skills.find(skill => skill.id === id || skill.skill_id === id)
+      return this.skills.find((skill) => skill.id === id || skill.skill_id === id);
     },
 
     // 更新技能（通过API）
     async updateSkill(skillData) {
       try {
-        const skillId = skillData.skill_id || skillData.id
+        const skillId = skillData.skill_id || skillData.id;
         if (!skillId) {
-          throw new Error('缺少技能ID')
+          throw new Error("缺少技能ID");
         }
-        
+
         const updateData = {
           skill_name: skillData.name,
           skill_tags: skillData.categories || [],
           description: skillData.description,
-          prompt_template: skillData.prompt_template || skillData.description
-        }
-        
-        await centerAPI.reviewSkill.updateReviewSkill(skillId, updateData)
-        
+          prompt_template: skillData.prompt_template || skillData.description,
+        };
+
+        await centerAPI.reviewSkill.updateReviewSkill(skillId, updateData);
+
         // 重新加载数据
-        await this.loadSkillsData()
-        
-        this.$message.success(`技能 "${skillData.name}" 已更新`)
-        return true
+        await this.loadSkillsData();
+
+        this.$message.success(`技能 "${skillData.name}" 已更新`);
+        return true;
       } catch (error) {
-        console.error('更新技能失败:', error)
-        this.$message.error('更新技能失败: ' + (error.message || '未知错误'))
-        return false
+        console.error("更新技能失败:", error);
+        this.$message.error("更新技能失败: " + (error.message || "未知错误"));
+        return false;
       }
     },
 
     // 删除技能（通过API）
     async deleteSkillById(skillId) {
       try {
-        const skill = this.getSkillById(skillId)
+        const skill = this.getSkillById(skillId);
         if (!skill) {
-          throw new Error('未找到对应技能')
+          throw new Error("未找到对应技能");
         }
-        
+
         // 检查技能状态，已上线的技能不可删除
-        if (skill.status === 'online') {
-          this.$message.warning(`技能 "${skill.name}" 已上线，无法删除`)
-          return false
+        if (skill.status === "online") {
+          this.$message.warning(`技能 "${skill.name}" 已上线，无法删除`);
+          return false;
         }
-        
-        const apiSkillId = skill.skill_id || skillId
-        await centerAPI.reviewSkill.deleteReviewSkill(apiSkillId)
-        
+
+        const apiSkillId = skill.skill_id || skillId;
+        await centerAPI.reviewSkill.deleteReviewSkill(apiSkillId);
+
         // 重新加载数据
-        await this.loadSkillsData()
-        
-        this.$message.success(`技能 "${skill.name}" 已删除`)
-        
+        await this.loadSkillsData();
+
+        this.$message.success(`技能 "${skill.name}" 已删除`);
+
         // 清空选择状态
-        this.selectedSkills = []
-        
+        this.selectedSkills = [];
+
         // 检查当前页是否还有数据，如果没有则回到上一页
         if (this.skills.length === 0 && this.currentPage > 1) {
-          this.currentPage--
-          await this.loadSkillsData()
+          this.currentPage--;
+          await this.loadSkillsData();
         }
-        
-        return true
+
+        return true;
       } catch (error) {
-        console.error('删除技能失败:', error)
-        this.$message.error('删除技能失败: ' + (error.message || '未知错误'))
-        return false
+        console.error("删除技能失败:", error);
+        this.$message.error("删除技能失败: " + (error.message || "未知错误"));
+        return false;
       }
     },
 
@@ -670,121 +725,129 @@ export default {
     async deleteSkills(skillIds) {
       try {
         if (!skillIds || skillIds.length === 0) {
-          return []
+          return [];
         }
-        
+
         // 获取技能详情并检查状态
-        const selectedSkills = skillIds.map(id => this.getSkillById(id)).filter(Boolean)
-        const onlineSkills = selectedSkills.filter(skill => skill.status === 'online')
-        
+        const selectedSkills = skillIds.map((id) => this.getSkillById(id)).filter(Boolean);
+        const onlineSkills = selectedSkills.filter((skill) => skill.status === "online");
+
         if (onlineSkills.length > 0) {
-          const onlineSkillNames = onlineSkills.map(skill => skill.name).join('、')
-          this.$message.warning(`无法删除已上线的技能：${onlineSkillNames}。请先将这些技能下线后再删除。`)
-          return []
+          const onlineSkillNames = onlineSkills.map((skill) => skill.name).join("、");
+          this.$message.warning(
+            `无法删除已上线的技能：${onlineSkillNames}。请先将这些技能下线后再删除。`,
+          );
+          return [];
         }
-        
+
         // 转换为API使用的skill_id
-        const apiSkillIds = selectedSkills.map(skill => skill.skill_id || skill.id)
-        
-        const response = await centerAPI.reviewSkill.batchDeleteReviewSkills(apiSkillIds)
-        
+        const apiSkillIds = selectedSkills.map((skill) => skill.skill_id || skill.id);
+
+        const response = await centerAPI.reviewSkill.batchDeleteReviewSkills(apiSkillIds);
+
         // 重新加载数据
-        await this.loadSkillsData()
-        
+        await this.loadSkillsData();
+
         // 清空选择状态
-        this.selectedSkills = []
-        
+        this.selectedSkills = [];
+
         // 检查当前页是否还有数据，如果没有则回到上一页
         if (this.skills.length === 0 && this.currentPage > 1) {
-          this.currentPage--
-          await this.loadSkillsData()
+          this.currentPage--;
+          await this.loadSkillsData();
         }
-        
+
         // 响应拦截器已处理成功/失败判断，直接使用数据
-        const resultData = response.data || response
-        const deletedCount = resultData.deleted_count || 0
-        this.$message.success(`已成功删除 ${deletedCount} 个技能`)
-        
-        return selectedSkills
+        const resultData = response.data || response;
+        const deletedCount = resultData.deleted_count || 0;
+        this.$message.success(`已成功删除 ${deletedCount} 个技能`);
+
+        return selectedSkills;
       } catch (error) {
-        console.error('批量删除技能失败:', error)
-        this.$message.error('批量删除技能失败: ' + (error.message || '未知错误'))
-        return []
+        console.error("批量删除技能失败:", error);
+        this.$message.error("批量删除技能失败: " + (error.message || "未知错误"));
+        return [];
       }
     },
 
     // 切换技能状态（通过API）
     async toggleSkillStatus(skill) {
       try {
-        const skillId = skill.skill_id || skill.id
-        const actionText = skill.status === 'online' ? '下线' : '上线'
-        
-        if (skill.status === 'online') {
+        const skillId = skill.skill_id || skill.id;
+        const actionText = skill.status === "online" ? "下线" : "上线";
+
+        if (skill.status === "online") {
           // 下线技能
-          await centerAPI.reviewSkill.unpublishReviewSkill(skillId)
+          await centerAPI.reviewSkill.unpublishReviewSkill(skillId);
         } else {
           // 上线技能
-          await centerAPI.reviewSkill.publishReviewSkill(skillId)
+          await centerAPI.reviewSkill.publishReviewSkill(skillId);
         }
-        
+
         // 重新加载数据
-        await this.loadSkillsData()
-        
-        this.$message.success(`${skill.name} 已${actionText}`)
-        return true
+        await this.loadSkillsData();
+
+        this.$message.success(`${skill.name} 已${actionText}`);
+        return true;
       } catch (error) {
-        console.error(`${actionText}技能失败:`, error)
-        this.$message.error(`${actionText}技能失败: ` + (error.message || '未知错误'))
-        return false
+        console.error(`${actionText}技能失败:`, error);
+        this.$message.error(`${actionText}技能失败: ` + (error.message || "未知错误"));
+        return false;
       }
     },
 
     // 头部操作
     createSkill() {
       this.$router.push({
-        path: '/skillManage/multimodalReviewCreate'
-      })
+        path: "/skillManage/multimodalReviewCreate",
+      });
     },
 
     async batchImport() {
       if (this.selectedSkills.length === 0) {
-        this.$message.warning('请先选择要删除的技能')
-        return
+        this.$message.warning("请先选择要删除的技能");
+        return;
       }
 
-      this.$confirm(`确认删除选中的 ${this.selectedSkills.length} 个技能吗？此操作不可恢复！`, '批量删除', {
-        confirmButtonText: '确定删除',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        // 执行批量删除
-        await this.deleteSkills(this.selectedSkills)
-      }).catch(() => {
-        this.$message.info('已取消删除')
-      })
+      this.$confirm(
+        `确认删除选中的 ${this.selectedSkills.length} 个技能吗？此操作不可恢复！`,
+        "批量删除",
+        {
+          confirmButtonText: "确定删除",
+          cancelButtonText: "取消",
+          type: "warning",
+        },
+      )
+        .then(async () => {
+          // 执行批量删除
+          await this.deleteSkills(this.selectedSkills);
+        })
+        .catch(() => {
+          this.$message.info("已取消删除");
+        });
     },
 
     // 实时搜索输入处理（防抖）
     handleSearchInput() {
       // 清除之前的定时器
       if (this.searchDebounceTimer) {
-        clearTimeout(this.searchDebounceTimer)
+        clearTimeout(this.searchDebounceTimer);
       }
-      
+
       // 设置新的防抖定时器
       this.searchDebounceTimer = setTimeout(() => {
-        this.handleSearchDebounced()
-      }, 500) // 500ms防抖延迟
+        this.handleSearchDebounced();
+      }, 500); // 500ms防抖延迟
     },
 
     // 防抖搜索执行
     async handleSearchDebounced() {
-      const newKeyword = this.searchInput.trim()
+      const newKeyword = this.searchInput.trim();
       // 只有当搜索关键词真正改变时才重新搜索
       if (newKeyword !== this.searchKeyword) {
-        this.searchKeyword = newKeyword
-        this.currentPage = 1
-        await this.loadSkillsData()
+        this.searchKeyword = newKeyword;
+        this.currentPage = 1;
+        await this.loadSkillsData();
       }
     },
 
@@ -792,64 +855,64 @@ export default {
     async handleSearch() {
       // 清除防抖定时器
       if (this.searchDebounceTimer) {
-        clearTimeout(this.searchDebounceTimer)
-        this.searchDebounceTimer = null
+        clearTimeout(this.searchDebounceTimer);
+        this.searchDebounceTimer = null;
       }
-      
-      this.searchKeyword = this.searchInput.trim()
-      this.currentPage = 1
-      await this.loadSkillsData()
+
+      this.searchKeyword = this.searchInput.trim();
+      this.currentPage = 1;
+      await this.loadSkillsData();
     },
 
     async handleFilter() {
       // 筛选条件改变时重置到第一页并重新加载数据
-      this.currentPage = 1
-      await this.loadSkillsData()
+      this.currentPage = 1;
+      await this.loadSkillsData();
     },
 
     async refreshData() {
       try {
         // 重置所有搜索和筛选条件
-        this.searchInput = ''
-        this.searchKeyword = ''
-        this.selectedProvider = ''
-        this.selectedCategory = ''
-        
+        this.searchInput = "";
+        this.searchKeyword = "";
+        this.selectedProvider = "";
+        this.selectedCategory = "";
+
         // 重置排序
-        this.sortType = 'time'
-        this.sortOrder = 'desc'
-        
+        this.sortType = "time";
+        this.sortOrder = "desc";
+
         // 重置分页
-        this.currentPage = 1
-        this.pageSize = 12
-        
+        this.currentPage = 1;
+        this.pageSize = 12;
+
         // 清空选择状态
-        this.selectedSkills = []
-        this.cardHoverStates = {}
-        
+        this.selectedSkills = [];
+        this.cardHoverStates = {};
+
         // 隐藏tooltip
-        this.tooltipVisible = false
-        this.tooltipContent = ''
-        
+        this.tooltipVisible = false;
+        this.tooltipContent = "";
+
         // 重新加载数据
-        await this.loadSkillsData()
-        
-        this.$message.success('数据已刷新')
+        await this.loadSkillsData();
+
+        this.$message.success("数据已刷新");
       } catch (error) {
-        console.error('刷新数据失败:', error)
-        this.$message.error('刷新数据失败')
+        console.error("刷新数据失败:", error);
+        this.$message.error("刷新数据失败");
       }
     },
 
     // 排序切换
     toggleSort() {
       // 第一次点击：切换排序方向
-      if (this.sortOrder === 'desc') {
-        this.sortOrder = 'asc'
-      } else if (this.sortOrder === 'asc') {
+      if (this.sortOrder === "desc") {
+        this.sortOrder = "asc";
+      } else if (this.sortOrder === "asc") {
         // 第二次点击：切换排序类型并重置为降序
-        this.sortType = this.sortType === 'time' ? 'name' : 'time'
-        this.sortOrder = 'desc'
+        this.sortType = this.sortType === "time" ? "name" : "time";
+        this.sortOrder = "desc";
       }
     },
 
@@ -857,142 +920,142 @@ export default {
     viewSkillDetail(skill) {
       // 跳转到技能详情页面，传递技能ID
       this.$router.push({
-        path: '/skillManage/multimodalReviewCreate',
-        query: { 
+        path: "/skillManage/multimodalReviewCreate",
+        query: {
           id: skill.id,
-          mode: 'view' // 表示查看模式
-        }
-      })
+          mode: "view", // 表示查看模式
+        },
+      });
     },
 
     editSkill(skill) {
       // 检查技能状态，已上线的技能不可编辑
-      if (skill.status === 'online') {
-        this.$message.warning('已上线的技能不可编辑，请先下线后再编辑')
-        return
+      if (skill.status === "online") {
+        this.$message.warning("已上线的技能不可编辑，请先下线后再编辑");
+        return;
       }
-      
+
       // 跳转到技能编辑页面，传递技能ID
       this.$router.push({
-        path: '/skillManage/multimodalReviewCreate',
-        query: { 
+        path: "/skillManage/multimodalReviewCreate",
+        query: {
           id: skill.id,
-          mode: 'edit' // 表示编辑模式
-        }
-      })
+          mode: "edit", // 表示编辑模式
+        },
+      });
     },
 
     async deleteSkill(skill) {
       // 检查技能状态，已上线的技能不可删除
-      if (skill.status === 'online') {
-        this.$message.warning('已上线的技能不可删除，请先下线后再删除')
-        return
+      if (skill.status === "online") {
+        this.$message.warning("已上线的技能不可删除，请先下线后再删除");
+        return;
       }
-      
-      this.$confirm('确认删除该技能吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        // 删除技能
-        await this.deleteSkillById(skill.id)
-      }).catch(() => {
-        this.$message.info('已取消删除')
+
+      this.$confirm("确认删除该技能吗?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
       })
+        .then(async () => {
+          // 删除技能
+          await this.deleteSkillById(skill.id);
+        })
+        .catch(() => {
+          this.$message.info("已取消删除");
+        });
     },
 
     // 分页
     async handleSizeChange(val) {
-      this.pageSize = val
-      this.currentPage = 1
-      await this.loadSkillsData()
+      this.pageSize = val;
+      this.currentPage = 1;
+      await this.loadSkillsData();
     },
 
     async handleCurrentChange(val) {
-      this.currentPage = val
-      await this.loadSkillsData()
+      this.currentPage = val;
+      await this.loadSkillsData();
     },
 
     goToPage() {
       // 跳转到指定页面逻辑
     },
 
-
-
     // Tooltip相关方法
     showTooltip(event, content) {
-      this.tooltipContent = content
-      this.tooltipVisible = true
-      
+      this.tooltipContent = content;
+      this.tooltipVisible = true;
+
       // 先设置一个基本位置
-      const rect = event.target.getBoundingClientRect()
-      let left = rect.left + rect.width / 2 - 150
-      let top = rect.top - 60
-      
+      const rect = event.target.getBoundingClientRect();
+      let left = rect.left + rect.width / 2 - 150;
+      let top = rect.top - 60;
+
       // 确保不超出屏幕边界
-      if (left < 10) left = 10
-      if (left + 300 > window.innerWidth) left = window.innerWidth - 310
-      if (top < 10) top = rect.bottom + 10
-      
+      if (left < 10) left = 10;
+      if (left + 300 > window.innerWidth) left = window.innerWidth - 310;
+      if (top < 10) top = rect.bottom + 10;
+
       this.tooltipStyle = {
-        left: left + 'px',
-        top: top + 'px'
-      }
-      
+        left: left + "px",
+        top: top + "px",
+      };
+
       this.$nextTick(() => {
-        if (!this.$refs.tooltip) return
-        
-        const tooltipRect = this.$refs.tooltip.getBoundingClientRect()
-        
+        if (!this.$refs.tooltip) return;
+
+        const tooltipRect = this.$refs.tooltip.getBoundingClientRect();
+
         // 重新计算精确位置
-        let left = rect.left + rect.width / 2 - tooltipRect.width / 2
-        let top = rect.top - tooltipRect.height - 8
-        
+        let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+        let top = rect.top - tooltipRect.height - 8;
+
         // 边界检查
-        const margin = 10
+        const margin = 10;
         if (left < margin) {
-          left = margin
+          left = margin;
         } else if (left + tooltipRect.width > window.innerWidth - margin) {
-          left = window.innerWidth - tooltipRect.width - margin
+          left = window.innerWidth - tooltipRect.width - margin;
         }
-        
+
         if (top < margin) {
           // 如果上方空间不够，显示在下方
-          top = rect.bottom + 8
+          top = rect.bottom + 8;
         }
-        
+
         this.tooltipStyle = {
-          left: left + 'px',
-          top: top + 'px'
-        }
-      })
+          left: left + "px",
+          top: top + "px",
+        };
+      });
     },
 
     hideTooltip() {
-      this.tooltipVisible = false
-      this.tooltipContent = ''
+      this.tooltipVisible = false;
+      this.tooltipContent = "";
     },
 
     // 选择相关方法
     showCardCheckbox(skillId) {
-      this.$set(this.cardHoverStates, skillId, true)
+      this.$set(this.cardHoverStates, skillId, true);
     },
 
     hideCardCheckbox(skillId) {
-      this.$set(this.cardHoverStates, skillId, false)
+      this.$set(this.cardHoverStates, skillId, false);
     },
 
     handleSkillSelect(skillId, checked) {
       if (checked) {
         // 选中：添加到已选列表
         if (!this.selectedSkills.includes(skillId)) {
-          this.selectedSkills.push(skillId)
+          this.selectedSkills.push(skillId);
         }
       } else {
         // 取消选中：从已选列表移除
-        const index = this.selectedSkills.indexOf(skillId)
+        const index = this.selectedSkills.indexOf(skillId);
         if (index > -1) {
-          this.selectedSkills.splice(index, 1)
+          this.selectedSkills.splice(index, 1);
         }
       }
     },
@@ -1000,35 +1063,33 @@ export default {
     selectAll() {
       if (this.isAllSelected) {
         // 如果已全选，则取消全选
-        this.selectedSkills = []
+        this.selectedSkills = [];
       } else {
         // 注意：由于使用后端分页，这里的"全选"实际上是选择当前页的所有技能
         // 真正的全选功能需要获取所有数据，但这会影响性能
         // 暂时保持选择当前页的所有技能
-        this.selectedSkills = this.skills.map(skill => skill.id)
-        this.$message.info('由于使用分页加载，当前只能选择本页的所有技能')
+        this.selectedSkills = this.skills.map((skill) => skill.id);
+        this.$message.info("由于使用分页加载，当前只能选择本页的所有技能");
       }
     },
 
     selectCurrentPage() {
       if (this.isCurrentPageSelected) {
         // 如果当前页已全选，则取消当前页选择
-        const currentPageIds = this.skills.map(skill => skill.id)
-        this.selectedSkills = this.selectedSkills.filter(id => !currentPageIds.includes(id))
+        const currentPageIds = this.skills.map((skill) => skill.id);
+        this.selectedSkills = this.selectedSkills.filter((id) => !currentPageIds.includes(id));
       } else {
         // 选择当前页所有技能
-        const currentPageIds = this.skills.map(skill => skill.id)
-        currentPageIds.forEach(id => {
+        const currentPageIds = this.skills.map((skill) => skill.id);
+        currentPageIds.forEach((id) => {
           if (!this.selectedSkills.includes(id)) {
-            this.selectedSkills.push(id)
+            this.selectedSkills.push(id);
           }
-        })
+        });
       }
     },
-
-
-  }
-}
+  },
+};
 </script>
 
 <style scoped>
@@ -1056,7 +1117,7 @@ export default {
 }
 
 .page-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -1339,25 +1400,27 @@ export default {
 }
 
 .skill-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg,
-      rgba(30, 64, 175, 0.08) 0%,
-      rgba(59, 130, 246, 0.06) 15%,
-      rgba(6, 182, 212, 0.07) 33%,
-      rgba(30, 64, 175, 0.03) 50%,
-      rgba(255, 255, 255, 0.01) 70%,
-      rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(30, 64, 175, 0.08) 0%,
+    rgba(59, 130, 246, 0.06) 15%,
+    rgba(6, 182, 212, 0.07) 33%,
+    rgba(30, 64, 175, 0.03) 50%,
+    rgba(255, 255, 255, 0.01) 70%,
+    rgba(255, 255, 255, 0) 100%
+  );
   border-radius: 12px;
   pointer-events: none;
   z-index: 1;
 }
 
-.skill-card>* {
+.skill-card > * {
   position: relative;
   z-index: 2;
 }
@@ -1459,8 +1522,6 @@ export default {
   text-overflow: ellipsis;
 }
 
-
-
 .card-content {
   flex: 1;
   margin-bottom: 8px;
@@ -1495,7 +1556,9 @@ export default {
   background: #fff;
   border: 2px solid #3b82f6 !important;
   border-radius: 8px !important;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3), 0 2px 8px rgba(30, 64, 175, 0.2) !important;
+  box-shadow:
+    0 4px 20px rgba(59, 130, 246, 0.3),
+    0 2px 8px rgba(30, 64, 175, 0.2) !important;
   color: #1e40af !important;
   font-size: 14px !important;
   font-weight: 400 !important;
@@ -1507,8 +1570,6 @@ export default {
   opacity: 1 !important;
   visibility: visible !important;
 }
-
-
 
 .skill-info {
   display: flex;
@@ -1612,8 +1673,8 @@ export default {
   display: flex;
   justify-content: center;
   background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  margin-top: 0 !important;
+  padding-bottom: 10px !important;
 }
 
 .pagination-section :deep(.el-pagination__total) {
@@ -1758,8 +1819,6 @@ export default {
 .pagination-section :deep(.el-pagination .el-select .el-input .el-input__inner:hover) {
   border-color: #3b82f6 !important;
 } */
-
-
 
 /* 加载状态和空状态样式 */
 .loading-container {

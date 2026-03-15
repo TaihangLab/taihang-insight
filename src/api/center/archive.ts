@@ -1,7 +1,14 @@
-import { AxiosResponse } from 'axios'
-import { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { AlertArchive, ArchiveQueryParams, CreateArchiveRequest, Alert, AlertRecordQueryParams, AlertRecord } from '@/types/center.d'
-import { normalizePageParams } from '@/api/utils/pageUtils'
+import { AxiosResponse } from "axios";
+import { authAxios, type UnifiedResponse } from "@/api/commons";
+import type {
+  AlertArchive,
+  ArchiveQueryParams,
+  CreateArchiveRequest,
+  Alert,
+  AlertRecordQueryParams,
+  AlertRecord,
+} from "@/types/center.d";
+import { normalizePageParams } from "@/api/utils/pageUtils";
 
 /**
  * 档案管理 API
@@ -16,11 +23,13 @@ class ArchiveAPI {
    * 获取预警档案列表
    * @param params 查询参数
    */
-  async getArchiveList(params: ArchiveQueryParams = {}): Promise<AxiosResponse<UnifiedResponse<AlertArchive[]>>> {
-    const { page, limit } = normalizePageParams(params)
-    const apiParams = { ...params, page, limit }
+  async getArchiveList(
+    params: ArchiveQueryParams = {},
+  ): Promise<AxiosResponse<UnifiedResponse<AlertArchive[]>>> {
+    const { page, limit } = normalizePageParams(params);
+    const apiParams = { ...params, page, limit };
 
-    return authAxios.get('/api/v1/alert-archives', { params: apiParams })
+    return authAxios.get("/api/v1/alert-archives", { params: apiParams });
   }
 
   /**
@@ -29,22 +38,29 @@ class ArchiveAPI {
    */
   async getArchiveDetail(archiveId: number): Promise<AxiosResponse<UnifiedResponse<AlertArchive>>> {
     if (!archiveId) {
-      return Promise.reject(new Error('缺少档案ID'))
+      return Promise.reject(new Error("缺少档案ID"));
     }
 
-    return authAxios.get(`/api/v1/alert-archives/${archiveId}`)
+    return authAxios.get(`/api/v1/alert-archives/${archiveId}`);
   }
 
   /**
    * 创建预警档案
    * @param archiveData 档案数据
    */
-  async createArchive(archiveData: CreateArchiveRequest): Promise<AxiosResponse<UnifiedResponse<AlertArchive>>> {
-    if (!archiveData.name || !archiveData.location || !archiveData.start_time || !archiveData.end_time) {
-      return Promise.reject(new Error('缺少必要参数：档案名称、位置、开始时间和结束时间必须提供'))
+  async createArchive(
+    archiveData: CreateArchiveRequest,
+  ): Promise<AxiosResponse<UnifiedResponse<AlertArchive>>> {
+    if (
+      !archiveData.name ||
+      !archiveData.location ||
+      !archiveData.start_time ||
+      !archiveData.end_time
+    ) {
+      return Promise.reject(new Error("缺少必要参数：档案名称、位置、开始时间和结束时间必须提供"));
     }
 
-    return authAxios.post('/api/v1/alert-archives', archiveData)
+    return authAxios.post("/api/v1/alert-archives", archiveData);
   }
 
   /**
@@ -52,12 +68,15 @@ class ArchiveAPI {
    * @param archiveId 档案ID
    * @param archiveData 档案数据
    */
-  async updateArchive(archiveId: number, archiveData: Partial<AlertArchive>): Promise<AxiosResponse<UnifiedResponse<AlertArchive>>> {
+  async updateArchive(
+    archiveId: number,
+    archiveData: Partial<AlertArchive>,
+  ): Promise<AxiosResponse<UnifiedResponse<AlertArchive>>> {
     if (!archiveId) {
-      return Promise.reject(new Error('缺少档案ID'))
+      return Promise.reject(new Error("缺少档案ID"));
     }
 
-    return authAxios.put(`/api/v1/alert-archives/${archiveId}`, archiveData)
+    return authAxios.put(`/api/v1/alert-archives/${archiveId}`, archiveData);
   }
 
   /**
@@ -66,10 +85,10 @@ class ArchiveAPI {
    */
   async deleteArchive(archiveId: number): Promise<AxiosResponse> {
     if (!archiveId) {
-      return Promise.reject(new Error('缺少档案ID'))
+      return Promise.reject(new Error("缺少档案ID"));
     }
 
-    return authAxios.delete(`/api/v1/alert-archives/${archiveId}`)
+    return authAxios.delete(`/api/v1/alert-archives/${archiveId}`);
   }
 
   /**
@@ -78,12 +97,12 @@ class ArchiveAPI {
    */
   async batchDeleteArchives(archiveIds: number[]): Promise<AxiosResponse> {
     if (!archiveIds || !Array.isArray(archiveIds) || archiveIds.length === 0) {
-      return Promise.reject(new Error('缺少档案ID数组'))
+      return Promise.reject(new Error("缺少档案ID数组"));
     }
 
-    return authAxios.delete('/api/v1/alert-archives/batch', {
-      data: { archive_ids: archiveIds }
-    })
+    return authAxios.delete("/api/v1/alert-archives/batch", {
+      data: { archive_ids: archiveIds },
+    });
   }
 
   /**
@@ -91,39 +110,54 @@ class ArchiveAPI {
    * @param archiveId 档案ID
    * @param params 查询参数
    */
-  async getArchiveAlerts(archiveId: number, params: AlertRecordQueryParams = {}): Promise<AxiosResponse<UnifiedResponse<Alert[]>>> {
+  async getArchiveAlerts(
+    archiveId: number,
+    params: AlertRecordQueryParams = {},
+  ): Promise<AxiosResponse<UnifiedResponse<Alert[]>>> {
     if (!archiveId) {
-      return Promise.reject(new Error('缺少档案ID'))
+      return Promise.reject(new Error("缺少档案ID"));
     }
 
-    const { page, limit } = normalizePageParams(params)
-    const apiParams = { ...params, page, limit }
+    const { page, limit } = normalizePageParams(params);
+    const apiParams = { ...params, page, limit };
 
-    return authAxios.get(`/api/v1/alert-archives/${archiveId}/alerts`, { params: apiParams })
+    return authAxios.get(`/api/v1/alert-archives/${archiveId}/alerts`, { params: apiParams });
   }
 
   /**
    * 添加预警记录到档案
    * @param recordData 预警记录数据
    */
-  async addAlertRecord(recordData: Partial<AlertRecord>): Promise<AxiosResponse<UnifiedResponse<AlertRecord>>> {
-    if (!recordData.archive_id || !recordData.name || !recordData.device_name || !recordData.alert_time || !recordData.alert_level) {
-      return Promise.reject(new Error('缺少必要参数：档案ID、预警名称、设备名称、预警时间和预警等级必须提供'))
+  async addAlertRecord(
+    recordData: Partial<AlertRecord>,
+  ): Promise<AxiosResponse<UnifiedResponse<AlertRecord>>> {
+    if (
+      !recordData.archive_id ||
+      !recordData.name ||
+      !recordData.device_name ||
+      !recordData.alert_time ||
+      !recordData.alert_level
+    ) {
+      return Promise.reject(
+        new Error("缺少必要参数：档案ID、预警名称、设备名称、预警时间和预警等级必须提供"),
+      );
     }
 
-    return authAxios.post('/api/v1/alert-archives/alerts', recordData)
+    return authAxios.post("/api/v1/alert-archives/alerts", recordData);
   }
 
   /**
    * 获取预警记录详情
    * @param recordId 记录ID
    */
-  async getAlertRecordDetail(recordId: number): Promise<AxiosResponse<UnifiedResponse<AlertRecord>>> {
+  async getAlertRecordDetail(
+    recordId: number,
+  ): Promise<AxiosResponse<UnifiedResponse<AlertRecord>>> {
     if (!recordId) {
-      return Promise.reject(new Error('缺少记录ID'))
+      return Promise.reject(new Error("缺少记录ID"));
     }
 
-    return authAxios.get(`/api/v1/alert-archives/alerts/${recordId}`)
+    return authAxios.get(`/api/v1/alert-archives/alerts/${recordId}`);
   }
 
   /**
@@ -131,12 +165,15 @@ class ArchiveAPI {
    * @param recordId 记录ID
    * @param recordData 记录数据
    */
-  async updateAlertRecord(recordId: number, recordData: Partial<AlertRecord>): Promise<AxiosResponse<UnifiedResponse<AlertRecord>>> {
+  async updateAlertRecord(
+    recordId: number,
+    recordData: Partial<AlertRecord>,
+  ): Promise<AxiosResponse<UnifiedResponse<AlertRecord>>> {
     if (!recordId) {
-      return Promise.reject(new Error('缺少记录ID'))
+      return Promise.reject(new Error("缺少记录ID"));
     }
 
-    return authAxios.put(`/api/v1/alert-archives/alerts/${recordId}`, recordData)
+    return authAxios.put(`/api/v1/alert-archives/alerts/${recordId}`, recordData);
   }
 
   /**
@@ -146,15 +183,15 @@ class ArchiveAPI {
    */
   async deleteAlertRecord(recordId: number, archiveId?: number | null): Promise<AxiosResponse> {
     if (!recordId) {
-      return Promise.reject(new Error('缺少记录ID'))
+      return Promise.reject(new Error("缺少记录ID"));
     }
 
-    let url = `/api/v1/alert-archives/alerts/${recordId}`
+    let url = `/api/v1/alert-archives/alerts/${recordId}`;
     if (archiveId) {
-      url += `?archive_id=${archiveId}`
+      url += `?archive_id=${archiveId}`;
     }
 
-    return authAxios.delete(url)
+    return authAxios.delete(url);
   }
 
   /**
@@ -163,12 +200,12 @@ class ArchiveAPI {
    */
   async batchDeleteAlertRecords(recordIds: number[]): Promise<AxiosResponse> {
     if (!recordIds || !Array.isArray(recordIds) || recordIds.length === 0) {
-      return Promise.reject(new Error('缺少记录ID数组'))
+      return Promise.reject(new Error("缺少记录ID数组"));
     }
 
-    return authAxios.post('/api/v1/alert-archives/alerts/batch-delete', {
-      record_ids: recordIds
-    })
+    return authAxios.post("/api/v1/alert-archives/alerts/batch-delete", {
+      record_ids: recordIds,
+    });
   }
 
   /**
@@ -178,19 +215,19 @@ class ArchiveAPI {
    */
   async uploadArchiveImage(archiveId: number, imageFile: File): Promise<AxiosResponse> {
     if (!archiveId || !imageFile) {
-      return Promise.reject(new Error('缺少档案ID或图片文件'))
+      return Promise.reject(new Error("缺少档案ID或图片文件"));
     }
 
-    const formData = new FormData()
-    formData.append('image', imageFile)
+    const formData = new FormData();
+    formData.append("image", imageFile);
 
     const config = {
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    }
+        "Content-Type": "multipart/form-data",
+      },
+    };
 
-    return authAxios.post(`/api/v1/alert-archives/${archiveId}/upload/image`, formData, config)
+    return authAxios.post(`/api/v1/alert-archives/${archiveId}/upload/image`, formData, config);
   }
 
   /**
@@ -200,19 +237,23 @@ class ArchiveAPI {
    */
   async uploadRecordImage(recordId: number, imageFile: File): Promise<AxiosResponse> {
     if (!recordId || !imageFile) {
-      return Promise.reject(new Error('缺少记录ID或图片文件'))
+      return Promise.reject(new Error("缺少记录ID或图片文件"));
     }
 
-    const formData = new FormData()
-    formData.append('image', imageFile)
+    const formData = new FormData();
+    formData.append("image", imageFile);
 
     const config = {
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    }
+        "Content-Type": "multipart/form-data",
+      },
+    };
 
-    return authAxios.post(`/api/v1/alert-archives/alerts/${recordId}/upload/image`, formData, config)
+    return authAxios.post(
+      `/api/v1/alert-archives/alerts/${recordId}/upload/image`,
+      formData,
+      config,
+    );
   }
 
   /**
@@ -222,19 +263,23 @@ class ArchiveAPI {
    */
   async uploadRecordVideo(recordId: number, videoFile: File): Promise<AxiosResponse> {
     if (!recordId || !videoFile) {
-      return Promise.reject(new Error('缺少记录ID或视频文件'))
+      return Promise.reject(new Error("缺少记录ID或视频文件"));
     }
 
-    const formData = new FormData()
-    formData.append('video', videoFile)
+    const formData = new FormData();
+    formData.append("video", videoFile);
 
     const config = {
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    }
+        "Content-Type": "multipart/form-data",
+      },
+    };
 
-    return authAxios.post(`/api/v1/alert-archives/alerts/${recordId}/upload/video`, formData, config)
+    return authAxios.post(
+      `/api/v1/alert-archives/alerts/${recordId}/upload/video`,
+      formData,
+      config,
+    );
   }
 
   /**
@@ -242,15 +287,20 @@ class ArchiveAPI {
    * @param archiveId 档案ID
    * @param params 查询参数
    */
-  async getArchiveLinkedAlerts(archiveId: number, params: AlertRecordQueryParams = {}): Promise<AxiosResponse<UnifiedResponse<any>>> {
+  async getArchiveLinkedAlerts(
+    archiveId: number,
+    params: AlertRecordQueryParams = {},
+  ): Promise<AxiosResponse<UnifiedResponse<any>>> {
     if (!archiveId) {
-      return Promise.reject(new Error('缺少档案ID'))
+      return Promise.reject(new Error("缺少档案ID"));
     }
 
-    const { page, limit } = normalizePageParams(params)
-    const apiParams = { ...params, page, limit }
+    const { page, limit } = normalizePageParams(params);
+    const apiParams = { ...params, page, limit };
 
-    return authAxios.get(`/api/v1/alert-archives/linked-alerts/${archiveId}`, { params: apiParams })
+    return authAxios.get(`/api/v1/alert-archives/linked-alerts/${archiveId}`, {
+      params: apiParams,
+    });
   }
 
   /**
@@ -260,21 +310,23 @@ class ArchiveAPI {
    */
   async unlinkAlertFromArchive(archiveId: number, alertId: number): Promise<AxiosResponse> {
     if (!archiveId || !alertId) {
-      return Promise.reject(new Error('缺少档案ID或预警ID'))
+      return Promise.reject(new Error("缺少档案ID或预警ID"));
     }
 
-    return authAxios.delete(`/api/v1/alert-archives/unlink-alert/${archiveId}/${alertId}`)
+    return authAxios.delete(`/api/v1/alert-archives/unlink-alert/${archiveId}/${alertId}`);
   }
 
   /**
    * 获取可用的预警列表（用于添加到档案）
    * @param params 查询参数
    */
-  async getAvailableAlerts(params: AlertRecordQueryParams = {}): Promise<AxiosResponse<UnifiedResponse<any>>> {
-    const { page, limit } = normalizePageParams(params)
-    const apiParams = { ...params, page, limit, exclude_archived: true }
+  async getAvailableAlerts(
+    params: AlertRecordQueryParams = {},
+  ): Promise<AxiosResponse<UnifiedResponse<any>>> {
+    const { page, limit } = normalizePageParams(params);
+    const apiParams = { ...params, page, limit, exclude_archived: true };
 
-    return authAxios.get('/api/v1/alert-archives/available-alerts', { params: apiParams })
+    return authAxios.get("/api/v1/alert-archives/available-alerts", { params: apiParams });
   }
 
   /**
@@ -283,19 +335,23 @@ class ArchiveAPI {
    * @param alertIds 预警ID列表
    * @param linkReason 关联原因（可选）
    */
-  async linkAlertsToArchive(archiveId: number, alertIds: number[], linkReason?: string): Promise<AxiosResponse> {
+  async linkAlertsToArchive(
+    archiveId: number,
+    alertIds: number[],
+    linkReason?: string,
+  ): Promise<AxiosResponse> {
     if (!archiveId || !alertIds || !Array.isArray(alertIds) || alertIds.length === 0) {
-      return Promise.reject(new Error('缺少档案ID或预警ID列表'))
+      return Promise.reject(new Error("缺少档案ID或预警ID列表"));
     }
 
     const requestData = {
       alert_ids: alertIds,
-      link_reason: linkReason || '批量关联预警到档案'
-    }
+      link_reason: linkReason || "批量关联预警到档案",
+    };
 
-    return authAxios.post(`/api/v1/alert-archives/link-alerts/${archiveId}`, requestData)
+    return authAxios.post(`/api/v1/alert-archives/link-alerts/${archiveId}`, requestData);
   }
 }
 
 // 导出单例实例
-export default new ArchiveAPI()
+export default new ArchiveAPI();

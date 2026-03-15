@@ -1,13 +1,13 @@
-import request from '@/utils/request'
+import request from "@/utils/request";
 
 /**
  * 获取资源统计信息
  */
 export function getResourceStatistics() {
   return request({
-    url: '/algorithm/resource/statistics',
-    method: 'get'
-  })
+    url: "/algorithm/resource/statistics",
+    method: "get",
+  });
 }
 
 /**
@@ -15,9 +15,9 @@ export function getResourceStatistics() {
  */
 export function getResourceDetails() {
   return request({
-    url: '/algorithm/resource/details',
-    method: 'get'
-  })
+    url: "/algorithm/resource/details",
+    method: "get",
+  });
 }
 
 /**
@@ -25,9 +25,9 @@ export function getResourceDetails() {
  */
 export function getMyAlgorithms() {
   return request({
-    url: '/algorithm/my-list',
-    method: 'get'
-  })
+    url: "/algorithm/my-list",
+    method: "get",
+  });
 }
 
 /**
@@ -37,8 +37,8 @@ export function getMyAlgorithms() {
 export function getAlgorithmDetail(id) {
   return request({
     url: `/algorithm/${id}`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
 
 /**
@@ -47,10 +47,10 @@ export function getAlgorithmDetail(id) {
  */
 export function getRealtimeEvents(params) {
   return request({
-    url: '/algorithm/events/realtime',
-    method: 'get',
-    params
-  })
+    url: "/algorithm/events/realtime",
+    method: "get",
+    params,
+  });
 }
 
 /**
@@ -61,10 +61,10 @@ export function getRealtimeEvents(params) {
  */
 export function getAlarmStatistics(params) {
   return request({
-    url: '/algorithm/alarm/statistics',
-    method: 'get',
-    params
-  })
+    url: "/algorithm/alarm/statistics",
+    method: "get",
+    params,
+  });
 }
 
 /**
@@ -72,9 +72,9 @@ export function getAlarmStatistics(params) {
  */
 export function getDeviceStatistics() {
   return request({
-    url: '/algorithm/device/statistics',
-    method: 'get'
-  })
+    url: "/algorithm/device/statistics",
+    method: "get",
+  });
 }
 
 /**
@@ -86,10 +86,10 @@ export function getDeviceStatistics() {
  */
 export function getAlarmInfoList(params) {
   return request({
-    url: '/algorithm/alarm/list',
-    method: 'get',
-    params
-  })
+    url: "/algorithm/alarm/list",
+    method: "get",
+    params,
+  });
 }
 
 /**
@@ -98,10 +98,10 @@ export function getAlarmInfoList(params) {
  */
 export function getAlarmForwardingData(params) {
   return request({
-    url: '/algorithm/alarm/forwarding',
-    method: 'get',
-    params
-  })
+    url: "/algorithm/alarm/forwarding",
+    method: "get",
+    params,
+  });
 }
 
 /**
@@ -109,9 +109,9 @@ export function getAlarmForwardingData(params) {
  */
 export function getAlgorithmRunStatus() {
   return request({
-    url: '/algorithm/run-status',
-    method: 'get'
-  })
+    url: "/algorithm/run-status",
+    method: "get",
+  });
 }
 
 /**
@@ -121,8 +121,8 @@ export function getAlgorithmRunStatus() {
 export function startAlgorithm(id) {
   return request({
     url: `/algorithm/${id}/start`,
-    method: 'post'
-  })
+    method: "post",
+  });
 }
 
 /**
@@ -132,8 +132,8 @@ export function startAlgorithm(id) {
 export function stopAlgorithm(id) {
   return request({
     url: `/algorithm/${id}/stop`,
-    method: 'post'
-  })
+    method: "post",
+  });
 }
 
 /**
@@ -143,7 +143,6 @@ export function stopAlgorithm(id) {
 export function restartAlgorithm(id) {
   return request({
     url: `/algorithm/${id}/restart`,
-    method: 'post'
-  })
+    method: "post",
+  });
 }
-

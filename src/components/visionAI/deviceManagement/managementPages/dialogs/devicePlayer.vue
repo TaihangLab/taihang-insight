@@ -1,67 +1,147 @@
 <template>
   <div id="devicePlayer" v-loading="isLoging">
-
-    <el-dialog title="视频播放" top="0" :close-on-click-modal="false" :visible.sync="showVideoDialog" @close="close()" v-if="showVideoDialog">
+    <el-dialog
+      title="视频播放"
+      top="0"
+      :close-on-click-modal="false"
+      :visible.sync="showVideoDialog"
+      @close="close()"
+      v-if="showVideoDialog"
+    >
       <div style="width: 100%; height: 100%">
-        <el-tabs type="card" :stretch="true" v-model="activePlayer" @tab-click="changePlayer"
-                 v-if="Object.keys(this.player).length > 1">
+        <el-tabs
+          type="card"
+          :stretch="true"
+          v-model="activePlayer"
+          @tab-click="changePlayer"
+          v-if="Object.keys(this.player).length > 1"
+        >
           <el-tab-pane label="Jessibuca" name="jessibuca">
-            <jessibucaPlayer v-if="activePlayer === 'jessibuca'" ref="jessibuca" :visible.sync="showVideoDialog"
-                             :videoUrl="videoUrl" :error="videoError" :message="videoError"
-                             :hasAudio="hasAudio" fluent autoplay live></jessibucaPlayer>
+            <jessibucaPlayer
+              v-if="activePlayer === 'jessibuca'"
+              ref="jessibuca"
+              :visible.sync="showVideoDialog"
+              :videoUrl="videoUrl"
+              :error="videoError"
+              :message="videoError"
+              :hasAudio="hasAudio"
+              fluent
+              autoplay
+              live
+            ></jessibucaPlayer>
           </el-tab-pane>
           <el-tab-pane label="WebRTC" name="webRTC">
-            <rtc-player v-if="activePlayer === 'webRTC'" ref="webRTC" :visible.sync="showVideoDialog"
-                        :videoUrl="videoUrl" :error="videoError" :message="videoError" height="100px"
-                        :hasAudio="hasAudio" fluent autoplay live></rtc-player>
+            <rtc-player
+              v-if="activePlayer === 'webRTC'"
+              ref="webRTC"
+              :visible.sync="showVideoDialog"
+              :videoUrl="videoUrl"
+              :error="videoError"
+              :message="videoError"
+              height="100px"
+              :hasAudio="hasAudio"
+              fluent
+              autoplay
+              live
+            ></rtc-player>
           </el-tab-pane>
           <el-tab-pane label="h265web" name="h265web">
-            <h265web v-if="activePlayer === 'h265web'" ref="h265web"
-                    :videoUrl="videoUrl" :error="videoError" :message="videoError" height="100px"
-                    :hasAudio="hasAudio" fluent autoplay live></h265web>
+            <h265web
+              v-if="activePlayer === 'h265web'"
+              ref="h265web"
+              :videoUrl="videoUrl"
+              :error="videoError"
+              :message="videoError"
+              height="100px"
+              :hasAudio="hasAudio"
+              fluent
+              autoplay
+              live
+            ></h265web>
           </el-tab-pane>
         </el-tabs>
-        <jessibucaPlayer v-if="Object.keys(this.player).length == 1 && this.player.jessibuca" ref="jessibuca"
-                         :visible.sync="showVideoDialog" :videoUrl="videoUrl" :error="videoError" :message="videoError"
-                         :hasAudio="hasAudio" fluent autoplay live></jessibucaPlayer>
-        <rtc-player v-if="Object.keys(this.player).length == 1 && this.player.webRTC" ref="jessibuca"
-                    :visible.sync="showVideoDialog" :videoUrl="videoUrl" :error="videoError" :message="videoError"
-                    height="100px" :hasAudio="hasAudio" fluent autoplay live></rtc-player>
-        <h265web v-if="Object.keys(this.player).length == 1 && this.player.h265web" ref="jessibuca"
-                    :visible.sync="showVideoDialog" :videoUrl="videoUrl" :error="videoError" :message="videoError"
-                    height="100px" :hasAudio="hasAudio" fluent autoplay live></h265web>
+        <jessibucaPlayer
+          v-if="Object.keys(this.player).length == 1 && this.player.jessibuca"
+          ref="jessibuca"
+          :visible.sync="showVideoDialog"
+          :videoUrl="videoUrl"
+          :error="videoError"
+          :message="videoError"
+          :hasAudio="hasAudio"
+          fluent
+          autoplay
+          live
+        ></jessibucaPlayer>
+        <rtc-player
+          v-if="Object.keys(this.player).length == 1 && this.player.webRTC"
+          ref="jessibuca"
+          :visible.sync="showVideoDialog"
+          :videoUrl="videoUrl"
+          :error="videoError"
+          :message="videoError"
+          height="100px"
+          :hasAudio="hasAudio"
+          fluent
+          autoplay
+          live
+        ></rtc-player>
+        <h265web
+          v-if="Object.keys(this.player).length == 1 && this.player.h265web"
+          ref="jessibuca"
+          :visible.sync="showVideoDialog"
+          :videoUrl="videoUrl"
+          :error="videoError"
+          :message="videoError"
+          height="100px"
+          :hasAudio="hasAudio"
+          fluent
+          autoplay
+          live
+        ></h265web>
       </div>
-      <div id="shared" style="text-align: right; margin-top: 1rem;">
-
+      <div id="shared" style="text-align: right; margin-top: 1rem">
         <el-tabs v-model="tabActiveName" @tab-click="tabHandleClick">
           <el-tab-pane label="实时视频" name="media">
-            <div style="display: flex; margin-bottom: 0.5rem; height: 2.5rem;">
-              <span style="width: 5rem; line-height: 2.5rem; text-align: right;">播放地址：</span>
+            <div style="display: flex; margin-bottom: 0.5rem; height: 2.5rem">
+              <span style="width: 5rem; line-height: 2.5rem; text-align: right">播放地址：</span>
               <el-input v-model="getPlayerShared.sharedUrl" :disabled="true">
                 <template slot="append">
-                  <i class="cpoy-btn el-icon-document-copy" title="点击拷贝" v-clipboard="getPlayerShared.sharedUrl"
-                     @success="$message({type:'success', message:'成功拷贝到粘贴板'})"></i>
+                  <i
+                    class="cpoy-btn el-icon-document-copy"
+                    title="点击拷贝"
+                    v-clipboard="getPlayerShared.sharedUrl"
+                    @success="$message({ type: 'success', message: '成功拷贝到粘贴板' })"
+                  ></i>
                 </template>
               </el-input>
             </div>
-            <div style="display: flex; margin-bottom: 0.5rem; height: 2.5rem;">
-              <span style="width: 5rem; line-height: 2.5rem; text-align: right;">iframe：</span>
+            <div style="display: flex; margin-bottom: 0.5rem; height: 2.5rem">
+              <span style="width: 5rem; line-height: 2.5rem; text-align: right">iframe：</span>
               <el-input v-model="getPlayerShared.sharedIframe" :disabled="true">
                 <template slot="append">
-                  <i class="cpoy-btn el-icon-document-copy" title="点击拷贝" v-clipboard="getPlayerShared.sharedIframe"
-                     @success="$message({type:'success', message:'成功拷贝到粘贴板'})"></i>
+                  <i
+                    class="cpoy-btn el-icon-document-copy"
+                    title="点击拷贝"
+                    v-clipboard="getPlayerShared.sharedIframe"
+                    @success="$message({ type: 'success', message: '成功拷贝到粘贴板' })"
+                  ></i>
                 </template>
               </el-input>
             </div>
-            <div style="display: flex; margin-bottom: 0.5rem; height: 2.5rem;">
-              <span style="width: 5rem; line-height: 2.5rem; text-align: right;">资源地址：</span>
+            <div style="display: flex; margin-bottom: 0.5rem; height: 2.5rem">
+              <span style="width: 5rem; line-height: 2.5rem; text-align: right">资源地址：</span>
               <el-input v-model="getPlayerShared.sharedRtmp" :disabled="true">
-                <el-button slot="append" icon="el-icon-document-copy" title="点击拷贝"
-                           v-clipboard="getPlayerShared.sharedRtmp"
-                           @success="$message({type:'success', message:'成功拷贝到粘贴板'})"></el-button>
+                <el-button
+                  slot="append"
+                  icon="el-icon-document-copy"
+                  title="点击拷贝"
+                  v-clipboard="getPlayerShared.sharedRtmp"
+                  @success="$message({ type: 'success', message: '成功拷贝到粘贴板' })"
+                ></el-button>
                 <el-dropdown slot="prepend" v-if="streamInfo" trigger="click" @command="copyUrl">
                   <el-button>
-                    更多地址<i class="el-icon-arrow-down el-icon--right"></i>
+                    更多地址
+                    <i class="el-icon-arrow-down el-icon--right"></i>
                   </el-button>
                   <el-dropdown-menu>
                     <el-dropdown-item v-if="streamInfo.flv" :command="streamInfo.flv">
@@ -155,67 +235,125 @@
                   </el-dropdown-menu>
                 </el-dropdown>
               </el-input>
-
             </div>
           </el-tab-pane>
           <!--{"code":0,"data":{"paths":["22-29-30.mp4"],"rootPath":"/home/kkkkk/Documents/ZLMediaKit/release/linux/Debug/www/record/hls/kkkkk/2020-05-11/"}}-->
           <!--遥控界面-->
           <el-tab-pane label="云台控制" name="control" v-if="showPtz">
-            <div style="display: grid; grid-template-columns: 240px auto; height: 180px; overflow: auto">
-              <div style="display: grid; grid-template-columns: 6.25rem auto;">
-
+            <div
+              style="
+                display: grid;
+                grid-template-columns: 240px auto;
+                height: 180px;
+                overflow: auto;
+              "
+            >
+              <div style="display: grid; grid-template-columns: 6.25rem auto">
                 <div class="control-wrapper">
-                  <div class="control-btn control-top" @mousedown="ptzCamera('up')" @mouseup="ptzCamera('stop')">
+                  <div
+                    class="control-btn control-top"
+                    @mousedown="ptzCamera('up')"
+                    @mouseup="ptzCamera('stop')"
+                  >
                     <i class="el-icon-caret-top"></i>
                     <div class="control-inner-btn control-inner"></div>
                   </div>
-                  <div class="control-btn control-left" @mousedown="ptzCamera('left')" @mouseup="ptzCamera('stop')">
+                  <div
+                    class="control-btn control-left"
+                    @mousedown="ptzCamera('left')"
+                    @mouseup="ptzCamera('stop')"
+                  >
                     <i class="el-icon-caret-left"></i>
                     <div class="control-inner-btn control-inner"></div>
                   </div>
-                  <div class="control-btn control-bottom" @mousedown="ptzCamera('down')" @mouseup="ptzCamera('stop')">
+                  <div
+                    class="control-btn control-bottom"
+                    @mousedown="ptzCamera('down')"
+                    @mouseup="ptzCamera('stop')"
+                  >
                     <i class="el-icon-caret-bottom"></i>
                     <div class="control-inner-btn control-inner"></div>
                   </div>
-                  <div class="control-btn control-right" @mousedown="ptzCamera('right')" @mouseup="ptzCamera('stop')">
+                  <div
+                    class="control-btn control-right"
+                    @mousedown="ptzCamera('right')"
+                    @mouseup="ptzCamera('stop')"
+                  >
                     <i class="el-icon-caret-right"></i>
                     <div class="control-inner-btn control-inner"></div>
                   </div>
                   <div class="control-round">
                     <div class="control-round-inner"><i class="i-carbon-pause-filled"></i></div>
                   </div>
-                  <div class="contro-speed" style="position: absolute; left: 4px; top: 7rem; width: 6.25rem;">
+                  <div
+                    class="contro-speed"
+                    style="position: absolute; left: 4px; top: 7rem; width: 6.25rem"
+                  >
                     <el-slider v-model="controSpeed" :max="100"></el-slider>
                   </div>
                 </div>
                 <div>
                   <div class="ptz-btn-box">
-                    <div style="" @mousedown="ptzCamera('zoomin')" @mouseup="ptzCamera('stop')" title="变倍+">
-                      <i class="el-icon-zoom-in control-zoom-btn" style="font-size: 1.5rem;"></i>
+                    <div
+                      style=""
+                      @mousedown="ptzCamera('zoomin')"
+                      @mouseup="ptzCamera('stop')"
+                      title="变倍+"
+                    >
+                      <i class="el-icon-zoom-in control-zoom-btn" style="font-size: 1.5rem"></i>
                     </div>
-                    <div style="" @mousedown="ptzCamera('zoomout')" @mouseup="ptzCamera('stop')" title="变倍-">
-                      <i class="el-icon-zoom-out control-zoom-btn" style="font-size: 1.5rem;"></i>
+                    <div
+                      style=""
+                      @mousedown="ptzCamera('zoomout')"
+                      @mouseup="ptzCamera('stop')"
+                      title="变倍-"
+                    >
+                      <i class="el-icon-zoom-out control-zoom-btn" style="font-size: 1.5rem"></i>
                     </div>
                   </div>
                   <div class="ptz-btn-box">
-                    <div @mousedown="focusCamera('near')"  @mouseup="focusCamera('stop')" title="聚焦+">
-                      <i class="iconfont icon-bianjiao-fangda control-zoom-btn" style="font-size: 1.5rem;"></i>
+                    <div
+                      @mousedown="focusCamera('near')"
+                      @mouseup="focusCamera('stop')"
+                      title="聚焦+"
+                    >
+                      <i
+                        class="iconfont icon-bianjiao-fangda control-zoom-btn"
+                        style="font-size: 1.5rem"
+                      ></i>
                     </div>
-                    <div @mousedown="focusCamera('far')" @mouseup="focusCamera('stop')" title="聚焦-">
-                      <i class="iconfont icon-bianjiao-suoxiao control-zoom-btn" style="font-size: 1.5rem;"></i>
+                    <div
+                      @mousedown="focusCamera('far')"
+                      @mouseup="focusCamera('stop')"
+                      title="聚焦-"
+                    >
+                      <i
+                        class="iconfont icon-bianjiao-suoxiao control-zoom-btn"
+                        style="font-size: 1.5rem"
+                      ></i>
                     </div>
                   </div>
                   <div class="ptz-btn-box">
-                    <div @mousedown="irisCamera('in')"  @mouseup="irisCamera('stop')" title="光圈+">
-                      <i class="iconfont icon-guangquan control-zoom-btn" style="font-size: 1.5rem;"></i>
+                    <div @mousedown="irisCamera('in')" @mouseup="irisCamera('stop')" title="光圈+">
+                      <i
+                        class="iconfont icon-guangquan control-zoom-btn"
+                        style="font-size: 1.5rem"
+                      ></i>
                     </div>
-                    <div @mousedown="pirisCamera('out')" @mouseup="irisCamera('stop')" title="光圈-">
-                      <i class="iconfont icon-guangquan- control-zoom-btn" style="font-size: 1.5rem;"></i>
+                    <div
+                      @mousedown="pirisCamera('out')"
+                      @mouseup="irisCamera('stop')"
+                      title="光圈-"
+                    >
+                      <i
+                        class="iconfont icon-guangquan- control-zoom-btn"
+                        style="font-size: 1.5rem"
+                      ></i>
                     </div>
                   </div>
                 </div>
               </div>
-              <div style="text-align: left" >
+              <div style="text-align: left">
                 <el-select
                   v-model="ptzMethod"
                   style="width: 100%"
@@ -229,41 +367,75 @@
                   <el-option label="辅助开关" value="switch"></el-option>
                 </el-select>
 
-                <ptzPreset :channelDeviceId="channelId" :deviceId="deviceId" v-if="ptzMethod === 'preset'" style="margin-top: 1rem"></ptzPreset>
-                <ptzCruising :channelDeviceId="channelId" :deviceId="deviceId" v-if="ptzMethod === 'cruise'" style="margin-top: 1rem"></ptzCruising>
-                <ptzScan :channelDeviceId="channelId" :deviceId="deviceId" v-if="ptzMethod === 'scan'" style="margin-top: 1rem"></ptzScan>
-                <ptzWiper :channelDeviceId="channelId" :deviceId="deviceId" v-if="ptzMethod === 'wiper'" style="margin-top: 1rem"></ptzWiper>
-                <ptzSwitch :channelDeviceId="channelId" :deviceId="deviceId" v-if="ptzMethod === 'switch'" style="margin-top: 1rem"></ptzSwitch>
+                <ptzPreset
+                  :channelDeviceId="channelId"
+                  :deviceId="deviceId"
+                  v-if="ptzMethod === 'preset'"
+                  style="margin-top: 1rem"
+                ></ptzPreset>
+                <ptzCruising
+                  :channelDeviceId="channelId"
+                  :deviceId="deviceId"
+                  v-if="ptzMethod === 'cruise'"
+                  style="margin-top: 1rem"
+                ></ptzCruising>
+                <ptzScan
+                  :channelDeviceId="channelId"
+                  :deviceId="deviceId"
+                  v-if="ptzMethod === 'scan'"
+                  style="margin-top: 1rem"
+                ></ptzScan>
+                <ptzWiper
+                  :channelDeviceId="channelId"
+                  :deviceId="deviceId"
+                  v-if="ptzMethod === 'wiper'"
+                  style="margin-top: 1rem"
+                ></ptzWiper>
+                <ptzSwitch
+                  :channelDeviceId="channelId"
+                  :deviceId="deviceId"
+                  v-if="ptzMethod === 'switch'"
+                  style="margin-top: 1rem"
+                ></ptzSwitch>
               </div>
             </div>
           </el-tab-pane>
-          <el-tab-pane label="编码信息" name="codec" >
-            <mediaInfo ref="mediaInfo" :app="app" :stream="streamId" :mediaServerId="mediaServerId"></mediaInfo>
+          <el-tab-pane label="编码信息" name="codec">
+            <mediaInfo
+              ref="mediaInfo"
+              :app="app"
+              :stream="streamId"
+              :mediaServerId="mediaServerId"
+            ></mediaInfo>
           </el-tab-pane>
           <el-tab-pane label="语音对讲" name="broadcast">
             <div style="padding: 0 10px">
-<!--              <el-switch v-model="broadcastMode" :disabled="broadcastStatus !== -1" active-color="#409EFF"-->
-<!--                         active-text="喊话(Broadcast)"-->
-<!--                         inactive-text="对讲(Talk)"></el-switch>-->
+              <!--              <el-switch v-model="broadcastMode" :disabled="broadcastStatus !== -1" active-color="#409EFF"-->
+              <!--                         active-text="喊话(Broadcast)"-->
+              <!--                         inactive-text="对讲(Talk)"></el-switch>-->
 
               <el-radio-group v-model="broadcastMode" :disabled="broadcastStatus !== -1">
-                <el-radio :label="true" >喊话(Broadcast)</el-radio>
-                <el-radio :label="false" >对讲(Talk)</el-radio>
+                <el-radio :label="true">喊话(Broadcast)</el-radio>
+                <el-radio :label="false">对讲(Talk)</el-radio>
               </el-radio-group>
             </div>
-            <div class="trank" style="text-align: center;">
-              <el-button @click="broadcastStatusClick()" :type="getBroadcastStatus()" :disabled="broadcastStatus === -2"
-                         circle icon="el-icon-microphone" style="font-size: 32px; padding: 24px;margin-top: 24px;"/>
+            <div class="trank" style="text-align: center">
+              <el-button
+                @click="broadcastStatusClick()"
+                :type="getBroadcastStatus()"
+                :disabled="broadcastStatus === -2"
+                circle
+                icon="el-icon-microphone"
+                style="font-size: 32px; padding: 24px; margin-top: 24px"
+              />
               <p>
                 <span v-if="broadcastStatus === -2">正在释放资源</span>
                 <span v-if="broadcastStatus === -1">点击开始对讲</span>
                 <span v-if="broadcastStatus === 0">等待接通中...</span>
                 <span v-if="broadcastStatus === 1">请说话</span>
               </p>
-
             </div>
           </el-tab-pane>
-
         </el-tabs>
       </div>
     </el-dialog>
@@ -271,10 +443,10 @@
 </template>
 
 <script>
-import rtcPlayer from './rtcPlayer.vue'
+import rtcPlayer from "./rtcPlayer.vue";
 // import LivePlayer from '@liveqing/liveplayer-v3'  // 已禁用 - 使用 jessibuca/rtcPlayer/h265web 替代
-import crypto from 'crypto'
-import jessibucaPlayer from './jessibuca.vue'
+import crypto from "crypto";
+import jessibucaPlayer from "./jessibuca.vue";
 import PtzPreset from "./ptzPreset.vue";
 import PtzCruising from "./ptzCruising.vue";
 import ptzScan from "./ptzScan.vue";
@@ -282,40 +454,52 @@ import ptzWiper from "./ptzWiper.vue";
 import ptzSwitch from "./ptzSwitch.vue";
 import mediaInfo from "./mediaInfo.vue";
 import H265web from "./h265web.vue";
-import { frontEndPtzControl, irisControl, focusControl } from '@/api/ptz'
-import { startBroadcast, stopBroadcast } from '@/api/play'
-import { getUserDetailInfo } from '@/api/user'
+import { frontEndPtzControl, irisControl, focusControl } from "@/api/ptz";
+import { startBroadcast, stopBroadcast } from "@/api/play";
+import { getUserDetailInfo } from "@/api/user";
 
 export default {
-  name: 'devicePlayer',
+  name: "devicePlayer",
   props: {},
   components: {
     H265web,
-    PtzPreset,PtzCruising,ptzScan,ptzWiper,ptzSwitch,mediaInfo,
+    PtzPreset,
+    PtzCruising,
+    ptzScan,
+    ptzWiper,
+    ptzSwitch,
+    mediaInfo,
     // LivePlayer,  // 已禁用 - liveplayer-v3 与 Vite/新版 video.js 不兼容
-    jessibucaPlayer, rtcPlayer,
+    jessibucaPlayer,
+    rtcPlayer,
   },
   computed: {
     getPlayerShared: function () {
       return {
-        sharedUrl: window.location.origin + '/#/play/wasm/' + encodeURIComponent(this.videoUrl),
-        sharedIframe: '<iframe src="' + window.location.origin + '/#/play/wasm/' + encodeURIComponent(this.videoUrl) + '"></iframe>',
-        sharedRtmp: this.videoUrl
+        sharedUrl: window.location.origin + "/#/play/wasm/" + encodeURIComponent(this.videoUrl),
+        sharedIframe:
+          '<iframe src="' +
+          window.location.origin +
+          "/#/play/wasm/" +
+          encodeURIComponent(this.videoUrl) +
+          '"></iframe>',
+        sharedRtmp: this.videoUrl,
       };
-    }
+    },
   },
   created() {
-    console.log("created")
-    console.log(this.player)
+    console.log("created");
+    console.log(this.player);
     this.broadcastStatus = -1;
     if (Object.keys(this.player).length === 1) {
-      this.activePlayer = Object.keys(this.player)[0]
+      this.activePlayer = Object.keys(this.player)[0];
     }
   },
   data() {
     return {
-      video: 'http://lndxyj.iqilu.com/public/upload/2019/10/14/8c001ea0c09cdc59a57829dabc8010fa.mp4',
-      videoUrl: '',
+      video:
+        "http://lndxyj.iqilu.com/public/upload/2019/10/14/8c001ea0c09cdc59a57829dabc8010fa.mp4",
+      videoUrl: "",
       activePlayer: "jessibuca",
       // 如何你只是用一种播放器，直接注释掉不用的部分即可
       player: {
@@ -324,14 +508,14 @@ export default {
         h265web: ["ws_flv", "wss_flv"],
       },
       showVideoDialog: false,
-      streamId: '',
-      ptzMethod: 'preset',
-      ptzPresetId: '',
-      app: '',
-      mediaServerId: '',
-      deviceId: '',
-      channelId: '',
-      tabActiveName: 'media',
+      streamId: "",
+      ptzMethod: "preset",
+      ptzPresetId: "",
+      app: "",
+      mediaServerId: "",
+      deviceId: "",
+      channelId: "",
+      tabActiveName: "media",
       hasAudio: false,
       loadingRecords: false,
       recordsLoading: false,
@@ -361,19 +545,19 @@ export default {
   },
   methods: {
     tabHandleClick: function (tab, event) {
-      console.log(tab)
+      console.log(tab);
       this.tracks = [];
       if (tab.name === "codec") {
-        this.$refs.mediaInfo.startTask()
-      }else {
-        this.$refs.mediaInfo.stopTask()
+        this.$refs.mediaInfo.startTask();
+      } else {
+        this.$refs.mediaInfo.stopTask();
       }
     },
     changePlayer: function (tab) {
-      console.log(this.player[tab.name][0])
+      console.log(this.player[tab.name][0]);
       this.activePlayer = tab.name;
-      this.videoUrl = this.getUrlByStreamInfo()
-      console.log(this.videoUrl)
+      this.videoUrl = this.getUrlByStreamInfo();
+      console.log(this.videoUrl);
     },
     openDialog: function (tab, deviceId, channelId, param) {
       if (this.showVideoDialog) {
@@ -385,19 +569,19 @@ export default {
       this.streamId = "";
       this.mediaServerId = "";
       this.app = "";
-      this.videoUrl = ""
+      this.videoUrl = "";
       if (!!this.$refs[this.activePlayer]) {
         this.$refs[this.activePlayer].pause();
       }
       switch (tab) {
         case "media":
-          this.play(param.streamInfo, param.hasAudio)
+          this.play(param.streamInfo, param.hasAudio);
           break;
         case "streamPlay":
           this.tabActiveName = "media";
           this.showRrecord = false;
           this.showPtz = false;
-          this.play(param.streamInfo, param.hasAudio)
+          this.play(param.streamInfo, param.hasAudio);
           break;
         case "control":
           break;
@@ -412,134 +596,130 @@ export default {
       this.streamId = streamInfo.stream;
       this.app = streamInfo.app;
       this.mediaServerId = streamInfo.mediaServerId;
-      this.playFromStreamInfo(false, streamInfo)
+      this.playFromStreamInfo(false, streamInfo);
     },
     getUrlByStreamInfo() {
-      console.log(this.streamInfo)
-      let streamInfo = this.streamInfo
+      console.log(this.streamInfo);
+      let streamInfo = this.streamInfo;
       if (this.streamInfo.transcodeStream) {
         streamInfo = this.streamInfo.transcodeStream;
       }
       if (location.protocol === "https:") {
-        this.videoUrl = streamInfo[this.player[this.activePlayer][1]]
+        this.videoUrl = streamInfo[this.player[this.activePlayer][1]];
       } else {
-        this.videoUrl = streamInfo[this.player[this.activePlayer][0]]
+        this.videoUrl = streamInfo[this.player[this.activePlayer][0]];
       }
       return this.videoUrl;
-
     },
 
     playFromStreamInfo: function (realHasAudio, streamInfo) {
       this.showVideoDialog = true;
       this.hasaudio = realHasAudio && this.hasaudio;
       if (this.$refs[this.activePlayer]) {
-        this.$refs[this.activePlayer].play(this.getUrlByStreamInfo(streamInfo))
-      }else {
+        this.$refs[this.activePlayer].play(this.getUrlByStreamInfo(streamInfo));
+      } else {
         this.$nextTick(() => {
-          this.$refs[this.activePlayer].play(this.getUrlByStreamInfo(streamInfo))
+          this.$refs[this.activePlayer].play(this.getUrlByStreamInfo(streamInfo));
         });
       }
     },
     close: function () {
-        console.log('关闭视频');
-        if (!!this.$refs[this.activePlayer]){
-          this.$refs[this.activePlayer].pause();
-        }
-        this.videoUrl = '';
-        this.coverPlaying = false;
-        this.showVideoDialog = false;
-        this.stopBroadcast()
+      console.log("关闭视频");
+      if (!!this.$refs[this.activePlayer]) {
+        this.$refs[this.activePlayer].pause();
+      }
+      this.videoUrl = "";
+      this.coverPlaying = false;
+      this.showVideoDialog = false;
+      this.stopBroadcast();
     },
 
     copySharedInfo: function (data) {
-      console.log('复制内容：' + data);
+      console.log("复制内容：" + data);
       this.coverPlaying = false;
-      this.tracks = []
+      this.tracks = [];
       let _this = this;
       this.$copyText(data).then(
-          function (e) {
-            _this.$message({
-              showClose: true,
-              message: '复制成功',
-              type: 'success'
-            });
-          },
-          function (e) {
-            _this.$message({
-              showClose: true,
-              message: '复制失败，请手动复制',
-              type: 'error'
-            });
-          }
+        function (e) {
+          _this.$message({
+            showClose: true,
+            message: "复制成功",
+            type: "success",
+          });
+        },
+        function (e) {
+          _this.$message({
+            showClose: true,
+            message: "复制失败，请手动复制",
+            type: "error",
+          });
+        },
       );
     },
     ptzCamera: function (command) {
-      console.log('云台控制：' + command);
+      console.log("云台控制：" + command);
       frontEndPtzControl(this.deviceId, this.channelId, {
         command: command,
-        horizonSpeed: parseInt(this.controSpeed * 255/100),
-        verticalSpeed: parseInt(this.controSpeed * 255/100),
-        zoomSpeed: parseInt(this.controSpeed * 16/100)
-      }).then(() => {
-      });
+        horizonSpeed: parseInt((this.controSpeed * 255) / 100),
+        verticalSpeed: parseInt((this.controSpeed * 255) / 100),
+        zoomSpeed: parseInt((this.controSpeed * 16) / 100),
+      }).then(() => {});
     },
     irisCamera: function (command) {
       irisControl(this.deviceId, this.channelId, {
         command: command,
-        speed: parseInt(this.controSpeed * 255/100)
-      }).then(() => {
-      });
+        speed: parseInt((this.controSpeed * 255) / 100),
+      }).then(() => {});
     },
     focusCamera: function (command) {
       focusControl(this.deviceId, this.channelId, {
         command: command,
-        speed: parseInt(this.controSpeed * 255/100)
-      }).then(() => {
-      });
+        speed: parseInt((this.controSpeed * 255) / 100),
+      }).then(() => {});
     },
     //////////////////////播放器事件处理//////////////////////////
     videoError: function (e) {
       console.log("播放器错误：" + JSON.stringify(e));
     },
     copyUrl: function (dropdownItem) {
-      console.log(dropdownItem)
-      this.$copyText(dropdownItem).then((e) => {
-        this.$message.success({
-          showClose: true,
-          message: "成功拷贝到粘贴板"
-        })
-      }, (e) => {
-
-      })
+      console.log(dropdownItem);
+      this.$copyText(dropdownItem).then(
+        (e) => {
+          this.$message.success({
+            showClose: true,
+            message: "成功拷贝到粘贴板",
+          });
+        },
+        (e) => {},
+      );
     },
     getBroadcastStatus() {
       if (this.broadcastStatus == -2) {
-        return "primary"
+        return "primary";
       }
       if (this.broadcastStatus == -1) {
-        return "primary"
+        return "primary";
       }
       if (this.broadcastStatus == 0) {
-        return "warning"
+        return "warning";
       }
       if (this.broadcastStatus == 1) {
-        return "danger"
+        return "danger";
       }
-
     },
     broadcastStatusClick() {
       if (this.broadcastStatus == -1) {
-        this.broadcastStatus = 0
+        this.broadcastStatus = 0;
         startBroadcast(this.deviceId, this.channelId, {
           timeout: 30,
-          broadcastMode: this.broadcastMode
+          broadcastMode: this.broadcastMode,
         }).then((res) => {
           if (res.code === 0) {
             let streamInfo = res.data.streamInfo;
             if (document.location.protocol.includes("https")) {
-              this.startBroadcast(streamInfo.rtcs)
+              this.startBroadcast(streamInfo.rtcs);
             } else {
-              this.startBroadcast(streamInfo.rtc)
+              this.startBroadcast(streamInfo.rtc);
             }
           } else {
             this.$message({
@@ -551,92 +731,97 @@ export default {
         });
       } else if (this.broadcastStatus === 1) {
         this.broadcastStatus = -1;
-        this.broadcastRtc.close()
+        this.broadcastRtc.close();
       }
     },
     startBroadcast(url) {
-      getUserDetailInfo().then((res) => {
-        if (res.code !== 0) {
+      getUserDetailInfo()
+        .then((res) => {
+          if (res.code !== 0) {
+            this.$message({
+              showClose: true,
+              message: "获取推流鉴权Key失败",
+              type: "error",
+            });
+            this.broadcastStatus = -1;
+          } else {
+            let pushKey = res.data.pushKey;
+            // 获取推流鉴权KEY
+            url += "&sign=" + crypto.createHash("md5").update(pushKey, "utf8").digest("hex");
+            console.log("开始语音喊话： " + url);
+            this.broadcastRtc = new ZLMRTCClient.Endpoint({
+              debug: true, // 是否打印日志
+              zlmsdpUrl: url, //流地址
+              simulecast: false,
+              useCamera: false,
+              audioEnable: true,
+              videoEnable: false,
+              recvOnly: false,
+            });
+
+            this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_NOT_SUPPORT, (e) => {
+              // 获取到了本地流
+              console.error("不支持webrtc", e);
+              this.$message({
+                showClose: true,
+                message: "不支持webrtc, 无法进行语音喊话",
+                type: "error",
+              });
+              this.broadcastStatus = -1;
+            });
+
+            this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_ICE_CANDIDATE_ERROR, (e) => {
+              // ICE 协商出错
+              console.error("ICE 协商出错");
+              this.$message({
+                showClose: true,
+                message: "ICE 协商出错",
+                type: "error",
+              });
+              this.broadcastStatus = -1;
+            });
+
+            this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_OFFER_ANWSER_EXCHANGE_FAILED, (e) => {
+              // offer anwser 交换失败
+              console.error("offer anwser 交换失败", e);
+              this.$message({
+                showClose: true,
+                message: "offer anwser 交换失败" + e,
+                type: "error",
+              });
+              this.broadcastStatus = -1;
+            });
+            this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_ON_CONNECTION_STATE_CHANGE, (e) => {
+              // offer anwser 交换失败
+              console.log("状态改变", e);
+              if (e === "connecting") {
+                this.broadcastStatus = 0;
+              } else if (e === "connected") {
+                this.broadcastStatus = 1;
+              } else if (e === "disconnected") {
+                this.broadcastStatus = -1;
+              }
+            });
+            this.broadcastRtc.on(ZLMRTCClient.Events.CAPTURE_STREAM_FAILED, (e) => {
+              // offer anwser 交换失败
+              console.log("捕获流失败", e);
+              this.$message({
+                showClose: true,
+                message: "捕获流失败" + e,
+                type: "error",
+              });
+              this.broadcastStatus = -1;
+            });
+          }
+        })
+        .catch((e) => {
           this.$message({
             showClose: true,
-            message: "获取推流鉴权Key失败",
+            message: e,
             type: "error",
           });
           this.broadcastStatus = -1;
-        } else {
-          let pushKey = res.data.pushKey;
-          // 获取推流鉴权KEY
-          url += "&sign=" + crypto.createHash('md5').update(pushKey, "utf8").digest('hex')
-          console.log("开始语音喊话： " + url)
-          this.broadcastRtc = new ZLMRTCClient.Endpoint({
-            debug: true, // 是否打印日志
-            zlmsdpUrl: url, //流地址
-            simulecast: false,
-            useCamera: false,
-            audioEnable: true,
-            videoEnable: false,
-            recvOnly: false,
-          })
-
-          this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_NOT_SUPPORT, (e) => {// 获取到了本地流
-            console.error('不支持webrtc', e)
-            this.$message({
-              showClose: true,
-              message: '不支持webrtc, 无法进行语音喊话',
-              type: 'error'
-            });
-            this.broadcastStatus = -1;
-          });
-
-          this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_ICE_CANDIDATE_ERROR, (e) => {// ICE 协商出错
-            console.error('ICE 协商出错')
-            this.$message({
-              showClose: true,
-              message: 'ICE 协商出错',
-              type: 'error'
-            });
-            this.broadcastStatus = -1;
-          });
-
-          this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_OFFER_ANWSER_EXCHANGE_FAILED, (e) => {// offer anwser 交换失败
-            console.error('offer anwser 交换失败', e)
-            this.$message({
-              showClose: true,
-              message: 'offer anwser 交换失败' + e,
-              type: 'error'
-            });
-            this.broadcastStatus = -1;
-          });
-          this.broadcastRtc.on(ZLMRTCClient.Events.WEBRTC_ON_CONNECTION_STATE_CHANGE, (e) => {// offer anwser 交换失败
-            console.log('状态改变', e)
-            if (e === "connecting") {
-              this.broadcastStatus = 0;
-            } else if (e === "connected") {
-              this.broadcastStatus = 1;
-            } else if (e === "disconnected") {
-              this.broadcastStatus = -1;
-            }
-          });
-          this.broadcastRtc.on(ZLMRTCClient.Events.CAPTURE_STREAM_FAILED, (e) => {// offer anwser 交换失败
-            console.log('捕获流失败', e)
-            this.$message({
-              showClose: true,
-              message: '捕获流失败' + e,
-              type: 'error'
-            });
-            this.broadcastStatus = -1;
-          });
-        }
-      }).catch((e) => {
-        this.$message({
-          showClose: true,
-          message: e,
-          type: 'error'
         });
-        this.broadcastStatus = -1;
-      });
-
-
     },
     stopBroadcast() {
       this.broadcastRtc.close();
@@ -650,8 +835,8 @@ export default {
           });
         }
       });
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -689,7 +874,7 @@ export default {
 }
 
 .control-btn:hover {
-  cursor: pointer
+  cursor: pointer;
 }
 
 .control-btn i {
@@ -701,11 +886,11 @@ export default {
 }
 
 .control-btn i:hover {
-  cursor: pointer
+  cursor: pointer;
 }
 
 .control-zoom-btn:hover {
-  cursor: pointer
+  cursor: pointer;
 }
 
 .control-round {
@@ -846,7 +1031,7 @@ export default {
   width: 80%;
   padding: 0 10%;
 }
-.el-dialog__body{
+.el-dialog__body {
   padding: 10px 20px;
 }
 .ptz-btn-box {

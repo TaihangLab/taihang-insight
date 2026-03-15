@@ -48,25 +48,17 @@
         <el-radio-button label="month">本月</el-radio-button>
         <el-radio-button label="custom">自定义</el-radio-button>
       </el-radio-group>
-      <el-button
-        v-if="timeRange === 'custom'"
-        type="primary"
-        size="small"
-        @click="showDatePicker"
-      >
+      <el-button v-if="timeRange === 'custom'" type="primary" size="small" @click="showDatePicker">
         选择日期
       </el-button>
       <el-button type="primary" size="small" :loading="refreshing" @click="refreshData">
-        <i class="el-icon-refresh"></i> 刷新
+        <i class="el-icon-refresh"></i>
+        刷新
       </el-button>
     </div>
 
     <!-- 日期选择器弹窗 -->
-    <el-dialog
-      title="选择日期范围"
-      :visible.sync="datePickerDialogVisible"
-      width="400px"
-    >
+    <el-dialog title="选择日期范围" :visible.sync="datePickerDialogVisible" width="400px">
       <el-date-picker
         v-model="customDateRange"
         type="daterange"
@@ -121,82 +113,82 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import * as echarts from 'echarts'
-import dashboardAPI from '@/api/center/dashboard'
-import type { DashboardSummary } from '@/types/center/dashboard'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import * as echarts from "echarts";
+import dashboardAPI from "@/api/center/dashboard";
+import type { DashboardSummary } from "@/types/center/dashboard";
 
 // ==================== 响应式数据 ====================
-const timeRange = ref<'today' | 'week' | 'month' | 'custom'>('today')
-const customDateRange = ref<string[]>([])
-const datePickerDialogVisible = ref(false)
-const refreshing = ref(false)
+const timeRange = ref<"today" | "week" | "month" | "custom">("today");
+const customDateRange = ref<string[]>([]);
+const datePickerDialogVisible = ref(false);
+const refreshing = ref(false);
 
 // 统计数据
 const statisticsData = ref({
   totalCount: 0,
   successRate: 0,
   warningCount: 0,
-  processedCount: 0
-})
+  processedCount: 0,
+});
 
 // 设备预警 TOP10
-const deviceWarnings = ref<Array<{ name: string; count: number; percent: number }>>([])
+const deviceWarnings = ref<Array<{ name: string; count: number; percent: number }>>([]);
 
 // 图表实例
 const charts = ref<{
-  trendChart?: echarts.ECharts
-  warningStatusChart?: echarts.ECharts
-  warningLevelChart?: echarts.ECharts
-  topWarningTypeChart?: echarts.ECharts
-}>({})
+  trendChart?: echarts.ECharts;
+  warningStatusChart?: echarts.ECharts;
+  warningLevelChart?: echarts.ECharts;
+  topWarningTypeChart?: echarts.ECharts;
+}>({});
 
 // 后端数据
-const dashboardData = ref<DashboardSummary | null>(null)
+const dashboardData = ref<DashboardSummary | null>(null);
 
 // ==================== 计算属性 ====================
 // 计算成功率
 const successRate = computed(() => {
-  const total = dashboardData.value?.alerts?.total_alerts || 0
-  const processed = dashboardData.value?.alerts?.resolved_today || 0
-  return total > 0 ? ((processed / total) * 100).toFixed(2) : '0.00'
-})
+  const total = dashboardData.value?.alerts?.total_alerts || 0;
+  const processed = dashboardData.value?.alerts?.resolved_today || 0;
+  return total > 0 ? ((processed / total) * 100).toFixed(2) : "0.00";
+});
 
 // 计算待处理数量
 const warningCount = computed(() => {
-  return dashboardData.value?.alerts?.pending_alerts || 0
-})
+  return dashboardData.value?.alerts?.pending_alerts || 0;
+});
 
 // 计算总数
 const totalCount = computed(() => {
-  return dashboardData.value?.alerts?.total_alerts || 0
-})
+  return dashboardData.value?.alerts?.total_alerts || 0;
+});
 
 // 计算今日已处理
 const processedCount = computed(() => {
-  return dashboardData.value?.alerts?.resolved_today || 0
-})
+  return dashboardData.value?.alerts?.resolved_today || 0;
+});
 
 // ==================== API 调用 ====================
 /**
  * 加载统计数据
  */
 async function loadStatistics() {
-  refreshing.value = true
+  refreshing.value = true;
   try {
-    const data = await dashboardAPI.getSummary()
-    dashboardData.value = data
-    console.log('[统计分析] 获取到统计数据:', data)
+    const data = await dashboardAPI.getSummary();
+    dashboardData.value = data;
+    console.log("[统计分析] 获取到统计数据:", data);
 
     // 更新统计数据
-    updateStatisticsData()
+    updateStatisticsData();
 
     // 更新图表
-    updateAllCharts()
+    updateAllCharts();
   } catch (error) {
-    console.error('[统计分析] 获取统计数据失败:', error)
+    console.error("[统计分析] 获取统计数据失败:", error);
   } finally {
-    refreshing.value = false
+    refreshing.value = false;
   }
 }
 
@@ -208,8 +200,8 @@ function updateStatisticsData() {
     totalCount: totalCount.value,
     successRate: parseFloat(successRate.value),
     warningCount: warningCount.value,
-    processedCount: processedCount.value
-  }
+    processedCount: processedCount.value,
+  };
 }
 
 /**
@@ -218,13 +210,13 @@ function updateStatisticsData() {
 function generateDeviceWarningsTop10() {
   // 从后端数据生成（如果没有后端数据，使用默认空数据）
   if (!dashboardData.value) {
-    deviceWarnings.value = []
-    return
+    deviceWarnings.value = [];
+    return;
   }
 
   // TODO: 如果后端提供了设备预警统计接口，可以调用
   // 目前使用模拟数据
-  deviceWarnings.value = []
+  deviceWarnings.value = [];
 }
 
 // ==================== 时间范围处理 ====================
@@ -233,12 +225,12 @@ function generateDeviceWarningsTop10() {
  */
 function handleTimeRangeChange() {
   // 重新加载数据
-  loadStatistics()
+  loadStatistics();
 
   // 更新趋势图数据
   if (charts.value.trendChart) {
-    const { xData, yData } = generateTimeData(timeRange.value)
-    updateTrendChart(xData, yData)
+    const { xData, yData } = generateTimeData(timeRange.value);
+    updateTrendChart(xData, yData);
   }
 }
 
@@ -246,7 +238,7 @@ function handleTimeRangeChange() {
  * 显示日期选择器
  */
 function showDatePicker() {
-  datePickerDialogVisible.value = true
+  datePickerDialogVisible.value = true;
 }
 
 /**
@@ -254,9 +246,9 @@ function showDatePicker() {
  */
 function applyCustomDateRange() {
   if (customDateRange.value && customDateRange.value.length === 2) {
-    datePickerDialogVisible.value = false
+    datePickerDialogVisible.value = false;
     // 重新加载数据
-    loadStatistics()
+    loadStatistics();
   }
 }
 
@@ -264,48 +256,50 @@ function applyCustomDateRange() {
  * 生成时间范围数据
  */
 function generateTimeData(range: string) {
-  const now = new Date()
-  let xData: string[] = []
-  let yData: number[] = []
+  const now = new Date();
+  let xData: string[] = [];
+  let yData: number[] = [];
 
-  if (range === 'today') {
+  if (range === "today") {
     // 今日24小时
     for (let i = 0; i < 24; i++) {
-      xData.push(`${i}:00`)
-      yData.push(Math.floor(Math.random() * 20))
+      xData.push(`${i}:00`);
+      yData.push(Math.floor(Math.random() * 20));
     }
-  } else if (range === 'week') {
+  } else if (range === "week") {
     // 本周7天
-    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+    const weekDays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
     for (let i = 6; i >= 0; i--) {
-      const date = new Date(now)
-      date.setDate(now.getDate() - i)
-      xData.push(weekDays[date.getDay()])
-      yData.push(Math.floor(Math.random() * 50))
+      const date = new Date(now);
+      date.setDate(now.getDate() - i);
+      xData.push(weekDays[date.getDay()]);
+      yData.push(Math.floor(Math.random() * 50));
     }
-  } else if (range === 'month') {
+  } else if (range === "month") {
     // 本月30天
     for (let i = 1; i <= 30; i++) {
-      xData.push(`${i}日`)
-      yData.push(Math.floor(Math.random() * 100))
+      xData.push(`${i}日`);
+      yData.push(Math.floor(Math.random() * 100));
     }
-  } else if (range === 'custom') {
+  } else if (range === "custom") {
     // 自定义日期范围
     if (customDateRange.value && customDateRange.value.length === 2) {
-      const startDate = new Date(customDateRange.value[0])
-      const endDate = new Date(customDateRange.value[1])
-      const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+      const startDate = new Date(customDateRange.value[0]);
+      const endDate = new Date(customDateRange.value[1]);
+      const daysDiff = Math.floor(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+      );
 
       for (let i = 0; i <= daysDiff; i++) {
-        const date = new Date(startDate)
-        date.setDate(startDate.getDate() + i)
-        xData.push(`${date.getMonth() + 1}/${date.getDate()}`)
-        yData.push(Math.floor(Math.random() * 50))
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        xData.push(`${date.getMonth() + 1}/${date.getDate()}`);
+        yData.push(Math.floor(Math.random() * 50));
       }
     }
   }
 
-  return { xData, yData }
+  return { xData, yData };
 }
 
 // ==================== 图表初始化 ====================
@@ -314,358 +308,358 @@ function generateTimeData(range: string) {
  */
 function initCharts() {
   nextTick(() => {
-    initTrendChart()
-    initWarningStatusChart()
-    initWarningLevelChart()
-    initTopWarningTypeChart()
-  })
+    initTrendChart();
+    initWarningStatusChart();
+    initWarningLevelChart();
+    initTopWarningTypeChart();
+  });
 }
 
 /**
  * 初始化预警趋势图
  */
 function initTrendChart() {
-  const chartDom = document.getElementById('trendChart')
-  if (!chartDom) return
+  const chartDom = document.getElementById("trendChart");
+  if (!chartDom) return;
 
-  charts.value.trendChart = echarts.init(chartDom)
-  const { xData, yData } = generateTimeData('today')
-  updateTrendChart(xData, yData)
+  charts.value.trendChart = echarts.init(chartDom);
+  const { xData, yData } = generateTimeData("today");
+  updateTrendChart(xData, yData);
 }
 
 /**
  * 更新预警趋势图
  */
 function updateTrendChart(xData: string[], yData: number[]) {
-  if (!charts.value.trendChart) return
+  if (!charts.value.trendChart) return;
 
   const option = {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     grid: {
       top: 40,
       bottom: 20,
       left: 0,
       right: 20,
-      containLabel: true
+      containLabel: true,
     },
     tooltip: {
-      trigger: 'axis',
+      trigger: "axis",
       axisPointer: {
-        type: 'line',
+        type: "line",
         lineStyle: {
-          color: 'rgba(0, 255, 255, 0.3)'
-        }
+          color: "rgba(0, 255, 255, 0.3)",
+        },
       },
-      backgroundColor: 'rgba(0, 19, 40, 0.8)',
-      borderColor: 'rgba(0, 255, 255, 0.3)',
+      backgroundColor: "rgba(0, 19, 40, 0.8)",
+      borderColor: "rgba(0, 255, 255, 0.3)",
       textStyle: {
-        color: '#00FFFF'
-      }
+        color: "#00FFFF",
+      },
     },
     xAxis: {
-      type: 'category',
+      type: "category",
       data: xData,
       axisLine: {
         lineStyle: {
-          color: 'rgba(0, 255, 255, 0.3)'
-        }
+          color: "rgba(0, 255, 255, 0.3)",
+        },
       },
       axisLabel: {
-        color: '#7EAEE5',
-        rotate: timeRange.value === 'month' ? 45 : 0
-      }
+        color: "#7EAEE5",
+        rotate: timeRange.value === "month" ? 45 : 0,
+      },
     },
     yAxis: {
-      type: 'value',
+      type: "value",
       axisLine: {
         lineStyle: {
-          color: 'rgba(0, 255, 255, 0.3)'
-        }
+          color: "rgba(0, 255, 255, 0.3)",
+        },
       },
       axisLabel: {
-        color: '#7EAEE5'
+        color: "#7EAEE5",
       },
       splitLine: {
         lineStyle: {
-          color: 'rgba(0, 255, 255, 0.1)'
-        }
-      }
+          color: "rgba(0, 255, 255, 0.1)",
+        },
+      },
     },
     series: [
       {
-        name: '预警数量',
-        type: 'line',
+        name: "预警数量",
+        type: "line",
         data: yData,
         smooth: true,
         lineStyle: {
-          color: '#00FFFF',
-          width: 2
+          color: "#00FFFF",
+          width: 2,
         },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(0, 255, 255, 0.3)' },
-            { offset: 1, color: 'rgba(0, 255, 255, 0.05)' }
-          ])
+            { offset: 0, color: "rgba(0, 255, 255, 0.3)" },
+            { offset: 1, color: "rgba(0, 255, 255, 0.05)" },
+          ]),
         },
         itemStyle: {
-          color: '#00FFFF'
-        }
-      }
-    ]
-  }
+          color: "#00FFFF",
+        },
+      },
+    ],
+  };
 
-  charts.value.trendChart.setOption(option)
+  charts.value.trendChart.setOption(option);
 }
 
 /**
  * 初始化预警状态图表
  */
 function initWarningStatusChart() {
-  const chartDom = document.getElementById('warningStatusChart')
-  if (!chartDom) return
+  const chartDom = document.getElementById("warningStatusChart");
+  if (!chartDom) return;
 
-  charts.value.warningStatusChart = echarts.init(chartDom)
-  updateWarningStatusChart()
+  charts.value.warningStatusChart = echarts.init(chartDom);
+  updateWarningStatusChart();
 }
 
 /**
  * 更新预警状态图表
  */
 function updateWarningStatusChart() {
-  if (!charts.value.warningStatusChart) return
+  if (!charts.value.warningStatusChart) return;
 
   // 使用后端数据
-  const alertLevels = dashboardData.value?.alert_levels || []
+  const alertLevels = dashboardData.value?.alert_levels || [];
 
   // 将后端数据映射到状态分布
   const statusData = [
     {
-      value: alertLevels.find((item: any) => item.level_name === '一般')?.count || 0,
-      name: '待处理',
-      count: alertLevels.find((item: any) => item.level_name === '一般')?.count || 0,
-      itemStyle: { color: '#FF8746' }
+      value: alertLevels.find((item: any) => item.level_name === "一般")?.count || 0,
+      name: "待处理",
+      count: alertLevels.find((item: any) => item.level_name === "一般")?.count || 0,
+      itemStyle: { color: "#FF8746" },
     },
     {
-      value: alertLevels.find((item: any) => item.level_name === '重要')?.count || 0,
-      name: '处理中',
-      count: alertLevels.find((item: any) => item.level_name === '重要')?.count || 0,
-      itemStyle: { color: '#44FF9B' }
+      value: alertLevels.find((item: any) => item.level_name === "重要")?.count || 0,
+      name: "处理中",
+      count: alertLevels.find((item: any) => item.level_name === "重要")?.count || 0,
+      itemStyle: { color: "#44FF9B" },
     },
     {
-      value: alertLevels.find((item: any) => item.level_name === '紧急')?.count || 0,
-      name: '已完成',
-      count: alertLevels.find((item: any) => item.level_name === '紧急')?.count || 0,
-      itemStyle: { color: '#00FFFF' }
+      value: alertLevels.find((item: any) => item.level_name === "紧急")?.count || 0,
+      name: "已完成",
+      count: alertLevels.find((item: any) => item.level_name === "紧急")?.count || 0,
+      itemStyle: { color: "#00FFFF" },
     },
     {
-      value: alertLevels.find((item: any) => item.level_name === '特急')?.count || 0,
-      name: '已忽略',
-      count: alertLevels.find((item: any) => item.level_name === '特急')?.count || 0,
-      itemStyle: { color: '#ee6666' }
-    }
-  ]
+      value: alertLevels.find((item: any) => item.level_name === "特急")?.count || 0,
+      name: "已忽略",
+      count: alertLevels.find((item: any) => item.level_name === "特急")?.count || 0,
+      itemStyle: { color: "#ee6666" },
+    },
+  ];
 
   const option = {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)',
-      backgroundColor: 'rgba(0, 19, 40, 0.8)',
-      borderColor: 'rgba(0, 255, 255, 0.3)',
+      trigger: "item",
+      formatter: "{b}: {c} ({d}%)",
+      backgroundColor: "rgba(0, 19, 40, 0.8)",
+      borderColor: "rgba(0, 255, 255, 0.3)",
       textStyle: {
-        color: '#00FFFF'
-      }
+        color: "#00FFFF",
+      },
     },
     legend: {
-      orient: 'vertical',
-      right: '0%',
-      top: 'center',
+      orient: "vertical",
+      right: "0%",
+      top: "center",
       textStyle: {
-        color: '#7EAEE5'
-      }
+        color: "#7EAEE5",
+      },
     },
     series: [
       {
-        type: 'pie',
-        radius: ['50%', '70%'],
-        center: ['30%', '50%'],
+        type: "pie",
+        radius: ["50%", "70%"],
+        center: ["30%", "50%"],
         label: { show: false },
-        data: statusData
-      }
-    ]
-  }
+        data: statusData,
+      },
+    ],
+  };
 
-  charts.value.warningStatusChart.setOption(option)
+  charts.value.warningStatusChart.setOption(option);
 }
 
 /**
  * 初始化预警等级图表
  */
 function initWarningLevelChart() {
-  const chartDom = document.getElementById('warningLevelChart')
-  if (!chartDom) return
+  const chartDom = document.getElementById("warningLevelChart");
+  if (!chartDom) return;
 
-  charts.value.warningLevelChart = echarts.init(chartDom)
-  updateWarningLevelChart()
+  charts.value.warningLevelChart = echarts.init(chartDom);
+  updateWarningLevelChart();
 }
 
 /**
  * 更新预警等级图表
  */
 function updateWarningLevelChart() {
-  if (!charts.value.warningLevelChart) return
+  if (!charts.value.warningLevelChart) return;
 
   // 使用后端数据
-  const alertLevels = dashboardData.value?.alert_levels || []
+  const alertLevels = dashboardData.value?.alert_levels || [];
 
   const option = {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     tooltip: {
-      trigger: 'axis',
+      trigger: "axis",
       axisPointer: {
-        type: 'shadow'
+        type: "shadow",
       },
-      backgroundColor: 'rgba(0, 19, 40, 0.8)',
-      borderColor: 'rgba(0, 255, 255, 0.3)',
+      backgroundColor: "rgba(0, 19, 40, 0.8)",
+      borderColor: "rgba(0, 255, 255, 0.3)",
       textStyle: {
-        color: '#00FFFF'
-      }
+        color: "#00FFFF",
+      },
     },
     xAxis: {
-      type: 'category',
+      type: "category",
       data: alertLevels.map((item: any) => item.level_name),
       axisLine: {
         lineStyle: {
-          color: 'rgba(0, 255, 255, 0.3)'
-        }
+          color: "rgba(0, 255, 255, 0.3)",
+        },
       },
       axisLabel: {
-        color: '#7EAEE5'
-      }
+        color: "#7EAEE5",
+      },
     },
     yAxis: {
-      type: 'value',
+      type: "value",
       axisLine: {
         lineStyle: {
-          color: 'rgba(0 255, 255, 0.3)'
-        }
+          color: "rgba(0 255, 255, 0.3)",
+        },
       },
       axisLabel: {
-        color: '#7EAEE5'
+        color: "#7EAEE5",
       },
       splitLine: {
         lineStyle: {
-          color: 'rgba(0, 255, 255, 0.1)'
-        }
-      }
+          color: "rgba(0, 255, 255, 0.1)",
+        },
+      },
     },
     series: [
       {
-        name: '预警数量',
-        type: 'bar',
+        name: "预警数量",
+        type: "bar",
         data: alertLevels.map((item: any) => ({
           value: item.count,
-          itemStyle: { color: item.color }
+          itemStyle: { color: item.color },
         })),
-        barWidth: '60%'
-      }
-    ]
-  }
+        barWidth: "60%",
+      },
+    ],
+  };
 
-  charts.value.warningLevelChart.setOption(option)
+  charts.value.warningLevelChart.setOption(option);
 }
 
 /**
  * 初始化TOP10预警类型图表
  */
 function initTopWarningTypeChart() {
-  const chartDom = document.getElementById('topWarningTypeChart')
-  if (!chartDom) return
+  const chartDom = document.getElementById("topWarningTypeChart");
+  if (!chartDom) return;
 
-  charts.value.topWarningTypeChart = echarts.init(chartDom)
-  updateTopWarningTypeChart()
+  charts.value.topWarningTypeChart = echarts.init(chartDom);
+  updateTopWarningTypeChart();
 }
 
 /**
  * 更新TOP10预警类型图表
  */
 function updateTopWarningTypeChart() {
-  if (!charts.value.topWarningTypeChart) return
+  if (!charts.value.topWarningTypeChart) return;
 
   const option = {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     tooltip: {
-      trigger: 'axis',
+      trigger: "axis",
       axisPointer: {
-        type: 'shadow'
+        type: "shadow",
       },
-      backgroundColor: 'rgba(0, 19, 40, 0.8)',
-      borderColor: 'rgba(0, 255, 255, 0.3)',
+      backgroundColor: "rgba(0, 19, 40, 0.8)",
+      borderColor: "rgba(0, 255, 255, 0.3)",
       textStyle: {
-        color: '#00FFFF'
+        color: "#00FFFF",
       },
-      formatter: '{b}: {c}'
+      formatter: "{b}: {c}",
     },
     grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      top: '10%',
-      containLabel: true
+      left: "3%",
+      right: "4%",
+      bottom: "3%",
+      top: "10%",
+      containLabel: true,
     },
     xAxis: {
-      type: 'value',
+      type: "value",
       axisLine: {
         lineStyle: {
-          color: 'rgba(0, 255, 255, 0.3)'
-        }
+          color: "rgba(0, 255, 255, 0.3)",
+        },
       },
       axisLabel: {
-        color: '#7EAEE5'
+        color: "#7EAEE5",
       },
       splitLine: {
         lineStyle: {
-          color: 'rgba(0, 255, 255, 0.1)'
-        }
-      }
+          color: "rgba(0, 255, 255, 0.1)",
+        },
+      },
     },
     yAxis: {
-      type: 'category',
+      type: "category",
       data: deviceWarnings.value.map((item) => item.name),
       axisLine: {
         lineStyle: {
-          color: 'rgba(0, 255, 255, 0.3)'
-        }
+          color: "rgba(0, 255, 255, 0.3)",
+        },
       },
       axisLabel: {
-        color: '#7EAEE5'
-      }
+        color: "#7EAEE5",
+      },
     },
     series: [
       {
-        name: '预警数量',
-        type: 'bar',
+        name: "预警数量",
+        type: "bar",
         data: deviceWarnings.value.map((item) => ({
           value: item.count,
           itemStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-              { offset: 0, color: 'rgba(0, 255, 255, 0.8)' },
-              { offset: 1, color: 'rgba(0, 255, 255, 0.2)' }
-            ])
-          }
+              { offset: 0, color: "rgba(0, 255, 255, 0.8)" },
+              { offset: 1, color: "rgba(0, 255, 255, 0.2)" },
+            ]),
+          },
         })),
-        barWidth: '60%',
+        barWidth: "60%",
         label: {
           show: true,
-          position: 'right',
-          color: '#7EAEE5',
-          formatter: '{c}次'
-        }
-      }
-    ]
-  }
+          position: "right",
+          color: "#7EAEE5",
+          formatter: "{c}次",
+        },
+      },
+    ],
+  };
 
-  charts.value.topWarningTypeChart.setOption(option)
+  charts.value.topWarningTypeChart.setOption(option);
 }
 
 /**
@@ -673,18 +667,18 @@ function updateTopWarningTypeChart() {
  */
 function updateAllCharts() {
   // 状态图表
-  updateWarningStatusChart()
+  updateWarningStatusChart();
   // 等级图表
-  updateWarningLevelChart()
+  updateWarningLevelChart();
   // TOP10图表
-  updateTopWarningTypeChart()
+  updateTopWarningTypeChart();
 }
 
 /**
  * 刷新数据
  */
 function refreshData() {
-  loadStatistics()
+  loadStatistics();
 }
 
 /**
@@ -693,9 +687,9 @@ function refreshData() {
 function handleResize() {
   Object.values(charts.value).forEach((chart) => {
     if (chart) {
-      chart.resize()
+      chart.resize();
     }
-  })
+  });
 }
 
 /**
@@ -704,31 +698,31 @@ function handleResize() {
 function disposeCharts() {
   Object.values(charts.value).forEach((chart) => {
     if (chart) {
-      chart.dispose()
+      chart.dispose();
     }
-  })
+  });
 }
 
 // ==================== 生命周期 ====================
 onMounted(() => {
   // 加载统计数据
-  loadStatistics()
+  loadStatistics();
 
   // 初始化图表
-  initCharts()
+  initCharts();
 
   // 监听窗口大小变化
-  window.addEventListener('resize', handleResize)
+  window.addEventListener("resize", handleResize);
 
   // 初始化CSS变量
-  document.documentElement.style.setProperty('--panel-top-height', '35vh')
-  document.documentElement.style.setProperty('--panel-bottom-height', '33vh')
-})
+  document.documentElement.style.setProperty("--panel-top-height", "35vh");
+  document.documentElement.style.setProperty("--panel-bottom-height", "33vh");
+});
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', handleResize)
-  disposeCharts()
-})
+  window.removeEventListener("resize", handleResize);
+  disposeCharts();
+});
 </script>
 
 <style scoped>
@@ -790,13 +784,13 @@ onBeforeUnmount(() => {
 .card-value {
   font-size: 28px;
   font-weight: bold;
-  color: #00FFFF;
+  color: #00ffff;
   margin-bottom: 5px;
 }
 
 .card-label {
   font-size: 14px;
-  color: #7EAEE5;
+  color: #7eaee5;
 }
 
 /* 筛选区域 */
@@ -836,7 +830,7 @@ onBeforeUnmount(() => {
 .panel-title {
   font-size: 16px;
   font-weight: bold;
-  color: #00FFFF;
+  color: #00ffff;
 }
 
 .chart-content {

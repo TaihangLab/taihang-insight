@@ -3,8 +3,8 @@
  * Tenant Management Types
  */
 
-import type { PaginationParams, PaginatedResponse, ApiResponse } from './common';
-import { Status, EntityWithTimestamp, TenantScoped, StatusEnabled } from './common';
+import type { PaginationParams, PaginatedResponse, ApiResponse } from "./common";
+import { Status, EntityWithTimestamp, TenantScoped, StatusEnabled } from "./common";
 
 // ============================================
 // API 原始响应类型（snake_case）
@@ -75,10 +75,11 @@ export interface TenantQueryFields {
 /**
  * 租户查询参数
  */
-export type TenantQueryParams = PaginationParams & TenantQueryFields & {
-  /** 租户状态（0启用/1停用） */
-  status?: Status;
-};
+export type TenantQueryParams = PaginationParams &
+  TenantQueryFields & {
+    /** 租户状态（0启用/1停用） */
+    status?: Status;
+  };
 
 /**
  * 租户查询参数表单类型（用于表单筛选，所有字段可选）
@@ -265,8 +266,8 @@ export function convertAPIToTenant(api: TenantAPI): Tenant {
     tenantCode: api.company_code, // TenantScoped - 使用企业编码作为租户编码
     tenantName: api.tenant_name,
     companyName: api.company_name,
-    contactPerson: api.contact_person || '',
-    contactPhone: api.contact_phone || '',
+    contactPerson: api.contact_person || "",
+    contactPhone: api.contact_phone || "",
     username: api.username,
     package: api.package,
     expireTime: api.expire_time,

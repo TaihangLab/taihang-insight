@@ -5,7 +5,7 @@
       <div class="header-wrapper">
         <!-- 左侧装饰 -->
         <div class="left-decoration">
-          <dv-decoration-5 style="width:250px;height:60px;" />
+          <dv-decoration-5 style="width: 250px; height: 60px" />
           <div class="decoration-line-group">
             <div class="decoration-line line1"></div>
             <div class="decoration-line line2"></div>
@@ -15,18 +15,18 @@
 
         <!-- 中间标题 -->
         <div class="title-container">
-          <dv-decoration-8 style="width:300px;height:50px;" :reverse="true" />
+          <dv-decoration-8 style="width: 300px; height: 50px" :reverse="true" />
           <div class="title-wrapper">
-            <dv-decoration-6 style="width:200px;height:50px;" />
+            <dv-decoration-6 style="width: 200px; height: 50px" />
             <div class="title-text">园区封闭管理平台</div>
-            <dv-decoration-6 style="width:200px;height:50px;" :reverse="true" />
+            <dv-decoration-6 style="width: 200px; height: 50px" :reverse="true" />
           </div>
-          <dv-decoration-8 style="width:300px;height:50px;" />
+          <dv-decoration-8 style="width: 300px; height: 50px" />
         </div>
 
         <!-- 右侧装饰 -->
         <div class="right-decoration">
-          <dv-decoration-5 style="width:250px;height:60px;" :reverse="true" />
+          <dv-decoration-5 style="width: 250px; height: 60px" :reverse="true" />
           <div class="decoration-line-group">
             <div class="decoration-line line1"></div>
             <div class="decoration-line line2"></div>
@@ -56,11 +56,11 @@
                 :props="defaultProps"
                 node-key="id"
                 :default-expanded-keys="['1']"
-                class="custom-tree">
-              </el-tree>
+                class="custom-tree"
+              ></el-tree>
             </div>
           </dv-border-box-12>
-          
+
           <!-- CPU使用率 -->
           <dv-border-box-12 class="panel cpu-panel">
             <div class="panel-header">
@@ -68,9 +68,9 @@
               <div class="watermark">TSINGSEE</div>
             </div>
             <!-- <dv-charts :option="cpuOption" /> -->
-            <div id="cpuChart" style="width: 90%; height: 90%;"></div>
+            <div id="cpuChart" style="width: 90%; height: 90%"></div>
           </dv-border-box-12>
-          
+
           <!-- 存储使用 -->
           <dv-border-box-12 class="panel storage-panel">
             <div class="panel-header">
@@ -78,7 +78,7 @@
               <div class="watermark">TSINGSEE</div>
             </div>
             <!-- <dv-charts :option="storageOption" /> -->
-            <div id="storageChart" style="width: 90%; height: 90%;"></div>
+            <div id="storageChart" style="width: 90%; height: 90%"></div>
           </dv-border-box-12>
         </div>
 
@@ -98,7 +98,7 @@
               <div v-for="i in 4" :key="i" class="video-item">
                 <dv-border-box-8>
                   <div class="video-content">
-                    <img :src="getRandomImage(i)" alt="监控画面">
+                    <img :src="getRandomImage(i)" alt="监控画面" />
                   </div>
                 </dv-border-box-8>
               </div>
@@ -117,7 +117,7 @@
               <div class="alert-item">
                 <div class="category-label">在岗检测</div>
                 <div class="alert-image-container">
-                  <img :src="getRandomImage(14)" alt="在岗检测">
+                  <img :src="getRandomImage(14)" alt="在岗检测" />
                 </div>
                 <div class="alert-info single-line">
                   <div class="info-content">
@@ -133,7 +133,7 @@
               <div class="alert-item">
                 <div class="category-label">安全帽检测</div>
                 <div class="alert-image-container">
-                  <img :src="getRandomImage(12)" alt="安全帽检测">
+                  <img :src="getRandomImage(12)" alt="安全帽检测" />
                 </div>
                 <div class="alert-info single-line">
                   <div class="info-content">
@@ -149,7 +149,7 @@
               <div class="alert-item">
                 <div class="category-label">安全帽检测</div>
                 <div class="alert-image-container">
-                  <img :src="getRandomImage(13)" alt="安全帽检测">
+                  <img :src="getRandomImage(13)" alt="安全帽检测" />
                 </div>
                 <div class="alert-info single-line">
                   <div class="info-content">
@@ -165,7 +165,7 @@
               <div class="alert-item">
                 <div class="category-label">在岗检测</div>
                 <div class="alert-image-container">
-                  <img :src="getRandomImage(11)" alt="在岗检测">
+                  <img :src="getRandomImage(11)" alt="在岗检测" />
                 </div>
                 <div class="alert-info single-line">
                   <div class="info-content">
@@ -217,13 +217,13 @@
             </div>
             <div class="bandwidth-content">
               <!-- <dv-charts :option="bandwidthOption" /> -->
-              <div id="bandwidthChart" style="width: 90%; height: 90%;"></div>
+              <div id="bandwidthChart" style="width: 90%; height: 90%"></div>
             </div>
           </dv-border-box-12>
         </div>
       </div>
     </div>
-    
+
     <!-- 大图查看模态框 -->
     <div class="modal-overlay" v-if="showModal" @click="closeModal">
       <div class="modal-content" @click.stop>
@@ -237,7 +237,7 @@
           <span class="close-modal" @click="closeModal">&times;</span>
         </div>
         <div class="modal-body">
-          <img :src="largeImage" alt="大图查看">
+          <img :src="largeImage" alt="大图查看" />
         </div>
         <div class="modal-footer">
           <div class="info-row">
@@ -257,7 +257,7 @@
 <script>
 import * as echarts from "echarts";
 export default {
-  name: 'ParkManagement',
+  name: "ParkManagement",
   components: {
     // 暂时注释掉data-view组件，使项目能够正常运行
     // 这些组件仅在可视化中心功能中使用，不影响系统管理功能
@@ -276,271 +276,294 @@ export default {
   data() {
     return {
       isFullScreen: false,
-      treeData: [{
-        id: '1',
-        label: '市直单位',
-        children: [{
-          id: '2',
-          label: '清江园区',
-          children: [{
-            id: '3',
-            label: '清江园区-南',
-            children: [{
-              id: '4',
-              label: '监控点1号探头'
-            }, {
-              id: '5',
-              label: '监控点2号探头'
-            }]
-          }, {
-            id: '6',
-            label: '清江园区-西',
-            children: [{
-              id: '7',
-              label: '监控点19号探头'
-            }, {
-              id: '8',
-              label: '监控点21号探头'
-            }]
-          }]
-        }]
-      }],
+      treeData: [
+        {
+          id: "1",
+          label: "市直单位",
+          children: [
+            {
+              id: "2",
+              label: "清江园区",
+              children: [
+                {
+                  id: "3",
+                  label: "清江园区-南",
+                  children: [
+                    {
+                      id: "4",
+                      label: "监控点1号探头",
+                    },
+                    {
+                      id: "5",
+                      label: "监控点2号探头",
+                    },
+                  ],
+                },
+                {
+                  id: "6",
+                  label: "清江园区-西",
+                  children: [
+                    {
+                      id: "7",
+                      label: "监控点19号探头",
+                    },
+                    {
+                      id: "8",
+                      label: "监控点21号探头",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
       defaultProps: {
-        children: 'children',
-        label: 'label'
+        children: "children",
+        label: "label",
       },
       cpuOption: {
         grid: {
-          left: '5%',
-          right: '5%',
-          top: '10%',
-          bottom: '20%',
-          containLabel: true
+          left: "5%",
+          right: "5%",
+          top: "10%",
+          bottom: "20%",
+          containLabel: true,
         },
         xAxis: {
-          type: 'category',
+          type: "category",
           boundaryGap: false,
-          data: ['17:23:05', '17:23:10', '17:23:15', '17:23:20'],
+          data: ["17:23:05", "17:23:10", "17:23:15", "17:23:20"],
           axisLine: {
             style: {
-              stroke: '#1B96FF'
-            }
+              stroke: "#1B96FF",
+            },
           },
           axisLabel: {
             style: {
-              fill: '#fff'
+              fill: "#fff",
             },
             textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                //  fontSize : 10      //更改坐标轴文字大小
-              }
-          }
+              color: "#fff", //更改坐标轴文字颜色
+              //  fontSize : 10      //更改坐标轴文字大小
+            },
+          },
         },
         yAxis: {
-          type: 'value',
+          type: "value",
           splitLine: {
             show: true,
             style: {
-              stroke: 'rgba(27,150,255,0.1)'
-            }
+              stroke: "rgba(27,150,255,0.1)",
+            },
           },
           axisLine: {
             style: {
-              stroke: '#1B96FF'
-            }
+              stroke: "#1B96FF",
+            },
           },
           axisLabel: {
             style: {
-              fill: '#fff'
+              fill: "#fff",
             },
             textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
-              }
-          }
-        },
-        series: [{
-          type: 'line',
-          data: [65, 59, 80, 81],
-          smooth: true,
-          lineStyle: {
-            stroke: '#1B96FF',
-            width: 2
+              color: "#fff", //更改坐标轴文字颜色
+              // fontSize : 8      //更改坐标轴文字大小
+            },
           },
-          areaStyle: {
-            fill: 'rgba(27,150,255,0.3)'
-          }
-        }]
+        },
+        series: [
+          {
+            type: "line",
+            data: [65, 59, 80, 81],
+            smooth: true,
+            lineStyle: {
+              stroke: "#1B96FF",
+              width: 2,
+            },
+            areaStyle: {
+              fill: "rgba(27,150,255,0.3)",
+            },
+          },
+        ],
       },
       storageOption: {
         grid: {
-          left: '5%',
-          right: '5%',
-          top: '10%',
-          bottom: '20%',
-          containLabel: true
+          left: "5%",
+          right: "5%",
+          top: "10%",
+          bottom: "20%",
+          containLabel: true,
         },
         xAxis: {
-          type: 'category',
-          data: ['内存1', '内存2', '内存3', '内存4', '内存5', '内存6', '内存7'],
+          type: "category",
+          data: ["内存1", "内存2", "内存3", "内存4", "内存5", "内存6", "内存7"],
           axisLine: {
             style: {
-              stroke: '#1B96FF'
-            }
+              stroke: "#1B96FF",
+            },
           },
           axisLabel: {
             style: {
-              fill: '#fff'
+              fill: "#fff",
             },
             textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
-              }
-          }
+              color: "#fff", //更改坐标轴文字颜色
+              // fontSize : 8      //更改坐标轴文字大小
+            },
+          },
         },
         yAxis: {
-          type: 'value',
+          type: "value",
           splitLine: {
             show: true,
             style: {
-              stroke: 'rgba(27,150,255,0.1)'
-            }
+              stroke: "rgba(27,150,255,0.1)",
+            },
           },
           axisLine: {
             style: {
-              stroke: '#1B96FF'
-            }
+              stroke: "#1B96FF",
+            },
           },
           axisLabel: {
             style: {
-              fill: '#fff'
+              fill: "#fff",
             },
             textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
-              }
-          }
+              color: "#fff", //更改坐标轴文字颜色
+              // fontSize : 8      //更改坐标轴文字大小
+            },
+          },
         },
-        series: [{
-          type: 'bar',
-          data: [60, 40, 20, 70, 30, 50, 10],
-          barWidth: 20,
-          itemStyle: {
-            color: {
-              type: 'linear',
-              x: 0, y: 0, x2: 0, y2: 1,
-              colorStops: [
-                {offset: 0, color: 'rgba(27,150,255,0.8)'},
-                {offset: 1, color: 'rgba(27,150,255,0.3)'}
-              ]
-            }
-          }
-        }]
+        series: [
+          {
+            type: "bar",
+            data: [60, 40, 20, 70, 30, 50, 10],
+            barWidth: 20,
+            itemStyle: {
+              color: {
+                type: "linear",
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [
+                  { offset: 0, color: "rgba(27,150,255,0.8)" },
+                  { offset: 1, color: "rgba(27,150,255,0.3)" },
+                ],
+              },
+            },
+          },
+        ],
       },
       bandwidthOption: {
         grid: {
-          left: '5%',
-          right: '5%',
-          top: '5%',
-          bottom: '20%',
-          containLabel: true
+          left: "5%",
+          right: "5%",
+          top: "5%",
+          bottom: "20%",
+          containLabel: true,
         },
         legend: {
-          data: ['上行带宽', '下行带宽'],
+          data: ["上行带宽", "下行带宽"],
           textStyle: {
-            fill: '#fff'
+            fill: "#fff",
           },
           right: 0,
-          top: 0
+          top: 0,
         },
         xAxis: {
-          type: 'category',
+          type: "category",
           boundaryGap: false,
-          data: ['17:23:05', '17:23:10', '17:23:15', '17:23:20', '17:23:25', '17:23:30'],
+          data: ["17:23:05", "17:23:10", "17:23:15", "17:23:20", "17:23:25", "17:23:30"],
           axisLine: {
             style: {
-              stroke: '#1B96FF'
-            }
+              stroke: "#1B96FF",
+            },
           },
           axisLabel: {
             style: {
-              fill: '#fff'
+              fill: "#fff",
             },
             textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
-              }
-          }
+              color: "#fff", //更改坐标轴文字颜色
+              // fontSize : 8      //更改坐标轴文字大小
+            },
+          },
         },
         yAxis: {
-          type: 'value',
+          type: "value",
           splitLine: {
             show: true,
             style: {
-              stroke: 'rgba(27,150,255,0.1)'
-            }
+              stroke: "rgba(27,150,255,0.1)",
+            },
           },
           axisLine: {
             style: {
-              stroke: '#1B96FF'
-            }
+              stroke: "#1B96FF",
+            },
           },
           axisLabel: {
             style: {
-              fill: '#fff'
+              fill: "#fff",
             },
             textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
-              }
-          }
+              color: "#fff", //更改坐标轴文字颜色
+              // fontSize : 8      //更改坐标轴文字大小
+            },
+          },
         },
-        series: [{
-          name: '上行带宽',
-          type: 'line',
-          data: [2.39687, 2.39687, 2.39687, 2.39687, 2.39687, 2.39687],
-          smooth: true,
-          lineStyle: {
-            stroke: '#1B96FF'
-          }
-        }, {
-          name: '下行带宽',
-          type: 'line',
-          data: [2.39687, 2.39687, 2.39687, 2.39687, 2.39687, 2.39687],
-          smooth: true,
-          lineStyle: {
-            stroke: '#FFD700'
-          }
-        }]
+        series: [
+          {
+            name: "上行带宽",
+            type: "line",
+            data: [2.39687, 2.39687, 2.39687, 2.39687, 2.39687, 2.39687],
+            smooth: true,
+            lineStyle: {
+              stroke: "#1B96FF",
+            },
+          },
+          {
+            name: "下行带宽",
+            type: "line",
+            data: [2.39687, 2.39687, 2.39687, 2.39687, 2.39687, 2.39687],
+            smooth: true,
+            lineStyle: {
+              stroke: "#FFD700",
+            },
+          },
+        ],
       },
       deviceStatusConfig1: {
         data: [
-          {name: '在线', value: 27},
-          {name: '离线', value: 3}
+          { name: "在线", value: 27 },
+          { name: "离线", value: 3 },
         ],
-        color: ['#1B96FF', 'rgba(27,150,255,0.2)'],
-        radius: '80%',
-        activeRadius: '85%'
+        color: ["#1B96FF", "rgba(27,150,255,0.2)"],
+        radius: "80%",
+        activeRadius: "85%",
       },
       deviceStatusConfig2: {
         data: [
-          {name: '在线', value: 18},
-          {name: '离线', value: 9}
+          { name: "在线", value: 18 },
+          { name: "离线", value: 9 },
         ],
-        color: ['#1B96FF', 'rgba(27,150,255,0.2)'],
-        radius: '80%',
-        activeRadius: '85%'
+        color: ["#1B96FF", "rgba(27,150,255,0.2)"],
+        radius: "80%",
+        activeRadius: "85%",
       },
       showModal: false,
-      largeImage: '',
-      modalTitle: '',
-      modalType: '',
+      largeImage: "",
+      modalTitle: "",
+      modalType: "",
 
       // 图表实例
       charts: {
-        cpuChart: null
-      }
-    }
+        cpuChart: null,
+      },
+    };
   },
   methods: {
     // 初始化所有图表
@@ -593,34 +616,34 @@ export default {
       // 根据索引返回不同类型的工业场景图片
       const industrialImages = [
         // 管道设施图片
-        'https://images.unsplash.com/photo-1574172367057-93d703ae5bad?w=800&h=450&fit=crop',
+        "https://images.unsplash.com/photo-1574172367057-93d703ae5bad?w=800&h=450&fit=crop",
         // 工业储罐图片
-        'https://images.unsplash.com/photo-1518640467707-6811f4a6ab73?w=800&h=450&fit=crop',
+        "https://images.unsplash.com/photo-1518640467707-6811f4a6ab73?w=800&h=450&fit=crop",
         // 工厂设备图片
-        'https://images.unsplash.com/photo-1631651738795-b89747292eb0?w=800&h=450&fit=crop',
+        "https://images.unsplash.com/photo-1631651738795-b89747292eb0?w=800&h=450&fit=crop",
         // 货运卡车图片
-        'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&h=450&fit=crop',
+        "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&h=450&fit=crop",
         // 安全帽工人
-        'https://images.unsplash.com/photo-1531973486364-5fa64260d75b?w=400&h=300&fit=crop',
+        "https://images.unsplash.com/photo-1531973486364-5fa64260d75b?w=400&h=300&fit=crop",
         // 工厂作业
-        'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=400&h=300&fit=crop',
+        "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=400&h=300&fit=crop",
         // 安全检查
-        'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=300&fit=crop',
+        "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=300&fit=crop",
         // 工厂监督
-        'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=300&fit=crop'
+        "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=300&fit=crop",
       ];
-      
+
       // 选择合适的图片索引
       let imgIndex = (index - 1) % industrialImages.length;
-      if (index > 10) imgIndex = index % 4 + 4; // 预警图片使用后面的索引
-      
+      if (index > 10) imgIndex = (index % 4) + 4; // 预警图片使用后面的索引
+
       return industrialImages[imgIndex];
     },
-    
+
     // 显示大图
     showLargeImage(index) {
       this.largeImage = this.getRandomImage(index);
-      
+
       // 设置标题和类型
       if (index === 11) {
         this.modalTitle = "预警详情";
@@ -632,80 +655,80 @@ export default {
         this.modalTitle = "预警详情";
         this.modalType = "duty";
       }
-      
+
       this.showModal = true;
-      
+
       // 防止页面滚动
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     },
-    
+
     // 关闭模态框
     closeModal() {
       this.showModal = false;
-      this.largeImage = '';
-      
+      this.largeImage = "";
+
       // 恢复页面滚动
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     },
-    
+
     // 添加窗口大小变化监听
     handleResize() {
       // 在窗口大小变化时可以进行额外调整
       // 此处仅作为示例，实际实现可能需要调整其他组件
-      console.log('Window resized');
+      console.log("Window resized");
     },
-    
+
     // 添加全屏切换方法
     toggleFullScreen() {
       this.isFullScreen = !this.isFullScreen;
-      
-      const navBar = document.querySelector('.el-header');
-      const parkManagement = document.querySelector('.park-management');
-      
+
+      const navBar = document.querySelector(".el-header");
+      const parkManagement = document.querySelector(".park-management");
+
       if (this.isFullScreen) {
         // 请求全屏
         if (document.documentElement.requestFullscreen) {
           document.documentElement.requestFullscreen();
         }
-        
+
         // 隐藏导航栏
-        if (navBar) navBar.style.display = 'none';
-        
+        if (navBar) navBar.style.display = "none";
+
         // 添加全屏模式样式类
-        if (parkManagement) parkManagement.classList.add('fullscreen-mode');
+        if (parkManagement) parkManagement.classList.add("fullscreen-mode");
       } else {
         // 退出全屏
         if (document.exitFullscreen) {
           document.exitFullscreen();
         }
-        
+
         // 显示导航栏
-        if (navBar) navBar.style.display = '';
-        
+        if (navBar) navBar.style.display = "";
+
         // 移除全屏模式样式类
-        if (parkManagement) parkManagement.classList.remove('fullscreen-mode');
+        if (parkManagement) parkManagement.classList.remove("fullscreen-mode");
       }
-    }
+    },
   },
   mounted() {
     this.initCharts();
     // 添加窗口大小变化监听
-    window.addEventListener('resize', this.handleResize);
+    window.addEventListener("resize", this.handleResize);
   },
   beforeDestroy() {
     // 移除监听器避免内存泄漏
-    window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener("resize", this.handleResize);
 
     this.disposeCharts();
-  }
-}
+  },
+};
 </script>
 
 <style scoped>
 .park-management {
   width: 100%;
   height: 100vh;
-  background-color: #000B2A;
+  background-color: #000b2a;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -716,7 +739,7 @@ export default {
   width: 100%;
   height: 80px;
   margin: 0;
-  background: linear-gradient(180deg, rgba(1,19,56,0.8) 0%, rgba(1,19,56,0.6) 100%);
+  background: linear-gradient(180deg, rgba(1, 19, 56, 0.8) 0%, rgba(1, 19, 56, 0.6) 100%);
 }
 
 .header-wrapper {
@@ -746,12 +769,12 @@ export default {
 .decoration-line {
   width: 2px;
   height: 40px;
-  background: linear-gradient(180deg, rgba(51,255,255,0.8) 0%, rgba(51,255,255,0) 100%);
+  background: linear-gradient(180deg, rgba(51, 255, 255, 0.8) 0%, rgba(51, 255, 255, 0) 100%);
   position: relative;
 }
 
 .decoration-line::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 50%;
@@ -760,7 +783,7 @@ export default {
   height: 6px;
   background: #33ffff;
   border-radius: 50%;
-  box-shadow: 0 0 10px rgba(51,255,255,0.8);
+  box-shadow: 0 0 10px rgba(51, 255, 255, 0.8);
 }
 
 .decoration-line.line1 {
@@ -798,7 +821,7 @@ export default {
   font-size: 32px;
   font-weight: bold;
   color: #ffffff;
-  text-shadow: 0 0 10px rgba(51,255,255,0.5);
+  text-shadow: 0 0 10px rgba(51, 255, 255, 0.5);
   letter-spacing: 4px;
   position: relative;
   padding: 0 20px;
@@ -834,11 +857,14 @@ export default {
   flex: 3;
 }
 
-.cpu-panel, .storage-panel {
+.cpu-panel,
+.storage-panel {
   flex: 2;
 }
 
-.device-panel, .cpu-panel, .storage-panel {
+.device-panel,
+.cpu-panel,
+.storage-panel {
   height: auto;
 }
 
@@ -871,17 +897,17 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 0 15px;
-  background: linear-gradient(90deg, #001135 0%, rgba(0,17,53,0.8) 100%);
+  background: linear-gradient(90deg, #001135 0%, rgba(0, 17, 53, 0.8) 100%);
   border-bottom: 1px solid #0a2550;
   font-size: 14px;
   position: relative;
 }
 
 .panel-header::before {
-  content: '';
+  content: "";
   width: 4px;
   height: 16px;
-  background: #1B96FF;
+  background: #1b96ff;
   position: absolute;
   left: 0;
   margin-left: -15px;
@@ -939,7 +965,7 @@ export default {
 .video-info {
   height: 24px;
   line-height: 24px;
-  background: rgba(0,17,53,0.9);
+  background: rgba(0, 17, 53, 0.9);
   padding: 0 10px;
   font-size: 11px;
   color: #fff;
@@ -969,7 +995,7 @@ export default {
 }
 
 .alert-item {
-  background: #000B2A;
+  background: #000b2a;
   border: 1px solid #0a2550;
   border-radius: 4px;
   overflow: hidden;
@@ -978,7 +1004,7 @@ export default {
   flex-direction: column;
   height: auto;
   flex: 0 0 auto;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   position: relative;
   width: 100%;
 }
@@ -987,13 +1013,13 @@ export default {
   position: absolute;
   top: 10px;
   left: 10px;
-  background-color: #000B2A;
+  background-color: #000b2a;
   color: #fff;
   padding: 4px 8px;
   font-size: 12px;
   border-radius: 2px;
   z-index: 1;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .alert-image-container {
@@ -1013,8 +1039,8 @@ export default {
 .alert-info {
   padding: 8px 12px;
   font-size: 12px;
-  background: #000B2A;
-  border-top: 1px solid rgba(10,37,80,0.5);
+  background: #000b2a;
+  border-top: 1px solid rgba(10, 37, 80, 0.5);
 }
 
 .alert-info.single-line {
@@ -1038,7 +1064,7 @@ export default {
 }
 
 .view-large {
-  color: #1B96FF;
+  color: #1b96ff;
   cursor: pointer;
   font-size: 12px;
   font-weight: normal;
@@ -1072,7 +1098,7 @@ export default {
 }
 
 .screen-controls i.active {
-  color: #1B96FF;
+  color: #1b96ff;
 }
 
 .watermark {
@@ -1092,11 +1118,11 @@ export default {
   background: transparent;
   color: #7a8baa;
   height: 32px;
-  border-bottom: 1px solid rgba(10,37,80,0.5);
+  border-bottom: 1px solid rgba(10, 37, 80, 0.5);
 }
 
 .custom-tree :deep(.el-tree-node__content:hover) {
-  background: rgba(27,150,255,0.1);
+  background: rgba(27, 150, 255, 0.1);
   color: #fff;
 }
 
@@ -1133,7 +1159,7 @@ export default {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #1B96FF;
+  background: #1b96ff;
 }
 
 /* 底部容器样式 */
@@ -1155,12 +1181,14 @@ export default {
   width: calc(100% - 630px); /* 屏幕宽度 - (左面板宽度 + 右面板宽度 + 边距) */
 }
 
-.status-panel, .bandwidth-panel {
+.status-panel,
+.bandwidth-panel {
   flex: 1;
   height: 100%;
 }
 
-.status-content, .bandwidth-content {
+.status-content,
+.bandwidth-content {
   height: calc(100% - 36px);
   display: flex;
   justify-content: space-around;
@@ -1240,7 +1268,7 @@ export default {
 
 .modal-header {
   padding: 12px 15px;
-  background: linear-gradient(90deg, #001135 0%, rgba(0,17,53,0.8) 100%);
+  background: linear-gradient(90deg, #001135 0%, rgba(0, 17, 53, 0.8) 100%);
   color: #fff;
   display: flex;
   justify-content: space-between;
@@ -1273,7 +1301,7 @@ export default {
 }
 
 .close-modal:hover {
-  color: #1B96FF;
+  color: #1b96ff;
   background: rgba(27, 150, 255, 0.1);
 }
 
@@ -1292,7 +1320,7 @@ export default {
 
 .modal-footer {
   padding: 12px 15px;
-  background: rgba(0,17,53,0.9);
+  background: rgba(0, 17, 53, 0.9);
   border-top: 1px solid #0a2550;
 }
 
@@ -1322,15 +1350,15 @@ export default {
 }
 
 .category-badge.parking {
-  background-color: #1B96FF;
+  background-color: #1b96ff;
 }
 
 .category-badge.helmet {
-  background-color: #FF6B00;
+  background-color: #ff6b00;
 }
 
 .category-badge.duty {
-  background-color: #00B42A;
+  background-color: #00b42a;
 }
 
 .fullscreen-btn {
@@ -1345,7 +1373,7 @@ export default {
   background: rgba(0, 17, 53, 0.5);
   border: 1px solid #0a2550;
   border-radius: 4px;
-  color: #1B96FF;
+  color: #1b96ff;
   font-size: 22px;
   cursor: pointer;
   transition: all 0.3s;
@@ -1380,4 +1408,4 @@ export default {
 .park-management.fullscreen-mode .alert-panel {
   min-height: var(--main-height);
 }
-</style> 
+</style>

@@ -25,15 +25,15 @@
             <span>管理菜单</span>
             <i class="el-icon-refresh-right back-to-home-icon"></i>
           </div>
-          
+
           <el-menu
             :default-active="activeMenuIndex"
             class="management-menu"
             @select="handleMenuSelect"
             background-color="transparent"
             text-color="#606266"
-            active-text-color="#409EFF">
-            
+            active-text-color="#409EFF"
+          >
             <el-menu-item index="gb-devices" class="menu-item">
               <div class="menu-item-content">
                 <div class="menu-icon">
@@ -42,7 +42,7 @@
                 <span class="menu-text">国标设备</span>
               </div>
             </el-menu-item>
-            
+
             <el-menu-item index="push-streams" class="menu-item">
               <div class="menu-item-content">
                 <div class="menu-icon">
@@ -51,7 +51,7 @@
                 <span class="menu-text">推流列表</span>
               </div>
             </el-menu-item>
-            
+
             <el-menu-item index="pull-proxy" class="menu-item">
               <div class="menu-item-content">
                 <div class="menu-icon">
@@ -60,7 +60,7 @@
                 <span class="menu-text">拉流代理</span>
               </div>
             </el-menu-item>
-            
+
             <el-menu-item index="node-management" class="menu-item">
               <div class="menu-item-content">
                 <div class="menu-icon">
@@ -69,7 +69,7 @@
                 <span class="menu-text">节点管理</span>
               </div>
             </el-menu-item>
-            
+
             <el-submenu index="channel-management" class="menu-submenu">
               <template slot="title">
                 <div class="menu-item-content">
@@ -117,12 +117,13 @@
 
             <!-- 功能卡片网格 -->
             <div class="feature-grid">
-              <el-card 
-                v-for="(item, key) in menuComponentMap" 
+              <el-card
+                v-for="(item, key) in menuComponentMap"
                 :key="key"
-                class="feature-card" 
+                class="feature-card"
                 shadow="hover"
-                @click.native="handleMenuSelect(key)">
+                @click.native="handleMenuSelect(key)"
+              >
                 <div class="feature-content">
                   <div class="feature-icon">
                     <i :class="getFeatureIcon(key)"></i>
@@ -137,12 +138,12 @@
           </div>
 
           <!-- 动态组件区域 -->
-          <component 
+          <component
             v-else
-            :is="currentComponent" 
+            :is="currentComponent"
             :key="activeMenuIndex"
-            @back="handleComponentBack">
-          </component>
+            @back="handleComponentBack"
+          ></component>
         </div>
       </div>
     </div>
@@ -151,38 +152,38 @@
 
 <script>
 // 导入各个管理页面组件
-import GBDevices from './managementPages/GBDevices.vue'
-import PushStreams from './managementPages/PushStreams.vue'
-import PullProxy from './managementPages/PullProxy.vue'
-import MediaServerManager from './managementPages/MediaServerManager.vue'
-import AdministrativeDivision from './managementPages/AdministrativeDivision.vue'
-import BusinessGroup from './managementPages/BusinessGroup.vue'
+import GBDevices from "./managementPages/GBDevices.vue";
+import PushStreams from "./managementPages/PushStreams.vue";
+import PullProxy from "./managementPages/PullProxy.vue";
+import MediaServerManager from "./managementPages/MediaServerManager.vue";
+import AdministrativeDivision from "./managementPages/AdministrativeDivision.vue";
+import BusinessGroup from "./managementPages/BusinessGroup.vue";
 
 export default {
-  name: 'CameraManagementMain',
+  name: "CameraManagementMain",
   components: {
     GBDevices,
     PushStreams,
     PullProxy,
     MediaServerManager,
     AdministrativeDivision,
-    BusinessGroup
+    BusinessGroup,
   },
   data() {
     return {
-      activeMenuIndex: '',
+      activeMenuIndex: "",
       currentComponent: null,
-      currentMenuName: '',
+      currentMenuName: "",
       // 菜单项与组件的映射关系
       menuComponentMap: {
-        'gb-devices': { component: 'GBDevices', name: '国标设备' },
-        'push-streams': { component: 'PushStreams', name: '推流列表' },
-        'pull-proxy': { component: 'PullProxy', name: '拉流代理' },
-        'node-management': { component: 'MediaServerManager', name: '节点管理' },
-        'administrative-division': { component: 'AdministrativeDivision', name: '行政区划' },
-        'business-group': { component: 'BusinessGroup', name: '业务分组' }
-      }
-    }
+        "gb-devices": { component: "GBDevices", name: "国标设备" },
+        "push-streams": { component: "PushStreams", name: "推流列表" },
+        "pull-proxy": { component: "PullProxy", name: "拉流代理" },
+        "node-management": { component: "MediaServerManager", name: "节点管理" },
+        "administrative-division": { component: "AdministrativeDivision", name: "行政区划" },
+        "business-group": { component: "BusinessGroup", name: "业务分组" },
+      },
+    };
   },
   created() {
     // 检查是否有路由参数指定默认页面
@@ -201,68 +202,68 @@ export default {
     handleMenuSelect(index) {
       this.activeMenuIndex = index;
       const menuConfig = this.menuComponentMap[index];
-      
+
       if (menuConfig) {
         this.currentComponent = menuConfig.component;
         this.currentMenuName = menuConfig.name;
-        
+
         // 更新路由（不刷新页面）
-        this.$router.replace({ 
-          name: 'CameraManagementMain', 
-          params: { type: index } 
+        this.$router.replace({
+          name: "CameraManagementMain",
+          params: { type: index },
         });
       } else {
-        console.warn('未找到对应的组件配置:', index);
+        console.warn("未找到对应的组件配置:", index);
       }
     },
 
     // 处理组件返回事件
     handleComponentBack() {
-      this.activeMenuIndex = '';
+      this.activeMenuIndex = "";
       this.currentComponent = null;
-      this.currentMenuName = '';
-      
+      this.currentMenuName = "";
+
       // 更新路由
-      this.$router.replace({ name: 'CameraManagementMain' });
+      this.$router.replace({ name: "CameraManagementMain" });
     },
 
     // 获取功能图标
     getFeatureIcon(key) {
       const icons = {
-        'gb-devices': 'el-icon-video-camera',
-        'push-streams': 'el-icon-upload2',
-        'pull-proxy': 'el-icon-download',
-        'node-management': 'el-icon-connection',
-        'administrative-division': 'el-icon-location',
-        'business-group': 'el-icon-s-grid'
+        "gb-devices": "el-icon-video-camera",
+        "push-streams": "el-icon-upload2",
+        "pull-proxy": "el-icon-download",
+        "node-management": "el-icon-connection",
+        "administrative-division": "el-icon-location",
+        "business-group": "el-icon-s-grid",
       };
-      return icons[key] || 'el-icon-menu';
+      return icons[key] || "el-icon-menu";
     },
 
     // 获取功能描述
     getFeatureDesc(key) {
       const descs = {
-        'gb-devices': '管理国标设备连接',
-        'push-streams': '管理推流通道',
-        'pull-proxy': '管理拉流代理',
-        'node-management': '管理服务节点',
-        'administrative-division': '管理行政区划',
-        'business-group': '管理业务分组'
+        "gb-devices": "管理国标设备连接",
+        "push-streams": "管理推流通道",
+        "pull-proxy": "管理拉流代理",
+        "node-management": "管理服务节点",
+        "administrative-division": "管理行政区划",
+        "business-group": "管理业务分组",
       };
-      return descs[key] || '设备管理';
+      return descs[key] || "设备管理";
     },
 
     // 处理返回主页事件
     handleBackToHome() {
-      this.activeMenuIndex = '';
+      this.activeMenuIndex = "";
       this.currentComponent = null;
-      this.currentMenuName = '';
-      
+      this.currentMenuName = "";
+
       // 更新路由
-      this.$router.replace({ name: 'CameraManagementMain' });
-    }
-  }
-}
+      this.$router.replace({ name: "CameraManagementMain" });
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -283,7 +284,7 @@ export default {
 
 /* 页面头部 - 科技感卡片样式 */
 .page-header {
-  padding-bottom: 0!important;
+  padding-bottom: 0 !important;
 }
 
 .header-content {
@@ -796,19 +797,19 @@ export default {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .sidebar-menu {
     width: 100%;
   }
-  
+
   .feature-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .page-title {
     flex-direction: column;
     gap: 8px;
     align-items: flex-start;
   }
 }
-</style> 
+</style>

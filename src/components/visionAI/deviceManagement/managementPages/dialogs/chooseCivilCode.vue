@@ -1,5 +1,5 @@
 <template>
-  <div id="chooseCivilCode" >
+  <div id="chooseCivilCode">
     <el-dialog
       title="选择行政区划"
       width="30%"
@@ -10,8 +10,15 @@
       append-to-body
       @close="close()"
     >
-      <RegionTree ref="regionTree" :showHeader=true :edit="true" :enableAddChannel="false"  :clickEvent="treeNodeClickEvent"
-                  :onChannelChange="onChannelChange" :treeHeight="'45vh'"></RegionTree>
+      <RegionTree
+        ref="regionTree"
+        :showHeader="true"
+        :edit="true"
+        :enableAddChannel="false"
+        :clickEvent="treeNodeClickEvent"
+        :onChannelChange="onChannelChange"
+        :treeHeight="'45vh'"
+      ></RegionTree>
       <el-form>
         <el-form-item>
           <div style="text-align: right">
@@ -25,12 +32,11 @@
 </template>
 
 <script>
-
 import RegionTree from "./RegionTree.vue";
 
 export default {
   name: "chooseCivilCode",
-  components: {RegionTree},
+  components: { RegionTree },
   props: {},
   computed: {},
   created() {},
@@ -48,7 +54,7 @@ export default {
     },
     onSubmit: function () {
       if (this.endCallback) {
-        this.endCallback(this.regionDeviceId)
+        this.endCallback(this.regionDeviceId);
       }
       this.close();
     },

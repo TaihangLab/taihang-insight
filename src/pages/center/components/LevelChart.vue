@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
-import * as echarts from 'echarts';
-import type { ECharts } from 'echarts';
-import alertStatisticsAPI from '@/api/center/alertStatistics';
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
+import * as echarts from "echarts";
+import type { ECharts } from "echarts";
+import alertStatisticsAPI from "@/api/center/alertStatistics";
 
 interface ChartDataItem {
   name: string;
@@ -15,7 +15,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  height: 200
+  height: 200,
 });
 
 const chartRef = ref<HTMLElement | null>(null);
@@ -31,43 +31,43 @@ let refreshTimer: number | null = null;
 
 function getOption(data: ChartDataItem[]) {
   return {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)',
-      backgroundColor: 'rgba(0, 19, 40, 0.8)',
-      borderColor: 'rgba(0, 255, 255, 0.3)',
+      trigger: "item",
+      formatter: "{b}: {c} ({d}%)",
+      backgroundColor: "rgba(0, 19, 40, 0.8)",
+      borderColor: "rgba(0, 255, 255, 0.3)",
       textStyle: {
-        color: '#00FFFF'
-      }
+        color: "#00FFFF",
+      },
     },
     legend: {
-      orient: 'vertical',
+      orient: "vertical",
       right: 0,
-      top: 'center',
+      top: "center",
       itemWidth: 12,
       itemHeight: 12,
       itemGap: 20,
       textStyle: {
-        color: '#7EAEE5'
-      }
+        color: "#7EAEE5",
+      },
     },
     series: [
       {
-        name: '预警等级',
-        type: 'pie',
-        radius: ['60%', '85%'],
-        center: ['30%', '50%'],
+        name: "预警等级",
+        type: "pie",
+        radius: ["60%", "85%"],
+        center: ["30%", "50%"],
         avoidLabelOverlap: false,
         label: {
-          show: false
+          show: false,
         },
         labelLine: {
-          show: false
+          show: false,
         },
-        data: data
-      }
-    ]
+        data: data,
+      },
+    ],
   };
 }
 
@@ -95,18 +95,18 @@ function initChart() {
 async function loadData(): Promise<void> {
   loading.value = true;
   try {
-    const response = await alertStatisticsAPI.getByLevel('24h');
+    const response = await alertStatisticsAPI.getByLevel("24h");
     if (Array.isArray(response)) {
       chartData.value = response.map((item: any) => ({
         name: item.name || item.level_name,
         value: item.value || item.count,
         itemStyle: {
-          color: item.color
-        }
+          color: item.color,
+        },
       }));
     }
   } catch (error) {
-    console.error('加载预警等级失败:', error);
+    console.error("加载预警等级失败:", error);
   } finally {
     loading.value = false;
   }
@@ -140,23 +140,27 @@ onBeforeUnmount(() => {
 });
 
 // 监听数据变化，更新图表
-watch(() => chartData.value, (data) => {
-  // 数据存在时确保图表显示
-  if (data.length > 0) {
-    if (chart) {
-      chart.setOption(getOption(data));
-    } else {
-      // 图表未初始化，直接初始化
-      initChart();
+watch(
+  () => chartData.value,
+  (data) => {
+    // 数据存在时确保图表显示
+    if (data.length > 0) {
+      if (chart) {
+        chart.setOption(getOption(data));
+      } else {
+        // 图表未初始化，直接初始化
+        initChart();
+      }
     }
-  }
-}, { deep: true });
+  },
+  { deep: true },
+);
 
 defineExpose({
   resize: () => chart?.resize(),
   init: initChart,
   refresh: loadData,
-  loading
+  loading,
 });
 </script>
 

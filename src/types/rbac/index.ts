@@ -10,7 +10,7 @@
 // ============================================
 // 通用类型
 // ============================================
-export * from './common';
+export * from "./common";
 
 // ============================================
 // 用户管理类型
@@ -30,8 +30,8 @@ export type {
   UpdateUserResponse,
   UserRole,
   AssignRoleToUserRequest,
-  UserRoleListResponse
-} from './user';
+  UserRoleListResponse,
+} from "./user";
 
 // ============================================
 // 角色管理类型
@@ -51,10 +51,10 @@ export type {
   RolePermission,
   RolePermissionListResponse,
   AssignPermissionToRoleRequest,
-  RemoveRolePermissionRequest
-} from './role';
+  RemoveRolePermissionRequest,
+} from "./role";
 
-export { DataScope } from './role';
+export { DataScope } from "./role";
 
 // ============================================
 // 租户管理类型
@@ -73,8 +73,8 @@ export type {
   CreateTenantResponse,
   UpdateTenantResponse,
   DeleteTenantResponse,
-  BatchDeleteTenantsResponse
-} from './tenant';
+  BatchDeleteTenantsResponse,
+} from "./tenant";
 
 // ============================================
 // 部门管理类型
@@ -94,8 +94,8 @@ export type {
   DepartmentDetailResponse,
   CreateDepartmentResponse,
   UpdateDepartmentResponse,
-  DeleteDepartmentResponse
-} from './department';
+  DeleteDepartmentResponse,
+} from "./department";
 
 // ============================================
 // 岗位管理类型
@@ -114,8 +114,8 @@ export type {
   CreatePositionResponse,
   UpdatePositionResponse,
   DeletePositionResponse,
-  PositionCategoryListResponse
-} from './position';
+  PositionCategoryListResponse,
+} from "./position";
 
 // ============================================
 // 权限管理类型
@@ -137,7 +137,7 @@ export type {
   CreatePermissionResponse,
   UpdatePermissionResponse,
   DeletePermissionResponse,
-  UpdatePermissionStatusResponse
-} from './permission';
+  UpdatePermissionStatusResponse,
+} from "./permission";
 
-export { PermissionType, PermissionNodeType } from './permission';
+export { PermissionType, PermissionNodeType } from "./permission";

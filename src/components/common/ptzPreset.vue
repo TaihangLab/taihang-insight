@@ -1,14 +1,15 @@
 <template>
   <div id="ptzPreset" style="width: 100%">
-    <el-tag v-for="item in presetList"
-            key="item.presetId"
-            closable
-            @close="delPreset(item)"
-            @click="gotoPreset(item)"
-            size="small"
-            style="margin-right: 1rem; cursor: pointer; margin-bottom: 0.6rem"
+    <el-tag
+      v-for="item in presetList"
+      key="item.presetId"
+      closable
+      @close="delPreset(item)"
+      @click="gotoPreset(item)"
+      size="small"
+      style="margin-right: 1rem; cursor: pointer; margin-bottom: 0.6rem"
     >
-      {{item.presetName?item.presetName:item.presetId}}
+      {{ item.presetName ? item.presetName : item.presetId }}
     </el-tag>
     <el-input
       min="1"
@@ -16,15 +17,15 @@
       placeholder="预置位编号"
       addonBefore="预置位编号"
       addonAfter="(1-255)"
-      style="width: 300px; vertical-align: bottom;"
+      style="width: 300px; vertical-align: bottom"
       v-if="inputVisible"
       v-model="ptzPresetId"
       ref="saveTagInput"
       size="small"
     >
       <template v-slot:append>
-        <el-button  @click="addPreset()">保存</el-button>
-        <el-button  @click="cancel()">取消</el-button>
+        <el-button @click="addPreset()">保存</el-button>
+        <el-button @click="cancel()">取消</el-button>
       </template>
     </el-input>
     <el-button v-else size="small" @click="showInput">+ 添加</el-button>
@@ -32,137 +33,143 @@
 </template>
 
 <script>
-import { 
-  getFrontEndPresetList, 
-  addFrontEndPreset, 
-  callFrontEndPreset, 
-  deleteFrontEndPreset 
-} from '@/api/ptz'
+import {
+  getFrontEndPresetList,
+  addFrontEndPreset,
+  callFrontEndPreset,
+  deleteFrontEndPreset,
+} from "@/api/ptz";
 
 export default {
   name: "ptzPreset",
-  props: [ 'channelDeviceId', 'deviceId'],
+  props: ["channelDeviceId", "deviceId"],
   components: {},
   created() {
-    this.getPresetList()
+    this.getPresetList();
   },
   data() {
     return {
       presetList: [],
       inputVisible: false,
-      ptzPresetId: '',
+      ptzPresetId: "",
     };
   },
   methods: {
     getPresetList: function () {
-      getFrontEndPresetList(this.deviceId, this.channelDeviceId).then((data)=> {
-        this.presetList = data;
-        // 防止出现表格错位
-        this.$nextTick(() => {
-          this.$refs.channelListTable.doLayout();
+      getFrontEndPresetList(this.deviceId, this.channelDeviceId)
+        .then((data) => {
+          this.presetList = data;
+          // 防止出现表格错位
+          this.$nextTick(() => {
+            this.$refs.channelListTable.doLayout();
+          });
         })
-      }).catch((error)=> {
-        console.log(error);
-      });
+        .catch((error) => {
+          console.log(error);
+        });
     },
     showInput() {
       this.inputVisible = true;
-      this.$nextTick(_ => {
+      this.$nextTick((_) => {
         this.$refs.saveTagInput.$refs.input.focus();
       });
     },
-    addPreset: function (){
+    addPreset: function () {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
-      addFrontEndPreset(this.deviceId, this.channelDeviceId, {
-        presetId: this.ptzPresetId
-      }).then((data)=>{
-        setTimeout(()=>{
-          loading.close()
-          this.inputVisible = false;
-          this.ptzPresetId = ""
-          this.getPresetList()
-        }, 1000)
-      }).catch((error)=> {
-        loading.close()
-        this.inputVisible = false;
-        this.ptzPresetId = ""
-        this.$message({
-          showClose: true,
-          message: error.message || '添加失败',
-          type: 'error'
-        });
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
       });
+      addFrontEndPreset(this.deviceId, this.channelDeviceId, {
+        presetId: this.ptzPresetId,
+      })
+        .then((data) => {
+          setTimeout(() => {
+            loading.close();
+            this.inputVisible = false;
+            this.ptzPresetId = "";
+            this.getPresetList();
+          }, 1000);
+        })
+        .catch((error) => {
+          loading.close();
+          this.inputVisible = false;
+          this.ptzPresetId = "";
+          this.$message({
+            showClose: true,
+            message: error.message || "添加失败",
+            type: "error",
+          });
+        });
     },
     cancel: function () {
       this.inputVisible = false;
-      this.ptzPresetId = ""
+      this.ptzPresetId = "";
     },
-    gotoPreset: function (preset){
-      console.log(preset)
+    gotoPreset: function (preset) {
+      console.log(preset);
       callFrontEndPreset(this.deviceId, this.channelDeviceId, {
-        presetId: preset.presetId
-      }).then(()=> {
-        this.$message({
-          showClose: true,
-          message: '调用成功',
-          type: 'success'
-        });
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error.message || '调用失败',
-          type: 'error'
-        });
-      });
-    },
-    delPreset: function (preset){
-      this.$confirm("确定删除此预置位", '提示', {
-        dangerouslyUseHTMLString: true,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        const loading = this.$loading({
-          lock: true,
-          fullscreen: true,
-          text: '正在发送指令',
-          spinner: 'el-icon-loading',
-          background: 'rgba(0, 0, 0, 0.7)'
-        })
-        deleteFrontEndPreset(this.deviceId, this.channelDeviceId, {
-          presetId: preset.presetId
-        }).then(()=> {
-          setTimeout(()=>{
-            loading.close()
-            this.getPresetList()
-          }, 1000)
-        }).catch((error)=> {
-          loading.close()
+        presetId: preset.presetId,
+      })
+        .then(() => {
           this.$message({
             showClose: true,
-            message: error.message || '删除失败',
-            type: 'error'
+            message: "调用成功",
+            type: "success",
+          });
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error.message || "调用失败",
+            type: "error",
           });
         });
-      }).catch(() => {
-
-      });
-
     },
-
+    delPreset: function (preset) {
+      this.$confirm("确定删除此预置位", "提示", {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          const loading = this.$loading({
+            lock: true,
+            fullscreen: true,
+            text: "正在发送指令",
+            spinner: "el-icon-loading",
+            background: "rgba(0, 0, 0, 0.7)",
+          });
+          deleteFrontEndPreset(this.deviceId, this.channelDeviceId, {
+            presetId: preset.presetId,
+          })
+            .then(() => {
+              setTimeout(() => {
+                loading.close();
+                this.getPresetList();
+              }, 1000);
+            })
+            .catch((error) => {
+              loading.close();
+              this.$message({
+                showClose: true,
+                message: error.message || "删除失败",
+                type: "error",
+              });
+            });
+        })
+        .catch(() => {});
+    },
   },
 };
 </script>
 <style>
 .channel-form {
   display: grid;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   padding: 1rem 2rem 0 2rem;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 1rem;

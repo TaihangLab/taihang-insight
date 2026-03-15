@@ -15,12 +15,40 @@
     >
       <template #default="{ node, data }">
         <span class="custom-tree-node">
-          <span v-if="data.type === 0 && chooseId !== data.deviceId" style="color: #409EFF" class="iconfont icon-bianzubeifen3"></span>
-          <span v-if="data.type === 0 && chooseId === data.deviceId" style="color: #c60135;" class="iconfont icon-bianzubeifen3"></span>
-          <span v-if="data.type === 1 && data.status === 'ON'" style="color: #409EFF" class="iconfont icon-shexiangtou2"></span>
-          <span v-if="data.type === 1 && data.status !== 'ON'" style="color: #808181" class="iconfont icon-shexiangtou2"></span>
-          <span style="padding-left: 1px" v-if="data.deviceId !== '' && showCode" :title="data.deviceId">{{ data.name }}（编号：{{ data.deviceId }}）</span>
-          <span style="padding-left: 1px" v-if="data.deviceId === '' || !showCode" :title="data.deviceId">{{ data.name }}</span>
+          <span
+            v-if="data.type === 0 && chooseId !== data.deviceId"
+            style="color: #409eff"
+            class="iconfont icon-bianzubeifen3"
+          ></span>
+          <span
+            v-if="data.type === 0 && chooseId === data.deviceId"
+            style="color: #c60135"
+            class="iconfont icon-bianzubeifen3"
+          ></span>
+          <span
+            v-if="data.type === 1 && data.status === 'ON'"
+            style="color: #409eff"
+            class="iconfont icon-shexiangtou2"
+          ></span>
+          <span
+            v-if="data.type === 1 && data.status !== 'ON'"
+            style="color: #808181"
+            class="iconfont icon-shexiangtou2"
+          ></span>
+          <span
+            style="padding-left: 1px"
+            v-if="data.deviceId !== '' && showCode"
+            :title="data.deviceId"
+          >
+            {{ data.name }}（编号：{{ data.deviceId }}）
+          </span>
+          <span
+            style="padding-left: 1px"
+            v-if="data.deviceId === '' || !showCode"
+            :title="data.deviceId"
+          >
+            {{ data.name }}
+          </span>
         </span>
       </template>
     </el-tree>
@@ -28,86 +56,88 @@
 </template>
 
 <script>
-import { ElMessage } from 'element-plus'
-import centerAPI from '@/api/center'
+import { ElMessage } from "element-plus";
+import centerAPI from "@/api/center";
 
 export default {
-  name: 'MonitorGroupTree',
+  name: "MonitorGroupTree",
   data() {
     return {
       treeProps: {
-        label: 'name',
-        children: 'children',
-        isLeaf: (data) => data.leaf
+        label: "name",
+        children: "children",
+        isLeaf: (data) => data.leaf,
       },
       showCode: false,
-      searchSrt: '',
-      chooseId: '',
-      treeData: [{
-        treeId: '',
-        deviceId: '',
-        name: '根资源组',
-        isLeaf: false,
-        type: 0
-      }]
-    }
+      searchSrt: "",
+      chooseId: "",
+      treeData: [
+        {
+          treeId: "",
+          deviceId: "",
+          name: "根资源组",
+          isLeaf: false,
+          type: 0,
+        },
+      ],
+    };
   },
-  props: ['clickEvent', 'hasChannel', 'treeHeight'],
+  props: ["clickEvent", "hasChannel", "treeHeight"],
   methods: {
     loadNode: async function (node, resolve) {
       try {
         // 根节点已初始化，直接返回
         if (node.level === 0) {
-          return
+          return;
         }
 
         // 如果是叶子节点，返回空数组
         if (node.data.leaf) {
-          resolve([])
-          return
+          resolve([]);
+          return;
         }
 
         // 使用专用的实时监控API
         const response = await centerAPI.realtimeMonitor.getGroupTree({
           query: this.searchSrt,
           parent: node.data.id,
-          hasChannel: this.hasChannel
-        })
+          hasChannel: this.hasChannel,
+        });
 
         // 响应拦截器已处理成功/失败判断，直接使用数据
-        const treeData = Array.isArray(response.data) ? response.data : []
-        resolve(treeData)
+        const treeData = Array.isArray(response.data) ? response.data : [];
+        resolve(treeData);
       } catch (error) {
-        console.error('加载业务分组树失败:', error)
-        ElMessage.error('加载业务分组树失败')
-        resolve([])
+        console.error("加载业务分组树失败:", error);
+        ElMessage.error("加载业务分组树失败");
+        resolve([]);
       }
     },
     reset: function () {
-      this.$forceUpdate()
+      this.$forceUpdate();
     },
     refreshNode: function (node) {
-      node.loaded = false
-      node.expand()
+      node.loaded = false;
+      node.expand();
     },
     refresh: function (id) {
-      const tree = this.$refs.treeRef
+      const tree = this.$refs.treeRef;
       if (tree) {
-        const node = tree.getNode(id)
+        const node = tree.getNode(id);
         if (node) {
-          node.loaded = false
-          node.expand()
+          node.loaded = false;
+          node.expand();
         }
       }
     },
     nodeClickHandler: function (data, node) {
-      this.chooseId = data.deviceId
+      this.chooseId = data.deviceId;
       if (this.clickEvent) {
-        this.clickEvent(data)
+        this.clickEvent(data);
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -121,4 +151,3 @@ export default {
   background-color: transparent;
 }
 </style>
-

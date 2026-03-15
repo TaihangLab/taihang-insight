@@ -1,7 +1,7 @@
 <template>
   <div id="realTimeMonitoring" class="realtime-monitoring-container">
     <el-container v-loading="loading" class="main-container" element-loading-text="加载中">
-    <!-- 左侧设备列表 - 科技感设计 -->
+      <!-- 左侧设备列表 - 科技感设计 -->
       <el-aside width="250px" class="device-tree-aside">
         <div class="custom-tree-header">
           <div class="header-title">
@@ -14,16 +14,28 @@
               active-color="#3b82f6"
               inactive-color="#10b981"
               active-text="行政区划"
-              inactive-text="业务分组">
-            </el-switch>
+              inactive-text="业务分组"
+            ></el-switch>
           </div>
         </div>
         <div class="custom-tree-container">
           <div v-if="showRegion" style="height: 100%">
-            <RegionTree ref="regionTree" :edit="false" :showHeader="false" :hasChannel="true" :clickEvent="treeNodeClickEvent"></RegionTree>
+            <RegionTree
+              ref="regionTree"
+              :edit="false"
+              :showHeader="false"
+              :hasChannel="true"
+              :clickEvent="treeNodeClickEvent"
+            ></RegionTree>
           </div>
           <div v-if="!showRegion" style="height: 100%">
-            <GroupTree ref="groupTree" :edit="false" :showHeader="false" :hasChannel="true" :clickEvent="treeNodeClickEvent"></GroupTree>
+            <GroupTree
+              ref="groupTree"
+              :edit="false"
+              :showHeader="false"
+              :hasChannel="true"
+              :clickEvent="treeNodeClickEvent"
+            ></GroupTree>
           </div>
         </div>
       </el-aside>
@@ -35,9 +47,21 @@
           <div class="toolbar-left">
             <span class="header-label">分屏:</span>
             <div class="view-mode-buttons">
-              <i class="iconfont icon-a-mti-1fenpingshi btn" :class="{active: viewMode === 'single'}" @click="switchViewMode('single')"/>
-              <i class="iconfont icon-a-mti-4fenpingshi btn" :class="{active: viewMode === 'four'}" @click="switchViewMode('four')"/>
-              <i class="iconfont icon-a-mti-9fenpingshi btn" :class="{active: viewMode === 'nine'}" @click="switchViewMode('nine')"/>
+              <i
+                class="iconfont icon-a-mti-1fenpingshi btn"
+                :class="{ active: viewMode === 'single' }"
+                @click="switchViewMode('single')"
+              />
+              <i
+                class="iconfont icon-a-mti-4fenpingshi btn"
+                :class="{ active: viewMode === 'four' }"
+                @click="switchViewMode('four')"
+              />
+              <i
+                class="iconfont icon-a-mti-9fenpingshi btn"
+                :class="{ active: viewMode === 'nine' }"
+                @click="switchViewMode('nine')"
+              />
             </div>
           </div>
           <div class="toolbar-right">
@@ -46,261 +70,363 @@
               <span>{{ currentDateTime }}</span>
             </div>
             <el-tooltip content="全屏" placement="bottom" effect="light">
-              <i class="el-icon-full-screen btn fullscreen-btn" @click="toggleFullscreen"/>
+              <i class="el-icon-full-screen btn fullscreen-btn" @click="toggleFullscreen" />
             </el-tooltip>
           </div>
         </el-header>
 
-      <!-- 视频网格区域 - 科技感设计 -->
+        <!-- 视频网格区域 - 科技感设计 -->
         <el-main class="video-main">
-          <div ref="videoGrid"
-               :class="['video-grid', viewMode, { fullscreen: isFullscreen }]">
-        <template v-if="!isFullscreen">
-          <div
-            v-for="index in generateGrids()"
-            :key="index"
-            class="video-cell"
-            :class="{ selected: selectedCamera === index }"
-            @click="selectCamera(index)"
-          >
+          <div ref="videoGrid" :class="['video-grid', viewMode, { fullscreen: isFullscreen }]">
+            <template v-if="!isFullscreen">
+              <div
+                v-for="index in generateGrids()"
+                :key="index"
+                class="video-cell"
+                :class="{ selected: selectedCamera === index }"
+                @click="selectCamera(index)"
+              >
                 <!-- 超薄标题栏 - 科技感设计 -->
                 <div class="video-slim-header">
-                  <span class="camera-name">{{ cameraNames[index-1] || `摄像头 ${index}` }}</span>
-                  <div class="video-status" :class="getVideoStatus(index-1)">
+                  <span class="camera-name">{{ cameraNames[index - 1] || `摄像头 ${index}` }}</span>
+                  <div class="video-status" :class="getVideoStatus(index - 1)">
                     <span class="status-dot"></span>
-                    <span class="status-text">{{ getVideoStatusText(index-1) }}</span>
-            </div>
+                    <span class="status-text">{{ getVideoStatusText(index - 1) }}</span>
+                  </div>
                 </div>
 
-            <div class="video-content" :ref="'videoContent'+(index-1)">
-              
-              <div class="video-placeholder" :data-timestamp="currentDateTime" :data-camera="formatCameraName(index)">
-                    <div v-if="!videoUrl[index-1]" class="no-signal">
+                <div class="video-content" :ref="'videoContent' + (index - 1)">
+                  <div
+                    class="video-placeholder"
+                    :data-timestamp="currentDateTime"
+                    :data-camera="formatCameraName(index)"
+                  >
+                    <div v-if="!videoUrl[index - 1]" class="no-signal">
                       <i class="el-icon-video-camera-solid"></i>
-                      <div>{{ videoTip[index-1] ? videoTip[index-1] : "无信号" }}</div>
+                      <div>{{ videoTip[index - 1] ? videoTip[index - 1] : "无信号" }}</div>
                     </div>
                     <div v-else class="video-player-wrapper">
-                      <player :ref="'player'+(index-1)" :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
-                              @destroy="destroy"/>
-                      
+                      <player
+                        :ref="'player' + (index - 1)"
+                        :videoUrl="videoUrl[index - 1]"
+                        fluent
+                        autoplay
+                        @screenshot="shot"
+                        @destroy="destroy"
+                      />
+
                       <!-- 🆕 AI任务选择下拉框 - 移到video-player-wrapper内部 -->
-                      <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
-                           class="ai-task-selector">
-                        <el-select 
-                          v-model="selectedAITasks[index-1]" 
-                          size="small" 
+                      <div
+                        v-if="
+                          availableAITasks[cameraIdMapping[index - 1]] &&
+                          availableAITasks[cameraIdMapping[index - 1]].length > 0
+                        "
+                        class="ai-task-selector"
+                      >
+                        <el-select
+                          v-model="selectedAITasks[index - 1]"
+                          size="small"
                           placeholder="选择AI任务"
-                          @change="onTaskSelectionChange(index-1)"
-                          clearable>
+                          @change="onTaskSelectionChange(index - 1)"
+                          clearable
+                        >
                           <el-option
-                            v-for="task in availableAITasks[cameraIdMapping[index-1]]"
+                            v-for="task in availableAITasks[cameraIdMapping[index - 1]]"
                             :key="task.task_id"
                             :label="`${task.task_name}`"
-                            :value="task.task_id">
+                            :value="task.task_id"
+                          >
                             <span style="float: left">{{ task.task_name }}</span>
-                            <span style="float: right; color: #8492a6; font-size: 12px">{{ task.skill_name }}</span>
+                            <span style="float: right; color: #8492a6; font-size: 12px">
+                              {{ task.skill_name }}
+                            </span>
                           </el-option>
                         </el-select>
                       </div>
-                      
+
                       <!-- 🆕 调试信息显示区域 -->
-                      <div v-if="selectedAITasks[index-1]" class="detection-debug-info">
+                      <div v-if="selectedAITasks[index - 1]" class="detection-debug-info">
                         <div class="debug-line">
                           <span class="debug-label">WebSocket:</span>
-                          <span :class="['debug-value', wsConnections[index-1] ? 'connected' : 'disconnected']">
-                            {{ wsConnections[index-1] ? '已连接' : '未连接' }}
+                          <span
+                            :class="[
+                              'debug-value',
+                              wsConnections[index - 1] ? 'connected' : 'disconnected',
+                            ]"
+                          >
+                            {{ wsConnections[index - 1] ? "已连接" : "未连接" }}
                           </span>
                         </div>
-                        <div class="debug-line" v-if="detectionResults[index-1]">
+                        <div class="debug-line" v-if="detectionResults[index - 1]">
                           <span class="debug-label">检测目标:</span>
-                          <span class="debug-value">{{ detectionResults[index-1].detections ? detectionResults[index-1].detections.length : 0 }} 个</span>
+                          <span class="debug-value">
+                            {{
+                              detectionResults[index - 1].detections
+                                ? detectionResults[index - 1].detections.length
+                                : 0
+                            }}
+                            个
+                          </span>
                         </div>
-                        <div class="debug-line" v-if="detectionResults[index-1] && detectionResults[index-1].detections && detectionResults[index-1].detections.length > 0">
+                        <div
+                          class="debug-line"
+                          v-if="
+                            detectionResults[index - 1] &&
+                            detectionResults[index - 1].detections &&
+                            detectionResults[index - 1].detections.length > 0
+                          "
+                        >
                           <span class="debug-label">目标列表:</span>
                           <span class="debug-value">
-                            {{ detectionResults[index-1].detections.map(d => d.label || d.class_name).join(', ') }}
+                            {{
+                              detectionResults[index - 1].detections
+                                .map((d) => d.label || d.class_name)
+                                .join(", ")
+                            }}
                           </span>
                         </div>
                         <div class="debug-line">
                           <span class="debug-label">最后更新:</span>
-                          <span class="debug-value">{{ detectionUpdateTime[index-1] || '无数据' }}</span>
+                          <span class="debug-value">
+                            {{ detectionUpdateTime[index - 1] || "无数据" }}
+                          </span>
                         </div>
                       </div>
-                      
+
                       <!-- 🆕 检测框OSD叠加层 -->
                       <detection-overlay
-                        v-if="selectedAITasks[index-1] && detectionResults[index-1]"
-                        :container-width="getVideoWidth(index-1)"
-                        :container-height="getVideoHeight(index-1)"
-                        :video-width="getActualVideoWidth(index-1)"
-                        :video-height="getActualVideoHeight(index-1)"
-                        :detections="detectionResults[index-1].detections || []">
-                      </detection-overlay>
+                        v-if="selectedAITasks[index - 1] && detectionResults[index - 1]"
+                        :container-width="getVideoWidth(index - 1)"
+                        :container-height="getVideoHeight(index - 1)"
+                        :video-width="getActualVideoWidth(index - 1)"
+                        :video-height="getActualVideoHeight(index - 1)"
+                        :detections="detectionResults[index - 1].detections || []"
+                      ></detection-overlay>
                     </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </template>
-        <template v-else>
-          <div
-            v-for="index in generateGrids()"
-            :key="index"
-            class="video-cell"
-            :class="{ selected: selectedCamera === index }"
-            @click="selectCamera(index)"
-          >
-            <!-- 超薄标题栏 -->
-            <div class="video-slim-header">
-              <span class="camera-name">{{ cameraNames[index-1] || `摄像头 ${index}` }}</span>
-              <div class="video-status" :class="getVideoStatus(index-1)">
-                <span class="status-dot"></span>
-                <span class="status-text">{{ getVideoStatusText(index-1) }}</span>
-              </div>
-            </div>
+            </template>
+            <template v-else>
+              <div
+                v-for="index in generateGrids()"
+                :key="index"
+                class="video-cell"
+                :class="{ selected: selectedCamera === index }"
+                @click="selectCamera(index)"
+              >
+                <!-- 超薄标题栏 -->
+                <div class="video-slim-header">
+                  <span class="camera-name">{{ cameraNames[index - 1] || `摄像头 ${index}` }}</span>
+                  <div class="video-status" :class="getVideoStatus(index - 1)">
+                    <span class="status-dot"></span>
+                    <span class="status-text">{{ getVideoStatusText(index - 1) }}</span>
+                  </div>
+                </div>
 
-            <div class="video-content" :ref="'videoContentFs'+(index-1)">
-              
-              <div class="video-placeholder" :data-timestamp="currentDateTime" :data-camera="formatCameraName(index)">
-                    <div v-if="!videoUrl[index-1]" class="no-signal">
+                <div class="video-content" :ref="'videoContentFs' + (index - 1)">
+                  <div
+                    class="video-placeholder"
+                    :data-timestamp="currentDateTime"
+                    :data-camera="formatCameraName(index)"
+                  >
+                    <div v-if="!videoUrl[index - 1]" class="no-signal">
                       <i class="el-icon-video-camera-solid"></i>
-                      <div>{{ videoTip[index-1] ? videoTip[index-1] : "无信号" }}</div>
+                      <div>{{ videoTip[index - 1] ? videoTip[index - 1] : "无信号" }}</div>
                     </div>
                     <div v-else class="video-player-wrapper">
-                      <player :ref="'player'+(index-1)" :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
-                              @destroy="destroy"/>
-                      
+                      <player
+                        :ref="'player' + (index - 1)"
+                        :videoUrl="videoUrl[index - 1]"
+                        fluent
+                        autoplay
+                        @screenshot="shot"
+                        @destroy="destroy"
+                      />
+
                       <!-- 🆕 AI任务选择下拉框（全屏模式） -->
-                      <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
-                           class="ai-task-selector">
-                        <el-select 
-                          v-model="selectedAITasks[index-1]" 
-                          size="small" 
+                      <div
+                        v-if="
+                          availableAITasks[cameraIdMapping[index - 1]] &&
+                          availableAITasks[cameraIdMapping[index - 1]].length > 0
+                        "
+                        class="ai-task-selector"
+                      >
+                        <el-select
+                          v-model="selectedAITasks[index - 1]"
+                          size="small"
                           placeholder="选择AI任务"
-                          @change="onTaskSelectionChange(index-1)"
-                          clearable>
+                          @change="onTaskSelectionChange(index - 1)"
+                          clearable
+                        >
                           <el-option
-                            v-for="task in availableAITasks[cameraIdMapping[index-1]]"
+                            v-for="task in availableAITasks[cameraIdMapping[index - 1]]"
                             :key="task.task_id"
                             :label="`${task.task_name}`"
-                            :value="task.task_id">
+                            :value="task.task_id"
+                          >
                             <span style="float: left">{{ task.task_name }}</span>
-                            <span style="float: right; color: #8492a6; font-size: 12px">{{ task.skill_name }}</span>
+                            <span style="float: right; color: #8492a6; font-size: 12px">
+                              {{ task.skill_name }}
+                            </span>
                           </el-option>
                         </el-select>
                       </div>
-                      
+
                       <!-- 🆕 调试信息显示区域（全屏模式） -->
-                      <div v-if="selectedAITasks[index-1]" class="detection-debug-info">
+                      <div v-if="selectedAITasks[index - 1]" class="detection-debug-info">
                         <div class="debug-line">
                           <span class="debug-label">WebSocket:</span>
-                          <span :class="['debug-value', wsConnections[index-1] ? 'connected' : 'disconnected']">
-                            {{ wsConnections[index-1] ? '已连接' : '未连接' }}
+                          <span
+                            :class="[
+                              'debug-value',
+                              wsConnections[index - 1] ? 'connected' : 'disconnected',
+                            ]"
+                          >
+                            {{ wsConnections[index - 1] ? "已连接" : "未连接" }}
                           </span>
                         </div>
-                        <div class="debug-line" v-if="detectionResults[index-1]">
+                        <div class="debug-line" v-if="detectionResults[index - 1]">
                           <span class="debug-label">检测目标:</span>
-                          <span class="debug-value">{{ detectionResults[index-1].detections ? detectionResults[index-1].detections.length : 0 }} 个</span>
+                          <span class="debug-value">
+                            {{
+                              detectionResults[index - 1].detections
+                                ? detectionResults[index - 1].detections.length
+                                : 0
+                            }}
+                            个
+                          </span>
                         </div>
-                        <div class="debug-line" v-if="detectionResults[index-1] && detectionResults[index-1].detections && detectionResults[index-1].detections.length > 0">
+                        <div
+                          class="debug-line"
+                          v-if="
+                            detectionResults[index - 1] &&
+                            detectionResults[index - 1].detections &&
+                            detectionResults[index - 1].detections.length > 0
+                          "
+                        >
                           <span class="debug-label">目标列表:</span>
                           <span class="debug-value">
-                            {{ detectionResults[index-1].detections.map(d => d.label || d.class_name).join(', ') }}
+                            {{
+                              detectionResults[index - 1].detections
+                                .map((d) => d.label || d.class_name)
+                                .join(", ")
+                            }}
                           </span>
                         </div>
                         <div class="debug-line">
                           <span class="debug-label">最后更新:</span>
-                          <span class="debug-value">{{ detectionUpdateTime[index-1] || '无数据' }}</span>
+                          <span class="debug-value">
+                            {{ detectionUpdateTime[index - 1] || "无数据" }}
+                          </span>
                         </div>
                       </div>
                       <!-- 🆕 检测框OSD叠加层（全屏模式） -->
                       <detection-overlay
-                        v-if="selectedAITasks[index-1] && detectionResults[index-1]"
-                        :container-width="getVideoWidth(index-1)"
-                        :container-height="getVideoHeight(index-1)"
-                        :video-width="videoResolutions[index-1] ? videoResolutions[index-1].width : 1920"
-                        :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
-                        :detections="detectionResults[index-1].detections || []">
-                      </detection-overlay>
+                        v-if="selectedAITasks[index - 1] && detectionResults[index - 1]"
+                        :container-width="getVideoWidth(index - 1)"
+                        :container-height="getVideoHeight(index - 1)"
+                        :video-width="
+                          videoResolutions[index - 1] ? videoResolutions[index - 1].width : 1920
+                        "
+                        :video-height="
+                          videoResolutions[index - 1] ? videoResolutions[index - 1].height : 1080
+                        "
+                        :detections="detectionResults[index - 1].detections || []"
+                      ></detection-overlay>
                     </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            </template>
           </div>
-        </template>
-      </div>
         </el-main>
       </el-container>
 
-    <!-- 右侧预警信息 - 科技感设计 -->
+      <!-- 右侧预警信息 - 科技感设计 -->
       <el-aside width="270px" class="warning-aside">
-    <div class="warning-list">
-      <div class="list-header">
-        <div class="header-left">
-          <span>实时预警</span>
-          <div class="sse-status-indicator" :class="getSSSStatusClass()">
-            <span class="status-dot"></span>
-            <span class="status-text">{{ getSSEStatusText() }}</span>
-          </div>
-        </div>
-        <el-button link class="more-btn" @click="goToMoreWarnings">更多 <i class="el-icon-arrow-right"></i></el-button>
-      </div>
-      <div class="list-content">
-        <!-- 加载状态 -->
-        <div v-if="apiDataLoading && warningList.length === 0" class="loading-state">
-          <i class="el-icon-loading"></i>
-          <span>正在加载预警数据...</span>
-        </div>
-
-        <!-- 空状态 -->
-        <div v-else-if="!apiDataLoading && warningList.length === 0" class="empty-state">
-          <i class="el-icon-warning-outline"></i>
-          <span>暂无预警数据</span>
-          <el-button link @click="refreshWarningData">点击刷新</el-button>
-        </div>
-
-        <!-- 预警列表 -->
-        <div v-for="warning in warningList"
-             :key="warning.id"
-             class="warning-item">
-          <div class="warning-video">
-            <div class="warning-status-container">
-              <div class="warning-level-badge" :class="warning.level">{{ getWarningLevelText(warning.level) }}</div>
-              <div class="warning-status-badge" :class="getCurrentWarningStatus(warning).class">{{ getCurrentWarningStatus(warning).text }}</div>
-            </div>
-            <div v-if="warning.imageUrl" class="warning-image">
-              <img :src="warning.imageUrl" :alt="warning.type" />
-            </div>
-            <div v-else class="video-placeholder">
-              <i :class="getWarningIcon(warning.level)"></i>
-              <span>预警监控画面</span>
-            </div>
-          </div>
-          <div class="warning-info">
-            <div class="warning-time-location">
-              <div class="warning-time">{{ formatTime(warning.time) }}</div>
-              <div class="warning-location">{{ warning.location }}</div>
-            </div>
-            <div class="warning-detail">
-              <div class="device-type-row">
-                <span class="device-name">{{ warning.device }}</span>
-                <span class="violation-type">{{ warning.type }}</span>
+        <div class="warning-list">
+          <div class="list-header">
+            <div class="header-left">
+              <span>实时预警</span>
+              <div class="sse-status-indicator" :class="getSSSStatusClass()">
+                <span class="status-dot"></span>
+                <span class="status-text">{{ getSSEStatusText() }}</span>
               </div>
             </div>
-            <div class="warning-actions">
-              <el-button size="small" plain class="report-btn" @click="viewWarningDetail(warning)">查看详情</el-button>
-              <!-- 处理按钮根据状态禁用，使用与上报按钮相同的样式 -->
-              <el-button
-                size="small"
-                plain
-                class="process-btn"
-                :disabled="isProcessingDisabled(warning)"
-                @click="handleWarningFromList(warning)">
-                {{ isProcessingDisabled(warning) ? '已完成' : '处理' }}
-              </el-button>
+            <el-button link class="more-btn" @click="goToMoreWarnings">
+              更多
+              <i class="el-icon-arrow-right"></i>
+            </el-button>
+          </div>
+          <div class="list-content">
+            <!-- 加载状态 -->
+            <div v-if="apiDataLoading && warningList.length === 0" class="loading-state">
+              <i class="el-icon-loading"></i>
+              <span>正在加载预警数据...</span>
+            </div>
+
+            <!-- 空状态 -->
+            <div v-else-if="!apiDataLoading && warningList.length === 0" class="empty-state">
+              <i class="el-icon-warning-outline"></i>
+              <span>暂无预警数据</span>
+              <el-button link @click="refreshWarningData">点击刷新</el-button>
+            </div>
+
+            <!-- 预警列表 -->
+            <div v-for="warning in warningList" :key="warning.id" class="warning-item">
+              <div class="warning-video">
+                <div class="warning-status-container">
+                  <div class="warning-level-badge" :class="warning.level">
+                    {{ getWarningLevelText(warning.level) }}
+                  </div>
+                  <div class="warning-status-badge" :class="getCurrentWarningStatus(warning).class">
+                    {{ getCurrentWarningStatus(warning).text }}
+                  </div>
+                </div>
+                <div v-if="warning.imageUrl" class="warning-image">
+                  <img :src="warning.imageUrl" :alt="warning.type" />
+                </div>
+                <div v-else class="video-placeholder">
+                  <i :class="getWarningIcon(warning.level)"></i>
+                  <span>预警监控画面</span>
+                </div>
+              </div>
+              <div class="warning-info">
+                <div class="warning-time-location">
+                  <div class="warning-time">{{ formatTime(warning.time) }}</div>
+                  <div class="warning-location">{{ warning.location }}</div>
+                </div>
+                <div class="warning-detail">
+                  <div class="device-type-row">
+                    <span class="device-name">{{ warning.device }}</span>
+                    <span class="violation-type">{{ warning.type }}</span>
+                  </div>
+                </div>
+                <div class="warning-actions">
+                  <el-button
+                    size="small"
+                    plain
+                    class="report-btn"
+                    @click="viewWarningDetail(warning)"
+                  >
+                    查看详情
+                  </el-button>
+                  <!-- 处理按钮根据状态禁用，使用与上报按钮相同的样式 -->
+                  <el-button
+                    size="small"
+                    plain
+                    class="process-btn"
+                    :disabled="isProcessingDisabled(warning)"
+                    @click="handleWarningFromList(warning)"
+                  >
+                    {{ isProcessingDisabled(warning) ? "已完成" : "处理" }}
+                  </el-button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
       </el-aside>
     </el-container>
 
@@ -338,8 +464,10 @@
         </el-form-item>
       </el-form>
       <div class="process-tip">
-        <i class="el-icon-info" style="color: #909399; margin-right: 4px;"></i>
-        <span style="color: #909399; font-size: 13px;">填写处理意见后，可点击"确认处理"添加处理记录，或点击"结束处理"完成整个处理流程</span>
+        <i class="el-icon-info" style="color: #909399; margin-right: 4px"></i>
+        <span style="color: #909399; font-size: 13px">
+          填写处理意见后，可点击"确认处理"添加处理记录，或点击"结束处理"完成整个处理流程
+        </span>
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="saveRemark">确认处理</el-button>
@@ -369,11 +497,7 @@
           />
         </el-form-item>
         <el-form-item label="同时归档">
-          <el-switch
-            v-model="falseAlarmForm.needArchive"
-            active-text="是"
-            inactive-text="否"
-          />
+          <el-switch v-model="falseAlarmForm.needArchive" active-text="是" inactive-text="否" />
         </el-form-item>
         <el-form-item label="选择档案" v-if="falseAlarmForm.needArchive">
           <el-select
@@ -389,7 +513,9 @@
               :value="archive.archive_id"
             >
               <span style="float: left">{{ archive.name }}</span>
-              <span style="float: right; color: #8492a6; font-size: 13px">{{ archive.location }}</span>
+              <span style="float: right; color: #8492a6; font-size: 13px">
+                {{ archive.location }}
+              </span>
             </el-option>
           </el-select>
           <el-button
@@ -398,13 +524,18 @@
             @click="createNewArchiveForFalseAlarm"
             style="margin-top: 5px"
           >
-            <i class="el-icon-plus"></i> 创建新档案
+            <i class="el-icon-plus"></i>
+            创建新档案
           </el-button>
         </el-form-item>
       </el-form>
       <div class="process-tip">
-        <i class="el-icon-warning" style="color: #E6A23C; margin-right: 4px;"></i>
-        <span style="color: #E6A23C; font-size: 13px;">标记为误报后，该预警将被移出实时监控列表，并保存到复判记录中{{ falseAlarmForm.needArchive ? '，同时归档到选定的档案' : '' }}</span>
+        <i class="el-icon-warning" style="color: #e6a23c; margin-right: 4px"></i>
+        <span style="color: #e6a23c; font-size: 13px">
+          标记为误报后，该预警将被移出实时监控列表，并保存到复判记录中{{
+            falseAlarmForm.needArchive ? "，同时归档到选定的档案" : ""
+          }}
+        </span>
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeFalseAlarmDialog">取消</el-button>
@@ -427,7 +558,7 @@
     >
       <div class="archive-dialog-content">
         <div class="archive-info">
-          <i class="el-icon-folder" style="color: #E6A23C; font-size: 24px; margin-right: 8px;"></i>
+          <i class="el-icon-folder" style="color: #e6a23c; font-size: 24px; margin-right: 8px"></i>
           <span>请选择要归档到的档案：</span>
         </div>
 
@@ -451,7 +582,9 @@
                   :value="archive.archive_id"
                 >
                   <span style="float: left">{{ archive.name }}</span>
-                  <span style="float: right; color: #8492a6; font-size: 13px">{{ archive.location }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">
+                    {{ archive.location }}
+                  </span>
                 </el-option>
               </el-select>
               <el-button
@@ -460,7 +593,8 @@
                 @click="createNewArchiveForArchiveDialog"
                 style="margin-top: 5px"
               >
-                <i class="el-icon-plus"></i> 创建新档案
+                <i class="el-icon-plus"></i>
+                创建新档案
               </el-button>
             </el-form-item>
 
@@ -489,11 +623,9 @@
 
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeArchiveDialog">取 消</el-button>
-        <el-button
-          type="danger"
-          @click="confirmArchive"
-          :disabled="!selectedArchiveId"
-        >确认归档</el-button>
+        <el-button type="danger" @click="confirmArchive" :disabled="!selectedArchiveId">
+          确认归档
+        </el-button>
       </span>
     </el-dialog>
   </div>
@@ -551,7 +683,7 @@ export default {
       // 添加预警管理相关的数据属性
       // archivesList: [],  // 已废弃，使用 availableArchivesList
       currentCameraId: '',
-      
+
       // 🆕 OSD检测框叠加相关
       selectedAITasks: {},  // 每个视频窗口的AI任务选择 {index: task_id}
       availableAITasks: {},  // 每个摄像头的可用AI任务列表 {camera_id: []}
@@ -925,7 +1057,7 @@ export default {
         // 🆕 保存摄像头名称
         const idx = this.playerIdx
         this.$set(this.cameraNames, idx, data.name || `摄像头 ${idx+1}`)
-        
+
         this.sendDevicePush(data.id);
       }
     },
@@ -938,15 +1070,15 @@ export default {
       let idxTmp = this.playerIdx;
       this.setPlayUrl("", idxTmp);
       this.$set(this.videoTip, idxTmp, "正在拉流...");
-      
+
       // 🆕 保存摄像头ID映射
       this.$set(this.cameraIdMapping, idxTmp, channelId);
-      
+
       this.loading = true;
 
       try {
         console.log('🎬 开始播放通道 - 通道ID:', channelId, '播放器索引:', idxTmp);
-        
+
         // 使用新的专用API播放通道
         const response = await centerAPI.realtimeMonitor.playChannel(channelId);
 
@@ -954,14 +1086,14 @@ export default {
         if (response) {
           const streamData = response;
           let videoUrl;
-          
+
           // 根据协议选择合适的流地址
           if (location.protocol === "https:") {
             videoUrl = streamData.wss_flv || streamData.https_flv;
           } else {
             videoUrl = streamData.ws_flv || streamData.http_flv;
           }
-          
+
           if (videoUrl) {
             console.log('✅ 获取播放地址成功:', videoUrl);
             this.setPlayUrl(videoUrl, idxTmp);
@@ -1534,7 +1666,7 @@ export default {
         }
 
         const alertId = warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId);
-        
+
         // 🔧 修复：使用 archive_id 字段查找档案（不是 id）
         const selectedArchive = this.availableArchivesList.find(archive => archive.archive_id === this.selectedArchiveId);
         const archiveName = selectedArchive ? selectedArchive.name : '未知档案';
@@ -2898,7 +3030,7 @@ export default {
     },
 
     // 🆕 ========== OSD检测框叠加功能 ==========
-    
+
     /**
      * 加载指定摄像头的可用AI任务列表
      */
@@ -2911,28 +3043,28 @@ export default {
         console.error(`❌ 获取摄像头AI任务列表失败:`, error)
       }
     },
-    
+
     /**
      * AI任务选择变化处理
      */
     onTaskSelectionChange(index) {
       const taskId = this.selectedAITasks[index]
-      
+
       // 断开旧连接
       if (this.wsConnections[index]) {
         this.wsConnections[index].close()
         delete this.wsConnections[index]
       }
-      
+
       // 清空检测结果
       this.$set(this.detectionResults, index, null)
-      
+
       // 如果选择了任务，建立WebSocket连接
       if (taskId) {
         this.connectDetectionWebSocket(index, taskId)
       }
     },
-    
+
     /**
      * 连接检测结果WebSocket
      */
@@ -2944,32 +3076,32 @@ export default {
         const wsProtocol = backendUrl.startsWith('https') ? 'wss:' : 'ws:'
         const wsHost = backendUrl.replace(/^https?:\/\//, '') // 移除 http:// 或 https://
         const wsUrl = `${wsProtocol}//${wsHost}/api/v1/realtime-detection/ws/detection/${taskId}`
-        
+
         const ws = new WebSocket(wsUrl)
-        
+
         // 先设置为未连接状态
         this.$set(this.wsConnections, index, null)
-        
+
         ws.onopen = () => {
           // 连接成功后才设置
           this.$set(this.wsConnections, index, ws)
         }
-        
+
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data)
-            
+
             // 更新检测结果
             this.$set(this.detectionResults, index, {
               detections: data.detections || [],
               frame_size: data.frame_size || {width: 1920, height: 1080}
             })
-            
+
             // 更新时间戳
             const now = new Date()
-            this.$set(this.detectionUpdateTime, index, 
+            this.$set(this.detectionUpdateTime, index,
               `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`)
-            
+
             // 更新视频分辨率
             if (data.frame_size) {
               this.$set(this.videoResolutions, index, {
@@ -2981,25 +3113,25 @@ export default {
             console.error('❌ 解析检测结果失败:', error)
           }
         }
-        
+
         ws.onerror = (error) => {
           console.error(`❌ WebSocket错误: task_id=${taskId}`, error)
         }
-        
+
         ws.onclose = () => {
           // 清理
           if (this.wsConnections[index] === ws) {
             delete this.wsConnections[index]
           }
         }
-        
+
         // 不在这里保存连接，等onopen成功后再保存
-        
+
       } catch (error) {
         console.error('❌ 创建WebSocket连接失败:', error)
       }
     },
-    
+
     /**
      * 获取视频窗口宽度
      */
@@ -3015,7 +3147,7 @@ export default {
           }
         }
       }
-      
+
       // 降级方案：使用容器尺寸
       const ref = this.$refs[`videoContent${index}`]
       if (ref && ref[0]) {
@@ -3023,7 +3155,7 @@ export default {
       }
       return 640
     },
-    
+
     /**
      * 获取视频窗口高度
      */
@@ -3039,7 +3171,7 @@ export default {
           }
         }
       }
-      
+
       // 降级方案：使用容器尺寸
       const ref = this.$refs[`videoContent${index}`]
       if (ref && ref[0]) {
@@ -3047,7 +3179,7 @@ export default {
       }
       return 480
     },
-    
+
     /**
      * 获取实际视频分辨率宽度
      */
@@ -3065,14 +3197,14 @@ export default {
           }
         }
       }
-      
+
       // 降级方案：使用后端返回的分辨率
       if (this.videoResolutions[index]) {
         return this.videoResolutions[index].width
       }
       return 1920
     },
-    
+
     /**
      * 获取实际视频分辨率高度
      */
@@ -3090,14 +3222,14 @@ export default {
           }
         }
       }
-      
+
       // 降级方案：使用后端返回的分辨率
       if (this.videoResolutions[index]) {
         return this.videoResolutions[index].height
       }
       return 1080
     },
-    
+
     /**
      * 清理指定索引的OSD资源
      */
@@ -3107,13 +3239,13 @@ export default {
         this.wsConnections[index].close()
         delete this.wsConnections[index]
       }
-      
+
       // 清空数据
       this.$set(this.selectedAITasks, index, null)
       this.$set(this.detectionResults, index, null)
       this.$set(this.videoResolutions, index, null)
     },
-    
+
     /**
      * 清理所有OSD资源
      */
@@ -3124,7 +3256,7 @@ export default {
           ws.close()
         }
       })
-      
+
       // 清空所有数据
       this.wsConnections = {}
       this.selectedAITasks = {}
@@ -3142,7 +3274,7 @@ export default {
     if (this.timer) {
       clearInterval(this.timer)
     }
-    
+
     // 🆕 清理所有OSD资源
     this.cleanupAllOSDResources()
   }
@@ -3190,8 +3322,6 @@ export default {
   border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
-
-
 .device-tree-aside > * {
   position: relative;
   z-index: 2;
@@ -3211,11 +3341,13 @@ export default {
   text-shadow: none;
 }
 
-
-
 @keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 /* 添加header-switch样式 */
@@ -3318,8 +3450,6 @@ export default {
   border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
-
-
 .video-main-container > * {
   position: relative;
   z-index: 2;
@@ -3337,8 +3467,6 @@ export default {
   position: relative;
   overflow: hidden;
 }
-
-
 
 .toolbar-left {
   display: flex;
@@ -3379,8 +3507,6 @@ export default {
   border: 1px solid rgba(59, 130, 246, 0.1);
   position: relative;
 }
-
-
 
 .warning-list > * {
   position: relative;
@@ -3482,8 +3608,6 @@ export default {
   color: white;
 }
 
-
-
 .btn.disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -3510,8 +3634,6 @@ export default {
   display: grid;
   gap: 16px;
 }
-
-
 
 .video-grid > * {
   position: relative;
@@ -3557,8 +3679,6 @@ export default {
   animation: fadeIn 0.4s ease-out;
 }
 
-
-
 .video-cell > * {
   position: relative;
   z-index: 2;
@@ -3594,11 +3714,13 @@ export default {
   overflow: hidden;
 }
 
-
-
 @keyframes headerShimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 .video-slim-header .camera-name {
@@ -3686,11 +3808,13 @@ export default {
   position: relative;
 }
 
-
-
 @keyframes patternMove {
-  0% { background-position: 0 0; }
-  100% { background-position: 20px 20px; }
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 20px 20px;
+  }
 }
 
 .video-cell .video-content .no-signal {
@@ -3797,8 +3921,6 @@ export default {
   background-color: #ef4444;
 }
 
-
-
 .warning-list .list-header .more-btn {
   color: #1e40af;
   padding: 6px 12px;
@@ -3882,8 +4004,12 @@ export default {
 
 /* 旋转动画 */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* 预警项目 - 科技感设计，调整尺寸减少滚动条 */
@@ -3900,8 +4026,6 @@ export default {
   transition: all 0.3s ease;
   animation: slideIn 0.5s ease-out;
 }
-
-
 
 .warning-list .list-content .warning-item > * {
   position: relative;
@@ -4021,8 +4145,6 @@ export default {
   border-color: #fdba74 !important;
 }
 
-
-
 .warning-list .list-content .warning-item .warning-info {
   padding: 2px 0;
 }
@@ -4045,7 +4167,7 @@ export default {
 }
 
 .warning-list .list-content .warning-item .warning-info .warning-time:before {
-  content: '';
+  content: "";
   display: inline-block;
   width: 12px;
   height: 12px;
@@ -4066,7 +4188,7 @@ export default {
 }
 
 .warning-list .list-content .warning-item .warning-info .warning-location:before {
-  content: '';
+  content: "";
   display: inline-block;
   width: 12px;
   height: 12px;
@@ -4356,8 +4478,6 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
   font-size: 18px !important;
 }
 
-
-
 /* 调整el-main在单分屏模式下的样式 */
 .single-screen-mode .el-main {
   padding: 0;
@@ -4428,9 +4548,9 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
 }
 
 /* 添加树节点选中样式以区分悬浮状态 */
-.device-tree-aside :deep(.is-current>.el-tree-node__content) {
+.device-tree-aside :deep(.is-current > .el-tree-node__content) {
   background-color: rgba(64, 158, 255, 0.15) !important;
-  color: #409EFF !important;
+  color: #409eff !important;
   font-weight: bold !important;
   transform: none !important;
 }
@@ -4521,7 +4641,7 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
 }
 
 .warning-list .list-content .warning-item.level3 .warning-video .video-placeholder i {
-  color: #409EFF;
+  color: #409eff;
 }
 
 .warning-list .list-content .warning-item.level4 .warning-video .video-placeholder i {
@@ -4553,7 +4673,7 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
 }
 
 .warning-media .placeholder-video i.el-icon-video-camera {
-  color: #409EFF;
+  color: #409eff;
 }
 
 body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-icon-warning {
@@ -4870,7 +4990,6 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
 }
 
 /* 🆕 OSD样式结束 */
-
 </style>
 
 <!-- 全局样式，处理全屏模式 -->
@@ -4982,7 +5101,7 @@ body.camera-fullscreen-mode .btn {
 }
 
 body.camera-fullscreen-mode .btn:hover {
-  color: #409EFF !important;
+  color: #409eff !important;
   background-color: rgba(255, 255, 255, 0.15) !important;
 }
 
@@ -5008,7 +5127,12 @@ body.camera-fullscreen-mode .video-cell {
 
 body.camera-fullscreen-mode .video-cell .video-overlay {
   padding: 16px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0) 100%);
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.4) 30%,
+    rgba(0, 0, 0, 0) 100%
+  );
 }
 
 body.camera-fullscreen-mode .video-cell .video-overlay .camera-name {

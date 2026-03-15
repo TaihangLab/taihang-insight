@@ -1,10 +1,7 @@
 <template>
   <div class="layout-container" :class="{ 'in-fullscreen': isFullscreen }">
     <!-- 左侧菜单 - 全屏时隐藏 -->
-    <dynamic-menu
-      v-show="!isFullscreen"
-      @collapse-change="handleCollapseChange"
-    />
+    <dynamic-menu v-show="!isFullscreen" @collapse-change="handleCollapseChange" />
 
     <!-- 右侧内容区域 -->
     <div
@@ -28,42 +25,42 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import DynamicMenu from '@/layout/DynamicMenu.vue'
-import UiHeader from '@/layout/UiHeader.vue'
-import IntelligentAssistant from '@/components/visionAI/chatAssistant/IntelligentAssistant.vue'
+import { ref, onMounted, onBeforeUnmount } from "vue";
+import DynamicMenu from "@/layout/DynamicMenu.vue";
+import UiHeader from "@/layout/UiHeader.vue";
+import IntelligentAssistant from "@/components/visionAI/chatAssistant/IntelligentAssistant.vue";
 
 // 固定 Header
-const fixedHeader = ref(true)
+const fixedHeader = ref(true);
 
 // 菜单折叠状态
-const isMenuCollapsed = ref(false)
+const isMenuCollapsed = ref(false);
 
 // 全屏状态
-const isFullscreen = ref(false)
+const isFullscreen = ref(false);
 
 // 处理菜单折叠变化
 const handleCollapseChange = (collapsed: boolean) => {
-  isMenuCollapsed.value = collapsed
-}
+  isMenuCollapsed.value = collapsed;
+};
 
 // 处理全屏变化
 const handleFullscreenChange = () => {
-  isFullscreen.value = !!document.fullscreenElement
-  console.log('[Layout] 全屏状态变化:', isFullscreen.value)
-}
+  isFullscreen.value = !!document.fullscreenElement;
+  console.log("[Layout] 全屏状态变化:", isFullscreen.value);
+};
 
 onMounted(() => {
   // 初始化检查
-  isFullscreen.value = !!document.fullscreenElement
+  isFullscreen.value = !!document.fullscreenElement;
   // 监听全屏变化
-  document.addEventListener('fullscreenchange', handleFullscreenChange)
-})
+  document.addEventListener("fullscreenchange", handleFullscreenChange);
+});
 
 onBeforeUnmount(() => {
   // 移除监听
-  document.removeEventListener('fullscreenchange', handleFullscreenChange)
-})
+  document.removeEventListener("fullscreenchange", handleFullscreenChange);
+});
 </script>
 
 <style scoped>

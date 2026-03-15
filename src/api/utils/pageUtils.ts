@@ -3,13 +3,13 @@
  * 提供分页参数的规范化处理
  */
 
-import type { PageParams, RequiredPageParams } from '@/types/center.d'
+import type { PageParams, RequiredPageParams } from "@/types/center.d";
 
 /**
  * 分页默认值常量
  */
-export const DEFAULT_PAGE = 1
-export const DEFAULT_PAGE_SIZE = 20
+export const DEFAULT_PAGE = 1;
+export const DEFAULT_PAGE_SIZE = 20;
 
 /**
  * 规范化分页参数（填充默认值）
@@ -31,6 +31,6 @@ export const DEFAULT_PAGE_SIZE = 20
 export function normalizePageParams(params: PageParams = {}): RequiredPageParams {
   return {
     page: params.page ?? DEFAULT_PAGE,
-    limit: params.limit ?? DEFAULT_PAGE_SIZE
-  }
+    limit: params.limit ?? DEFAULT_PAGE_SIZE,
+  };
 }

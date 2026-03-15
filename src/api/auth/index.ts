@@ -4,18 +4,14 @@
  * 注意：缓存由 Pinia 持久化插件自动管理
  */
 
-import { createAuthAPI } from './authAPI'
-import type {
-  AuthInfoResponse,
-  AuthPermissionsResponse,
-  MenuItem
-} from '@/types/auth'
+import { createAuthAPI } from "./authAPI";
+import type { AuthInfoResponse, AuthPermissionsResponse, MenuItem } from "@/types/auth";
 
 // 导出单例实例
-export const authAPI = createAuthAPI()
+export const authAPI = createAuthAPI();
 
 // 导出类型
-export type * from '@/types/auth'
+export type * from "@/types/auth";
 
 /**
  * 获取用户基本信息
@@ -23,14 +19,14 @@ export type * from '@/types/auth'
  */
 export async function getUserInfo(forceRefresh = false): Promise<AuthInfoResponse | null> {
   try {
-    const response = await authAPI.getUserInfo()
+    const response = await authAPI.getUserInfo();
     if (response && response.user_id) {
-      return response
+      return response;
     }
-    return null
+    return null;
   } catch (error) {
-    console.error('获取用户信息失败:', error)
-    throw error
+    console.error("获取用户信息失败:", error);
+    throw error;
   }
 }
 
@@ -40,14 +36,14 @@ export async function getUserInfo(forceRefresh = false): Promise<AuthInfoRespons
  */
 export async function getPermissions(forceRefresh = false): Promise<string[]> {
   try {
-    const response = await authAPI.getPermissions()
+    const response = await authAPI.getPermissions();
     if (response && response.permission_codes) {
-      return response.permission_codes || []
+      return response.permission_codes || [];
     }
-    return []
+    return [];
   } catch (error) {
-    console.error('获取权限码失败:', error)
-    throw error
+    console.error("获取权限码失败:", error);
+    throw error;
   }
 }
 
@@ -58,14 +54,14 @@ export async function getPermissions(forceRefresh = false): Promise<string[]> {
  */
 export async function getMenuTree(forceRefresh = false): Promise<MenuItem[] | null> {
   try {
-    const response = await authAPI.getMenuTree()
+    const response = await authAPI.getMenuTree();
     if (response && response.menu_tree) {
-      return response.menu_tree
+      return response.menu_tree;
     }
-    return null
+    return null;
   } catch (error) {
-    console.error('获取菜单树失败:', error)
-    throw error
+    console.error("获取菜单树失败:", error);
+    throw error;
   }
 }
 
@@ -76,12 +72,12 @@ export async function fetchAllAuthInfo(forceRefresh = false) {
   const [userInfo, permissions, menuTree] = await Promise.all([
     getUserInfo(forceRefresh),
     getPermissions(forceRefresh),
-    getMenuTree(forceRefresh)
-  ])
+    getMenuTree(forceRefresh),
+  ]);
 
   return {
     userInfo,
     permissions,
-    menuTree
-  }
+    menuTree,
+  };
 }

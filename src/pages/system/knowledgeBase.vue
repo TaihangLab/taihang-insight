@@ -8,13 +8,17 @@
             <el-button type="primary" icon="el-icon-plus" @click="createKnowledge">
               创建知识库
             </el-button>
-            <el-button @click="batchDelete">
-              批量删除
-            </el-button>
+            <el-button @click="batchDelete">批量删除</el-button>
           </div>
 
           <div class="header-right">
-            <el-input v-model="searchInput" placeholder="请输入知识库名称搜索" class="search-input" @input="handleSearchInput" @keyup.enter="handleSearch">
+            <el-input
+              v-model="searchInput"
+              placeholder="请输入知识库名称搜索"
+              class="search-input"
+              @input="handleSearchInput"
+              @keyup.enter="handleSearch"
+            >
               <el-button slot="append" icon="el-icon-search" @click="handleSearch"></el-button>
             </el-input>
 
@@ -25,55 +29,73 @@
         <!-- 过滤标签 -->
         <div class="filter-tabs">
           <div class="filter-buttons">
-            <el-button :type="isAllSelected ? 'primary' : ''" :plain="!isAllSelected"
-              @click="selectAll">
+            <el-button
+              :type="isAllSelected ? 'primary' : ''"
+              :plain="!isAllSelected"
+              @click="selectAll"
+            >
               全选
             </el-button>
-            <el-button :type="isCurrentPageSelected ? 'primary' : ''" :plain="!isCurrentPageSelected"
-              @click="selectCurrentPage">
+            <el-button
+              :type="isCurrentPageSelected ? 'primary' : ''"
+              :plain="!isCurrentPageSelected"
+              @click="selectCurrentPage"
+            >
               选择本页
             </el-button>
           </div>
 
           <div class="sort-section">
             <span>{{ sortTypeText }}</span>
-            <el-button link 
-                       :icon="sortOrder === 'desc' ? 'el-icon-caret-bottom' : 'el-icon-caret-top'" 
-                       @click="toggleSort"></el-button>
+            <el-button
+              link
+              :icon="sortOrder === 'desc' ? 'el-icon-caret-bottom' : 'el-icon-caret-top'"
+              @click="toggleSort"
+            ></el-button>
           </div>
         </div>
 
         <!-- 知识库卡片网格 -->
         <div class="knowledge-container">
           <!-- 加载状态 -->
-          <div v-if="loading" class="loading-container" v-loading="loading" element-loading-text="正在加载知识库列表...">
+          <div
+            v-if="loading"
+            class="loading-container"
+            v-loading="loading"
+            element-loading-text="正在加载知识库列表..."
+          >
             <div class="loading-placeholder"></div>
           </div>
-          
+
           <!-- 空状态 -->
           <div v-else-if="!loading && knowledgeBases.length === 0" class="empty-state">
             <el-empty description="暂无知识库数据" image-size="120">
               <el-button type="primary" @click="createKnowledge">创建第一个知识库</el-button>
             </el-empty>
           </div>
-          
+
           <!-- 知识库网格 -->
           <div v-else class="knowledge-grid">
-            <div v-for="knowledge in paginatedKnowledge" :key="knowledge.id" 
-                 class="knowledge-card"
-                 @mouseenter="showCardCheckbox(knowledge.id)"
-                 @mouseleave="hideCardCheckbox(knowledge.id)"
-                 @click="viewKnowledgeDetail(knowledge)">
-              
+            <div
+              v-for="knowledge in paginatedKnowledge"
+              :key="knowledge.id"
+              class="knowledge-card"
+              @mouseenter="showCardCheckbox(knowledge.id)"
+              @mouseleave="hideCardCheckbox(knowledge.id)"
+              @click="viewKnowledgeDetail(knowledge)"
+            >
               <!-- 选择框 -->
-              <div v-show="cardHoverStates[knowledge.id] || selectedKnowledge.includes(knowledge.id)" 
-                   class="card-checkbox"
-                   @click.stop>
-                <el-checkbox 
+              <div
+                v-show="cardHoverStates[knowledge.id] || selectedKnowledge.includes(knowledge.id)"
+                class="card-checkbox"
+                @click.stop
+              >
+                <el-checkbox
                   :value="selectedKnowledge.includes(knowledge.id)"
-                  @input="handleKnowledgeSelect(knowledge.id, $event)"></el-checkbox>
+                  @input="handleKnowledgeSelect(knowledge.id, $event)"
+                ></el-checkbox>
               </div>
-              
+
               <div class="card-header">
                 <h3 class="knowledge-title">{{ knowledge.name }}</h3>
                 <div class="knowledge-id">
@@ -83,9 +105,11 @@
               </div>
 
               <div class="card-content">
-                <p class="knowledge-description" 
-                   @mouseenter="showTooltip($event, knowledge.description)" 
-                   @mouseleave="hideTooltip">
+                <p
+                  class="knowledge-description"
+                  @mouseenter="showTooltip($event, knowledge.description)"
+                  @mouseleave="hideTooltip"
+                >
                   {{ knowledge.description }}
                 </p>
 
@@ -103,12 +127,8 @@
               </div>
 
               <div class="card-actions" @click.stop>
-                <el-button size="small" @click="editKnowledge(knowledge)">
-                  编辑
-                </el-button>
-                <el-button size="small" @click="deleteKnowledge(knowledge)">
-                  删除
-                </el-button>
+                <el-button size="small" @click="editKnowledge(knowledge)">编辑</el-button>
+                <el-button size="small" @click="deleteKnowledge(knowledge)">删除</el-button>
               </div>
             </div>
           </div>
@@ -116,15 +136,16 @@
 
         <!-- 分页 -->
         <div class="pagination-section">
-          <el-pagination 
-            @size-change="handleSizeChange" 
-            @current-change="handleCurrentChange" 
+          <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
             :current-page="currentPage"
-            :page-sizes="[12, 24, 48, 96]" 
-            :page-size="pageSize" 
+            :page-sizes="[12, 24, 48, 96]"
+            :page-size="pageSize"
             :total="totalCount"
-            layout="total, sizes, prev, pager, next, jumper" 
-            background>
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+          >
             <template slot="total">
               <span>共 {{ totalCount }} 条数据</span>
             </template>
@@ -132,12 +153,9 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 描述信息悬浮提示框 -->
-    <div v-show="tooltipVisible" 
-         ref="tooltip"
-         class="knowledge-tooltip"
-         :style="tooltipStyle">
+    <div v-show="tooltipVisible" ref="tooltip" class="knowledge-tooltip" :style="tooltipStyle">
       {{ tooltipContent }}
     </div>
 
@@ -149,35 +167,37 @@
       :before-close="handleEditDialogClose"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
-      custom-class="edit-knowledge-dialog">
-      
+      custom-class="edit-knowledge-dialog"
+    >
       <div class="edit-form-container">
         <el-form
           ref="editForm"
           :model="editForm"
           :rules="editRules"
           label-width="120px"
-          class="edit-form">
-          
+          class="edit-form"
+        >
           <el-form-item label="知识库名称" prop="name" required>
             <el-input
               v-model="editForm.name"
               placeholder="请输入知识库名称"
               maxlength="50"
-              show-word-limit>
-            </el-input>
+              show-word-limit
+            ></el-input>
           </el-form-item>
 
           <el-form-item label="向量数据库" prop="vectorDatabase" required>
             <el-select
               v-model="editForm.vectorDatabase"
               placeholder="请选择向量数据库"
-              style="width: 100%">
+              style="width: 100%"
+            >
               <el-option
                 v-for="item in vectorDatabaseOptions"
                 :key="item.value"
                 :label="item.label"
-                :value="item.value">
+                :value="item.value"
+              >
                 <div class="select-option">
                   <span class="option-label">{{ item.label }}</span>
                   <span class="option-desc">{{ item.description }}</span>
@@ -190,12 +210,14 @@
             <el-select
               v-model="editForm.vectorModel"
               placeholder="请选择向量模型"
-              style="width: 100%">
+              style="width: 100%"
+            >
               <el-option
                 v-for="item in vectorModelOptions"
                 :key="item.value"
                 :label="item.label"
-                :value="item.value">
+                :value="item.value"
+              >
                 <div class="select-option">
                   <span class="option-label">{{ item.label }}</span>
                   <span class="option-desc">{{ item.description }}</span>
@@ -211,8 +233,8 @@
               :rows="3"
               placeholder="请输入知识库描述"
               maxlength="200"
-              show-word-limit>
-            </el-input>
+              show-word-limit
+            ></el-input>
           </el-form-item>
         </el-form>
       </div>
@@ -229,14 +251,14 @@
 
 <script>
 export default {
-  name: 'KnowledgeBase',
+  name: "KnowledgeBase",
   data() {
     return {
       // 搜索和过滤
-      searchInput: '', // 搜索输入框的值
-      searchKeyword: '', // 实际执行搜索的关键词
-      sortType: 'time', // 'time' 或 'name'
-      sortOrder: 'desc', // 'asc' 或 'desc'
+      searchInput: "", // 搜索输入框的值
+      searchKeyword: "", // 实际执行搜索的关键词
+      sortType: "time", // 'time' 或 'name'
+      sortOrder: "desc", // 'asc' 或 'desc'
 
       // 分页
       currentPage: 1,
@@ -249,16 +271,16 @@ export default {
 
       // tooltip相关
       tooltipVisible: false,
-      tooltipContent: '',
+      tooltipContent: "",
       tooltipStyle: {
-        left: '0px',
-        top: '0px'
+        left: "0px",
+        top: "0px",
       },
 
       // 知识库数据
       knowledgeBases: [],
       loading: false, // 加载状态
-      
+
       // 搜索防抖
       searchDebounceTimer: null,
 
@@ -266,369 +288,372 @@ export default {
       editDialogVisible: false,
       submitLoading: false,
       currentEditKnowledge: null,
-      dialogTitle: '编辑知识库', // 弹窗标题
+      dialogTitle: "编辑知识库", // 弹窗标题
       editForm: {
-        name: '',
-        vectorDatabase: '',
-        vectorModel: '',
-        description: ''
+        name: "",
+        vectorDatabase: "",
+        vectorModel: "",
+        description: "",
       },
       editRules: {
         name: [
-          { required: true, message: '请输入知识库名称', trigger: 'blur' },
-          { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+          { required: true, message: "请输入知识库名称", trigger: "blur" },
+          { min: 2, max: 50, message: "长度在 2 到 50 个字符", trigger: "blur" },
         ],
-        vectorDatabase: [
-          { required: true, message: '请选择向量数据库', trigger: 'change' }
-        ],
-        vectorModel: [
-          { required: true, message: '请选择向量模型', trigger: 'change' }
-        ],
-        description: [
-          { max: 200, message: '描述不能超过 200 个字符', trigger: 'blur' }
-        ]
+        vectorDatabase: [{ required: true, message: "请选择向量数据库", trigger: "change" }],
+        vectorModel: [{ required: true, message: "请选择向量模型", trigger: "change" }],
+        description: [{ max: 200, message: "描述不能超过 200 个字符", trigger: "blur" }],
       },
       vectorDatabaseOptions: [
         {
-          value: 'sxctlab',
-          label: 'sxctlab',
-          description: '高性能向量数据库'
+          value: "sxctlab",
+          label: "sxctlab",
+          description: "高性能向量数据库",
         },
         {
-          value: 'elasticsearch',
-          label: 'Elasticsearch',
-          description: '分布式搜索引擎'
+          value: "elasticsearch",
+          label: "Elasticsearch",
+          description: "分布式搜索引擎",
         },
         {
-          value: 'faiss',
-          label: 'Faiss',
-          description: 'Facebook AI 相似性搜索'
-        }
+          value: "faiss",
+          label: "Faiss",
+          description: "Facebook AI 相似性搜索",
+        },
       ],
       vectorModelOptions: [
         {
-          value: 'bge',
-          label: 'bge',
-          description: 'BGE 嵌入模型'
+          value: "bge",
+          label: "bge",
+          description: "BGE 嵌入模型",
         },
         {
-          value: 'text-embedding-ada-002',
-          label: 'OpenAI Ada',
-          description: 'OpenAI 文本嵌入模型'
+          value: "text-embedding-ada-002",
+          label: "OpenAI Ada",
+          description: "OpenAI 文本嵌入模型",
         },
         {
-          value: 'sentence-transformers',
-          label: 'Sentence Transformers',
-          description: '语句转换器模型'
-        }
+          value: "sentence-transformers",
+          label: "Sentence Transformers",
+          description: "语句转换器模型",
+        },
       ],
 
       // 示例数据
       exampleKnowledgeBases: [
         {
-          id: '1',
-          name: '法规服务',
-          description: '包含各类法律法规和服务指南',
+          id: "1",
+          name: "法规服务",
+          description: "包含各类法律法规和服务指南",
           documentCount: 10,
-          updateTime: '2024-03-20 14:30:00'
+          updateTime: "2024-03-20 14:30:00",
         },
         {
-          id: '2',
-          name: '综改区助手',
-          description: '综合改革示范区相关政策和指南',
+          id: "2",
+          name: "综改区助手",
+          description: "综合改革示范区相关政策和指南",
           documentCount: 15,
-          updateTime: '2024-03-19 16:45:00'
-        }
-      ]
-    }
+          updateTime: "2024-03-19 16:45:00",
+        },
+      ],
+    };
   },
   computed: {
     // 当前页显示的知识库列表
     paginatedKnowledge() {
-      return this.knowledgeBases
+      return this.knowledgeBases;
     },
 
     // 是否全部选中
     isAllSelected() {
-      return this.knowledgeBases.length > 0 && 
-             this.selectedKnowledge.length === this.totalCount &&
-             this.knowledgeBases.every(knowledge => this.selectedKnowledge.includes(knowledge.id))
+      return (
+        this.knowledgeBases.length > 0 &&
+        this.selectedKnowledge.length === this.totalCount &&
+        this.knowledgeBases.every((knowledge) => this.selectedKnowledge.includes(knowledge.id))
+      );
     },
 
     // 是否当前页全部选中
     isCurrentPageSelected() {
-      return this.knowledgeBases.length > 0 && 
-             this.knowledgeBases.every(knowledge => this.selectedKnowledge.includes(knowledge.id))
+      return (
+        this.knowledgeBases.length > 0 &&
+        this.knowledgeBases.every((knowledge) => this.selectedKnowledge.includes(knowledge.id))
+      );
     },
 
     // 排序类型文本
     sortTypeText() {
-      const typeText = this.sortType === 'time' ? '按更新时间排序' : '按名称排序'
-      return typeText
-    }
+      const typeText = this.sortType === "time" ? "按更新时间排序" : "按名称排序";
+      return typeText;
+    },
   },
   created() {
     // 初始化数据
-    this.loadKnowledgeData()
+    this.loadKnowledgeData();
   },
   methods: {
     // 加载知识库数据
     async loadKnowledgeData() {
       try {
-        this.loading = true
+        this.loading = true;
         // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        this.knowledgeBases = this.exampleKnowledgeBases
-        this.totalCount = this.exampleKnowledgeBases.length
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        this.knowledgeBases = this.exampleKnowledgeBases;
+        this.totalCount = this.exampleKnowledgeBases.length;
       } catch (error) {
-        console.error('加载知识库列表失败:', error)
-        this.$message.error('加载知识库列表失败')
+        console.error("加载知识库列表失败:", error);
+        this.$message.error("加载知识库列表失败");
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
     // 创建知识库
     createKnowledge() {
-      this.dialogTitle = '创建知识库'
-      this.currentEditKnowledge = null
+      this.dialogTitle = "创建知识库";
+      this.currentEditKnowledge = null;
       this.editForm = {
-        name: '',
-        vectorDatabase: '',
-        vectorModel: '',
-        description: ''
-      }
-      this.editDialogVisible = true
+        name: "",
+        vectorDatabase: "",
+        vectorModel: "",
+        description: "",
+      };
+      this.editDialogVisible = true;
     },
 
     // 批量删除
     async batchDelete() {
       if (this.selectedKnowledge.length === 0) {
-        this.$message.warning('请先选择要删除的知识库')
-        return
+        this.$message.warning("请先选择要删除的知识库");
+        return;
       }
 
       try {
-        await this.$confirm(`确认删除选中的 ${this.selectedKnowledge.length} 个知识库吗？`, '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-        
-        this.$message.success('删除成功')
-        this.selectedKnowledge = []
-        await this.loadKnowledgeData()
+        await this.$confirm(
+          `确认删除选中的 ${this.selectedKnowledge.length} 个知识库吗？`,
+          "提示",
+          {
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning",
+          },
+        );
+
+        this.$message.success("删除成功");
+        this.selectedKnowledge = [];
+        await this.loadKnowledgeData();
       } catch (error) {
-        this.$message.info('已取消删除')
+        this.$message.info("已取消删除");
       }
     },
 
     // 搜索相关方法
     handleSearchInput() {
       if (this.searchDebounceTimer) {
-        clearTimeout(this.searchDebounceTimer)
+        clearTimeout(this.searchDebounceTimer);
       }
       this.searchDebounceTimer = setTimeout(() => {
-        this.handleSearch()
-      }, 300)
+        this.handleSearch();
+      }, 300);
     },
 
     handleSearch() {
-      this.currentPage = 1
-      this.loadKnowledgeData()
+      this.currentPage = 1;
+      this.loadKnowledgeData();
     },
 
     // 刷新数据
     async refreshData() {
-      this.searchInput = ''
-      this.currentPage = 1
-      await this.loadKnowledgeData()
-      this.$message.success('数据已刷新')
+      this.searchInput = "";
+      this.currentPage = 1;
+      await this.loadKnowledgeData();
+      this.$message.success("数据已刷新");
     },
 
     // 排序相关
     toggleSort() {
-      if (this.sortOrder === 'desc') {
-        this.sortOrder = 'asc'
+      if (this.sortOrder === "desc") {
+        this.sortOrder = "asc";
       } else {
-        this.sortType = this.sortType === 'time' ? 'name' : 'time'
-        this.sortOrder = 'desc'
+        this.sortType = this.sortType === "time" ? "name" : "time";
+        this.sortOrder = "desc";
       }
-      this.loadKnowledgeData()
+      this.loadKnowledgeData();
     },
 
     // 知识库操作
     viewKnowledgeDetail(knowledge) {
       // 跳转到知识库详情页，传递知识库信息
       this.$router.push({
-        path: '/system/knowledge-detail',
+        path: "/system/knowledge-detail",
         query: {
           id: knowledge.id,
-          name: knowledge.name
-        }
-      })
+          name: knowledge.name,
+        },
+      });
     },
 
     editKnowledge(knowledge) {
-      this.dialogTitle = '编辑知识库'
-      this.currentEditKnowledge = knowledge
+      this.dialogTitle = "编辑知识库";
+      this.currentEditKnowledge = knowledge;
       this.editForm = {
         name: knowledge.name,
-        vectorDatabase: 'sxctlab', // 默认值，实际应从knowledge对象获取
-        vectorModel: 'bge', // 默认值，实际应从knowledge对象获取  
-        description: knowledge.description
-      }
-      this.editDialogVisible = true
+        vectorDatabase: "sxctlab", // 默认值，实际应从knowledge对象获取
+        vectorModel: "bge", // 默认值，实际应从knowledge对象获取
+        description: knowledge.description,
+      };
+      this.editDialogVisible = true;
     },
 
     async deleteKnowledge(knowledge) {
       try {
-        await this.$confirm('确认删除该知识库吗？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-        
-        this.$message.success('删除成功')
-        await this.loadKnowledgeData()
+        await this.$confirm("确认删除该知识库吗？", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+        });
+
+        this.$message.success("删除成功");
+        await this.loadKnowledgeData();
       } catch (error) {
-        this.$message.info('已取消删除')
+        this.$message.info("已取消删除");
       }
     },
 
     // 分页方法
     handleSizeChange(val) {
-      this.pageSize = val
-      this.currentPage = 1
-      this.loadKnowledgeData()
+      this.pageSize = val;
+      this.currentPage = 1;
+      this.loadKnowledgeData();
     },
 
     handleCurrentChange(val) {
-      this.currentPage = val
-      this.loadKnowledgeData()
+      this.currentPage = val;
+      this.loadKnowledgeData();
     },
 
     // Tooltip相关方法
     showTooltip(event, content) {
-      this.tooltipContent = content
-      this.tooltipVisible = true
-      
-      const rect = event.target.getBoundingClientRect()
-      let left = rect.left + rect.width / 2 - 150
-      let top = rect.top - 60
-      
-      if (left < 10) left = 10
-      if (left + 300 > window.innerWidth) left = window.innerWidth - 310
-      if (top < 10) top = rect.bottom + 10
-      
+      this.tooltipContent = content;
+      this.tooltipVisible = true;
+
+      const rect = event.target.getBoundingClientRect();
+      let left = rect.left + rect.width / 2 - 150;
+      let top = rect.top - 60;
+
+      if (left < 10) left = 10;
+      if (left + 300 > window.innerWidth) left = window.innerWidth - 310;
+      if (top < 10) top = rect.bottom + 10;
+
       this.tooltipStyle = {
-        left: left + 'px',
-        top: top + 'px'
-      }
+        left: left + "px",
+        top: top + "px",
+      };
     },
 
     hideTooltip() {
-      this.tooltipVisible = false
-      this.tooltipContent = ''
+      this.tooltipVisible = false;
+      this.tooltipContent = "";
     },
 
     // 选择相关方法
     showCardCheckbox(knowledgeId) {
-      this.$set(this.cardHoverStates, knowledgeId, true)
+      this.$set(this.cardHoverStates, knowledgeId, true);
     },
 
     hideCardCheckbox(knowledgeId) {
-      this.$set(this.cardHoverStates, knowledgeId, false)
+      this.$set(this.cardHoverStates, knowledgeId, false);
     },
 
     handleKnowledgeSelect(knowledgeId, checked) {
       if (checked) {
         if (!this.selectedKnowledge.includes(knowledgeId)) {
-          this.selectedKnowledge.push(knowledgeId)
+          this.selectedKnowledge.push(knowledgeId);
         }
       } else {
-        const index = this.selectedKnowledge.indexOf(knowledgeId)
+        const index = this.selectedKnowledge.indexOf(knowledgeId);
         if (index > -1) {
-          this.selectedKnowledge.splice(index, 1)
+          this.selectedKnowledge.splice(index, 1);
         }
       }
     },
 
     selectAll() {
       if (this.isAllSelected) {
-        this.selectedKnowledge = []
+        this.selectedKnowledge = [];
       } else {
-        this.selectedKnowledge = this.knowledgeBases.map(k => k.id)
+        this.selectedKnowledge = this.knowledgeBases.map((k) => k.id);
       }
     },
 
     selectCurrentPage() {
       if (this.isCurrentPageSelected) {
-        const currentPageIds = this.knowledgeBases.map(k => k.id)
-        this.selectedKnowledge = this.selectedKnowledge.filter(id => !currentPageIds.includes(id))
+        const currentPageIds = this.knowledgeBases.map((k) => k.id);
+        this.selectedKnowledge = this.selectedKnowledge.filter(
+          (id) => !currentPageIds.includes(id),
+        );
       } else {
-        const currentPageIds = this.knowledgeBases.map(k => k.id)
-        currentPageIds.forEach(id => {
+        const currentPageIds = this.knowledgeBases.map((k) => k.id);
+        currentPageIds.forEach((id) => {
           if (!this.selectedKnowledge.includes(id)) {
-            this.selectedKnowledge.push(id)
+            this.selectedKnowledge.push(id);
           }
-        })
+        });
       }
     },
 
     // 编辑弹窗相关方法
     handleEditDialogClose() {
-      this.editDialogVisible = false
-      this.currentEditKnowledge = null
-      this.resetEditForm()
+      this.editDialogVisible = false;
+      this.currentEditKnowledge = null;
+      this.resetEditForm();
     },
 
     resetEditForm() {
       this.editForm = {
-        name: '',
-        vectorDatabase: '',
-        vectorModel: '',
-        description: ''
-      }
-      this.dialogTitle = '编辑知识库'
+        name: "",
+        vectorDatabase: "",
+        vectorModel: "",
+        description: "",
+      };
+      this.dialogTitle = "编辑知识库";
       if (this.$refs.editForm) {
-        this.$refs.editForm.clearValidate()
+        this.$refs.editForm.clearValidate();
       }
     },
 
     async handleEditSubmit() {
       try {
-        const valid = await this.$refs.editForm.validate()
-        if (!valid) return
+        const valid = await this.$refs.editForm.validate();
+        if (!valid) return;
 
-        this.submitLoading = true
-        
+        this.submitLoading = true;
+
         // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
         if (this.currentEditKnowledge) {
           // 编辑模式
-          this.$message.success('知识库信息更新成功')
+          this.$message.success("知识库信息更新成功");
         } else {
           // 创建模式
-          this.$message.success('知识库创建成功')
+          this.$message.success("知识库创建成功");
         }
-        
-        this.editDialogVisible = false
-        this.currentEditKnowledge = null
-        this.resetEditForm()
-        await this.loadKnowledgeData()
-        
+
+        this.editDialogVisible = false;
+        this.currentEditKnowledge = null;
+        this.resetEditForm();
+        await this.loadKnowledgeData();
       } catch (error) {
-        const action = this.currentEditKnowledge ? '更新' : '创建'
-        console.error(`${action}知识库失败:`, error)
-        this.$message.error(`${action}知识库失败`)
+        const action = this.currentEditKnowledge ? "更新" : "创建";
+        console.error(`${action}知识库失败:`, error);
+        this.$message.error(`${action}知识库失败`);
       } finally {
-        this.submitLoading = false
+        this.submitLoading = false;
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -656,7 +681,7 @@ export default {
 }
 
 .page-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -899,7 +924,7 @@ export default {
 }
 
 .knowledge-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -1046,7 +1071,9 @@ export default {
   background: #fff;
   border: 2px solid #3b82f6 !important;
   border-radius: 8px !important;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3), 0 2px 8px rgba(30, 64, 175, 0.2) !important;
+  box-shadow:
+    0 4px 20px rgba(59, 130, 246, 0.3),
+    0 2px 8px rgba(30, 64, 175, 0.2) !important;
   color: #1e40af !important;
   font-size: 14px !important;
   font-weight: 400 !important;
@@ -1133,8 +1160,8 @@ export default {
   display: flex;
   justify-content: center;
   background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  margin-top: 0 !important;
+  padding-bottom: 10px !important;
 }
 
 .pagination-section :deep(.el-pagination__total) {
@@ -1186,108 +1213,111 @@ export default {
   color: #606266 !important;
 }
 
-  /* 编辑弹窗样式 - 参照 tenantManagement.vue */
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog) {
-    border-radius: 12px !important;
-    overflow: hidden !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
-  }
+/* 编辑弹窗样式 - 参照 tenantManagement.vue */
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog) {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
+}
 
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__header) {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-    border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
-    padding: 16px 20px !important;
-  }
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__header) {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
+  padding: 16px 20px !important;
+}
 
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__title) {
-    color: #1f2937 !important;
-    font-weight: 600 !important;
-  }
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__title) {
+  color: #1f2937 !important;
+  font-weight: 600 !important;
+}
 
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__close) {
-    color: #6b7280 !important;
-    transition: color 0.3s ease !important;
-  }
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__close) {
+  color: #6b7280 !important;
+  transition: color 0.3s ease !important;
+}
 
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__close:hover) {
-    color: #3b82f6 !important;
-  }
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__close:hover) {
+  color: #3b82f6 !important;
+}
 
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__body) {
-    padding: 20px !important;
-    background: #ffffff !important;
-  }
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__body) {
+  padding: 20px !important;
+  background: #ffffff !important;
+}
 
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__footer) {
-    padding: 10px 20px 20px !important;
-    text-align: right !important;
-    border-top: 1px solid rgba(59, 130, 246, 0.1) !important;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  }
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-dialog__footer) {
+  padding: 10px 20px 20px !important;
+  text-align: right !important;
+  border-top: 1px solid rgba(59, 130, 246, 0.1) !important;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+}
 
-  /* 表单样式美化 - 与 tenantManagement.vue 保持一致 */
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-form-item__label) {
-    color: #303133 !important;
-    font-weight: 500 !important;
-  }
+/* 表单样式美化 - 与 tenantManagement.vue 保持一致 */
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-form-item__label) {
+  color: #303133 !important;
+  font-weight: 500 !important;
+}
 
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-form-item.is-required .el-form-item__label:before) {
-    content: '*' !important;
-    color: #f56c6c !important;
-    margin-right: 4px !important;
-  }
+.knowledge-base-wrapper
+  :deep(.el-dialog.edit-knowledge-dialog .el-form-item.is-required .el-form-item__label:before) {
+  content: "*" !important;
+  color: #f56c6c !important;
+  margin-right: 4px !important;
+}
 
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-input__inner),
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-date-editor .el-input__inner),
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-select .el-input__inner),
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-textarea__inner) {
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 6px !important;
-    transition: all 0.3s ease !important;
-  }
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-input__inner),
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-date-editor .el-input__inner),
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-select .el-input__inner),
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-textarea__inner) {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease !important;
+}
 
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-input__inner:hover),
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-date-editor .el-input__inner:hover),
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-select .el-input__inner:hover),
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-textarea__inner:hover) {
-    border-color: #3b82f6 !important;
-  }
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-input__inner:hover),
+.knowledge-base-wrapper
+  :deep(.el-dialog.edit-knowledge-dialog .el-date-editor .el-input__inner:hover),
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-select .el-input__inner:hover),
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-textarea__inner:hover) {
+  border-color: #3b82f6 !important;
+}
 
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-input__inner:focus),
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-date-editor .el-input__inner:focus),
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-select .el-input__inner:focus),
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-textarea__inner:focus) {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
-  }
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-input__inner:focus),
+.knowledge-base-wrapper
+  :deep(.el-dialog.edit-knowledge-dialog .el-date-editor .el-input__inner:focus),
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-select .el-input__inner:focus),
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-textarea__inner:focus) {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
+}
 
-  /* 下拉框样式优化 */
-  .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-select-dropdown) {
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 6px !important;
-  }
+/* 下拉框样式优化 */
+.knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-select-dropdown) {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+}
 
-  .select-option {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 4px 0;
-  }
+.select-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+}
 
-  .option-label {
-    font-weight: 600;
-    color: #303133;
-    font-size: 14px;
-  }
+.option-label {
+  font-weight: 600;
+  color: #303133;
+  font-size: 14px;
+}
 
-  .option-desc {
-    font-size: 12px;
-    color: #909399;
-    font-weight: 400;
-  }
+.option-desc {
+  font-size: 12px;
+  color: #909399;
+  font-weight: 400;
+}
 
-  /* 弹框内按钮样式 - 与 tenantManagement.vue 完全一致 */
-  /* .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-button--primary) {
+/* 弹框内按钮样式 - 与 tenantManagement.vue 完全一致 */
+/* .knowledge-base-wrapper :deep(.el-dialog.edit-knowledge-dialog .el-button--primary) {
     background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
     border: none !important;
     box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -1410,4 +1440,4 @@ export default {
     min-height: auto;
   }
 }
-</style> 
+</style>

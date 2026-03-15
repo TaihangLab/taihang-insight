@@ -1,5 +1,5 @@
 <template>
-  <div id="chooseGroup" >
+  <div id="chooseGroup">
     <el-dialog
       title="选择虚拟组织"
       width="30%"
@@ -10,8 +10,15 @@
       :destroy-on-close="true"
       @close="close()"
     >
-      <GroupTree ref="regionTree" :showHeader=true :edit="true" :enableAddChannel="false"  :clickEvent="treeNodeClickEvent"
-                  :onChannelChange="onChannelChange" :treeHeight="'45vh'"></GroupTree>
+      <GroupTree
+        ref="regionTree"
+        :showHeader="true"
+        :edit="true"
+        :enableAddChannel="false"
+        :clickEvent="treeNodeClickEvent"
+        :onChannelChange="onChannelChange"
+        :treeHeight="'45vh'"
+      ></GroupTree>
       <el-form>
         <el-form-item>
           <div style="text-align: right">
@@ -25,12 +32,11 @@
 </template>
 
 <script>
-
 import GroupTree from "./GroupTree.vue";
 
 export default {
   name: "chooseCivilCode",
-  components: {GroupTree},
+  components: { GroupTree },
   props: {},
   computed: {},
   created() {},
@@ -49,7 +55,7 @@ export default {
     },
     onSubmit: function () {
       if (this.endCallback) {
-        this.endCallback(this.groupDeviceId, this.businessGroup)
+        this.endCallback(this.groupDeviceId, this.businessGroup);
       }
       this.close();
     },
@@ -58,7 +64,7 @@ export default {
     },
     treeNodeClickEvent: function (group) {
       if (group.deviceId === "" || group.deviceId === group.businessGroup) {
-        return
+        return;
       }
       this.groupDeviceId = group.deviceId;
       this.businessGroup = group.businessGroup;

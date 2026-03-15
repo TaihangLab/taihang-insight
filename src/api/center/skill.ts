@@ -1,7 +1,7 @@
-import { AxiosResponse } from 'axios'
-import  { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { SkillClass, SkillQueryParams, AITask, LlmSkill, LlmTask } from '@/types/center.d'
-import { normalizePageParams } from '@/api/utils/pageUtils'
+import { AxiosResponse } from "axios";
+import { authAxios, type UnifiedResponse } from "@/api/commons";
+import type { SkillClass, SkillQueryParams, AITask, LlmSkill, LlmTask } from "@/types/center.d";
+import { normalizePageParams } from "@/api/utils/pageUtils";
 /**
  * 技能管理 API
  * 提供技能类、AI任务、多模态LLM技能的增删改查操作
@@ -21,45 +21,47 @@ class SkillAPI {
    * @returns 技能列表响应
    */
   async getSkillList(params: SkillQueryParams = {}): Promise<UnifiedResponse<SkillClass[]>> {
-    const { page, limit } = normalizePageParams(params)
-    const apiParams = { ...params, page, limit }
+    const { page, limit } = normalizePageParams(params);
+    const apiParams = { ...params, page, limit };
 
-    return authAxios.get('/api/v1/skill-classes', { params: apiParams })
+    return authAxios.get("/api/v1/skill-classes", { params: apiParams });
   }
 
   /**
    * 热加载技能类
    */
   async reloadSkillClasses(): Promise<AxiosResponse> {
-    return authAxios.post('/api/v1/skill-classes/reload')
+    return authAxios.post("/api/v1/skill-classes/reload");
   }
 
   /**
    * 获取AI任务技能类列表
    * @param params 查询参数
    */
-  async getAITaskSkillClasses(params: SkillQueryParams = {}): Promise<AxiosResponse<UnifiedResponse<SkillClass[]>>> {
-    const apiParams = { ...params }
+  async getAITaskSkillClasses(
+    params: SkillQueryParams = {},
+  ): Promise<AxiosResponse<UnifiedResponse<SkillClass[]>>> {
+    const apiParams = { ...params };
 
     if (params.page) {
-      apiParams.page = params.page
+      apiParams.page = params.page;
     }
 
     if (params.limit) {
-      apiParams.limit = Math.min(params.limit, 100)
+      apiParams.limit = Math.min(params.limit, 100);
     }
 
     if (params.query) {
-      apiParams.query = params.query
+      apiParams.query = params.query;
     }
 
     if (params.status !== undefined) {
-      apiParams.status = params.status
+      apiParams.status = params.status;
     } else {
-      apiParams.status = true
+      apiParams.status = true;
     }
 
-    return authAxios.get('/api/v1/ai-tasks/api/v1/skill-classes', { params: apiParams })
+    return authAxios.get("/api/v1/ai-tasks/api/v1/skill-classes", { params: apiParams });
   }
 
   /**
@@ -67,7 +69,7 @@ class SkillAPI {
    * @param skillClassId 技能类ID
    */
   async getSkillDetail(skillClassId: number): Promise<AxiosResponse> {
-    return authAxios.get(`/api/v1/skill-classes/${skillClassId}`)
+    return authAxios.get(`/api/v1/skill-classes/${skillClassId}`);
   }
 
   /**
@@ -75,7 +77,7 @@ class SkillAPI {
    * @param skillClassId 技能类ID
    */
   async deleteSkill(skillClassId: number): Promise<AxiosResponse> {
-    return authAxios.delete(`/api/v1/skill-classes/${skillClassId}`)
+    return authAxios.delete(`/api/v1/skill-classes/${skillClassId}`);
   }
 
   /**
@@ -83,9 +85,9 @@ class SkillAPI {
    * @param ids 技能类ID数组
    */
   async batchDeleteSkills(ids: number[]): Promise<any> {
-    return authAxios.delete('/api/v1/skill-classes/batch-delete', {
-      data: { skill_class_ids: ids }
-    })
+    return authAxios.delete("/api/v1/skill-classes/batch-delete", {
+      data: { skill_class_ids: ids },
+    });
   }
 
   /**
@@ -93,7 +95,7 @@ class SkillAPI {
    * @param skillData 技能数据
    */
   async importSkill(skillData: Partial<SkillClass>): Promise<AxiosResponse> {
-    return authAxios.post('/api/v1/skill-classes', skillData)
+    return authAxios.post("/api/v1/skill-classes", skillData);
   }
 
   /**
@@ -102,7 +104,7 @@ class SkillAPI {
    * @param skillData 技能数据
    */
   async updateSkill(skillClassId: number, skillData: Partial<SkillClass>): Promise<AxiosResponse> {
-    return authAxios.put(`/api/v1/skill-classes/${skillClassId}`, skillData)
+    return authAxios.put(`/api/v1/skill-classes/${skillClassId}`, skillData);
   }
 
   /**
@@ -112,24 +114,24 @@ class SkillAPI {
    */
   async uploadSkillImage(skillClassId: number, imageFile: File): Promise<AxiosResponse> {
     if (!imageFile || !skillClassId) {
-      return Promise.reject(new Error('缺少必要参数'))
+      return Promise.reject(new Error("缺少必要参数"));
     }
 
-    const formData = new FormData()
-    formData.append('file', imageFile)
+    const formData = new FormData();
+    formData.append("file", imageFile);
 
     const config = {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        "Content-Type": "multipart/form-data",
       },
       onUploadProgress: (progressEvent: { loaded: number; total?: number }) => {
         // 上传进度回调（可用于UI进度显示）
-        void Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1))
+        void Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
         // 这里可以触发进度事件
-      }
-    }
+      },
+    };
 
-    return authAxios.post(`/api/v1/skill-classes/${skillClassId}/image`, formData, config)
+    return authAxios.post(`/api/v1/skill-classes/${skillClassId}/image`, formData, config);
   }
 
   /**
@@ -138,10 +140,10 @@ class SkillAPI {
    */
   async getSkillDevices(skillClassId: number): Promise<AxiosResponse> {
     if (!skillClassId) {
-      return Promise.reject(new Error('缺少技能ID'))
+      return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return authAxios.get(`/api/v1/skill-classes/${skillClassId}/devices`)
+    return authAxios.get(`/api/v1/skill-classes/${skillClassId}/devices`);
   }
 
   // ============================================
@@ -154,10 +156,10 @@ class SkillAPI {
    */
   async createAITask(taskData: Partial<AITask>): Promise<AxiosResponse> {
     if (!taskData.camera_id || !taskData.skill_class_id) {
-      return Promise.reject(new Error('缺少必要参数: 摄像头ID和技能类ID必须提供'))
+      return Promise.reject(new Error("缺少必要参数: 摄像头ID和技能类ID必须提供"));
     }
 
-    return authAxios.post('/api/v1/ai-tasks', taskData)
+    return authAxios.post("/api/v1/ai-tasks", taskData);
   }
 
   /**
@@ -166,10 +168,10 @@ class SkillAPI {
    */
   async getAITaskDetail(taskId: number): Promise<AxiosResponse> {
     if (!taskId) {
-      return Promise.reject(new Error('缺少任务ID'))
+      return Promise.reject(new Error("缺少任务ID"));
     }
 
-    return authAxios.get(`/api/v1/ai-tasks/${taskId}`)
+    return authAxios.get(`/api/v1/ai-tasks/${taskId}`);
   }
 
   /**
@@ -177,7 +179,7 @@ class SkillAPI {
    * @param skillClassId 技能类ID
    */
   async getAITaskSkillDetail(skillClassId: number): Promise<AxiosResponse> {
-    return authAxios.get(`/api/v1/ai-tasks/api/v1/skill-classes/${skillClassId}`)
+    return authAxios.get(`/api/v1/ai-tasks/api/v1/skill-classes/${skillClassId}`);
   }
 
   /**
@@ -187,10 +189,10 @@ class SkillAPI {
    */
   async updateAITask(taskId: number, taskData: Partial<AITask>): Promise<AxiosResponse> {
     if (!taskId) {
-      return Promise.reject(new Error('缺少任务ID'))
+      return Promise.reject(new Error("缺少任务ID"));
     }
 
-    return authAxios.put(`/api/v1/ai-tasks/${taskId}`, taskData)
+    return authAxios.put(`/api/v1/ai-tasks/${taskId}`, taskData);
   }
 
   /**
@@ -199,10 +201,10 @@ class SkillAPI {
    */
   async deleteAITask(taskId: number): Promise<AxiosResponse> {
     if (!taskId) {
-      return Promise.reject(new Error('缺少任务ID'))
+      return Promise.reject(new Error("缺少任务ID"));
     }
 
-    return authAxios.delete(`/api/v1/ai-tasks/${taskId}`)
+    return authAxios.delete(`/api/v1/ai-tasks/${taskId}`);
   }
 
   // ============================================
@@ -213,11 +215,13 @@ class SkillAPI {
    * 获取多模态LLM技能列表
    * @param params 查询参数
    */
-  async getLlmSkillList(params: SkillQueryParams = {}): Promise<AxiosResponse<UnifiedResponse<LlmSkill[]>>> {
-    const { page, limit } = normalizePageParams(params)
-    const apiParams = { ...params, page, limit }
+  async getLlmSkillList(
+    params: SkillQueryParams = {},
+  ): Promise<AxiosResponse<UnifiedResponse<LlmSkill[]>>> {
+    const { page, limit } = normalizePageParams(params);
+    const apiParams = { ...params, page, limit };
 
-    return authAxios.get('/api/v1/llm-skills/api/v1/skill-classes', { params: apiParams })
+    return authAxios.get("/api/v1/llm-skills/api/v1/skill-classes", { params: apiParams });
   }
 
   /**
@@ -226,10 +230,10 @@ class SkillAPI {
    */
   async getLlmSkillDetail(skillId: string): Promise<AxiosResponse<UnifiedResponse<LlmSkill>>> {
     if (!skillId) {
-      return Promise.reject(new Error('缺少技能ID'))
+      return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return authAxios.get(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`)
+    return authAxios.get(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`);
   }
 
   /**
@@ -238,22 +242,22 @@ class SkillAPI {
    */
   async createLlmSkill(skillData: LlmSkill): Promise<AxiosResponse> {
     if (!skillData.skill_name || !skillData.skill_id) {
-      return Promise.reject(new Error('缺少必要参数: 技能名称和技能ID必须提供'))
+      return Promise.reject(new Error("缺少必要参数: 技能名称和技能ID必须提供"));
     }
 
     const data = {
       skill_name: skillData.skill_name,
       skill_id: skillData.skill_id,
-      application_scenario: skillData.application_scenario || 'video_analysis',
+      application_scenario: skillData.application_scenario || "video_analysis",
       skill_tags: skillData.skill_tags || [],
       skill_icon: skillData.skill_icon || null,
-      skill_description: skillData.skill_description || '',
-      prompt_template: skillData.prompt_template || '',
+      skill_description: skillData.skill_description || "",
+      prompt_template: skillData.prompt_template || "",
       output_parameters: skillData.output_parameters || [],
-      alert_conditions: skillData.alert_conditions || null
-    }
+      alert_conditions: skillData.alert_conditions || null,
+    };
 
-    return authAxios.post('/api/v1/llm-skills/api/v1/skill-classes', data)
+    return authAxios.post("/api/v1/llm-skills/api/v1/skill-classes", data);
   }
 
   /**
@@ -263,10 +267,10 @@ class SkillAPI {
    */
   async updateLlmSkill(skillId: string, skillData: Partial<LlmSkill>): Promise<AxiosResponse> {
     if (!skillId) {
-      return Promise.reject(new Error('缺少技能ID'))
+      return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return authAxios.put(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`, skillData)
+    return authAxios.put(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`, skillData);
   }
 
   /**
@@ -275,10 +279,10 @@ class SkillAPI {
    */
   async publishLlmSkill(skillId: string): Promise<AxiosResponse> {
     if (!skillId) {
-      return Promise.reject(new Error('缺少技能ID'))
+      return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return authAxios.post(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}/publish`)
+    return authAxios.post(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}/publish`);
   }
 
   /**
@@ -287,10 +291,10 @@ class SkillAPI {
    */
   async unpublishLlmSkill(skillId: string): Promise<AxiosResponse> {
     if (!skillId) {
-      return Promise.reject(new Error('缺少技能ID'))
+      return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return authAxios.post(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}/unpublish`)
+    return authAxios.post(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}/unpublish`);
   }
 
   /**
@@ -299,10 +303,10 @@ class SkillAPI {
    */
   async deleteLlmSkill(skillId: string): Promise<AxiosResponse> {
     if (!skillId) {
-      return Promise.reject(new Error('缺少技能ID'))
+      return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return authAxios.delete(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`)
+    return authAxios.delete(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`);
   }
 
   /**
@@ -311,10 +315,10 @@ class SkillAPI {
    */
   async batchDeleteLlmSkills(skillIds: string[]): Promise<AxiosResponse> {
     if (!skillIds || !Array.isArray(skillIds) || skillIds.length === 0) {
-      return Promise.reject(new Error('缺少技能ID数组'))
+      return Promise.reject(new Error("缺少技能ID数组"));
     }
 
-    return authAxios.post('/api/v1/llm-skills/api/v1/skill-classes/batch-delete', skillIds)
+    return authAxios.post("/api/v1/llm-skills/api/v1/skill-classes/batch-delete", skillIds);
   }
 
   /**
@@ -324,27 +328,27 @@ class SkillAPI {
    */
   async uploadLlmSkillIcon(iconFile: File, skillId?: string | null): Promise<AxiosResponse> {
     if (!iconFile) {
-      return Promise.reject(new Error('缺少图标文件'))
+      return Promise.reject(new Error("缺少图标文件"));
     }
 
-    const formData = new FormData()
-    formData.append('icon', iconFile)
+    const formData = new FormData();
+    formData.append("icon", iconFile);
     if (skillId) {
-      formData.append('skill_id', skillId)
+      formData.append("skill_id", skillId);
     }
 
     const config = {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        "Content-Type": "multipart/form-data",
       },
       onUploadProgress: (progressEvent: { loaded: number; total?: number }) => {
         // 上传进度回调（可用于UI进度显示）
-        void Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1))
+        void Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
         // 这里可以触发进度事件
-      }
-    }
+      },
+    };
 
-    return authAxios.post('/api/v1/llm-skills/upload/skill-icon', formData, config)
+    return authAxios.post("/api/v1/llm-skills/upload/skill-icon", formData, config);
   }
 
   /**
@@ -358,32 +362,32 @@ class SkillAPI {
     testImage: File,
     promptTemplate: string,
     systemPrompt?: string | null,
-    outputParameters?: Record<string, unknown>[] | null
+    outputParameters?: Record<string, unknown>[] | null,
   ): Promise<AxiosResponse> {
     if (!testImage || !promptTemplate) {
-      return Promise.reject(new Error('缺少测试图片或提示词模板'))
+      return Promise.reject(new Error("缺少测试图片或提示词模板"));
     }
 
-    const formData = new FormData()
-    formData.append('test_image', testImage)
-    formData.append('prompt_template', promptTemplate)
+    const formData = new FormData();
+    formData.append("test_image", testImage);
+    formData.append("prompt_template", promptTemplate);
 
     if (systemPrompt) {
-      formData.append('system_prompt', systemPrompt)
+      formData.append("system_prompt", systemPrompt);
     }
 
     if (outputParameters && outputParameters.length > 0) {
-      formData.append('output_parameters', JSON.stringify(outputParameters))
+      formData.append("output_parameters", JSON.stringify(outputParameters));
     }
 
     const config = {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        "Content-Type": "multipart/form-data",
       },
-      timeout: 60000
-    }
+      timeout: 60000,
+    };
 
-    return authAxios.post('/api/v1/llm-skills/api/v1/skill-classes/preview-test', formData, config)
+    return authAxios.post("/api/v1/llm-skills/api/v1/skill-classes/preview-test", formData, config);
   }
 
   // ============================================
@@ -396,10 +400,10 @@ class SkillAPI {
    */
   async createLlmTask(taskData: Partial<LlmTask>): Promise<AxiosResponse> {
     if (!taskData.name || !taskData.skill_id) {
-      return Promise.reject(new Error('缺少必要参数: 任务名称和技能ID必须提供'))
+      return Promise.reject(new Error("缺少必要参数: 任务名称和技能ID必须提供"));
     }
 
-    return authAxios.post('/api/v1/llm-skills/tasks', taskData)
+    return authAxios.post("/api/v1/llm-skills/tasks", taskData);
   }
 
   /**
@@ -408,22 +412,24 @@ class SkillAPI {
    */
   async deleteLlmTask(taskId: number): Promise<AxiosResponse> {
     if (!taskId) {
-      return Promise.reject(new Error('缺少任务ID'))
+      return Promise.reject(new Error("缺少任务ID"));
     }
 
-    return authAxios.delete(`/api/v1/llm-skills/tasks/${taskId}`)
+    return authAxios.delete(`/api/v1/llm-skills/tasks/${taskId}`);
   }
 
   /**
    * 获取多模态大模型任务列表
    * @param params 查询参数
    */
-  async getLlmTaskList(params: SkillQueryParams = {}): Promise<AxiosResponse<UnifiedResponse<LlmTask[]>>> {
+  async getLlmTaskList(
+    params: SkillQueryParams = {},
+  ): Promise<AxiosResponse<UnifiedResponse<LlmTask[]>>> {
     // LLM 任务列表默认显示更多，使用 100 作为最大值
-    const { page, limit } = normalizePageParams(params)
-    const apiParams = { ...params, page, limit: Math.min(limit, 100) }
+    const { page, limit } = normalizePageParams(params);
+    const apiParams = { ...params, page, limit: Math.min(limit, 100) };
 
-    return authAxios.get('/api/v1/llm-skills/tasks', { params: apiParams })
+    return authAxios.get("/api/v1/llm-skills/tasks", { params: apiParams });
   }
 
   /**
@@ -433,12 +439,12 @@ class SkillAPI {
    */
   async updateLlmTask(taskId: number, taskData: Partial<LlmTask>): Promise<AxiosResponse> {
     if (!taskId) {
-      return Promise.reject(new Error('缺少任务ID'))
+      return Promise.reject(new Error("缺少任务ID"));
     }
 
-    return authAxios.put(`/api/v1/llm-skills/tasks/${taskId}`, taskData)
+    return authAxios.put(`/api/v1/llm-skills/tasks/${taskId}`, taskData);
   }
 }
 
 // 导出单例实例
-export default new SkillAPI()
+export default new SkillAPI();

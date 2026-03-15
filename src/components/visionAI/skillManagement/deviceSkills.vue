@@ -4,17 +4,37 @@
     <div class="filter-section">
       <div class="toolbar">
         <div class="left-controls">
-          <el-button type="primary" icon="el-icon-plus" size="small" @click="handleImportSkill">导入技能</el-button>
-          <el-button type="danger" icon="el-icon-delete" size="small" :disabled="!selectedSkills.length" @click="handleBatchDelete">批量删除</el-button>
-          <el-button type="info" icon="el-icon-check" size="small" @click="selectAllCurrentPage">选择本页</el-button>
-          <el-button type="success" icon="el-icon-refresh-right" size="small" @click="handleReloadSkillClasses" :loading="reloading">加载技能</el-button>
+          <el-button type="primary" icon="el-icon-plus" size="small" @click="handleImportSkill">
+            导入技能
+          </el-button>
+          <el-button
+            type="danger"
+            icon="el-icon-delete"
+            size="small"
+            :disabled="!selectedSkills.length"
+            @click="handleBatchDelete"
+          >
+            批量删除
+          </el-button>
+          <el-button type="info" icon="el-icon-check" size="small" @click="selectAllCurrentPage">
+            选择本页
+          </el-button>
+          <el-button
+            type="success"
+            icon="el-icon-refresh-right"
+            size="small"
+            @click="handleReloadSkillClasses"
+            :loading="reloading"
+          >
+            加载技能
+          </el-button>
         </div>
-        
+
         <div class="right-controls">
           <div class="filter-item">
             <span class="filter-label">状态:</span>
-            <el-select 
-              v-model="tempFilterStatus" 
+            <el-select
+              v-model="tempFilterStatus"
               placeholder="选择状态"
               clearable
               size="small"
@@ -24,22 +44,17 @@
               <el-option label="未发布" value="unpublished" />
             </el-select>
           </div>
-          
+
           <div class="filter-item">
             <span class="filter-label">技能类型:</span>
-            <el-select 
-              v-model="tempFilterType" 
+            <el-select
+              v-model="tempFilterType"
               placeholder="选择类型"
               clearable
               size="small"
               @change="debounceSearch"
             >
-              <el-option 
-                v-for="type in skillTypes" 
-                :key="type" 
-                :label="type" 
-                :value="type"
-              />
+              <el-option v-for="type in skillTypes" :key="type" :label="type" :value="type" />
             </el-select>
           </div>
 
@@ -54,10 +69,10 @@
           >
             <i slot="prefix" class="el-icon-search"></i>
           </el-input>
-          <el-button 
-            class="refresh-btn" 
-            size="small" 
-            icon="el-icon-refresh-left" 
+          <el-button
+            class="refresh-btn"
+            size="small"
+            icon="el-icon-refresh-left"
             @click="handleRefreshData"
             :loading="refreshing"
             title="刷新数据"
@@ -79,39 +94,44 @@
           class="skill-col"
         >
           <div class="skill-card-wrapper">
-            <el-card 
-              class="skill-card" 
+            <el-card
+              class="skill-card"
               :body-style="{ padding: '0px' }"
-              shadow="hover" 
-              :class="{ 'selected': isSelected(skill.id) }" 
+              shadow="hover"
+              :class="{ selected: isSelected(skill.id) }"
               @click.native="viewSkillDetails(skill)"
               @mouseenter.native="showCardCheckbox(skill.id)"
               @mouseleave.native="hideCardCheckbox(skill.id)"
             >
               <div class="selection-overlay" v-if="isSelected(skill.id)"></div>
-              
+
               <!-- 选择框 -->
-              <div 
-                v-show="cardHoverStates[skill.id] || selectedSkills.includes(skill.id)" 
+              <div
+                v-show="cardHoverStates[skill.id] || selectedSkills.includes(skill.id)"
                 class="card-checkbox"
-                @click.stop>
-                <el-checkbox 
+                @click.stop
+              >
+                <el-checkbox
                   :value="selectedSkills.includes(skill.id)"
-                  @input="handleSkillSelect(skill.id, $event)">
-                </el-checkbox>
+                  @input="handleSkillSelect(skill.id, $event)"
+                ></el-checkbox>
               </div>
               <div class="skill-thumbnail">
-                <img :src="skill.image_url || './static/logo.png'" class="thumbnail-img" alt="技能图标">
+                <img
+                  :src="skill.image_url || './static/logo.png'"
+                  class="thumbnail-img"
+                  alt="技能图标"
+                />
               </div>
               <div class="skill-info">
                 <h3 class="skill-title">{{ skill.name_zh }}</h3>
                 <div class="version-line">
-                  <el-tag 
-                    size="small" 
-                    :type="skill.status === 'published' ? 'success' : 'info'" 
+                  <el-tag
+                    size="small"
+                    :type="skill.status === 'published' ? 'success' : 'info'"
                     class="status-mini-tag"
                   >
-                    {{ skill.status === 'published' ? '已发布' : '未发布' }}
+                    {{ skill.status === "published" ? "已发布" : "未发布" }}
                   </el-tag>
                   <span class="version-text">版本 {{ skill.version }}</span>
                 </div>
@@ -138,7 +158,7 @@
         </el-col>
       </el-row>
     </div>
-  
+
     <!-- 分页 -->
     <div class="pagination">
       <el-pagination
@@ -184,7 +204,12 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="技能描述" prop="description">
-          <el-input type="textarea" v-model="importForm.description" rows="3" placeholder="请输入技能描述"></el-input>
+          <el-input
+            type="textarea"
+            v-model="importForm.description"
+            rows="3"
+            placeholder="请输入技能描述"
+          ></el-input>
         </el-form-item>
         <el-form-item label="技能文件" prop="file">
           <el-upload
@@ -197,7 +222,10 @@
             :file-list="fileList"
           >
             <i class="el-icon-upload"></i>
-            <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+            <div class="el-upload__text">
+              将文件拖到此处，或
+              <em>点击上传</em>
+            </div>
             <div class="el-upload__tip" slot="tip">只能上传json文件，且不超过500kb</div>
           </el-upload>
         </el-form-item>
@@ -209,7 +237,12 @@
     </el-dialog>
 
     <!-- 技能详情对话框 -->
-    <el-dialog :title="isEditing ? '编辑技能' : '技能详情'" :visible.sync="detailsDialogVisible" width="50%" :close-on-click-modal="false">
+    <el-dialog
+      :title="isEditing ? '编辑技能' : '技能详情'"
+      :visible.sync="detailsDialogVisible"
+      width="50%"
+      :close-on-click-modal="false"
+    >
       <div v-if="currentSkill" class="skill-details">
         <el-form v-if="isEditing" :model="editForm" ref="editForm" label-width="0">
           <div class="skill-header">
@@ -221,8 +254,13 @@
                 :show-file-list="false"
                 :on-change="handleImageChange"
               >
-                <img v-if="imageUrl" :src="imageUrl" class="avatar" alt="技能图标">
-                <img v-else :src="currentSkill.image_url || './static/logo.png'" class="avatar" alt="技能图标">
+                <img v-if="imageUrl" :src="imageUrl" class="avatar" alt="技能图标" />
+                <img
+                  v-else
+                  :src="currentSkill.image_url || './static/logo.png'"
+                  class="avatar"
+                  alt="技能图标"
+                />
                 <div class="upload-mask">
                   <i class="el-icon-plus"></i>
                   <span>更换图片</span>
@@ -230,28 +268,37 @@
               </el-upload>
             </div>
             <div class="skill-title">
-              <el-input 
-                v-model="editForm.name_zh" 
-                placeholder="请输入技能名称" 
+              <el-input
+                v-model="editForm.name_zh"
+                placeholder="请输入技能名称"
                 class="name-edit-input"
                 :rules="[
                   { required: true, message: '请输入技能名称', trigger: 'blur' },
-                  { min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur' }
+                  { min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur' },
                 ]"
               ></el-input>
               <div class="skill-subtitle">
-                <el-tag :type="currentSkill.status === 'published' ? 'success' : 'info'" size="medium" class="status-inline-tag">
-                  {{ currentSkill.status === 'published' ? '已发布' : '未发布' }}
+                <el-tag
+                  :type="currentSkill.status === 'published' ? 'success' : 'info'"
+                  size="medium"
+                  class="status-inline-tag"
+                >
+                  {{ currentSkill.status === "published" ? "已发布" : "未发布" }}
                 </el-tag>
                 <span class="version-edit">
-                  版本 <el-input v-model="editForm.version" class="version-input" placeholder="请输入版本号"></el-input>
+                  版本
+                  <el-input
+                    v-model="editForm.version"
+                    class="version-input"
+                    placeholder="请输入版本号"
+                  ></el-input>
                 </span>
               </div>
             </div>
           </div>
-          
+
           <el-divider></el-divider>
-          
+
           <div class="skill-info-section">
             <div class="info-card">
               <div class="info-card-header">
@@ -266,23 +313,25 @@
                   </div>
                   <div class="info-item half-width">
                     <span class="info-label">关联设备：</span>
-                    <span class="info-value clickable" @click="showDevicesList">{{ currentSkill.deviceCount }}</span>
+                    <span class="info-value clickable" @click="showDevicesList">
+                      {{ currentSkill.deviceCount }}
+                    </span>
                   </div>
                 </div>
-                
+
                 <div class="info-row">
                   <div class="info-item half-width">
                     <span class="info-label">创建时间：</span>
-                    <span class="info-value">{{ currentSkill.createTime || '-' }}</span>
+                    <span class="info-value">{{ currentSkill.createTime || "-" }}</span>
                   </div>
                   <div class="info-item half-width">
                     <span class="info-label">最后更新：</span>
-                    <span class="info-value">{{ currentSkill.updateTime || '-' }}</span>
+                    <span class="info-value">{{ currentSkill.updateTime || "-" }}</span>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <div class="info-card">
               <div class="info-card-header">
                 <i class="el-icon-cpu"></i>
@@ -292,22 +341,27 @@
                 <div class="info-row">
                   <div class="info-item">
                     <div class="model-tags">
-                      <el-tag 
-                        size="medium" 
-                        type="info" 
-                        v-for="(model, index) in currentSkill.models" 
+                      <el-tag
+                        size="medium"
+                        type="info"
+                        v-for="(model, index) in currentSkill.models"
                         :key="index"
                         class="model-tag"
                       >
                         {{ model }}
                       </el-tag>
-                      <span v-if="!currentSkill.models || !currentSkill.models.length" class="no-data">暂无模型信息</span>
+                      <span
+                        v-if="!currentSkill.models || !currentSkill.models.length"
+                        class="no-data"
+                      >
+                        暂无模型信息
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <div class="info-card">
               <div class="info-card-header">
                 <i class="el-icon-document"></i>
@@ -316,10 +370,10 @@
               <div class="info-card-content">
                 <div class="info-row">
                   <div class="info-item description-item">
-                    <el-input 
-                      type="textarea" 
-                      v-model="editForm.description" 
-                      :rows="4" 
+                    <el-input
+                      type="textarea"
+                      v-model="editForm.description"
+                      :rows="4"
                       placeholder="请输入技能描述"
                       class="description-edit-input"
                     ></el-input>
@@ -327,7 +381,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="info-card" v-if="currentSkill.aiTasks && currentSkill.aiTasks.length > 0">
               <div class="info-card-header">
                 <i class="el-icon-s-operation"></i>
@@ -336,36 +390,46 @@
               <div class="info-card-content">
                 <div class="skill-instances-container">
                   <div class="instances-wrapper">
-                    <div class="instance-item" 
-                      v-for="task in currentSkill.aiTasks" 
-                      :key="task.id">
+                    <div class="instance-item" v-for="task in currentSkill.aiTasks" :key="task.id">
                       <div class="instance-header">
                         <h4>{{ task.name }}</h4>
-                        <el-tag :type="task.status ? 'success' : 'info'" size="small" class="status-tag">
-                          {{ task.status ? '运行中' : '已停止' }}
+                        <el-tag
+                          :type="task.status ? 'success' : 'info'"
+                          size="small"
+                          class="status-tag"
+                        >
+                          {{ task.status ? "运行中" : "已停止" }}
                         </el-tag>
                       </div>
                       <div class="instance-info">
                         <div class="info-row-small">
                           <span class="info-label-small">关联摄像头：</span>
-                          <span class="info-value-small">{{ task.camera_info ? task.camera_info.name : '-' }}</span>
+                          <span class="info-value-small">
+                            {{ task.camera_info ? task.camera_info.name : "-" }}
+                          </span>
                         </div>
                         <div class="info-row-small">
                           <span class="info-label-small">摄像头位置：</span>
-                          <span class="info-value-small">{{ task.camera_info ? task.camera_info.location : '-' }}</span>
+                          <span class="info-value-small">
+                            {{ task.camera_info ? task.camera_info.location : "-" }}
+                          </span>
                         </div>
                         <div class="info-row-small">
                           <span class="info-label-small">创建时间：</span>
-                          <span class="info-value-small">{{ formatDateTime(task.created_at) }}</span>
+                          <span class="info-value-small">
+                            {{ formatDateTime(task.created_at) }}
+                          </span>
                         </div>
                         <div class="info-row-small">
                           <span class="info-label-small">更新时间：</span>
-                          <span class="info-value-small">{{ formatDateTime(task.updated_at) }}</span>
+                          <span class="info-value-small">
+                            {{ formatDateTime(task.updated_at) }}
+                          </span>
                         </div>
                       </div>
                       <div class="instance-desc">
                         <p :title="task.description">
-                          {{ task.description || '暂无任务描述' }}
+                          {{ task.description || "暂无任务描述" }}
                         </p>
                       </div>
                     </div>
@@ -375,23 +439,31 @@
             </div>
           </div>
         </el-form>
-        
+
         <div v-else>
           <div class="skill-header">
-            <img :src="currentSkill.image_url || './static/logo.png'" alt="技能图标" class="skill-logo">
+            <img
+              :src="currentSkill.image_url || './static/logo.png'"
+              alt="技能图标"
+              class="skill-logo"
+            />
             <div class="skill-title">
               <h2>{{ currentSkill.name_zh }}</h2>
               <div class="skill-subtitle">
-                <el-tag :type="currentSkill.status === 'published' ? 'success' : 'info'" size="medium" class="status-inline-tag">
-                  {{ currentSkill.status === 'published' ? '已发布' : '未发布' }}
+                <el-tag
+                  :type="currentSkill.status === 'published' ? 'success' : 'info'"
+                  size="medium"
+                  class="status-inline-tag"
+                >
+                  {{ currentSkill.status === "published" ? "已发布" : "未发布" }}
                 </el-tag>
                 <span class="version">版本 {{ currentSkill.version }}</span>
               </div>
             </div>
           </div>
-          
+
           <el-divider></el-divider>
-          
+
           <div class="skill-info-section">
             <div class="info-card">
               <div class="info-card-header">
@@ -406,23 +478,25 @@
                   </div>
                   <div class="info-item half-width">
                     <span class="info-label">关联设备：</span>
-                    <span class="info-value clickable" @click="showDevicesList">{{ currentSkill.deviceCount }}</span>
+                    <span class="info-value clickable" @click="showDevicesList">
+                      {{ currentSkill.deviceCount }}
+                    </span>
                   </div>
                 </div>
-                
+
                 <div class="info-row">
                   <div class="info-item half-width">
                     <span class="info-label">创建时间：</span>
-                    <span class="info-value">{{ currentSkill.createTime || '-' }}</span>
+                    <span class="info-value">{{ currentSkill.createTime || "-" }}</span>
                   </div>
                   <div class="info-item half-width">
                     <span class="info-label">最后更新：</span>
-                    <span class="info-value">{{ currentSkill.updateTime || '-' }}</span>
+                    <span class="info-value">{{ currentSkill.updateTime || "-" }}</span>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <div class="info-card">
               <div class="info-card-header">
                 <i class="el-icon-cpu"></i>
@@ -432,22 +506,27 @@
                 <div class="info-row">
                   <div class="info-item">
                     <div class="model-tags">
-                      <el-tag 
-                        size="medium" 
-                        type="info" 
-                        v-for="(model, index) in currentSkill.models" 
+                      <el-tag
+                        size="medium"
+                        type="info"
+                        v-for="(model, index) in currentSkill.models"
                         :key="index"
                         class="model-tag"
                       >
                         {{ model }}
                       </el-tag>
-                      <span v-if="!currentSkill.models || !currentSkill.models.length" class="no-data">暂无模型信息</span>
+                      <span
+                        v-if="!currentSkill.models || !currentSkill.models.length"
+                        class="no-data"
+                      >
+                        暂无模型信息
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <div class="info-card">
               <div class="info-card-header">
                 <i class="el-icon-document"></i>
@@ -457,13 +536,13 @@
                 <div class="info-row">
                   <div class="info-item description-item">
                     <span class="info-value description-content">
-                      {{ currentSkill.description || '暂无描述信息' }}
+                      {{ currentSkill.description || "暂无描述信息" }}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <div class="info-card" v-if="currentSkill.aiTasks && currentSkill.aiTasks.length > 0">
               <div class="info-card-header">
                 <i class="el-icon-s-operation"></i>
@@ -472,36 +551,46 @@
               <div class="info-card-content">
                 <div class="skill-instances-container">
                   <div class="instances-wrapper">
-                    <div class="instance-item" 
-                      v-for="task in currentSkill.aiTasks" 
-                      :key="task.id">
+                    <div class="instance-item" v-for="task in currentSkill.aiTasks" :key="task.id">
                       <div class="instance-header">
                         <h4>{{ task.name }}</h4>
-                        <el-tag :type="task.status ? 'success' : 'info'" size="small" class="status-tag">
-                          {{ task.status ? '运行中' : '已停止' }}
+                        <el-tag
+                          :type="task.status ? 'success' : 'info'"
+                          size="small"
+                          class="status-tag"
+                        >
+                          {{ task.status ? "运行中" : "已停止" }}
                         </el-tag>
                       </div>
                       <div class="instance-info">
                         <div class="info-row-small">
                           <span class="info-label-small">关联摄像头：</span>
-                          <span class="info-value-small">{{ task.camera_info ? task.camera_info.name : '-' }}</span>
+                          <span class="info-value-small">
+                            {{ task.camera_info ? task.camera_info.name : "-" }}
+                          </span>
                         </div>
                         <div class="info-row-small">
                           <span class="info-label-small">摄像头位置：</span>
-                          <span class="info-value-small">{{ task.camera_info ? task.camera_info.location : '-' }}</span>
+                          <span class="info-value-small">
+                            {{ task.camera_info ? task.camera_info.location : "-" }}
+                          </span>
                         </div>
                         <div class="info-row-small">
                           <span class="info-label-small">创建时间：</span>
-                          <span class="info-value-small">{{ formatDateTime(task.created_at) }}</span>
+                          <span class="info-value-small">
+                            {{ formatDateTime(task.created_at) }}
+                          </span>
                         </div>
                         <div class="info-row-small">
                           <span class="info-label-small">更新时间：</span>
-                          <span class="info-value-small">{{ formatDateTime(task.updated_at) }}</span>
+                          <span class="info-value-small">
+                            {{ formatDateTime(task.updated_at) }}
+                          </span>
                         </div>
                       </div>
                       <div class="instance-desc">
                         <p :title="task.description">
-                          {{ task.description || '暂无任务描述' }}
+                          {{ task.description || "暂无任务描述" }}
                         </p>
                       </div>
                     </div>
@@ -513,7 +602,7 @@
         </div>
       </div>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="cancelEdit">{{ isEditing ? '取消' : '关闭' }}</el-button>
+        <el-button @click="cancelEdit">{{ isEditing ? "取消" : "关闭" }}</el-button>
         <el-button v-if="!isEditing" type="primary" @click="startEditing">编辑</el-button>
         <el-button v-else type="primary" @click="saveChanges" :loading="editing">保存</el-button>
       </span>
@@ -533,24 +622,25 @@
         <el-table
           v-loading="loadingDevices"
           :data="relatedDevices"
-          style="width: 100%; background-color: #ffffff;"
+          style="width: 100%; background-color: #ffffff"
           max-height="400"
-          :header-cell-style="{background:'#f5f7fa',color:'#303133', fontWeight: '500', textAlign: 'center'}"
-          :cell-style="{textAlign: 'center', backgroundColor: '#ffffff'}"
-          :row-style="{backgroundColor: '#ffffff'}"
+          :header-cell-style="{
+            background: '#f5f7fa',
+            color: '#303133',
+            fontWeight: '500',
+            textAlign: 'center',
+          }"
+          :cell-style="{ textAlign: 'center', backgroundColor: '#ffffff' }"
+          :row-style="{ backgroundColor: '#ffffff' }"
           :row-class-name="tableRowClassName"
         >
           <el-table-column
             prop="name"
             label="设备名称"
             width="160"
-            align="center">
-          </el-table-column>
-          <el-table-column
-            prop="id"
-            label="设备ID"
-            min-width="220"
-            align="center">
+            align="center"
+          ></el-table-column>
+          <el-table-column prop="id" label="设备ID" min-width="220" align="center">
             <template #default="scope">
               {{ scope.row.id }}
             </template>
@@ -559,16 +649,12 @@
             prop="location"
             label="位置"
             min-width="120"
-            align="center">
-          </el-table-column>
-          <el-table-column
-            prop="status"
-            label="状态"
-            width="80"
-            align="center">
+            align="center"
+          ></el-table-column>
+          <el-table-column prop="status" label="状态" width="80" align="center">
             <template #default="scope">
               <el-tag :type="scope.row.status ? 'success' : 'info'" size="small" effect="light">
-                {{ scope.row.status ? '在线' : '离线' }}
+                {{ scope.row.status ? "在线" : "离线" }}
               </el-tag>
             </template>
           </el-table-column>
@@ -587,7 +673,7 @@ import centerAPI from '@/api/center';
 
 export default {
   name: 'DeviceSkills',
-  
+
   data() {
     return {
       // 搜索和筛选条件
@@ -616,7 +702,7 @@ export default {
 
       // 搜索防抖定时器
       searchTimer: null,
-      
+
       // 导入相关
       importForm: {
         name: '',
@@ -714,7 +800,7 @@ export default {
       window.location.reload()
       return
     }
-    
+
     this.fetchSkills();
     // 设置默认每页显示12条数据
     this.pageSize = 12;
@@ -748,14 +834,14 @@ export default {
       this.currentPage = 1; // 重置页码
       this.fetchSkills(); // 重新获取数据
     },
-    
+
     // 防抖搜索处理，避免频繁请求
     debounceSearch() {
       // 如果已有定时器，清除它
       if(this.searchTimer) {
         clearTimeout(this.searchTimer);
       }
-      
+
       // 设置新的定时器，300毫秒后执行搜索
       this.searchTimer = setTimeout(() => {
         this.handleSearch();
@@ -817,7 +903,7 @@ export default {
         this.total = 0;
         return;
       }
-      
+
       // 转换API数据格式为组件所需格式
       this.skillsList = skillsData.map(skill => {
         // 计算关联设备总数
@@ -825,7 +911,7 @@ export default {
 
         // 获取模型信息
         const models = skill.model_info ? skill.model_info.map(model => model[1]) : [];
-        
+
         return {
           id: skill.id,
           name: skill.name,
@@ -841,7 +927,7 @@ export default {
           updateTime: skill.updated_at,
         };
       });
-      
+
       // 设置总数据量
       this.total = this.skillsList.length;
     },
@@ -914,10 +1000,10 @@ export default {
     selectAllCurrentPage() {
       const currentIds = this.currentPageSkillIds;
       const newSelected = [...this.selectedSkills];
-      
+
       // 检查当前页是否已全选
       const allSelected = currentIds.every(id => this.selectedSkills.includes(id));
-      
+
       if (allSelected) {
         // 如果已全选，则取消选择当前页所有技能
         this.selectedSkills = this.selectedSkills.filter(id => !currentIds.includes(id));
@@ -937,7 +1023,7 @@ export default {
         this.$message.warning('请先选择要删除的技能');
         return;
       }
-      
+
       this.$confirm(`确认删除选中的 ${this.selectedSkills.length} 个技能吗?`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -1019,16 +1105,16 @@ export default {
       this.$refs.importForm.validate(async valid => {
         if (valid) {
           this.importing = true;
-          
+
           try {
             // 读取文件内容
             const reader = new FileReader();
             reader.readAsText(this.importForm.file);
-            
+
             reader.onload = async (event) => {
               try {
                 const fileContent = JSON.parse(event.target.result);
-                
+
                 // 创建导入数据对象
                 const importData = {
                   name: this.importForm.name,
@@ -1039,7 +1125,7 @@ export default {
                   status: this.importForm.status === 'published',
                   skill_data: fileContent
                 };
-                
+
                 // 调用API导入技能
                 const response = await centerAPI.skill.importSkill(importData);
 
@@ -1056,7 +1142,7 @@ export default {
                 this.importing = false;
               }
             };
-            
+
             reader.onerror = () => {
               this.$message.error('读取文件失败');
               this.importing = false;
@@ -1099,15 +1185,15 @@ export default {
           this.imageFile = null;
           return;
         }
-        
+
         // 保存文件对象以便后续上传
         this.imageFile = file.raw;
-        
+
         // 创建临时URL用于预览
         this.imageUrl = URL.createObjectURL(file.raw);
-        
+
         console.log('已选择图片:', this.imageFile.name, '大小:', this.imageFile.size, '类型:', this.imageFile.type);
-        
+
         // 删除已选择图片但尚未保存的提示
         // this.$message.info('已选择图片，点击保存按钮上传');
         this.imageFile = null;
@@ -1120,7 +1206,7 @@ export default {
       this.$refs.editForm.validate(async valid => {
         if (valid) {
           this.editing = true;
-          
+
           try {
             // 首先更新技能基本信息
             const response = await centerAPI.skill.updateSkill(this.currentSkill.id, {
@@ -1153,17 +1239,17 @@ export default {
                   this.$message.warning('技能信息已更新，但图片上传失败，请检查网络连接和服务器状态');
                 }
               }
-              
+
               this.$message.success('技能编辑成功');
-              
+
               // 更新当前技能的数据
               this.currentSkill.name_zh = this.editForm.name_zh;
               this.currentSkill.description = this.editForm.description;
               this.currentSkill.version = this.editForm.version;
-              
+
               // 切换回详情模式
               this.isEditing = false;
-              
+
               // 刷新技能列表（在后台进行，不影响用户查看详情）
               this.fetchSkills();
               this.$message.error(response.message || "" || '技能编辑失败');
@@ -1184,7 +1270,7 @@ export default {
     // 刷新当前技能详情
     async refreshSkillDetail() {
       if (!this.currentSkill || !this.currentSkill.id) return;
-      
+
       try {
         const response = await centerAPI.skill.getSkillDetail(this.currentSkill.id);
 
@@ -1233,7 +1319,7 @@ export default {
     tableRowClassName({row, rowIndex}) {
       return rowIndex % 2 === 0 ? '' : 'row-striped';
     },
-    
+
     // 显示关联设备列表
     async showDevicesList() {
       // 设置对话框标题
@@ -1241,7 +1327,7 @@ export default {
       this.devicesDialogVisible = true;
       this.loadingDevices = true;
       this.relatedDevices = [];
-      
+
       try {
         // 获取关联设备列表
         const response = await centerAPI.skill.getSkillDevices(this.currentSkill.id);
@@ -1257,7 +1343,7 @@ export default {
         this.loadingDevices = false;
       }
     },
-    
+
     // 清空搜索内容
     clearSearch() {
       this.tempSearchQuery = '';
@@ -1291,9 +1377,9 @@ export default {
           type: 'info',
           duration: 1000
         });
-        
+
         await this.fetchSkills();
-        
+
         this.$message.success('数据刷新成功');
       } catch (error) {
         console.error('刷新数据失败:', error);
@@ -1330,7 +1416,7 @@ export default {
     // 格式化日期时间
     formatDateTime(dateTimeStr) {
       if (!dateTimeStr) return '-';
-      
+
       try {
         const date = new Date(dateTimeStr);
         const year = date.getFullYear();
@@ -1338,7 +1424,7 @@ export default {
         const day = String(date.getDate()).padStart(2, '0');
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
-        
+
         return `${year}-${month}-${day} ${hours}:${minutes}`;
       } catch (error) {
         console.error('日期格式化失败:', error);
@@ -1354,7 +1440,7 @@ export default {
       this.loadingDevices = true;
       this.relatedDevices = [];
       this.currentInstance = instance;
-      
+
       try {
         // 获取技能实例关联设备列表
         const response = await centerAPI.skill.getSkillInstanceDevices(instance.id);
@@ -1418,8 +1504,6 @@ export default {
   overflow: hidden;
   flex-shrink: 0; /* 防止收缩 */
 }
-
-
 
 .toolbar {
   display: flex;
@@ -1501,8 +1585,8 @@ export default {
 
 /* 搜索框布局混乱 */
 .right-controls :deep(.el-input__prefix) {
-  top:6px;
-  left:10px;
+  top: 6px;
+  left: 10px;
 }
 
 .filter-item {
@@ -1559,7 +1643,9 @@ export default {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-.grid-view-btn, .list-view-btn, .refresh-btn {
+.grid-view-btn,
+.list-view-btn,
+.refresh-btn {
   padding: 7px 10px;
   margin-left: 0;
   color: #606266;
@@ -1569,7 +1655,9 @@ export default {
   transition: all 0.3s ease;
 }
 
-.grid-view-btn:hover, .list-view-btn:hover, .refresh-btn:hover {
+.grid-view-btn:hover,
+.list-view-btn:hover,
+.refresh-btn:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e40af;
@@ -1639,8 +1727,6 @@ export default {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-
-
 .skills-grid .skill-card > * {
   position: relative;
   z-index: 2;
@@ -1708,7 +1794,7 @@ export default {
 .skills-grid .skill-card .skill-thumbnail {
   position: relative;
   width: 100%;
-  padding-top: 63%; 
+  padding-top: 63%;
   background-color: #f5f7fa;
 }
 
@@ -1816,12 +1902,12 @@ export default {
   font-size: 12px;
 }
 
-.skills-grid .skill-card .skill-actions .el-button+.el-button {
+.skills-grid .skill-card .skill-actions .el-button + .el-button {
   margin-left: 0;
 }
 
 .skills-grid .skill-card .skill-actions .delete-btn {
-  color: #F56C6C;
+  color: #f56c6c;
 }
 
 .skills-grid .skill-card .skill-actions .el-divider--vertical {
@@ -1833,8 +1919,8 @@ export default {
   display: flex;
   justify-content: center;
   background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  margin-top: 0 !important;
+  padding-bottom: 10px !important;
 }
 
 .pagination :deep(.el-pagination__total) {
@@ -2633,7 +2719,7 @@ export default {
 }
 
 .clickable:hover {
-  color: #409EFF;
+  color: #409eff;
 }
 
 .devices-list-container {
@@ -2658,7 +2744,7 @@ export default {
 
 .no-devices-tip i {
   font-size: 30px;
-  color: #409EFF;
+  color: #409eff;
   opacity: 0.5;
   margin-bottom: 10px;
 }
@@ -2790,7 +2876,7 @@ export default {
 
 .no-devices-tip i {
   font-size: 30px;
-  color: #409EFF;
+  color: #409eff;
   opacity: 0.5;
   margin-bottom: 10px;
 }
@@ -2841,7 +2927,7 @@ export default {
 }
 
 /* 表格单元格和行样式 */
-.devices-dialog :deep(.el-table td), 
+.devices-dialog :deep(.el-table td),
 .devices-dialog :deep(.el-table th.is-leaf) {
   background-color: #ffffff;
   border-bottom: 1px solid #ebeef5;

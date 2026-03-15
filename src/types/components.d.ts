@@ -7,9 +7,9 @@
  */
 export interface ErrorReasonItem {
   /** 图标类名 */
-  icon: string
+  icon: string;
   /** 原因描述 */
-  text: string
+  text: string;
 }
 
 /**
@@ -17,11 +17,11 @@ export interface ErrorReasonItem {
  */
 export interface ErrorActionButton {
   /** 按钮标签 */
-  label: string
+  label: string;
   /** 图标类名 */
-  icon: string
+  icon: string;
   /** 按钮类型 */
-  type?: 'primary' | 'secondary'
+  type?: "primary" | "secondary";
   /** 点击事件处理 */
-  onClick: () => void
+  onClick: () => void;
 }

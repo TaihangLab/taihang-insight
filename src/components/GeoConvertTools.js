@@ -2,7 +2,7 @@
  * 经纬度转换
  */
 export default {
-  PI: 3.1415926535897932384626,  
+  PI: 3.1415926535897932384626,
   //PI: 3.14159265358979324,
   x_pi: (3.1415926535897932384626 * 3000.0) / 180.0,
   delta: function (lat, lng) {
@@ -23,7 +23,7 @@ export default {
     dLng = (dLng * 180.0) / ((a / sqrtMagic) * Math.cos(radLat) * this.PI);
     return {
       lat: dLat,
-      lng: dLng
+      lng: dLng,
     };
   },
   /**
@@ -33,14 +33,15 @@ export default {
    * @return {object}        返回中国坐标经纬度对象
    */
   GPSToChina: function (wgsLat, wgsLng) {
-    if (this.outOfChina(wgsLat, wgsLng)) return {
-      lat: wgsLat,
-      lng: wgsLng
-    };
+    if (this.outOfChina(wgsLat, wgsLng))
+      return {
+        lat: wgsLat,
+        lng: wgsLng,
+      };
     var d = this.delta(wgsLat, wgsLng);
     return {
       lat: Number(wgsLat) + Number(d.lat),
-      lng: Number(wgsLng) + Number(d.lng)
+      lng: Number(wgsLng) + Number(d.lng),
     };
   },
   /**
@@ -50,14 +51,15 @@ export default {
    * @return {object}        返回GPS经纬度对象
    */
   chinaToGPS: function (gcjLat, gcjLng) {
-    if (this.outOfChina(gcjLat, gcjLng)) return {
-      lat: gcjLat,
-      lng: gcjLng
-    };
+    if (this.outOfChina(gcjLat, gcjLng))
+      return {
+        lat: gcjLat,
+        lng: gcjLng,
+      };
     var d = this.delta(gcjLat, gcjLng);
     return {
       lat: Number(gcjLat) - Number(d.lat),
-      lng: Number(gcjLng) - Number(d.lng)
+      lng: Number(gcjLng) - Number(d.lng),
     };
   },
   /**
@@ -96,7 +98,7 @@ export default {
     //console.log(i);
     return {
       lat: wgsLat,
-      lng: wgsLng
+      lng: wgsLng,
     };
   },
   /**
@@ -114,7 +116,7 @@ export default {
     var bdLat = z * Math.sin(theta) + 0.006;
     return {
       lat: bdLat,
-      lng: bdLng
+      lng: bdLng,
     };
   },
   /**
@@ -132,7 +134,7 @@ export default {
     var gcjLat = z * Math.sin(theta);
     return {
       lat: gcjLat,
-      lng: gcjLng
+      lng: gcjLng,
     };
   },
   /**
@@ -167,7 +169,7 @@ export default {
     y = (y * 20037508.34) / 180;
     return {
       lat: y,
-      lng: x
+      lng: x,
     };
     /*
     if ((Math.abs(wgsLng) > 180 || Math.abs(wgsLat) > 90))
@@ -190,7 +192,7 @@ export default {
     y = (180 / this.PI) * (2 * Math.atan(Math.exp((y * this.PI) / 180)) - this.PI / 2);
     return {
       lat: y,
-      lng: x
+      lng: x,
     };
     /*
     if (Math.abs(mercatorLng) < 180 && Math.abs(mercatorLat) < 90)
@@ -213,7 +215,10 @@ export default {
    */
   distance: function (latA, lngA, latB, lngB) {
     var earthR = 6371000;
-    var x = Math.cos((latA * this.PI) / 180) * Math.cos((latB * this.PI) / 180) * Math.cos(((lngA - lngB) * this.PI) / 180);
+    var x =
+      Math.cos((latA * this.PI) / 180) *
+      Math.cos((latB * this.PI) / 180) *
+      Math.cos(((lngA - lngB) * this.PI) / 180);
     var y = Math.sin((latA * this.PI) / 180) * Math.sin((latB * this.PI) / 180);
     var s = x + y;
     if (s > 1) s = 1;
@@ -237,14 +242,17 @@ export default {
     var ret = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x));
     ret += ((20.0 * Math.sin(6.0 * x * this.PI) + 20.0 * Math.sin(2.0 * x * this.PI)) * 2.0) / 3.0;
     ret += ((20.0 * Math.sin(y * this.PI) + 40.0 * Math.sin((y / 3.0) * this.PI)) * 2.0) / 3.0;
-    ret += ((160.0 * Math.sin((y / 12.0) * this.PI) + 320 * Math.sin((y * this.PI) / 30.0)) * 2.0) / 3.0;
+    ret +=
+      ((160.0 * Math.sin((y / 12.0) * this.PI) + 320 * Math.sin((y * this.PI) / 30.0)) * 2.0) / 3.0;
     return ret;
   },
   transformLng: function (x, y) {
     var ret = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x));
     ret += ((20.0 * Math.sin(6.0 * x * this.PI) + 20.0 * Math.sin(2.0 * x * this.PI)) * 2.0) / 3.0;
     ret += ((20.0 * Math.sin(x * this.PI) + 40.0 * Math.sin((x / 3.0) * this.PI)) * 2.0) / 3.0;
-    ret += ((150.0 * Math.sin((x / 12.0) * this.PI) + 300.0 * Math.sin((x / 30.0) * this.PI)) * 2.0) / 3.0;
+    ret +=
+      ((150.0 * Math.sin((x / 12.0) * this.PI) + 300.0 * Math.sin((x / 30.0) * this.PI)) * 2.0) /
+      3.0;
     return ret;
-  }
+  },
 };

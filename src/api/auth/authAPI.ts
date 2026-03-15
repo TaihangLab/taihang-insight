@@ -8,15 +8,15 @@
  * 4. 使用自定义响应拦截器处理 401 错误和登录页面跳转
  */
 
-import router from '@/router'
-import { authAxios, createAxiosInstance } from '@/api/commons'
+import router from "@/router";
+import { authAxios, createAxiosInstance } from "@/api/commons";
 import type {
   AuthInfoResponse,
   AuthPermissionsResponse,
   LoginRequest,
   LoginResponse,
-  MenuItem
-} from '@/types/auth'
+  MenuItem,
+} from "@/types/auth";
 
 /**
  * 响应拦截器工厂
@@ -25,33 +25,33 @@ import type {
 const createAuthResponseInterceptor = (instance: any) => {
   instance.interceptors.response.use(
     (response: any) => {
-      return response.data
+      return response.data;
     },
     (error: any) => {
       if (error.response?.status === 401) {
         // 清除认证缓存数据（保留 token，等待用户重新登录）
         try {
-          const authData = localStorage.getItem('taihang-auth')
+          const authData = localStorage.getItem("taihang-auth");
           if (authData) {
-            const parsed = JSON.parse(authData)
+            const parsed = JSON.parse(authData);
             // 清除 userInfo, permissions, menuTree，保留 token
-            parsed.userInfo = null
-            parsed.permissions = []
-            parsed.menuTree = []
-            parsed.isLoggedIn = false
-            localStorage.setItem('taihang-auth', JSON.stringify(parsed))
+            parsed.userInfo = null;
+            parsed.permissions = [];
+            parsed.menuTree = [];
+            parsed.isLoggedIn = false;
+            localStorage.setItem("taihang-auth", JSON.stringify(parsed));
           }
         } catch (e) {
-          console.warn('清除认证数据失败:', e)
+          console.warn("清除认证数据失败:", e);
         }
 
         // 使用 router 跳转到登录页，避免页面刷新导致日志丢失
-        router.push('/login')
+        router.push("/login");
       }
-      return Promise.reject(error)
-    }
-  )
-}
+      return Promise.reject(error);
+    },
+  );
+};
 
 /**
  * 无需认证的 axios 实例
@@ -59,16 +59,14 @@ const createAuthResponseInterceptor = (instance: any) => {
  */
 const unAuthAxios = createAxiosInstance(
   {
-    baseURL: import.meta.env.VITE_API_BASE_URL || '',
-    timeout: 10000
+    baseURL: import.meta.env.VITE_API_BASE_URL || "",
+    timeout: 10000,
   },
   {
     skipAuth: true, // 跳过 Authorization
-    customResponseInterceptor: createAuthResponseInterceptor
-  }
-)
-
-
+    customResponseInterceptor: createAuthResponseInterceptor,
+  },
+);
 
 /**
  * 认证 API 类
@@ -79,7 +77,7 @@ class AuthAPI {
    * POST /api/v1/login
    */
   async login(params: LoginRequest): Promise<LoginResponse> {
-    return unAuthAxios.post('/api/v1/login', params)
+    return unAuthAxios.post("/api/v1/login", params);
   }
 
   /**
@@ -89,7 +87,7 @@ class AuthAPI {
    * 注意：响应拦截器已提取 data.data，直接返回内层数据
    */
   async getUserInfo(): Promise<AuthInfoResponse> {
-    return authAxios.get('/api/v1/info')
+    return authAxios.get("/api/v1/info");
   }
 
   /**
@@ -99,7 +97,7 @@ class AuthAPI {
    * 注意：响应拦截器已提取 data.data，直接返回内层数据
    */
   async getPermissions(): Promise<AuthPermissionsResponse> {
-    return authAxios.get('/api/v1/permissions')
+    return authAxios.get("/api/v1/permissions");
   }
 
   /**
@@ -120,8 +118,12 @@ class AuthAPI {
    *
    * 注意：响应拦截器已提取 data.data，直接返回内层数据
    */
-  async getMenuTree(): Promise<{ user_id: number | string; user_name: string; menu_tree: MenuItem[] }> {
-    return authAxios.get('/api/v1/menu')
+  async getMenuTree(): Promise<{
+    user_id: number | string;
+    user_name: string;
+    menu_tree: MenuItem[];
+  }> {
+    return authAxios.get("/api/v1/menu");
   }
 }
 
@@ -129,8 +131,8 @@ class AuthAPI {
  * 创建单例实例
  */
 export function createAuthAPI(): AuthAPI {
-  return new AuthAPI()
+  return new AuthAPI();
 }
 
 // 导出默认实例
-export default createAuthAPI()
+export default createAuthAPI();

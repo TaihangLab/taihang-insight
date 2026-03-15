@@ -9,14 +9,14 @@
  * message 为 null 时表示成功或无消息
  */
 export interface UnifiedResponse<T = any> {
-  code: number
-  message: string | null
-  data: T
-  total?: number
-  page?: number
-  page_size?: number
-  limit?: number
-  pages?: number
+  code: number;
+  message: string | null;
+  data: T;
+  total?: number;
+  page?: number;
+  page_size?: number;
+  limit?: number;
+  pages?: number;
 }
 
 /**
@@ -24,18 +24,18 @@ export interface UnifiedResponse<T = any> {
  * @deprecated 使用 UnifiedResponse 替代
  */
 export interface RBACResponse<T = any> {
-  code: number
-  message: string | null
-  data: T
+  code: number;
+  message: string | null;
+  data: T;
 }
 
 /**
  * 分页参数
  */
 export interface PageParams {
-  page?: number
-  limit?: number
-  page_size?: number
+  page?: number;
+  limit?: number;
+  page_size?: number;
 }
 
 /**
@@ -43,35 +43,35 @@ export interface PageParams {
  * 后端返回格式：{ data: T[], total, page, page_size }
  */
 export interface FlatPaginationResponse<T = any> {
-  data: T[]
-  total: number
-  page: number
-  page_size?: number
-  limit?: number
-  pages?: number
+  data: T[];
+  total: number;
+  page: number;
+  page_size?: number;
+  limit?: number;
+  pages?: number;
 }
 
 /**
  * 分页数据（向后兼容的别名）
  */
-export type PaginationData<T = any> = FlatPaginationResponse<T>
+export type PaginationData<T = any> = FlatPaginationResponse<T>;
 
 /**
  * 通用的键值对类型
  */
-export type RecordType<T = any> = Record<string, T>
+export type RecordType<T = any> = Record<string, T>;
 
 /**
  * ID 类型
  */
-export type ID = string | number
+export type ID = string | number;
 
 /**
  * 时间戳类型
  */
-export type Timestamp = string | number | Date
+export type Timestamp = string | number | Date;
 
 /**
  * 可选的异步函数类型
  */
-export type AsyncFunction<T = any> = (...args: any[]) => Promise<T>
+export type AsyncFunction<T = any> = (...args: any[]) => Promise<T>;

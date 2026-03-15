@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia'
-import storage from './storage'
-import { StorageKey } from './storageKeys'
+import { defineStore } from "pinia";
+import storage from "./storage";
+import { StorageKey } from "./storageKeys";
 
 /**
  * 临时数据 Store
@@ -11,59 +11,56 @@ import { StorageKey } from './storageKeys'
  *
  * 这些数据通过 localStorage 持久化，以便在页面跳转时保留
  */
-export const useTempStore = defineStore('temp', () => {
+export const useTempStore = defineStore("temp", () => {
   // ========== 技能编辑相关 ==========
 
   /**
    * 获取技能编辑信息
    */
   function getEditSkillInfo(): any | null {
-    return storage.getEditSkillInfo()
+    return storage.getEditSkillInfo();
   }
 
   /**
    * 设置技能编辑信息
    */
   function setEditSkillInfo(info: any): void {
-    storage.setEditSkillInfo(info)
+    storage.setEditSkillInfo(info);
   }
 
   /**
    * 清除技能编辑信息
    */
   function clearEditSkillInfo(): void {
-    storage.removeEditSkillInfo()
+    storage.removeEditSkillInfo();
   }
 
   /**
    * 获取临时技能信息
    */
   function getTempSkillInfo(): any | null {
-    return storage.getTempSkillInfo()
+    return storage.getTempSkillInfo();
   }
 
   /**
    * 设置临时技能信息
    */
   function setTempSkillInfo(info: any): void {
-    storage.setTempSkillInfo(info)
+    storage.setTempSkillInfo(info);
   }
 
   /**
    * 清除临时技能信息
    */
   function clearTempSkillInfo(): void {
-    storage.removeTempSkillInfo()
+    storage.removeTempSkillInfo();
   }
 
   /**
    * 清除所有临时数据
    */
   function clearAllTempData(): void {
-    storage.removeMultiple(
-      StorageKey.EDIT_SKILL_INFO,
-      StorageKey.TEMP_SKILL_INFO
-    )
+    storage.removeMultiple(StorageKey.EDIT_SKILL_INFO, StorageKey.TEMP_SKILL_INFO);
   }
 
   return {
@@ -78,6 +75,6 @@ export const useTempStore = defineStore('temp', () => {
     clearTempSkillInfo,
 
     // 清除所有
-    clearAllTempData
-  }
-})
+    clearAllTempData,
+  };
+});

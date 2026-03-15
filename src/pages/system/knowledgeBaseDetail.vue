@@ -4,21 +4,27 @@
       <!-- 左侧菜单 -->
       <div class="left-panel">
         <div class="menu-container">
-                  <div class="knowledge-info">
-          <div class="knowledge-header">
-            <el-button link icon="el-icon-arrow-left" @click="goBack" class="back-button"></el-button>
-            <div class="knowledge-name">{{ knowledgeName }}</div>
+          <div class="knowledge-info">
+            <div class="knowledge-header">
+              <el-button
+                link
+                icon="el-icon-arrow-left"
+                @click="goBack"
+                class="back-button"
+              ></el-button>
+              <div class="knowledge-name">{{ knowledgeName }}</div>
+            </div>
+            <div class="knowledge-id">ID: {{ knowledgeId }}</div>
           </div>
-          <div class="knowledge-id">ID: {{ knowledgeId }}</div>
-        </div>
-          
+
           <div class="menu-list">
-            <div 
-              v-for="item in menuItems" 
+            <div
+              v-for="item in menuItems"
               :key="item.key"
               class="menu-item"
               :class="{ active: activeMenu === item.key }"
-              @click="switchMenu(item.key)">
+              @click="switchMenu(item.key)"
+            >
               <i :class="item.icon"></i>
               <span>{{ item.label }}</span>
             </div>
@@ -40,7 +46,7 @@
                 刷新
               </el-button>
             </div>
-            
+
             <div class="right-info">
               <div class="stats">
                 <span class="stat-item">
@@ -72,65 +78,100 @@
               class="custom-table"
               style="width: 100%"
               table-layout="fixed"
-              size="medium">
-              
-              <el-table-column prop="fileName" label="文档名称" width="150" align="center" show-overflow-tooltip>
+              size="medium"
+            >
+              <el-table-column
+                prop="fileName"
+                label="文档名称"
+                width="150"
+                align="center"
+                show-overflow-tooltip
+              >
                 <template #default="scope">
                   <span class="file-name">{{ scope.row.fileName }}</span>
                 </template>
               </el-table-column>
-              
+
               <el-table-column prop="source" label="文档来源" width="100" align="center">
                 <template #default="scope">
                   <el-tag size="small" type="info">{{ scope.row.source }}</el-tag>
                 </template>
               </el-table-column>
-              
-              <el-table-column prop="characterCount" label="字符数" width="80" align="center"></el-table-column>
-              
-              <el-table-column prop="chunkCount" label="切片数量" width="90" align="center"></el-table-column>
-              
+
+              <el-table-column
+                prop="characterCount"
+                label="字符数"
+                width="80"
+                align="center"
+              ></el-table-column>
+
+              <el-table-column
+                prop="chunkCount"
+                label="切片数量"
+                width="90"
+                align="center"
+              ></el-table-column>
+
               <el-table-column prop="uploadTime" label="上传时间" width="150" align="center">
                 <template #default="scope">
-                  <span style="font-size: 12px;">{{ scope.row.uploadTime }}</span>
+                  <span style="font-size: 12px">{{ scope.row.uploadTime }}</span>
                 </template>
               </el-table-column>
-              
+
               <el-table-column prop="status" label="文档状态" width="90" align="center">
                 <template #default="scope">
-                  <el-tag 
-                    size="small" 
-                    :type="getStatusType(scope.row.status)">
+                  <el-tag size="small" :type="getStatusType(scope.row.status)">
                     {{ scope.row.status }}
                   </el-tag>
                 </template>
               </el-table-column>
-              
+
               <el-table-column prop="fileSize" label="文档大小" width="100" align="center">
                 <template #default="scope">
-                  <span style="font-size: 12px;">{{ scope.row.fileSize }}</span>
+                  <span style="font-size: 12px">{{ scope.row.fileSize }}</span>
                 </template>
               </el-table-column>
-              
-              <el-table-column prop="logs" label="执行日志" width="120" align="center" show-overflow-tooltip>
+
+              <el-table-column
+                prop="logs"
+                label="执行日志"
+                width="120"
+                align="center"
+                show-overflow-tooltip
+              >
                 <template #default="scope">
                   <span class="log-text">{{ scope.row.logs }}</span>
                 </template>
               </el-table-column>
-              
+
               <el-table-column label="操作" width="130" align="center">
                 <template #default="scope">
                   <div class="operation-buttons">
                     <el-button link class="view-btn" @click="viewDocument(scope.row)" title="查看">
                       <i class="el-icon-view"></i>
                     </el-button>
-                    <el-button link class="download-btn" @click="downloadDocument(scope.row)" title="下载">
+                    <el-button
+                      link
+                      class="download-btn"
+                      @click="downloadDocument(scope.row)"
+                      title="下载"
+                    >
                       <i class="el-icon-download"></i>
                     </el-button>
-                    <el-button link class="refresh-btn" @click="refreshDocument(scope.row)" title="刷新">
+                    <el-button
+                      link
+                      class="refresh-btn"
+                      @click="refreshDocument(scope.row)"
+                      title="刷新"
+                    >
                       <i class="el-icon-refresh"></i>
                     </el-button>
-                    <el-button link class="delete-btn" @click="deleteDocument(scope.row)" title="删除">
+                    <el-button
+                      link
+                      class="delete-btn"
+                      @click="deleteDocument(scope.row)"
+                      title="删除"
+                    >
                       <i class="el-icon-delete"></i>
                     </el-button>
                   </div>
@@ -147,8 +188,8 @@
                 :page-sizes="[10, 20, 50, 100]"
                 :page-size="pageSize"
                 layout="total, sizes, prev, pager, next, jumper"
-                :total="totalDocuments">
-              </el-pagination>
+                :total="totalDocuments"
+              ></el-pagination>
             </div>
           </div>
         </div>
@@ -158,20 +199,36 @@
           <!-- 操作栏 -->
           <div class="toolbar tech-toolbar">
             <div class="left-actions">
-              <el-button type="primary" icon="el-icon-plus" size="small" @click="addPresetAnswer" class="tech-primary-btn">
+              <el-button
+                type="primary"
+                icon="el-icon-plus"
+                size="small"
+                @click="addPresetAnswer"
+                class="tech-primary-btn"
+              >
                 批量录入新问题
               </el-button>
-              <el-button icon="el-icon-refresh" size="small" @click="refreshPresetAnswers" class="tech-refresh-btn">
+              <el-button
+                icon="el-icon-refresh"
+                size="small"
+                @click="refreshPresetAnswers"
+                class="tech-refresh-btn"
+              >
                 刷新
               </el-button>
-              <el-button icon="el-icon-download" size="small" @click="downloadTemplate" class="tech-download-btn">
+              <el-button
+                icon="el-icon-download"
+                size="small"
+                @click="downloadTemplate"
+                class="tech-download-btn"
+              >
                 下载模板
               </el-button>
               <el-button icon="el-icon-view" size="small" @click="viewInGrid" class="tech-view-btn">
                 切换网格视图
               </el-button>
             </div>
-            
+
             <div class="right-info">
               <div class="stats tech-stats">
                 <span class="stat-item">
@@ -195,45 +252,72 @@
               class="tech-table"
               style="width: 100%"
               table-layout="fixed"
-              size="medium">
-              
-              <el-table-column prop="question" label="问题" width="320" align="left" show-overflow-tooltip>
+              size="medium"
+            >
+              <el-table-column
+                prop="question"
+                label="问题"
+                width="320"
+                align="left"
+                show-overflow-tooltip
+              >
                 <template #default="scope">
                   <div class="question-cell">
-                    <el-tag size="small" :type="getQuestionTagType(scope.row.question)" class="question-tag">
+                    <el-tag
+                      size="small"
+                      :type="getQuestionTagType(scope.row.question)"
+                      class="question-tag"
+                    >
                       {{ getQuestionCategory(scope.row.question) }}
                     </el-tag>
                     <span class="question-text">{{ scope.row.question }}</span>
                   </div>
                 </template>
               </el-table-column>
-              
-              <el-table-column prop="answer" label="答案" width="600" align="left" show-overflow-tooltip>
+
+              <el-table-column
+                prop="answer"
+                label="答案"
+                width="600"
+                align="left"
+                show-overflow-tooltip
+              >
                 <template #default="scope">
                   <div class="answer-cell">
                     <span class="answer-text">{{ scope.row.answer }}</span>
                   </div>
                 </template>
               </el-table-column>
-              
+
               <el-table-column prop="trainedStatus" label="切配状态" width="100" align="center">
                 <template #default="scope">
-                  <el-tag 
-                    size="small" 
+                  <el-tag
+                    size="small"
                     :type="scope.row.trainedStatus ? 'success' : 'warning'"
-                    class="tech-status-tag">
-                    {{ scope.row.trainedStatus ? '已训练' : '未训练' }}
+                    class="tech-status-tag"
+                  >
+                    {{ scope.row.trainedStatus ? "已训练" : "未训练" }}
                   </el-tag>
                 </template>
               </el-table-column>
-              
+
               <el-table-column label="操作" width="100" align="center">
                 <template #default="scope">
                   <div class="operation-buttons tech-operations">
-                    <el-button link class="tech-edit-btn" @click="editPresetAnswer(scope.row)" title="编辑">
+                    <el-button
+                      link
+                      class="tech-edit-btn"
+                      @click="editPresetAnswer(scope.row)"
+                      title="编辑"
+                    >
                       编辑
                     </el-button>
-                    <el-button link class="tech-delete-btn" @click="deletePresetAnswer(scope.row)" title="删除">
+                    <el-button
+                      link
+                      class="tech-delete-btn"
+                      @click="deletePresetAnswer(scope.row)"
+                      title="删除"
+                    >
                       删除
                     </el-button>
                   </div>
@@ -254,8 +338,8 @@
                 :page-size="presetPageSize"
                 layout="sizes, prev, pager, next, jumper"
                 :total="totalPresetAnswers"
-                class="tech-pagination-controls">
-              </el-pagination>
+                class="tech-pagination-controls"
+              ></el-pagination>
             </div>
           </div>
         </div>
@@ -266,7 +350,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 执行日志弹框 -->
     <el-dialog
       title="执行日志"
@@ -274,8 +358,8 @@
       width="800px"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
-      custom-class="log-dialog">
-      
+      custom-class="log-dialog"
+    >
       <div class="log-content">
         <pre class="log-text-content">{{ currentLogContent }}</pre>
       </div>
@@ -285,41 +369,41 @@
 
 <script>
 export default {
-  name: 'KnowledgeBaseDetail',
+  name: "KnowledgeBaseDetail",
   data() {
     return {
       // 路由参数
-      knowledgeId: '',
-      knowledgeName: '',
-      
+      knowledgeId: "",
+      knowledgeName: "",
+
       // 菜单相关
-      activeMenu: 'documents',
+      activeMenu: "documents",
       menuItems: [
-        { key: 'documents', label: '文档列表', icon: 'el-icon-document' },
-        { key: 'import', label: '数据导入', icon: 'el-icon-upload2' },
-        { key: 'search', label: '向量搜索', icon: 'el-icon-search' },
-        { key: 'preset', label: '预设回答', icon: 'el-icon-chat-dot-round' },
-        { key: 'settings', label: '设置', icon: 'el-icon-setting' }
+        { key: "documents", label: "文档列表", icon: "el-icon-document" },
+        { key: "import", label: "数据导入", icon: "el-icon-upload2" },
+        { key: "search", label: "向量搜索", icon: "el-icon-search" },
+        { key: "preset", label: "预设回答", icon: "el-icon-chat-dot-round" },
+        { key: "settings", label: "设置", icon: "el-icon-setting" },
       ],
-      
+
       // 表格数据
       documentData: [],
       loading: false,
-      
+
       // 分页
       currentPage: 1,
       pageSize: 10,
-      
+
       // 统计数据
       totalDocuments: 419,
       completionRate: 100,
       completedCount: 0,
       failedCount: 0,
-      
+
       // 日志弹框相关
       logDialogVisible: false,
-      currentLogContent: '',
-      
+      currentLogContent: "",
+
       // 预设回答相关
       presetAnswerData: [],
       presetLoading: false,
@@ -328,281 +412,291 @@ export default {
       totalPresetAnswers: 123,
       enabledPresetCount: 103,
       disabledPresetCount: 20,
-      
+
       // 预设回答示例数据
       mockPresetAnswers: [
         {
           id: 1,
-          question: '重点企业扶本人才奖励政策',
-          answer: '营业某况政清单（T1）事项名称企业业务人才奖励政策助方名企业申请政府依据《山西...',
+          question: "重点企业扶本人才奖励政策",
+          answer: "营业某况政清单（T1）事项名称企业业务人才奖励政策助方名企业申请政府依据《山西...",
           trainedStatus: true,
-          category: 'policy'
+          category: "policy",
         },
         {
           id: 2,
-          question: '社保开户怎么办理',
-          answer: '根据《国家税务总局山西省税务局 山西省财政厅山西省人力资源和社会保障厅 中国人民...',
+          question: "社保开户怎么办理",
+          answer:
+            "根据《国家税务总局山西省税务局 山西省财政厅山西省人力资源和社会保障厅 中国人民...",
           trainedStatus: true,
-          category: 'procedure'
+          category: "procedure",
         },
         {
           id: 3,
-          question: '社保开户怎么办理',
-          answer: '根据《国家税务总局山西省税务局 山西省财政厅山西省人力资源和社会保障厅 中国人民...',
+          question: "社保开户怎么办理",
+          answer:
+            "根据《国家税务总局山西省税务局 山西省财政厅山西省人力资源和社会保障厅 中国人民...",
           trainedStatus: true,
-          category: 'procedure'
+          category: "procedure",
         },
         {
           id: 4,
-          question: '社保开户怎么办理',
-          answer: '根据《国家税务总局山西省税务局 山西省财政厅山西省人力资源和社会保障厅 中国人民...',
+          question: "社保开户怎么办理",
+          answer:
+            "根据《国家税务总局山西省税务局 山西省财政厅山西省人力资源和社会保障厅 中国人民...",
           trainedStatus: true,
-          category: 'procedure'
+          category: "procedure",
         },
         {
           id: 5,
-          question: '检验检测机构资质认定（合计算认证）',
-          answer: '办理地点：太原市龙藏街15号山西省政务服务大楼四 办理时间：周一至周五上午8...',
+          question: "检验检测机构资质认定（合计算认证）",
+          answer: "办理地点：太原市龙藏街15号山西省政务服务大楼四 办理时间：周一至周五上午8...",
           trainedStatus: true,
-          category: 'certification'
+          category: "certification",
         },
         {
           id: 6,
-          question: '检验检测机构资质认定（合计算认证）扩项',
-          answer: '办理地点：太原市龙藏街15号山西省政务服务大楼四 办理时间：周一至周五上午8...',
+          question: "检验检测机构资质认定（合计算认证）扩项",
+          answer: "办理地点：太原市龙藏街15号山西省政务服务大楼四 办理时间：周一至周五上午8...",
           trainedStatus: true,
-          category: 'certification'
+          category: "certification",
         },
         {
           id: 7,
-          question: '计量票据票式批准（试行地政策）（名称变更）',
-          answer: '办理地点：太原市龙藏街15号山西省政务服务大楼四 办理时间：周一至周五上午8...',
+          question: "计量票据票式批准（试行地政策）（名称变更）",
+          answer: "办理地点：太原市龙藏街15号山西省政务服务大楼四 办理时间：周一至周五上午8...",
           trainedStatus: true,
-          category: 'approval'
+          category: "approval",
         },
         {
           id: 8,
-          question: '计量票据票式批准',
-          answer: '办理地点：太原市龙藏街15号山西省政务服务大楼四 办理时间：周一至周五上午8...',
+          question: "计量票据票式批准",
+          answer: "办理地点：太原市龙藏街15号山西省政务服务大楼四 办理时间：周一至周五上午8...",
           trainedStatus: true,
-          category: 'approval'
+          category: "approval",
         },
         {
           id: 9,
-          question: '计量标准器具检定（新建）',
-          answer: '办理地点：太原市龙藏街15号山西省政务服务大楼四 办理时间：周一至周五上午8...',
+          question: "计量标准器具检定（新建）",
+          answer: "办理地点：太原市龙藏街15号山西省政务服务大楼四 办理时间：周一至周五上午8...",
           trainedStatus: true,
-          category: 'inspection'
+          category: "inspection",
         },
         {
           id: 10,
-          question: '计量标准器具检定（复查）',
-          answer: '办理地点：太原市龙藏街15号山西省政务服务大楼四 办理时间：周一至周五上午8...',
+          question: "计量标准器具检定（复查）",
+          answer: "办理地点：太原市龙藏街15号山西省政务服务大楼四 办理时间：周一至周五上午8...",
           trainedStatus: true,
-          category: 'inspection'
-        }
+          category: "inspection",
+        },
       ],
-      
+
       // 示例数据
       mockDocuments: [
         {
           id: 1,
-          fileName: 'PHSQ11.docx',
-          source: '文档上传',
+          fileName: "PHSQ11.docx",
+          source: "文档上传",
           characterCount: 867,
           chunkCount: 1,
-          uploadTime: '2025-07-15 17:44:39',
-          status: '已完成',
-          fileSize: '128.99 KB',
-          logs: '===================='
+          uploadTime: "2025-07-15 17:44:39",
+          status: "已完成",
+          fileSize: "128.99 KB",
+          logs: "====================",
         },
         {
           id: 2,
-          fileName: 'PHSQ07.docx',
-          source: '文档上传',
+          fileName: "PHSQ07.docx",
+          source: "文档上传",
           characterCount: 427,
           chunkCount: 1,
-          uploadTime: '2025-07-15 17:37:40',
-          status: '已完成',
-          fileSize: '107.40 KB',
-          logs: '===================='
+          uploadTime: "2025-07-15 17:37:40",
+          status: "已完成",
+          fileSize: "107.40 KB",
+          logs: "====================",
         },
         {
           id: 3,
-          fileName: 'PHSQ13.docx',
-          source: '文档上传',
+          fileName: "PHSQ13.docx",
+          source: "文档上传",
           characterCount: 835,
           chunkCount: 1,
-          uploadTime: '2025-07-15 17:37:40',
-          status: '已完成',
-          fileSize: '131.71 KB',
-          logs: '===================='
+          uploadTime: "2025-07-15 17:37:40",
+          status: "已完成",
+          fileSize: "131.71 KB",
+          logs: "====================",
         },
         {
           id: 4,
-          fileName: 'PHSQ05.docx',
-          source: '文档上传',
+          fileName: "PHSQ05.docx",
+          source: "文档上传",
           characterCount: 386,
           chunkCount: 1,
-          uploadTime: '2025-07-15 17:37:40',
-          status: '已完成',
-          fileSize: '101.80 KB',
-          logs: '===================='
+          uploadTime: "2025-07-15 17:37:40",
+          status: "已完成",
+          fileSize: "101.80 KB",
+          logs: "====================",
         },
         {
           id: 5,
-          fileName: 'PHSQ11.docx',
-          source: '文档上传',
+          fileName: "PHSQ11.docx",
+          source: "文档上传",
           characterCount: 867,
           chunkCount: 1,
-          uploadTime: '2025-07-15 17:37:40',
-          status: '已完成',
-          fileSize: '128.99 KB',
-          logs: '===================='
+          uploadTime: "2025-07-15 17:37:40",
+          status: "已完成",
+          fileSize: "128.99 KB",
+          logs: "====================",
         },
         {
           id: 6,
-          fileName: 'PHSQ08.docx',
-          source: '文档上传',
+          fileName: "PHSQ08.docx",
+          source: "文档上传",
           characterCount: 324,
           chunkCount: 1,
-          uploadTime: '2025-07-15 17:37:40',
-          status: '已完成',
-          fileSize: '106.17 KB',
-          logs: '===================='
+          uploadTime: "2025-07-15 17:37:40",
+          status: "已完成",
+          fileSize: "106.17 KB",
+          logs: "====================",
         },
         {
           id: 7,
-          fileName: 'PHSQ03.docx',
-          source: '文档上传',
+          fileName: "PHSQ03.docx",
+          source: "文档上传",
           characterCount: 666,
           chunkCount: 1,
-          uploadTime: '2025-07-15 17:37:40',
-          status: '已完成',
-          fileSize: '117.01 KB',
-          logs: '===================='
+          uploadTime: "2025-07-15 17:37:40",
+          status: "已完成",
+          fileSize: "117.01 KB",
+          logs: "====================",
         },
         {
           id: 8,
-          fileName: 'PHSQ02.docx',
-          source: '文档上传',
+          fileName: "PHSQ02.docx",
+          source: "文档上传",
           characterCount: 416,
           chunkCount: 1,
-          uploadTime: '2025-07-15 17:37:40',
-          status: '已完成',
-          fileSize: '104.59 KB',
-          logs: '===================='
+          uploadTime: "2025-07-15 17:37:40",
+          status: "已完成",
+          fileSize: "104.59 KB",
+          logs: "====================",
         },
         {
           id: 9,
-          fileName: 'PHSQ10.docx',
-          source: '文档上传',
+          fileName: "PHSQ10.docx",
+          source: "文档上传",
           characterCount: 376,
           chunkCount: 1,
-          uploadTime: '2025-07-15 17:37:40',
-          status: '已完成',
-          fileSize: '101.71 KB',
-          logs: '===================='
+          uploadTime: "2025-07-15 17:37:40",
+          status: "已完成",
+          fileSize: "101.71 KB",
+          logs: "====================",
         },
         {
           id: 10,
-          fileName: 'PHSQ06.docx',
-          source: '文档上传',
+          fileName: "PHSQ06.docx",
+          source: "文档上传",
           characterCount: 457,
           chunkCount: 1,
-          uploadTime: '2025-07-15 17:37:40',
-          status: '已完成',
-          fileSize: '101.55 KB',
-          logs: '===================='
-        }
-      ]
-    }
+          uploadTime: "2025-07-15 17:37:40",
+          status: "已完成",
+          fileSize: "101.55 KB",
+          logs: "====================",
+        },
+      ],
+    };
   },
-  
+
   created() {
     // 获取路由参数
-    this.knowledgeId = this.$route.query.id || '1'
-    this.knowledgeName = this.$route.query.name || '综改区助手'
-    
+    this.knowledgeId = this.$route.query.id || "1";
+    this.knowledgeName = this.$route.query.name || "综改区助手";
+
     // 加载数据
-    this.loadDocuments()
+    this.loadDocuments();
   },
-  
+
   methods: {
     // 切换菜单
     switchMenu(menuKey) {
-      this.activeMenu = menuKey
-      if (menuKey === 'documents') {
-        this.loadDocuments()
-      } else if (menuKey === 'preset') {
-        this.loadPresetAnswers()
+      this.activeMenu = menuKey;
+      if (menuKey === "documents") {
+        this.loadDocuments();
+      } else if (menuKey === "preset") {
+        this.loadPresetAnswers();
       }
     },
-    
+
     // 获取当前菜单标签
     getCurrentMenuLabel() {
-      const item = this.menuItems.find(item => item.key === this.activeMenu)
-      return item ? item.label : ''
+      const item = this.menuItems.find((item) => item.key === this.activeMenu);
+      return item ? item.label : "";
     },
-    
+
     // 加载文档数据
     async loadDocuments() {
       try {
-        this.loading = true
+        this.loading = true;
         // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 800))
-        
+        await new Promise((resolve) => setTimeout(resolve, 800));
+
         this.documentData = this.mockDocuments.slice(
           (this.currentPage - 1) * this.pageSize,
-          this.currentPage * this.pageSize
-        )
-        
+          this.currentPage * this.pageSize,
+        );
+
         // 计算统计数据
-        this.completedCount = this.mockDocuments.filter(doc => doc.status === '已完成').length
-        this.failedCount = this.mockDocuments.filter(doc => doc.status === '失败').length
-        this.completionRate = Math.round((this.completedCount / this.totalDocuments) * 100)
-        
+        this.completedCount = this.mockDocuments.filter((doc) => doc.status === "已完成").length;
+        this.failedCount = this.mockDocuments.filter((doc) => doc.status === "失败").length;
+        this.completionRate = Math.round((this.completedCount / this.totalDocuments) * 100);
       } catch (error) {
-        console.error('加载文档列表失败:', error)
-        this.$message.error('加载文档列表失败')
+        console.error("加载文档列表失败:", error);
+        this.$message.error("加载文档列表失败");
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
-    
+
     // 获取状态标签类型
     getStatusType(status) {
       switch (status) {
-        case '已完成': return 'success'
-        case '处理中': return 'warning'
-        case '失败': return 'danger'
-        default: return 'info'
+        case "已完成":
+          return "success";
+        case "处理中":
+          return "warning";
+        case "失败":
+          return "danger";
+        default:
+          return "info";
       }
     },
-    
+
     // 文档操作方法
     importDocument() {
-      this.$message.info('导入新文档功能开发中...')
+      this.$message.info("导入新文档功能开发中...");
     },
-    
+
     refreshDocuments() {
-      this.loadDocuments()
-      this.$message.success('文档列表已刷新')
+      this.loadDocuments();
+      this.$message.success("文档列表已刷新");
     },
-    
+
     viewDocument(row) {
       // 生成日志内容
-      this.currentLogContent = this.generateLogContent(row)
-      this.logDialogVisible = true
+      this.currentLogContent = this.generateLogContent(row);
+      this.logDialogVisible = true;
     },
-    
+
     // 生成日志内容
     generateLogContent(row) {
-      const now = new Date()
+      const now = new Date();
       const formatTime = (date) => {
-        return date.toISOString().replace('T', 'T').slice(0, -5) + '.' + Math.floor(Math.random() * 1000000000)
-      }
-      
+        return (
+          date.toISOString().replace("T", "T").slice(0, -5) +
+          "." +
+          Math.floor(Math.random() * 1000000000)
+        );
+      };
+
       return `===============================================================
                     文档向量化处理开始
 ===============================================================
@@ -619,142 +713,145 @@ export default {
 字符数量: ${row.characterCount}
 切片数量: ${row.chunkCount}
 成功时间: ${formatTime(new Date(now.getTime() + 1000))}
-===============================================================`
+===============================================================`;
     },
-    
+
     downloadDocument(row) {
-      this.$message.info(`下载文档: ${row.fileName}`)
+      this.$message.info(`下载文档: ${row.fileName}`);
     },
-    
+
     refreshDocument(row) {
-      this.$message.info(`重新处理文档: ${row.fileName}`)
+      this.$message.info(`重新处理文档: ${row.fileName}`);
     },
-    
+
     deleteDocument(row) {
-      this.$confirm(`确认删除文档 "${row.fileName}" 吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.$message.success('删除成功')
-        this.loadDocuments()
-      }).catch(() => {
-        this.$message.info('已取消删除')
+      this.$confirm(`确认删除文档 "${row.fileName}" 吗？`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
       })
+        .then(() => {
+          this.$message.success("删除成功");
+          this.loadDocuments();
+        })
+        .catch(() => {
+          this.$message.info("已取消删除");
+        });
     },
-    
+
     // 分页方法
     handleSizeChange(size) {
-      this.pageSize = size
-      this.currentPage = 1
-      this.loadDocuments()
+      this.pageSize = size;
+      this.currentPage = 1;
+      this.loadDocuments();
     },
-    
+
     handleCurrentChange(page) {
-      this.currentPage = page
-      this.loadDocuments()
+      this.currentPage = page;
+      this.loadDocuments();
     },
-    
+
     // 返回知识库列表页
     goBack() {
-      this.$router.push('/systemManage/knowledgeBase')
+      this.$router.push("/systemManage/knowledgeBase");
     },
-    
+
     // 预设回答相关方法
     // 加载预设回答数据
     async loadPresetAnswers() {
       try {
-        this.presetLoading = true
+        this.presetLoading = true;
         // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 800))
-        
+        await new Promise((resolve) => setTimeout(resolve, 800));
+
         this.presetAnswerData = this.mockPresetAnswers.slice(
           (this.presetCurrentPage - 1) * this.presetPageSize,
-          this.presetCurrentPage * this.presetPageSize
-        )
-        
+          this.presetCurrentPage * this.presetPageSize,
+        );
       } catch (error) {
-        console.error('加载预设回答列表失败:', error)
-        this.$message.error('加载预设回答列表失败')
+        console.error("加载预设回答列表失败:", error);
+        this.$message.error("加载预设回答列表失败");
       } finally {
-        this.presetLoading = false
+        this.presetLoading = false;
       }
     },
-    
+
     // 获取问题标签类型
     getQuestionTagType(question) {
       const categoryMap = {
-        '重点企业': 'primary',
-        '社保': 'success',
-        '检验检测': 'warning',
-        '计量': 'info'
-      }
-      
+        重点企业: "primary",
+        社保: "success",
+        检验检测: "warning",
+        计量: "info",
+      };
+
       for (let key in categoryMap) {
         if (question.includes(key)) {
-          return categoryMap[key]
+          return categoryMap[key];
         }
       }
-      return 'default'
+      return "default";
     },
-    
+
     // 获取问题分类
     getQuestionCategory(question) {
-      if (question.includes('重点企业') || question.includes('人才')) return '重点企业扶持'
-      if (question.includes('社保')) return '社保开户'
-      if (question.includes('检验检测')) return '检验检测资质认定'
-      if (question.includes('计量')) return '计量票据'
-      return '其他'
+      if (question.includes("重点企业") || question.includes("人才")) return "重点企业扶持";
+      if (question.includes("社保")) return "社保开户";
+      if (question.includes("检验检测")) return "检验检测资质认定";
+      if (question.includes("计量")) return "计量票据";
+      return "其他";
     },
-    
+
     // 预设回答操作方法
     addPresetAnswer() {
-      this.$message.info('批量录入新问题功能开发中...')
+      this.$message.info("批量录入新问题功能开发中...");
     },
-    
+
     refreshPresetAnswers() {
-      this.loadPresetAnswers()
-      this.$message.success('预设回答列表已刷新')
+      this.loadPresetAnswers();
+      this.$message.success("预设回答列表已刷新");
     },
-    
+
     downloadTemplate() {
-      this.$message.info('下载模板功能开发中...')
+      this.$message.info("下载模板功能开发中...");
     },
-    
+
     viewInGrid() {
-      this.$message.info('切换网格视图功能开发中...')
+      this.$message.info("切换网格视图功能开发中...");
     },
-    
+
     editPresetAnswer(row) {
-      this.$message.info(`编辑预设回答: ${row.question}`)
+      this.$message.info(`编辑预设回答: ${row.question}`);
     },
-    
+
     deletePresetAnswer(row) {
-      this.$confirm(`确认删除预设回答 "${row.question}" 吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.$message.success('删除成功')
-        this.loadPresetAnswers()
-      }).catch(() => {
-        this.$message.info('已取消删除')
+      this.$confirm(`确认删除预设回答 "${row.question}" 吗？`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
       })
+        .then(() => {
+          this.$message.success("删除成功");
+          this.loadPresetAnswers();
+        })
+        .catch(() => {
+          this.$message.info("已取消删除");
+        });
     },
-    
+
     // 预设回答分页方法
     handlePresetSizeChange(size) {
-      this.presetPageSize = size
-      this.presetCurrentPage = 1
-      this.loadPresetAnswers()
+      this.presetPageSize = size;
+      this.presetCurrentPage = 1;
+      this.loadPresetAnswers();
     },
-    
+
     handlePresetCurrentChange(page) {
-      this.presetCurrentPage = page
-      this.loadPresetAnswers()
-    }
-  }
-}
+      this.presetCurrentPage = page;
+      this.loadPresetAnswers();
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -1115,8 +1212,8 @@ export default {
   display: flex;
   justify-content: center;
   background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  margin-top: 0 !important;
+  padding-bottom: 10px !important;
 }
 
 .pagination-container :deep(.el-pagination__total) {
@@ -1202,61 +1299,61 @@ export default {
   border: 1px solid #7dd3fc !important;
 }
 
-  /* 执行日志弹框样式 - 与 knowledgeBase.vue 编辑弹框保持一致 */
-  .knowledge-detail-container :deep(.el-dialog.log-dialog) {
-    border-radius: 12px !important;
-    overflow: hidden !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
-  }
+/* 执行日志弹框样式 - 与 knowledgeBase.vue 编辑弹框保持一致 */
+.knowledge-detail-container :deep(.el-dialog.log-dialog) {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
+}
 
-  .knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__header) {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-    border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
-    padding: 16px 20px !important;
-  }
+.knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__header) {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
+  padding: 16px 20px !important;
+}
 
-  .knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__title) {
-    color: #1f2937 !important;
-    font-weight: 600 !important;
-  }
+.knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__title) {
+  color: #1f2937 !important;
+  font-weight: 600 !important;
+}
 
-  .knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__close) {
-    color: #6b7280 !important;
-    transition: color 0.3s ease !important;
-  }
+.knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__close) {
+  color: #6b7280 !important;
+  transition: color 0.3s ease !important;
+}
 
-  .knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__close:hover) {
-    color: #3b82f6 !important;
-  }
+.knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__close:hover) {
+  color: #3b82f6 !important;
+}
 
-  .knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__body) {
-    padding: 20px !important;
-    background: #ffffff !important;
-    max-height: 500px !important;
-    overflow-y: auto !important;
-  }
+.knowledge-detail-container :deep(.el-dialog.log-dialog .el-dialog__body) {
+  padding: 20px !important;
+  background: #ffffff !important;
+  max-height: 500px !important;
+  overflow-y: auto !important;
+}
 
-  .log-content {
-    padding: 0;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    overflow: hidden;
-  }
+.log-content {
+  padding: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
 
-  .log-text-content {
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
-    font-size: 13px !important;
-    line-height: 1.5 !important;
-    color: #374151 !important;
-    background: #ffffff !important;
-    padding: 20px !important;
-    margin: 0 !important;
-    border: none !important;
-    white-space: pre-wrap !important;
-    word-wrap: break-word !important;
-    overflow-x: auto !important;
-  }
+.log-text-content {
+  font-family: "Consolas", "Monaco", "Courier New", monospace !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  color: #374151 !important;
+  background: #ffffff !important;
+  padding: 20px !important;
+  margin: 0 !important;
+  border: none !important;
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  overflow-x: auto !important;
+}
 
 /* 预设回答页面简洁白色主题样式 */
 .tech-toolbar {
@@ -1548,8 +1645,8 @@ export default {
   color: #606266 !important;
 }
 
-  /* 响应式设计 */
-  @media screen and (max-width: 1200px) {
+/* 响应式设计 */
+@media screen and (max-width: 1200px) {
   .content-layout {
     flex-direction: column;
     height: auto;
@@ -1614,4 +1711,4 @@ export default {
     font-size: 12px !important;
   }
 }
-</style> 
+</style>

@@ -28,58 +28,58 @@
 
 <script>
 export default {
-  name: 'DepartmentTreePanel',
+  name: "DepartmentTreePanel",
   data() {
     return {
-      filterText: '',
+      filterText: "",
       treeData: [
         {
           id: 1,
-          label: 'XXX科技',
+          label: "XXX科技",
           children: [
             {
               id: 2,
-              label: '深圳总公司',
+              label: "深圳总公司",
               children: [
-                { id: 3, label: '研发部门' },
-                { id: 4, label: '市场部门' },
-                { id: 5, label: '测试部门' },
-                { id: 6, label: '财务部门' },
-                { id: 7, label: '运维部门' }
-              ]
+                { id: 3, label: "研发部门" },
+                { id: 4, label: "市场部门" },
+                { id: 5, label: "测试部门" },
+                { id: 6, label: "财务部门" },
+                { id: 7, label: "运维部门" },
+              ],
             },
             {
               id: 8,
-              label: '长沙分公司',
+              label: "长沙分公司",
               children: [
-                { id: 9, label: '市场部门' },
-                { id: 10, label: '财务部门' }
-              ]
-            }
-          ]
-        }
+                { id: 9, label: "市场部门" },
+                { id: 10, label: "财务部门" },
+              ],
+            },
+          ],
+        },
       ],
       defaultProps: {
-        children: 'children',
-        label: 'label'
-      }
-    }
+        children: "children",
+        label: "label",
+      },
+    };
   },
   watch: {
     filterText(val) {
-      this.$refs.tree.filter(val)
-    }
+      this.$refs.tree.filter(val);
+    },
   },
   methods: {
     filterNode(value, data) {
-      if (!value) return true
-      return data.label.indexOf(value) !== -1
+      if (!value) return true;
+      return data.label.indexOf(value) !== -1;
     },
     handleNodeClick(data) {
-      this.$emit('node-click', data)
-    }
-  }
-}
+      this.$emit("node-click", data);
+    },
+  },
+};
 </script>
 
 <style scoped>

@@ -9,18 +9,25 @@
     @close="close"
     class="stream-proxy-dialog"
     :fullscreen="false"
-    custom-class="large-dialog">
-    
+    custom-class="large-dialog"
+  >
     <div id="StreamProxyEdit" style="width: 100%">
       <el-tabs tab-position="top" v-model="activeTab">
-        <el-tab-pane label="拉流代理信息" name="proxy" style="background-color: #FFFFFF; padding: 1rem">
-          <el-form ref="streamProxyForm" :rules="rules" :model="proxyParam" label-width="140px" style="width: 50%; margin: 0 auto" v-loading="dialogLoading">
+        <el-tab-pane
+          label="拉流代理信息"
+          name="proxy"
+          style="background-color: #ffffff; padding: 1rem"
+        >
+          <el-form
+            ref="streamProxyForm"
+            :rules="rules"
+            :model="proxyParam"
+            label-width="140px"
+            style="width: 50%; margin: 0 auto"
+            v-loading="dialogLoading"
+          >
             <el-form-item label="类型" prop="type">
-              <el-select
-                v-model="proxyParam.type"
-                style="width: 100%"
-                placeholder="请选择代理类型"
-              >
+              <el-select v-model="proxyParam.type" style="width: 100%" placeholder="请选择代理类型">
                 <el-option key="默认" label="默认" value="default"></el-option>
                 <el-option key="FFmpeg" label="FFmpeg" value="ffmpeg"></el-option>
               </el-select>
@@ -49,11 +56,15 @@
                   v-for="item in mediaServerList"
                   :key="item.id"
                   :label="item.id"
-                  :value="item.id">
-                </el-option>
+                  :value="item.id"
+                ></el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="FFmpeg命令模板" prop="ffmpegCmdKey" v-if="proxyParam.type=='ffmpeg'">
+            <el-form-item
+              label="FFmpeg命令模板"
+              prop="ffmpegCmdKey"
+              v-if="proxyParam.type == 'ffmpeg'"
+            >
               <el-select
                 v-model="proxyParam.ffmpegCmdKey"
                 style="width: 100%"
@@ -63,8 +74,8 @@
                   v-for="item in Object.keys(ffmpegCmdList)"
                   :key="item"
                   :label="ffmpegCmdList[item]"
-                  :value="item">
-                </el-option>
+                  :value="item"
+                ></el-option>
               </el-select>
             </el-form-item>
             <el-form-item label="拉流方式(RTSP)" prop="rtspType">
@@ -79,7 +90,7 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label="无人观看" prop="noneReader" >
+            <el-form-item label="无人观看" prop="noneReader">
               <el-radio-group v-model="proxyParam.noneReader">
                 <el-radio :label="0">不做处理</el-radio>
                 <el-radio :label="1">停用</el-radio>
@@ -87,16 +98,20 @@
               </el-radio-group>
             </el-form-item>
             <el-form-item label="其他选项">
-              <div style="float: left;">
-                <el-checkbox label="启用" v-model="proxyParam.enable" ></el-checkbox>
-                <el-checkbox label="开启音频" v-model="proxyParam.enableAudio" ></el-checkbox>
-                <el-checkbox label="录制" v-model="proxyParam.enableMp4" ></el-checkbox>
+              <div style="float: left">
+                <el-checkbox label="启用" v-model="proxyParam.enable"></el-checkbox>
+                <el-checkbox label="开启音频" v-model="proxyParam.enableAudio"></el-checkbox>
+                <el-checkbox label="录制" v-model="proxyParam.enableMp4"></el-checkbox>
               </div>
             </el-form-item>
           </el-form>
         </el-tab-pane>
         <el-tab-pane label="国标通道配置" name="channel" v-if="proxyParam.id">
-          <CommonChannelEdit ref="commonChannelEdit" :dataForm="proxyParam" :cancel="close"></CommonChannelEdit>
+          <CommonChannelEdit
+            ref="commonChannelEdit"
+            :dataForm="proxyParam"
+            :cancel="close"
+          ></CommonChannelEdit>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -109,18 +124,18 @@
 </template>
 
 <script>
-import CommonChannelEdit from './CommonChannelEdit.vue'
-import MediaServer from '../service/MediaServer.js'
-import wvpAxios from '@/api/camera/base'
+import CommonChannelEdit from "./CommonChannelEdit.vue";
+import MediaServer from "../service/MediaServer.js";
+import wvpAxios from "@/api/camera/base";
 
 export default {
   name: "streamProxyEdit",
-  props: ['streamProxy', 'closeEdit'],
+  props: ["streamProxy", "closeEdit"],
   components: {
     CommonChannelEdit,
   },
   created() {
-    console.log('StreamProxy Edit created:', this.streamProxy)
+    console.log("StreamProxy Edit created:", this.streamProxy);
     this.initData();
   },
   data() {
@@ -130,124 +145,134 @@ export default {
       proxyParam: this.streamProxy,
       mediaServerList: {},
       ffmpegCmdList: {},
-      activeTab: 'proxy',
+      activeTab: "proxy",
       rules: {
         name: [{ required: true, message: "请输入名称", trigger: "blur" }],
         app: [{ required: true, message: "请输入应用名", trigger: "blur" }],
         stream: [{ required: true, message: "请输入流ID", trigger: "blur" }],
         srcUrl: [{ required: true, message: "请输入要代理的流", trigger: "blur" }],
         timeout: [{ required: true, message: "请输入FFmpeg推流成功超时时间", trigger: "blur" }],
-        ffmpegCmdKey: [{ required: false, message: "请输入FFmpeg命令参数模板（可选）", trigger: "blur" }],
+        ffmpegCmdKey: [
+          { required: false, message: "请输入FFmpeg命令参数模板（可选）", trigger: "blur" },
+        ],
       },
     };
   },
   watch: {
-    streamProxy(newValue, oldValue){
+    streamProxy(newValue, oldValue) {
       this.proxyParam = newValue;
-    }
+    },
   },
   methods: {
     initData() {
-      this.mediaServer.getOnlineMediaServerList((data)=>{
+      this.mediaServer.getOnlineMediaServerList((data) => {
         this.mediaServerList = data.data;
-      })
+      });
     },
-    
+
     mediaServerIdChange() {
-      if (this.proxyParam.relatesMediaServerId !== "auto"){
+      if (this.proxyParam.relatesMediaServerId !== "auto") {
         wvpAxios({
-          method: 'get',
-          url:`proxy/ffmpeg_cmd/list`,
+          method: "get",
+          url: `proxy/ffmpeg_cmd/list`,
           params: {
-            mediaServerId: this.proxyParam.relatesMediaServerId
-          }
-        }).then((res)=> {
-          this.ffmpegCmdList = res.data.data;
-          this.proxyParam.ffmpegCmdKey = Object.keys(res.data.data)[0];
-        }).catch(function (error) {
-          console.log(error);
-        });
+            mediaServerId: this.proxyParam.relatesMediaServerId,
+          },
+        })
+          .then((res) => {
+            this.ffmpegCmdList = res.data.data;
+            this.proxyParam.ffmpegCmdKey = Object.keys(res.data.data)[0];
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
       }
     },
-    
+
     onSubmit() {
-      console.log(typeof this.proxyParam.noneReader)
+      console.log(typeof this.proxyParam.noneReader);
       this.dialogLoading = true;
       this.noneReaderHandler();
       if (this.proxyParam.id) {
         wvpAxios({
-          method: 'post',
-          url:`proxy/update`,
-          data: this.proxyParam
-        }).then((res)=> {
-          this.dialogLoading = false;
-          if (typeof (res.data.code) != "undefined" && res.data.code === 0) {
-            this.$message.success({
-              showClose: true,
-              message: "保存成功"
-            });
-            this.proxyParam = res.data.data
-          }else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-          }
-          this.dialogLoading = false;
-        }).catch((error) =>{
-          this.$message.error({
-            showClose: true,
-            message: error
-          });
-          this.dialogLoading = false;
-        }).finally(()=>{
-          console.log("finally==finally")
-          this.dialogLoading = false;
+          method: "post",
+          url: `proxy/update`,
+          data: this.proxyParam,
         })
-      }else {
-        wvpAxios({
-          method: 'post',
-          url:`proxy/add`,
-          data: this.proxyParam
-        }).then((res)=> {
-          this.dialogLoading = false;
-          if (typeof (res.data.code) != "undefined" && res.data.code === 0) {
-            this.$message.success({
-            showClose: true,
-            message: "保存成功"
-          });
-            this.proxyParam = res.data.data
-          }else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-          }
-        }).catch((error) =>{
-          this.$message.error({
-            showClose: true,
-            message: error
+          .then((res) => {
+            this.dialogLoading = false;
+            if (typeof res.data.code != "undefined" && res.data.code === 0) {
+              this.$message.success({
+                showClose: true,
+                message: "保存成功",
+              });
+              this.proxyParam = res.data.data;
+            } else {
+              this.$message.error({
+                showClose: true,
+                message: res.data.msg,
+              });
+            }
+            this.dialogLoading = false;
           })
-          this.dialogLoading = false;
-        }).finally(()=>{
-          this.dialogLoading = false;
+          .catch((error) => {
+            this.$message.error({
+              showClose: true,
+              message: error,
+            });
+            this.dialogLoading = false;
+          })
+          .finally(() => {
+            console.log("finally==finally");
+            this.dialogLoading = false;
+          });
+      } else {
+        wvpAxios({
+          method: "post",
+          url: `proxy/add`,
+          data: this.proxyParam,
         })
+          .then((res) => {
+            this.dialogLoading = false;
+            if (typeof res.data.code != "undefined" && res.data.code === 0) {
+              this.$message.success({
+                showClose: true,
+                message: "保存成功",
+              });
+              this.proxyParam = res.data.data;
+            } else {
+              this.$message.error({
+                showClose: true,
+                message: res.data.msg,
+              });
+            }
+          })
+          .catch((error) => {
+            this.$message.error({
+              showClose: true,
+              message: error,
+            });
+            this.dialogLoading = false;
+          })
+          .finally(() => {
+            this.dialogLoading = false;
+          });
       }
     },
-    
+
     close() {
       this.closeEdit();
     },
-    
+
     noneReaderHandler() {
-      console.log(this.proxyParam)
-      if (!this.proxyParam.noneReader || this.proxyParam.noneReader === 0 ) {
+      console.log(this.proxyParam);
+      if (!this.proxyParam.noneReader || this.proxyParam.noneReader === 0) {
         this.proxyParam.enableDisableNoneReader = false;
         this.proxyParam.enableRemoveNoneReader = false;
-      }else if (this.proxyParam.noneReader === 1){
+      } else if (this.proxyParam.noneReader === 1) {
         this.proxyParam.enableDisableNoneReader = true;
         this.proxyParam.enableRemoveNoneReader = false;
-      }else if (this.proxyParam.noneReader ===2){
+      } else if (this.proxyParam.noneReader === 2) {
         this.proxyParam.enableDisableNoneReader = false;
         this.proxyParam.enableRemoveNoneReader = true;
       }

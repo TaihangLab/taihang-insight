@@ -1,5 +1,5 @@
-import request from '@/utils/request'
-import apiConfig from '../config/api.js'
+import request from "@/utils/request";
+import apiConfig from "../config/api.js";
 
 /**
  * 获取本地视频列表
@@ -12,11 +12,11 @@ import apiConfig from '../config/api.js'
  */
 export function getLocalVideoList(params) {
   return request({
-    url: '/api/v1/local-videos/list',
-    method: 'get',
+    url: "/api/v1/local-videos/list",
+    method: "get",
     params: params,
-    baseURL: apiConfig.API_BASE_URL
-  })
+    baseURL: apiConfig.API_BASE_URL,
+  });
 }
 
 /**
@@ -27,16 +27,16 @@ export function getLocalVideoList(params) {
  */
 export function uploadLocalVideo(formData, onUploadProgress) {
   return request({
-    url: '/api/v1/local-videos/upload',
-    method: 'post',
+    url: "/api/v1/local-videos/upload",
+    method: "post",
     data: formData,
     baseURL: apiConfig.API_BASE_URL,
     headers: {
-      'Content-Type': 'multipart/form-data'
+      "Content-Type": "multipart/form-data",
     },
     timeout: 300000, // 5分钟超时，适用于大文件上传
-    onUploadProgress: onUploadProgress
-  })
+    onUploadProgress: onUploadProgress,
+  });
 }
 
 /**
@@ -51,10 +51,10 @@ export function uploadLocalVideo(formData, onUploadProgress) {
 export function updateLocalVideo(videoId, data) {
   return request({
     url: `/api/v1/local-videos/${videoId}`,
-    method: 'put',
+    method: "put",
     data: data,
-    baseURL: apiConfig.API_BASE_URL
-  })
+    baseURL: apiConfig.API_BASE_URL,
+  });
 }
 
 /**
@@ -65,9 +65,9 @@ export function updateLocalVideo(videoId, data) {
 export function deleteLocalVideo(videoId) {
   return request({
     url: `/api/v1/local-videos/${videoId}`,
-    method: 'delete',
-    baseURL: apiConfig.API_BASE_URL
-  })
+    method: "delete",
+    baseURL: apiConfig.API_BASE_URL,
+  });
 }
 
 /**
@@ -81,10 +81,10 @@ export function deleteLocalVideo(videoId) {
 export function startVideoStream(videoId, data) {
   return request({
     url: `/api/v1/local-videos/${videoId}/start-stream`,
-    method: 'post',
+    method: "post",
     data: data,
-    baseURL: apiConfig.API_BASE_URL
-  })
+    baseURL: apiConfig.API_BASE_URL,
+  });
 }
 
 /**
@@ -95,9 +95,9 @@ export function startVideoStream(videoId, data) {
 export function stopVideoStream(videoId) {
   return request({
     url: `/api/v1/local-videos/${videoId}/stop-stream`,
-    method: 'post',
-    baseURL: apiConfig.API_BASE_URL
-  })
+    method: "post",
+    baseURL: apiConfig.API_BASE_URL,
+  });
 }
 
 /**
@@ -108,8 +108,7 @@ export function stopVideoStream(videoId) {
 export function getVideoStreamStatus(videoId) {
   return request({
     url: `/api/v1/local-videos/${videoId}/stream-status`,
-    method: 'get',
-    baseURL: apiConfig.API_BASE_URL
-  })
+    method: "get",
+    baseURL: apiConfig.API_BASE_URL,
+  });
 }
-

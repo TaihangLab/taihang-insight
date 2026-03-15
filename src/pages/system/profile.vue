@@ -21,7 +21,11 @@
               </div>
               <div class="stat-item">
                 <span class="stat-label">账户状态</span>
-                <el-tag :type="userInfo.status === '正常' ? 'success' : 'danger'" size="small" class="status-tag">
+                <el-tag
+                  :type="userInfo.status === '正常' ? 'success' : 'danger'"
+                  size="small"
+                  class="status-tag"
+                >
                   {{ userInfo.status }}
                 </el-tag>
               </div>
@@ -52,10 +56,10 @@
             <div slot="header" class="card-header">
               <span>基本信息</span>
               <el-button type="primary" size="small" @click="editMode = !editMode" class="edit-btn">
-                {{ editMode ? '取消编辑' : '编辑信息' }}
+                {{ editMode ? "取消编辑" : "编辑信息" }}
               </el-button>
             </div>
-            
+
             <el-form :model="userInfo" label-width="100px" class="profile-form">
               <el-row :gutter="20">
                 <el-col :span="12">
@@ -69,7 +73,7 @@
                   </el-form-item>
                 </el-col>
               </el-row>
-              
+
               <el-row :gutter="20">
                 <el-col :span="12">
                   <el-form-item label="手机号">
@@ -82,7 +86,7 @@
                   </el-form-item>
                 </el-col>
               </el-row>
-              
+
               <el-row :gutter="20">
                 <el-col :span="12">
                   <el-form-item label="创建时间">
@@ -95,17 +99,17 @@
                   </el-form-item>
                 </el-col>
               </el-row>
-              
+
               <el-form-item label="个人简介">
-                <el-input 
-                  type="textarea" 
-                  v-model="userInfo.description" 
-                  :rows="3" 
+                <el-input
+                  type="textarea"
+                  v-model="userInfo.description"
+                  :rows="3"
                   :disabled="!editMode"
-                  placeholder="请输入个人简介...">
-                </el-input>
+                  placeholder="请输入个人简介..."
+                ></el-input>
               </el-form-item>
-              
+
               <el-form-item v-if="editMode" class="form-actions">
                 <el-button type="primary" @click="saveProfile" class="save-btn">保存修改</el-button>
                 <el-button @click="editMode = false" class="cancel-btn">取消</el-button>
@@ -119,28 +123,28 @@
 </template>
 
 <script>
-import userService from '@/api/system/userService'
-import { storage } from '@/stores/modules/storage'
+import userService from "@/api/system/userService";
+import { storage } from "@/stores/modules/storage";
 
 export default {
-  name: 'Profile',
+  name: "Profile",
   data() {
     return {
       editMode: false,
       userInfo: {
-        user_name: '',
-        username: 'admin',
-        email: 'admin@example.com',
-        phone: '138****8888',
-        department: '系统管理部',
-        role: '系统管理员',
-        status: '正常',
-        create_time: '2024-01-01 10:00:00',
-        lastLoginTime: '2024-12-26 09:30:15',
-        description: '系统管理员，负责平台的日常维护和用户管理工作。',
-        tenant_id: ''
-      }
-    }
+        user_name: "",
+        username: "admin",
+        email: "admin@example.com",
+        phone: "138****8888",
+        department: "系统管理部",
+        role: "系统管理员",
+        status: "正常",
+        create_time: "2024-01-01 10:00:00",
+        lastLoginTime: "2024-12-26 09:30:15",
+        description: "系统管理员，负责平台的日常维护和用户管理工作。",
+        tenant_id: "",
+      },
+    };
   },
   mounted() {
     this.loadUserInfo();
@@ -157,9 +161,9 @@ export default {
           // 调用userService获取详细用户信息
           const params = {
             user_name: currentUser.user_name || currentUser.user_code,
-            tenant_id: currentUser.tenant_id
+            tenant_id: currentUser.tenant_id,
           };
-          
+
           const response = await userService.getUsers(params);
           if (response.data && response.data.length > 0) {
             const user = response.data[0];
@@ -168,15 +172,15 @@ export default {
             this.userInfo.phone = user.phone || this.userInfo.phone;
             this.userInfo.department = user.department || this.userInfo.department;
             this.userInfo.role = user.role_name || this.userInfo.role;
-            this.userInfo.status = user.status === 0 ? '正常' : '禁用';  // 0为正常，1为禁用
+            this.userInfo.status = user.status === 0 ? "正常" : "禁用"; // 0为正常，1为禁用
             this.userInfo.create_time = user.create_time || this.userInfo.create_time;
             this.userInfo.lastLoginTime = user.last_login_time || this.userInfo.lastLoginTime;
             this.userInfo.description = user.description || this.userInfo.description;
           }
         }
       } catch (error) {
-        console.error('获取用户信息失败:', error);
-        this.$message.error('获取用户信息失败');
+        console.error("获取用户信息失败:", error);
+        this.$message.error("获取用户信息失败");
       }
     },
     async saveProfile() {
@@ -186,29 +190,25 @@ export default {
           email: this.userInfo.email,
           phone: this.userInfo.phone,
           description: this.userInfo.description,
-          update_by: this.userInfo.user_name // 添加更新人信息
+          update_by: this.userInfo.user_name, // 添加更新人信息
         };
 
         // 调用userService更新用户信息
-        await userService.updateUser(
-          this.userInfo.user_name,
-          this.userInfo.tenant_id,
-          userData
-        );
-        
-        this.$message.success('个人信息保存成功');
+        await userService.updateUser(this.userInfo.user_name, this.userInfo.tenant_id, userData);
+
+        this.$message.success("个人信息保存成功");
         this.editMode = false;
       } catch (error) {
-        console.error('保存用户信息失败:', error);
-        this.$message.error('保存用户信息失败');
+        console.error("保存用户信息失败:", error);
+        this.$message.error("保存用户信息失败");
       }
     },
     changePassword() {
       // 跳转到修改密码功能
-      this.$message.info('请在用户菜单中选择修改密码');
-    }
-  }
-}
+      this.$message.info("请在用户菜单中选择修改密码");
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -313,7 +313,8 @@ export default {
   border-radius: 10px !important;
 }
 
-.info-card, .security-card {
+.info-card,
+.security-card {
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -509,31 +510,32 @@ export default {
   .profile {
     padding: 10px;
   }
-  
+
   .page-content {
     height: calc(100% - 70px);
   }
-  
-  .profile-card, .security-card {
+
+  .profile-card,
+  .security-card {
     height: auto;
     margin-bottom: 15px;
   }
-  
+
   .info-card {
     height: auto;
   }
-  
+
   .profile-form .el-col {
     margin-bottom: 10px;
   }
-  
+
   .security-item {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .security-item i:first-child {
     margin-bottom: 10px;
   }
 }
-</style> 
+</style>

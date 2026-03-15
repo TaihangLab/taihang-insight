@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    :title="dialogTitle"
-    v-model="dialogVisible"
-    width="600px"
-    @close="closeDialog"
-  >
+  <el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" @close="closeDialog">
     <DevTools v-if="dialogVisible" v-model="deptForm" type="department" :enabled="isDev" />
 
     <el-form :model="deptForm" :rules="deptRules" ref="deptFormRef" label-width="100px">
@@ -18,8 +13,8 @@
               placeholder="选择上级部门"
               clearable
               filterable
-              style="width: 100%">
-            </el-cascader>
+              style="width: 100%"
+            ></el-cascader>
           </el-form-item>
         </el-col>
       </el-row>
@@ -45,8 +40,8 @@
               :min="0"
               :max="999"
               controls-position="right"
-              style="width: 100%">
-            </el-input-number>
+              style="width: 100%"
+            ></el-input-number>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -67,172 +62,170 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, nextTick } from 'vue'
-import type { FormInstance } from 'element-plus'
-import DevTools from '@/components/common/DevTools.vue'
+import { ref, reactive, computed, watch, nextTick } from "vue";
+import type { FormInstance } from "element-plus";
+import DevTools from "@/components/common/DevTools.vue";
 
 interface DeptForm {
-  id: string | number | null
-  parent_id: number | null
-  name: string
-  sort_order: number
-  status: number
+  id: string | number | null;
+  parent_id: number | null;
+  name: string;
+  sort_order: number;
+  status: number;
 }
 
 interface DeptOption {
-  id: number | string | null
-  name: string
-  value?: number | string | null
-  label?: string
-  children?: DeptOption[]
-  [key: string]: any
+  id: number | string | null;
+  name: string;
+  value?: number | string | null;
+  label?: string;
+  children?: DeptOption[];
+  [key: string]: any;
 }
 
 interface CurrentDept {
-  id?: string | number
-  isSubDept?: boolean
-  [key: string]: any
+  id?: string | number;
+  isSubDept?: boolean;
+  [key: string]: any;
 }
 
 const props = withDefaults(
   defineProps<{
-    visible: boolean
-    currentDept: CurrentDept | null
-    parentDeptOptions: DeptOption[]
+    visible: boolean;
+    currentDept: CurrentDept | null;
+    parentDeptOptions: DeptOption[];
   }>(),
   {
-    parentDeptOptions: () => []
-  }
-)
+    parentDeptOptions: () => [],
+  },
+);
 
 const emit = defineEmits<{
-  'update:visible': [value: boolean]
-  submit: [data: DeptForm]
-}>()
+  "update:visible": [value: boolean];
+  submit: [data: DeptForm];
+}>();
 
-const deptFormRef = ref<FormInstance>()
+const deptFormRef = ref<FormInstance>();
 
 const deptForm = reactive<DeptForm>({
   id: null,
   parent_id: null,
-  name: '',
+  name: "",
   sort_order: 0,
-  status: 0
-})
+  status: 0,
+});
 
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (value) => emit('update:visible', value)
-})
+  set: (value) => emit("update:visible", value),
+});
 
 const dialogTitle = computed(() => {
   if (props.currentDept && props.currentDept.isSubDept) {
-    return '添加子部门'
+    return "添加子部门";
   }
-  return props.currentDept ? '编辑部门' : '添加部门'
-})
+  return props.currentDept ? "编辑部门" : "添加部门";
+});
 
-const isEdit = computed(() => !!props.currentDept && !props.currentDept.isSubDept)
+const isEdit = computed(() => !!props.currentDept && !props.currentDept.isSubDept);
 
 // 检测是否为开发环境
 const isDev = computed(() => {
-  return import.meta.env.DEV
-})
+  return import.meta.env.DEV;
+});
 
 const deptRules = {
   name: [
-    { required: true, message: '请输入部门名称', trigger: 'blur' },
-    { min: 2, max: 30, message: '部门名称长度在2到30个字符', trigger: 'blur' }
+    { required: true, message: "请输入部门名称", trigger: "blur" },
+    { min: 2, max: 30, message: "部门名称长度在2到30个字符", trigger: "blur" },
   ],
-  sort_order: [
-    { required: true, message: '请输入显示排序', trigger: 'blur' }
-  ]
-}
+  sort_order: [{ required: true, message: "请输入显示排序", trigger: "blur" }],
+};
 
 const cascaderProps = {
-  value: 'id',
-  label: 'name',
-  children: 'children',
+  value: "id",
+  label: "name",
+  children: "children",
   checkStrictly: true,
   emitPath: false,
-  expandTrigger: 'hover' as const
-}
+  expandTrigger: "hover" as const,
+};
 
 const parentDeptOptionsWithTreeStructure = computed(() => {
   const noneOption: DeptOption = {
     id: 0,
-    name: '无上级部门',
+    name: "无上级部门",
     value: 0,
-    label: '无上级部门',
-    children: []
-  }
+    label: "无上级部门",
+    children: [],
+  };
 
   const filteredOptions = props.parentDeptOptions
     .filter((option) => option.id !== null && option.id !== 0)
-    .map((option) => convertOptionToNumber(option))
+    .map((option) => convertOptionToNumber(option));
 
-  return [noneOption, ...filteredOptions]
-})
+  return [noneOption, ...filteredOptions];
+});
 
 const convertOptionToNumber = (option: DeptOption): DeptOption => {
   const converted: DeptOption = {
     ...option,
     id: option.id !== null ? Number(option.id) : null,
-    value: option.value !== null ? Number(option.value) : null
-  }
+    value: option.value !== null ? Number(option.value) : null,
+  };
 
   if (option.children && option.children.length > 0) {
-    converted.children = option.children.map((child) => convertOptionToNumber(child))
+    converted.children = option.children.map((child) => convertOptionToNumber(child));
   }
 
-  return converted
-}
+  return converted;
+};
 
 const resetForm = () => {
   Object.assign(deptForm, {
     id: null,
     parent_id: null,
-    name: '',
+    name: "",
     sort_order: 0,
-    status: 0
-  })
-}
+    status: 0,
+  });
+};
 
 watch(
   () => props.currentDept,
   (newVal) => {
-    console.log('DepartmentEditDialog - currentDept:', newVal)
+    console.log("DepartmentEditDialog - currentDept:", newVal);
     if (newVal) {
-      Object.assign(deptForm, newVal)
-      console.log('DepartmentEditDialog - deptForm:', deptForm)
+      Object.assign(deptForm, newVal);
+      console.log("DepartmentEditDialog - deptForm:", deptForm);
     } else {
-      resetForm()
+      resetForm();
     }
   },
-  { immediate: true }
-)
+  { immediate: true },
+);
 
 const submitForm = async () => {
-  if (!deptFormRef.value) return
+  if (!deptFormRef.value) return;
 
-  const valid = await deptFormRef.value.validate()
+  const valid = await deptFormRef.value.validate();
   if (valid) {
-    emit('submit', { ...deptForm })
+    emit("submit", { ...deptForm });
   }
-}
+};
 
 const closeDialog = () => {
-  emit('update:visible', false)
+  emit("update:visible", false);
   nextTick(() => {
     if (deptFormRef.value) {
-      deptFormRef.value.clearValidate()
+      deptFormRef.value.clearValidate();
     }
-  })
-}
+  });
+};
 
 const cancel = () => {
-  closeDialog()
-}
+  closeDialog();
+};
 </script>
 
 <style scoped>

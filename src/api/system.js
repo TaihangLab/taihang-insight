@@ -1,16 +1,16 @@
 /**
  * 系统管理相关API
  */
-import request from '@/utils/request'
+import request from "@/utils/request";
 
 /**
  * 获取系统配置信息
  */
 export function getSystemConfig() {
   return request({
-    url: '/api/v1/server/system/configInfo',
-    method: 'get'
-  })
+    url: "/api/v1/server/system/configInfo",
+    method: "get",
+  });
 }
 
 /**
@@ -19,10 +19,10 @@ export function getSystemConfig() {
  */
 export function updateSystemConfig(data) {
   return request({
-    url: '/api/v1/server/system/config',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/server/system/config",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -30,9 +30,9 @@ export function updateSystemConfig(data) {
  */
 export function getServerInfo() {
   return request({
-    url: '/api/v1/server/info',
-    method: 'get'
-  })
+    url: "/api/v1/server/info",
+    method: "get",
+  });
 }
 
 /**
@@ -41,9 +41,8 @@ export function getServerInfo() {
  */
 export function getLogList(params) {
   return request({
-    url: '/api/v1/server/log/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/server/log/list",
+    method: "get",
+    params: params,
+  });
 }
-

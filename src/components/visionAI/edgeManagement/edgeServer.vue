@@ -3,7 +3,8 @@
     <!-- 顶部操作栏 -->
     <div class="operation-bar">
       <el-button type="primary" @click="handleAddServer">
-        <i class="el-icon-plus"></i>注册边缘服务器
+        <i class="el-icon-plus"></i>
+        注册边缘服务器
       </el-button>
       <div class="search-box">
         <el-input
@@ -16,15 +17,20 @@
         </el-input>
       </div>
     </div>
-  
+
     <!-- 边缘服务器列表 -->
-    <el-table :data="tableData" :border="false" class="custom-table" style="width: 100%; text-align: center;">
+    <el-table
+      :data="tableData"
+      :border="false"
+      class="custom-table"
+      style="width: 100%; text-align: center"
+    >
       <el-table-column type="selection" width="55" />
       <el-table-column prop="name" label="边缘服务器名称" min-width="180" align="center" />
       <el-table-column prop="status" label="状态" width="100" align="center">
         <template #default="{ row }">
           <el-tag :type="row.status === 'online' ? 'success' : 'danger'">
-            {{ row.status === 'online' ? '在线' : '离线' }}
+            {{ row.status === "online" ? "在线" : "离线" }}
           </el-tag>
         </template>
       </el-table-column>
@@ -32,17 +38,22 @@
       <el-table-column prop="domain" label="域名" min-width="200" align="center" />
       <el-table-column prop="visionSkills" label="视觉技能" min-width="150" align="center">
         <template #default="{ row }">
-          {{ row.visionSkills.join(', ') || '未设置' }}
+          {{ row.visionSkills.join(", ") || "未设置" }}
         </template>
       </el-table-column>
-      <el-table-column prop="dataCollectionRules" label="数据采集规则" min-width="150" align="center">
+      <el-table-column
+        prop="dataCollectionRules"
+        label="数据采集规则"
+        min-width="150"
+        align="center"
+      >
         <template #default="{ row }">
-          {{ row.dataCollectionRules || '未设置' }}
+          {{ row.dataCollectionRules || "未设置" }}
         </template>
       </el-table-column>
       <el-table-column prop="authorizedGroups" label="授权组织" min-width="150" align="center">
         <template #default="{ row }">
-          {{ row.authorizedGroups.join(', ') || '未设置' }}
+          {{ row.authorizedGroups.join(", ") || "未设置" }}
         </template>
       </el-table-column>
       <el-table-column label="操作" fixed="right" width="280" align="center">
@@ -58,7 +69,7 @@
     </el-table>
 
     <!-- 注册边缘服务器弹框 -->
-    <el-dialog 
+    <el-dialog
       :title="isEditing ? '编辑边缘服务器' : '注册边缘服务器'"
       :visible.sync="dialogVisible"
       width="50%"
@@ -81,13 +92,22 @@
           <el-input v-model="newServer.domain" placeholder="请输入域名"></el-input>
         </el-form-item>
         <el-form-item label="视觉技能">
-          <el-input v-model="newServer.visionSkills" placeholder="请输入视觉技能，用逗号分隔"></el-input>
+          <el-input
+            v-model="newServer.visionSkills"
+            placeholder="请输入视觉技能，用逗号分隔"
+          ></el-input>
         </el-form-item>
         <el-form-item label="数据采集规则">
-          <el-input v-model="newServer.dataCollectionRules" placeholder="请输入数据采集规则"></el-input>
+          <el-input
+            v-model="newServer.dataCollectionRules"
+            placeholder="请输入数据采集规则"
+          ></el-input>
         </el-form-item>
         <el-form-item label="授权组织">
-          <el-input v-model="newServer.authorizedGroups" placeholder="请输入授权组织，用逗号分隔"></el-input>
+          <el-input
+            v-model="newServer.authorizedGroups"
+            placeholder="请输入授权组织，用逗号分隔"
+          ></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -112,67 +132,137 @@
 </template>
 
 <script>
-import { 
-  getEdgeServerList, 
-  registerEdgeServer, 
-  updateEdgeServer, 
+import {
+  getEdgeServerList,
+  registerEdgeServer,
+  updateEdgeServer,
   deleteEdgeServer,
   getEdgeServerDetail,
-  updateServerAuthorization
-} from '@/api/edgeManagement'
+  updateServerAuthorization,
+} from "@/api/edgeManagement";
 
 export default {
-  name: 'EdgeServer',
-  
+  name: "EdgeServer",
+
   data() {
     return {
       // 分页相关数据
       currentPage: 1,
       pageSize: 10,
       total: 0,
-      
+
       // 表格数据
       tableData: [],
-      
+
       // 搜索关键词
-      searchKeyword: '',
-      
+      searchKeyword: "",
+
       // 弹框控制
       dialogVisible: false,
       isEditing: false,
-      editingId: '',
-      
+      editingId: "",
+
       // 新服务器表单
       newServer: {
-        name: '',
-        ipAddress: '',
-        status: 'online',
-        domain: '',
-        visionSkills: '',
-        dataCollectionRules: '',
-        authorizedGroups: ''
+        name: "",
+        ipAddress: "",
+        status: "online",
+        domain: "",
+        visionSkills: "",
+        dataCollectionRules: "",
+        authorizedGroups: "",
       },
-      
+
       // 模拟数据
       allData: [
-        { id: '1', name: '北京集团绿源化工厂', status: 'offline', ipAddress: '192.168.1.4', visionSkills: [], authorizedGroups: [] },
-        { id: '2', name: '北京集团热电公司', status: 'online', ipAddress: '192.168.1.3', visionSkills: [], authorizedGroups: [] },
-        { id: '3', name: '北京集团水泥厂', status: 'offline', ipAddress: '192.168.1.2', visionSkills: [], authorizedGroups: [] },
-        { id: '4', name: '北京集团化工厂', status: 'online', ipAddress: '192.168.1.1', visionSkills: [], authorizedGroups: [] },
-        { id: '5', name: '中南石化', status: 'offline', ipAddress: '127.0.0.2', visionSkills: [], authorizedGroups: [] },
-        { id: '6', name: '大树石化', status: 'online', ipAddress: '127.0.0.1', visionSkills: [], authorizedGroups: [] },
-        { id: '7', name: '宝山自来水厂', status: 'offline', ipAddress: '10.68.208.94', visionSkills: [], authorizedGroups: [] },
-        { id: '8', name: '白云港污水处理厂', status: 'online', ipAddress: '10.68.208.94', visionSkills: [], authorizedGroups: [] },
-        { id: '9', name: '石油污水处理厂', status: 'offline', ipAddress: '10.68.208.94', visionSkills: [], authorizedGroups: [] },
-        { id: '10', name: '秦港污水处理厂', status: 'online', ipAddress: '10.31.76.16', visionSkills: [], authorizedGroups: [] }
-      ]
-    }
+        {
+          id: "1",
+          name: "北京集团绿源化工厂",
+          status: "offline",
+          ipAddress: "192.168.1.4",
+          visionSkills: [],
+          authorizedGroups: [],
+        },
+        {
+          id: "2",
+          name: "北京集团热电公司",
+          status: "online",
+          ipAddress: "192.168.1.3",
+          visionSkills: [],
+          authorizedGroups: [],
+        },
+        {
+          id: "3",
+          name: "北京集团水泥厂",
+          status: "offline",
+          ipAddress: "192.168.1.2",
+          visionSkills: [],
+          authorizedGroups: [],
+        },
+        {
+          id: "4",
+          name: "北京集团化工厂",
+          status: "online",
+          ipAddress: "192.168.1.1",
+          visionSkills: [],
+          authorizedGroups: [],
+        },
+        {
+          id: "5",
+          name: "中南石化",
+          status: "offline",
+          ipAddress: "127.0.0.2",
+          visionSkills: [],
+          authorizedGroups: [],
+        },
+        {
+          id: "6",
+          name: "大树石化",
+          status: "online",
+          ipAddress: "127.0.0.1",
+          visionSkills: [],
+          authorizedGroups: [],
+        },
+        {
+          id: "7",
+          name: "宝山自来水厂",
+          status: "offline",
+          ipAddress: "10.68.208.94",
+          visionSkills: [],
+          authorizedGroups: [],
+        },
+        {
+          id: "8",
+          name: "白云港污水处理厂",
+          status: "online",
+          ipAddress: "10.68.208.94",
+          visionSkills: [],
+          authorizedGroups: [],
+        },
+        {
+          id: "9",
+          name: "石油污水处理厂",
+          status: "offline",
+          ipAddress: "10.68.208.94",
+          visionSkills: [],
+          authorizedGroups: [],
+        },
+        {
+          id: "10",
+          name: "秦港污水处理厂",
+          status: "online",
+          ipAddress: "10.31.76.16",
+          visionSkills: [],
+          authorizedGroups: [],
+        },
+      ],
+    };
   },
-  
+
   mounted() {
-    this.loadTableData()
+    this.loadTableData();
   },
-  
+
   methods: {
     // 加载表格数据
     async loadTableData() {
@@ -181,208 +271,221 @@ export default {
         const response = await getEdgeServerList({
           pageNum: this.currentPage,
           pageSize: this.pageSize,
-          keyword: this.searchKeyword
+          keyword: this.searchKeyword,
         }).catch(() => null);
-        
+
         if (response && response.data) {
           this.tableData = response.data.list || response.data.rows || [];
           this.total = response.data.total || 0;
         } else {
           // API调用失败，使用模拟数据
-          const filteredData = this.allData.filter(server => server.name.includes(this.searchKeyword));
+          const filteredData = this.allData.filter((server) =>
+            server.name.includes(this.searchKeyword),
+          );
           this.total = filteredData.length;
           const start = (this.currentPage - 1) * this.pageSize;
           this.tableData = filteredData.slice(start, start + this.pageSize);
         }
       } catch (error) {
-        console.error('加载边缘服务器列表失败:', error);
+        console.error("加载边缘服务器列表失败:", error);
         // 使用模拟数据作为降级方案
-        const filteredData = this.allData.filter(server => server.name.includes(this.searchKeyword));
+        const filteredData = this.allData.filter((server) =>
+          server.name.includes(this.searchKeyword),
+        );
         this.total = filteredData.length;
         const start = (this.currentPage - 1) * this.pageSize;
         this.tableData = filteredData.slice(start, start + this.pageSize);
       }
     },
-    
+
     // 注册边缘服务器
     handleAddServer() {
-      this.dialogVisible = true
+      this.dialogVisible = true;
     },
-    
+
     // 确认注册
     async confirmAddServer() {
       if (!this.newServer.name || !this.newServer.ipAddress) {
         this.$message({
-          message: '请填写名称和IP地址',
-          type: 'error'
-        })
-        return
+          message: "请填写名称和IP地址",
+          type: "error",
+        });
+        return;
       }
-      
+
       const serverData = {
         id: this.editingId,
         name: this.newServer.name,
         ipAddress: this.newServer.ipAddress,
         status: this.newServer.status,
         domain: this.newServer.domain,
-        visionSkills: this.newServer.visionSkills.split(',').map(skill => skill.trim()).filter(Boolean),
+        visionSkills: this.newServer.visionSkills
+          .split(",")
+          .map((skill) => skill.trim())
+          .filter(Boolean),
         dataCollectionRules: this.newServer.dataCollectionRules,
-        authorizedGroups: this.newServer.authorizedGroups.split(',').map(group => group.trim()).filter(Boolean)
-      }
+        authorizedGroups: this.newServer.authorizedGroups
+          .split(",")
+          .map((group) => group.trim())
+          .filter(Boolean),
+      };
 
       try {
         if (this.isEditing) {
           // 更新现有服务器
           await updateEdgeServer(serverData);
           this.$message({
-            message: '边缘服务器更新成功！',
-            type: 'success'
-          })
+            message: "边缘服务器更新成功！",
+            type: "success",
+          });
         } else {
           // 添加新服务器
           await registerEdgeServer(serverData);
           this.$message({
-            message: '边缘服务器注册成功！',
-            type: 'success'
-          })
+            message: "边缘服务器注册成功！",
+            type: "success",
+          });
         }
 
         this.loadTableData();
         this.dialogVisible = false;
         this.resetForm();
       } catch (error) {
-        console.error('操作失败:', error);
+        console.error("操作失败:", error);
         this.$message({
-          message: this.isEditing ? '更新失败' : '注册失败',
-          type: 'error'
+          message: this.isEditing ? "更新失败" : "注册失败",
+          type: "error",
         });
       }
     },
-    
+
     // 管理功能
     handleManage(server) {
-      this.$alert(`
+      this.$alert(
+        `
         <div>
           <p>服务器名称：${server.name}</p>
           <p>IP地址：${server.ipAddress}</p>
-          <p>状态：${server.status === 'online' ? '在线' : '离线'}</p>
-          <p>域名：${server.domain || '未设置'}</p>
-          <p>视觉技能：${server.visionSkills.join(', ') || '未设置'}</p>
-          <p>数据采集规则：${server.dataCollectionRules || '未设置'}</p>
-          <p>授权组织：${server.authorizedGroups.join(', ') || '未设置'}</p>
+          <p>状态：${server.status === "online" ? "在线" : "离线"}</p>
+          <p>域名：${server.domain || "未设置"}</p>
+          <p>视觉技能：${server.visionSkills.join(", ") || "未设置"}</p>
+          <p>数据采集规则：${server.dataCollectionRules || "未设置"}</p>
+          <p>授权组织：${server.authorizedGroups.join(", ") || "未设置"}</p>
         </div>
-      `, '管理', {
-        confirmButtonText: '确定',
-        dangerouslyUseHTMLString: true
-      })
+      `,
+        "管理",
+        {
+          confirmButtonText: "确定",
+          dangerouslyUseHTMLString: true,
+        },
+      );
     },
-    
+
     // 授权组织功能
     handleAuthorize(server) {
-      this.$prompt('请输入要添加的授权组织（多个组织用逗号分隔）', '授权组织', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        inputValue: server.authorizedGroups.join(', ')
+      this.$prompt("请输入要添加的授权组织（多个组织用逗号分隔）", "授权组织", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        inputValue: server.authorizedGroups.join(", "),
       }).then(async ({ value }) => {
         try {
           await updateServerAuthorization({
             serverId: server.id,
-            authorizedGroups: value.split(',').map(group => group.trim()).filter(Boolean)
+            authorizedGroups: value
+              .split(",")
+              .map((group) => group.trim())
+              .filter(Boolean),
           });
           this.loadTableData();
           this.$message({
-            message: '授权组织更新成功！',
-            type: 'success'
-          })
+            message: "授权组织更新成功！",
+            type: "success",
+          });
         } catch (error) {
-          console.error('授权更新失败:', error);
+          console.error("授权更新失败:", error);
           this.$message({
-            message: '授权组织更新失败',
-            type: 'error'
-          })
+            message: "授权组织更新失败",
+            type: "error",
+          });
         }
-      })
+      });
     },
-    
+
     // 编辑功能
     handleEdit(server) {
       this.newServer = {
         name: server.name,
         ipAddress: server.ipAddress,
         status: server.status,
-        domain: server.domain || '',
-        visionSkills: server.visionSkills.join(', '),
-        dataCollectionRules: server.dataCollectionRules || '',
-        authorizedGroups: server.authorizedGroups.join(', ')
-      }
-      
-      this.isEditing = true
-      this.editingId = server.id
-      this.dialogVisible = true
+        domain: server.domain || "",
+        visionSkills: server.visionSkills.join(", "),
+        dataCollectionRules: server.dataCollectionRules || "",
+        authorizedGroups: server.authorizedGroups.join(", "),
+      };
+
+      this.isEditing = true;
+      this.editingId = server.id;
+      this.dialogVisible = true;
     },
-    
+
     // 重置表单
     resetForm() {
       this.newServer = {
-        name: '',
-        ipAddress: '',
-        status: 'online',
-        domain: '',
-        visionSkills: '',
-        dataCollectionRules: '',
-        authorizedGroups: ''
-      }
-      this.isEditing = false
-      this.editingId = ''
+        name: "",
+        ipAddress: "",
+        status: "online",
+        domain: "",
+        visionSkills: "",
+        dataCollectionRules: "",
+        authorizedGroups: "",
+      };
+      this.isEditing = false;
+      this.editingId = "";
     },
-    
+
     // 删除功能
     handleDelete(server) {
-      this.$confirm(
-        `确定要删除边缘服务器 "${server.name}" 吗？此操作不可恢复。`,
-        '警告',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }
-      ).then(async () => {
+      this.$confirm(`确定要删除边缘服务器 "${server.name}" 吗？此操作不可恢复。`, "警告", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      }).then(async () => {
         try {
           await deleteEdgeServer(server.id);
           this.loadTableData();
           this.$message({
-            message: '删除成功！',
-            type: 'success'
-          })
+            message: "删除成功！",
+            type: "success",
+          });
         } catch (error) {
-          console.error('删除失败:', error);
+          console.error("删除失败:", error);
           this.$message({
-            message: '删除失败',
-            type: 'error'
-          })
+            message: "删除失败",
+            type: "error",
+          });
         }
-      })
+      });
     },
-    
+
     // 刷新数据
     handleRefresh() {
-      this.loadTableData()
+      this.loadTableData();
     },
-    
+
     // 处理页码变化
     handlePageChange(page) {
-      this.currentPage = page
-      this.loadTableData()
+      this.currentPage = page;
+      this.loadTableData();
     },
-    
+
     // 处理每页显示数量变化
     handlePageSizeChange(size) {
-      this.pageSize = size
-      this.currentPage = 1
-      this.loadTableData()
-    }
-  }
-}
+      this.pageSize = size;
+      this.currentPage = 1;
+      this.loadTableData();
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -432,7 +535,9 @@ export default {
 .operation-bar :deep(.el-button--primary) {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
+  box-shadow:
+    0 4px 12px rgba(59, 130, 246, 0.4),
+    0 2px 4px rgba(30, 64, 175, 0.3);
   color: white;
   font-weight: 600;
   border-radius: 8px;
@@ -440,7 +545,9 @@ export default {
 }
 .operation-bar :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4);
+  box-shadow:
+    0 6px 20px rgba(59, 130, 246, 0.5),
+    0 4px 8px rgba(30, 64, 175, 0.4);
   transform: translateY(-2px);
 }
 

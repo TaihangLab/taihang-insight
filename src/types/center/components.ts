@@ -63,4 +63,4 @@ export interface LoadingState {
   warningImages: boolean;
 }
 
-export type UITimeRange = 'day' | 'week' | 'month';
+export type UITimeRange = "day" | "week" | "month";

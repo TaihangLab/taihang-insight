@@ -21,12 +21,8 @@
       <template #header>
         <div class="card-header">
           <div class="card-actions">
-            <el-button
-              type="info"
-              icon="Expand"
-              @click="toggleExpandAll"
-            >
-              {{ expandAll ? '收起全部' : '展开全部' }}
+            <el-button type="info" icon="Expand" @click="toggleExpandAll">
+              {{ expandAll ? "收起全部" : "展开全部" }}
             </el-button>
             <el-button type="primary" icon="Plus" @click="handleAdd">新增权限</el-button>
           </div>
@@ -83,7 +79,7 @@
       >
         <el-table-column prop="id" label="id" width="220" />
 
-        <el-table-column prop="permission_name" label="权限名称" width="220" >
+        <el-table-column prop="permission_name" label="权限名称" width="220">
           <template #default="{ row }">
             <div v-if="row.icon" class="permission-name-with-icon">
               <el-icon><component :is="row.icon" /></el-icon>
@@ -105,7 +101,7 @@
 
         <el-table-column prop="path" label="路由路径" min-width="180">
           <template #default="{ row }">
-            <span>{{ row.path || '-' }}</span>
+            <span>{{ row.path || "-" }}</span>
           </template>
         </el-table-column>
 
@@ -131,15 +127,8 @@
 
         <el-table-column label="操作" width="250" align="center">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="handleEdit(row)">
-              编辑
-            </el-button>
-            <el-button
-              link
-              type="success"
-              size="small"
-              @click="handleAddChild(row)"
-            >
+            <el-button link type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button link type="success" size="small" @click="handleAddChild(row)">
               新增子节点
             </el-button>
             <el-button
@@ -165,16 +154,16 @@
  * 仅支持树形视图
  * 使用蛇形命名 (snake_case) 与后端保持一致
  */
-import { ref, reactive, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { View, Hide } from '@element-plus/icons-vue'
-import type { PermissionTreeNode } from '@/types/rbac/permission';
-import { PermissionNodeType } from '@/types/rbac/permission';
+import { ref, reactive, onMounted } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { View, Hide } from "@element-plus/icons-vue";
+import type { PermissionTreeNode } from "@/types/rbac/permission";
+import { PermissionNodeType } from "@/types/rbac/permission";
 import {
   PermissionSearchConditions,
-  usePermissionData
-} from '@/pages/system/composable/permission/usePermissionData';
-import PermissionEditDialog from '@/pages/system/components/permission/PermissionEditDialog.vue';
+  usePermissionData,
+} from "@/pages/system/composable/permission/usePermissionData";
+import PermissionEditDialog from "@/pages/system/components/permission/PermissionEditDialog.vue";
 
 // ============================================
 // Composables
@@ -187,7 +176,7 @@ const {
   createPermission,
   updatePermission,
   updatePermissionStatus,
-  deletePermission
+  deletePermission,
 } = usePermissionData();
 
 // ============================================
@@ -202,14 +191,14 @@ const treeTableRef = ref();
 
 // 查询表单
 const queryForm = reactive<PermissionSearchConditions>({
-  permission_name: '',
-  permission_code: '',
-  status: undefined
+  permission_name: "",
+  permission_code: "",
+  status: undefined,
 });
 
 // 对话框状态
 const editDialogVisible = ref(false);
-const editMode = ref<'create' | 'edit'>('create');
+const editMode = ref<"create" | "edit">("create");
 const currentNode = ref<PermissionTreeNode | null>(null);
 const parentNode = ref<PermissionTreeNode | null>(null);
 
@@ -223,11 +212,11 @@ const parentNode = ref<PermissionTreeNode | null>(null);
  */
 const getNodeTypeTagType = (nodeType: string) => {
   const typeMap: Record<string, string> = {
-    directory: 'info',     // 目录使用 info (蓝色)
-    menu: 'warning',        // 菜单使用 warning (橙色)
-    button: 'success'       // 按钮使用 success (绿色)
+    directory: "info", // 目录使用 info (蓝色)
+    menu: "warning", // 菜单使用 warning (橙色)
+    button: "success", // 按钮使用 success (绿色)
   };
-  return typeMap[nodeType] || 'info';
+  return typeMap[nodeType] || "info";
 };
 
 /**
@@ -235,11 +224,11 @@ const getNodeTypeTagType = (nodeType: string) => {
  */
 const getNodeTypeLabel = (nodeType: string) => {
   const labelMap: Record<string, string> = {
-    directory: '目录',
-    menu: '菜单',
-    button: '按钮'
+    directory: "目录",
+    menu: "菜单",
+    button: "按钮",
   };
-  return labelMap[nodeType] || '';
+  return labelMap[nodeType] || "";
 };
 
 // ============================================
@@ -251,7 +240,7 @@ const getNodeTypeLabel = (nodeType: string) => {
  */
 const loadPermissionTree = async () => {
   try {
-    permissionTree.value= await fetchPermissionTree();
+    permissionTree.value = await fetchPermissionTree();
   } catch (error: unknown) {
     const err = error as Error;
     ElMessage.error(`加载权限树失败: ${err.message}`);
@@ -266,7 +255,7 @@ const toggleExpandAll = () => {
   if (treeTableRef.value) {
     // 递归展开/收起所有行
     const toggleRow = (data: PermissionTreeNode[], expanded: boolean) => {
-      data.forEach(row => {
+      data.forEach((row) => {
         if (treeTableRef.value) {
           treeTableRef.value.toggleRowExpansion(row, expanded);
         }
@@ -291,8 +280,8 @@ const handleSearch = () => {
  * 重置处理
  */
 const handleReset = () => {
-  queryForm.permission_name = '';
-  queryForm.permission_code = '';
+  queryForm.permission_name = "";
+  queryForm.permission_code = "";
   queryForm.status = undefined;
   loadPermissionTree();
 };
@@ -301,7 +290,7 @@ const handleReset = () => {
  * 新增权限处理
  */
 const handleAdd = () => {
-  editMode.value = 'create';
+  editMode.value = "create";
   currentNode.value = null;
   parentNode.value = null;
   editDialogVisible.value = true;
@@ -311,7 +300,7 @@ const handleAdd = () => {
  * 编辑权限处理
  */
 const handleEdit = (row: PermissionTreeNode) => {
-  editMode.value = 'edit';
+  editMode.value = "edit";
   currentNode.value = row;
   parentNode.value = null;
   editDialogVisible.value = true;
@@ -321,7 +310,7 @@ const handleEdit = (row: PermissionTreeNode) => {
  * 新增子节点处理
  */
 const handleAddChild = (row: PermissionTreeNode) => {
-  editMode.value = 'create';
+  editMode.value = "create";
   currentNode.value = null;
   parentNode.value = row;
   editDialogVisible.value = true;
@@ -332,14 +321,14 @@ const handleAddChild = (row: PermissionTreeNode) => {
  */
 const handlePermissionSubmit = async (formData: Record<string, unknown>) => {
   try {
-    if (editMode.value === 'edit' && currentNode.value) {
+    if (editMode.value === "edit" && currentNode.value) {
       // 编辑权限
       await updatePermission(currentNode.value.id, formData);
-      ElMessage.success('权限修改成功');
+      ElMessage.success("权限修改成功");
     } else {
       // 新增权限
       await createPermission(formData);
-      ElMessage.success('权限添加成功');
+      ElMessage.success("权限添加成功");
     }
     editDialogVisible.value = false;
     loadPermissionTree();
@@ -355,7 +344,7 @@ const handlePermissionSubmit = async (formData: Record<string, unknown>) => {
 const handleStatusChange = async (row: PermissionTreeNode) => {
   try {
     await updatePermissionStatus(row.id, row.status);
-    ElMessage.success('状态更新成功');
+    ElMessage.success("状态更新成功");
     loadPermissionTree();
   } catch (error: unknown) {
     const err = error as Error;
@@ -370,18 +359,14 @@ const handleStatusChange = async (row: PermissionTreeNode) => {
  */
 const handleDelete = async (row: PermissionTreeNode) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除权限 "${row.permission_name}" 吗？`,
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    );
+    await ElMessageBox.confirm(`确定要删除权限 "${row.permission_name}" 吗？`, "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
 
     await deletePermission(row.id);
-    ElMessage.success('删除成功');
+    ElMessage.success("删除成功");
     loadPermissionTree();
   } catch {
     // 用户取消操作

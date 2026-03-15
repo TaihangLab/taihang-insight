@@ -19,20 +19,23 @@
           :headers="headers"
           :on-success="successHook"
           :on-error="errorHook"
-          >
+        >
           <i class="el-icon-upload"></i>
-          <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+          <div class="el-upload__text">
+            将文件拖到此处，或
+            <em>点击上传</em>
+          </div>
           <div class="el-upload__tip" slot="tip">只能上传 csv / xls / xlsx 文件</div>
         </el-upload>
       </div>
     </el-dialog>
-    <ShowErrorData ref="showErrorData" :gbIds="errorGBIds" :streams="errorStreams" ></ShowErrorData>
+    <ShowErrorData ref="showErrorData" :gbIds="errorGBIds" :streams="errorStreams"></ShowErrorData>
   </div>
 </template>
 
 <script>
-import ShowErrorData from './importChannelShowErrorData.vue'
-import { storage } from '@/stores/modules/storage'
+import ShowErrorData from "./importChannelShowErrorData.vue";
+import { storage } from "@/stores/modules/storage";
 
 export default {
   name: "importChannel",
@@ -49,9 +52,12 @@ export default {
       errorStreams: [],
       errorGBIds: [],
       headers: {
-        "access-token": storage.getWvpToken()
+        "access-token": storage.getWvpToken(),
       },
-      uploadUrl: import.meta.env.MODE === 'development'? `/debug/api/push/upload`: (window.baseUrl ? window.baseUrl : "") + `/api/push/upload`,
+      uploadUrl:
+        import.meta.env.MODE === "development"
+          ? `/debug/api/push/upload`
+          : (window.baseUrl ? window.baseUrl : "") + `/api/push/upload`,
     };
   },
   methods: {
@@ -62,20 +68,20 @@ export default {
     close: function () {
       this.showDialog = false;
     },
-    successHook: function(response, file, fileList){
+    successHook: function (response, file, fileList) {
       if (response.code === 0) {
         this.$message({
           showClose: true,
           message: response.msg,
           type: "success",
         });
-      }else if (response.code === 1) {
-        this.errorGBIds = response.data.gbId
-        this.errorStreams = response.data.stream
-        console.log(this.$refs)
-        console.log(this.$refs.showErrorData)
-        this.$refs.showErrorData.openDialog()
-      }else {
+      } else if (response.code === 1) {
+        this.errorGBIds = response.data.gbId;
+        this.errorStreams = response.data.stream;
+        console.log(this.$refs);
+        console.log(this.$refs.showErrorData);
+        this.$refs.showErrorData.openDialog();
+      } else {
         this.$message({
           showClose: true,
           message: response.msg,
@@ -89,15 +95,15 @@ export default {
         message: err,
         type: "error",
       });
-    }
+    },
   },
 };
 </script>
 <style>
-.upload-box{
+.upload-box {
   text-align: center;
 }
-.errDataBox{
+.errDataBox {
   max-height: 15rem;
   overflow: auto;
 }

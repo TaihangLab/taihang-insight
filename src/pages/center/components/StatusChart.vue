@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
-import * as echarts from 'echarts';
-import type { ECharts } from 'echarts';
-import alertStatisticsAPI from '@/api/center/alertStatistics';
-import type { TimeRange } from '@/types/center/alertStatistics';
-import type { UITimeRange } from '@/types/center/components';
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
+import * as echarts from "echarts";
+import type { ECharts } from "echarts";
+import alertStatisticsAPI from "@/api/center/alertStatistics";
+import type { TimeRange } from "@/types/center/alertStatistics";
+import type { UITimeRange } from "@/types/center/components";
 
 // UI 层面的时间范围选择（用于界面切换）
 const timeRangeMapping: Record<UITimeRange, TimeRange> = {
-  day: '24h',
-  week: '7d',
-  month: '30d'
+  day: "24h",
+  week: "7d",
+  month: "30d",
 };
 
 interface ChartDataItem {
@@ -25,8 +25,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  timeRange: 'day',
-  height: 200
+  timeRange: "day",
+  height: 200,
 });
 
 const chartRef = ref<HTMLElement | null>(null);
@@ -42,47 +42,47 @@ const currentTimeRange = ref<UITimeRange>(props.timeRange);
 let refreshTimer: number | null = null;
 
 const timeRangeLabels: Record<UITimeRange, string> = {
-  day: '本日',
-  week: '本周',
-  month: '本月'
+  day: "本日",
+  week: "本周",
+  month: "本月",
 };
 
 function getOption(data: ChartDataItem[]) {
   return {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     tooltip: {
-      trigger: 'item',
-      formatter: '{b}: {c} ({d}%)',
-      backgroundColor: 'rgba(0, 19, 40, 0.8)',
-      borderColor: 'rgba(0, 255, 255, 0.3)',
+      trigger: "item",
+      formatter: "{b}: {c} ({d}%)",
+      backgroundColor: "rgba(0, 19, 40, 0.8)",
+      borderColor: "rgba(0, 255, 255, 0.3)",
       textStyle: {
-        color: '#00FFFF'
-      }
+        color: "#00FFFF",
+      },
     },
     series: [
       {
-        name: '状态分布',
-        type: 'pie',
-        radius: ['50%', '70%'],
-        center: ['50%', '50%'],
+        name: "状态分布",
+        type: "pie",
+        radius: ["50%", "70%"],
+        center: ["50%", "50%"],
         avoidLabelOverlap: false,
         label: {
           show: true,
-          position: 'outside',
-          formatter: '{b}\n{c}条',
-          color: '#7EAEE5'
+          position: "outside",
+          formatter: "{b}\n{c}条",
+          color: "#7EAEE5",
         },
         labelLine: {
           show: true,
           length: 10,
           length2: 10,
           lineStyle: {
-            color: 'rgba(35, 88, 148, 0.8)'
-          }
+            color: "rgba(35, 88, 148, 0.8)",
+          },
         },
-        data: data
-      }
-    ]
+        data: data,
+      },
+    ],
   };
 }
 
@@ -124,11 +124,11 @@ async function loadData(): Promise<void> {
       chartData.value = response.map((item: any) => ({
         name: item.status_name || item.name || item.status,
         value: item.count || item.value,
-        itemStyle: item.color ? { color: item.color } : undefined
+        itemStyle: item.color ? { color: item.color } : undefined,
       }));
     }
   } catch (error) {
-    console.error('加载预警处理情况失败:', error);
+    console.error("加载预警处理情况失败:", error);
   } finally {
     loading.value = false;
   }
@@ -162,24 +162,28 @@ onBeforeUnmount(() => {
 });
 
 // 监听数据变化，更新图表
-watch(() => chartData.value, (data) => {
-  // 数据存在时确保图表显示
-  if (data.length > 0) {
-    if (chart) {
-      chart.setOption(getOption(data));
-    } else {
-      // 图表未初始化，直接初始化
-      initChart();
+watch(
+  () => chartData.value,
+  (data) => {
+    // 数据存在时确保图表显示
+    if (data.length > 0) {
+      if (chart) {
+        chart.setOption(getOption(data));
+      } else {
+        // 图表未初始化，直接初始化
+        initChart();
+      }
     }
-  }
-}, { deep: true });
+  },
+  { deep: true },
+);
 
 defineExpose({
   resize: () => chart?.resize(),
   init: initChart,
   refresh: loadData,
   changeTimeRange,
-  loading
+  loading,
 });
 </script>
 
@@ -192,7 +196,7 @@ defineExpose({
         :key="key"
         :class="[
           'py-2 px-3 cursor-pointer text-13px relative transition-all duration-300',
-          currentTimeRange === key ? 'text-[#00FFFF]' : 'text-[#7EAEE5]'
+          currentTimeRange === key ? 'text-[#00FFFF]' : 'text-[#7EAEE5]',
         ]"
         @click="changeTimeRange(key)"
       >
@@ -205,6 +209,10 @@ defineExpose({
     </div>
 
     <!-- 图表容器 -->
-    <div ref="chartRef" class="w-full relative flex-1" :style="{ height: props.height + 'px' }"></div>
+    <div
+      ref="chartRef"
+      class="w-full relative flex-1"
+      :style="{ height: props.height + 'px' }"
+    ></div>
   </div>
 </template>

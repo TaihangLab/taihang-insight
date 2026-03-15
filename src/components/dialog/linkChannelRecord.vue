@@ -1,60 +1,114 @@
 <template>
-  <div id="linkChannelRecord" style="width: 100%;  background-color: #FFFFFF; display: grid; grid-template-columns: 200px auto;">
-    <el-dialog title="通道关联" v-loading="dialogLoading" v-if="showDialog" top="2rem" width="80%" :close-on-click-modal="false" :visible.sync="showDialog" :destroy-on-close="true" @close="close()">
-      <div style="display: grid; grid-template-columns: 100px auto;">
+  <div
+    id="linkChannelRecord"
+    style="width: 100%; background-color: #ffffff; display: grid; grid-template-columns: 200px auto"
+  >
+    <el-dialog
+      title="通道关联"
+      v-loading="dialogLoading"
+      v-if="showDialog"
+      top="2rem"
+      width="80%"
+      :close-on-click-modal="false"
+      :visible.sync="showDialog"
+      :destroy-on-close="true"
+      @close="close()"
+    >
+      <div style="display: grid; grid-template-columns: 100px auto">
         <el-tabs tab-position="left" style="" v-model="hasLink" @tab-click="search">
           <el-tab-pane label="未关联" name="false"></el-tab-pane>
           <el-tab-pane label="已关联" name="true"></el-tab-pane>
         </el-tabs>
         <div>
           <div class="page-header">
-            <div class="page-header-btn" >
-              <div  style="display: inline;">
+            <div class="page-header-btn">
+              <div style="display: inline">
                 搜索:
-                <el-input @input="search" style="margin-right: 1rem; width: auto;" size="small" placeholder="关键字"
-                          prefix-icon="el-icon-search" v-model="searchSrt" clearable></el-input>
+                <el-input
+                  @input="search"
+                  style="margin-right: 1rem; width: auto"
+                  size="small"
+                  placeholder="关键字"
+                  prefix-icon="el-icon-search"
+                  v-model="searchSrt"
+                  clearable
+                ></el-input>
 
                 在线状态:
-                <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="search" v-model="online" placeholder="请选择"
-                           default-first-option>
+                <el-select
+                  size="small"
+                  style="width: 8rem; margin-right: 1rem"
+                  @change="search"
+                  v-model="online"
+                  placeholder="请选择"
+                  default-first-option
+                >
                   <el-option label="全部" value=""></el-option>
                   <el-option label="在线" value="true"></el-option>
                   <el-option label="离线" value="false"></el-option>
                 </el-select>
                 类型:
-                <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="search" v-model="channelType" placeholder="请选择"
-                           default-first-option>
+                <el-select
+                  size="small"
+                  style="width: 8rem; margin-right: 1rem"
+                  @change="search"
+                  v-model="channelType"
+                  placeholder="请选择"
+                  default-first-option
+                >
                   <el-option label="全部" value=""></el-option>
-                  <el-option v-for="item in Object.values($channelTypeList)" :key="item.id" :label="item.name" :value="item.id"></el-option>
+                  <el-option
+                    v-for="item in Object.values($channelTypeList)"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
+                  ></el-option>
                 </el-select>
-                <el-button v-if="hasLink !=='true'" size="small" type="primary" @click="add()">
+                <el-button v-if="hasLink !== 'true'" size="small" type="primary" @click="add()">
                   添加
                 </el-button>
-                <el-button v-if="hasLink ==='true'" size="small" type="danger" @click="remove()">
+                <el-button v-if="hasLink === 'true'" size="small" type="danger" @click="remove()">
                   移除
                 </el-button>
-                <el-button size="small" v-if="hasLink !=='true'" @click="addByDevice()">按设备添加</el-button>
-                <el-button size="small" v-if="hasLink ==='true'" @click="removeByDevice()">按设备移除</el-button>
-                <el-button size="small" v-if="hasLink !=='true'" @click="addAll()">添加所有通道</el-button>
-                <el-button size="small" v-if="hasLink ==='true'" @click="removeAll()">移除所有通道</el-button>
+                <el-button size="small" v-if="hasLink !== 'true'" @click="addByDevice()">
+                  按设备添加
+                </el-button>
+                <el-button size="small" v-if="hasLink === 'true'" @click="removeByDevice()">
+                  按设备移除
+                </el-button>
+                <el-button size="small" v-if="hasLink !== 'true'" @click="addAll()">
+                  添加所有通道
+                </el-button>
+                <el-button size="small" v-if="hasLink === 'true'" @click="removeAll()">
+                  移除所有通道
+                </el-button>
                 <el-button size="small" @click="getChannelList()">刷新</el-button>
               </div>
             </div>
           </div>
-          <el-table size="small"  ref="channelListTable" :data="channelList" :height="winHeight"
-                    header-row-class-name="table-header" @selection-change="handleSelectionChange" >
-            <el-table-column type="selection" width="55" >
-            </el-table-column>
-            <el-table-column prop="gbName" label="名称" min-width="180">
-            </el-table-column>
-            <el-table-column prop="gbDeviceId" label="编号" min-width="180">
-            </el-table-column>
-            <el-table-column prop="gbManufacturer" label="厂家" min-width="100">
-            </el-table-column>
+          <el-table
+            size="small"
+            ref="channelListTable"
+            :data="channelList"
+            :height="winHeight"
+            header-row-class-name="table-header"
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column type="selection" width="55"></el-table-column>
+            <el-table-column prop="gbName" label="名称" min-width="180"></el-table-column>
+            <el-table-column prop="gbDeviceId" label="编号" min-width="180"></el-table-column>
+            <el-table-column prop="gbManufacturer" label="厂家" min-width="100"></el-table-column>
             <el-table-column label="类型" min-width="100">
               <template v-slot:default="scope">
                 <div slot="reference" class="name-wrapper">
-                  <el-tag size="medium" effect="plain" type="success" :style="$channelTypeList[scope.row.dataType].style">{{$channelTypeList[scope.row.dataType].name}}</el-tag>
+                  <el-tag
+                    size="medium"
+                    effect="plain"
+                    type="success"
+                    :style="$channelTypeList[scope.row.dataType].style"
+                  >
+                    {{ $channelTypeList[scope.row.dataType].name }}
+                  </el-tag>
                 </div>
               </template>
             </el-table-column>
@@ -75,8 +129,8 @@
             :page-size="count"
             :page-sizes="[15, 25, 35, 50]"
             layout="total, sizes, prev, pager, next"
-            :total="total">
-          </el-pagination>
+            :total="total"
+          ></el-pagination>
           <gbDeviceSelect ref="gbDeviceSelect"></gbDeviceSelect>
         </div>
       </div>
@@ -86,11 +140,11 @@
 
 <script>
 import gbDeviceSelect from "./GbDeviceSelect.vue";
-import { getRecordPlanChannelList, linkRecordPlan } from '@/api/dialog'
+import { getRecordPlanChannelList, linkRecordPlan } from "@/api/dialog";
 
 export default {
-  name: 'linkChannelRecord',
-  components: {gbDeviceSelect},
+  name: "linkChannelRecord",
+  components: { gbDeviceSelect },
   data() {
     return {
       dialogLoading: false,
@@ -108,7 +162,7 @@ export default {
       loading: false,
       planId: null,
       loadSnap: {},
-      multipleSelection: []
+      multipleSelection: [],
     };
   },
 
@@ -116,15 +170,15 @@ export default {
   destroyed() {},
   methods: {
     openDialog(planId, closeCallback) {
-      this.planId = planId
-      this.showDialog = true
-      this.closeCallback = closeCallback
-      this.initData()
+      this.planId = planId;
+      this.showDialog = true;
+      this.closeCallback = closeCallback;
+      this.initData();
     },
     initData: function () {
-      this.currentPage= 1;
-      this.count= 15;
-      this.total= 0;
+      this.currentPage = 1;
+      this.count = 15;
+      this.total = 0;
       this.getChannelList();
     },
     currentChange: function (val) {
@@ -143,128 +197,133 @@ export default {
         online: this.online,
         channelType: this.channelType,
         planId: this.planId,
-        hasLink: this.hasLink
-      }).then((res)=> {
-        this.total = res.total;
-        this.channelList = res.list;
-        // 防止出现表格错位
-        this.$nextTick(() => {
-          this.$refs.channelListTable.doLayout();
+        hasLink: this.hasLink,
+      })
+        .then((res) => {
+          this.total = res.total;
+          this.channelList = res.list;
+          // 防止出现表格错位
+          this.$nextTick(() => {
+            this.$refs.channelListTable.doLayout();
+          });
         })
-      }).catch((error)=> {
-
-        console.log(error);
-      });
+        .catch((error) => {
+          console.log(error);
+        });
     },
-    handleSelectionChange: function (val){
+    handleSelectionChange: function (val) {
       this.multipleSelection = val;
     },
 
-    linkPlan: function (data){
-      this.loading = true
-      return linkRecordPlan(data).then((res)=> {
-        this.$message.success({
-          showClose: true,
-          message: "保存成功"
+    linkPlan: function (data) {
+      this.loading = true;
+      return linkRecordPlan(data)
+        .then((res) => {
+          this.$message.success({
+            showClose: true,
+            message: "保存成功",
+          });
+          this.getChannelList();
         })
-        this.getChannelList()
-      }).catch((error)=> {
-        this.$message.error({
-          showClose: true,
-          message: error.msg || error
+        .catch((error) => {
+          this.$message.error({
+            showClose: true,
+            message: error.msg || error,
+          });
         })
-      }).finally(()=>{
-        this.loading = false
-      })
+        .finally(() => {
+          this.loading = false;
+        });
     },
 
     add: function (row) {
-      let channels = []
+      let channels = [];
       for (let i = 0; i < this.multipleSelection.length; i++) {
-        channels.push(this.multipleSelection[i].gbId)
+        channels.push(this.multipleSelection[i].gbId);
       }
       if (channels.length === 0) {
         this.$message.info({
           showClose: true,
-          message: "请选择通道"
-        })
+          message: "请选择通道",
+        });
         return;
       }
       this.linkPlan({
         planId: this.planId,
-        channelIds: channels
-      })
+        channelIds: channels,
+      });
     },
     addAll: function (row) {
-      this.$confirm("添加所有通道将包括已经添加到其他计划的通道，确定添加所有通道？", '提示', {
+      this.$confirm("添加所有通道将包括已经添加到其他计划的通道，确定添加所有通道？", "提示", {
         dangerouslyUseHTMLString: true,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.linkPlan({
-          planId: this.planId,
-          allLink: true
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          this.linkPlan({
+            planId: this.planId,
+            allLink: true,
+          });
         })
-        }).catch(() => {
-      });
+        .catch(() => {});
     },
 
     addByDevice: function (row) {
-      this.$refs.gbDeviceSelect.openDialog((rows)=>{
-        let deviceIds = []
+      this.$refs.gbDeviceSelect.openDialog((rows) => {
+        let deviceIds = [];
         for (let i = 0; i < rows.length; i++) {
-          deviceIds.push(rows[i].id)
+          deviceIds.push(rows[i].id);
         }
         this.linkPlan({
           planId: this.planId,
-          deviceDbIds: deviceIds
-        })
-      })
+          deviceDbIds: deviceIds,
+        });
+      });
     },
 
     removeByDevice: function (row) {
-      this.$refs.gbDeviceSelect.openDialog((rows)=>{
-        let deviceIds = []
+      this.$refs.gbDeviceSelect.openDialog((rows) => {
+        let deviceIds = [];
         for (let i = 0; i < rows.length; i++) {
-          deviceIds.push(rows[i].id)
+          deviceIds.push(rows[i].id);
         }
         this.linkPlan({
-          deviceDbIds: deviceIds
-        })
-      })
+          deviceDbIds: deviceIds,
+        });
+      });
     },
     remove: function (row) {
-      let channels = []
+      let channels = [];
       for (let i = 0; i < this.multipleSelection.length; i++) {
-        channels.push(this.multipleSelection[i].gbId)
+        channels.push(this.multipleSelection[i].gbId);
       }
       if (channels.length === 0) {
         this.$message.info({
           showClose: true,
-          message: "请选择通道"
-        })
+          message: "请选择通道",
+        });
         return;
       }
 
       this.linkPlan({
-        channelIds: channels
-      })
+        channelIds: channels,
+      });
     },
     removeAll: function (row) {
-
-      this.$confirm("确定移除所有通道？", '提示', {
+      this.$confirm("确定移除所有通道？", "提示", {
         dangerouslyUseHTMLString: true,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.linkPlan({
-          planId: this.planId,
-          allLink: false
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          this.linkPlan({
+            planId: this.planId,
+            allLink: false,
+          });
         })
-      }).catch(() => {
-      });
+        .catch(() => {});
     },
     search: function () {
       this.currentPage = 1;
@@ -274,7 +333,7 @@ export default {
     refresh: function () {
       this.initData();
     },
-  }
+  },
 };
 </script>
 

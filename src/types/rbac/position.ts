@@ -3,8 +3,8 @@
  * Position Management Types
  */
 
-import type { BaseQueryParams, PaginatedResponse, ApiResponse } from './common';
-import { Status } from './common';
+import type { BaseQueryParams, PaginatedResponse, ApiResponse } from "./common";
+import { Status } from "./common";
 
 // ============================================
 // 查询参数类型

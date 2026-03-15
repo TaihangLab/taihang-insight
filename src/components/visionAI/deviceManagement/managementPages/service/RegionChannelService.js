@@ -7,11 +7,11 @@ import {
   addChannelToRegion as apiAddChannelToRegion,
   deleteChannelFromRegion as apiDeleteChannelFromRegion,
   addChannelToGroup as apiAddChannelToGroup,
-  deleteChannelFromGroup as apiDeleteChannelFromGroup
-} from '@/api/channel'
-import { getRegionPath } from '@/api/region'
-import { getGroupPath } from '@/api/group'
-import { getDeviceList as apiGetDeviceList } from '@/api/device'
+  deleteChannelFromGroup as apiDeleteChannelFromGroup,
+} from "@/api/channel";
+import { getRegionPath } from "@/api/region";
+import { getGroupPath } from "@/api/group";
+import { getDeviceList as apiGetDeviceList } from "@/api/device";
 
 class RegionChannelService {
   /**
@@ -23,13 +23,13 @@ class RegionChannelService {
   getCivilCodeChannelList(params, callback, errorCallback) {
     apiGetCivilCodeChannelList(params)
       .then((res) => {
-        if (typeof callback === 'function') {
+        if (typeof callback === "function") {
           callback(res.data);
         }
       })
       .catch((error) => {
-        console.error('获取行政区划通道列表错误:', error);
-        if (typeof errorCallback === 'function') {
+        console.error("获取行政区划通道列表错误:", error);
+        if (typeof errorCallback === "function") {
           errorCallback(error);
         }
       });
@@ -44,13 +44,13 @@ class RegionChannelService {
   getParentChannelList(params, callback, errorCallback) {
     apiGetParentChannelList(params)
       .then((res) => {
-        if (typeof callback === 'function') {
+        if (typeof callback === "function") {
           callback(res.data);
         }
       })
       .catch((error) => {
-        console.error('获取业务分组通道列表错误:', error);
-        if (typeof errorCallback === 'function') {
+        console.error("获取业务分组通道列表错误:", error);
+        if (typeof errorCallback === "function") {
           errorCallback(error);
         }
       });
@@ -65,13 +65,13 @@ class RegionChannelService {
   addChannelToRegion(data, callback, errorCallback) {
     apiAddChannelToRegion(data)
       .then((res) => {
-        if (typeof callback === 'function') {
+        if (typeof callback === "function") {
           callback(res.data);
         }
       })
       .catch((error) => {
-        console.error('添加通道到行政区划错误:', error);
-        if (typeof errorCallback === 'function') {
+        console.error("添加通道到行政区划错误:", error);
+        if (typeof errorCallback === "function") {
           errorCallback(error);
         }
       });
@@ -86,13 +86,13 @@ class RegionChannelService {
   deleteChannelFromRegion(data, callback, errorCallback) {
     apiDeleteChannelFromRegion(data)
       .then((res) => {
-        if (typeof callback === 'function') {
+        if (typeof callback === "function") {
           callback(res.data);
         }
       })
       .catch((error) => {
-        console.error('从行政区划删除通道错误:', error);
-        if (typeof errorCallback === 'function') {
+        console.error("从行政区划删除通道错误:", error);
+        if (typeof errorCallback === "function") {
           errorCallback(error);
         }
       });
@@ -107,13 +107,13 @@ class RegionChannelService {
   addChannelToGroup(data, callback, errorCallback) {
     apiAddChannelToGroup(data)
       .then((res) => {
-        if (typeof callback === 'function') {
+        if (typeof callback === "function") {
           callback(res.data);
         }
       })
       .catch((error) => {
-        console.error('添加通道到业务分组错误:', error);
-        if (typeof errorCallback === 'function') {
+        console.error("添加通道到业务分组错误:", error);
+        if (typeof errorCallback === "function") {
           errorCallback(error);
         }
       });
@@ -128,13 +128,13 @@ class RegionChannelService {
   deleteChannelFromGroup(data, callback, errorCallback) {
     apiDeleteChannelFromGroup(data)
       .then((res) => {
-        if (typeof callback === 'function') {
+        if (typeof callback === "function") {
           callback(res.data);
         }
       })
       .catch((error) => {
-        console.error('从业务分组删除通道错误:', error);
-        if (typeof errorCallback === 'function') {
+        console.error("从业务分组删除通道错误:", error);
+        if (typeof errorCallback === "function") {
           errorCallback(error);
         }
       });
@@ -149,13 +149,13 @@ class RegionChannelService {
   getRegionPath(deviceId, callback, errorCallback) {
     getRegionPath(deviceId)
       .then((res) => {
-        if (typeof callback === 'function') {
+        if (typeof callback === "function") {
           callback(res.data);
         }
       })
       .catch((error) => {
-        console.error('获取行政区划路径错误:', error);
-        if (typeof errorCallback === 'function') {
+        console.error("获取行政区划路径错误:", error);
+        if (typeof errorCallback === "function") {
           errorCallback(error);
         }
       });
@@ -171,13 +171,13 @@ class RegionChannelService {
   getGroupPath(deviceId, businessGroup, callback, errorCallback) {
     getGroupPath(deviceId, businessGroup)
       .then((res) => {
-        if (typeof callback === 'function') {
+        if (typeof callback === "function") {
           callback(res.data);
         }
       })
       .catch((error) => {
-        console.error('获取业务分组路径错误:', error);
-        if (typeof errorCallback === 'function') {
+        console.error("获取业务分组路径错误:", error);
+        if (typeof errorCallback === "function") {
           errorCallback(error);
         }
       });
@@ -192,13 +192,13 @@ class RegionChannelService {
   getDeviceList(params, callback, errorCallback) {
     apiGetDeviceList(params)
       .then((res) => {
-        if (typeof callback === 'function') {
+        if (typeof callback === "function") {
           callback(res.data);
         }
       })
       .catch((error) => {
-        console.error('获取设备列表错误:', error);
-        if (typeof errorCallback === 'function') {
+        console.error("获取设备列表错误:", error);
+        if (typeof errorCallback === "function") {
           errorCallback(error);
         }
       });
@@ -206,6 +206,3 @@ class RegionChannelService {
 }
 
 export default new RegionChannelService();
-
-
-

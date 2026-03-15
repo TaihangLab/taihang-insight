@@ -1,5 +1,5 @@
 <template>
-  <div id="queryTrace" >
+  <div id="queryTrace">
     <el-dialog
       title="查询轨迹"
       width="40%"
@@ -10,18 +10,39 @@
       @close="close()"
     >
       <div v-loading="isLoging">
-        <el-date-picker v-model="searchFrom" type="datetime" placeholder="选择开始日期时间" default-time="00:00:00" value-format="yyyy-MM-dd HH:mm:ss" size="small" style="width: 11rem;" align="right" :picker-options="pickerOptions"></el-date-picker>
-        <el-date-picker v-model="searchTo" type="datetime" placeholder="选择结束日期时间" default-time="00:00:00" value-format="yyyy-MM-dd HH:mm:ss" size="small" style="width: 11rem;" align="right" :picker-options="pickerOptions"></el-date-picker>
-        <el-button icon="el-icon-search" size="small" type="primary" @click="onSubmit">查询</el-button>
+        <el-date-picker
+          v-model="searchFrom"
+          type="datetime"
+          placeholder="选择开始日期时间"
+          default-time="00:00:00"
+          value-format="yyyy-MM-dd HH:mm:ss"
+          size="small"
+          style="width: 11rem"
+          align="right"
+          :picker-options="pickerOptions"
+        ></el-date-picker>
+        <el-date-picker
+          v-model="searchTo"
+          type="datetime"
+          placeholder="选择结束日期时间"
+          default-time="00:00:00"
+          value-format="yyyy-MM-dd HH:mm:ss"
+          size="small"
+          style="width: 11rem"
+          align="right"
+          :picker-options="pickerOptions"
+        ></el-date-picker>
+        <el-button icon="el-icon-search" size="small" type="primary" @click="onSubmit">
+          查询
+        </el-button>
       </div>
-
     </el-dialog>
   </div>
 </template>
 
 <script>
-import DeviceService from '../service/DeviceService.js'
-import { getPositionHistory } from '@/api/dialog'
+import DeviceService from "../service/DeviceService.js";
+import { getPositionHistory } from "@/api/dialog";
 
 export default {
   name: "deviceEdit",
@@ -32,26 +53,30 @@ export default {
     return {
       deviceService: new DeviceService(),
       pickerOptions: {
-        shortcuts: [{
-          text: '今天',
-          onClick(picker) {
-            picker.$emit('pick', new Date());
-          }
-        }, {
-          text: '昨天',
-          onClick(picker) {
-            const date = new Date();
-            date.setTime(date.getTime() - 3600 * 1000 * 24);
-            picker.$emit('pick', date);
-          }
-        }, {
-          text: '一周前',
-          onClick(picker) {
-            const date = new Date();
-            date.setTime(date.getTime() - 3600 * 1000 * 24 * 7);
-            picker.$emit('pick', date);
-          }
-        }]
+        shortcuts: [
+          {
+            text: "今天",
+            onClick(picker) {
+              picker.$emit("pick", new Date());
+            },
+          },
+          {
+            text: "昨天",
+            onClick(picker) {
+              const date = new Date();
+              date.setTime(date.getTime() - 3600 * 1000 * 24);
+              picker.$emit("pick", date);
+            },
+          },
+          {
+            text: "一周前",
+            onClick(picker) {
+              const date = new Date();
+              date.setTime(date.getTime() - 3600 * 1000 * 24 * 7);
+              picker.$emit("pick", date);
+            },
+          },
+        ],
       },
       searchFrom: null,
       searchTo: null,
@@ -64,7 +89,7 @@ export default {
   },
   methods: {
     openDialog: function (channel, callback) {
-      console.log(channel)
+      console.log(channel);
       this.showDialog = true;
       this.callback = callback;
       this.channel = channel;
@@ -77,25 +102,26 @@ export default {
         this.channel.deviceId,
         this.channel.channelId,
         this.searchFrom,
-        this.searchTo
-      ).then((res)=> {
-        this.isLoging = false;
-        if (typeof this.callback == "function") {
-          if (res.data.code == 0) {
-            this.callback(res.data.data)
-            this.close()
-          }else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg,
-            });
+        this.searchTo,
+      )
+        .then((res) => {
+          this.isLoging = false;
+          if (typeof this.callback == "function") {
+            if (res.data.code == 0) {
+              this.callback(res.data.data);
+              this.close();
+            } else {
+              this.$message.error({
+                showClose: true,
+                message: res.data.msg,
+              });
+            }
           }
-
-        }
-      }).catch((error) => {
+        })
+        .catch((error) => {
           this.isLoging = false;
           console.error(error);
-        })
+        });
     },
     close: function () {
       this.showDialog = false;

@@ -4,60 +4,118 @@
     <div class="filter-section">
       <div class="toolbar">
         <div class="left-operations">
-          <el-button type="primary" icon="el-icon-plus" size="small" @click="handleImport">导入模型</el-button>
-          <el-button type="danger" icon="el-icon-delete" size="small" :disabled="!multipleSelection.length"
-            @click="handleBatchDelete">批量删除</el-button>
-          <el-button type="success" icon="el-icon-refresh-right" size="small" @click="handleRefresh"
-            :loading="refreshLoading">刷新列表</el-button>
+          <el-button type="primary" icon="el-icon-plus" size="small" @click="handleImport">
+            导入模型
+          </el-button>
+          <el-button
+            type="danger"
+            icon="el-icon-delete"
+            size="small"
+            :disabled="!multipleSelection.length"
+            @click="handleBatchDelete"
+          >
+            批量删除
+          </el-button>
+          <el-button
+            type="success"
+            icon="el-icon-refresh-right"
+            size="small"
+            @click="handleRefresh"
+            :loading="refreshLoading"
+          >
+            刷新列表
+          </el-button>
         </div>
 
         <!-- 搜索区域移到右边 -->
         <div class="right-operations">
           <div class="filter-item">
-            <el-select v-model="searchForm.status" placeholder="全部" class="status-select" @change="handleSearch"
-              size="small" clearable>
+            <el-select
+              v-model="searchForm.status"
+              placeholder="全部"
+              class="status-select"
+              @change="handleSearch"
+              size="small"
+              clearable
+            >
               <el-option label="全部" value="all" />
               <el-option label="使用中" value="using" />
               <el-option label="未使用" value="unused" />
             </el-select>
           </div>
 
-          <el-input v-model="searchForm.keyword" placeholder="请输入模型名称" class="search-input" @input="handleSearch"
-            clearable @clear="handleSearch" size="small">
-            <i slot="prefix" style="align-items: center; display: flex; height: 32px;" class="el-icon-search"></i>
+          <el-input
+            v-model="searchForm.keyword"
+            placeholder="请输入模型名称"
+            class="search-input"
+            @input="handleSearch"
+            clearable
+            @clear="handleSearch"
+            size="small"
+          >
+            <i
+              slot="prefix"
+              style="align-items: center; display: flex; height: 32px"
+              class="el-icon-search"
+            ></i>
           </el-input>
 
-          <el-button class="refresh-btn" size="small" icon="el-icon-refresh-left" @click="handleRefresh"
-            :loading="refreshLoading" title="刷新数据"></el-button>
+          <el-button
+            class="refresh-btn"
+            size="small"
+            icon="el-icon-refresh-left"
+            @click="handleRefresh"
+            :loading="refreshLoading"
+            title="刷新数据"
+          ></el-button>
         </div>
       </div>
     </div>
 
     <!-- 导入模型对话框 -->
-    <el-dialog :visible.sync="importDialogVisible" title="导入模型" width="650px" :close-on-click-modal="false"
-      custom-class="tech-dialog">
+    <el-dialog
+      :visible.sync="importDialogVisible"
+      title="导入模型"
+      width="650px"
+      :close-on-click-modal="false"
+      custom-class="tech-dialog"
+    >
       <el-form :model="importForm" label-width="85px" class="tech-form">
         <el-form-item label="模型名称" required>
-          <el-input v-model="importForm.name" placeholder="请输入模型名称" style="width: 100%;" />
+          <el-input v-model="importForm.name" placeholder="请输入模型名称" style="width: 100%" />
         </el-form-item>
         <el-form-item label="模型文件" required>
-          <el-upload class="upload-demo" action="#" :auto-upload="false" :on-change="file => handleFileChange(file.raw)"
-            :limit="1">
-            <el-button type="primary" style="margin-left: 0;">选择文件</el-button>
-            <div class="el-upload__tip" style="margin-top: 10px; color: #86909C; font-size: 12px;">
+          <el-upload
+            class="upload-demo"
+            action="#"
+            :auto-upload="false"
+            :on-change="(file) => handleFileChange(file.raw)"
+            :limit="1"
+          >
+            <el-button type="primary" style="margin-left: 0">选择文件</el-button>
+            <div class="el-upload__tip" style="margin-top: 10px; color: #86909c; font-size: 12px">
               请选择模型文件进行上传
             </div>
           </el-upload>
         </el-form-item>
         <el-form-item label="版本">
-          <el-input v-model="importForm.version" placeholder="请输入版本号" style="width: 40%;" class="version-input">
+          <el-input
+            v-model="importForm.version"
+            placeholder="请输入版本号"
+            style="width: 40%"
+            class="version-input"
+          >
             <template slot="prepend">
               <span class="version-prefix">V</span>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item label="描述">
-          <el-input v-model="importForm.description" placeholder="请输入模型描述" style="width: 100%;" />
+          <el-input
+            v-model="importForm.description"
+            placeholder="请输入模型描述"
+            style="width: 100%"
+          />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -67,15 +125,37 @@
     </el-dialog>
 
     <!-- 编辑模型对话框 -->
-    <el-dialog :visible.sync="editDialogVisible" title="编辑模型" width="650px" :close-on-click-modal="false"
-      :before-close="cancelEdit" custom-class="tech-dialog">
-      <el-form :model="editForm" label-width="85px" class="tech-form" :rules="editFormRules" ref="editForm">
+    <el-dialog
+      :visible.sync="editDialogVisible"
+      title="编辑模型"
+      width="650px"
+      :close-on-click-modal="false"
+      :before-close="cancelEdit"
+      custom-class="tech-dialog"
+    >
+      <el-form
+        :model="editForm"
+        label-width="85px"
+        class="tech-form"
+        :rules="editFormRules"
+        ref="editForm"
+      >
         <el-form-item label="模型名称" prop="name" required>
-          <el-input v-model="editForm.name" placeholder="请输入模型名称" style="width: 100%;" disabled />
+          <el-input
+            v-model="editForm.name"
+            placeholder="请输入模型名称"
+            style="width: 100%"
+            disabled
+          />
         </el-form-item>
         <div class="form-row">
           <el-form-item label="版本" prop="version" class="half-width-item">
-            <el-input v-model="editForm.version" placeholder="请输入版本号" style="width: 100%;" class="version-input">
+            <el-input
+              v-model="editForm.version"
+              placeholder="请输入版本号"
+              style="width: 100%"
+              class="version-input"
+            >
               <template slot="prepend">
                 <span class="version-prefix">V</span>
               </template>
@@ -83,12 +163,16 @@
           </el-form-item>
           <el-form-item label="使用状态" class="half-width-item status-item-readonly">
             <el-tag :type="editForm.usage_status === 'using' ? 'success' : 'info'" size="medium">
-              {{ editForm.usage_status === 'using' ? '使用中' : '未使用' }}
+              {{ editForm.usage_status === "using" ? "使用中" : "未使用" }}
             </el-tag>
           </el-form-item>
         </div>
         <el-form-item label="描述" prop="description">
-          <el-input v-model="editForm.description" placeholder="请输入模型描述" style="width: 100%;" />
+          <el-input
+            v-model="editForm.description"
+            placeholder="请输入模型描述"
+            style="width: 100%"
+          />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -99,24 +183,53 @@
 
     <!-- 模型列表 -->
     <div class="table-container">
-      <el-table v-loading="loading" :data="currentPageData" @selection-change="handleSelectionChange" class="tech-table"
+      <el-table
+        v-loading="loading"
+        :data="currentPageData"
+        @selection-change="handleSelectionChange"
+        class="tech-table"
         height="calc(100vh - 280px)"
-        :header-cell-style="{ background: '#f5f7fa', color: '#303133', fontWeight: '500', textAlign: 'center' }"
-        :cell-style="{ textAlign: 'center', backgroundColor: '#ffffff' }" :row-style="{ backgroundColor: '#ffffff' }">
+        :header-cell-style="{
+          background: '#f5f7fa',
+          color: '#303133',
+          fontWeight: '500',
+          textAlign: 'center',
+        }"
+        :cell-style="{ textAlign: 'center', backgroundColor: '#ffffff' }"
+        :row-style="{ backgroundColor: '#ffffff' }"
+      >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column prop="name" label="模型名称" min-width="180" align="center" header-align="center" />
-        <el-table-column prop="id" label="模型ID" width="180" align="center" header-align="center" />
+        <el-table-column
+          prop="name"
+          label="模型名称"
+          min-width="180"
+          align="center"
+          header-align="center"
+        />
+        <el-table-column
+          prop="id"
+          label="模型ID"
+          width="180"
+          align="center"
+          header-align="center"
+        />
         <el-table-column label="使用状态" width="100" align="center" header-align="center">
           <template #default="{ row }">
-            <el-tag :type="row.usage_status === 'using' ? 'success' : 'info'" class="tech-status-tag">
-              {{ row.usage_status === 'using' ? '使用中' : '未使用' }}
+            <el-tag
+              :type="row.usage_status === 'using' ? 'success' : 'info'"
+              class="tech-status-tag"
+            >
+              {{ row.usage_status === "using" ? "使用中" : "未使用" }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="加载状态" width="100" align="center" header-align="center">
           <template #default="{ row }">
-            <el-tag :type="row.model_status === 'loaded' ? 'success' : 'warning'" class="tech-status-tag">
-              {{ row.model_status === 'loaded' ? '已加载' : '未加载' }}
+            <el-tag
+              :type="row.model_status === 'loaded' ? 'success' : 'warning'"
+              class="tech-status-tag"
+            >
+              {{ row.model_status === "loaded" ? "已加载" : "未加载" }}
             </el-tag>
           </template>
         </el-table-column>
@@ -128,31 +241,70 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="200" align="center" header-align="center" />
-        <el-table-column label="操作" width="200" fixed="right" align="center" header-align="center">
+        <el-table-column
+          prop="description"
+          label="描述"
+          min-width="200"
+          align="center"
+          header-align="center"
+        />
+        <el-table-column
+          label="操作"
+          width="200"
+          fixed="right"
+          align="center"
+          header-align="center"
+        >
           <template #default="{ row }">
             <div class="operation-buttons">
               <!-- 卸载/加载按钮 -->
               <template v-if="row.model_status === 'loaded'">
-                <el-button link size="small" @click="handleUnload(row)" :loading="row.isLoading"
-                  class="operation-text-btn unload-text-btn">
+                <el-button
+                  link
+                  size="small"
+                  @click="handleUnload(row)"
+                  :loading="row.isLoading"
+                  class="operation-text-btn unload-text-btn"
+                >
                   卸载
                 </el-button>
               </template>
               <template v-else>
-                <el-button link size="small" @click="handleLoad(row)" :loading="row.isLoading"
-                  class="operation-text-btn load-text-btn">
+                <el-button
+                  link
+                  size="small"
+                  @click="handleLoad(row)"
+                  :loading="row.isLoading"
+                  class="operation-text-btn load-text-btn"
+                >
                   加载
                 </el-button>
               </template>
 
-              <el-button link size="small" @click="handleDetail(row)"
-                class="operation-text-btn detail-text-btn">详情</el-button>
-              <el-button link size="small" @click="handleEdit(row)"
-                class="operation-text-btn edit-text-btn">编辑</el-button>
-              <el-button link size="small" @click="handleDelete(row)" :disabled="row.usage_status === 'using'"
+              <el-button
+                link
+                size="small"
+                @click="handleDetail(row)"
+                class="operation-text-btn detail-text-btn"
+              >
+                详情
+              </el-button>
+              <el-button
+                link
+                size="small"
+                @click="handleEdit(row)"
+                class="operation-text-btn edit-text-btn"
+              >
+                编辑
+              </el-button>
+              <el-button
+                link
+                size="small"
+                @click="handleDelete(row)"
+                :disabled="row.usage_status === 'using'"
                 class="operation-text-btn delete-text-btn"
-                :class="{ 'disabled-text-btn': row.usage_status === 'using' }">
+                :class="{ 'disabled-text-btn': row.usage_status === 'using' }"
+              >
                 删除
               </el-button>
             </div>
@@ -162,8 +314,14 @@
     </div>
 
     <!-- 模型详情对话框 -->
-    <el-dialog :visible.sync="detailDialogVisible" title="模型详情" width="700px" :close-on-click-modal="false"
-      custom-class="model-detail-dialog" :append-to-body="true">
+    <el-dialog
+      :visible.sync="detailDialogVisible"
+      title="模型详情"
+      width="700px"
+      :close-on-click-modal="false"
+      custom-class="model-detail-dialog"
+      :append-to-body="true"
+    >
       <div class="model-detail-content">
         <!-- 基本信息卡片 -->
         <el-card class="detail-card info-card" shadow="never" :body-style="{ padding: '0' }">
@@ -191,33 +349,43 @@
             <div class="info-row">
               <div class="info-item half-width">
                 <span class="info-label">使用状态：</span>
-                <el-tag :type="detailForm.usage_status === 'using' ? 'success' : 'info'" size="small"
-                  class="tech-status-tag">
-                  {{ detailForm.usage_status === 'using' ? '使用中' : '未使用' }}
+                <el-tag
+                  :type="detailForm.usage_status === 'using' ? 'success' : 'info'"
+                  size="small"
+                  class="tech-status-tag"
+                >
+                  {{ detailForm.usage_status === "using" ? "使用中" : "未使用" }}
                 </el-tag>
               </div>
               <div class="info-item half-width">
                 <span class="info-label">加载状态：</span>
-                <el-tag :type="detailForm.model_status === 'loaded' ? 'success' : 'warning'" size="small"
-                  class="tech-status-tag">
-                  {{ detailForm.model_status === 'loaded' ? '已加载' : '未加载' }}
+                <el-tag
+                  :type="detailForm.model_status === 'loaded' ? 'success' : 'warning'"
+                  size="small"
+                  class="tech-status-tag"
+                >
+                  {{ detailForm.model_status === "loaded" ? "已加载" : "未加载" }}
                 </el-tag>
               </div>
             </div>
             <div class="info-row">
               <div class="info-item half-width">
                 <span class="info-label">创建时间：</span>
-                <span class="info-value">{{ detailForm.created_at || '2023-06-15 14:30:25' }}</span>
+                <span class="info-value">{{ detailForm.created_at || "2023-06-15 14:30:25" }}</span>
               </div>
               <div class="info-item half-width">
                 <span class="info-label">更新时间：</span>
-                <span class="info-value">{{ detailForm.updated_at || '2023-08-20 09:45:12' }}</span>
+                <span class="info-value">{{ detailForm.updated_at || "2023-08-20 09:45:12" }}</span>
               </div>
             </div>
             <div class="info-item">
               <span class="info-label">相关描述：</span>
-              <span class="info-value desc-value">{{ detailForm.description || '该模型基于深度学习技术，针对特定场景优化，支持多尺度特征融合和高精度目标检测。'
-                }}</span>
+              <span class="info-value desc-value">
+                {{
+                  detailForm.description ||
+                  "该模型基于深度学习技术，针对特定场景优化，支持多尺度特征融合和高精度目标检测。"
+                }}
+              </span>
             </div>
           </div>
         </el-card>
@@ -227,10 +395,13 @@
           <el-card class="detail-card skills-card" shadow="never" :body-style="{ padding: '0' }">
             <div slot="header" class="card-header">
               <span>技能实例</span>
-              <el-tag type="success" size="small" class="tech-status-tag">{{ relatedSkills.length }}</el-tag>
+              <el-tag type="success" size="small" class="tech-status-tag">
+                {{ relatedSkills.length }}
+              </el-tag>
             </div>
             <div v-if="relatedSkills.length === 0" class="no-skills">
-              <i class="el-icon-warning-outline"></i> 暂无技能实例
+              <i class="el-icon-warning-outline"></i>
+              暂无技能实例
             </div>
             <div v-else class="skills-scroll-container">
               <div v-for="(skill, index) in relatedSkills" :key="index" class="skill-card">
@@ -248,8 +419,12 @@
                   </div>
                 </div>
                 <div class="skill-status">
-                  <el-tag size="small" :type="skill.enabled ? 'success' : 'info'" class="status-tag tech-status-tag">
-                    {{ skill.enabled ? '已启用' : '未启用' }}
+                  <el-tag
+                    size="small"
+                    :type="skill.enabled ? 'success' : 'info'"
+                    class="status-tag tech-status-tag"
+                  >
+                    {{ skill.enabled ? "已启用" : "未启用" }}
                   </el-tag>
                 </div>
               </div>
@@ -261,9 +436,15 @@
 
     <!-- 分页控件 -->
     <div class="pagination">
-      <el-pagination :current-page.sync="pagination.currentPage" :page-size.sync="pagination.pageSize"
-        :page-sizes="[10, 20, 50]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange" @current-change="handlePageChange" />
+      <el-pagination
+        :current-page.sync="pagination.currentPage"
+        :page-size.sync="pagination.pageSize"
+        :page-sizes="[10, 20, 50]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
     </div>
   </div>
 </template>
@@ -811,8 +992,6 @@ export default {
   flex-shrink: 0;
 }
 
-
-
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -1065,8 +1244,6 @@ export default {
   background: #f5f7fa;
 }
 
-
-
 /* 确保表格边框圆角 */
 .tech-table :deep(.el-table) {
   overflow: hidden;
@@ -1083,12 +1260,7 @@ export default {
   border-top: none !important;
 }
 
-
-
-
-
-
-.tech-table :deep(.el-table--enable-row-hover .el-table__body tr:hover>td) {
+.tech-table :deep(.el-table--enable-row-hover .el-table__body tr:hover > td) {
   background-color: rgba(59, 130, 246, 0.05) !important;
 }
 
@@ -1154,8 +1326,8 @@ export default {
   display: flex;
   justify-content: center;
   background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  margin-top: 0 !important;
+  padding-bottom: 10px !important;
 }
 
 .pagination :deep(.el-pagination__total) {
@@ -1295,7 +1467,7 @@ export default {
   display: flex;
   justify-content: flex-end;
   padding: 16px 24px;
-  border-top: 1px solid #E5E6EB;
+  border-top: 1px solid #e5e6eb;
   text-align: right;
 }
 
@@ -1313,7 +1485,7 @@ export default {
 
 .tech-form :deep(.el-form-item__label) {
   font-size: 14px;
-  color: #1F2329;
+  color: #1f2329;
   font-weight: 600;
   padding-right: 12px;
   text-align: right;
@@ -1326,7 +1498,7 @@ export default {
 
 .tech-form :deep(.el-form-item__label::before) {
   margin-right: 4px;
-  color: #F53F3F;
+  color: #f53f3f;
   font-weight: 600;
 }
 
@@ -1378,11 +1550,11 @@ export default {
 }
 
 .el-card__header {
-  padding: 0 0!important;
+  padding: 0 0 !important;
 }
 
 .el-card__body {
-  padding: 0 0!important;
+  padding: 0 0 !important;
 }
 
 .card-header {
@@ -1395,7 +1567,7 @@ export default {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 8px 8px 0 0;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-  margin-bottom: 0!important;
+  margin-bottom: 0 !important;
 }
 
 .card-header .el-tag {
@@ -1552,8 +1724,8 @@ export default {
 /* 刷新按钮样式 */
 .refresh-button {
   position: relative;
-  background: #67C23A !important;
-  border-color: #67C23A !important;
+  background: #67c23a !important;
+  border-color: #67c23a !important;
   color: white;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.3s;
@@ -1711,7 +1883,7 @@ export default {
 }
 
 .details-btn {
-  background-color: #67C23A;
+  background-color: #67c23a;
 }
 
 .details-btn:hover {
@@ -1719,7 +1891,7 @@ export default {
 }
 
 .edit-btn {
-  background-color: #E6A23C;
+  background-color: #e6a23c;
 }
 
 .edit-btn:hover {
@@ -1727,7 +1899,7 @@ export default {
 }
 
 .delete-btn {
-  background-color: #F56C6C;
+  background-color: #f56c6c;
 }
 
 .delete-btn:hover {
@@ -1769,7 +1941,7 @@ export default {
 
 /* 加载按钮样式 - 播放图标 */
 .load-button {
-  background: linear-gradient(135deg, #409EFF, #53a8ff);
+  background: linear-gradient(135deg, #409eff, #53a8ff);
   border: none;
 }
 
@@ -1797,7 +1969,7 @@ export default {
 
 /* 卸载按钮样式 - 停止图标 */
 .unload-button {
-  background: linear-gradient(135deg, #F56C6C, #f78989);
+  background: linear-gradient(135deg, #f56c6c, #f78989);
   border: none;
 }
 
@@ -1835,26 +2007,36 @@ export default {
   color: #606266;
 }
 
-.number-input :deep(.el-input-number__decrease:hover:not(.is-disabled)~.el-input .el-input__inner:not(.is-disabled),
-.number-input :deep(.el-input-number__increase:hover:not(.is-disabled)~.el-input .el-input__inner:not(.is-disabled) ) ) {
-  border-color: #409EFF;
+.number-input
+  :deep(
+    .el-input-number__decrease:hover:not(.is-disabled)
+      ~ .el-input
+      .el-input__inner:not(.is-disabled),
+    .number-input
+      :deep(
+        .el-input-number__increase:hover:not(.is-disabled)
+          ~ .el-input
+          .el-input__inner:not(.is-disabled)
+      )
+  ) {
+  border-color: #409eff;
 }
 
 .tech-form :deep(.el-input:hover .el-input__inner) {
-  border-color: #409EFF;
+  border-color: #409eff;
 }
 
 .tech-form :deep(.el-form-item.is-error .el-input__inner),
 .tech-form :deep(.el-form-item.is-error .el-input__inner:focus),
 .tech-form :deep(.el-form-item.is-error .el-textarea__inner),
 .tech-form :deep(.el-form-item.is-error .el-textarea__inner:focus) {
-  border-color: #F56C6C;
+  border-color: #f56c6c;
 }
 
 /* 编辑对话框内按钮样式优化 */
 .dialog-footer .el-button--primary {
-  background-color: #409EFF;
-  border-color: #409EFF;
+  background-color: #409eff;
+  border-color: #409eff;
 }
 
 .dialog-footer .el-button--primary:hover,
@@ -1883,7 +2065,7 @@ export default {
 .version-decrease-btn:not([disabled]):hover {
   background-color: #f2f6fc;
   border-color: #c6e2ff;
-  color: #409EFF;
+  color: #409eff;
 }
 
 .version-increase-btn {
@@ -1894,7 +2076,7 @@ export default {
 .version-increase-btn:hover {
   background-color: #f2f6fc;
   border-color: #c6e2ff;
-  color: #409EFF;
+  color: #409eff;
 }
 
 .version-value {
@@ -1941,7 +2123,7 @@ export default {
   font-weight: 600;
   color: #1890ff;
   letter-spacing: 0.5px;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
 }
 
 /* 详情页中的版本号样式 */
@@ -1966,13 +2148,13 @@ export default {
   color: #1890ff;
   font-weight: 600;
   font-size: 14px;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
 }
 
 .version-input :deep(.el-input__inner) {
   border-color: #d9e8ff;
   transition: all 0.3s;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
 }
 
 .version-input :deep(.el-input__inner:focus) {
@@ -2338,7 +2520,7 @@ body .el-dialog__wrapper .model-detail-dialog {
 
 /* 科技感表单样式 */
 .tech-form .el-form-item__label {
-  color: #1F2329 !important;
+  color: #1f2329 !important;
   font-weight: 600 !important;
 }
 
@@ -2445,13 +2627,13 @@ body .el-dialog__wrapper .model-detail-dialog {
   color: #1890ff !important;
   font-weight: 600 !important;
   font-size: 14px !important;
-  font-family: 'Arial', sans-serif !important;
+  font-family: "Arial", sans-serif !important;
 }
 
 .version-input .el-input__inner {
   border-color: #d9e8ff !important;
   transition: all 0.3s !important;
-  font-family: 'Arial', sans-serif !important;
+  font-family: "Arial", sans-serif !important;
 }
 
 .version-input .el-input__inner:focus {
@@ -2751,11 +2933,11 @@ body .model-list .el-tag:hover {
   border: 1px solid #a7f3d0 !important;
 }
 
-  .tech-status-tag.el-tag--info {
-    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%) !important;
-    color: #6b7280 !important;
-    border: 1px solid #d1d5db !important;
-  }
+.tech-status-tag.el-tag--info {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%) !important;
+  color: #6b7280 !important;
+  border: 1px solid #d1d5db !important;
+}
 
 .tech-status-tag.el-tag--warning {
   background: linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%) !important;

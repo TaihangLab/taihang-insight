@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    title="导出岗位数据"
-    v-model="dialogVisible"
-    width="500px"
-    @close="handleClose"
-  >
+  <el-dialog title="导出岗位数据" v-model="dialogVisible" width="500px" @close="handleClose">
     <el-form label-width="100px">
       <el-form-item label="导出格式">
         <el-radio-group v-model="exportForm.format">
@@ -39,46 +34,54 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue'
+import { reactive, computed } from "vue";
 
 interface ExportForm {
-  format: string
-  range: string
-  fields: string[]
+  format: string;
+  range: string;
+  fields: string[];
 }
 
 const props = defineProps<{
-  visible: boolean
-}>()
+  visible: boolean;
+}>();
 
 const emit = defineEmits<{
-  'update:visible': [value: boolean]
-  confirm: [data: ExportForm]
-}>()
+  "update:visible": [value: boolean];
+  confirm: [data: ExportForm];
+}>();
 
 const exportForm = reactive<ExportForm>({
-  format: 'excel',
-  range: 'all',
-  fields: ['position_code', 'category_code', 'position_name', 'department', 'order_num', 'status', 'create_time']
-})
+  format: "excel",
+  range: "all",
+  fields: [
+    "position_code",
+    "category_code",
+    "position_name",
+    "department",
+    "order_num",
+    "status",
+    "create_time",
+  ],
+});
 
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (value) => emit('update:visible', value)
-})
+  set: (value) => emit("update:visible", value),
+});
 
 const handleConfirm = () => {
-  emit('confirm', { ...exportForm })
-  dialogVisible.value = false
-}
+  emit("confirm", { ...exportForm });
+  dialogVisible.value = false;
+};
 
 const handleCancel = () => {
-  dialogVisible.value = false
-}
+  dialogVisible.value = false;
+};
 
 const handleClose = () => {
-  dialogVisible.value = false
-}
+  dialogVisible.value = false;
+};
 </script>
 
 <style scoped>

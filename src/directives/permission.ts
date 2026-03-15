@@ -3,33 +3,33 @@
  * 用法：v-permission="'user:create'" 或 v-permission="['user:create', 'user:edit']"
  */
 
-import type { Directive, DirectiveBinding } from 'vue'
-import { usePermissionsStore } from '@/stores/modules/permissions'
+import type { Directive, DirectiveBinding } from "vue";
+import { usePermissionsStore } from "@/stores/modules/permissions";
 
 /**
  * 检查是否有权限
  */
 function hasPermission(value: string | string[]): boolean {
-  const permissionsStore = usePermissionsStore()
+  const permissionsStore = usePermissionsStore();
 
   if (!value) {
-    console.warn('[v-permission] 权限码不能为空')
-    return false
+    console.warn("[v-permission] 权限码不能为空");
+    return false;
   }
 
   // 使用 getter 方法获取权限列表
-  const permissions = permissionsStore.getPermissionsSync() || []
+  const permissions = permissionsStore.getPermissionsSync() || [];
 
   // 如果权限列表为空，认为有权限（兼容未配置权限的情况）
   if (permissions.length === 0) {
-    return true
+    return true;
   }
 
   // 支持字符串和数组
-  const permissionList = Array.isArray(value) ? value : [value]
+  const permissionList = Array.isArray(value) ? value : [value];
 
   // 只要有一个权限码满足即可
-  return permissionList.some(permission => permissions.includes(permission))
+  return permissionList.some((permission) => permissions.includes(permission));
 }
 
 /**
@@ -37,24 +37,24 @@ function hasPermission(value: string | string[]): boolean {
  */
 const permission: Directive = {
   mounted(el: HTMLElement, binding: DirectiveBinding) {
-    const { value } = binding
+    const { value } = binding;
 
     if (!hasPermission(value)) {
       // 移除元素
-      el.parentNode?.removeChild(el)
+      el.parentNode?.removeChild(el);
     }
   },
 
   updated(el: HTMLElement, binding: DirectiveBinding) {
-    const { value, oldValue } = binding
+    const { value, oldValue } = binding;
 
-    if (value === oldValue) return
+    if (value === oldValue) return;
 
     if (!hasPermission(value)) {
       // 移除元素
-      el.parentNode?.removeChild(el)
+      el.parentNode?.removeChild(el);
     }
-  }
-}
+  },
+};
 
-export default permission
+export default permission;

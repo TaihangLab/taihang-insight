@@ -1,8 +1,17 @@
 <template>
   <div class="role-table-actions">
     <div class="left-buttons">
-      <el-button type="primary" icon="el-icon-plus" size="small" @click="handleAdd">新增角色</el-button>
-      <el-button icon="el-icon-delete" size="small" @click="handleBatchDelete" :disabled="selectedCount === 0">批量删除</el-button>
+      <el-button type="primary" icon="el-icon-plus" size="small" @click="handleAdd">
+        新增角色
+      </el-button>
+      <el-button
+        icon="el-icon-delete"
+        size="small"
+        @click="handleBatchDelete"
+        :disabled="selectedCount === 0"
+      >
+        批量删除
+      </el-button>
     </div>
     <div class="right-buttons">
       <el-button icon="el-icon-refresh" size="small" circle @click="handleRefresh"></el-button>
@@ -12,26 +21,26 @@
 
 <script setup lang="ts">
 defineProps<{
-  selectedCount: number
-}>()
+  selectedCount: number;
+}>();
 
 const emit = defineEmits<{
-  add: []
-  batchDelete: []
-  refresh: []
-}>()
+  add: [];
+  batchDelete: [];
+  refresh: [];
+}>();
 
 const handleAdd = () => {
-  emit('add')
-}
+  emit("add");
+};
 
 const handleBatchDelete = () => {
-  emit('batchDelete')
-}
+  emit("batchDelete");
+};
 
 const handleRefresh = () => {
-  emit('refresh')
-}
+  emit("refresh");
+};
 </script>
 
 <style scoped>

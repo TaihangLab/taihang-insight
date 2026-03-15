@@ -10,20 +10,33 @@
       :default-expand-all="defaultExpandAll"
     >
       <el-table-column prop="id" label="部门编码" min-width="140" align="center"></el-table-column>
-      <el-table-column prop="name" label="部门名称" min-width="200" align="left" header-align="center">
+      <el-table-column
+        prop="name"
+        label="部门名称"
+        min-width="200"
+        align="left"
+        header-align="center"
+      >
         <template #default="scope">
-          <span :style="{ paddingLeft: (scope.row.depth || 0) * 20 + 'px' }">{{ scope.row.name }}</span>
+          <span :style="{ paddingLeft: (scope.row.depth || 0) * 20 + 'px' }">
+            {{ scope.row.name }}
+          </span>
         </template>
       </el-table-column>
       <el-table-column prop="sort_order" label="排序" width="80" align="center"></el-table-column>
       <el-table-column prop="status" label="状态" width="80" align="center">
         <template #default="scope">
           <el-tag :type="scope.row.status === 0 ? 'success' : 'danger'" size="small">
-            {{ scope.row.status === 0 ? '启用' : '停用' }}
+            {{ scope.row.status === 0 ? "启用" : "停用" }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="create_time" label="创建时间" min-width="160" align="center"></el-table-column>
+      <el-table-column
+        prop="create_time"
+        label="创建时间"
+        min-width="160"
+        align="center"
+      ></el-table-column>
       <el-table-column label="操作" width="180" fixed="right" align="center">
         <template #default="scope">
           <div class="operation-buttons">
@@ -38,79 +51,79 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
-import type { ElTable } from 'element-plus'
-import { calculateTreeDepth } from '@/utils/treeUtils'
+import { ref, computed, nextTick } from "vue";
+import type { ElTable } from "element-plus";
+import { calculateTreeDepth } from "@/utils/treeUtils";
 
 interface Department {
-  id: string | number
-  name: string
-  sort_order: number
-  status: number
-  children?: Department[]
-  depth?: number
-  [key: string]: any
+  id: string | number;
+  name: string;
+  sort_order: number;
+  status: number;
+  children?: Department[];
+  depth?: number;
+  [key: string]: any;
 }
 
 const props = withDefaults(
   defineProps<{
-    data: Department[]
-    loading: boolean
-    defaultExpandAll: boolean
+    data: Department[];
+    loading: boolean;
+    defaultExpandAll: boolean;
   }>(),
   {
     data: () => [],
     loading: false,
-    defaultExpandAll: true
-  }
-)
+    defaultExpandAll: true,
+  },
+);
 
 const emit = defineEmits<{
-  edit: [row: Department]
-  addSub: [row: Department]
-  delete: [row: Department]
-}>()
+  edit: [row: Department];
+  addSub: [row: Department];
+  delete: [row: Department];
+}>();
 
-const treeTableRef = ref<InstanceType<typeof ElTable>>()
+const treeTableRef = ref<InstanceType<typeof ElTable>>();
 
 const processedData = computed(() => {
-  return calculateTreeDepth(props.data, 'children', 0)
-})
+  return calculateTreeDepth(props.data, "children", 0);
+});
 
 const handleEdit = (row: Department) => {
-  emit('edit', row)
-}
+  emit("edit", row);
+};
 
 const handleAddSub = (row: Department) => {
-  emit('addSub', row)
-}
+  emit("addSub", row);
+};
 
 const handleDelete = (row: Department) => {
-  emit('delete', row)
-}
+  emit("delete", row);
+};
 
 const toggleExpandAll = async (expand: boolean) => {
-  await nextTick()
-  await setTableExpandState(processedData.value, expand)
-}
+  await nextTick();
+  await setTableExpandState(processedData.value, expand);
+};
 
 const setTableExpandState = async (data: Department[], expand: boolean) => {
   for (const item of data) {
     if (item.children && item.children.length > 0) {
       if (treeTableRef.value) {
-        treeTableRef.value.toggleRowExpansion(item, expand)
+        treeTableRef.value.toggleRowExpansion(item, expand);
       }
 
-      await nextTick()
-      await setTableExpandState(item.children, expand)
+      await nextTick();
+      await setTableExpandState(item.children, expand);
     }
   }
-}
+};
 
 // Define expose after function definitions
 defineExpose({
-  toggleExpandAll
-})
+  toggleExpandAll,
+});
 </script>
 
 <style scoped>

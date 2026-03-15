@@ -1,7 +1,7 @@
-import { AxiosResponse } from 'axios'
-import  { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { Camera, CameraQueryParams, AITask } from '@/types/center.d'
-import { normalizePageParams } from '@/api/utils/pageUtils'
+import { AxiosResponse } from "axios";
+import { authAxios, type UnifiedResponse } from "@/api/commons";
+import type { Camera, CameraQueryParams, AITask } from "@/types/center.d";
+import { normalizePageParams } from "@/api/utils/pageUtils";
 /**
  * 摄像头管理 API
  * 提供摄像头的增删改查操作
@@ -18,14 +18,14 @@ class CameraAPI {
    */
   async getCameraList(params: CameraQueryParams = {}): Promise<UnifiedResponse<Camera[]>> {
     // 复制所有参数并应用分页默认值
-    const { page, limit } = normalizePageParams(params)
+    const { page, limit } = normalizePageParams(params);
     const apiParams = {
       ...params,
       page,
-      limit: Math.min(limit, 100)  // 摄像头列表限制最大值为 100
-    }
+      limit: Math.min(limit, 100), // 摄像头列表限制最大值为 100
+    };
 
-    return authAxios.get('/api/v1/cameras/ai/list', { params: apiParams })
+    return authAxios.get("/api/v1/cameras/ai/list", { params: apiParams });
   }
 
   /**
@@ -33,7 +33,7 @@ class CameraAPI {
    * @param cameraId 摄像头ID
    */
   async getCameraDetail(cameraId: number | string): Promise<Camera> {
-    return authAxios.get(`/api/v1/cameras/${cameraId}`)
+    return authAxios.get(`/api/v1/cameras/${cameraId}`);
   }
 
   /**
@@ -43,24 +43,26 @@ class CameraAPI {
    */
   async updateCamera(cameraId: number | string, updateData: Partial<Camera>): Promise<any> {
     if (!cameraId) {
-      return Promise.reject(new Error('缺少摄像头ID'))
+      return Promise.reject(new Error("缺少摄像头ID"));
     }
 
-    return authAxios.put(`/api/v1/cameras/${cameraId}`, updateData)
+    return authAxios.put(`/api/v1/cameras/${cameraId}`, updateData);
   }
 
   /**
    * 获取摄像头关联的AI任务
    * @param cameraId 摄像头ID
    */
-  async getCameraAITasks(cameraId: number | string): Promise<AxiosResponse<UnifiedResponse<AITask[]>>> {
+  async getCameraAITasks(
+    cameraId: number | string,
+  ): Promise<AxiosResponse<UnifiedResponse<AITask[]>>> {
     if (!cameraId) {
-      return Promise.reject(new Error('缺少摄像头ID'))
+      return Promise.reject(new Error("缺少摄像头ID"));
     }
 
-    return authAxios.get(`/api/v1/ai-tasks/camera/id/${cameraId}`)
+    return authAxios.get(`/api/v1/ai-tasks/camera/id/${cameraId}`);
   }
 }
 
 // 导出单例实例
-export default new CameraAPI()
+export default new CameraAPI();

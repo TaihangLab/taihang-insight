@@ -2,15 +2,15 @@
  * Dialog 组件相关 API
  * 该文件封装所有 dialog 组件中使用的接口请求
  */
-import request from '@/utils/request'
-import type { AxiosRequestConfig } from 'axios'
+import request from "@/utils/request";
+import type { AxiosRequestConfig } from "axios";
 
 // ==================== 通用类型定义 ====================
 interface ApiResponse<T = any> {
-  code: number
-  data: T
-  msg?: string
-  message?: string
+  code: number;
+  data: T;
+  msg?: string;
+  message?: string;
 }
 
 // ==================== Onvif 相关 ====================
@@ -18,10 +18,10 @@ interface ApiResponse<T = any> {
  * ONVIF RTSP 请求参数
  */
 interface OnvifRtspParams {
-  hostname: string
-  timeout: number
-  username: string
-  password: string
+  hostname: string;
+  timeout: number;
+  username: string;
+  password: string;
 }
 
 /**
@@ -29,10 +29,10 @@ interface OnvifRtspParams {
  */
 export function getOnvifRtsp(params: OnvifRtspParams): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/onvif/rtsp',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/onvif/rtsp",
+    method: "get",
+    params: params,
+  });
 }
 
 // ==================== 轨迹查询相关 ====================
@@ -47,16 +47,16 @@ export function getPositionHistory(
   deviceId: string,
   channelId: string | undefined,
   start: string,
-  end: string
+  end: string,
 ): Promise<ApiResponse> {
-  let url = `/api/v1/position/history/${deviceId}?start=${start}&end=${end}`
+  let url = `/api/v1/position/history/${deviceId}?start=${start}&end=${end}`;
   if (channelId) {
-    url += `&channelId=${channelId}`
+    url += `&channelId=${channelId}`;
   }
   return request({
     url: url,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
 
 // ==================== 设备管理相关 ====================
@@ -67,10 +67,10 @@ export function getPositionHistory(
  */
 export function saveDevice(data: Record<string, any>, isUpdate = false): Promise<ApiResponse> {
   return request({
-    url: `/api/v1/device/query/device/${isUpdate ? 'update' : 'add'}`,
-    method: 'post',
-    data: data
-  })
+    url: `/api/v1/device/query/device/${isUpdate ? "update" : "add"}`,
+    method: "post",
+    data: data,
+  });
 }
 
 // ==================== 国标编码相关 ====================
@@ -80,10 +80,10 @@ export function saveDevice(data: Record<string, any>, isUpdate = false): Promise
  */
 export function getRegionChildList(parent: string): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/region/base/child/list',
-    method: 'get',
-    params: { parent }
-  })
+    url: "/api/v1/region/base/child/list",
+    method: "get",
+    params: { parent },
+  });
 }
 
 /**
@@ -91,9 +91,9 @@ export function getRegionChildList(parent: string): Promise<ApiResponse> {
  */
 export function getIndustryCodeList(): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/common/channel/industry/list',
-    method: 'get'
-  })
+    url: "/api/v1/common/channel/industry/list",
+    method: "get",
+  });
 }
 
 /**
@@ -101,9 +101,9 @@ export function getIndustryCodeList(): Promise<ApiResponse> {
  */
 export function getDeviceTypeList(): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/common/channel/type/list',
-    method: 'get'
-  })
+    url: "/api/v1/common/channel/type/list",
+    method: "get",
+  });
 }
 
 /**
@@ -111,9 +111,9 @@ export function getDeviceTypeList(): Promise<ApiResponse> {
  */
 export function getNetworkIdentificationList(): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/common/channel/network/identification/list',
-    method: 'get'
-  })
+    url: "/api/v1/common/channel/network/identification/list",
+    method: "get",
+  });
 }
 
 // ==================== 目录/分组管理相关 ====================
@@ -124,10 +124,10 @@ export function getNetworkIdentificationList(): Promise<ApiResponse> {
  */
 export function saveCatalog(data: Record<string, any>, isEdit = false): Promise<ApiResponse> {
   return request({
-    url: `/api/v1/platform/catalog/${isEdit ? 'edit' : 'add'}`,
-    method: 'post',
-    data: data
-  })
+    url: `/api/v1/platform/catalog/${isEdit ? "edit" : "add"}`,
+    method: "post",
+    data: data,
+  });
 }
 
 // ==================== 用户密码管理相关 ====================
@@ -138,13 +138,13 @@ export function saveCatalog(data: Record<string, any>, isEdit = false): Promise<
  */
 export function changePassword(oldPassword: string, password: string): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/user/changePassword',
-    method: 'post',
+    url: "/api/v1/user/changePassword",
+    method: "post",
     params: {
       oldPassword: oldPassword,
-      password: password
-    }
-  })
+      password: password,
+    },
+  });
 }
 
 /**
@@ -154,13 +154,13 @@ export function changePassword(oldPassword: string, password: string): Promise<A
  */
 export function changePasswordForAdmin(password: string, userId: number): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/user/changePasswordForAdmin',
-    method: 'post',
+    url: "/api/v1/user/changePasswordForAdmin",
+    method: "post",
     params: {
       password: password,
-      userId: userId
-    }
-  })
+      userId: userId,
+    },
+  });
 }
 
 /**
@@ -170,13 +170,13 @@ export function changePasswordForAdmin(password: string, userId: number): Promis
  */
 export function changePushKey(pushKey: string, userId: number): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/user/changePushKey',
-    method: 'post',
+    url: "/api/v1/user/changePushKey",
+    method: "post",
     params: {
       pushKey: pushKey,
-      userId: userId
-    }
-  })
+      userId: userId,
+    },
+  });
 }
 
 // ==================== 录像下载相关 ====================
@@ -186,11 +186,15 @@ export function changePushKey(pushKey: string, userId: number): Promise<ApiRespo
  * @param channelId - 通道ID
  * @param stream - 流标识
  */
-export function getDownloadProgress(deviceId: string, channelId: string, stream: string): Promise<ApiResponse> {
+export function getDownloadProgress(
+  deviceId: string,
+  channelId: string,
+  stream: string,
+): Promise<ApiResponse> {
   return request({
     url: `/api/v1/gb_record/download/progress/${deviceId}/${channelId}/${stream}`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
 
 /**
@@ -199,11 +203,15 @@ export function getDownloadProgress(deviceId: string, channelId: string, stream:
  * @param channelId - 通道ID
  * @param stream - 流标识
  */
-export function stopDownloadRecord(deviceId: string, channelId: string, stream: string): Promise<ApiResponse> {
+export function stopDownloadRecord(
+  deviceId: string,
+  channelId: string,
+  stream: string,
+): Promise<ApiResponse> {
   return request({
     url: `/api/v1/gb_record/download/stop/${deviceId}/${channelId}/${stream}`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
 
 // ==================== 设备通道列表相关 ====================
@@ -213,10 +221,10 @@ export function stopDownloadRecord(deviceId: string, channelId: string, stream: 
  */
 export function getGbDeviceList(params: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/device/query/devices',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/device/query/devices",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -225,10 +233,10 @@ export function getGbDeviceList(params: Record<string, any>): Promise<ApiRespons
  */
 export function getChannelByCivilCode(params: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/common/channel/civilcode/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/common/channel/civilcode/list",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -237,10 +245,10 @@ export function getChannelByCivilCode(params: Record<string, any>): Promise<ApiR
  */
 export function getChannelByParent(params: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/common/channel/parent/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/common/channel/parent/list",
+    method: "get",
+    params: params,
+  });
 }
 
 // ==================== 平台共享相关 ====================
@@ -250,10 +258,10 @@ export function getChannelByParent(params: Record<string, any>): Promise<ApiResp
  */
 export function getPlatformChannelList(params: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/platform/channel/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/platform/channel/list",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -262,10 +270,10 @@ export function getPlatformChannelList(params: Record<string, any>): Promise<Api
  */
 export function addPlatformChannel(data: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/platform/channel/add',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/platform/channel/add",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -274,10 +282,10 @@ export function addPlatformChannel(data: Record<string, any>): Promise<ApiRespon
  */
 export function addPlatformChannelByDevice(data: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/platform/channel/device/add',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/platform/channel/device/add",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -286,10 +294,10 @@ export function addPlatformChannelByDevice(data: Record<string, any>): Promise<A
  */
 export function removePlatformChannel(data: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/platform/channel/remove',
-    method: 'delete',
-    data: data
-  })
+    url: "/api/v1/platform/channel/remove",
+    method: "delete",
+    data: data,
+  });
 }
 
 /**
@@ -298,10 +306,10 @@ export function removePlatformChannel(data: Record<string, any>): Promise<ApiRes
  */
 export function removePlatformChannelByDevice(data: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/platform/channel/device/remove',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/platform/channel/device/remove",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -310,10 +318,10 @@ export function removePlatformChannelByDevice(data: Record<string, any>): Promis
  */
 export function updatePlatformChannelCustom(data: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/platform/channel/custom/update',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/platform/channel/custom/update",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -322,10 +330,10 @@ export function updatePlatformChannelCustom(data: Record<string, any>): Promise<
  */
 export function updatePlatformChannelForGb(data: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/platform/update_channel_for_gb',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/platform/update_channel_for_gb",
+    method: "post",
+    data: data,
+  });
 }
 
 // ==================== 录像计划关联相关 ====================
@@ -335,10 +343,10 @@ export function updatePlatformChannelForGb(data: Record<string, any>): Promise<A
  */
 export function getRecordPlanChannelList(params: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/record/plan/channel/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/record/plan/channel/list",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -347,10 +355,10 @@ export function getRecordPlanChannelList(params: Record<string, any>): Promise<A
  */
 export function linkRecordPlan(data: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/record/plan/link',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/record/plan/link",
+    method: "post",
+    data: data,
+  });
 }
 
 // ==================== 异常通道相关 ====================
@@ -360,10 +368,10 @@ export function linkRecordPlan(data: Record<string, any>): Promise<ApiResponse> 
  */
 export function getUnusualCivilCodeChannelList(params: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/common/channel/civilCode/unusual/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/common/channel/civilCode/unusual/list",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -372,10 +380,10 @@ export function getUnusualCivilCodeChannelList(params: Record<string, any>): Pro
  */
 export function clearUnusualCivilCodeChannel(data: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/common/channel/civilCode/unusual/clear',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/common/channel/civilCode/unusual/clear",
+    method: "post",
+    data: data,
+  });
 }
 
 /**
@@ -384,10 +392,10 @@ export function clearUnusualCivilCodeChannel(data: Record<string, any>): Promise
  */
 export function getRegionDescription(civilCode: string): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/region/description',
-    method: 'get',
-    params: { civilCode }
-  })
+    url: "/api/v1/region/description",
+    method: "get",
+    params: { civilCode },
+  });
 }
 
 /**
@@ -396,10 +404,10 @@ export function getRegionDescription(civilCode: string): Promise<ApiResponse> {
  */
 export function addRegionByCivilCode(civilCode: string): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/region/addByCivilCode',
-    method: 'get',
-    params: { civilCode }
-  })
+    url: "/api/v1/region/addByCivilCode",
+    method: "get",
+    params: { civilCode },
+  });
 }
 
 /**
@@ -408,10 +416,10 @@ export function addRegionByCivilCode(civilCode: string): Promise<ApiResponse> {
  */
 export function getUnusualParentChannelList(params: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/common/channel/parent/unusual/list',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/common/channel/parent/unusual/list",
+    method: "get",
+    params: params,
+  });
 }
 
 /**
@@ -420,10 +428,10 @@ export function getUnusualParentChannelList(params: Record<string, any>): Promis
  */
 export function clearUnusualParentChannel(data: Record<string, any>): Promise<ApiResponse> {
   return request({
-    url: '/api/v1/common/channel/parent/unusual/clear',
-    method: 'post',
-    data: data
-  })
+    url: "/api/v1/common/channel/parent/unusual/clear",
+    method: "post",
+    data: data,
+  });
 }
 
 // ==================== 设备同步相关 ====================
@@ -434,8 +442,8 @@ export function clearUnusualParentChannel(data: Record<string, any>): Promise<Ap
 export function getDeviceSyncStatus(deviceId: string): Promise<ApiResponse> {
   return request({
     url: `/api/v1/device/query/${deviceId}/sync_status/`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }
 
 // ==================== 播放相关 ====================
@@ -447,6 +455,6 @@ export function getDeviceSyncStatus(deviceId: string): Promise<ApiResponse> {
 export function startPlay(deviceId: string, channelId: string): Promise<ApiResponse> {
   return request({
     url: `/api/v1/play/start/${deviceId}/${channelId}`,
-    method: 'get'
-  })
+    method: "get",
+  });
 }

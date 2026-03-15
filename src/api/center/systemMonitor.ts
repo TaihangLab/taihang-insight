@@ -1,5 +1,13 @@
-import { authAxios } from '@/api/commons'
-import type { ResourceMetric, TimeRange, SystemResourcesData, CurrentResources, ResourceHistory, StorageUsage, BandwidthUsage } from '@/types/center.d'
+import { authAxios } from "@/api/commons";
+import type {
+  ResourceMetric,
+  TimeRange,
+  SystemResourcesData,
+  CurrentResources,
+  ResourceHistory,
+  StorageUsage,
+  BandwidthUsage,
+} from "@/types/center.d";
 
 /**
  * 系统资源监控 API
@@ -19,7 +27,7 @@ class SystemMonitorAPI {
    */
   getSystemResources(): Promise<SystemResourcesData> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 SystemResourcesData
-    return authAxios.get<any, SystemResourcesData>('/api/v1/server/system/resources')
+    return authAxios.get<any, SystemResourcesData>("/api/v1/server/system/resources");
   }
 
   /**
@@ -31,7 +39,7 @@ class SystemMonitorAPI {
    */
   getCurrentResources(): Promise<CurrentResources> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 CurrentResources
-    return authAxios.get<any, CurrentResources>('/api/v1/system/resources')
+    return authAxios.get<any, CurrentResources>("/api/v1/system/resources");
   }
 
   /**
@@ -43,11 +51,14 @@ class SystemMonitorAPI {
    * 注意：响应拦截器会自动提取 data.data 字段
    * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
-  getResourceHistory(metric: ResourceMetric = 'cpu', timeRange: TimeRange = '1h'): Promise<ResourceHistory> {
+  getResourceHistory(
+    metric: ResourceMetric = "cpu",
+    timeRange: TimeRange = "1h",
+  ): Promise<ResourceHistory> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 ResourceHistory
-    return authAxios.get<any, ResourceHistory>('/api/v1/system/resources/history', {
-      params: { metric, time_range: timeRange }
-    })
+    return authAxios.get<any, ResourceHistory>("/api/v1/system/resources/history", {
+      params: { metric, time_range: timeRange },
+    });
   }
 
   /**
@@ -59,7 +70,7 @@ class SystemMonitorAPI {
    */
   getStorageUsage(): Promise<StorageUsage> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 StorageUsage
-    return authAxios.get<any, StorageUsage>('/api/v1/storage/usage')
+    return authAxios.get<any, StorageUsage>("/api/v1/storage/usage");
   }
 
   /**
@@ -70,13 +81,13 @@ class SystemMonitorAPI {
    * 注意：响应拦截器会自动提取 data.data 字段
    * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
-  getBandwidthUsage(timeRange: TimeRange = '1h'): Promise<BandwidthUsage> {
+  getBandwidthUsage(timeRange: TimeRange = "1h"): Promise<BandwidthUsage> {
     // 响应拦截器会自动提取 data 字段，因此这里返回的就是 BandwidthUsage
-    return authAxios.get<any, BandwidthUsage>('/api/v1/bandwidth/usage', {
-      params: { time_range: timeRange }
-    })
+    return authAxios.get<any, BandwidthUsage>("/api/v1/bandwidth/usage", {
+      params: { time_range: timeRange },
+    });
   }
 }
 
 // 导出单例实例
-export default new SystemMonitorAPI()
+export default new SystemMonitorAPI();

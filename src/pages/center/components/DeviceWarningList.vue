@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import alertStatisticsAPI from '@/api/center/alertStatistics';
-import type { DeviceWarning, UITimeRange } from '@/types/center/components';
-import type { TimeRange } from '@/types/center/alertStatistics';
+import { ref, onMounted, onBeforeUnmount } from "vue";
+import alertStatisticsAPI from "@/api/center/alertStatistics";
+import type { DeviceWarning, UITimeRange } from "@/types/center/components";
+import type { TimeRange } from "@/types/center/alertStatistics";
 
 // UI 层面的时间范围选择（用于界面切换）
 const timeRangeMapping: Record<UITimeRange, TimeRange> = {
-  day: '24h',
-  week: '7d',
-  month: '30d'
+  day: "24h",
+  week: "7d",
+  month: "30d",
 };
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  deviceTimeRange: 'day'
+  deviceTimeRange: "day",
 });
 
 // 数据状态
@@ -30,9 +30,9 @@ const currentTimeRange = ref<UITimeRange>(props.deviceTimeRange);
 let refreshTimer: number | null = null;
 
 const timeRangeLabels: Record<UITimeRange, string> = {
-  day: '本日',
-  week: '本周',
-  month: '本月'
+  day: "本日",
+  week: "本周",
+  month: "本月",
 };
 
 /**
@@ -54,11 +54,11 @@ async function loadData(): Promise<void> {
     if (Array.isArray(response)) {
       deviceWarnings.value = response.map((item: any) => ({
         name: item.name,
-        count: item.count
+        count: item.count,
       }));
     }
   } catch (error) {
-    console.error('加载设备预警失败:', error);
+    console.error("加载设备预警失败:", error);
   } finally {
     loading.value = false;
   }
@@ -82,7 +82,7 @@ onBeforeUnmount(() => {
 defineExpose({
   refresh: loadData,
   changeTimeRange,
-  loading
+  loading,
 });
 </script>
 
@@ -95,7 +95,7 @@ defineExpose({
         :key="key"
         :class="[
           'py-2 px-3 cursor-pointer text-13px relative transition-all duration-300',
-          currentTimeRange === key ? 'text-[#00FFFF]' : 'text-[#7EAEE5]'
+          currentTimeRange === key ? 'text-[#00FFFF]' : 'text-[#7EAEE5]',
         ]"
         @click="changeTimeRange(key)"
       >
@@ -111,7 +111,11 @@ defineExpose({
     <el-table
       :data="deviceWarnings"
       :header-cell-style="headerCellStyle"
-      :cell-style="{ background: 'transparent', color: '#7EAEE5', borderBottom: '1px solid rgba(35, 88, 148, 0.3)' }"
+      :cell-style="{
+        background: 'transparent',
+        color: '#7EAEE5',
+        borderBottom: '1px solid rgba(35, 88, 148, 0.3)',
+      }"
       :row-style="{ background: 'transparent' }"
       :row-class-name="'transparent-row'"
       style="width: 100%"

@@ -3,12 +3,12 @@
  * 负责角色列表的获取、创建、更新、删除等数据操作
  */
 
-import { ref, computed } from 'vue';
-import type { Role } from '@/types/rbac';
-import type { RolePermission } from '@/types/rbac/role';
-import { Status, DataScope } from '@/types/rbac';
-import roleService from '@/api/system/roleService';
-import associationService from '@/api/system/associationService';
+import { ref, computed } from "vue";
+import type { Role } from "@/types/rbac";
+import type { RolePermission } from "@/types/rbac/role";
+import { Status, DataScope } from "@/types/rbac";
+import roleService from "@/api/system/roleService";
+import associationService from "@/api/system/associationService";
 
 // ============================================
 // 类型定义
@@ -40,11 +40,11 @@ export interface RolePagination {
  */
 export interface RoleEntity extends Role {
   // 驼峰命名的字段，用于前端展示
-  roleCode: string
-  roleName: string
-  dataScope: DataScope
-  tenantCode: string
-  createTime: string
+  roleCode: string;
+  roleName: string;
+  dataScope: DataScope;
+  tenantCode: string;
+  createTime: string;
   // 扩展字段用于兼容后端返回
   [key: string]: unknown;
 }
@@ -66,7 +66,7 @@ export function useRoleData() {
   const pagination = ref<RolePagination>({
     currentPage: 1,
     pageSize: 10,
-    total: 0
+    total: 0,
   });
 
   // 计算属性
@@ -88,7 +88,7 @@ export function useRoleData() {
       // 构建查询参数
       const queryParams: Record<string, unknown> = {
         skip: (currentPage - 1) * size,
-        limit: size
+        limit: size,
       };
 
       // 添加可选查询条件
@@ -107,23 +107,23 @@ export function useRoleData() {
         const items = Array.isArray(response.data) ? response.data : [];
 
         // 映射数据
-        roles.value = items.map(item => {
+        roles.value = items.map((item) => {
           return {
             id: Number(item.id),
-            role_code: String(item.role_code || ''),
-            role_name: String(item.role_name || ''),
+            role_code: String(item.role_code || ""),
+            role_name: String(item.role_name || ""),
             data_scope: (item.data_scope || DataScope.ALL) as DataScope,
             status: Number(item.status) as Status,
             tenant_id: Number(item.tenant_id || 0),
-            create_time: String(item.create_time || ''),
+            create_time: String(item.create_time || ""),
             // 驼峰命名的字段用于兼容
-            roleCode: String(item.role_code || ''),
-            roleName: String(item.role_name || ''),
+            roleCode: String(item.role_code || ""),
+            roleName: String(item.role_name || ""),
             dataScope: (item.data_scope || DataScope.ALL) as DataScope,
-            tenantCode: String(item.tenant_id || ''),
-            createTime: String(item.create_time || ''),
+            tenantCode: String(item.tenant_id || ""),
+            createTime: String(item.create_time || ""),
             // 保留原始数据
-            ...item
+            ...item,
           } as RoleEntity;
         });
 
@@ -135,7 +135,7 @@ export function useRoleData() {
 
       return roles.value;
     } catch (error) {
-      console.error('获取角色列表失败:', error);
+      console.error("获取角色列表失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -150,18 +150,20 @@ export function useRoleData() {
       const response = await roleService.getRolePermissions(roleId);
 
       if (response?.data) {
-        rolePermissions.value = (Array.isArray(response.data) ? response.data : []).map((item: any) => ({
-          role_id: Number(item.role_id || roleId),
-          role_name: String(item.role_name || ''),
-          permission_id: Number(item.permission_id || item.id || 0),
-          permission_code: String(item.permission_code || ''),
-          permission_name: String(item.permission_name || item.permission_code || '')
-        }));
+        rolePermissions.value = (Array.isArray(response.data) ? response.data : []).map(
+          (item: any) => ({
+            role_id: Number(item.role_id || roleId),
+            role_name: String(item.role_name || ""),
+            permission_id: Number(item.permission_id || item.id || 0),
+            permission_code: String(item.permission_code || ""),
+            permission_name: String(item.permission_name || item.permission_code || ""),
+          }),
+        );
       }
 
       return rolePermissions.value;
     } catch (error) {
-      console.error('获取角色权限失败:', error);
+      console.error("获取角色权限失败:", error);
       throw error;
     }
   };
@@ -174,9 +176,9 @@ export function useRoleData() {
     try {
       // @ts-ignore - 数据由调用方验证，后端会进行验证
       await roleService.createRole(data);
-      return { success: true, message: '新增成功' };
+      return { success: true, message: "新增成功" };
     } catch (error) {
-      console.error('创建角色失败:', error);
+      console.error("创建角色失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -191,9 +193,9 @@ export function useRoleData() {
     try {
       // @ts-ignore - 数据由调用方验证，后端会进行验证
       await roleService.updateRole(roleId, data);
-      return { success: true, message: '修改成功' };
+      return { success: true, message: "修改成功" };
     } catch (error) {
-      console.error('更新角色失败:', error);
+      console.error("更新角色失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -207,9 +209,9 @@ export function useRoleData() {
     loading.value = true;
     try {
       await roleService.deleteRole(roleId);
-      return { success: true, message: '删除成功' };
+      return { success: true, message: "删除成功" };
     } catch (error) {
-      console.error('删除角色失败:', error);
+      console.error("删除角色失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -223,9 +225,9 @@ export function useRoleData() {
     loading.value = true;
     try {
       await associationService.assignPermissionsToRole(roleId, permissionIds);
-      return { success: true, message: '权限分配成功' };
+      return { success: true, message: "权限分配成功" };
     } catch (error) {
-      console.error('分配权限失败:', error);
+      console.error("分配权限失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -239,9 +241,9 @@ export function useRoleData() {
     loading.value = true;
     try {
       await associationService.removeRolePermission(roleId, permissionId);
-      return { success: true, message: '权限移除成功' };
+      return { success: true, message: "权限移除成功" };
     } catch (error) {
-      console.error('移除权限失败:', error);
+      console.error("移除权限失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -257,7 +259,7 @@ export function useRoleData() {
     pagination.value = {
       currentPage: 1,
       pageSize: 10,
-      total: 0
+      total: 0,
     };
   };
 
@@ -277,6 +279,6 @@ export function useRoleData() {
     deleteRole,
     assignPermissionsToRole,
     removeRolePermission,
-    clearData
+    clearData,
   };
 }

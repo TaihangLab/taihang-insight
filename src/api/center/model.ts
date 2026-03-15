@@ -1,6 +1,6 @@
-import { AxiosResponse } from 'axios'
-import { authAxios, type UnifiedResponse } from '@/api/commons'
-import type { Model, ModelQueryParams } from '@/types/center.d'
+import { AxiosResponse } from "axios";
+import { authAxios, type UnifiedResponse } from "@/api/commons";
+import type { Model, ModelQueryParams } from "@/types/center.d";
 /**
  * 模型管理 API
  * 提供模型的增删改查、加载卸载等操作
@@ -16,7 +16,7 @@ class ModelAPI {
    * @returns 模型列表响应
    */
   async getModelList(params: ModelQueryParams = {}): Promise<UnifiedResponse<Model[]>> {
-    return authAxios.get('/api/v1/api/v1/models/list', { params })
+    return authAxios.get("/api/v1/api/v1/models/list", { params });
   }
 
   /**
@@ -25,7 +25,7 @@ class ModelAPI {
    * @returns 模型详情响应
    */
   async getModelDetail(modelId: number): Promise<Model> {
-    return authAxios.get(`/api/v1/models/${modelId}`)
+    return authAxios.get(`/api/v1/models/${modelId}`);
   }
 
   /**
@@ -35,7 +35,7 @@ class ModelAPI {
    * @returns 更新结果响应
    */
   async updateModel(modelId: number, modelData: Partial<Model>): Promise<AxiosResponse> {
-    return authAxios.put(`/api/v1/models/${modelId}`, modelData)
+    return authAxios.put(`/api/v1/models/${modelId}`, modelData);
   }
 
   /**
@@ -44,7 +44,7 @@ class ModelAPI {
    * @returns 删除结果响应
    */
   async deleteModel(modelId: number): Promise<AxiosResponse> {
-    return authAxios.delete(`/api/v1/models/${modelId}`)
+    return authAxios.delete(`/api/v1/models/${modelId}`);
   }
 
   /**
@@ -53,9 +53,9 @@ class ModelAPI {
    * @returns 删除结果响应
    */
   async batchDeleteModels(ids: number[]): Promise<any> {
-    return authAxios.delete('/api/v1/models/batch-delete', {
-      data: { model_ids: ids }
-    })
+    return authAxios.delete("/api/v1/models/batch-delete", {
+      data: { model_ids: ids },
+    });
   }
 
   /**
@@ -64,7 +64,7 @@ class ModelAPI {
    * @returns 加载结果响应
    */
   async loadModel(modelId: number): Promise<AxiosResponse> {
-    return authAxios.post(`/api/v1/models/${modelId}/load`)
+    return authAxios.post(`/api/v1/models/${modelId}/load`);
   }
 
   /**
@@ -73,9 +73,9 @@ class ModelAPI {
    * @returns 卸载结果响应
    */
   async unloadModel(modelId: number): Promise<AxiosResponse> {
-    return authAxios.post(`/api/v1/models/${modelId}/unload`)
+    return authAxios.post(`/api/v1/models/${modelId}/unload`);
   }
 }
 
 // 导出单例实例
-export default new ModelAPI()
+export default new ModelAPI();

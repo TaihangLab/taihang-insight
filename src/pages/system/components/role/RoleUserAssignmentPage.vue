@@ -18,20 +18,47 @@
     <!-- 角色信息 -->
     <div class="role-info-section">
       <h3 class="section-title">角色信息</h3>
-      
+
       <!-- 角色表格 -->
       <el-table
         :data="roleData"
         v-loading="loading"
         style="width: 100%"
         class="role-table"
-        @selection-change="handleSelectionChange">
+        @selection-change="handleSelectionChange"
+      >
         <el-table-column type="selection" width="50" align="center"></el-table-column>
-        <el-table-column label="序号" type="index" width="80" align="center" :index="indexMethod"></el-table-column>
-        <el-table-column prop="role_code" label="角色编号" min-width="180" align="center"></el-table-column>
-        <el-table-column prop="role_name" label="角色名称" min-width="120" align="center"></el-table-column>
-        <el-table-column prop="roleKey" label="权限字符" min-width="120" align="center"></el-table-column>
-        <el-table-column prop="create_time" label="创建时间" min-width="160" align="center"></el-table-column>
+        <el-table-column
+          label="序号"
+          type="index"
+          width="80"
+          align="center"
+          :index="indexMethod"
+        ></el-table-column>
+        <el-table-column
+          prop="role_code"
+          label="角色编号"
+          min-width="180"
+          align="center"
+        ></el-table-column>
+        <el-table-column
+          prop="role_name"
+          label="角色名称"
+          min-width="120"
+          align="center"
+        ></el-table-column>
+        <el-table-column
+          prop="roleKey"
+          label="权限字符"
+          min-width="120"
+          align="center"
+        ></el-table-column>
+        <el-table-column
+          prop="create_time"
+          label="创建时间"
+          min-width="160"
+          align="center"
+        ></el-table-column>
       </el-table>
 
       <!-- 分页器 -->
@@ -43,8 +70,8 @@
           layout="total, sizes, prev, pager, next, jumper"
           :total="pagination.total"
           @size-change="handleSizeChange"
-          @current-change="handleCurrentChange">
-        </el-pagination>
+          @current-change="handleCurrentChange"
+        ></el-pagination>
       </div>
     </div>
 
@@ -61,21 +88,21 @@ import associationService from '@/api/system/associationService'
 
 export default {
   name: 'RoleAssignment',
-  
+
   data() {
     return {
       loading: false,
-      
+
       // 用户信息
       userInfo: {
         user_name: '',
         nick_name: ''
       },
-      
+
       // 角色数据
       roleData: [],
       selectedRoles: [],
-      
+
       // 分页
       pagination: {
         currentPage: 1,
@@ -84,12 +111,12 @@ export default {
       }
     }
   },
-  
+
   created() {
     this.initUserInfo()
     this.fetchRoles()
   },
-  
+
   methods: {
     // 初始化用户信息
     initUserInfo() {
@@ -99,7 +126,7 @@ export default {
       // 根据用户Code获取用户详细信息
       this.fetchUserInfo()
     },
-    
+
     // 获取用户详细信息
     async fetchUserInfo() {
       try {
@@ -120,11 +147,11 @@ export default {
         this.userInfo.nick_name = this.userInfo.user_name // 使用用户名作为昵称
       }
     },
-    
+
     // 获取角色数据
     async fetchRoles() {
       this.loading = true
-      
+
       try {
         // 尝试从API获取数据
         const skip = (this.pagination.currentPage - 1) * this.pagination.pageSize;
@@ -132,7 +159,7 @@ export default {
           skip: skip,
           limit: this.pagination.pageSize
         }
-        
+
         const response = await associationService.getRoles(params)
 
         // 响应拦截器已处理格式转换，直接使用数据
@@ -155,10 +182,10 @@ export default {
         this.roleData = []
         this.pagination.total = 0
       }
-      
+
       this.loading = false
     },
-    
+
     // 生成模拟角色数据
     generateMockRoles() {
       return [
@@ -199,28 +226,28 @@ export default {
         }
       ]
     },
-    
+
     // 序号计算
     indexMethod(index) {
       return (this.pagination.currentPage - 1) * this.pagination.pageSize + index + 1
     },
-    
+
     // 处理选择变化
     handleSelectionChange(selection) {
       this.selectedRoles = selection
     },
-    
+
     // 处理分页
     handleSizeChange(size) {
       this.pagination.pageSize = size
       this.fetchRoles()
     },
-    
+
     handleCurrentChange(page) {
       this.pagination.currentPage = page
       this.fetchRoles()
     },
-    
+
     // 提交分配
     async submitAssignment() {
       if (this.selectedRoles.length === 0) {
@@ -230,21 +257,21 @@ export default {
         })
         return
       }
-      
+
       this.loading = true
-      
+
       try {
         // 准备角色数据，提取roleCode
         const roleCodes = this.selectedRoles.map(role => role.role_code)
-        
+
         // 调用API提交角色分配
         await associationService.assignRolesToUser(this.userInfo.user_name, roleCodes)
-        
+
         this.$message({
           message: `已为用户"${this.userInfo.user_name}"分配${this.selectedRoles.length}个角色`,
           type: 'success'
         })
-        
+
         // 提交成功后返回
         setTimeout(() => {
           this.goBack()
@@ -259,7 +286,7 @@ export default {
         this.loading = false
       }
     },
-    
+
     // 返回上一页
     goBack() {
       this.$router.go(-1)
@@ -344,12 +371,12 @@ export default {
 }
 
 /* 分页器 */
-  .pagination-container {
+.pagination-container {
   display: flex;
   justify-content: center;
   background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  margin-top: 0 !important;
+  padding-bottom: 10px !important;
 }
 
 .pagination-container :deep(.el-pagination__total) {
@@ -448,19 +475,19 @@ export default {
   .role-assignment-container {
     padding: 12px;
   }
-  
+
   .info-row {
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .action-buttons {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .action-buttons :deep(.el-button) {
     width: 120px;
   }
 }
-</style> 
+</style>

@@ -1,7 +1,7 @@
 /**
  * ONVIF相关API
  */
-import request from '@/utils/request'
+import request from "@/utils/request";
 
 /**
  * 获取ONVIF RTSP地址
@@ -13,10 +13,8 @@ import request from '@/utils/request'
  */
 export function getOnvifRtsp(params) {
   return request({
-    url: '/api/v1/onvif/rtsp',
-    method: 'get',
-    params: params
-  })
+    url: "/api/v1/onvif/rtsp",
+    method: "get",
+    params: params,
+  });
 }
-
-

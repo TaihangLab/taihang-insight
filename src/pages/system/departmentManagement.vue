@@ -14,10 +14,7 @@
 
     <!-- 列表区 -->
     <div class="table-container">
-      <DepartmentTableActions
-        @add="handleAdd"
-        @toggle-expand="handleToggleExpand"
-      />
+      <DepartmentTableActions @add="handleAdd" @toggle-expand="handleToggleExpand" />
 
       <DepartmentTreeTable
         ref="treeTableRef"
@@ -54,25 +51,25 @@
  * 部门管理页面
  * 使用 Composition API + TypeScript
  */
-import { ref, onMounted, nextTick } from 'vue';
-import { ElMessage } from 'element-plus';
-import departmentService from '@/api/system/departmentService';
-import tenantService from '@/api/system/tenantService';
+import { ref, onMounted, nextTick } from "vue";
+import { ElMessage } from "element-plus";
+import departmentService from "@/api/system/departmentService";
+import tenantService from "@/api/system/tenantService";
 import {
   useDepartmentData,
   type DepartmentSearchConditions,
-  type DepartmentEntity
-} from '@/pages/system/composable/department/useDepartmentData';
+  type DepartmentEntity,
+} from "@/pages/system/composable/department/useDepartmentData";
 
 // ============================================
 // 组件引入
 // ============================================
 
-import DepartmentSearchBar from '@/pages/system/components/department/DepartmentSearchBar.vue';
-import DepartmentTableActions from '@/pages/system/components/department/DepartmentTableActions.vue';
-import DepartmentTreeTable from '@/pages/system/components/department/DepartmentTreeTable.vue';
-import DepartmentEditDialog from '@/pages/system/components/department/DepartmentEditDialog.vue';
-import DeleteConfirmDialog from '@/pages/system/components/department/DeleteConfirmDialog.vue';
+import DepartmentSearchBar from "@/pages/system/components/department/DepartmentSearchBar.vue";
+import DepartmentTableActions from "@/pages/system/components/department/DepartmentTableActions.vue";
+import DepartmentTreeTable from "@/pages/system/components/department/DepartmentTreeTable.vue";
+import DepartmentEditDialog from "@/pages/system/components/department/DepartmentEditDialog.vue";
+import DeleteConfirmDialog from "@/pages/system/components/department/DeleteConfirmDialog.vue";
 
 // ============================================
 // Composables
@@ -86,7 +83,7 @@ const {
   createDepartment,
   updateDepartment,
   deleteDepartment,
-  clearData
+  clearData,
 } = useDepartmentData();
 
 // ============================================
@@ -96,10 +93,10 @@ const {
 // 搜索条件
 const searchConditions = ref<DepartmentSearchConditions>({
   tenant_id: null as string | number | null,
-  dept_name: '',
-  name: '',
+  dept_name: "",
+  name: "",
   id: undefined,
-  status: null as number | null
+  status: null as number | null,
 });
 
 // 展开控制
@@ -110,7 +107,7 @@ const expandAll = ref(true);
 const editDialogVisible = ref(false);
 const deleteDialogVisible = ref(false);
 const currentDept = ref<DepartmentEntity | null>(null);
-const deleteTargetName = ref('');
+const deleteTargetName = ref("");
 
 // TreeTable 引用
 const treeTableRef = ref<{
@@ -132,7 +129,7 @@ const getDefaultTenant = async () => {
       searchConditions.value.tenant_id = firstTenant.id;
     }
   } catch (error) {
-    console.error('获取租户信息失败:', error);
+    console.error("获取租户信息失败:", error);
   }
 };
 
@@ -170,10 +167,10 @@ const handleSearch = (conditions: DepartmentSearchConditions) => {
 const handleReset = () => {
   searchConditions.value = {
     tenant_id: null as string | number | null,
-    dept_name: '',
-    name: '',
+    dept_name: "",
+    name: "",
     id: undefined,
-    status: null as number | null
+    status: null as number | null,
   };
   loadData();
 };
@@ -210,7 +207,7 @@ const handleAddSub = (row: any) => {
   currentDept.value = {
     ...row,
     isSubDept: true,
-    parent_id: row.id
+    parent_id: row.id,
   } as DepartmentEntity & { isSubDept: boolean };
   editDialogVisible.value = true;
 };
@@ -219,7 +216,7 @@ const handleAddSub = (row: any) => {
  * 编辑部门处理
  */
 const handleEdit = (row: any) => {
-  console.log('handleEdit', row);
+  console.log("handleEdit", row);
   currentDept.value = row as DepartmentEntity;
   editDialogVisible.value = true;
 };
@@ -232,7 +229,11 @@ const handleSubmit = async (formData: any) => {
     const submitData: Record<string, unknown> = { ...formData };
 
     // 处理 parent_id
-    if (submitData.parent_id === null || submitData.parent_id === undefined || submitData.parent_id === '') {
+    if (
+      submitData.parent_id === null ||
+      submitData.parent_id === undefined ||
+      submitData.parent_id === ""
+    ) {
       submitData.parent_id = null;
     }
 

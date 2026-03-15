@@ -8,8 +8,8 @@
  * 3. 不区分 "分页 API" 和 "非分页 API"
  */
 
-import type { AxiosRequestConfig } from 'axios'
-import { authAxios } from '../commons'
+import type { AxiosRequestConfig } from "axios";
+import { authAxios } from "../commons";
 
 /**
  * 发起 GET 请求
@@ -29,41 +29,27 @@ import { authAxios } from '../commons'
  * const items = apiGet<Item[]>('/api/items')
  * ```
  */
-export function apiGet<T>(
-  url: string,
-  config?: AxiosRequestConfig
-): Promise<T> {
-  return authAxios.get<any, T>(url, config)
+export function apiGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  return authAxios.get<any, T>(url, config);
 }
 
 /**
  * 发起 POST 请求
  */
-export function apiPost<T>(
-  url: string,
-  data?: any,
-  config?: AxiosRequestConfig
-): Promise<T> {
-  return authAxios.post<any, T>(url, data, config)
+export function apiPost<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  return authAxios.post<any, T>(url, data, config);
 }
 
 /**
  * 发起 PUT 请求
  */
-export function apiPut<T>(
-  url: string,
-  data?: any,
-  config?: AxiosRequestConfig
-): Promise<T> {
-  return authAxios.put<any, T>(url, data, config)
+export function apiPut<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  return authAxios.put<any, T>(url, data, config);
 }
 
 /**
  * 发起 DELETE 请求
  */
-export function apiDelete<T>(
-  url: string,
-  config?: AxiosRequestConfig
-): Promise<T> {
-  return authAxios.delete<any, T>(url, config)
+export function apiDelete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  return authAxios.delete<any, T>(url, config);
 }

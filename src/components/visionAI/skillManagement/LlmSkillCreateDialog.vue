@@ -5,8 +5,8 @@
     width="55%"
     @close="handleClose"
     :close-on-click-modal="false"
-    class="skill-create-dialog">
-    
+    class="skill-create-dialog"
+  >
     <div class="dialog-content">
       <!-- 进度指示器 -->
       <div class="progress-indicator">
@@ -21,40 +21,50 @@
         </div>
       </div>
 
-      <el-form :model="form" :rules="rules" ref="createForm" label-width="120px" class="create-form">
+      <el-form
+        :model="form"
+        :rules="rules"
+        ref="createForm"
+        label-width="120px"
+        class="create-form"
+      >
         <div class="form-section">
           <h3 class="section-title">
             <i class="el-icon-info"></i>
             基本信息
           </h3>
-          
+
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="技能名称" prop="name">
-                <el-input 
-                  v-model="form.name" 
+                <el-input
+                  v-model="form.name"
                   placeholder="请输入技能名称"
                   maxlength="30"
                   show-word-limit
-                  @input="!isEditMode && generateSkillId()">
-                </el-input>
+                  @input="!isEditMode && generateSkillId()"
+                ></el-input>
                 <div class="form-tip">
                   仅支持数字、中文、大小写英文字母、非特殊符号，不允许空格，不可重复
                 </div>
               </el-form-item>
             </el-col>
-            
+
             <el-col :span="12">
               <el-form-item label="技能ID" prop="skillId">
-                <el-input 
-                  v-model="form.skillId" 
+                <el-input
+                  v-model="form.skillId"
                   :placeholder="isEditMode ? '编辑模式下不可修改' : '系统自动生成或手动输入'"
                   :disabled="isEditMode"
                   maxlength="40"
-                  show-word-limit>
-                </el-input>
+                  show-word-limit
+                ></el-input>
                 <div class="form-tip">
-                  {{ isEditMode ? '编辑模式下技能ID不可修改' : '支持大小写字母、数字、下划线和中划线，必须以英文或数字开头' }}
+                  {{
+                    isEditMode
+                      ? "编辑模式下技能ID不可修改"
+                      : "支持大小写字母、数字、下划线和中划线，必须以英文或数字开头"
+                  }}
                 </div>
               </el-form-item>
             </el-col>
@@ -66,13 +76,14 @@
             <i class="el-icon-view"></i>
             应用场景
           </h3>
-          
+
           <el-form-item prop="scenario">
             <div class="scenario-grid">
-              <div 
-                class="scenario-card" 
+              <div
+                class="scenario-card"
                 :class="{ active: form.scenario === 'vision' }"
-                @click="selectScenario('vision')">
+                @click="selectScenario('vision')"
+              >
                 <div class="scenario-header">
                   <div class="scenario-icon">
                     <i class="el-icon-video-camera"></i>
@@ -84,14 +95,17 @@
                     <span class="feature-tag">实时处理</span>
                     <span class="feature-tag">连续帧分析</span>
                   </div>
-                  <div class="scenario-desc">对动态图像序列进行实时分析，适用于监控、行为识别等场景</div>
+                  <div class="scenario-desc">
+                    对动态图像序列进行实时分析，适用于监控、行为识别等场景
+                  </div>
                 </div>
               </div>
-              
-              <div 
-                class="scenario-card" 
+
+              <div
+                class="scenario-card"
                 :class="{ active: form.scenario === 'image' }"
-                @click="selectScenario('image')">
+                @click="selectScenario('image')"
+              >
                 <div class="scenario-header">
                   <div class="scenario-icon">
                     <i class="el-icon-picture"></i>
@@ -103,7 +117,9 @@
                     <span class="feature-tag">批量处理</span>
                     <span class="feature-tag">高精度识别</span>
                   </div>
-                  <div class="scenario-desc">对静态图像进行批量处理和分析，适用于质量检测、物体识别等场景</div>
+                  <div class="scenario-desc">
+                    对静态图像进行批量处理和分析，适用于质量检测、物体识别等场景
+                  </div>
                 </div>
               </div>
             </div>
@@ -115,7 +131,7 @@
             <i class="el-icon-price-tag"></i>
             标签与描述
           </h3>
-          
+
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="技能标签" prop="tags">
@@ -124,7 +140,8 @@
                   placeholder="请选择技能标签"
                   style="width: 100%"
                   filterable
-                  allow-create>
+                  allow-create
+                >
                   <el-option label="事件检测" value="事件检测">
                     <span style="float: left">事件检测</span>
                     <span style="float: right; color: #8492a6; font-size: 13px">异常事件识别</span>
@@ -146,12 +163,10 @@
                     <span style="float: right; color: #8492a6; font-size: 13px">环境场景理解</span>
                   </el-option>
                 </el-select>
-                <div class="form-tip">
-                  可选择现有标签，或输入自定义标签，单个标签不能超过10个字
-                </div>
+                <div class="form-tip">可选择现有标签，或输入自定义标签，单个标签不能超过10个字</div>
               </el-form-item>
             </el-col>
-            
+
             <el-col :span="12">
               <el-form-item label="技能图标" prop="icon">
                 <div class="icon-upload-wrapper">
@@ -161,7 +176,8 @@
                     :show-file-list="false"
                     :auto-upload="false"
                     :on-change="handleIconChange"
-                    accept="image/*">
+                    accept="image/*"
+                  >
                     <div v-if="form.iconUrl" class="avatar-preview">
                       <img :src="form.iconUrl" class="avatar" />
                       <div class="avatar-overlay">
@@ -174,14 +190,12 @@
                       <div class="upload-text">上传图标</div>
                     </div>
                   </el-upload>
-                  <div class="upload-tip">
-                    JPG、PNG格式，64x64px
-                  </div>
+                  <div class="upload-tip">JPG、PNG格式，64x64px</div>
                 </div>
               </el-form-item>
             </el-col>
           </el-row>
-          
+
           <el-form-item label="技能描述" prop="description">
             <el-input
               type="textarea"
@@ -189,11 +203,9 @@
               placeholder="请详细描述技能的功能、适用场景和预期效果..."
               :rows="4"
               maxlength="255"
-              show-word-limit>
-            </el-input>
-            <div class="form-tip">
-              请简要描述技能的核心能力和应用价值，10-255个字符。
-            </div>
+              show-word-limit
+            ></el-input>
+            <div class="form-tip">请简要描述技能的核心能力和应用价值，10-255个字符。</div>
           </el-form-item>
         </div>
       </el-form>
@@ -202,7 +214,7 @@
     <span slot="footer" class="dialog-footer">
       <el-button @click="handleClose" size="medium">取消</el-button>
       <el-button type="primary" @click="handleConfirm" :loading="loading" size="medium">
-        {{ isEditMode ? '下一步：更新配置' : '下一步：详细配置' }}
+        {{ isEditMode ? "下一步：更新配置" : "下一步：详细配置" }}
         <i class="el-icon-arrow-right"></i>
       </el-button>
     </span>
@@ -210,213 +222,221 @@
 </template>
 
 <script>
-import centerAPI from '@/api/center'
+import centerAPI from "@/api/center";
 
 export default {
-  name: 'LlmSkillCreateDialog',
+  name: "LlmSkillCreateDialog",
   data() {
     // 生成随机技能ID的函数
     const generateRandomSkillId = () => {
-      const timestamp = Date.now().toString().slice(-4)
-      const randomStr = Math.random().toString(36).substring(2, 5)
-      const randomHex = Math.random().toString(16).substring(2, 5)
-      const randomBase32 = Math.random().toString(32).substring(2, 4)
-      const separators = ['_', '-']
-      const sep = separators[Math.floor(Math.random() * separators.length)]
+      const timestamp = Date.now().toString().slice(-4);
+      const randomStr = Math.random().toString(36).substring(2, 5);
+      const randomHex = Math.random().toString(16).substring(2, 5);
+      const randomBase32 = Math.random().toString(32).substring(2, 4);
+      const separators = ["_", "-"];
+      const sep = separators[Math.floor(Math.random() * separators.length)];
       const patterns = [
         `${randomStr}${sep}${timestamp}${randomHex}`,
         `${randomHex}${sep}${randomStr}${timestamp}`,
         `${timestamp}${sep}${randomStr}${randomHex}`,
         `${randomStr}${randomBase32}${timestamp}`,
         `${randomHex}${timestamp}${randomStr}`,
-        `${randomStr}${timestamp}${randomHex.substring(0, 2)}`
-      ]
-      return patterns[Math.floor(Math.random() * patterns.length)]
-    }
-    
+        `${randomStr}${timestamp}${randomHex.substring(0, 2)}`,
+      ];
+      return patterns[Math.floor(Math.random() * patterns.length)];
+    };
+
     return {
       dialogVisible: false,
       loading: false,
       isEditMode: false, // 是否为编辑模式
       editData: null, // 编辑时的原始数据
       form: {
-        name: '',
+        name: "",
         skillId: generateRandomSkillId(),
-        scenario: '',
-        tags: '',
-        description: '',
-        iconUrl: '',
-        iconFile: null // 保存原始图标文件
+        scenario: "",
+        tags: "",
+        description: "",
+        iconUrl: "",
+        iconFile: null, // 保存原始图标文件
       },
       rules: {
         name: [
-          { required: true, message: '请输入技能名称', trigger: 'blur' },
-          { min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur' },
-          { pattern: /^[\u4e00-\u9fa5a-zA-Z0-9_-]+$/, message: '只能包含中文、英文、数字、下划线和中划线', trigger: 'blur' }
+          { required: true, message: "请输入技能名称", trigger: "blur" },
+          { min: 2, max: 30, message: "长度在 2 到 30 个字符", trigger: "blur" },
+          {
+            pattern: /^[\u4e00-\u9fa5a-zA-Z0-9_-]+$/,
+            message: "只能包含中文、英文、数字、下划线和中划线",
+            trigger: "blur",
+          },
         ],
         skillId: [
-          { required: true, message: '请输入技能ID', trigger: 'blur' },
-          { min: 3, max: 40, message: '长度在 3 到 40 个字符', trigger: 'blur' },
-          { pattern: /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/, message: '必须以英文或数字开头，只能包含字母、数字、下划线和中划线', trigger: 'blur' }
+          { required: true, message: "请输入技能ID", trigger: "blur" },
+          { min: 3, max: 40, message: "长度在 3 到 40 个字符", trigger: "blur" },
+          {
+            pattern: /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/,
+            message: "必须以英文或数字开头，只能包含字母、数字、下划线和中划线",
+            trigger: "blur",
+          },
         ],
-        scenario: [
-          { required: true, message: '请选择应用场景', trigger: 'change' }
-        ],
-        tags: [
-          { required: true, message: '请选择或输入技能标签', trigger: 'change' }
-        ],
+        scenario: [{ required: true, message: "请选择应用场景", trigger: "change" }],
+        tags: [{ required: true, message: "请选择或输入技能标签", trigger: "change" }],
         description: [
-          { required: true, message: '请输入技能描述', trigger: 'blur' },
-          { min: 10, max: 255, message: '描述长度在 10 到 255 个字符', trigger: 'blur' }
-        ]
-      }
-    }
+          { required: true, message: "请输入技能描述", trigger: "blur" },
+          { min: 10, max: 255, message: "描述长度在 10 到 255 个字符", trigger: "blur" },
+        ],
+      },
+    };
   },
   methods: {
     show() {
-      this.dialogVisible = true
-      this.isEditMode = false
-      this.editData = null
-      this.resetForm()
+      this.dialogVisible = true;
+      this.isEditMode = false;
+      this.editData = null;
+      this.resetForm();
     },
 
     // 显示编辑对话框
     showEdit(editData) {
-      this.dialogVisible = true
-      this.isEditMode = true
-      this.editData = editData
-      
+      this.dialogVisible = true;
+      this.isEditMode = true;
+      this.editData = editData;
+
       // 填充表单数据
       this.form = {
-        name: editData.name || '',
-        skillId: editData.skillId || '',
-        scenario: editData.scenario || '',
-        tags: editData.tags || '',
-        description: editData.description || '',
-        iconUrl: editData.iconUrl || '',
-        iconFile: null
-      }
+        name: editData.name || "",
+        skillId: editData.skillId || "",
+        scenario: editData.scenario || "",
+        tags: editData.tags || "",
+        description: editData.description || "",
+        iconUrl: editData.iconUrl || "",
+        iconFile: null,
+      };
     },
-    
+
     hide() {
-      this.dialogVisible = false
+      this.dialogVisible = false;
     },
-    
+
     handleClose() {
-      this.dialogVisible = false
+      this.dialogVisible = false;
       // 清理编辑状态
-      this.isEditMode = false
-      this.editData = null
+      this.isEditMode = false;
+      this.editData = null;
       // 关闭时不重置表单，保留用户输入的数据
     },
-    
+
     resetForm() {
-      this.isEditMode = false
-      this.editData = null
+      this.isEditMode = false;
+      this.editData = null;
       this.form = {
-        name: '',
+        name: "",
         skillId: this.generateRandomSkillId(),
-        scenario: '',
-        tags: '',
-        description: '',
-        iconUrl: '',
-        iconFile: null
-      }
-      this.loading = false
+        scenario: "",
+        tags: "",
+        description: "",
+        iconUrl: "",
+        iconFile: null,
+      };
+      this.loading = false;
       if (this.$refs.createForm) {
-        this.$refs.createForm.resetFields()
+        this.$refs.createForm.resetFields();
       }
     },
-    
+
     // 清空表单（用于真正需要重置的场景）
     clearForm() {
-      this.resetForm()
+      this.resetForm();
     },
-    
+
     selectScenario(scenario) {
-      this.form.scenario = scenario
+      this.form.scenario = scenario;
     },
-    
+
     // 根据技能名称自动生成技能ID
     generateSkillId() {
       if (this.form.name && !this.form.skillId) {
         // 生成逻辑：提取英文字母 + 随机字符串
-        const timestamp = Date.now().toString().slice(-6)
-        const randomStr = Math.random().toString(36).substring(2, 6)
-        
+        const timestamp = Date.now().toString().slice(-6);
+        const randomStr = Math.random().toString(36).substring(2, 6);
+
         let id = this.form.name
-          .replace(/[\u4e00-\u9fa5]/g, '') // 移除中文
-          .replace(/[^a-zA-Z0-9]/g, '') // 移除特殊字符
-          .toLowerCase()
-        
+          .replace(/[\u4e00-\u9fa5]/g, "") // 移除中文
+          .replace(/[^a-zA-Z0-9]/g, "") // 移除特殊字符
+          .toLowerCase();
+
         if (!id) {
-          id = 'ai'
+          id = "ai";
         }
-        
-        this.form.skillId = `${id}_${timestamp}_${randomStr}`
+
+        this.form.skillId = `${id}_${timestamp}_${randomStr}`;
       }
     },
-    
+
     // 生成随机技能ID
     generateRandomSkillId() {
-      const timestamp = Date.now().toString().slice(-4)
-      const randomStr = Math.random().toString(36).substring(2, 5)
-      const randomHex = Math.random().toString(16).substring(2, 5)
-      const randomBase32 = Math.random().toString(32).substring(2, 4)
-      const separators = ['_', '-']
-      const sep = separators[Math.floor(Math.random() * separators.length)]
+      const timestamp = Date.now().toString().slice(-4);
+      const randomStr = Math.random().toString(36).substring(2, 5);
+      const randomHex = Math.random().toString(16).substring(2, 5);
+      const randomBase32 = Math.random().toString(32).substring(2, 4);
+      const separators = ["_", "-"];
+      const sep = separators[Math.floor(Math.random() * separators.length)];
       const patterns = [
         `${randomStr}${sep}${timestamp}${randomHex}`,
         `${randomHex}${sep}${randomStr}${timestamp}`,
         `${timestamp}${sep}${randomStr}${randomHex}`,
         `${randomStr}${randomBase32}${timestamp}`,
         `${randomHex}${timestamp}${randomStr}`,
-        `${randomStr}${timestamp}${randomHex.substring(0, 2)}`
-      ]
-      return patterns[Math.floor(Math.random() * patterns.length)]
+        `${randomStr}${timestamp}${randomHex.substring(0, 2)}`,
+      ];
+      return patterns[Math.floor(Math.random() * patterns.length)];
     },
-    
+
     handleIconChange(file) {
-      const isValidImage = file.raw && ['image/jpeg', 'image/jpg', 'image/png'].includes(file.raw.type)
-      const isValidSize = file.raw && file.raw.size / 1024 / 1024 < 2
+      const isValidImage =
+        file.raw && ["image/jpeg", "image/jpg", "image/png"].includes(file.raw.type);
+      const isValidSize = file.raw && file.raw.size / 1024 / 1024 < 2;
 
       if (!isValidImage) {
-        this.$message.error('图标只能是 JPG/PNG 格式!')
-        return
+        this.$message.error("图标只能是 JPG/PNG 格式!");
+        return;
       }
       if (!isValidSize) {
-        this.$message.error('图标大小不能超过 2MB!')
-        return
+        this.$message.error("图标大小不能超过 2MB!");
+        return;
       }
 
       if (file.raw) {
         // 保存原始文件用于上传
-        this.form.iconFile = file.raw
+        this.form.iconFile = file.raw;
         // 创建预览URL
-        this.form.iconUrl = URL.createObjectURL(file.raw)
+        this.form.iconUrl = URL.createObjectURL(file.raw);
       }
     },
-    
+
     async handleConfirm() {
       this.$refs.createForm.validate(async (valid) => {
         if (valid) {
-          this.loading = true
-          
+          this.loading = true;
+
           try {
-            let skillIcon = null
-            
+            let skillIcon = null;
+
             // 如果有图标文件，先上传图标
             if (this.form.iconFile) {
-              console.log('正在上传技能图标...')
-              const uploadResponse = await centerAPI.skill.uploadLlmSkillIcon(this.form.iconFile, this.form.skillId)
+              console.log("正在上传技能图标...");
+              const uploadResponse = await centerAPI.skill.uploadLlmSkillIcon(
+                this.form.iconFile,
+                this.form.skillId,
+              );
 
-              console.log('图标上传响应:', uploadResponse)
+              console.log("图标上传响应:", uploadResponse);
 
               // 响应拦截器已处理成功/失败判断，直接使用数据
-              skillIcon = uploadResponse.object_name
-              console.log('图标上传成功:', skillIcon)
+              skillIcon = uploadResponse.object_name;
+              console.log("图标上传成功:", skillIcon);
             }
-            
+
             if (this.isEditMode) {
               // 编辑模式：合并基础信息和详细配置数据
               const skillInfo = {
@@ -428,22 +448,22 @@ export default {
                 tags: this.form.tags,
                 description: this.form.description,
                 iconUrl: this.form.iconUrl,
-                skillIcon: skillIcon || this.editData.skillIcon // 如果有新图标则使用新的，否则保留原有的
-              }
-              
+                skillIcon: skillIcon || this.editData.skillIcon, // 如果有新图标则使用新的，否则保留原有的
+              };
+
               // 将更新后的技能信息存储到本地存储
-              localStorage.setItem('editSkillInfo', JSON.stringify(skillInfo))
-              
-              this.loading = false
-              this.$message.success('基础信息更新成功！')
-              this.$emit('confirm', skillInfo)
-              this.hide()
-              
+              localStorage.setItem("editSkillInfo", JSON.stringify(skillInfo));
+
+              this.loading = false;
+              this.$message.success("基础信息更新成功！");
+              this.$emit("confirm", skillInfo);
+              this.hide();
+
               // 跳转到详细配置页面
               this.$router.push({
-                name: 'multimodalCreateDetail',
-                query: { mode: 'edit' }
-              })
+                name: "multimodalCreateDetail",
+                query: { mode: "edit" },
+              });
             } else {
               // 创建模式：准备传递给详细配置页面的数据
               const skillInfo = {
@@ -453,42 +473,41 @@ export default {
                 tags: this.form.tags,
                 description: this.form.description,
                 iconUrl: this.form.iconUrl,
-                skillIcon: skillIcon // MinIO对象名称
-              }
-              
+                skillIcon: skillIcon, // MinIO对象名称
+              };
+
               // 将技能信息存储到本地存储，供详细配置页面使用
-              localStorage.setItem('tempSkillInfo', JSON.stringify(skillInfo))
-              
-              this.loading = false
-              this.$message.success('基础信息保存成功！')
-              this.$emit('confirm', skillInfo)
-              this.hide()
-              
+              localStorage.setItem("tempSkillInfo", JSON.stringify(skillInfo));
+
+              this.loading = false;
+              this.$message.success("基础信息保存成功！");
+              this.$emit("confirm", skillInfo);
+              this.hide();
+
               // 成功提交后重置表单
-              this.resetForm()
+              this.resetForm();
             }
-            
           } catch (error) {
-            console.error('保存基础信息失败:', error)
-            this.loading = false
-            
+            console.error("保存基础信息失败:", error);
+            this.loading = false;
+
             // 根据错误类型显示不同的错误信息
-            if (error.message.includes('图标上传失败')) {
-              this.$message.error('图标上传失败，请重试')
+            if (error.message.includes("图标上传失败")) {
+              this.$message.error("图标上传失败，请重试");
             } else if (error.response && error.response.data && error.response.data.detail) {
-              this.$message.error(`保存失败: ${error.response.data.detail}`)
+              this.$message.error(`保存失败: ${error.response.data.detail}`);
             } else {
-              this.$message.error('保存基础信息失败，请检查网络连接')
+              this.$message.error("保存基础信息失败，请检查网络连接");
             }
           }
         } else {
-          this.$message.warning('请完善必填信息')
-          return false
+          this.$message.warning("请完善必填信息");
+          return false;
         }
-      })
-    }
-  }
-}
+      });
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -640,7 +659,7 @@ export default {
 }
 
 .scenario-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -891,64 +910,64 @@ export default {
     width: 95% !important;
     margin: 15px auto;
   }
-  
+
   .create-form {
     padding: 0 16px;
   }
-  
+
   .form-section {
     margin-bottom: 16px;
   }
-  
+
   .scenario-grid {
     grid-template-columns: 1fr;
     gap: 8px;
   }
-  
+
   .scenario-card {
     padding: 6px;
   }
-  
+
   .scenario-header {
     gap: 6px;
     margin-bottom: 6px;
   }
-  
+
   .scenario-icon {
     width: 18px;
     height: 18px;
     font-size: 9px;
   }
-  
+
   .scenario-title {
     font-size: 13px;
   }
-  
+
   .scenario-content {
     gap: 4px;
   }
-  
+
   .scenario-desc {
     font-size: 11px;
   }
-  
+
   .feature-tag {
     font-size: 10px;
     padding: 2px 6px;
   }
-  
+
   .progress-indicator {
     padding: 16px 0;
     margin-bottom: 16px;
   }
-  
+
   .progress-line {
     width: 40px;
     margin: 0 8px;
   }
-  
+
   .dialog-footer {
     padding: 12px 16px;
   }
 }
-</style> 
+</style>

@@ -4,10 +4,10 @@
  * 前后端统一使用 snake_case
  */
 
-import { ref, computed } from 'vue';
-import type { TenantAPI } from '@/types/rbac/tenant';
-import { Status } from '@/types/rbac';
-import tenantService from '@/api/system/tenantService';
+import { ref, computed } from "vue";
+import type { TenantAPI } from "@/types/rbac/tenant";
+import { Status } from "@/types/rbac";
+import tenantService from "@/api/system/tenantService";
 
 // ============================================
 // 类型定义
@@ -53,7 +53,7 @@ export function useTenantData() {
   const pagination = ref<TenantPagination>({
     currentPage: 1,
     pageSize: 10,
-    total: 0
+    total: 0,
   });
 
   // 计算属性
@@ -75,7 +75,7 @@ export function useTenantData() {
       // 构建查询参数
       const queryParams: Record<string, unknown> = {
         skip: (currentPage - 1) * size,
-        limit: size
+        limit: size,
       };
 
       // 添加可选查询条件
@@ -102,7 +102,7 @@ export function useTenantData() {
 
       return tenants.value;
     } catch (error) {
-      console.error('获取租户列表失败:', error);
+      console.error("获取租户列表失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -117,9 +117,9 @@ export function useTenantData() {
     try {
       // @ts-ignore - 数据由调用方验证，后端会进行验证
       await tenantService.createTenant(data);
-      return { success: true, message: '新增成功' };
+      return { success: true, message: "新增成功" };
     } catch (error) {
-      console.error('创建租户失败:', error);
+      console.error("创建租户失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -134,9 +134,9 @@ export function useTenantData() {
     try {
       // @ts-ignore - 数据由调用方验证，后端会进行验证
       await tenantService.updateTenant(tenantId, data);
-      return { success: true, message: '修改成功' };
+      return { success: true, message: "修改成功" };
     } catch (error) {
-      console.error('更新租户失败:', error);
+      console.error("更新租户失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -150,9 +150,9 @@ export function useTenantData() {
     loading.value = true;
     try {
       await tenantService.deleteTenant(tenantId);
-      return { success: true, message: '删除成功' };
+      return { success: true, message: "删除成功" };
     } catch (error) {
-      console.error('删除租户失败:', error);
+      console.error("删除租户失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -166,9 +166,9 @@ export function useTenantData() {
     loading.value = true;
     try {
       await tenantService.batchDeleteTenants(tenantIds);
-      return { success: true, message: '批量删除成功' };
+      return { success: true, message: "批量删除成功" };
     } catch (error) {
-      console.error('批量删除租户失败:', error);
+      console.error("批量删除租户失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -183,7 +183,7 @@ export function useTenantData() {
     pagination.value = {
       currentPage: 1,
       pageSize: 10,
-      total: 0
+      total: 0,
     };
   };
 
@@ -200,6 +200,6 @@ export function useTenantData() {
     updateTenant,
     deleteTenant,
     batchDeleteTenants,
-    clearData
+    clearData,
   };
 }

@@ -6,8 +6,8 @@
     <div class="card-content h-full">
       <!-- 加载状态 -->
       <div v-if="loading" class="flex items-center justify-center h-full">
-        <i class="i-carbon-circle-dash text-4xl animate-spin" style="color: #3eaef9;"></i>
-        <p class="text-sm mt-2 ml-2" style="color: #fff;">加载中...</p>
+        <i class="i-carbon-circle-dash text-4xl animate-spin" style="color: #3eaef9"></i>
+        <p class="text-sm mt-2 ml-2" style="color: #fff">加载中...</p>
       </div>
 
       <!-- 数据展示 -->
@@ -34,53 +34,81 @@
         <div class="resource-charts">
           <div class="chart-item">
             <div class="chart-container">
-              <div class="percentage-ring cpu"
-                :style="{ background: `conic-gradient(#3eaef9 ${resourceData.cpu.usage * 3.6}deg, transparent 0deg)` }"></div>
+              <div
+                class="percentage-ring cpu"
+                :style="{
+                  background: `conic-gradient(#3eaef9 ${resourceData.cpu.usage * 3.6}deg, transparent 0deg)`,
+                }"
+              ></div>
               <div class="inner-circle">
                 <div class="liquid-container cpu">
                   <div class="liquid-wave"></div>
                 </div>
               </div>
-              <div class="percentage-text cpu">{{ resourceData.cpu.usage }}<span class="percentage-symbol">%</span></div>
+              <div class="percentage-text cpu">
+                {{ resourceData.cpu.usage }}
+                <span class="percentage-symbol">%</span>
+              </div>
             </div>
             <div class="chart-title">CPU</div>
           </div>
           <div class="chart-item">
             <div class="chart-container">
-              <div class="percentage-ring disk"
-                :style="{ background: `conic-gradient(#ff9c38 ${resourceData.memory.usage * 3.6}deg, transparent 0deg)` }"></div>
+              <div
+                class="percentage-ring disk"
+                :style="{
+                  background: `conic-gradient(#ff9c38 ${resourceData.memory.usage * 3.6}deg, transparent 0deg)`,
+                }"
+              ></div>
               <div class="inner-circle">
                 <div class="liquid-container disk">
                   <div class="liquid-wave"></div>
                 </div>
               </div>
-              <div class="percentage-text disk">{{ resourceData.memory.usage }}<span class="percentage-symbol">%</span></div>
+              <div class="percentage-text disk">
+                {{ resourceData.memory.usage }}
+                <span class="percentage-symbol">%</span>
+              </div>
             </div>
             <div class="chart-title">内存</div>
           </div>
           <div class="chart-item">
             <div class="chart-container">
-              <div class="percentage-ring memory"
-                :style="{ background: `conic-gradient(#29de9c ${resourceData.disk.usage * 3.6}deg, transparent 0deg)` }"></div>
+              <div
+                class="percentage-ring memory"
+                :style="{
+                  background: `conic-gradient(#29de9c ${resourceData.disk.usage * 3.6}deg, transparent 0deg)`,
+                }"
+              ></div>
               <div class="inner-circle">
                 <div class="liquid-container memory">
                   <div class="liquid-wave"></div>
                 </div>
               </div>
-              <div class="percentage-text memory">{{ resourceData.disk.usage }}<span class="percentage-symbol">%</span></div>
+              <div class="percentage-text memory">
+                {{ resourceData.disk.usage }}
+                <span class="percentage-symbol">%</span>
+              </div>
             </div>
             <div class="chart-title">磁盘</div>
           </div>
           <div class="chart-item">
             <div class="chart-container">
-              <div class="percentage-ring gpu"
-                :style="{ background: `conic-gradient(#ff5a5a ${resourceData.gpu.usage * 3.6}deg, transparent 0deg)` }"></div>
+              <div
+                class="percentage-ring gpu"
+                :style="{
+                  background: `conic-gradient(#ff5a5a ${resourceData.gpu.usage * 3.6}deg, transparent 0deg)`,
+                }"
+              ></div>
               <div class="inner-circle">
                 <div class="liquid-container gpu">
                   <div class="liquid-wave"></div>
                 </div>
               </div>
-              <div class="percentage-text gpu">{{ resourceData.gpu.usage }}<span class="percentage-symbol">%</span></div>
+              <div class="percentage-text gpu">
+                {{ resourceData.gpu.usage }}
+                <span class="percentage-symbol">%</span>
+              </div>
             </div>
             <div class="chart-title">显存</div>
           </div>
@@ -156,49 +184,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import systemMonitorAPI from '@/api/center/systemMonitor'
-import type { SystemResourcesData } from '@/api/center/systemMonitor'
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import systemMonitorAPI from "@/api/center/systemMonitor";
+import type { SystemResourcesData } from "@/api/center/systemMonitor";
 
 // 接收 resizeTrigger prop
 defineProps<{
-  resizeTrigger?: number
-}>()
+  resizeTrigger?: number;
+}>();
 
 // 响应式数据
-const loading = ref(true)
+const loading = ref(true);
 const resourceData = ref<SystemResourcesData>({
   cpu: { usage: 0, cores: 0, avg_temp: 0, max_temp: 0 },
-  memory: { usage: 0, total: '0GB', used: '0GB' },
-  disk: { usage: 0, total: '0GB', used: '0GB', type: 'Unknown' },
-  gpu: { usage: 0, model: 'Unknown', vram_total: '0GB', temperature: 0 },
+  memory: { usage: 0, total: "0GB", used: "0GB" },
+  disk: { usage: 0, total: "0GB", used: "0GB", type: "Unknown" },
+  gpu: { usage: 0, model: "Unknown", vram_total: "0GB", temperature: 0 },
   servers: { master: 0, nodes: 0 },
-  timestamp: new Date().toISOString()
-})
+  timestamp: new Date().toISOString(),
+});
 
 // 格式化时间
 const formattedTime = computed(() => {
-  if (!resourceData.value.timestamp) return '--'
+  if (!resourceData.value.timestamp) return "--";
   try {
-    const date = new Date(resourceData.value.timestamp)
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
+    const date = new Date(resourceData.value.timestamp);
+    return date.toLocaleString("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
   } catch {
-    return '--'
+    return "--";
   }
-})
+});
 
 // 加载资源数据
 async function loadResources(): Promise<void> {
   try {
-    const data = await systemMonitorAPI.getSystemResources()
-    console.log('[ResourceStatistics] 获取到资源数据:', data)
+    const data = await systemMonitorAPI.getSystemResources();
+    console.log("[ResourceStatistics] 获取到资源数据:", data);
 
     // 确保数据结构完整，使用默认值填充缺失字段
     resourceData.value = {
@@ -206,49 +234,49 @@ async function loadResources(): Promise<void> {
         usage: data?.cpu?.usage ?? 0,
         cores: data?.cpu?.cores ?? 0,
         avg_temp: data?.cpu?.avg_temp ?? 0,
-        max_temp: data?.cpu?.max_temp ?? 0
+        max_temp: data?.cpu?.max_temp ?? 0,
       },
       memory: {
         usage: data?.memory?.usage ?? 0,
-        total: data?.memory?.total ?? '0GB',
-        used: data?.memory?.used ?? '0GB'
+        total: data?.memory?.total ?? "0GB",
+        used: data?.memory?.used ?? "0GB",
       },
       disk: {
         usage: data?.disk?.usage ?? 0,
-        total: data?.disk?.total ?? '0GB',
-        used: data?.disk?.used ?? '0GB',
-        type: data?.disk?.type ?? 'Unknown'
+        total: data?.disk?.total ?? "0GB",
+        used: data?.disk?.used ?? "0GB",
+        type: data?.disk?.type ?? "Unknown",
       },
       gpu: {
         usage: data?.gpu?.usage ?? 0,
-        model: data?.gpu?.model ?? 'Unknown',
-        vram_total: data?.gpu?.vram_total ?? '0GB',
-        temperature: data?.gpu?.temperature ?? 0
+        model: data?.gpu?.model ?? "Unknown",
+        vram_total: data?.gpu?.vram_total ?? "0GB",
+        temperature: data?.gpu?.temperature ?? 0,
       },
       servers: {
         master: data?.servers?.master ?? 0,
-        nodes: data?.servers?.nodes ?? 0
+        nodes: data?.servers?.nodes ?? 0,
       },
-      timestamp: data?.timestamp ?? new Date().toISOString()
-    }
+      timestamp: data?.timestamp ?? new Date().toISOString(),
+    };
   } catch (error) {
-    console.error('加载系统资源失败:', error)
+    console.error("加载系统资源失败:", error);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
-let refreshTimer: number | null = null
+let refreshTimer: number | null = null;
 
 onMounted(() => {
-  loadResources()
+  loadResources();
   // 每 30 秒刷新一次
-  refreshTimer = window.setInterval(loadResources, 30000)
-})
+  refreshTimer = window.setInterval(loadResources, 30000);
+});
 
 onBeforeUnmount(() => {
-  if (refreshTimer) clearInterval(refreshTimer)
-})
+  if (refreshTimer) clearInterval(refreshTimer);
+});
 </script>
 
 <style scoped>
@@ -273,7 +301,7 @@ onBeforeUnmount(() => {
 .title {
   font-size: 18px;
   font-weight: 600;
-  background: linear-gradient(90deg, #00FFFF, #1B96FF);
+  background: linear-gradient(90deg, #00ffff, #1b96ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -299,7 +327,7 @@ onBeforeUnmount(() => {
 
 .server-icon {
   font-size: 20px;
-  color: #1B96FF;
+  color: #1b96ff;
 }
 
 .resource-labels {
@@ -418,7 +446,7 @@ onBeforeUnmount(() => {
 .resource-detail-title {
   font-size: 16px;
   font-weight: 600;
-  color: #00FFFF;
+  color: #00ffff;
 }
 
 .resource-time {
@@ -452,7 +480,7 @@ onBeforeUnmount(() => {
 
 .detail-label {
   opacity: 0.7;
-  color: #7EAEE5;
+  color: #7eaee5;
 }
 
 .detail-value {

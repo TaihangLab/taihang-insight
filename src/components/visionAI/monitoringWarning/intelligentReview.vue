@@ -12,8 +12,12 @@
           <i class="status-icon" :class="serviceStatusIcon"></i>
           <span class="status-text">复判服务: {{ serviceStatusText }}</span>
           <el-tooltip content="复判服务已随系统自动启动，无需手动控制" placement="bottom">
-            <el-tag :type="serviceStatus === 'running' ? 'success' : 'warning'" size="small" style="margin-left: 10px;">
-              {{ serviceStatus === 'running' ? '自动运行中' : '启动中...' }}
+            <el-tag
+              :type="serviceStatus === 'running' ? 'success' : 'warning'"
+              size="small"
+              style="margin-left: 10px"
+            >
+              {{ serviceStatus === "running" ? "自动运行中" : "启动中..." }}
             </el-tag>
           </el-tooltip>
         </div>
@@ -69,14 +73,14 @@
           placeholder="搜索任务名称或描述"
           prefix-icon="el-icon-search"
           clearable
-          style="width: 300px; margin-right: 10px;"
+          style="width: 300px; margin-right: 10px"
           @input="handleSearch"
         />
         <el-select
           v-model="taskTypeFilter"
           placeholder="任务类型"
           clearable
-          style="width: 150px; margin-right: 10px;"
+          style="width: 150px; margin-right: 10px"
           @change="handleFilterChange"
         >
           <el-option label="AI任务" value="ai_task"></el-option>
@@ -86,7 +90,7 @@
           v-model="reviewStatusFilter"
           placeholder="复判状态"
           clearable
-          style="width: 150px; margin-right: 10px;"
+          style="width: 150px; margin-right: 10px"
           @change="handleFilterChange"
         >
           <el-option label="已启用" value="enabled"></el-option>
@@ -99,14 +103,18 @@
       <el-table
         :data="filteredTaskList"
         v-loading="tableLoading"
-        style="width: 100%; margin-top: 20px;"
+        style="width: 100%; margin-top: 20px"
         :row-class-name="tableRowClassName"
       >
         <el-table-column prop="name" label="任务名称" width="300">
           <template #default="scope">
             <div class="task-name-cell">
-              <el-tag :type="scope.row.task_type === 'ai_task' ? 'primary' : 'success'" size="small" style="margin-right: 8px;">
-                {{ scope.row.task_type === 'ai_task' ? 'AI' : 'LLM' }}
+              <el-tag
+                :type="scope.row.task_type === 'ai_task' ? 'primary' : 'success'"
+                size="small"
+                style="margin-right: 8px"
+              >
+                {{ scope.row.task_type === "ai_task" ? "AI" : "LLM" }}
               </el-tag>
               <span class="task-name-text">{{ scope.row.name }}</span>
             </div>
@@ -114,39 +122,34 @@
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="180" show-overflow-tooltip>
           <template #default="scope">
-            <span>{{ scope.row.description || '-' }}</span>
+            <span>{{ scope.row.description || "-" }}</span>
           </template>
         </el-table-column>
         <el-table-column label="任务状态" width="90" align="center">
           <template #default="scope">
             <el-tag :type="scope.row.status ? 'success' : 'info'" size="small">
-              {{ scope.row.status ? '运行中' : '已停止' }}
+              {{ scope.row.status ? "运行中" : "已停止" }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="复判状态" width="90" align="center">
           <template #default="scope">
             <el-tag :type="scope.row.review_enabled ? 'success' : 'info'" size="small">
-              {{ scope.row.review_enabled ? '已启用' : '未启用' }}
+              {{ scope.row.review_enabled ? "已启用" : "未启用" }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="复判技能" width="180" show-overflow-tooltip>
           <template #default="scope">
-            <span v-if="scope.row.review_skill_name" style="font-weight: 500; color: #303133;">
+            <span v-if="scope.row.review_skill_name" style="font-weight: 500; color: #303133">
               {{ scope.row.review_skill_name }}
             </span>
-            <span v-else style="color: #909399;">未配置</span>
+            <span v-else style="color: #909399">未配置</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" align="center">
           <template #default="scope">
-            <el-button
-              link
-              size="small"
-              icon="el-icon-edit"
-              @click="handleConfigReview(scope.row)"
-            >
+            <el-button link size="small" icon="el-icon-edit" @click="handleConfigReview(scope.row)">
               配置
             </el-button>
             <el-button
@@ -154,7 +157,7 @@
               link
               size="small"
               icon="el-icon-close"
-              style="color: #f56c6c;"
+              style="color: #f56c6c"
               @click="handleDisableReview(scope.row)"
             >
               停用
@@ -173,9 +176,8 @@
         :page-size="pageSize"
         layout="total, sizes, prev, pager, next, jumper"
         :total="total"
-        style="margin-top: 20px; text-align: right;"
-      >
-      </el-pagination>
+        style="margin-top: 20px; text-align: right"
+      ></el-pagination>
     </el-card>
 
     <!-- 复判配置对话框 -->
@@ -186,26 +188,24 @@
       :close-on-click-modal="false"
       @close="handleDialogClose"
     >
-      <el-form
-        ref="configForm"
-        :model="configForm"
-        :rules="configRules"
-        label-width="140px"
-      >
+      <el-form ref="configForm" :model="configForm" :rules="configRules" label-width="140px">
         <el-form-item label="启用复判" prop="review_enabled">
           <el-switch
             v-model="configForm.review_enabled"
             active-text="启用"
             inactive-text="禁用"
-          >
-          </el-switch>
+          ></el-switch>
         </el-form-item>
 
-        <el-form-item label="复判技能" prop="review_skill_class_id" v-if="configForm.review_enabled">
+        <el-form-item
+          label="复判技能"
+          prop="review_skill_class_id"
+          v-if="configForm.review_enabled"
+        >
           <el-select
             v-model="configForm.review_skill_class_id"
             placeholder="请选择复判技能"
-            style="width: 100%;"
+            style="width: 100%"
             filterable
           >
             <el-option
@@ -214,15 +214,15 @@
               :label="skill.skill_name"
               :value="skill.id"
             >
-              <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; justify-content: space-between; align-items: center">
                 <span>{{ skill.skill_name }}</span>
                 <el-tag :type="skill.status ? 'success' : 'info'" size="small">
-                  {{ skill.status ? '在线' : '离线' }}
+                  {{ skill.status ? "在线" : "离线" }}
                 </el-tag>
               </div>
             </el-option>
           </el-select>
-          <div style="color: #909399; font-size: 12px; margin-top: 5px;">
+          <div style="color: #909399; font-size: 12px; margin-top: 5px">
             选择一个复判技能来对预警进行二次判断，技能会自动分析并返回是否为误报
           </div>
         </el-form-item>
@@ -234,17 +234,25 @@
               <label>技能名称：</label>
               <span class="skill-name-text">{{ selectedSkillDetail.skill_name }}</span>
             </div>
-            <div class="skill-detail-row" v-if="selectedSkillDetail.tags && selectedSkillDetail.tags.length > 0">
+            <div
+              class="skill-detail-row"
+              v-if="selectedSkillDetail.tags && selectedSkillDetail.tags.length > 0"
+            >
               <label>技能标签：</label>
               <div>
-                <el-tag v-for="tag in selectedSkillDetail.tags" :key="tag" size="small" style="margin-right: 5px;">
+                <el-tag
+                  v-for="tag in selectedSkillDetail.tags"
+                  :key="tag"
+                  size="small"
+                  style="margin-right: 5px"
+                >
                   {{ tag }}
                 </el-tag>
               </div>
             </div>
             <div class="skill-detail-row">
               <label>功能描述：</label>
-              <span>{{ selectedSkillDetail.description || '无描述' }}</span>
+              <span>{{ selectedSkillDetail.description || "无描述" }}</span>
             </div>
             <div class="skill-detail-tip">
               <i class="el-icon-info"></i>
@@ -265,14 +273,14 @@
 </template>
 
 <script>
-import centerAPI from '@/api/center';
+import centerAPI from "@/api/center";
 
 export default {
-  name: 'IntelligentReview',
+  name: "IntelligentReview",
   data() {
     return {
       // 服务状态（自动启动）
-      serviceStatus: 'stopped', // 'running' | 'stopped' | 'error'
+      serviceStatus: "stopped", // 'running' | 'stopped' | 'error'
       queueSize: 0,
 
       // 统计数据
@@ -281,9 +289,9 @@ export default {
       availableSkillsCount: 0,
 
       // 搜索和过滤
-      searchKeyword: '',
-      taskTypeFilter: '',
-      reviewStatusFilter: '',
+      searchKeyword: "",
+      taskTypeFilter: "",
+      reviewStatusFilter: "",
 
       // 表格数据
       tableLoading: false,
@@ -301,43 +309,41 @@ export default {
       saveLoading: false,
       configForm: {
         review_enabled: false,
-        review_skill_class_id: null
+        review_skill_class_id: null,
       },
       configRules: {
-        review_skill_class_id: [
-          { required: true, message: '请选择复判技能', trigger: 'change' }
-        ]
+        review_skill_class_id: [{ required: true, message: "请选择复判技能", trigger: "change" }],
       },
 
       // 刷新定时器
-      refreshTimer: null
+      refreshTimer: null,
     };
   },
   computed: {
     // 服务状态样式类
     serviceStatusClass() {
       return {
-        'status-running': this.serviceStatus === 'running',
-        'status-stopped': this.serviceStatus === 'stopped',
-        'status-error': this.serviceStatus === 'error'
+        "status-running": this.serviceStatus === "running",
+        "status-stopped": this.serviceStatus === "stopped",
+        "status-error": this.serviceStatus === "error",
       };
     },
     // 服务状态图标
     serviceStatusIcon() {
       return {
-        'el-icon-success': this.serviceStatus === 'running',
-        'el-icon-warning': this.serviceStatus === 'stopped',
-        'el-icon-error': this.serviceStatus === 'error'
+        "el-icon-success": this.serviceStatus === "running",
+        "el-icon-warning": this.serviceStatus === "stopped",
+        "el-icon-error": this.serviceStatus === "error",
       };
     },
     // 服务状态文本
     serviceStatusText() {
       const statusMap = {
-        running: '运行中',
-        stopped: '已停止',
-        error: '异常'
+        running: "运行中",
+        stopped: "已停止",
+        error: "异常",
       };
-      return statusMap[this.serviceStatus] || '未知';
+      return statusMap[this.serviceStatus] || "未知";
     },
     // 过滤后的任务列表
     filteredTaskList() {
@@ -346,21 +352,22 @@ export default {
       // 搜索关键词过滤
       if (this.searchKeyword) {
         const keyword = this.searchKeyword.toLowerCase();
-        list = list.filter(task =>
-          task.name.toLowerCase().includes(keyword) ||
-          (task.description && task.description.toLowerCase().includes(keyword))
+        list = list.filter(
+          (task) =>
+            task.name.toLowerCase().includes(keyword) ||
+            (task.description && task.description.toLowerCase().includes(keyword)),
         );
       }
 
       // 任务类型过滤
       if (this.taskTypeFilter) {
-        list = list.filter(task => task.task_type === this.taskTypeFilter);
+        list = list.filter((task) => task.task_type === this.taskTypeFilter);
       }
 
       // 复判状态过滤
       if (this.reviewStatusFilter) {
-        const enabled = this.reviewStatusFilter === 'enabled';
-        list = list.filter(task => task.review_enabled === enabled);
+        const enabled = this.reviewStatusFilter === "enabled";
+        list = list.filter((task) => task.review_enabled === enabled);
       }
 
       return list;
@@ -369,9 +376,9 @@ export default {
     selectedSkillDetail() {
       if (!this.configForm.review_skill_class_id) return null;
       return this.availableSkills.find(
-        skill => skill.id === this.configForm.review_skill_class_id
+        (skill) => skill.id === this.configForm.review_skill_class_id,
       );
-    }
+    },
   },
   created() {
     this.init();
@@ -388,7 +395,7 @@ export default {
       await this.loadServiceStatus();
       await this.loadAvailableSkills();
       await this.loadTaskList();
-      
+
       // 启动定时刷新（每30秒）
       this.refreshTimer = setInterval(() => {
         this.loadServiceStatus();
@@ -400,12 +407,12 @@ export default {
       try {
         const response = await centerAPI.taskReview.getReviewServiceStatus();
         const data = response.data;
-        
-        this.serviceStatus = data.status || 'stopped';
+
+        this.serviceStatus = data.status || "stopped";
         this.queueSize = data.queue_size || 0;
       } catch (error) {
-        console.error('获取服务状态失败:', error);
-        this.serviceStatus = 'error';
+        console.error("获取服务状态失败:", error);
+        this.serviceStatus = "error";
       }
     },
 
@@ -414,12 +421,12 @@ export default {
       try {
         const response = await centerAPI.taskReview.getAvailableReviewSkills();
         const data = response.data;
-        
+
         this.availableSkills = data.skills || [];
         this.availableSkillsCount = this.availableSkills.length;
       } catch (error) {
-        console.error('获取可用技能失败:', error);
-        this.$message.error('获取可用复判技能失败');
+        console.error("获取可用技能失败:", error);
+        this.$message.error("获取可用复判技能失败");
       }
     },
 
@@ -430,21 +437,21 @@ export default {
         // 加载AI任务
         const aiTasksResponse = await centerAPI.taskReview.getAITasksForReview({
           page: 1,
-          limit: 1000 // 获取所有任务
+          limit: 1000, // 获取所有任务
         });
-        const aiTasks = (aiTasksResponse.data.data || []).map(task => ({
+        const aiTasks = (aiTasksResponse.data.data || []).map((task) => ({
           ...task,
-          task_type: 'ai_task'
+          task_type: "ai_task",
         }));
 
         // 加载LLM任务
         const llmTasksResponse = await centerAPI.skill.getLlmTaskList({
           page: 1,
-          limit: 1000
+          limit: 1000,
         });
-        const llmTasks = (llmTasksResponse.data.data || []).map(task => ({
+        const llmTasks = (llmTasksResponse.data.data || []).map((task) => ({
           ...task,
-          task_type: 'llm_task'
+          task_type: "llm_task",
         }));
 
         // 合并任务列表
@@ -455,12 +462,12 @@ export default {
         await this.loadReviewConfigs();
 
         // 计算启用复判的任务数
-        this.reviewEnabledCount = this.taskList.filter(t => t.review_enabled).length;
+        this.reviewEnabledCount = this.taskList.filter((t) => t.review_enabled).length;
 
         this.total = this.taskList.length;
       } catch (error) {
-        console.error('获取任务列表失败:', error);
-        this.$message.error('获取任务列表失败');
+        console.error("获取任务列表失败:", error);
+        this.$message.error("获取任务列表失败");
       } finally {
         this.tableLoading = false;
       }
@@ -470,12 +477,9 @@ export default {
     async loadReviewConfigs() {
       const promises = this.taskList.map(async (task, index) => {
         try {
-          const response = await centerAPI.taskReview.getTaskReviewConfig(
-            task.task_type,
-            task.id
-          );
+          const response = await centerAPI.taskReview.getTaskReviewConfig(task.task_type, task.id);
           const config = response.data;
-          
+
           // 使用 Vue.set 确保响应式更新
           task.has_config = config.has_config;
           task.review_enabled = config.review_enabled || false;
@@ -494,11 +498,10 @@ export default {
       });
 
       await Promise.all(promises);
-      
+
       // 强制更新视图
       this.$forceUpdate();
     },
-
 
     // 搜索
     handleSearch() {
@@ -515,17 +518,17 @@ export default {
       await this.loadServiceStatus();
       await this.loadAvailableSkills();
       await this.loadTaskList();
-      this.$message.success('数据已刷新');
+      this.$message.success("数据已刷新");
     },
 
     // 配置复判
     handleConfigReview(task) {
       this.currentTask = task;
-      
+
       // 初始化表单数据
       this.configForm = {
         review_enabled: task.review_enabled || false,
-        review_skill_class_id: task.review_skill_class_id || null
+        review_skill_class_id: task.review_skill_class_id || null,
       };
 
       this.configDialogVisible = true;
@@ -533,29 +536,29 @@ export default {
 
     // 停用复判
     handleDisableReview(task) {
-      this.$confirm(`确认要停用任务"${task.name}"的复判功能吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        this.tableLoading = true;
-        try {
-          await centerAPI.taskReview.updateTaskReviewConfig(
-            task.task_type,
-            task.id,
-            { review_enabled: false }
-          );
-          this.$message.success('已停用复判');
-          
-          // 重新加载任务列表以更新显示
-          await this.loadTaskList();
-        } catch (error) {
-          console.error('停用复判失败:', error);
-          this.$message.error('停用复判失败: ' + (error.message || '未知错误'));
-        } finally {
-          this.tableLoading = false;
-        }
-      }).catch(() => {});
+      this.$confirm(`确认要停用任务"${task.name}"的复判功能吗？`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(async () => {
+          this.tableLoading = true;
+          try {
+            await centerAPI.taskReview.updateTaskReviewConfig(task.task_type, task.id, {
+              review_enabled: false,
+            });
+            this.$message.success("已停用复判");
+
+            // 重新加载任务列表以更新显示
+            await this.loadTaskList();
+          } catch (error) {
+            console.error("停用复判失败:", error);
+            this.$message.error("停用复判失败: " + (error.message || "未知错误"));
+          } finally {
+            this.tableLoading = false;
+          }
+        })
+        .catch(() => {});
     },
 
     // 保存配置
@@ -566,31 +569,33 @@ export default {
         }
 
         this.saveLoading = true;
-        
+
         try {
           // 构建配置对象
           const config = {
             review_enabled: this.configForm.review_enabled,
-            review_skill_class_id: this.configForm.review_skill_class_id || null
+            review_skill_class_id: this.configForm.review_skill_class_id || null,
           };
 
           // 调用API更新配置
           await centerAPI.taskReview.updateTaskReviewConfig(
             this.currentTask.task_type,
             this.currentTask.id,
-            config
+            config,
           );
-          
-          this.$message.success(config.review_enabled ? '配置保存成功' : '已停用复判');
+
+          this.$message.success(config.review_enabled ? "配置保存成功" : "已停用复判");
           this.configDialogVisible = false;
-          
+
           // 重新加载任务列表以更新显示
           await this.loadTaskList();
-          
         } catch (error) {
-          console.error('保存配置失败:', error);
-          const errorMsg = (error.response && error.response.data && error.response.data.detail) || error.message || '未知错误';
-          this.$message.error('保存配置失败: ' + errorMsg);
+          console.error("保存配置失败:", error);
+          const errorMsg =
+            (error.response && error.response.data && error.response.data.detail) ||
+            error.message ||
+            "未知错误";
+          this.$message.error("保存配置失败: " + errorMsg);
         } finally {
           this.saveLoading = false;
         }
@@ -606,12 +611,12 @@ export default {
     // 表格行样式
     tableRowClassName({ row }) {
       if (!row.status) {
-        return 'row-disabled';
+        return "row-disabled";
       }
       if (row.review_enabled) {
-        return 'row-review-enabled';
+        return "row-review-enabled";
       }
-      return '';
+      return "";
     },
 
     // 分页
@@ -620,8 +625,8 @@ export default {
     },
     handleCurrentChange(val) {
       this.currentPage = val;
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -924,4 +929,3 @@ export default {
   }
 }
 </style>
-

@@ -1,7 +1,7 @@
 <template>
   <div id="ptzScan">
     <div style="display: grid; grid-template-columns: 80px auto; line-height: 28px">
-      <span>扫描组号: </span>
+      <span>扫描组号:</span>
       <el-input
         min="1"
         max="255"
@@ -10,15 +10,14 @@
         addonAfter="(1-255)"
         v-model="scanId"
         size="small"
-      >
-      </el-input>
+      ></el-input>
     </div>
 
     <el-button size="small" @click="setScanLeft">设置左边界</el-button>
     <el-button size="small" @click="setScanRight">设置右边界</el-button>
 
     <el-form size="small" :inline="true" v-if="setSpeedVisible">
-      <el-form-item >
+      <el-form-item>
         <el-input
           min="1"
           max="4095"
@@ -28,8 +27,7 @@
           v-if="setSpeedVisible"
           v-model="speed"
           size="small"
-        >
-        </el-input>
+        ></el-input>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="setSpeed">保存</el-button>
@@ -44,204 +42,218 @@
 </template>
 
 <script>
-import { 
-  setScanLeft as apiSetScanLeft, 
-  setScanRight as apiSetScanRight, 
-  setScanSpeed, 
-  startFrontEndScan, 
-  stopFrontEndScan 
-} from '@/api/ptz'
+import {
+  setScanLeft as apiSetScanLeft,
+  setScanRight as apiSetScanRight,
+  setScanSpeed,
+  startFrontEndScan,
+  stopFrontEndScan,
+} from "@/api/ptz";
 
 export default {
   name: "ptzScan",
-  props: [ 'channelDeviceId', 'deviceId'],
+  props: ["channelDeviceId", "deviceId"],
   components: {},
-  created() {
-  },
+  created() {},
   data() {
     return {
       scanId: 1,
       setSpeedVisible: false,
-      speed: '',
+      speed: "",
     };
   },
   methods: {
-    setSpeed: function (){
+    setSpeed: function () {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
       setScanSpeed(this.deviceId, this.channelDeviceId, {
         scanId: this.scanId,
-        speed: this.speed
-      }).then((res)=> {
-        if (res.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "保存成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: 'error'
-          });
-        }
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error,
-          type: 'error'
-        });
-      }).finally(()=>{
-        this.speed = ""
-        this.setSpeedVisible = false
-        loading.close()
+        speed: this.speed,
       })
+        .then((res) => {
+          if (res.code === 0) {
+            this.$message({
+              showClose: true,
+              message: "保存成功",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error,
+            type: "error",
+          });
+        })
+        .finally(() => {
+          this.speed = "";
+          this.setSpeedVisible = false;
+          loading.close();
+        });
     },
     cancelSetSpeed: function () {
-      this.speed = ""
-      this.setSpeedVisible = false
+      this.speed = "";
+      this.setSpeedVisible = false;
     },
-    setScanLeft: function (){
+    setScanLeft: function () {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
       apiSetScanLeft(this.deviceId, this.channelDeviceId, {
-        scanId: this.scanId
-      }).then((res)=> {
-        if (res.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "保存成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: 'error'
-          });
-        }
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error,
-          type: 'error'
-        });
-      }).finally(()=>{
-        loading.close()
+        scanId: this.scanId,
       })
+        .then((res) => {
+          if (res.code === 0) {
+            this.$message({
+              showClose: true,
+              message: "保存成功",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error,
+            type: "error",
+          });
+        })
+        .finally(() => {
+          loading.close();
+        });
     },
-    setScanRight: function (){
+    setScanRight: function () {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
       apiSetScanRight(this.deviceId, this.channelDeviceId, {
-        scanId: this.scanId
-      }).then((res)=> {
-        if (res.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "保存成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: 'error'
-          });
-        }
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error,
-          type: 'error'
-        });
-      }).finally(()=>{
-        loading.close()
+        scanId: this.scanId,
       })
+        .then((res) => {
+          if (res.code === 0) {
+            this.$message({
+              showClose: true,
+              message: "保存成功",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error,
+            type: "error",
+          });
+        })
+        .finally(() => {
+          loading.close();
+        });
     },
-    startScan: function (){
+    startScan: function () {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
       startFrontEndScan(this.deviceId, this.channelDeviceId, {
-        scanId: this.scanId
-      }).then((res)=> {
-        if (res.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "开始扫描",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: 'error'
-          });
-        }
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error,
-          type: 'error'
-        });
-      }).finally(()=>{
-        loading.close()
+        scanId: this.scanId,
       })
+        .then((res) => {
+          if (res.code === 0) {
+            this.$message({
+              showClose: true,
+              message: "开始扫描",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error,
+            type: "error",
+          });
+        })
+        .finally(() => {
+          loading.close();
+        });
     },
-    stopScan: function (){
+    stopScan: function () {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
       stopFrontEndScan(this.deviceId, this.channelDeviceId, {
-        scanId: this.scanId
-      }).then((res)=> {
-        if (res.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "停止扫描",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: 'error'
-          });
-        }
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error,
-          type: 'error'
-        });
-      }).finally(()=>{
-        loading.close()
+        scanId: this.scanId,
       })
+        .then((res) => {
+          if (res.code === 0) {
+            this.$message({
+              showClose: true,
+              message: "停止扫描",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error,
+            type: "error",
+          });
+        })
+        .finally(() => {
+          loading.close();
+        });
     },
   },
 };
@@ -249,7 +261,7 @@ export default {
 <style>
 .channel-form {
   display: grid;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   padding: 1rem 2rem 0 2rem;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 1rem;

@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
-import * as echarts from 'echarts';
-import type { ECharts } from 'echarts';
-import alertStatisticsAPI from '@/api/center/alertStatistics';
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from "vue";
+import * as echarts from "echarts";
+import type { ECharts } from "echarts";
+import alertStatisticsAPI from "@/api/center/alertStatistics";
 
 interface Props {
   height?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  height: 200
+  height: 200,
 });
 
 const chartRef = ref<HTMLElement | null>(null);
@@ -26,98 +26,104 @@ let refreshTimer: number | null = null;
 
 function getOption(timeLabels: string[], dataPoints: number[]) {
   return {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     grid: {
       top: 40,
       bottom: 20,
       left: 0,
       right: 20,
-      containLabel: true
+      containLabel: true,
     },
     tooltip: {
-      trigger: 'axis',
+      trigger: "axis",
       axisPointer: {
-        type: 'line',
+        type: "line",
         lineStyle: {
-          color: 'rgba(0, 255, 255, 0.3)',
-          width: 1
-        }
+          color: "rgba(0, 255, 255, 0.3)",
+          width: 1,
+        },
       },
-      backgroundColor: 'rgba(0, 19, 40, 0.8)',
-      borderColor: 'rgba(0, 255, 255, 0.3)',
+      backgroundColor: "rgba(0, 19, 40, 0.8)",
+      borderColor: "rgba(0, 255, 255, 0.3)",
       textStyle: {
-        color: '#00FFFF'
-      }
+        color: "#00FFFF",
+      },
     },
     xAxis: {
-      type: 'category',
+      type: "category",
       data: timeLabels,
       axisLine: {
         lineStyle: {
-          color: 'rgba(0, 255, 255, 0.3)'
-        }
+          color: "rgba(0, 255, 255, 0.3)",
+        },
       },
       axisLabel: {
-        color: '#7EAEE5'
+        color: "#7EAEE5",
       },
       axisTick: {
-        show: false
+        show: false,
       },
       splitLine: {
-        show: false
-      }
+        show: false,
+      },
     },
     yAxis: {
-      type: 'value',
+      type: "value",
       axisLine: {
-        show: false
+        show: false,
       },
       axisLabel: {
-        color: '#7EAEE5'
+        color: "#7EAEE5",
       },
       splitLine: {
         lineStyle: {
-          color: 'rgba(35, 88, 148, 0.3)',
-          type: 'dashed'
-        }
-      }
+          color: "rgba(35, 88, 148, 0.3)",
+          type: "dashed",
+        },
+      },
     },
     series: [
       {
-        name: '预警数量',
-        type: 'line',
+        name: "预警数量",
+        type: "line",
         smooth: true,
-        symbol: 'circle',
+        symbol: "circle",
         symbolSize: 8,
         data: dataPoints,
         lineStyle: {
           width: 3,
           color: {
-            type: 'linear',
-            x: 0, y: 0, x2: 1, y2: 0,
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 1,
+            y2: 0,
             colorStops: [
-              { offset: 0, color: '#00FFFF' },
-              { offset: 1, color: '#207FFF' }
-            ]
-          }
+              { offset: 0, color: "#00FFFF" },
+              { offset: 1, color: "#207FFF" },
+            ],
+          },
         },
         itemStyle: {
-          color: '#00FFFF',
-          borderColor: 'rgba(0, 255, 255, 0.3)',
-          borderWidth: 6
+          color: "#00FFFF",
+          borderColor: "rgba(0, 255, 255, 0.3)",
+          borderWidth: 6,
         },
         areaStyle: {
           color: {
-            type: 'linear',
-            x: 0, y: 0, x2: 0, y2: 1,
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(0, 255, 255, 0.3)' },
-              { offset: 1, color: 'rgba(0, 255, 255, 0)' }
-            ]
-          }
-        }
-      }
-    ]
+              { offset: 0, color: "rgba(0, 255, 255, 0.3)" },
+              { offset: 1, color: "rgba(0, 255, 255, 0)" },
+            ],
+          },
+        },
+      },
+    ],
   };
 }
 
@@ -145,17 +151,17 @@ function initChart() {
 async function loadData(): Promise<void> {
   loading.value = true;
   try {
-    const response = await alertStatisticsAPI.getTrend('24h', 'hour');
+    const response = await alertStatisticsAPI.getTrend("24h", "hour");
     if (response) {
       // 兼容多种可能的字段名
-      const labels = response.time_labels  || [];
+      const labels = response.time_labels || [];
       const data = response.trend_data || [];
 
       timeLabels.value = labels;
       dataPoints.value = data;
     }
   } catch (error) {
-    console.error('[TrendChart] 加载预警趋势失败:', error);
+    console.error("[TrendChart] 加载预警趋势失败:", error);
   } finally {
     loading.value = false;
   }
@@ -189,17 +195,21 @@ onBeforeUnmount(() => {
 });
 
 // 监听数据变化，更新图表
-watch(() => [timeLabels.value, dataPoints.value], ([labels, points]) => {
-  if (labels && labels.length > 0 && points && points.length > 0 && chart) {
-    chart.setOption(getOption(labels as string[], points as number[]));
-  }
-}, { deep: true });
+watch(
+  () => [timeLabels.value, dataPoints.value],
+  ([labels, points]) => {
+    if (labels && labels.length > 0 && points && points.length > 0 && chart) {
+      chart.setOption(getOption(labels as string[], points as number[]));
+    }
+  },
+  { deep: true },
+);
 
 defineExpose({
   resize: () => chart?.resize(),
   init: initChart,
   refresh: loadData,
-  loading
+  loading,
 });
 </script>
 

@@ -10,13 +10,14 @@
         <p class="page-subtitle">管理和监控所有GB28181国标设备</p>
       </div>
       <div class="header-right">
-        <el-button type="primary" icon="el-icon-plus" @click="handleAddDevice">
-          添加设备
-        </el-button>
-        <el-button type="info" icon="el-icon-info" @click="showInfo">
-          平台信息
-        </el-button>
-        <el-button type="success" icon="el-icon-refresh" @click="handleRefresh" :loading="getDeviceListLoading">
+        <el-button type="primary" icon="el-icon-plus" @click="handleAddDevice">添加设备</el-button>
+        <el-button type="info" icon="el-icon-info" @click="showInfo">平台信息</el-button>
+        <el-button
+          type="success"
+          icon="el-icon-refresh"
+          @click="handleRefresh"
+          :loading="getDeviceListLoading"
+        >
           刷新列表
         </el-button>
       </div>
@@ -31,22 +32,24 @@
             <el-input
               v-model="searchForm.query"
               placeholder="设备编号、名称"
-              style="width: 220px;"
+              style="width: 220px"
               clearable
               @keyup.enter.native="handleSearch"
-              @clear="handleSearch">
+              @clear="handleSearch"
+            >
               <i slot="prefix" class="el-icon-search"></i>
             </el-input>
           </div>
-          
+
           <div class="search-item">
             <label>在线状态：</label>
             <el-select
               v-model="searchForm.status"
               placeholder="请选择"
-              style="width: 120px;"
+              style="width: 120px"
               clearable
-              @change="handleSearch">
+              @change="handleSearch"
+            >
               <el-option label="在线" value="true"></el-option>
               <el-option label="离线" value="false"></el-option>
             </el-select>
@@ -73,7 +76,7 @@
           </div>
         </div>
       </el-card>
-      
+
       <el-card class="stat-card" shadow="hover">
         <div class="stat-content">
           <div class="stat-icon offline">
@@ -85,7 +88,7 @@
           </div>
         </div>
       </el-card>
-      
+
       <el-card class="stat-card" shadow="hover">
         <div class="stat-content">
           <div class="stat-icon total">
@@ -97,7 +100,7 @@
           </div>
         </div>
       </el-card>
-      
+
       <el-card class="stat-card" shadow="hover">
         <div class="stat-content">
           <div class="stat-icon channels">
@@ -117,8 +120,20 @@
         <span class="card-title">设备列表</span>
         <div class="card-actions">
           <el-button-group>
-            <el-button :type="viewMode === 'table' ? 'primary' : ''" icon="el-icon-menu" @click="viewMode = 'table'">列表</el-button>
-            <el-button :type="viewMode === 'card' ? 'primary' : ''" icon="el-icon-s-grid" @click="viewMode = 'card'">卡片</el-button>
+            <el-button
+              :type="viewMode === 'table' ? 'primary' : ''"
+              icon="el-icon-menu"
+              @click="viewMode = 'table'"
+            >
+              列表
+            </el-button>
+            <el-button
+              :type="viewMode === 'card' ? 'primary' : ''"
+              icon="el-icon-s-grid"
+              @click="viewMode = 'card'"
+            >
+              卡片
+            </el-button>
           </el-button-group>
         </div>
       </div>
@@ -136,11 +151,11 @@
           :height="tableHeight"
           stripe
           border
-          @selection-change="handleSelectionChange">
-          
+          @selection-change="handleSelectionChange"
+        >
           <el-table-column type="selection" width="55" align="center"></el-table-column>
           <el-table-column type="index" label="序号" width="60" align="center"></el-table-column>
-          
+
           <el-table-column prop="name" label="设备名称" min-width="160" show-overflow-tooltip>
             <template #default="{ row }">
               <div class="device-name">
@@ -149,121 +164,179 @@
               </div>
             </template>
           </el-table-column>
-          
-          <el-table-column prop="deviceId" label="设备编号" min-width="180" align="center" show-overflow-tooltip></el-table-column>
-          
+
+          <el-table-column
+            prop="deviceId"
+            label="设备编号"
+            min-width="180"
+            align="center"
+            show-overflow-tooltip
+          ></el-table-column>
+
           <el-table-column label="网络地址" min-width="140" align="center">
             <template #default="{ row }">
               <el-tag v-if="row.hostAddress" size="small" type="info">{{ row.hostAddress }}</el-tag>
               <el-tag v-else size="small" type="warning">未知</el-tag>
             </template>
           </el-table-column>
-          
-          <el-table-column prop="manufacturer" label="厂商" min-width="100" align="center" show-overflow-tooltip></el-table-column>
-          <el-table-column prop="transport" label="信令传输" min-width="100" align="center"></el-table-column>
-          
+
+          <el-table-column
+            prop="manufacturer"
+            label="厂商"
+            min-width="100"
+            align="center"
+            show-overflow-tooltip
+          ></el-table-column>
+          <el-table-column
+            prop="transport"
+            label="信令传输"
+            min-width="100"
+            align="center"
+          ></el-table-column>
+
           <el-table-column label="流传输模式" min-width="140" align="center">
             <template #default="{ row }">
               <el-select
                 v-model="row.streamMode"
                 size="small"
                 @change="handleStreamModeChange(row)"
-                style="width: 120px">
+                style="width: 120px"
+              >
                 <el-option label="UDP" value="UDP"></el-option>
                 <el-option label="TCP主动" value="TCP-ACTIVE"></el-option>
                 <el-option label="TCP被动" value="TCP-PASSIVE"></el-option>
               </el-select>
             </template>
           </el-table-column>
-          
+
           <el-table-column label="通道数" width="80" align="center">
             <template #default="{ row }">
               <span class="channel-count">{{ row.channelCount || 0 }}</span>
             </template>
           </el-table-column>
-          
+
           <el-table-column label="状态" width="100" align="center">
             <template #default="{ row }">
               <div slot="reference" class="name-wrapper">
-                <el-tag size="medium" v-if="row.onLine && myServerId !== row.serverId" style="border-color: #ecf1af">在线</el-tag>
+                <el-tag
+                  size="medium"
+                  v-if="row.onLine && myServerId !== row.serverId"
+                  style="border-color: #ecf1af"
+                >
+                  在线
+                </el-tag>
                 <el-tag size="medium" v-if="row.onLine && myServerId === row.serverId">在线</el-tag>
                 <el-tag size="medium" type="info" v-if="!row.onLine">离线</el-tag>
               </div>
             </template>
           </el-table-column>
-          
+
           <el-table-column label="订阅状态" min-width="180" align="center">
             <template #default="{ row }">
               <div class="subscribe-status">
                 <el-tooltip content="目录订阅" placement="top">
-                  <el-checkbox 
+                  <el-checkbox
                     :checked="row.subscribeCycleForCatalog > 0"
                     @change="(e) => handleSubscribeForCatalog(row.id, e)"
-                    size="small">目录</el-checkbox>
+                    size="small"
+                  >
+                    目录
+                  </el-checkbox>
                 </el-tooltip>
                 <el-tooltip content="位置订阅" placement="top">
-                  <el-checkbox 
+                  <el-checkbox
                     :checked="row.subscribeCycleForMobilePosition > 0"
                     @change="(e) => handleSubscribeForMobilePosition(row.id, e)"
-                    size="small">位置</el-checkbox>
+                    size="small"
+                  >
+                    位置
+                  </el-checkbox>
                 </el-tooltip>
                 <el-tooltip content="报警订阅" placement="top">
-                  <el-checkbox 
-                    :checked="row.subscribeCycleForAlarm > 0"
-                    disabled
-                    size="small">报警</el-checkbox>
+                  <el-checkbox :checked="row.subscribeCycleForAlarm > 0" disabled size="small">
+                    报警
+                  </el-checkbox>
                 </el-tooltip>
               </div>
             </template>
           </el-table-column>
-          
-          <el-table-column prop="keepaliveTime" label="最近心跳" min-width="140" align="center" show-overflow-tooltip></el-table-column>
-          <el-table-column prop="registerTime" label="最近注册" min-width="140" align="center" show-overflow-tooltip></el-table-column>
-          
+
+          <el-table-column
+            prop="keepaliveTime"
+            label="最近心跳"
+            min-width="140"
+            align="center"
+            show-overflow-tooltip
+          ></el-table-column>
+          <el-table-column
+            prop="registerTime"
+            label="最近注册"
+            min-width="140"
+            align="center"
+            show-overflow-tooltip
+          ></el-table-column>
+
           <el-table-column label="操作" width="280" align="center" fixed="right">
             <template #default="{ row }">
               <div class="operation-buttons">
                 <el-tooltip content="刷新设备" placement="top">
-                  <el-button 
-                    type="primary" 
-                    size="small" 
-                    icon="el-icon-refresh" 
+                  <el-button
+                    type="primary"
+                    size="small"
+                    icon="el-icon-refresh"
                     :disabled="!row.onLine"
-                    @click="handleRefreshDevice(row)">刷新</el-button>
+                    @click="handleRefreshDevice(row)"
+                  >
+                    刷新
+                  </el-button>
                 </el-tooltip>
-                
+
                 <el-tooltip content="查看通道" placement="top">
-                  <el-button 
-                    type="success" 
-                    size="small" 
+                  <el-button
+                    type="success"
+                    size="small"
                     icon="el-icon-video-camera"
-                    @click="handleViewChannels(row)">通道</el-button>
+                    @click="handleViewChannels(row)"
+                  >
+                    通道
+                  </el-button>
                 </el-tooltip>
-                
+
                 <el-tooltip content="编辑设备" placement="top">
-                  <el-button 
-                    type="info" 
-                    size="small" 
+                  <el-button
+                    type="info"
+                    size="small"
                     icon="el-icon-edit"
-                    @click="handleEditDevice(row)">编辑</el-button>
+                    @click="handleEditDevice(row)"
+                  >
+                    编辑
+                  </el-button>
                 </el-tooltip>
-                
-                <el-dropdown @command="(command) => handleMoreActions(command, row)" trigger="click">
+
+                <el-dropdown
+                  @command="(command) => handleMoreActions(command, row)"
+                  trigger="click"
+                >
                   <el-button size="small" link>
-                    更多<i class="el-icon-arrow-down el-icon--right"></i>
+                    更多
+                    <i class="el-icon-arrow-down el-icon--right"></i>
                   </el-button>
                   <el-dropdown-menu slot="dropdown">
                     <el-dropdown-item command="delete" style="color: #f56c6c">
-                      <i class="el-icon-delete"></i> 删除设备
+                      <i class="el-icon-delete"></i>
+                      删除设备
                     </el-dropdown-item>
                     <el-dropdown-item command="setGuard" :disabled="!row.onLine">
-                      <i class="el-icon-lock"></i> 布防
+                      <i class="el-icon-lock"></i>
+                      布防
                     </el-dropdown-item>
                     <el-dropdown-item command="resetGuard" :disabled="!row.onLine">
-                      <i class="el-icon-unlock"></i> 撤防
+                      <i class="el-icon-unlock"></i>
+                      撤防
                     </el-dropdown-item>
                     <el-dropdown-item command="syncBasicParam" :disabled="!row.onLine">
-                      <i class="el-icon-setting"></i> 基础配置同步
+                      <i class="el-icon-setting"></i>
+                      基础配置同步
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </el-dropdown>
@@ -279,26 +352,26 @@
           <el-card shadow="hover" class="device-card">
             <div class="device-card-header">
               <div class="device-status-badge">
-                <el-badge 
-                  :type="device.onLine ? 'success' : 'danger'" 
-                  is-dot 
-                  class="status-dot">
-                </el-badge>
+                <el-badge
+                  :type="device.onLine ? 'success' : 'danger'"
+                  is-dot
+                  class="status-dot"
+                ></el-badge>
               </div>
               <div class="device-title">
                 <h4>{{ device.name }}</h4>
                 <p>{{ device.deviceId }}</p>
               </div>
             </div>
-            
+
             <div class="device-card-content">
               <div class="device-info-row">
                 <span class="info-label">厂商：</span>
-                <span class="info-value">{{ device.manufacturer || '未知' }}</span>
+                <span class="info-value">{{ device.manufacturer || "未知" }}</span>
               </div>
               <div class="device-info-row">
                 <span class="info-label">地址：</span>
-                <span class="info-value">{{ device.hostAddress || '未知' }}</span>
+                <span class="info-value">{{ device.hostAddress || "未知" }}</span>
               </div>
               <div class="device-info-row">
                 <span class="info-label">通道：</span>
@@ -306,18 +379,34 @@
               </div>
               <div class="device-info-row">
                 <span class="info-label">心跳：</span>
-                <span class="info-value">{{ device.keepaliveTime || '无' }}</span>
+                <span class="info-value">{{ device.keepaliveTime || "无" }}</span>
               </div>
             </div>
-            
+
             <div class="device-card-actions">
-              <el-button size="small" type="primary" icon="el-icon-video-camera" @click="handleViewChannels(device)">
+              <el-button
+                size="small"
+                type="primary"
+                icon="el-icon-video-camera"
+                @click="handleViewChannels(device)"
+              >
                 通道
               </el-button>
-              <el-button size="small" type="info" icon="el-icon-edit" @click="handleEditDevice(device)">
+              <el-button
+                size="small"
+                type="info"
+                icon="el-icon-edit"
+                @click="handleEditDevice(device)"
+              >
                 编辑
               </el-button>
-              <el-button size="small" type="success" icon="el-icon-refresh" :disabled="!device.onLine" @click="handleRefreshDevice(device)">
+              <el-button
+                size="small"
+                type="success"
+                icon="el-icon-refresh"
+                :disabled="!device.onLine"
+                @click="handleRefreshDevice(device)"
+              >
                 刷新
               </el-button>
             </div>
@@ -334,49 +423,49 @@
           layout="total, sizes, prev, pager, next, jumper"
           :total="total"
           @size-change="handleSizeChange"
-          @current-change="handleCurrentChange">
-        </el-pagination>
+          @current-change="handleCurrentChange"
+        ></el-pagination>
       </div>
     </el-card>
 
     <!-- 设备编辑对话框 -->
     <deviceEdit ref="deviceEdit"></deviceEdit>
-    
+
     <!-- 通道列表对话框 -->
     <GBDeviceChannels ref="deviceChannels"></GBDeviceChannels>
-    
+
     <!-- 同步进度对话框 -->
     <SyncChannelProgress ref="syncChannelProgress" @refresh="handleRefresh"></SyncChannelProgress>
-    
+
     <!-- 平台信息对话框 -->
     <configInfo ref="configInfo"></configInfo>
   </div>
 </template>
 
 <script>
-import deviceEdit from '../../../dialog/deviceEdit.vue'
-import GBDeviceChannels from './dialogs/GBDeviceChannels.vue'
-import SyncChannelProgress from './dialogs/SyncChannelProgress.vue'
-import configInfo from '../../../dialog/configInfo.vue'
-import { getCurrentInstance } from 'vue'
-import wvpAxios from '@/api/camera/base'
+import deviceEdit from "../../../dialog/deviceEdit.vue";
+import GBDeviceChannels from "./dialogs/GBDeviceChannels.vue";
+import SyncChannelProgress from "./dialogs/SyncChannelProgress.vue";
+import configInfo from "../../../dialog/configInfo.vue";
+import { getCurrentInstance } from "vue";
+import wvpAxios from "@/api/camera/base";
 
 export default {
-  name: 'GBDevices',
+  name: "GBDevices",
   components: {
     deviceEdit,
     GBDeviceChannels,
     SyncChannelProgress,
-    configInfo
+    configInfo,
   },
   data() {
     return {
       // 搜索表单
       searchForm: {
-        query: '',
-        status: null
+        query: "",
+        status: null,
       },
-      
+
       // 设备列表数据
       deviceList: [],
       loading: false,
@@ -385,51 +474,51 @@ export default {
       pageSize: 15,
       total: 0,
       selectedDevices: [],
-      
+
       // 视图模式
-      viewMode: 'table', // table | card
-      
+      viewMode: "table", // table | card
+
       // 设备统计
       deviceStats: {
         online: 0,
         offline: 0,
         total: 0,
-        channels: 0
+        channels: 0,
       },
-      
+
       // 表格高度
       tableHeight: 600,
-      
+
       // 轮询定时器
       updateLooper: null,
-      
+
       // 服务ID
       serverId: null,
 
       // 当前服务器ID
-      myServerId: null
-    }
+      myServerId: null,
+    };
   },
-  
+
   created() {
     this.myServerId = this.$myServerId || null;
     this.initData();
   },
-  
+
   mounted() {
     this.calculateTableHeight();
-    window.addEventListener('resize', this.calculateTableHeight);
+    window.addEventListener("resize", this.calculateTableHeight);
     // 启动轮询
     this.updateLooper = setInterval(this.getDeviceList, 30000);
   },
-  
+
   beforeDestroy() {
     if (this.updateLooper) {
       clearInterval(this.updateLooper);
     }
-    window.removeEventListener('resize', this.calculateTableHeight);
+    window.removeEventListener("resize", this.calculateTableHeight);
   },
-  
+
   methods: {
     // 初始化数据
     initData() {
@@ -437,7 +526,7 @@ export default {
       this.total = 0;
       this.getDeviceList();
     },
-    
+
     // 计算表格高度
     calculateTableHeight() {
       this.$nextTick(() => {
@@ -451,49 +540,50 @@ export default {
         }
       });
     },
-    
+
     // 获取设备列表
     getDeviceList() {
       this.loading = true;
       this.getDeviceListLoading = true;
-      
+
       const params = {
         page: this.currentPage,
         count: this.pageSize,
         query: this.searchForm.query,
-        status: this.searchForm.status
+        status: this.searchForm.status,
       };
-      
 
-      
       wvpAxios({
-        method: 'get',
-        url: '/device/query/devices',
-        params: params
-      }).then((res) => {
-        if (res.data.code === 0) {
-          this.total = res.data.data.total;
-          this.deviceList = res.data.data.list;
-          this.updateDeviceStats();
-        } else {
-          this.$message.error('获取设备列表失败：' + res.data.msg);
-        }
-      }).catch((error) => {
-        console.error('获取设备列表失败:', error);
-        this.$message.error('获取设备列表失败：' + error.message);
-      }).finally(() => {
-        this.loading = false;
-        this.getDeviceListLoading = false;
-      });
+        method: "get",
+        url: "/device/query/devices",
+        params: params,
+      })
+        .then((res) => {
+          if (res.data.code === 0) {
+            this.total = res.data.data.total;
+            this.deviceList = res.data.data.list;
+            this.updateDeviceStats();
+          } else {
+            this.$message.error("获取设备列表失败：" + res.data.msg);
+          }
+        })
+        .catch((error) => {
+          console.error("获取设备列表失败:", error);
+          this.$message.error("获取设备列表失败：" + error.message);
+        })
+        .finally(() => {
+          this.loading = false;
+          this.getDeviceListLoading = false;
+        });
     },
-    
+
     // 更新设备统计
     updateDeviceStats() {
       let online = 0;
       let offline = 0;
       let channels = 0;
-      
-      this.deviceList.forEach(device => {
+
+      this.deviceList.forEach((device) => {
         if (device.onLine) {
           online++;
         } else {
@@ -501,50 +591,52 @@ export default {
         }
         channels += device.channelCount || 0;
       });
-      
+
       this.deviceStats = {
         online,
         offline,
         total: this.total,
-        channels
+        channels,
       };
     },
-    
+
     // 搜索
     handleSearch() {
       this.currentPage = 1;
       this.getDeviceList();
     },
-    
+
     // 重置搜索
     handleReset() {
       this.searchForm = {
-        query: '',
-        status: null
+        query: "",
+        status: null,
       };
       this.handleSearch();
     },
-    
+
     // 刷新
     handleRefresh() {
       this.initData();
     },
-    
+
     // 显示平台信息
     showInfo() {
       wvpAxios({
-        method: 'get',
+        method: "get",
         url: `/server/system/configInfo`,
-      }).then((res) => {
-        if (res.data.code === 0) {
-          this.serverId = res.data.data.addOn.serverId;
-          this.$refs.configInfo.openDialog(res.data.data);
-        }
-      }).catch((error) => {
-        this.$message.error('获取平台信息失败：' + error.message);
-      });
+      })
+        .then((res) => {
+          if (res.data.code === 0) {
+            this.serverId = res.data.data.addOn.serverId;
+            this.$refs.configInfo.openDialog(res.data.data);
+          }
+        })
+        .catch((error) => {
+          this.$message.error("获取平台信息失败：" + error.message);
+        });
     },
-    
+
     // 添加设备
     handleAddDevice() {
       this.$refs.deviceEdit.openDialog(null, () => {
@@ -557,7 +649,7 @@ export default {
         setTimeout(this.getDeviceList, 200);
       });
     },
-    
+
     // 编辑设备
     handleEditDevice(row) {
       this.$refs.deviceEdit.openDialog(row, () => {
@@ -570,209 +662,228 @@ export default {
         setTimeout(this.getDeviceList, 200);
       });
     },
-    
+
     // 刷新单个设备
     handleRefreshDevice(row) {
       wvpAxios({
-        method: 'get',
-        url: `/device/query/devices/${row.deviceId}/sync`
-      }).then((res) => {
-        if (res.data.code !== 0) {
-          this.$message.error(res.data.msg);
-        } else {
-          if (res.data.data && res.data.data.errorMsg) {
-            this.$message.error(res.data.data.errorMsg);
-            return;
+        method: "get",
+        url: `/device/query/devices/${row.deviceId}/sync`,
+      })
+        .then((res) => {
+          if (res.data.code !== 0) {
+            this.$message.error(res.data.msg);
+          } else {
+            if (res.data.data && res.data.data.errorMsg) {
+              this.$message.error(res.data.data.errorMsg);
+              return;
+            }
+            this.$refs.syncChannelProgress.openDialog(row.deviceId, () => {
+              this.handleRefresh();
+            });
           }
-          this.$refs.syncChannelProgress.openDialog(row.deviceId, () => {
-            this.handleRefresh();
-          });
-        }
-      }).catch((error) => {
-        console.error('刷新设备失败:', error);
-        this.$message.error('刷新设备失败：' + error.message);
-      });
+        })
+        .catch((error) => {
+          console.error("刷新设备失败:", error);
+          this.$message.error("刷新设备失败：" + error.message);
+        });
     },
-    
+
     // 查看通道
     handleViewChannels(row) {
       this.$refs.deviceChannels.openDialog(row);
     },
-    
+
     // 流传输模式改变
     handleStreamModeChange(row) {
       wvpAxios({
-        method: 'post',
-        url: `/device/query/transport/${row.deviceId}/${row.streamMode}`
-      }).then((res) => {
-        if (res.data.code === 0) {
-          this.$message.success('传输模式修改成功');
-        } else {
-          this.$message.error('传输模式修改失败：' + res.data.msg);
-        }
-      }).catch((error) => {
-        console.error('修改传输模式失败:', error);
-        this.$message.error('修改传输模式失败：' + error.message);
-      });
+        method: "post",
+        url: `/device/query/transport/${row.deviceId}/${row.streamMode}`,
+      })
+        .then((res) => {
+          if (res.data.code === 0) {
+            this.$message.success("传输模式修改成功");
+          } else {
+            this.$message.error("传输模式修改失败：" + res.data.msg);
+          }
+        })
+        .catch((error) => {
+          console.error("修改传输模式失败:", error);
+          this.$message.error("修改传输模式失败：" + error.message);
+        });
     },
-    
+
     // 订阅目录
     handleSubscribeForCatalog(deviceId, value) {
       wvpAxios({
-        method: 'get',
-        url: '/device/query/subscribe/catalog',
-        params: {
-          id: deviceId,
-          cycle: value ? 60 : 0
-        }
-      }).then((res) => {
-        if (res.data.code === 0) {
-          this.$message.success(value ? '订阅成功' : '取消订阅成功');
-        } else {
-          this.$message.error(res.data.msg);
-        }
-      }).catch((error) => {
-        this.$message.error('操作失败：' + error.message);
-      });
-    },
-    
-    // 订阅位置
-    handleSubscribeForMobilePosition(deviceId, value) {
-      wvpAxios({
-        method: 'get',
-        url: '/device/query/subscribe/mobile-position',
+        method: "get",
+        url: "/device/query/subscribe/catalog",
         params: {
           id: deviceId,
           cycle: value ? 60 : 0,
-          interval: value ? 5 : 0
-        }
-      }).then((res) => {
-        if (res.data.code === 0) {
-          this.$message.success(value ? '订阅成功' : '取消订阅成功');
-        } else {
-          this.$message.error(res.data.msg);
-        }
-      }).catch((error) => {
-        this.$message.error('操作失败：' + error.message);
-      });
+        },
+      })
+        .then((res) => {
+          if (res.data.code === 0) {
+            this.$message.success(value ? "订阅成功" : "取消订阅成功");
+          } else {
+            this.$message.error(res.data.msg);
+          }
+        })
+        .catch((error) => {
+          this.$message.error("操作失败：" + error.message);
+        });
     },
-    
+
+    // 订阅位置
+    handleSubscribeForMobilePosition(deviceId, value) {
+      wvpAxios({
+        method: "get",
+        url: "/device/query/subscribe/mobile-position",
+        params: {
+          id: deviceId,
+          cycle: value ? 60 : 0,
+          interval: value ? 5 : 0,
+        },
+      })
+        .then((res) => {
+          if (res.data.code === 0) {
+            this.$message.success(value ? "订阅成功" : "取消订阅成功");
+          } else {
+            this.$message.error(res.data.msg);
+          }
+        })
+        .catch((error) => {
+          this.$message.error("操作失败：" + error.message);
+        });
+    },
+
     // 更多操作
     handleMoreActions(command, row) {
       switch (command) {
-        case 'delete':
+        case "delete":
           this.handleDeleteDevice(row);
           break;
-        case 'setGuard':
+        case "setGuard":
           this.handleSetGuard(row);
           break;
-        case 'resetGuard':
+        case "resetGuard":
           this.handleResetGuard(row);
           break;
-        case 'syncBasicParam':
+        case "syncBasicParam":
           this.handleSyncBasicParam(row);
           break;
         default:
           break;
       }
     },
-    
+
     // 删除设备
     handleDeleteDevice(row) {
-      let msg = '确定删除此设备？';
+      let msg = "确定删除此设备？";
       if (row.onLine) {
-        msg = '在线设备删除后仍可通过注册再次上线。<br/>如需彻底删除请先将设备离线。<br/><strong>确定删除此设备？</strong>';
+        msg =
+          "在线设备删除后仍可通过注册再次上线。<br/>如需彻底删除请先将设备离线。<br/><strong>确定删除此设备？</strong>";
       }
-      
-      this.$confirm(msg, '提示', {
+
+      this.$confirm(msg, "提示", {
         dangerouslyUseHTMLString: true,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
       }).then(() => {
         wvpAxios({
-          method: 'delete',
-          url: `/device/query/devices/${row.deviceId}/delete`
-        }).then((res) => {
-          if (res.data.code === 0) {
-            this.$message.success('删除成功');
-            this.handleRefresh();
-          } else {
-            this.$message.error('删除失败：' + res.data.msg);
-          }
-        }).catch((error) => {
-          console.error('删除设备失败:', error);
-          this.$message.error('删除失败：' + error.message);
-        });
+          method: "delete",
+          url: `/device/query/devices/${row.deviceId}/delete`,
+        })
+          .then((res) => {
+            if (res.data.code === 0) {
+              this.$message.success("删除成功");
+              this.handleRefresh();
+            } else {
+              this.$message.error("删除失败：" + res.data.msg);
+            }
+          })
+          .catch((error) => {
+            console.error("删除设备失败:", error);
+            this.$message.error("删除失败：" + error.message);
+          });
       });
     },
-    
+
     // 布防
     handleSetGuard(row) {
       wvpAxios({
-        method: 'get',
-        url: `/device/control/guard/${row.deviceId}/SetGuard`
-      }).then((res) => {
-        if (res.data.code === 0) {
-          this.$message.success('布防成功');
-        } else {
-          this.$message.error(res.data.msg);
-        }
-      }).catch((error) => {
-        this.$message.error('布防失败：' + error.message);
-      });
+        method: "get",
+        url: `/device/control/guard/${row.deviceId}/SetGuard`,
+      })
+        .then((res) => {
+          if (res.data.code === 0) {
+            this.$message.success("布防成功");
+          } else {
+            this.$message.error(res.data.msg);
+          }
+        })
+        .catch((error) => {
+          this.$message.error("布防失败：" + error.message);
+        });
     },
-    
+
     // 撤防
     handleResetGuard(row) {
       wvpAxios({
-        method: 'get',
-        url: `/device/control/guard/${row.deviceId}/ResetGuard`
-      }).then((res) => {
-        if (res.data.code === 0) {
-          this.$message.success('撤防成功');
-        } else {
-          this.$message.error(res.data.msg);
-        }
-      }).catch((error) => {
-        this.$message.error('撤防失败：' + error.message);
-      });
+        method: "get",
+        url: `/device/control/guard/${row.deviceId}/ResetGuard`,
+      })
+        .then((res) => {
+          if (res.data.code === 0) {
+            this.$message.success("撤防成功");
+          } else {
+            this.$message.error(res.data.msg);
+          }
+        })
+        .catch((error) => {
+          this.$message.error("撤防失败：" + error.message);
+        });
     },
-    
+
     // 同步基础参数
     handleSyncBasicParam(row) {
       wvpAxios({
-        method: 'get',
-        url: `/device/config/query/${row.deviceId}/BasicParam`
-      }).then((res) => {
-        if (res.data.code === 0) {
-          const basicParam = res.data.data.BasicParam;
-          this.$message.success(`配置已同步，当前心跳间隔：${basicParam.HeartBeatInterval} 心跳计数：${basicParam.HeartBeatCount}`);
-        } else {
-          this.$message.error(res.data.msg);
-        }
-      }).catch((error) => {
-        this.$message.error('同步失败：' + error.message);
-      });
+        method: "get",
+        url: `/device/config/query/${row.deviceId}/BasicParam`,
+      })
+        .then((res) => {
+          if (res.data.code === 0) {
+            const basicParam = res.data.data.BasicParam;
+            this.$message.success(
+              `配置已同步，当前心跳间隔：${basicParam.HeartBeatInterval} 心跳计数：${basicParam.HeartBeatCount}`,
+            );
+          } else {
+            this.$message.error(res.data.msg);
+          }
+        })
+        .catch((error) => {
+          this.$message.error("同步失败：" + error.message);
+        });
     },
-    
+
     // 选择改变
     handleSelectionChange(selection) {
       this.selectedDevices = selection;
     },
-    
+
     // 分页处理
     handleSizeChange(val) {
       this.pageSize = val;
       this.getDeviceList();
     },
-    
+
     handleCurrentChange(val) {
       this.currentPage = val;
       this.getDeviceList();
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -872,8 +983,8 @@ export default {
 
 /* 搜索框布局混乱 */
 .search-item :deep(.el-input__prefix) {
-  top:7px;
-  left:5px;
+  top: 7px;
+  left: 5px;
 }
 
 .search-actions {
@@ -1051,7 +1162,7 @@ export default {
   margin: 0;
   font-size: 13px;
   color: #909399;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 .device-card-content {
@@ -1100,38 +1211,38 @@ export default {
   .gb-devices-container {
     padding: 10px;
   }
-  
+
   .page-header {
     flex-direction: column;
     text-align: center;
     gap: 16px;
   }
-  
+
   .search-form .search-row {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-item {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .search-actions {
     margin-left: 0;
     margin-top: 16px;
   }
-  
+
   .stats-cards {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 12px;
   }
-  
+
   .operation-buttons {
     flex-direction: column;
     gap: 2px;
   }
-  
+
   .device-cards {
     grid-template-columns: 1fr;
   }
@@ -1281,11 +1392,11 @@ export default {
   .gb-devices-container {
     background-color: #1a1a1a;
   }
-  
+
   .channel-count {
     background-color: #1e3a8a;
     color: #dbeafe;
     border-color: #1e40af;
   }
 }
-</style> 
+</style>

@@ -44,104 +44,104 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
-import type { ElTree } from 'element-plus'
+import { ref, reactive, computed, watch } from "vue";
+import type { ElTree } from "element-plus";
 
 interface Permission {
-  id: string | number
-  label: string
-  children?: Permission[]
+  id: string | number;
+  label: string;
+  children?: Permission[];
 }
 
 interface Role {
-  id: string | number
-  role_name?: string
+  id: string | number;
+  role_name?: string;
 }
 
 const props = defineProps<{
-  visible: boolean
-  role: Role
-  permissions: Permission[]
-  checkedPermissionKeys: (string | number)[]
-}>()
+  visible: boolean;
+  role: Role;
+  permissions: Permission[];
+  checkedPermissionKeys: (string | number)[];
+}>();
 
 const emit = defineEmits<{
-  'update:visible': [value: boolean]
-  submit: [data: { roleId: string | number; permissionIds: (string | number)[] }]
-}>()
+  "update:visible": [value: boolean];
+  submit: [data: { roleId: string | number; permissionIds: (string | number)[] }];
+}>();
 
-const permissionTreeRef = ref<InstanceType<typeof ElTree>>()
+const permissionTreeRef = ref<InstanceType<typeof ElTree>>();
 
-const formData = reactive({})
-const searchKeyword = ref('')
-const filteredPermissions = ref<Permission[]>([])
-const expandedPermissionKeys = ref<(string | number)[]>([])
+const formData = reactive({});
+const searchKeyword = ref("");
+const filteredPermissions = ref<Permission[]>([]);
+const expandedPermissionKeys = ref<(string | number)[]>([]);
 const treeProps = {
-  children: 'children',
-  label: 'label'
-}
+  children: "children",
+  label: "label",
+};
 
 const dialogVisible = computed({
   get: () => props.visible,
-  set: (value) => emit('update:visible', value)
-})
+  set: (value) => emit("update:visible", value),
+});
 
-const roleName = computed(() => props.role.role_name || '')
+const roleName = computed(() => props.role.role_name || "");
 
 watch(
   () => props.visible,
   (val) => {
     if (val) {
-      filteredPermissions.value = props.permissions
-      expandedPermissionKeys.value = props.permissions.map((item) => item.id)
+      filteredPermissions.value = props.permissions;
+      expandedPermissionKeys.value = props.permissions.map((item) => item.id);
     }
-  }
-)
+  },
+);
 
 watch(
   () => props.permissions,
   (newVal) => {
     if (props.visible) {
-      filteredPermissions.value = newVal
+      filteredPermissions.value = newVal;
     }
   },
-  { deep: true }
-)
+  { deep: true },
+);
 
 const handleClose = () => {
-  emit('update:visible', false)
-  searchKeyword.value = ''
-  filteredPermissions.value = []
-  expandedPermissionKeys.value = []
-}
+  emit("update:visible", false);
+  searchKeyword.value = "";
+  filteredPermissions.value = [];
+  expandedPermissionKeys.value = [];
+};
 
 const handleSubmit = () => {
-  if (!permissionTreeRef.value) return
+  if (!permissionTreeRef.value) return;
 
-  const checkedKeys = permissionTreeRef.value.getCheckedKeys()
-  const halfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys()
-  const allPermissionIds = [...checkedKeys, ...halfCheckedKeys]
+  const checkedKeys = permissionTreeRef.value.getCheckedKeys();
+  const halfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys();
+  const allPermissionIds = [...checkedKeys, ...halfCheckedKeys];
 
-  emit('submit', {
+  emit("submit", {
     roleId: props.role.id,
-    permissionIds: allPermissionIds
-  })
-}
+    permissionIds: allPermissionIds,
+  });
+};
 
 const filterPermissions = () => {
   if (permissionTreeRef.value) {
     if (searchKeyword.value) {
-      permissionTreeRef.value.filter(searchKeyword.value)
+      permissionTreeRef.value.filter(searchKeyword.value);
     } else {
-      filteredPermissions.value = props.permissions
+      filteredPermissions.value = props.permissions;
     }
   }
-}
+};
 
 const filterNode = (value: string, data: Permission) => {
-  if (!value) return true
-  return data.label.toLowerCase().includes(value.toLowerCase())
-}
+  if (!value) return true;
+  return data.label.toLowerCase().includes(value.toLowerCase());
+};
 </script>
 
 <style scoped>

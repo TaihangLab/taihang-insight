@@ -5,12 +5,12 @@
  */
 interface Props {
   /** 左侧装饰区域是否显示 */
-  showDecoration?: boolean
+  showDecoration?: boolean;
 }
 
 withDefaults(defineProps<Props>(), {
-  showDecoration: true
-})
+  showDecoration: true,
+});
 </script>
 
 <template>

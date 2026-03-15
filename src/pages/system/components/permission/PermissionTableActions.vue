@@ -1,14 +1,10 @@
 <template>
   <div class="permission-table-actions">
-    <el-button type="primary" icon="el-icon-plus" @click="handleAdd">
-      新增权限
-    </el-button>
-    <el-button icon="el-icon-refresh" @click="handleRefresh">
-      刷新
-    </el-button>
+    <el-button type="primary" icon="el-icon-plus" @click="handleAdd">新增权限</el-button>
+    <el-button icon="el-icon-refresh" @click="handleRefresh">刷新</el-button>
     <div class="expand-actions">
       <el-button icon="el-icon-folder-opened" @click="handleToggleExpand">
-        {{ expandAll ? '全部折叠' : '全部展开' }}
+        {{ expandAll ? "全部折叠" : "全部展开" }}
       </el-button>
     </div>
   </div>
@@ -16,25 +12,25 @@
 
 <script>
 export default {
-  name: 'PermissionTableActions',
+  name: "PermissionTableActions",
   data() {
     return {
-      expandAll: true
-    }
+      expandAll: true,
+    };
   },
   methods: {
     handleAdd() {
-      this.$emit('add')
+      this.$emit("add");
     },
     handleRefresh() {
-      this.$emit('refresh')
+      this.$emit("refresh");
     },
     handleToggleExpand() {
-      this.expandAll = !this.expandAll
-      this.$emit('toggle-expand', this.expandAll)
-    }
-  }
-}
+      this.expandAll = !this.expandAll;
+      this.$emit("toggle-expand", this.expandAll);
+    },
+  },
+};
 </script>
 
 <style scoped>

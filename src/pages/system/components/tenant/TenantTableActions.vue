@@ -1,11 +1,6 @@
 <template>
   <div class="tenant-table-actions">
-    <el-button
-      type="primary"
-      size="default"
-      data-testid="btn-add-tenant"
-      @click="handleAdd"
-    >
+    <el-button type="primary" size="default" data-testid="btn-add-tenant" @click="handleAdd">
       <el-icon><Plus /></el-icon>
       <span>新增</span>
     </el-button>
@@ -22,35 +17,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Plus, Delete } from '@element-plus/icons-vue'
+import { computed } from "vue";
+import { ElMessage } from "element-plus";
+import { Plus, Delete } from "@element-plus/icons-vue";
 
 const props = defineProps<{
-  selectedCount: number
-}>()
+  selectedCount: number;
+}>();
 
 const emit = defineEmits<{
-  add: []
-  batchDelete: []
-}>()
+  add: [];
+  batchDelete: [];
+}>();
 
-const hasSelection = computed(() => props.selectedCount > 0)
+const hasSelection = computed(() => props.selectedCount > 0);
 
 const handleAdd = () => {
-  emit('add')
-}
+  emit("add");
+};
 
 const handleBatchDelete = () => {
   if (!hasSelection.value) {
     ElMessage({
-      message: '请选择要删除的租户',
-      type: 'warning'
-    })
-    return
+      message: "请选择要删除的租户",
+      type: "warning",
+    });
+    return;
   }
-  emit('batchDelete')
-}
+  emit("batchDelete");
+};
 </script>
 
 <style scoped>

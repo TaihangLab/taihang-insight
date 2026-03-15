@@ -10,10 +10,13 @@
         <p class="page-subtitle">管理和配置业务分组，实现通道的业务逻辑归类</p>
       </div>
       <div class="header-right">
-        <el-button type="primary" icon="el-icon-plus" @click="add">
-          添加通道
-        </el-button>
-        <el-button type="danger" icon="el-icon-delete" @click="remove" :disabled="multipleSelection.length === 0">
+        <el-button type="primary" icon="el-icon-plus" @click="add">添加通道</el-button>
+        <el-button
+          type="danger"
+          icon="el-icon-delete"
+          @click="remove"
+          :disabled="multipleSelection.length === 0"
+        >
           移除通道
         </el-button>
         <el-button type="warning" icon="el-icon-warning" @click="showUnusualChanel">
@@ -37,17 +40,27 @@
               <el-checkbox v-model="showCode" @change="onShowCodeChange">显示编号</el-checkbox>
             </div>
           </div>
-          <GroupTree ref="groupTree" :show-header="false" :edit="true" :clickEvent="treeNodeClickEvent"
-                    :onChannelChange="onChannelChange" :enableAddChannel="true" :addChannelToGroup="addChannelToGroup" :showCode="showCode"></GroupTree>
+          <GroupTree
+            ref="groupTree"
+            :show-header="false"
+            :edit="true"
+            :clickEvent="treeNodeClickEvent"
+            :onChannelChange="onChannelChange"
+            :enableAddChannel="true"
+            :addChannelToGroup="addChannelToGroup"
+            :showCode="showCode"
+          ></GroupTree>
         </el-card>
       </el-aside>
-      
+
       <el-main class="content-main">
         <!-- 面包屑导航 -->
         <el-card class="breadcrumb-card" shadow="never">
           <div class="breadcrumb-content">
             <el-breadcrumb separator="/" v-if="regionParents.length > 0">
-              <el-breadcrumb-item v-for="key in regionParents" :key="key">{{ key }}</el-breadcrumb-item>
+              <el-breadcrumb-item v-for="key in regionParents" :key="key">
+                {{ key }}
+              </el-breadcrumb-item>
             </el-breadcrumb>
             <div v-else class="no-selection">
               <i class="el-icon-info"></i>
@@ -65,22 +78,24 @@
                 <el-input
                   v-model="searchSrt"
                   placeholder="通道名称、编号"
-                  style="width: 220px;"
+                  style="width: 220px"
                   clearable
                   @input="search"
-                  @clear="search">
+                  @clear="search"
+                >
                   <i slot="prefix" class="el-icon-search"></i>
                 </el-input>
               </div>
-              
+
               <div class="search-item">
                 <label>在线状态：</label>
                 <el-select
                   v-model="online"
                   placeholder="请选择"
-                  style="width: 120px;"
+                  style="width: 120px"
                   clearable
-                  @change="search">
+                  @change="search"
+                >
                   <el-option label="全部" value=""></el-option>
                   <el-option label="在线" value="true"></el-option>
                   <el-option label="离线" value="false"></el-option>
@@ -92,15 +107,19 @@
                 <el-select
                   v-model="channelType"
                   placeholder="请选择"
-                  style="width: 120px;"
+                  style="width: 120px"
                   clearable
-                  @change="getChannelList">
+                  @change="getChannelList"
+                >
                   <el-option label="全部" value=""></el-option>
-                  <el-option v-for="item in Object.values($channelTypeList)" :key="item.id" :label="item.name" :value="item.id"></el-option>
+                  <el-option
+                    v-for="item in Object.values($channelTypeList)"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
+                  ></el-option>
                 </el-select>
               </div>
-
-
             </div>
           </div>
         </el-card>
@@ -130,10 +149,10 @@
             border
             ref="channelListTable"
             @selection-change="handleSelectionChange"
-            @row-dblclick="rowDblclick">
-            
+            @row-dblclick="rowDblclick"
+          >
             <el-table-column type="selection" width="55" align="center"></el-table-column>
-            
+
             <el-table-column prop="gbName" label="通道名称" min-width="180" show-overflow-tooltip>
               <template #default="{ row }">
                 <div class="channel-name">
@@ -142,19 +161,36 @@
                 </div>
               </template>
             </el-table-column>
-            
-            <el-table-column prop="gbDeviceId" label="通道编号" min-width="180" align="center" show-overflow-tooltip></el-table-column>
-            
-            <el-table-column prop="gbManufacturer" label="厂商" min-width="100" align="center" show-overflow-tooltip></el-table-column>
-            
+
+            <el-table-column
+              prop="gbDeviceId"
+              label="通道编号"
+              min-width="180"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+
+            <el-table-column
+              prop="gbManufacturer"
+              label="厂商"
+              min-width="100"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+
             <el-table-column label="通道类型" min-width="100" align="center">
               <template #default="{ row }">
-                <el-tag size="medium" effect="plain" type="success" :style="$channelTypeList[row.dataType].style">
+                <el-tag
+                  size="medium"
+                  effect="plain"
+                  type="success"
+                  :style="$channelTypeList[row.dataType].style"
+                >
                   {{ $channelTypeList[row.dataType].name }}
                 </el-tag>
               </template>
             </el-table-column>
-            
+
             <el-table-column label="在线状态" min-width="100" align="center">
               <template #default="{ row }">
                 <el-tag size="medium" v-if="row.gbStatus === 'ON'" type="success">在线</el-tag>
@@ -171,8 +207,8 @@
               :page-size="count"
               :page-sizes="[15, 25, 35, 50]"
               layout="total, sizes, prev, pager, next"
-              :total="total">
-            </el-pagination>
+              :total="total"
+            ></el-pagination>
           </div>
         </el-card>
       </el-main>
@@ -192,11 +228,11 @@ import GbChannelSelect from "./dialogs/GbChannelSelect.vue";
 import UnusualGroupChannelSelect from "./dialogs/UnusualGroupChannelSelect.vue";
 
 export default {
-  name: 'BusinessGroup',
+  name: "BusinessGroup",
   components: {
     GroupTree,
     GbChannelSelect,
-    UnusualGroupChannelSelect
+    UnusualGroupChannelSelect,
   },
   data() {
     return {
@@ -214,7 +250,7 @@ export default {
       businessGroup: "",
       regionParents: [],
       multipleSelection: [],
-      showCode: false
+      showCode: false,
     };
   },
   created() {
@@ -233,24 +269,28 @@ export default {
       this.getChannelList();
     },
     getChannelList() {
-      RegionChannelService.getParentChannelList({
-        page: this.currentPage,
-        count: this.count,
-        query: this.searchSrt,
-        online: this.online,
-        channelType: this.channelType,
-        groupDeviceId: this.groupDeviceId
-      }, (res) => {
-        if (res.code === 0) {
-          this.total = res.data.total;
-          this.channelList = res.data.list;
-          this.$nextTick(() => {
-            this.$refs.channelListTable.doLayout();
-          })
-        }
-      }, (error) => {
-        console.log(error);
-      });
+      RegionChannelService.getParentChannelList(
+        {
+          page: this.currentPage,
+          count: this.count,
+          query: this.searchSrt,
+          online: this.online,
+          channelType: this.channelType,
+          groupDeviceId: this.groupDeviceId,
+        },
+        (res) => {
+          if (res.code === 0) {
+            this.total = res.data.total;
+            this.channelList = res.data.list;
+            this.$nextTick(() => {
+              this.$refs.channelListTable.doLayout();
+            });
+          }
+        },
+        (error) => {
+          console.log(error);
+        },
+      );
     },
     handleSelectionChange(val) {
       this.multipleSelection = val;
@@ -262,93 +302,101 @@ export default {
       if (this.groupDeviceId === "") {
         this.$message.info({
           showClose: true,
-          message: "请选择左侧虚拟组织节点"
-        })
+          message: "请选择左侧虚拟组织节点",
+        });
         return;
       }
       this.$refs.gbChannelSelect.openDialog((data) => {
-        console.log("选择的数据")
-        console.log(data)
-        this.addChannelToGroup(this.groupDeviceId, this.businessGroup, data)
-      })
+        console.log("选择的数据");
+        console.log(data);
+        this.addChannelToGroup(this.groupDeviceId, this.businessGroup, data);
+      });
     },
     addChannelToGroup(groupDeviceId, businessGroup, data) {
       if (data.length === 0) {
         return;
       }
-      let channels = []
+      let channels = [];
       for (let i = 0; i < data.length; i++) {
-        channels.push(data[i].gbId)
+        channels.push(data[i].gbId);
       }
-      this.loading = true
+      this.loading = true;
 
-      RegionChannelService.addChannelToGroup({
-        parentId: groupDeviceId,
-        businessGroup: businessGroup,
-        channelIds: channels
-      }, (res) => {
-        if (res.code === 0) {
-          this.$message.success({
-            showClose: true,
-            message: "保存成功"
-          })
-          this.getChannelList()
-        } else {
+      RegionChannelService.addChannelToGroup(
+        {
+          parentId: groupDeviceId,
+          businessGroup: businessGroup,
+          channelIds: channels,
+        },
+        (res) => {
+          if (res.code === 0) {
+            this.$message.success({
+              showClose: true,
+              message: "保存成功",
+            });
+            this.getChannelList();
+          } else {
+            this.$message.error({
+              showClose: true,
+              message: res.msg,
+            });
+          }
+          this.loading = false;
+        },
+        (error) => {
           this.$message.error({
             showClose: true,
-            message: res.msg
-          })
-        }
-        this.loading = false
-      }, (error) => {
-        this.$message.error({
-          showClose: true,
-          message: error.message || error
-        })
-        this.loading = false
-      });
+            message: error.message || error,
+          });
+          this.loading = false;
+        },
+      );
     },
     remove() {
-      let channels = []
+      let channels = [];
       for (let i = 0; i < this.multipleSelection.length; i++) {
-        channels.push(this.multipleSelection[i].gbId)
+        channels.push(this.multipleSelection[i].gbId);
       }
       if (channels.length === 0) {
         this.$message.info({
           showClose: true,
-          message: "请选择通道"
-        })
+          message: "请选择通道",
+        });
         return;
       }
-      this.loading = true
+      this.loading = true;
 
-      RegionChannelService.deleteChannelFromGroup({
-        channelIds: channels
-      }, (res) => {
-        if (res.code === 0) {
-          this.$message.success({
-            showClose: true,
-            message: "保存成功"
-          })
-          this.getChannelList()
-          this.$refs.groupTree.refresh(this.groupDeviceId)
-        } else {
+      RegionChannelService.deleteChannelFromGroup(
+        {
+          channelIds: channels,
+        },
+        (res) => {
+          if (res.code === 0) {
+            this.$message.success({
+              showClose: true,
+              message: "保存成功",
+            });
+            this.getChannelList();
+            this.$refs.groupTree.refresh(this.groupDeviceId);
+          } else {
+            this.$message.error({
+              showClose: true,
+              message: res.msg,
+            });
+          }
+          this.loading = false;
+        },
+        (error) => {
           this.$message.error({
             showClose: true,
-            message: res.msg
-          })
-        }
-        this.loading = false
-      }, (error) => {
-        this.$message.error({
-          showClose: true,
-          message: error.message || error
-        })
-        this.loading = false
-      });
+            message: error.message || error,
+          });
+          this.loading = false;
+        },
+      );
     },
     showUnusualChanel() {
-      this.$refs.unusualGroupChannelSelect.openDialog()
+      this.$refs.unusualGroupChannelSelect.openDialog();
     },
     search() {
       this.currentPage = 1;
@@ -360,28 +408,33 @@ export default {
     },
     treeNodeClickEvent(group) {
       if (group.deviceId === "" || group.deviceId === group.businessGroup) {
-        this.channelList = []
+        this.channelList = [];
         this.regionParents = [];
         this.$message.info({
           showClose: true,
-          message: "当前为业务分组，挂载通道请选择其下的虚拟组织，如不存在可右键新建"
-        })
-        return
+          message: "当前为业务分组，挂载通道请选择其下的虚拟组织，如不存在可右键新建",
+        });
+        return;
       }
       this.groupDeviceId = group.deviceId;
       this.businessGroup = group.businessGroup;
       this.initData();
-      RegionChannelService.getGroupPath(this.groupDeviceId, this.businessGroup, (res) => {
-        if (res.code === 0) {
-          let path = []
-          for (let i = 0; i < res.data.length; i++) {
-            path.push(res.data[i].name)
+      RegionChannelService.getGroupPath(
+        this.groupDeviceId,
+        this.businessGroup,
+        (res) => {
+          if (res.code === 0) {
+            let path = [];
+            for (let i = 0; i < res.data.length; i++) {
+              path.push(res.data[i].name);
+            }
+            this.regionParents = path;
           }
-          this.regionParents = path;
-        }
-      }, (error) => {
-        console.log(error);
-      });
+        },
+        (error) => {
+          console.log(error);
+        },
+      );
     },
     onChannelChange(deviceId) {
       //
@@ -392,8 +445,8 @@ export default {
         this.$refs.groupTree.showCode = this.showCode;
         this.$refs.groupTree.$forceUpdate();
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -460,8 +513,6 @@ export default {
   color: #1e3a8a; */
 }
 
-
-
 /* 主要容器 */
 .main-container {
   height: calc(100vh - 140px);
@@ -496,7 +547,7 @@ export default {
 
 .tree-title i {
   margin-right: 8px;
-  color: #409EFF;
+  color: #409eff;
 }
 
 .tree-controls {
@@ -580,8 +631,8 @@ export default {
 
 /* 搜索框布局混乱 */
 .search-item :deep(.el-input__prefix) {
-  top:7px;
-  left:5px;
+  top: 7px;
+  left: 5px;
 }
 
 /* 表格卡片 */
@@ -611,7 +662,7 @@ export default {
 
 .card-title i {
   margin-right: 8px;
-  color: #409EFF;
+  color: #409eff;
 }
 
 .card-info {
@@ -647,7 +698,7 @@ export default {
 
 .channel-icon {
   margin-right: 8px;
-  color: #409EFF;
+  color: #409eff;
 }
 
 /* 分页 */
@@ -665,36 +716,36 @@ export default {
   .business-group-container {
     padding: 10px;
   }
-  
+
   .page-header {
     flex-direction: column;
     text-align: center;
     gap: 16px;
   }
-  
+
   .main-container {
     flex-direction: column;
   }
-  
+
   .tree-aside {
     width: 100% !important;
     margin-right: 0;
     margin-bottom: 16px;
   }
-  
+
   .search-row {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-item {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .header-right {
     gap: 6px;
     justify-content: center;
   }
 }
-</style> 
+</style>

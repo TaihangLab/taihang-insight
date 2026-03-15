@@ -31,74 +31,74 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import TenantTableActions from '@/pages/system/components/tenant/TenantTableActions.vue'
-import TenantTable from '@/pages/system/components/tenant/TenantTable.vue'
-import TenantPagination from '@/pages/system/components/tenant/TenantPagination.vue'
-import type { TenantAPI } from '@/types/rbac/tenant'
+import { ref } from "vue";
+import TenantTableActions from "@/pages/system/components/tenant/TenantTableActions.vue";
+import TenantTable from "@/pages/system/components/tenant/TenantTable.vue";
+import TenantPagination from "@/pages/system/components/tenant/TenantPagination.vue";
+import type { TenantAPI } from "@/types/rbac/tenant";
 
 interface Pagination {
-  currentPage: number
-  pageSize: number
+  currentPage: number;
+  pageSize: number;
 }
 
 defineProps<{
-  tenants: TenantAPI[]
-  loading: boolean
-  pagination: Pagination
-  total: number
-}>()
+  tenants: TenantAPI[];
+  loading: boolean;
+  pagination: Pagination;
+  total: number;
+}>();
 
 const emit = defineEmits<{
-  selectionChange: [codes: number[]]
-  add: []
-  edit: [row: TenantAPI]
-  delete: [row: TenantAPI]
-  batchDelete: [codes: number[]]
-  statusChange: [row: TenantAPI]
-  pageChange: [page: number]
-  sizeChange: [size: number]
-  export: [codes: number[]]
-}>()
+  selectionChange: [codes: number[]];
+  add: [];
+  edit: [row: TenantAPI];
+  delete: [row: TenantAPI];
+  batchDelete: [codes: number[]];
+  statusChange: [row: TenantAPI];
+  pageChange: [page: number];
+  sizeChange: [size: number];
+  export: [codes: number[]];
+}>();
 
-const selectedCodes = ref<number[]>([])
+const selectedCodes = ref<number[]>([]);
 
 const handleSelectionChange = (codes: number[]) => {
-  selectedCodes.value = codes
-  emit('selectionChange', codes)
-}
+  selectedCodes.value = codes;
+  emit("selectionChange", codes);
+};
 
 const handleAdd = () => {
-  emit('add')
-}
+  emit("add");
+};
 
 const handleEdit = (row: TenantAPI) => {
-  emit('edit', row)
-}
+  emit("edit", row);
+};
 
 const handleDelete = (row: TenantAPI) => {
-  emit('delete', row)
-}
+  emit("delete", row);
+};
 
 const handleBatchDelete = () => {
-  emit('batchDelete', selectedCodes.value)
-}
+  emit("batchDelete", selectedCodes.value);
+};
 
 const handleStatusChange = (row: TenantAPI) => {
-  emit('statusChange', row)
-}
+  emit("statusChange", row);
+};
 
 const handlePageChange = (page: number) => {
-  emit('pageChange', page)
-}
+  emit("pageChange", page);
+};
 
 const handleSizeChange = (size: number) => {
-  emit('sizeChange', size)
-}
+  emit("sizeChange", size);
+};
 
 const handleExport = () => {
-  emit('export', selectedCodes.value)
-}
+  emit("export", selectedCodes.value);
+};
 </script>
 
 <style scoped>

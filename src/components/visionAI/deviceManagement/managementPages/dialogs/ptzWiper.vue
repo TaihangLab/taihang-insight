@@ -6,51 +6,53 @@
 </template>
 
 <script>
-import { controlWiper } from '@/api/ptz'
+import { controlWiper } from "@/api/ptz";
 
 export default {
   name: "ptzWiper",
-  props: [ 'channelDeviceId', 'deviceId'],
+  props: ["channelDeviceId", "deviceId"],
   components: {},
-  created() {
-  },
+  created() {},
   data() {
     return {};
   },
   methods: {
-    open: function (command){
+    open: function (command) {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
       controlWiper(this.deviceId, this.channelDeviceId, {
         command: command,
-      }).then((res)=> {
-        if (res.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "保存成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: 'error'
-          });
-        }
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error,
-          type: 'error'
-        });
-      }).finally(()=>{
-        loading.close()
       })
+        .then((res) => {
+          if (res.code === 0) {
+            this.$message({
+              showClose: true,
+              message: "保存成功",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error,
+            type: "error",
+          });
+        })
+        .finally(() => {
+          loading.close();
+        });
     },
   },
 };
@@ -58,10 +60,9 @@ export default {
 <style>
 .channel-form {
   display: grid;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   padding: 1rem 2rem 0 2rem;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 1rem;
 }
-
 </style>

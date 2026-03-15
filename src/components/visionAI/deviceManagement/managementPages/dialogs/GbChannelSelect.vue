@@ -10,44 +10,81 @@
       append-to-body
       @close="close()"
     >
-      <div class="page-header" style="width: 100%; margin-bottom: 20px;">
+      <div class="page-header" style="width: 100%; margin-bottom: 20px">
         <div class="page-header-btn" style="width: 100%; text-align: left">
           搜索:
-          <el-input @input="getChannelList" style="margin-right: 1rem; width: auto;" size="small" placeholder="关键字"
-                    prefix-icon="el-icon-search" v-model="searchSrt" clearable></el-input>
+          <el-input
+            @input="getChannelList"
+            style="margin-right: 1rem; width: auto"
+            size="small"
+            placeholder="关键字"
+            prefix-icon="el-icon-search"
+            v-model="searchSrt"
+            clearable
+          ></el-input>
           在线状态:
-          <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="getChannelList" v-model="online" placeholder="请选择"
-                     default-first-option>
+          <el-select
+            size="small"
+            style="width: 8rem; margin-right: 1rem"
+            @change="getChannelList"
+            v-model="online"
+            placeholder="请选择"
+            default-first-option
+          >
             <el-option label="全部" value=""></el-option>
             <el-option label="在线" value="true"></el-option>
             <el-option label="离线" value="false"></el-option>
           </el-select>
           类型:
-          <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="getChannelList" v-model="channelType" placeholder="请选择"
-                     default-first-option>
+          <el-select
+            size="small"
+            style="width: 8rem; margin-right: 1rem"
+            @change="getChannelList"
+            v-model="channelType"
+            placeholder="请选择"
+            default-first-option
+          >
             <el-option label="全部" value=""></el-option>
-            <el-option v-for="item in Object.values($channelTypeList)" :key="item.id" :label="item.name" :value="item.id"></el-option>
+            <el-option
+              v-for="item in Object.values($channelTypeList)"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            ></el-option>
           </el-select>
-          <el-button size="small" :loading="getChannelListLoading"
-                     @click="getChannelList()">刷新</el-button>
-          <el-button type="primary" size="small" style="float: right" @click="onSubmit">确 定</el-button>
+          <el-button size="small" :loading="getChannelListLoading" @click="getChannelList()">
+            刷新
+          </el-button>
+          <el-button type="primary" size="small" style="float: right" @click="onSubmit">
+            确 定
+          </el-button>
         </div>
       </div>
       <!--通道列表-->
-      <el-table size="small"  ref="channelListTable" :data="channelList" :height="winHeight" style="width: 100%;"
-                header-row-class-name="table-header" @selection-change="handleSelectionChange" >
-        <el-table-column type="selection" width="55" >
-        </el-table-column>
-        <el-table-column prop="gbName" label="名称" min-width="180">
-        </el-table-column>
-        <el-table-column prop="gbDeviceId" label="编号" min-width="180">
-        </el-table-column>
-        <el-table-column prop="gbManufacturer" label="厂家" min-width="100">
-        </el-table-column>
+      <el-table
+        size="small"
+        ref="channelListTable"
+        :data="channelList"
+        :height="winHeight"
+        style="width: 100%"
+        header-row-class-name="table-header"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55"></el-table-column>
+        <el-table-column prop="gbName" label="名称" min-width="180"></el-table-column>
+        <el-table-column prop="gbDeviceId" label="编号" min-width="180"></el-table-column>
+        <el-table-column prop="gbManufacturer" label="厂家" min-width="100"></el-table-column>
         <el-table-column label="类型" min-width="100">
           <template v-slot:default="scope">
             <div slot="reference" class="name-wrapper">
-              <el-tag size="medium" effect="plain" type="success" :style="$channelTypeList[scope.row.dataType].style" >{{$channelTypeList[scope.row.dataType].name}}</el-tag>
+              <el-tag
+                size="medium"
+                effect="plain"
+                type="success"
+                :style="$channelTypeList[scope.row.dataType].style"
+              >
+                {{ $channelTypeList[scope.row.dataType].name }}
+              </el-tag>
             </div>
           </template>
         </el-table-column>
@@ -62,7 +99,10 @@
       </el-table>
       <div style="display: grid; grid-template-columns: 1fr 1fr">
         <div style="text-align: left; line-height: 32px">
-          <i class="el-icon-info"></i> 未找到通道，可在国标设备/通道中选择编辑按钮， 选择{{dataType === 'civilCode'?'行政区划':'父节点编码'}}
+          <i class="el-icon-info"></i>
+          未找到通道，可在国标设备/通道中选择编辑按钮， 选择{{
+            dataType === "civilCode" ? "行政区划" : "父节点编码"
+          }}
         </div>
         <el-pagination
           style="text-align: right"
@@ -72,10 +112,9 @@
           :page-size="count"
           :page-sizes="[10, 25, 35, 50, 200, 1000, 50000]"
           layout="total, sizes, prev, pager, next"
-          :total="total">
-        </el-pagination>
+          :total="total"
+        ></el-pagination>
       </div>
-
     </el-dialog>
   </div>
 </template>
@@ -85,7 +124,7 @@ import RegionChannelService from "../service/RegionChannelService.js";
 
 export default {
   name: "gbChannelSelect",
-  props: ['dataType', "selected"],
+  props: ["dataType", "selected"],
   computed: {},
   data() {
     return {
@@ -118,7 +157,7 @@ export default {
       this.count = val;
       this.getChannelList();
     },
-    handleSelectionChange: function (val){
+    handleSelectionChange: function (val) {
       this.multipleSelection = val;
     },
     getChannelList: function () {
@@ -130,29 +169,37 @@ export default {
         query: this.searchSrt,
         online: this.online,
       };
-      
+
       if (this.dataType === "civilCode") {
-        RegionChannelService.getCivilCodeChannelList(params, (res) => {
-          if (res.code === 0) {
-            this.total = res.data.total;
-            this.channelList = res.data.list;
-          }
-          this.getChannelListLoading = false;
-        }, (error) => {
-          console.error(error);
-          this.getChannelListLoading = false;
-        });
+        RegionChannelService.getCivilCodeChannelList(
+          params,
+          (res) => {
+            if (res.code === 0) {
+              this.total = res.data.total;
+              this.channelList = res.data.list;
+            }
+            this.getChannelListLoading = false;
+          },
+          (error) => {
+            console.error(error);
+            this.getChannelListLoading = false;
+          },
+        );
       } else {
-        RegionChannelService.getParentChannelList(params, (res) => {
-          if (res.code === 0) {
-            this.total = res.data.total;
-            this.channelList = res.data.list;
-          }
-          this.getChannelListLoading = false;
-        }, (error) => {
-          console.error(error);
-          this.getChannelListLoading = false;
-        });
+        RegionChannelService.getParentChannelList(
+          params,
+          (res) => {
+            if (res.code === 0) {
+              this.total = res.data.total;
+              this.channelList = res.data.list;
+            }
+            this.getChannelListLoading = false;
+          },
+          (error) => {
+            console.error(error);
+            this.getChannelListLoading = false;
+          },
+        );
       }
     },
     openDialog: function (callback) {
@@ -161,15 +208,14 @@ export default {
       this.initData();
     },
     onSubmit: function () {
-      if (this.listChangeCallback ) {
-        this.listChangeCallback(this.multipleSelection)
+      if (this.listChangeCallback) {
+        this.listChangeCallback(this.multipleSelection);
       }
       this.showDialog = false;
     },
     close: function () {
       this.showDialog = false;
     },
-
-  }
+  },
 };
 </script>

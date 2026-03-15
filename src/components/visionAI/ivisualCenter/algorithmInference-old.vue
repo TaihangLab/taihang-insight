@@ -14,14 +14,16 @@
             <span>加载中...</span>
           </div>
           <template v-else>
-            <div class="location" style="margin-right: -10px;">
+            <div class="location" style="margin-right: -10px">
               <i class="el-icon-location"></i>
-              <span>{{ locationInfo ? locationInfo.location : '太行山工业园区' }}</span>
+              <span>{{ locationInfo ? locationInfo.location : "太行山工业园区" }}</span>
             </div>
             <div class="weather-info">
               <i class="el-icon-sunny"></i>
-              <span>{{ locationInfo ? locationInfo.weather : '晴 26°C' }}</span>
-              <span class="air-quality">{{ locationInfo ? locationInfo.airQuality : '空气质量: 良' }}</span>
+              <span>{{ locationInfo ? locationInfo.weather : "晴 26°C" }}</span>
+              <span class="air-quality">
+                {{ locationInfo ? locationInfo.airQuality : "空气质量: 良" }}
+              </span>
             </div>
             <div class="fullscreen-btn" @click="toggleFullScreen">
               <i class="el-icon-full-screen"></i>
@@ -38,7 +40,8 @@
         :memoryUsage="memoryUsage"
         :diskUsage="diskUsage"
         :networkUsage="networkUsage"
-        :currentTime="currentTime" />
+        :currentTime="currentTime"
+      />
 
       <!-- 中间部分 - 数据展示 -->
       <div class="center-container">
@@ -110,10 +113,26 @@
             <!-- 圆环饼图 -->
             <div class="donut-container">
               <div class="donut-chart">
-                <div class="chart-section section-1" @mouseover="showTooltip('人员检测', 5, $event)" @mouseout="hideTooltip"></div>
-                <div class="chart-section section-2" @mouseover="showTooltip('交通拥堵', 40, $event)" @mouseout="hideTooltip"></div>
-                <div class="chart-section section-3" @mouseover="showTooltip('非机动车违规', 20, $event)" @mouseout="hideTooltip"></div>
-                <div class="chart-section section-4" @mouseover="showTooltip('违章停车', 35, $event)" @mouseout="hideTooltip"></div>
+                <div
+                  class="chart-section section-1"
+                  @mouseover="showTooltip('人员检测', 5, $event)"
+                  @mouseout="hideTooltip"
+                ></div>
+                <div
+                  class="chart-section section-2"
+                  @mouseover="showTooltip('交通拥堵', 40, $event)"
+                  @mouseout="hideTooltip"
+                ></div>
+                <div
+                  class="chart-section section-3"
+                  @mouseover="showTooltip('非机动车违规', 20, $event)"
+                  @mouseout="hideTooltip"
+                ></div>
+                <div
+                  class="chart-section section-4"
+                  @mouseover="showTooltip('违章停车', 35, $event)"
+                  @mouseout="hideTooltip"
+                ></div>
                 <div class="chart-tooltip" v-if="tooltipVisible" :style="tooltipStyle">
                   {{ tooltipText }}
                 </div>
@@ -159,7 +178,6 @@
               <span class="digit">5</span>
               <span class="digit">8</span>
               <span class="digit">9</span>
-
             </div>
           </div>
           <!-- 设备类型统计 -->
@@ -173,7 +191,6 @@
                 </div>
                 <div class="circle-content">
                   <span class="number">562</span>
-
                 </div>
               </div>
               <div class="type-name">视频流</div>
@@ -187,7 +204,6 @@
                 </div>
                 <div class="circle-content">
                   <span class="number">23108</span>
-
                 </div>
               </div>
               <div class="type-name">抓图服务</div>
@@ -201,7 +217,6 @@
                 </div>
                 <div class="circle-content">
                   <span class="number">2389</span>
-
                 </div>
               </div>
               <div class="type-name">NVR调用</div>
@@ -256,23 +271,69 @@
             <svg width="100%" height="150" viewBox="0 0 600 150" preserveAspectRatio="none">
               <!-- 横线 -->
               <g class="grid-lines">
-                <line x1="0" y1="0" x2="600" y2="0" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="30" x2="600" y2="30" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="60" x2="600" y2="60" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="90" x2="600" y2="90" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="120" x2="600" y2="120" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="150" x2="600" y2="150" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
+                <line
+                  x1="0"
+                  y1="0"
+                  x2="600"
+                  y2="0"
+                  stroke="rgba(120, 140, 180, 0.2)"
+                  stroke-width="1"
+                />
+                <line
+                  x1="0"
+                  y1="30"
+                  x2="600"
+                  y2="30"
+                  stroke="rgba(120, 140, 180, 0.2)"
+                  stroke-width="1"
+                />
+                <line
+                  x1="0"
+                  y1="60"
+                  x2="600"
+                  y2="60"
+                  stroke="rgba(120, 140, 180, 0.2)"
+                  stroke-width="1"
+                />
+                <line
+                  x1="0"
+                  y1="90"
+                  x2="600"
+                  y2="90"
+                  stroke="rgba(120, 140, 180, 0.2)"
+                  stroke-width="1"
+                />
+                <line
+                  x1="0"
+                  y1="120"
+                  x2="600"
+                  y2="120"
+                  stroke="rgba(120, 140, 180, 0.2)"
+                  stroke-width="1"
+                />
+                <line
+                  x1="0"
+                  y1="150"
+                  x2="600"
+                  y2="150"
+                  stroke="rgba(120, 140, 180, 0.2)"
+                  stroke-width="1"
+                />
               </g>
 
               <!-- 数据曲线 -->
               <path
                 d="M0,90 C20,70 40,80 60,60 C80,40 100,70 120,65 C140,60 160,50 180,55 C200,60 220,30 240,50 C260,70 280,80 300,75 C320,70 340,60 360,65 C380,70 400,80 420,60 C440,40 460,50 480,55 C500,60 520,80 540,70 C560,60 580,50 600,55"
-                stroke="#0095ff" stroke-width="2" fill="none" />
+                stroke="#0095ff"
+                stroke-width="2"
+                fill="none"
+              />
 
               <!-- 区域填充 -->
               <path
                 d="M0,90 C20,70 40,80 60,60 C80,40 100,70 120,65 C140,60 160,50 180,55 C200,60 220,30 240,50 C260,70 280,80 300,75 C320,70 340,60 360,65 C380,70 400,80 420,60 C440,40 460,50 480,55 C500,60 520,80 540,70 C560,60 580,50 600,55 L600,150 L0,150 Z"
-                fill="url(#gradient)" />
+                fill="url(#gradient)"
+              />
 
               <!-- 渐变定义 -->
               <defs>
@@ -320,7 +381,6 @@
               </g>
             </svg>
           </div>
-
         </div>
       </div>
 
@@ -335,12 +395,54 @@
             <svg width="100%" height="150" viewBox="0 0 350 150" preserveAspectRatio="none">
               <!-- 横线 -->
               <g class="grid-lines">
-                <line x1="0" y1="0" x2="350" y2="0" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="30" x2="350" y2="30" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="60" x2="350" y2="60" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="90" x2="350" y2="90" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="120" x2="350" y2="120" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="150" x2="350" y2="150" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
+                <line
+                  x1="0"
+                  y1="0"
+                  x2="350"
+                  y2="0"
+                  stroke="rgba(120, 140, 180, 0.2)"
+                  stroke-width="1"
+                />
+                <line
+                  x1="0"
+                  y1="30"
+                  x2="350"
+                  y2="30"
+                  stroke="rgba(120, 140, 180, 0.2)"
+                  stroke-width="1"
+                />
+                <line
+                  x1="0"
+                  y1="60"
+                  x2="350"
+                  y2="60"
+                  stroke="rgba(120, 140, 180, 0.2)"
+                  stroke-width="1"
+                />
+                <line
+                  x1="0"
+                  y1="90"
+                  x2="350"
+                  y2="90"
+                  stroke="rgba(120, 140, 180, 0.2)"
+                  stroke-width="1"
+                />
+                <line
+                  x1="0"
+                  y1="120"
+                  x2="350"
+                  y2="120"
+                  stroke="rgba(120, 140, 180, 0.2)"
+                  stroke-width="1"
+                />
+                <line
+                  x1="0"
+                  y1="150"
+                  x2="350"
+                  y2="150"
+                  stroke="rgba(120, 140, 180, 0.2)"
+                  stroke-width="1"
+                />
               </g>
 
               <!-- 柱状图 -->
@@ -399,47 +501,47 @@
 </template>
 
 <script>
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import ResourceStatistics from './components/ResourceStatistics.vue';
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import ResourceStatistics from "./components/ResourceStatistics.vue";
 
 export default {
-  name: 'AlgorithmInference',
+  name: "AlgorithmInference",
   components: {
-    ResourceStatistics
+    ResourceStatistics,
   },
   data() {
     return {
-      currentTime: '',
+      currentTime: "",
       cpuUsage: 20.69,
       memoryUsage: 64.35,
-      diskUsage: 45.60,
+      diskUsage: 45.6,
       networkUsage: 92.34,
       timerID: null,
       cubeRotateID: null,
       locationInfo: {
-        location: '太行山工业园区',
-        weather: '晴 26°C',
-        airQuality: '空气质量: 良',
-        loading: false
+        location: "太行山工业园区",
+        weather: "晴 26°C",
+        airQuality: "空气质量: 良",
+        loading: false,
       },
       myAlgorithms: [
-        { id: '9934', name: '打手识别', size: 1.2 },
-        { id: '9926', name: '渣土车识别', size: 1.3 },
-        { id: '9677', name: '人员闯入', size: 1.1 },
-        { id: '9650', name: '消防通道堵塞', size: 1.2 },
-        { id: '9768', name: '厨房夜间老鼠识别', size: 1.4 },
-        { id: '9610', name: '火焰识别', size: 1.3 },
-        { id: '9762', name: '街道垃圾识别', size: 1.2 },
-        { id: '9758', name: '积水识别', size: 1.3 },
-        { id: '9688', name: '其它检测', size: 1.2 },
-        { id: '9684', name: '烟雾检测', size: 1.2 }
+        { id: "9934", name: "打手识别", size: 1.2 },
+        { id: "9926", name: "渣土车识别", size: 1.3 },
+        { id: "9677", name: "人员闯入", size: 1.1 },
+        { id: "9650", name: "消防通道堵塞", size: 1.2 },
+        { id: "9768", name: "厨房夜间老鼠识别", size: 1.4 },
+        { id: "9610", name: "火焰识别", size: 1.3 },
+        { id: "9762", name: "街道垃圾识别", size: 1.2 },
+        { id: "9758", name: "积水识别", size: 1.3 },
+        { id: "9688", name: "其它检测", size: 1.2 },
+        { id: "9684", name: "烟雾检测", size: 1.2 },
       ],
       deviceStatistics: {
         total: 286589,
         videoStreams: 562,
         captureServices: 23108,
-        wvpCalls: 2389
+        wvpCalls: 2389,
       },
       // Three.js相关变量
       cubeScene: null,
@@ -480,18 +582,18 @@ export default {
       algoAnimationId: null,
       algoControls: null,
       tooltipVisible: false,
-      tooltipText: '',
+      tooltipText: "",
       tooltipStyle: {
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        color: '#fff',
-        padding: '5px',
-        borderRadius: '5px',
-        zIndex: 1000
-      }
-    }
+        position: "absolute",
+        top: "0",
+        left: "0",
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        color: "#fff",
+        padding: "5px",
+        borderRadius: "5px",
+        zIndex: 1000,
+      },
+    };
   },
   mounted() {
     // 初始化时间更新
@@ -499,7 +601,7 @@ export default {
     this.timer = setInterval(this.updateTime, 1000);
 
     // 添加全屏变化事件监听器
-    document.addEventListener('fullscreenchange', this.handleFullscreenChange);
+    document.addEventListener("fullscreenchange", this.handleFullscreenChange);
 
     this.$nextTick(() => {
       this.initCubeScene();
@@ -507,7 +609,7 @@ export default {
       this.initResourceChart();
 
       // 添加窗口大小变化监听
-      window.addEventListener('resize', this.handleResize);
+      window.addEventListener("resize", this.handleResize);
 
       // 延迟300ms后再次初始化算法球体，确保容器大小已经正确计算
       setTimeout(() => {
@@ -522,7 +624,7 @@ export default {
     }
 
     // 移除全屏变化事件监听器
-    document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
+    document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
 
     // 清除动画循环
     if (this.cubeAnimationId) {
@@ -533,8 +635,8 @@ export default {
     }
 
     // 移除窗口大小变化监听
-    window.removeEventListener('resize', this.handleResize);
-    window.removeEventListener('resize', this.handleAlgoResize);
+    window.removeEventListener("resize", this.handleResize);
+    window.removeEventListener("resize", this.handleAlgoResize);
 
     // 清除资源图表
     if (this.resourceChart) {
@@ -550,37 +652,43 @@ export default {
     updateTime() {
       const now = new Date();
       const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
       this.currentTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     },
     toggleFullScreen() {
-      const navBar = document.querySelector('.el-header'); // 选择顶部导航栏元素
+      const navBar = document.querySelector(".el-header"); // 选择顶部导航栏元素
 
       if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().then(() => {
-          // 进入全屏后隐藏导航栏
-          if (navBar) navBar.style.display = 'none';
-        }).catch(err => {
-          console.error('全屏切换失败:', err);
-        });
+        document.documentElement
+          .requestFullscreen()
+          .then(() => {
+            // 进入全屏后隐藏导航栏
+            if (navBar) navBar.style.display = "none";
+          })
+          .catch((err) => {
+            console.error("全屏切换失败:", err);
+          });
       } else {
         if (document.exitFullscreen) {
-          document.exitFullscreen().then(() => {
-            // 退出全屏后显示导航栏
-            if (navBar) navBar.style.display = '';
-          }).catch(err => {
-            console.error('退出全屏失败:', err);
-          });
+          document
+            .exitFullscreen()
+            .then(() => {
+              // 退出全屏后显示导航栏
+              if (navBar) navBar.style.display = "";
+            })
+            .catch((err) => {
+              console.error("退出全屏失败:", err);
+            });
         }
       }
     },
     initCubeScene() {
       // 获取容器
-      const container = document.getElementById('threejs-cube');
+      const container = document.getElementById("threejs-cube");
       if (!container) return;
 
       // 创建场景
@@ -593,7 +701,12 @@ export default {
       this.modelContainer.position.y = 1; // 整体向下移动2个单位
 
       // 创建相机 - 调整位置更好地观察场景
-      this.cubeCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+      this.cubeCamera = new THREE.PerspectiveCamera(
+        45,
+        container.clientWidth / container.clientHeight,
+        0.1,
+        1000,
+      );
       this.cubeCamera.position.set(0, 5, 35); // 更正面的视角
       this.cubeCamera.lookAt(0, 8, 0); // 向上看一点，聚焦在中心点
 
@@ -601,7 +714,7 @@ export default {
       this.cubeRenderer = new THREE.WebGLRenderer({
         antialias: true,
         alpha: true,
-        logarithmicDepthBuffer: true  // 提高深度缓冲精度
+        logarithmicDepthBuffer: true, // 提高深度缓冲精度
       });
       this.cubeRenderer.setSize(container.clientWidth, container.clientHeight);
       this.cubeRenderer.setPixelRatio(window.devicePixelRatio);
@@ -673,7 +786,7 @@ export default {
         uniforms: {
           time: { value: 0.0 },
           color1: { value: new THREE.Color(0x0055ff) },
-          color2: { value: new THREE.Color(0x00d9ff) }
+          color2: { value: new THREE.Color(0x00d9ff) },
         },
         vertexShader: `
           varying vec2 vUv;
@@ -704,7 +817,7 @@ export default {
           }
         `,
         transparent: true,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       const ring = new THREE.Mesh(ringGeometry, ringMaterial);
@@ -721,7 +834,7 @@ export default {
         uniforms: {
           time: { value: 0.0 },
           color1: { value: new THREE.Color(0x0066ff) },
-          color2: { value: new THREE.Color(0x00a5ff) }
+          color2: { value: new THREE.Color(0x00a5ff) },
         },
         vertexShader: `
           varying vec2 vUv;
@@ -754,7 +867,7 @@ export default {
           }
         `,
         transparent: true,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       const innerRing = new THREE.Mesh(innerRingGeometry, innerRingMaterial);
@@ -771,7 +884,7 @@ export default {
         uniforms: {
           time: { value: 0.0 },
           baseColor: { value: new THREE.Color(0x002040) },
-          glowColor: { value: new THREE.Color(0x0088ff) }
+          glowColor: { value: new THREE.Color(0x0088ff) },
         },
         vertexShader: `
           varying vec2 vUv;
@@ -835,7 +948,7 @@ export default {
           }
         `,
         transparent: true,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       const platform = new THREE.Mesh(platformGeometry, platformMaterial);
@@ -851,7 +964,7 @@ export default {
       const glowMaterial = new THREE.ShaderMaterial({
         uniforms: {
           time: { value: 0.0 },
-          glowColor: { value: new THREE.Color(0x0088ff) }
+          glowColor: { value: new THREE.Color(0x0088ff) },
         },
         vertexShader: `
           varying vec2 vUv;
@@ -880,7 +993,7 @@ export default {
         transparent: true,
         blending: THREE.AdditiveBlending,
         side: THREE.DoubleSide,
-        depthWrite: false
+        depthWrite: false,
       });
 
       const glow = new THREE.Mesh(glowGeometry, glowMaterial);
@@ -922,14 +1035,14 @@ export default {
         sizes[i] = 0.1 + Math.random() * 0.2;
       }
 
-      particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+      particles.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      particles.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      particles.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
 
       // 使用着色器材质
       const particleMaterial = new THREE.ShaderMaterial({
         uniforms: {
-          time: { value: 0.0 }
+          time: { value: 0.0 },
         },
         vertexShader: `
           attribute float size;
@@ -969,7 +1082,7 @@ export default {
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
-        vertexColors: true
+        vertexColors: true,
       });
 
       const energyField = new THREE.Points(particles, particleMaterial);
@@ -982,7 +1095,7 @@ export default {
       const beamGeometry = new THREE.CylinderGeometry(0.3, 0.3, 16, 16, 1, true);
       const beamMaterial = new THREE.ShaderMaterial({
         uniforms: {
-          time: { value: 0.0 }
+          time: { value: 0.0 },
         },
         vertexShader: `
           varying vec2 vUv;
@@ -1017,7 +1130,7 @@ export default {
         transparent: true,
         blending: THREE.AdditiveBlending,
         side: THREE.DoubleSide,
-        depthWrite: false
+        depthWrite: false,
       });
 
       const beam = new THREE.Mesh(beamGeometry, beamMaterial);
@@ -1062,7 +1175,6 @@ export default {
       this.createCircuitScanEffect();
     },
 
-
     // 创建六角星体
     createHexaStar(parent) {
       // 创建六角星组
@@ -1076,7 +1188,7 @@ export default {
         opacity: 0.7,
         emissive: 0x1a4a7a,
         emissiveIntensity: 0.5,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
@@ -1092,7 +1204,7 @@ export default {
       const extrudeSettings = {
         steps: 1,
         depth: 0.3,
-        bevelEnabled: false
+        bevelEnabled: false,
       };
 
       const triangleGeometry = new THREE.ExtrudeGeometry(triangleShape, extrudeSettings);
@@ -1106,7 +1218,7 @@ export default {
           opacity: 0.8,
           emissive: 0x2a6a9a,
           emissiveIntensity: 0.5,
-          side: THREE.DoubleSide
+          side: THREE.DoubleSide,
         });
 
         const triangle = new THREE.Mesh(triangleGeometry, triangleMaterial);
@@ -1118,27 +1230,33 @@ export default {
       // 创建上下两个方向的三角形
       const verticalTriangleGeometry = triangleGeometry.clone();
 
-      const topTriangle = new THREE.Mesh(verticalTriangleGeometry, new THREE.MeshPhongMaterial({
-        color: 0x5badff,
-        transparent: true,
-        opacity: 0.8,
-        emissive: 0x2a6a9a,
-        emissiveIntensity: 0.5,
-        side: THREE.DoubleSide
-      }));
+      const topTriangle = new THREE.Mesh(
+        verticalTriangleGeometry,
+        new THREE.MeshPhongMaterial({
+          color: 0x5badff,
+          transparent: true,
+          opacity: 0.8,
+          emissive: 0x2a6a9a,
+          emissiveIntensity: 0.5,
+          side: THREE.DoubleSide,
+        }),
+      );
       topTriangle.position.set(0, 0.6, 0);
       topTriangle.rotation.z = Math.PI / 2;
       topTriangle.rotation.x = Math.PI / 2;
       starGroup.add(topTriangle);
 
-      const bottomTriangle = new THREE.Mesh(verticalTriangleGeometry, new THREE.MeshPhongMaterial({
-        color: 0x5badff,
-        transparent: true,
-        opacity: 0.8,
-        emissive: 0x2a6a9a,
-        emissiveIntensity: 0.5,
-        side: THREE.DoubleSide
-      }));
+      const bottomTriangle = new THREE.Mesh(
+        verticalTriangleGeometry,
+        new THREE.MeshPhongMaterial({
+          color: 0x5badff,
+          transparent: true,
+          opacity: 0.8,
+          emissive: 0x2a6a9a,
+          emissiveIntensity: 0.5,
+          side: THREE.DoubleSide,
+        }),
+      );
       bottomTriangle.position.set(0, -0.6, 0);
       bottomTriangle.rotation.z = Math.PI / 2;
       bottomTriangle.rotation.x = -Math.PI / 2;
@@ -1149,7 +1267,7 @@ export default {
       const coreMaterial = new THREE.MeshBasicMaterial({
         color: 0xff3a3a,
         transparent: true,
-        opacity: 0.9
+        opacity: 0.9,
       });
 
       const core = new THREE.Mesh(coreGeometry, coreMaterial);
@@ -1181,14 +1299,14 @@ export default {
         color: 0x3a9eff,
         transparent: true,
         opacity: 0.7,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       const ringMaterial2 = new THREE.MeshBasicMaterial({
         color: 0x66ccff,
         transparent: true,
         opacity: 0.6,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       // 第一个光环
@@ -1209,7 +1327,7 @@ export default {
         color: 0x66ccff,
         transparent: true,
         opacity: 0.8,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       const topInnerRing = new THREE.Mesh(topInnerRingGeometry, innerRingMaterial);
@@ -1222,7 +1340,7 @@ export default {
         color: 0x3a9eff,
         transparent: true,
         opacity: 0.15,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       const topGlow = new THREE.Mesh(topGlowGeometry, glowMaterial);
@@ -1342,8 +1460,7 @@ export default {
 
         // 粒子大小 - 近处的稍大，远处的较小
         const distanceFromCenter = Math.sqrt(
-          positions[i * 3] * positions[i * 3] +
-          positions[i * 3 + 2] * positions[i * 3 + 2]
+          positions[i * 3] * positions[i * 3] + positions[i * 3 + 2] * positions[i * 3 + 2],
         );
 
         if (distanceFromCenter < 4) {
@@ -1353,19 +1470,20 @@ export default {
         }
 
         // 设置粒子速度 - 越靠近中心的粒子速度越快
-        speeds[i] = 0.2 + (10 - Math.min(10, distanceFromCenter)) / 10 * 0.8 + Math.random() * 0.2;
+        speeds[i] =
+          0.2 + ((10 - Math.min(10, distanceFromCenter)) / 10) * 0.8 + Math.random() * 0.2;
       }
 
-      particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-      particleGeometry.setAttribute('speed', new THREE.BufferAttribute(speeds, 1)); // 添加速度属性
+      particleGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      particleGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      particleGeometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
+      particleGeometry.setAttribute("speed", new THREE.BufferAttribute(speeds, 1)); // 添加速度属性
 
       // 创建更高级的着色器材质
       const particleMaterial = new THREE.ShaderMaterial({
         uniforms: {
           time: { value: 0 },
-          pointTexture: { value: this.createParticleTexture() }
+          pointTexture: { value: this.createParticleTexture() },
         },
         vertexShader: `
           attribute float size;
@@ -1416,7 +1534,7 @@ export default {
         blending: THREE.AdditiveBlending,
         depthTest: false,
         transparent: true,
-        vertexColors: true
+        vertexColors: true,
       });
 
       const particles = new THREE.Points(particleGeometry, particleMaterial);
@@ -1427,21 +1545,19 @@ export default {
 
     // 创建粒子纹理
     createParticleTexture() {
-      const canvas = document.createElement('canvas');
+      const canvas = document.createElement("canvas");
       canvas.width = 64;
       canvas.height = 64;
 
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext("2d");
 
       // 创建渐变
-      const gradient = context.createRadialGradient(
-        32, 32, 0, 32, 32, 32
-      );
+      const gradient = context.createRadialGradient(32, 32, 0, 32, 32, 32);
 
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      gradient.addColorStop(0.3, 'rgba(120, 180, 255, 0.8)');
-      gradient.addColorStop(0.7, 'rgba(70, 120, 255, 0.3)');
-      gradient.addColorStop(1, 'rgba(40, 80, 255, 0)');
+      gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+      gradient.addColorStop(0.3, "rgba(120, 180, 255, 0.8)");
+      gradient.addColorStop(0.7, "rgba(70, 120, 255, 0.3)");
+      gradient.addColorStop(1, "rgba(40, 80, 255, 0)");
 
       // 绘制粒子
       context.fillStyle = gradient;
@@ -1469,16 +1585,20 @@ export default {
         // 创建线段 - 调整起点位置从圆盘开始
         const lineGeometry = new THREE.BufferGeometry();
         const positions = new Float32Array([
-          x, 0, z, // 底部贴着圆盘
-          x, 14.5, z  // 顶部
+          x,
+          0,
+          z, // 底部贴着圆盘
+          x,
+          14.5,
+          z, // 顶部
         ]);
 
-        lineGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        lineGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
         const lineMaterial = new THREE.LineBasicMaterial({
           color: 0x3a9eff,
           transparent: true,
-          opacity: 0.4
+          opacity: 0.4,
         });
 
         const line = new THREE.Line(lineGeometry, lineMaterial);
@@ -1495,7 +1615,7 @@ export default {
           const nodeMaterial = new THREE.MeshBasicMaterial({
             color: 0x66ffff,
             transparent: true,
-            opacity: 0.9
+            opacity: 0.9,
           });
 
           const node = new THREE.Mesh(nodeGeometry, nodeMaterial);
@@ -1506,23 +1626,20 @@ export default {
           if (Math.random() > 0.5) {
             const hLineLength = 0.4 + Math.random() * 0.6; // 更长的连接线
             const hDirection = Math.random() > 0.5 ? 1 : -1;
-            const hAngle = angle + Math.PI / 2 * hDirection;
+            const hAngle = angle + (Math.PI / 2) * hDirection;
 
             const hEndX = x + Math.cos(hAngle) * hLineLength;
             const hEndZ = z + Math.sin(hAngle) * hLineLength;
 
             const hLineGeometry = new THREE.BufferGeometry();
-            const hPositions = new Float32Array([
-              x, y, z,
-              hEndX, y, hEndZ
-            ]);
+            const hPositions = new Float32Array([x, y, z, hEndX, y, hEndZ]);
 
-            hLineGeometry.setAttribute('position', new THREE.BufferAttribute(hPositions, 3));
+            hLineGeometry.setAttribute("position", new THREE.BufferAttribute(hPositions, 3));
 
             const hLineMaterial = new THREE.LineBasicMaterial({
               color: 0x3a9eff,
               transparent: true,
-              opacity: 0.6
+              opacity: 0.6,
             });
 
             const hLine = new THREE.Line(hLineGeometry, hLineMaterial);
@@ -1533,7 +1650,7 @@ export default {
             const endNodeMaterial = new THREE.MeshBasicMaterial({
               color: 0x66ffff,
               transparent: true,
-              opacity: 0.8
+              opacity: 0.8,
             });
 
             const endNode = new THREE.Mesh(endNodeGeometry, endNodeMaterial);
@@ -1554,19 +1671,15 @@ export default {
         // 创建环形
         for (let j = 0; j <= 64; j++) {
           const angle = (j / 64) * Math.PI * 2;
-          ringPoints.push(
-            Math.cos(angle) * radius,
-            y,
-            Math.sin(angle) * radius
-          );
+          ringPoints.push(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
         }
 
-        ringGeometry.setAttribute('position', new THREE.Float32BufferAttribute(ringPoints, 3));
+        ringGeometry.setAttribute("position", new THREE.Float32BufferAttribute(ringPoints, 3));
 
         const ringMaterial = new THREE.LineBasicMaterial({
           color: 0x3a9eff,
           transparent: true,
-          opacity: 0.6
+          opacity: 0.6,
         });
 
         const ring = new THREE.Line(ringGeometry, ringMaterial);
@@ -1594,17 +1707,13 @@ export default {
         const height = baseHeight + Math.random() * 1;
 
         // 圆周分布，半径更大
-        const angle = ((i % 6) / 6) * Math.PI * 2 + (layerIndex * Math.PI / 6);
+        const angle = ((i % 6) / 6) * Math.PI * 2 + (layerIndex * Math.PI) / 6;
         const radius = 2.5 + Math.random() * 1.2; // 更大的半径
 
         nodePositions.push({
-          position: new THREE.Vector3(
-            Math.cos(angle) * radius,
-            height,
-            Math.sin(angle) * radius
-          ),
+          position: new THREE.Vector3(Math.cos(angle) * radius, height, Math.sin(angle) * radius),
           size: 0.1 + Math.random() * 0.1, // 更大的节点尺寸
-          layerIndex
+          layerIndex,
         });
       }
 
@@ -1615,7 +1724,7 @@ export default {
         const nodeMaterial = new THREE.MeshBasicMaterial({
           color: 0x66ffff,
           transparent: true,
-          opacity: 0.9
+          opacity: 0.9,
         });
 
         const nodeMesh = new THREE.Mesh(nodeGeometry, nodeMaterial);
@@ -1625,26 +1734,18 @@ export default {
         // 连接到中心的概率提高
         if (index % 3 === 0 || Math.random() > 0.7) {
           const centerPoint = new THREE.Vector3(0, node.position.y, 0);
-          const midPoint = new THREE.Vector3().lerpVectors(
-            node.position, centerPoint, 0.3
-          );
+          const midPoint = new THREE.Vector3().lerpVectors(node.position, centerPoint, 0.3);
           midPoint.y += 0.5 + Math.random() * 0.5; // 中点向上弯曲更多
 
           // 创建到中心的曲线
-          const curve = new THREE.QuadraticBezierCurve3(
-            node.position,
-            midPoint,
-            centerPoint
-          );
+          const curve = new THREE.QuadraticBezierCurve3(node.position, midPoint, centerPoint);
 
-          const curveGeometry = new THREE.BufferGeometry().setFromPoints(
-            curve.getPoints(20)
-          );
+          const curveGeometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(20));
 
           const curveMaterial = new THREE.LineBasicMaterial({
             color: 0x3a9eff,
             transparent: true,
-            opacity: 0.6
+            opacity: 0.6,
           });
 
           const curveLine = new THREE.Line(curveGeometry, curveMaterial);
@@ -1657,26 +1758,22 @@ export default {
           if (Math.abs(otherNode.layerIndex - node.layerIndex) > 1) return; // 只连接邻近层
           if (Math.random() > 0.5) return; // 50%概率连接
 
-          const midPoint = new THREE.Vector3().lerpVectors(
-            node.position, otherNode.position, 0.5
-          );
+          const midPoint = new THREE.Vector3().lerpVectors(node.position, otherNode.position, 0.5);
           midPoint.y += 0.3 + Math.random() * 0.4; // 让中点向上弯曲
 
           // 创建节点间的曲线
           const curve = new THREE.QuadraticBezierCurve3(
             node.position,
             midPoint,
-            otherNode.position
+            otherNode.position,
           );
 
-          const curveGeometry = new THREE.BufferGeometry().setFromPoints(
-            curve.getPoints(20)
-          );
+          const curveGeometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(20));
 
           const curveMaterial = new THREE.LineBasicMaterial({
             color: 0x3a9eff,
             transparent: true,
-            opacity: 0.4
+            opacity: 0.4,
           });
 
           const curveLine = new THREE.Line(curveGeometry, curveMaterial);
@@ -1728,14 +1825,14 @@ export default {
         sizes[i] = 0.08 + Math.random() * 0.12;
       }
 
-      particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+      particleGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      particleGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      particleGeometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
 
       // 创建着色器材质
       const particleMaterial = new THREE.ShaderMaterial({
         uniforms: {
-          time: { value: 0 }
+          time: { value: 0 },
         },
         vertexShader: `
           attribute float size;
@@ -1769,7 +1866,7 @@ export default {
         blending: THREE.AdditiveBlending,
         depthTest: false,
         transparent: true,
-        vertexColors: true
+        vertexColors: true,
       });
 
       const particles = new THREE.Points(particleGeometry, particleMaterial);
@@ -1787,7 +1884,7 @@ export default {
         color: 0x3a9eff,
         transparent: true,
         opacity: 0.6,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       const ring = new THREE.Mesh(ringGeometry, ringMaterial);
@@ -1801,7 +1898,7 @@ export default {
         color: 0x3a9eff,
         transparent: true,
         opacity: 0.8,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       const innerRing = new THREE.Mesh(innerRingGeometry, innerRingMaterial);
@@ -1815,7 +1912,7 @@ export default {
         color: 0x3a9eff,
         transparent: true,
         opacity: 0.2,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       const platform = new THREE.Mesh(platformGeometry, platformMaterial);
@@ -1832,7 +1929,7 @@ export default {
         color: 0x66ccff,
         transparent: true,
         opacity: 0.8,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       this.scanningRing = new THREE.Mesh(scanGeometry, scanMaterial);
@@ -1846,59 +1943,60 @@ export default {
       // 创建标签位置和内容
       const labelData = [
         // 标签位置和内容 - 使用更合理的屏幕位置
-        { id: '报警事件总数', value: '2342325', position: { left: '6%', top: '17%' } },
-        { id: '算法总数', value: '90280', position: { right: '6%', top: '17%' } },
-        { id: '视频类', value: '2901', position: { left: '4%', top: '39%' } },
-        { id: '视频类设备', value: '5249', position: { right: '4%', top: '39%' } },
-        { id: '图片类', value: '2901', position: { left: '5%', top: '61%' } },
-        { id: '图片类设备', value: '5249', position: { right: '5%', top: '61%' } },
-        { id: '运行中算法', value: '2901', position: { left: '7%', top: '83%' } },
-        { id: '已停止算法', value: '2880', position: { right: '7%', top: '83%' } }
+        { id: "报警事件总数", value: "2342325", position: { left: "6%", top: "17%" } },
+        { id: "算法总数", value: "90280", position: { right: "6%", top: "17%" } },
+        { id: "视频类", value: "2901", position: { left: "4%", top: "39%" } },
+        { id: "视频类设备", value: "5249", position: { right: "4%", top: "39%" } },
+        { id: "图片类", value: "2901", position: { left: "5%", top: "61%" } },
+        { id: "图片类设备", value: "5249", position: { right: "5%", top: "61%" } },
+        { id: "运行中算法", value: "2901", position: { left: "7%", top: "83%" } },
+        { id: "已停止算法", value: "2880", position: { right: "7%", top: "83%" } },
       ];
 
       // 固定位置的标签容器
-      const labelContainer = document.createElement('div');
-      labelContainer.className = 'data-labels-container';
-      labelContainer.style.position = 'absolute';
-      labelContainer.style.top = '0';
-      labelContainer.style.left = '0';
-      labelContainer.style.width = '100%';
-      labelContainer.style.height = '100%';
-      labelContainer.style.overflow = 'hidden';
-      labelContainer.style.pointerEvents = 'none';
-      document.getElementById('threejs-cube').appendChild(labelContainer);
+      const labelContainer = document.createElement("div");
+      labelContainer.className = "data-labels-container";
+      labelContainer.style.position = "absolute";
+      labelContainer.style.top = "0";
+      labelContainer.style.left = "0";
+      labelContainer.style.width = "100%";
+      labelContainer.style.height = "100%";
+      labelContainer.style.overflow = "hidden";
+      labelContainer.style.pointerEvents = "none";
+      document.getElementById("threejs-cube").appendChild(labelContainer);
 
       // 添加标签到HTML容器
       labelData.forEach((data, index) => {
         // 创建标签元素
-        const labelElement = document.createElement('div');
-        labelElement.className = 'fixed-data-label';
-        labelElement.style.position = 'absolute';
-        labelElement.style.padding = '5px 8px';
-        labelElement.style.color = '#fff';
-        labelElement.style.background = 'rgba(0, 20, 50, 0.65)';
-        labelElement.style.border = '1px solid rgba(58, 158, 255, 0.6)';
-        labelElement.style.borderRadius = '2px';
-        labelElement.style.boxShadow = '0 0 6px rgba(58, 158, 255, 0.4)';
-        labelElement.style.width = '140px';
-        labelElement.style.fontSize = '10px';
-        labelElement.style.transition = 'all 0.3s';
-        labelElement.style.opacity = '0';
-        labelElement.style.transform = 'scale(0.85)';
-        labelElement.style.backdropFilter = 'blur(2px)';
-        labelElement.style.WebkitBackdropFilter = 'blur(2px)';
-        labelElement.style.pointerEvents = 'auto';
+        const labelElement = document.createElement("div");
+        labelElement.className = "fixed-data-label";
+        labelElement.style.position = "absolute";
+        labelElement.style.padding = "5px 8px";
+        labelElement.style.color = "#fff";
+        labelElement.style.background = "rgba(0, 20, 50, 0.65)";
+        labelElement.style.border = "1px solid rgba(58, 158, 255, 0.6)";
+        labelElement.style.borderRadius = "2px";
+        labelElement.style.boxShadow = "0 0 6px rgba(58, 158, 255, 0.4)";
+        labelElement.style.width = "140px";
+        labelElement.style.fontSize = "10px";
+        labelElement.style.transition = "all 0.3s";
+        labelElement.style.opacity = "0";
+        labelElement.style.transform = "scale(0.85)";
+        labelElement.style.backdropFilter = "blur(2px)";
+        labelElement.style.WebkitBackdropFilter = "blur(2px)";
+        labelElement.style.pointerEvents = "auto";
 
         // 设置固定位置
-        Object.keys(data.position).forEach(key => {
+        Object.keys(data.position).forEach((key) => {
           labelElement.style[key] = data.position[key];
         });
 
         // 根据标签不同类型调整样式
-        if (index < 2) { // 顶部标签 - 报警事件总数和算法总数
-          labelElement.style.minHeight = '44px';
+        if (index < 2) {
+          // 顶部标签 - 报警事件总数和算法总数
+          labelElement.style.minHeight = "44px";
         } else {
-          labelElement.style.minHeight = '36px';
+          labelElement.style.minHeight = "36px";
         }
 
         // 添加科技感标签内容
@@ -1920,56 +2018,63 @@ export default {
         `;
 
         // 添加连接线
-        const lineElement = document.createElement('div');
-        lineElement.className = 'connector-line';
-        lineElement.style.position = 'absolute';
-        lineElement.style.height = '1px';
-        lineElement.style.width = '30px';
-        lineElement.style.top = '50%';
+        const lineElement = document.createElement("div");
+        lineElement.className = "connector-line";
+        lineElement.style.position = "absolute";
+        lineElement.style.height = "1px";
+        lineElement.style.width = "30px";
+        lineElement.style.top = "50%";
 
         // 设置左右两侧线条样式
-        if (index % 2 === 0) { // 左侧标签
-          lineElement.style.right = '-30px';
-          lineElement.style.background = 'linear-gradient(to right, rgba(58,158,255,0.8), rgba(58,158,255,0))';
-        } else { // 右侧标签
-          lineElement.style.left = '-30px';
-          lineElement.style.background = 'linear-gradient(to left, rgba(58,158,255,0.8), rgba(58,158,255,0))';
+        if (index % 2 === 0) {
+          // 左侧标签
+          lineElement.style.right = "-30px";
+          lineElement.style.background =
+            "linear-gradient(to right, rgba(58,158,255,0.8), rgba(58,158,255,0))";
+        } else {
+          // 右侧标签
+          lineElement.style.left = "-30px";
+          lineElement.style.background =
+            "linear-gradient(to left, rgba(58,158,255,0.8), rgba(58,158,255,0))";
         }
 
         // 添加脉冲点
-        const pulseElement = document.createElement('div');
-        pulseElement.className = 'pulse-dot';
-        pulseElement.style.position = 'absolute';
-        pulseElement.style.width = '4px';
-        pulseElement.style.height = '4px';
-        pulseElement.style.borderRadius = '50%';
-        pulseElement.style.backgroundColor = '#3a9eff';
-        pulseElement.style.top = '50%';
-        pulseElement.style.transform = 'translateY(-50%)';
-        pulseElement.style.boxShadow = '0 0 4px #3a9eff';
+        const pulseElement = document.createElement("div");
+        pulseElement.className = "pulse-dot";
+        pulseElement.style.position = "absolute";
+        pulseElement.style.width = "4px";
+        pulseElement.style.height = "4px";
+        pulseElement.style.borderRadius = "50%";
+        pulseElement.style.backgroundColor = "#3a9eff";
+        pulseElement.style.top = "50%";
+        pulseElement.style.transform = "translateY(-50%)";
+        pulseElement.style.boxShadow = "0 0 4px #3a9eff";
         pulseElement.style.animation = `pulse-${index} 2s infinite`;
 
-        if (index % 2 === 0) { // 左侧标签
-          pulseElement.style.right = '-2px';
-        } else { // 右侧标签
-          pulseElement.style.left = '-2px';
+        if (index % 2 === 0) {
+          // 左侧标签
+          pulseElement.style.right = "-2px";
+        } else {
+          // 右侧标签
+          pulseElement.style.left = "-2px";
         }
 
         // 创建扫描线效果
-        const scanElement = document.createElement('div');
-        scanElement.className = 'scan-line';
-        scanElement.style.position = 'absolute';
-        scanElement.style.top = '0';
-        scanElement.style.bottom = '0';
-        scanElement.style.left = '0';
-        scanElement.style.width = '100%';
-        scanElement.style.background = 'linear-gradient(to bottom, rgba(58,158,255,0) 0%, rgba(58,158,255,0.1) 50%, rgba(58,158,255,0) 100%)';
+        const scanElement = document.createElement("div");
+        scanElement.className = "scan-line";
+        scanElement.style.position = "absolute";
+        scanElement.style.top = "0";
+        scanElement.style.bottom = "0";
+        scanElement.style.left = "0";
+        scanElement.style.width = "100%";
+        scanElement.style.background =
+          "linear-gradient(to bottom, rgba(58,158,255,0) 0%, rgba(58,158,255,0.1) 50%, rgba(58,158,255,0) 100%)";
         scanElement.style.animation = `scan-${index} 3s linear infinite`;
-        scanElement.style.pointerEvents = 'none';
-        scanElement.style.opacity = '0.6';
+        scanElement.style.pointerEvents = "none";
+        scanElement.style.opacity = "0.6";
 
         // 创建动画样式
-        const styleElement = document.createElement('style');
+        const styleElement = document.createElement("style");
         styleElement.textContent = `
           @keyframes pulse-${index} {
             0% { box-shadow: 0 0 4px rgba(58, 158, 255, 0.7); }
@@ -1990,29 +2095,29 @@ export default {
         labelContainer.appendChild(labelElement);
 
         // 标签悬停效果
-        labelElement.addEventListener('mouseenter', () => {
-          labelElement.style.transform = 'scale(1)';
-          labelElement.style.zIndex = '10';
-          labelElement.style.background = 'rgba(0, 30, 70, 0.85)';
-          labelElement.style.boxShadow = '0 0 12px rgba(58, 158, 255, 0.7)';
+        labelElement.addEventListener("mouseenter", () => {
+          labelElement.style.transform = "scale(1)";
+          labelElement.style.zIndex = "10";
+          labelElement.style.background = "rgba(0, 30, 70, 0.85)";
+          labelElement.style.boxShadow = "0 0 12px rgba(58, 158, 255, 0.7)";
         });
 
-        labelElement.addEventListener('mouseleave', () => {
-          labelElement.style.transform = 'scale(0.85)';
-          labelElement.style.zIndex = '1';
-          labelElement.style.background = 'rgba(0, 20, 50, 0.65)';
-          labelElement.style.boxShadow = '0 0 6px rgba(58, 158, 255, 0.4)';
+        labelElement.addEventListener("mouseleave", () => {
+          labelElement.style.transform = "scale(0.85)";
+          labelElement.style.zIndex = "1";
+          labelElement.style.background = "rgba(0, 20, 50, 0.65)";
+          labelElement.style.boxShadow = "0 0 6px rgba(58, 158, 255, 0.4)";
         });
       });
 
       // 保存标签元素引用
-      this.labelElements = Array.from(labelContainer.querySelectorAll('.fixed-data-label'));
+      this.labelElements = Array.from(labelContainer.querySelectorAll(".fixed-data-label"));
 
       // 延迟显示标签，产生淡入效果
       setTimeout(() => {
         this.labelElements.forEach((el, index) => {
           setTimeout(() => {
-            el.style.opacity = '1';
+            el.style.opacity = "1";
           }, index * 120); // 依次显示标签
         });
       }, 500);
@@ -2021,20 +2126,20 @@ export default {
     // 创建单个标签实体
     createLabelEntity(id, value, sub, sub2) {
       // 创建Canvas用于绘制标签
-      const canvas = document.createElement('canvas');
+      const canvas = document.createElement("canvas");
 
       // 所有标签使用相同大小
       canvas.width = 256;
       canvas.height = 128;
 
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext("2d");
 
       // 绘制背景 - 透明度降低
-      context.fillStyle = 'rgba(0, 10, 25, 0.4)';
+      context.fillStyle = "rgba(0, 10, 25, 0.4)";
       context.fillRect(0, 0, canvas.width, canvas.height);
 
       // 添加边框和装饰元素
-      context.strokeStyle = '#3a9eff';
+      context.strokeStyle = "#3a9eff";
       context.lineWidth = 1;
       context.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
 
@@ -2042,13 +2147,13 @@ export default {
       const lineCount = 10;
       const lineWidth = (canvas.width - 40) / (lineCount * 2 - 1);
       for (let i = 0; i < lineCount; i++) {
-        context.fillStyle = '#3a9eff';
+        context.fillStyle = "#3a9eff";
         context.fillRect(20 + i * lineWidth * 2, 2, lineWidth, 2);
       }
 
       // 下边的小线条装饰
       for (let i = 0; i < lineCount; i++) {
-        context.fillStyle = '#3a9eff';
+        context.fillStyle = "#3a9eff";
         context.fillRect(20 + i * lineWidth * 2, canvas.height - 4, lineWidth, 2);
       }
 
@@ -2078,34 +2183,34 @@ export default {
 
       // 添加文本 - ID
       context.font = '16px "Microsoft YaHei", Arial, sans-serif';
-      context.fillStyle = '#FFFFFF';
-      context.textAlign = 'center';
+      context.fillStyle = "#FFFFFF";
+      context.textAlign = "center";
       context.fillText(id, canvas.width / 2, 25);
 
       // 添加数值 - 大号字体
-      context.fillStyle = '#3a9eff';
+      context.fillStyle = "#3a9eff";
       context.font = 'bold 38px "Digital-7", Arial, sans-serif';
       context.fillText(value, canvas.width / 2, 70);
 
       // 添加左侧子项
       if (sub) {
         context.font = '14px "Microsoft YaHei", Arial, sans-serif';
-        context.fillStyle = '#FFFFFF';
-        context.textAlign = 'left';
+        context.fillStyle = "#FFFFFF";
+        context.textAlign = "left";
         context.fillText(sub.name, 20, 100);
 
-        context.fillStyle = '#3a9eff';
+        context.fillStyle = "#3a9eff";
         context.fillText(sub.value, 20, 118);
       }
 
       // 添加右侧子项
       if (sub2) {
         context.font = '14px "Microsoft YaHei", Arial, sans-serif';
-        context.fillStyle = '#FFFFFF';
-        context.textAlign = 'right';
+        context.fillStyle = "#FFFFFF";
+        context.textAlign = "right";
         context.fillText(sub2.name, canvas.width - 20, 100);
 
-        context.fillStyle = '#3a9eff';
+        context.fillStyle = "#3a9eff";
         context.fillText(sub2.value, canvas.width - 20, 118);
       }
 
@@ -2119,7 +2224,7 @@ export default {
         map: texture,
         transparent: true,
         opacity: 0.9,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       });
 
       return new THREE.Mesh(labelGeometry, labelMaterial);
@@ -2163,32 +2268,26 @@ export default {
         circuitPoints.push({
           start: new THREE.Vector3(startX, startY, startZ),
           mid: new THREE.Vector3(midX, midY, midZ),
-          end: new THREE.Vector3(endX, endY, endZ)
+          end: new THREE.Vector3(endX, endY, endZ),
         });
       }
 
       // 创建电路线
       const circuitGroup = new THREE.Group();
 
-      circuitPoints.forEach(points => {
+      circuitPoints.forEach((points) => {
         // 创建曲线
-        const curve = new THREE.QuadraticBezierCurve3(
-          points.start,
-          points.mid,
-          points.end
-        );
+        const curve = new THREE.QuadraticBezierCurve3(points.start, points.mid, points.end);
 
         // 创建几何体
-        const geometry = new THREE.BufferGeometry().setFromPoints(
-          curve.getPoints(20)
-        );
+        const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(20));
 
         // 创建材质 - 随机颜色
         const colorIntensity = 0.5 + Math.random() * 0.5;
         const material = new THREE.LineBasicMaterial({
           color: new THREE.Color(0.2 * colorIntensity, 0.6 * colorIntensity, 1.0 * colorIntensity),
           transparent: true,
-          opacity: 0.3 + Math.random() * 0.3
+          opacity: 0.3 + Math.random() * 0.3,
         });
 
         // 创建线条
@@ -2201,7 +2300,7 @@ export default {
           const dotMaterial = new THREE.MeshBasicMaterial({
             color: 0x66ccff,
             transparent: true,
-            opacity: 0.8
+            opacity: 0.8,
           });
           const dot = new THREE.Mesh(dotGeometry, dotMaterial);
           dot.position.copy(points.end);
@@ -2343,7 +2442,7 @@ export default {
     handleResize() {
       // 更新渲染器和相机
       if (this.cubeRenderer && this.cubeCamera) {
-        const container = document.getElementById('threejs-cube');
+        const container = document.getElementById("threejs-cube");
         if (container) {
           this.cubeCamera.aspect = container.clientWidth / container.clientHeight;
           this.cubeCamera.updateProjectionMatrix();
@@ -2373,16 +2472,16 @@ export default {
       this.initialPosY = this.myAlgorithms[index].y;
 
       // 添加移动和停止拖拽的事件监听
-      document.addEventListener('mousemove', this.onDrag);
-      document.addEventListener('mouseup', this.stopDrag);
+      document.addEventListener("mousemove", this.onDrag);
+      document.addEventListener("mouseup", this.stopDrag);
 
       // 设置被拖拽的元素样式
-      const element = event.target.closest('.algorithm-bubble');
+      const element = event.target.closest(".algorithm-bubble");
       if (element) {
-        element.style.animation = 'none';
-        element.style.transform = 'scale(1.1)';
-        element.style.zIndex = '100';
-        element.style.boxShadow = '0 0 20px rgba(30, 144, 255, 0.8)';
+        element.style.animation = "none";
+        element.style.transform = "scale(1.1)";
+        element.style.zIndex = "100";
+        element.style.boxShadow = "0 0 20px rgba(30, 144, 255, 0.8)";
       }
     },
 
@@ -2391,7 +2490,7 @@ export default {
       if (this.currentDragIndex === undefined) return;
 
       // 获取容器
-      const container = document.getElementById('algorithm-container');
+      const container = document.getElementById("algorithm-container");
       if (!container) return;
 
       // 计算容器的尺寸
@@ -2419,25 +2518,27 @@ export default {
       if (this.currentDragIndex === undefined) return;
 
       // 恢复动画
-      const element = document.querySelector(`.algorithm-bubble:nth-child(${this.currentDragIndex + 1})`);
+      const element = document.querySelector(
+        `.algorithm-bubble:nth-child(${this.currentDragIndex + 1})`,
+      );
       if (element) {
         const algo = this.myAlgorithms[this.currentDragIndex];
         element.style.animation = `floating ${algo.animTime}s ease-in-out infinite`;
-        element.style.transform = '';
-        element.style.zIndex = '';
-        element.style.boxShadow = '';
+        element.style.transform = "";
+        element.style.zIndex = "";
+        element.style.boxShadow = "";
       }
 
       // 移除事件监听
-      document.removeEventListener('mousemove', this.onDrag);
-      document.removeEventListener('mouseup', this.stopDrag);
+      document.removeEventListener("mousemove", this.onDrag);
+      document.removeEventListener("mouseup", this.stopDrag);
 
       // 重置当前拖拽索引
       this.currentDragIndex = undefined;
     },
     // 初始化算法球体
     initAlgorithmSphere() {
-      const container = document.getElementById('algorithm-sphere-container');
+      const container = document.getElementById("algorithm-sphere-container");
       if (!container) return;
 
       // 创建场景
@@ -2453,12 +2554,12 @@ export default {
       this.algoRenderer = new THREE.WebGLRenderer({
         antialias: true,
         alpha: true,
-        powerPreference: 'high-performance' // 提高性能
+        powerPreference: "high-performance", // 提高性能
       });
       this.algoRenderer.setSize(width, height);
       this.algoRenderer.setClearColor(0x000000, 0);
       this.algoRenderer.setPixelRatio(window.devicePixelRatio); // 根据设备像素比设置
-      container.innerHTML = ''; // 清空容器，防止重复添加
+      container.innerHTML = ""; // 清空容器，防止重复添加
       container.appendChild(this.algoRenderer.domElement);
 
       // 创建球体组
@@ -2489,7 +2590,7 @@ export default {
       // this.algoControls.maxPolarAngle = Math.PI * 0.8;
 
       // 监听窗口大小变化
-      window.addEventListener('resize', this.handleAlgoResize);
+      window.addEventListener("resize", this.handleAlgoResize);
 
       // 开始动画循环
       this.animateAlgorithmSphere();
@@ -2520,7 +2621,7 @@ export default {
         const material = new THREE.ShaderMaterial({
           uniforms: {
             color: { value: color },
-            time: { value: 0 }
+            time: { value: 0 },
           },
           vertexShader: `
             varying vec2 vUv;
@@ -2563,7 +2664,7 @@ export default {
               gl_FragColor = vec4(finalColor + glow, 0.92);
             }
           `,
-          transparent: true
+          transparent: true,
         });
 
         // 创建气泡
@@ -2580,8 +2681,8 @@ export default {
     // 创建文本标签
     createTextLabel(algo, bubble) {
       // 创建2D画布
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
       canvas.width = 512; // 保持高分辨率
       canvas.height = 256;
 
@@ -2589,14 +2690,14 @@ export default {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // 绘制算法ID，不使用阴影
-      ctx.font = 'bold 72px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = 'white';
+      ctx.font = "bold 72px Arial";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "white";
       ctx.fillText(algo.id, canvas.width / 2, 110);
 
       // 绘制算法名称，不使用阴影
-      ctx.font = 'bold 40px Arial';
-      ctx.fillStyle = 'white';
+      ctx.font = "bold 40px Arial";
+      ctx.fillStyle = "white";
       ctx.fillText(algo.name, canvas.width / 2, 170);
 
       // 创建纹理
@@ -2610,7 +2711,7 @@ export default {
         map: texture,
         transparent: true,
         depthTest: false,
-        sizeAttenuation: true
+        sizeAttenuation: true,
       });
 
       // 创建精灵
@@ -2628,7 +2729,7 @@ export default {
       const phi = Math.PI * (3 - Math.sqrt(5)); // 黄金角
 
       for (let i = 0; i < n; i++) {
-        const y = 1 - (i / (n - 1)) * 2;  // y从1到-1
+        const y = 1 - (i / (n - 1)) * 2; // y从1到-1
         const radiusAtY = Math.sqrt(1 - y * y); // 半径在该y位置
 
         const theta = phi * i; // 黄金角旋转
@@ -2646,7 +2747,7 @@ export default {
     handleAlgoResize() {
       if (!this.algoRenderer || !this.algoCamera) return;
 
-      const container = document.getElementById('algorithm-sphere-container');
+      const container = document.getElementById("algorithm-sphere-container");
       if (!container) return;
 
       const width = container.clientWidth;
@@ -2682,7 +2783,7 @@ export default {
 
       // 更新着色器中的时间
       const time = performance.now() * 0.001;
-      this.algoSphereGroup.children.forEach(child => {
+      this.algoSphereGroup.children.forEach((child) => {
         if (child.material && child.material.uniforms && child.material.uniforms.time) {
           child.material.uniforms.time.value = time;
         }
@@ -2699,14 +2800,14 @@ export default {
 
     // 处理全屏变化事件
     handleFullscreenChange() {
-      const navBar = document.querySelector('.el-header');
+      const navBar = document.querySelector(".el-header");
 
       if (!document.fullscreenElement) {
         // 退出全屏时显示导航栏
-        if (navBar) navBar.style.display = '';
+        if (navBar) navBar.style.display = "";
       } else {
         // 进入全屏时隐藏导航栏
-        if (navBar) navBar.style.display = 'none';
+        if (navBar) navBar.style.display = "none";
       }
     },
 
@@ -2724,58 +2825,58 @@ export default {
     showTooltip(text, percentage, event) {
       this.tooltipText = `${text}: ${percentage}%`;
       this.tooltipVisible = true;
-      
+
       if (event) {
-        const donutChart = event.target.closest('.donut-chart');
+        const donutChart = event.target.closest(".donut-chart");
         if (donutChart) {
           const donutRect = donutChart.getBoundingClientRect();
           const centerX = donutRect.width / 2;
           const centerY = donutRect.height / 2;
-          
+
           // 计算鼠标相对于圆心的位置
           const mouseX = event.clientX - donutRect.left;
           const mouseY = event.clientY - donutRect.top;
-          
+
           // 计算鼠标到圆心的向量
           const vectorX = mouseX - centerX;
           const vectorY = mouseY - centerY;
-          
+
           // 归一化向量并延长到圆环外
           const length = Math.sqrt(vectorX * vectorX + vectorY * vectorY);
           const normalizedX = vectorX / length;
           const normalizedY = vectorY / length;
-          
+
           // 计算tooltip位置，将其放在圆环外一定距离
           const radius = donutRect.width / 2;
           const tooltipX = centerX + normalizedX * (radius * 1.5);
           const tooltipY = centerY + normalizedY * (radius * 1.5);
-          
+
           // 覆盖默认样式，删除居中定位
           this.tooltipStyle = {
-            position: 'absolute',
+            position: "absolute",
             top: `${tooltipY}px`,
             left: `${tooltipX}px`,
-            transform: 'translate(-50%, -50%)',
-            backgroundColor: 'rgba(0, 20, 40, 0.9)',
-            color: '#fff',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            zIndex: '100',
-            border: '1px solid rgba(65, 120, 255, 0.5)',
-            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.5)',
-            pointerEvents: 'none'
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "rgba(0, 20, 40, 0.9)",
+            color: "#fff",
+            padding: "8px 12px",
+            borderRadius: "4px",
+            fontSize: "14px",
+            fontWeight: "bold",
+            whiteSpace: "nowrap",
+            zIndex: "100",
+            border: "1px solid rgba(65, 120, 255, 0.5)",
+            boxShadow: "0 2px 10px rgba(0, 0, 0, 0.5)",
+            pointerEvents: "none",
           };
         }
       }
     },
     hideTooltip() {
       this.tooltipVisible = false;
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -2791,7 +2892,7 @@ export default {
   /* 保留垂直滚动 */
   overflow-x: hidden;
   /* 隐藏水平滚动 */
-  background-image: url('/img/bg-pattern.png');
+  background-image: url("/img/bg-pattern.png");
   padding: 0;
   margin: 0;
   display: flex;
@@ -2850,11 +2951,13 @@ export default {
   padding: 8px 0;
   position: relative;
   z-index: 10;
-  background: linear-gradient(to right,
-      rgba(0, 0, 0, 0),
-      rgba(10, 35, 75, 0.7) 20%,
-      rgba(10, 35, 75, 0.7) 80%,
-      rgba(0, 0, 0, 0));
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0),
+    rgba(10, 35, 75, 0.7) 20%,
+    rgba(10, 35, 75, 0.7) 80%,
+    rgba(0, 0, 0, 0)
+  );
   flex: 0 0 auto;
 }
 
@@ -2907,7 +3010,7 @@ export default {
 
 /* 卡片头部蓝色边框 */
 .dashboard-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -2918,7 +3021,7 @@ export default {
 
 /* 卡片蓝色边角 */
 .dashboard-card::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -2946,7 +3049,7 @@ export default {
 }
 
 .card-header .title::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 2px;
@@ -3034,7 +3137,7 @@ export default {
 }
 
 .master-icon::before {
-  content: '';
+  content: "";
   position: absolute;
   width: 16px;
   height: 16px;
@@ -3043,7 +3146,7 @@ export default {
 }
 
 .node-icon::before {
-  content: '';
+  content: "";
   position: absolute;
   width: 16px;
   height: 16px;
@@ -3067,12 +3170,14 @@ export default {
   left: 0;
   width: 100%;
   height: 1px;
-  background: linear-gradient(90deg, 
-    rgba(30, 80, 150, 0) 0%, 
-    rgba(65, 120, 255, 0.5) 20%, 
-    rgba(65, 120, 255, 0.8) 50%, 
-    rgba(65, 120, 255, 0.5) 80%, 
-    rgba(30, 80, 150, 0) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(30, 80, 150, 0) 0%,
+    rgba(65, 120, 255, 0.5) 20%,
+    rgba(65, 120, 255, 0.8) 50%,
+    rgba(65, 120, 255, 0.5) 80%,
+    rgba(30, 80, 150, 0) 100%
+  );
 }
 
 .resource-labels {
@@ -3136,7 +3241,8 @@ export default {
   align-items: center;
   justify-content: center;
   overflow: visible;
-  box-shadow: 0 0 15px rgba(0, 10, 30, 0.5),
+  box-shadow:
+    0 0 15px rgba(0, 10, 30, 0.5),
     inset 0 0 15px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(5px);
 }
@@ -3156,26 +3262,34 @@ export default {
 }
 
 .percentage-ring.cpu {
-  background: conic-gradient(rgba(62, 174, 249, 0.95) var(--progress, 74.484deg),
-      rgba(62, 174, 249, 0.15) var(--progress, 74.484deg));
+  background: conic-gradient(
+    rgba(62, 174, 249, 0.95) var(--progress, 74.484deg),
+    rgba(62, 174, 249, 0.15) var(--progress, 74.484deg)
+  );
   box-shadow: 0 0 20px rgba(62, 174, 249, 0.3);
 }
 
 .percentage-ring.disk {
-  background: conic-gradient(rgba(255, 156, 56, 0.95) var(--progress, 231.66deg),
-      rgba(255, 156, 56, 0.15) var(--progress, 231.66deg));
+  background: conic-gradient(
+    rgba(255, 156, 56, 0.95) var(--progress, 231.66deg),
+    rgba(255, 156, 56, 0.15) var(--progress, 231.66deg)
+  );
   box-shadow: 0 0 20px rgba(255, 156, 56, 0.3);
 }
 
 .percentage-ring.memory {
-  background: conic-gradient(rgba(41, 222, 156, 0.95) var(--progress, 164.16deg),
-      rgba(41, 222, 156, 0.15) var(--progress, 164.16deg));
+  background: conic-gradient(
+    rgba(41, 222, 156, 0.95) var(--progress, 164.16deg),
+    rgba(41, 222, 156, 0.15) var(--progress, 164.16deg)
+  );
   box-shadow: 0 0 20px rgba(41, 222, 156, 0.3);
 }
 
 .percentage-ring.gpu {
-  background: conic-gradient(rgba(255, 90, 90, 0.95) var(--progress, 332.424deg),
-      rgba(255, 90, 90, 0.15) var(--progress, 332.424deg));
+  background: conic-gradient(
+    rgba(255, 90, 90, 0.95) var(--progress, 332.424deg),
+    rgba(255, 90, 90, 0.15) var(--progress, 332.424deg)
+  );
   box-shadow: 0 0 20px rgba(255, 90, 90, 0.3);
 }
 
@@ -3184,9 +3298,7 @@ export default {
   width: 85%;
   height: 85%;
   border-radius: 50%;
-  background: linear-gradient(145deg,
-      rgba(5, 16, 39, 0.9),
-      rgba(5, 20, 50, 0.7));
+  background: linear-gradient(145deg, rgba(5, 16, 39, 0.9), rgba(5, 20, 50, 0.7));
   position: relative;
   z-index: 3;
   overflow: hidden;
@@ -3210,30 +3322,22 @@ export default {
 }
 
 .liquid-container.cpu {
-  background: linear-gradient(to bottom,
-      rgba(62, 174, 249, 0.1),
-      rgba(62, 174, 249, 0.3));
+  background: linear-gradient(to bottom, rgba(62, 174, 249, 0.1), rgba(62, 174, 249, 0.3));
   box-shadow: 0 0 10px rgba(62, 174, 249, 0.2);
 }
 
 .liquid-container.disk {
-  background: linear-gradient(to bottom,
-      rgba(255, 156, 56, 0.1),
-      rgba(255, 156, 56, 0.3));
+  background: linear-gradient(to bottom, rgba(255, 156, 56, 0.1), rgba(255, 156, 56, 0.3));
   box-shadow: 0 0 10px rgba(255, 156, 56, 0.2);
 }
 
 .liquid-container.memory {
-  background: linear-gradient(to bottom,
-      rgba(41, 222, 156, 0.1),
-      rgba(41, 222, 156, 0.3));
+  background: linear-gradient(to bottom, rgba(41, 222, 156, 0.1), rgba(41, 222, 156, 0.3));
   box-shadow: 0 0 10px rgba(41, 222, 156, 0.2);
 }
 
 .liquid-container.gpu {
-  background: linear-gradient(to bottom,
-      rgba(255, 90, 90, 0.1),
-      rgba(255, 90, 90, 0.3));
+  background: linear-gradient(to bottom, rgba(255, 90, 90, 0.1), rgba(255, 90, 90, 0.3));
   box-shadow: 0 0 10px rgba(255, 90, 90, 0.2);
 }
 
@@ -3360,7 +3464,7 @@ export default {
 
 /* 科技感增强 */
 .chart-container::after {
-  content: '';
+  content: "";
   position: absolute;
   top: -2px;
   left: -2px;
@@ -3373,7 +3477,7 @@ export default {
 }
 
 .chart-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -1px;
   left: -1px;
@@ -3403,16 +3507,18 @@ export default {
 }
 
 .more-btn::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   bottom: 0;
   width: 100%;
   height: 1px;
-  background: linear-gradient(to right,
-      rgba(30, 144, 255, 0),
-      rgba(30, 144, 255, 0.5),
-      rgba(30, 144, 255, 0));
+  background: linear-gradient(
+    to right,
+    rgba(30, 144, 255, 0),
+    rgba(30, 144, 255, 0.5),
+    rgba(30, 144, 255, 0)
+  );
 }
 
 .more-btn:hover {
@@ -3538,7 +3644,7 @@ export default {
 }
 
 .stat-box::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -3554,7 +3660,7 @@ export default {
 }
 
 .digital-number {
-  font-family: 'Digital-7', monospace;
+  font-family: "Digital-7", monospace;
   font-size: 24px;
   color: #ffffff;
   letter-spacing: 2px;
@@ -3597,11 +3703,16 @@ export default {
 }
 
 .stat-box::before {
-  content: '';
+  content: "";
   position: absolute;
   width: 100%;
   height: 3px;
-  background: linear-gradient(90deg, rgba(0, 149, 255, 0), rgba(0, 149, 255, 0.9), rgba(0, 149, 255, 0));
+  background: linear-gradient(
+    90deg,
+    rgba(0, 149, 255, 0),
+    rgba(0, 149, 255, 0.9),
+    rgba(0, 149, 255, 0)
+  );
   top: 0;
   left: 0;
 }
@@ -3613,7 +3724,7 @@ export default {
 }
 
 .digital-number {
-  font-family: 'Digital-7', 'Orbitron', monospace;
+  font-family: "Digital-7", "Orbitron", monospace;
   font-size: 28px;
   color: #2bbdff;
   letter-spacing: 2px;
@@ -3725,21 +3836,23 @@ export default {
 }
 
 .cube-face::before {
-  content: '';
+  content: "";
   position: absolute;
   width: 100%;
   height: 100%;
   top: 0;
   left: 0;
-  background-image: linear-gradient(135deg,
-      rgba(43, 189, 255, 0.3) 0%,
-      rgba(43, 189, 255, 0.1) 50%,
-      rgba(43, 189, 255, 0.3) 100%);
+  background-image: linear-gradient(
+    135deg,
+    rgba(43, 189, 255, 0.3) 0%,
+    rgba(43, 189, 255, 0.1) 50%,
+    rgba(43, 189, 255, 0.3) 100%
+  );
   opacity: 0.4;
 }
 
 .cube-face::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 90%;
   height: 90%;
@@ -3793,7 +3906,7 @@ export default {
 }
 
 .cube-icon::before {
-  content: '';
+  content: "";
   position: absolute;
   width: 100%;
   height: 100%;
@@ -3803,7 +3916,7 @@ export default {
 }
 
 .cube-icon::after {
-  content: '数据';
+  content: "数据";
   position: absolute;
   width: 80%;
   height: 80%;
@@ -3860,18 +3973,23 @@ export default {
 }
 
 .platform-surface::before {
-  content: '';
+  content: "";
   position: absolute;
   width: 100%;
   height: 100%;
   top: 0;
   left: 0;
-  background-image: radial-gradient(circle at 50% 50%, rgba(43, 189, 255, 0.2) 0%, rgba(43, 189, 255, 0.1) 20%, rgba(9, 30, 66, 0.1) 60%);
+  background-image: radial-gradient(
+    circle at 50% 50%,
+    rgba(43, 189, 255, 0.2) 0%,
+    rgba(43, 189, 255, 0.1) 20%,
+    rgba(9, 30, 66, 0.1) 60%
+  );
   pointer-events: none;
 }
 
 .platform-surface::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 100%;
   height: 100%;
@@ -3978,29 +4096,31 @@ export default {
 }
 
 .tag-content::before {
-  content: '';
+  content: "";
   position: absolute;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg,
-      rgba(43, 189, 255, 0.05) 0%,
-      rgba(43, 189, 255, 0.1) 10%,
-      rgba(43, 189, 255, 0.05) 20%,
-      rgba(43, 189, 255, 0.05) 30%,
-      rgba(43, 189, 255, 0.1) 40%,
-      rgba(43, 189, 255, 0.05) 50%,
-      rgba(43, 189, 255, 0.05) 60%,
-      rgba(43, 189, 255, 0.1) 70%,
-      rgba(43, 189, 255, 0.05) 80%,
-      rgba(43, 189, 255, 0.1) 90%,
-      rgba(43, 189, 255, 0.05) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(43, 189, 255, 0.05) 0%,
+    rgba(43, 189, 255, 0.1) 10%,
+    rgba(43, 189, 255, 0.05) 20%,
+    rgba(43, 189, 255, 0.05) 30%,
+    rgba(43, 189, 255, 0.1) 40%,
+    rgba(43, 189, 255, 0.05) 50%,
+    rgba(43, 189, 255, 0.05) 60%,
+    rgba(43, 189, 255, 0.1) 70%,
+    rgba(43, 189, 255, 0.05) 80%,
+    rgba(43, 189, 255, 0.1) 90%,
+    rgba(43, 189, 255, 0.05) 100%
+  );
   top: 0;
   left: 0;
   opacity: 0.5;
 }
 
 .tag-content::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   right: 0;
@@ -4203,11 +4323,13 @@ export default {
   position: absolute;
   width: 1px;
   height: 300px;
-  background: linear-gradient(to bottom,
-      rgba(43, 189, 255, 0),
-      rgba(43, 189, 255, 0.7),
-      rgba(43, 189, 255, 0.4),
-      rgba(43, 189, 255, 0));
+  background: linear-gradient(
+    to bottom,
+    rgba(43, 189, 255, 0),
+    rgba(43, 189, 255, 0.7),
+    rgba(43, 189, 255, 0.4),
+    rgba(43, 189, 255, 0)
+  );
   animation: linePulse 4s ease-in-out infinite;
 }
 
@@ -4279,7 +4401,11 @@ export default {
   position: relative;
   background-color: rgba(0, 15, 30, 0.6);
   overflow: hidden;
-  background-image: radial-gradient(circle at center, rgba(10, 50, 100, 0.3) 0%, rgba(0, 15, 30, 0.8) 100%);
+  background-image: radial-gradient(
+    circle at center,
+    rgba(10, 50, 100, 0.3) 0%,
+    rgba(0, 15, 30, 0.8) 100%
+  );
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4296,7 +4422,11 @@ export default {
   transition: transform 0.2s ease-out;
   text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
   box-shadow: 0 0 15px rgba(30, 144, 255, 0.4);
-  background: radial-gradient(ellipse at center, rgba(90, 140, 250, 0.9) 0%, rgba(30, 100, 200, 0.8) 70%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(90, 140, 250, 0.9) 0%,
+    rgba(30, 100, 200, 0.8) 70%
+  );
   user-select: none;
   border: 1px solid rgba(120, 160, 255, 0.5);
 }
@@ -4354,7 +4484,7 @@ export default {
   grid-column: 1;
   grid-row: 1;
   background-color: #0c1932;
-  background-image: url('/img/traffic.jpg');
+  background-image: url("/img/traffic.jpg");
   background-size: cover;
   background-position: center;
   border: 1px solid #1c3f6e;
@@ -4374,18 +4504,18 @@ export default {
 .thumbnail-item {
   flex: 1;
   background-color: #0c1932;
-  background-image: url('/img/traffic-3.jpg');
+  background-image: url("/img/traffic-3.jpg");
   background-size: cover;
   background-position: center;
   border: 1px solid #1c3f6e;
 }
 
 .thumbnail-item:nth-child(2) {
-  background-image: url('/img/traffic-1.jpg');
+  background-image: url("/img/traffic-1.jpg");
 }
 
 .thumbnail-item:nth-child(3) {
-  background-image: url('/img/traffic-2.jpg');
+  background-image: url("/img/traffic-2.jpg");
 }
 
 .event-info-area {
@@ -4453,14 +4583,19 @@ export default {
 }
 
 .total-label::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -6px;
   left: 50%;
   transform: translateX(-50%);
   width: 30px;
   height: 2px;
-  background: linear-gradient(to right, rgba(30, 144, 255, 0), rgba(30, 144, 255, 0.8), rgba(30, 144, 255, 0));
+  background: linear-gradient(
+    to right,
+    rgba(30, 144, 255, 0),
+    rgba(30, 144, 255, 0.8),
+    rgba(30, 144, 255, 0)
+  );
 }
 
 .digital-counter {
@@ -4476,7 +4611,7 @@ export default {
   border: 1px solid rgba(30, 144, 255, 0.3);
   color: #3a9eff;
   font-size: 24px;
-  font-family: 'Digital-7', monospace;
+  font-family: "Digital-7", monospace;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4486,23 +4621,33 @@ export default {
 }
 
 .digit::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(to right, rgba(30, 144, 255, 0), rgba(30, 144, 255, 0.5), rgba(30, 144, 255, 0));
+  background: linear-gradient(
+    to right,
+    rgba(30, 144, 255, 0),
+    rgba(30, 144, 255, 0.5),
+    rgba(30, 144, 255, 0)
+  );
 }
 
 .digit::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(to right, rgba(30, 144, 255, 0), rgba(30, 144, 255, 0.5), rgba(30, 144, 255, 0));
+  background: linear-gradient(
+    to right,
+    rgba(30, 144, 255, 0),
+    rgba(30, 144, 255, 0.5),
+    rgba(30, 144, 255, 0)
+  );
 }
 
 .unit {
@@ -4584,9 +4729,11 @@ export default {
   transform: translate(-50%, -50%);
   width: 60px;
   height: 60px;
-  background: radial-gradient(circle at center,
-      rgba(0, 149, 255, 0.3) 0%,
-      rgba(0, 149, 255, 0.2) 100%);
+  background: radial-gradient(
+    circle at center,
+    rgba(0, 149, 255, 0.3) 0%,
+    rgba(0, 149, 255, 0.2) 100%
+  );
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -4598,16 +4745,14 @@ export default {
 }
 
 .circle-content::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at center,
-      rgba(0, 149, 255, 0.2) 0%,
-      transparent 70%);
+  background: radial-gradient(circle at center, rgba(0, 149, 255, 0.2) 0%, transparent 70%);
   z-index: -1;
 }
 
@@ -4760,7 +4905,6 @@ export default {
 
 .chart-tabs {
   display: flex;
-
 }
 
 .tab {
@@ -4870,7 +5014,9 @@ export default {
 }
 
 .bars rect {
-  transition: height 0.5s ease, y 0.5s ease;
+  transition:
+    height 0.5s ease,
+    y 0.5s ease;
   cursor: pointer;
   filter: drop-shadow(0px 0px 3px rgba(30, 144, 255, 0.3));
 }
@@ -5067,11 +5213,15 @@ export default {
 
 /* 添加底部投影 */
 .floating-cube::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 100%;
   height: 10px;
-  background: radial-gradient(ellipse at center, rgba(43, 189, 255, 0.5) 0%, rgba(43, 189, 255, 0) 70%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(43, 189, 255, 0.5) 0%,
+    rgba(43, 189, 255, 0) 70%
+  );
   bottom: -40px;
   left: 0;
   transform: rotateX(90deg) scale(1.2, 1);
@@ -5103,18 +5253,20 @@ export default {
 }
 
 .data-tag.stopped-algo .tag-content::before {
-  background: linear-gradient(90deg,
-      rgba(255, 153, 51, 0.05) 0%,
-      rgba(255, 153, 51, 0.1) 10%,
-      rgba(255, 153, 51, 0.05) 20%,
-      rgba(255, 153, 51, 0.05) 30%,
-      rgba(255, 153, 51, 0.1) 40%,
-      rgba(255, 153, 51, 0.05) 50%,
-      rgba(255, 153, 51, 0.05) 60%,
-      rgba(255, 153, 51, 0.1) 70%,
-      rgba(255, 153, 51, 0.05) 80%,
-      rgba(255, 153, 51, 0.1) 90%,
-      rgba(255, 153, 51, 0.05) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 153, 51, 0.05) 0%,
+    rgba(255, 153, 51, 0.1) 10%,
+    rgba(255, 153, 51, 0.05) 20%,
+    rgba(255, 153, 51, 0.05) 30%,
+    rgba(255, 153, 51, 0.1) 40%,
+    rgba(255, 153, 51, 0.05) 50%,
+    rgba(255, 153, 51, 0.05) 60%,
+    rgba(255, 153, 51, 0.1) 70%,
+    rgba(255, 153, 51, 0.05) 80%,
+    rgba(255, 153, 51, 0.1) 90%,
+    rgba(255, 153, 51, 0.05) 100%
+  );
 }
 
 .data-tag.stopped-algo .tag-content::after {
@@ -5139,23 +5291,25 @@ export default {
 
 /* 科技感光效果 */
 .chart-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -2px;
   left: -2px;
   right: -2px;
   bottom: -2px;
   border-radius: 50%;
-  background: linear-gradient(45deg,
-      rgba(255, 255, 255, 0.1),
-      rgba(255, 255, 255, 0.05) 20%,
-      rgba(255, 255, 255, 0) 30%);
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.05) 20%,
+    rgba(255, 255, 255, 0) 30%
+  );
   z-index: 4;
   pointer-events: none;
 }
 
 .chart-container::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -5279,7 +5433,7 @@ export default {
 
 .top-bar .title span::before,
 .top-bar .title span::after {
-  content: '';
+  content: "";
   position: absolute;
   height: 2px;
   width: 70px;
@@ -5306,19 +5460,19 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #7EAEE5;
+  color: #7eaee5;
   margin-right: 40px;
 }
 
 .location i,
 .weather-info i {
-  color: #00FFFF;
+  color: #00ffff;
   font-size: 16px;
 }
 
 .air-quality {
   margin-left: 8px;
-  color: #44FF9B;
+  color: #44ff9b;
 }
 
 .fullscreen-btn {
@@ -5335,7 +5489,7 @@ export default {
 }
 
 .fullscreen-btn i {
-  color: #00FFFF;
+  color: #00ffff;
   font-size: 18px;
 }
 
@@ -5347,7 +5501,7 @@ export default {
 }
 
 .loading-indicator {
-  color: #7EAEE5;
+  color: #7eaee5;
   font-size: 14px;
 }
 
@@ -5431,25 +5585,25 @@ export default {
 
 .half-ring-chart path {
   fill: none;
-  stroke: #FF5A5A;
+  stroke: #ff5a5a;
   stroke-width: 10;
   stroke-linecap: round;
 }
 
 .half-ring-chart path:nth-child(2) {
-  stroke: #FFAA33;
+  stroke: #ffaa33;
 }
 
 .half-ring-chart path:nth-child(3) {
-  stroke: #3EAEF9;
+  stroke: #3eaef9;
 }
 
 .half-ring-chart path:nth-child(4) {
-  stroke: #29DE9C;
+  stroke: #29de9c;
 }
 
 .half-ring-chart path:nth-child(5) {
-  stroke: #B980FF;
+  stroke: #b980ff;
 }
 
 .half-ring-chart circle {
@@ -5515,12 +5669,7 @@ export default {
   border-radius: 50%;
   position: relative;
   margin: 0 auto;
-  background: conic-gradient(
-    #4CD964 0 5%, 
-    #447CF9 5% 45%, 
-    #FF9500 45% 65%, 
-    #FF2D55 65% 100%
-  );
+  background: conic-gradient(#4cd964 0 5%, #447cf9 5% 45%, #ff9500 45% 65%, #ff2d55 65% 100%);
   transform: perspective(800px) rotateX(60deg);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   /* 创建真正的圆环效果 */
@@ -5536,11 +5685,12 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(130deg, 
-    rgba(255, 255, 255, 0) 0%, 
-    rgba(255, 255, 255, 0.4) 45%, 
-    rgba(255, 255, 255, 0.7) 50%, 
-    rgba(255, 255, 255, 0.4) 55%, 
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 45%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.4) 55%,
     rgba(255, 255, 255, 0) 100%
   );
   border-radius: 50%;
@@ -5620,22 +5770,22 @@ export default {
 }
 
 .type-1 {
-  background-color: #4CD964;
+  background-color: #4cd964;
   /* 人员检测 */
 }
 
 .type-2 {
-  background-color: #447CF9;
+  background-color: #447cf9;
   /* 交通拥堵 */
 }
 
 .type-3 {
-  background-color: #FF9500;
+  background-color: #ff9500;
   /* 非机动车违规 */
 }
 
 .type-4 {
-  background-color: #FF2D55;
+  background-color: #ff2d55;
   /* 违章停车 */
 }
 
@@ -5689,12 +5839,7 @@ export default {
   border-radius: 50%;
   position: relative;
   margin: 0 auto;
-  background: conic-gradient(
-    #4CD964 0 5%, 
-    #447CF9 5% 45%, 
-    #FF9500 45% 65%, 
-    #FF2D55 65% 100%
-  );
+  background: conic-gradient(#4cd964 0 5%, #447cf9 5% 45%, #ff9500 45% 65%, #ff2d55 65% 100%);
   transform: perspective(800px) rotateX(60deg);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
@@ -5880,11 +6025,12 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(130deg, 
-    rgba(255, 255, 255, 0) 0%, 
-    rgba(255, 255, 255, 0.4) 45%, 
-    rgba(255, 255, 255, 0.7) 50%, 
-    rgba(255, 255, 255, 0.4) 55%, 
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 45%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.4) 55%,
     rgba(255, 255, 255, 0) 100%
   );
   border-radius: 50%;

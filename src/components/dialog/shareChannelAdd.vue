@@ -1,78 +1,130 @@
 <template>
-  <div id="shareChannelAdd" style="width: 100%;  background-color: #FFFFFF; display: grid; grid-template-columns: 200px auto;">
+  <div
+    id="shareChannelAdd"
+    style="width: 100%; background-color: #ffffff; display: grid; grid-template-columns: 200px auto"
+  >
     <el-tabs tab-position="left" style="" v-model="hasShare" @tab-click="search">
       <el-tab-pane label="未共享" name="false"></el-tab-pane>
       <el-tab-pane label="已共享" name="true"></el-tab-pane>
     </el-tabs>
     <div>
       <div class="page-header">
-        <div class="page-header-btn" style="width: 100%;">
-          <div  style="display: inline;">
+        <div class="page-header-btn" style="width: 100%">
+          <div style="display: inline">
             搜索:
-            <el-input @input="search" style="margin-right: 1rem; width: auto;" size="small" placeholder="关键字"
-                      prefix-icon="el-icon-search" v-model="searchSrt" clearable></el-input>
+            <el-input
+              @input="search"
+              style="margin-right: 1rem; width: auto"
+              size="small"
+              placeholder="关键字"
+              prefix-icon="el-icon-search"
+              v-model="searchSrt"
+              clearable
+            ></el-input>
 
             在线状态:
-            <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="search" v-model="online" placeholder="请选择"
-                       default-first-option>
+            <el-select
+              size="small"
+              style="width: 8rem; margin-right: 1rem"
+              @change="search"
+              v-model="online"
+              placeholder="请选择"
+              default-first-option
+            >
               <el-option label="全部" value=""></el-option>
               <el-option label="在线" value="true"></el-option>
               <el-option label="离线" value="false"></el-option>
             </el-select>
             类型:
-            <el-select size="small" style="width: 8rem; margin-right: 1rem;" @change="search" v-model="channelType" placeholder="请选择"
-                       default-first-option>
+            <el-select
+              size="small"
+              style="width: 8rem; margin-right: 1rem"
+              @change="search"
+              v-model="channelType"
+              placeholder="请选择"
+              default-first-option
+            >
               <el-option label="全部" value=""></el-option>
-              <el-option v-for="item in Object.values($channelTypeList)" :key="item.id" :label="item.name" :value="item.id"></el-option>
+              <el-option
+                v-for="item in Object.values($channelTypeList)"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              ></el-option>
             </el-select>
-            <el-button v-if="hasShare !=='true'" size="small" type="primary" @click="add()">
+            <el-button v-if="hasShare !== 'true'" size="small" type="primary" @click="add()">
               添加
             </el-button>
-            <el-button v-if="hasShare ==='true'" size="small" type="danger" @click="remove()">
+            <el-button v-if="hasShare === 'true'" size="small" type="danger" @click="remove()">
               移除
             </el-button>
-            <el-button size="small" v-if="hasShare !=='true'" @click="addByDevice()">按设备添加</el-button>
-            <el-button size="small" v-if="hasShare ==='true'" @click="removeByDevice()">按设备移除</el-button>
-            <el-button size="small" v-if="hasShare !=='true'" @click="addAll()">全部添加</el-button>
-            <el-button size="small" v-if="hasShare ==='true'" @click="removeAll()">全部移除</el-button>
+            <el-button size="small" v-if="hasShare !== 'true'" @click="addByDevice()">
+              按设备添加
+            </el-button>
+            <el-button size="small" v-if="hasShare === 'true'" @click="removeByDevice()">
+              按设备移除
+            </el-button>
+            <el-button size="small" v-if="hasShare !== 'true'" @click="addAll()">
+              全部添加
+            </el-button>
+            <el-button size="small" v-if="hasShare === 'true'" @click="removeAll()">
+              全部移除
+            </el-button>
             <el-button size="small" @click="getChannelList()">刷新</el-button>
           </div>
         </div>
       </div>
-      <el-table size="small"  ref="channelListTable" :data="channelList" :height="winHeight" style="width: 100%;"
-                header-row-class-name="table-header" @selection-change="handleSelectionChange" >
-        <el-table-column type="selection" width="55" :selectable="selectable">
-        </el-table-column>
-        <el-table-column prop="gbName" label="名称" min-width="180">
-        </el-table-column>
-        <el-table-column prop="gbDeviceId" label="编号" min-width="180">
-        </el-table-column>
-        <el-table-column v-if="hasShare ==='true'" label="自定义名称" min-width="180">
+      <el-table
+        size="small"
+        ref="channelListTable"
+        :data="channelList"
+        :height="winHeight"
+        style="width: 100%"
+        header-row-class-name="table-header"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" :selectable="selectable"></el-table-column>
+        <el-table-column prop="gbName" label="名称" min-width="180"></el-table-column>
+        <el-table-column prop="gbDeviceId" label="编号" min-width="180"></el-table-column>
+        <el-table-column v-if="hasShare === 'true'" label="自定义名称" min-width="180">
           <template v-slot:default="scope">
             <div slot="—" class="name-wrapper">
-              <el-input size="small" placeholder="不填按原名称" v-model:value="scope.row.customName"></el-input>
+              <el-input
+                size="small"
+                placeholder="不填按原名称"
+                v-model:value="scope.row.customName"
+              ></el-input>
             </div>
           </template>
         </el-table-column>
-        <el-table-column v-if="hasShare ==='true'" label="自定义编号" min-width="180">
+        <el-table-column v-if="hasShare === 'true'" label="自定义编号" min-width="180">
           <template v-slot:default="scope">
             <div slot="—" class="name-wrapper">
-              <el-input size="small" placeholder="不填按原编号" v-model:value="scope.row.customDeviceId"></el-input>
+              <el-input
+                size="small"
+                placeholder="不填按原编号"
+                v-model:value="scope.row.customDeviceId"
+              ></el-input>
             </div>
           </template>
         </el-table-column>
-        <el-table-column v-if="hasShare ==='true'"  label="" min-width="80">
+        <el-table-column v-if="hasShare === 'true'" label="" min-width="80">
           <template v-slot:default="scope">
-            <el-button size="small" type="primary" @click="saveCustom(scope.row)">保存
-            </el-button>
+            <el-button size="small" type="primary" @click="saveCustom(scope.row)">保存</el-button>
           </template>
         </el-table-column>
-        <el-table-column prop="gbManufacturer" label="厂家" min-width="100">
-        </el-table-column>
+        <el-table-column prop="gbManufacturer" label="厂家" min-width="100"></el-table-column>
         <el-table-column label="类型" min-width="100">
           <template v-slot:default="scope">
             <div slot="reference" class="name-wrapper">
-              <el-tag size="medium" effect="plain" type="success" :style="$channelTypeList[scope.row.dataType].style">{{$channelTypeList[scope.row.dataType].name}}</el-tag>
+              <el-tag
+                size="medium"
+                effect="plain"
+                type="success"
+                :style="$channelTypeList[scope.row.dataType].style"
+              >
+                {{ $channelTypeList[scope.row.dataType].name }}
+              </el-tag>
             </div>
           </template>
         </el-table-column>
@@ -93,8 +145,8 @@
         :page-size="count"
         :page-sizes="[15, 25, 35, 50]"
         layout="total, sizes, prev, pager, next"
-        :total="total">
-      </el-pagination>
+        :total="total"
+      ></el-pagination>
       <gbDeviceSelect ref="gbDeviceSelect"></gbDeviceSelect>
     </div>
   </div>
@@ -102,19 +154,19 @@
 
 <script>
 import gbDeviceSelect from "./GbDeviceSelect.vue";
-import { 
-  getPlatformChannelList, 
-  addPlatformChannel, 
-  addPlatformChannelByDevice, 
-  removePlatformChannel, 
-  removePlatformChannelByDevice, 
-  updatePlatformChannelCustom 
-} from '@/api/dialog'
+import {
+  getPlatformChannelList,
+  addPlatformChannel,
+  addPlatformChannelByDevice,
+  removePlatformChannel,
+  removePlatformChannelByDevice,
+  updatePlatformChannelCustom,
+} from "@/api/dialog";
 
 export default {
-  name: 'shareChannelAdd',
-  components: {gbDeviceSelect},
-  props: [ 'platformId'],
+  name: "shareChannelAdd",
+  components: { gbDeviceSelect },
+  props: ["platformId"],
   data() {
     return {
       channelList: [],
@@ -128,7 +180,7 @@ export default {
       total: 0,
       loading: false,
       loadSnap: {},
-      multipleSelection: []
+      multipleSelection: [],
     };
   },
 
@@ -156,221 +208,242 @@ export default {
         online: this.online,
         channelType: this.channelType,
         platformId: this.platformId,
-        hasShare: this.hasShare
-      }).then((res)=> {
-        this.total = res.total;
-        this.channelList = res.list;
-        // 防止出现表格错位
-        this.$nextTick(() => {
-          this.$refs.channelListTable.doLayout();
+        hasShare: this.hasShare,
+      })
+        .then((res) => {
+          this.total = res.total;
+          this.channelList = res.list;
+          // 防止出现表格错位
+          this.$nextTick(() => {
+            this.$refs.channelListTable.doLayout();
+          });
         })
-      }).catch((error)=> {
-
-        console.log(error);
-      });
+        .catch((error) => {
+          console.log(error);
+        });
     },
-    handleSelectionChange: function (val){
+    handleSelectionChange: function (val) {
       this.multipleSelection = val;
     },
     selectable: function (row, rowIndex) {
       if (this.hasShare === "") {
         if (row.platformId) {
-          return false
-        }else {
-          return true
+          return false;
+        } else {
+          return true;
         }
-      }else {
-        return true
+      } else {
+        return true;
       }
     },
     add: function (row) {
-      let channels = []
+      let channels = [];
       for (let i = 0; i < this.multipleSelection.length; i++) {
-        channels.push(this.multipleSelection[i].gbId)
+        channels.push(this.multipleSelection[i].gbId);
       }
       if (channels.length === 0) {
         this.$message.info({
           showClose: true,
-          message: "请选择通道"
-        })
+          message: "请选择通道",
+        });
         return;
       }
-      this.loading = true
+      this.loading = true;
 
       addPlatformChannel({
         platformId: this.platformId,
-        channelIds: channels
-      }).then((res)=> {
-        this.$message.success({
-          showClose: true,
-          message: "保存成功"
-        })
-        this.getChannelList()
-      }).catch((error)=> {
-        this.$message.error({
-            showClose: true,
-            message: error.msg || error
-          })
-      }).finally(()=>{
-        this.loading = false
-      });
-    },
-    addAll: function (row) {
-      this.$confirm("确定全部添加？", '提示', {
-        dangerouslyUseHTMLString: true,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.loading = true
-
-        addPlatformChannel({
-          platformId: this.platformId,
-          all: true
-        }).then((res)=> {
+        channelIds: channels,
+      })
+        .then((res) => {
           this.$message.success({
             showClose: true,
-            message: "保存成功"
-          })
-          this.getChannelList()
-        }).catch((error)=> {
+            message: "保存成功",
+          });
+          this.getChannelList();
+        })
+        .catch((error) => {
           this.$message.error({
             showClose: true,
-            message: error.msg || error
-          })
-        }).finally(()=>{
-          this.loading = false
+            message: error.msg || error,
+          });
+        })
+        .finally(() => {
+          this.loading = false;
         });
-      }).catch(() => {
-      });
+    },
+    addAll: function (row) {
+      this.$confirm("确定全部添加？", "提示", {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          this.loading = true;
+
+          addPlatformChannel({
+            platformId: this.platformId,
+            all: true,
+          })
+            .then((res) => {
+              this.$message.success({
+                showClose: true,
+                message: "保存成功",
+              });
+              this.getChannelList();
+            })
+            .catch((error) => {
+              this.$message.error({
+                showClose: true,
+                message: error.msg || error,
+              });
+            })
+            .finally(() => {
+              this.loading = false;
+            });
+        })
+        .catch(() => {});
     },
 
     addByDevice: function (row) {
-      this.$refs.gbDeviceSelect.openDialog((rows)=>{
-        let deviceIds = []
+      this.$refs.gbDeviceSelect.openDialog((rows) => {
+        let deviceIds = [];
         for (let i = 0; i < rows.length; i++) {
-          deviceIds.push(rows[i].id)
+          deviceIds.push(rows[i].id);
         }
         addPlatformChannelByDevice({
           platformId: this.platformId,
           deviceIds: deviceIds,
-        }).then((res)=> {
-          this.$message.success({
-            showClose: true,
-            message: "保存成功"
+        })
+          .then((res) => {
+            this.$message.success({
+              showClose: true,
+              message: "保存成功",
+            });
+            this.initData();
           })
-          this.initData()
-        }).catch((error)=> {
-          this.$message.error({
-            showClose: true,
-            message: error.msg || error
+          .catch((error) => {
+            this.$message.error({
+              showClose: true,
+              message: error.msg || error,
+            });
           })
-        }).finally(()=>{
-          this.loading = false
-        });
-      })
+          .finally(() => {
+            this.loading = false;
+          });
+      });
     },
 
     removeByDevice: function (row) {
-      this.$refs.gbDeviceSelect.openDialog((rows)=>{
-        let deviceIds = []
+      this.$refs.gbDeviceSelect.openDialog((rows) => {
+        let deviceIds = [];
         for (let i = 0; i < rows.length; i++) {
-          deviceIds.push(rows[i].id)
+          deviceIds.push(rows[i].id);
         }
         removePlatformChannelByDevice({
           platformId: this.platformId,
           deviceIds: deviceIds,
-        }).then((res)=> {
-          this.$message.success({
-            showClose: true,
-            message: "保存成功"
+        })
+          .then((res) => {
+            this.$message.success({
+              showClose: true,
+              message: "保存成功",
+            });
+            this.initData();
           })
-          this.initData()
-        }).catch((error)=> {
-          this.$message.error({
-            showClose: true,
-            message: error.msg || error
+          .catch((error) => {
+            this.$message.error({
+              showClose: true,
+              message: error.msg || error,
+            });
           })
-        }).finally(()=>{
-          this.loading = false
-        });
-      })
+          .finally(() => {
+            this.loading = false;
+          });
+      });
     },
     remove: function (row) {
-      let channels = []
+      let channels = [];
       for (let i = 0; i < this.multipleSelection.length; i++) {
-        channels.push(this.multipleSelection[i].gbId)
+        channels.push(this.multipleSelection[i].gbId);
       }
       if (channels.length === 0) {
         this.$message.info({
           showClose: true,
-          message: "请选择通道"
-        })
+          message: "请选择通道",
+        });
         return;
       }
-      this.loading = true
+      this.loading = true;
 
       removePlatformChannel({
         platformId: this.platformId,
-        channelIds: channels
-      }).then((res)=> {
-        this.$message.success({
-          showClose: true,
-          message: "保存成功"
-        })
-        this.getChannelList()
-      }).catch((error)=> {
-        this.$message.error({
-            showClose: true,
-            message: error.msg || error
-          })
-      }).finally(()=>{
-        this.loading = false
-      });
-    },
-    removeAll: function (row) {
-
-      this.$confirm("确定全部移除？", '提示', {
-        dangerouslyUseHTMLString: true,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.loading = true
-        removePlatformChannel({
-          platformId: this.platformId,
-          all: true
-        }).then((res)=> {
+        channelIds: channels,
+      })
+        .then((res) => {
           this.$message.success({
             showClose: true,
-            message: "保存成功"
-          })
-          this.getChannelList()
-        }).catch((error)=> {
+            message: "保存成功",
+          });
+          this.getChannelList();
+        })
+        .catch((error) => {
           this.$message.error({
             showClose: true,
-            message: error.msg || error
-          })
-        }).finally(()=>{
-          this.loading = false
+            message: error.msg || error,
+          });
+        })
+        .finally(() => {
+          this.loading = false;
         });
-      }).catch(() => {
-      });
-
+    },
+    removeAll: function (row) {
+      this.$confirm("确定全部移除？", "提示", {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          this.loading = true;
+          removePlatformChannel({
+            platformId: this.platformId,
+            all: true,
+          })
+            .then((res) => {
+              this.$message.success({
+                showClose: true,
+                message: "保存成功",
+              });
+              this.getChannelList();
+            })
+            .catch((error) => {
+              this.$message.error({
+                showClose: true,
+                message: error.msg || error,
+              });
+            })
+            .finally(() => {
+              this.loading = false;
+            });
+        })
+        .catch(() => {});
     },
     saveCustom: function (row) {
-      updatePlatformChannelCustom(row).then((res)=> {
-        this.$message.success({
-          showClose: true,
-          message: "保存成功"
+      updatePlatformChannelCustom(row)
+        .then((res) => {
+          this.$message.success({
+            showClose: true,
+            message: "保存成功",
+          });
+          this.initData();
         })
-        this.initData()
-      }).catch((error)=> {
-        this.$message.error({
-          showClose: true,
-          message: error.msg || error
-        })
-      });
+        .catch((error) => {
+          this.$message.error({
+            showClose: true,
+            message: error.msg || error,
+          });
+        });
     },
     search: function () {
       this.currentPage = 1;
@@ -380,7 +453,7 @@ export default {
     refresh: function () {
       this.initData();
     },
-  }
+  },
 };
 </script>
 

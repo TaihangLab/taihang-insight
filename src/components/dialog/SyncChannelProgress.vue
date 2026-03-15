@@ -9,22 +9,23 @@
       :destroy-on-close="true"
       :show-close="true"
       @close="close()"
-     style="text-align: center">
+      style="text-align: center"
+    >
       <el-progress type="circle" :percentage="percentage" :status="syncStatus"></el-progress>
       <div style="text-align: center">
-        {{msg}}
+        {{ msg }}
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { getDeviceSyncStatus } from '@/api/dialog'
+import { getDeviceSyncStatus } from "@/api/dialog";
 
 export default {
   name: "SyncChannelProgress",
   computed: {},
-  props: ['platformId'],
+  props: ["platformId"],
   created() {},
   data() {
     return {
@@ -43,60 +44,63 @@ export default {
   },
   methods: {
     openDialog: function (deviceId, endCallBack) {
-      console.log("deviceId: " + deviceId)
+      console.log("deviceId: " + deviceId);
       this.deviceId = deviceId;
       this.showDialog = true;
       this.msg = "";
-      this.percentage= 0;
-      this.total= 0;
-      this.current= 0;
-      this.syncFlag= false;
+      this.percentage = 0;
+      this.total = 0;
+      this.current = 0;
+      this.syncFlag = false;
       this.syncStatus = null;
       this.endCallBack = endCallBack;
-      this.getProgress()
+      this.getProgress();
     },
-    getProgress(){
-      getDeviceSyncStatus(this.deviceId).then((data) => {
-        // 响应拦截器已处理成功/失败判断，直接使用数据
-        if (data != null) {
-          if (data.syncIng) {
-            if (data.total === 0) {
-              this.msg = `等待同步中`;
-              this.timmer = setTimeout(this.getProgress, 300)
-            }else {
-              this.syncFlag = true;
-              this.total = data.total;
-              this.current = data.current;
-              this.percentage = Math.floor(Number(data.current)/Number(data.total)* 10000)/100;
-              this.msg = `同步中...[${data.current}/${data.total}]`;
-              this.timmer = setTimeout(this.getProgress, 300)
-            }
-          }else {
-            if (data.errorMsg){
-              this.msg = data.errorMsg;
-              this.syncStatus = "exception"
-            }else {
-              this.syncStatus = "success"
-              this.percentage = 100;
-              this.msg = '同步成功';
-              setTimeout(()=>{
-                this.showDialog = false;
-              }, 3000)
+    getProgress() {
+      getDeviceSyncStatus(this.deviceId)
+        .then((data) => {
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          if (data != null) {
+            if (data.syncIng) {
+              if (data.total === 0) {
+                this.msg = `等待同步中`;
+                this.timmer = setTimeout(this.getProgress, 300);
+              } else {
+                this.syncFlag = true;
+                this.total = data.total;
+                this.current = data.current;
+                this.percentage =
+                  Math.floor((Number(data.current) / Number(data.total)) * 10000) / 100;
+                this.msg = `同步中...[${data.current}/${data.total}]`;
+                this.timmer = setTimeout(this.getProgress, 300);
+              }
+            } else {
+              if (data.errorMsg) {
+                this.msg = data.errorMsg;
+                this.syncStatus = "exception";
+              } else {
+                this.syncStatus = "success";
+                this.percentage = 100;
+                this.msg = "同步成功";
+                setTimeout(() => {
+                  this.showDialog = false;
+                }, 3000);
+              }
             }
           }
-        }
-      }).catch((error) =>{
-        console.log(error);
-        this.syncStatus = "error"
-        this.msg = error.response?.data?.msg || error.message;
-      });
+        })
+        .catch((error) => {
+          console.log(error);
+          this.syncStatus = "error";
+          this.msg = error.response?.data?.msg || error.message;
+        });
     },
-    close: function (){
+    close: function () {
       if (this.endCallBack) {
-        this.endCallBack()
+        this.endCallBack();
       }
-      window.clearTimeout(this.timmer)
-    }
+      window.clearTimeout(this.timmer);
+    },
   },
 };
 </script>

@@ -2,8 +2,8 @@
   <div class="side-menu-container" :class="{ collapsed: isCollapsed }">
     <!-- Logo 区域 -->
     <div class="logo-section">
-      <img src="@static/logo.png" alt="Logo" class="logo-img" v-if="!isCollapsed"/>
-      <img src="@static/logo.png" alt="Logo" class="logo-img-small" v-else/>
+      <img src="@static/logo.png" alt="Logo" class="logo-img" v-if="!isCollapsed" />
+      <img src="@static/logo.png" alt="Logo" class="logo-img-small" v-else />
       <div class="logo-text-container" v-if="!isCollapsed">
         <div class="brand-row">
           <span class="brand-name-text">太行·慧眼</span>
@@ -31,9 +31,12 @@
         <!-- 动态渲染菜单树 -->
         <template v-for="menuItem in menuTree" :key="menuItem.id">
           <!-- 有子菜单的情况 -->
-          <el-sub-menu v-if="menuItem.children && menuItem.children.length > 0" :index="String(menuItem.path || menuItem.id)">
+          <el-sub-menu
+            v-if="menuItem.children && menuItem.children.length > 0"
+            :index="String(menuItem.path || menuItem.id)"
+          >
             <template #title>
-               <el-icon><component :is="menuItem.icon" /></el-icon>
+              <el-icon><component :is="menuItem.icon" /></el-icon>
               <span>1{{ menuItem.menu_name }}</span>
             </template>
             <!-- 递归渲染子菜单 -->
@@ -46,10 +49,13 @@
               </el-menu-item>
             </template>
           </el-sub-menu>
-          
+
           <!-- 没有子菜单的情况 -->
-          <el-menu-item v-else-if="menuItem.menu_type !== 'button'" :index="String(menuItem.path || menuItem.id)">
-           <el-icon><component :is="menuItem.icon" /></el-icon>
+          <el-menu-item
+            v-else-if="menuItem.menu_type !== 'button'"
+            :index="String(menuItem.path || menuItem.id)"
+          >
+            <el-icon><component :is="menuItem.icon" /></el-icon>
             <span>1{{ menuItem.menu_name }}</span>
           </el-menu-item>
         </template>
@@ -59,9 +65,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { useMenusStore, useTokenStore } from '@/stores'
+import { ref, watch, computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { useMenusStore, useTokenStore } from "@/stores";
 import {
   VideoCamera,
   Cpu,
@@ -83,80 +89,80 @@ import {
   Platform,
   Histogram,
   Warning,
-  DataLine
-} from '@element-plus/icons-vue'
+  DataLine,
+} from "@element-plus/icons-vue";
 
 // 定义 emit
 const emit = defineEmits<{
-  collapseChange: [collapsed: boolean]
-}>()
+  collapseChange: [collapsed: boolean];
+}>();
 
 // 路由
-const route = useRoute()
+const route = useRoute();
 
 // 使用新的独立 stores
-const menusStore = useMenusStore()
-const tokenStore = useTokenStore()
+const menusStore = useMenusStore();
+const tokenStore = useTokenStore();
 
 // 菜单折叠状态
-const isCollapsed = ref(false)
+const isCollapsed = ref(false);
 
 // 当前激活的菜单
-const activeMenu = ref(route.path)
+const activeMenu = ref(route.path);
 
 // 从 store 获取菜单树（使用 getter 方法）
 // 登录时数据已加载，使用同步版本即可
-const menuTree = computed(() => menusStore.getMenuTreeSync() || [])
+const menuTree = computed(() => menusStore.getMenuTreeSync() || []);
 
 // 图标映射
 const iconMap: Record<string, any> = {
-  'VideoCamera': VideoCamera,
-  'Cpu': Cpu,
-  'DataAnalysis': DataAnalysis,
-  'MagicStick': MagicStick,
-  'Setting': Setting,
-  'OfficeBuilding': OfficeBuilding,
-  'User': User,
-  'UserFilled': UserFilled,
-  'Lock': Lock,
-  'School': School,
-  'Notebook': Notebook,
-  'View': View,
-  'Document': Document,
-  'Tools': Tools,
-  'Monitor': Monitor,
-  'Platform': Platform,
-  'Histogram': Histogram,
-  'Warning': Warning,
-  'DataLine': DataLine
-}
+  VideoCamera: VideoCamera,
+  Cpu: Cpu,
+  DataAnalysis: DataAnalysis,
+  MagicStick: MagicStick,
+  Setting: Setting,
+  OfficeBuilding: OfficeBuilding,
+  User: User,
+  UserFilled: UserFilled,
+  Lock: Lock,
+  School: School,
+  Notebook: Notebook,
+  View: View,
+  Document: Document,
+  Tools: Tools,
+  Monitor: Monitor,
+  Platform: Platform,
+  Histogram: Histogram,
+  Warning: Warning,
+  DataLine: DataLine,
+};
 
 // 获取图标组件
 const getIconComponent = (iconName?: string) => {
-  if (!iconName) return Setting
-  return iconMap[iconName] || Setting
-}
+  if (!iconName) return Setting;
+  return iconMap[iconName] || Setting;
+};
 
 // 监听路由变化
 watch(
   () => route.path,
   (newPath) => {
-    activeMenu.value = newPath
-  }
-)
+    activeMenu.value = newPath;
+  },
+);
 
 // 切换折叠状态
 const toggleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value
-  emit('collapseChange', isCollapsed.value)
-}
+  isCollapsed.value = !isCollapsed.value;
+  emit("collapseChange", isCollapsed.value);
+};
 
 // 组件挂载时，如果菜单树为空且有 token，尝试获取菜单
 onMounted(async () => {
   if (menuTree.value.length === 0 && tokenStore.hasToken()) {
     // 菜单树应该在登录时已加载
   }
-})
+});
 </script>
 
 <style scoped>

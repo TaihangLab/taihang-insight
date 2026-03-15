@@ -31,11 +31,7 @@
           ></el-date-picker>
         </el-form-item>
         <el-form-item>
-          <el-input
-            v-model="searchForm.keyword"
-            placeholder="搜索关键词"
-            clearable
-          >
+          <el-input v-model="searchForm.keyword" placeholder="搜索关键词" clearable>
             <i slot="prefix" class="el-icon-search"></i>
           </el-input>
         </el-form-item>
@@ -45,14 +41,18 @@
         </el-form-item>
       </el-form>
     </div>
-    
+
     <!-- 日志列表表格 -->
     <div class="table-container">
       <div class="table-operations">
-        <el-button type="primary" icon="el-icon-download" size="small" @click="exportLogs">导出日志</el-button>
-        <el-button type="danger" icon="el-icon-delete" size="small" @click="clearLogs">清空日志</el-button>
+        <el-button type="primary" icon="el-icon-download" size="small" @click="exportLogs">
+          导出日志
+        </el-button>
+        <el-button type="danger" icon="el-icon-delete" size="small" @click="clearLogs">
+          清空日志
+        </el-button>
       </div>
-      
+
       <el-table
         :data="tableData"
         v-loading="loading"
@@ -64,20 +64,14 @@
         <el-table-column prop="timestamp" label="时间" width="160" align="center"></el-table-column>
         <el-table-column prop="type" label="日志类型" width="120" align="center">
           <template #default="scope">
-            <el-tag 
-              :type="getLogTypeTag(scope.row.type)"
-              size="small"
-            >
+            <el-tag :type="getLogTypeTag(scope.row.type)" size="small">
               {{ scope.row.type }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="level" label="级别" width="100" align="center">
           <template #default="scope">
-            <el-tag 
-              :type="getLevelTag(scope.row.level)"
-              size="small"
-            >
+            <el-tag :type="getLevelTag(scope.row.level)" size="small">
               {{ scope.row.level }}
             </el-tag>
           </template>
@@ -89,12 +83,14 @@
         <el-table-column label="操作" width="100" fixed="right" align="center">
           <template #default="scope">
             <div class="operation-buttons">
-              <el-button link class="view-detail-btn" @click="viewLogDetail(scope.row)">详情</el-button>
+              <el-button link class="view-detail-btn" @click="viewLogDetail(scope.row)">
+                详情
+              </el-button>
             </div>
           </template>
         </el-table-column>
       </el-table>
-      
+
       <!-- 分页 -->
       <div class="pagination-container">
         <el-pagination
@@ -108,13 +104,9 @@
         ></el-pagination>
       </div>
     </div>
-    
+
     <!-- 日志详情对话框 -->
-    <el-dialog
-      title="日志详情"
-      :visible.sync="logDetailVisible"
-      width="700px"
-    >
+    <el-dialog title="日志详情" :visible.sync="logDetailVisible" width="700px">
       <div v-if="currentLog" class="log-detail">
         <div class="detail-item">
           <span class="detail-label">日志ID：</span>
@@ -127,13 +119,17 @@
         <div class="detail-item">
           <span class="detail-label">类型：</span>
           <span class="detail-value">
-            <el-tag :type="getLogTypeTag(currentLog.type)" size="small">{{ currentLog.type }}</el-tag>
+            <el-tag :type="getLogTypeTag(currentLog.type)" size="small">
+              {{ currentLog.type }}
+            </el-tag>
           </span>
         </div>
         <div class="detail-item">
           <span class="detail-label">级别：</span>
           <span class="detail-value">
-            <el-tag :type="getLevelTag(currentLog.level)" size="small">{{ currentLog.level }}</el-tag>
+            <el-tag :type="getLevelTag(currentLog.level)" size="small">
+              {{ currentLog.level }}
+            </el-tag>
           </span>
         </div>
         <div class="detail-item">
@@ -161,13 +157,9 @@
         <el-button @click="logDetailVisible = false">关闭</el-button>
       </span>
     </el-dialog>
-    
+
     <!-- 清空日志确认对话框 -->
-    <el-dialog
-      title="确认清空"
-      :visible.sync="clearLogVisible"
-      width="400px"
-    >
+    <el-dialog title="确认清空" :visible.sync="clearLogVisible" width="400px">
       <div class="confirm-message">
         <i class="el-icon-warning"></i>
         <span>确定要清空所有日志记录吗？此操作不可恢复。</span>
@@ -182,103 +174,106 @@
 
 <script>
 export default {
-  name: 'LogRecords',
-  
+  name: "LogRecords",
+
   data() {
     return {
       // 搜索表单
       searchForm: {
-        logType: '',
-        logLevel: '',
+        logType: "",
+        logLevel: "",
         timeRange: [],
-        keyword: ''
+        keyword: "",
       },
-      
+
       // 表格数据
       tableData: [],
       loading: false,
-      
+
       // 分页
       pagination: {
         currentPage: 1,
         pageSize: 10,
-        total: 0
+        total: 0,
       },
-      
+
       // 日志详情
       logDetailVisible: false,
       currentLog: null,
-      
+
       // 清空日志确认
-      clearLogVisible: false
-    }
+      clearLogVisible: false,
+    };
   },
-  
+
   created() {
-    this.fetchLogs()
+    this.fetchLogs();
   },
-  
+
   methods: {
     // 获取日志数据
     fetchLogs() {
-      this.loading = true
-      
+      this.loading = true;
+
       // 模拟API调用获取日志数据
       setTimeout(() => {
         // 根据搜索条件筛选
-        let filteredData = [...this.tableData]
-        
+        let filteredData = [...this.tableData];
+
         if (this.searchForm.logType) {
-          filteredData = filteredData.filter(item => item.type === this.searchForm.logType)
+          filteredData = filteredData.filter((item) => item.type === this.searchForm.logType);
         }
-        
+
         if (this.searchForm.logLevel) {
-          filteredData = filteredData.filter(item => item.level === this.searchForm.logLevel)
+          filteredData = filteredData.filter((item) => item.level === this.searchForm.logLevel);
         }
-        
+
         if (this.searchForm.timeRange && this.searchForm.timeRange.length === 2) {
-          filteredData = filteredData.filter(item => {
-            const itemDate = item.timestamp.split(' ')[0]
-            return itemDate >= this.searchForm.timeRange[0] && itemDate <= this.searchForm.timeRange[1]
-          })
+          filteredData = filteredData.filter((item) => {
+            const itemDate = item.timestamp.split(" ")[0];
+            return (
+              itemDate >= this.searchForm.timeRange[0] && itemDate <= this.searchForm.timeRange[1]
+            );
+          });
         }
-        
+
         if (this.searchForm.keyword) {
-          const keyword = this.searchForm.keyword.toLowerCase()
-          filteredData = filteredData.filter(item => 
-            item.message.toLowerCase().includes(keyword) ||
-            item.module.toLowerCase().includes(keyword) ||
-            item.user.toLowerCase().includes(keyword)
-          )
+          const keyword = this.searchForm.keyword.toLowerCase();
+          filteredData = filteredData.filter(
+            (item) =>
+              item.message.toLowerCase().includes(keyword) ||
+              item.module.toLowerCase().includes(keyword) ||
+              item.user.toLowerCase().includes(keyword),
+          );
         }
-        
+
         // 设置总数
-        this.pagination.total = filteredData.length
-        
+        this.pagination.total = filteredData.length;
+
         // 根据当前页码和每页数量过滤数据
-        const startIndex = (this.pagination.currentPage - 1) * this.pagination.pageSize
-        const endIndex = startIndex + this.pagination.pageSize
-        
+        const startIndex = (this.pagination.currentPage - 1) * this.pagination.pageSize;
+        const endIndex = startIndex + this.pagination.pageSize;
+
         // 截取当前页数据
-        this.tableData = filteredData.slice(startIndex, endIndex)
-        
-        this.loading = false
-      }, 500)
+        this.tableData = filteredData.slice(startIndex, endIndex);
+
+        this.loading = false;
+      }, 500);
     },
-    
+
     // 生成模拟日志数据 - 当前页
     generateMockLogs() {
-      const logTypes = ['操作', '系统', '错误', '告警']
-      const logLevels = ['信息', '警告', '错误', '严重']
-      const modules = ['用户管理', '设备管理', '系统设置', '视频监控', '模型管理']
-      const users = ['admin', 'operator', 'system']
-      
+      const logTypes = ["操作", "系统", "错误", "告警"];
+      const logLevels = ["信息", "警告", "错误", "严重"];
+      const modules = ["用户管理", "设备管理", "系统设置", "视频监控", "模型管理"];
+      const users = ["admin", "operator", "system"];
+
       return Array.from({ length: 10 }, (_, i) => {
-        const type = logTypes[Math.floor(Math.random() * logTypes.length)]
-        const level = logLevels[Math.floor(Math.random() * logLevels.length)]
-        const date = new Date()
-        date.setHours(date.getHours() - Math.floor(Math.random() * 24))
-        
+        const type = logTypes[Math.floor(Math.random() * logTypes.length)];
+        const level = logLevels[Math.floor(Math.random() * logLevels.length)];
+        const date = new Date();
+        date.setHours(date.getHours() - Math.floor(Math.random() * 24));
+
         return {
           id: 1000 + i,
           timestamp: this.formatDate(date),
@@ -288,224 +283,208 @@ export default {
           module: modules[Math.floor(Math.random() * modules.length)],
           message: this.getRandomMessage(type),
           ip: `192.168.1.${Math.floor(Math.random() * 255)}`,
-          stackTrace: level === '错误' || level === '严重' ? this.getRandomStackTrace() : null
-        }
-      })
+          stackTrace: level === "错误" || level === "严重" ? this.getRandomStackTrace() : null,
+        };
+      });
     },
-    
-    
+
     // 格式化日期
     formatDate(date) {
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const hour = String(date.getHours()).padStart(2, '0')
-      const minute = String(date.getMinutes()).padStart(2, '0')
-      const second = String(date.getSeconds()).padStart(2, '0')
-      
-      return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hour = String(date.getHours()).padStart(2, "0");
+      const minute = String(date.getMinutes()).padStart(2, "0");
+      const second = String(date.getSeconds()).padStart(2, "0");
+
+      return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
     },
-    
+
     // 获取随机日志信息
     getRandomMessage(type) {
       const messages = {
-        '操作': [
-          '用户登录系统',
-          '修改设备配置',
-          '添加新用户',
-          '删除视频文件',
-          '更新系统设置'
+        操作: ["用户登录系统", "修改设备配置", "添加新用户", "删除视频文件", "更新系统设置"],
+        系统: ["系统启动", "数据库备份完成", "服务重启", "系统资源检查", "缓存清理完成"],
+        错误: ["数据库连接失败", "API请求超时", "文件上传错误", "服务不可用", "权限验证失败"],
+        告警: [
+          "磁盘空间不足",
+          "CPU使用率过高",
+          "内存占用过大",
+          "连接尝试次数过多",
+          "未授权的访问尝试",
         ],
-        '系统': [
-          '系统启动',
-          '数据库备份完成',
-          '服务重启',
-          '系统资源检查',
-          '缓存清理完成'
-        ],
-        '错误': [
-          '数据库连接失败',
-          'API请求超时',
-          '文件上传错误',
-          '服务不可用',
-          '权限验证失败'
-        ],
-        '告警': [
-          '磁盘空间不足',
-          'CPU使用率过高',
-          '内存占用过大',
-          '连接尝试次数过多',
-          '未授权的访问尝试'
-        ]
-      }
-      
-      const typeMessages = messages[type] || messages['系统']
-      return typeMessages[Math.floor(Math.random() * typeMessages.length)]
+      };
+
+      const typeMessages = messages[type] || messages["系统"];
+      return typeMessages[Math.floor(Math.random() * typeMessages.length)];
     },
-    
+
     // 获取随机堆栈信息
     getRandomStackTrace() {
       return `Error: Something went wrong
   at processRequest (server.js:42:15)
   at async handleAPIRequest (api.js:27:12)
-  at async processAPIRequest (controller.js:125:23)`
+  at async processAPIRequest (controller.js:125:23)`;
     },
-    
+
     // 搜索日志
     searchLogs() {
-      this.pagination.currentPage = 1
-      this.fetchLogs()
+      this.pagination.currentPage = 1;
+      this.fetchLogs();
     },
-    
+
     // 重置搜索条件
     resetSearch() {
       this.searchForm = {
-        logType: '',
-        logLevel: '',
+        logType: "",
+        logLevel: "",
         timeRange: [],
-        keyword: ''
-      }
-      this.pagination.currentPage = 1
-      this.fetchLogs()
+        keyword: "",
+      };
+      this.pagination.currentPage = 1;
+      this.fetchLogs();
     },
-    
+
     // 处理每页数量变化
     handleSizeChange(size) {
-      this.pagination.pageSize = size
-      this.fetchLogs()
+      this.pagination.pageSize = size;
+      this.fetchLogs();
     },
-    
+
     // 处理页码变化
     handleCurrentChange(page) {
-      this.pagination.currentPage = page
-      this.fetchLogs()
+      this.pagination.currentPage = page;
+      this.fetchLogs();
     },
-    
+
     // 查看日志详情
     viewLogDetail(log) {
-      this.currentLog = log
-      this.logDetailVisible = true
+      this.currentLog = log;
+      this.logDetailVisible = true;
     },
-    
+
     // 导出日志
     exportLogs() {
-      this.loading = true
-      
+      this.loading = true;
+
       // 使用当前表格数据
-      let dataToExport = [...this.tableData]
-      
+      let dataToExport = [...this.tableData];
+
       // 应用当前筛选条件
       if (this.searchForm.logType) {
-        dataToExport = dataToExport.filter(item => item.type === this.searchForm.logType)
+        dataToExport = dataToExport.filter((item) => item.type === this.searchForm.logType);
       }
-      
+
       if (this.searchForm.logLevel) {
-        dataToExport = dataToExport.filter(item => item.level === this.searchForm.logLevel)
+        dataToExport = dataToExport.filter((item) => item.level === this.searchForm.logLevel);
       }
-      
+
       if (this.searchForm.timeRange && this.searchForm.timeRange.length === 2) {
-        dataToExport = dataToExport.filter(item => {
-          const itemDate = item.timestamp.split(' ')[0]
-          return itemDate >= this.searchForm.timeRange[0] && itemDate <= this.searchForm.timeRange[1]
-        })
+        dataToExport = dataToExport.filter((item) => {
+          const itemDate = item.timestamp.split(" ")[0];
+          return (
+            itemDate >= this.searchForm.timeRange[0] && itemDate <= this.searchForm.timeRange[1]
+          );
+        });
       }
-      
+
       if (this.searchForm.keyword) {
-        const keyword = this.searchForm.keyword.toLowerCase()
-        dataToExport = dataToExport.filter(item => 
-          item.message.toLowerCase().includes(keyword) ||
-          item.module.toLowerCase().includes(keyword) ||
-          item.user.toLowerCase().includes(keyword)
-        )
+        const keyword = this.searchForm.keyword.toLowerCase();
+        dataToExport = dataToExport.filter(
+          (item) =>
+            item.message.toLowerCase().includes(keyword) ||
+            item.module.toLowerCase().includes(keyword) ||
+            item.user.toLowerCase().includes(keyword),
+        );
       }
-      
+
       // 设置CSV表头
-      let csvContent = 'ID,时间,日志类型,级别,用户,模块,日志内容,IP地址\n'
-      
+      let csvContent = "ID,时间,日志类型,级别,用户,模块,日志内容,IP地址\n";
+
       // 添加数据行
-      dataToExport.forEach(item => {
+      dataToExport.forEach((item) => {
         // 处理CSV中的特殊字符，确保内容中的逗号不会破坏CSV格式
-        const message = item.message.replace(/"/g, '""')
-        
-        csvContent += `${item.id},"${item.timestamp}","${item.type}","${item.level}","${item.user}","${item.module}","${message}","${item.ip}"\n`
-      })
-      
+        const message = item.message.replace(/"/g, '""');
+
+        csvContent += `${item.id},"${item.timestamp}","${item.type}","${item.level}","${item.user}","${item.module}","${message}","${item.ip}"\n`;
+      });
+
       // 创建Blob对象
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+
       // 创建下载链接
-      const link = document.createElement('a')
-      const url = URL.createObjectURL(blob)
-      
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+
       // 设置文件名，使用当前日期
-      const now = new Date()
-      const fileName = `系统日志_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}.csv`
-      
+      const now = new Date();
+      const fileName = `系统日志_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}.csv`;
+
       // 设置下载链接属性
-      link.setAttribute('href', url)
-      link.setAttribute('download', fileName)
-      link.style.visibility = 'hidden'
-      
+      link.setAttribute("href", url);
+      link.setAttribute("download", fileName);
+      link.style.visibility = "hidden";
+
       // 添加到DOM并触发点击
-      document.body.appendChild(link)
-      link.click()
-      
+      document.body.appendChild(link);
+      link.click();
+
       // 清理
-      document.body.removeChild(link)
-      this.loading = false
-      
+      document.body.removeChild(link);
+      this.loading = false;
+
       this.$message({
-        message: '日志导出成功',
-        type: 'success'
-      })
+        message: "日志导出成功",
+        type: "success",
+      });
     },
-    
+
     // 清空日志
     clearLogs() {
-      this.clearLogVisible = true
+      this.clearLogVisible = true;
     },
-    
+
     // 确认清空日志
     confirmClearLogs() {
-      this.clearLogVisible = false
-      this.loading = true
-      
+      this.clearLogVisible = false;
+      this.loading = true;
+
       // 模拟API调用
       setTimeout(() => {
-        this.tableData = []
-        this.pagination.total = 0
-        this.loading = false
-        
+        this.tableData = [];
+        this.pagination.total = 0;
+        this.loading = false;
+
         this.$message({
-          message: '日志记录已成功清空',
-          type: 'success'
-        })
-      }, 800)
+          message: "日志记录已成功清空",
+          type: "success",
+        });
+      }, 800);
     },
-    
+
     // 获取日志类型对应的标签类型
     getLogTypeTag(type) {
       const typeMap = {
-        '操作': 'success',
-        '系统': 'info',
-        '错误': 'danger',
-        '告警': 'warning'
-      }
-      return typeMap[type] || 'info'
+        操作: "success",
+        系统: "info",
+        错误: "danger",
+        告警: "warning",
+      };
+      return typeMap[type] || "info";
     },
-    
+
     // 获取日志级别对应的标签类型
     getLevelTag(level) {
       const levelMap = {
-        '信息': 'info',
-        '警告': 'warning',
-        '错误': 'danger',
-        '严重': 'danger'
-      }
-      return levelMap[level] || 'info'
-    }
-  }
-}
+        信息: "info",
+        警告: "warning",
+        错误: "danger",
+        严重: "danger",
+      };
+      return levelMap[level] || "info";
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -566,7 +545,9 @@ export default {
 .filter-section :deep(.el-button--primary) {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
+  box-shadow:
+    0 4px 12px rgba(59, 130, 246, 0.4),
+    0 2px 4px rgba(30, 64, 175, 0.3);
   color: white;
   font-weight: 600;
   border-radius: 8px;
@@ -574,7 +555,9 @@ export default {
 }
 .filter-section :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4);
+  box-shadow:
+    0 6px 20px rgba(59, 130, 246, 0.5),
+    0 4px 8px rgba(30, 64, 175, 0.4);
   transform: translateY(-2px);
 }
 .filter-section :deep(.el-button:not(.el-button--primary)) {

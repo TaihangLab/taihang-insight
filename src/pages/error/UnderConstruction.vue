@@ -1,41 +1,41 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref } from "vue";
+import { useRouter } from "vue-router";
 
-const router = useRouter()
+const router = useRouter();
 
 // 返回首页
 const goHome = () => {
-  router.push('/')
-}
+  router.push("/");
+};
 
 // 返回上一页
 const goBack = () => {
-  router.back()
-}
+  router.back();
+};
 
 // 粒子样式生成
-const particleCount = 30
-const particles = ref<Array<{ id: number; style: Record<string, string> }>>([])
+const particleCount = 30;
+const particles = ref<Array<{ id: number; style: Record<string, string> }>>([]);
 
 // 生成粒子样式
 function generateParticles() {
-  const result: Array<{ id: number; style: Record<string, string> }> = []
+  const result: Array<{ id: number; style: Record<string, string> }> = [];
   for (let i = 0; i < particleCount; i++) {
     result.push({
       id: i,
       style: {
-        left: Math.random() * 100 + '%',
-        top: Math.random() * 100 + '%',
-        animationDelay: Math.random() * 3 + 's',
-        animationDuration: (Math.random() * 3 + 2) + 's'
-      }
-    })
+        left: Math.random() * 100 + "%",
+        top: Math.random() * 100 + "%",
+        animationDelay: Math.random() * 3 + "s",
+        animationDuration: Math.random() * 3 + 2 + "s",
+      },
+    });
   }
-  return result
+  return result;
 }
 
-particles.value = generateParticles()
+particles.value = generateParticles();
 </script>
 
 <template>
@@ -77,12 +77,8 @@ particles.value = generateParticles()
 
         <!-- 描述 -->
         <div class="error-description">
-          <p class="error-message">
-            该功能正在开发中，敬请期待...
-          </p>
-          <p class="error-submessage">
-            我们的团队正在努力为您打造更好的用户体验。
-          </p>
+          <p class="error-message">该功能正在开发中，敬请期待...</p>
+          <p class="error-submessage">我们的团队正在努力为您打造更好的用户体验。</p>
         </div>
 
         <!-- 进度提示 -->
@@ -157,14 +153,15 @@ particles.value = generateParticles()
   position: absolute;
   width: 2px;
   height: 2px;
-  background: var(--design-primary-color, #4185F7);
+  background: var(--design-primary-color, #4185f7);
   border-radius: 50%;
-  box-shadow: 0 0 10px var(--design-primary-color, #4185F7);
+  box-shadow: 0 0 10px var(--design-primary-color, #4185f7);
   animation: float 3s ease-in-out infinite;
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) scale(1);
     opacity: 0.7;
   }
@@ -185,7 +182,12 @@ particles.value = generateParticles()
 
 .line {
   position: absolute;
-  background: linear-gradient(90deg, transparent, var(--design-primary-color, #4185F7), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--design-primary-color, #4185f7),
+    transparent
+  );
   opacity: 0.4;
 }
 
@@ -204,13 +206,23 @@ particles.value = generateParticles()
 }
 
 @keyframes slideRight {
-  0%, 100% { transform: translateX(-100%); }
-  50% { transform: translateX(100%); }
+  0%,
+  100% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes slideDown {
-  0%, 100% { transform: translateY(-100%); }
-  50% { transform: translateY(100%); }
+  0%,
+  100% {
+    transform: translateY(-100%);
+  }
+  50% {
+    transform: translateY(100%);
+  }
 }
 
 /* 主内容区域 */
@@ -260,7 +272,7 @@ particles.value = generateParticles()
   align-items: center;
   justify-content: center;
   font-size: 80px;
-  color: var(--design-primary-color, #4185F7);
+  color: var(--design-primary-color, #4185f7);
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -274,13 +286,25 @@ particles.value = generateParticles()
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 @keyframes glow {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.2); }
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
 
 .building-text {
@@ -317,7 +341,7 @@ particles.value = generateParticles()
 .error-divider {
   width: 60px;
   height: 3px;
-  background: linear-gradient(90deg, var(--design-primary-color, #4185F7), transparent);
+  background: linear-gradient(90deg, var(--design-primary-color, #4185f7), transparent);
   border-radius: 2px;
 }
 
@@ -360,7 +384,7 @@ particles.value = generateParticles()
 
 .progress-icon {
   font-size: 24px;
-  color: var(--design-primary-color, #4185F7);
+  color: var(--design-primary-color, #4185f7);
 }
 
 .progress-content {
@@ -405,7 +429,7 @@ particles.value = generateParticles()
 }
 
 .tech-btn-primary {
-  background: linear-gradient(45deg, var(--design-primary-color, #4185F7), #2d5fd9);
+  background: linear-gradient(45deg, var(--design-primary-color, #4185f7), #2d5fd9);
   color: #ffffff;
   box-shadow: 0 8px 20px rgba(65, 133, 247, 0.3);
 }
@@ -461,7 +485,7 @@ particles.value = generateParticles()
 }
 
 .footer-info i {
-  color: var(--design-primary-color, #4185F7);
+  color: var(--design-primary-color, #4185f7);
 }
 
 /* 响应式设计 */

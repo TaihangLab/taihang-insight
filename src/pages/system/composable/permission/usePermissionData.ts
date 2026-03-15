@@ -4,11 +4,11 @@
  * 使用蛇形命名 (snake_case) 与后端保持一致
  */
 
-import { ref, computed } from 'vue';
-import type { Permission } from '@/types/rbac';
-import type { PermissionTreeNode, PermissionType } from '@/types/rbac/permission';
-import { Status } from '@/types/rbac';
-import permissionService from '@/api/system/permissionService';
+import { ref, computed } from "vue";
+import type { Permission } from "@/types/rbac";
+import type { PermissionTreeNode, PermissionType } from "@/types/rbac/permission";
+import { Status } from "@/types/rbac";
+import permissionService from "@/api/system/permissionService";
 
 // ============================================
 // 类型定义
@@ -60,7 +60,7 @@ export function usePermissionData() {
   const pagination = ref<PermissionPagination>({
     currentPage: 1,
     pageSize: 10,
-    total: 0
+    total: 0,
   });
 
   // 计算属性
@@ -74,7 +74,11 @@ export function usePermissionData() {
   /**
    * 获取权限列表
    */
-  const fetchPermissions = async (params: PermissionSearchConditions, page?: number, pageSize?: number) => {
+  const fetchPermissions = async (
+    params: PermissionSearchConditions,
+    page?: number,
+    pageSize?: number,
+  ) => {
     loading.value = true;
     try {
       const currentPage = page ?? pagination.value.currentPage;
@@ -83,7 +87,7 @@ export function usePermissionData() {
       // 构建查询参数
       const queryParams: Record<string, unknown> = {
         skip: (currentPage - 1) * size,
-        limit: size
+        limit: size,
       };
 
       // 添加可选查询条件
@@ -102,18 +106,18 @@ export function usePermissionData() {
         const items = Array.isArray(response.data) ? response.data : [];
 
         // 映射数据
-        permissions.value = items.map(item => {
+        permissions.value = items.map((item) => {
           return {
             id: Number(item.id),
-            permission_code: String(item.permission_code || ''),
-            permission_name: String(item.permission_name || ''),
-            permission_type: (item.permission_type) as PermissionType,
+            permission_code: String(item.permission_code || ""),
+            permission_name: String(item.permission_name || ""),
+            permission_type: item.permission_type as PermissionType,
             status: Number(item.status) as Status,
-            creator: String(item.creator || ''),
-            tenant_code: String(item.tenant_code || ''),
-            create_time: String(item.create_time || ''),
+            creator: String(item.creator || ""),
+            tenant_code: String(item.tenant_code || ""),
+            create_time: String(item.create_time || ""),
             // 保留原始数据
-            ...item
+            ...item,
           } as PermissionEntity;
         });
 
@@ -125,7 +129,7 @@ export function usePermissionData() {
 
       return permissions.value;
     } catch (error) {
-      console.error('获取权限列表失败:', error);
+      console.error("获取权限列表失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -150,7 +154,7 @@ export function usePermissionData() {
 
       return permissionTree.value;
     } catch (error) {
-      console.error('获取权限树失败:', error);
+      console.error("获取权限树失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -165,9 +169,9 @@ export function usePermissionData() {
     try {
       // @ts-ignore - 数据由调用方验证，后端会进行验证
       await permissionService.createPermissionNode(data);
-      return { success: true, message: '新增成功' };
+      return { success: true, message: "新增成功" };
     } catch (error) {
-      console.error('创建权限失败:', error);
+      console.error("创建权限失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -182,9 +186,9 @@ export function usePermissionData() {
     try {
       // @ts-ignore - 数据由调用方验证，后端会进行验证
       await permissionService.updatePermissionNode(permissionId, data);
-      return { success: true, message: '修改成功' };
+      return { success: true, message: "修改成功" };
     } catch (error) {
-      console.error('更新权限失败:', error);
+      console.error("更新权限失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -198,9 +202,9 @@ export function usePermissionData() {
     loading.value = true;
     try {
       await permissionService.updatePermissionNodeStatus(permissionId, status);
-      return { success: true, message: '状态更新成功' };
+      return { success: true, message: "状态更新成功" };
     } catch (error) {
-      console.error('更新权限状态失败:', error);
+      console.error("更新权限状态失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -214,9 +218,9 @@ export function usePermissionData() {
     loading.value = true;
     try {
       await permissionService.deletePermissionNode(permissionId);
-      return { success: true, message: '删除成功' };
+      return { success: true, message: "删除成功" };
     } catch (error) {
-      console.error('删除权限失败:', error);
+      console.error("删除权限失败:", error);
       throw error;
     } finally {
       loading.value = false;
@@ -232,7 +236,7 @@ export function usePermissionData() {
     pagination.value = {
       currentPage: 1,
       pageSize: 10,
-      total: 0
+      total: 0,
     };
   };
 
@@ -252,6 +256,6 @@ export function usePermissionData() {
     updatePermission,
     updatePermissionStatus,
     deletePermission,
-    clearData
+    clearData,
   };
 }

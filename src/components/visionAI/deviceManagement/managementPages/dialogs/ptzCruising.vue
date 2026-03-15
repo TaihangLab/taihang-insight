@@ -1,7 +1,7 @@
 <template>
   <div id="ptzCruising">
     <div style="display: grid; grid-template-columns: 80px auto; line-height: 28px">
-      <span>巡航组号: </span>
+      <span>巡航组号:</span>
       <el-input
         min="1"
         max="255"
@@ -10,29 +10,29 @@
         addonAfter="(1-255)"
         v-model="cruiseId"
         size="small"
-      >
-      </el-input>
+      ></el-input>
     </div>
     <p>
-      <el-tag v-for="(item, index) in presetList"
-              key="item.presetId"
-              closable
-              @close="delPreset(item, index)"
-              style="margin-right: 1rem; cursor: pointer"
+      <el-tag
+        v-for="(item, index) in presetList"
+        key="item.presetId"
+        closable
+        @close="delPreset(item, index)"
+        style="margin-right: 1rem; cursor: pointer"
       >
-        {{item.presetName?item.presetName:item.presetId}}
+        {{ item.presetName ? item.presetName : item.presetId }}
       </el-tag>
     </p>
 
     <el-form size="small" :inline="true" v-if="selectPresetVisible">
-      <el-form-item >
+      <el-form-item>
         <el-select v-model="selectPreset" placeholder="请选择预置点">
           <el-option
             v-for="item in allPresetList"
             :key="item.presetId"
             :label="item.presetName"
-            :value="item">
-          </el-option>
+            :value="item"
+          ></el-option>
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -40,10 +40,10 @@
         <el-button type="primary" @click="cancelAddCruisePoint">取消</el-button>
       </el-form-item>
     </el-form>
-    <el-button size="small" v-else @click="selectPresetVisible=true">添加巡航点</el-button>
+    <el-button size="small" v-else @click="selectPresetVisible = true">添加巡航点</el-button>
 
     <el-form size="small" :inline="true" v-if="setSpeedVisible">
-      <el-form-item >
+      <el-form-item>
         <el-input
           min="1"
           max="4095"
@@ -53,8 +53,7 @@
           v-if="setSpeedVisible"
           v-model="cruiseSpeed"
           size="small"
-        >
-        </el-input>
+        ></el-input>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="setCruiseSpeed">保存</el-button>
@@ -63,20 +62,17 @@
     </el-form>
     <el-button v-else size="small" @click="setSpeedVisible = true">设置巡航速度</el-button>
 
-
-
     <el-form size="small" :inline="true" v-if="setTimeVisible">
-      <el-form-item >
+      <el-form-item>
         <el-input
           min="1"
           max="4095"
           placeholder="巡航停留时间(秒)"
           addonBefore="巡航停留时间(秒)"
           addonAfter="(1-4095)"
-          style="width: 100%;"
+          style="width: 100%"
           v-model="cruiseTime"
-        >
-        </el-input>
+        ></el-input>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="setCruiseTime">保存</el-button>
@@ -91,22 +87,22 @@
 </template>
 
 <script>
-import { 
-  getFrontEndPresetList, 
-  addCruisePoint, 
-  deleteCruisePoint, 
-  setCruiseSpeed, 
+import {
+  getFrontEndPresetList,
+  addCruisePoint,
+  deleteCruisePoint,
+  setCruiseSpeed,
   setCruiseTime,
   startFrontEndCruise,
-  stopFrontEndCruise
-} from '@/api/ptz'
+  stopFrontEndCruise,
+} from "@/api/ptz";
 
 export default {
   name: "ptzCruising",
-  props: [ 'channelDeviceId', 'deviceId'],
+  props: ["channelDeviceId", "deviceId"],
   components: {},
   created() {
-    this.getPresetList()
+    this.getPresetList();
   },
   data() {
     return {
@@ -118,287 +114,308 @@ export default {
       selectPresetVisible: false,
       setSpeedVisible: false,
       setTimeVisible: false,
-      cruiseSpeed: '',
-      cruiseTime: '',
+      cruiseSpeed: "",
+      cruiseTime: "",
     };
   },
   methods: {
     getPresetList: function () {
-      getFrontEndPresetList(this.deviceId, this.channelDeviceId).then((res)=> {
-        if (res.code === 0) {
-          this.allPresetList = res.data;
-        }
-      }).catch((error)=> {
-        console.log(error);
-      });
+      getFrontEndPresetList(this.deviceId, this.channelDeviceId)
+        .then((res) => {
+          if (res.code === 0) {
+            this.allPresetList = res.data;
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     },
-    addCruisePoint: function (){
+    addCruisePoint: function () {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
       addCruisePoint(this.deviceId, this.channelDeviceId, {
         cruiseId: this.cruiseId,
-        presetId: this.selectPreset.presetId
-      }).then((res)=> {
-        if (res.code === 0) {
-          this.presetList.push(this.selectPreset)
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: 'error'
-          });
-        }
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error,
-          type: 'error'
-        });
-      }).finally(()=>{
-        this.selectPreset = ""
-        this.selectPresetVisible = false;
-        loading.close()
+        presetId: this.selectPreset.presetId,
       })
-    },
-    cancelAddCruisePoint: function () {
-      this.selectPreset = ""
-      this.selectPresetVisible = false;
-    },
-    delPreset: function (preset, index){
-      const loading = this.$loading({
-        lock: true,
-        fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
-      deleteCruisePoint(this.deviceId, this.channelDeviceId, {
-        cruiseId: this.cruiseId,
-        presetId: preset.presetId
-      }).then((res)=> {
-        if (res.code === 0) {
-          this.presetList.splice(index, 1)
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: 'error'
-          });
-        }
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error,
-          type: 'error'
-        });
-      }).finally(()=>{
-        loading.close()
-      })
-    },
-    deleteCruise: function (preset, index){
-      this.$confirm("确定删除此巡航组", '提示', {
-        dangerouslyUseHTMLString: true,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        const loading = this.$loading({
-          lock: true,
-          fullscreen: true,
-          text: '正在发送指令',
-          spinner: 'el-icon-loading',
-          background: 'rgba(0, 0, 0, 0.7)'
-        })
-        deleteCruisePoint(this.deviceId, this.channelDeviceId, {
-          cruiseId: this.cruiseId,
-          presetId: 0
-        }).then((res)=> {
+        .then((res) => {
           if (res.code === 0) {
-            this.presetList = []
-          }else {
+            this.presetList.push(this.selectPreset);
+          } else {
             this.$message({
               showClose: true,
               message: res.msg,
-              type: 'error'
+              type: "error",
             });
           }
-        }).catch((error)=> {
+        })
+        .catch((error) => {
           this.$message({
             showClose: true,
             message: error,
-            type: 'error'
+            type: "error",
           });
-        }).finally(()=>{
-          loading.close()
         })
-      }).catch(() => {
-
-      });
-
+        .finally(() => {
+          this.selectPreset = "";
+          this.selectPresetVisible = false;
+          loading.close();
+        });
     },
-    setCruiseSpeed: function (){
+    cancelAddCruisePoint: function () {
+      this.selectPreset = "";
+      this.selectPresetVisible = false;
+    },
+    delPreset: function (preset, index) {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
+      deleteCruisePoint(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId,
+        presetId: preset.presetId,
       })
+        .then((res) => {
+          if (res.code === 0) {
+            this.presetList.splice(index, 1);
+          } else {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error,
+            type: "error",
+          });
+        })
+        .finally(() => {
+          loading.close();
+        });
+    },
+    deleteCruise: function (preset, index) {
+      this.$confirm("确定删除此巡航组", "提示", {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          const loading = this.$loading({
+            lock: true,
+            fullscreen: true,
+            text: "正在发送指令",
+            spinner: "el-icon-loading",
+            background: "rgba(0, 0, 0, 0.7)",
+          });
+          deleteCruisePoint(this.deviceId, this.channelDeviceId, {
+            cruiseId: this.cruiseId,
+            presetId: 0,
+          })
+            .then((res) => {
+              if (res.code === 0) {
+                this.presetList = [];
+              } else {
+                this.$message({
+                  showClose: true,
+                  message: res.msg,
+                  type: "error",
+                });
+              }
+            })
+            .catch((error) => {
+              this.$message({
+                showClose: true,
+                message: error,
+                type: "error",
+              });
+            })
+            .finally(() => {
+              loading.close();
+            });
+        })
+        .catch(() => {});
+    },
+    setCruiseSpeed: function () {
+      const loading = this.$loading({
+        lock: true,
+        fullscreen: true,
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
       setCruiseSpeed(this.deviceId, this.channelDeviceId, {
         cruiseId: this.cruiseId,
-        speed: this.cruiseSpeed
-      }).then((res)=> {
-        if (res.code === 0) {
-          this.$message({
-            showClose: true,
-            message: '设置成功',
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: 'error'
-          });
-        }
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error,
-          type: 'error'
-        });
-      }).finally(()=>{
-        this.setSpeedVisible = false;
-        this.cruiseSpeed = ''
-        loading.close()
+        speed: this.cruiseSpeed,
       })
+        .then((res) => {
+          if (res.code === 0) {
+            this.$message({
+              showClose: true,
+              message: "设置成功",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error,
+            type: "error",
+          });
+        })
+        .finally(() => {
+          this.setSpeedVisible = false;
+          this.cruiseSpeed = "";
+          loading.close();
+        });
     },
     cancelSetCruiseSpeed: function () {
       this.setSpeedVisible = false;
-      this.cruiseSpeed = ''
+      this.cruiseSpeed = "";
     },
-    setCruiseTime: function (){
+    setCruiseTime: function () {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
       setCruiseTime(this.deviceId, this.channelDeviceId, {
         cruiseId: this.cruiseId,
-        time: this.cruiseTime
-      }).then((res)=> {
-        if (res.code === 0) {
-          this.$message({
-            showClose: true,
-            message: '设置成功',
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: 'error'
-          });
-        }
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error,
-          type: 'error'
-        });
-      }).finally(()=>{
-        this.setTimeVisible = false;
-        this.cruiseTime = ''
-        loading.close()
+        time: this.cruiseTime,
       })
+        .then((res) => {
+          if (res.code === 0) {
+            this.$message({
+              showClose: true,
+              message: "设置成功",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error,
+            type: "error",
+          });
+        })
+        .finally(() => {
+          this.setTimeVisible = false;
+          this.cruiseTime = "";
+          loading.close();
+        });
     },
     cancelSetCruiseTime: function () {
       this.setTimeVisible = false;
-      this.cruiseTime = ''
+      this.cruiseTime = "";
     },
-    startCruise: function (){
+    startCruise: function () {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
       startFrontEndCruise(this.deviceId, this.channelDeviceId, {
-        cruiseId: this.cruiseId
-      }).then((res)=> {
-        if (res.code === 0) {
-          this.$message({
-            showClose: true,
-            message: '开始巡航',
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: 'error'
-          });
-        }
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error,
-          type: 'error'
-        });
-      }).finally(()=>{
-        loading.close()
+        cruiseId: this.cruiseId,
       })
+        .then((res) => {
+          if (res.code === 0) {
+            this.$message({
+              showClose: true,
+              message: "开始巡航",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error,
+            type: "error",
+          });
+        })
+        .finally(() => {
+          loading.close();
+        });
     },
-    stopCruise: function (){
+    stopCruise: function () {
       const loading = this.$loading({
         lock: true,
         fullscreen: true,
-        text: '正在发送指令',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)'
-      })
+        text: "正在发送指令",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
       stopFrontEndCruise(this.deviceId, this.channelDeviceId, {
-        cruiseId: this.cruiseId
-      }).then((res)=> {
-        if (res.code === 0) {
-          this.$message({
-            showClose: true,
-            message: '停止巡航',
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.msg,
-            type: 'error'
-          });
-        }
-      }).catch((error)=> {
-        this.$message({
-          showClose: true,
-          message: error,
-          type: 'error'
-        });
-      }).finally(()=>{
-        loading.close()
+        cruiseId: this.cruiseId,
       })
+        .then((res) => {
+          if (res.code === 0) {
+            this.$message({
+              showClose: true,
+              message: "停止巡航",
+              type: "success",
+            });
+          } else {
+            this.$message({
+              showClose: true,
+              message: res.msg,
+              type: "error",
+            });
+          }
+        })
+        .catch((error) => {
+          this.$message({
+            showClose: true,
+            message: error,
+            type: "error",
+          });
+        })
+        .finally(() => {
+          loading.close();
+        });
     },
-
   },
 };
 </script>
 <style>
 .channel-form {
   display: grid;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   padding: 1rem 2rem 0 2rem;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 1rem;
