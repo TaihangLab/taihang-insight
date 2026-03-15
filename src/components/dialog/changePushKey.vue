@@ -66,22 +66,19 @@ export default {
     },
     onSubmit: function () {
       changePushKey(this.newPushKey, this.form.id).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: '修改成功',
-            type: 'success'
-          });
-          this.showDialog = false;
-          this.listChangeCallback();
-        }else {
-          this.$message({
-            showClose: true,
-            message: '修改pushKey失败，是否已登录（接口鉴权关闭无法修改pushKey）',
-            type: 'error'
-          });
-        }
+        this.$message({
+          showClose: true,
+          message: '修改成功',
+          type: 'success'
+        });
+        this.showDialog = false;
+        this.listChangeCallback();
       }).catch((error)=> {
+        this.$message({
+          showClose: true,
+          message: '修改pushKey失败，是否已登录（接口鉴权关闭无法修改pushKey）',
+          type: 'error'
+        });
         console.error(error)
       });
     },

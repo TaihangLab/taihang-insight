@@ -257,20 +257,13 @@ export default {
       }
       if (this.form.gbId) {
         // 更新通道
-        updateChannel(this.form).then((res) => {
-          if (res.data.code === 0) {
-            this.$message.success({
-              showClose: true,
-              message: "保存成功"
-            });
-            if (this.saveSuccess) {
-              this.saveSuccess()
-            }
-          } else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
+        updateChannel(this.form).then(() => {
+          this.$message.success({
+            showClose: true,
+            message: "保存成功"
+          });
+          if (this.saveSuccess) {
+            this.saveSuccess()
           }
         }).catch((error) => {
           this.$message.error({
@@ -282,21 +275,14 @@ export default {
         })
       } else {
         // 添加通道
-        addChannel(this.form).then((res) => {
-          if (res.data.code === 0) {
-            this.$message.success({
-              showClose: true,
-              message: "保存成功"
-            });
-            this.form = res.data.data
-            if (this.saveSuccess) {
-              this.saveSuccess()
-            }
-          } else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
+        addChannel(this.form).then((data) => {
+          this.$message.success({
+            showClose: true,
+            message: "保存成功"
+          });
+          this.form = data
+          if (this.saveSuccess) {
+            this.saveSuccess()
           }
         }).catch((error) => {
           this.$message.error({
@@ -317,14 +303,12 @@ export default {
         type: 'warning'
       }).then(() => {
         this.locading = true
-        resetChannel(this.form.gbId).then((res) => {
-          if (res.data.code === 0) {
-            this.$message.success({
-              showClose: true,
-              message: "重置成功 已保存"
-            });
-            this.getCommonChannel()
-          }
+        resetChannel(this.form.gbId).then(() => {
+          this.$message.success({
+            showClose: true,
+            message: "重置成功 已保存"
+          });
+          this.getCommonChannel()
         }).catch((error) => {
           console.error(error)
         }).finally(() => {
@@ -337,13 +321,11 @@ export default {
     },
     getCommonChannel: function () {
       this.locading = true
-      getChannelInfo(this.id).then((res) => {
-        if (res.data.code === 0) {
-          if (res.data.data.gbDownloadSpeed) {
-            res.data.data.gbDownloadSpeedArray = res.data.data.gbDownloadSpeed.split("/")
-          }
-          this.form = res.data.data;
+      getChannelInfo(this.id).then((data) => {
+        if (data.gbDownloadSpeed) {
+          data.gbDownloadSpeedArray = data.gbDownloadSpeed.split("/")
         }
+        this.form = data;
       }).catch((error) => {
         console.error(error)
       }).finally(() => {

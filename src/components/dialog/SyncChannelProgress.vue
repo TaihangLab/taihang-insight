@@ -56,53 +56,39 @@ export default {
       this.getProgress()
     },
     getProgress(){
-      getDeviceSyncStatus(this.deviceId).then((res) => {
-        if (res.data.code === 0) {
-
-          if (res.data.data != null) {
-            if (res.data.data.syncIng) {
-              if (res.data.data.total === 0) {
-                this.msg = `等待同步中`;
-                this.timmer = setTimeout(this.getProgress, 300)
-              }else {
-                this.syncFlag = true;
-                this.total = res.data.data.total;
-                this.current = res.data.data.current;
-                this.percentage = Math.floor(Number(res.data.data.current)/Number(res.data.data.total)* 10000)/100;
-                this.msg = `同步中...[${res.data.data.current}/${res.data.data.total}]`;
-                this.timmer = setTimeout(this.getProgress, 300)
-              }
+      getDeviceSyncStatus(this.deviceId).then((data) => {
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        if (data != null) {
+          if (data.syncIng) {
+            if (data.total === 0) {
+              this.msg = `等待同步中`;
+              this.timmer = setTimeout(this.getProgress, 300)
             }else {
-              if (res.data.data.errorMsg){
-                this.msg = res.data.data.errorMsg;
-                this.syncStatus = "exception"
-              }else {
-                this.syncStatus = "success"
-                this.percentage = 100;
-                this.msg = '同步成功';
-                setTimeout(()=>{
-                  this.showDialog = false;
-                }, 3000)
-              }
+              this.syncFlag = true;
+              this.total = data.total;
+              this.current = data.current;
+              this.percentage = Math.floor(Number(data.current)/Number(data.total)* 10000)/100;
+              this.msg = `同步中...[${data.current}/${data.total}]`;
+              this.timmer = setTimeout(this.getProgress, 300)
             }
           }else {
-            this.msg = res.data.msg;
-            this.timmer = setTimeout(this.getProgress, 300)
-          }
-        }else {
-          if (this.syncFlag) {
-            this.syncStatus = "success"
-            this.percentage = 100;
-            this.msg = '同步成功';
-          }else {
-            this.syncStatus = "error"
-            this.msg = res.data.msg;
+            if (data.errorMsg){
+              this.msg = data.errorMsg;
+              this.syncStatus = "exception"
+            }else {
+              this.syncStatus = "success"
+              this.percentage = 100;
+              this.msg = '同步成功';
+              setTimeout(()=>{
+                this.showDialog = false;
+              }, 3000)
+            }
           }
         }
       }).catch((error) =>{
         console.log(error);
         this.syncStatus = "error"
-        this.msg = error.response.data.msg;
+        this.msg = error.response?.data?.msg || error.message;
       });
     },
     close: function (){

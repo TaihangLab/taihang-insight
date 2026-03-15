@@ -548,38 +548,15 @@ export default {
         }
         
         console.log('加载复判技能列表，参数:', params)
-        
+
         const response = await centerAPI.reviewSkill.getReviewSkillList(params)
-        
-        // 解析后端返回的数据格式
-        let skillsData = null
-        let totalCount = 0
-        let pageInfo = {}
-        
-        if (response.data && response.data.success && response.data.data) {
-          // 后端新格式：{success: true, data: [...], total: N, page: 1, limit: 10, total_pages: N}
-          skillsData = response.data.data
-          totalCount = response.data.total || 0
-          pageInfo = {
-            page: response.data.page || this.currentPage,
-            limit: response.data.limit || this.pageSize,
-            total_pages: response.data.total_pages || 0
-          }
-        } else if (response.data && Array.isArray(response.data)) {
-          // 兼容：后端直接返回数组的格式
-          skillsData = response.data
-          totalCount = response.data.length
-        } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
-          // 兼容：标准包装格式 {code: 0, data: [...], total: 0}
-          skillsData = response.data.data
-          totalCount = response.data.total || response.data.data.length
-        } else {
-          console.error('API返回数据格式异常:', response)
-          this.skills = []
-          this.totalCount = 0
-          return
-        }
-        
+
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        const skillsData = Array.isArray(response.data) ? response.data : []
+
+        // 分页信息在顶层
+        const totalCount = response.total || 0
+
         if (skillsData && Array.isArray(skillsData)) {
           // 转换数据格式以适配前端组件
           this.skills = skillsData.map(skill => ({
@@ -723,12 +700,10 @@ export default {
           await this.loadSkillsData()
         }
         
-        if (response.data && response.data.success) {
-          // 修复数据解析逻辑，处理后端响应格式
-          const resultData = response.data.data || response.data
-          const deletedCount = resultData.deleted_count || 0
-          this.$message.success(`已成功删除 ${deletedCount} 个技能`)
-        }
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        const resultData = response.data || response
+        const deletedCount = resultData.deleted_count || 0
+        this.$message.success(`已成功删除 ${deletedCount} 个技能`)
         
         return selectedSkills
       } catch (error) {

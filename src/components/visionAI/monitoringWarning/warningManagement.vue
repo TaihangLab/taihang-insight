@@ -469,22 +469,14 @@ export default {
           status: 1 // 只获取正常状态的档案
         })
 
-        console.log('📥 预警管理 - 获取档案列表响应:', response.data)
+        console.log('📥 预警管理 - 获取档案列表响应:', response)
 
-        // 后端返回格式：{ code: 0, msg: "获取成功", data: [...], pagination: {...} }
-        if (response.data && response.data.code === 0 && response.data.data) {
-          this.availableArchives = response.data.data
+        // 响应拦截器已处理格式转换，直接使用数据
+        if (Array.isArray(response)) {
+          this.availableArchives = response
           console.log('✅ 预警管理 - 加载档案列表成功:', this.availableArchives.length, '个档案')
-        } else if (response.data && response.data.archives) {
-          // 兼容其他可能的返回格式
-          this.availableArchives = response.data.archives
-          console.log('✅ 预警管理 - 加载档案列表成功(archives):', this.availableArchives.length, '个档案')
-        } else if (response.data && Array.isArray(response.data)) {
-          // 兼容直接返回数组的格式
-          this.availableArchives = response.data
-          console.log('✅ 预警管理 - 加载档案列表成功(数组):', this.availableArchives.length, '个档案')
         } else {
-          console.warn('⚠️ 预警管理 - 获取档案列表格式异常:', response.data)
+          console.warn('⚠️ 预警管理 - 获取档案列表格式异常:', response)
           this.availableArchives = []
         }
 
@@ -675,31 +667,26 @@ export default {
           `预警管理归档 - 预警类型: ${warning.type || warning.alert_type}`
         )
 
-        console.log('📤 归档API响应:', response.data)
+        console.log('📤 归档API响应:', response)
 
-        if (response.data && response.data.code === 0) {
-          // 5. 延迟移除记录，让用户能看到状态变化
-          setTimeout(() => {
-            const currentIndex = this.warningList.findIndex(item => item.id === this.archiveWarningId)
-            if (currentIndex !== -1) {
-              // 从预警列表中移除已归档的预警
-              this.warningList.splice(currentIndex, 1)
-            }
-          }, 500)
+        // 响应拦截器已处理成功/失败判断，直接执行后续操作
+        // 5. 延迟移除记录，让用户能看到状态变化
+        setTimeout(() => {
+          const currentIndex = this.warningList.findIndex(item => item.id === this.archiveWarningId)
+          if (currentIndex !== -1) {
+            // 从预警列表中移除已归档的预警
+            this.warningList.splice(currentIndex, 1)
+          }
+        }, 500)
 
-          this.$message.success('预警已成功归档')
-          console.log('✅ 预警管理 - 预警归档成功:', apiAlertId, '档案ID:', targetArchiveId)
+        this.$message.success('预警已成功归档')
+        console.log('✅ 预警管理 - 预警归档成功:', apiAlertId, '档案ID:', targetArchiveId)
 
-          // 关闭对话框
-          this.closeArchiveDialog()
-          
-          // 刷新列表以获取最新数据
-          await this.getWarningList()
-        } else {
-          const errorMessage = (response.data && response.data.message) || '归档失败'
-          this.$message.error(errorMessage)
-          console.warn('⚠️ 预警管理 - 预警归档失败:', response.data)
-        }
+        // 关闭对话框
+        this.closeArchiveDialog()
+
+        // 刷新列表以获取最新数据
+        await this.getWarningList()
         
         // 如果在选中列表中，也移除
         const selectedIndex = this.selectedWarnings.indexOf(this.archiveWarningId)
@@ -845,10 +832,10 @@ export default {
         console.log('批量处理预警:', apiAlertIds, updateData)
 
         const response = await centerAPI.alert.batchUpdateAlertStatus(apiAlertIds, updateData)
-        
-        if (response.data && response.data.code === 0) {
-          // API调用成功，更新本地数据（与单个处理逻辑一致）
-          for (const id of this.selectedWarnings) {
+
+        // 响应拦截器已处理成功/失败判断，直接执行后续操作
+        // API调用成功，更新本地数据（与单个处理逻辑一致）
+        for (const id of this.selectedWarnings) {
             const index = this.warningList.findIndex(item => item.id === id)
             if (index !== -1) {
               // 确保有操作历史数组
@@ -887,16 +874,12 @@ export default {
           }
           
           this.$message.success(`已为 ${this.selectedWarnings.length} 项预警添加处理记录`)
-          
+
           // 刷新列表以获取最新数据
           await this.getWarningList()
-        } else {
-          console.error('批量处理API失败:', response.data)
-          this.$message.error('批量处理失败：' + (response.data && response.data.msg || '服务器错误'))
-        }
-        
-        this.selectedWarnings = []
-        this.closeBatchProcessDialog()
+
+          this.selectedWarnings = []
+          this.closeBatchProcessDialog()
       } catch (error) {
         console.error('批量处理失败:', error)
         this.$message.error('批量处理失败：' + (error.message || '网络错误'))
@@ -1125,49 +1108,45 @@ export default {
 
         // 调用API更新预警状态
         const response = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData)
-        
-        if (response.data && response.data.code === 0) {
-          // API调用成功，更新本地数据状态 - 添加新的处理记录
-          const index = this.warningList.findIndex(item => String(item.id) === String(warningId))
-          if (index !== -1) {
-            // 🔧 关键修复：更新 _apiData.status 字段为处理中
-            if (this.warningList[index]._apiData) {
-              this.warningList[index]._apiData.status = 2
-            }
-            
-            // 更新字符串状态为处理中
-            this.warningList[index].status = 'processing'
-            
-            // 确保有操作历史数组
-            if (!this.warningList[index].operationHistory) {
-              this.warningList[index].operationHistory = []
-            }
-            
-            // 添加新的处理中记录
-            const newRecord = {
-              id: Date.now() + Math.random(),
-              status: 'completed',
-              statusText: '处理中',
-              time: this.getCurrentTime(),
-              description: `处理意见：${this.remarkForm.remark}`,
-              operationType: 'processing',
-              operator: this.getCurrentUserName()
-            }
-            
-            this.warningList[index].operationHistory.unshift(newRecord)
-            
-            console.log('✅ saveRemark - 本地状态已更新为处理中，_apiData.status:', this.warningList[index]._apiData.status)
+
+        // 响应拦截器已处理成功/失败判断，直接执行后续操作
+        // API调用成功，更新本地数据状态 - 添加新的处理记录
+        const index = this.warningList.findIndex(item => String(item.id) === String(warningId))
+        if (index !== -1) {
+          // 🔧 关键修复：更新 _apiData.status 字段为处理中
+          if (this.warningList[index]._apiData) {
+            this.warningList[index]._apiData.status = 2
           }
-          
-          this.$message.success('处理记录已添加')
-          
-          // 刷新列表以获取最新数据
-          await this.getWarningList()
-        } else {
-          console.error('更新预警状态API失败:', response.data)
-          this.$message.error('处理失败：' + (response.data && response.data.msg || '服务器错误'))
+
+          // 更新字符串状态为处理中
+          this.warningList[index].status = 'processing'
+
+          // 确保有操作历史数组
+          if (!this.warningList[index].operationHistory) {
+            this.warningList[index].operationHistory = []
+          }
+
+          // 添加新的处理中记录
+          const newRecord = {
+            id: Date.now() + Math.random(),
+            status: 'completed',
+            statusText: '处理中',
+            time: this.getCurrentTime(),
+            description: `处理意见：${this.remarkForm.remark}`,
+            operationType: 'processing',
+            operator: this.getCurrentUserName()
+          }
+
+          this.warningList[index].operationHistory.unshift(newRecord)
+
+          console.log('✅ saveRemark - 本地状态已更新为处理中，_apiData.status:', this.warningList[index]._apiData.status)
         }
-        
+
+        this.$message.success('处理记录已添加')
+
+        // 刷新列表以获取最新数据
+        await this.getWarningList()
+
         this.closeRemarkDialog()
       } catch (error) {
         console.error('处理失败:', error)
@@ -1495,42 +1474,39 @@ export default {
           this.falseAlarmForm.reviewNotes,
           this.getCurrentUserName()
         )
-        
-        if (response.data && response.data.code === 0) {
-          // 添加误报记录到操作历史
-          if (!this.warningList[warningIndex].operationHistory) {
-            this.warningList[warningIndex].operationHistory = []
-          }
-          
-          const newRecord = {
-            id: Date.now() + Math.random(),
-            status: 'completed',
-            statusText: '误报处理',
-            time: this.getCurrentTime(),
-            description: `预警被标记为误报：${this.falseAlarmForm.reviewNotes}`,
-            operationType: 'falseAlarm',
-            operator: this.getCurrentUserName()
-          }
-          
-          this.warningList[warningIndex].operationHistory.unshift(newRecord)
-          this.warningList[warningIndex].status = 'archived'
-          this.warningList[warningIndex].isFalseAlarm = true
-          this.warningList[warningIndex].archiveTime = new Date().toLocaleString()
-          
-          // 如果在选中列表中，也移除
-          const selectedIndex = this.selectedWarnings.indexOf(this.archiveWarningId)
-          if (selectedIndex !== -1) {
-            this.selectedWarnings.splice(selectedIndex, 1)
-          }
-          
-          this.$message.success('预警已标记为误报，复判记录已保存')
-          
-          // 刷新列表以获取最新数据
-          await this.getWarningList()
-        } else {
-          this.$message.error((response.data && response.data.msg) || '标记误报失败')
+
+        // 响应拦截器已处理成功/失败判断，直接执行后续操作
+        // 添加误报记录到操作历史
+        if (!this.warningList[warningIndex].operationHistory) {
+          this.warningList[warningIndex].operationHistory = []
         }
-        
+
+        const newRecord = {
+          id: Date.now() + Math.random(),
+          status: 'completed',
+          statusText: '误报处理',
+          time: this.getCurrentTime(),
+          description: `预警被标记为误报：${this.falseAlarmForm.reviewNotes}`,
+          operationType: 'falseAlarm',
+          operator: this.getCurrentUserName()
+        }
+
+        this.warningList[warningIndex].operationHistory.unshift(newRecord)
+        this.warningList[warningIndex].status = 'archived'
+        this.warningList[warningIndex].isFalseAlarm = true
+        this.warningList[warningIndex].archiveTime = new Date().toLocaleString()
+
+        // 如果在选中列表中，也移除
+        const selectedIndex = this.selectedWarnings.indexOf(this.archiveWarningId)
+        if (selectedIndex !== -1) {
+          this.selectedWarnings.splice(selectedIndex, 1)
+        }
+
+        this.$message.success('预警已标记为误报，复判记录已保存')
+
+        // 刷新列表以获取最新数据
+        await this.getWarningList()
+
         // 关闭对话框并重置表单
         this.falseAlarmDialogVisible = false
         this.falseAlarmForm.reviewNotes = ''
@@ -1775,48 +1751,44 @@ export default {
 
         // 调用API更新预警状态
         const response = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData)
-        
-        if (response.data && response.data.code === 0) {
-          // API调用成功，更新本地数据状态
-          const index = this.warningList.findIndex(item => String(item.id) === String(warningId))
-          if (index !== -1) {
-            // 🔧 关键修复：更新 _apiData.status 字段为已处理
-            if (this.warningList[index]._apiData) {
-              this.warningList[index]._apiData.status = 3
-            }
-            
-            // 更新字符串状态为已处理
-            this.warningList[index].status = 'completed'
-            
-            // 确保有操作历史数组
-            if (!this.warningList[index].operationHistory) {
-              this.warningList[index].operationHistory = []
-            }
-            
-            // 添加新的已处理记录
-            const newRecord = {
-              id: Date.now() + Math.random(),
-              status: 'completed',
-              statusText: '已处理',
-              time: this.getCurrentTime(),
-              description: '预警处理已完成，可以进行后续操作',
-              operationType: 'completed',
-              operator: this.getCurrentUserName()
-            }
-            
-            this.warningList[index].operationHistory.unshift(newRecord)
-            
-            console.log('✅ finishProcessing - 本地状态已更新为已处理，_apiData.status:', this.warningList[index]._apiData.status)
+
+        // 响应拦截器已处理成功/失败判断，直接执行后续操作
+        // API调用成功，更新本地数据状态
+        const index = this.warningList.findIndex(item => String(item.id) === String(warningId))
+        if (index !== -1) {
+          // 🔧 关键修复：更新 _apiData.status 字段为已处理
+          if (this.warningList[index]._apiData) {
+            this.warningList[index]._apiData.status = 3
           }
-          
-          this.$message.success('处理已完成，现在可以进行归档等操作')
-          
-          // 刷新列表以获取最新数据
-          await this.getWarningList()
-        } else {
-          console.error('结束处理API失败:', response.data)
-          this.$message.error('结束处理失败：' + (response.data && response.data.msg || '服务器错误'))
+
+          // 更新字符串状态为已处理
+          this.warningList[index].status = 'completed'
+
+          // 确保有操作历史数组
+          if (!this.warningList[index].operationHistory) {
+            this.warningList[index].operationHistory = []
+          }
+
+          // 添加新的已处理记录
+          const newRecord = {
+            id: Date.now() + Math.random(),
+            status: 'completed',
+            statusText: '已处理',
+            time: this.getCurrentTime(),
+            description: '预警处理已完成，可以进行后续操作',
+            operationType: 'completed',
+            operator: this.getCurrentUserName()
+          }
+
+          this.warningList[index].operationHistory.unshift(newRecord)
+
+          console.log('✅ finishProcessing - 本地状态已更新为已处理，_apiData.status:', this.warningList[index]._apiData.status)
         }
+
+        this.$message.success('处理已完成，现在可以进行归档等操作')
+
+        // 刷新列表以获取最新数据
+        await this.getWarningList()
         
         this.closeRemarkDialog()
       } catch (error) {
@@ -2089,19 +2061,15 @@ export default {
 
         // 调用API进行批量删除
         const response = await centerAPI.alert.batchDeleteAlerts(apiAlertIds)
-        
-        if (response.data && response.data.code === 0) {
-          // API调用成功，从预警列表中移除选中的项
-          this.warningList = this.warningList.filter(item => 
-            !this.selectedWarnings.includes(item.id)
-          )
-          
-          this.$message.success(`已成功删除 ${this.selectedWarnings.length} 项预警`)
-        } else {
-          console.error('删除预警API失败:', response.data)
-          this.$message.error('删除失败：' + (response.data && response.data.msg || '服务器错误'))
-        }
-        
+
+        // 响应拦截器已处理成功/失败判断，直接执行后续操作
+        // API调用成功，从预警列表中移除选中的项
+        this.warningList = this.warningList.filter(item =>
+          !this.selectedWarnings.includes(item.id)
+        )
+
+        this.$message.success(`已成功删除 ${this.selectedWarnings.length} 项预警`)
+
         // 清空选择
         this.selectedWarnings = []
         this.closeDeleteDialog()

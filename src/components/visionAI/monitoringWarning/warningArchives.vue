@@ -166,7 +166,6 @@ export default {
       } else if (this.addArchiveDialogVisible && this.currentArchiveId) {
         // 添加档案时的图片上传
         return `${baseUrl}/api/v1/alert-archives/${this.currentArchiveId}/upload/image`
-      } else {
         // 临时上传地址（新建时还没有ID）
         return `${baseUrl}/api/v1/alert-archives/upload/temp`
       }
@@ -178,7 +177,6 @@ export default {
       
       if (this.currentRecordId) {
         return `${baseUrl}/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/video`
-      } else {
         return `${baseUrl}/api/v1/alert-archives/upload/temp-video`
       }
     },
@@ -207,7 +205,6 @@ export default {
       if (imageUrl) {
         this.currentPreviewImage = imageUrl;
         this.imagePreviewVisible = true;
-      } else {
         this.$message.warning('该预警暂无图片');
       }
     },
@@ -247,28 +244,23 @@ export default {
 
         const response = await centerAPI.archive.getArchiveList(queryParams);
         
-        // 适配新的API响应格式：检查是否为包装格式或直接数据格式
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        // 分页格式: { data: [], total, page, page_size }
         let archiveData;
         let paginationData;
-        
-        if (response.data.code !== undefined) {
-          // 包装格式 {code, msg, data, pagination}
-          if (response.data.code === 0) {
-            archiveData = response.data.data || [];
-            paginationData = response.data.pagination;
-          } else {
-            throw new Error(response.data.msg || '获取档案列表失败');
-          }
-        } else if (response.data.data) {
-          // 新的包装格式 {data, pagination}
-          archiveData = response.data.data || [];
-          paginationData = response.data.pagination;
-        } else if (Array.isArray(response.data)) {
-          // 直接数组格式
+
+        if (Array.isArray(response.data)) {
           archiveData = response.data;
-        } else {
+          paginationData = {
+            total: response.total || 0,
+            page: response.page || 1,
+            limit: response.page_size || response.limit || 20
+          };
+        } else if (response.data && typeof response.data === 'object') {
           // 单个对象格式，转为数组
           archiveData = [response.data];
+        } else {
+          archiveData = [];
         }
         
         // 更新档案列表数据，转换格式以适配前端显示
@@ -305,19 +297,8 @@ export default {
 
         const response = await centerAPI.archive.getArchiveDetail(archiveId);
         
-        // 适配新的API响应格式
-        let archiveData;
-        if (response.data.code !== undefined) {
-          // 包装格式 {code, msg, data}
-          if (response.data.code === 0) {
-            archiveData = response.data.data;
-          } else {
-            throw new Error(response.data.msg || '获取档案详情失败');
-          }
-        } else {
-          // 直接数据格式
-          archiveData = response.data;
-        }
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        const archiveData = response.data || response;
         
         this.archiveInfo = {
           id: archiveData.archive_id,
@@ -353,42 +334,16 @@ export default {
         console.log(`加载第${this.pagination.currentPage}页预警记录，每页${limit}条...`);
         const response = await centerAPI.archive.getArchiveLinkedAlerts(archiveId, queryParams);
         
-        // 适配新的API响应格式
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        // 分页格式: { data: [], total, page, page_size }
         let alertRecords = [];
         let totalCount = 0;
         let pages = 0;
-        
-        if (response.data.code !== undefined) {
-          // 包装格式 {code, message, data}
-          if (response.data.code === 0) {
-            const data = response.data.data || {};
-            alertRecords = data.items || [];
-            totalCount = data.total || 0;
-            pages = data.pages || 1;
-          } else {
-            throw new Error(response.data.message || '获取预警记录失败');
-          }
-        } else if (response.data.data) {
-          // 新的包装格式 {data, pagination}
-          alertRecords = response.data.data || [];
-          if (response.data.pagination) {
-            totalCount = response.data.pagination.total;
-            pages = response.data.pagination.pages;
-          } else {
-            totalCount = alertRecords.length;
-            pages = 1;
-          }
-        } else if (Array.isArray(response.data)) {
-          // 直接数组格式
-          alertRecords = response.data;
-          totalCount = alertRecords.length;
-          pages = 1;
-        } else {
-          // 单个对象格式，转为数组
-          alertRecords = [response.data];
-          totalCount = 1;
-          pages = 1;
-        }
+
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        alertRecords = Array.isArray(response.data) ? response.data : [];
+        totalCount = response.total || 0;
+        pages = response.pages || Math.ceil(totalCount / (response.page_size || response.limit || 20));
         
         // 转换数据格式以适配前端显示，同时保留原始API数据
         this.archiveList = alertRecords.map(record => ({
@@ -500,7 +455,6 @@ export default {
           deviceName = '东15风机';
         } else if (archive.id === 3) {
           deviceName = 'EF两区特检测区10社';
-        } else {
           deviceName = '降盐水泵废水站';
         }
         
@@ -633,7 +587,6 @@ export default {
         let history = [];
         if (apiDetail.process) {
           history = this.processApiDataHistory(apiDetail);
-        } else {
           history = this.buildFromApiData(apiDetail);
         }
 
@@ -889,7 +842,6 @@ export default {
         } else if (timeString.includes(' ')) {
           // 标准格式 YYYY-MM-DD HH:mm:ss
           date = new Date(timeString);
-        } else {
           // 其他格式
           date = new Date(timeString);
         }
@@ -932,7 +884,6 @@ export default {
           date = new Date(timeString);
         } else if (timeString.includes(' ')) {
           date = new Date(timeString);
-        } else {
           date = new Date();
         }
         
@@ -1013,17 +964,8 @@ export default {
           
           const response = await centerAPI.archive.unlinkAlertFromArchive(this.currentArchiveId, this.deleteId);
           
-          // 适配API响应格式
-          if (response.data.code !== undefined) {
-            if (response.data.code === 0) {
-              this.$message.success('已从档案中移除该预警');
-            } else {
-              throw new Error(response.data.msg || '移除失败');
-            }
-          } else {
-            this.$message.success('已从档案中移除该预警');
-          }
-        } else {
+          // 响应拦截器已处理成功/失败判断
+          this.$message.success('已从档案中移除该预警');
           // 批量删除 - 提取ID数组并逐个解除关联
           const recordIds = this.selectedRows.map(row => row.id);
           
@@ -1049,11 +991,8 @@ export default {
           for (const alertId of recordIds) {
             try {
               const response = await centerAPI.archive.unlinkAlertFromArchive(this.currentArchiveId, alertId);
-              if (!response.data || response.data.code === 0) {
-                successCount++;
-              } else {
-                failCount++;
-              }
+              // 响应拦截器已处理成功/失败判断，如果到这里说明成功
+              successCount++;
             } catch (error) {
               console.error(`移除预警 ${alertId} 失败:`, error);
               failCount++;
@@ -1062,7 +1001,6 @@ export default {
           
           if (failCount > 0) {
             this.$message.warning(`已成功移除 ${successCount} 条，失败 ${failCount} 条`);
-          } else {
             this.$message.success(`已成功从档案中移除 ${successCount} 条预警`);
           }
           
@@ -1090,10 +1028,8 @@ export default {
         
         if (match) {
           this.editForm.timeRange = [match[1], match[2]];
-        } else {
           this.editForm.timeRange = [];
         }
-      } else {
         this.editForm.timeRange = [];
       }
       
@@ -1117,7 +1053,6 @@ export default {
         if (this.editForm.timeRange && Array.isArray(this.editForm.timeRange) && this.editForm.timeRange.length === 2) {
           startTime = this.editForm.timeRange[0];
           endTime = this.editForm.timeRange[1];
-        } else {
           // 默认设置为当年完整时间范围
           const currentYear = new Date().getFullYear();
           startTime = `${currentYear}-01-01 00:00:00`;
@@ -1140,19 +1075,8 @@ export default {
         // 调用后端API更新档案
         const response = await centerAPI.archive.updateArchive(this.currentArchiveId, updateData);
         
-        // 适配新的API响应格式
-        let updatedArchive;
-        if (response.data.code !== undefined) {
-          // 包装格式 {code, msg, data}
-          if (response.data.code === 0) {
-            updatedArchive = response.data.data;
-          } else {
-            throw new Error(response.data.msg || '更新档案失败');
-          }
-        } else {
-          // 直接数据格式
-          updatedArchive = response.data;
-        }
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        const updatedArchive = response.data || response;
 
         this.$message.success('档案信息更新成功');
 
@@ -1235,19 +1159,8 @@ export default {
         // 调用后端API添加预警记录
         const response = await centerAPI.archive.addAlertRecord(recordData);
         
-        // 适配新的API响应格式
-        let newRecord;
-        if (response.data.code !== undefined) {
-          // 包装格式 {code, msg, data}
-          if (response.data.code === 0) {
-            newRecord = response.data.data;
-          } else {
-            throw new Error(response.data.msg || '添加预警记录失败');
-          }
-        } else {
-          // 直接数据格式
-          newRecord = response.data;
-        }
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        const newRecord = response.data || response;
         
         this.$message.success('预警记录添加成功');
         
@@ -1304,15 +1217,12 @@ export default {
           console.log('加载可用预警列表参数:', params);
 
           const response = await centerAPI.archive.getAvailableAlerts(params);
-          
-          if (response.data && response.data.code === 0) {
-            this.availableAlerts = response.data.data.items || [];
-            this.availableAlertsPagination.total = response.data.data.total || 0;
-            this.availableAlertsPagination.currentPage = response.data.data.page || 1;
-            console.log('可用预警列表加载成功:', this.availableAlerts);
-          } else {
-            throw new Error(response.data ? response.data.msg : '获取预警列表失败');
-          }
+
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          this.availableAlerts = Array.isArray(response.data) ? response.data : [];
+          this.availableAlertsPagination.total = response.total || 0;
+          this.availableAlertsPagination.currentPage = response.page || 1;
+          console.log('可用预警列表加载成功:', this.availableAlerts);
         } catch (error) {
           console.error('加载可用预警列表失败:', error);
           this.$message.error('加载预警列表失败: ' + error.message);
@@ -1386,36 +1296,32 @@ export default {
           });
 
           const response = await centerAPI.archive.linkAlertsToArchive(
-            this.currentArchiveId, 
-            alertIds, 
+            this.currentArchiveId,
+            alertIds,
             linkReason
           );
 
-          if (response.data && response.data.code === 0) {
-            const result = response.data.data;
-            
-            // 显示结果信息
-            if (result.success_count > 0) {
-              this.$message.success(`成功添加 ${result.success_count} 个预警到档案`);
-              
-              // 重新加载当前档案的预警记录
-              await this.loadArchiveAlerts(this.currentArchiveId);
-            }
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          const result = response.data || response;
 
-            if (result.failed_count > 0) {
-              const failedDetails = result.failed_alerts.map(item => 
-                `预警${item.alert_id}: ${item.error}`
-              ).join('; ');
-              this.$message.warning(`${result.failed_count} 个预警添加失败: ${failedDetails}`);
-            }
+          // 显示结果信息
+          if (result.success_count > 0) {
+            this.$message.success(`成功添加 ${result.success_count} 个预警到档案`);
 
-            // 关闭对话框
-            this.selectAlertDialogVisible = false;
-            this.selectedAlerts = [];
-
-          } else {
-            throw new Error(response.data ? response.data.msg : '关联预警失败');
+            // 重新加载当前档案的预警记录
+            await this.loadArchiveAlerts(this.currentArchiveId);
           }
+
+          if (result.failed_count > 0) {
+            const failedDetails = result.failed_alerts.map(item =>
+              `预警${item.alert_id}: ${item.error}`
+            ).join('; ');
+            this.$message.warning(`${result.failed_count} 个预警添加失败: ${failedDetails}`);
+          }
+
+          // 关闭对话框
+          this.selectAlertDialogVisible = false;
+          this.selectedAlerts = [];
 
         } catch (error) {
           console.error('批量添加预警失败:', error);
@@ -1513,7 +1419,6 @@ export default {
          if (this.newArchiveForm.timeRange && this.newArchiveForm.timeRange.length === 2) {
            startTime = this.newArchiveForm.timeRange[0];
            endTime = this.newArchiveForm.timeRange[1];
-         } else {
            // 默认设置为当年完整时间范围
            const currentYear = new Date().getFullYear();
            startTime = `${currentYear}-01-01 00:00:00`;
@@ -1535,20 +1440,9 @@ export default {
 
         // 调用后端API创建档案
         const response = await centerAPI.archive.createArchive(archiveData);
-        
-        // 适配新的API响应格式
-        let newArchive;
-        if (response.data.code !== undefined) {
-          // 包装格式 {code, msg, data}
-          if (response.data.code === 0) {
-            newArchive = response.data.data;
-          } else {
-            throw new Error(response.data.msg || '创建档案失败');
-          }
-        } else {
-          // 直接数据格式
-          newArchive = response.data;
-        }
+
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        const newArchive = response.data || response;
         
         this.$message.success('档案创建成功');
         
@@ -1749,16 +1643,8 @@ export default {
       try {
         const response = await centerAPI.archive.deleteArchive(this.deleteArchiveId);
         
-        // 适配API响应格式
-        if (response.data.code !== undefined) {
-          if (response.data.code === 0) {
-            this.$message.success('档案删除成功');
-          } else {
-            throw new Error(response.data.msg || '删除档案失败');
-          }
-        } else {
-          this.$message.success('档案删除成功');
-        }
+        // 响应拦截器已处理成功/失败判断
+        this.$message.success('档案删除成功');
         
         // 如果删除的是当前选中的档案，清空详情
         if (this.currentArchiveId === this.deleteArchiveId) {

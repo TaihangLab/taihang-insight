@@ -241,7 +241,8 @@ export const createAxiosInstance = (
 
 /**
  * 附加通用响应拦截器
- * 处理统一的 RBACResponse 格式和常见错误
+ * 处理统一的响应格式和常见错误
+ * 后端新格式：{ code: 0, message: string, data: any, total?: number, page?: number, page_size?: number }
  * 支持 200/201/204 状态码
  */
 export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
@@ -250,15 +251,26 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
       // 204 No Content - 无响应体（用于 DELETE 操作）
       // 返回默认成功对象
       if (response.status === 204) {
-        return { success: true, code: 204, message: '删除成功', data: null }
+        return { code: 0, message: '删除成功', data: null }
       }
 
       const data = response.data
 
-      // 检查是否为 RBACResponse 格式 { success, code, message, data }
-      if (data && typeof data === 'object' && 'success' in data && 'code' in data && 'message' in data) {
-        if (data.success) {
-          // 请求成功，返回 data.data（内层数据，包含分页信息）
+      // 后端统一响应格式：{ code, message, data }
+      // code === 0 表示成功，非 0 表示失败
+      if (data && typeof data === 'object' && 'code' in data) {
+        if (data.code === 0) {
+          // 请求成功，返回 data 字段
+          // 如果是分页数据，将分页信息合并到返回值中
+          if (data.total !== undefined || data.page !== undefined || data.page_size !== undefined) {
+            return {
+              data: data.data,
+              total: data.total,
+              page: data.page,
+              limit: data.page_size || data.limit,
+              pages: data.total && data.page_size ? Math.ceil(data.total / data.page_size) : 0
+            }
+          }
           return data.data
         } else {
           // 请求失败，抛出错误
@@ -267,12 +279,8 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
           throw error
         }
       }
-      // 检查是否为 UnifiedResponse 格式 { code, msg, data }
-      if (data && typeof data === 'object' && 'code' in data && 'msg' in data) {
-        // 请求成功（code === 0/200/201），返回 data 字段
-        return data.data
-      }
-      // 其他格式，直接返回
+
+      // 其他格式，直接返回（兼容旧代码）
       return data
     },
     (error) => {

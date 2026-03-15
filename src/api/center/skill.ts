@@ -122,9 +122,9 @@ class SkillAPI {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
-      onUploadProgress: (progressEvent: any) => {
+      onUploadProgress: (progressEvent: { loaded: number; total?: number }) => {
         // 上传进度回调（可用于UI进度显示）
-        void Math.round((progressEvent.loaded * 100) / progressEvent.total)
+        void Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1))
         // 这里可以触发进度事件
       }
     }
@@ -337,9 +337,9 @@ class SkillAPI {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
-      onUploadProgress: (progressEvent: any) => {
+      onUploadProgress: (progressEvent: { loaded: number; total?: number }) => {
         // 上传进度回调（可用于UI进度显示）
-        void Math.round((progressEvent.loaded * 100) / progressEvent.total)
+        void Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1))
         // 这里可以触发进度事件
       }
     }
@@ -358,7 +358,7 @@ class SkillAPI {
     testImage: File,
     promptTemplate: string,
     systemPrompt?: string | null,
-    outputParameters?: any[] | null
+    outputParameters?: Record<string, unknown>[] | null
   ): Promise<AxiosResponse> {
     if (!testImage || !promptTemplate) {
       return Promise.reject(new Error('缺少测试图片或提示词模板'))

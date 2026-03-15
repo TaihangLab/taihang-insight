@@ -73,9 +73,9 @@ export function useUserData() {
       const response = await userService.getUsers(queryParams)
 
       if (response?.data) {
-        // 使用 any 处理后端返回的动态结构
-        const paginatedData = response.data as { items?: unknown[]; total?: number }
-        const items = Array.isArray(paginatedData.items) ? paginatedData.items : []
+        // 后端新格式：response.data 直接是数组，分页信息在顶层
+        // 拦截器已将 { data: [...], total, page, page_size } 转换为 { data, total, page, limit }
+        const items = Array.isArray(response.data) ? response.data : []
 
         users.value = items.map((item: unknown) => {
           const data = item as Record<string, unknown>
@@ -95,7 +95,7 @@ export function useUserData() {
           }
         }) as User[]
 
-        pagination.value.total = Number(paginatedData.total || 0)
+        pagination.value.total = Number(response.total || 0)
         pagination.value.currentPage = currentPage
         pagination.value.pageSize = size
       }

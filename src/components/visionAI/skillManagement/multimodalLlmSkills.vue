@@ -755,43 +755,38 @@ export default {
         console.log('加载多模态技能列表，参数:', params)
 
         const response = await centerAPI.skill.getLlmSkillList(params)
-        
-        if (response.data && response.data.success) {
-          // 修复数据解析：技能数组直接在 response.data.data 中
-          const skillList = response.data.data || []
-          
-          // 处理技能列表数据
-          this.skills = skillList.map(skill => ({
-            id: skill.id,
-            skillId: skill.skill_id,
-            name: skill.skill_name,
-            description: skill.skill_description || '暂无描述',
-            model: this.mapModelType(skill.llm_provider || 'custom'),
-            status: skill.status ? 'enabled' : 'disabled',
-            type: skill.type || 'multimodal_analysis', // 技能类型
-            tags: (skill.skill_tags || []).join(', ') || '未分类',
-            scenario: skill.application_scenario,
-            accuracy: 0, // 暂时设为0，后续可能从统计接口获取
-            callCount: 0, // 暂时设为0，后续可能从统计接口获取
-            deviceCount: 0, // 暂时设为0，后续可能从统计接口获取
-            systemPrompt: skill.system_prompt || '',
-            userPromptTemplate: skill.prompt_template || '',
-            maxTokens: skill.max_tokens || 1000,
-            temperature: skill.temperature || 0.7,
-            createdAt: this.formatDateTime(skill.created_at),
-            updatedAt: this.formatDateTime(skill.updated_at),
-            image_url: skill.skill_icon_url || '/static/logo.png' // 直接使用后端返回的临时访问URL
-          }))
 
-          // 更新总数和分页信息
-          this.totalCount = response.data.total || 0
-          
-          console.log('技能列表加载成功:', this.skills.length, '条记录')
-          this.$message.success(`加载成功，共 ${this.totalCount} 条记录`)
-          
-        } else {
-          throw new Error('获取技能列表失败')
-        }
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        const skillList = Array.isArray(response.data) ? response.data : []
+
+        // 处理技能列表数据
+        this.skills = skillList.map(skill => ({
+          id: skill.id,
+          skillId: skill.skill_id,
+          name: skill.skill_name,
+          description: skill.skill_description || '暂无描述',
+          model: this.mapModelType(skill.llm_provider || 'custom'),
+          status: skill.status ? 'enabled' : 'disabled',
+          type: skill.type || 'multimodal_analysis', // 技能类型
+          tags: (skill.skill_tags || []).join(', ') || '未分类',
+          scenario: skill.application_scenario,
+          accuracy: 0, // 暂时设为0，后续可能从统计接口获取
+          callCount: 0, // 暂时设为0，后续可能从统计接口获取
+          deviceCount: 0, // 暂时设为0，后续可能从统计接口获取
+          systemPrompt: skill.system_prompt || '',
+          userPromptTemplate: skill.prompt_template || '',
+          maxTokens: skill.max_tokens || 1000,
+          temperature: skill.temperature || 0.7,
+          createdAt: this.formatDateTime(skill.created_at),
+          updatedAt: this.formatDateTime(skill.updated_at),
+          image_url: skill.skill_icon_url || '/static/logo.png' // 直接使用后端返回的临时访问URL
+        }))
+
+        // 更新总数和分页信息（分页字段在顶层）
+        this.totalCount = response.total || 0
+
+        console.log('技能列表加载成功:', this.skills.length, '条记录')
+        this.$message.success(`加载成功，共 ${this.totalCount} 条记录`)
 
       } catch (error) {
         console.error('加载技能列表失败:', error)
@@ -1087,14 +1082,13 @@ export default {
     editSkill(skill) {
       // 获取技能详情数据并跳转到编辑页面
       this.detailLoading = true
-      
+
       centerAPI.skill.getLlmSkillDetail(skill.skillId)
         .then(response => {
-          if (response.data && response.data.success) {
-            const skillDetail = response.data.data
-            
-            // 构造编辑数据，包含基础信息和详细配置
-            const editData = {
+          const skillDetail = response.data
+
+          // 构造编辑数据，包含基础信息和详细配置
+          const editData = {
               // 基础信息
               id: skillDetail.id,
               name: skillDetail.skill_name,
@@ -1114,12 +1108,9 @@ export default {
             
             // 存储到localStorage供编辑页面使用
             localStorage.setItem('editSkillInfo', JSON.stringify(editData))
-            
+
             // 打开编辑对话框（基础信息）
             this.$refs.createSkillDialog.showEdit(editData)
-          } else {
-            this.$message.error('获取技能详情失败')
-          }
         })
         .catch(error => {
           console.error('获取技能详情失败:', error)
@@ -1227,26 +1218,22 @@ export default {
         } else {
           response = await centerAPI.skill.unpublishLlmSkill(skill.skillId)
         }
-        
-        if (response.data && response.data.success) {
-          // 更新本地状态
-          const newStatus = skill.status === 'enabled' ? 'disabled' : 'enabled'
-          skill.status = newStatus
-          skill.updatedAt = new Date().toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-          }).replace(/\//g, '-')
-          
-          this.$message.success(`技能已${action}成功`)
-        } else {
-          throw new Error(`${action}失败`)
-        }
-        
+
+        // 更新本地状态
+        const newStatus = skill.status === 'enabled' ? 'disabled' : 'enabled'
+        skill.status = newStatus
+        skill.updatedAt = new Date().toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        }).replace(/\//g, '-')
+
+        this.$message.success(`技能已${action}成功`)
+
       } catch (error) {
         if (error === 'cancel') {
           // 用户取消操作
@@ -1287,10 +1274,9 @@ export default {
         
         // 调用删除API
         const response = await centerAPI.skill.deleteLlmSkill(skill.skillId)
-        
-        if (response.data && response.data.success) {
-          // 从本地列表中移除技能
-          const index = this.skills.findIndex(s => s.skillId === skill.skillId)
+
+        // 从本地列表中移除技能
+        const index = this.skills.findIndex(s => s.skillId === skill.skillId)
           if (index > -1) {
             this.skills.splice(index, 1)
           }
@@ -1299,10 +1285,7 @@ export default {
           
           // 刷新技能列表
           this.loadSkillList()
-        } else {
-          throw new Error('删除失败')
-        }
-        
+
       } catch (error) {
         if (error === 'cancel') {
           this.$message.info('已取消删除')
@@ -1360,9 +1343,8 @@ export default {
         // 调用批量删除API
         const response = await centerAPI.skill.batchDeleteLlmSkills(selectedSkillIds)
 
-        if (response.data && response.data.success) {
-          // 获取删除结果
-          const deleteResult = response.data.data || {}
+        // 获取删除结果
+        const deleteResult = response.data || {}
           const successCount = deleteResult.deleted_count || 0
           const failedCount = deleteResult.failed_count || 0
           const failedSkills = deleteResult.failed_skills || []
@@ -1391,10 +1373,6 @@ export default {
 
           // 刷新技能列表
           this.loadSkillList()
-
-        } else {
-          throw new Error('批量删除响应格式异常')
-        }
 
       } catch (error) {
         if (error === 'cancel') {
@@ -1437,11 +1415,10 @@ export default {
       // 调用API获取技能详情
       centerAPI.skill.getLlmSkillDetail(skill.skillId)
         .then(response => {
-          if (response.data && response.data.success) {
-            const skillDetail = response.data.data
-            
-            // 格式化技能详情数据
-            this.detailSkill = {
+          const skillDetail = response.data
+
+          // 格式化技能详情数据
+          this.detailSkill = {
               id: skillDetail.id,
               skillId: skillDetail.skill_id,
               name: skillDetail.skill_name,
@@ -1463,11 +1440,8 @@ export default {
               accuracy: skill.accuracy || 0,
               callCount: skill.callCount || 0
             }
-            
+
             console.log('技能详情加载成功:', this.detailSkill)
-          } else {
-            throw new Error('获取技能详情失败')
-          }
         })
         .catch(error => {
           console.error('获取技能详情失败:', error)

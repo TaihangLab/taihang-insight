@@ -145,15 +145,12 @@ export default {
         planId: this.planId,
         hasLink: this.hasLink
       }).then((res)=> {
-        if (res.data.code === 0) {
-          this.total = res.data.data.total;
-          this.channelList = res.data.data.list;
-          // 防止出现表格错位
-          this.$nextTick(() => {
-            this.$refs.channelListTable.doLayout();
-          })
-        }
-
+        this.total = res.total;
+        this.channelList = res.list;
+        // 防止出现表格错位
+        this.$nextTick(() => {
+          this.$refs.channelListTable.doLayout();
+        })
       }).catch((error)=> {
 
         console.log(error);
@@ -166,24 +163,17 @@ export default {
     linkPlan: function (data){
       this.loading = true
       return linkRecordPlan(data).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message.success({
-            showClose: true,
-            message: "保存成功"
-          })
-          this.getChannelList()
-        }else {
-          this.$message.error({
-            showClose: true,
-            message: res.data.msg
-          })
-        }
-        this.loading = false
+        this.$message.success({
+          showClose: true,
+          message: "保存成功"
+        })
+        this.getChannelList()
       }).catch((error)=> {
         this.$message.error({
           showClose: true,
-          message: error
+          message: error.msg || error
         })
+      }).finally(()=>{
         this.loading = false
       })
     },

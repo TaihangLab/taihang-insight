@@ -400,18 +400,13 @@ export default {
       }
 
       // 使用modelAPI服务发送请求
-      centerAPI.model.getModelList(params).then((res) => {
-        if (res.data && res.data.code === 0) {
-          // 更新数据
-          this.tableData = res.data.data || []
+      centerAPI.model.getModelList(params).then((data) => {
+        // 更新数据
+        this.tableData = data.list || []
 
-          // 更新分页信息
-          if (res.data.total !== undefined) {
-            this.pagination.total = res.data.total
-          }
-        } else {
-          this.$message.error(res.data.msg || '获取模型列表失败')
-          this.tableData = []
+        // 更新分页信息
+        if (data.total !== undefined) {
+          this.pagination.total = data.total
         }
         this.loading = false
       }).catch((error) => {
@@ -442,15 +437,10 @@ export default {
         this.loading = true
 
         // 发送删除请求
-        centerAPI.model.deleteModel(row.id).then((res) => {
-          if (res.data && res.data.code === 0) {
-            // 删除成功后重新获取列表
-            this.fetchModelList()
-            this.$message.success('删除成功')
-          } else {
-            this.$message.error(res.data.msg || '删除失败')
-            this.loading = false
-          }
+        centerAPI.model.deleteModel(row.id).then(() => {
+          // 删除成功后重新获取列表
+          this.fetchModelList()
+          this.$message.success('删除成功')
         }).catch((error) => {
           console.error('删除模型失败', error)
           this.$message.error('删除失败: ' + (error.message || '未知错误'))
@@ -491,36 +481,33 @@ export default {
         const selectedIds = selectedItems.map(item => item.id)
 
         // 发送批量删除请求
-        centerAPI.model.batchDeleteModels(selectedIds).then((res) => {
-          if (res.data && res.data.success) {
-            // 删除成功后重新获取列表
-            this.fetchModelList()
+        try {
+          const result = await centerAPI.model.batchDeleteModels(selectedIds)
 
-            // 显示成功消息和详细信息
-            this.$message.success(res.data.message || '批量删除成功')
+          // 删除成功后重新获取列表
+          this.fetchModelList()
 
-            // 如果有失败的模型，显示详细信息
-            if (res.data.detail && res.data.detail.failed && res.data.detail.failed.length > 0) {
-              const failedInfo = res.data.detail.failed.map(item => {
-                return `模型ID ${item.id}: ${item.reason}`
-              }).join('\n')
+          // 显示成功消息和详细信息
+          this.$message.success(result.message || '批量删除成功')
 
-              this.$notify({
-                title: '部分模型删除失败',
-                message: failedInfo,
-                type: 'warning',
-                duration: 10000
-              })
-            }
-          } else {
-            this.$message.error(res.data.message || '批量删除失败')
-            this.loading = false
+          // 如果有失败的模型，显示详细信息
+          if (result.detail && result.detail.failed && result.detail.failed.length > 0) {
+            const failedInfo = result.detail.failed.map(item => {
+              return `模型ID ${item.id}: ${item.reason}`
+            }).join('\n')
+
+            this.$notify({
+              title: '部分模型删除失败',
+              message: failedInfo,
+              type: 'warning',
+              duration: 10000
+            })
           }
-        }).catch((error) => {
+        } catch (error) {
           console.error('批量删除模型失败', error)
           this.$message.error('批量删除失败: ' + (error.message || '未知错误'))
           this.loading = false
-        })
+        }
       }).catch(() => {
         // 用户取消删除，不执行任何操作
       })
@@ -560,15 +547,11 @@ export default {
       formData.append('file', this.importForm.file)
 
       // 发送导入请求
-      centerAPI.model.importModel(formData).then((res) => {
-        if (res.data && res.data.code === 0) {
-          // 导入成功后重新获取列表
-          this.fetchModelList()
-          this.$message.success('导入成功')
-          this.importDialogVisible = false
-        } else {
-          this.$message.error(res.data.msg || '导入失败')
-        }
+      centerAPI.model.importModel(formData).then(() => {
+        // 导入成功后重新获取列表
+        this.fetchModelList()
+        this.$message.success('导入成功')
+        this.importDialogVisible = false
         this.loading = false
       }).catch((error) => {
         console.error('导入模型失败', error)
@@ -629,22 +612,18 @@ export default {
         }
 
         // 发送更新请求
-        centerAPI.model.updateModel(this.editForm.id, updateData).then((res) => {
-          if (res.data && res.data.code === 0) {
-            // 更新成功后重新获取列表
-            this.fetchModelList()
+        centerAPI.model.updateModel(this.editForm.id, updateData).then(() => {
+          // 更新成功后重新获取列表
+          this.fetchModelList()
 
-            // 关闭对话框
-            this.editDialogVisible = false
+          // 关闭对话框
+          this.editDialogVisible = false
 
-            // 显示成功消息
-            this.$message({
-              message: '模型编辑成功',
-              type: 'success'
-            })
-          } else {
-            this.$message.error(res.data.msg || '编辑失败')
-          }
+          // 显示成功消息
+          this.$message({
+            message: '模型编辑成功',
+            type: 'success'
+          })
           this.loading = false
         }).catch((error) => {
           console.error('编辑模型失败', error)
@@ -678,40 +657,36 @@ export default {
       this.loading = true
 
       // 获取模型详情
-      centerAPI.model.getModelDetail(row.id).then((res) => {
-        if (res.data && res.data.code === 0) {
-          // 更新详情表单
-          this.detailForm = {
-            id: res.data.data.id,
-            name: res.data.data.name,
-            version: res.data.data.version,
-            usage_status: res.data.data.usage_status,
-            model_status: res.data.data.model_status,
-            description: res.data.data.description || '',
-            created_at: res.data.data.created_at,
-            updated_at: res.data.data.updated_at
-          }
-
-          // 更新相关技能列表
-          if (res.data.data.skill_classes && res.data.data.skill_classes.skill_classes) {
-            this.relatedSkills = res.data.data.skill_classes.skill_classes.map(skill => {
-              return {
-                id: skill.id,
-                zhName: skill.name_zh,
-                name: skill.name,
-                type: skill.type,
-                description: skill.description || '',
-                enabled: skill.enabled
-              };
-            });
-          } else {
-            this.relatedSkills = [];
-          }
-
-          this.detailDialogVisible = true
-        } else {
-          this.$message.error(res.data.msg || '获取模型详情失败')
+      centerAPI.model.getModelDetail(row.id).then((data) => {
+        // 更新详情表单
+        this.detailForm = {
+          id: data.id,
+          name: data.name,
+          version: data.version,
+          usage_status: data.usage_status,
+          model_status: data.model_status,
+          description: data.description || '',
+          created_at: data.created_at,
+          updated_at: data.updated_at
         }
+
+        // 更新相关技能列表
+        if (data.skill_classes && data.skill_classes.skill_classes) {
+          this.relatedSkills = data.skill_classes.skill_classes.map(skill => {
+            return {
+              id: skill.id,
+              zhName: skill.name_zh,
+              name: skill.name,
+              type: skill.type,
+              description: skill.description || '',
+              enabled: skill.enabled
+            };
+          });
+        } else {
+          this.relatedSkills = [];
+        }
+
+        this.detailDialogVisible = true
         this.loading = false
       }).catch((error) => {
         console.error('获取模型详情失败', error)
@@ -729,18 +704,10 @@ export default {
       }
 
       // 发送加载请求
-      centerAPI.model.loadModel(row.id).then((res) => {
-        if (res.data && res.data.code === 0) {
-          // 加载成功后重新获取列表
-          this.fetchModelList()
-          this.$message.success(`${row.name} 加载成功`)
-        } else {
-          this.$message.error(res.data.msg || '加载失败')
-          // 重置加载状态
-          if (index !== -1) {
-            this.tableData[index].isLoading = false
-          }
-        }
+      centerAPI.model.loadModel(row.id).then(() => {
+        // 加载成功后重新获取列表
+        this.fetchModelList()
+        this.$message.success(`${row.name} 加载成功`)
       }).catch((error) => {
         console.error('加载模型失败', error)
         this.$message.error('加载失败: ' + (error.message || '未知错误'))
@@ -760,18 +727,10 @@ export default {
       }
 
       // 发送卸载请求
-      centerAPI.model.unloadModel(row.id).then((res) => {
-        if (res.data && res.data.code === 0) {
-          // 卸载成功后重新获取列表
-          this.fetchModelList()
-          this.$message.success(`${row.name} 卸载成功`)
-        } else {
-          this.$message.error(res.data.msg || '卸载失败')
-          // 重置加载状态
-          if (index !== -1) {
-            this.tableData[index].isLoading = false
-          }
-        }
+      centerAPI.model.unloadModel(row.id).then(() => {
+        // 卸载成功后重新获取列表
+        this.fetchModelList()
+        this.$message.success(`${row.name} 卸载成功`)
       }).catch((error) => {
         console.error('卸载模型失败', error)
         this.$message.error('卸载失败: ' + (error.message || '未知错误'))

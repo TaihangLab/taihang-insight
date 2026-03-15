@@ -949,9 +949,10 @@ export default {
         
         // 使用新的专用API播放通道
         const response = await centerAPI.realtimeMonitor.playChannel(channelId);
-        
-        if (response.data && response.data.code === 0 && response.data.data) {
-          const streamData = response.data.data;
+
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        if (response) {
+          const streamData = response;
           let videoUrl;
           
           // 根据协议选择合适的流地址
@@ -1593,28 +1594,23 @@ export default {
           `实时监控归档 - 预警类型: ${warningInfo.type}`
         );
 
-        console.log('📤 归档API响应:', response.data);
+        console.log('📤 归档API响应:', response);
 
-        if (response.data && response.data.code === 0) {
-          // 4. 延迟移除记录，让用户能看到状态变化
-          setTimeout(() => {
-            const currentIndex = this.warningList.findIndex(item => item.id === this.archiveWarningId);
-            if (currentIndex !== -1) {
-              // 从实时预警列表中移除已归档的预警
-              this.warningList.splice(currentIndex, 1);
-            }
-          }, 500);
+        // 响应拦截器已处理成功/失败判断，直接执行后续操作
+        // 4. 延迟移除记录，让用户能看到状态变化
+        setTimeout(() => {
+          const currentIndex = this.warningList.findIndex(item => item.id === this.archiveWarningId);
+          if (currentIndex !== -1) {
+            // 从实时预警列表中移除已归档的预警
+            this.warningList.splice(currentIndex, 1);
+          }
+        }, 500);
 
-          this.$message.success('预警已成功归档');
-          console.log('✅ 实时监控 - 预警归档成功:', alertId, '档案ID:', this.selectedArchiveId);
+        this.$message.success('预警已成功归档');
+        console.log('✅ 实时监控 - 预警归档成功:', alertId, '档案ID:', this.selectedArchiveId);
 
-          // 关闭对话框
-          this.closeArchiveDialog();
-        } else {
-          const errorMessage = (response.data && response.data.message) || '归档失败';
-          this.$message.error(errorMessage);
-          console.warn('⚠️ 实时监控 - 预警归档失败:', response.data);
-        }
+        // 关闭对话框
+        this.closeArchiveDialog();
       } catch (error) {
         console.error('❌ 实时监控 - 预警归档异常:', error);
         this.$message.error('归档失败: ' + (error.message || '未知错误'));
@@ -1771,48 +1767,43 @@ export default {
           this.getCurrentUserName()
         );
 
-        if (response.data && response.data.code === 0) {
-          // 添加误报记录到操作历史
-          if (!this.warningList[warningIndex].operationHistory) {
-            this.warningList[warningIndex].operationHistory = [];
-          }
+        // 响应拦截器已处理成功/失败判断，直接执行后续操作
+        // 添加误报记录到操作历史
+        if (!this.warningList[warningIndex].operationHistory) {
+          this.warningList[warningIndex].operationHistory = [];
+        }
 
-          const newRecord = {
-            id: Date.now() + Math.random(),
-            status: 'completed',
-            statusText: '误报处理',
-            time: this.getCurrentTime(),
-            description: `预警被标记为误报：${this.falseAlarmForm.reviewNotes}`,
-            operationType: 'falseAlarm',
-            operator: this.getCurrentUserName()
-          };
+        const newRecord = {
+          id: Date.now() + Math.random(),
+          status: 'completed',
+          statusText: '误报处理',
+          time: this.getCurrentTime(),
+          description: `预警被标记为误报：${this.falseAlarmForm.reviewNotes}`,
+          operationType: 'falseAlarm',
+          operator: this.getCurrentUserName()
+        };
 
-          this.warningList[warningIndex].operationHistory.unshift(newRecord);
-          this.warningList[warningIndex].status = 'archived';
-          this.warningList[warningIndex].isFalseAlarm = true;
-          this.warningList[warningIndex].archiveTime = new Date().toLocaleString();
+        this.warningList[warningIndex].operationHistory.unshift(newRecord);
+        this.warningList[warningIndex].status = 'archived';
+        this.warningList[warningIndex].isFalseAlarm = true;
+        this.warningList[warningIndex].archiveTime = new Date().toLocaleString();
 
-          // 保存到智能复判记录
-          await this.saveToReviewRecords(warningInfo);
-          console.log('📝 实时监控页面-误报记录已保存到智能复判');
+        // 保存到智能复判记录
+        await this.saveToReviewRecords(warningInfo);
+        console.log('📝 实时监控页面-误报记录已保存到智能复判');
 
-          // 如果选择了归档，调用归档API
-          if (this.falseAlarmForm.needArchive && this.falseAlarmForm.archiveId) {
-            try {
-              const archiveResponse = await centerAPI.archive.linkAlertsToArchive(
+        // 如果选择了归档，调用归档API
+        if (this.falseAlarmForm.needArchive && this.falseAlarmForm.archiveId) {
+          try {
+            const archiveResponse = await centerAPI.archive.linkAlertsToArchive(
                 this.falseAlarmForm.archiveId,
                 [alertId],
                 `误报记录归档：${this.falseAlarmForm.reviewNotes}`
               );
 
-              if (archiveResponse.data && archiveResponse.data.code === 0) {
-                console.log('✅ 误报记录已成功归档到档案');
-                this.$message.success('预警已标记为误报，复判记录已保存并归档');
-              } else {
-                console.warn('⚠️ 误报记录归档失败:', archiveResponse.data);
-                const errorMessage = (archiveResponse.data && archiveResponse.data.message) || '未知错误';
-                this.$message.warning('预警已标记为误报，但归档失败: ' + errorMessage);
-              }
+              // 响应拦截器已处理成功/失败判断，直接执行后续操作
+              console.log('✅ 误报记录已成功归档到档案');
+              this.$message.success('预警已标记为误报，复判记录已保存并归档');
             } catch (archiveError) {
               console.error('❌ 误报记录归档异常:', archiveError);
               this.$message.warning('预警已标记为误报，但归档时发生异常');
@@ -1823,8 +1814,6 @@ export default {
 
           // 从实时预警列表中移除误报预警
           this.warningList.splice(warningIndex, 1);
-        } else {
-          this.$message.error((response.data && response.data.msg) || '标记误报失败');
         }
 
         // 关闭对话框并重置表单
@@ -1921,22 +1910,14 @@ export default {
           status: 1 // 只获取正常状态的档案
         });
 
-        console.log('📥 实时监控 - 获取档案列表响应:', response.data);
+        console.log('📥 实时监控 - 获取档案列表响应:', response);
 
-        // 后端返回格式：{ code: 0, msg: "获取成功", data: [...], pagination: {...} }
-        if (response.data && response.data.code === 0 && response.data.data) {
-          this.availableArchivesList = response.data.data;
+        // 响应拦截器已处理格式转换，直接使用数据
+        if (Array.isArray(response)) {
+          this.availableArchivesList = response;
           console.log('✅ 实时监控 - 加载档案列表成功:', this.availableArchivesList.length, '个档案', this.availableArchivesList);
-        } else if (response.data && response.data.archives) {
-          // 兼容其他可能的返回格式
-          this.availableArchivesList = response.data.archives;
-          console.log('✅ 实时监控 - 加载档案列表成功(archives):', this.availableArchivesList.length, '个档案');
-        } else if (response.data && Array.isArray(response.data)) {
-          // 兼容直接返回数组的格式
-          this.availableArchivesList = response.data;
-          console.log('✅ 实时监控 - 加载档案列表成功(数组):', this.availableArchivesList.length, '个档案');
         } else {
-          console.warn('⚠️ 实时监控 - 获取档案列表格式异常:', response.data);
+          console.warn('⚠️ 实时监控 - 获取档案列表格式异常:', response);
           this.availableArchivesList = [];
         }
 
@@ -2974,9 +2955,8 @@ export default {
     async loadAvailableAITasks(cameraId) {
       try {
         const response = await centerAPI.realtimeDetection.getTasksByCamera(cameraId)
-        if (response.data && response.data.code === 0) {
-          this.$set(this.availableAITasks, cameraId, response.data.data || [])
-        }
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        this.$set(this.availableAITasks, cameraId, response || [])
       } catch (error) {
         console.error(`❌ 获取摄像头AI任务列表失败:`, error)
       }

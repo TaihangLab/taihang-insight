@@ -136,10 +136,8 @@ export default {
         : getChannelByParent(params)
       
       apiCall.then( (res)=> {
-        if (res.data.code === 0) {
-          this.total = res.data.data.total;
-          this.channelList = res.data.data.list;
-        }
+        this.total = res.total;
+        this.channelList = res.list;
         this.getChannelListLoading = false;
       }).catch( (error)=> {
         console.error(error);

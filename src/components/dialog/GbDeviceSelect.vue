@@ -121,10 +121,8 @@ export default {
         query: this.searchSrt,
         status: this.online,
       }).then( (res)=> {
-        if (res.data.code === 0) {
-          this.total = res.data.data.total;
-          this.deviceList = res.data.data.list;
-        }
+        this.total = res.total;
+        this.deviceList = res.list;
         this.getDeviceListLoading = false;
       }).catch( (error)=> {
         console.error(error);

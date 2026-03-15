@@ -68,34 +68,25 @@ export default {
           }, 5000)
         },
         getProgress: function (callback){
-          getDownloadProgress(this.deviceId, this.channelId, this.stream).then((res)=> {
-              if (res.data.code === 0) {
-                this.streamInfo = res.data.data;
-                if (parseFloat(res.data.progress) === 1) {
-                  this.percentage = 100;
-                }else {
-                  this.percentage = (parseFloat(res.data.data.progress)*100).toFixed(1);
-                }
-                if (this.streamInfo.downLoadFilePath) {
-                  if (location.protocol === "https:") {
-                    this.downloadFile = this.streamInfo.downLoadFilePath.httpsPath;
-                  }else {
-                    this.downloadFile = this.streamInfo.downLoadFilePath.httpPath;
-                  }
-                  this.percentage = 100
-                  this.getProgressRun = false;
-                  this.downloadFileClientEvent()
-                }
-                if (callback)callback();
+          getDownloadProgress(this.deviceId, this.channelId, this.stream).then((data)=> {
+              // 响应拦截器已处理成功/失败判断，直接使用数据
+              this.streamInfo = data;
+              if (parseFloat(data.progress) === 1) {
+                this.percentage = 100;
               }else {
-                this.$message({
-                  showClose: true,
-                  message: res.data.msg,
-                  type: "error",
-                });
-                this.close();
+                this.percentage = (parseFloat(data.progress)*100).toFixed(1);
               }
-
+              if (this.streamInfo.downLoadFilePath) {
+                if (location.protocol === "https:") {
+                  this.downloadFile = this.streamInfo.downLoadFilePath.httpsPath;
+                }else {
+                  this.downloadFile = this.streamInfo.downLoadFilePath.httpPath;
+                }
+                this.percentage = 100
+                this.getProgressRun = false;
+                this.downloadFileClientEvent()
+              }
+              if (callback)callback();
           }).catch((e) =>{
             console.log(e)
           });

@@ -110,17 +110,13 @@ export default {
       console.log("onSubmit");
       console.log(this.form);
       saveDevice(this.form, this.isEdit).then((res) => {
-        console.log(res.data)
-        if (res.data.code === 0) {
-          this.listChangeCallback()
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: "error",
-          });
-        }
-      }).catch(function (error) {
+        this.listChangeCallback()
+      }).catch((error) => {
+        this.$message({
+          showClose: true,
+          message: error.msg || error,
+          type: "error",
+        });
         console.log(error);
       });
     },

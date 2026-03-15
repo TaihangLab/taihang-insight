@@ -86,25 +86,11 @@ export default {
         timeout: 3000,
         username: this.form.username,
         password: this.form.password,
-      }).then((res) => {
-        console.log(res.data)
-        if (res.data.code === 0) {
-          if (res.data.data != null) {
-            this.listChangeCallback(res.data.data)
-          }else {
-            this.$message({
-              showClose: true,
-              message: res.data.msg,
-              type: "error",
-            });
-          }
-
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: "error",
-          });
+      }).then((data) => {
+        console.log(data)
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        if (data != null) {
+          this.listChangeCallback(data)
         }
       }).catch(function (error) {
         console.log(error);

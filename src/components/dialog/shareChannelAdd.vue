@@ -158,15 +158,12 @@ export default {
         platformId: this.platformId,
         hasShare: this.hasShare
       }).then((res)=> {
-        if (res.data.code === 0) {
-          this.total = res.data.data.total;
-          this.channelList = res.data.data.list;
-          // 防止出现表格错位
-          this.$nextTick(() => {
-            this.$refs.channelListTable.doLayout();
-          })
-        }
-
+        this.total = res.total;
+        this.channelList = res.list;
+        // 防止出现表格错位
+        this.$nextTick(() => {
+          this.$refs.channelListTable.doLayout();
+        })
       }).catch((error)=> {
 
         console.log(error);
@@ -204,24 +201,17 @@ export default {
         platformId: this.platformId,
         channelIds: channels
       }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message.success({
-            showClose: true,
-            message: "保存成功"
-          })
-          this.getChannelList()
-        }else {
-          this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-        }
-        this.loading = false
+        this.$message.success({
+          showClose: true,
+          message: "保存成功"
+        })
+        this.getChannelList()
       }).catch((error)=> {
         this.$message.error({
             showClose: true,
-            message: error
+            message: error.msg || error
           })
+      }).finally(()=>{
         this.loading = false
       });
     },
@@ -238,24 +228,17 @@ export default {
           platformId: this.platformId,
           all: true
         }).then((res)=> {
-          if (res.data.code === 0) {
-            this.$message.success({
+          this.$message.success({
             showClose: true,
             message: "保存成功"
           })
-            this.getChannelList()
-          }else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-          }
-          this.loading = false
+          this.getChannelList()
         }).catch((error)=> {
           this.$message.error({
             showClose: true,
-            message: error
+            message: error.msg || error
           })
+        }).finally(()=>{
           this.loading = false
         });
       }).catch(() => {
@@ -272,23 +255,17 @@ export default {
           platformId: this.platformId,
           deviceIds: deviceIds,
         }).then((res)=> {
-          if (res.data.code === 0) {
-            this.$message.success({
-              showClose: true,
-              message: "保存成功"
-            })
-            this.initData()
-          }else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-          }
+          this.$message.success({
+            showClose: true,
+            message: "保存成功"
+          })
+          this.initData()
         }).catch((error)=> {
           this.$message.error({
             showClose: true,
-            message: error
+            message: error.msg || error
           })
+        }).finally(()=>{
           this.loading = false
         });
       })
@@ -304,23 +281,17 @@ export default {
           platformId: this.platformId,
           deviceIds: deviceIds,
         }).then((res)=> {
-          if (res.data.code === 0) {
-            this.$message.success({
-              showClose: true,
-              message: "保存成功"
-            })
-            this.initData()
-          }else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-          }
+          this.$message.success({
+            showClose: true,
+            message: "保存成功"
+          })
+          this.initData()
         }).catch((error)=> {
           this.$message.error({
             showClose: true,
-            message: error
+            message: error.msg || error
           })
+        }).finally(()=>{
           this.loading = false
         });
       })
@@ -343,24 +314,17 @@ export default {
         platformId: this.platformId,
         channelIds: channels
       }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message.success({
-            showClose: true,
-            message: "保存成功"
-          })
-          this.getChannelList()
-        }else {
-          this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-        }
-        this.loading = false
+        this.$message.success({
+          showClose: true,
+          message: "保存成功"
+        })
+        this.getChannelList()
       }).catch((error)=> {
         this.$message.error({
             showClose: true,
-            message: error
+            message: error.msg || error
           })
+      }).finally(()=>{
         this.loading = false
       });
     },
@@ -377,24 +341,17 @@ export default {
           platformId: this.platformId,
           all: true
         }).then((res)=> {
-          if (res.data.code === 0) {
-            this.$message.success({
+          this.$message.success({
             showClose: true,
             message: "保存成功"
           })
-            this.getChannelList()
-          }else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-          }
-          this.loading = false
+          this.getChannelList()
         }).catch((error)=> {
           this.$message.error({
             showClose: true,
-            message: error
+            message: error.msg || error
           })
+        }).finally(()=>{
           this.loading = false
         });
       }).catch(() => {
@@ -403,22 +360,15 @@ export default {
     },
     saveCustom: function (row) {
       updatePlatformChannelCustom(row).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message.success({
-            showClose: true,
-            message: "保存成功"
-          })
-          this.initData()
-        }else {
-          this.$message.error({
-            showClose: true,
-            message: res.data.msg
-          })
-        }
+        this.$message.success({
+          showClose: true,
+          message: "保存成功"
+        })
+        this.initData()
       }).catch((error)=> {
         this.$message.error({
           showClose: true,
-          message: error
+          message: error.msg || error
         })
       });
     },

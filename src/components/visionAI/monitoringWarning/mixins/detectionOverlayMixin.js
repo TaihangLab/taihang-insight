@@ -27,10 +27,10 @@ export default {
     async loadAvailableAITasks(cameraId, index) {
       try {
         const response = await this.$http.get(`/api/realtime-detection/detection/tasks/by_camera/${cameraId}`)
-        if (response.data && response.data.code === 0) {
-          this.$set(this.availableAITasks, cameraId, response.data.data || [])
-          console.log(`✅ 摄像头${cameraId}的AI任务列表:`, response.data.data)
-        }
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        const tasks = response.data || response || []
+        this.$set(this.availableAITasks, cameraId, tasks)
+        console.log(`✅ 摄像头${cameraId}的AI任务列表:`, tasks)
       } catch (error) {
         console.error(`❌ 获取摄像头${cameraId}的AI任务列表失败:`, error)
       }

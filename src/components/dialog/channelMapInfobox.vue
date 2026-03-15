@@ -45,15 +45,12 @@ export default {
       let that = this;
       startPlay(deviceId, channelId).then(function (res) {
         that.isLoging = false;
-        if (res.data.code === 0) {
-          that.$refs.devicePlayer.openDialog("media", deviceId, channelId, {
-            streamInfo: res.data.data,
-            hasAudio: this.channel.hasAudio
-          });
-        } else {
-          that.$message.error(res.data.msg);
-        }
+        that.$refs.devicePlayer.openDialog("media", deviceId, channelId, {
+          streamInfo: res,
+          hasAudio: that.channel.hasAudio
+        });
       }).catch(function (e) {
+        that.$message.error(e.msg || e);
       });
     },
     close: function () {

@@ -291,49 +291,43 @@ export default {
         .then(response => {
           console.log('获取摄像头列表原始响应:', response);
           console.log('获取摄像头列表响应data:', response.data);
-          
-          if (response.data && response.data.code === 0) {
-            // 处理返回的数据
-            let camerasData = response.data.data || [];
-            this.total = response.data.total || camerasData.length;
-            
-            console.log('处理后的摄像头数据:', camerasData);
-            console.log('摄像头总数:', this.total);
-            
-            // 将获取的摄像头列表转换为前端所需的设备列表格式
-            const newDeviceList = camerasData.map(camera => {
-              return {
-                id: camera.id,
-                name: camera.name,
-                status: camera.status,
-                location: camera.location || '-',
-                skill: Array.isArray(camera.skill_names) ? camera.skill_names.join(', ') : '-',
-                camera_type: camera.camera_type,
-              };
-            });
-            
-            // 使用Vue.set确保视图更新
-            this.deviceList = newDeviceList;
-            
-            // 保存原始数据，用于重置
-            this.originalDeviceList = [...this.deviceList];
-            
-            
-            
-            // 检查当前页是否有数据，如果当前页没有数据且不是第一页，则回到前一页
-            if (this.deviceList.length === 0 && this.currentPage > 1 && this.total > 0) {
-              this.currentPage -= 1;
-              // 重新获取上一页数据
-              this.fetchCameraList();
-            }
-            
-            // 强制下一次DOM更新后触发回调
-            this.$nextTick(() => {
-              console.log('DOM已更新，设备列表数据:', this.deviceList);
-            });
-          } else {
-            this.$message.error('获取摄像头列表失败：' + (response.data && response.data.msg ? response.data.msg : '未知错误'));
+
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          let camerasData = response.data || [];
+          this.total = response.total || camerasData.length;
+
+          console.log('处理后的摄像头数据:', camerasData);
+          console.log('摄像头总数:', this.total);
+
+          // 将获取的摄像头列表转换为前端所需的设备列表格式
+          const newDeviceList = camerasData.map(camera => {
+            return {
+              id: camera.id,
+              name: camera.name,
+              status: camera.status,
+              location: camera.location || '-',
+              skill: Array.isArray(camera.skill_names) ? camera.skill_names.join(', ') : '-',
+              camera_type: camera.camera_type,
+            };
+          });
+
+          // 使用Vue.set确保视图更新
+          this.deviceList = newDeviceList;
+
+          // 保存原始数据，用于重置
+          this.originalDeviceList = [...this.deviceList];
+
+          // 检查当前页是否有数据，如果当前页没有数据且不是第一页，则回到前一页
+          if (this.deviceList.length === 0 && this.currentPage > 1 && this.total > 0) {
+            this.currentPage -= 1;
+            // 重新获取上一页数据
+            this.fetchCameraList();
           }
+
+          // 强制下一次DOM更新后触发回调
+          this.$nextTick(() => {
+            console.log('DOM已更新，设备列表数据:', this.deviceList);
+          });
         })
         .catch(error => {
           console.error('获取摄像头列表出错:', error);
@@ -447,22 +441,15 @@ export default {
       // 调用API获取完整的摄像头信息
       centerAPI.camera.getCameraDetail(row.id)
         .then(response => {
-          // 检查API响应
-          if (response.data && (response.data.success || response.data.code === 0)) {
-            // 获取摄像头详细数据
-            const camera = response.data.camera || response.data.data;
-            console.log('获取到摄像头详细信息:', camera);
-            
-            // 创建详情对象
-            this.deviceDetailData = camera;
-            
-            // 显示详情对话框
-            this.deviceDetailDialogVisible = true;
-            } else {
-            // 处理API错误
-            const errorMsg = response.data && response.data.message ? response.data.message : '获取摄像头详情失败';
-            this.$message.error(errorMsg);
-          }
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          const camera = response.camera || response.data || response;
+          console.log('获取到摄像头详细信息:', camera);
+
+          // 创建详情对象
+          this.deviceDetailData = camera;
+
+          // 显示详情对话框
+          this.deviceDetailDialogVisible = true;
         })
         .catch(error => {
           console.error('获取摄像头详情时出错:', error);
@@ -498,16 +485,15 @@ export default {
         
         centerAPI.camera.getCameraDetail(row.id)
           .then(response => {
-            if (response.data && (response.data.success || response.data.code === 0)) {
-              const camera = response.data.camera || response.data.data;
-              console.log('获取到摄像头详细信息:', camera);
-              
-              // 只加载已成功配置的技能列表
-              if (camera.skill_names && Array.isArray(camera.skill_names)) {
-                this.skillSelectForm.selectedSkills = [...camera.skill_names];
-                this.selectedSkillCache = [...camera.skill_names];
-                console.log('已加载摄像头的技能列表:', this.selectedSkillCache);
-              }
+            // 响应拦截器已处理成功/失败判断，直接使用数据
+            const camera = response.camera || response.data || response;
+            console.log('获取到摄像头详细信息:', camera);
+
+            // 只加载已成功配置的技能列表
+            if (camera.skill_names && Array.isArray(camera.skill_names)) {
+              this.skillSelectForm.selectedSkills = [...camera.skill_names];
+              this.selectedSkillCache = [...camera.skill_names];
+              console.log('已加载摄像头的技能列表:', this.selectedSkillCache);
             }
           })
           .catch(error => {
@@ -663,18 +649,18 @@ export default {
         // 从API获取该技能类的默认参数
         centerAPI.skill.getAITaskSkillDetail(skillInfo.id)
           .then(response => {
+            // 响应拦截器已处理成功/失败判断，直接使用数据
             let params = {};
             let alertDefinitions = '';
-            if (response.data && (response.data.code === 0 || response.data.success)) {
-              const skillDetail = response.data.data;
-              if (skillDetail && skillDetail.default_config && skillDetail.default_config.params) {
-                params = skillDetail.default_config.params;
-              }
-              if (skillDetail && skillDetail.default_config && skillDetail.default_config.alert_definitions) {
-                alertDefinitions = skillDetail.default_config.alert_definitions;
-              }
+            const skillDetail = response.data || response;
+
+            if (skillDetail && skillDetail.default_config && skillDetail.default_config.params) {
+              params = skillDetail.default_config.params;
             }
-            
+            if (skillDetail && skillDetail.default_config && skillDetail.default_config.alert_definitions) {
+              alertDefinitions = skillDetail.default_config.alert_definitions;
+            }
+
             // 保存当前技能的预警定义
             this.currentSkillAlertDefinitions = alertDefinitions;
             
@@ -938,11 +924,10 @@ export default {
                 // 3. 最后才获取默认参数
                 centerAPI.skill.getAITaskSkillDetail(skillInfo.id)
                   .then(response => {
-                    if (response.data && (response.data.code === 0 || response.data.success)) {
-                      const skillDetail = response.data.data;
-                      if (skillDetail && skillDetail.default_config && skillDetail.default_config.params) {
-                        finalParams = skillDetail.default_config.params;
-                      }
+                    // 响应拦截器已处理成功/失败判断，直接使用数据
+                    const skillDetail = response.data || response;
+                    if (skillDetail && skillDetail.default_config && skillDetail.default_config.params) {
+                      finalParams = skillDetail.default_config.params;
                     }
                     console.log('使用API获取的默认参数:', finalParams);
                     taskData.skill_config.params = finalParams;
@@ -1450,38 +1435,37 @@ export default {
       
       centerAPI.camera.getCameraDetail(cameraId)
         .then(response => {
-          if (response.data && (response.data.success || response.data.code === 0)) {
-            const camera = response.data.camera || response.data.data;
-            console.log('刷新获取到最新摄像头详情:', camera);
-            
-            // 更新摄像头在列表中的数据
-            const index = this.deviceList.findIndex(device => device.id === cameraId);
-            if (index !== -1) {
-              // 更新设备基本信息
-              this.deviceList[index].name = camera.name;
-              this.deviceList[index].status = camera.status;
-              this.deviceList[index].location = camera.location || '-';
-              
-              // 更新技能列表（这是最关键的部分）
-              if (camera.skill_names && Array.isArray(camera.skill_names)) {
-                // 更新设备显示的技能列表文本
-                this.deviceList[index].skill = camera.skill_names.join(', ');
-                
-                // 更新已选技能缓存
-                this.selectedSkillCache = [...camera.skill_names];
-                this.skillSelectForm.selectedSkills = [...this.selectedSkillCache];
-                
-                console.log('已更新摄像头技能列表:', camera.skill_names.join(', '));
-              } else {
-                this.deviceList[index].skill = '-';
-                // 清空已选技能缓存
-                this.selectedSkillCache = [];
-                this.skillSelectForm.selectedSkills = [];
-              }
-              
-              // 刷新原始列表
-              this.originalDeviceList = [...this.deviceList];
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          const camera = response.camera || response.data || response;
+          console.log('刷新获取到最新摄像头详情:', camera);
+
+          // 更新摄像头在列表中的数据
+          const index = this.deviceList.findIndex(device => device.id === cameraId);
+          if (index !== -1) {
+            // 更新设备基本信息
+            this.deviceList[index].name = camera.name;
+            this.deviceList[index].status = camera.status;
+            this.deviceList[index].location = camera.location || '-';
+
+            // 更新技能列表（这是最关键的部分）
+            if (camera.skill_names && Array.isArray(camera.skill_names)) {
+              // 更新设备显示的技能列表文本
+              this.deviceList[index].skill = camera.skill_names.join(', ');
+
+              // 更新已选技能缓存
+              this.selectedSkillCache = [...camera.skill_names];
+              this.skillSelectForm.selectedSkills = [...this.selectedSkillCache];
+
+              console.log('已更新摄像头技能列表:', camera.skill_names.join(', '));
+            } else {
+              this.deviceList[index].skill = '-';
+              // 清空已选技能缓存
+              this.selectedSkillCache = [];
+              this.skillSelectForm.selectedSkills = [];
             }
+
+            // 刷新原始列表
+            this.originalDeviceList = [...this.deviceList];
           }
         })
         .catch(error => {
@@ -1526,26 +1510,22 @@ export default {
       centerAPI.skill.getAITaskSkillClasses(queryParams)
         .then(response => {
           console.log('获取技能类列表原始响应:', response);
-          if (response.data && (response.data.success || response.data.code === 0)) {
-            const data = response.data.data || [];
-            this.skillOptionsTotal = response.data.total || data.length;
-            
-            this.skillOptions = data.map(item => ({
-              id: item.id,
-              value: item.name_en || item.name,
-              name_zh: item.name_zh || item.name,
-              type: item.type || 'default',
-              version: item.version,
-              status: item.status,
-              parameters: item.parameters || []
-            }));
-            console.log('获取到技能类列表:', this.skillOptions);
-            console.log('技能总数:', this.skillOptionsTotal);
-          } else {
-            this.$message.error('获取技能类列表失败：' + (response.data && response.data.msg ? response.data.msg : '未知错误'));
-            this.skillOptions = []; // 清空技能选项
-            this.skillOptionsTotal = 0;
-          }
+
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          const data = response.data || [];
+          this.skillOptionsTotal = response.total || data.length;
+
+          this.skillOptions = data.map(item => ({
+            id: item.id,
+            value: item.name_en || item.name,
+            name_zh: item.name_zh || item.name,
+            type: item.type || 'default',
+            version: item.version,
+            status: item.status,
+            parameters: item.parameters || []
+          }));
+          console.log('获取到技能类列表:', this.skillOptions);
+          console.log('技能总数:', this.skillOptionsTotal);
         })
         .catch(error => {
           console.error('获取技能类列表出错:', error);
@@ -1963,31 +1943,16 @@ export default {
     createAITaskWithParams(taskData, deviceIndex, skillKey, config) {
       console.log('准备创建AI任务:', taskData);
       console.log('设备索引:', deviceIndex, '技能键:', skillKey);
-      
+
       // 调用API创建AI任务
       centerAPI.skill.createAITask(taskData)
         .then(response => {
-          console.log('创建AI任务返回数据:', response.data);
-          
-          // 检查不同的返回数据格式
-          let isSuccess = false;
-          let responseData = null;
-          
-          if (response.data && response.data.code === 0) {
-            // 标准格式{code: 0, data: ...}
-            isSuccess = true;
-            responseData = response.data.data;
-          } else if (response.data && response.data.id) {
-            // 直接返回任务对象格式，包含id字段
-            isSuccess = true;
-            responseData = response.data;
-          } else if (response.status === 200 || response.status === 201) {
-            // 通过HTTP状态码判断成功
-            isSuccess = true;
-            responseData = response.data;
-          }
-          
-          if (isSuccess) {
+          console.log('创建AI任务返回数据:', response);
+
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          const responseData = response;
+
+          if (responseData && responseData.id) {
             console.log('AI任务创建成功:', responseData);
             
             // 确保config对象有customParams字段
@@ -2024,8 +1989,8 @@ export default {
             // 刷新关联任务列表
             this.fetchCameraRelatedTasks(this.currentDeviceId);
           } else {
-            console.error('创建AI任务失败:', response.data);
-            this.$message.error('创建AI任务失败：' + (response.data && response.data.msg ? response.data.msg : '未知错误'));
+            console.error('创建AI任务失败: 无效的响应数据');
+            this.$message.error('创建AI任务失败：返回数据格式不正确');
           }
         })
         .catch(error => {
@@ -2076,34 +2041,28 @@ export default {
         console.error('获取关联任务失败: 缺少摄像头ID');
         return;
       }
-      
+
       this.taskLoading = true;
       this.cameraRelatedTasks = [];
-      
+
       centerAPI.camera.getCameraAITasks(cameraId)
         .then(response => {
           console.log('获取摄像头关联任务原始响应:', response);
-          
-          // 检查不同可能的数据结构
+
+          // 响应拦截器已处理数据提取，直接使用
           let tasks = [];
-          
-          if (response.data && response.data.tasks) {
+
+          if (response && response.tasks) {
             // 直接结构: { tasks: [...] }
-            tasks = response.data.tasks;
-          } else if (response.data && response.data.data && response.data.data.tasks) {
-            // 嵌套结构: { data: { tasks: [...] } }
-            tasks = response.data.data.tasks;
-          } else if (response.data && Array.isArray(response.data)) {
-            // 数组结构: [...] 
-            tasks = response.data;
-          } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
-            // 嵌套数组结构: { data: [...] }
-            tasks = response.data.data;
+            tasks = response.tasks;
+          } else if (Array.isArray(response)) {
+            // 数组结构: [...]
+            tasks = response;
           }
-          
+
           this.cameraRelatedTasks = tasks;
           console.log('解析后的关联任务数据:', this.cameraRelatedTasks);
-          
+
           if (this.cameraRelatedTasks.length === 0) {
             console.warn('未获取到任何关联任务数据');
           }
@@ -2224,17 +2183,12 @@ export default {
         // 调用接口获取任务详情
         centerAPI.skill.getAITaskDetail(taskId)
           .then(response => {
-            // 正确处理不同的数据结构
-            let taskData;
-            if (response.data && response.data.id) {
-              // 直接返回的任务数据
-              taskData = response.data;
-            } else if (response.data && response.data.code === 0 && response.data.data) {
-              // 标准包装格式的任务数据
-              taskData = response.data.data;
-            } else {
+            // 响应拦截器已处理成功/失败判断，直接使用数据
+            const taskData = response;
+
+            if (!taskData || !taskData.id) {
               const error = new Error('数据格式不正确');
-              console.error('任务数据格式不符合预期:', response.data);
+              console.error('任务数据格式不符合预期:', taskData);
               reject(error);
               return;
             }
@@ -2255,20 +2209,11 @@ export default {
             if (taskData.skill_class_id) {
               // 查找对应的技能信息
               centerAPI.skill.getAITaskSkillDetail(taskData.skill_class_id)
-                .then(skillResponse => {
-                  // 处理不同格式的技能数据
-                  let skillData;
-                  if (skillResponse.data && skillResponse.data.data) {
-                    // 标准包装格式
-                    skillData = skillResponse.data.data;
-                  } else if (skillResponse.data && (skillResponse.data.id || skillResponse.data.value || skillResponse.data.name_zh)) {
-                    // 直接返回的技能数据
-                    skillData = skillResponse.data;
-                  } else if (skillResponse.data && skillResponse.data.code === 0 && skillResponse.data.data) {
-                    // 嵌套包装格式
-                    skillData = skillResponse.data.data;
-                  } else {
-                    console.error('技能数据格式不符合预期:', skillResponse.data);
+                .then(skillData => {
+                  // 响应拦截器已处理成功/失败判断，直接使用数据
+
+                  if (!skillData || (!skillData.id && !skillData.value && !skillData.name_zh)) {
+                    console.error('技能数据格式不符合预期:', skillData);
                     const error = new Error('技能数据格式不正确');
                     reject(error);
                     return;
@@ -2469,31 +2414,16 @@ export default {
       }
       console.log('准备更新AI任务:', taskData);
       console.log('设备索引:', deviceIndex, '技能键:', skillKey);
-      
+
       // 调用API更新AI任务
       centerAPI.skill.updateAITask(this.currentTaskId, taskData)
         .then(response => {
-          console.log('更新AI任务返回数据:', response.data);
-          
-          // 检查不同的返回数据格式
-          let isSuccess = false;
-          let responseData = null;
-          
-          if (response.data && response.data.code === 0) {
-            // 标准格式{code: 0, data: ...}
-            isSuccess = true;
-            responseData = response.data.data;
-          } else if (response.data && response.data.id) {
-            // 直接返回任务对象格式，包含id字段
-            isSuccess = true;
-            responseData = response.data;
-          } else if (response.status === 200 || response.status === 201) {
-            // 通过HTTP状态码判断成功
-            isSuccess = true;
-            responseData = response.data;
-          }
-          
-          if (isSuccess) {
+          console.log('更新AI任务返回数据:', response);
+
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          const responseData = response;
+
+          if (responseData && responseData.id) {
             console.log('AI任务更新成功:', responseData);
             
             // 确保config对象有customParams字段
@@ -2521,8 +2451,8 @@ export default {
             // 刷新关联任务列表
             this.fetchCameraRelatedTasks(this.currentDeviceId);
           } else {
-            console.error('更新AI任务失败:', response.data);
-            this.$message.error('更新AI任务失败：' + (response.data && response.data.msg ? response.data.msg : '未知错误'));
+            console.error('更新AI任务失败: 无效的响应数据');
+            this.$message.error('更新AI任务失败：返回数据格式不正确');
           }
         })
         .catch(error => {
@@ -2561,26 +2491,18 @@ export default {
         type: 'warning'
       }).then(() => {
         const deletedTaskId = this.currentTaskId;
-        centerAPI.skill.deleteAITask(deletedTaskId).then(response => {
-          // 兼容多种返回结构（经由handleSimpleResponse转换后为{code, msg, data:{success}}）
-          const ok = (response && response.data && response.data.code === 0)
-            || (response && response.data && response.data.data && response.data.data.success === true)
-            || (response && (response.status === 200 || response.status === 204));
-          if (ok) {
-            this.$message.success('删除成功');
-            // 先重置更新态与任务ID，避免后续误触发更新接口
-            this.isUpdateMode = false;
-            this.currentTaskId = null;
-            // 关闭对话框并刷新关联任务
-            this.closeSkillDialog();
-            this.fetchCameraRelatedTasks(this.currentDeviceId);
-          } else {
-            const msg = (response && response.data && (response.data.msg || response.data.message)) || '删除失败';
-            this.$message.error(msg);
-          }
+        centerAPI.skill.deleteAITask(deletedTaskId).then(() => {
+          // 响应拦截器已处理成功/失败判断，成功则执行以下逻辑
+          this.$message.success('删除成功');
+          // 先重置更新态与任务ID，避免后续误触发更新接口
+          this.isUpdateMode = false;
+          this.currentTaskId = null;
+          // 关闭对话框并刷新关联任务
+          this.closeSkillDialog();
+          this.fetchCameraRelatedTasks(this.currentDeviceId);
         }).catch(error => {
           console.error('删除AI任务失败:', error);
-          this.$message.error('删除失败：' + ((error.response && error.response.data && error.response.data.message) || '未知错误'));
+          this.$message.error('删除失败：' + (error.message || '未知错误'));
         });
       }).catch(() => {
         // 取消删除操作

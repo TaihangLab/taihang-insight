@@ -105,8 +105,9 @@ export default {
       try {
         const response = await associationService.getUsers({ user_name: this.userInfo.user_name })
 
-        if (response && response.data && Array.isArray(response.data.items) && response.data.items.length > 0) {
-          const userData = response.data.items[0]
+        // 响应拦截器已处理格式转换，直接使用数据
+        if (response && Array.isArray(response) && response.length > 0) {
+          const userData = response[0]
           this.userInfo.nick_name = userData.nick_name || userData.nickName || userData.user_name
           this.userInfo.user_name = userData.user_name
         } else {
@@ -133,12 +134,15 @@ export default {
         }
         
         const response = await associationService.getRoles(params)
-        
-        if (response && response.data && Array.isArray(response.data.items)) {
+
+        // 响应拦截器已处理格式转换，直接使用数据
+        if (response && Array.isArray(response)) {
           // API调用成功，使用API数据
           console.log('✅ 使用API数据获取角色列表')
-          this.roleData = response.data.items
-          this.pagination.total = response.data.total || response.data.items.length || 0
+          this.roleData = response
+          // 从响应中获取 total（如果有）
+          const responseWithTotal = response as any
+          this.pagination.total = responseWithTotal.total || response.length || 0
         } else {
           // API返回格式异常，使用模拟数据
           throw new Error('API返回格式异常')

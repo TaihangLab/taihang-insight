@@ -28,24 +28,16 @@ export default {
       })
       controlWiper(this.deviceId, this.channelDeviceId, {
         command: command,
-      }).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: "保存成功",
-            type: 'success'
-          });
-        }else {
-          this.$message({
-            showClose: true,
-            message: res.data.msg,
-            type: 'error'
-          });
-        }
+      }).then(()=> {
+        this.$message({
+          showClose: true,
+          message: "保存成功",
+          type: 'success'
+        });
       }).catch((error)=> {
         this.$message({
           showClose: true,
-          message: error,
+          message: error.message || '保存失败',
           type: 'error'
         });
       }).finally(()=>{

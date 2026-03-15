@@ -94,28 +94,21 @@ export default {
       changePassword(
         crypto.createHash('md5').update(this.oldPassword, "utf8").digest('hex'),
         this.newPassword
-      ).then((res)=> {
-        if (res.data.code === 0) {
-          this.$message({
-            showClose: true,
-            message: '修改成功，请重新登录',
-            type: 'success'
-          });
-          this.showDialog = false;
-          setTimeout(()=>{
-            storage.remove(StorageKey.ADMIN_TOKEN)
+      ).then((data)=> {
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        this.$message({
+          showClose: true,
+          message: '修改成功，请重新登录',
+          type: 'success'
+        });
+        this.showDialog = false;
+        setTimeout(()=>{
+          storage.remove(StorageKey.ADMIN_TOKEN)
 storage.remove(StorageKey.WVP_TOKEN)
 storage.remove(StorageKey.WVP_USER)
-            this.$router.push('/login');
-            this.sseSource.close();
-          },800)
-        }else {
-          this.$message({
-            showClose: true,
-            message: '修改密码失败，是否已登录（接口鉴权关闭无法修改密码）',
-            type: 'error'
-          });
-        }
+          this.$router.push('/login');
+          this.sseSource.close();
+        },800)
       }).catch((error)=> {
         console.error(error)
       });

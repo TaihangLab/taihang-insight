@@ -4,28 +4,28 @@
  */
 
 /**
- * VisionAI Center API 统一响应格式
- * 用于大部分业务 API 接口
+ * 统一响应格式（后端新格式）
+ * code === 0 表示成功，非 0 表示失败
+ * message 为 null 时表示成功或无消息
  */
 export interface UnifiedResponse<T = any> {
   code: number
-  msg: string
+  message: string | null
   data: T
   total?: number
   page?: number
+  page_size?: number
   limit?: number
   pages?: number
-  pagination?: any
 }
 
 /**
- * RBAC API 统一响应格式
- * 用于 RBAC 权限管理系统接口
+ * RBAC API 统一响应格式（已废弃，使用 UnifiedResponse）
+ * @deprecated 使用 UnifiedResponse 替代
  */
 export interface RBACResponse<T = any> {
-  success: boolean
   code: number
-  message: string
+  message: string | null
   data: T
 }
 
@@ -39,15 +39,22 @@ export interface PageParams {
 }
 
 /**
- * 分页数据
+ * 扁平分页响应（直接匹配后端格式）
+ * 后端返回格式：{ data: T[], total, page, page_size }
  */
-export interface PaginationData<T = any> {
+export interface FlatPaginationResponse<T = any> {
   data: T[]
   total: number
   page: number
-  limit: number
-  pages: number
+  page_size?: number
+  limit?: number
+  pages?: number
 }
+
+/**
+ * 分页数据（向后兼容的别名）
+ */
+export type PaginationData<T = any> = FlatPaginationResponse<T>
 
 /**
  * 通用的键值对类型

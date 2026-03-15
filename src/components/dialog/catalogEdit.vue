@@ -120,16 +120,9 @@ export default {
     onSubmit: function () {
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          saveCatalog(this.form, this.isEdit).then((res)=> {
-            if (res.data.code === 0) {
-              if (this.submitCallback)this.submitCallback(this.form)
-            }else {
-              this.$message({
-                showClose: true,
-                message: res.data.msg,
-                type: "error",
-              });
-            }
+          saveCatalog(this.form, this.isEdit).then((data)=> {
+            // 响应拦截器已处理成功/失败判断，直接使用数据
+            if (this.submitCallback)this.submitCallback(this.form)
             this.close();
           })
             .catch((error)=> {

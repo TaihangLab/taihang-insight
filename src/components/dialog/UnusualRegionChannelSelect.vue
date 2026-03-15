@@ -150,13 +150,11 @@ export default {
         query: this.searchSrt,
         online: this.online,
       }).then( (res)=> {
-        if (res.data.code === 0) {
-          this.total = res.data.data.total;
-          for (let i = 0; i < res.data.data.list.length; i++) {
-            res.data.data.list[i]["addRegionLoading"] = false
-          }
-          this.channelList = res.data.data.list;
+        this.total = res.total;
+        for (let i = 0; i < res.list.length; i++) {
+          res.list[i]["addRegionLoading"] = false
         }
+        this.channelList = res.list;
       }).catch( (error)=> {
         console.error(error);
       }).finally(()=>{
@@ -183,22 +181,15 @@ export default {
         all: all,
         channelIds: channels
       }).then((res) => {
-        if (res.data.code === 0) {
-          this.$message.success({
-            showClose: true,
-            message: "清除成功"
-          })
-          this.getChannelList()
-        } else {
-          this.$message.error({
-            showClose: true,
-            message: res.data.msg
-          })
-        }
+        this.$message.success({
+          showClose: true,
+          message: "清除成功"
+        })
+        this.getChannelList()
       }).catch((error) => {
         this.$message.error({
           showClose: true,
-          message: error
+          message: error.msg || error
         })
       }).finally(()=>{
         this.loading = false
@@ -208,42 +199,31 @@ export default {
     addRegion: function (row) {
       row.addRegionLoading = true;
       getRegionDescription(row.gbCivilCode).then((res) => {
-        if (res.data.code === 0) {
-          this.$confirm(`确定添加： ${res.data.data}`, '提示', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'info'
-          }).then(() => {
-            addRegionByCivilCode(row.gbCivilCode).then((res) => {
-              if (res.data.code === 0) {
-                this.$message.success({
-                  showClose: true,
-                  message: "添加成功"
-                })
-                this.initData()
-              }else {
-                this.$message.error({
-                  showClose: true,
-                  message: res.data.msg
-                })
-              }
-
-            }).catch((error) => {
-              console.error(error);
-            });
-          }).catch(() => {
-
+        this.$confirm(`确定添加： ${res}`, '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'info'
+        }).then(() => {
+          addRegionByCivilCode(row.gbCivilCode).then((res) => {
+            this.$message.success({
+              showClose: true,
+              message: "添加成功"
+            })
+            this.initData()
+          }).catch((error) => {
+            console.error(error);
+            this.$message.error({
+              showClose: true,
+              message: error.msg || error
+            })
           });
-        } else {
-          this.$message.error({
-            showClose: true,
-            message: res.data.msg
-          })
-        }
+        }).catch(() => {
+
+        });
       }).catch((error) => {
         this.$message.error({
           showClose: true,
-          message: error
+          message: error.msg || error
         })
       }).finally(()=>{
         row.addRegionLoading = false;

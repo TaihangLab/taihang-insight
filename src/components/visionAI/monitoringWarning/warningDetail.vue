@@ -702,10 +702,11 @@ export default {
           // status: 1 // 获取所有正常状态的档案
         });
 
-        console.log('📥 获取档案列表响应:', response.data);
+        console.log('📥 获取档案列表响应:', response);
 
-        if (response.data && response.data.data) {
-          this.archivesList = response.data.data.map(archive => ({
+        // 响应拦截器已处理，分页数据格式为 { data: [], total, page, limit }
+        if (response.data && Array.isArray(response.data)) {
+          this.archivesList = response.data.map(archive => ({
             id: archive.archive_id,
             name: archive.name,
             cameraId: archive.camera_id || 'unknown',
@@ -977,28 +978,25 @@ export default {
 
         const response = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData);
 
-        if (response.data && response.data.code === 0) {
-          // API调用成功，添加本地操作记录
-          this.addOperationRecord({
-            status: 'completed',
-            statusText: '处理中',
-            time: this.getCurrentTime(),
-            description: `处理意见：${this.remarkForm.remark}`,
-            operationType: 'processing',
-            operator: this.getCurrentUserName()
-          });
+        // 响应拦截器已处理成功/失败判断，直接执行后续操作
+        // API调用成功，添加本地操作记录
+        this.addOperationRecord({
+          status: 'completed',
+          statusText: '处理中',
+          time: this.getCurrentTime(),
+          description: `处理意见：${this.remarkForm.remark}`,
+          operationType: 'processing',
+          operator: this.getCurrentUserName()
+        });
 
-          this.$message.success('确认处理成功，状态已更新为处理中');
-          // 发出处理记录添加事件，传递action标识和API响应数据
-          this.$emit('handle-warning', {
-            ...this.warning,
-            action: 'record-added',
-            apiResponse: response.data.data
-          });
-          this.closeRemarkDialog();
-        } else {
-          throw new Error(response.data ? response.data.msg : '更新失败');
-        }
+        this.$message.success('确认处理成功，状态已更新为处理中');
+        // 发出处理记录添加事件，传递action标识和API响应数据
+        this.$emit('handle-warning', {
+          ...this.warning,
+          action: 'record-added',
+          apiResponse: response
+        });
+        this.closeRemarkDialog();
       } catch (error) {
         console.error('确认处理失败:', error);
         this.$message.error(`确认处理失败: ${error.message || error}`);
@@ -1024,28 +1022,25 @@ export default {
 
         const response = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData);
 
-        if (response.data && response.data.code === 0) {
-          // API调用成功，添加本地操作记录
-          this.addOperationRecord({
-            status: 'completed',
-            statusText: '已处理',
-            time: this.getCurrentTime(),
-            description: '预警处理已完成，可以进行后续操作',
-            operationType: 'completed',
-            operator: this.getCurrentUserName()
-          });
+        // 响应拦截器已处理成功/失败判断，直接执行后续操作
+        // API调用成功，添加本地操作记录
+        this.addOperationRecord({
+          status: 'completed',
+          statusText: '已处理',
+          time: this.getCurrentTime(),
+          description: '预警处理已完成，可以进行后续操作',
+          operationType: 'completed',
+          operator: this.getCurrentUserName()
+        });
 
-          this.$message.success('处理已完成，现在可以进行归档等操作');
-          // 发出完成处理事件，传递API响应数据
-          this.$emit('handle-warning', {
-            ...this.warning,
-            action: 'finished',
-            apiResponse: response.data.data
-          });
-          this.closeRemarkDialog();
-        } else {
-          throw new Error(response.data ? response.data.msg : '更新失败');
-        }
+        this.$message.success('处理已完成，现在可以进行归档等操作');
+        // 发出完成处理事件，传递API响应数据
+        this.$emit('handle-warning', {
+          ...this.warning,
+          action: 'finished',
+          apiResponse: response
+        });
+        this.closeRemarkDialog();
       } catch (error) {
         console.error('结束处理失败:', error);
         this.$message.error(`结束处理失败: ${error.message || error}`);
@@ -1182,35 +1177,30 @@ export default {
           `预警详情页面归档 - 预警类型: ${this.warning.type || this.warning.alert_type}`
         );
 
-        console.log('📤 归档API响应:', response.data);
+        console.log('📤 归档API响应:', response);
 
-        if (response.data && response.data.code === 0) {
-          // 🔧 修复：记录归档操作到历史，包含位置信息
-          this.addOperationRecord({
-            status: 'completed',
-            statusText: '预警归档',
-            time: this.getCurrentTime(),
-            description: `预警已归档到：${archiveName}（${archiveLocation}），可在预警档案中查看`,
-            operationType: 'archive',
-            operator: this.getCurrentUserName(),
-            archiveInfo: {
-              archiveId: targetArchiveId,
-              archiveName: archiveName,
-              location: archiveLocation // 🔧 添加位置信息
-            }
-          });
+        // 响应拦截器已处理成功/失败判断，直接执行后续操作
+        // 🔧 修复：记录归档操作到历史，包含位置信息
+        this.addOperationRecord({
+          status: 'completed',
+          statusText: '预警归档',
+          time: this.getCurrentTime(),
+          description: `预警已归档到：${archiveName}（${archiveLocation}），可在预警档案中查看`,
+          operationType: 'archive',
+          operator: this.getCurrentUserName(),
+          archiveInfo: {
+            archiveId: targetArchiveId,
+            archiveName: archiveName,
+            location: archiveLocation // 🔧 添加位置信息
+          }
+        });
 
-          this.$message.success('预警已成功归档');
-          console.log('✅ 预警详情页面 - 预警归档成功:', alertId, '档案ID:', targetArchiveId);
+        this.$message.success('预警已成功归档');
+        console.log('✅ 预警详情页面 - 预警归档成功:', alertId, '档案ID:', targetArchiveId);
 
-          this.$emit('handle-archive', this.warning);
-          this.closeArchiveDialog();
-          // 不关闭详情对话框，让用户可以继续查看操作历史
-        } else {
-          const errorMessage = (response.data && response.data.message) || '归档失败';
-          this.$message.error(errorMessage);
-          console.warn('⚠️ 预警详情页面 - 预警归档失败:', response.data);
-        }
+        this.$emit('handle-archive', this.warning);
+        this.closeArchiveDialog();
+        // 不关闭详情对话框，让用户可以继续查看操作历史
       } catch (error) {
         console.error('❌ 预警详情页面 - 预警归档异常:', error);
         this.$message.error('归档失败: ' + (error.message || '未知错误'));

@@ -74,8 +74,8 @@ export default {
           hasChannel: this.hasChannel
         })
 
-        // 解包后端响应: response.data = {code: 0, msg: "成功", data: [...]}
-        const treeData = (response.data && response.data.data) || []
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        const treeData = Array.isArray(response.data) ? response.data : []
         resolve(treeData)
       } catch (error) {
         console.error('加载业务分组树失败:', error)

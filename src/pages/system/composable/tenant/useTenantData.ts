@@ -87,15 +87,15 @@ export function useTenantData() {
       const response = await tenantService.getTenants(queryParams);
 
       if (response?.data) {
-        // response.data 是分页对象：{ items: [...], page, page_size, total, pages }
-        const paginatedData = response.data as any;
-        const items = Array.isArray(paginatedData.items) ? paginatedData.items : [];
+        // 后端新格式：response.data 直接是数组，分页信息在顶层
+        // 拦截器已将 { data: [...], total, page, page_size } 转换为 { data, total, page, limit }
+        const items = Array.isArray(response.data) ? response.data : [];
 
         // 直接使用后端返回的 snake_case 数据，不做转换
         tenants.value = items as TenantEntity[];
 
         // 使用后端返回的总数
-        pagination.value.total = Number(paginatedData.total || 0);
+        pagination.value.total = Number(response.total || 0);
         pagination.value.currentPage = currentPage;
         pagination.value.pageSize = size;
       }

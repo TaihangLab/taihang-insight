@@ -255,72 +255,44 @@ export default {
     queryChildList: function(parent){
       this.regionList = []
       getRegionChildList(parent).then((res) => {
-        if (res.data.code === 0) {
-          this.regionList = res.data.data
-        } else {
-          this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-        }
+        this.regionList = res
       }).catch((error) => {
         this.$message.error({
             showClose: true,
-            message: error
+            message: error.msg || error
           });
       });
     },
     queryIndustryCodeList: function(){
       this.industryCodeTypeList = []
       getIndustryCodeList().then((res) => {
-        if (res.data.code === 0) {
-          this.industryCodeTypeList = res.data.data
-        } else {
-          this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-        }
+        this.industryCodeTypeList = res
       }).catch((error) => {
         this.$message.error({
             showClose: true,
-            message: error
+            message: error.msg || error
           });
       });
     },
     queryDeviceTypeList: function(){
       this.deviceTypeList = []
       getDeviceTypeList().then((res) => {
-        if (res.data.code === 0) {
-          this.deviceTypeList = res.data.data
-        } else {
-          this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-        }
+        this.deviceTypeList = res
       }).catch((error) => {
         this.$message.error({
             showClose: true,
-            message: error
+            message: error.msg || error
           });
       });
     },
     queryNetworkIdentificationTypeList: function(){
       this.networkIdentificationTypeList = []
       getNetworkIdentificationList().then((res) => {
-        if (res.data.code === 0) {
-          this.networkIdentificationTypeList = res.data.data
-        } else {
-          this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-        }
+        this.networkIdentificationTypeList = res
       }).catch((error) => {
         this.$message.error({
             showClose: true,
-            message: error
+            message: error.msg || error
           });
       });
     },

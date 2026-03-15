@@ -794,16 +794,14 @@ export default {
 
         // 调用API获取技能列表
         const response = await centerAPI.skill.getSkillList(params);
-        
-        if (response.data.code === 0) {
-          this.processSkillsData(response.data.data);
-          // 更新总数和分页信息
-          this.total = response.data.total;
-          // 删除数据获取成功的消息提示
-          // this.$message.success('数据获取成功');
-        } else {
-          this.$message.error(response.data.msg || '获取技能列表失败');
-        }
+
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        this.processSkillsData(response);
+        // 更新总数和分页信息
+        const responseWithTotal = response as any;
+        this.total = responseWithTotal.total || 0;
+        // 删除数据获取成功的消息提示
+        // this.$message.success('数据获取成功');
       } catch (error) {
         console.error('获取技能列表失败:', error);
         this.$message.error('获取技能列表失败，请检查网络连接');
@@ -853,19 +851,15 @@ export default {
       try {
         // 加载详细数据
         const response = await centerAPI.skill.getSkillDetail(skill.id);
-        if (response.data.code === 0) {
-          this.currentSkill = {
-            ...skill,
-            aiTasks: response.data.data.ai_tasks || [],
-            deviceCount: response.data.data.total_device_count || 0,
-            models: response.data.data.model_info ? response.data.data.model_info.map(model => model[1]) : []
-          };
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        this.currentSkill = {
+          ...skill,
+          aiTasks: response.ai_tasks || [],
+          deviceCount: response.total_device_count || 0,
+          models: response.model_info ? response.model_info.map(model => model[1]) : []
+        };
 
-          this.detailsDialogVisible = true;
-        } else {
-          // 保留错误信息但简化
-          this.$message.error('获取技能详情失败');
-        }
+        this.detailsDialogVisible = true;
       } catch (error) {
         console.error('获取技能详情失败:', error);
         // 简化重复的错误提示
@@ -882,18 +876,15 @@ export default {
       }).then(async () => {
         try {
           const response = await centerAPI.skill.deleteSkill(skill.id);
-          
-          if (response.data.code === 0) {
-            this.skillsList = this.skillsList.filter(item => item.id !== skill.id);
-            // 删除成功提示仍需保留，因为这是重要操作
-            this.$message.success(`成功删除技能: ${skill.name_zh}`);
-            
-            // 若已选择的技能中包含被删除的技能，则从选择列表中移除
-            if (this.selectedSkills.includes(skill.id)) {
-              this.selectedSkills = this.selectedSkills.filter(id => id !== skill.id);
-            }
-          } else {
-            this.$message.error(response.data.msg || '删除技能失败');
+
+          // 响应拦截器已处理成功/失败判断，直接执行后续操作
+          this.skillsList = this.skillsList.filter(item => item.id !== skill.id);
+          // 删除成功提示仍需保留，因为这是重要操作
+          this.$message.success(`成功删除技能: ${skill.name_zh}`);
+
+          // 若已选择的技能中包含被删除的技能，则从选择列表中移除
+          if (this.selectedSkills.includes(skill.id)) {
+            this.selectedSkills = this.selectedSkills.filter(id => id !== skill.id);
           }
         } catch (error) {
           console.error('删除技能失败:', error);
@@ -915,7 +906,6 @@ export default {
       const index = this.selectedSkills.indexOf(skill.id);
       if (index > -1) {
         this.selectedSkills.splice(index, 1);
-      } else {
         this.selectedSkills.push(skill.id);
       }
     },
@@ -931,7 +921,6 @@ export default {
       if (allSelected) {
         // 如果已全选，则取消选择当前页所有技能
         this.selectedSkills = this.selectedSkills.filter(id => !currentIds.includes(id));
-      } else {
         // 如果未全选，则选择当前页所有未选择的技能
         currentIds.forEach(id => {
           if (!newSelected.includes(id)) {
@@ -956,42 +945,38 @@ export default {
       }).then(async () => {
         try {
           const response = await centerAPI.skill.batchDeleteSkills(this.selectedSkills);
-          
-          if (response.data.success) {
-            // 处理成功与失败的情况
-            const successCount = response.data.detail.success.length;
-            const failedCount = response.data.detail.failed.length;
-            
-            // 从列表中移除成功删除的技能
-            const successIds = response.data.detail.success;
-            this.skillsList = this.skillsList.filter(skill => !successIds.includes(skill.id));
-            
-            // 从选择列表中移除所有操作的技能ID
-            this.selectedSkills = [];
-            
-            // 显示结果信息
+
+          // 响应拦截器已处理成功/失败判断，直接使用数据
+          // 处理成功与失败的情况
+          const successCount = response.detail.success.length;
+          const failedCount = response.detail.failed.length;
+
+          // 从列表中移除成功删除的技能
+          const successIds = response.detail.success;
+          this.skillsList = this.skillsList.filter(skill => !successIds.includes(skill.id));
+
+          // 从选择列表中移除所有操作的技能ID
+          this.selectedSkills = [];
+
+          // 显示结果信息
+          if (failedCount > 0) {
+            // 有删除失败的情况
+            this.$message({
+              type: 'warning',
+              message: response.message || `成功删除 ${successCount} 个技能，失败 ${failedCount} 个`
+            });
+
+            // 只显示一条汇总失败信息，而不是每一个都显示
             if (failedCount > 0) {
-              // 有删除失败的情况
-              this.$message({
-                type: 'warning',
-                message: response.data.message || `成功删除 ${successCount} 个技能，失败 ${failedCount} 个`
-              });
-              
-              // 只显示一条汇总失败信息，而不是每一个都显示
-              if (failedCount > 0) {
-                this.$message.error(`${failedCount}个技能删除失败，请查看控制台了解详情`);
-                console.error('删除失败技能列表:', response.data.detail.failed);
-              }
-            } else {
-              // 全部删除成功
-              this.$message.success(response.data.message || `成功删除 ${successCount} 个技能`);
+              this.$message.error(`${failedCount}个技能删除失败，请查看控制台了解详情`);
+              console.error('删除失败技能列表:', response.detail.failed);
             }
-            
-            // 刷新技能列表
-            this.fetchSkills();
-          } else {
-            this.$message.error(response.data.message || '批量删除技能失败');
+            // 全部删除成功
+            this.$message.success(response.message || `成功删除 ${successCount} 个技能`);
           }
+
+          // 刷新技能列表
+          this.fetchSkills();
         } catch (error) {
           console.error('批量删除技能失败:', error);
           this.$message.error('批量删除技能失败');
@@ -1024,7 +1009,6 @@ export default {
         }
         this.importForm.file = file.raw;
         this.fileList = [file];
-      } else {
         this.importForm.file = null;
         this.fileList = [];
       }
@@ -1058,16 +1042,13 @@ export default {
                 
                 // 调用API导入技能
                 const response = await centerAPI.skill.importSkill(importData);
-                
-                if (response.data.code === 0) {
-                  this.$message.success('技能导入成功');
-                  this.importDialogVisible = false;
-                  
-                  // 重新获取技能列表
-                  this.fetchSkills();
-                } else {
-                  this.$message.error(response.data.msg || '技能导入失败');
-                }
+
+                // 响应拦截器已处理成功/失败判断，直接执行后续操作
+                this.$message.success('技能导入成功');
+                this.importDialogVisible = false;
+
+                // 重新获取技能列表
+                this.fetchSkills();
               } catch (error) {
                 console.error('解析文件内容失败:', error);
                 this.$message.error('文件格式错误，请检查JSON格式');
@@ -1085,7 +1066,6 @@ export default {
             this.$message.error('导入失败');
             this.importing = false;
           }
-        } else {
           return false;
         }
       });
@@ -1130,7 +1110,6 @@ export default {
         
         // 删除已选择图片但尚未保存的提示
         // this.$message.info('已选择图片，点击保存按钮上传');
-      } else {
         this.imageFile = null;
         this.imageUrl = '';
       }
@@ -1149,31 +1128,27 @@ export default {
               description: this.editForm.description,
               version: this.editForm.version
             });
-            
-            if (response.data.code === 0) {
-              // 如果有新上传的图片，调用图片上传API
-              if (this.imageFile) {
-                try {
-                  console.log('准备上传图片:', this.imageFile.name, this.imageFile.size, this.imageFile.type);
-                  
-                  const imageResponse = await centerAPI.skill.uploadSkillImage(this.currentSkill.id, this.imageFile);
-                  console.log('图片上传响应:', imageResponse.data);
-                  
-                  if (imageResponse.data.code === 0) {
-                    // 如果上传成功，更新图片URL
-                    if (imageResponse.data.data && imageResponse.data.data.image_url) {
-                      this.currentSkill.image_url = imageResponse.data.data.image_url;
-                      console.log('图片URL已更新:', this.currentSkill.image_url);
-                    } else {
-                      console.warn('响应中缺少图片URL:', imageResponse.data);
-                      // 如果响应中没有图片URL，但上传成功，我们可以刷新技能详情以获取最新数据
-                      this.refreshSkillDetail();
-                    }
-                  } else {
-                    console.error('图片上传失败:', imageResponse.data);
-                    this.$message.warning('技能信息已更新，但图片上传失败：' + (imageResponse.data.msg || '未知错误'));
-                  }
-                } catch (imageError) {
+
+            // 响应拦截器已处理成功/失败判断，直接执行后续操作
+            // 如果有新上传的图片，调用图片上传API
+            if (this.imageFile) {
+              try {
+                console.log('准备上传图片:', this.imageFile.name, this.imageFile.size, this.imageFile.type);
+
+                const imageResponse = await centerAPI.skill.uploadSkillImage(this.currentSkill.id, this.imageFile);
+                console.log('图片上传响应:', imageResponse);
+
+                // 响应拦截器已处理，直接使用数据
+                // 如果上传成功，更新图片URL
+                if (imageResponse && imageResponse.image_url) {
+                  this.currentSkill.image_url = imageResponse.image_url;
+                  console.log('图片URL已更新:', this.currentSkill.image_url);
+                } else {
+                  console.warn('响应中缺少图片URL');
+                  // 如果响应中没有图片URL，但上传成功，我们可以刷新技能详情以获取最新数据
+                  this.refreshSkillDetail();
+                }
+              } catch (imageError) {
                   console.error('上传技能图片失败:', imageError);
                   this.$message.warning('技能信息已更新，但图片上传失败，请检查网络连接和服务器状态');
                 }
@@ -1191,8 +1166,7 @@ export default {
               
               // 刷新技能列表（在后台进行，不影响用户查看详情）
               this.fetchSkills();
-            } else {
-              this.$message.error(response.data.msg || '技能编辑失败');
+              this.$message.error(response.message || "" || '技能编辑失败');
             }
           } catch (error) {
             console.error('编辑技能失败:', error);
@@ -1202,7 +1176,6 @@ export default {
             // 清除临时图片文件和URL
             this.imageFile = null;
           }
-        } else {
           return false;
         }
       });
@@ -1214,23 +1187,22 @@ export default {
       
       try {
         const response = await centerAPI.skill.getSkillDetail(this.currentSkill.id);
-        
-        if (response.data.code === 0) {
-          // 更新当前技能的所有数据
-          const skill = response.data.data;
-          this.currentSkill = {
-            ...this.currentSkill,
-            name_zh: skill.name_zh,
-            description: skill.description,
-            image_url: skill.image_url,
-            aiTasks: skill.ai_tasks || [],
-            deviceCount: skill.total_device_count || 0,
-            models: skill.model_info ? skill.model_info.map(model => model[1]) : []
-          };
-          
-          console.log('技能详情已刷新:', this.currentSkill);
-          // 不再显示刷新成功的提示
-        }
+
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        // 更新当前技能的所有数据
+        const skill = response;
+        this.currentSkill = {
+          ...this.currentSkill,
+          name_zh: skill.name_zh,
+          description: skill.description,
+          image_url: skill.image_url,
+          aiTasks: skill.ai_tasks || [],
+          deviceCount: skill.total_device_count || 0,
+          models: skill.model_info ? skill.model_info.map(model => model[1]) : []
+        };
+
+        console.log('技能详情已刷新:', this.currentSkill);
+        // 不再显示刷新成功的提示
         // 不显示刷新失败的提示，静默处理
       } catch (error) {
         console.error('刷新技能详情失败:', error);
@@ -1245,7 +1217,6 @@ export default {
         // 重置图片URL和文件
         this.imageUrl = '';
         this.imageFile = null;
-      } else {
         this.detailsDialogVisible = false;
       }
     },
@@ -1274,14 +1245,11 @@ export default {
       try {
         // 获取关联设备列表
         const response = await centerAPI.skill.getSkillDevices(this.currentSkill.id);
-        
-        if (response.data.code === 0) {
-          // 处理设备数据
-          this.relatedDevices = response.data.data;
-          // 不需要再次映射，因为在VisionAIService.js中已经处理好了数据格式
-        } else {
-          this.$message.error(response.data.msg || '获取关联设备失败');
-        }
+
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        // 处理设备数据
+        this.relatedDevices = response;
+        // 不需要再次映射，因为在VisionAIService.js中已经处理好了数据格式
       } catch (error) {
         console.error('获取关联设备失败:', error);
         this.$message.error('获取关联设备列表失败，请检查网络连接');
@@ -1346,14 +1314,11 @@ export default {
         });
 
         const response = await centerAPI.skill.reloadSkillClasses();
-        
-        if (response.data.code === 0) {
-          this.$message.success('技能加载成功');
-          // 重新获取技能列表
-          this.fetchSkills();
-        } else {
-          this.$message.error(response.data.msg || '技能加载失败');
-        }
+
+        // 响应拦截器已处理成功/失败判断，直接执行后续操作
+        this.$message.success('技能加载成功');
+        // 重新获取技能列表
+        this.fetchSkills();
       } catch (error) {
         console.error('加载技能失败:', error);
         this.$message.error('加载技能失败，请检查网络连接');
@@ -1393,14 +1358,11 @@ export default {
       try {
         // 获取技能实例关联设备列表
         const response = await centerAPI.skill.getSkillInstanceDevices(instance.id);
-        
-        if (response.data.code === 0) {
-          // 处理设备数据
-          this.relatedDevices = response.data.data;
-          // 不需要再次映射，因为在VisionAIService.js中已经处理好了数据格式
-        } else {
-          this.$message.error(response.data.msg || '获取关联设备失败');
-        }
+
+        // 响应拦截器已处理成功/失败判断，直接使用数据
+        // 处理设备数据
+        this.relatedDevices = response;
+        // 不需要再次映射，因为在VisionAIService.js中已经处理好了数据格式
       } catch (error) {
         console.error('获取技能实例关联设备失败:', error);
         this.$message.error('获取关联设备列表失败，请检查网络连接');
@@ -1425,7 +1387,6 @@ export default {
         if (!this.selectedSkills.includes(skillId)) {
           this.selectedSkills.push(skillId)
         }
-      } else {
         const index = this.selectedSkills.indexOf(skillId)
         if (index > -1) {
           this.selectedSkills.splice(index, 1)
