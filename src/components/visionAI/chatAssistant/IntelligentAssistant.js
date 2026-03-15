@@ -816,32 +816,6 @@ export default {
     },
 
     /**
-     * 用户手动停止生成（类似ChatGPT的停止按钮）
-     */
-    stopGeneration() {
-      console.log("用户手动停止生成");
-      this.userStoppedGeneration = true;
-      this.stopCurrentChat();
-
-      // 在当前消息末尾添加停止标识
-      const lastMessage = this.messages[this.messages.length - 1];
-      if (lastMessage && lastMessage.type === "assistant" && !lastMessage.isTyping) {
-        // 如果回复内容不为空，保留已生成的内容
-        if (lastMessage.content && lastMessage.content.trim()) {
-          lastMessage.content += "\n\n[已停止生成]";
-          lastMessage.displayContent = lastMessage.content;
-        } else {
-          // 如果没有内容，显示停止消息
-          lastMessage.content = "[生成已停止]";
-          lastMessage.displayContent = lastMessage.content;
-        }
-      }
-
-      // 保存当前会话状态
-      this.saveCurrentChat();
-    },
-
-    /**
      * 用户手动停止生成（模仿Cursor的停止机制）
      */
     async stopGeneration() {
