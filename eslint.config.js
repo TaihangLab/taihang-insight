@@ -90,7 +90,7 @@ export default [
       'vue/require-prop-types': 'off',
 
       // General rules
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': 'off', // Allow console.log for development
       'no-debugger': 'warn',
       'no-unused-vars': 'off', // Use @typescript-eslint/no-unused-vars instead
       'no-undef': 'off' // TypeScript handles this
