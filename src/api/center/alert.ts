@@ -252,7 +252,7 @@ class AlertAPI {
    * 导出预警数据
    * @param params 导出参数
    */
-  async exportAlerts(params: any = {}): Promise<AxiosResponse> {
+  async exportAlerts(params: Record<string, unknown> = {}): Promise<AxiosResponse> {
     const exportParams = { ...params }
 
     if (!exportParams.format) {
@@ -264,7 +264,8 @@ class AlertAPI {
       delete exportParams.warningSkill
     }
 
-    if (!exportParams.alert_ids || exportParams.alert_ids.length === 0) {
+    const alertIds = exportParams.alert_ids as unknown[] | undefined
+    if (!alertIds || alertIds.length === 0) {
       delete exportParams.alert_ids
     }
 
