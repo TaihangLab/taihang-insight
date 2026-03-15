@@ -155,7 +155,7 @@ const buildParams = () => {
 const loadData = async () => {
   try {
     users.value = await fetchUsers(buildParams());
-  } catch (error: any) {
+  } catch (error: unknown) {
     ElMessage.error(`获取用户列表失败: ${error.message}`);
     clearData();
   }
@@ -171,7 +171,7 @@ const clearData = () => {
 /**
  * 搜索
  */
-const handleSearch = (conditions: any) => {
+const handleSearch = (conditions: unknown) => {
   Object.assign(searchConditions, conditions);
   pagination.value.currentPage = 1;
   loadData();
@@ -207,7 +207,7 @@ const handleAdd = () => {
 /**
  * 编辑
  */
-const handleEdit = (row: any) => {
+const handleEdit = (row: unknown) => {
   currentUser.value = row;
   editDialogVisible.value = true;
 };
@@ -215,7 +215,7 @@ const handleEdit = (row: any) => {
 /**
  * 用户保存成功回调
  */
-const handleUserSubmit = async (formData: any) => {
+const handleUserSubmit = async (formData: unknown) => {
   try {
     if (currentUser.value) {
       await updateUser(currentUser.value.id, formData);
@@ -226,7 +226,7 @@ const handleUserSubmit = async (formData: any) => {
     }
     editDialogVisible.value = false;
     loadData();
-  } catch (error: any) {
+  } catch (error: unknown) {
     ElMessage.error(`保存失败: ${error.message}`);
   }
 };
@@ -234,7 +234,7 @@ const handleUserSubmit = async (formData: any) => {
 /**
  * 删除
  */
-const handleDelete = (row: any) => {
+const handleDelete = (row: unknown) => {
   deleteTargetType.value = "single";
   deleteTargetName.value = row.userName || row.id;
   deleteTargetIds.value = [row.id];
@@ -267,7 +267,7 @@ const handleDeleteConfirm = async () => {
       type: "success",
     });
     loadData();
-  } catch (error: any) {
+  } catch (error: unknown) {
     ElMessage({
       message: `删除失败: ${error.message || "未知错误"}`,
       type: "error",
@@ -278,7 +278,7 @@ const handleDeleteConfirm = async () => {
 /**
  * 状态切换
  */
-const handleStatusChange = async (row: any) => {
+const handleStatusChange = async (row: unknown) => {
   // v-model 已经自动更新了 row.status，直接使用即可
   const newStatus = row.status;
 
@@ -289,7 +289,7 @@ const handleStatusChange = async (row: any) => {
       type: "success",
     });
     loadData();
-  } catch (error: any) {
+  } catch (error: unknown) {
     let errorMessage = "更新用户状态失败";
     if (error.message && !error.message.includes("Network Error")) {
       errorMessage = error.message;
@@ -308,11 +308,11 @@ const handleStatusChange = async (row: any) => {
 /**
  * 重置密码
  */
-const handleResetPassword = async (row: any) => {
+const handleResetPassword = async (row: unknown) => {
   try {
     await resetUserPassword(row.id, "123456");
     ElMessage.success("密码重置成功，新密码为：123456");
-  } catch (error: any) {
+  } catch (error: unknown) {
     ElMessage.error(`重置密码失败: ${error.message}`);
   }
 };
@@ -337,7 +337,7 @@ const handleSizeChange = (size: number) => {
 /**
  * 授权
  */
-const handleAuthorization = (row: any) => {
+const handleAuthorization = (row: unknown) => {
   currentUser.value = row;
   authorizationDialogVisible.value = true;
 };

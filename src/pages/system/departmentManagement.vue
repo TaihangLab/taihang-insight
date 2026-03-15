@@ -203,7 +203,7 @@ const handleAdd = () => {
 /**
  * 添加子部门处理
  */
-const handleAddSub = (row: any) => {
+const handleAddSub = (row: unknown) => {
   currentDept.value = {
     ...row,
     isSubDept: true,
@@ -215,7 +215,7 @@ const handleAddSub = (row: any) => {
 /**
  * 编辑部门处理
  */
-const handleEdit = (row: any) => {
+const handleEdit = (row: unknown) => {
   console.log("handleEdit", row);
   currentDept.value = row as DepartmentEntity;
   editDialogVisible.value = true;
@@ -224,7 +224,7 @@ const handleEdit = (row: any) => {
 /**
  * 提交部门表单处理
  */
-const handleSubmit = async (formData: any) => {
+const handleSubmit = async (formData: unknown) => {
   try {
     const submitData: Record<string, unknown> = { ...formData };
 
@@ -265,7 +265,7 @@ const handleSubmit = async (formData: any) => {
 /**
  * 删除部门处理
  */
-const handleDelete = (row: any) => {
+const handleDelete = (row: unknown) => {
   const dept = row as DepartmentEntity;
   deleteTargetName.value = dept.dept_name || String(dept.id);
   currentDept.value = dept;

@@ -135,7 +135,7 @@ const loadData = async () => {
       pagination.value.currentPage,
       pagination.value.pageSize,
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     ElMessage.error(`获取租户列表失败: ${error.message}`);
     clearData();
   }
@@ -151,7 +151,7 @@ const clearData = () => {
 /**
  * 搜索
  */
-const handleSearch = (conditions: any) => {
+const handleSearch = (conditions: unknown) => {
   Object.assign(searchConditions, conditions);
   pagination.value.currentPage = 1;
   loadData();
@@ -187,7 +187,7 @@ const handleAdd = () => {
 /**
  * 编辑
  */
-const handleEdit = (row: any) => {
+const handleEdit = (row: unknown) => {
   currentTenant.value = row;
   editDialogVisible.value = true;
 };
@@ -202,7 +202,7 @@ const handleTenantSaved = () => {
 /**
  * 删除
  */
-const handleDelete = (row: any) => {
+const handleDelete = (row: unknown) => {
   deleteTargetType.value = "single";
   deleteTargetName.value = row.tenant_name || row.id;
   deleteTargetCodes.value = [row.id];
@@ -236,7 +236,7 @@ const handleDeleteConfirm = async () => {
       type: "success",
     });
     loadData();
-  } catch (error: any) {
+  } catch (error: unknown) {
     ElMessage({
       message: `删除失败: ${error.message || "未知错误"}`,
       type: "error",
@@ -247,7 +247,7 @@ const handleDeleteConfirm = async () => {
 /**
  * 状态切换
  */
-const handleStatusChange = async (row: any) => {
+const handleStatusChange = async (row: unknown) => {
   // v-model 已经自动更新了 row.status，直接使用即可
   const newStatus = row.status;
 
@@ -259,7 +259,7 @@ const handleStatusChange = async (row: any) => {
     });
     // 成功更新后刷新数据以显示最新状态
     loadData();
-  } catch (error: any) {
+  } catch (error: unknown) {
     // 提取错误消息，优先使用后端返回的具体错误信息
     let errorMessage = "更新租户状态失败";
     if (error.message && !error.message.includes("Network Error")) {
