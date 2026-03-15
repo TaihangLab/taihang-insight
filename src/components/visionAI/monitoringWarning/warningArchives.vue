@@ -166,7 +166,8 @@ export default {
       } else if (this.addArchiveDialogVisible && this.currentArchiveId) {
         // 添加档案时的图片上传
         return `${baseUrl}/api/v1/alert-archives/${this.currentArchiveId}/upload/image`;
-        // 临时上传地址（新建时还没有ID）
+      } else {
+        // 临时上传地址（新建时还没有 ID）
         return `${baseUrl}/api/v1/alert-archives/upload/temp`;
       }
     },
@@ -177,7 +178,8 @@ export default {
 
       if (this.currentRecordId) {
         return `${baseUrl}/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/video`;
-        return `${baseUrl}/api/v1/alert-archives/upload/temp-video`;
+      } else {
+return `${baseUrl}/api/v1/alert-archives/upload/temp-video`;
       }
     },
 
