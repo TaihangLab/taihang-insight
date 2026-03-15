@@ -167,7 +167,7 @@ export function usePermissionData() {
   const createPermission = async (data: Record<string, unknown>) => {
     loading.value = true;
     try {
-      // @ts-ignore - 数据由调用方验证，后端会进行验证
+      // @ts-expect-error - 数据由调用方验证，后端会进行验证
       await permissionService.createPermissionNode(data);
       return { success: true, message: "新增成功" };
     } catch (error) {
@@ -184,7 +184,7 @@ export function usePermissionData() {
   const updatePermission = async (permissionId: number, data: Record<string, unknown>) => {
     loading.value = true;
     try {
-      // @ts-ignore - 数据由调用方验证，后端会进行验证
+      // @ts-expect-error - 数据由调用方验证，后端会进行验证
       await permissionService.updatePermissionNode(permissionId, data);
       return { success: true, message: "修改成功" };
     } catch (error) {

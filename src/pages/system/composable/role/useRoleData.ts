@@ -174,7 +174,7 @@ export function useRoleData() {
   const createRole = async (data: Record<string, unknown>) => {
     loading.value = true;
     try {
-      // @ts-ignore - 数据由调用方验证，后端会进行验证
+      // @ts-expect-error - 数据由调用方验证，后端会进行验证
       await roleService.createRole(data);
       return { success: true, message: "新增成功" };
     } catch (error) {
@@ -191,7 +191,7 @@ export function useRoleData() {
   const updateRole = async (roleId: number, data: Record<string, unknown>) => {
     loading.value = true;
     try {
-      // @ts-ignore - 数据由调用方验证，后端会进行验证
+      // @ts-expect-error - 数据由调用方验证，后端会进行验证
       await roleService.updateRole(roleId, data);
       return { success: true, message: "修改成功" };
     } catch (error) {
