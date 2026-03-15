@@ -641,7 +641,6 @@
 import _imported_1 from '../../../../config/index.js';
 
 import player from '../../common/jessibuca.vue'
-import DeviceTree from '../../common/DeviceTree.vue'
 // 使用本地专用组件（改造后的实时监控专用API）
 import RegionTree from './components/RegionTree.vue'
 import GroupTree from './components/GroupTree.vue'
@@ -656,7 +655,7 @@ const config = _imported_1;
 export default {
   name: "RealTimeMonitoring",
   components: {
-    player, DeviceTree, RegionTree, GroupTree, WarningDetail, DetectionOverlay
+    player, RegionTree, GroupTree, WarningDetail, DetectionOverlay
   },
   data() {
     return {
