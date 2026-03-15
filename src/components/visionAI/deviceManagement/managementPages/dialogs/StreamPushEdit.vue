@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-mutating-props -->
 <template>
   <el-dialog
     :title="streamPush.id ? '编辑推流信息' : '添加推流'"
@@ -60,7 +61,6 @@
 </template>
 
 <script>
- 
 /* eslint-disable vue/no-mutating-props */
 import CommonChannelEdit from "./CommonChannelEdit.vue";
 import wvpAxios from "@/api/camera/base";
