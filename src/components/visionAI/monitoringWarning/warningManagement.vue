@@ -79,7 +79,6 @@ export default {
 
       // 档案管理数据
       archivesList: [],
-      availableArchives: [],
       selectedArchiveId: "",
       currentCameraId: "",
       archiveListLoading: false,
