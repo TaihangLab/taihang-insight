@@ -501,7 +501,7 @@ export default {
     },
 
     getPushList: function () {
-      let that = this;
+      let that = this; // eslint-disable-line @typescript-eslint/no-this-alias
       wvpAxios({
         method: "get",
         url: `push/list`,
@@ -609,7 +609,7 @@ export default {
           for (let i = 0; i < this.multipleSelection.length; i++) {
             ids.push(this.multipleSelection[i].id);
           }
-          let that = this;
+          let that = this; // eslint-disable-line @typescript-eslint/no-this-alias
           batchRemovePushStream(ids, that.mediaServerId)
             .then((res) => {
               this.initData();

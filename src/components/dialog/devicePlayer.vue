@@ -640,7 +640,7 @@ export default {
       console.log("复制内容：" + data);
       this.coverPlaying = false;
       this.tracks = [];
-      const _this = this; // eslint-disable-line @typescript-eslint/no-this-alias // eslint-disable-line @typescript-eslint/no-this-alias
+      const _this = this; // eslint-disable-line @typescript-eslint/no-this-alias
       this.$copyText(data).then(
         function (e) {
           _this.$message({
@@ -660,7 +660,7 @@ export default {
     },
     ptzCamera: function (command) {
       console.log("云台控制：" + command);
-      const that = this; // eslint-disable-line @typescript-eslint/no-this-alias // eslint-disable-line @typescript-eslint/no-this-alias
+      const that = this; // eslint-disable-line @typescript-eslint/no-this-alias
       wvpAxios({
         method: "get",
         url:
