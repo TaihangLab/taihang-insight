@@ -118,11 +118,13 @@
           <template #default="scope">
             <div v-if="scope.row.is_streaming && scope.row.rtsp_url" class="rtsp-url-cell">
               <el-input :value="scope.row.rtsp_url" size="small" readonly>
-                <el-button
-                  slot="append"
+                <template v-slot:append>
+<el-button
+                  
                   icon="el-icon-document-copy"
                   @click="copyToClipboard(scope.row.rtsp_url)"
                 ></el-button>
+</template>
               </el-input>
             </div>
             <span v-else class="text-muted">-</span>
@@ -177,7 +179,7 @@
     <!-- 上传视频对话框 -->
     <el-dialog
       title="上传视频"
-      :visible.sync="uploadDialogVisible"
+      v-model:visible="uploadDialogVisible"
       width="600px"
       @close="resetUploadForm"
     >
@@ -198,9 +200,11 @@
               将文件拖到此处，或
               <em>点击上传</em>
             </div>
-            <div class="el-upload__tip" slot="tip">
+            <template v-slot:tip>
+<div class="el-upload__tip" >
               支持MP4、AVI、MOV等视频格式，建议使用H.264编码的MP4格式
             </div>
+</template>
           </el-upload>
         </el-form-item>
         <el-form-item label="视频名称" prop="name">
@@ -238,16 +242,18 @@
           <span style="font-size: 12px; color: #909399">正在上传视频文件，请稍候...</span>
         </el-form-item>
       </el-form>
-      <div slot="footer">
+      <template v-slot:footer>
+<div >
         <el-button @click="uploadDialogVisible = false" :disabled="uploading">取消</el-button>
         <el-button type="primary" :loading="uploading" @click="submitUpload" :disabled="uploading">
           {{ uploading ? `上传中... ${uploadProgress}%` : "开始上传" }}
         </el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 编辑视频对话框 -->
-    <el-dialog title="编辑视频" :visible.sync="editDialogVisible" width="600px">
+    <el-dialog title="编辑视频" v-model:visible="editDialogVisible" width="600px">
       <el-form :model="editForm" :rules="editRules" ref="editForm" label-width="120px">
         <el-form-item label="视频名称" prop="name">
           <el-input v-model="editForm.name" placeholder="请输入视频名称" />
@@ -274,14 +280,16 @@
           <span class="form-tip">fps（留空则使用原始帧率，推流中时无法修改）</span>
         </el-form-item>
       </el-form>
-      <div slot="footer">
+      <template v-slot:footer>
+<div >
         <el-button @click="editDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="submitEdit">确定</el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 推流配置对话框 -->
-    <el-dialog title="推流配置" :visible.sync="streamDialogVisible" width="600px">
+    <el-dialog title="推流配置" v-model:visible="streamDialogVisible" width="600px">
       <el-form :model="streamForm" ref="streamForm" label-width="120px">
         <el-form-item label="推流ID（可选）">
           <el-input
@@ -305,10 +313,12 @@
           <span class="form-tip">fps（留空则使用视频配置的帧率或原始帧率）</span>
         </el-form-item>
       </el-form>
-      <div slot="footer">
+      <template v-slot:footer>
+<div >
         <el-button @click="streamDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="confirmStartStream">开始推流</el-button>
       </div>
+</template>
     </el-dialog>
   </div>
 </template>
@@ -389,7 +399,7 @@ export default {
       this.refreshStreamingStatus();
     }, 10000); // 每10秒刷新一次
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.timer) {
       clearInterval(this.timer);
     }

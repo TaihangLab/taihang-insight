@@ -6,15 +6,17 @@
     center
     :append-to-body="true"
     :close-on-click-modal="false"
-    :visible.sync="showVideoDialog"
+    v-model:visible="showVideoDialog"
     :destroy-on-close="false"
   >
     <el-tabs v-model="activeKey" style="padding: 0 1rem; margin: auto 0" @tab-click="getRegionList">
       <el-tab-pane name="0">
-        <div slot="label">
+        <template v-slot:label>
+<div >
           <div class="show-code-item">{{ allVal[0].val }}</div>
           <div style="text-align: center">{{ allVal[0].meaning }}</div>
         </div>
+</template>
         <el-radio-group v-model="allVal[0].val">
           <el-radio
             v-for="item in regionList"
@@ -27,10 +29,12 @@
         </el-radio-group>
       </el-tab-pane>
       <el-tab-pane name="1">
-        <div slot="label">
+        <template v-slot:label>
+<div >
           <div class="show-code-item">{{ allVal[1].val }}</div>
           <div style="text-align: center">{{ allVal[1].meaning }}</div>
         </div>
+</template>
         <el-radio-group v-model="allVal[1].val" :disabled="allVal[1].lock">
           <el-radio
             v-for="item in regionList"
@@ -43,10 +47,12 @@
         </el-radio-group>
       </el-tab-pane>
       <el-tab-pane name="2">
-        <div slot="label">
+        <template v-slot:label>
+<div >
           <div class="show-code-item">{{ allVal[2].val }}</div>
           <div style="text-align: center">{{ allVal[2].meaning }}</div>
         </div>
+</template>
         <el-radio-group v-model="allVal[2].val" :disabled="allVal[2].lock">
           <el-radio
             v-for="item in regionList"
@@ -60,10 +66,12 @@
       </el-tab-pane>
       <el-tab-pane name="3">
         请手动输入基层接入单位编码,两位数字
-        <div slot="label">
+        <template v-slot:label>
+<div >
           <div class="show-code-item">{{ allVal[3].val }}</div>
           <div style="text-align: center">{{ allVal[3].meaning }}</div>
         </div>
+</template>
         <el-input
           link
           placeholder="请输入内容"
@@ -74,10 +82,12 @@
         ></el-input>
       </el-tab-pane>
       <el-tab-pane name="4">
-        <div slot="label">
+        <template v-slot:label>
+<div >
           <div class="show-code-item">{{ allVal[4].val }}</div>
           <div style="text-align: center">{{ allVal[4].meaning }}</div>
         </div>
+</template>
         <el-radio-group v-model="allVal[4].val" :disabled="allVal[4].lock">
           <el-radio
             v-for="item in industryCodeTypeList"
@@ -90,10 +100,12 @@
         </el-radio-group>
       </el-tab-pane>
       <el-tab-pane name="5">
-        <div slot="label">
+        <template v-slot:label>
+<div >
           <div class="show-code-item">{{ allVal[5].val }}</div>
           <div style="text-align: center">{{ allVal[5].meaning }}</div>
         </div>
+</template>
         <el-radio-group v-model="allVal[5].val" :disabled="allVal[5].lock">
           <el-radio
             v-for="item in deviceTypeList"
@@ -106,10 +118,12 @@
         </el-radio-group>
       </el-tab-pane>
       <el-tab-pane name="6">
-        <div slot="label">
+        <template v-slot:label>
+<div >
           <div class="show-code-item">{{ allVal[6].val }}</div>
           <div style="text-align: center">{{ allVal[6].meaning }}</div>
         </div>
+</template>
         <el-radio-group v-model="allVal[6].val" :disabled="allVal[6].lock">
           <el-radio
             v-for="item in networkIdentificationTypeList"
@@ -123,10 +137,12 @@
       </el-tab-pane>
       <el-tab-pane name="7">
         请手动输入设备/用户序号, 六位数字
-        <div slot="label">
+        <template v-slot:label>
+<div >
           <div class="show-code-item">{{ allVal[7].val }}</div>
           <div style="text-align: center">{{ allVal[7].meaning }}</div>
         </div>
+</template>
         <el-input
           link
           placeholder="请输入内容"

@@ -33,10 +33,12 @@
         </el-form-item>
       </el-form>
     </div>
-    <span slot="footer" class="dialog-footer">
+    <template v-slot:footer>
+<span  class="dialog-footer">
       <el-button @click="handleClose">取消</el-button>
       <el-button type="primary" @click="handleSubmit" :loading="submitting">确定分配</el-button>
     </span>
+</template>
   </el-dialog>
 </template>
 

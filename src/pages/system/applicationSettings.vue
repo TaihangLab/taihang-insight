@@ -232,7 +232,7 @@
     </div>
 
     <!-- 技能设置弹窗 -->
-    <el-dialog title="技能详细设置" :visible.sync="dialogVisible" width="40%" class="config-dialog">
+    <el-dialog title="技能详细设置" v-model:visible="dialogVisible" width="40%" class="config-dialog">
       <div class="config-form">
         <el-form :model="currentSkill" label-width="120px">
           <el-form-item label="技能名称">
@@ -258,10 +258,12 @@
           </el-form-item>
         </el-form>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="cancelEdit">取 消</el-button>
         <el-button type="primary" @click="saveSkillSettings">确 定</el-button>
       </span>
+</template>
     </el-dialog>
   </div>
 </template>

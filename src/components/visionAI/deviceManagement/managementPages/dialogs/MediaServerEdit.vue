@@ -5,7 +5,7 @@
       :width="dialogWidth"
       top="2rem"
       :close-on-click-modal="false"
-      :visible.sync="showDialog"
+      v-model:visible="showDialog"
       :destroy-on-close="true"
       @close="close()"
     >
@@ -249,13 +249,15 @@
                   :disabled="mediaServerForm.defaultServer"
                 >
                   <!--                  <el-button v-if="mediaServerForm.recordAssistPort > 0" slot="append" type="primary" @click="checkRecordServer">测试</el-button>-->
-                  <el-button
+                  <template v-slot:append>
+<el-button
                     v-if="mediaServerForm.recordAssistPort > 0"
                     class="el-icon-check"
-                    slot="append"
+                    
                     type="primary"
                     @click="checkRecordServer"
                   ></el-button>
+</template>
                 </el-input>
                 <i
                   v-if="recordServerCheck == 1"

@@ -6,7 +6,7 @@
       top="5rem"
       :append-to-body="true"
       :close-on-click-modal="false"
-      :visible.sync="showDialog"
+      v-model:visible="showDialog"
       :destroy-on-close="true"
       @close="close()"
     >

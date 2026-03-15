@@ -4,7 +4,7 @@
       title="视频播放"
       top="0"
       :close-on-click-modal="false"
-      :visible.sync="showVideoDialog"
+      v-model:visible="showVideoDialog"
       @close="close()"
       v-if="showVideoDialog"
     >
@@ -20,7 +20,7 @@
             <jessibucaPlayer
               v-if="activePlayer === 'jessibuca'"
               ref="jessibuca"
-              :visible.sync="showVideoDialog"
+              v-model:visible="showVideoDialog"
               :videoUrl="videoUrl"
               :error="videoError"
               :message="videoError"
@@ -34,7 +34,7 @@
             <rtc-player
               v-if="activePlayer === 'webRTC'"
               ref="webRTC"
-              :visible.sync="showVideoDialog"
+              v-model:visible="showVideoDialog"
               :videoUrl="videoUrl"
               :error="videoError"
               :message="videoError"
@@ -63,7 +63,7 @@
         <jessibucaPlayer
           v-if="Object.keys(this.player).length == 1 && this.player.jessibuca"
           ref="jessibuca"
-          :visible.sync="showVideoDialog"
+          v-model:visible="showVideoDialog"
           :videoUrl="videoUrl"
           :error="videoError"
           :message="videoError"
@@ -75,7 +75,7 @@
         <rtc-player
           v-if="Object.keys(this.player).length == 1 && this.player.webRTC"
           ref="jessibuca"
-          :visible.sync="showVideoDialog"
+          v-model:visible="showVideoDialog"
           :videoUrl="videoUrl"
           :error="videoError"
           :message="videoError"
@@ -88,7 +88,7 @@
         <h265web
           v-if="Object.keys(this.player).length == 1 && this.player.h265web"
           ref="jessibuca"
-          :visible.sync="showVideoDialog"
+          v-model:visible="showVideoDialog"
           :videoUrl="videoUrl"
           :error="videoError"
           :message="videoError"
@@ -105,7 +105,7 @@
             <div style="display: flex; margin-bottom: 0.5rem; height: 2.5rem">
               <span style="width: 5rem; line-height: 2.5rem; text-align: right">播放地址：</span>
               <el-input v-model="getPlayerShared.sharedUrl" :disabled="true">
-                <template slot="append">
+                <template v-slot:append>
                   <i
                     class="cpoy-btn el-icon-document-copy"
                     title="点击拷贝"
@@ -118,7 +118,7 @@
             <div style="display: flex; margin-bottom: 0.5rem; height: 2.5rem">
               <span style="width: 5rem; line-height: 2.5rem; text-align: right">iframe：</span>
               <el-input v-model="getPlayerShared.sharedIframe" :disabled="true">
-                <template slot="append">
+                <template v-slot:append>
                   <i
                     class="cpoy-btn el-icon-document-copy"
                     title="点击拷贝"
@@ -131,14 +131,17 @@
             <div style="display: flex; margin-bottom: 0.5rem; height: 2.5rem">
               <span style="width: 5rem; line-height: 2.5rem; text-align: right">资源地址：</span>
               <el-input v-model="getPlayerShared.sharedRtmp" :disabled="true">
-                <el-button
-                  slot="append"
+                <template v-slot:append>
+<el-button
+                  
                   icon="el-icon-document-copy"
                   title="点击拷贝"
                   v-clipboard="getPlayerShared.sharedRtmp"
                   @success="$message({ type: 'success', message: '成功拷贝到粘贴板' })"
                 ></el-button>
-                <el-dropdown slot="prepend" v-if="streamInfo" trigger="click" @command="copyUrl">
+</template>
+                <template v-slot:prepend>
+<el-dropdown  v-if="streamInfo" trigger="click" @command="copyUrl">
                   <el-button>
                     更多地址
                     <i class="el-icon-arrow-down el-icon--right"></i>
@@ -234,6 +237,7 @@
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </el-dropdown>
+</template>
               </el-input>
             </div>
           </el-tab-pane>
@@ -570,7 +574,7 @@ export default {
       this.mediaServerId = "";
       this.app = "";
       this.videoUrl = "";
-      if (!!this.$refs[this.activePlayer]) {
+      if (this.$refs[this.activePlayer]) {
         this.$refs[this.activePlayer].pause();
       }
       switch (tab) {
@@ -625,7 +629,7 @@ export default {
     },
     close: function () {
       console.log("关闭视频");
-      if (!!this.$refs[this.activePlayer]) {
+      if (this.$refs[this.activePlayer]) {
         this.$refs[this.activePlayer].pause();
       }
       this.videoUrl = "";

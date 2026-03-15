@@ -6,7 +6,7 @@
       top="2rem"
       :append-to-body="true"
       :close-on-click-modal="false"
-      :visible.sync="showDialog"
+      v-model:visible="showDialog"
       :destroy-on-close="true"
       @close="close()"
     >
@@ -14,7 +14,9 @@
         <el-form ref="form" :model="group" label-width="140px">
           <el-form-item label="节点编号" prop="id">
             <el-input v-model="group.deviceId" placeholder="请输入编码">
-              <el-button slot="append" @click="buildDeviceIdCode(group.deviceId)">生成</el-button>
+              <template v-slot:append>
+<el-button  @click="buildDeviceIdCode(group.deviceId)">生成</el-button>
+</template>
             </el-input>
           </el-form-item>
           <el-form-item label="节点名称" prop="name">
@@ -22,7 +24,9 @@
           </el-form-item>
           <el-form-item label="行政区划" prop="name">
             <el-input v-model="group.civilCode">
-              <el-button slot="append" @click="buildCivilCode(group.civilCode)">选择</el-button>
+              <template v-slot:append>
+<el-button  @click="buildCivilCode(group.civilCode)">选择</el-button>
+</template>
             </el-input>
           </el-form-item>
 

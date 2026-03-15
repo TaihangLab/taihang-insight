@@ -34,9 +34,11 @@
 
           <!-- 安全设置卡片 -->
           <el-card class="security-card">
-            <div slot="header" class="card-header">
+            <template v-slot:header>
+<div  class="card-header">
               <span>安全设置</span>
             </div>
+</template>
             <div class="security-options">
               <div class="security-item" @click="changePassword">
                 <i class="el-icon-key"></i>
@@ -53,12 +55,14 @@
         <!-- 右侧基本信息 -->
         <el-col :xs="24" :sm="24" :md="16" :lg="18">
           <el-card class="info-card">
-            <div slot="header" class="card-header">
+            <template v-slot:header>
+<div  class="card-header">
               <span>基本信息</span>
               <el-button type="primary" size="small" @click="editMode = !editMode" class="edit-btn">
                 {{ editMode ? "取消编辑" : "编辑信息" }}
               </el-button>
             </div>
+</template>
 
             <el-form :model="userInfo" label-width="100px" class="profile-form">
               <el-row :gutter="20">

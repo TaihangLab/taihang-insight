@@ -13,7 +13,9 @@
           clearable
           @input="handleSearch"
         >
-          <i slot="suffix" class="el-icon-search"></i>
+          <template v-slot:suffix>
+<i  class="el-icon-search"></i>
+</template>
         </el-input>
       </div>
     </div>
@@ -53,8 +55,8 @@
     <!-- 分页器 -->
     <div class="pagination-container">
       <el-pagination
-        :current-page.sync="currentPage"
-        :page-size.sync="pageSize"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
@@ -66,7 +68,7 @@
     <!-- 添加/编辑边缘盒子弹窗 -->
     <el-dialog
       :title="dialogType === 'add' ? '添加边缘盒子' : '编辑边缘盒子'"
-      :visible.sync="dialogVisible"
+      v-model:visible="dialogVisible"
       width="50%"
       @close="resetForm"
     >
@@ -84,14 +86,16 @@
           <el-input v-model="formData.location" placeholder="请输入安装位置"></el-input>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="handleSubmit">确 定</el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 绑定服务器弹窗 -->
-    <el-dialog title="绑定边缘服务器" :visible.sync="bindDialogVisible" width="40%">
+    <el-dialog title="绑定边缘服务器" v-model:visible="bindDialogVisible" width="40%">
       <el-form :model="bindForm" label-width="100px">
         <el-form-item label="选择服务器">
           <el-select v-model="bindForm.serverId" placeholder="请选择边缘服务器" style="width: 100%">
@@ -104,10 +108,12 @@
           </el-select>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button @click="bindDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="handleBindSubmit">确 定</el-button>
       </div>
+</template>
     </el-dialog>
   </div>
 </template>

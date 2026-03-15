@@ -117,11 +117,13 @@
       </el-row>
     </el-form>
 
-    <span slot="footer" class="dialog-footer">
+    <template v-slot:footer>
+<span  class="dialog-footer">
       <el-button @click="fillTestData">智能填充测试数据</el-button>
       <el-button @click="cancel">取消</el-button>
       <el-button type="primary" @click="submitForm">确定</el-button>
     </span>
+</template>
   </el-dialog>
 </template>
 

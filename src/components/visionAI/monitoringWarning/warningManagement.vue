@@ -2511,7 +2511,7 @@ export default {
           layout="total, sizes, prev, pager, next, jumper"
           background
         >
-          <template slot="total">
+          <template v-slot:total>
             <span>共 {{ totalCount }} 条数据</span>
           </template>
         </el-pagination>
@@ -2521,7 +2521,7 @@ export default {
     <!-- 导出数据对话框 -->
     <el-dialog
       title="导出数据"
-      :visible.sync="exportDialogVisible"
+      v-model:visible="exportDialogVisible"
       width="35%"
       center
       :close-on-click-modal="false"
@@ -2592,19 +2592,21 @@ export default {
           </div>
         </div>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="exportDialogVisible = false" :disabled="exportLoading">取 消</el-button>
         <el-button type="primary" @click="confirmExport" :loading="exportLoading">
           <i class="el-icon-download"></i>
           确认导出
         </el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 添加备注对话框 -->
     <el-dialog
       title="处理预警"
-      :visible.sync="remarkDialogVisible"
+      v-model:visible="remarkDialogVisible"
       width="30%"
       center
       :close-on-click-modal="false"
@@ -2628,16 +2630,18 @@ export default {
           填写处理意见后，可点击"确认处理"添加处理记录，或点击"结束处理"完成整个处理流程
         </span>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button type="primary" @click="saveRemark">确认处理</el-button>
         <el-button type="success" @click="finishProcessing">结束处理</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 上报确认对话框 -->
     <el-dialog
       title="上报确认"
-      :visible.sync="reportDialogVisible"
+      v-model:visible="reportDialogVisible"
       width="400px"
       center
       :close-on-click-modal="false"
@@ -2647,16 +2651,18 @@ export default {
         <p>确定要上报此预警吗？</p>
         <p style="color: #909399; font-size: 12px">上报后预警将提交给上级部门处理</p>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="closeReportDialog">取 消</el-button>
         <el-button type="warning" @click="confirmReport">确定上报</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 归档确认对话框 -->
     <el-dialog
       title="归档预警"
-      :visible.sync="archiveDialogVisible"
+      v-model:visible="archiveDialogVisible"
       width="40%"
       center
       :close-on-click-modal="false"
@@ -2717,16 +2723,18 @@ export default {
         </div>
       </div>
 
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="closeArchiveDialog">取 消</el-button>
         <el-button type="danger" @click="confirmArchive">确认归档</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 批量处理对话框 -->
     <el-dialog
       title="批量处理预警"
-      :visible.sync="batchProcessDialogVisible"
+      v-model:visible="batchProcessDialogVisible"
       width="35%"
       center
       :close-on-click-modal="false"
@@ -2762,15 +2770,17 @@ export default {
         </span>
       </div>
 
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="closeBatchProcessDialog">取 消</el-button>
         <el-button type="primary" @click="confirmBatchProcess">确认批量处理</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 预警详情对话框 -->
     <WarningDetail
-      :visible.sync="warningDetailVisible"
+      v-model:visible="warningDetailVisible"
       :warning="currentWarningDetail"
       source="warningManagement"
       @handle-warning="handleWarningFromDetail"
@@ -2782,7 +2792,7 @@ export default {
     <!-- 误报输入对话框 -->
     <el-dialog
       title="标记误报"
-      :visible.sync="falseAlarmDialogVisible"
+      v-model:visible="falseAlarmDialogVisible"
       width="30%"
       center
       :close-on-click-modal="false"
@@ -2806,7 +2816,8 @@ export default {
           标记为误报后，该预警将被移出预警管理列表，并保存到复判记录中
         </span>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button
           @click="
             falseAlarmDialogVisible = false;
@@ -2818,12 +2829,13 @@ export default {
         </el-button>
         <el-button type="warning" @click="handleFalseAlarmArchive">确认误报</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 删除确认对话框 -->
     <el-dialog
       title="删除预警"
-      :visible.sync="deleteDialogVisible"
+      v-model:visible="deleteDialogVisible"
       width="400px"
       center
       :close-on-click-modal="false"
@@ -2846,12 +2858,14 @@ export default {
           </div>
         </div>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="closeDeleteDialog" :disabled="deleteLoading">取 消</el-button>
         <el-button type="danger" @click="confirmDelete" :loading="deleteLoading">
           确认删除
         </el-button>
       </span>
+</template>
     </el-dialog>
   </div>
 </template>

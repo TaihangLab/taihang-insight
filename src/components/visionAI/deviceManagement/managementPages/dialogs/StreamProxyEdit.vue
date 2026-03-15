@@ -116,10 +116,12 @@
       </el-tabs>
     </div>
 
-    <div slot="footer" class="dialog-footer" v-if="activeTab === 'proxy'">
+    <template v-slot:footer>
+<div  class="dialog-footer" v-if="activeTab === 'proxy'">
       <el-button @click="close">取消</el-button>
       <el-button type="primary" @click="onSubmit" :loading="dialogLoading">保存</el-button>
     </div>
+</template>
   </el-dialog>
 </template>
 

@@ -233,7 +233,7 @@ export default {
     this.getDownloadSpeedArray();
     window.addEventListener("beforeunload", this.stopPlayRecord);
   },
-  destroyed() {
+  unmounted() {
     this.$destroy("recordVideoPlayer");
     window.removeEventListener("beforeunload", this.stopPlayRecord);
   },

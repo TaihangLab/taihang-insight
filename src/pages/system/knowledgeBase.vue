@@ -19,7 +19,9 @@
               @input="handleSearchInput"
               @keyup.enter="handleSearch"
             >
-              <el-button slot="append" icon="el-icon-search" @click="handleSearch"></el-button>
+              <template v-slot:append>
+<el-button  icon="el-icon-search" @click="handleSearch"></el-button>
+</template>
             </el-input>
 
             <el-button icon="el-icon-refresh" class="action-btn" @click="refreshData"></el-button>
@@ -146,7 +148,7 @@
             layout="total, sizes, prev, pager, next, jumper"
             background
           >
-            <template slot="total">
+            <template v-slot:total>
               <span>共 {{ totalCount }} 条数据</span>
             </template>
           </el-pagination>
@@ -162,7 +164,7 @@
     <!-- 编辑/创建知识库弹窗 -->
     <el-dialog
       :title="dialogTitle"
-      :visible.sync="editDialogVisible"
+      v-model:visible="editDialogVisible"
       width="600px"
       :before-close="handleEditDialogClose"
       :close-on-click-modal="false"
@@ -239,12 +241,14 @@
         </el-form>
       </div>
 
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="handleEditDialogClose">取消</el-button>
         <el-button type="primary" @click="handleEditSubmit" :loading="submitLoading">
           确定
         </el-button>
       </span>
+</template>
     </el-dialog>
   </div>
 </template>

@@ -42,7 +42,9 @@
               @keyup.enter.native="getPushList"
               @clear="getPushList"
             >
-              <i slot="prefix" class="el-icon-search"></i>
+              <template v-slot:prefix>
+<i  class="el-icon-search"></i>
+</template>
             </el-input>
           </div>
 
@@ -129,7 +131,8 @@
 
     <!-- 推流列表 -->
     <el-card class="table-card management-table-card" shadow="never">
-      <div slot="header" class="card-header">
+      <template v-slot:header>
+<div  class="card-header">
         <span class="card-title">推流列表</span>
         <div class="card-actions">
           <el-button-group>
@@ -159,6 +162,7 @@
           </el-button>
         </div>
       </div>
+</template>
 
       <!-- 表格视图 -->
       <div v-if="viewMode === 'table'">
@@ -458,7 +462,7 @@ export default {
     window.addEventListener("resize", this.calculateTableHeight);
   },
 
-  destroyed() {
+  unmounted() {
     clearTimeout(this.updateLooper);
     window.removeEventListener("resize", this.calculateTableHeight);
   },

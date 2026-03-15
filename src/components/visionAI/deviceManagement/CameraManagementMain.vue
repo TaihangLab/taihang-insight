@@ -20,11 +20,13 @@
       <!-- 左侧菜单 -->
       <div class="sidebar-menu">
         <el-card class="menu-card" shadow="never">
-          <div slot="header" class="menu-header" @click="handleBackToHome">
+          <template v-slot:header>
+<div  class="menu-header" @click="handleBackToHome">
             <i class="el-icon-setting"></i>
             <span>管理菜单</span>
             <i class="el-icon-refresh-right back-to-home-icon"></i>
           </div>
+</template>
 
           <el-menu
             :default-active="activeMenuIndex"
@@ -71,7 +73,7 @@
             </el-menu-item>
 
             <el-submenu index="channel-management" class="menu-submenu">
-              <template slot="title">
+              <template v-slot:title>
                 <div class="menu-item-content">
                   <div class="menu-icon">
                     <i class="el-icon-menu"></i>

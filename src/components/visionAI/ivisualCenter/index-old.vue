@@ -407,7 +407,7 @@ export default {
 
     window.addEventListener("resize", this.handleResize);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // 清理定时器
     clearInterval(this.weatherTimer);
     clearInterval(this.dataRefreshTimer);

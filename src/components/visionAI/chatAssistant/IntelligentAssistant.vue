@@ -367,7 +367,7 @@
             class="message-input"
             :disabled="isGenerating"
           >
-            <template slot="append">
+            <template v-slot:append>
               <!-- 停止按钮（正在生成时显示） -->
               <el-button
                 v-if="isGenerating"
@@ -765,7 +765,7 @@
     <!-- 新建分组对话框 -->
     <el-dialog
       title="新建分组"
-      :visible.sync="showGroupDialog"
+      v-model:visible="showGroupDialog"
       width="400px"
       :close-on-click-modal="false"
       custom-class="modern-dialog"
@@ -780,16 +780,18 @@
           ></el-input>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button @click="showGroupDialog = false">取 消</el-button>
         <el-button type="primary" @click="createGroup">确 定</el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 移动到分组对话框 - 重新设计 -->
     <el-dialog
       title="移动到分组"
-      :visible.sync="showMoveDialog"
+      v-model:visible="showMoveDialog"
       width="400px"
       :close-on-click-modal="false"
       custom-class="modern-dialog"
@@ -830,10 +832,12 @@
         </div>
       </div>
 
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button @click="cancelMoveToGroup">取 消</el-button>
         <el-button type="primary" @click="confirmMoveToGroup">确 定</el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 全局点击处理，关闭右键菜单 -->

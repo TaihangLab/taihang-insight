@@ -2,7 +2,7 @@
   <div class="warning-detail-component">
     <el-dialog
       title="预警详情"
-      :visible.sync="dialogVisible"
+      v-model:visible="dialogVisible"
       width="900px"
       :before-close="handleClose"
       v-loading="loading"
@@ -215,7 +215,8 @@
         </div>
       </div>
 
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <!-- 实时监控页面显示所有按钮 -->
         <template v-if="source === 'realTimeMonitoring'">
           <el-button plain @click="handleReport" class="action-btn report-btn">
@@ -274,24 +275,27 @@
           <el-button @click="closeDialog" class="action-btn">关闭</el-button>
         </template>
       </span>
+</template>
     </el-dialog>
 
     <!-- 上报确认对话框 -->
-    <el-dialog title="上报确认" :visible.sync="reportDialogVisible" width="400px" center>
+    <el-dialog title="上报确认" v-model:visible="reportDialogVisible" width="400px" center>
       <div class="confirm-content">
         <p>确定要上报此预警吗？</p>
         <p style="color: #909399; font-size: 12px">上报后预警将提交给上级部门处理</p>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="closeReportDialog">取 消</el-button>
         <el-button type="warning" @click="confirmReport">确定上报</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 归档选择对话框 -->
     <el-dialog
       title="归档预警"
-      :visible.sync="archiveDialogVisible"
+      v-model:visible="archiveDialogVisible"
       width="40%"
       center
       :close-on-click-modal="false"
@@ -349,16 +353,18 @@
         </div>
       </div>
 
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="closeArchiveDialog">取 消</el-button>
         <el-button type="danger" @click="confirmArchive">确认归档</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 处理意见对话框 -->
     <el-dialog
       title="处理预警"
-      :visible.sync="remarkDialogVisible"
+      v-model:visible="remarkDialogVisible"
       width="30%"
       center
       :close-on-click-modal="false"
@@ -382,10 +388,12 @@
           填写处理意见后，可点击"确认处理"添加处理记录，或点击"结束处理"完成整个处理流程
         </span>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button type="primary" @click="saveRemark">确认处理</el-button>
         <el-button type="success" @click="finishProcessing">结束处理</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 简单图片放大显示 -->
@@ -546,7 +554,7 @@ export default {
     // 添加键盘事件监听
     document.addEventListener("keydown", this.handleKeydown);
   },
-  destroyed() {
+  unmounted() {
     // 移除键盘事件监听
     document.removeEventListener("keydown", this.handleKeydown);
   },
@@ -1966,7 +1974,7 @@ export default {
   },
 
   // 组件销毁时清理定时器
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.videoTimer) {
       clearInterval(this.videoTimer);
     }

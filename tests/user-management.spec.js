@@ -286,7 +286,7 @@ test.describe('用户管理页面', () => {
     await page.waitForSelector('.el-dialog__title');
 
     // 尝试提交空表单
-    await page.locator('.el-dialog__footer .el-button').filter({ hasText: '确定', hasText: '保存' }).or(page.locator('.el-dialog__footer .el-button--primary')).click();
+    await page.locator('.el-dialog__footer .el-button').filter({ hasText: '确定' }).or(page.locator('.el-dialog__footer .el-button--primary')).click();
 
     // 检查验证错误信息
     const hasError = await page.locator('.el-form-item__error').count() > 0;

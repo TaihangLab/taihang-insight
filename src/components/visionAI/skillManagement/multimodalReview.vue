@@ -42,7 +42,9 @@
               @input="handleSearchInput"
               @keyup.enter="handleSearch"
             >
-              <el-button slot="append" icon="el-icon-search" @click="handleSearch"></el-button>
+              <template v-slot:append>
+<el-button  icon="el-icon-search" @click="handleSearch"></el-button>
+</template>
             </el-input>
 
             <el-button icon="el-icon-refresh" class="action-btn" @click="refreshData"></el-button>
@@ -201,7 +203,7 @@
             layout="total, sizes, prev, pager, next, jumper"
             background
           >
-            <template slot="total">
+            <template v-slot:total>
               <span>共 {{ totalCount }} 条数据</span>
             </template>
           </el-pagination>
@@ -531,7 +533,7 @@ export default {
     this.refreshData();
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     // 清理搜索防抖定时器
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);

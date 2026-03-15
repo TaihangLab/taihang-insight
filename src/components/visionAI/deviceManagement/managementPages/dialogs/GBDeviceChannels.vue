@@ -2,7 +2,7 @@
   <div>
     <el-dialog
       title="设备通道列表"
-      :visible.sync="dialogVisible"
+      v-model:visible="dialogVisible"
       width="90%"
       :close-on-click-modal="false"
       custom-class="device-channels-dialog"
@@ -170,9 +170,11 @@
                 :fit="'contain'"
                 style="width: 60px"
               >
-                <div slot="error" class="image-slot">
+                <template v-slot:error>
+<div  class="image-slot">
                   <i class="el-icon-picture-outline"></i>
                 </div>
+</template>
               </el-image>
             </template>
           </el-table-column>
@@ -295,7 +297,8 @@
                     更多
                     <i class="el-icon-arrow-down el-icon--right"></i>
                   </el-button>
-                  <el-dropdown-menu slot="dropdown">
+                  <template v-slot:dropdown>
+<el-dropdown-menu >
                     <el-dropdown-item
                       command="records"
                       :disabled="!currentDevice || currentDevice.onLine === false"
@@ -321,6 +324,7 @@
                       设备录像控制-停止
                     </el-dropdown-item>
                   </el-dropdown-menu>
+</template>
                 </el-dropdown>
               </div>
             </template>
@@ -330,8 +334,8 @@
         <!-- 分页 -->
         <div class="pagination-container">
           <el-pagination
-            :current-page.sync="currentPage"
-            :page-size.sync="pageSize"
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
             :page-sizes="[10, 20, 50, 100]"
             layout="total, sizes, prev, pager, next, jumper"
             :total="total"
@@ -341,19 +345,21 @@
         </div>
       </div>
 
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <span class="footer-info">
           总计 {{ (channelList || []).length }} 个通道， 在线 {{ onlineChannelCount }} 个， 离线
           {{ offlineChannelCount }} 个
         </span>
         <el-button @click="handleClose">关闭</el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 通道编辑对话框 -->
     <el-dialog
       title="编辑通道"
-      :visible.sync="editDialogVisible"
+      v-model:visible="editDialogVisible"
       width="80%"
       :close-on-click-modal="false"
       :destroy-on-close="true"
@@ -365,9 +371,11 @@
         :saveSuccess="handleEditSuccess"
         :cancel="handleEditCancel"
       ></CommonChannelEdit>
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <!-- 通过CommonChannelEdit组件内部的按钮控制 -->
       </div>
+</template>
     </el-dialog>
 
     <!-- 设备播放器组件 -->

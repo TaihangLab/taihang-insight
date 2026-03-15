@@ -197,7 +197,7 @@ test.describe('角色管理页面', () => {
     // 【已知问题】编辑功能仅有console.log输出，未实际更新数据
 
     // 先创建一个角色（因为页面加载时没有数据）
-    await page.getByTestId('btn-add-role, .btn-add, [data-testid*="add"]').or(page.locator('button').filter({ hasText: '新增角色' })).or(page.locator('button').filter({ hasText: '新增' }))).click();
+    await page.getByTestId('btn-add-role', '.btn-add', '[data-testid*="add"]').or(page.locator('button').filter({ hasText: '新增角色' })).or(page.locator('button').filter({ hasText: '新增' })).click();
     await page.waitForSelector('.el-dialog');
     await page.fill('.el-dialog input[placeholder*="角色名称"], .el-dialog input[placeholder*="role_name"]', '待编辑角色');
     await page.fill('.el-dialog input[placeholder*="角色代码"], .el-dialog input[placeholder*="role_code"]', 'role_to_edit');
@@ -227,7 +227,7 @@ test.describe('角色管理页面', () => {
     // 【已知问题】编辑功能未实现
 
     // 先创建一个角色
-    await page.getByTestId('btn-add-role, .btn-add, [data-testid*="add"]').or(page.locator('button').filter({ hasText: '新增角色' })).or(page.locator('button').filter({ hasText: '新增' }))).click();
+    await page.getByTestId('btn-add-role', '.btn-add', '[data-testid*="add"]').or(page.locator('button').filter({ hasText: '新增角色' })).or(page.locator('button').filter({ hasText: '新增' })).click();
     await page.waitForSelector('.el-dialog');
     await page.fill('.el-dialog input[placeholder*="角色名称"], .el-dialog input[placeholder*="role_name"]', '待编辑角色');
     await page.fill('.el-dialog input[placeholder*="角色代码"], .el-dialog input[placeholder*="role_code"]', 'role_to_edit');

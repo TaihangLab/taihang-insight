@@ -92,9 +92,9 @@
       <!-- 分页 -->
       <div class="user-pagination">
         <el-pagination
-          :current-page.sync="pagination.currentPage"
+          v-model:current-page="pagination.currentPage"
           :page-sizes="[10, 20, 50, 100]"
-          :page-size.sync="pagination.pageSize"
+          v-model:page-size="pagination.pageSize"
           layout="total, sizes, prev, pager, next, jumper"
           :total="pagination.total"
           @size-change="handleSizeChange"
@@ -106,7 +106,7 @@
     <!-- 添加用户对话框 -->
     <el-dialog
       title="选择用户"
-      :visible.sync="addUserDialogVisible"
+      v-model:visible="addUserDialogVisible"
       width="1200px"
       class="add-user-dialog"
     >
@@ -188,9 +188,9 @@
           <!-- 分页器 -->
           <div class="user-pagination">
             <el-pagination
-              :current-page.sync="userPagination.currentPage"
+              v-model:current-page="userPagination.currentPage"
               :page-sizes="[10, 20, 50, 100]"
-              :page-size.sync="userPagination.pageSize"
+              v-model:page-size="userPagination.pageSize"
               layout="total, sizes, prev, pager, next, jumper"
               :total="userPagination.total"
               @size-change="handleUserSizeChange"
@@ -199,10 +199,12 @@
           </div>
         </div>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="addUserDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="saveAddUser">确定</el-button>
       </span>
+</template>
     </el-dialog>
   </div>
 </template>
@@ -303,7 +305,7 @@ export default {
           }))
 
           // 从响应中获取 total（如果有）
-          const responseWithTotal = response as any
+          const responseWithTotal = response
           this.pagination.total = responseWithTotal.total || response.length || 0
         } else {
           // API返回格式异常
@@ -384,7 +386,7 @@ export default {
           }))
 
           // 从响应中获取 total（如果有）
-          const responseWithTotal = response as any
+          const responseWithTotal = response
           this.userPagination.total = responseWithTotal.total || response.length || 0
         } else {
           // API返回格式异常

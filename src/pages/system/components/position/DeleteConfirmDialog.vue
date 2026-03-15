@@ -4,10 +4,12 @@
       <i class="el-icon-warning"></i>
       <span>确定要删除选中的岗位吗？此操作不可恢复。</span>
     </div>
-    <span slot="footer" class="dialog-footer">
+    <template v-slot:footer>
+<span  class="dialog-footer">
       <el-button @click="handleCancel">取消</el-button>
       <el-button type="danger" @click="handleConfirm">确定删除</el-button>
     </span>
+</template>
   </el-dialog>
 </template>
 

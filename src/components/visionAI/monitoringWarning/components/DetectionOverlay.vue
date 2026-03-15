@@ -71,7 +71,7 @@ export default {
   mounted() {
     this.updateCanvasSize();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
     }

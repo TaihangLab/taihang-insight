@@ -66,7 +66,9 @@
               style="width: 250px"
               clearable
             >
-              <i slot="prefix" class="el-icon-search"></i>
+              <template v-slot:prefix>
+<i  class="el-icon-search"></i>
+</template>
             </el-input>
           </div>
         </div>
@@ -174,8 +176,8 @@
           <!-- 分页区域 -->
           <div class="pagination-wrapper">
             <el-pagination
-              :current-page.sync="currentPage"
-              :page-size.sync="pageSize"
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
               :page-sizes="[10, 20, 30, 50]"
               layout="total, sizes, prev, pager, next, jumper"
               :total="total"
@@ -189,7 +191,7 @@
       <!-- 选择技能对话框 -->
       <el-dialog
         title="选择技能"
-        :visible.sync="skillSelectDialogVisible"
+        v-model:visible="skillSelectDialogVisible"
         width="55%"
         :close-on-click-modal="false"
         :destroy-on-close="false"
@@ -244,8 +246,8 @@
                 </span>
                 <el-pagination
                   v-if="skillOptionsTotal > skillPageSize"
-                  :current-page.sync="skillCurrentPage"
-                  :page-size.sync="skillPageSize"
+                  v-model:current-page="skillCurrentPage"
+                  v-model:page-size="skillPageSize"
                   :page-sizes="[12, 24, 36, 48]"
                   layout="sizes, prev, pager, next"
                   :total="skillOptionsTotal"
@@ -352,16 +354,18 @@
             </div>
           </div>
         </el-form>
-        <div slot="footer" class="dialog-footer">
+        <template v-slot:footer>
+<div  class="dialog-footer">
           <el-button @click="closeSkillSelectDialog">取消</el-button>
           <el-button type="primary" @click="closeSkillSelectDialog">确定</el-button>
         </div>
+</template>
       </el-dialog>
 
       <!-- 配置技能对话框 -->
       <el-dialog
         :title="isUpdateMode ? '更新技能' : '配置技能'"
-        :visible.sync="skillDialogVisible"
+        v-model:visible="skillDialogVisible"
         width="60%"
         :close-on-click-modal="false"
         :destroy-on-close="false"
@@ -828,23 +832,26 @@
             </div>
           </el-form-item>
         </el-form>
-        <div slot="footer" class="dialog-footer">
+        <template v-slot:footer>
+<div  class="dialog-footer">
           <el-button @click="handleClose">取 消</el-button>
           <el-button type="danger" v-if="isUpdateMode" @click="handleDeleteTask">删 除</el-button>
           <el-button type="primary" @click="handleConfirm">确 定</el-button>
         </div>
+</template>
       </el-dialog>
 
       <!-- 技能详情对话框 -->
       <el-dialog
-        :visible.sync="skillDetailDialogVisible"
+        v-model:visible="skillDetailDialogVisible"
         width="40%"
         :close-on-click-modal="false"
         custom-class="skill-params-dialog"
         :append-to-body="true"
         center
       >
-        <div slot="title" class="dialog-header">
+        <template v-slot:title>
+<div  class="dialog-header">
           <div class="dialog-header-content">
             <div class="skill-icon-wrapper">
               <i class="el-icon-setting"></i>
@@ -857,6 +864,7 @@
             </div>
           </div>
         </div>
+</template>
 
         <div v-if="skillDetailData && skillDetailData.params" class="skill-params-content">
           <div class="params-overview">
@@ -1000,7 +1008,8 @@
           </div>
         </div>
 
-        <div slot="footer" class="dialog-footer">
+        <template v-slot:footer>
+<div  class="dialog-footer">
           <el-button @click="skillDetailDialogVisible = false">取消</el-button>
           <el-button
             type="primary"
@@ -1010,12 +1019,13 @@
             保存配置
           </el-button>
         </div>
+</template>
       </el-dialog>
 
       <!-- 设备详情对话框 -->
       <el-dialog
         title="摄像头详情"
-        :visible.sync="deviceDetailDialogVisible"
+        v-model:visible="deviceDetailDialogVisible"
         width="60%"
         :close-on-click-modal="false"
       >
@@ -1107,9 +1117,11 @@
           </div>
           <el-empty v-else description="暂无关联技能"></el-empty>
         </div>
-        <span slot="footer" class="dialog-footer">
+        <template v-slot:footer>
+<span  class="dialog-footer">
           <el-button @click="deviceDetailDialogVisible = false">关 闭</el-button>
         </span>
+</template>
       </el-dialog>
 
       <!-- 配置大模型技能组件 -->

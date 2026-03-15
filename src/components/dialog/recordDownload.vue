@@ -6,7 +6,7 @@
       width="45rem"
       :append-to-body="true"
       :close-on-click-modal="false"
-      :visible.sync="showDialog"
+      v-model:visible="showDialog"
       :destroy-on-close="true"
       @close="close()"
       center
@@ -148,7 +148,7 @@ export default {
       x.send();
     },
   },
-  destroyed() {
+  unmounted() {
     window.removeEventListener("beforeunload", this.stopDownloadRecord);
   },
 };

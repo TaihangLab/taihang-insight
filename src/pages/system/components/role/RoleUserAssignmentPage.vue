@@ -64,9 +64,9 @@
       <!-- 分页器 -->
       <div class="pagination-container">
         <el-pagination
-          :current-page.sync="pagination.currentPage"
+          v-model:current-page="pagination.currentPage"
           :page-sizes="[10, 20, 50, 100]"
-          :page-size.sync="pagination.pageSize"
+          v-model:page-size="pagination.pageSize"
           layout="total, sizes, prev, pager, next, jumper"
           :total="pagination.total"
           @size-change="handleSizeChange"
@@ -168,7 +168,7 @@ export default {
           console.log('✅ 使用API数据获取角色列表')
           this.roleData = response
           // 从响应中获取 total（如果有）
-          const responseWithTotal = response as any
+          const responseWithTotal = response
           this.pagination.total = responseWithTotal.total || response.length || 0
         } else {
           // API返回格式异常，使用模拟数据

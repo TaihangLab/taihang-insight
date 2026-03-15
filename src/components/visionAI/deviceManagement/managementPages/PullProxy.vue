@@ -40,7 +40,9 @@
                 @keyup.enter.native="handleSearch"
                 @clear="handleSearch"
               >
-                <i slot="prefix" class="el-icon-search"></i>
+                <template v-slot:prefix>
+<i  class="el-icon-search"></i>
+</template>
               </el-input>
             </div>
 
@@ -139,7 +141,8 @@
 
       <!-- 代理列表 -->
       <el-card class="table-card management-table-card" shadow="never">
-        <div slot="header" class="card-header">
+        <template v-slot:header>
+<div  class="card-header">
           <span class="card-title">拉流代理列表</span>
           <div class="card-actions">
             <el-button-group>
@@ -160,6 +163,7 @@
             </el-button-group>
           </div>
         </div>
+</template>
 
         <!-- 表格视图 -->
         <div v-if="viewMode === 'table'">
@@ -475,7 +479,7 @@ export default {
     this.calculateTableHeight();
     window.addEventListener("resize", this.calculateTableHeight);
   },
-  destroyed() {
+  unmounted() {
     this.$destroy("videojs");
     clearTimeout(this.updateLooper);
     window.removeEventListener("resize", this.calculateTableHeight);

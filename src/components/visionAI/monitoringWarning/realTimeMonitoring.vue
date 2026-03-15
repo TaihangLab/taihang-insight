@@ -432,7 +432,7 @@
 
     <!-- 引入预警详情组件 -->
     <WarningDetail
-      :visible.sync="warningDetailVisible"
+      v-model:visible="warningDetailVisible"
       :warning="currentWarning"
       source="realTimeMonitoring"
       @handle-warning="handleWarningFromDialog"
@@ -444,7 +444,7 @@
     <!-- 处理意见对话框 -->
     <el-dialog
       title="处理预警"
-      :visible.sync="remarkDialogVisible"
+      v-model:visible="remarkDialogVisible"
       width="30%"
       center
       :close-on-click-modal="false"
@@ -469,16 +469,18 @@
           填写处理意见后，可点击"确认处理"添加处理记录，或点击"结束处理"完成整个处理流程
         </span>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button type="primary" @click="saveRemark">确认处理</el-button>
         <el-button type="success" @click="finishProcessing">结束处理</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 误报输入对话框 -->
     <el-dialog
       title="标记误报"
-      :visible.sync="falseAlarmDialogVisible"
+      v-model:visible="falseAlarmDialogVisible"
       width="35%"
       center
       :close-on-click-modal="false"
@@ -537,16 +539,18 @@
           }}
         </span>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="closeFalseAlarmDialog">取消</el-button>
         <el-button type="warning" @click="handleFalseAlarmArchive">确认误报</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 归档选择对话框 -->
     <el-dialog
       title="归档预警"
-      :visible.sync="archiveDialogVisible"
+      v-model:visible="archiveDialogVisible"
       width="40%"
       center
       :close-on-click-modal="false"
@@ -621,12 +625,14 @@
         </div>
       </div>
 
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="closeArchiveDialog">取 消</el-button>
         <el-button type="danger" @click="confirmArchive" :disabled="!selectedArchiveId">
           确认归档
         </el-button>
       </span>
+</template>
     </el-dialog>
   </div>
 </template>
@@ -819,7 +825,7 @@ export default {
       }, 200);
     });
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // 组件销毁时清理
     this.exitFullscreen();
     document.body.classList.remove('camera-fullscreen-mode');
@@ -1936,17 +1942,16 @@ export default {
               // 响应拦截器已处理成功/失败判断，直接执行后续操作
               console.log('✅ 误报记录已成功归档到档案');
               this.$message.success('预警已标记为误报，复判记录已保存并归档');
-            } catch (archiveError) {
-              console.error('❌ 误报记录归档异常:', archiveError);
-              this.$message.warning('预警已标记为误报，但归档时发生异常');
-            }
-          } else {
-            this.$message.success('预警已标记为误报，复判记录已保存');
+          } catch (archiveError) {
+            console.error('❌ 误报记录归档异常:', archiveError);
+            this.$message.warning('预警已标记为误报，但归档时发生异常');
           }
-
-          // 从实时预警列表中移除误报预警
-          this.warningList.splice(warningIndex, 1);
+        } else {
+          this.$message.success('预警已标记为误报，复判记录已保存');
         }
+
+        // 从实时预警列表中移除误报预警
+        this.warningList.splice(warningIndex, 1);
 
         // 关闭对话框并重置表单
         this.closeFalseAlarmDialog();
@@ -3269,7 +3274,7 @@ export default {
     // 🆕 ========== OSD检测框叠加功能结束 ==========
 
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // 清理定时器
     if (this.timer) {
       clearInterval(this.timer)

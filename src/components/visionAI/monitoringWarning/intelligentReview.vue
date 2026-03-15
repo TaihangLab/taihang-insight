@@ -183,7 +183,7 @@
     <!-- 复判配置对话框 -->
     <el-dialog
       :title="`配置复判 - ${currentTask ? currentTask.name : ''}`"
-      :visible.sync="configDialogVisible"
+      v-model:visible="configDialogVisible"
       width="600px"
       :close-on-click-modal="false"
       @close="handleDialogClose"
@@ -262,12 +262,14 @@
         </el-form-item>
       </el-form>
 
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button @click="configDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleSaveConfig" :loading="saveLoading">
           保存配置
         </el-button>
       </div>
+</template>
     </el-dialog>
   </div>
 </template>
@@ -383,7 +385,7 @@ export default {
   created() {
     this.init();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // 清除定时器
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);

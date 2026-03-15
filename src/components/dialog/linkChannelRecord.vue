@@ -10,7 +10,7 @@
       top="2rem"
       width="80%"
       :close-on-click-modal="false"
-      :visible.sync="showDialog"
+      v-model:visible="showDialog"
       :destroy-on-close="true"
       @close="close()"
     >
@@ -167,7 +167,7 @@ export default {
   },
 
   created() {},
-  destroyed() {},
+  unmounted() {},
   methods: {
     openDialog(planId, closeCallback) {
       this.planId = planId;

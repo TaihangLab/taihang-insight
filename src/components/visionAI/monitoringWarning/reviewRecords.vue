@@ -1265,7 +1265,7 @@ export default {
 
     <!-- 预警详情对话框 -->
     <WarningDetail
-      :visible.sync="warningDetailVisible"
+      v-model:visible="warningDetailVisible"
       :warning="currentWarningDetail"
       source="reviewRecords"
       @handle-warning="handleWarningFromDetail"

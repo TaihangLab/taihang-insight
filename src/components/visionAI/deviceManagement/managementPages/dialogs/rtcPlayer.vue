@@ -90,7 +90,7 @@ export default {
       console.log(message);
     },
   },
-  destroyed() {
+  unmounted() {
     clearTimeout(this.timer);
   },
 };

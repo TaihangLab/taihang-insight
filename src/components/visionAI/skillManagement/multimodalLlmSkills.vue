@@ -56,7 +56,9 @@
               @keyup.enter="handleSearch"
               clearable
             >
-              <el-button slot="append" icon="el-icon-search" @click="handleSearch"></el-button>
+              <template v-slot:append>
+<el-button  icon="el-icon-search" @click="handleSearch"></el-button>
+</template>
             </el-input>
 
             <el-button icon="el-icon-refresh" class="action-btn" @click="refreshData"></el-button>
@@ -224,7 +226,7 @@
             layout="total, sizes, prev, pager, next, jumper"
             background
           >
-            <template slot="total">
+            <template v-slot:total>
               <span>共 {{ totalCount }} 条数据</span>
             </template>
           </el-pagination>
@@ -248,7 +250,7 @@
     <!-- 编辑技能对话框 -->
     <el-dialog
       title="编辑技能"
-      :visible.sync="skillDialogVisible"
+      v-model:visible="skillDialogVisible"
       width="60%"
       @close="resetSkillForm"
     >
@@ -331,16 +333,18 @@
         </el-row>
       </el-form>
 
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="skillDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="saveSkill" :loading="saving">保存</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 设备列表弹窗 -->
     <el-dialog
       title="关联设备列表"
-      :visible.sync="deviceListVisible"
+      v-model:visible="deviceListVisible"
       width="800px"
       :close-on-click-modal="false"
       custom-class="fixed-height-device-dialog"
@@ -402,7 +406,7 @@
     <!-- 技能详情弹窗 -->
     <el-dialog
       title="技能详情"
-      :visible.sync="detailDialogVisible"
+      v-model:visible="detailDialogVisible"
       width="900px"
       :close-on-click-modal="false"
     >
@@ -619,10 +623,12 @@
           </div>
         </div>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button size="medium" @click="detailDialogVisible = false">关闭</el-button>
         <el-button size="medium" type="primary" @click="editSkill(detailSkill)">编辑技能</el-button>
       </span>
+</template>
     </el-dialog>
   </div>
 </template>

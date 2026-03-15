@@ -74,9 +74,11 @@
 
     <!-- 节点列表 -->
     <el-card class="server-list-card management-table-card" shadow="never">
-      <div slot="header" class="card-header">
+      <template v-slot:header>
+<div  class="card-header">
         <span class="card-title">节点列表</span>
       </div>
+</template>
 
       <div class="server-grid" v-loading="loading" element-loading-text="加载节点列表中...">
         <el-card
@@ -210,7 +212,7 @@ export default {
     this.initData();
     this.updateLooper = setInterval(this.initData, 2000);
   },
-  destroyed() {
+  unmounted() {
     clearTimeout(this.updateLooper);
   },
   methods: {

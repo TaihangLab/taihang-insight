@@ -67,7 +67,9 @@
             @input="debounceSearch"
             @clear="clearSearch"
           >
-            <i slot="prefix" class="el-icon-search"></i>
+            <template v-slot:prefix>
+<i  class="el-icon-search"></i>
+</template>
           </el-input>
           <el-button
             class="refresh-btn"
@@ -162,8 +164,8 @@
     <!-- 分页 -->
     <div class="pagination">
       <el-pagination
-        :current-page.sync="currentPage"
-        :page-size.sync="pageSize"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
         :total="total"
         :page-sizes="[12, 24, 36]"
         layout="total, sizes, prev, pager, next, jumper"
@@ -173,7 +175,7 @@
     </div>
 
     <!-- 导入技能对话框 -->
-    <el-dialog title="导入技能" :visible.sync="importDialogVisible" width="40%">
+    <el-dialog title="导入技能" v-model:visible="importDialogVisible" width="40%">
       <el-form :model="importForm" ref="importForm" label-width="100px" :rules="importRules">
         <el-form-item label="技能名称" prop="name">
           <el-input v-model="importForm.name" placeholder="请输入技能名称"></el-input>
@@ -226,20 +228,24 @@
               将文件拖到此处，或
               <em>点击上传</em>
             </div>
-            <div class="el-upload__tip" slot="tip">只能上传json文件，且不超过500kb</div>
+            <template v-slot:tip>
+<div class="el-upload__tip" >只能上传json文件，且不超过500kb</div>
+</template>
           </el-upload>
         </el-form-item>
       </el-form>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="importDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="confirmImport" :loading="importing">确定</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 技能详情对话框 -->
     <el-dialog
       :title="isEditing ? '编辑技能' : '技能详情'"
-      :visible.sync="detailsDialogVisible"
+      v-model:visible="detailsDialogVisible"
       width="50%"
       :close-on-click-modal="false"
     >
@@ -601,16 +607,18 @@
           </div>
         </div>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="cancelEdit">{{ isEditing ? "取消" : "关闭" }}</el-button>
         <el-button v-if="!isEditing" type="primary" @click="startEditing">编辑</el-button>
         <el-button v-else type="primary" @click="saveChanges" :loading="editing">保存</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 关联设备列表弹框 -->
     <el-dialog
-      :visible.sync="devicesDialogVisible"
+      v-model:visible="devicesDialogVisible"
       width="40%"
       :close-on-click-modal="true"
       append-to-body
@@ -806,7 +814,7 @@ export default {
     this.pageSize = 12;
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     // 页面销毁时清除标志
     sessionStorage.removeItem('deviceSkillsLoaded')
   },
@@ -884,7 +892,7 @@ export default {
         // 响应拦截器已处理成功/失败判断，直接使用数据
         this.processSkillsData(response);
         // 更新总数和分页信息
-        const responseWithTotal = response as any;
+        const responseWithTotal = /** @type {any} */ (response);
         this.total = responseWithTotal.total || 0;
         // 删除数据获取成功的消息提示
         // this.$message.success('数据获取成功');
@@ -1253,7 +1261,6 @@ export default {
               // 刷新技能列表（在后台进行，不影响用户查看详情）
               this.fetchSkills();
               this.$message.error(response.message || "" || '技能编辑失败');
-            }
           } catch (error) {
             console.error('编辑技能失败:', error);
             this.$message.error('编辑技能失败');

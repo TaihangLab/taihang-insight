@@ -143,7 +143,7 @@ export default {
     // 监听容器尺寸变化
     this.setupResizeObserver();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.cleanup();
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();

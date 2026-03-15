@@ -187,7 +187,7 @@ export default {
   created() {
     this.initData();
   },
-  destroyed() {},
+  unmounted() {},
   methods: {
     initData: function () {
       this.getChannelList();

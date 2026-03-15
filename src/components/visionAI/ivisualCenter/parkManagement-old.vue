@@ -715,7 +715,7 @@ export default {
     // 添加窗口大小变化监听
     window.addEventListener("resize", this.handleResize);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // 移除监听器避免内存泄漏
     window.removeEventListener("resize", this.handleResize);
 

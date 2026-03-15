@@ -237,7 +237,7 @@ export default {
       }
     },
   },
-  destroyed() {
+  unmounted() {
     // if (this.jessibuca) {
     //   this.jessibuca.destroy();
     // }

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     title="设备同步进度"
-    :visible.sync="dialogVisible"
+    v-model:visible="dialogVisible"
     width="600px"
     :close-on-click-modal="false"
     :show-close="false"
@@ -74,7 +74,8 @@
       </div>
     </div>
 
-    <div slot="footer" class="dialog-footer">
+    <template v-slot:footer>
+<div  class="dialog-footer">
       <el-button v-if="syncStatus === 'syncing'" @click="handleCancel" type="warning">
         取消同步
       </el-button>
@@ -85,6 +86,7 @@
         {{ syncStatus === "syncing" ? "强制关闭" : "关闭" }}
       </el-button>
     </div>
+</template>
   </el-dialog>
 </template>
 
@@ -414,7 +416,7 @@ export default {
     },
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     // 组件销毁时清除定时器
     if (this.pollTimer) {
       clearInterval(this.pollTimer);

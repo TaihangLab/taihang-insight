@@ -617,7 +617,7 @@ export default {
       }, 300);
     });
   },
-  beforeDestroy() {
+  beforeUnmount() {
     // 清除定时器
     if (this.timer) {
       clearInterval(this.timer);

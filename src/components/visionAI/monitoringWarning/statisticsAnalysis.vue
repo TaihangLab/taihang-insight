@@ -58,7 +58,7 @@
     </div>
 
     <!-- 日期选择器弹窗 -->
-    <el-dialog title="选择日期范围" :visible.sync="datePickerDialogVisible" width="400px">
+    <el-dialog title="选择日期范围" v-model:visible="datePickerDialogVisible" width="400px">
       <el-date-picker
         v-model="customDateRange"
         type="daterange"
@@ -69,10 +69,12 @@
         value-format="yyyy-MM-dd"
         style="width: 100%"
       ></el-date-picker>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="datePickerDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="applyCustomDateRange">确定</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 图表区域 -->

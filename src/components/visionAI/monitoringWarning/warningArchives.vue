@@ -1744,8 +1744,8 @@ export default {
         <!-- layout="total, sizes, prev, pager, next, jumper" -->
         <div class="archives-pagination">
           <el-pagination
-            :current-page.sync="archivesPagination.currentPage"
-            :page-size.sync="archivesPagination.pageSize"
+            v-model:current-page="archivesPagination.currentPage"
+            v-model:page-size="archivesPagination.pageSize"
             :total="archivesPagination.total"
             :page-sizes="[10, 20, 50, 100]"
             layout="total, prev, pager, next"
@@ -1902,8 +1902,8 @@ export default {
         <!-- 分页区域 - 改为与 deviceSkills.vue 一致的样式 -->
         <div class="archives-pagination">
           <el-pagination
-            :current-page.sync="pagination.currentPage"
-            :page-size.sync="pagination.pageSize"
+            v-model:current-page="pagination.currentPage"
+            v-model:page-size="pagination.pageSize"
             :total="pagination.total"
             :page-sizes="[10, 20, 50, 100]"
             layout="total, sizes, prev, pager, next, jumper"
@@ -1916,7 +1916,7 @@ export default {
 
     <!-- 替换原有的预警详情弹框 -->
     <WarningDetail
-      :visible.sync="warningDetailVisible"
+      v-model:visible="warningDetailVisible"
       :warning="currentWarning"
       source="warningArchives"
       @handle-warning="handleWarningFromDetail"
@@ -1925,7 +1925,7 @@ export default {
     <!-- 图片预览弹框 -->
     <el-dialog
       title="预警图片预览"
-      :visible.sync="imagePreviewVisible"
+      v-model:visible="imagePreviewVisible"
       width="50%"
       custom-class="image-preview-dialog"
     >
@@ -1940,7 +1940,7 @@ export default {
     <!-- 编辑档案弹框 -->
     <el-dialog
       title="编辑档案信息"
-      :visible.sync="editDialogVisible"
+      v-model:visible="editDialogVisible"
       width="30%"
       :before-close="cancelEdit"
       custom-class="edit-archive-dialog"
@@ -1972,16 +1972,18 @@ export default {
           <el-input type="textarea" v-model="editForm.description" rows="4"></el-input>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button @click="cancelEdit" class="cancel-btn">取 消</el-button>
         <el-button type="primary" @click="saveEdit" class="confirm-btn">确 定</el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 选择已发生预警弹框 -->
     <el-dialog
       title="选择预警添加到档案"
-      :visible.sync="selectAlertDialogVisible"
+      v-model:visible="selectAlertDialogVisible"
       width="85%"
       custom-class="select-alert-dialog"
       :close-on-click-modal="false"
@@ -2172,8 +2174,8 @@ export default {
       <!-- 分页 -->
       <div class="archives-pagination">
         <el-pagination
-          :current-page.sync="availableAlertsPagination.currentPage"
-          :page-size.sync="availableAlertsPagination.pageSize"
+          v-model:current-page="availableAlertsPagination.currentPage"
+          v-model:page-size="availableAlertsPagination.pageSize"
           :total="availableAlertsPagination.total"
           :page-sizes="[10, 20, 50, 100]"
           layout="total, sizes, prev, pager, next, jumper"
@@ -2182,7 +2184,8 @@ export default {
         ></el-pagination>
       </div>
 
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <div class="selected-info">
           <span v-if="selectedAlerts.length > 0">已选择 {{ selectedAlerts.length }} 个预警</span>
           <span v-else class="no-selection">请选择要添加到档案的预警</span>
@@ -2200,12 +2203,13 @@ export default {
           </el-button>
         </div>
       </div>
+</template>
     </el-dialog>
 
     <!-- 删除确认对话框 -->
     <el-dialog
       title="删除确认"
-      :visible.sync="deleteConfirmVisible"
+      v-model:visible="deleteConfirmVisible"
       width="25%"
       custom-class="delete-confirm-dialog"
       center
@@ -2213,7 +2217,8 @@ export default {
       <div class="confirm-content">
         <p>{{ deleteConfirmMessage }}</p>
       </div>
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button size="small" @click="deleteConfirmVisible = false" class="cancel-btn">
           取 消
         </el-button>
@@ -2221,12 +2226,13 @@ export default {
           确 定
         </el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 添加档案对话框 -->
     <el-dialog
       title="添加新档案"
-      :visible.sync="addArchiveDialogVisible"
+      v-model:visible="addArchiveDialogVisible"
       width="30%"
       custom-class="add-archive-dialog"
     >
@@ -2262,16 +2268,18 @@ export default {
           ></el-input>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button @click="addArchiveDialogVisible = false" class="cancel-btn">取 消</el-button>
         <el-button type="primary" @click="submitNewArchive" class="confirm-btn">确 定</el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 删除档案确认对话框 -->
     <el-dialog
       title="删除档案确认"
-      :visible.sync="deleteArchiveConfirmVisible"
+      v-model:visible="deleteArchiveConfirmVisible"
       width="25%"
       custom-class="delete-confirm-dialog"
       center
@@ -2289,7 +2297,8 @@ export default {
           删除后该档案及其关联的所有预警记录都将被删除，此操作不可恢复！
         </p>
       </div>
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button size="small" @click="deleteArchiveConfirmVisible = false" class="cancel-btn">
           取 消
         </el-button>
@@ -2297,11 +2306,12 @@ export default {
           确认删除
         </el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 预警详情对话框 -->
     <WarningDetail
-      :visible.sync="warningDetailVisible"
+      v-model:visible="warningDetailVisible"
       :warning="currentWarning"
       source="warningArchives"
       @handle-warning="handleWarningFromDetail"

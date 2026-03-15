@@ -111,7 +111,7 @@
     </el-container>
     <el-drawer
       title="录像下载"
-      :visible.sync="drawer"
+      v-model:visible="drawer"
       :direction="direction"
       :before-close="drawerClose"
     >
@@ -119,10 +119,12 @@
         <el-button icon="el-icon-plus" size="small" type="primary" @click="addTask"></el-button>
         <el-tabs type="border-card" style="height: 100%" v-model="tabVal" @tab-click="tabClick">
           <el-tab-pane name="running">
-            <span slot="label">
+            <template v-slot:label>
+<span >
               <i class="el-icon-scissors"></i>
               进行中
             </span>
+</template>
             <ul class="task-list">
               <li class="task-list-item" v-for="(item, index) in taskListForRuning" :key="index">
                 <div class="task-list-item-box">
@@ -135,10 +137,12 @@
             </ul>
           </el-tab-pane>
           <el-tab-pane name="ended">
-            <span slot="label">
+            <template v-slot:label>
+<span >
               <i class="el-icon-finished"></i>
               已完成
             </span>
+</template>
             <ul class="task-list">
               <li class="task-list-item" v-for="(item, index) in taskListEnded" :key="index">
                 <div class="task-list-item-box" style="height: 2rem; line-height: 2rem">
@@ -155,7 +159,7 @@
         </el-tabs>
       </div>
     </el-drawer>
-    <el-dialog title="选择时间段" :visible.sync="showTaskBox">
+    <el-dialog title="选择时间段" v-model:visible="showTaskBox">
       <el-date-picker
         type="datetimerange"
         v-model="taskTimeRange"
@@ -274,7 +278,7 @@ export default {
       }
     });
   },
-  destroyed() {
+  unmounted() {
     this.$destroy("recordVideoPlayer");
   },
   methods: {

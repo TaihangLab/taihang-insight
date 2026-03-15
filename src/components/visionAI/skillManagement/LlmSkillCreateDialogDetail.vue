@@ -657,7 +657,7 @@ export default {
     }, { immediate: true })
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     // 清理定时器
     if (this.inputTimer) {
       clearTimeout(this.inputTimer)
@@ -1114,6 +1114,7 @@ export default {
         // 响应拦截器已处理成功/失败判断，直接使用数据即可
 
           // 格式化分析结果 - 更紧凑的格式
+        if (resultData) {
           let formattedResult = ''
 
           // 优先显示分析结果
@@ -1258,11 +1259,8 @@ export default {
           // 清除临时数据
           localStorage.removeItem('tempSkillInfo')
 
-            // 返回技能列表
-            this.$router.push('/skillManage/multimodalLlmSkills')
-          } else {
-            throw new Error('创建响应格式异常')
-          }
+          // 返回技能列表
+          this.$router.push('/skillManage/multimodalLlmSkills')
         }
 
       } catch (error) {

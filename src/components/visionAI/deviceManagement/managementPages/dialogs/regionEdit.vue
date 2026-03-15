@@ -6,15 +6,17 @@
     center
     :append-to-body="true"
     :close-on-click-modal="false"
-    :visible.sync="showVideoDialog"
+    v-model:visible="showVideoDialog"
     :destroy-on-close="false"
   >
     <el-tabs v-model="activeKey" style="padding: 0 1rem; margin: auto 0" @tab-click="getRegionList">
       <el-tab-pane name="0">
-        <div slot="label">
+        <template v-slot:label>
+<div >
           <div class="show-code-item">{{ allVal[0].val }}</div>
           <div style="text-align: center">{{ allVal[0].meaning }}</div>
         </div>
+</template>
         <el-radio
           v-for="item in regionList"
           v-model="allVal[0].val"
@@ -28,10 +30,12 @@
         </el-radio>
       </el-tab-pane>
       <el-tab-pane name="1">
-        <div slot="label">
+        <template v-slot:label>
+<div >
           <div class="show-code-item">{{ allVal[1].val ? allVal[1].val : "--" }}</div>
           <div style="text-align: center">{{ allVal[1].meaning }}</div>
         </div>
+</template>
         <el-radio
           :key="-1"
           v-model="allVal[1].val"
@@ -53,10 +57,12 @@
         </el-radio>
       </el-tab-pane>
       <el-tab-pane name="2">
-        <div slot="label">
+        <template v-slot:label>
+<div >
           <div class="show-code-item">{{ allVal[2].val ? allVal[2].val : "--" }}</div>
           <div style="text-align: center">{{ allVal[2].meaning }}</div>
         </div>
+</template>
         <el-radio
           :key="-1"
           label=""
@@ -79,10 +85,12 @@
       </el-tab-pane>
       <el-tab-pane name="3">
         请手动输入基层接入单位编码,两位数字
-        <div slot="label">
+        <template v-slot:label>
+<div >
           <div class="show-code-item">{{ allVal[3].val ? allVal[3].val : "--" }}</div>
           <div style="text-align: center">{{ allVal[3].meaning }}</div>
         </div>
+</template>
         <el-input
           link
           placeholder="请输入内容"

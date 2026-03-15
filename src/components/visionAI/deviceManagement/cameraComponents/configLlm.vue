@@ -3,7 +3,7 @@
     <!-- 大模型技能管理对话框 -->
     <el-dialog
       :title="`摄像头「${selectedCamera.name || ''}」- 大模型技能管理`"
-      :visible.sync="dialogVisible"
+      v-model:visible="dialogVisible"
       width="75%"
       :close-on-click-modal="false"
       :close-on-press-escape="true"
@@ -170,9 +170,11 @@
         </div>
       </div>
 
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button @click="closeDialog">关闭</el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 大模型技能配置对话框 -->
@@ -182,7 +184,7 @@
         ' - ' +
         (selectedSkillData.skill_name || selectedSkillData.name || '')
       "
-      :visible.sync="skillConfigVisible"
+      v-model:visible="skillConfigVisible"
       width="65%"
       :close-on-click-modal="false"
       :close-on-press-escape="true"
@@ -470,10 +472,12 @@
         </el-form>
       </div>
 
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button @click="cancelSkillConfig">取消</el-button>
         <el-button type="primary" @click="saveConfig" :loading="saveLoading">保存配置</el-button>
       </div>
+</template>
     </el-dialog>
   </div>
 </template>
@@ -599,7 +603,7 @@ export default {
     },
   },
   // 移除 watch，不再监听外部状态
-  beforeDestroy() {
+  beforeUnmount() {
     // 清理搜索定时器，避免内存泄漏
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);

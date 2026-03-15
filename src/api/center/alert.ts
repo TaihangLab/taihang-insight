@@ -147,7 +147,7 @@ class AlertAPI {
         if (onMessage) {
           onMessage(data);
         }
-      } catch (error) {
+      } catch {
         if (onMessage) {
           onMessage({ raw: event.data });
         }

@@ -6,7 +6,7 @@
       top="2rem"
       :append-to-body="true"
       :close-on-click-modal="false"
-      :visible.sync="showDialog"
+      v-model:visible="showDialog"
       :destroy-on-close="true"
       @close="close()"
     >
@@ -25,7 +25,9 @@
             将文件拖到此处，或
             <em>点击上传</em>
           </div>
-          <div class="el-upload__tip" slot="tip">只能上传 csv / xls / xlsx 文件</div>
+          <template v-slot:tip>
+<div class="el-upload__tip" >只能上传 csv / xls / xlsx 文件</div>
+</template>
         </el-upload>
       </div>
     </el-dialog>

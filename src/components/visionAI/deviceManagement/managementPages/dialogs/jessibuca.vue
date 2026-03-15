@@ -285,7 +285,7 @@ export default {
       );
     },
   },
-  destroyed() {
+  unmounted() {
     if (jessibucaPlayer[this._uid]) {
       jessibucaPlayer[this._uid].destroy();
     }

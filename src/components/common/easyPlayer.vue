@@ -51,7 +51,7 @@ export default {
       // console.log(message)
     },
   },
-  destroyed() {
+  unmounted() {
     this.easyPlayer.destroy();
   },
 };

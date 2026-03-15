@@ -13,7 +13,9 @@
           clearable
           @input="loadTableData"
         >
-          <i slot="suffix" class="el-icon-search"></i>
+          <template v-slot:suffix>
+<i  class="el-icon-search"></i>
+</template>
         </el-input>
       </div>
     </div>
@@ -71,7 +73,7 @@
     <!-- 注册边缘服务器弹框 -->
     <el-dialog
       :title="isEditing ? '编辑边缘服务器' : '注册边缘服务器'"
-      :visible.sync="dialogVisible"
+      v-model:visible="dialogVisible"
       width="50%"
       @closed="resetForm"
     >
@@ -110,17 +112,19 @@
           ></el-input>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="confirmAddServer">确定</el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 分页器 -->
     <div class="pagination-container">
       <el-pagination
-        :current-page.sync="currentPage"
-        :page-size.sync="pageSize"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"

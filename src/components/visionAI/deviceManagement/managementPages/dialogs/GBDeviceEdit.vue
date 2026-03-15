@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :title="editMode ? '编辑国标设备' : '添加国标设备'"
-    :visible.sync="dialogVisible"
+    v-model:visible="dialogVisible"
     width="800px"
     :close-on-click-modal="false"
     :before-close="handleClose"
@@ -31,7 +31,9 @@
                   maxlength="20"
                   show-word-limit
                 >
-                  <i slot="prefix" class="el-icon-postcard"></i>
+                  <template v-slot:prefix>
+<i  class="el-icon-postcard"></i>
+</template>
                 </el-input>
               </el-form-item>
             </el-col>
@@ -44,7 +46,9 @@
                   maxlength="50"
                   show-word-limit
                 >
-                  <i slot="prefix" class="el-icon-video-camera"></i>
+                  <template v-slot:prefix>
+<i  class="el-icon-video-camera"></i>
+</template>
                 </el-input>
               </el-form-item>
             </el-col>
@@ -73,7 +77,9 @@
             <el-col :span="12">
               <el-form-item label="设备型号" prop="model">
                 <el-input v-model="deviceForm.model" placeholder="请输入设备型号" maxlength="50">
-                  <i slot="prefix" class="el-icon-cpu"></i>
+                  <template v-slot:prefix>
+<i  class="el-icon-cpu"></i>
+</template>
                 </el-input>
               </el-form-item>
             </el-col>
@@ -90,7 +96,9 @@
             <el-col :span="12">
               <el-form-item label="IP地址" prop="ip">
                 <el-input v-model="deviceForm.ip" placeholder="请输入IP地址">
-                  <i slot="prefix" class="el-icon-monitor"></i>
+                  <template v-slot:prefix>
+<i  class="el-icon-monitor"></i>
+</template>
                 </el-input>
               </el-form-item>
             </el-col>
@@ -146,7 +154,9 @@
                   placeholder="请输入设备密码"
                   show-password
                 >
-                  <i slot="prefix" class="el-icon-key"></i>
+                  <template v-slot:prefix>
+<i  class="el-icon-key"></i>
+</template>
                 </el-input>
               </el-form-item>
             </el-col>
@@ -210,12 +220,14 @@
       </el-form>
     </div>
 
-    <div slot="footer" class="dialog-footer">
+    <template v-slot:footer>
+<div  class="dialog-footer">
       <el-button @click="handleClose">取消</el-button>
       <el-button type="primary" @click="handleSave" :loading="saving">
         {{ editMode ? "保存修改" : "添加设备" }}
       </el-button>
     </div>
+</template>
   </el-dialog>
 </template>
 

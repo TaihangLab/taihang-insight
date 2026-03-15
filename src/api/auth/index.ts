@@ -5,7 +5,7 @@
  */
 
 import { createAuthAPI } from "./authAPI";
-import type { AuthInfoResponse, AuthPermissionsResponse, MenuItem } from "@/types/auth";
+import type { AuthInfoResponse, MenuItem } from "@/types/auth";
 
 // 导出单例实例
 export const authAPI = createAuthAPI();
@@ -17,7 +17,7 @@ export type * from "@/types/auth";
  * 获取用户基本信息
  * 注意：响应拦截器已提取 data.data，response 直接是内层数据
  */
-export async function getUserInfo(forceRefresh = false): Promise<AuthInfoResponse | null> {
+export async function getUserInfo(_forceRefresh = false): Promise<AuthInfoResponse | null> {
   try {
     const response = await authAPI.getUserInfo();
     if (response && response.user_id) {
@@ -34,7 +34,7 @@ export async function getUserInfo(forceRefresh = false): Promise<AuthInfoRespons
  * 获取权限码列表
  * 注意：响应拦截器已提取 data.data，response 直接是内层数据
  */
-export async function getPermissions(forceRefresh = false): Promise<string[]> {
+export async function getPermissions(_forceRefresh = false): Promise<string[]> {
   try {
     const response = await authAPI.getPermissions();
     if (response && response.permission_codes) {
@@ -52,7 +52,7 @@ export async function getPermissions(forceRefresh = false): Promise<string[]> {
  * 后端返回结构：{ code: 200, data: { user_id, user_name, menu_tree: MenuItem[] } }
  * 注意：响应拦截器已提取 data.data，response 直接是内层数据
  */
-export async function getMenuTree(forceRefresh = false): Promise<MenuItem[] | null> {
+export async function getMenuTree(_forceRefresh = false): Promise<MenuItem[] | null> {
   try {
     const response = await authAPI.getMenuTree();
     if (response && response.menu_tree) {
@@ -68,11 +68,11 @@ export async function getMenuTree(forceRefresh = false): Promise<MenuItem[] | nu
 /**
  * 批量获取用户认证信息（用于登录后刷新）
  */
-export async function fetchAllAuthInfo(forceRefresh = false) {
+export async function fetchAllAuthInfo(_forceRefresh = false) {
   const [userInfo, permissions, menuTree] = await Promise.all([
-    getUserInfo(forceRefresh),
-    getPermissions(forceRefresh),
-    getMenuTree(forceRefresh),
+    getUserInfo(_forceRefresh),
+    getPermissions(_forceRefresh),
+    getMenuTree(_forceRefresh),
   ]);
 
   return {

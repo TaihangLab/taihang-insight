@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :title="isEdit ? '编辑标签' : '添加标签'"
-    :visible.sync="dialogVisible"
+    v-model:visible="dialogVisible"
     width="30%"
     :close-on-click-modal="false"
     :destroy-on-close="true"
@@ -33,10 +33,12 @@
         />
       </el-form-item>
     </el-form>
-    <span slot="footer" class="dialog-footer">
+    <template v-slot:footer>
+<span  class="dialog-footer">
       <el-button @click="closeDialog">取消</el-button>
       <el-button type="primary" @click="confirmTag" :loading="submitting">确认</el-button>
     </span>
+</template>
   </el-dialog>
 </template>
 

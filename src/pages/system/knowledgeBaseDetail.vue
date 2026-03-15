@@ -354,7 +354,7 @@
     <!-- 执行日志弹框 -->
     <el-dialog
       title="执行日志"
-      :visible.sync="logDialogVisible"
+      v-model:visible="logDialogVisible"
       width="800px"
       :close-on-click-modal="false"
       :close-on-press-escape="false"

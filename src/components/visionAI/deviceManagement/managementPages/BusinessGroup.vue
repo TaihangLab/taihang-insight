@@ -31,7 +31,8 @@
     <el-container v-loading="loading" class="main-container">
       <el-aside width="400px" class="tree-aside">
         <el-card class="tree-card" shadow="never">
-          <div slot="header" class="tree-header">
+          <template v-slot:header>
+<div  class="tree-header">
             <span class="tree-title">
               <i class="el-icon-folder"></i>
               业务分组树
@@ -40,6 +41,7 @@
               <el-checkbox v-model="showCode" @change="onShowCodeChange">显示编号</el-checkbox>
             </div>
           </div>
+</template>
           <GroupTree
             ref="groupTree"
             :show-header="false"
@@ -83,7 +85,9 @@
                   @input="search"
                   @clear="search"
                 >
-                  <i slot="prefix" class="el-icon-search"></i>
+                  <template v-slot:prefix>
+<i  class="el-icon-search"></i>
+</template>
                 </el-input>
               </div>
 
@@ -126,7 +130,8 @@
 
         <!-- 通道列表 -->
         <el-card class="table-card" shadow="never">
-          <div slot="header" class="card-header">
+          <template v-slot:header>
+<div  class="card-header">
             <span class="card-title">
               <i class="el-icon-menu"></i>
               通道列表
@@ -135,6 +140,7 @@
               <span class="total-info">共 {{ total }} 个通道</span>
             </div>
           </div>
+</template>
 
           <el-table
             :data="channelList"

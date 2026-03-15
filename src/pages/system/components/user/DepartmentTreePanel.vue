@@ -19,9 +19,11 @@
       :highlight-current="true"
       @node-click="handleNodeClick"
     >
-      <span class="custom-tree-node" slot-scope="{ node, data }">
+      <template v-slot="{ node, data }">
+<span class="custom-tree-node">
         <span class="tree-label">{{ node.label }}</span>
       </span>
+</template>
     </el-tree>
   </div>
 </template>

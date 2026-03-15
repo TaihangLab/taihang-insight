@@ -32,7 +32,9 @@
         </el-form-item>
         <el-form-item>
           <el-input v-model="searchForm.keyword" placeholder="搜索关键词" clearable>
-            <i slot="prefix" class="el-icon-search"></i>
+            <template v-slot:prefix>
+<i  class="el-icon-search"></i>
+</template>
           </el-input>
         </el-form-item>
         <el-form-item>
@@ -94,9 +96,9 @@
       <!-- 分页 -->
       <div class="pagination-container">
         <el-pagination
-          :current-page.sync="pagination.currentPage"
+          v-model:current-page="pagination.currentPage"
           :page-sizes="[10, 20, 50, 100]"
-          :page-size.sync="pagination.pageSize"
+          v-model:page-size="pagination.pageSize"
           layout="total, sizes, prev, pager, next, jumper"
           :total="pagination.total"
           @size-change="handleSizeChange"
@@ -106,7 +108,7 @@
     </div>
 
     <!-- 日志详情对话框 -->
-    <el-dialog title="日志详情" :visible.sync="logDetailVisible" width="700px">
+    <el-dialog title="日志详情" v-model:visible="logDetailVisible" width="700px">
       <div v-if="currentLog" class="log-detail">
         <div class="detail-item">
           <span class="detail-label">日志ID：</span>
@@ -153,21 +155,25 @@
           <pre class="detail-value stack-trace">{{ currentLog.stackTrace }}</pre>
         </div>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="logDetailVisible = false">关闭</el-button>
       </span>
+</template>
     </el-dialog>
 
     <!-- 清空日志确认对话框 -->
-    <el-dialog title="确认清空" :visible.sync="clearLogVisible" width="400px">
+    <el-dialog title="确认清空" v-model:visible="clearLogVisible" width="400px">
       <div class="confirm-message">
         <i class="el-icon-warning"></i>
         <span>确定要清空所有日志记录吗？此操作不可恢复。</span>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<span  class="dialog-footer">
         <el-button @click="clearLogVisible = false">取消</el-button>
         <el-button type="danger" @click="confirmClearLogs">确定清空</el-button>
       </span>
+</template>
     </el-dialog>
   </div>
 </template>

@@ -37,7 +37,9 @@
               @keyup.enter.native="handleSearch"
               @clear="handleSearch"
             >
-              <i slot="prefix" class="el-icon-search"></i>
+              <template v-slot:prefix>
+<i  class="el-icon-search"></i>
+</template>
             </el-input>
           </div>
 
@@ -116,7 +118,8 @@
 
     <!-- 设备列表 -->
     <el-card class="table-card" shadow="never">
-      <div slot="header" class="card-header">
+      <template v-slot:header>
+<div  class="card-header">
         <span class="card-title">设备列表</span>
         <div class="card-actions">
           <el-button-group>
@@ -137,6 +140,7 @@
           </el-button-group>
         </div>
       </div>
+</template>
 
       <!-- 表格视图 -->
       <div v-if="viewMode === 'table'">
@@ -321,7 +325,8 @@
                     更多
                     <i class="el-icon-arrow-down el-icon--right"></i>
                   </el-button>
-                  <el-dropdown-menu slot="dropdown">
+                  <template v-slot:dropdown>
+<el-dropdown-menu >
                     <el-dropdown-item command="delete" style="color: #f56c6c">
                       <i class="el-icon-delete"></i>
                       删除设备
@@ -339,6 +344,7 @@
                       基础配置同步
                     </el-dropdown-item>
                   </el-dropdown-menu>
+</template>
                 </el-dropdown>
               </div>
             </template>
@@ -417,8 +423,8 @@
       <!-- 分页 -->
       <div class="pagination-container">
         <el-pagination
-          :current-page.sync="currentPage"
-          :page-size.sync="pageSize"
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
           :page-sizes="[15, 25, 35, 50]"
           layout="total, sizes, prev, pager, next, jumper"
           :total="total"
@@ -512,7 +518,7 @@ export default {
     this.updateLooper = setInterval(this.getDeviceList, 30000);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.updateLooper) {
       clearInterval(this.updateLooper);
     }

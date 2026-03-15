@@ -227,7 +227,7 @@ export default {
       );
     },
   },
-  destroyed() {
+  unmounted() {
     if (h265webPlayer[this._uid]) {
       h265webPlayer[this._uid].destroy();
     }

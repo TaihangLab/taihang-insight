@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :title="isEditMode ? '编辑技能（多模态大模型生成）' : '创建技能（多模态大模型生成）'"
-    :visible.sync="dialogVisible"
+    v-model:visible="dialogVisible"
     width="55%"
     @close="handleClose"
     :close-on-click-modal="false"
@@ -211,13 +211,15 @@
       </el-form>
     </div>
 
-    <span slot="footer" class="dialog-footer">
+    <template v-slot:footer>
+<span  class="dialog-footer">
       <el-button @click="handleClose" size="medium">取消</el-button>
       <el-button type="primary" @click="handleConfirm" :loading="loading" size="medium">
         {{ isEditMode ? "下一步：更新配置" : "下一步：详细配置" }}
         <i class="el-icon-arrow-right"></i>
       </el-button>
     </span>
+</template>
   </el-dialog>
 </template>
 

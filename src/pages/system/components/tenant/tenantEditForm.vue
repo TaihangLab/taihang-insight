@@ -111,10 +111,12 @@
         <el-input v-model="tenantForm.remark" placeholder="请输入备注"></el-input>
       </el-form-item>
     </el-form>
-    <span slot="footer" class="dialog-footer">
+    <template v-slot:footer>
+<span  class="dialog-footer">
       <el-button @click="cancel">取消</el-button>
       <el-button type="primary" @click="submitForm">确定</el-button>
     </span>
+</template>
   </el-dialog>
 </template>
 

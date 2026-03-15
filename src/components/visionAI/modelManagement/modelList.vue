@@ -53,11 +53,13 @@
             @clear="handleSearch"
             size="small"
           >
-            <i
-              slot="prefix"
+            <template v-slot:prefix>
+<i
+              
               style="align-items: center; display: flex; height: 32px"
               class="el-icon-search"
             ></i>
+</template>
           </el-input>
 
           <el-button
@@ -74,7 +76,7 @@
 
     <!-- 导入模型对话框 -->
     <el-dialog
-      :visible.sync="importDialogVisible"
+      v-model:visible="importDialogVisible"
       title="导入模型"
       width="650px"
       :close-on-click-modal="false"
@@ -105,7 +107,7 @@
             style="width: 40%"
             class="version-input"
           >
-            <template slot="prepend">
+            <template v-slot:prepend>
               <span class="version-prefix">V</span>
             </template>
           </el-input>
@@ -118,15 +120,17 @@
           />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button @click="importDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="confirmImport">确认导入</el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 编辑模型对话框 -->
     <el-dialog
-      :visible.sync="editDialogVisible"
+      v-model:visible="editDialogVisible"
       title="编辑模型"
       width="650px"
       :close-on-click-modal="false"
@@ -156,7 +160,7 @@
               style="width: 100%"
               class="version-input"
             >
-              <template slot="prepend">
+              <template v-slot:prepend>
                 <span class="version-prefix">V</span>
               </template>
             </el-input>
@@ -175,10 +179,12 @@
           />
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
+      <template v-slot:footer>
+<div  class="dialog-footer">
         <el-button @click="cancelEdit">取消</el-button>
         <el-button type="primary" @click="confirmEdit" :loading="loading">确认修改</el-button>
       </div>
+</template>
     </el-dialog>
 
     <!-- 模型列表 -->
@@ -315,7 +321,7 @@
 
     <!-- 模型详情对话框 -->
     <el-dialog
-      :visible.sync="detailDialogVisible"
+      v-model:visible="detailDialogVisible"
       title="模型详情"
       width="700px"
       :close-on-click-modal="false"
@@ -325,9 +331,11 @@
       <div class="model-detail-content">
         <!-- 基本信息卡片 -->
         <el-card class="detail-card info-card" shadow="never" :body-style="{ padding: '0' }">
-          <div slot="header" class="card-header">
+          <template v-slot:header>
+<div  class="card-header">
             <span>基本信息</span>
           </div>
+</template>
           <div class="info-content">
             <div class="info-item">
               <span class="info-label">模型名称：</span>
@@ -393,12 +401,14 @@
         <!-- 技能实例信息 -->
         <div class="related-skills-section">
           <el-card class="detail-card skills-card" shadow="never" :body-style="{ padding: '0' }">
-            <div slot="header" class="card-header">
+            <template v-slot:header>
+<div  class="card-header">
               <span>技能实例</span>
               <el-tag type="success" size="small" class="tech-status-tag">
                 {{ relatedSkills.length }}
               </el-tag>
             </div>
+</template>
             <div v-if="relatedSkills.length === 0" class="no-skills">
               <i class="el-icon-warning-outline"></i>
               暂无技能实例
@@ -437,8 +447,8 @@
     <!-- 分页控件 -->
     <div class="pagination">
       <el-pagination
-        :current-page.sync="pagination.currentPage"
-        :page-size.sync="pagination.pageSize"
+        v-model:current-page="pagination.currentPage"
+        v-model:page-size="pagination.pageSize"
         :page-sizes="[10, 20, 50]"
         :total="pagination.total"
         layout="total, sizes, prev, pager, next, jumper"
@@ -655,7 +665,7 @@ export default {
           cancelButtonText: '取消',
           customClass: 'tech-confirm-dialog'
         }
-      ).then(() => {
+      ).then(async () => {
         this.loading = true
 
         // 获取所有选中项的ID
