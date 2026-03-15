@@ -92,7 +92,7 @@ export const useReviewStore = defineStore("review", () => {
    * 添加还原的预警
    * @param warning 预警信息
    */
-  function addRestoredWarning(warning: any): void {
+  function addRestoredWarning(warning: unknown): void {
     storage.addRestoredWarning(warning);
     loadRestoredWarnings(); // 重新加载以保持同步
   }
@@ -101,7 +101,7 @@ export const useReviewStore = defineStore("review", () => {
    * 设置还原预警列表
    * @param warnings 预警列表
    */
-  function setRestoredWarningsList(warnings: any[]): void {
+  function setRestoredWarningsList(warnings: unknown[]): void {
     storage.setRestoredWarnings(warnings);
     loadRestoredWarnings(); // 重新加载以保持同步
   }

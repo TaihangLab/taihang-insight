@@ -195,8 +195,8 @@ export class ChatService {
   /**
    * 获取可用模型列表
    */
-  async getChatModels(): Promise<ApiResponse<{ object: string; data: any[] }>> {
-    const response = await axiosInstance.get<any, ApiResponse<{ object: string; data: any[] }>>(
+  async getChatModels(): Promise<ApiResponse<{ object: string; data: unknown[] }>> {
+    const response = await axiosInstance.get<any, ApiResponse<{ object: string; data: unknown[] }>>(
       `${this.basePath}/models`,
     );
     return response;

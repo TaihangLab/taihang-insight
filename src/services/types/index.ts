@@ -57,7 +57,7 @@ export interface SkillClass {
   status: boolean;
   required_models: string[];
   params: Record<string, any>;
-  alert_definitions: any[];
+  alert_definitions: unknown[];
   created_at?: string;
   updated_at?: string;
 }
@@ -69,7 +69,7 @@ export interface SkillListParams extends PaginationParams {
 }
 
 export interface AITaskSkillClass extends SkillClass {
-  devices?: any[];
+  devices?: unknown[];
 }
 
 // ============ AI 任务相关类型 ============

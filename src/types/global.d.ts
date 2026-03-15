@@ -74,4 +74,4 @@ export type Timestamp = string | number | Date;
 /**
  * 可选的异步函数类型
  */
-export type AsyncFunction<T = any> = (...args: any[]) => Promise<T>;
+export type AsyncFunction<T = any> = (...args: unknown[]) => Promise<T>;

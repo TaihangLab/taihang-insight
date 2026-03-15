@@ -147,7 +147,7 @@ export class AlertService {
    * 创建 SSE 连接
    */
   createAlertSSEConnection(
-    onMessage: (data: any) => void,
+    onMessage: (data: unknown) => void,
     onError?: (error: Event) => void,
     onClose?: () => void,
   ): EventSource {

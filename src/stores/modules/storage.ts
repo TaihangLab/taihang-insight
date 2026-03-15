@@ -152,13 +152,13 @@ export const storage = {
   /** 获取技能编辑信息 */
   getEditSkillInfo: () => storageHelper.getJSON<any>(StorageKey.EDIT_SKILL_INFO),
   /** 设置技能编辑信息 */
-  setEditSkillInfo: (info: any) => storageHelper.setJSON(StorageKey.EDIT_SKILL_INFO, info),
+  setEditSkillInfo: (info: unknown) => storageHelper.setJSON(StorageKey.EDIT_SKILL_INFO, info),
   /** 移除技能编辑信息 */
   removeEditSkillInfo: () => storageHelper.remove(StorageKey.EDIT_SKILL_INFO),
   /** 获取临时技能信息 */
   getTempSkillInfo: () => storageHelper.getJSON<any>(StorageKey.TEMP_SKILL_INFO),
   /** 设置临时技能信息 */
-  setTempSkillInfo: (info: any) => storageHelper.setJSON(StorageKey.TEMP_SKILL_INFO, info),
+  setTempSkillInfo: (info: unknown) => storageHelper.setJSON(StorageKey.TEMP_SKILL_INFO, info),
   /** 移除临时技能信息 */
   removeTempSkillInfo: () => storageHelper.remove(StorageKey.TEMP_SKILL_INFO),
 
@@ -167,10 +167,10 @@ export const storage = {
   getIntelligentReviewRecords: () =>
     storageHelper.getJSON<any[]>(StorageKey.INTELLIGENT_REVIEW_RECORDS, []),
   /** 设置智能复判记录 */
-  setIntelligentReviewRecords: (records: any[]) =>
+  setIntelligentReviewRecords: (records: unknown[]) =>
     storageHelper.setJSON(StorageKey.INTELLIGENT_REVIEW_RECORDS, records),
   /** 添加智能复判记录 */
-  addIntelligentReviewRecord: (record: any) => {
+  addIntelligentReviewRecord: (record: unknown) => {
     const records = storage.getIntelligentReviewRecords();
     records.unshift(record);
     // 限制记录数量
@@ -182,10 +182,10 @@ export const storage = {
   /** 获取还原的预警列表 */
   getRestoredWarnings: () => storageHelper.getJSON<any[]>(StorageKey.RESTORED_WARNINGS, []),
   /** 设置还原的预警列表 */
-  setRestoredWarnings: (warnings: any[]) =>
+  setRestoredWarnings: (warnings: unknown[]) =>
     storageHelper.setJSON(StorageKey.RESTORED_WARNINGS, warnings),
   /** 添加还原的预警 */
-  addRestoredWarning: (warning: any) => {
+  addRestoredWarning: (warning: unknown) => {
     const warnings = storage.getRestoredWarnings();
     warnings.push({
       ...warning,

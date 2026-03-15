@@ -6,7 +6,7 @@
  * 树节点基础接口
  */
 export interface TreeNode {
-  [key: string]: any;
+  [key: string]: unknown;
   children?: TreeNode[];
   depth?: number;
 }

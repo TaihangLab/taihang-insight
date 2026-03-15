@@ -43,7 +43,7 @@ axiosInstance.interceptors.request.use(
 
 // 响应拦截器 - 统一处理响应和错误
 axiosInstance.interceptors.response.use(
-  (response: any) => {
+  (response: AxiosResponse<unknown>) => {
     const originalData = response.data;
 
     // 处理 code 格式的响应
@@ -88,23 +88,26 @@ axiosInstance.interceptors.response.use(
     }
 
     // 返回错误信息
-    const errorData: any = error.response?.data;
+    const errorData: unknown = error.response?.data;
     const errorMessage: string =
-      errorData?.detail || errorData?.message || error.message || "请求失败";
+      (errorData as { detail?: string; message?: string })?.detail ||
+      (errorData as { detail?: string; message?: string })?.message ||
+      error.message ||
+      "请求失败";
 
     return Promise.reject(new Error(errorMessage));
   },
 );
 
 // 自定义参数序列化函数
-const paramsSerializer = (params: Record<string, any>): string => {
+const paramsSerializer = (params: Record<string, unknown>): string => {
   const queryParams: string[] = [];
 
   for (const key in params) {
     if (params[key] !== undefined) {
       if (Array.isArray(params[key])) {
         // 对于数组参数，使用重复的键名传递每个值
-        params[key].forEach((value: any) => {
+        params[key].forEach((value: unknown) => {
           queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
         });
       } else {

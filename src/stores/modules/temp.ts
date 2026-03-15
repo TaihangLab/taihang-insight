@@ -17,14 +17,14 @@ export const useTempStore = defineStore("temp", () => {
   /**
    * 获取技能编辑信息
    */
-  function getEditSkillInfo(): any | null {
+  function getEditSkillInfo(): unknown | null {
     return storage.getEditSkillInfo();
   }
 
   /**
    * 设置技能编辑信息
    */
-  function setEditSkillInfo(info: any): void {
+  function setEditSkillInfo(info: unknown): void {
     storage.setEditSkillInfo(info);
   }
 
@@ -38,14 +38,14 @@ export const useTempStore = defineStore("temp", () => {
   /**
    * 获取临时技能信息
    */
-  function getTempSkillInfo(): any | null {
+  function getTempSkillInfo(): unknown | null {
     return storage.getTempSkillInfo();
   }
 
   /**
    * 设置临时技能信息
    */
-  function setTempSkillInfo(info: any): void {
+  function setTempSkillInfo(info: unknown): void {
     storage.setTempSkillInfo(info);
   }
 
