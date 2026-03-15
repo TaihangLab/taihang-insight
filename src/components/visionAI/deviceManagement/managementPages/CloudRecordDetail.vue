@@ -490,7 +490,6 @@ export default {
       }
       if (m < 10) {
         mStr = "0" + mStr;
-        s;
       }
       if (s < 10) {
         sStr = "0" + sStr;
