@@ -58,7 +58,7 @@ export default {
           source: new XYZ({
             projection: getProj("EPSG:3857"),
             wrapX: false,
-            tileSize: 256 || mapParam.tileSize,
+            tileSize: mapParam.tileSize || 256,
             url: mapParam.tilesUrl,
           }),
         });

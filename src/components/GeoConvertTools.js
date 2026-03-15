@@ -80,7 +80,7 @@ export default {
     var wgsLat,
       wgsLng,
       i = 0;
-    while (1) {
+    while (true) {  
       wgsLat = (mLat + pLat) / 2;
       wgsLng = (mLng + pLng) / 2;
       var tmp = this.gcj_encrypt(wgsLat, wgsLng);
