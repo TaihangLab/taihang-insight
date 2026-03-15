@@ -19,7 +19,7 @@
       :highlight-current="true"
       @node-click="handleNodeClick"
     >
-      <template v-slot="{ node, data }">
+      <template v-slot="{ node }">
 <span class="custom-tree-node">
         <span class="tree-label">{{ node.label }}</span>
       </span>
