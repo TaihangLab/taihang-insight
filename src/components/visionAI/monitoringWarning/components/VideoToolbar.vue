@@ -100,5 +100,7 @@ export default {
 .fullscreen-btn {
   font-size: 18px;
 }
-</style>
 </template>
+
+<style scoped>
+</style>

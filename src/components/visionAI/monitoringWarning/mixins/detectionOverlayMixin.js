@@ -85,14 +85,14 @@ export default {
             this.detectionResults[index] = {
               detections: data.detections || [],
               frame_size: data.frame_size || { width: 1920, height: 1080 },
-            });
+            }
 
             // 更新视频分辨率
             if (data.frame_size) {
               this.videoResolutions[index] = {
                 width: data.frame_size.width,
                 height: data.frame_size.height,
-              });
+              }
             }
           } catch (error) {
             console.error("❌ 解析检测结果失败:", error);
@@ -165,7 +165,7 @@ export default {
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.close();
         }
-      });
+      }
 
       // 清空所有数据
       this.wsConnections = {};
