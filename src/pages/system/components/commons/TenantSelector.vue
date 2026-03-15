@@ -75,7 +75,7 @@ const loadTenants = async () => {
         ElMessage.warning("没有可用的租户，请先创建租户");
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("获取租户列表失败:", error);
     ElMessage.error(error.message || "获取租户列表失败");
   }

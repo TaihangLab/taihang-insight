@@ -40,25 +40,25 @@ interface Pagination {
 }
 
 defineProps<{
-  roles: any[];
+  roles: unknown[];
   loading: boolean;
   pagination: Pagination;
   total: number;
 }>();
 
 const emit = defineEmits<{
-  selectionChange: [codes: number[], selection: any[]];
+  selectionChange: [codes: number[], selection: unknown[]];
   add: [];
-  edit: [row: any];
-  delete: [row: any];
-  authorization: [row: any];
+  edit: [row: unknown];
+  delete: [row: unknown];
+  authorization: [row: unknown];
   pageChange: [page: number];
   sizeChange: [size: number];
 }>();
 
 const selectedCodes = ref<number[]>([]);
 
-const handleSelectionChange = (selection: any[]) => {
+const handleSelectionChange = (selection: unknown[]) => {
   const codes = selection.map((row) => row.id);
   emit("selectionChange", codes, selection);
 };
@@ -67,15 +67,15 @@ const handleAdd = () => {
   emit("add");
 };
 
-const handleEdit = (row: any) => {
+const handleEdit = (row: unknown) => {
   emit("edit", row);
 };
 
-const handleDelete = (row: any) => {
+const handleDelete = (row: unknown) => {
   emit("delete", row);
 };
 
-const handleAuthorization = (row: any) => {
+const handleAuthorization = (row: unknown) => {
   emit("authorization", row);
 };
 

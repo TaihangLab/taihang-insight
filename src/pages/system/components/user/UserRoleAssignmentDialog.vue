@@ -116,7 +116,7 @@ const loadRolesAndUserRoles = async () => {
         : [userRolesRes.data];
       selectedRoleIds.value = existingRoles.map((r: Role) => r.id);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("加载角色数据失败:", error);
     ElMessage.error(`加载角色数据失败: ${error.message}`);
   }
@@ -146,7 +146,7 @@ const handleSubmit = async () => {
     ElMessage.success("角色分配成功");
     emit("submit");
     handleClose();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("角色分配失败:", error);
     ElMessage.error(`角色分配失败: ${error.message}`);
   } finally {

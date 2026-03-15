@@ -117,7 +117,7 @@ const loadPermissions = async () => {
       if (rolePermsResponse?.data) {
         checkedPermissions.value = (
           Array.isArray(rolePermsResponse.data) ? rolePermsResponse.data : []
-        ).map((p: any) => Number(p.permissionId || p.permission_id));
+        ).map((p: unknown) => Number(p.permissionId || p.permission_id));
       }
     }
 

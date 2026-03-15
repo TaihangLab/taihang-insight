@@ -172,7 +172,7 @@ const isDev = computed(() => {
   return import.meta.env.DEV;
 });
 
-const normalizeGenderValue = (gender: any): number => {
+const normalizeGenderValue = (gender: unknown): number => {
   if (typeof gender === "string") {
     switch (gender.toLowerCase()) {
       case "male":

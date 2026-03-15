@@ -85,7 +85,7 @@ const cascaderProps = computed(() => {
     children: "children",
     checkStrictly: true,
     expandTrigger: "hover" as const,
-    renderFormat: (labels: string[], selectedOptions: any[]) => {
+    renderFormat: (labels: string[], selectedOptions: unknown[]) => {
       return selectedOptions
         .map((option) => {
           return `${option.code} - ${option.label}`;
@@ -122,7 +122,7 @@ const fetchDepartmentTree = async () => {
     );
     treeData.value = transformDeptTree(response.data);
     loaded.value = true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("获取部门树失败:", error);
     ElMessage.error(`获取部门树失败: ${error.message}`);
     treeData.value = [];
@@ -152,7 +152,7 @@ watch(
   },
 );
 
-const handleChange = (value: any) => {
+const handleChange = (value: unknown) => {
   emit("change", value);
 };
 
