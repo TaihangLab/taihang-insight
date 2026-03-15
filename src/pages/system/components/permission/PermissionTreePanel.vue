@@ -11,7 +11,7 @@
       default-expand-all
       @node-click="handleNodeClick"
     >
-      <template #default="{ node, data }">
+      <template #default="{ data }">
         <span class="tree-node-content">
           <span class="node-left">
             <i :class="getNodeIconClass(data.type)" class="node-icon"></i>

@@ -13,7 +13,7 @@
       class="flow-tree"
       :style="{ height: treeHeight || '78vh', padding: '0 0 2rem 0.5rem' }"
     >
-      <template #default="{ node, data }">
+      <template #default="{ data }">
         <span class="custom-tree-node">
           <span
             v-if="data.type === 0 && chooseId !== data.deviceId"
