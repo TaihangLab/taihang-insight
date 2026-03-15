@@ -428,7 +428,7 @@ export interface StreamStatus {
 /**
  * SSE消息回调类型
  */
-export type SSEMessageCallback = (data: any) => void;
+export type SSEMessageCallback = (data: unknown) => void;
 export type SSEErrorCallback = (event: Event) => void;
 export type SSECloseCallback = () => void;
 

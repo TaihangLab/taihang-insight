@@ -17,7 +17,7 @@ export interface WvpUser {
   id?: number;
   username?: string;
   name?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const useTokenStore = defineStore(

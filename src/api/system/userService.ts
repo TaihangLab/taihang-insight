@@ -25,7 +25,7 @@ export interface UserAuthInfo {
   /** 权限码列表 */
   permissions: string[];
   /** 菜单树 */
-  menu_tree: any[];
+  menu_tree: unknown[];
 }
 
 // ============================================

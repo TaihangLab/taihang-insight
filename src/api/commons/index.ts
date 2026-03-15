@@ -64,7 +64,7 @@ export const paramsSerializer = function (params: Record<string, any>): string {
     if (params[key] !== undefined) {
       if (Array.isArray(params[key])) {
         // 数组参数：使用重复的键名传递每个值
-        params[key].forEach((value: any) => {
+        params[key].forEach((value: unknown) => {
           queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
         });
       } else {

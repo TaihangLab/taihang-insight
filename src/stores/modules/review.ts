@@ -11,7 +11,7 @@ export interface ReviewRecord {
   type?: string;
   operator?: string;
   timestamp?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

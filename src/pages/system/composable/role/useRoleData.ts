@@ -151,7 +151,7 @@ export function useRoleData() {
 
       if (response?.data) {
         rolePermissions.value = (Array.isArray(response.data) ? response.data : []).map(
-          (item: any) => ({
+          (item: unknown) => ({
             role_id: Number(item.role_id || roleId),
             role_name: String(item.role_name || ""),
             permission_id: Number(item.permission_id || item.id || 0),
