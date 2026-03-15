@@ -7,6 +7,7 @@
 </template>
 
 <script>
+/* eslint-disable vue/no-mutating-props */
 let webrtcPlayer = null;
 export default {
   name: "rtcPlayer",

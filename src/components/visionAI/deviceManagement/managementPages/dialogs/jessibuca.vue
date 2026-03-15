@@ -43,6 +43,7 @@
 </template>
 
 <script>
+/* eslint-disable vue/no-mutating-props */
 let jessibucaPlayer = {};
 export default {
   name: "jessibuca",

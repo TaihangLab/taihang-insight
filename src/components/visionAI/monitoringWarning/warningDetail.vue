@@ -465,6 +465,7 @@
 </template>
 
 <script>
+/* eslint-disable vue/no-mutating-props */
 import centerAPI from "@/api/center";
 
 export default {

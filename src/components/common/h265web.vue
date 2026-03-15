@@ -38,6 +38,7 @@
 </template>
 
 <script>
+/* eslint-disable vue/no-mutating-props */
 let h265webPlayer = {};
 /**
  * 从github上复制的

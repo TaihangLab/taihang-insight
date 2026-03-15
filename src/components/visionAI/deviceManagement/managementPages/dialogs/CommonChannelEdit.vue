@@ -254,6 +254,7 @@
 </template>
 
 <script>
+/* eslint-disable vue/no-mutating-props */
 import channelCode from "./channelCode.vue";
 import ChooseCivilCode from "./chooseCivilCode.vue";
 import ChooseGroup from "./chooseGroup.vue";

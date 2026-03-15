@@ -254,6 +254,7 @@
 </template>
 
 <script>
+/* eslint-disable vue/no-mutating-props */
 import channelCode from "./../dialog/channelCode.vue";
 import ChooseCivilCode from "../dialog/chooseCivilCode.vue";
 import ChooseGroup from "../visionAI/deviceManagement/managementPages/dialogs/chooseGroup.vue";
