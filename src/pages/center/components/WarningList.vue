@@ -67,7 +67,7 @@ async function loadData(): Promise<void> {
     const alerts = alertsData as any[];
 
     if (alerts && alerts.length > 0) {
-      warningList.value = alerts.map((item: any) => ({
+      warningList.value = alerts.map((item: unknown) => ({
         event: item.alert_name || item.name || "未知预警",
         time: item.alert_time || item.time || "",
         status: mapStatusToString(item.status),

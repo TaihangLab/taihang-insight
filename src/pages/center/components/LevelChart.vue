@@ -97,7 +97,7 @@ async function loadData(): Promise<void> {
   try {
     const response = await alertStatisticsAPI.getByLevel("24h");
     if (Array.isArray(response)) {
-      chartData.value = response.map((item: any) => ({
+      chartData.value = response.map((item: unknown) => ({
         name: item.name || item.level_name,
         value: item.value || item.count,
         itemStyle: {

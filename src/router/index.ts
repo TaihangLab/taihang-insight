@@ -266,7 +266,7 @@ router.push = function push(location) {
  * @param menuItems - 后端返回的菜单树
  * @returns 返回实际添加的路由数量
  */
-export function setupAsyncRoutes(menuItems: any[]): number {
+export function setupAsyncRoutes(menuItems: unknown[]): number {
   const appStore = useAppStore();
 
   // 检查是否已添加
@@ -280,7 +280,7 @@ export function setupAsyncRoutes(menuItems: any[]): number {
   /**
    * 递归处理菜单树
    */
-  function processMenuItems(items: any[]) {
+  function processMenuItems(items: unknown[]) {
     for (const item of items) {
       // 兼容后端不同字段名：permission_name/menu_name, permission_type/menu_type
       const menuName = item.menu_name || item.permission_name || item.name;

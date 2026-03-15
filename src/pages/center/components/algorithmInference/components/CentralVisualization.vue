@@ -83,7 +83,7 @@ async function initThreeJS() {
   }
 }
 
-function addParticles(THREE: any) {
+function addParticles(THREE: unknown) {
   const particleCount = 100;
   const geometry = new THREE.BufferGeometry();
   const positions = new Float32Array(particleCount * 3);
@@ -157,11 +157,11 @@ function cleanup() {
   }
 
   if (scene) {
-    scene.traverse((object: any) => {
+    scene.traverse((object: unknown) => {
       if (object.geometry) object.geometry.dispose();
       if (object.material) {
         if (Array.isArray(object.material)) {
-          object.material.forEach((m: any) => m.dispose());
+          object.material.forEach((m: unknown) => m.dispose());
         } else {
           object.material.dispose();
         }

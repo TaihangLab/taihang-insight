@@ -121,7 +121,7 @@ async function loadData(): Promise<void> {
     const apiTimeRange = timeRangeMapping[currentTimeRange.value];
     const response = await alertStatisticsAPI.getProcessingStatus(apiTimeRange);
     if (Array.isArray(response)) {
-      chartData.value = response.map((item: any) => ({
+      chartData.value = response.map((item: unknown) => ({
         name: item.status_name || item.name || item.status,
         value: item.count || item.value,
         itemStyle: item.color ? { color: item.color } : undefined,

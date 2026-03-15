@@ -52,7 +52,7 @@ async function loadData(): Promise<void> {
     const apiTimeRange = timeRangeMapping[currentTimeRange.value];
     const response = await alertStatisticsAPI.getByLocation(apiTimeRange, 10);
     if (Array.isArray(response)) {
-      deviceWarnings.value = response.map((item: any) => ({
+      deviceWarnings.value = response.map((item: unknown) => ({
         name: item.name,
         count: item.count,
       }));

@@ -134,11 +134,11 @@ async function loadAlarmStatistics(): Promise<void> {
     const response = await centerAPI.alertStatistics.getByType("7d");
     if (Array.isArray(response) && response.length > 0) {
       const stats = response.slice(0, 4);
-      alarmSections.value = stats.map((item: any) => ({
+      alarmSections.value = stats.map((item: unknown) => ({
         name: item.name,
         value: item.count || item.value || 0,
       }));
-      alarmLegends.value = stats.map((item: any) => ({ name: item.name }));
+      alarmLegends.value = stats.map((item: unknown) => ({ name: item.name }));
     } else {
       alarmSections.value = [];
       alarmLegends.value = [];

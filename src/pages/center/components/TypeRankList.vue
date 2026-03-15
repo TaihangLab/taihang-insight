@@ -24,7 +24,7 @@ async function loadData(): Promise<void> {
   try {
     const response = await alertStatisticsAPI.getByType("24h", 10);
     if (Array.isArray(response)) {
-      warningTypes.value = response.map((item: any) => ({
+      warningTypes.value = response.map((item: unknown) => ({
         name: item.name,
         count: item.count,
         value: item.value,
