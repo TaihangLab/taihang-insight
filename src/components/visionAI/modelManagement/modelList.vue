@@ -481,16 +481,18 @@ export default {
         const selectedIds = selectedItems.map(item => item.id)
 
         // 发送批量删除请求
-        centerAPI.model.batchDeleteModels(selectedIds).then((res) => {
+        try {
+          const result = await centerAPI.model.batchDeleteModels(selectedIds)
+
           // 删除成功后重新获取列表
           this.fetchModelList()
 
           // 显示成功消息和详细信息
-          this.$message.success(res.message || '批量删除成功')
+          this.$message.success(result.message || '批量删除成功')
 
           // 如果有失败的模型，显示详细信息
-          if (res.detail && res.detail.failed && res.detail.failed.length > 0) {
-            const failedInfo = res.detail.failed.map(item => {
+          if (result.detail && result.detail.failed && result.detail.failed.length > 0) {
+            const failedInfo = result.detail.failed.map(item => {
               return `模型ID ${item.id}: ${item.reason}`
             }).join('\n')
 
@@ -501,11 +503,11 @@ export default {
               duration: 10000
             })
           }
-        }).catch((error) => {
+        } catch (error) {
           console.error('批量删除模型失败', error)
           this.$message.error('批量删除失败: ' + (error.message || '未知错误'))
           this.loading = false
-        })
+        }
       }).catch(() => {
         // 用户取消删除，不执行任何操作
       })
