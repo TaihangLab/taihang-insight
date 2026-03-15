@@ -19,7 +19,7 @@ export class CameraService {
    * 获取摄像头列表
    */
   async getCameraList(params?: CameraListParams): Promise<PaginatedResponse<Camera>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<Camera>>(this.basePath, {
+    const response = await axiosInstance.get<unknown, PaginatedResponse<Camera>>(this.basePath, {
       params,
     });
     return response;
@@ -29,7 +29,7 @@ export class CameraService {
    * 获取摄像头详情
    */
   async getCameraDetail(cameraId: string): Promise<ApiResponse<Camera>> {
-    const response = await axiosInstance.get<any, ApiResponse<Camera>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<Camera>>(
       `${this.basePath}/${cameraId}`,
     );
     return response;
@@ -43,7 +43,7 @@ export class CameraService {
     rtsp_url: string;
     channel_id?: string;
   }): Promise<ApiResponse<Camera>> {
-    const response = await axiosInstance.post<any, ApiResponse<Camera>>(this.basePath, cameraData);
+    const response = await axiosInstance.post<unknown, ApiResponse<Camera>>(this.basePath, cameraData);
     return response;
   }
 
@@ -54,7 +54,7 @@ export class CameraService {
     cameraId: string,
     updateData: UpdateCameraParams,
   ): Promise<ApiResponse<Camera>> {
-    const response = await axiosInstance.put<any, ApiResponse<Camera>>(
+    const response = await axiosInstance.put<unknown, ApiResponse<Camera>>(
       `${this.basePath}/${cameraId}`,
       updateData,
     );
@@ -75,7 +75,7 @@ export class CameraService {
    * 批量删除摄像头
    */
   async batchDeleteCameras(cameraIds: string[]): Promise<ApiResponse<void>> {
-    const response = await axiosInstance.post<any, ApiResponse<void>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<void>>(
       `${this.basePath}/batch-delete`,
       { ids: cameraIds },
     );
@@ -86,7 +86,7 @@ export class CameraService {
    * 获取摄像头的 AI 任务列表
    */
   async getCameraAITasks(cameraId: string): Promise<ApiResponse<AITask[]>> {
-    const response = await axiosInstance.get<any, ApiResponse<AITask[]>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<AITask[]>>(
       `${this.basePath}/${cameraId}/ai-tasks`,
     );
     return response;

@@ -13,7 +13,7 @@ export class RegionService {
    * 获取区域树
    */
   async getRegionTree(params?: { parent_id?: string }): Promise<ApiResponse<RegionTreeNode[]>> {
-    const response = await axiosInstance.get<any, ApiResponse<RegionTreeNode[]>>(this.regionPath, {
+    const response = await axiosInstance.get<unknown, ApiResponse<RegionTreeNode[]>>(this.regionPath, {
       params,
     });
     return response;
@@ -23,7 +23,7 @@ export class RegionService {
    * 获取分组树
    */
   async getGroupTree(params?: { parent_id?: string }): Promise<ApiResponse<GroupTreeNode[]>> {
-    const response = await axiosInstance.get<any, ApiResponse<GroupTreeNode[]>>(this.groupPath, {
+    const response = await axiosInstance.get<unknown, ApiResponse<GroupTreeNode[]>>(this.groupPath, {
       params,
     });
     return response;
@@ -33,7 +33,7 @@ export class RegionService {
    * 获取摄像头的任务列表
    */
   async getTasksByCamera(cameraId: string): Promise<ApiResponse<any[]>> {
-    const response = await axiosInstance.get<any, ApiResponse<any[]>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<any[]>>(
       `/api/v1/cameras/${cameraId}/ai-tasks`,
     );
     return response;
@@ -53,7 +53,7 @@ export class RegionService {
       timestamp: string;
     }>
   > {
-    const response = await axiosInstance.get<any, ApiResponse<any>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<any>>(
       `/api/v1/ai-tasks/${taskId}/detection-result`,
     );
     return response;

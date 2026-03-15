@@ -12,7 +12,7 @@ export class ModelService {
    * 获取模型列表
    */
   async getModelList(params?: ModelListParams): Promise<PaginatedResponse<Model>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<Model>>(this.basePath, {
+    const response = await axiosInstance.get<unknown, PaginatedResponse<Model>>(this.basePath, {
       params,
     });
     return response;
@@ -22,7 +22,7 @@ export class ModelService {
    * 获取模型详情
    */
   async getModelDetail(modelId: string): Promise<ApiResponse<Model>> {
-    const response = await axiosInstance.get<any, ApiResponse<Model>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<Model>>(
       `${this.basePath}/${modelId}`,
     );
     return response;
@@ -32,7 +32,7 @@ export class ModelService {
    * 更新模型
    */
   async updateModel(modelId: string, modelData: Partial<Model>): Promise<ApiResponse<Model>> {
-    const response = await axiosInstance.put<any, ApiResponse<Model>>(
+    const response = await axiosInstance.put<unknown, ApiResponse<Model>>(
       `${this.basePath}/${modelId}`,
       modelData,
     );
@@ -53,7 +53,7 @@ export class ModelService {
    * 批量删除模型
    */
   async batchDeleteModels(ids: string[]): Promise<ApiResponse<void>> {
-    const response = await axiosInstance.post<any, ApiResponse<void>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<void>>(
       `${this.basePath}/batch-delete`,
       { ids },
     );
@@ -64,7 +64,7 @@ export class ModelService {
    * 加载模型到 Triton
    */
   async loadModel(modelId: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/${modelId}/load`,
     );
     return response;
@@ -74,7 +74,7 @@ export class ModelService {
    * 从 Triton 卸载模型
    */
   async unloadModel(modelId: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/${modelId}/unload`,
     );
     return response;

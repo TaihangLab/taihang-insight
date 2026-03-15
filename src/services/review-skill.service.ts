@@ -26,7 +26,7 @@ export class ReviewSkillService {
       }
     });
 
-    const response = await axiosInstance.post<any, ApiResponse<ReviewSkill>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<ReviewSkill>>(
       this.basePath,
       formData,
       {
@@ -44,7 +44,7 @@ export class ReviewSkillService {
     formData.append("test_image", testImage);
     formData.append("user_prompt", userPrompt);
 
-    const response = await axiosInstance.post<any, ApiResponse<any>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<any>>(
       `${this.basePath}/preview-test`,
       formData,
       {
@@ -69,7 +69,7 @@ export class ReviewSkillService {
       }
     });
 
-    const response = await axiosInstance.put<any, ApiResponse<ReviewSkill>>(
+    const response = await axiosInstance.put<unknown, ApiResponse<ReviewSkill>>(
       `${this.basePath}/${skillId}`,
       formData,
       {
@@ -85,7 +85,7 @@ export class ReviewSkillService {
   async getReviewSkillList(
     params?: ReviewSkillListParams,
   ): Promise<PaginatedResponse<ReviewSkill>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<ReviewSkill>>(this.basePath, {
+    const response = await axiosInstance.get<unknown, PaginatedResponse<ReviewSkill>>(this.basePath, {
       params,
     });
     return response;
@@ -95,7 +95,7 @@ export class ReviewSkillService {
    * 获取复判技能详情
    */
   async getReviewSkillDetail(skillId: string): Promise<ApiResponse<ReviewSkill>> {
-    const response = await axiosInstance.get<any, ApiResponse<ReviewSkill>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<ReviewSkill>>(
       `${this.basePath}/${skillId}`,
     );
     return response;
@@ -105,7 +105,7 @@ export class ReviewSkillService {
    * 发布复判技能
    */
   async publishReviewSkill(skillId: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/${skillId}/publish`,
     );
     return response;
@@ -115,7 +115,7 @@ export class ReviewSkillService {
    * 取消发布复判技能
    */
   async unpublishReviewSkill(skillId: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/${skillId}/unpublish`,
     );
     return response;
@@ -135,7 +135,7 @@ export class ReviewSkillService {
    * 批量删除复判技能
    */
   async batchDeleteReviewSkills(skillIds: string[]): Promise<ApiResponse<void>> {
-    const response = await axiosInstance.post<any, ApiResponse<void>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<void>>(
       `${this.basePath}/batch-delete`,
       { ids: skillIds },
     );

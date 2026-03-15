@@ -24,7 +24,7 @@ export class AITaskService {
     skill_class_id?: string;
     status?: boolean;
   }): Promise<PaginatedResponse<AITask>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<AITask>>(this.basePath, {
+    const response = await axiosInstance.get<unknown, PaginatedResponse<AITask>>(this.basePath, {
       params,
     });
     return response;
@@ -34,7 +34,7 @@ export class AITaskService {
    * 获取 AI 任务详情
    */
   async getAITaskDetail(taskId: string): Promise<ApiResponse<AITask>> {
-    const response = await axiosInstance.get<any, ApiResponse<AITask>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<AITask>>(
       `${this.basePath}/${taskId}`,
     );
     return response;
@@ -44,7 +44,7 @@ export class AITaskService {
    * 创建 AI 任务
    */
   async createAITask(taskData: CreateAITaskParams): Promise<ApiResponse<AITask>> {
-    const response = await axiosInstance.post<any, ApiResponse<AITask>>(this.basePath, taskData);
+    const response = await axiosInstance.post<unknown, ApiResponse<AITask>>(this.basePath, taskData);
     return response;
   }
 
@@ -52,7 +52,7 @@ export class AITaskService {
    * 更新 AI 任务
    */
   async updateAITask(taskId: string, taskData: UpdateAITaskParams): Promise<ApiResponse<AITask>> {
-    const response = await axiosInstance.put<any, ApiResponse<AITask>>(
+    const response = await axiosInstance.put<unknown, ApiResponse<AITask>>(
       `${this.basePath}/${taskId}`,
       taskData,
     );
@@ -73,7 +73,7 @@ export class AITaskService {
    * 批量删除 AI 任务
    */
   async batchDeleteAITasks(taskIds: string[]): Promise<ApiResponse<void>> {
-    const response = await axiosInstance.post<any, ApiResponse<void>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<void>>(
       `${this.basePath}/batch-delete`,
       { ids: taskIds },
     );
@@ -84,7 +84,7 @@ export class AITaskService {
    * 启动 AI 任务
    */
   async startAITask(taskId: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/${taskId}/start`,
     );
     return response;
@@ -94,7 +94,7 @@ export class AITaskService {
    * 停止 AI 任务
    */
   async stopAITask(taskId: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/${taskId}/stop`,
     );
     return response;
@@ -104,7 +104,7 @@ export class AITaskService {
    * 获取任务的摄像头列表
    */
   async getCameraAITasks(cameraId: string): Promise<ApiResponse<AITask[]>> {
-    const response = await axiosInstance.get<any, ApiResponse<AITask[]>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<AITask[]>>(
       `/api/v1/cameras/${cameraId}/ai-tasks`,
     );
     return response;

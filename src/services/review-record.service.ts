@@ -37,7 +37,7 @@ export class ReviewRecordService {
    * 启动复判服务
    */
   async startReviewService(): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/start`,
     );
     return response;
@@ -47,7 +47,7 @@ export class ReviewRecordService {
    * 停止复判服务
    */
   async stopReviewService(): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/stop`,
     );
     return response;
@@ -61,7 +61,7 @@ export class ReviewRecordService {
     limit?: number;
     status?: string;
   }): Promise<PaginatedResponse<any>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<any>>(
+    const response = await axiosInstance.get<unknown, PaginatedResponse<any>>(
       `${this.basePath}/ai-tasks`,
       { params },
     );
@@ -74,7 +74,7 @@ export class ReviewRecordService {
   async getReviewRecords(
     params?: ReviewRecordListParams,
   ): Promise<PaginatedResponse<ReviewRecord>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<ReviewRecord>>(this.basePath, {
+    const response = await axiosInstance.get<unknown, PaginatedResponse<ReviewRecord>>(this.basePath, {
       params,
     });
     return response;
@@ -84,7 +84,7 @@ export class ReviewRecordService {
    * 根据ID获取复判记录
    */
   async getReviewRecordById(reviewId: string): Promise<ApiResponse<ReviewRecord>> {
-    const response = await axiosInstance.get<any, ApiResponse<ReviewRecord>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<ReviewRecord>>(
       `${this.basePath}/${reviewId}`,
     );
     return response;
@@ -94,7 +94,7 @@ export class ReviewRecordService {
    * 根据预警ID获取复判记录
    */
   async getReviewRecordsByAlertId(alertId: string): Promise<ApiResponse<ReviewRecord[]>> {
-    const response = await axiosInstance.get<any, ApiResponse<ReviewRecord[]>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<ReviewRecord[]>>(
       `${this.basePath}/alert/${alertId}`,
     );
     return response;
@@ -106,7 +106,7 @@ export class ReviewRecordService {
   async createReviewRecord(
     recordData: CreateReviewRecordParams,
   ): Promise<ApiResponse<ReviewRecord>> {
-    const response = await axiosInstance.post<any, ApiResponse<ReviewRecord>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<ReviewRecord>>(
       this.basePath,
       recordData,
     );
@@ -120,7 +120,7 @@ export class ReviewRecordService {
     reviewId: string,
     updateData: Partial<CreateReviewRecordParams>,
   ): Promise<ApiResponse<ReviewRecord>> {
-    const response = await axiosInstance.put<any, ApiResponse<ReviewRecord>>(
+    const response = await axiosInstance.put<unknown, ApiResponse<ReviewRecord>>(
       `${this.basePath}/${reviewId}`,
       updateData,
     );

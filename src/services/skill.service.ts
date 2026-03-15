@@ -18,7 +18,7 @@ export class SkillService {
    * 获取技能列表
    */
   async getSkillList(params?: SkillListParams): Promise<PaginatedResponse<SkillClass>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<SkillClass>>(this.basePath, {
+    const response = await axiosInstance.get<unknown, PaginatedResponse<SkillClass>>(this.basePath, {
       params,
     });
     return response;
@@ -30,7 +30,7 @@ export class SkillService {
   async getAITaskSkillClasses(
     params?: SkillListParams,
   ): Promise<PaginatedResponse<AITaskSkillClass>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<AITaskSkillClass>>(
+    const response = await axiosInstance.get<unknown, PaginatedResponse<AITaskSkillClass>>(
       `${this.basePath}/ai-tasks`,
       { params },
     );
@@ -41,7 +41,7 @@ export class SkillService {
    * 重新加载技能类
    */
   async reloadSkillClasses(): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/reload`,
     );
     return response;
@@ -51,7 +51,7 @@ export class SkillService {
    * 获取技能详情
    */
   async getSkillDetail(skillClassId: string): Promise<ApiResponse<SkillClass>> {
-    const response = await axiosInstance.get<any, ApiResponse<SkillClass>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<SkillClass>>(
       `${this.basePath}/${skillClassId}`,
     );
     return response;
@@ -61,7 +61,7 @@ export class SkillService {
    * 获取 AI 任务技能详情
    */
   async getAITaskSkillDetail(skillClassId: string): Promise<ApiResponse<AITaskSkillClass>> {
-    const response = await axiosInstance.get<any, ApiResponse<AITaskSkillClass>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<AITaskSkillClass>>(
       `${this.basePath}/ai-tasks/${skillClassId}`,
     );
     return response;
@@ -80,7 +80,7 @@ export class SkillService {
       periods?: Array<{ start: string; end: string }>;
     };
   }): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `/api/v1/ai-tasks`,
       taskData,
     );
@@ -101,7 +101,7 @@ export class SkillService {
    * 批量删除技能
    */
   async batchDeleteSkills(ids: string[]): Promise<ApiResponse<void>> {
-    const response = await axiosInstance.post<any, ApiResponse<void>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<void>>(
       `${this.basePath}/batch-delete`,
       { ids },
     );
@@ -124,7 +124,7 @@ export class SkillService {
       }
     });
 
-    const response = await axiosInstance.post<any, ApiResponse<SkillClass>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<SkillClass>>(
       `${this.basePath}/import`,
       formData,
       {
@@ -141,7 +141,7 @@ export class SkillService {
     skillClassId: string,
     skillData: Partial<SkillClass>,
   ): Promise<ApiResponse<SkillClass>> {
-    const response = await axiosInstance.put<any, ApiResponse<SkillClass>>(
+    const response = await axiosInstance.put<unknown, ApiResponse<SkillClass>>(
       `${this.basePath}/${skillClassId}`,
       skillData,
     );
@@ -158,7 +158,7 @@ export class SkillService {
     const formData = new FormData();
     formData.append("image", imageFile);
 
-    const response = await axiosInstance.post<any, ApiResponse<{ image_url: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ image_url: string }>>(
       `${this.basePath}/${skillClassId}/image`,
       formData,
       {
@@ -172,7 +172,7 @@ export class SkillService {
    * 获取技能设备列表
    */
   async getSkillDevices(skillClassId: string): Promise<ApiResponse<any[]>> {
-    const response = await axiosInstance.get<any, ApiResponse<any[]>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<any[]>>(
       `${this.basePath}/${skillClassId}/devices`,
     );
     return response;

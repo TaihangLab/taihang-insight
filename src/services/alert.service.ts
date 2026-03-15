@@ -19,7 +19,7 @@ export class AlertService {
    * 获取实时预警列表
    */
   async getRealTimeAlerts(params?: AlertListParams): Promise<PaginatedResponse<Alert>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<Alert>>(this.basePath, {
+    const response = await axiosInstance.get<unknown, PaginatedResponse<Alert>>(this.basePath, {
       params,
     });
     return response;
@@ -29,7 +29,7 @@ export class AlertService {
    * 获取预警详情
    */
   async getAlertDetail(alertId: string): Promise<ApiResponse<Alert>> {
-    const response = await axiosInstance.get<any, ApiResponse<Alert>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<Alert>>(
       `${this.basePath}/${alertId}`,
     );
     return response;
@@ -42,7 +42,7 @@ export class AlertService {
     alertId: string,
     updateData: UpdateAlertParams,
   ): Promise<ApiResponse<Alert>> {
-    const response = await axiosInstance.put<any, ApiResponse<Alert>>(
+    const response = await axiosInstance.put<unknown, ApiResponse<Alert>>(
       `${this.basePath}/${alertId}`,
       updateData,
     );
@@ -56,7 +56,7 @@ export class AlertService {
     alertIds: string[],
     updateData: UpdateAlertParams,
   ): Promise<ApiResponse<void>> {
-    const response = await axiosInstance.put<any, ApiResponse<void>>(
+    const response = await axiosInstance.put<unknown, ApiResponse<void>>(
       `${this.basePath}/batch-update`,
       {
         ids: alertIds,
@@ -80,7 +80,7 @@ export class AlertService {
    * 批量删除预警
    */
   async batchDeleteAlerts(alertIds: string[]): Promise<ApiResponse<void>> {
-    const response = await axiosInstance.post<any, ApiResponse<void>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<void>>(
       `${this.basePath}/batch-delete`,
       { ids: alertIds },
     );
@@ -95,7 +95,7 @@ export class AlertService {
     reviewNotes: string,
     reviewerName: string,
   ): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/${alertId}/false-alarm`,
       { review_notes: reviewNotes, reviewer_name: reviewerName },
     );
@@ -110,7 +110,7 @@ export class AlertService {
     reviewNotes: string,
     reviewerName: string,
   ): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/batch-false-alarm`,
       {
         ids: alertIds,
@@ -125,7 +125,7 @@ export class AlertService {
    * 获取预警统计数据
    */
   async getAlertStatistics(days: number = 7): Promise<ApiResponse<AlertStatistics>> {
-    const response = await axiosInstance.get<any, ApiResponse<AlertStatistics>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<AlertStatistics>>(
       `${this.basePath}/statistics`,
       { params: { days } },
     );
@@ -191,7 +191,7 @@ export class AlertService {
    * 获取已连接的客户端列表
    */
   async getConnectedClients(): Promise<ApiResponse<any[]>> {
-    const response = await axiosInstance.get<any, ApiResponse<any[]>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<any[]>>(
       `${this.basePath}/stream/clients`,
     );
     return response;
@@ -201,7 +201,7 @@ export class AlertService {
    * 发送测试预警
    */
   async sendTestAlert(): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/test`,
     );
     return response;

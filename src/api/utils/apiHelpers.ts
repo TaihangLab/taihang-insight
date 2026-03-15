@@ -37,19 +37,19 @@ export function apiGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> 
  * 发起 POST 请求
  */
 export function apiPost<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-  return authAxios.post<any, T>(url, data, config);
+  return authAxios.post<unknown, T>(url, data, config);
 }
 
 /**
  * 发起 PUT 请求
  */
 export function apiPut<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-  return authAxios.put<any, T>(url, data, config);
+  return authAxios.put<unknown, T>(url, data, config);
 }
 
 /**
  * 发起 DELETE 请求
  */
 export function apiDelete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-  return authAxios.delete<any, T>(url, config);
+  return authAxios.delete<unknown, T>(url, config);
 }

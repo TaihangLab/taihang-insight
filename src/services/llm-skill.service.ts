@@ -18,7 +18,7 @@ export class LlmSkillService {
    * 创建 LLM 技能
    */
   async createLlmSkill(skillData: CreateLlmSkillParams): Promise<ApiResponse<LlmSkill>> {
-    const response = await axiosInstance.post<any, ApiResponse<LlmSkill>>(this.basePath, skillData);
+    const response = await axiosInstance.post<unknown, ApiResponse<LlmSkill>>(this.basePath, skillData);
     return response;
   }
 
@@ -35,7 +35,7 @@ export class LlmSkillService {
       formData.append("skill_id", skillId);
     }
 
-    const response = await axiosInstance.post<any, ApiResponse<{ icon_url: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ icon_url: string }>>(
       `${this.basePath}/upload-icon`,
       formData,
       {
@@ -64,7 +64,7 @@ export class LlmSkillService {
       formData.append("output_parameters", JSON.stringify(outputParameters));
     }
 
-    const response = await axiosInstance.post<any, ApiResponse<any>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<any>>(
       `${this.basePath}/preview-test`,
       formData,
       {
@@ -78,7 +78,7 @@ export class LlmSkillService {
    * 获取 LLM 技能列表
    */
   async getLlmSkillList(params?: LlmSkillListParams): Promise<PaginatedResponse<LlmSkill>> {
-    const response = await axiosInstance.get<any, PaginatedResponse<LlmSkill>>(this.basePath, {
+    const response = await axiosInstance.get<unknown, PaginatedResponse<LlmSkill>>(this.basePath, {
       params,
     });
     return response;
@@ -88,7 +88,7 @@ export class LlmSkillService {
    * 获取 LLM 技能详情
    */
   async getLlmSkillDetail(skillId: string): Promise<ApiResponse<LlmSkill>> {
-    const response = await axiosInstance.get<any, ApiResponse<LlmSkill>>(
+    const response = await axiosInstance.get<unknown, ApiResponse<LlmSkill>>(
       `${this.basePath}/${skillId}`,
     );
     return response;
@@ -101,7 +101,7 @@ export class LlmSkillService {
     skillId: string,
     skillData: Partial<CreateLlmSkillParams>,
   ): Promise<ApiResponse<LlmSkill>> {
-    const response = await axiosInstance.put<any, ApiResponse<LlmSkill>>(
+    const response = await axiosInstance.put<unknown, ApiResponse<LlmSkill>>(
       `${this.basePath}/${skillId}`,
       skillData,
     );
@@ -112,7 +112,7 @@ export class LlmSkillService {
    * 发布 LLM 技能
    */
   async publishLlmSkill(skillId: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/${skillId}/publish`,
     );
     return response;
@@ -122,7 +122,7 @@ export class LlmSkillService {
    * 取消发布 LLM 技能
    */
   async unpublishLlmSkill(skillId: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await axiosInstance.post<any, ApiResponse<{ message: string }>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<{ message: string }>>(
       `${this.basePath}/${skillId}/unpublish`,
     );
     return response;
@@ -142,7 +142,7 @@ export class LlmSkillService {
    * 批量删除 LLM 技能
    */
   async batchDeleteLlmSkills(skillIds: string[]): Promise<ApiResponse<void>> {
-    const response = await axiosInstance.post<any, ApiResponse<void>>(
+    const response = await axiosInstance.post<unknown, ApiResponse<void>>(
       `${this.basePath}/batch-delete`,
       { ids: skillIds },
     );
