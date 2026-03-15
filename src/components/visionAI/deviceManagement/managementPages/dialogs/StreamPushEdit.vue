@@ -60,6 +60,7 @@
 </template>
 
 <script>
+ 
 /* eslint-disable vue/no-mutating-props */
 import CommonChannelEdit from "./CommonChannelEdit.vue";
 import wvpAxios from "@/api/camera/base";
