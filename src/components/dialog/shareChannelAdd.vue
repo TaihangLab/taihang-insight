@@ -88,7 +88,7 @@
         <el-table-column prop="gbDeviceId" label="编号" min-width="180"></el-table-column>
         <el-table-column v-if="hasShare === 'true'" label="自定义名称" min-width="180">
           <template v-slot:default="scope">
-            <div slot="—" class="name-wrapper">
+            <div class="name-wrapper">
               <el-input
                 size="small"
                 placeholder="不填按原名称"
@@ -99,7 +99,7 @@
         </el-table-column>
         <el-table-column v-if="hasShare === 'true'" label="自定义编号" min-width="180">
           <template v-slot:default="scope">
-            <div slot="—" class="name-wrapper">
+            <div class="name-wrapper">
               <el-input
                 size="small"
                 placeholder="不填按原编号"
