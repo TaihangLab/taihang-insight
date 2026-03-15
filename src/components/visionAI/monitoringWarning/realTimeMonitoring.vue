@@ -638,6 +638,7 @@
 </template>
 
 <script>
+/* eslint-disable vue/no-deprecated-events-api */
 import _imported_1 from '../../../../config/index.js';
 
 import player from '../../common/jessibuca.vue'
