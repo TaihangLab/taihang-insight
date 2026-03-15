@@ -30,20 +30,20 @@ import { authAxios } from "../commons";
  * ```
  */
 export function apiGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-  return authAxios.get<any, T>(url, config);
+  return authAxios.get<unknown, T>(url, config);
 }
 
 /**
  * 发起 POST 请求
  */
-export function apiPost<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+export function apiPost<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
   return authAxios.post<unknown, T>(url, data, config);
 }
 
 /**
  * 发起 PUT 请求
  */
-export function apiPut<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+export function apiPut<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
   return authAxios.put<unknown, T>(url, data, config);
 }
 

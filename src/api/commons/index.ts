@@ -239,7 +239,7 @@ export const createAxiosInstance = (
 /**
  * 附加通用响应拦截器
  * 处理统一的响应格式和常见错误
- * 后端新格式：{ code: 0, message: string, data: any, total?: number, page?: number, page_size?: number }
+ * 后端新格式：{ code: 0, message: string, data: unknown, total?: number, page?: number, page_size?: number }
  * 支持 200/201/204 状态码
  */
 export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
