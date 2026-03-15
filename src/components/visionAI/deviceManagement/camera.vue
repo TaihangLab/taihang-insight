@@ -663,16 +663,15 @@
 
                           <!-- 非第一个点 -->
                           <circle
-                            v-for="(point, index) in skillForm.electronicFence.currentPolygon"
-                            v-if="index !== 0"
-                            :key="`current-${index}`"
+                            v-for="(point, index) in skillForm.electronicFence.currentPolygon.slice(1)"
+                            :key="`current-${index + 1}`"
                             :cx="point.x"
                             :cy="point.y"
                             r="8"
                             fill="#f56c6c"
                             stroke="#fff"
                             stroke-width="2"
-                            @click.stop="handleCurrentPointClick(index)"
+                            @click.stop="handleCurrentPointClick(index + 1)"
                             style="cursor: pointer"
                           />
 

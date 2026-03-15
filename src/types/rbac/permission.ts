@@ -92,9 +92,10 @@ export interface PermissionBase {
 }
 
 /**
- * 权限信息
+ * 权限信息（已废弃，请使用 PermissionBase）
+ * @deprecated 直接使用 PermissionBase
  */
-export interface Permission extends PermissionBase {}
+export type Permission = PermissionBase;
 
 /**
  * 权限详情（包含更多信息）

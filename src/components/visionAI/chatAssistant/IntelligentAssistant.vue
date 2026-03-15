@@ -363,7 +363,7 @@
           <el-input
             v-model="inputMessage"
             placeholder="请输入你的问题..."
-            @keyup.enter.native="sendMessage"
+            @keyup.enter="sendMessage"
             class="message-input"
             :disabled="isGenerating"
           >
@@ -712,7 +712,7 @@
                 ref="fullscreenInput"
                 v-model="inputMessage"
                 placeholder="有什么我可以帮您的吗？"
-                @keyup.enter.native="sendMessage"
+                @keyup.enter="sendMessage"
                 class="fullscreen-message-input"
                 type="textarea"
                 :autosize="{ minRows: 1, maxRows: 4 }"
