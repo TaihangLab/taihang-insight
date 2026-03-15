@@ -400,19 +400,5 @@ export const authAxios = createAxiosInstance(
   },
 )
 
-/**
- * 原始响应的 axios 实例
- * 返回完整的 response 对象，不经过响应拦截器处理
- * 用于需要访问完整响应数据的场景（如 warningArchives.vue）
- */
-export const rawAuthAxios = createAxiosInstance(
-  {
-    timeout: 15000
-  },
-  {
-    skipResponseInterceptor: true
-  }
-)
-
 // 默认导出，方便其他模块使用
 export default authAxios

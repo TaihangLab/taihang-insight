@@ -2298,39 +2298,12 @@ export default {
 
         const response = await centerAPI.alert.getRealTimeAlerts(params);
 
-        console.log('loadWarningData - 原始响应:', response);
+        console.log('loadWarningData - 响应数据:', response);
 
-        // 处理响应数据 - 后端返回 { success: true, code: 200, data: [...], pagination: {...} }
-        // 响应拦截器返回 { data, pagination }
-        let apiWarnings = [];
-        let totalCount = 0;
-
-        // 情况1: 新格式 { data, pagination }
-        if (response && response.data && Array.isArray(response.data)) {
-          apiWarnings = response.data;
-          totalCount = response.pagination?.total || response.data.length;
-        }
-        // 情况2: 响应拦截器返回了 data.data (alerts 数组)
-        else if (Array.isArray(response)) {
-          apiWarnings = response;
-          totalCount = response.length;
-        }
-        // 情况3: 完整的响应对象 { code, data, total }
-        else if (response && response.code === 0) {
-          if (Array.isArray(response.data)) {
-            apiWarnings = response.data;
-          } else if (response.data && Array.isArray(response.data.alerts)) {
-            apiWarnings = response.data.alerts;
-          } else if (Array.isArray(response.alerts)) {
-            apiWarnings = response.alerts;
-          }
-          totalCount = response.total || apiWarnings.length;
-        }
-        // 情况4: 响应对象但有 alerts 字段
-        else if (response && Array.isArray(response.alerts)) {
-          apiWarnings = response.alerts;
-          totalCount = response.total || response.alerts.length;
-        }
+        // 响应拦截器已处理：成功时提取 data，失败时抛出错误
+        // 分页数据已合并到顶层：data, total, page, limit
+        const apiWarnings = Array.isArray(response.data) ? response.data : [];
+        const totalCount = response.total || response.pagination?.total || apiWarnings.length;
 
         console.log('loadWarningData - 提取的预警数据:', apiWarnings.length, '条');
 
@@ -2514,32 +2487,9 @@ export default {
 
         const response = await centerAPI.alert.getRealTimeAlerts(params);
 
-        // 处理响应数据 - 后端返回 { success: true, code: 200, data: [...], pagination: {...} }
-        // 响应拦截器返回 { data, pagination }
-        let apiWarnings = [];
-
-        // 情况1: 新格式 { data, pagination }
-        if (response && response.data && Array.isArray(response.data)) {
-          apiWarnings = response.data;
-        }
-        // 情况2: 响应拦截器返回了 data.data (alerts 数组)
-        else if (Array.isArray(response)) {
-          apiWarnings = response;
-        }
-        // 情况3: 完整的响应对象 { code, data, total }
-        else if (response && response.code === 0) {
-          if (Array.isArray(response.data)) {
-            apiWarnings = response.data;
-          } else if (response.data && Array.isArray(response.data.alerts)) {
-            apiWarnings = response.data.alerts;
-          } else if (Array.isArray(response.alerts)) {
-            apiWarnings = response.alerts;
-          }
-        }
-        // 情况4: 响应对象但有 alerts 字段
-        else if (response && Array.isArray(response.alerts)) {
-          apiWarnings = response.alerts;
-        }
+        // 响应拦截器已处理：成功时提取 data，失败时抛出错误
+        // 直接使用响应数据
+        const apiWarnings = Array.isArray(response.data) ? response.data : [];
 
         const convertedWarnings = apiWarnings.map(warning =>
           this.convertAPIWarningToFrontend(warning)
