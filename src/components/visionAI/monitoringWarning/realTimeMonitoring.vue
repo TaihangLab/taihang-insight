@@ -3100,19 +3100,19 @@ export default {
             this.detectionResults[index] = {
               detections: data.detections || [],
               frame_size: data.frame_size || {width: 1920, height: 1080}
-            })
+            }
 
             // 更新时间戳
             const now = new Date()
             this.detectionUpdateTime[index] =
-              `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`)
+              `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
 
             // 更新视频分辨率
             if (data.frame_size) {
               this.videoResolutions[index] = {
                 width: data.frame_size.width,
                 height: data.frame_size.height
-              })
+              }
             }
           } catch (error) {
             console.error('❌ 解析检测结果失败:', error)
