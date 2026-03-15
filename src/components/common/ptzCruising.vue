@@ -15,7 +15,7 @@
     <p>
       <el-tag
         v-for="(item, index) in presetList"
-        key="item.presetId"
+        :key="item.presetId"
         closable
         @close="delPreset(item, index)"
         style="margin-right: 1rem; cursor: pointer"

@@ -2,7 +2,7 @@
   <div id="ptzPreset" style="width: 100%">
     <el-tag
       v-for="item in presetList"
-      key="item.presetId"
+      :key="item.presetId"
       closable
       @close="delPreset(item)"
       @click="gotoPreset(item)"
