@@ -41,7 +41,7 @@
         @node-contextmenu="contextmenuEventHandler"
         @node-click="nodeClickHandler"
       >
-        <template class="custom-tree-node" v-slot:default="{ node }">
+        <template v-slot:default="{ node }">
           <span class="custom-tree-node">
             <span
               v-if="node.data.type === 0 && chooseId !== node.data.deviceId"
