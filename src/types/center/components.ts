@@ -46,8 +46,6 @@ export interface DeviceWarning {
 
 export interface LocationInfo {
   location: string;
-  weather: string;
-  airQuality: string;
   loading: boolean;
 }
 

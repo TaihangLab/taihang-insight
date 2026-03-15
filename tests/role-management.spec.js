@@ -256,7 +256,7 @@ test.describe('角色管理页面', () => {
     // 【验证业务规则】点击删除按钮应打开确认对话框
 
     // 先创建一个角色
-    await page.getByTestId('btn-add-role, .btn-add, [data-testid*="add"]').or(page.locator('button').filter({ hasText: '新增角色' })).or(page.locator('button').filter({ hasText: '新增' }))).click();
+    await page.getByTestId('btn-add-role, .btn-add, [data-testid*="add"]').or(page.locator('button').filter({ hasText: '新增角色' })).or(page.locator('button').filter({ hasText: '新增' })).click();
     await page.waitForSelector('.el-dialog');
     await page.fill('.el-dialog input[placeholder*="角色名称"], .el-dialog input[placeholder*="role_name"]', '待删除角色');
     await page.fill('.el-dialog input[placeholder*="角色代码"], .el-dialog input[placeholder*="role_code"]', 'role_to_delete');
@@ -282,7 +282,7 @@ test.describe('角色管理页面', () => {
     // 【已知问题】删除功能未连接API，仅操作本地数据
 
     // 先创建一个角色
-    await page.getByTestId('btn-add-role, .btn-add, [data-testid*="add"]').or(page.locator('button').filter({ hasText: '新增角色' })).or(page.locator('button').filter({ hasText: '新增' }))).click();
+    await page.getByTestId('btn-add-role, .btn-add, [data-testid*="add"]').or(page.locator('button').filter({ hasText: '新增角色' })).or(page.locator('button').filter({ hasText: '新增' })).click();
     await page.waitForSelector('.el-dialog');
     await page.fill('.el-dialog input[placeholder*="角色名称"], .el-dialog input[placeholder*="role_name"]', '待删除角色');
     await page.fill('.el-dialog input[placeholder*="角色代码"], .el-dialog input[placeholder*="role_code"]', 'role_to_delete');
@@ -315,7 +315,7 @@ test.describe('角色管理页面', () => {
     // 【已知问题】状态显示不友好
 
     // 先创建一个角色
-    await page.getByTestId('btn-add-role, .btn-add, [data-testid*="add"]').or(page.locator('button').filter({ hasText: '新增角色' })).or(page.locator('button').filter({ hasText: '新增' }))).click();
+    await page.getByTestId('btn-add-role, .btn-add, [data-testid*="add"]').or(page.locator('button').filter({ hasText: '新增角色' })).or(page.locator('button').filter({ hasText: '新增' })).click();
     await page.waitForSelector('.el-dialog');
     await page.fill('.el-dialog input[placeholder*="角色名称"], .el-dialog input[placeholder*="role_name"]', '状态测试角色');
     await page.fill('.el-dialog input[placeholder*="角色代码"], .el-dialog input[placeholder*="role_code"]', 'status_test_role');

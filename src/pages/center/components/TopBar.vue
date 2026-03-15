@@ -28,8 +28,6 @@ const internalTime = ref<string>("");
 // 如果没有传入位置信息，内部获取
 const internalLocationInfo = reactive<LocationInfo>({
   location: "加载中...",
-  weather: "--",
-  airQuality: "--",
   loading: true,
 });
 
@@ -107,11 +105,6 @@ onBeforeUnmount(() => {
       <div class="flex items-center gap-2" style="color: #7eaee5">
         <i class="i-carbon-location text-base" style="color: #00ffff"></i>
         <span>{{ displayLocationInfo.location }}</span>
-      </div>
-      <div class="flex items-center gap-2" style="color: #7eaee5">
-        <i class="i-carbon-sun text-base" style="color: #00ffff"></i>
-        <span>{{ displayLocationInfo.weather }}</span>
-        <span class="ml-2" style="color: #44ff9b">{{ displayLocationInfo.airQuality }}</span>
       </div>
       <el-button
         :icon="Expand"

@@ -351,9 +351,9 @@ export default {
             }
           }
           this.loading = false;
-          if (callback) callback();
+          if (callback) callback();  
         })
-        .catch((error) => {
+        .catch((error) => {  
           console.log(error);
           this.loading = false;
         });
@@ -382,7 +382,7 @@ export default {
               }
             }
           })
-          .catch((error) => {
+          .catch((error) => {  
             console.log(error);
           });
       }
@@ -409,7 +409,7 @@ export default {
             link.click();
           }
         })
-        .catch((error) => {
+        .catch((error) => {  
           console.log(error);
         });
     },
@@ -541,9 +541,9 @@ export default {
               console.log(this.dateFilesObj);
             }
           }
-          if (callback) callback();
+          if (callback) callback();  
         })
-        .catch((error) => {
+        .catch((error) => {  
           console.log(error);
         });
     },

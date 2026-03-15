@@ -102,11 +102,9 @@ const currentDetailTime = ref<string>("");
 // 大屏摘要数据
 const dashboardSummary = ref<DashboardSummary | null>(null);
 
-// 天气和位置信息
+// 位置信息
 const locationInfo = reactive<LocationInfo>({
   location: "",
-  weather: "",
-  airQuality: "",
   loading: true,
 });
 
@@ -136,7 +134,6 @@ const tableHeight = ref<number>(280);
 const chartHeight = ref<number>(200);
 
 // 定时器
-let weatherTimer: number | null = null;
 let timeTimer: number | null = null;
 let dashboardRefreshTimer: number | null = null;
 
@@ -214,23 +211,6 @@ async function loadDashboardData(): Promise<void> {
 }
 
 /**
- * 获取天气数据
- */
-async function fetchWeatherData(): Promise<void> {
-  locationInfo.loading = true;
-  try {
-    // TODO: 接入真实天气API
-    locationInfo.location = "太行工业园区";
-    locationInfo.weather = "晴 26°C";
-    locationInfo.airQuality = "空气质量: 良";
-  } catch (error) {
-    console.error("获取天气数据失败:", error);
-  } finally {
-    locationInfo.loading = false;
-  }
-}
-
-/**
  * 切换全屏
  */
 async function toggleFullscreen(): Promise<void> {
@@ -259,9 +239,6 @@ onMounted(() => {
   // 更新当前时间
   updateCurrentTime();
 
-  // 初始化天气数据
-  fetchWeatherData();
-
   // 加载大屏摘要数据
   loadDashboardData();
 
@@ -273,7 +250,6 @@ onMounted(() => {
   });
 
   // 设置定时器
-  weatherTimer = window.setInterval(fetchWeatherData, 5 * 60 * 1000);
   timeTimer = window.setInterval(updateCurrentTime, 1000);
   dashboardRefreshTimer = window.setInterval(loadDashboardData, 30 * 1000);
 
@@ -290,7 +266,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   // 清理定时器
-  if (weatherTimer) clearInterval(weatherTimer);
   if (timeTimer) clearInterval(timeTimer);
   if (dashboardRefreshTimer) clearInterval(dashboardRefreshTimer);
 
