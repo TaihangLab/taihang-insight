@@ -28,6 +28,10 @@ export default defineConfig({
           ],
           exclude: ['node_modules', 'dist'],
           testTimeout: 10000,
+          alias: {
+            '@': resolve(__dirname, 'src'),
+            '@static': resolve(__dirname, 'static')
+          },
         },
       },
       // 集成测试项目（API 调用后端）
