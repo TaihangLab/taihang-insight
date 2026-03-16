@@ -209,10 +209,11 @@ const parentNode = ref<PermissionTreeNode | null>(null);
 /**
  * 获取节点类型标签颜色
  * Element Plus el-tag type: 'primary' | 'success' | 'info' | 'warning' | 'danger'
+ * 注意：数据已通过 normalizePermissionTree 转换，directory -> folder
  */
 const getNodeTypeTagType = (nodeType: string) => {
   const typeMap: Record<string, string> = {
-    directory: "info", // 目录使用 info (蓝色)
+    folder: "info", // 目录使用 info (蓝色)
     menu: "warning", // 菜单使用 warning (橙色)
     button: "success", // 按钮使用 success (绿色)
   };
@@ -221,10 +222,11 @@ const getNodeTypeTagType = (nodeType: string) => {
 
 /**
  * 获取节点类型标签文本
+ * 注意：数据已通过 normalizePermissionTree 转换，directory -> folder
  */
 const getNodeTypeLabel = (nodeType: string) => {
   const labelMap: Record<string, string> = {
-    directory: "目录",
+    folder: "目录",
     menu: "菜单",
     button: "按钮",
   };

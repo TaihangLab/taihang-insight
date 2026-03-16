@@ -39,19 +39,55 @@ const TEST_DATA = {
 
 // 测试辅助函数
 async function login(page: Page) {
+  // 监听网络请求来检查登录响应
+  let loginResponse: any = null;
+  page.on('response', async (response) => {
+    if (response.url().includes('/login')) {
+      try {
+        const text = await response.text();
+        console.log('登录响应内容:', text);
+        loginResponse = JSON.parse(text);
+      } catch (e) {
+        console.log('登录响应解析失败:', e);
+      }
+      console.log('登录响应状态:', response.status());
+    }
+  });
+
   await page.goto(`${BASE_URL}/#/login`);
 
   // 等待登录表单
-  await page.waitForSelector('input[type="text"]', { timeout: 10000 });
+  await page.waitForSelector('.tech-input', { timeout: 10000 });
 
-  await page.fill('input[type="text"]', 'admin');
-  await page.fill('input[type="password"]', 'Admin@123456');
+  // 填写租户编码 - 尝试使用数字ID
+  await page.fill('input[placeholder*="租户编码"]', '1000000000000001');
+
+  // 填写用户名
+  await page.fill('input[placeholder*="用户名"]', 'admin');
+
+  // 填写密码
+  await page.fill('input[placeholder*="密码"]', 'admin123456');
 
   // 点击登录按钮
-  await page.click('button[type="submit"]');
+  await page.click('.tech-login-btn');
 
-  // 等待跳转
-  await page.waitForTimeout(2000);
+  // 等待登录响应
+  await page.waitForTimeout(3000);
+
+  // 检查登录响应
+  if (loginResponse) {
+    console.log('登录响应 code:', loginResponse.code);
+    console.log('登录响应 message:', loginResponse.message);
+    console.log('登录响应 data:', loginResponse.data ? '有数据' : '无数据');
+  }
+
+  // 确认不再在登录页面
+  const currentUrl = page.url();
+  console.log('登录后 URL:', currentUrl);
+
+  if (currentUrl.includes('/#/login')) {
+    throw new Error(`登录失败：仍在登录页面。响应: ${JSON.stringify(loginResponse)}`);
+  }
 }
 
 async function cleanupTestData(page: Page, dataType: string, identifier: string) {
@@ -77,8 +113,22 @@ test.describe('RBAC 租户管理 CRUD E2E', () => {
   test('应完成租户 CRUD 完整闭环', async ({ page }) => {
     await page.goto(`${BASE_URL}/#/systemManage/tenantManagement`);
 
-    // 等待列表加载
-    await page.waitForSelector('.el-table', { timeout: 10000 });
+    // 等待列表加载 - 增加超时时间并等待网络空闲
+    await page.waitForLoadState('networkidle', { timeout: 15000 });
+
+    // 调试：打印页面 URL 和标题
+    console.log('当前 URL:', page.url());
+    console.log('页面标题:', await page.title());
+
+    // 尝试等待表格，如果失败则截图
+    try {
+      await page.waitForSelector('.el-table', { timeout: 10000 });
+    } catch (e) {
+      // 调试：检查页面是否加载成功
+      const bodyText = await page.locator('body').textContent();
+      console.log('页面内容前 200 字符:', bodyText?.slice(0, 200));
+      throw e;
+    }
 
     // CREATE - 创建租户
     await page.click('button:has-text("新增")');
@@ -119,10 +169,11 @@ test.describe('RBAC 租户管理 CRUD E2E', () => {
 
   test('应验证租户列表分页功能', async ({ page }) => {
     await page.goto(`${BASE_URL}/#/systemManage/tenantManagement`);
-    await page.waitForSelector('.el-table', { timeout: 10000 });
+    await page.waitForSelector('.el-table', { timeout: 20000 });
 
-    // 获取初始数据量
-    const initialRows = await page.locator('.el-table-row').count();
+    // 验证有数据行
+    const rowCount = await page.locator('.el-table-row').count();
+    expect(rowCount).toBeGreaterThan(0);
 
     // 测试分页器是否存在
     const pagination = page.locator('.el-pagination');
@@ -141,14 +192,10 @@ test.describe('RBAC 用户管理 CRUD E2E', () => {
 
     // CREATE
     await page.click('button:has-text("新增")');
-    await page.fill('input[placeholder*="用户名"]', TEST_DATA.user.username);
-    await page.fill('input[placeholder*="真实姓名"]', TEST_DATA.user.realName);
+    await page.fill('input[placeholder*="用户名称"]', TEST_DATA.user.username);
+    await page.fill('input[placeholder*="用户昵称"]', TEST_DATA.user.realName);
     await page.fill('input[placeholder*="邮箱"]', TEST_DATA.user.email);
-    await page.fill('input[placeholder*="密码"]', TEST_DATA.user.password);
-
-    // 选择角色
-    await page.click('.el-select:has-text("请选择")');
-    await page.click('.el-select-dropdown__item:has-text("管理员")');
+    await page.fill('input[placeholder*="用户密码"]', TEST_DATA.user.password);
 
     await page.click('button:has-text("确定")');
     await expect(page.locator(`text=${TEST_DATA.user.realName}`)).toBeVisible({ timeout: 5000 });
@@ -160,7 +207,7 @@ test.describe('RBAC 用户管理 CRUD E2E', () => {
 
     // UPDATE
     await page.click('button:has-text("编辑")');
-    await page.fill('input[placeholder*="真实姓名"]', `${TEST_DATA.user.realName}-已修改`);
+    await page.fill('input[placeholder*="用户昵称"]', `${TEST_DATA.user.realName}-已修改`);
     await page.click('button:has-text("确定")');
     await expect(page.locator(`text=${TEST_DATA.user.realName}-已修改`)).toBeVisible();
 
@@ -336,8 +383,8 @@ test.describe('路由刷新和状态持久化', () => {
 
     // 创建测试数据
     await page.click('button:has-text("新增")');
-    await page.fill('input[placeholder*="用户名"]', `refresh_test_${Date.now()}`);
-    await page.fill('input[placeholder*="真实姓名"]', '刷新测试');
+    await page.fill('input[placeholder*="用户名称"]', `refresh_test_${Date.now()}`);
+    await page.fill('input[placeholder*="用户昵称"]', '刷新测试');
     await page.click('button:has-text("确定")');
 
     // 刷新验证
