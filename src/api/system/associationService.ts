@@ -214,9 +214,12 @@ class AssociationService {
 
   /**
    * 获取用户角色列表
+   * 使用查询参数而非路径参数：/api/v1/rbac/user-roles?user_id=xxx
    */
   static async getUserRoles(userId: string): Promise<UnifiedResponse<Role[]>> {
-    return rbacAxios.get(`/api/v1/rbac/user-roles/${userId}`);
+    return rbacAxios.get("/api/v1/rbac/user-roles", {
+      params: { user_id: userId }
+    });
   }
 }
 
