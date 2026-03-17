@@ -110,7 +110,7 @@ class ArchiveAPI {
   async getArchiveAlerts(
     archiveId: number,
     params: AlertRecordQueryParams = {},
-  ): Promise<ListWithPagination<Alert>> {
+  ): Promise<ListWithPagination<AlertRecord>> {
     if (!archiveId) {
       return Promise.reject(new Error("缺少档案ID"));
     }
@@ -118,7 +118,7 @@ class ArchiveAPI {
     const { page, limit } = normalizePageParams(params);
     const apiParams = { ...params, page, limit };
 
-    return apiGet<ListWithPagination<Alert>>(`/api/v1/alerts/archives/${archiveId}/alerts`, {
+    return apiGet<ListWithPagination<AlertRecord>>(`/api/v1/alerts/archives/${archiveId}/alerts`, {
       params: apiParams,
     });
   }

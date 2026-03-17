@@ -356,7 +356,10 @@ export function useReviewRecords() {
   const exportToCSV = (data: Record<string, any>[], filename: string) => {
     if (data.length === 0) return;
 
-    const headers = Object.keys(data[0]);
+    const firstRow = data[0];
+    if (!firstRow) return;
+
+    const headers = Object.keys(firstRow);
     const csvContent = [
       headers.join(','),
       ...data.map((row) => headers.map((header) => `"${row[header] || ''}"`).join(',')),

@@ -17,7 +17,7 @@ import type {
 } from '@/types/center/archive.d';
 import type { WarningItem } from '@/types/center/alert';
 import centerAPI from '@/api/center';
-import type { AlertArchive, Alert, AlertRecord, ArchiveQueryParams, AlertRecordQueryParams } from '@/types/center.d';
+import type { AlertArchive, Alert, ArchiveQueryParams, AlertRecordQueryParams } from '@/types/center.d';
 
 /**
  * 预警档案页面 Composable
@@ -319,11 +319,11 @@ export function useWarningArchives() {
       const response = await centerAPI.archive.getArchiveAlerts(archiveId, params);
 
       // 转换为前端格式
-      alertRecords.value = response.data.map((record: AlertRecord) => ({
+      alertRecords.value = response.data.map((record) => ({
         id: record.id || 0,
         alertId: record.archive_id || 0,
         name: record.name,
-        deviceName: record.device_name,
+        deviceName: record.device_name || '',
         imageUrl: record.violation_image_url || null,
         videoUrl: record.violation_video_url,
         alertTime: record.alert_time ? formatTimeDisplay(record.alert_time) : '',
