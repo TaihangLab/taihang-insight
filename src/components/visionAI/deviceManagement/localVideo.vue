@@ -324,20 +324,7 @@
 </template>
 
 <script>
-import _imported_1 from "../../../../config/index.js";
-
-import axios from "axios";
-const config = _imported_1;
-
-// 创建专用 axios 实例
-// 开发环境：使用相对路径，通过 Vite 代理访问（/videos -> localhost:8000）
-// 生产环境：使用 config.API_BASE_URL 作为 baseURL
-const isDev = import.meta.env.DEV;
-const localVideoAxios = axios.create({
-  baseURL: isDev ? '' : (config.API_BASE_URL || ''),
-  timeout: 15000,
-  withCredentials: !isDev, // 开发环境通过 Vite 代理，不需要 withCredentials
-});
+import localVideoAPI from "@/api/center/localVideo";
 
 export default {
   name: "LocalVideo",
@@ -413,7 +400,7 @@ export default {
       this.loading = true;
       try {
         const params = {
-          skip: 0,
+          page: 1,
           limit: 1000,
         };
         if (this.searchName) {
@@ -423,7 +410,7 @@ export default {
           params.is_streaming = this.filterStreaming;
         }
 
-        const response = await localVideoAxios.get("/api/v1/videos/local/list", { params });
+        const response = await localVideoAPI.getVideoList(params);
 
         this.videoList = response.data;
         this.totalVideos = this.videoList.length;
@@ -434,9 +421,7 @@ export default {
       } catch (error) {
         this.$message.error(
           "加载视频列表失败: " +
-            (error.response && error.response.data && error.response.data.detail
-              ? error.response.data.detail
-              : error.message),
+            (error.message || "未知错误"),
         );
       } finally {
         this.loading = false;
@@ -448,13 +433,11 @@ export default {
       for (const video of this.videoList) {
         if (video.is_streaming) {
           try {
-            const response = await localVideoAxios.get(
-              `/api/v1/videos/local/${video.id}/stream-status`,
-            );
-            if (response.data) {
+            const response = await localVideoAPI.getStreamStatus(video.id);
+            if (response) {
               // 使用 $set 确保Vue能追踪新属性的变化
-              video.rtsp_url = response.data.rtsp_url;
-              video.stream_stats = response.data.stats;
+              video.rtsp_url = response.rtsp_url;
+              video.stream_stats = response.stats;
             }
           } catch (error) {
             console.error(`获取视频${video.id}推流状态失败:`, error);
@@ -470,13 +453,11 @@ export default {
       const streamingVideos = this.videoList.filter((v) => v.is_streaming);
       for (const video of streamingVideos) {
         try {
-          const response = await localVideoAxios.get(
-            `/api/v1/videos/local/${video.id}/stream-status`,
-          );
-          if (response.data) {
+          const response = await localVideoAPI.getStreamStatus(video.id);
+          if (response) {
             // 使用 $set 确保Vue能追踪新属性的变化
-            video.rtsp_url = response.data.rtsp_url;
-            video.stream_stats = response.data.stats;
+            video.rtsp_url = response.rtsp_url;
+            video.stream_stats = response.stats;
           } else {
             // 推流状态不一致，刷新列表
             video.is_streaming = false;
@@ -544,29 +525,14 @@ export default {
           }
 
           try {
-            await localVideoAxios.post("/api/v1/videos/local/upload", formData, {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-              onUploadProgress: (progressEvent) => {
-                // 计算上传进度
-                if (progressEvent.total) {
-                  this.uploadProgress = Math.round(
-                    (progressEvent.loaded * 100) / progressEvent.total,
-                  );
-                }
-              },
-            });
+            await localVideoAPI.uploadVideo(formData);
 
             this.$message.success("视频上传成功");
             this.uploadDialogVisible = false;
             this.loadVideos();
           } catch (error) {
             this.$message.error(
-              "上传失败: " +
-                (error.response && error.response.data && error.response.data.detail
-                  ? error.response.data.detail
-                  : error.message),
+              "上传失败: " + (error.message || "未知错误"),
             );
           } finally {
             this.uploading = false;
@@ -609,17 +575,14 @@ export default {
               updateData.stream_fps = this.editForm.stream_fps;
             }
 
-            await localVideoAxios.put(`/api/v1/videos/local/${this.currentVideo.id}`, updateData);
+            await localVideoAPI.updateVideo(this.currentVideo.id, updateData);
 
             this.$message.success("视频信息已更新");
             this.editDialogVisible = false;
             this.loadVideos();
           } catch (error) {
             this.$message.error(
-              "更新失败: " +
-                (error.response && error.response.data && error.response.data.detail
-                  ? error.response.data.detail
-                  : error.message),
+              "更新失败: " + (error.message || "未知错误"),
             );
           }
         }
@@ -648,19 +611,11 @@ export default {
       this.streamingOperations.add(this.currentVideo.id);
 
       try {
-        const payload = {};
-        if (this.streamForm.stream_id) {
-          payload.stream_id = this.streamForm.stream_id;
-        }
-        // 只有当用户明确填写了帧率且值有效时才传递
-        if (this.streamForm.stream_fps && this.streamForm.stream_fps > 0) {
-          payload.stream_fps = this.streamForm.stream_fps;
-        }
+        const streamFps = this.streamForm.stream_fps && this.streamForm.stream_fps > 0
+          ? this.streamForm.stream_fps
+          : undefined;
 
-        const response = await localVideoAxios.post(
-          `/api/v1/videos/local/${this.currentVideo.id}/start-stream`,
-          payload,
-        );
+        const response = await localVideoAPI.startStream(this.currentVideo.id, streamFps);
 
         this.$message.success("推流已启动");
         this.streamDialogVisible = false;
@@ -668,7 +623,7 @@ export default {
         // 显示RTSP地址（10秒后自动关闭，也可手动关闭）
         this.$notify({
           title: "推流成功",
-          message: `RTSP地址: ${response.data.rtsp_url}`,
+          message: `RTSP地址: ${response.rtsp_url}`,
           type: "success",
           duration: 10000, // 10秒后自动关闭
           showClose: true, // 显示关闭按钮
@@ -677,10 +632,7 @@ export default {
         this.loadVideos();
       } catch (error) {
         this.$message.error(
-          "启动推流失败: " +
-            (error.response && error.response.data && error.response.data.detail
-              ? error.response.data.detail
-              : error.message),
+          "启动推流失败: " + (error.message || "未知错误"),
         );
       } finally {
         // 从操作集合中移除
@@ -697,16 +649,13 @@ export default {
       })
         .then(async () => {
           try {
-            await localVideoAxios.post(`/api/v1/videos/local/${video.id}/stop-stream`);
+            await localVideoAPI.stopStream(video.id);
 
             this.$message.success("推流已停止");
             this.loadVideos();
           } catch (error) {
             this.$message.error(
-              "停止推流失败: " +
-                (error.response && error.response.data && error.response.data.detail
-                  ? error.response.data.detail
-                  : error.message),
+              "停止推流失败: " + (error.message || "未知错误"),
             );
           }
         })
@@ -727,16 +676,13 @@ export default {
       })
         .then(async () => {
           try {
-            await localVideoAxios.delete(`/api/v1/videos/local/${video.id}`);
+            await localVideoAPI.deleteVideo(video.id);
 
             this.$message.success("视频已删除");
             this.loadVideos();
           } catch (error) {
             this.$message.error(
-              "删除失败: " +
-                (error.response && error.response.data && error.response.data.detail
-                  ? error.response.data.detail
-                  : error.message),
+              "删除失败: " + (error.message || "未知错误"),
             );
           }
         })

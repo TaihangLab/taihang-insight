@@ -3,7 +3,7 @@
  * 拆分为多个独立接口，分别获取各模块数据
  * 原 /api/v1/monitor/dashboard/summary 已弃用并删除
  */
-import authAxios from "@/api/commons";
+import { apiGet } from "@/api/utils/apiHelpers";
 import type {
   AlertSummary,
   AlertLevel,
@@ -22,7 +22,7 @@ class DashboardAPI {
    * GET /api/v1/monitor/alerts/summary
    */
   getAlertSummary(): Promise<AlertSummary> {
-    return authAxios.get<unknown, AlertSummary>("/api/v1/monitor/alerts/summary");
+    return apiGet<AlertSummary>("/api/v1/monitor/alerts/summary");
   }
 
   /**
@@ -30,7 +30,7 @@ class DashboardAPI {
    * GET /api/v1/monitor/alerts/levels
    */
   getAlertLevels(range: TimeRange = "7d"): Promise<AlertLevel[]> {
-    return authAxios.get<unknown, AlertLevel[]>("/api/v1/monitor/alerts/levels", {
+    return apiGet<AlertLevel[]>("/api/v1/monitor/alerts/levels", {
       params: { range },
     });
   }
@@ -40,7 +40,7 @@ class DashboardAPI {
    * GET /api/v1/monitor/alerts/status
    */
   getAlertStatus(range: TimeRange = "7d"): Promise<AlertStatus[]> {
-    return authAxios.get<unknown, AlertStatus[]>("/api/v1/monitor/alerts/status", {
+    return apiGet<AlertStatus[]>("/api/v1/monitor/alerts/status", {
       params: { range },
     });
   }
@@ -50,7 +50,7 @@ class DashboardAPI {
    * GET /api/v1/monitor/devices/top-warnings
    */
   getDeviceTopWarnings(range: TimeRange = "7d", topN: number = 10): Promise<DeviceTopWarning[]> {
-    return authAxios.get<unknown, DeviceTopWarning[]>("/api/v1/monitor/devices/top-warnings", {
+    return apiGet<DeviceTopWarning[]>("/api/v1/monitor/devices/top-warnings", {
       params: { range, top_n: topN },
     });
   }
@@ -60,7 +60,7 @@ class DashboardAPI {
    * GET /api/v1/monitor/system/status
    */
   getSystemStatus(): Promise<SystemStatus> {
-    return authAxios.get<unknown, SystemStatus>("/api/v1/monitor/system/status");
+    return apiGet<SystemStatus>("/api/v1/monitor/system/status");
   }
 
   /**

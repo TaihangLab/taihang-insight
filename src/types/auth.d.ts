@@ -145,3 +145,104 @@ export interface UnifiedResponse<T> {
   message: string;
   data: T;
 }
+
+// ==================== 新增接口类型 ====================
+
+/**
+ * 刷新令牌请求参数
+ */
+export interface RefreshTokenRequest {
+  refresh_token: string;
+}
+
+/**
+ * 刷新令牌响应
+ */
+export interface RefreshTokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  token_type?: string;
+  expires_in?: number;
+}
+
+/**
+ * 刷新用户态响应
+ */
+export interface RefreshUserStateResponse {
+  userInfo?: AuthInfoResponse;
+  permissions?: string[];
+  menuTree?: MenuItem[];
+  success?: boolean;
+  message?: string;
+}
+
+/**
+ * 修改密码请求参数
+ */
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+}
+
+/**
+ * 修改密码响应
+ */
+export interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+/**
+ * 重置密码请求参数
+ */
+export interface ResetPasswordRequest {
+  userId: number | string;
+  newPassword: string;
+}
+
+/**
+ * 重置密码响应
+ */
+export interface ResetPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+/**
+ * 缓存统计响应
+ */
+export interface CacheStatsResponse {
+  totalKeys: number;
+  hitRate: number;
+  memoryUsage: string;
+  keys?: Array<{
+    key: string;
+    ttl?: number;
+    size: number;
+  }>;
+}
+
+/**
+ * 清除缓存请求参数
+ */
+export interface ClearCacheRequest {
+  keys?: string[];
+}
+
+/**
+ * 清除缓存响应
+ */
+export interface ClearCacheResponse {
+  success: boolean;
+  clearedKeys: string[];
+  message?: string;
+}
+
+/**
+ * 初始化权限响应
+ */
+export interface InitPermissionsResponse {
+  success: boolean;
+  message?: string;
+  initializedPermissions?: number;
+}

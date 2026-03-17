@@ -6,6 +6,19 @@
  * 2. login 等公开接口使用 unAuthAxios
  * 3. 其他接口使用 authAxios，自动添加 token
  * 4. 使用自定义响应拦截器处理 401 错误和登录页面跳转
+ *
+ * 认证接口（/api/v1/auth）：
+ * - GET /api/v1/auth/info - 获取用户权限信息
+ * - GET /api/v1/auth/permissions - 获取权限码列表
+ * - GET /api/v1/auth/menu - 获取菜单树
+ * - GET /api/v1/auth/user-info - 获取用户信息
+ * - POST /api/v1/auth/change-password - 修改密码
+ * - POST /api/v1/auth/reset-password - 重置密码
+ * - POST /api/v1/auth/refresh-token - 刷新令牌
+ * - GET /api/v1/auth/cache/stats - 缓存统计
+ * - POST /api/v1/auth/cache/clear - 清除缓存
+ * - POST /api/v1/auth/user-info/refresh - 刷新用户态
+ * - POST /api/v1/auth/permissions/init - 初始化权限
  */
 
 import router from "@/router";
@@ -16,6 +29,16 @@ import type {
   LoginRequest,
   LoginResponse,
   MenuItem,
+  RefreshTokenResponse,
+  RefreshUserStateResponse,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
+  CacheStatsResponse,
+  ClearCacheRequest,
+  ClearCacheResponse,
+  InitPermissionsResponse,
 } from "@/types/auth";
 import type { AxiosResponse } from "axios";
 
@@ -73,6 +96,8 @@ const unAuthAxios = createAxiosInstance(
  * 认证 API 类
  */
 class AuthAPI {
+  // ==================== 认证相关 ====================
+
   /**
    * 用户登录（不需要 token）
    * POST /api/v1/auth/login
@@ -82,28 +107,72 @@ class AuthAPI {
   }
 
   /**
-   * 获取用户基本信息（需要 token）
-   * GET /api/v1/info
+   * 刷新令牌（需要 token）
+   * POST /api/v1/auth/refresh-token
+   */
+  async refreshToken(): Promise<RefreshTokenResponse> {
+    return authAxios.post("/api/v1/auth/refresh-token");
+  }
+
+  // ==================== 用户信息相关 ====================
+
+  /**
+   * 获取用户权限信息（需要 token）
+   * GET /api/v1/auth/info
    *
    * 注意：响应拦截器已提取 data.data，直接返回内层数据
    */
   async getUserInfo(): Promise<AuthInfoResponse> {
-    return authAxios.get("/api/v1/info");
+    return authAxios.get("/api/v1/auth/info");
   }
 
   /**
+   * 获取用户信息（需要 token）
+   * GET /api/v1/auth/user-info
+   *
+   * 注意：响应拦截器已提取 data.data，直接返回内层数据
+   */
+  async getUserDetail(): Promise<AuthInfoResponse> {
+    return authAxios.get("/api/v1/auth/user-info");
+  }
+
+  /**
+   * 刷新用户态（需要 token）
+   * POST /api/v1/auth/user-info/refresh
+   *
+   * 用于刷新用户相关数据（ userInfo, permissions, menuTree ）
+   */
+  async refreshUserState(): Promise<RefreshUserStateResponse> {
+    return authAxios.post("/api/v1/auth/user-info/refresh");
+  }
+
+  // ==================== 权限相关 ====================
+
+  /**
    * 获取权限码列表（需要 token）
-   * GET /api/v1/permissions
+   * GET /api/v1/auth/permissions
    *
    * 注意：响应拦截器已提取 data.data，直接返回内层数据
    */
   async getPermissions(): Promise<AuthPermissionsResponse> {
-    return authAxios.get("/api/v1/permissions");
+    return authAxios.get("/api/v1/auth/permissions");
   }
 
   /**
+   * 初始化权限（需要 token）
+   * POST /api/v1/auth/permissions/init
+   *
+   * 用于初始化用户权限数据
+   */
+  async initPermissions(): Promise<InitPermissionsResponse> {
+    return authAxios.post("/api/v1/auth/permissions/init");
+  }
+
+  // ==================== 菜单相关 ====================
+
+  /**
    * 获取菜单树（需要 token）
-   * GET /api/v1/menu
+   * GET /api/v1/auth/menu
    *
    * 后端返回结构：
    * {
@@ -124,7 +193,53 @@ class AuthAPI {
     user_name: string;
     menu_tree: MenuItem[];
   }> {
-    return authAxios.get("/api/v1/menu");
+    return authAxios.get("/api/v1/auth/menu");
+  }
+
+  // ==================== 密码相关 ====================
+
+  /**
+   * 修改密码（需要 token）
+   * POST /api/v1/auth/change-password
+   *
+   * @param oldPassword 旧密码
+   * @param newPassword 新密码
+   */
+  async changePassword(params: ChangePasswordRequest): Promise<ChangePasswordResponse> {
+    return authAxios.post("/api/v1/auth/change-password", params);
+  }
+
+  /**
+   * 重置密码（需要 token，管理员权限）
+   * POST /api/v1/auth/reset-password
+   *
+   * @param userId 用户ID
+   * @param newPassword 新密码
+   */
+  async resetPassword(params: ResetPasswordRequest): Promise<ResetPasswordResponse> {
+    return authAxios.post("/api/v1/auth/reset-password", params);
+  }
+
+  // ==================== 缓存管理 ====================
+
+  /**
+   * 获取缓存统计信息（需要 token）
+   * GET /api/v1/auth/cache/stats
+   *
+   * 返回缓存命中率、使用情况等统计信息
+   */
+  async getCacheStats(): Promise<CacheStatsResponse> {
+    return authAxios.get("/api/v1/auth/cache/stats");
+  }
+
+  /**
+   * 清除缓存（需要 token）
+   * POST /api/v1/auth/cache/clear
+   *
+   * @param keys 可选，指定要清除的缓存键，不传则清除所有
+   */
+  async clearCache(params?: ClearCacheRequest): Promise<ClearCacheResponse> {
+    return authAxios.post("/api/v1/auth/cache/clear", params);
   }
 }
 

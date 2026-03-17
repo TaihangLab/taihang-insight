@@ -1,4 +1,4 @@
-import authAxios from "@/api/commons";
+import { apiGet } from "@/api/utils/apiHelpers";
 import type {
   AlertSummary,
   AlertTypeStat,
@@ -17,13 +17,9 @@ class AlertStatisticsAPI {
   /**
    * 获取综合统计（包含设备 Top 10）
    * @param range 时间范围: '24h' | '7d' | '30d'
-   *
-   * 注意：响应拦截器会自动提取 data.data 字段
-   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
   async getSummary(range: TimeRange = "24h"): Promise<AlertSummary> {
-    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 AlertSummary
-    return authAxios.get<unknown, AlertSummary>("/api/v1/alerts/statistics", {
+    return apiGet<AlertSummary>("/api/v1/alerts/statistics", {
       params: { range },
     });
   }
@@ -32,13 +28,9 @@ class AlertStatisticsAPI {
    * 获取预警趋势数据
    * @param range 时间范围: '24h' | '7d' | '30d'
    * @param granularity 时间粒度: 'hour' | 'day'
-   *
-   * 注意：响应拦截器会自动提取 data.data 字段
-   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
   async getTrend(range: TimeRange = "24h", granularity: Granularity = "hour"): Promise<AlertTrend> {
-    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 AlertTrend
-    return authAxios.get<unknown, AlertTrend>("/api/v1/alerts/statistics/trend", {
+    return apiGet<AlertTrend>("/api/v1/alerts/statistics/trend", {
       params: { range, granularity },
     });
   }
@@ -47,13 +39,9 @@ class AlertStatisticsAPI {
    * 获取预警类型排名
    * @param range 时间范围: '24h' | '7d' | '30d'
    * @param topN 返回 Top N
-   *
-   * 注意：响应拦截器会自动提取 data.data 字段
-   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
   async getByType(range: TimeRange = "7d", topN: number = 10): Promise<AlertTypeStat[]> {
-    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 AlertTypeStat[]
-    return authAxios.get<unknown, AlertTypeStat[]>("/api/v1/alerts/statistics/by-type", {
+    return apiGet<AlertTypeStat[]>("/api/v1/alerts/statistics/by-type", {
       params: { range, top_n: topN },
     });
   }
@@ -61,13 +49,9 @@ class AlertStatisticsAPI {
   /**
    * 获取预警等级占比
    * @param range 时间范围: '24h' | '7d' | '30d'
-   *
-   * 注意：响应拦截器会自动提取 data.data 字段
-   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
   async getByLevel(range: TimeRange = "7d"): Promise<AlertLevelStat[]> {
-    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 AlertLevelStat[]
-    return authAxios.get<unknown, AlertLevelStat[]>("/api/v1/alerts/statistics/level", {
+    return apiGet<AlertLevelStat[]>("/api/v1/alerts/statistics/level", {
       params: { range },
     });
   }
@@ -76,13 +60,9 @@ class AlertStatisticsAPI {
    * 获取位置/设备预警数量 Top N
    * @param range 时间范围: '24h' | '7d' | '30d'
    * @param topN 返回 Top N
-   *
-   * 注意：响应拦截器会自动提取 data.data 字段
-   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
   async getByLocation(range: TimeRange = "7d", topN: number = 10): Promise<LocationStat[]> {
-    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 LocationStat[]
-    return authAxios.get<unknown, LocationStat[]>("/api/v1/alerts/statistics/location", {
+    return apiGet<LocationStat[]>("/api/v1/alerts/statistics/location", {
       params: { range, top_n: topN },
     });
   }
@@ -93,23 +73,16 @@ class AlertStatisticsAPI {
    */
   async getLatestImages(limit = 10): Promise<AlertImage[]> {
     try {
-      const response = await authAxios.get<unknown, AlertImage[]>("/api/v1/alerts/latest-images", {
+      const response = await apiGet<AlertImage[]>("/api/v1/alerts/latest-images", {
         params: { limit },
       });
 
-      // 响应拦截器已经处理了 UnifiedResponse 格式，直接返回 data 字段
-      let images: AlertImage[] = [];
-
-      if (Array.isArray(response)) {
-        // 响应拦截器已经提取了 data 字段
-        images = response.map((item: AlertImage) => ({
-          ...item,
-          // 如果 image_url 是 http/https 开头，确保直接使用完整 URL
-          image_url: item.image_url?.startsWith("http") ? item.image_url : item.image_url,
-        }));
-      }
-
-      return images;
+      // 处理图片 URL
+      return response.map((item: AlertImage) => ({
+        ...item,
+        // 如果 image_url 是 http/https 开头，确保直接使用完整 URL
+        image_url: item.image_url?.startsWith("http") ? item.image_url : item.image_url,
+      }));
     } catch (error) {
       console.error("[统计API] 获取最新预警图片失败:", error);
       // 失败时返回空数组
@@ -120,13 +93,9 @@ class AlertStatisticsAPI {
   /**
    * 获取预警处理情况统计
    * @param range 时间范围: '24h' | '7d' | '30d'
-   *
-   * 注意：响应拦截器会自动提取 data.data 字段
-   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
   async getProcessingStatus(range: TimeRange = "7d"): Promise<AlertLevelStat[]> {
-    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 AlertLevelStat[]
-    return authAxios.get<unknown, AlertLevelStat[]>("/api/v1/alerts/statistics/processing-status", {
+    return apiGet<AlertLevelStat[]>("/api/v1/alerts/statistics/processing-status", {
       params: { range },
     });
   }

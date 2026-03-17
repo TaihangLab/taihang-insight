@@ -379,11 +379,13 @@ export function markDynamicRoutesReady() {
 /**
  * 全局前置守卫 - 认证与权限检查
  *
- * 修复：刷新页面跳转 404 问题
- * 问题原因：刷新时 Store 可能还未从 localStorage 完全恢复，导致 userInfo 为 null
+ * 修复：
+ * 1. 刷新页面跳转 404 问题：Store 可能还未从 localStorage 完全恢复
+ * 2. localStorage 被删除后数据无法自动重建：新增 menus/permissions 自动加载
+ *
  * 解决方案：
  * 1. 优先使用 token 判断登录状态（token 存储更可靠）
- * 2. 如果 userInfo 为 null 但有 token，尝试异步获取用户信息
+ * 2. 如果 userInfo/menus/permissions 数据缺失，尝试异步获取
  * 3. 在动态路由加载完成前，不检查 to.matched.length
  *
  * 最佳实践：
@@ -397,7 +399,7 @@ router.beforeEach(async (to: RouteLocationNormalized) => {
     return true;
   }
 
-  // 2. 检查认证状态
+  // 2. 检查认证状态并确保必要数据已加载
   // 优先使用 token 判断登录状态，因为 token 存储在 localStorage 更可靠
   const { useTokenStore } = await import("@/stores/modules/token");
   const tokenStore = useTokenStore();
@@ -417,6 +419,34 @@ router.beforeEach(async (to: RouteLocationNormalized) => {
         path: "/login",
         query: { redirect: to.fullPath },
       };
+    }
+  }
+
+  // 2.1 确保菜单数据已加载（修复 localStorage 被删除后无法重建的问题）
+  if (tokenStore.hasAdminToken()) {
+    const { useMenusStore } = await import("@/stores/modules/menus");
+    const menusStore = useMenusStore();
+    if (!menusStore.hasData()) {
+      console.log("[Router] 菜单数据为空或已过期，尝试获取...");
+      try {
+        await menusStore.refresh();
+        console.log("[Router] 菜单数据获取成功");
+      } catch (error) {
+        console.error("[Router] 获取菜单失败", error);
+      }
+    }
+
+    // 2.2 确保权限数据已加载（修复 localStorage 被删除后无法重建的问题）
+    const { usePermissionsStore } = await import("@/stores/modules/permissions");
+    const permissionsStore = usePermissionsStore();
+    if (!permissionsStore.hasData()) {
+      console.log("[Router] 权限数据为空或已过期，尝试获取...");
+      try {
+        await permissionsStore.refresh();
+        console.log("[Router] 权限数据获取成功");
+      } catch (error) {
+        console.error("[Router] 获取权限失败", error);
+      }
     }
   }
 

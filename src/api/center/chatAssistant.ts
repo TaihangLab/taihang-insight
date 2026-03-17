@@ -1,4 +1,5 @@
-import { authAxios, type PageParams } from "@/api/commons";
+import { authAxios } from "@/api/commons";
+import { apiGet, apiPost, apiPut, apiDelete } from "@/api/utils/apiHelpers";
 import type { ChatMessage, ChatChunk, ChatStreamOptions } from "@/types/center.d";
 import { normalizePageParams } from "@/api/utils/pageUtils";
 
@@ -159,10 +160,9 @@ const chatAssistantAPI = {
   /**
    * 获取会话列表
    * @param params 查询参数
-   * @returns axios响应
    */
-  getChatConversations(params: PageParams = {}) {
-    return authAxios.get("/api/v1/chat/conversations", {
+  getChatConversations(params: { page?: number; limit?: number } = {}) {
+    return apiGet("/api/v1/chat/conversations", {
       params: normalizePageParams(params),
     });
   },
@@ -171,11 +171,10 @@ const chatAssistantAPI = {
    * 获取会话消息
    * @param conversationId 会话ID
    * @param params 查询参数
-   * @returns axios响应
    */
-  getChatMessages(conversationId: string, params: PageParams = {}) {
+  getChatMessages(conversationId: string, params: { page?: number; limit?: number } = {}) {
     const normalized = normalizePageParams(params);
-    return authAxios.get(`/api/v1/chat/conversations/${conversationId}/messages`, {
+    return apiGet(`/api/v1/chat/conversations/${conversationId}/messages`, {
       params: {
         ...normalized,
         limit: normalized.limit * 2, // 消息列表默认显示更多
@@ -186,87 +185,88 @@ const chatAssistantAPI = {
   /**
    * 删除会话
    * @param conversationId 会话ID
-   * @returns axios响应
    */
   deleteChatConversation(conversationId: string) {
-    return authAxios.delete(`/api/v1/chat/conversations/${conversationId}`);
+    return apiDelete<void>(`/api/v1/chat/conversations/${conversationId}`);
   },
 
   /**
    * 自动生成对话标题
    * @param conversationId 会话ID
-   * @returns Promise
    */
   autoGenerateTitle(conversationId: string) {
-    return authAxios.post(`/api/v1/chat/conversations/${conversationId}/auto-title`);
+    return apiPost<void>(`/api/v1/chat/conversations/${conversationId}/auto-title`);
   },
 
   /**
    * 更新会话标题
    * @param conversationId 会话ID
    * @param title 新的标题
-   * @returns Promise
    */
   updateConversationTitle(conversationId: string, title: string) {
     const formData = new FormData();
     formData.append("title", title);
-    return authAxios.put(`/api/v1/chat/conversations/${conversationId}/title`, formData);
+    // FormData 上传需要特殊配置
+    return apiPut<void>(`/api/v1/chat/conversations/${conversationId}/title`, formData as any, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
   },
 
   /**
    * 更新会话分组
    * @param conversationId 会话ID
    * @param groupId 分组ID，null表示移动到无分组
-   * @returns Promise
    */
   updateConversationGroup(conversationId: string, groupId: string | null) {
     const formData = new FormData();
     if (groupId) {
       formData.append("group_id", groupId);
     }
-    return authAxios.put(`/api/v1/chat/conversations/${conversationId}/group`, formData);
+    return apiPut<void>(`/api/v1/chat/conversations/${conversationId}/group`, formData as any, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
   },
 
   /**
-   * 停止生成并保存部分内容（模仿Cursor的停止机制）
+   * 停止生成并保存部分内容
    * @param conversationId 会话ID
    * @param messageId 助手消息ID
    * @param partialContent 已生成的部分内容
-   * @returns Promise
    */
   stopGeneration(conversationId: string, messageId: string, partialContent = "") {
     const formData = new FormData();
     formData.append("message_id", messageId);
     formData.append("partial_content", partialContent);
-    return authAxios.post(`/api/v1/chat/conversations/${conversationId}/stop-generation`, formData);
+    return apiPost<void>(`/api/v1/chat/conversations/${conversationId}/stop-generation`, formData as any, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
   },
 
   /**
    * 创建分组
    * @param name 分组名称
-   * @returns Promise
    */
   createGroup(name: string) {
     const formData = new FormData();
     formData.append("name", name);
-    return authAxios.post("/api/v1/chat/groups", formData);
+    return apiPost<void>("/api/v1/chat/groups", formData as any, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
   },
 
   /**
    * 获取分组列表
-   * @returns Promise
    */
   getGroups() {
-    return authAxios.get("/api/v1/chat/groups");
+    return apiGet("/api/v1/chat/groups");
   },
 
   /**
    * 删除分组
    * @param groupId 分组ID
-   * @returns Promise
    */
   deleteGroup(groupId: string) {
-    return authAxios.delete(`/api/v1/chat/groups/${groupId}`);
+    return apiDelete<void>(`/api/v1/chat/groups/${groupId}`);
   },
 };
 

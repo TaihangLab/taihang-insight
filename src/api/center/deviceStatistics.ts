@@ -1,4 +1,4 @@
-import { authAxios } from "@/api/commons";
+import { apiGet } from "@/api/utils/apiHelpers";
 import type { DeviceStatusStatistics, DeviceTreeNode, ConnectionSummary } from "@/types/center.d";
 
 /**
@@ -13,37 +13,25 @@ class DeviceStatisticsAPI {
   /**
    * 获取设备状态统计
    * GET /api/v1/devices/statistics
-   *
-   * 注意：响应拦截器会自动提取 data.data 字段
-   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
   getStatusStatistics(): Promise<DeviceStatusStatistics> {
-    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 DeviceStatusStatistics
-    return authAxios.get<unknown, DeviceStatusStatistics>("/api/v1/devices/statistics");
+    return apiGet<DeviceStatusStatistics>("/api/v1/devices/statistics");
   }
 
   /**
    * 获取设备树状结构
    * GET /api/v1/devices/tree
-   *
-   * 注意：响应拦截器会自动提取 data.data 字段
-   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
   getDeviceTree(): Promise<DeviceTreeNode[]> {
-    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 DeviceTreeNode[]
-    return authAxios.get<unknown, DeviceTreeNode[]>("/api/v1/devices/tree");
+    return apiGet<DeviceTreeNode[]>("/api/v1/devices/tree");
   }
 
   /**
    * 获取设备接入摘要
    * GET /api/v1/devices/summary
-   *
-   * 注意：响应拦截器会自动提取 data.data 字段
-   * 使用 axios 的类型参数来指定返回类型，而不是使用 'as' 类型断言
    */
   getConnectionSummary(): Promise<ConnectionSummary> {
-    // 响应拦截器会自动提取 data 字段，因此这里返回的就是 ConnectionSummary
-    return authAxios.get<unknown, ConnectionSummary>("/api/v1/devices/summary");
+    return apiGet<ConnectionSummary>("/api/v1/devices/summary");
   }
 }
 
