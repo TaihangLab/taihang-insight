@@ -23,14 +23,14 @@ class SkillAPI {
     const { page, limit } = normalizePageParams(params);
     const apiParams = { ...params, page, limit };
 
-    return apiGet<SkillClass[]>("/api/v1/skill-classes", { params: apiParams });
+    return apiGet<SkillClass[]>("/api/v1/skills/classes", { params: apiParams });
   }
 
   /**
    * 热加载技能类
    */
   async reloadSkillClasses(): Promise<void> {
-    return apiPost<void>("/api/v1/skill-classes/reload");
+    return apiPost<void>("/api/v1/skills/classes/reload");
   }
 
   /**
@@ -58,7 +58,7 @@ class SkillAPI {
       apiParams.status = true;
     }
 
-    return apiGet<SkillClass[]>("/api/v1/ai-tasks/api/v1/skill-classes", { params: apiParams });
+    return apiGet<SkillClass[]>("/api/v1/skills/classes", { params: apiParams });
   }
 
   /**
@@ -70,7 +70,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return apiGet<SkillClass>(`/api/v1/skill-classes/${skillClassId}`);
+    return apiGet<SkillClass>(`/api/v1/skills/classes/${skillClassId}`);
   }
 
   /**
@@ -82,7 +82,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return apiDelete<void>(`/api/v1/skill-classes/${skillClassId}`);
+    return apiDelete<void>(`/api/v1/skills/classes/${skillClassId}`);
   }
 
   /**
@@ -94,7 +94,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少技能ID数组"));
     }
 
-    return apiDelete<void>("/api/v1/skill-classes/batch-delete", {
+    return apiDelete<void>("/api/v1/skills/classes/batch-delete", {
       data: { skill_class_ids: ids },
     });
   }
@@ -108,7 +108,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少必要参数: 技能名称必须提供"));
     }
 
-    return apiPost<SkillClass>("/api/v1/skill-classes", skillData);
+    return apiPost<SkillClass>("/api/v1/skills/classes", skillData);
   }
 
   /**
@@ -121,7 +121,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return apiPut<SkillClass>(`/api/v1/skill-classes/${skillClassId}`, skillData);
+    return apiPut<SkillClass>(`/api/v1/skills/classes/${skillClassId}`, skillData);
   }
 
   /**
@@ -148,7 +148,7 @@ class SkillAPI {
       },
     };
 
-    return apiPost<void>(`/api/v1/skill-classes/${skillClassId}/image`, formData, config);
+    return apiPost<void>(`/api/v1/skills/classes/${skillClassId}/image`, formData, config);
   }
 
   /**
@@ -160,7 +160,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return apiGet<any[]>(`/api/v1/skill-classes/${skillClassId}/devices`);
+    return apiGet<any[]>(`/api/v1/skills/classes/${skillClassId}/devices`);
   }
 
   // ============================================
@@ -196,7 +196,7 @@ class SkillAPI {
    * @param skillClassId 技能类ID
    */
   async getAITaskSkillDetail(skillClassId: number): Promise<SkillClass> {
-    return apiGet<SkillClass>(`/api/v1/ai-tasks/api/v1/skill-classes/${skillClassId}`);
+    return apiGet<SkillClass>(`/api/v1/skills/classes/${skillClassId}`);
   }
 
   /**
@@ -236,7 +236,7 @@ class SkillAPI {
     const { page, limit } = normalizePageParams(params);
     const apiParams = { ...params, page, limit };
 
-    return apiGet<LlmSkill[]>("/api/v1/llm-skills/api/v1/skill-classes", { params: apiParams });
+    return apiGet<LlmSkill[]>("/api/v1/skills/llm", { params: apiParams });
   }
 
   /**
@@ -248,7 +248,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return apiGet<LlmSkill>(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`);
+    return apiGet<LlmSkill>(`/api/v1/skills/llm/${skillId}`);
   }
 
   /**
@@ -272,7 +272,7 @@ class SkillAPI {
       alert_conditions: skillData.alert_conditions || null,
     };
 
-    return apiPost<LlmSkill>("/api/v1/llm-skills/api/v1/skill-classes", data);
+    return apiPost<LlmSkill>("/api/v1/skills/llm", data);
   }
 
   /**
@@ -285,7 +285,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return apiPut<LlmSkill>(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`, skillData);
+    return apiPut<LlmSkill>(`/api/v1/skills/llm/${skillId}`, skillData);
   }
 
   /**
@@ -297,7 +297,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return apiPost<void>(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}/publish`);
+    return apiPost<void>(`/api/v1/skills/llm/${skillId}/publish`);
   }
 
   /**
@@ -309,7 +309,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return apiPost<void>(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}/unpublish`);
+    return apiPost<void>(`/api/v1/skills/llm/${skillId}/unpublish`);
   }
 
   /**
@@ -321,7 +321,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
-    return apiDelete<void>(`/api/v1/llm-skills/api/v1/skill-classes/${skillId}`);
+    return apiDelete<void>(`/api/v1/skills/llm/${skillId}`);
   }
 
   /**
@@ -333,7 +333,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少技能ID数组"));
     }
 
-    return apiPost<void>("/api/v1/llm-skills/api/v1/skill-classes/batch-delete", skillIds);
+    return apiPost<void>("/api/v1/skills/llm/batch-delete", skillIds);
   }
 
   /**
@@ -363,7 +363,7 @@ class SkillAPI {
       },
     };
 
-    return apiPost<void>("/api/v1/llm-skills/upload/skill-icon", formData, config);
+    return apiPost<void>("/api/v1/skills/llm/upload/skill-icon", formData, config);
   }
 
   /**
@@ -402,7 +402,7 @@ class SkillAPI {
       timeout: 60000,
     };
 
-    return apiPost<any>("/api/v1/llm-skills/api/v1/skill-classes/preview-test", formData, config);
+    return apiPost<any>("/api/v1/skills/llm/preview-test", formData, config);
   }
 
   // ============================================
@@ -418,7 +418,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少必要参数: 任务名称和技能ID必须提供"));
     }
 
-    return apiPost<LlmTask>("/api/v1/llm-skills/tasks", taskData);
+    return apiPost<LlmTask>("/api/v1/skills/llm/tasks", taskData);
   }
 
   /**
@@ -430,7 +430,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少任务ID"));
     }
 
-    return apiDelete<void>(`/api/v1/llm-skills/tasks/${taskId}`);
+    return apiDelete<void>(`/api/v1/skills/llm/tasks/${taskId}`);
   }
 
   /**
@@ -442,7 +442,7 @@ class SkillAPI {
     const { page, limit } = normalizePageParams(params);
     const apiParams = { ...params, page, limit: Math.min(limit, 100) };
 
-    return apiGet<LlmTask[]>("/api/v1/llm-skills/tasks", { params: apiParams });
+    return apiGet<LlmTask[]>("/api/v1/skills/llm/tasks", { params: apiParams });
   }
 
   /**
@@ -455,7 +455,7 @@ class SkillAPI {
       return Promise.reject(new Error("缺少任务ID"));
     }
 
-    return apiPut<LlmTask>(`/api/v1/llm-skills/tasks/${taskId}`, taskData);
+    return apiPut<LlmTask>(`/api/v1/skills/llm/tasks/${taskId}`, taskData);
   }
 }
 
