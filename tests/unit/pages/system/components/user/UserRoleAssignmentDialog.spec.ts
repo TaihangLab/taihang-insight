@@ -235,6 +235,135 @@ describe('UserRoleAssignmentDialog.vue', () => {
     // 验证用户名称计算属性
     expect(wrapper.vm.userName).toBe('测试用户');
   });
+
+  describe('租户 ID 相关测试', () => {
+    it('应该在用户缺少租户 ID 时抛出错误', async () => {
+      // 创建没有 tenant_id 的用户
+      const wrapper = mount(UserRoleAssignmentDialog, {
+        props: {
+          visible: false,
+          user: {
+            user_id: 'test_user_001',
+            nick_name: '测试用户',
+            // tenant_id 缺失
+          } as any,
+        },
+        global: {
+          stubs: {
+            'el-dialog': true,
+            'el-form': true,
+            'el-form-item': true,
+            'el-input': true,
+            'el-checkbox-group': true,
+            'el-checkbox': true,
+            'el-button': true,
+          },
+        },
+      });
+
+      // 触发 watch
+      await wrapper.setProps({ visible: true });
+      await flushPromises();
+
+      // 验证错误消息
+      expect(ElMessage.error).toHaveBeenCalledWith(expect.stringContaining('用户租户ID不存在'));
+    });
+
+    it('应该正确传递租户 ID 到 getRoles API', async () => {
+      const wrapper = await createWrapper();
+
+      // 验证 getRoles 被调用时传递了正确的 tenant_id
+      expect(associationService.getRoles).toHaveBeenCalledWith({
+        skip: 0,
+        limit: 1000,
+        tenant_id: '0', // mock 用户的租户 ID
+      });
+    });
+
+    it('应该支持不同租户 ID 的用户', async () => {
+      // 创建不同租户的用户
+      const differentTenantUser = {
+        user_id: 'test_user_002',
+        nick_name: '租户2用户',
+        tenant_id: '1000000000000002', // 不同租户
+      };
+
+      const wrapper = mount(UserRoleAssignmentDialog, {
+        props: {
+          visible: false,
+          user: differentTenantUser,
+        },
+        global: {
+          stubs: {
+            'el-dialog': true,
+            'el-form': true,
+            'el-form-item': true,
+            'el-input': true,
+            'el-checkbox-group': true,
+            'el-checkbox': true,
+            'el-button': true,
+          },
+        },
+      });
+
+      // Mock API
+      vi.mocked(associationService.getRoles).mockResolvedValue({
+        data: mockRoles,
+        total: 3,
+      } as any);
+      vi.mocked(associationService.getUserRoles).mockResolvedValue([] as any);
+
+      // 触发 watch
+      await wrapper.setProps({ visible: true });
+      await flushPromises();
+
+      // 验证使用了正确的租户 ID
+      expect(associationService.getRoles).toHaveBeenCalledWith({
+        skip: 0,
+        limit: 1000,
+        tenant_id: '1000000000000002',
+      });
+    });
+
+    it('应该在租户 ID 为空字符串时不传递该参数', async () => {
+      // 监控 getRoles 的调用
+      const getRolesCalls: any[] = [];
+      vi.mocked(associationService.getRoles).mockImplementation((params: any) => {
+        getRolesCalls.push(params);
+        return Promise.resolve({
+          data: mockRoles,
+          total: 3,
+        } as any);
+      });
+
+      mount(UserRoleAssignmentDialog, {
+        props: {
+          visible: false,
+          user: {
+            user_id: 'test_user_001',
+            nick_name: '测试用户',
+            tenant_id: '', // 空字符串
+          } as any,
+        },
+        global: {
+          stubs: {
+            'el-dialog': true,
+            'el-form': true,
+            'el-form-item': true,
+            'el-input': true,
+            'el-checkbox-group': true,
+            'el-checkbox': true,
+            'el-button': true,
+          },
+        },
+      });
+
+      await flushPromises();
+
+      // 验证：由于 tenant_id 为空字符串，应该抛出错误
+      expect(ElMessage.error).toHaveBeenCalledWith(expect.stringContaining('用户租户ID不存在'));
+    });
+  });
 });
 
 /**

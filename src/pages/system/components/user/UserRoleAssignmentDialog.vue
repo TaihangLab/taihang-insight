@@ -90,7 +90,7 @@ watch(
 
 const loadRolesAndUserRoles = async () => {
   try {
-    // 获取用户的租户ID
+    // 获取用户的租户ID（必须存在）
     const tenantId = props.user?.tenant_id;
 
     // 获取用户ID - 后端使用 user_id (string) 作为主键
@@ -100,6 +100,10 @@ const loadRolesAndUserRoles = async () => {
 
     if (!userId) {
       throw new Error('用户ID不存在');
+    }
+
+    if (!tenantId) {
+      throw new Error('用户租户ID不存在');
     }
 
     // 并行加载所有角色和用户已有角色

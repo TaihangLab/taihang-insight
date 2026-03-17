@@ -186,7 +186,7 @@ class AssociationService {
    * 获取角色列表
    */
   static async getRoles(params?: {
-    tenant_id?: number;
+    tenant_id?: string;
     page?: number;
     size?: number;
     skip?: number;
@@ -203,8 +203,8 @@ class AssociationService {
       if ("limit" in params && params.limit !== undefined) {
         queryParams.size = params.limit;
       }
-      // 租户ID
-      if ("tenant_id" in params && params.tenant_id !== undefined) {
+      // 租户ID（字符串类型）
+      if ("tenant_id" in params && params.tenant_id !== undefined && params.tenant_id !== null && params.tenant_id !== "") {
         queryParams.tenant_id = params.tenant_id;
       }
     }
