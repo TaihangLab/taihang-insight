@@ -108,13 +108,13 @@ export function useRoleData() {
 
         // 映射数据
         roles.value = items.map((item) => {
-          return {
-            id: Number(item.id),
+          const roleEntity: RoleEntity = {
+            ...item,
+            // 类型转换（确保字符串转换为正确的类型）
             role_code: String(item.role_code || ""),
             role_name: String(item.role_name || ""),
             data_scope: (item.data_scope || DataScope.ALL) as DataScope,
             status: Number(item.status) as Status,
-            tenant_id: Number(item.tenant_id || 0),
             create_time: String(item.create_time || ""),
             // 驼峰命名的字段用于兼容
             roleCode: String(item.role_code || ""),
@@ -122,9 +122,8 @@ export function useRoleData() {
             dataScope: (item.data_scope || DataScope.ALL) as DataScope,
             tenantCode: String(item.tenant_id || ""),
             createTime: String(item.create_time || ""),
-            // 保留原始数据
-            ...item,
-          } as RoleEntity;
+          };
+          return roleEntity;
         });
 
         // 使用后端返回的总数

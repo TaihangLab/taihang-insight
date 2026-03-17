@@ -127,7 +127,9 @@ export function useDepartmentData() {
       });
 
       // 同时更新上级部门选项
-      await fetchParentDeptOptions(params.tenant_id);
+      if (params.tenant_id !== null && params.tenant_id !== undefined) {
+        await fetchParentDeptOptions(params.tenant_id);
+      }
 
       return departments.value;
     } catch (error) {

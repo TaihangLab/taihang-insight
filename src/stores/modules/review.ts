@@ -42,14 +42,14 @@ export const useReviewStore = defineStore("review", () => {
    * 从 localStorage 加载复判记录
    */
   function loadRecords(): void {
-    records.value = storage.getIntelligentReviewRecords();
+    records.value = storage.getIntelligentReviewRecords() ?? [];
   }
 
   /**
    * 从 localStorage 加载还原预警
    */
   function loadRestoredWarnings(): void {
-    restoredWarnings.value = storage.getRestoredWarnings();
+    restoredWarnings.value = storage.getRestoredWarnings() ?? [];
   }
 
   /**

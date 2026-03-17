@@ -103,7 +103,10 @@ class PermissionCodeGenerator {
         if (routePath) {
           const segments = routePath.split("/").filter((s) => s);
           if (segments.length > 0) {
-            return this.normalizeSegment(segments[0]);
+            const firstSegment = segments[0];
+            if (firstSegment) {
+              return this.normalizeSegment(firstSegment);
+            }
           }
         }
         return "";
@@ -114,11 +117,18 @@ class PermissionCodeGenerator {
         if (routePath) {
           const segments = routePath.split("/").filter((s) => s);
           if (segments.length >= 2) {
-            const module = this.normalizeSegment(segments[0]);
-            const page = this.extractResource(segments[segments.length - 1]);
-            return `${module}:${page}:view`;
+            const firstSegment = segments[0];
+            const lastSegment = segments[segments.length - 1];
+            if (firstSegment !== undefined && lastSegment !== undefined) {
+              const module = this.normalizeSegment(firstSegment);
+              const page = this.extractResource(lastSegment);
+              return `${module}:${page}:view`;
+            }
           } else if (segments.length === 1) {
-            return `${this.normalizeSegment(segments[0])}:view`;
+            const firstSegment = segments[0];
+            if (firstSegment !== undefined) {
+              return `${this.normalizeSegment(firstSegment)}:view`;
+            }
           }
         } else if (parentCode) {
           // 基于父节点权限码生成

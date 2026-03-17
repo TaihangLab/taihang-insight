@@ -12,6 +12,7 @@ import type {
   UpdateUserRequest,
 } from "@/types/rbac/user";
 import type { PaginationState } from "@/types/rbac/common";
+import { Gender } from "@/types/rbac/common";
 import { useUserInfoStore } from "@/stores/modules/userInfo";
 import userService from "@/api/system/userService";
 import associationService from "@/api/system/associationService";
@@ -85,21 +86,22 @@ export function useUserData() {
 
         users.value = items.map((item: unknown) => {
           const data = item as Record<string, unknown>;
-          return {
+          const user: User = {
             id: Number(data.id),
             user_name: String(data.user_name || ""),
             nick_name: String(data.nick_name || ""),
             phone: String(data.phone || ""),
             email: String(data.email || ""),
             dept_id: Number(data.dept_id || 0),
-            gender: data.gender ?? 0,
+            gender: (data.gender ?? 0) as Gender,
             status: Number(data.status),
             tenant_id: String(data.tenant_id || ""),
             create_time: String(data.create_time || ""),
             update_time: String(data.update_time || ""),
-            ...(data.dept_name && { dept_name: String(data.dept_name) }),
-          };
-        }) as User[];
+            ...(data.dept_name ? { dept_name: String(data.dept_name) } : {}),
+          } as User;
+          return user;
+        });
 
         pagination.value.total = Number(response.total || 0);
         pagination.value.currentPage = currentPage;

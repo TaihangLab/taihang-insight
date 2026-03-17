@@ -172,6 +172,8 @@ export const storage = {
   /** 添加智能复判记录 */
   addIntelligentReviewRecord: (record: unknown) => {
     const records = storage.getIntelligentReviewRecords();
+    if (!records) return;
+
     records.unshift(record);
     // 限制记录数量
     if (records.length > 1000) {
@@ -187,6 +189,8 @@ export const storage = {
   /** 添加还原的预警 */
   addRestoredWarning: (warning: unknown) => {
     const warnings = storage.getRestoredWarnings();
+    if (!warnings) return;
+
     warnings.push({
       ...(typeof warning === "object" && warning !== null ? warning : {}),
       restoredAt: new Date().toISOString(),

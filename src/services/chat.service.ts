@@ -8,7 +8,6 @@ import type {
   ChatMessage,
   ChatConversation,
   ChatRequest,
-  ChatResponse,
   ConversationListParams,
 } from "./types";
 
