@@ -1,4 +1,4 @@
-import { cameraAPI, skillAPI } from '@/components/service/VisionAIService.js';
+import { cameraAPI, skillAPI, systemMonitorAPI } from '@/components/service/VisionAIService.js';
 import MediaServer from '@/components/service/MediaServer.js';
 
 export default {
@@ -51,6 +51,10 @@ export default {
       cameraRelatedTasks: [],
       // 任务加载状态
       taskLoading: false,
+      
+      // 推流健康状态映射 { task_id: { state, message, ... } }
+      streamingHealthMap: {},
+      streamingHealthTimer: null,
 
       // 摄像头类型筛选 - 新增
       currentCameraTypeFilter: 0,
@@ -239,13 +243,21 @@ export default {
     // 获取摄像头列表
     this.fetchCameraList();
     
-    
-    
     // 初始化摄像头类型筛选为全部(0)
     this.currentCameraTypeFilter = 0;
 
     // 获取技能类列表
     this.fetchSkillClasses();
+    
+    // 启动推流健康状态轮询
+    this.startStreamingHealthPolling();
+  },
+  
+  beforeDestroy() {
+    if (this.streamingHealthTimer) {
+      clearInterval(this.streamingHealthTimer);
+      this.streamingHealthTimer = null;
+    }
   },
 
   watch: {
@@ -271,6 +283,72 @@ export default {
   },
 
   methods: {
+    // ---- 推流健康状态 ----
+    startStreamingHealthPolling() {
+      this.fetchStreamingHealth();
+      this.streamingHealthTimer = setInterval(() => {
+        this.fetchStreamingHealth();
+      }, 10000);
+    },
+    
+    fetchStreamingHealth() {
+      systemMonitorAPI.getStreamingHealth()
+        .then(response => {
+          const data = response.data;
+          if (data && data.task_streamers) {
+            const map = {};
+            data.task_streamers.forEach(item => {
+              map[item.task_id] = {
+                state: item.state,
+                message: item.message || '',
+                is_running: item.is_running,
+                last_error: item.last_error,
+                frames_sent: item.frames_sent,
+                errors: item.errors,
+              };
+            });
+            this.streamingHealthMap = map;
+          }
+        })
+        .catch(() => {});
+    },
+    
+    getStreamingHealthType(health) {
+      if (!health) return 'info';
+      switch (health.state) {
+        case 'healthy': return 'success';
+        case 'starting': return 'warning';
+        case 'degraded': return 'warning';
+        case 'failed': return 'danger';
+        case 'stopped': return 'info';
+        default: return 'info';
+      }
+    },
+    
+    getStreamingHealthIcon(health) {
+      if (!health) return 'el-icon-question';
+      switch (health.state) {
+        case 'healthy': return 'el-icon-circle-check';
+        case 'starting': return 'el-icon-loading';
+        case 'degraded': return 'el-icon-warning';
+        case 'failed': return 'el-icon-circle-close';
+        case 'stopped': return 'el-icon-remove';
+        default: return 'el-icon-question';
+      }
+    },
+    
+    getStreamingHealthText(health) {
+      if (!health) return '未知';
+      switch (health.state) {
+        case 'healthy': return '正常';
+        case 'starting': return '启动中';
+        case 'degraded': return '异常';
+        case 'failed': return '失败';
+        case 'stopped': return '已停止';
+        default: return '未知';
+      }
+    },
+    
     // 获取摄像头列表数据
     fetchCameraList(params = {}) {
       this.loading = true;

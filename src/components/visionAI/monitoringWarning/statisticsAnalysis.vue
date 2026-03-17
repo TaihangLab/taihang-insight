@@ -55,6 +55,13 @@ export default {
   mounted() {
     this.initCharts();
     window.addEventListener("resize", this.handleResize);
+
+    // 初始化CSS变量 - 设置适当的面板高度
+    document.documentElement.style.setProperty("--panel-top-height", "380px");
+    document.documentElement.style.setProperty(
+      "--panel-bottom-height",
+      "350px"
+    );
   },
   beforeDestroy() {
     window.removeEventListener("resize", this.handleResize);
@@ -846,7 +853,7 @@ export default {
 
     <div class="main-content">
       <!-- 上方面板：预警趋势和预警类型TOP5 -->
-      <el-row :gutter="20" class="top-section">
+      <el-row :gutter="20">
         <!-- 左侧 - 预警趋势图表 -->
         <el-col :span="12">
           <div class="panel-box panel-equal-height">
@@ -925,34 +932,34 @@ export default {
 </template>
 
 <style scoped>
-/* 占满布局内容区（100%），与顶部标题栏一起一屏显示 */
+:root {
+  --panel-top-height: 380px;
+  --panel-bottom-height: 350px;
+}
+
 .visual-statistics {
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+  min-height: 100vh;
   background: linear-gradient(135deg, #001529 0%, #000b18 100%);
   color: #fff;
-  padding: 12px 16px;
+  padding: 16px;
   position: relative;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   margin: 0;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 /* 顶部标题栏 */
 .header-bar {
-  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background-color: #001529;
-  padding: 10px 20px;
+  padding: 12px 20px;
   position: relative;
   border-bottom: 1px solid #002140;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 
 .page-title {
@@ -1260,12 +1267,12 @@ export default {
   );
   border: 1px solid rgba(35, 88, 148, 0.5);
   border-radius: 4px;
-  padding: 12px 15px;
+  padding: 15px;
+  margin-bottom: 20px;
   position: relative;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  min-height: 0;
 }
 
 .panel-box:hover {
@@ -1275,32 +1282,28 @@ export default {
 
 .panel-title {
   color: #00ffff;
-  font-size: 15px;
-  margin-bottom: 10px;
-  flex-shrink: 0;
+  font-size: 16px;
+  margin-bottom: 15px;
   padding-left: 10px;
   border-left: 3px solid #00ffff;
   text-align: left;
 }
 
 .panel-equal-height {
-  flex: 1;
-  min-height: 0;
+  height: var(--panel-top-height);
   overflow: hidden;
 }
 
 .panel-bottom-equal-height {
-  flex: 1;
-  min-height: 0;
+  height: var(--panel-bottom-height);
   overflow: hidden;
 }
 
 /* 顶部统计卡片 */
 .statistics-header {
-  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   gap: 20px;
 }
 
@@ -1375,34 +1378,9 @@ export default {
   margin-left: 2px;
 }
 
-/* 主内容区域 - 占满剩余高度，内部两行均分 */
+/* 主内容区域 */
 .main-content {
-  flex: 1;
-  min-height: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.main-content .top-section,
-.main-content .bottom-section {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-}
-
-.main-content .top-section .el-col,
-.main-content .bottom-section .el-col {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.main-content .top-section .panel-box,
-.main-content .bottom-section .panel-box {
-  flex: 1;
-  min-height: 0;
 }
 
 /* 图表样式 */
@@ -1418,9 +1396,8 @@ export default {
 
 /* 设备TOP10列表 */
 .device-tabs {
-  flex-shrink: 0;
   display: flex;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   border-bottom: 1px solid rgba(0, 255, 255, 0.2);
 }
 
@@ -1448,10 +1425,9 @@ export default {
 }
 
 .device-top-list {
-  flex: 1;
-  min-height: 0;
+  height: calc(100% - 50px);
   overflow-y: auto;
-  padding: 8px 0;
+  padding: 10px 0;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
@@ -1524,7 +1500,7 @@ export default {
 
 /* 底部分区 */
 .bottom-section {
-  margin-top: 12px;
+  margin-top: 20px;
 }
 
 /* 响应式调整 */

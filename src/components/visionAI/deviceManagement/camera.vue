@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="page-container">
     <div class="camera-management">
       <!-- 左侧分类卡片 -->
@@ -243,6 +243,24 @@
                       {{ getAlertLevelName(task.alert_level) }}
                     </el-tag>
                   </div>
+                </div>
+                <!-- 推流健康状态 -->
+                <div v-if="task.config && task.config.rtsp_streaming && task.config.rtsp_streaming.enabled" class="task-streaming-health">
+                  <div class="streaming-indicator">
+                    <span class="streaming-label">推流状态：</span>
+                    <el-tag size="mini" 
+                      :type="getStreamingHealthType(streamingHealthMap[task.id])"
+                      effect="dark">
+                      <i :class="getStreamingHealthIcon(streamingHealthMap[task.id])"></i>
+                      {{ getStreamingHealthText(streamingHealthMap[task.id]) }}
+                    </el-tag>
+                  </div>
+                  <el-tooltip v-if="streamingHealthMap[task.id] && streamingHealthMap[task.id].message" 
+                    :content="streamingHealthMap[task.id].message" placement="top">
+                    <i class="el-icon-warning-outline streaming-error-icon" 
+                       v-if="streamingHealthMap[task.id] && (streamingHealthMap[task.id].state === 'failed' || streamingHealthMap[task.id].state === 'degraded')"
+                       style="color: #E6A23C; margin-left: 6px; cursor: help;"></i>
+                  </el-tooltip>
                 </div>
               </el-card>
             </div>

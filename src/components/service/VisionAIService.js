@@ -4003,6 +4003,47 @@ export const mlPipelineAPI = {
   }
 };
 
+/**
+ * 系统监控 API - 推流诊断与健康检查
+ */
+export const systemMonitorAPI = {
+  /**
+   * 获取推流环境完整诊断信息
+   * 包括 FFmpeg 安装状态、NVENC 可用性、RTSP 服务器可达性等
+   */
+  getStreamingDiagnostics() {
+    return visionAIAxios.get('/api/v1/system/streaming-diagnostics');
+  },
+
+  /**
+   * 获取推流健康状态摘要（轻量级，适合轮询）
+   */
+  getStreamingHealth() {
+    return visionAIAxios.get('/api/v1/system/streaming-health');
+  },
+
+  /**
+   * 获取AI任务执行器状态（含推流健康）
+   */
+  getExecutorStatus() {
+    return visionAIAxios.get('/api/v1/ai/monitor/executor-status');
+  },
+
+  /**
+   * 获取指定任务的性能报告（含推流详情）
+   */
+  getTaskPerformance(taskId) {
+    return visionAIAxios.get(`/api/v1/ai/monitor/task-performance/${taskId}`);
+  },
+
+  /**
+   * 获取系统健康检查
+   */
+  getHealthCheck() {
+    return visionAIAxios.get('/api/v1/system/health');
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
@@ -4016,5 +4057,6 @@ export default {
   realtimeMonitorAPI,
   realtimeDetectionAPI,
   mlPipelineAPI,
+  systemMonitorAPI,
   visionAIAxios
 };
