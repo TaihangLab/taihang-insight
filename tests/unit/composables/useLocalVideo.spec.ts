@@ -293,7 +293,9 @@ describe('useLocalVideo', () => {
     it('应该成功复制到剪贴板', async () => {
       const { copyToClipboard } = useLocalVideo()
 
-      await copyToClipboard('rtsp://localhost/test')
+      copyToClipboard('rtsp://localhost/test')
+      // 等待微任务队列完成
+      await vi.runAllTimersAsync()
 
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith('rtsp://localhost/test')
       expect(ElMessage.success).toHaveBeenCalledWith(
@@ -310,13 +312,13 @@ describe('useLocalVideo', () => {
 
       // 调用复制函数并等待异步完成
       copyToClipboard('rtsp://localhost/test')
-      await new Promise(resolve => setTimeout(resolve, 10))
+      await vi.runAllTimersAsync()
 
       expect(ElMessage.error).toHaveBeenCalledWith('复制失败')
 
       // 恢复默认 mock
       writeTextMock.mockResolvedValue(undefined)
-    }, 15000) // 增加超时时间到15秒
+    })
   })
 
   describe('格式化函数', () => {
