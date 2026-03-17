@@ -27,7 +27,7 @@ class ReviewSkillAPI {
     }
 
     try {
-      return await apiPost<ReviewSkill>("/api/v1/llm-skill-review/review-skills", skillData);
+      return await apiPost<ReviewSkill>("/api/v1/skills/llm/review-skills", skillData);
     } catch (error) {
       let errorMessage = "创建复判技能失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -67,7 +67,7 @@ class ReviewSkillAPI {
 
     try {
       return await apiPost<PreviewTestResponse>(
-        "/api/v1/llm-skill-review/review-skills/preview-test",
+        "/api/v1/skills/llm/review-skills/preview-test",
         formData,
         config,
       );
@@ -99,7 +99,7 @@ class ReviewSkillAPI {
 
     try {
       return await apiPut<ReviewSkill>(
-        `/api/v1/llm-skill-review/review-skills/${skillId}`,
+        `/api/v1/skills/llm/review-skills/${skillId}`,
         updateData,
       );
     } catch (error) {
@@ -181,7 +181,7 @@ class ReviewSkillAPI {
     }
 
     try {
-      return await apiGet<ReviewSkill[]>("/api/v1/llm-skill-review/review-skills", {
+      return await apiGet<ReviewSkill[]>("/api/v1/skills/llm/review-skills", {
         params: apiParams,
       });
     } catch (error) {
@@ -210,7 +210,7 @@ class ReviewSkillAPI {
     }
 
     try {
-      return await apiGet<ReviewSkill>(`/api/v1/llm-skill-review/review-skills/${skillId}`);
+      return await apiGet<ReviewSkill>(`/api/v1/skills/llm/review-skills/${skillId}`);
     } catch (error) {
       let errorMessage = "获取复判技能详情失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -237,7 +237,7 @@ class ReviewSkillAPI {
     }
 
     try {
-      await apiPost<void>(`/api/v1/llm-skill-review/review-skills/${skillId}/publish`);
+      await apiPost<void>(`/api/v1/skills/llm/review-skills/${skillId}/publish`);
     } catch (error) {
       let errorMessage = "发布复判技能失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -264,7 +264,7 @@ class ReviewSkillAPI {
     }
 
     try {
-      await apiPost<void>(`/api/v1/llm-skill-review/review-skills/${skillId}/unpublish`);
+      await apiPost<void>(`/api/v1/skills/llm/review-skills/${skillId}/unpublish`);
     } catch (error) {
       let errorMessage = "下线复判技能失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -291,7 +291,7 @@ class ReviewSkillAPI {
     }
 
     try {
-      await apiDelete<void>(`/api/v1/llm-skill-review/review-skills/${skillId}`);
+      await apiDelete<void>(`/api/v1/skills/llm/review-skills/${skillId}`);
     } catch (error) {
       let errorMessage = "删除复判技能失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -322,7 +322,7 @@ class ReviewSkillAPI {
     }
 
     try {
-      await apiPost<void>("/api/v1/llm-skill-review/review-skills/batch-delete", skillIds);
+      await apiPost<void>("/api/v1/skills/llm/review-skills/batch-delete", skillIds);
     } catch (error) {
       let errorMessage = "批量删除复判技能失败";
       if (error && typeof error === "object" && "response" in error) {
