@@ -29,7 +29,7 @@ class ArchiveAPI {
     const { page, limit } = normalizePageParams(params);
     const apiParams = { ...params, page, limit };
 
-    return apiGet<ListWithPagination<AlertArchive>>("/api/v1/alert-archives", {
+    return apiGet<ListWithPagination<AlertArchive>>("/api/v1/alerts/archives", {
       params: apiParams,
     });
   }
@@ -43,7 +43,7 @@ class ArchiveAPI {
       return Promise.reject(new Error("缺少档案ID"));
     }
 
-    return apiGet<AlertArchive>(`/api/v1/alert-archives/${archiveId}`);
+    return apiGet<AlertArchive>(`/api/v1/alerts/archives/${archiveId}`);
   }
 
   /**
@@ -60,7 +60,7 @@ class ArchiveAPI {
       return Promise.reject(new Error("缺少必要参数：档案名称、位置、开始时间和结束时间必须提供"));
     }
 
-    return apiPost<AlertArchive>("/api/v1/alert-archives", archiveData);
+    return apiPost<AlertArchive>("/api/v1/alerts/archives", archiveData);
   }
 
   /**
@@ -73,7 +73,7 @@ class ArchiveAPI {
       return Promise.reject(new Error("缺少档案ID"));
     }
 
-    return apiPut<AlertArchive>(`/api/v1/alert-archives/${archiveId}`, archiveData);
+    return apiPut<AlertArchive>(`/api/v1/alerts/archives/${archiveId}`, archiveData);
   }
 
   /**
@@ -85,7 +85,7 @@ class ArchiveAPI {
       return Promise.reject(new Error("缺少档案ID"));
     }
 
-    return apiDelete<void>(`/api/v1/alert-archives/${archiveId}`);
+    return apiDelete<void>(`/api/v1/alerts/archives/${archiveId}`);
   }
 
   /**
@@ -97,7 +97,7 @@ class ArchiveAPI {
       return Promise.reject(new Error("缺少档案ID数组"));
     }
 
-    return apiDelete<void>("/api/v1/alert-archives/batch", {
+    return apiDelete<void>("/api/v1/alerts/archives/batch", {
       data: { archive_ids: archiveIds },
     });
   }
@@ -118,7 +118,7 @@ class ArchiveAPI {
     const { page, limit } = normalizePageParams(params);
     const apiParams = { ...params, page, limit };
 
-    return apiGet<ListWithPagination<Alert>>(`/api/v1/alert-archives/${archiveId}/alerts`, {
+    return apiGet<ListWithPagination<Alert>>(`/api/v1/alerts/archives/${archiveId}/alerts`, {
       params: apiParams,
     });
   }
@@ -140,7 +140,7 @@ class ArchiveAPI {
       );
     }
 
-    return apiPost<AlertRecord>("/api/v1/alert-archives/alerts", recordData);
+    return apiPost<AlertRecord>("/api/v1/alerts/archives/alerts", recordData);
   }
 
   /**
@@ -152,7 +152,7 @@ class ArchiveAPI {
       return Promise.reject(new Error("缺少记录ID"));
     }
 
-    return apiGet<AlertRecord>(`/api/v1/alert-archives/alerts/${recordId}`);
+    return apiGet<AlertRecord>(`/api/v1/alerts/archives/alerts/${recordId}`);
   }
 
   /**
@@ -165,7 +165,7 @@ class ArchiveAPI {
       return Promise.reject(new Error("缺少记录ID"));
     }
 
-    return apiPut<AlertRecord>(`/api/v1/alert-archives/alerts/${recordId}`, recordData);
+    return apiPut<AlertRecord>(`/api/v1/alerts/archives/alerts/${recordId}`, recordData);
   }
 
   /**
@@ -178,7 +178,7 @@ class ArchiveAPI {
       return Promise.reject(new Error("缺少记录ID"));
     }
 
-    let url = `/api/v1/alert-archives/alerts/${recordId}`;
+    let url = `/api/v1/alerts/archives/alerts/${recordId}`;
     if (archiveId) {
       url += `?archive_id=${archiveId}`;
     }
@@ -195,7 +195,7 @@ class ArchiveAPI {
       return Promise.reject(new Error("缺少记录ID数组"));
     }
 
-    return apiPost<void>("/api/v1/alert-archives/alerts/batch-delete", {
+    return apiPost<void>("/api/v1/alerts/archives/alerts/batch-delete", {
       record_ids: recordIds,
     });
   }
@@ -220,7 +220,7 @@ class ArchiveAPI {
     };
 
     // 上传接口使用完整的 axios 调用，因为需要特殊配置
-    return apiPost<void>(`/api/v1/alert-archives/${archiveId}/upload/image`, formData, config);
+    return apiPost<void>(`/api/v1/alerts/archives/${archiveId}/upload/image`, formData, config);
   }
 
   /**
@@ -243,7 +243,7 @@ class ArchiveAPI {
     };
 
     return apiPost<void>(
-      `/api/v1/alert-archives/alerts/${recordId}/upload/image`,
+      `/api/v1/alerts/archives/alerts/${recordId}/upload/image`,
       formData,
       config,
     );
@@ -269,7 +269,7 @@ class ArchiveAPI {
     };
 
     return apiPost<void>(
-      `/api/v1/alert-archives/alerts/${recordId}/upload/video`,
+      `/api/v1/alerts/archives/alerts/${recordId}/upload/video`,
       formData,
       config,
     );
@@ -292,7 +292,7 @@ class ArchiveAPI {
     const apiParams = { ...params, page, limit };
 
     return apiGet<ListWithPagination<Alert>>(
-      `/api/v1/alert-archives/linked-alerts/${archiveId}`,
+      `/api/v1/alerts/archives/linked-alerts/${archiveId}`,
       {
         params: apiParams,
       },
@@ -309,7 +309,7 @@ class ArchiveAPI {
       return Promise.reject(new Error("缺少档案ID或预警ID"));
     }
 
-    return apiDelete<void>(`/api/v1/alert-archives/unlink-alert/${archiveId}/${alertId}`);
+    return apiDelete<void>(`/api/v1/alerts/archives/unlink-alert/${archiveId}/${alertId}`);
   }
 
   /**
@@ -322,7 +322,7 @@ class ArchiveAPI {
     const { page, limit } = normalizePageParams(params);
     const apiParams = { ...params, page, limit, exclude_archived: true };
 
-    return apiGet<ListWithPagination<Alert>>("/api/v1/alert-archives/available-alerts", {
+    return apiGet<ListWithPagination<Alert>>("/api/v1/alerts/archives/available-alerts", {
       params: apiParams,
     });
   }
@@ -347,7 +347,7 @@ class ArchiveAPI {
       link_reason: linkReason || "批量关联预警到档案",
     };
 
-    return apiPost<void>(`/api/v1/alert-archives/link-alerts/${archiveId}`, requestData);
+    return apiPost<void>(`/api/v1/alerts/archives/link-alerts/${archiveId}`, requestData);
   }
 }
 
