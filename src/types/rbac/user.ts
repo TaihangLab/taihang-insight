@@ -53,10 +53,13 @@ export type UserQueryForm = Partial<UserQueryFields> & {
 /**
  * 用户基本信息
  * 字段统一使用蛇形命名（snake_case）
+ *
+ * 注意：后端使用 user_id (string) 作为主键，不是 id (number)
+ * SysUser 使用复合主键（tenant_id + user_id）
  */
 export interface User {
-  /** 用户ID */
-  id: number;
+  /** 用户ID（后端使用 user_id: string） */
+  user_id?: string;
   /** 租户ID */
   tenant_id?: string;
   /** 用户名 */
@@ -131,8 +134,6 @@ export interface CreateUserRequest {
  * 更新用户请求参数
  */
 export interface UpdateUserRequest {
-  /** 用户ID（必填） */
-  id: number;
   /** 用户昵称 */
   nick_name?: string;
   /** 手机号码 */
@@ -154,7 +155,7 @@ export interface UpdateUserRequest {
  */
 export interface ResetPasswordRequest {
   /** 用户ID（必填） */
-  user_id: number;
+  user_id: string;
   /** 新密码（必填） */
   new_password: string;
 }
@@ -194,7 +195,7 @@ export type UpdateUserResponse = ApiResponse<User>;
  */
 export interface UserRole {
   /** 用户ID */
-  user_id: number;
+  user_id: string;
   /** 用户名 */
   user_name: string;
   /** 角色ID */

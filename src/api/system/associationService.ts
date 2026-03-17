@@ -10,12 +10,12 @@ export type { Role } from "@/types/rbac/role";
 export type { Permission } from "@/types/rbac/permission";
 
 export interface AssignRoleToUserRequest {
-  user_id: number;
+  user_id: string;
   role_id: number;
 }
 
 export interface AssignRolesToUserRequest {
-  user_id: number;
+  user_id: string;
   role_ids: number[];
 }
 
@@ -25,7 +25,7 @@ export interface AssignPermissionToRoleRequest {
 }
 
 export interface CheckPermissionRequest {
-  user_id: number;
+  user_id: string;
   url: string;
   method: string;
 }
@@ -45,7 +45,7 @@ class AssociationService {
   /**
    * 分配角色给用户
    */
-  static async assignRoleToUser(userId: number, roleId: number): Promise<UnifiedResponse<void>> {
+  static async assignRoleToUser(userId: string, roleId: number): Promise<UnifiedResponse<void>> {
     return rbacAxios.post("/api/v1/rbac/user-roles", {
       user_id: userId,
       role_id: roleId,
@@ -56,7 +56,7 @@ class AssociationService {
    * 批量分配角色给用户
    */
   static async assignRolesToUser(
-    userId: number,
+    userId: string,
     roleIds: number[],
   ): Promise<UnifiedResponse<void>> {
     return rbacAxios.post("/api/v1/rbac/user-roles", {
@@ -68,7 +68,7 @@ class AssociationService {
   /**
    * 移除用户角色
    */
-  static async removeUserRole(userId: number, roleId: number): Promise<UnifiedResponse<void>> {
+  static async removeUserRole(userId: string, roleId: number): Promise<UnifiedResponse<void>> {
     return rbacAxios.delete("/api/v1/rbac/user-roles", {
       params: {
         user_id: userId,
@@ -136,7 +136,7 @@ class AssociationService {
    * 检查用户权限
    */
   static async checkUserPermission(
-    userId: number,
+    userId: string,
     url: string,
     method: string,
   ): Promise<UnifiedResponse<CheckPermissionResponse>> {
@@ -150,12 +150,14 @@ class AssociationService {
   /**
    * 获取用户权限列表
    */
-  static async getUserPermissions(userId: number): Promise<UnifiedResponse<Permission[]>> {
+  static async getUserPermissions(userId: string): Promise<UnifiedResponse<Permission[]>> {
     return rbacAxios.get(`/api/v1/rbac/permissions/user/${userId}`);
   }
 
   /**
    * 获取权限树
+   * 使用 /permission-tree 端点，不需要权限检查
+   * 用于角色分配权限对话框，避免权限循环依赖问题
    */
   static async getPermissionTree(
     params?: number | { include_disabled?: boolean; tenant_id?: number },
@@ -169,7 +171,8 @@ class AssociationService {
       if ("include_disabled" in params) queryParams.include_disabled = params.include_disabled;
     }
 
-    return rbacAxios.get("/api/v1/rbac/permissions/tree", { params: queryParams });
+    // 使用不需要权限检查的端点，避免权限循环依赖
+    return rbacAxios.get("/api/v1/rbac/permission-tree", { params: queryParams });
   }
 
   /**
@@ -212,7 +215,7 @@ class AssociationService {
   /**
    * 获取用户角色列表
    */
-  static async getUserRoles(userId: number): Promise<UnifiedResponse<Role[]>> {
+  static async getUserRoles(userId: string): Promise<UnifiedResponse<Role[]>> {
     return rbacAxios.get(`/api/v1/rbac/user-roles/${userId}`);
   }
 }

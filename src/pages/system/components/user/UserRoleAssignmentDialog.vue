@@ -93,29 +93,53 @@ const loadRolesAndUserRoles = async () => {
     // 获取用户的租户ID
     const tenantId = props.user?.tenant_id;
 
+    // 获取用户ID - 后端使用 user_id (string) 作为主键
+    const userId = props.user?.user_id;
+
+    console.log('加载角色数据 - tenantId:', tenantId, 'userId:', userId, '完整用户对象:', props.user);
+
+    if (!userId) {
+      throw new Error('用户ID不存在');
+    }
+
     // 并行加载所有角色和用户已有角色
     const [rolesRes, userRolesRes] = await Promise.all([
       // 传递 tenant_id 参数，确保只获取同一租户的角色
       associationService.getRoles({ skip: 0, limit: 1000, tenant_id: tenantId }),
-      associationService.getUserRoles(props.user.id),
+      associationService.getUserRoles(userId),
     ]);
 
-    // 处理角色数据 - 支持 { items, total } 和直接数组两种格式
-    if (rolesRes?.data) {
-      const rolesData = Array.isArray(rolesRes.data)
+    console.log('角色 API 响应:', rolesRes);
+    console.log('用户角色 API 响应:', userRolesRes);
+
+    // 处理角色数据
+    // 响应拦截器会提取 data.data，如果没有分页字段则直接返回 data.data
+    let rolesData: Role[] = [];
+    if (Array.isArray(rolesRes)) {
+      // 直接是数组（响应拦截器已提取）
+      rolesData = rolesRes;
+    } else if (rolesRes?.data) {
+      // 有 .data 属性（分页数据）
+      rolesData = Array.isArray(rolesRes.data)
         ? rolesRes.data
         : (rolesRes.data as any).items || [];
-      allRoles.value = rolesData;
-      filteredRoles.value = rolesData;
     }
 
-    if (userRolesRes?.data) {
-      // 提取用户已有的角色ID
-      const existingRoles = Array.isArray(userRolesRes.data)
-        ? userRolesRes.data
-        : [userRolesRes.data];
-      selectedRoleIds.value = existingRoles.map((r: Role) => r.id);
+    console.log('处理后的角色数据:', rolesData);
+    allRoles.value = rolesData;
+    filteredRoles.value = rolesData;
+
+    // 处理用户已有角色
+    // 响应拦截器对于非分页数据直接返回 data.data
+    let userRoles: Role[] = [];
+    if (Array.isArray(userRolesRes)) {
+      userRoles = userRolesRes;
+    } else if (userRolesRes?.data && Array.isArray(userRolesRes.data)) {
+      userRoles = userRolesRes.data;
     }
+
+    console.log('处理后的用户角色:', userRoles);
+    selectedRoleIds.value = userRoles.map((r: Role) => r.role_id || r.id);
   } catch (error: unknown) {
     console.error("加载角色数据失败:", error);
     ElMessage.error(`加载角色数据失败: ${error.message}`);
@@ -134,14 +158,20 @@ const handleSubmit = async () => {
   try {
     submitting.value = true;
 
-    const userIdentifier = props.user.id;
+    // 后端使用 user_id (string) 作为主键
+    const userId = props.user?.user_id;
+
+    if (!userId) {
+      ElMessage.error("用户ID不存在");
+      return;
+    }
 
     if (selectedRoleIds.value.length === 0) {
       ElMessage.warning("请至少选择一个角色");
       return;
     }
 
-    await associationService.assignRolesToUser(userIdentifier, selectedRoleIds.value);
+    await associationService.assignRolesToUser(userId, selectedRoleIds.value);
 
     ElMessage.success("角色分配成功");
     emit("submit");

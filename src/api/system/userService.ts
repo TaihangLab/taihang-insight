@@ -51,7 +51,7 @@ class UserService {
    * 更新用户
    */
   static async updateUser(
-    userId: number,
+    userId: string,
     userData: UpdateUserRequest,
   ): Promise<UnifiedResponse<User>> {
     return rbacAxios.put(`/api/v1/rbac/users/${userId}`, userData);
@@ -60,14 +60,14 @@ class UserService {
   /**
    * 删除用户
    */
-  static async deleteUser(userId: number): Promise<UnifiedResponse<void>> {
+  static async deleteUser(userId: string): Promise<UnifiedResponse<void>> {
     return rbacAxios.delete(`/api/v1/rbac/users/${userId}`);
   }
 
   /**
    * 批量删除用户
    */
-  static async deleteUsers(userIds: number[]): Promise<UnifiedResponse<void>> {
+  static async deleteUsers(userIds: string[]): Promise<UnifiedResponse<void>> {
     return rbacAxios.post("/api/v1/rbac/users/batch-delete", {
       user_ids: userIds,
     });
@@ -77,7 +77,7 @@ class UserService {
    * 重置用户密码
    */
   static async resetUserPassword(
-    userId: number,
+    userId: string,
     newPassword: string,
   ): Promise<UnifiedResponse<void>> {
     return rbacAxios.post(`/api/v1/rbac/users/${userId}/reset-password`, {
@@ -88,7 +88,7 @@ class UserService {
   /**
    * 获取用户的角色列表
    */
-  static async getUserRoles(userId: number): Promise<UnifiedResponse<Role[]>> {
+  static async getUserRoles(userId: string): Promise<UnifiedResponse<Role[]>> {
     return rbacAxios.get(`/api/v1/rbac/users/${userId}/roles`);
   }
 

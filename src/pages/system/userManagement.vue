@@ -98,7 +98,7 @@ const searchConditions = ref<SearchConditions>({
 });
 
 // 选中的用户ID
-const selectedIds = ref<number[]>([]);
+const selectedIds = ref<string[]>([]);
 
 // 计算对话框的租户ID（安全地获取，避免运行时错误）
 const dialogTenantId = computed(() => {
@@ -123,7 +123,7 @@ const currentUser = ref<User | null>(null);
 // 删除相关
 const deleteTargetType = ref<"single" | "batch">("single");
 const deleteTargetName = ref("");
-const deleteTargetIds = ref<number[]>([]);
+const deleteTargetIds = ref<string[]>([]);
 
 // ============================================
 // 生命周期
@@ -216,7 +216,7 @@ const handleReset = () => {
  * 选择变化
  */
 const handleSelectionChange = (selection: User[]) => {
-  selectedIds.value = selection.map((user) => user.id);
+  selectedIds.value = selection.map((user) => user.user_id).filter(Boolean) as string[];
 };
 
 /**
@@ -240,8 +240,8 @@ const handleEdit = (row: User) => {
  */
 const handleUserSubmit = async (formData: Partial<User>) => {
   try {
-    if (currentUser.value) {
-      await updateUser(currentUser.value.id, formData);
+    if (currentUser.value?.user_id) {
+      await updateUser(currentUser.value.user_id, formData);
       ElMessage.success("用户修改成功");
     } else {
       // 新增逻辑需要在 useUserData 中实现 createUser
@@ -260,15 +260,15 @@ const handleUserSubmit = async (formData: Partial<User>) => {
  */
 const handleDelete = (row: User) => {
   deleteTargetType.value = "single";
-  deleteTargetName.value = row.user_name || row.id;
-  deleteTargetIds.value = [row.id];
+  deleteTargetName.value = row.user_name || row.user_id || "";
+  deleteTargetIds.value = row.user_id ? [row.user_id] : [];
   deleteDialogVisible.value = true;
 };
 
 /**
  * 批量删除
  */
-const handleBatchDelete = (ids: number[]) => {
+const handleBatchDelete = (ids: string[]) => {
   deleteTargetType.value = "batch";
   deleteTargetName.value = String(ids.length);
   deleteTargetIds.value = ids;

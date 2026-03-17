@@ -84,7 +84,7 @@ const emit = defineEmits<{
   add: [];
   edit: [row: User];
   delete: [row: User];
-  batchDelete: [ids: number[]];
+  batchDelete: [ids: string[]];
   statusChange: [row: User, callback: (success: boolean) => void];
   resetPassword: [row: User];
   pageChange: [page: number];
@@ -95,10 +95,10 @@ const emit = defineEmits<{
   authorization: [row: User];
 }>();
 
-const selectedCodes = ref<number[]>([]);
+const selectedCodes = ref<string[]>([]);
 
 const handleSelectionChange = (selection: User[]) => {
-  const codes = selection.map((row) => row.id);
+  const codes = selection.map((row) => row.user_id).filter(Boolean) as string[];
   selectedCodes.value = codes;
   emit("selectionChange", selection);
 };

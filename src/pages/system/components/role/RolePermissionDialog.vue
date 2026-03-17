@@ -105,19 +105,20 @@ const loadPermissions = async () => {
   loading.value = true;
   try {
     // Load permission tree
-    const treeResponse = await associationService.getPermissionTree();
-    if (treeResponse?.data) {
-      // Map Permission to PermissionTreeNode by adding missing fields
-      permissionTree.value = treeResponse.data as unknown as PermissionTreeNode[];
+    // 注意：响应拦截器已经提取了 data 字段，所以 treeResponse 直接就是数组
+    const treeResponse = await associationService.getPermissionTree() as unknown as PermissionTreeNode[];
+    if (Array.isArray(treeResponse)) {
+      // 直接使用响应数据，因为拦截器已经提取了 data 字段
+      permissionTree.value = treeResponse;
     }
 
     // Load role's current permissions
+    // 注意：响应拦截器已经提取了 data 字段
     if (props.currentRole) {
-      const rolePermsResponse = await associationService.getRolePermissions(props.currentRole.id);
-      if (rolePermsResponse?.data) {
-        checkedPermissions.value = (
-          Array.isArray(rolePermsResponse.data) ? rolePermsResponse.data : []
-        ).map((p: unknown) => Number(p.permissionId || p.permission_id));
+      const rolePermsResponse = await associationService.getRolePermissions(props.currentRole.id) as unknown as Array<{ id: number; permission_id?: number; permissionId?: number }>;
+      if (Array.isArray(rolePermsResponse)) {
+        // 后端返回的是 PermissionListResponse，字段名是 id 而不是 permission_id
+        checkedPermissions.value = rolePermsResponse.map((p) => Number(p.id || p.permission_id || p.permissionId));
       }
     }
 

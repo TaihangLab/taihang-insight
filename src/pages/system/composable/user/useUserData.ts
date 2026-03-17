@@ -86,10 +86,10 @@ export function useUserData() {
 
         users.value = items.map((item: unknown) => {
           const data = item as Record<string, unknown>;
-          // 后端返回的字段可能是 user_id 或 id
-          const userId = data.user_id ?? data.id;
+          // 后端返回 user_id (string) 作为主键
+          const userId = String(data.user_id || "");
           const user: User = {
-            id: Number(userId),
+            user_id: userId,
             user_name: String(data.user_name || ""),
             nick_name: String(data.nick_name || ""),
             phone: String(data.phone || ""),
@@ -119,7 +119,7 @@ export function useUserData() {
   /**
    * 获取用户角色列表
    */
-  const fetchUserRoles = async (userId: number) => {
+  const fetchUserRoles = async (userId: string) => {
     const response = await userService.getUserRoles(userId);
 
     if (response?.data) {
@@ -128,9 +128,9 @@ export function useUserData() {
       userRoles.value = roles.map((item: unknown) => {
         const data = item as Record<string, unknown>;
         return {
-          user_id: Number(data.userId || data.user_id),
+          user_id: String(data.userId || data.user_id || ""),
           user_name: String(data.userName || data.user_name || ""),
-          role_id: Number(data.roleId || data.role_id),
+          role_id: Number(data.roleId || data.role_id || 0),
           role_code: String(data.roleCode || data.role_code || ""),
           role_name: String(data.roleName || data.role_name || ""),
         };
@@ -150,35 +150,35 @@ export function useUserData() {
   /**
    * 更新用户
    */
-  const updateUser = async (userId: number, data: Omit<UpdateUserRequest, "id">) => {
-    await userService.updateUser(userId, { id: userId, ...data });
+  const updateUser = async (userId: string, data: UpdateUserRequest) => {
+    await userService.updateUser(userId, data);
   };
 
   /**
    * 删除用户
    */
-  const deleteUser = async (userId: number) => {
+  const deleteUser = async (userId: string) => {
     await userService.deleteUser(userId);
   };
 
   /**
    * 批量删除用户
    */
-  const deleteUsers = async (userIds: number[]) => {
+  const deleteUsers = async (userIds: string[]) => {
     await userService.deleteUsers(userIds);
   };
 
   /**
    * 重置用户密码
    */
-  const resetUserPassword = async (userId: number, newPassword: string) => {
+  const resetUserPassword = async (userId: string, newPassword: string) => {
     await userService.resetUserPassword(userId, newPassword);
   };
 
   /**
    * 分配角色给用户
    */
-  const assignRolesToUser = async (userId: number, roleIds: number[]) => {
+  const assignRolesToUser = async (userId: string, roleIds: number[]) => {
     await associationService.assignRolesToUser(userId, roleIds);
   };
 

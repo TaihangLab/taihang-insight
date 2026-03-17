@@ -69,10 +69,9 @@ describe('useUserData', () => {
       await fetchUsers({ tenant_id: '1000000000000001' });
 
       expect(users.value).toHaveLength(1);
-      // 验证 id 字段被正确映射（从 user_id 转换为 id）
-      expect(users.value[0].id).toBe(1000000000000001);
-      // 验证 id 不是 NaN
-      expect(users.value[0].id).not.toBeNaN();
+      // 验证 user_id 字段是字符串类型
+      expect(users.value[0].user_id).toBe('1000000000000001');
+      expect(typeof users.value[0].user_id).toBe('string');
       expect(users.value[0].user_name).toBe('admin');
     });
 
@@ -80,7 +79,7 @@ describe('useUserData', () => {
       const mockResponse = {
         data: [
           {
-            id: '1000000000000002',  // 后端返回 id（兼容情况）
+            id: '1000000000000002',  // 后端返回 id（兼容情况，但会映射为 user_id）
             user_name: 'testuser',
             nick_name: '测试用户',
             email: 'test@example.com',
@@ -98,8 +97,8 @@ describe('useUserData', () => {
       await fetchUsers({ tenant_id: '1000000000000001' });
 
       expect(users.value).toHaveLength(1);
-      expect(users.value[0].id).toBe(1000000000000002);
-      expect(users.value[0].id).not.toBeNaN();
+      // 由于后端没有返回 user_id，映射后 user_id 为空字符串
+      expect(users.value[0].user_id).toBe('');
     });
 
     it('应该优先使用 user_id 字段，当两者都存在时', async () => {
@@ -107,7 +106,7 @@ describe('useUserData', () => {
         data: [
           {
             user_id: '1000000000000003',  // 应该优先使用这个
-            id: '9999999999999999',        // 而不是这个
+            id: '9999999999999999',        // 忽略这个
             user_name: 'priorityuser',
             status: 0,
           },
@@ -120,14 +119,14 @@ describe('useUserData', () => {
       const { users, fetchUsers } = useUserData();
       await fetchUsers({ tenant_id: '1000000000000001' });
 
-      expect(users.value[0].id).toBe(1000000000000003);
+      expect(users.value[0].user_id).toBe('1000000000000003');
     });
 
     it('应该处理后端返回的数字类型 user_id', async () => {
       const mockResponse = {
         data: [
           {
-            user_id: 1000000000000004,  // 数字类型
+            user_id: 1000000000000004,  // 数字类型，会被转换为字符串
             user_name: 'numberuser',
             status: 0,
           },
@@ -140,8 +139,8 @@ describe('useUserData', () => {
       const { users, fetchUsers } = useUserData();
       await fetchUsers({ tenant_id: '1000000000000001' });
 
-      expect(users.value[0].id).toBe(1000000000000004);
-      expect(users.value[0].id).not.toBeNaN();
+      expect(users.value[0].user_id).toBe('1000000000000004');
+      expect(typeof users.value[0].user_id).toBe('string');
     });
   });
 
@@ -216,19 +215,18 @@ describe('useUserData', () => {
       mockDeleteUser.mockResolvedValue({ data: null });
 
       const { deleteUser } = useUserData();
-      await deleteUser(1000000000000001);
+      await deleteUser('1000000000000001');
 
-      expect(mockDeleteUser).toHaveBeenCalledWith(1000000000000001);
+      expect(mockDeleteUser).toHaveBeenCalledWith('1000000000000001');
     });
 
     it('updateUser 应该使用正确的用户ID', async () => {
       mockUpdateUser.mockResolvedValue({ data: null });
 
       const { updateUser } = useUserData();
-      await updateUser(1000000000000002, { nick_name: '新昵称' });
+      await updateUser('1000000000000002', { nick_name: '新昵称' });
 
-      expect(mockUpdateUser).toHaveBeenCalledWith(1000000000000002, {
-        id: 1000000000000002,
+      expect(mockUpdateUser).toHaveBeenCalledWith('1000000000000002', {
         nick_name: '新昵称',
       });
     });
@@ -237,9 +235,9 @@ describe('useUserData', () => {
       mockResetUserPassword.mockResolvedValue({ data: null });
 
       const { resetUserPassword } = useUserData();
-      await resetUserPassword(1000000000000003, '123456');
+      await resetUserPassword('1000000000000003', '123456');
 
-      expect(mockResetUserPassword).toHaveBeenCalledWith(1000000000000003, '123456');
+      expect(mockResetUserPassword).toHaveBeenCalledWith('1000000000000003', '123456');
     });
   });
 

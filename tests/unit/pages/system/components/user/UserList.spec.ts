@@ -83,79 +83,39 @@ describe('UserList 组件 - 新增按钮逻辑', () => {
     });
   });
 
-  describe('用户数据映射 - user_id 到 id 的转换', () => {
+  describe('用户数据映射 - user_id 字段处理', () => {
     it('应该正确处理后端返回的 user_id 字段', () => {
       const backendData = {
-        user_id: '1000000000000001',  // 后端返回 user_id
+        user_id: '1000000000000001',  // 后端返回 user_id (string)
         user_name: 'admin',
         status: 0,
       };
 
-      // 模拟字段映射逻辑
-      const userId = backendData.user_id ?? backendData.id;
+      // 直接使用 user_id (string)，不再映射到 id
       const mappedUser = {
-        id: Number(userId),
+        user_id: backendData.user_id,
         user_name: backendData.user_name,
         status: backendData.status,
       };
 
-      expect(mappedUser.id).toBe(1000000000000001);
-      expect(mappedUser.id).not.toBeNaN();
+      expect(mappedUser.user_id).toBe('1000000000000001');
+      expect(typeof mappedUser.user_id).toBe('string');
     });
 
-    it('应该兼容后端返回的 id 字段', () => {
+    it('应该处理空的 user_id 字段', () => {
       const backendData = {
-        id: '1000000000000002',  // 后端返回 id（兼容情况）
-        user_name: 'user',
-        status: 0,
-      } as { id?: string; user_id?: string; user_name: string; status: number };
-
-      const userId = backendData.user_id ?? backendData.id;
-      const mappedUser = {
-        id: Number(userId),
-        user_name: backendData.user_name,
-        status: backendData.status,
-      };
-
-      expect(mappedUser.id).toBe(1000000000000002);
-      expect(Number.isNaN(mappedUser.id)).toBe(false);
-    });
-
-    it('应该优先使用 user_id 字段（当两者都存在时）', () => {
-      const backendData = {
-        user_id: '1000000000000003',  // 应该优先使用
-        id: '9999999999999999',        // 而不是这个
+        user_id: '',
         user_name: 'user',
         status: 0,
       };
 
-      const userId = backendData.user_id ?? backendData.id;
       const mappedUser = {
-        id: Number(userId),
+        user_id: backendData.user_id || undefined,
         user_name: backendData.user_name,
         status: backendData.status,
       };
 
-      expect(mappedUser.id).toBe(1000000000000003);
-      expect(mappedUser.id).not.toBe(9999999999999999);
-    });
-
-    it('应该处理数字类型的 user_id', () => {
-      const backendData = {
-        user_id: 1000000000000004,  // 数字类型
-        user_name: 'user',
-        status: 0,
-      } as { user_id?: number | string; id?: number | string; user_name: string; status: number };
-
-      const userId = backendData.user_id ?? backendData.id;
-      const mappedUser = {
-        id: Number(userId),
-        user_name: backendData.user_name,
-        status: backendData.status,
-      };
-
-      expect(mappedUser.id).toBe(1000000000000004);
-      expect(typeof mappedUser.id).toBe('number');
+      expect(mappedUser.user_id).toBeUndefined();
     });
   });
 

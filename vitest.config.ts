@@ -18,6 +18,8 @@ export default defineConfig({
     projects: [
       // 单元测试项目（组件、Store 等）
       {
+        // 单元测试需要处理 .vue 文件
+        plugins: [vue(), UnoCSS()],
         test: {
           environment: 'happy-dom',
           globals: true,
@@ -37,6 +39,8 @@ export default defineConfig({
       },
       // 集成测试项目（API 调用后端）
       {
+        // 集成测试也需要处理 .vue 文件
+        plugins: [vue(), UnoCSS()],
         test: {
           environment: 'node',
           globals: true,
@@ -60,8 +64,6 @@ export default defineConfig({
           testTimeout: 30000,
           hookTimeout: 30000,
         },
-        // 集成测试也需要处理 .vue 文件
-        plugins: [vue(), UnoCSS()],
       }
     ],
 
