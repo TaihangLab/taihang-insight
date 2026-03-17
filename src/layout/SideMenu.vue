@@ -159,7 +159,7 @@ const toggleCollapse = () => {
 
 // 组件挂载时，如果菜单树为空且有 token，尝试获取菜单
 onMounted(async () => {
-  if (menuTree.value.length === 0 && tokenStore.hasToken()) {
+  if (menuTree.value.length === 0 && tokenStore.hasAdminToken()) {
     // 菜单树应该在登录时已加载
   }
 });

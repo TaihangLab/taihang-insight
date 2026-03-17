@@ -4,16 +4,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useRoleData } from '@/pages/system/composable/role/useRoleData';
 
-// Mock the service
-const mockGetRoles = vi.fn();
-const mockCreateRole = vi.fn();
-const mockAssignPermissionsToRole = vi.fn();
+// Mock the service - 使用 vi.hoisted 因为 vi.mock 会被提升
+const mockGetRoles = vi.hoisted(() => vi.fn());
+const mockCreateRole = vi.hoisted(() => vi.fn());
+const mockAssignPermissionsToRole = vi.hoisted(() => vi.fn());
 
 vi.mock('@/api/system/roleService', () => ({
   default: {
-    getRoles: () => mockGetRoles(),
+    getRoles: mockGetRoles,
     getRoleById: vi.fn(),
-    createRole: () => mockCreateRole(),
+    createRole: mockCreateRole,
     updateRole: vi.fn(),
     deleteRole: vi.fn(),
     batchDeleteRoles: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock('@/api/system/roleService', () => ({
 // Mock the association service
 vi.mock('@/api/system/roleAssociationService', () => ({
   default: {
-    assignPermissionsToRole: () => mockAssignPermissionsToRole(),
+    assignPermissionsToRole: mockAssignPermissionsToRole,
     removeRolePermission: vi.fn(),
   },
 }));

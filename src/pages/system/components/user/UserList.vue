@@ -1,14 +1,39 @@
 <template>
-  <div class="user-list-container">
+  <div class="user-list-container flex flex-col flex-1">
     <!-- 操作按钮区 -->
-    <UserTableActions
-      :selected-count="selectedCodes.length"
-      @add="handleAdd"
-      @batch-delete="handleBatchDelete"
-      @advanced-search="handleAdvancedSearch"
-      @refresh="handleRefresh"
-      @table-setting="handleTableSetting"
-    />
+    <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
+      <div class="flex gap-2">
+        <el-button
+          type="primary"
+          size="small"
+          data-testid="btn-add-user"
+          @click="handleAdd"
+        >
+          <i class="i-carbon-add"></i>
+          新增
+        </el-button>
+        <el-button
+          size="small"
+          :disabled="selectedCodes.length === 0"
+          data-testid="btn-batch-delete"
+          @click="handleBatchDelete"
+        >
+          <i class="i-carbon-trash-can"></i>
+          删除
+        </el-button>
+      </div>
+      <div class="flex gap-2">
+        <el-button size="small" circle @click="handleAdvancedSearch">
+          <i class="i-carbon-search"></i>
+        </el-button>
+        <el-button size="small" circle @click="handleRefresh">
+          <i class="i-carbon-renew"></i>
+        </el-button>
+        <el-button size="small" circle @click="handleTableSetting">
+          <i class="i-carbon-settings"></i>
+        </el-button>
+      </div>
+    </div>
 
     <!-- 表格 -->
     <UserTable
@@ -23,21 +48,23 @@
     />
 
     <!-- 分页 -->
-    <UserPagination
-      :current-page="pagination.currentPage"
-      :page-size="pagination.pageSize"
-      :total="total"
-      @page-change="handlePageChange"
-      @size-change="handleSizeChange"
-    />
+    <div class="mt-5 text-center">
+      <el-pagination
+        :current-page="pagination.currentPage"
+        :page-sizes="[10, 20, 50, 100]"
+        :page-size="pagination.pageSize"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="total"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      ></el-pagination>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
-import UserTableActions from "@/pages/system/components/user/UserTableActions.vue";
 import UserTable from "@/pages/system/components/user/UserTable.vue";
-import UserPagination from "@/pages/system/components/user/UserPagination.vue";
 import type { User } from "@/types/rbac/user";
 
 interface Pagination {
@@ -126,9 +153,8 @@ const handleAuthorization = (row: User) => {
 </script>
 
 <style scoped>
-.user-list-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+/* 禁用状态下的按钮样式 */
+.el-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
 }
 </style>

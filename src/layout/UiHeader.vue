@@ -72,14 +72,13 @@ import ChangePasswordDialog from "../components/dialog/changePassword.vue";
 import { storage } from "@/stores/modules/storage";
 import { StorageKey } from "@/stores/modules/storageKeys";
 import cacheManager from "@/utils/cacheManager";
-import { useUserInfoStore, useTokenStore, useMenusStore, usePermissionsStore } from "@/stores";
+import { useUserInfoStore, useMenusStore, usePermissionsStore } from "@/stores";
 
 // 路由
 const route = useRoute();
 const router = useRouter();
 // 使用新的独立 stores
 const userInfoStore = useUserInfoStore();
-const tokenStore = useTokenStore();
 const menusStore = useMenusStore();
 const permissionsStore = usePermissionsStore();
 

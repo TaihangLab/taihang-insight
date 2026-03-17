@@ -4,15 +4,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useDepartmentData } from '@/pages/system/composable/department/useDepartmentData';
 
-// Mock the service
-const mockGetDepartmentTree = vi.fn();
-const mockCreateDepartment = vi.fn();
+// Mock the service - 使用 vi.hoisted 因为 vi.mock 会被提升
+const mockGetDepartmentTree = vi.hoisted(() => vi.fn());
+const mockCreateDepartment = vi.hoisted(() => vi.fn());
 
 vi.mock('@/api/system/departmentService', () => ({
   default: {
-    getDepartmentTree: () => mockGetDepartmentTree(),
+    getDepartmentTree: mockGetDepartmentTree,
     getDepartments: vi.fn(),
-    createDepartment: () => mockCreateDepartment(),
+    createDepartment: mockCreateDepartment,
     updateDepartment: vi.fn(),
     deleteDepartment: vi.fn(),
   },
@@ -94,24 +94,22 @@ describe('useDepartmentData', () => {
 
   describe('fetchDepartments - 获取部门树', () => {
     it('应该成功获取部门树', async () => {
-      const mockResponse = {
-        data: [
-          {
-            id: 1,
-            name: '总公司',
-            parent_id: null,
-            depth: 0,
-            children: [
-              { id: 2, name: '技术部', parent_id: 1, depth: 1 },
-            ],
-          },
-        ],
-      };
+      const mockResponse = [
+        {
+          id: 1,
+          dept_name: '总公司',
+          parent_id: null,
+          depth: 0,
+          children: [
+            { id: 2, dept_name: '技术部', parent_id: 1, depth: 1 },
+          ],
+        },
+      ];
 
       mockGetDepartmentTree.mockResolvedValue(mockResponse);
 
       const { departments, fetchDepartments } = useDepartmentData();
-      await fetchDepartments({ tenantId: '1000000000000001' });
+      await fetchDepartments({ tenant_id: '1000000000000001', dept_name: '', status: null });
 
       expect(departments.value).toHaveLength(1);
       expect(departments.value[0].name).toBe('总公司');

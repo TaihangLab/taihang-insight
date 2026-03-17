@@ -1,9 +1,8 @@
 <template>
-  <div class="user-table">
+  <div class="user-table flex-1">
     <el-table
       :data="data"
       v-loading="loading"
-      style="width: 100%"
       class="custom-table"
       @selection-change="handleSelectionChange"
     >
@@ -52,13 +51,13 @@
       ></el-table-column>
       <el-table-column label="操作" min-width="240" fixed="right" align="center">
         <template #default="scope">
-          <div class="operation-buttons">
-            <el-button link class="auth-btn" @click="handleAuthorization(scope.row)">
+          <div class="flex justify-center gap-2">
+            <el-button link class="text-green-500" @click="handleAuthorization(scope.row)">
               授权
             </el-button>
-            <el-button link class="edit-btn" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button link class="delete-btn" @click="handleDelete(scope.row)">删除</el-button>
-            <el-button link class="reset-btn" @click="handleResetPassword(scope.row)">
+            <el-button link class="text-blue-500" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button link class="text-red-500" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button link class="text-amber-500" @click="handleResetPassword(scope.row)">
               重置
             </el-button>
           </div>
@@ -126,60 +125,33 @@ const handleAuthorization = (row: User) => {
 </script>
 
 <style scoped>
+/* 表格容器 */
 .user-table {
-  flex: 1;
+  @apply flex-1;
 }
 
+/* 表格样式 */
 .custom-table {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #ebeef5;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  @apply rounded-lg overflow-hidden border border-gray-200 shadow-sm;
 }
 
 .custom-table :deep(.el-table__cell) {
-  border-right: none;
+  @apply border-r-0;
 }
 
 .custom-table :deep(.el-table::before) {
-  height: 0;
+  @apply h-0;
 }
 
 .custom-table :deep(.el-table__header-wrapper th) {
-  font-weight: bold;
-  text-align: center;
-  background: var(--design-bg-secondary) !important;
-  color: #303133 !important;
-  border-bottom: 1px solid #ebeef5 !important;
+  @apply font-bold text-center bg-gray-50 text-gray-800 border-b border-gray-200;
 }
 
 .custom-table :deep(.el-table__row td) {
-  text-align: center;
+  @apply text-center;
 }
 
 .custom-table :deep(.el-table .el-table__body tr:hover > td) {
-  background: var(--design-bg-secondary) !important;
-}
-
-.operation-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-.auth-btn {
-  color: #67c23a;
-}
-
-.edit-btn {
-  color: #409eff;
-}
-
-.delete-btn {
-  color: #f56c6c;
-}
-
-.reset-btn {
-  color: #e6a23c;
+  background-color: var(--design-bg-secondary) !important;
 }
 </style>

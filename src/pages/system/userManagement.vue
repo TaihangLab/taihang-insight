@@ -302,13 +302,15 @@ const handleDeleteConfirm = async () => {
 /**
  * 状态切换
  */
-const handleStatusChange = async (row: User) => {
+const handleStatusChange = async (row: User, callback?: (success: boolean) => void) => {
   // v-model 已经自动更新了 row.status，直接使用即可
   const newStatus = row.status;
 
   try {
     await updateUser(row.id, { status: newStatus });
     ElMessage.success("状态更新成功");
+    // 通知子组件状态更新成功
+    callback?.(true);
     loadData();
   } catch (error: unknown) {
     let errorMessage = "更新用户状态失败";
@@ -319,6 +321,8 @@ const handleStatusChange = async (row: User) => {
     }
 
     ElMessage.error(errorMessage);
+    // 通知子组件状态更新失败，子组件会恢复原始状态
+    callback?.(false);
     loadData();
   }
 };

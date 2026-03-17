@@ -65,16 +65,22 @@ const loadTenants = async () => {
       skip: 0,
       limit: 1000, // 获取所有租户
     });
-    // 响应拦截器已处理格式转换，直接使用数据
-    if (Array.isArray(response)) {
+    
+    // 响应拦截器已处理格式，response.data 是租户数组
+    // 响应格式：{ data: [...], total, page, limit }
+    const tenantList = Array.isArray(response) ? response : (response?.data || []);
+
+    if (Array.isArray(tenantList)) {
       // 过滤掉 id 或 tenant_name 为空的租户记录
-      tenants.value = response.filter((tenant) => tenant.id != null && tenant.tenant_name != null);
+      tenants.value = tenantList.filter((tenant) => tenant.id != null && tenant.tenant_name != null);
       loaded.value = true;
 
       if (props.autoSelectFirst && !props.modelValue && tenants.value.length > 0) {
-        const firstTenantId = tenants.value[0].id;
-        emit("update:modelValue", firstTenantId);
-        emit("change", firstTenantId);
+        const firstTenant = tenants.value[0];
+        if (firstTenant) {
+          emit("update:modelValue", firstTenant.id);
+          emit("change", firstTenant.id);
+        }
       } else if (props.autoSelectFirst && !props.modelValue && tenants.value.length === 0) {
         ElMessage.warning("没有可用的租户，请先创建租户");
       }

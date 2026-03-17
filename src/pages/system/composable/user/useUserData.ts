@@ -86,8 +86,10 @@ export function useUserData() {
 
         users.value = items.map((item: unknown) => {
           const data = item as Record<string, unknown>;
+          // 后端返回的字段可能是 user_id 或 id
+          const userId = data.user_id ?? data.id;
           const user: User = {
-            id: Number(data.id),
+            id: Number(userId),
             user_name: String(data.user_name || ""),
             nick_name: String(data.nick_name || ""),
             phone: String(data.phone || ""),

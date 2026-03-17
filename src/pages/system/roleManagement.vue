@@ -3,9 +3,9 @@
   使用 <script setup> + TypeScript
 -->
 <template>
-  <div class="role-management-page">
+  <div class="role-management-page p-6 bg-neutral-50 min-h-screen">
     <!-- 搜索表单 -->
-    <el-card class="search-card" shadow="never">
+    <el-card class="search-card mb-5 rounded-xl border border-neutral-200 shadow-sm" shadow="never">
       <el-form :model="queryForm" inline>
         <el-form-item v-permission="'tenant:list:view'" label="租户">
           <TenantSelector v-model="queryForm.tenant_id" @change="handleSearch" />
@@ -16,7 +16,7 @@
             v-model="queryForm.role_name"
             placeholder="请输入角色名称"
             clearable
-            style="width: 200px"
+            class="w-[200px]"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
@@ -26,7 +26,7 @@
             v-model="queryForm.role_code"
             placeholder="请输入角色编码"
             clearable
-            style="width: 200px"
+            class="w-[200px]"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
@@ -36,7 +36,7 @@
             v-model="queryForm.data_scope"
             placeholder="请选择数据权限"
             clearable
-            style="width: 180px"
+            class="w-[180px]"
           >
             <el-option label="全部数据权限" :value="DataScope.ALL" />
             <el-option label="自定数据权限" :value="DataScope.CUSTOM" />
@@ -50,7 +50,7 @@
             v-model="queryForm.status"
             placeholder="请选择状态"
             clearable
-            style="width: 120px"
+            class="w-[120px]"
           >
             <el-option label="正常" :value="Status.ENABLED" />
             <el-option label="停用" :value="Status.DISABLED" />
@@ -65,11 +65,11 @@
     </el-card>
 
     <!-- 操作按钮 -->
-    <el-card class="table-card" shadow="never">
+    <el-card class="table-card rounded-xl border border-neutral-200 shadow-sm" shadow="never">
       <template #header>
-        <div class="card-header">
-          <span class="card-title">角色列表</span>
-          <div class="card-actions">
+        <div class="flex items-center justify-between">
+          <span class="text-base font-medium text-text-primary">角色列表</span>
+          <div class="flex gap-2">
             <el-button type="primary" icon="Plus" @click="handleAdd">新增角色</el-button>
           </div>
         </div>
@@ -111,7 +111,7 @@
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-container">
+      <div class="mt-5 flex justify-end">
         <el-pagination
           v-model:current-page="pagination.currentPage"
           v-model:page-size="pagination.pageSize"
@@ -144,21 +144,15 @@
 <script setup lang="ts">
 /**
  * 角色管理页面
- * 使用 Composition API + TypeScript
  */
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import type { Role } from "@/types/rbac";
 import type { RoleEntity } from "@/pages/system/composable/role/useRoleData";
 import { Status, DataScope } from "@/types/rbac";
 import { useRoleData } from "@/pages/system/composable/role/useRoleData";
 import TenantSelector from "@/pages/system/components/commons/TenantSelector.vue";
 import RoleEditDialog from "@/pages/system/components/role/RoleEditDialog.vue";
 import RolePermissionDialog from "@/pages/system/components/role/RolePermissionDialog.vue";
-
-// ============================================
-// Composables
-// ============================================
 
 const {
   roles,
@@ -171,23 +165,13 @@ const {
   assignPermissionsToRole,
 } = useRoleData();
 
-// ============================================
-// 响应式状态
-// ============================================
-
 // 查询表单
-const queryForm = reactive<{
-  tenant_id?: string | number | null;
-  role_name?: string;
-  role_code?: string;
-  data_scope?: DataScope;
-  status?: Status;
-}>({
-  tenant_id: null,
+const queryForm = reactive({
+  tenant_id: null as string | number | null,
   role_name: "",
   role_code: "",
-  data_scope: undefined,
-  status: undefined,
+  data_scope: undefined as DataScope | undefined,
+  status: undefined as Status | undefined,
 });
 
 // 对话框状态
@@ -195,63 +179,33 @@ const editDialogVisible = ref(false);
 const permissionDialogVisible = ref(false);
 const currentRole = ref<RoleEntity | null>(null);
 
-// ============================================
-// 辅助函数
-// ============================================
-
-/**
- * 获取数据权限标签类型
- */
-const getDataScopeTagType = (scope: DataScope) => {
-  const typeMap: Record<DataScope, string> = {
-    [DataScope.ALL]: "danger",
-    [DataScope.CUSTOM]: "warning",
-    [DataScope.DEPARTMENT]: "info",
-    [DataScope.DEPARTMENT_AND_BELOW]: "success",
-  };
-  return typeMap[scope] || "";
+// 数据权限标签映射
+const dataScopeMap: Record<DataScope, { type: string; label: string }> = {
+  [DataScope.ALL]: { type: "danger", label: "全部数据" },
+  [DataScope.CUSTOM]: { type: "warning", label: "自定义" },
+  [DataScope.DEPARTMENT]: { type: "info", label: "本部门" },
+  [DataScope.DEPARTMENT_AND_BELOW]: { type: "success", label: "本部门及以下" },
 };
 
-/**
- * 获取数据权限标签文本
- */
-const getDataScopeLabel = (scope: DataScope) => {
-  const labelMap: Record<DataScope, string> = {
-    [DataScope.ALL]: "全部数据",
-    [DataScope.CUSTOM]: "自定义",
-    [DataScope.DEPARTMENT]: "本部门",
-    [DataScope.DEPARTMENT_AND_BELOW]: "本部门及以下",
-  };
-  return labelMap[scope] || "";
-};
+const getDataScopeTagType = (scope: DataScope) => dataScopeMap[scope]?.type || "";
+const getDataScopeLabel = (scope: DataScope) => dataScopeMap[scope]?.label || "";
 
-// ============================================
-// 方法
-// ============================================
-
-/**
- * 加载角色列表
- */
+// 加载角色列表
 const loadRoles = async () => {
   try {
     roles.value = await fetchRoles(queryForm);
   } catch (error: unknown) {
-    const err = error as Error;
-    ElMessage.error(`加载角色列表失败: ${err.message}`);
+    ElMessage.error(`加载角色列表失败：${(error as Error).message}`);
   }
 };
 
-/**
- * 查询处理
- */
+// 查询处理
 const handleSearch = () => {
   pagination.value.currentPage = 1;
   loadRoles();
 };
 
-/**
- * 重置处理
- */
+// 重置处理
 const handleReset = () => {
   queryForm.tenant_id = null;
   queryForm.role_name = "";
@@ -262,42 +216,32 @@ const handleReset = () => {
   loadRoles();
 };
 
-/**
- * 页码变化处理
- */
+// 页码变化处理
 const handleCurrentChange = (page: number) => {
   pagination.value.currentPage = page;
   loadRoles();
 };
 
-/**
- * 每页条数变化处理
- */
+// 每页条数变化处理
 const handleSizeChange = (size: number) => {
   pagination.value.pageSize = size;
   pagination.value.currentPage = 1;
   loadRoles();
 };
 
-/**
- * 新增角色处理
- */
+// 新增角色
 const handleAdd = () => {
   currentRole.value = null;
   editDialogVisible.value = true;
 };
 
-/**
- * 编辑角色处理
- */
+// 编辑角色
 const handleEdit = (row: RoleEntity) => {
   currentRole.value = row;
   editDialogVisible.value = true;
 };
 
-/**
- * 删除角色处理
- */
+// 删除角色
 const handleDelete = async (row: RoleEntity) => {
   try {
     await ElMessageBox.confirm(`确定要删除角色 "${row.roleName}" 吗？`, "提示", {
@@ -314,58 +258,42 @@ const handleDelete = async (row: RoleEntity) => {
   }
 };
 
-/**
- * 分配权限处理
- */
+// 分配权限
 const handleAssignPermissions = (row: RoleEntity) => {
   currentRole.value = row;
   permissionDialogVisible.value = true;
 };
 
-/**
- * 角色表单提交处理
- */
+// 角色表单提交处理
 const handleRoleSubmit = async (formData: Record<string, unknown>) => {
   try {
     if (currentRole.value) {
-      // 编辑角色
       await updateRole(currentRole.value.id, formData);
       ElMessage.success("角色修改成功");
     } else {
-      // 新增角色
       await createRole(formData);
       ElMessage.success("角色添加成功");
     }
     editDialogVisible.value = false;
     loadRoles();
   } catch (error: unknown) {
-    const err = error as Error;
-    ElMessage.error(`保存失败: ${err.message}`);
+    ElMessage.error(`保存失败：${(error as Error).message}`);
   }
 };
 
-/**
- * 权限分配提交处理
- */
+// 权限分配提交处理
 const handlePermissionSubmit = async (roleId: number, permissionIds: number[]) => {
   try {
     await assignPermissionsToRole(roleId, permissionIds);
     ElMessage.success("权限分配成功");
     permissionDialogVisible.value = false;
   } catch (error: unknown) {
-    const err = error as Error;
-    ElMessage.error(`权限分配失败: ${err.message}`);
-    // 失败时也关闭对话框，重置 submitting 状态
-    // 延迟关闭以让用户看到错误消息
+    ElMessage.error(`权限分配失败：${(error as Error).message}`);
     setTimeout(() => {
       permissionDialogVisible.value = false;
     }, 500);
   }
 };
-
-// ============================================
-// 生命周期
-// ============================================
 
 onMounted(() => {
   loadRoles();
@@ -374,37 +302,17 @@ onMounted(() => {
 
 <style scoped>
 .role-management-page {
-  padding: 20px;
+  min-height: calc(100vh - var(--header-height, 60px));
 }
 
-.search-card {
-  margin-bottom: 20px;
+:deep(.el-table) {
+  --el-table-header-bg-color: var(--design-bg-secondary);
+  --el-table-header-text-color: var(--design-text-primary);
 }
 
-.table-card {
-  min-height: calc(100vh - 280px);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-title {
-  font-size: 16px;
+:deep(.el-table th) {
+  background-color: var(--design-bg-secondary);
+  color: var(--design-text-primary);
   font-weight: 500;
-  color: #333;
-}
-
-.card-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.pagination-container {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
 }
 </style>

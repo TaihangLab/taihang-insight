@@ -5,21 +5,21 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useTenantData } from '@/pages/system/composable/tenant/useTenantData';
 
-// Mock tenantService
-const mockGetTenants = vi.fn();
-const mockCreateTenant = vi.fn();
-const mockUpdateTenant = vi.fn();
-const mockDeleteTenant = vi.fn();
-const mockBatchDeleteTenants = vi.fn();
+// Mock tenantService - 使用 vi.hoisted 因为 vi.mock 会被提升
+const mockGetTenants = vi.hoisted(() => vi.fn());
+const mockCreateTenant = vi.hoisted(() => vi.fn());
+const mockUpdateTenant = vi.hoisted(() => vi.fn());
+const mockDeleteTenant = vi.hoisted(() => vi.fn());
+const mockBatchDeleteTenants = vi.hoisted(() => vi.fn());
 
 vi.mock('@/api/system/tenantService', () => ({
   default: {
-    getTenants: () => mockGetTenants(),
+    getTenants: mockGetTenants,
     getTenantTree: vi.fn(),
-    createTenant: () => mockCreateTenant(),
-    updateTenant: () => mockUpdateTenant(),
-    deleteTenant: () => mockDeleteTenant(),
-    batchDeleteTenants: () => mockBatchDeleteTenants(),
+    createTenant: mockCreateTenant,
+    updateTenant: mockUpdateTenant,
+    deleteTenant: mockDeleteTenant,
+    batchDeleteTenants: mockBatchDeleteTenants,
   },
 }));
 

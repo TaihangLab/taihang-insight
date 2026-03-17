@@ -8,16 +8,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { usePermissionData } from '@/pages/system/composable/permission/usePermissionData';
 
-// Mock the service
-const mockGetPermissionTree = vi.fn();
-const mockGetPermissions = vi.fn();
-const mockCreatePermissionNode = vi.fn();
+// Mock the service - 使用 vi.hoisted 因为 vi.mock 会被提升
+const mockGetPermissionTree = vi.hoisted(() => vi.fn());
+const mockGetPermissions = vi.hoisted(() => vi.fn());
+const mockCreatePermissionNode = vi.hoisted(() => vi.fn());
 
 vi.mock('@/api/system/permissionService', () => ({
   default: {
-    getPermissionTree: () => mockGetPermissionTree(),
-    getPermissions: () => mockGetPermissions(),
-    createPermissionNode: () => mockCreatePermissionNode(),
+    getPermissionTree: mockGetPermissionTree,
+    getPermissions: mockGetPermissions,
+    createPermissionNode: mockCreatePermissionNode,
     updatePermissionNode: vi.fn(),
     deletePermissionNode: vi.fn(),
     updatePermissionNodeStatus: vi.fn(),

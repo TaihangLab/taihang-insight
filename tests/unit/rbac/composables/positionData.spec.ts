@@ -5,15 +5,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { usePositionData } from '@/pages/system/composable/position/usePositionData';
 
-// Mock the service
-const mockGetPositions = vi.fn();
-const mockCreatePosition = vi.fn();
+// Mock the service - 使用 vi.hoisted 因为 vi.mock 会被提升
+const mockGetPositions = vi.hoisted(() => vi.fn());
+const mockCreatePosition = vi.hoisted(() => vi.fn());
 
 vi.mock('@/api/system/positionService', () => ({
   default: {
-    getPositions: () => mockGetPositions(),
+    getPositions: mockGetPositions,
     getPositionById: vi.fn(),
-    createPosition: () => mockCreatePosition(),
+    createPosition: mockCreatePosition,
     updatePosition: vi.fn(),
     deletePosition: vi.fn(),
   },

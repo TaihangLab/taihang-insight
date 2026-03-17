@@ -1,6 +1,6 @@
 <template>
-  <div class="user-search-bar">
-    <el-form :inline="true" :model="formValue" @submit.prevent="handleSearch">
+  <div class="p-4 px-5 mb-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+    <el-form :inline="true" :model="formValue" class="search-form" @submit.prevent="handleSearch">
       <el-form-item v-permission="'tenant:list:view'" label="租户">
         <TenantSelector
           ref="tenantSelectorRef"
@@ -13,6 +13,7 @@
           v-model="formValue.username"
           placeholder="请输入用户名"
           clearable
+          class="search-input"
           @clear="handleSearch"
         ></el-input>
       </el-form-item>
@@ -21,6 +22,7 @@
           v-model="formValue.phone"
           placeholder="请输入手机号"
           clearable
+          class="search-input"
           @clear="handleSearch"
         ></el-input>
       </el-form-item>
@@ -29,8 +31,8 @@
           v-model="formValue.status"
           placeholder="请选择状态"
           clearable
+          class="w-35"
           @clear="handleSearch"
-          style="width: 120px"
         >
           <el-option label="启用" :value="0"></el-option>
           <el-option label="停用" :value="1"></el-option>
@@ -111,70 +113,22 @@ const handleTenantChange = () => {
 </script>
 
 <style scoped>
-.user-search-bar {
-  padding: var(--design-spacing-md) var(--design-spacing-lg);
-  background: var(--design-bg-primary);
-  border-radius: var(--design-radius-lg);
-  border: 1px solid var(--design-border-color);
-  box-shadow: var(--design-shadow-sm);
-  margin-bottom: var(--design-spacing-md);
+/* 表单项间距和标签样式 */
+.search-form .el-form-item {
+  @apply mb-0 mr-4;
 }
 
-.user-search-bar .el-form-item {
-  margin-bottom: 0;
-  margin-right: var(--design-spacing-md);
+.search-form .el-form-item__label {
+  @apply text-gray-800 font-medium text-sm;
 }
 
-.user-search-bar .el-form-item__label {
-  color: var(--design-text-primary);
-  font-weight: var(--design-font-weight-medium);
-  font-size: var(--design-font-size-sm);
+/* 输入框样式 */
+.search-input :deep(.el-input__wrapper) {
+  @apply rounded-md transition-all duration-200;
 }
 
-.user-search-bar :deep(.el-input__wrapper) {
-  border-radius: var(--design-radius-md);
-  transition: all var(--design-transition-base);
-}
-
-.user-search-bar :deep(.el-input__wrapper:hover) {
+.search-input :deep(.el-input__wrapper:hover),
+.search-input :deep(.el-input__wrapper.is-focus) {
   box-shadow: 0 0 0 1px var(--design-primary-color) inset;
-}
-
-.user-search-bar :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px var(--design-primary-color) inset;
-}
-
-.user-search-bar :deep(.el-select .el-input__wrapper) {
-  width: 140px;
-}
-
-.user-search-bar :deep(.el-button) {
-  border-radius: var(--design-radius-md);
-  font-weight: var(--design-font-weight-medium);
-  padding: 8px 20px;
-  transition: all var(--design-transition-base);
-}
-
-.user-search-bar :deep(.el-button--primary) {
-  background: var(--design-gradient-primary);
-  border: none;
-  box-shadow: var(--design-shadow-primary);
-}
-
-.user-search-bar :deep(.el-button--primary:hover) {
-  background: linear-gradient(135deg, var(--design-primary-hover) 0%, #1a45c9 100%);
-  box-shadow: var(--design-shadow-primary-hover);
-  transform: translateY(-1px);
-}
-
-.user-search-bar :deep(.el-button--default) {
-  border-color: var(--design-border-color);
-  color: var(--design-text-primary);
-}
-
-.user-search-bar :deep(.el-button--default:hover) {
-  border-color: var(--design-primary-color);
-  color: var(--design-primary-color);
-  background-color: var(--design-primary-light);
 }
 </style>
