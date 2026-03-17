@@ -1806,15 +1806,15 @@ export default {
         console.log("加载分组列表...");
         const response = await centerAPI.chatAssistant.getGroups();
 
-        console.log("分组API响应:", response.data); // 添加调试日志
+        console.log("分组API响应:", response); // 添加调试日志
 
         // 响应拦截器已处理成功/失败判断，直接使用数据
         let groupsData = [];
 
-        if (Array.isArray(response.data)) {
-          groupsData = response.data;
+        if (Array.isArray(response)) {
+          groupsData = response;
         } else {
-          console.warn("分组列表格式错误或为空:", response.data);
+          console.warn("分组列表格式错误或为空:", response);
           this.userGroups = [];
           return;
         }

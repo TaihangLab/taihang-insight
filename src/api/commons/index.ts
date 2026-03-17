@@ -257,10 +257,10 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
       const data = response.data;
 
       // 后端统一响应格式：{ code, message, data }
-      // 只支持 code === 0 作为成功标志，其他都认为是失败
-      if (data && typeof data === "object" && "code" in data) {
-        // 检查是否成功：只有 code === 0 才算成功
-        const isSuccess = data.code === 0;
+      // 支持多种成功标志：code === 0 或 code === 200 (HTTP OK) 或 success === true
+      if (data && typeof data === "object") {
+        // 检查是否成功
+        const isSuccess = data.code === 0 || data.code === 200 || data.success === true;
 
         if (isSuccess) {
           // 请求成功，返回 data 字段

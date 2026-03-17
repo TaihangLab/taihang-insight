@@ -90,7 +90,7 @@ import DeviceWarningList from "./components/DeviceWarningList.vue";
 
 // 导入类型
 import type { LocationInfo } from "@/types/center/components";
-import type { DashboardSummary } from "@/types/center/dashboard";
+import type { DashboardSummary, AlertLevel, DeviceTopWarning, SystemStatus } from "@/types/center/dashboard";
 
 // ============================================================================
 // 响应式状态
@@ -201,10 +201,42 @@ function handleResize(): void {
 
 /**
  * 加载大屏摘要数据
+ * 使用拆分后的独立接口组合数据
  */
 async function loadDashboardData(): Promise<void> {
   try {
-    dashboardSummary.value = await centerAPI.dashboard.getSummary();
+    // 并行调用多个独立接口
+    const [
+      alertSummary,
+      alertLevels,
+      deviceTopWarnings,
+      systemStatus,
+      deviceConnectionSummary
+    ] = await Promise.all([
+      centerAPI.dashboard.getAlertSummary(),
+      centerAPI.dashboard.getAlertLevels(),
+      centerAPI.dashboard.getDeviceTopWarnings(),
+      centerAPI.dashboard.getSystemStatus(),
+      // 注意：设备统计暂时使用 connection summary 的数据
+      // 或者可以调用 centerAPI.deviceStatistics.getStatusStatistics()
+      centerAPI.deviceStatistics.getConnectionSummary().catch(() => null)
+    ]);
+
+    // 组合数据为 DashboardSummary 格式
+    dashboardSummary.value = {
+      alerts: alertSummary,
+      // 设备数据：从 connection summary 提取
+      devices: {
+        total_cameras: deviceConnectionSummary?.total_connections || 0,
+        online_cameras: deviceConnectionSummary?.video_streams || 0,
+        offline_cameras: (deviceConnectionSummary?.total_connections || 0) - (deviceConnectionSummary?.video_streams || 0),
+        video_streams: deviceConnectionSummary?.video_streams || 0,
+        capture_services: deviceConnectionSummary?.capture_services || 0
+      },
+      system: systemStatus,
+      alert_levels: alertLevels,
+      timestamp: new Date().toISOString()
+    };
   } catch (error) {
     console.error("加载大屏摘要数据失败:", error);
   }
