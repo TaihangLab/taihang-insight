@@ -3,7 +3,6 @@
  * 该文件封装所有 dialog 组件中使用的接口请求
  */
 import request from "@/utils/request";
-import type { AxiosRequestConfig } from "axios";
 
 // ==================== 通用类型定义 ====================
 interface ApiResponse<T = any> {

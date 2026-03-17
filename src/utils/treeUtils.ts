@@ -96,24 +96,53 @@ function buildTreeFromFlatData<T extends Record<string, any>>(
 
   // 首先将所有项目放入映射
   for (let i = 0; i < flatData.length; i++) {
-    map[flatData[i][idField] as string | number] = {
-      ...flatData[i],
+    const item = flatData[i];
+    if (!item) continue;
+
+    const idValue = item[idField];
+
+    // 确保 idValue 存在
+    if (idValue === undefined || idValue === null) {
+      continue;
+    }
+
+    map[idValue as string | number] = {
+      ...item,
       [childrenField]: [],
-    };
+    } as T & { [key: string]: any };
   }
 
   // 然后将每个项目添加到其父级的children数组中
   for (let i = 0; i < flatData.length; i++) {
-    const node = map[flatData[i][idField] as string | number];
-    const parent_id = flatData[i][parentIdField] as string | number;
+    const item = flatData[i];
+    if (!item) continue;
+
+    const idValue = item[idField];
+    const parent_id = item[parentIdField];
+
+    // 跳过没有 id 的项目
+    if (idValue === undefined || idValue === null) {
+      continue;
+    }
+
+    const node = map[idValue as string | number];
+
+    // 如果节点不存在，跳过
+    if (!node) {
+      continue;
+    }
 
     if (parent_id === 0 || parent_id === null || parent_id === undefined) {
       // 如果没有父级，将其添加到根级
       roots.push(node);
     } else {
       // 否则，将其添加到父级的children数组中
-      if (map[parent_id]) {
-        (map[parent_id][childrenField] as any[]).push(node);
+      const parentNode = map[parent_id as string | number];
+      if (parentNode) {
+        const children = parentNode[childrenField];
+        if (Array.isArray(children)) {
+          children.push(node);
+        }
       }
     }
   }

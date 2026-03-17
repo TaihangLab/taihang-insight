@@ -248,13 +248,13 @@ const router = createRouter({
  * 修复 router.push 的重复导航错误
  */
 const originalPush = router.push;
-router.push = function push(location) {
-  return originalPush.call(this, location).catch((err: Error) => {
+router.push = ((location: Parameters<typeof router.push>[0]) => {
+  return originalPush(location).catch((err: Error) => {
     if (err.name !== "NavigationDuplicated") {
       throw err;
     }
   });
-} as typeof router.push;
+}) as typeof router.push;
 
 /**
  * ============== 动态路由管理 ==============
@@ -347,6 +347,8 @@ export function resetAsyncRoutes(): void {
   // 倒序移除路由（避免索引问题）
   for (let i = records.length - 1; i >= 0; i--) {
     const record = records[i];
+    if (!record) continue;
+
     if (router.hasRoute(record.name)) {
       router.removeRoute(record.name);
       console.log(`[Router] 移除路由: ${record.name} (${record.path})`);

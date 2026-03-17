@@ -14,7 +14,7 @@ import type { LocalVideo } from '@/types/center.d'
  */
 export interface LocalVideoQuery {
   name?: string
-  is_streaming?: boolean | null
+  is_streaming?: boolean
 }
 
 /**
@@ -119,7 +119,7 @@ export function useLocalVideo() {
       if (searchName.value) {
         params.name = searchName.value
       }
-      if (filterStreaming.value !== null) {
+      if (filterStreaming.value !== null && filterStreaming.value !== undefined) {
         params.is_streaming = filterStreaming.value
       }
 

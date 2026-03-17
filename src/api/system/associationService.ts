@@ -194,10 +194,16 @@ class AssociationService {
 
     if (params) {
       // 支持 skip/limit 格式（映射到后端的 page/size）
-      if ("skip" in params) queryParams.page = params.skip / 10 + 1; // 假设每页10条
-      if ("limit" in params) queryParams.size = params.limit;
+      if ("skip" in params && params.skip !== undefined) {
+        queryParams.page = params.skip / 10 + 1; // 假设每页10条
+      }
+      if ("limit" in params && params.limit !== undefined) {
+        queryParams.size = params.limit;
+      }
       // 租户ID
-      if ("tenant_id" in params) queryParams.tenant_id = params.tenant_id;
+      if ("tenant_id" in params && params.tenant_id !== undefined) {
+        queryParams.tenant_id = params.tenant_id;
+      }
     }
 
     return rbacAxios.get("/api/v1/rbac/roles", { params });

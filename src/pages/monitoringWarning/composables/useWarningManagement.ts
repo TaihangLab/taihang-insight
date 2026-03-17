@@ -17,7 +17,6 @@ import type {
   AlertStatusString,
   ExportFormat,
 } from '@/types/center/alert';
-import type { ArchiveQueryParams } from '@/types/center.d';
 
 export function useWarningManagement() {
   const router = useRouter();
@@ -406,8 +405,6 @@ export function useWarningManagement() {
         console.error('未找到预警项:', id);
         return;
       }
-
-      const warning = warningList.value[index];
 
       if (action === 'markProcessed') {
         // 处理预警 - 统一处理逻辑
@@ -933,7 +930,7 @@ export function useWarningManagement() {
       console.log('更新预警状态:', apiAlertId, updateData);
 
       // 调用API更新预警状态
-      const response = await centerAPI.alert.updateAlertStatus(apiAlertId, updateData);
+      await centerAPI.alert.updateAlertStatus(apiAlertId, updateData);
 
       // API调用成功，更新本地数据状态
       const index = warningList.value.findIndex((item) => String(item.id) === String(warningId));
@@ -1380,93 +1377,6 @@ export function useWarningManagement() {
       return;
     }
     batchProcessDialogVisible.value = true;
-  };
-
-  /**
-   * 确认批量处理
-   */
-  const confirmBatchProcess = async () => {
-    if (!batchRemarkForm.remark.trim()) {
-      ElMessage.warning('请输入批量处理意见');
-      return;
-    }
-
-    try {
-      loading.value = true;
-
-      // 调用API进行批量处理
-      const updateData = {
-        status: 2, // 处理中状态
-        processing_notes: batchRemarkForm.remark,
-        processed_by: getCurrentUserName(),
-      } as any;
-
-      // 将页面ID转换为数字类型的API ID
-      const apiAlertIds = selectedWarnings.value
-        .map((id) => {
-          const warning = warningList.value.find((item) => item.id === id);
-          return warning && warning._apiData ? warning._apiData.alert_id : parseInt(String(id));
-        })
-        .filter((id) => !isNaN(id));
-
-      console.log('批量处理预警:', apiAlertIds, updateData);
-
-      await centerAPI.alert.batchUpdateAlertStatus(apiAlertIds, updateData);
-
-      // API调用成功，更新本地数据（与单个处理逻辑一致）
-      for (const id of selectedWarnings.value) {
-        const index = warningList.value.findIndex((item) => item.id === id);
-        if (index !== -1) {
-          // 确保有操作历史数组
-          if (!warningList.value[index].operationHistory) {
-            warningList.value[index].operationHistory = [];
-          }
-
-          // 更新待处理记录为已完成状态
-          warningList.value[index].operationHistory = warningList.value[index].operationHistory.map(
-            (record) => {
-              if (record.operationType === 'pending' && record.status === 'active') {
-                return {
-                  ...record,
-                  status: 'completed',
-                  description: '预警已确认，开始处理',
-                };
-              }
-              return record;
-            },
-          );
-
-          // 添加处理中记录
-          const processingRecord: OperationHistory = {
-            id: Date.now() + Math.random(),
-            status: 'active',
-            statusText: '处理中',
-            time: getCurrentTime(),
-            description: `批量处理开始：${batchRemarkForm.remark}`,
-            operationType: 'processing',
-            operator: getCurrentUserName(),
-          };
-
-          warningList.value[index].operationHistory.unshift(processingRecord);
-
-          // 更新状态为处理中
-          warningList.value[index].status = 'processing';
-        }
-      }
-
-      ElMessage.success(`已为 ${selectedWarnings.value.length} 项预警添加处理记录`);
-
-      // 刷新列表以获取最新数据
-      await getWarningList();
-
-      selectedWarnings.value = [];
-      closeBatchProcessDialog();
-    } catch (error) {
-      console.error('批量处理失败:', error);
-      ElMessage.error('批量处理失败：' + (error instanceof Error ? error.message : '网络错误'));
-    } finally {
-      loading.value = false;
-    }
   };
 
   const closeBatchProcessDialog = () => {

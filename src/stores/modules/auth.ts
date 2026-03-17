@@ -80,7 +80,7 @@ export async function refreshAuthData(): Promise<void> {
   console.log("[Auth] 开始刷新认证数据...");
 
   try {
-    const [userInfo, permissions, menus] = await Promise.all([
+    await Promise.all([
       useUserInfoStore().refresh(),
       usePermissionsStore().refresh(),
       useMenusStore().refresh(),
