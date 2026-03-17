@@ -9,7 +9,7 @@ class LocalVideoAPI {
   /**
    * 获取本地视频列表
    */
-  async getVideoList(
+  getVideoList(
     params: {
       skip?: number;
       limit?: number;
@@ -23,26 +23,26 @@ class LocalVideoAPI {
       ...params,
     };
 
-    return authAxios.get("/api/v1/local-videos/list", { params: apiParams });
+    return authAxios.get("/api/v1/videos/local/list", { params: apiParams });
   }
 
   /**
    * 上传本地视频
    */
-  async uploadVideo(formData: FormData): Promise<AxiosResponse<LocalVideo>> {
+  uploadVideo(formData: FormData): Promise<AxiosResponse<LocalVideo>> {
     const config = {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     };
 
-    return authAxios.post("/api/v1/local-videos/upload", formData, config);
+    return authAxios.post("/api/v1/videos/local/upload", formData, config);
   }
 
   /**
    * 更新本地视频
    */
-  async updateVideo(
+  updateVideo(
     videoId: number,
     updateData: {
       name?: string;
@@ -50,36 +50,36 @@ class LocalVideoAPI {
       stream_fps?: number;
     },
   ): Promise<AxiosResponse<LocalVideo>> {
-    return authAxios.put(`/api/v1/local-videos/${videoId}`, updateData);
+    return authAxios.put(`/api/v1/videos/local/${videoId}`, updateData);
   }
 
   /**
    * 删除本地视频
    */
-  async deleteVideo(videoId: number): Promise<AxiosResponse> {
-    return authAxios.delete(`/api/v1/local-videos/${videoId}`);
+  deleteVideo(videoId: number): Promise<AxiosResponse> {
+    return authAxios.delete(`/api/v1/videos/local/${videoId}`);
   }
 
   /**
    * 获取推流状态
    */
-  async getStreamStatus(videoId: number): Promise<AxiosResponse<StreamStatus>> {
-    return authAxios.get(`/api/v1/local-videos/${videoId}/stream-status`);
+  getStreamStatus(videoId: number): Promise<AxiosResponse<StreamStatus>> {
+    return authAxios.get(`/api/v1/videos/local/${videoId}/stream-status`);
   }
 
   /**
    * 启动推流
    */
-  async startStream(videoId: number, streamFps?: number): Promise<AxiosResponse<StreamStatus>> {
+  startStream(videoId: number, streamFps?: number): Promise<AxiosResponse<StreamStatus>> {
     const data = streamFps !== undefined ? { stream_fps: streamFps } : {};
-    return authAxios.post(`/api/v1/local-videos/${videoId}/stream/start`, data);
+    return authAxios.post(`/api/v1/videos/local/${videoId}/stream/start`, data);
   }
 
   /**
    * 停止推流
    */
-  async stopStream(videoId: number): Promise<AxiosResponse> {
-    return authAxios.post(`/api/v1/local-videos/${videoId}/stream/stop`);
+  stopStream(videoId: number): Promise<AxiosResponse> {
+    return authAxios.post(`/api/v1/videos/local/${videoId}/stream/stop`);
   }
 }
 

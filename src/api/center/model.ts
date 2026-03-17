@@ -15,8 +15,8 @@ class ModelAPI {
    * @param params 查询参数
    * @returns 模型列表响应
    */
-  async getModelList(params: ModelQueryParams = {}): Promise<UnifiedResponse<Model[]>> {
-    return authAxios.get("/api/v1/api/v1/models/list", { params });
+  getModelList(params: ModelQueryParams = {}): Promise<UnifiedResponse<Model[]>> {
+    return authAxios.get("/api/v1/ai/models/list", { params });
   }
 
   /**
@@ -24,8 +24,8 @@ class ModelAPI {
    * @param modelId 模型ID
    * @returns 模型详情响应
    */
-  async getModelDetail(modelId: number): Promise<Model> {
-    return authAxios.get(`/api/v1/models/${modelId}`);
+  getModelDetail(modelId: number): Promise<Model> {
+    return authAxios.get(`/api/v1/ai/models/${modelId}`);
   }
 
   /**
@@ -34,8 +34,8 @@ class ModelAPI {
    * @param modelData 模型数据
    * @returns 更新结果响应
    */
-  async updateModel(modelId: number, modelData: Partial<Model>): Promise<AxiosResponse> {
-    return authAxios.put(`/api/v1/models/${modelId}`, modelData);
+  updateModel(modelId: number, modelData: Partial<Model>): Promise<AxiosResponse> {
+    return authAxios.put(`/api/v1/ai/models/${modelId}`, modelData);
   }
 
   /**
@@ -43,8 +43,8 @@ class ModelAPI {
    * @param modelId 模型ID
    * @returns 删除结果响应
    */
-  async deleteModel(modelId: number): Promise<AxiosResponse> {
-    return authAxios.delete(`/api/v1/models/${modelId}`);
+  deleteModel(modelId: number): Promise<AxiosResponse> {
+    return authAxios.delete(`/api/v1/ai/models/${modelId}`);
   }
 
   /**
@@ -52,10 +52,18 @@ class ModelAPI {
    * @param ids 模型ID数组
    * @returns 删除结果响应
    */
-  async batchDeleteModels(ids: number[]): Promise<any> {
-    return authAxios.delete("/api/v1/models/batch-delete", {
+  batchDeleteModels(ids: number[]): Promise<any> {
+    return authAxios.delete("/api/v1/ai/models/batch-delete", {
       data: { model_ids: ids },
     });
+  }
+
+  /**
+   * 同步模型从 Triton
+   * @returns 同步结果响应
+   */
+  syncModels(): Promise<any> {
+    return authAxios.post("/api/v1/ai/models/sync");
   }
 
   /**
@@ -63,8 +71,8 @@ class ModelAPI {
    * @param modelId 模型ID
    * @returns 加载结果响应
    */
-  async loadModel(modelId: number): Promise<AxiosResponse> {
-    return authAxios.post(`/api/v1/models/${modelId}/load`);
+  loadModel(modelId: number): Promise<AxiosResponse> {
+    return authAxios.post(`/api/v1/ai/models/${modelId}/load`);
   }
 
   /**
@@ -72,8 +80,21 @@ class ModelAPI {
    * @param modelId 模型ID
    * @returns 卸载结果响应
    */
-  async unloadModel(modelId: number): Promise<AxiosResponse> {
-    return authAxios.post(`/api/v1/models/${modelId}/unload`);
+  unloadModel(modelId: number): Promise<AxiosResponse> {
+    return authAxios.post(`/api/v1/ai/models/${modelId}/unload`);
+  }
+
+  /**
+   * 导入模型
+   * @param formData 模型文件和元数据
+   * @returns 导入结果响应
+   */
+  importModel(formData: FormData): Promise<AxiosResponse> {
+    return authAxios.post("/api/v1/ai/models/import", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
   }
 }
 

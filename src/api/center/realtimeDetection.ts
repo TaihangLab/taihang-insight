@@ -14,24 +14,24 @@ class RealtimeDetectionAPI {
    * 获取指定摄像头的运行中AI任务列表
    * @param cameraId 摄像头ID
    */
-  async getTasksByCamera(cameraId: number): Promise<AITask[]> {
+  getTasksByCamera(cameraId: number): Promise<AITask[]> {
     if (!cameraId) {
       return Promise.reject(new Error("缺少摄像头ID"));
     }
 
-    return apiGet<AITask[]>(`/api/v1/realtime-detection/detection/tasks/by_camera/${cameraId}`);
+    return apiGet<AITask[]>(`/api/v1/monitor/detection/tasks/by_camera/${cameraId}`);
   }
 
   /**
    * 获取指定任务的当前检测结果（HTTP轮询方式）
    * @param taskId 任务ID
    */
-  async getDetectionResult(taskId: number): Promise<DetectionResult> {
+  getDetectionResult(taskId: number): Promise<DetectionResult> {
     if (!taskId) {
       return Promise.reject(new Error("缺少任务ID"));
     }
 
-    return apiGet<DetectionResult>(`/api/v1/realtime-detection/detection/result/${taskId}`);
+    return apiGet<DetectionResult>(`/api/v1/monitor/detection/result/${taskId}`);
   }
 }
 
