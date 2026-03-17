@@ -60,7 +60,11 @@ const loadTenants = async () => {
   if (loaded.value) return;
 
   try {
-    const response = await tenantService.getTenants();
+    // 传递分页参数以获取所有租户
+    const response = await tenantService.getTenants({
+      skip: 0,
+      limit: 1000, // 获取所有租户
+    });
     // 响应拦截器已处理格式转换，直接使用数据
     if (Array.isArray(response)) {
       // 过滤掉 id 或 tenant_name 为空的租户记录
@@ -77,7 +81,8 @@ const loadTenants = async () => {
     }
   } catch (error: unknown) {
     console.error("获取租户列表失败:", error);
-    ElMessage.error(error.message || "获取租户列表失败");
+    const err = error as { message?: string };
+    ElMessage.error(err.message || "获取租户列表失败");
   }
 };
 

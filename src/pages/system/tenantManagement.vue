@@ -61,8 +61,8 @@ const {
 // 响应式状态
 // ============================================
 
-// 搜索条件
-const searchConditions = reactive({
+// 搜索条件（使用 let 声明，因为 v-model 需要修改整个对象）
+let searchConditions = reactive({
   tenant_id: "",
   tenant_name: "",
   company_name: "",

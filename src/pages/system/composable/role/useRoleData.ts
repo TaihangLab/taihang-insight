@@ -151,13 +151,16 @@ export function useRoleData() {
 
       if (response?.data) {
         rolePermissions.value = (Array.isArray(response.data) ? response.data : []).map(
-          (item: unknown) => ({
-            role_id: Number(item.role_id || roleId),
-            role_name: String(item.role_name || ""),
-            permission_id: Number(item.permission_id || item.id || 0),
-            permission_code: String(item.permission_code || ""),
-            permission_name: String(item.permission_name || item.permission_code || ""),
-          }),
+          (item: unknown) => {
+            const record = item as Record<string, unknown>;
+            return {
+              role_id: Number(record.role_id || roleId),
+              role_name: String(record.role_name || ""),
+              permission_id: Number(record.permission_id || record.id || 0),
+              permission_code: String(record.permission_code || ""),
+              permission_name: String(record.permission_name || record.permission_code || ""),
+            };
+          },
         );
       }
 
@@ -191,7 +194,6 @@ export function useRoleData() {
   const updateRole = async (roleId: number, data: Record<string, unknown>) => {
     loading.value = true;
     try {
-      // @ts-expect-error - 数据由调用方验证，后端会进行验证
       await roleService.updateRole(roleId, data);
       return { success: true, message: "修改成功" };
     } catch (error) {

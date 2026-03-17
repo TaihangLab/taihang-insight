@@ -32,4 +32,4 @@ CLAUDE.md
 test-results/
 playwright-report/
 package-lock.json
-.playwright-mcp
+.playwright-mcptests/e2e/.auth/storage-state.json

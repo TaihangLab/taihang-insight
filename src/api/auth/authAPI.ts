@@ -12,6 +12,7 @@ import router from "@/router";
 import { authAxios, createAxiosInstance, type AxiosInstance } from "@/api/commons";
 import type {
   AuthInfoResponse,
+  AuthPermissionsResponse,
   LoginRequest,
   LoginResponse,
   MenuItem,
@@ -74,10 +75,10 @@ const unAuthAxios = createAxiosInstance(
 class AuthAPI {
   /**
    * 用户登录（不需要 token）
-   * POST /api/v1/login
+   * POST /api/v1/auth/login
    */
   async login(params: LoginRequest): Promise<LoginResponse> {
-    return unAuthAxios.post("/api/v1/login", params);
+    return unAuthAxios.post("/api/v1/auth/login", params);
   }
 
   /**

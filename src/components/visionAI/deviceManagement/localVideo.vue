@@ -329,11 +329,14 @@ import _imported_1 from "../../../../config/index.js";
 import axios from "axios";
 const config = _imported_1;
 
-// 创建专用axios实例，避免CORS错误
+// 创建专用 axios 实例
+// 开发环境：使用相对路径，通过 Vite 代理访问（/videos -> localhost:8000）
+// 生产环境：使用 config.API_BASE_URL 作为 baseURL
+const isDev = import.meta.env.DEV;
 const localVideoAxios = axios.create({
-  baseURL: config.API_BASE_URL,
+  baseURL: isDev ? '' : (config.API_BASE_URL || ''),
   timeout: 15000,
-  withCredentials: false, // 避免CORS错误
+  withCredentials: !isDev, // 开发环境通过 Vite 代理，不需要 withCredentials
 });
 
 export default {
@@ -420,7 +423,7 @@ export default {
           params.is_streaming = this.filterStreaming;
         }
 
-        const response = await localVideoAxios.get("/api/v1/local-videos/list", { params });
+        const response = await localVideoAxios.get("/api/v1/videos/local/list", { params });
 
         this.videoList = response.data;
         this.totalVideos = this.videoList.length;
@@ -446,7 +449,7 @@ export default {
         if (video.is_streaming) {
           try {
             const response = await localVideoAxios.get(
-              `/api/v1/local-videos/${video.id}/stream-status`,
+              `/api/v1/videos/local/${video.id}/stream-status`,
             );
             if (response.data) {
               // 使用 $set 确保Vue能追踪新属性的变化
@@ -468,7 +471,7 @@ export default {
       for (const video of streamingVideos) {
         try {
           const response = await localVideoAxios.get(
-            `/api/v1/local-videos/${video.id}/stream-status`,
+            `/api/v1/videos/local/${video.id}/stream-status`,
           );
           if (response.data) {
             // 使用 $set 确保Vue能追踪新属性的变化
@@ -541,7 +544,7 @@ export default {
           }
 
           try {
-            await localVideoAxios.post("/api/v1/local-videos/upload", formData, {
+            await localVideoAxios.post("/api/v1/videos/local/upload", formData, {
               headers: {
                 "Content-Type": "multipart/form-data",
               },
@@ -606,7 +609,7 @@ export default {
               updateData.stream_fps = this.editForm.stream_fps;
             }
 
-            await localVideoAxios.put(`/api/v1/local-videos/${this.currentVideo.id}`, updateData);
+            await localVideoAxios.put(`/api/v1/videos/local/${this.currentVideo.id}`, updateData);
 
             this.$message.success("视频信息已更新");
             this.editDialogVisible = false;
@@ -655,7 +658,7 @@ export default {
         }
 
         const response = await localVideoAxios.post(
-          `/api/v1/local-videos/${this.currentVideo.id}/start-stream`,
+          `/api/v1/videos/local/${this.currentVideo.id}/start-stream`,
           payload,
         );
 
@@ -694,7 +697,7 @@ export default {
       })
         .then(async () => {
           try {
-            await localVideoAxios.post(`/api/v1/local-videos/${video.id}/stop-stream`);
+            await localVideoAxios.post(`/api/v1/videos/local/${video.id}/stop-stream`);
 
             this.$message.success("推流已停止");
             this.loadVideos();
@@ -724,7 +727,7 @@ export default {
       })
         .then(async () => {
           try {
-            await localVideoAxios.delete(`/api/v1/local-videos/${video.id}`);
+            await localVideoAxios.delete(`/api/v1/videos/local/${video.id}`);
 
             this.$message.success("视频已删除");
             this.loadVideos();

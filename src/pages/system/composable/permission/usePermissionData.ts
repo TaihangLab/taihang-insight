@@ -73,6 +73,7 @@ export function usePermissionData() {
 
   /**
    * 获取权限列表
+   * 响应拦截器已提取 data 字段，response 直接是数组
    */
   const fetchPermissions = async (
     params: PermissionSearchConditions,
@@ -100,32 +101,25 @@ export function usePermissionData() {
 
       const response = await permissionService.getPermissions(queryParams);
 
-      if (response?.data) {
-        // 后端新格式：response.data 直接是数组，分页信息在顶层
-        // 拦截器已将 { data: [...], total, page, page_size } 转换为 { data, total, page, limit }
-        const items = Array.isArray(response.data) ? response.data : [];
+      // 响应拦截器已提取 data 字段，response 直接是数组
+      const items = Array.isArray(response) ? response : [];
 
-        // 映射数据
-        permissions.value = items.map((item) => {
-          return {
-            id: Number(item.id),
-            permission_code: String(item.permission_code || ""),
-            permission_name: String(item.permission_name || ""),
-            permission_type: item.permission_type as PermissionType,
-            status: Number(item.status) as Status,
-            creator: String(item.creator || ""),
-            tenant_code: String(item.tenant_code || ""),
-            create_time: String(item.create_time || ""),
-            // 保留原始数据
-            ...item,
-          } as PermissionEntity;
-        });
-
-        // 使用后端返回的总数
-        pagination.value.total = Number(response.total || 0);
-        pagination.value.currentPage = currentPage;
-        pagination.value.pageSize = size;
-      }
+      // 映射数据
+      permissions.value = items.map((item) => {
+        const i = item as Record<string, unknown>;
+        return {
+          id: Number(i.id),
+          permission_code: String(i.permission_code || ""),
+          permission_name: String(i.permission_name || ""),
+          permission_type: i.permission_type as PermissionType,
+          status: Number(i.status) as Status,
+          creator: String(i.creator || ""),
+          tenant_code: String(i.tenant_code || ""),
+          create_time: String(i.create_time || ""),
+          // 保留原始数据
+          ...i,
+        } as PermissionEntity;
+      });
 
       return permissions.value;
     } catch (error) {
@@ -138,19 +132,18 @@ export function usePermissionData() {
 
   /**
    * 获取权限树
-   * 后端直接返回树型结构，前端需要处理 node_type 映射
+   * 响应拦截器已提取 data 字段，response 直接是数组
    */
   const fetchPermissionTree = async () => {
     loading.value = true;
     try {
       const response = await permissionService.getPermissionTree();
 
-      if (response?.data) {
-        // 后端直接返回树型结构数据，包含 node_type 字段
-        // 需要处理 node_type 映射：后端返回 "directory"，前端期望 "folder"
-        const treeData = Array.isArray(response.data) ? response.data : [];
-        permissionTree.value = normalizePermissionTree(treeData);
-      }
+      // 响应拦截器已提取 data 字段，response 直接是数组
+      const treeData = Array.isArray(response) ? response : [];
+
+      // 规范化权限树数据
+      permissionTree.value = normalizePermissionTree(treeData);
 
       return permissionTree.value;
     } catch (error) {

@@ -1,5 +1,5 @@
 import type { AxiosResponse } from "axios";
-import { authAxios, type UnifiedResponse } from "@/api/commons";
+import { authAxios } from "@/api/commons";
 import type {
   Alert,
   AlertQueryParams,
@@ -11,7 +11,8 @@ import type {
 } from "@/types/center.d";
 import { useTokenStore } from "@/stores/modules/token";
 import { normalizePageParams } from "@/api/utils/pageUtils";
-import { apiGet } from "@/api/utils/apiHelpers";
+import { apiGet, apiPost, apiPut, apiDelete } from "@/api/utils/apiHelpers";
+
 /**
  * 预警管理 API
  * 提供预警的查询、更新、删除以及SSE实时推送功能
@@ -24,10 +25,6 @@ class AlertAPI {
   /**
    * 获取实时预警列表
    * @param params 查询参数
-   * @returns 包含数据和分页信息的响应
-   *
-   * 注意：分页和不分页使用相同的 apiGet 方法
-   * 后端返回结构应该是一致的，分页信息是响应对象的一个字段
    */
   getRealTimeAlerts(params: AlertQueryParams = {}): Promise<ListWithPagination<Alert>> {
     const { page, limit } = normalizePageParams(params);
@@ -41,12 +38,12 @@ class AlertAPI {
    * @param alertId 预警ID
    * @param updateData 更新数据
    */
-  async updateAlertStatus(alertId: number, updateData: AlertStatusUpdate): Promise<AxiosResponse> {
+  async updateAlertStatus(alertId: number, updateData: AlertStatusUpdate): Promise<void> {
     if (!alertId) {
       return Promise.reject(new Error("缺少预警ID"));
     }
 
-    return authAxios.put(`/api/v1/alerts/${alertId}/status`, updateData);
+    return apiPut<void>(`/api/v1/alerts/${alertId}/status`, updateData);
   }
 
   /**
@@ -57,12 +54,12 @@ class AlertAPI {
   async batchUpdateAlertStatus(
     alertIds: number[],
     updateData: AlertStatusUpdate,
-  ): Promise<AxiosResponse> {
+  ): Promise<void> {
     if (!alertIds || alertIds.length === 0) {
       return Promise.reject(new Error("缺少预警ID"));
     }
 
-    return authAxios.put("/api/v1/alerts/batch-update", {
+    return apiPut<void>("/api/v1/alerts/batch-update", {
       alert_ids: alertIds,
       ...updateData,
     });
@@ -72,24 +69,24 @@ class AlertAPI {
    * 删除预警
    * @param alertId 预警ID
    */
-  async deleteAlert(alertId: number): Promise<AxiosResponse> {
+  async deleteAlert(alertId: number): Promise<void> {
     if (!alertId) {
       return Promise.reject(new Error("缺少预警ID"));
     }
 
-    return authAxios.delete(`/api/v1/alerts/${alertId}`);
+    return apiDelete<void>(`/api/v1/alerts/${alertId}`);
   }
 
   /**
    * 批量删除预警
    * @param alertIds 预警ID数组
    */
-  async batchDeleteAlerts(alertIds: number[]): Promise<AxiosResponse> {
+  async batchDeleteAlerts(alertIds: number[]): Promise<void> {
     if (!alertIds || alertIds.length === 0) {
       return Promise.reject(new Error("缺少预警ID"));
     }
 
-    return authAxios.post("/api/v1/alerts/batch-delete", {
+    return apiPost<void>("/api/v1/alerts/batch-delete", {
       alert_ids: alertIds,
     });
   }
@@ -98,12 +95,12 @@ class AlertAPI {
    * 根据ID获取单个预警详情
    * @param alertId 预警ID
    */
-  async getAlertDetail(alertId: number | string): Promise<AxiosResponse<UnifiedResponse<Alert>>> {
+  async getAlertDetail(alertId: number | string): Promise<Alert> {
     if (!alertId) {
       return Promise.reject(new Error("缺少预警ID"));
     }
 
-    return authAxios.get(`/api/v1/alerts/${alertId}`);
+    return apiGet<Alert>(`/api/v1/alerts/${alertId}`);
   }
 
   /**
@@ -175,30 +172,30 @@ class AlertAPI {
   /**
    * 获取SSE连接状态
    */
-  async getSSEStatus(): Promise<AxiosResponse> {
-    return authAxios.get("/api/v1/alerts/sse/status");
+  async getSSEStatus(): Promise<unknown> {
+    return apiGet<unknown>("/api/v1/alerts/sse/status");
   }
 
   /**
    * 获取当前连接的SSE客户端信息
    */
-  async getConnectedClients(): Promise<AxiosResponse> {
-    return authAxios.get("/api/v1/alerts/connected");
+  async getConnectedClients(): Promise<unknown> {
+    return apiGet<unknown>("/api/v1/alerts/connected");
   }
 
   /**
    * 发送测试预警（仅供调试使用）
    */
-  async sendTestAlert(): Promise<AxiosResponse> {
-    return authAxios.post("/api/v1/alerts/test");
+  async sendTestAlert(): Promise<void> {
+    return apiPost<void>("/api/v1/alerts/test");
   }
 
   /**
    * 获取预警统计信息
    * @param days 统计天数
    */
-  async getAlertStatistics(days = 7): Promise<AxiosResponse> {
-    return authAxios.get("/api/v1/alerts/statistics", {
+  async getAlertStatistics(days = 7): Promise<unknown> {
+    return apiGet<unknown>("/api/v1/alerts/statistics", {
       params: { days },
     });
   }
@@ -213,17 +210,21 @@ class AlertAPI {
     alertId: number,
     reviewNotes: string,
     reviewerName: string,
-  ): Promise<AxiosResponse> {
+  ): Promise<void> {
     if (!alertId || !reviewNotes || !reviewerName) {
       return Promise.reject(new Error("缺少必要参数：预警ID、复判意见和复判人员姓名必须提供"));
     }
 
-    return authAxios.post(`/api/v1/alerts/${alertId}/false-alarm`, null, {
-      params: {
-        review_notes: reviewNotes,
-        reviewer_name: reviewerName,
+    return apiPost<void>(
+      `/api/v1/alerts/${alertId}/false-alarm`,
+      null,
+      {
+        params: {
+          review_notes: reviewNotes,
+          reviewer_name: reviewerName,
+        },
       },
-    });
+    );
   }
 
   /**
@@ -236,7 +237,7 @@ class AlertAPI {
     alertIds: number[],
     reviewNotes: string,
     reviewerName: string,
-  ): Promise<AxiosResponse> {
+  ): Promise<void> {
     if (!alertIds || !Array.isArray(alertIds) || alertIds.length === 0) {
       return Promise.reject(new Error("缺少预警ID数组"));
     }
@@ -245,7 +246,7 @@ class AlertAPI {
       return Promise.reject(new Error("缺少复判意见或复判人员姓名"));
     }
 
-    return authAxios.post(
+    return apiPost<void>(
       "/api/v1/alerts/batch-false-alarm",
       {
         alert_ids: alertIds,
@@ -262,6 +263,7 @@ class AlertAPI {
   /**
    * 导出预警数据
    * @param params 导出参数
+   * 注意：此方法返回完整的 AxiosResponse 以处理 blob 数据和响应头
    */
   async exportAlerts(params: Record<string, unknown> = {}): Promise<AxiosResponse> {
     const exportParams = { ...params };
@@ -280,6 +282,7 @@ class AlertAPI {
       delete exportParams.alert_ids;
     }
 
+    // 导出功能需要完整的 axios 响应以处理 blob
     return authAxios.get("/api/v1/alerts/export", {
       params: exportParams,
       responseType: "blob",

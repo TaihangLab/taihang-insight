@@ -24,7 +24,7 @@ const actions: ErrorActionButton[] = [
 // 可能的原因
 const reasons: ErrorReasonItem[] = [
   { icon: "i-carbon-link", text: "输入的网址有误或链接已失效" },
-  { icon: "i-carbon-user-locked", text: "您没有权限访问该页面" },
+  { icon: "i-carbon-security", text: "您没有权限访问该页面" },
   { icon: "i-carbon-development", text: "该页面正在开发中" },
 ];
 </script>

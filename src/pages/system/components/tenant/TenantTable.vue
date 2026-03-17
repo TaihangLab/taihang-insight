@@ -5,6 +5,7 @@
     :border="false"
     class="custom-table"
     style="width: 100%"
+    max-height="calc(100vh - 300px)"
     @selection-change="handleSelectionChange"
   >
     <el-table-column type="selection" align="center"></el-table-column>

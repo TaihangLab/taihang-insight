@@ -108,7 +108,7 @@ export function usePositionData() {
 
         // 映射数据 - 处理后端 snake_case 到前端 camelCase 的转换
         positions.value = items.map((item) => {
-          const record = item as Record<string, unknown>;
+          const record = item as unknown as Record<string, unknown>;
           return {
             id: Number(record.id),
             // 后端 snake_case → 前端 camelCase

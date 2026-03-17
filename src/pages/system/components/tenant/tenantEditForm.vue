@@ -129,7 +129,6 @@ import tenantService from "@/api/system/tenantService";
 import type { TenantAPI } from "@/types/rbac/tenant";
 
 interface TenantForm {
-  tenant_id: string;
   tenant_name: string;
   company_name: string;
   contact_person: string;
@@ -171,7 +170,6 @@ const getDefaultExpireTime = (): string => {
 };
 
 const createDefaultForm = (): TenantForm => ({
-  tenant_id: "",
   tenant_name: "",
   company_name: "",
   contact_person: "",
@@ -188,17 +186,10 @@ const createDefaultForm = (): TenantForm => ({
   remark: "",
 });
 
-const tenantForm = reactive<TenantForm>(createDefaultForm());
+// 租户表单（使用 let 声明，因为 DevTools 组件的 v-model 需要修改整个对象）
+let tenantForm = reactive<TenantForm>(createDefaultForm());
 
 const tenantRules = {
-  tenant_id: [
-    { required: true, message: "请输入租户编码", trigger: "blur" },
-    {
-      pattern: /^[a-zA-Z0-9_-]+$/,
-      message: "租户编码只能包含字母、数字、下划线和横线",
-      trigger: "blur",
-    },
-  ],
   tenant_name: [{ required: true, message: "请输入租户名称", trigger: "blur" }],
   company_name: [{ required: true, message: "请输入企业名称", trigger: "blur" }],
   contact_person: [{ required: true, message: "请输入联系人", trigger: "blur" }],
@@ -231,7 +222,6 @@ watch(
   (newVal) => {
     if (newVal) {
       Object.assign(tenantForm, {
-        tenant_id: String(newVal.tenant_id || newVal.id || ""),
         tenant_name: newVal.tenant_name || "",
         company_name: newVal.company_name || "",
         contact_person: newVal.contact_person || "",
@@ -266,13 +256,10 @@ const submitForm = async () => {
     await tenantFormRef.value.validate();
 
     if (props.currentTenant) {
-      const tenantId = Number(props.currentTenant.tenant_id || props.currentTenant.id);
-      if (!tenantId) {
-        throw new Error("租户ID不能为空");
-      }
+      // 使用 id (数据库主键) 作为租户标识
+      const tenantId = props.currentTenant.id;
 
       const updateData: Record<string, any> = {
-        id: tenantId,
         tenant_name: tenantForm.tenant_name,
         company_name: tenantForm.company_name,
         contact_person: tenantForm.contact_person,
@@ -299,7 +286,6 @@ const submitForm = async () => {
       });
     } else {
       const createData = {
-        tenant_id: tenantForm.tenant_id,
         tenant_name: tenantForm.tenant_name,
         company_name: tenantForm.company_name,
         contact_person: tenantForm.contact_person,

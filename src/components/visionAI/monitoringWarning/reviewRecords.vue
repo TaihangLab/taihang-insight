@@ -424,9 +424,9 @@ export default {
         });
 
         // 响应拦截器已处理成功/失败判断，直接使用数据
-        if (Array.isArray(response.data)) {
+        if (Array.isArray(response)) {
           // 转换API数据格式为前端需要的格式
-          this.reviewList = response.data.map((record) => ({
+          this.reviewList = response.map((record) => ({
             id: record.review_id.toString(),
             title: record.alert_name || "未知预警",
             image: record.image_url || "./images/5.jpg",

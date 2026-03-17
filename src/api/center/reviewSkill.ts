@@ -1,5 +1,4 @@
-import { AxiosResponse } from "axios";
-import { authAxios, type UnifiedResponse } from "@/api/commons";
+import { apiGet, apiPost, apiPut, apiDelete } from "@/api/utils/apiHelpers";
 import type {
   ReviewSkill,
   CreateReviewSkillRequest,
@@ -22,16 +21,13 @@ class ReviewSkillAPI {
    * 创建多模态复判技能
    * @param skillData 技能数据
    */
-  async createReviewSkill(
-    skillData: CreateReviewSkillRequest,
-  ): Promise<AxiosResponse<UnifiedResponse<ReviewSkill>>> {
+  async createReviewSkill(skillData: CreateReviewSkillRequest): Promise<ReviewSkill> {
     if (!skillData.skill_name || !skillData.description || !skillData.prompt_template) {
       return Promise.reject(new Error("缺少必要参数：技能名称、描述和提示词模板"));
     }
 
     try {
-      const response = await authAxios.post("/api/v1/llm-skill-review/review-skills", skillData);
-      return response;
+      return await apiPost<ReviewSkill>("/api/v1/llm-skill-review/review-skills", skillData);
     } catch (error) {
       let errorMessage = "创建复判技能失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -53,10 +49,7 @@ class ReviewSkillAPI {
    * @param testImage 测试图片文件
    * @param userPrompt 用户提示词
    */
-  async previewTestReviewSkill(
-    testImage: File,
-    userPrompt: string,
-  ): Promise<AxiosResponse<PreviewTestResponse>> {
+  async previewTestReviewSkill(testImage: File, userPrompt: string): Promise<PreviewTestResponse> {
     if (!testImage || !userPrompt) {
       return Promise.reject(new Error("缺少测试图片或用户提示词"));
     }
@@ -65,18 +58,19 @@ class ReviewSkillAPI {
     formData.append("test_image", testImage);
     formData.append("user_prompt", userPrompt);
 
+    const config = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      timeout: 60000,
+    };
+
     try {
-      const response = await authAxios.post(
+      return await apiPost<PreviewTestResponse>(
         "/api/v1/llm-skill-review/review-skills/preview-test",
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          timeout: 60000,
-        },
+        config,
       );
-      return response;
     } catch (error) {
       let errorMessage = "预览测试失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -98,20 +92,16 @@ class ReviewSkillAPI {
    * @param skillId 技能ID
    * @param updateData 更新数据
    */
-  async updateReviewSkill(
-    skillId: string,
-    updateData: UpdateReviewSkillRequest,
-  ): Promise<AxiosResponse<UnifiedResponse<ReviewSkill>>> {
+  async updateReviewSkill(skillId: string, updateData: UpdateReviewSkillRequest): Promise<ReviewSkill> {
     if (!skillId) {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
     try {
-      const response = await authAxios.put(
+      return await apiPut<ReviewSkill>(
         `/api/v1/llm-skill-review/review-skills/${skillId}`,
         updateData,
       );
-      return response;
     } catch (error) {
       let errorMessage = "更新复判技能失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -132,9 +122,7 @@ class ReviewSkillAPI {
    * 获取复判技能列表
    * @param params 查询参数
    */
-  async getReviewSkillList(
-    params: ReviewSkillQueryParams = {},
-  ): Promise<AxiosResponse<UnifiedResponse<ReviewSkill[]>>> {
+  async getReviewSkillList(params: ReviewSkillQueryParams = {}): Promise<ReviewSkill[]> {
     // 复制所有参数并应用分页默认值
     const { page, limit } = normalizePageParams(params);
     const apiParams = {
@@ -193,10 +181,9 @@ class ReviewSkillAPI {
     }
 
     try {
-      const response = await authAxios.get("/api/v1/llm-skill-review/review-skills", {
+      return await apiGet<ReviewSkill[]>("/api/v1/llm-skill-review/review-skills", {
         params: apiParams,
       });
-      return response;
     } catch (error) {
       let errorMessage = "获取复判技能列表失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -217,16 +204,13 @@ class ReviewSkillAPI {
    * 获取复判技能详情
    * @param skillId 技能ID
    */
-  async getReviewSkillDetail(
-    skillId: string,
-  ): Promise<AxiosResponse<UnifiedResponse<ReviewSkill>>> {
+  async getReviewSkillDetail(skillId: string): Promise<ReviewSkill> {
     if (!skillId) {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
     try {
-      const response = await authAxios.get(`/api/v1/llm-skill-review/review-skills/${skillId}`);
-      return response;
+      return await apiGet<ReviewSkill>(`/api/v1/llm-skill-review/review-skills/${skillId}`);
     } catch (error) {
       let errorMessage = "获取复判技能详情失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -247,16 +231,13 @@ class ReviewSkillAPI {
    * 发布复判技能（上线）
    * @param skillId 技能ID
    */
-  async publishReviewSkill(skillId: string): Promise<AxiosResponse> {
+  async publishReviewSkill(skillId: string): Promise<void> {
     if (!skillId) {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
     try {
-      const response = await authAxios.post(
-        `/api/v1/llm-skill-review/review-skills/${skillId}/publish`,
-      );
-      return response;
+      await apiPost<void>(`/api/v1/llm-skill-review/review-skills/${skillId}/publish`);
     } catch (error) {
       let errorMessage = "发布复判技能失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -277,16 +258,13 @@ class ReviewSkillAPI {
    * 下线复判技能
    * @param skillId 技能ID
    */
-  async unpublishReviewSkill(skillId: string): Promise<AxiosResponse> {
+  async unpublishReviewSkill(skillId: string): Promise<void> {
     if (!skillId) {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
     try {
-      const response = await authAxios.post(
-        `/api/v1/llm-skill-review/review-skills/${skillId}/unpublish`,
-      );
-      return response;
+      await apiPost<void>(`/api/v1/llm-skill-review/review-skills/${skillId}/unpublish`);
     } catch (error) {
       let errorMessage = "下线复判技能失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -307,14 +285,13 @@ class ReviewSkillAPI {
    * 删除复判技能
    * @param skillId 技能ID
    */
-  async deleteReviewSkill(skillId: string): Promise<AxiosResponse> {
+  async deleteReviewSkill(skillId: string): Promise<void> {
     if (!skillId) {
       return Promise.reject(new Error("缺少技能ID"));
     }
 
     try {
-      const response = await authAxios.delete(`/api/v1/llm-skill-review/review-skills/${skillId}`);
-      return response;
+      await apiDelete<void>(`/api/v1/llm-skill-review/review-skills/${skillId}`);
     } catch (error) {
       let errorMessage = "删除复判技能失败";
       if (error && typeof error === "object" && "response" in error) {
@@ -335,7 +312,7 @@ class ReviewSkillAPI {
    * 批量删除复判技能
    * @param skillIds 技能ID数组
    */
-  async batchDeleteReviewSkills(skillIds: string[]): Promise<AxiosResponse> {
+  async batchDeleteReviewSkills(skillIds: string[]): Promise<void> {
     if (!skillIds || !Array.isArray(skillIds) || skillIds.length === 0) {
       return Promise.reject(new Error("缺少技能ID数组"));
     }
@@ -345,11 +322,7 @@ class ReviewSkillAPI {
     }
 
     try {
-      const response = await authAxios.post(
-        "/api/v1/llm-skill-review/review-skills/batch-delete",
-        skillIds,
-      );
-      return response;
+      await apiPost<void>("/api/v1/llm-skill-review/review-skills/batch-delete", skillIds);
     } catch (error) {
       let errorMessage = "批量删除复判技能失败";
       if (error && typeof error === "object" && "response" in error) {

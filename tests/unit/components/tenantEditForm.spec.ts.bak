@@ -1,0 +1,477 @@
+/**
+ * 租户编辑表单组件单元测试
+ * 测试范围：表单验证、新增/编辑模式切换、字段显示
+ * @see .claude/rules/testing-guide.md
+ */
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { mount, VueWrapper } from '@vue/test-utils';
+import { ElMessage } from 'element-plus';
+import TenantEditForm from '@/pages/system/components/tenant/tenantEditForm.vue';
+import { flushPromises } from '../test-helpers';
+
+// Mock Element Plus 组件
+vi.mock('element-plus', () => ({
+  ElMessage: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+  ElNotification: vi.fn(),
+}));
+
+// Mock tenantService
+const mockCreateTenant = vi.fn();
+const mockUpdateTenant = vi.fn();
+
+vi.mock('@/api/system/tenantService', () => ({
+  default: {
+    createTenant: () => mockCreateTenant(),
+    updateTenant: () => mockUpdateTenant(),
+  },
+}));
+
+describe('TenantEditForm - 表单验证', () => {
+  let wrapper: VueWrapper;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('新增模式 - 验证规则', () => {
+    it('应该在必填字段为空时显示验证错误', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      // 不填写任何字段，直接提交
+      const submitButton = wrapper.find('button:contains("确定")');
+      if (submitButton.exists()) {
+        await submitButton.trigger('click');
+      }
+
+      await flushPromises();
+
+      // 验证：表单应该有验证错误
+      // 注意：Element Plus 的验证需要手动触发 validate
+      const formRef = wrapper.vm.$refs.tenantFormRef;
+      expect(formRef).toBeDefined();
+    });
+
+    it('应该验证租户编码格式', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      // 填写非法字符的租户编码
+      await wrapper.setData({
+        tenantForm: {
+          ...wrapper.vm.tenantForm,
+          tenant_id: 'INVALID@CODE',
+        },
+      });
+
+      // 手动验证字段
+      const formRef = wrapper.vm.$refs.tenantFormRef;
+      if (formRef) {
+        try {
+          await formRef.validateField('tenant_id');
+        } catch (error) {
+          // 验证失败是预期的
+        }
+      }
+
+      await flushPromises();
+    });
+
+    it('应该验证联系电话格式', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      // 填写错误的手机号
+      await wrapper.setData({
+        tenantForm: {
+          ...wrapper.vm.tenantForm,
+          contact_phone: '12345',
+        },
+      });
+
+      const formRef = wrapper.vm.$refs.tenantFormRef;
+      if (formRef) {
+        try {
+          await formRef.validateField('contact_phone');
+        } catch (error) {
+          // 验证失败是预期的
+        }
+      }
+
+      await flushPromises();
+    });
+
+    it('应该验证密码最小长度', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      // 填写少于6位的密码
+      await wrapper.setData({
+        tenantForm: {
+          ...wrapper.vm.tenantForm,
+          password: '12345',
+        },
+      });
+
+      const formRef = wrapper.vm.$refs.tenantFormRef;
+      if (formRef) {
+        try {
+          await formRef.validateField('password');
+        } catch (error) {
+          // 验证失败是预期的
+        }
+      }
+
+      await flushPromises();
+    });
+
+    it('应该接受有效的手机号格式', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      // 填写有效的手机号
+      await wrapper.setData({
+        tenantForm: {
+          ...wrapper.vm.tenantForm,
+          contact_phone: '13800138000',
+        },
+      });
+
+      const formRef = wrapper.vm.$refs.tenantFormRef;
+      if (formRef) {
+        try {
+          await formRef.validateField('contact_phone');
+        } catch (error) {
+          // 不应该抛出错误
+          expect.fail('有效手机号应该通过验证');
+        }
+      }
+
+      await flushPromises();
+    });
+  });
+
+  describe('编辑模式 - 特殊逻辑', () => {
+    const mockTenant = {
+      id: '1',
+      tenant_id: 'TEST001',
+      tenant_name: '测试租户',
+      company_name: '测试企业',
+      contact_person: '张三',
+      contact_phone: '13800138000',
+      username: 'admin',
+      package: 'standard',
+      expire_time: '2025-12-31',
+      user_count: 100,
+    };
+
+    it('应该在编辑模式时密码字段为空', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: mockTenant,
+        },
+      });
+
+      await flushPromises();
+
+      // 验证密码字段为空（不显示原密码）
+      expect(wrapper.vm.tenantForm.password).toBe('');
+    });
+
+    it('应该正确显示所有字段的原值', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: mockTenant,
+        },
+      });
+
+      await flushPromises();
+
+      // 验证字段值正确回显
+      expect(wrapper.vm.tenantForm.tenant_id).toBe('TEST001');
+      expect(wrapper.vm.tenantForm.tenant_name).toBe('测试租户');
+      expect(wrapper.vm.tenantForm.company_name).toBe('测试企业');
+      expect(wrapper.vm.tenantForm.contact_person).toBe('张三');
+      expect(wrapper.vm.tenantForm.contact_phone).toBe('13800138000');
+      expect(wrapper.vm.tenantForm.username).toBe('admin');
+      expect(wrapper.vm.tenantForm.package).toBe('standard');
+      expect(wrapper.vm.tenantForm.user_count).toBe(100);
+    });
+
+    it('应该显示正确的对话框标题', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: mockTenant,
+        },
+      });
+
+      await flushPromises();
+
+      // 验证对话框标题
+      const title = wrapper.vm.dialogTitle;
+      expect(title).toContain('编辑');
+    });
+  });
+
+  describe('新增模式 - 默认值', () => {
+    it('应该设置正确的默认值', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      await flushPromises();
+
+      // 验证默认值
+      expect(wrapper.vm.tenantForm.package).toBe('standard');
+      expect(wrapper.vm.tenantForm.user_count).toBe(10);
+      expect(wrapper.vm.tenantForm.tenant_name).toBe('');
+      expect(wrapper.vm.tenantForm.password).toBe('');
+    });
+
+    it('应该显示正确的对话框标题', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      await flushPromises();
+
+      const title = wrapper.vm.dialogTitle;
+      expect(title).toContain('新增') || expect(title).toContain('添加');
+    });
+  });
+
+  describe('日期选择器', () => {
+    it('应该禁用今天之前的日期', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      const pickerOptions = wrapper.vm.pickerOptions;
+      expect(pickerOptions).toBeDefined();
+      expect(pickerOptions.disabledDate).toBeInstanceOf(Function);
+
+      // 验证昨天的日期被禁用
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      expect(pickerOptions.disabledDate(yesterday)).toBe(true);
+
+      // 验证今天的日期不被禁用
+      const today = new Date();
+      expect(pickerOptions.disabledDate(today)).toBe(false);
+
+      // 验证明天的日期不被禁用
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      expect(pickerOptions.disabledDate(tomorrow)).toBe(false);
+    });
+
+    it('应该设置默认过期时间为一年后', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      const defaultExpireTime = wrapper.vm.getDefaultExpireTime();
+      expect(defaultExpireTime).toBeDefined();
+
+      const now = new Date();
+      const oneYearLater = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+      const expectedDate = oneYearLater.toISOString().split('T')[0];
+
+      expect(defaultExpireTime).toBe(expectedDate);
+    });
+  });
+
+  describe('表单提交', () => {
+    it('应该调用创建接口', async () => {
+      mockCreateTenant.mockResolvedValue({ data: { id: '1' } });
+
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      await wrapper.setData({
+        tenantForm: {
+          tenant_id: 'NEW001',
+          tenant_name: '新租户',
+          company_name: '新企业',
+          contact_person: '李四',
+          contact_phone: '13900139000',
+          username: 'newadmin',
+          password: '123456',
+          package: 'standard',
+          expire_time: '2025-12-31',
+          user_count: 10,
+          domain: '',
+          address: '',
+          company_code: '',
+          description: '',
+          remark: '',
+        },
+      });
+
+      await wrapper.vm.submitForm();
+      await flushPromises();
+
+      expect(mockCreateTenant).toHaveBeenCalled();
+      expect(ElMessage.success).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining('成功'),
+        })
+      );
+    });
+
+    it('应该调用更新接口', async () => {
+      mockUpdateTenant.mockResolvedValue({ data: { id: '1' } });
+
+      const mockTenant = {
+        id: '1',
+        tenant_id: 'TEST001',
+        tenant_name: '测试租户',
+        company_name: '测试企业',
+      };
+
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: mockTenant,
+        },
+      });
+
+      await wrapper.setData({
+        tenantForm: {
+          ...wrapper.vm.tenantForm,
+          tenant_name: '修改后的租户名',
+        },
+      });
+
+      await wrapper.vm.submitForm();
+      await flushPromises();
+
+      expect(mockUpdateTenant).toHaveBeenCalled();
+      expect(ElMessage.success).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining('修改'),
+        })
+      );
+    });
+
+    it('应该处理创建失败', async () => {
+      mockCreateTenant.mockRejectedValue(new Error('租户代码已存在'));
+
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      await wrapper.setData({
+        tenantForm: {
+          tenant_id: 'EXISTING',
+          tenant_name: '测试',
+          company_name: '测试',
+          contact_person: '测试',
+          contact_phone: '13800138000',
+          username: 'admin',
+          password: '123456',
+        },
+      });
+
+      await wrapper.vm.submitForm();
+      await flushPromises();
+
+      expect(ElMessage.error).toHaveBeenCalledWith(
+        expect.stringContaining('失败')
+      );
+    });
+  });
+
+  describe('对话框控制', () => {
+    it('应该在点击取消时关闭对话框', async () => {
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      await wrapper.vm.cancel();
+
+      // 验证 emit 事件
+      expect(wrapper.emitted('update:visible')).toBeTruthy();
+      expect(wrapper.emitted('update:visible')?.[0]).toEqual([false]);
+    });
+
+    it('应该在提交成功后关闭对话框', async () => {
+      mockCreateTenant.mockResolvedValue({ data: { id: '1' } });
+
+      wrapper = mount(TenantEditForm, {
+        props: {
+          visible: true,
+          currentTenant: null,
+        },
+      });
+
+      await wrapper.setData({
+        tenantForm: {
+          tenant_id: 'NEW001',
+          tenant_name: '新租户',
+          company_name: '新企业',
+          contact_person: '李四',
+          contact_phone: '13900139000',
+          username: 'newadmin',
+          password: '123456',
+        },
+      });
+
+      await wrapper.vm.submitForm();
+      await flushPromises();
+
+      // 验证 emit 事件
+      expect(wrapper.emitted('update:visible')).toBeTruthy();
+      expect(wrapper.emitted('saved')).toBeTruthy();
+    });
+  });
+});

@@ -188,7 +188,7 @@ export const storage = {
   addRestoredWarning: (warning: unknown) => {
     const warnings = storage.getRestoredWarnings();
     warnings.push({
-      ...warning,
+      ...(typeof warning === "object" && warning !== null ? warning : {}),
       restoredAt: new Date().toISOString(),
       restoredFrom: "reviewRecords",
     });

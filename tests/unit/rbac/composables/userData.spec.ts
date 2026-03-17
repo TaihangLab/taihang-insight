@@ -1,5 +1,6 @@
 /**
  * 用户数据管理 Composable 单元测试
+ * @see .claude/rules/testing-guide.md
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 

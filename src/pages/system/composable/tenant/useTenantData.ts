@@ -132,7 +132,6 @@ export function useTenantData() {
   const updateTenant = async (tenantId: number, data: Record<string, unknown>) => {
     loading.value = true;
     try {
-      // @ts-expect-error - 数据由调用方验证，后端会进行验证
       await tenantService.updateTenant(tenantId, data);
       return { success: true, message: "修改成功" };
     } catch (error) {

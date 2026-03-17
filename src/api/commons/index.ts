@@ -13,6 +13,9 @@ export type { UnifiedResponse, RBACResponse, PaginationData } from "@/types/glob
 // 导出 center API 相关类型（从 .d.ts 文件）
 export type { PageParams, RequiredPageParams } from "@/types/center.d";
 
+// 重新导出 Axios 相关类型
+export type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig };
+
 // ========== API 错误类 ==========
 /**
  * 自定义 API 错误类
@@ -65,10 +68,10 @@ export const paramsSerializer = function (params: Record<string, any>): string {
       if (Array.isArray(params[key])) {
         // 数组参数：使用重复的键名传递每个值
         params[key].forEach((value: unknown) => {
-          queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+          queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);
         });
       } else {
-        queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`);
+        queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(params[key]))}`);
       }
     }
   }
@@ -254,17 +257,20 @@ export const attachCommonResponseInterceptor = (instance: AxiosInstance) => {
       const data = response.data;
 
       // 后端统一响应格式：{ code, message, data }
-      // code === 0 表示成功，非 0 表示失败
+      // 只支持 code === 0 作为成功标志，其他都认为是失败
       if (data && typeof data === "object" && "code" in data) {
-        if (data.code === 0) {
+        // 检查是否成功：只有 code === 0 才算成功
+        const isSuccess = data.code === 0;
+
+        if (isSuccess) {
           // 请求成功，返回 data 字段
           // 如果是分页数据，将分页信息合并到返回值中
-          if (data.total !== undefined || data.page !== undefined || data.page_size !== undefined) {
+          if (data.total !== undefined || data.page !== undefined || data.page_size !== undefined || data.pagination) {
             return {
               data: data.data,
-              total: data.total,
-              page: data.page,
-              limit: data.page_size || data.limit,
+              total: data.total || data.pagination?.total,
+              page: data.page || data.pagination?.page,
+              limit: data.page_size || data.limit || data.pagination?.page_size,
               pages: data.total && data.page_size ? Math.ceil(data.total / data.page_size) : 0,
             };
           }

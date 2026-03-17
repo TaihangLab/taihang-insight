@@ -409,8 +409,8 @@ export default {
 
     // 处理摄像头管理按钮点击
     handleCameraManagement() {
-      // 跳转到摄像头管理页面
-      this.$router.push({ name: "CameraManagementMain" });
+      // 跳转到摄像头管理页面（使用路径跳转，避免依赖路由 name）
+      this.$router.push("/deviceManage/cameraManagement");
     },
 
     // 处理单个摄像头配置大模型技能

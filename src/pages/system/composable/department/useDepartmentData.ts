@@ -86,56 +86,45 @@ export function useDepartmentData() {
 
       const response = await departmentService.getDepartmentTree(queryParams);
 
-      if (response?.data) {
-        // 安全地提取部门数据，支持多种返回格式
-        let extractedDepartments: unknown[] = [];
+      // 响应拦截器已提取 data 字段，response 直接是数组
+      const extractedDepartments = Array.isArray(response) ? response : [];
 
-        if (Array.isArray(response.data)) {
-          extractedDepartments = response.data;
-        } else {
-          console.warn("API返回格式不符合预期:", response.data);
-          throw new Error("API返回格式异常");
-        }
+      // 递归映射函数，为所有部门节点添加 name 属性
+      const mapDepartmentNode = (node: Record<string, unknown>): DepartmentEntity => {
+        const children = Array.isArray(node.children) ? node.children : [];
+        const deptName = String(node.dept_name || node.name || "");
+        return {
+          id: Number(node.id),
+          dept_code: String(node.dept_code || ""),
+          dept_name: deptName,
+          name: deptName, // 兼容 DepartmentTreeTable 的本地 Department 接口
+          tenant_id:
+            node.tenant_id !== null && node.tenant_id !== undefined
+              ? String(node.tenant_id)
+              : undefined,
+          parent_id:
+            node.parent_id !== null && node.parent_id !== undefined
+              ? Number(node.parent_id)
+              : null,
+          sort_order: Number(node.sort_order || 0),
+          status: Number(node.status) as Status,
+          path: String(node.path || ""),
+          depth: Number(node.depth || 0),
+          leader: node.leader ? String(node.leader) : undefined,
+          phone: node.phone ? String(node.phone) : undefined,
+          email: node.email ? String(node.email) : undefined,
+          create_time: String(node.create_time || ""),
+          update_time: node.update_time ? String(node.update_time) : undefined,
+          remark: node.remark ? String(node.remark) : undefined,
+          // 递归映射子节点
+          children: children.map((child) => mapDepartmentNode(child as Record<string, unknown>)),
+        } as DepartmentEntity;
+      };
 
-        // 递归映射函数，为所有部门节点添加 name 属性
-        const mapDepartmentNode = (node: Record<string, unknown>): DepartmentEntity => {
-          const children = Array.isArray(node.children) ? node.children : [];
-          const deptName = String(node.dept_name || node.name || "");
-          return {
-            id: Number(node.id),
-            dept_code: String(node.dept_code || ""),
-            dept_name: deptName,
-            name: deptName, // 兼容 DepartmentTreeTable 的本地 Department 接口
-            tenant_id:
-              node.tenant_id !== null && node.tenant_id !== undefined
-                ? String(node.tenant_id)
-                : undefined,
-            parent_id:
-              node.parent_id !== null && node.parent_id !== undefined
-                ? Number(node.parent_id)
-                : null,
-            sort_order: Number(node.sort_order || 0),
-            status: Number(node.status) as Status,
-            path: String(node.path || ""),
-            depth: Number(node.depth || 0),
-            leader: node.leader ? String(node.leader) : undefined,
-            phone: node.phone ? String(node.phone) : undefined,
-            email: node.email ? String(node.email) : undefined,
-            create_time: String(node.create_time || ""),
-            update_time: node.update_time ? String(node.update_time) : undefined,
-            remark: node.remark ? String(node.remark) : undefined,
-            // 递归映射子节点
-            children: children.map((child) => mapDepartmentNode(child as Record<string, unknown>)),
-          } as DepartmentEntity;
-        };
-
-        // 映射数据库字段到前端使用的格式
-        departments.value = extractedDepartments.map((dept) => {
-          return mapDepartmentNode(dept as Record<string, unknown>);
-        });
-      } else {
-        throw new Error("API返回格式异常");
-      }
+      // 映射数据库字段到前端使用的格式
+      departments.value = extractedDepartments.map((dept) => {
+        return mapDepartmentNode(dept as Record<string, unknown>);
+      });
 
       // 同时更新上级部门选项
       await fetchParentDeptOptions(params.tenant_id);
@@ -157,13 +146,8 @@ export function useDepartmentData() {
       const params = tenantId ? { tenant_id: String(tenantId) } : {};
       const response = await departmentService.getDepartmentTree(params);
 
-      let depts: unknown[] = [];
-
-      if (response?.data) {
-        if (Array.isArray(response.data)) {
-          depts = response.data;
-        }
-      }
+      // 响应拦截器已提取 data 字段，response 直接是数组
+      const depts = Array.isArray(response) ? response : [];
 
       // 递归转换数据
       const convertToNumber = (nodes: unknown[]): ParentDeptOption[] => {

@@ -40,12 +40,20 @@ export default defineConfig(({ mode }) => {
       port: 4000,
       host: true, // 监听所有地址，包括 localhost、127.0.0.1 和局域网 IP
       open: false,
-      // 代理配置 - 统一代理所有 /api 开头的请求
+      // 代理配置 - 统一代理所有 /api 和 /videos 开头的请求
       proxy: {
+        // 后端 API 代理
         '/api': {
           target: env.VITE_BACKEND_URL || 'http://127.0.0.1:8000',
           changeOrigin: true,
           // 不重写路径，保持 /api 前缀
+          rewrite: (path) => path
+        },
+        // 本地视频 API 代理
+        '/videos': {
+          target: env.VITE_BACKEND_URL || 'http://127.0.0.1:8000',
+          changeOrigin: true,
+          // 不重写路径，保持 /videos 前缀
           rewrite: (path) => path
         }
       }

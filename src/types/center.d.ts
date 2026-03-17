@@ -324,6 +324,7 @@ export interface ArchiveQueryParams extends PageParams {
   location?: string;
   start_date?: string;
   end_date?: string;
+  status?: number;
 }
 
 /**

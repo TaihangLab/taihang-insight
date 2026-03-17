@@ -3,7 +3,7 @@
  * 使用 Vite 环境变量配置 base URL
  */
 
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosInstance, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import router from "@/router";
 
 // 从环境变量获取 API 基础 URL
@@ -43,25 +43,25 @@ axiosInstance.interceptors.request.use(
 
 // 响应拦截器 - 统一处理响应和错误
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse<unknown>) => {
-    const originalData = response.data;
+  (response: AxiosResponse) => {
+    const originalData = response.data as Record<string, unknown>;
 
     // 处理 code 格式的响应
     // 后端统一使用 code: 0 表示成功
     if (originalData && typeof originalData.code !== "undefined") {
       if (originalData.code === 0) {
-        return originalData;
+        return response.data;
       }
-      return Promise.reject(new Error(originalData.message || "请求失败"));
+      return Promise.reject(new Error(String(originalData.message || "请求失败")));
     }
 
     // 处理 success 格式的响应
     if (originalData && typeof originalData.success !== "undefined") {
-      return originalData;
+      return response.data;
     }
 
     // 直接返回原始数据
-    return originalData;
+    return response.data;
   },
   (error: AxiosError) => {
     // 处理 401 未授权错误
@@ -109,10 +109,10 @@ const paramsSerializer = (params: Record<string, unknown>): string => {
       if (Array.isArray(params[key])) {
         // 对于数组参数，使用重复的键名传递每个值
         params[key].forEach((value: unknown) => {
-          queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+          queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);
         });
       } else {
-        queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`);
+        queryParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(params[key]))}`);
       }
     }
   }

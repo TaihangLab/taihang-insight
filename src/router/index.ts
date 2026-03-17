@@ -54,21 +54,21 @@ export const componentMap: Record<string, () => Promise<any>> = {
   "/monitoring/statistics": () =>
     import("../components/visionAI/monitoringWarning/statisticsAnalysis.vue"),
   "/monitoring/warningArchive": () =>
-    import("../components/visionAI/monitoringWarning/warningArchives.vue"),
+    import("../pages/monitoringWarning/warningArchives.vue"),
   "/monitoring/warningManage": () =>
     import("../components/visionAI/monitoringWarning/warningManagement.vue"),
   "/monitoring/reviewRecords": () =>
-    import("../components/visionAI/monitoringWarning/reviewRecords.vue"),
+    import("../pages/monitoringWarning/reviewRecords.vue"),
   "/monitoring/intelligentReview": () =>
     import("../components/visionAI/monitoringWarning/intelligentReview.vue"),
   "/monitoring/warnings": () =>
-    import("../components/visionAI/monitoringWarning/warningArchives.vue"),
-  "/monitoring/review": () => import("../components/visionAI/monitoringWarning/reviewRecords.vue"),
+    import("../pages/monitoringWarning/warningArchives.vue"),
+  "/monitoring/review": () => import("../pages/monitoringWarning/reviewRecords.vue"),
   "/monitoring/intelligent-review": () =>
     import("../components/visionAI/monitoringWarning/intelligentReview.vue"),
 
   // 复判相关（支持后端返回的路径）
-  "/review": () => import("../components/visionAI/monitoringWarning/reviewRecords.vue"),
+  "/review": () => import("../pages/monitoringWarning/reviewRecords.vue"),
   "/task-review": () => import("../pages/error/UnderConstruction.vue"),
 
   // AI 任务（开发中）
