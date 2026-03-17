@@ -26,10 +26,11 @@ export default defineConfig({
             'src/**/*.{test,spec}.{js,ts}',
             'tests/unit/**/*.{test,spec}.{js,ts}'
           ],
-          exclude: ['node_modules', 'dist'],
+          exclude: ['node_modules', 'dist', 'tests/e2e'],
           testTimeout: 10000,
           alias: {
             '@': resolve(__dirname, 'src'),
+            '@tests': resolve(__dirname, 'tests'),
             '@static': resolve(__dirname, 'static')
           },
         },
@@ -42,9 +43,10 @@ export default defineConfig({
           include: [
             'tests/vitest/**/*.{test,spec}.{js,ts}'
           ],
-          exclude: ['node_modules', 'dist'],
+          exclude: ['node_modules', 'dist', 'tests/e2e', 'tests/unit'],
           alias: {
             '@': resolve(__dirname, 'src'),
+            '@tests': resolve(__dirname, 'tests'),
             '@static': resolve(__dirname, 'static')
           },
           setupFiles: ['./tests/setup.node.ts'],
@@ -82,6 +84,7 @@ export default defineConfig({
     // 别名配置
     alias: {
       '@': resolve(__dirname, 'src'),
+      '@tests': resolve(__dirname, 'tests'),
       '@static': resolve(__dirname, 'static')
     },
 
@@ -94,6 +97,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+      '@tests': resolve(__dirname, 'tests'),
       '@static': resolve(__dirname, 'static')
     }
   },
