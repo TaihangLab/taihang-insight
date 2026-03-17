@@ -62,16 +62,11 @@ const handleClose = () => {
 .confirm-message {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
-.confirm-message i {
+.confirm-message :deep(.el-icon) {
+  color: var(--el-color-warning);
   font-size: 20px;
-  color: #e6a23c;
-  margin-right: 10px;
-}
-
-.confirm-message span {
-  font-size: 14px;
-  color: #606266;
 }
 </style>

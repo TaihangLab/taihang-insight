@@ -50,60 +50,10 @@ const handleBatchDelete = () => {
 
 <style scoped>
 .tenant-table-actions {
-  padding: 16px 24px;
+  /* 使用 flex 布局和间距 */
   display: flex;
   gap: 12px;
-  border-bottom: 1px solid var(--design-border-color);
-}
-
-/* 按钮样式 */
-.tenant-table-actions :deep(.el-button) {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 16px;
-  font-size: var(--font-size-base);
-  border-radius: var(--design-radius-md);
-  font-weight: var(--font-weight-medium);
-  transition: all var(--design-transition-base);
-}
-
-/* 主按钮样式 */
-.tenant-table-actions :deep(.el-button--primary) {
-  background: var(--design-gradient-primary);
-  border: none;
-  color: #ffffff;
-  box-shadow: var(--design-shadow-primary);
-}
-
-.tenant-table-actions :deep(.el-button--primary:hover) {
-  background: linear-gradient(135deg, var(--design-primary-hover) 0%, #1a45c9 100%);
-  box-shadow: var(--design-shadow-primary-hover);
-  transform: translateY(-1px);
-}
-
-/* 默认按钮样式 */
-.tenant-table-actions :deep(.el-button--default) {
-  background: #ffffff;
-  border: 1px solid var(--design-border-color);
-  color: var(--design-text-primary);
-}
-
-.tenant-table-actions :deep(.el-button--default:hover:not(:disabled)) {
-  border-color: var(--design-primary-color);
-  color: var(--design-primary-color);
-  background-color: var(--design-primary-light);
-}
-
-/* 禁用状态 */
-.tenant-table-actions :deep(.el-button.is-disabled) {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* 图标样式 */
-.tenant-table-actions :deep(.el-icon) {
-  font-size: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--el-border-color);
 }
 </style>

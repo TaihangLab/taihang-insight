@@ -39,10 +39,33 @@
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { useTenantData } from "@/pages/system/composable/tenant/useTenantData";
+import type { TenantAPI } from "@/types/rbac/tenant";
 import TenantSearchBar from "@/pages/system/components/tenant/TenantSearchBar.vue";
 import TenantList from "@/pages/system/components/tenant/TenantList.vue";
 import DeleteConfirmDialog from "@/pages/system/components/tenant/DeleteConfirmDialog.vue";
 import TenantEditForm from "@/pages/system/components/tenant/tenantEditForm.vue";
+
+/**
+ * 查询条件类型
+ */
+interface SearchConditions {
+  tenant_id: string;
+  tenant_name: string;
+  company_name: string;
+  status: number | null;
+}
+
+/**
+ * API 查询参数类型
+ */
+interface QueryParams {
+  skip?: number;
+  limit?: number;
+  tenant_id?: string;
+  tenant_name?: string;
+  company_name?: string;
+  status?: number | null;
+}
 
 // ============================================
 // Composables
@@ -75,7 +98,7 @@ const selectedCodes = ref<number[]>([]);
 // 对话框状态
 const editDialogVisible = ref(false);
 const deleteDialogVisible = ref(false);
-const currentTenant = ref<any>(null);
+const currentTenant = ref<TenantAPI | null>(null);
 
 // 删除相关
 const deleteTargetType = ref<"single" | "batch">("single");
@@ -103,8 +126,8 @@ const getSkip = (): number => {
 /**
  * 构建查询参数
  */
-const buildParams = () => {
-  const params: Record<string, any> = {
+const buildParams = (): QueryParams => {
+  const params: QueryParams = {
     skip: getSkip(),
     limit: pagination.value.pageSize,
   };
@@ -151,7 +174,7 @@ const clearData = () => {
 /**
  * 搜索
  */
-const handleSearch = (conditions: unknown) => {
+const handleSearch = (conditions: SearchConditions) => {
   Object.assign(searchConditions, conditions);
   pagination.value.currentPage = 1;
   loadData();
@@ -187,7 +210,7 @@ const handleAdd = () => {
 /**
  * 编辑
  */
-const handleEdit = (row: unknown) => {
+const handleEdit = (row: TenantAPI) => {
   currentTenant.value = row;
   editDialogVisible.value = true;
 };
@@ -202,9 +225,9 @@ const handleTenantSaved = () => {
 /**
  * 删除
  */
-const handleDelete = (row: unknown) => {
+const handleDelete = (row: TenantAPI) => {
   deleteTargetType.value = "single";
-  deleteTargetName.value = row.tenant_name || row.id;
+  deleteTargetName.value = row.tenant_name || String(row.id);
   deleteTargetCodes.value = [row.id];
   deleteDialogVisible.value = true;
 };
@@ -246,47 +269,47 @@ const handleDeleteConfirm = async () => {
 
 /**
  * 状态切换
+ *
+ * 修复：避免 v-model 立即修改状态，API 失败时恢复原值
  */
-const handleStatusChange = async (row: unknown) => {
-  // v-model 已经自动更新了 row.status，直接使用即可
-  const newStatus = row.status;
+const handleStatusChange = async (row: TenantAPI, newStatus: number) => {
+  const oldStatus = row.status;
 
   try {
+    // 先更新 UI（乐观更新），如果失败则回滚
     await updateTenant(row.id, { status: newStatus });
+
     ElMessage({
       message: "状态更新成功",
       type: "success",
     });
-    // 成功更新后刷新数据以显示最新状态
-    loadData();
   } catch (error: unknown) {
-    // 提取错误消息，优先使用后端返回的具体错误信息
+    // API 失败，恢复原状态
+    row.status = oldStatus;
+
     let errorMessage = "更新租户状态失败";
-    if (error.message && !error.message.includes("Network Error")) {
+    if (error instanceof Error && error.message && !error.message.includes("Network Error")) {
       errorMessage = error.message;
-    } else if (error.response?.data) {
-      const data = error.response.data;
-      if (typeof data === "object") {
-        if (data.message) {
+    } else if (error && typeof error === "object" && "response" in error) {
+      const err = error as { response?: { data?: unknown } };
+      const data = err.response?.data;
+      if (data && typeof data === "object") {
+        if ("message" in data && typeof data.message === "string") {
           errorMessage = data.message;
-        } else if (data.detail) {
+        } else if ("detail" in data && typeof data.detail === "string") {
           errorMessage = data.detail;
-        } else if (data.msg) {
+        } else if ("msg" in data && typeof data.msg === "string") {
           errorMessage = data.msg;
         }
       } else if (typeof data === "string") {
         errorMessage = data;
       }
-    } else if (error.message) {
-      errorMessage = error.message;
     }
 
     ElMessage({
       message: errorMessage,
       type: "error",
     });
-    // 恢复原状态
-    loadData();
   }
 };
 

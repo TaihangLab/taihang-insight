@@ -26,12 +26,10 @@
       <template #default="scope">
         <el-switch
           :data-testid="'switch-status-' + scope.row.id"
-          v-model="scope.row.status"
+          :model-value="scope.row.status"
           :active-value="0"
           :inactive-value="1"
-          active-color="var(--design-success-color)"
-          inactive-color="var(--design-text-tertiary)"
-          @change="handleStatusChange(scope.row)"
+          @change="(val) => handleStatusChange(scope.row, val)"
         ></el-switch>
       </template>
     </el-table-column>

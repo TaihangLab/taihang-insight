@@ -103,12 +103,9 @@ const handleExport = () => {
 
 <style scoped>
 .tenant-list-container {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #ebeef5;
-  margin-top: 0;
-  position: relative;
-  overflow: hidden;
+  /* 使用 Element Plus 主题变量 */
+  background: var(--el-bg-color);
+  border-radius: var(--el-border-radius-base);
+  border: 1px solid var(--el-border-color);
 }
 </style>
