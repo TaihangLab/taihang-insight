@@ -109,7 +109,7 @@ describe('退出登录功能', () => {
 
     it('应该清除菜单', async () => {
       const menusStore = useMenusStore()
-      menusStore.setMenuTree([{ id: 1, name: 'Menu1' }])
+      menusStore.setMenuTree([{ id: 1, menu_name: 'Menu1', menu_type: 'menu', sort_order: 1, status: 1 }])
 
       await logout()
 
@@ -184,7 +184,7 @@ describe('退出登录功能', () => {
         nick_name: 'Test User'
       } as any)
       permissionsStore.setPermissions(['read', 'write'])
-      menusStore.setMenuTree([{ id: 1, name: 'Home' }])
+      menusStore.setMenuTree([{ id: 1, menu_name: 'Home', menu_type: 'menu', sort_order: 1, status: 1 }])
       appStore.setAsyncRoutesAdded(true)
 
       // 2. 设置用户偏好数据（这些会被直接清除）
@@ -200,7 +200,7 @@ describe('退出登录功能', () => {
         nick_name: 'Test User'
       })
       expect(permissionsStore.permissions).toEqual(['read', 'write'])
-      expect(menusStore.menuTree).toEqual([{ id: 1, name: 'Home' }])
+      expect(menusStore.menuTree).toEqual([{ id: 1, menu_name: 'Home', menu_type: 'menu', sort_order: 1, status: 1 }])
       expect(appStore.asyncRoutesAdded).toBe(true)
       expect(localStorage.getItem('selectedTenant')).toBe('tenant-001')
       expect(localStorage.getItem('nick_name')).toBe('Test User')
