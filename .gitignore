@@ -33,3 +33,6 @@ test-results/
 playwright-report/
 package-lock.json
 .playwright-mcptests/e2e/.auth/storage-state.json
+
+# 测试 Token 文件（包含敏感信息）
+tests/test-tokens.local.ts

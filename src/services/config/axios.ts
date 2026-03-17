@@ -27,9 +27,8 @@ const axiosInstance: AxiosInstance = axios.create({
 // 请求拦截器 - 添加 token
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // 从 Pinia 持久化存储中获取 token
-    const persistedAuth = localStorage.getItem("taihang-auth");
-    const token = persistedAuth ? JSON.parse(persistedAuth).token : null;
+    // 直接从 localStorage 获取 Admin-Token
+    const token = localStorage.getItem("Admin-Token");
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -66,24 +65,10 @@ axiosInstance.interceptors.response.use(
   (error: AxiosError) => {
     // 处理 401 未授权错误
     if (error.response && error.response.status === 401) {
-      // 清除认证缓存数据（保留 token）
-      // 注意：这里无法使用 useUserStore()，需要操作 localStorage
-      try {
-        const authData = localStorage.getItem("taihang-auth");
-        if (authData) {
-          const parsed = JSON.parse(authData);
-          // 清除 userInfo, permissions, menuTree，保留 token
-          parsed.userInfo = null;
-          parsed.permissions = [];
-          parsed.menuTree = [];
-          parsed.isLoggedIn = false;
-          localStorage.setItem("taihang-auth", JSON.stringify(parsed));
-        }
-      } catch (e) {
-        console.warn("清除认证数据失败:", e);
-      }
+      // 清除 Admin-Token
+      localStorage.removeItem("Admin-Token");
 
-      // 使用 router 跳转到登录页，避免页面刷新导致日志丢失
+      // 使用 router 跳转到登录页
       router.push("/login");
       return Promise.reject(new Error("未授权，请重新登录"));
     }

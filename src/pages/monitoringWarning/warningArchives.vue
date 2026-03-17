@@ -4,7 +4,7 @@
 -->
 <script setup lang="ts">
 import { defineAsyncComponent, ref } from 'vue';
-import useWarningArchives from './composables/useWarningArchives';
+import { useWarningArchives } from './composables/useWarningArchives';
 import { ALERT_LEVEL_OPTIONS, ALERT_STATUS_OPTIONS } from '@/types/center/archive.d';
 
 // 异步组件

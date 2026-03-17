@@ -84,7 +84,7 @@
     </div>
 
     <!-- 技能列表卡片区域 -->
-    <div class="skills-grid">
+    <div class="skills-grid" v-loading="loading">
       <el-row :gutter="15" type="flex" justify="start">
         <el-col
           v-for="skill in displaySkills"
@@ -159,6 +159,7 @@
           </div>
         </el-col>
       </el-row>
+      <el-empty v-if="!loading && skillsList.length === 0" description="暂无数据" />
     </div>
 
     <!-- 分页 -->
@@ -175,7 +176,7 @@
     </div>
 
     <!-- 导入技能对话框 -->
-    <el-dialog title="导入技能" v-model:visible="importDialogVisible" width="40%">
+    <el-dialog title="导入技能" v-model="importDialogVisible" width="40%">
       <el-form :model="importForm" ref="importForm" label-width="100px" :rules="importRules">
         <el-form-item label="技能名称" prop="name">
           <el-input v-model="importForm.name" placeholder="请输入技能名称"></el-input>
@@ -245,7 +246,7 @@
     <!-- 技能详情对话框 -->
     <el-dialog
       :title="isEditing ? '编辑技能' : '技能详情'"
-      v-model:visible="detailsDialogVisible"
+      v-model="detailsDialogVisible"
       width="50%"
       :close-on-click-modal="false"
     >
@@ -618,7 +619,7 @@
 
     <!-- 关联设备列表弹框 -->
     <el-dialog
-      v-model:visible="devicesDialogVisible"
+      v-model="devicesDialogVisible"
       width="40%"
       :close-on-click-modal="true"
       append-to-body
@@ -802,21 +803,14 @@ export default {
   },
 
   mounted() {
-    // 简单直接：每次进入页面自动刷新一次（避免状态污染）
-    if (!sessionStorage.getItem('deviceSkillsLoaded')) {
-      sessionStorage.setItem('deviceSkillsLoaded', 'true')
-      window.location.reload()
-      return
-    }
-
     this.fetchSkills();
-    // 设置默认每页显示12条数据
-    this.pageSize = 12;
   },
 
   beforeUnmount() {
-    // 页面销毁时清除标志
-    sessionStorage.removeItem('deviceSkillsLoaded')
+    // 清理定时器
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
   },
 
   methods: {
@@ -890,10 +884,11 @@ export default {
         const response = await centerAPI.skill.getSkillList(params);
 
         // 响应拦截器已处理成功/失败判断，直接使用数据
-        this.processSkillsData(response);
+        // 响应格式可能是：{ data: [], total: number, ... } 或直接是数组
+        const responseData = (/** @type {any} */ (response)).data || response;
+        this.processSkillsData(responseData);
         // 更新总数和分页信息
-        const responseWithTotal = /** @type {any} */ (response);
-        this.total = responseWithTotal.total || 0;
+        this.total = (/** @type {any} */ (response)).total || 0;
         // 删除数据获取成功的消息提示
         // this.$message.success('数据获取成功');
       } catch (error) {
@@ -935,9 +930,7 @@ export default {
           updateTime: skill.updated_at,
         };
       });
-
-      // 设置总数据量
-      this.total = this.skillsList.length;
+      // total 由 fetchSkills 方法从 API 响应中设置，这里不再覆盖
     },
 
     // 查看技能详情
@@ -1007,7 +1000,6 @@ export default {
     // 选择当前页所有技能
     selectAllCurrentPage() {
       const currentIds = this.currentPageSkillIds;
-      const newSelected = [...this.selectedSkills];
 
       // 检查当前页是否已全选
       const allSelected = currentIds.every(id => this.selectedSkills.includes(id));
@@ -1015,13 +1007,13 @@ export default {
       if (allSelected) {
         // 如果已全选，则取消选择当前页所有技能
         this.selectedSkills = this.selectedSkills.filter(id => !currentIds.includes(id));
+      } else {
         // 如果未全选，则选择当前页所有未选择的技能
         currentIds.forEach(id => {
-          if (!newSelected.includes(id)) {
-            newSelected.push(id);
+          if (!this.selectedSkills.includes(id)) {
+            this.selectedSkills.push(id);
           }
         });
-        this.selectedSkills = newSelected;
       }
     },
 
@@ -1059,12 +1051,8 @@ export default {
               type: 'warning',
               message: response.message || `成功删除 ${successCount} 个技能，失败 ${failedCount} 个`
             });
-
-            // 只显示一条汇总失败信息，而不是每一个都显示
-            if (failedCount > 0) {
-              this.$message.error(`${failedCount}个技能删除失败，请查看控制台了解详情`);
-              console.error('删除失败技能列表:', response.detail.failed);
-            }
+            console.error('删除失败技能列表:', response.detail.failed);
+          } else {
             // 全部删除成功
             this.$message.success(response.message || `成功删除 ${successCount} 个技能`);
           }
@@ -1103,8 +1091,6 @@ export default {
         }
         this.importForm.file = file.raw;
         this.fileList = [file];
-        this.importForm.file = null;
-        this.fileList = [];
       }
     },
 
@@ -1503,7 +1489,6 @@ export default {
 .filter-section {
   background: #ffffff;
   padding: 12px 24px;
-  border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   margin-bottom: 20px;
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -1527,62 +1512,6 @@ export default {
   gap: 8px;
 }
 
-/* .left-controls .el-button {
-  height: 32px;
-  padding: 6px 16px;
-  font-size: 14px;
-  border-radius: 6px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  margin-right: 0;
-}
-
-.left-controls .el-button--primary {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
-  border: none;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
-  position: relative;
-  overflow: hidden;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
-.left-controls .el-button--primary::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.6s ease;
-}
-
-.left-controls .el-button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4);
-  transform: translateY(-2px);
-}
-
-.left-controls .el-button--primary:hover::before {
-  left: 100%;
-}
-
-.left-controls .el-button:not(.el-button--primary) {
-  background: #f5f7fa;
-  border-color: #e4e7ed;
-  color: #606266;
-}
-
-.left-controls .el-button:not(.el-button--primary):hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: #3b82f6;
-  color: #1e3a8a;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
-  transform: translateY(-1px);
-} */
 
 .right-controls {
   display: flex;
@@ -1590,26 +1519,7 @@ export default {
   gap: 10px;
 }
 
-/* 搜索框布局混乱 */
-.right-controls :deep(.el-input__prefix) {
-  top: 6px;
-  left: 10px;
-}
 
-.filter-item {
-  display: flex;
-  align-items: center;
-  margin-right: 0;
-  gap: 5px;
-}
-
-.filter-label {
-  font-size: 14px;
-  color: #1e40af;
-  white-space: nowrap;
-  font-weight: 500;
-  margin-right: 0;
-}
 
 .filter-item .el-select {
   width: 130px;
@@ -1618,7 +1528,6 @@ export default {
 .filter-item .el-select .el-input__inner {
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  transition: all 0.3s ease;
 }
 
 .filter-item .el-select .el-input__inner:hover {
@@ -1638,7 +1547,6 @@ export default {
 .search-input .el-input__inner {
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  transition: all 0.3s ease;
 }
 
 .search-input .el-input__inner:hover {
@@ -1659,13 +1567,12 @@ export default {
   background-color: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  transition: all 0.3s ease;
 }
 
 .grid-view-btn:hover,
 .list-view-btn:hover,
 .refresh-btn:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: #dbeafe;
   border-color: #3b82f6;
   color: #1e40af;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
@@ -1687,31 +1594,6 @@ export default {
   flex-wrap: wrap;
 }
 
-/* 自定义滚动条样式 */
-.skills-grid::-webkit-scrollbar {
-  width: 8px;
-}
-
-.skills-grid::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-}
-
-.skills-grid::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-.skills-grid::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Firefox 滚动条样式 */
-.skills-grid {
-  scrollbar-width: thin;
-  scrollbar-color: #c1c1c1 rgba(0, 0, 0, 0.05);
-}
 
 .skill-col {
   margin-bottom: 18px;
@@ -1725,9 +1607,7 @@ export default {
   height: 100%;
   margin-bottom: 0;
   cursor: pointer;
-  transition: all 0.3s ease;
   position: relative;
-  border-radius: 12px;
   overflow: hidden;
   background: white;
   border: 1px solid #f3f4f6;
@@ -1740,7 +1620,6 @@ export default {
 }
 
 .skills-grid .skill-card:hover {
-  transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
@@ -1764,7 +1643,6 @@ export default {
   top: 10px;
   right: 10px;
   z-index: 10;
-  transition: all 0.2s ease;
 }
 
 .card-checkbox :deep(.el-checkbox) {
@@ -1869,19 +1747,6 @@ export default {
   font-size: 11px;
 }
 
-/* .status-mini-tag.el-tag--success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-color: #10b981;
-  color: white;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
-}
-
-.status-mini-tag.el-tag--info {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-  border-color: #6b7280;
-  color: white;
-  box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3);
-} */
 
 .version-text {
   font-size: 12px;
@@ -1930,99 +1795,6 @@ export default {
   padding-bottom: 10px !important;
 }
 
-.pagination :deep(.el-pagination__total) {
-  padding-top: 3px;
-}
-
-.pagination :deep(.el-pagination) {
-  display: flex;
-  justify-content: center;
-}
-
-.pagination :deep(.el-pagination .el-pager li) {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 4px;
-  color: #3b82f6;
-  margin: 0 2px;
-}
-
-.pagination :deep(.el-pagination .el-pager li:hover) {
-  color: #1d4ed8;
-  border-color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.05);
-}
-
-.pagination :deep(.el-pagination .el-pager li.active) {
-  background: #3b82f6 !important;
-  border-color: #3b82f6 !important;
-  color: white !important;
-  font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-}
-
-.pagination :deep(.el-pagination button) {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
-}
-
-.pagination :deep(.el-pagination button:hover) {
-  color: #1d4ed8;
-  border-color: #3b82f6;
-}
-
-.pagination :deep(.el-pagination .btn-prev),
-.pagination :deep(.el-pagination .btn-next) {
-  background-color: white !important;
-  border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
-}
-
-/* 深度选择器 */
-/* .pagination :deep(.el-pagination) {
-  justify-content: center;
-}
-
-.pagination :deep(.el-pagination .el-pager li) {
-  background: white !important;
-  border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
-  margin: 0 2px !important;
-}
-
-.pagination :deep(.el-pagination .el-pager li:hover) {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
-
-.pagination :deep(.el-pagination .el-pager li.active) {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
-  border-color: #3b82f6 !important;
-  color: white !important;
-  font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-}
-
-.pagination :deep(.el-pagination button) {
-  background: white !important;
-  border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
-  margin: 0 2px !important;
-}
-
-.pagination :deep(.el-pagination button:hover) {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-} */
 
 /* 技能详情样式 */
 .skill-details {
@@ -2077,16 +1849,13 @@ export default {
 
 .info-card {
   margin-bottom: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px 0 rgba(59, 130, 246, 0.1);
   background-color: #fff;
   overflow: hidden;
-  border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
 .info-card-header {
   padding: 12px 15px;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: #dbeafe;
   border-bottom: 1px solid rgba(59, 130, 246, 0.2);
   display: flex;
   align-items: center;
@@ -2140,14 +1909,13 @@ export default {
   padding: 5px 12px;
   margin-right: 0;
   border: 1px solid rgba(59, 130, 246, 0.2);
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: #dbeafe;
   color: #1e40af;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 32px;
   margin-bottom: 0;
-  border-radius: 16px;
   font-weight: 500;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
@@ -2190,20 +1958,6 @@ export default {
   font-weight: normal;
 }
 
-/* 技能卡片详情状态标签样式 */
-/* .status-tag.el-tag--success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-  border-color: #10b981 !important;
-  color: white !important;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
-}
-
-.status-tag.el-tag--info {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
-  border-color: #6b7280 !important;
-  color: white !important;
-  box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3) !important;
-} */
 
 /* 导入表单中的状态单选按钮样式 */
 .status-radio.published {
@@ -2278,7 +2032,6 @@ export default {
   border-radius: 4px;
   border: 1px solid #ebeef5;
   background-color: #fff;
-  transition: box-shadow 0.3s;
   box-sizing: border-box;
   position: relative;
 }
@@ -2471,7 +2224,6 @@ export default {
   justify-content: center;
   align-items: center;
   opacity: 0;
-  transition: opacity 0.3s;
   border-radius: 4px;
 }
 
@@ -2531,25 +2283,11 @@ export default {
   padding: 0 12px;
   height: 24px;
   font-size: 12px;
-  border-radius: 12px;
   margin-right: 10px;
   flex-shrink: 0;
   font-weight: 500;
 }
 
-/* .status-inline-tag.el-tag--success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-  border-color: #10b981 !important;
-  color: white !important;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
-}
-
-.status-inline-tag.el-tag--info {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
-  border-color: #6b7280 !important;
-  color: white !important;
-  box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3) !important;
-} */
 
 .no-data {
   color: #909399;
@@ -2566,7 +2304,6 @@ export default {
   border: 1px dashed #3b82f6;
   padding-left: 0;
   background-color: transparent;
-  transition: all 0.3s ease;
 }
 
 .name-edit-input .el-input__inner:hover,
@@ -2581,7 +2318,6 @@ export default {
   font-size: 14px;
   line-height: 1.6;
   color: #606266;
-  transition: all 0.3s ease;
 }
 
 .description-edit-input .el-textarea__inner:hover,
@@ -2612,7 +2348,6 @@ export default {
   font-size: 14px;
   border: 1px dashed #3b82f6;
   background-color: transparent;
-  transition: all 0.3s ease;
 }
 
 .version-input .el-input__inner:hover,
@@ -2628,101 +2363,12 @@ export default {
   }
 }
 
-/* 弹框按钮统一样式 */
-/* .device-skills-container :deep(.el-dialog .el-button--primary) {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
-  border: none !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
-  color: white !important;
-  font-weight: 500 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
-}
 
-.device-skills-container :deep(.el-dialog .el-button--primary:hover) {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
-  transform: translateY(-1px) !important;
-}
-
-.device-skills-container :deep(.el-dialog .el-button--default) {
-  background: white !important;
-  border: 1px solid #d1d5db !important;
-  color: #4b5563 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
-}
-
-.device-skills-container :deep(.el-dialog .el-button--default:hover) {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-} */
-
-/* 弹框样式 - 与 warningManagement.vue 一致 */
-.device-skills-container :deep(.el-dialog) {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-
-.device-skills-container :deep(.el-dialog__header) {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
-  padding: 16px 20px !important;
-}
-
-.device-skills-container :deep(.el-dialog__title) {
-  color: #1f2937 !important;
-  font-weight: 600 !important;
-}
-
-.device-skills-container :deep(.el-dialog__close) {
-  color: #6b7280 !important;
-  transition: color 0.3s ease !important;
-}
-
-.device-skills-container :deep(.el-dialog__close:hover) {
-  color: #3b82f6 !important;
-}
-
-/* 弹框内容样式 */
-.device-skills-container :deep(.el-dialog__body) {
-  padding: 20px !important;
-  background: #ffffff !important;
-}
-
-/* 上传组件样式优化 */
-.device-skills-container :deep(.el-upload-dragger) {
-  border: 2px dashed #d1d5db !important;
-  border-radius: 8px !important;
-  transition: all 0.3s ease !important;
-}
-
-.device-skills-container :deep(.el-upload-dragger:hover) {
-  border-color: #3b82f6 !important;
-  background-color: rgba(59, 130, 246, 0.05) !important;
-}
-
-.device-skills-container :deep(.el-upload-dragger .el-icon-upload) {
-  color: #3b82f6 !important;
-}
-
-.device-skills-container :deep(.el-upload__text) {
-  color: #6b7280 !important;
-}
-
-.device-skills-container :deep(.el-upload__text em) {
-  color: #3b82f6 !important;
-  font-weight: 500 !important;
-}
 
 /* 关联设备列表样式 */
 .clickable {
   cursor: pointer;
   color: inherit;
-  transition: color 0.3s;
 }
 
 .clickable:hover {
@@ -2756,217 +2402,5 @@ export default {
   margin-bottom: 10px;
 }
 
-/* 关联设备列表弹框样式 */
-.devices-dialog {
-  border-radius: 12px;
-  overflow: hidden;
-}
 
-.devices-dialog :deep(.el-dialog) {
-  background-color: #ffffff !important;
-  border: 1px solid #e4e7ed;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-
-.devices-dialog :deep(.el-dialog__header) {
-  background-color: #f5f7fa;
-  padding: 15px 20px;
-  border-bottom: 1px solid #e4e7ed;
-}
-
-.devices-dialog :deep(.el-dialog__title) {
-  color: #303133;
-  font-weight: 500;
-  font-size: 16px;
-}
-
-.devices-dialog :deep(.el-dialog__body) {
-  padding: 0;
-  background-color: #ffffff;
-}
-
-.devices-dialog :deep(.el-table) {
-  background-color: #ffffff;
-}
-
-.devices-dialog :deep(.el-table th) {
-  background-color: #f5f7fa !important;
-  border-bottom: 1px solid #ebeef5;
-  color: #303133 !important;
-}
-
-.devices-dialog :deep(.el-table td) {
-  border-bottom: 1px solid #ebeef5;
-}
-
-.devices-dialog :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
-  background-color: #fafafa;
-}
-
-/* 隐藏滚动条但保留滚动功能 */
-.devices-dialog :deep(*) {
-  scrollbar-width: none !important;
-}
-
-.devices-dialog :deep(*::-webkit-scrollbar) {
-  width: 0 !important;
-  display: none;
-}
-
-.devices-dialog :deep(*::-webkit-scrollbar-thumb) {
-  background-color: rgba(0, 0, 0, 0.2) !important;
-}
-
-.devices-dialog :deep(*::-webkit-scrollbar-track) {
-  background-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-.devices-dialog :deep(*::-ms-scrollbar) {
-  width: 0 !important;
-  display: none;
-}
-
-.devices-dialog :deep(*::-ms-scrollbar-thumb) {
-  background-color: rgba(0, 0, 0, 0.2) !important;
-}
-
-.devices-dialog :deep(*::-ms-scrollbar-track) {
-  background-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-.devices-dialog :deep(*::-moz-scrollbar) {
-  width: 0 !important;
-  display: none;
-}
-
-.devices-dialog :deep(*::-moz-scrollbar-thumb) {
-  background-color: rgba(0, 0, 0, 0.2) !important;
-}
-
-.devices-dialog :deep(*::-moz-scrollbar-track) {
-  background-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Firefox */
-.devices-list-container,
-.devices-dialog :deep(.el-table__body-wrapper) {
-  scrollbar-width: none;
-}
-
-/* IE和Edge */
-.devices-list-container,
-.devices-dialog :deep(.el-table__body-wrapper) {
-  -ms-overflow-style: none;
-}
-
-/* 确保表格完全占满容器宽度 */
-.devices-dialog :deep(.el-table) {
-  width: 100% !important;
-}
-
-/* 表格设置没有水平滚动条 */
-.devices-dialog :deep(.el-table__body-wrapper) {
-  overflow-x: hidden;
-}
-
-.no-devices-tip {
-  color: #909399;
-  text-align: center;
-  padding: 30px 0;
-  font-size: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.no-devices-tip i {
-  font-size: 30px;
-  color: #409eff;
-  opacity: 0.5;
-  margin-bottom: 10px;
-}
-
-/* 关联设备列表弹框样式 */
-.devices-dialog {
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-/* 整个弹框的背景和边框 */
-.devices-dialog :deep(.el-dialog) {
-  background-color: #ffffff !important;
-  border: 1px solid #e4e7ed;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-
-/* 弹框标题区域 */
-.devices-dialog :deep(.el-dialog__header) {
-  background-color: #f5f7fa;
-  padding: 15px 20px;
-  border-bottom: 1px solid #e4e7ed;
-}
-
-/* 弹框标题文字 */
-.devices-dialog :deep(.el-dialog__title) {
-  color: #303133;
-  font-weight: 500;
-  font-size: 16px;
-}
-
-/* 弹框内容区域 */
-.devices-dialog :deep(.el-dialog__body) {
-  padding: 0;
-  background-color: #ffffff;
-}
-
-/* 设备列表容器 */
-.devices-list-container {
-  background-color: #ffffff;
-  padding: 10px;
-}
-
-/* 表格样式 */
-.devices-dialog :deep(.el-table) {
-  background-color: #ffffff;
-}
-
-/* 表格单元格和行样式 */
-.devices-dialog :deep(.el-table td),
-.devices-dialog :deep(.el-table th.is-leaf) {
-  background-color: #ffffff;
-  border-bottom: 1px solid #ebeef5;
-}
-
-/* 表格表头样式 */
-.devices-dialog :deep(.el-table th) {
-  background-color: #f5f7fa !important;
-  border-bottom: 1px solid #ebeef5;
-  color: #303133 !important;
-}
-
-/* 表格行悬浮样式 */
-.devices-dialog :deep(.el-table--enable-row-hover .el-table__body tr:hover > td) {
-  background-color: #f5f7fa !important;
-}
-
-/* 表格条纹行样式 */
-.devices-dialog :deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
-  background-color: #fafafa;
-}
-
-/* 状态标签样式 */
-.devices-dialog :deep(.el-tag--success) {
-  background-color: rgba(103, 194, 58, 0.15);
-  border-color: rgba(103, 194, 58, 0.3);
-  color: #67c23a;
-}
-
-.devices-dialog :deep(.el-tag--info) {
-  background-color: rgba(144, 147, 153, 0.15);
-  border-color: rgba(144, 147, 153, 0.3);
-  color: #5a5e66;
-}
 </style>

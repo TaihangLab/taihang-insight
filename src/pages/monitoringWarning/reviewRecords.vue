@@ -4,7 +4,7 @@
 -->
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue';
-import useReviewRecords from './composables/useReviewRecords';
+import { useReviewRecords } from './composables/useReviewRecords';
 import { REVIEW_TYPE_OPTIONS, WARNING_SKILL_OPTIONS } from '@/types/center/review.d';
 
 // 异步组件

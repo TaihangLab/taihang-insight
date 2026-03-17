@@ -77,7 +77,9 @@ export default defineConfig(({ mode }) => {
       }
     },
     optimizeDeps: {
-      include: ['element-plus', 'vue-echarts', 'data-view-vue3']
+      include: ['element-plus', 'vue-echarts', 'data-view-vue3'],
+      entries: ['index.html'], // 只扫描 index.html，排除 playwright-report
+      exclude: ['playwright-report']
     },
     test: {
       globals: true,

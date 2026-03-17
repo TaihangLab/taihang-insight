@@ -53,23 +53,10 @@ const createAuthResponseInterceptor = (instance: AxiosInstance) => {
     },
     (error: unknown) => {
       if ((error as { response?: { status?: number } })?.response?.status === 401) {
-        // 清除认证缓存数据（保留 token，等待用户重新登录）
-        try {
-          const authData = localStorage.getItem("taihang-auth");
-          if (authData) {
-            const parsed = JSON.parse(authData);
-            // 清除 userInfo, permissions, menuTree，保留 token
-            parsed.userInfo = null;
-            parsed.permissions = [];
-            parsed.menuTree = [];
-            parsed.isLoggedIn = false;
-            localStorage.setItem("taihang-auth", JSON.stringify(parsed));
-          }
-        } catch (e) {
-          console.warn("清除认证数据失败:", e);
-        }
+        // 清除 Admin-Token
+        localStorage.removeItem("Admin-Token");
 
-        // 使用 router 跳转到登录页，避免页面刷新导致日志丢失
+        // 使用 router 跳转到登录页
         router.push("/login");
       }
       return Promise.reject(error);
@@ -100,10 +87,10 @@ class AuthAPI {
 
   /**
    * 用户登录（不需要 token）
-   * POST /api/v1/auth/login
+   * POST /api/v1/login
    */
   async login(params: LoginRequest): Promise<LoginResponse> {
-    return unAuthAxios.post("/api/v1/auth/login", params);
+    return unAuthAxios.post("/api/v1/login", params);
   }
 
   /**

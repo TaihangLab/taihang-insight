@@ -2,7 +2,10 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './tests',
+  // 只扫描 e2e 目录，避免与 Vitest 单元测试冲突
+  testDir: './tests/e2e',
+  // 只运行 .spec.ts 文件
+  testMatch: '**/*.spec.ts',
   // 每个测试文件共享同一个浏览器实例，避免频繁重启
   fullyParallel: false,
   // 测试失败时不关闭浏览器，继续执行下一个测试
@@ -18,11 +21,11 @@ export default defineConfig({
   ],
   use: {
     browserName: 'chromium',
-    headless: true, // 2. 启用无头模式，静默运行
+    headless: true, // 启用无头模式，静默运行
     viewport: { width: 1920, height: 1080 }, // 大屏测试使用更大视口
     ignoreHTTPSErrors: true, // 允许 HTTPS 自签名证书
-    video: 'off', // 6. 关闭视频录制
-    screenshot: 'off', // 6. 禁用所有截图功能
+    video: 'off', // 关闭视频录制
+    screenshot: 'off', // 禁用所有截图功能
     // 所有操作默认超时10秒
     actionTimeout: 10000,
     navigationTimeout: 10000,

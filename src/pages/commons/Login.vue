@@ -116,7 +116,6 @@ import TechPageContainer from "@/components/common/TechPageContainer.vue";
 import { useUserInfoStore } from "@/stores/modules/userInfo";
 import { usePermissionsStore } from "@/stores/modules/permissions";
 import { useMenusStore } from "@/stores/modules/menus";
-import { useTokenStore } from "@/stores/modules/token";
 import { logout, isLoggedIn } from "@/stores/modules/auth";
 import authAPI from "@/api/auth/authAPI";
 import storage from "@/stores/modules/storage";
@@ -129,7 +128,6 @@ const route = useRoute();
 const userInfoStore = useUserInfoStore();
 const permissionsStore = usePermissionsStore();
 const menusStore = useMenusStore();
-const tokenStore = useTokenStore();
 
 // 表单数据
 const isLoging = ref(false);
@@ -210,10 +208,10 @@ async function login(): Promise<void> {
     // 后端返回 code: 0 表示成功
     if (result.code === 0) {
       // 登录成功，处理返回的数据
-      const { token, adminToken, userInfo } = result.data;
+      const { adminToken } = result.data;
 
-      // 【关键】通过 Pinia TokenStore 设置 token，触发持久化插件
-      tokenStore.setAdminToken(adminToken);
+      // 【关键】直接将 adminToken 写入 localStorage
+      localStorage.setItem("Admin-Token", adminToken);
 
       // 存储租户信息用于下次登录自动填充
       storage.setSelectedTenant(selectedTenant.value);

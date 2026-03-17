@@ -3,6 +3,11 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+/**
+ * 等待所有 Promise 解决
+ */
+const flushPromises = () => new Promise(resolve => setTimeout(resolve, 0))
+
 // Mock clipboard API
 Object.defineProperty(global.navigator, 'clipboard', {
   value: {
@@ -296,20 +301,22 @@ describe('useLocalVideo', () => {
       )
     })
 
-    // TODO: 修复复制失败测试 - mockImplementationOnce 在某些情况下不稳定
-    // 可以通过创建一个新的 composable 实例来测试错误处理
-    it.skip('应该处理复制失败的情况', async () => {
+    it('应该处理复制失败的情况', async () => {
       const writeTextMock = vi.mocked(navigator.clipboard.writeText)
+      // 使用 mockRejectedValueOnce 让这次调用失败
       writeTextMock.mockRejectedValueOnce(new Error('复制失败'))
 
       const { copyToClipboard } = useLocalVideo()
 
-      await copyToClipboard('rtsp://localhost/test')
+      // 调用复制函数并等待异步完成
+      copyToClipboard('rtsp://localhost/test')
+      await new Promise(resolve => setTimeout(resolve, 10))
 
       expect(ElMessage.error).toHaveBeenCalledWith('复制失败')
 
+      // 恢复默认 mock
       writeTextMock.mockResolvedValue(undefined)
-    })
+    }, 15000) // 增加超时时间到15秒
   })
 
   describe('格式化函数', () => {

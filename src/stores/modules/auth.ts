@@ -8,7 +8,6 @@
  * 3. 提供统一的入口点
  */
 
-import { useTokenStore } from "./token";
 import { useUserInfoStore } from "./userInfo";
 import { usePermissionsStore } from "./permissions";
 import { useMenusStore } from "./menus";
@@ -23,10 +22,9 @@ export async function logout(): Promise<void> {
   try {
     console.log("[Auth] 开始登出流程...");
 
-    // 1. 清除 token（认证数据）
-    const tokenStore = useTokenStore();
-    tokenStore.clearTokens();
-    console.log("[Auth] Token 已清除");
+    // 1. 清除 Admin-Token
+    localStorage.removeItem("Admin-Token");
+    console.log("[Auth] Admin-Token 已清除");
 
     // 2. 清除用户信息
     const userInfoStore = useUserInfoStore();
@@ -69,8 +67,7 @@ export async function logout(): Promise<void> {
  * 检查是否已登录
  */
 export function isLoggedIn(): boolean {
-  const tokenStore = useTokenStore();
-  return tokenStore.hasAnyToken();
+  return !!localStorage.getItem("Admin-Token");
 }
 
 /**
@@ -92,6 +89,3 @@ export async function refreshAuthData(): Promise<void> {
     throw error;
   }
 }
-
-// 导出类型
-export type * from "./token";

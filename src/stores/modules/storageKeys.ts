@@ -6,8 +6,8 @@
  */
 export enum StorageKey {
   // ========== 认证相关 ==========
-  /** 认证数据（由 token store 管理） */
-  AUTH = "taihang-auth",
+  /** 管理员 Token */
+  ADMIN_TOKEN = "Admin-Token",
   PERMISSION = "taihang-permissions",
   MENUS = "taihang-menus",
   USER_INFO = "taihang-user-info",

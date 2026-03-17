@@ -23,7 +23,7 @@ class SkillAPI {
     const { page, limit } = normalizePageParams(params);
     const apiParams = { ...params, page, limit };
 
-    return apiGet<SkillClass[]>("/api/v1/skills/classes", { params: apiParams });
+    return apiGet<SkillClass[]>("/api/v1/skills/llm/classes", { params: apiParams });
   }
 
   /**
@@ -456,6 +456,24 @@ class SkillAPI {
     }
 
     return apiPut<LlmTask>(`/api/v1/skills/llm/tasks/${taskId}`, taskData);
+  }
+
+  // ============================================
+  // LLM 类型和场景
+  // ============================================
+
+  /**
+   * 获取 LLM 类型列表
+   */
+  async getLlmTypes(): Promise<string[]> {
+    return apiGet<string[]>("/api/v1/skills/llm/types");
+  }
+
+  /**
+   * 获取 LLM 场景列表
+   */
+  async getLlmScenarios(): Promise<string[]> {
+    return apiGet<string[]>("/api/v1/skills/llm/scenarios");
   }
 }
 
