@@ -73,6 +73,7 @@ import { storage } from "@/stores/modules/storage";
 import { StorageKey } from "@/stores/modules/storageKeys";
 import cacheManager from "@/utils/cacheManager";
 import { useUserInfoStore, useMenusStore, usePermissionsStore } from "@/stores";
+import { logout as authLogout } from "@/stores/modules/auth";
 
 // 路由
 const route = useRoute();
@@ -227,22 +228,25 @@ const clearCache = () => {
 };
 
 // 退出登录
-const logout = () => {
-  // 重置动态路由标记
-  resetAsyncRoutes();
+const logout = async () => {
+  try {
+    // 使用统一的登出函数（清除所有认证数据、用户数据、重置路由）
+    await authLogout();
 
-  // 清除所有认证相关的 localStorage 数据
-  storage.logout();
+    ElMessage({
+      showClose: true,
+      message: "已安全退出登录",
+      type: "success",
+    });
 
-  ElMessage({
-    showClose: true,
-    message: "已安全退出登录",
-    type: "success",
-  });
-
-  setTimeout(() => {
-    router.push("/login");
-  }, 500);
+    // 跳转到登录页（hash 模式）
+    setTimeout(() => {
+      window.location.href = "/#/login";
+    }, 500);
+  } catch (error) {
+    console.error("退出登录失败:", error);
+    ElMessage.error("退出登录失败，请重试");
+  }
 };
 
 // 监听路由变化

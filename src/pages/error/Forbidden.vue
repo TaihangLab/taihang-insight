@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { useUserInfoStore } from "@/stores";
+import { logout } from "@/stores/modules/auth";
 import ErrorPageLayout from "@/components/common/ErrorPageLayout.vue";
 import type { ErrorActionButton, ErrorReasonItem } from "@/types/components.d";
 
 const router = useRouter();
-const userInfoStore = useUserInfoStore();
 
 // 返回首页
 const goHome = () => {
@@ -13,14 +12,17 @@ const goHome = () => {
 };
 
 // 重新登录
-const reLogin = () => {
-  // 清除用户信息和 token
-  userInfoStore.clearUserInfo();
-  localStorage.removeItem("taihang-auth");
-  localStorage.removeItem("adminToken");
-
-  // 跳转到登录页
-  router.push("/login");
+const reLogin = async () => {
+  try {
+    // 使用统一的登出函数清除所有认证数据
+    await logout();
+    // 跳转到登录页（hash 模式）
+    window.location.href = "/#/login";
+  } catch (error) {
+    console.error("登出失败:", error);
+    // 即使失败也跳转到登录页
+    window.location.href = "/#/login";
+  }
 };
 
 // 操作按钮配置
