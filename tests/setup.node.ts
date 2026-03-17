@@ -3,12 +3,13 @@
  * 为 Node.js 环境提供浏览器 API mock
  */
 
-// Mock localStorage for Node environment
+// Mock localStorage for Node environment (实际存储数据，以支持认证测试)
+const localStorageStore = new Map<string, string>();
 const localStorageMock = {
-  getItem: (_key: string) => null,
-  setItem: (_key: string, _value: string) => {},
-  removeItem: (_key: string) => {},
-  clear: () => {}
+  getItem: (key: string) => localStorageStore.get(key) || null,
+  setItem: (key: string, value: string) => { localStorageStore.set(key, value) },
+  removeItem: (key: string) => { localStorageStore.delete(key) },
+  clear: () => { localStorageStore.clear() }
 }
 
 Object.defineProperty(globalThis, 'localStorage', {
