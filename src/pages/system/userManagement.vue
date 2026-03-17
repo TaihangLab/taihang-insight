@@ -25,9 +25,7 @@
     <UserEditDialog
       v-model:visible="editDialogVisible"
       :current-user="currentUser"
-      :tenant-id="
-        currentUser?.tenant_id ?? searchConditions.tenant_id ?? currentUserTenantId ?? null
-      "
+      :tenant-id="dialogTenantId"
       @submit="handleUserSubmit"
     />
 
@@ -49,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { useUserData } from "@/pages/system/composable/user/useUserData";
 import { useUserInfoStore } from "@/stores/modules/userInfo";
@@ -59,6 +57,14 @@ import DeleteConfirmDialog from "@/pages/system/components/user/DeleteConfirmDia
 import UserEditDialog from "@/pages/system/components/user/UserEditDialog.vue";
 import UserRoleAssignmentDialog from "@/pages/system/components/user/UserRoleAssignmentDialog.vue";
 import type { User } from "@/types/rbac/user";
+
+// 搜索条件接口
+interface SearchConditions {
+  tenant_id: string | number | null;
+  username: string;
+  phone: string;
+  status: number | null;
+}
 
 // ============================================
 // Composables
@@ -83,16 +89,30 @@ const userInfoStore = useUserInfoStore();
 // 当前用户的租户ID（使用 getter 方法）
 const currentUserTenantId = userInfoStore.getUserInfoSync()?.tenantId ?? null;
 
-// 搜索条件（使用 let 声明，因为 v-model 需要修改整个对象）
-let searchConditions = reactive({
-  tenant_id: (currentUserTenantId ?? null) as string | number | null,
+// 搜索条件（使用 ref，避免 reactive 的响应式问题）
+const searchConditions = ref<SearchConditions>({
+  tenant_id: currentUserTenantId,
   username: "",
   phone: "",
-  status: null as number | null,
+  status: null,
 });
 
 // 选中的用户ID
 const selectedIds = ref<number[]>([]);
+
+// 计算对话框的租户ID（安全地获取，避免运行时错误）
+const dialogTenantId = computed(() => {
+  // 优先使用当前用户的租户ID
+  if (currentUser.value?.tenant_id) {
+    return currentUser.value.tenant_id;
+  }
+  // 其次使用搜索条件的租户ID
+  if (searchConditions.value?.tenant_id) {
+    return searchConditions.value.tenant_id;
+  }
+  // 最后使用当前用户登录的租户ID
+  return currentUserTenantId;
+});
 
 // 对话框状态
 const editDialogVisible = ref(false);
@@ -133,17 +153,17 @@ const buildParams = () => {
     limit: pagination.value.pageSize,
   };
 
-  if (searchConditions.tenant_id) {
-    params.tenant_id = searchConditions.tenant_id;
+  if (searchConditions.value.tenant_id) {
+    params.tenant_id = searchConditions.value.tenant_id;
   }
-  if (searchConditions.username) {
-    params.username = searchConditions.username;
+  if (searchConditions.value.username) {
+    params.username = searchConditions.value.username;
   }
-  if (searchConditions.phone) {
-    params.phone = searchConditions.phone;
+  if (searchConditions.value.phone) {
+    params.phone = searchConditions.value.phone;
   }
-  if (searchConditions.status !== null) {
-    params.status = searchConditions.status;
+  if (searchConditions.value.status !== null) {
+    params.status = searchConditions.value.status;
   }
 
   return params;
@@ -171,8 +191,8 @@ const clearData = () => {
 /**
  * 搜索
  */
-const handleSearch = (conditions: unknown) => {
-  Object.assign(searchConditions, conditions);
+const handleSearch = (conditions: SearchConditions) => {
+  Object.assign(searchConditions.value, conditions);
   pagination.value.currentPage = 1;
   loadData();
 };
@@ -181,10 +201,13 @@ const handleSearch = (conditions: unknown) => {
  * 重置
  */
 const handleReset = () => {
-  searchConditions.tenant_id = null;
-  searchConditions.username = "";
-  searchConditions.phone = "";
-  searchConditions.status = null;
+  // 保留当前租户ID，只重置其他搜索条件
+  searchConditions.value = {
+    tenant_id: currentUserTenantId,
+    username: "",
+    phone: "",
+    status: null,
+  };
   pagination.value.currentPage = 1;
   loadData();
 };
@@ -207,7 +230,7 @@ const handleAdd = () => {
 /**
  * 编辑
  */
-const handleEdit = (row: unknown) => {
+const handleEdit = (row: User) => {
   currentUser.value = row;
   editDialogVisible.value = true;
 };
@@ -215,7 +238,7 @@ const handleEdit = (row: unknown) => {
 /**
  * 用户保存成功回调
  */
-const handleUserSubmit = async (formData: unknown) => {
+const handleUserSubmit = async (formData: Partial<User>) => {
   try {
     if (currentUser.value) {
       await updateUser(currentUser.value.id, formData);
@@ -227,16 +250,17 @@ const handleUserSubmit = async (formData: unknown) => {
     editDialogVisible.value = false;
     loadData();
   } catch (error: unknown) {
-    ElMessage.error(`保存失败: ${error.message}`);
+    const message = error instanceof Error ? error.message : "未知错误";
+    ElMessage.error(`保存失败: ${message}`);
   }
 };
 
 /**
  * 删除
  */
-const handleDelete = (row: unknown) => {
+const handleDelete = (row: User) => {
   deleteTargetType.value = "single";
-  deleteTargetName.value = row.userName || row.id;
+  deleteTargetName.value = row.user_name || row.id;
   deleteTargetIds.value = [row.id];
   deleteDialogVisible.value = true;
 };
@@ -278,29 +302,23 @@ const handleDeleteConfirm = async () => {
 /**
  * 状态切换
  */
-const handleStatusChange = async (row: unknown) => {
+const handleStatusChange = async (row: User) => {
   // v-model 已经自动更新了 row.status，直接使用即可
   const newStatus = row.status;
 
   try {
     await updateUser(row.id, { status: newStatus });
-    ElMessage({
-      message: "状态更新成功",
-      type: "success",
-    });
+    ElMessage.success("状态更新成功");
     loadData();
   } catch (error: unknown) {
     let errorMessage = "更新用户状态失败";
-    if (error.message && !error.message.includes("Network Error")) {
-      errorMessage = error.message;
-    } else if (error.response?.data?.message) {
-      errorMessage = error.response.data.message;
+    if (error instanceof Error) {
+      if (!error.message.includes("Network Error")) {
+        errorMessage = error.message;
+      }
     }
 
-    ElMessage({
-      message: errorMessage,
-      type: "error",
-    });
+    ElMessage.error(errorMessage);
     loadData();
   }
 };
@@ -308,12 +326,13 @@ const handleStatusChange = async (row: unknown) => {
 /**
  * 重置密码
  */
-const handleResetPassword = async (row: unknown) => {
+const handleResetPassword = async (row: User) => {
   try {
     await resetUserPassword(row.id, "123456");
     ElMessage.success("密码重置成功，新密码为：123456");
   } catch (error: unknown) {
-    ElMessage.error(`重置密码失败: ${error.message}`);
+    const message = error instanceof Error ? error.message : "未知错误";
+    ElMessage.error(`重置密码失败: ${message}`);
   }
 };
 
@@ -337,7 +356,7 @@ const handleSizeChange = (size: number) => {
 /**
  * 授权
  */
-const handleAuthorization = (row: unknown) => {
+const handleAuthorization = (row: User) => {
   currentUser.value = row;
   authorizationDialogVisible.value = true;
 };

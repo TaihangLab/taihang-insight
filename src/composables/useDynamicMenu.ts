@@ -52,8 +52,18 @@ function filterMenuItems(items: RawMenuItem[] | null | undefined): RawMenuItem[]
     // 过滤掉按钮类型
     if (menuType === MenuType.BUTTON) return false;
 
-    // 过滤掉设置为不可见的菜单（visible 显式设置为 false）
-    if (item.visible === false) return false;
+    // 过滤掉设置为不可见的菜单
+    // 处理各种可能的假值：false, 0, "0", "false"
+    // 使用类型断言来兼容后端可能返回的各种类型
+    const visibleValue = item.visible;
+    if (
+      visibleValue === false ||
+      (visibleValue as any) === 0 ||
+      (visibleValue as any) === "0" ||
+      (visibleValue as any) === "false"
+    ) {
+      return false;
+    }
 
     return true;
   });
