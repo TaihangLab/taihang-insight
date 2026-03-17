@@ -210,28 +210,24 @@ async function loadDashboardData(): Promise<void> {
       alertSummary,
       alertLevels,
       deviceTopWarnings,
-      systemStatus,
-      deviceConnectionSummary
+      systemStatus
     ] = await Promise.all([
       centerAPI.dashboard.getAlertSummary(),
       centerAPI.dashboard.getAlertLevels(),
       centerAPI.dashboard.getDeviceTopWarnings(),
-      centerAPI.dashboard.getSystemStatus(),
-      // 注意：设备统计暂时使用 connection summary 的数据
-      // 或者可以调用 centerAPI.deviceStatistics.getStatusStatistics()
-      centerAPI.deviceStatistics.getConnectionSummary().catch(() => null)
+      centerAPI.dashboard.getSystemStatus()
     ]);
 
     // 组合数据为 DashboardSummary 格式
     dashboardSummary.value = {
       alerts: alertSummary,
-      // 设备数据：从 connection summary 提取
+      // 设备数据：使用默认值（设备统计接口已删除）
       devices: {
-        total_cameras: deviceConnectionSummary?.total_connections || 0,
-        online_cameras: deviceConnectionSummary?.video_streams || 0,
-        offline_cameras: (deviceConnectionSummary?.total_connections || 0) - (deviceConnectionSummary?.video_streams || 0),
-        video_streams: deviceConnectionSummary?.video_streams || 0,
-        capture_services: deviceConnectionSummary?.capture_services || 0
+        total_cameras: 0,
+        online_cameras: 0,
+        offline_cameras: 0,
+        video_streams: 0,
+        capture_services: 0
       },
       system: systemStatus,
       alert_levels: alertLevels,
