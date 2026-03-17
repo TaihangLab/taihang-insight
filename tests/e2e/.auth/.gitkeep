@@ -1,0 +1,4 @@
+# 认证状态存储目录
+# 此目录用于存储 Playwright 的 storageState 文件
+# 文件: storage-state.json
+

@@ -281,11 +281,12 @@ export function setupAsyncRoutes(menuItems: unknown[]): number {
    * 递归处理菜单树
    */
   function processMenuItems(items: unknown[]) {
-    for (const item of items) {
+    for (const rawItem of items) {
+      const item = rawItem as Record<string, unknown>;
       // 兼容后端不同字段名：permission_name/menu_name, permission_type/menu_type
-      const menuName = item.menu_name || item.permission_name || item.name;
+      const menuName = String(item.menu_name || item.permission_name || item.name || "");
       const menuType = item.menu_type || item.permission_type || item.type;
-      const path = item.path;
+      const path = String(item.path || "");
 
       // 只处理 menu 类型的菜单项（跳过 folder 和 button）
       // menu_type 可能是: 'menu', 'folder', 'button' 或数字 1, 2, 3
@@ -302,7 +303,7 @@ export function setupAsyncRoutes(menuItems: unknown[]): number {
             component,
             meta: {
               title: menuName,
-              icon: item.icon,
+              icon: String(item.icon || ""),
             },
           };
           addedRoutes.push(route);
@@ -310,7 +311,7 @@ export function setupAsyncRoutes(menuItems: unknown[]): number {
       }
 
       // 递归处理子菜单
-      if (item.children?.length) {
+      if (Array.isArray(item.children) && item.children.length) {
         processMenuItems(item.children);
       }
     }
@@ -378,6 +379,13 @@ export function markDynamicRoutesReady() {
 /**
  * 全局前置守卫 - 认证与权限检查
  *
+ * 修复：刷新页面跳转 404 问题
+ * 问题原因：刷新时 Store 可能还未从 localStorage 完全恢复，导致 userInfo 为 null
+ * 解决方案：
+ * 1. 优先使用 token 判断登录状态（token 存储更可靠）
+ * 2. 如果 userInfo 为 null 但有 token，尝试异步获取用户信息
+ * 3. 在动态路由加载完成前，不检查 to.matched.length
+ *
  * 最佳实践：
  * 1. 避免在守卫中使用 next() 参数（Vue Router 4 推荐）
  * 2. 使用 return 或抛出错误进行导航控制
@@ -390,10 +398,31 @@ router.beforeEach(async (to: RouteLocationNormalized) => {
   }
 
   // 2. 检查认证状态
+  // 优先使用 token 判断登录状态，因为 token 存储在 localStorage 更可靠
+  const { useTokenStore } = await import("@/stores/modules/token");
+  const tokenStore = useTokenStore();
   const userInfoStore = useUserInfoStore();
   const userInfo = userInfoStore.getUserInfoSync();
 
-  if (!userInfo) {
+  // 有 token 但没有用户信息：尝试异步获取
+  if (tokenStore.hasAdminToken() && !userInfo) {
+    console.log("[Router] 检测到 token 但无用户信息，尝试获取...");
+    try {
+      await userInfoStore.refresh();
+      console.log("[Router] 用户信息获取成功");
+    } catch (error) {
+      console.error("[Router] 获取用户信息失败，清除 token", error);
+      tokenStore.clearTokens();
+      return {
+        path: "/login",
+        query: { redirect: to.fullPath },
+      };
+    }
+  }
+
+  // 没有登录信息：重定向到登录页
+  const updatedUserInfo = userInfoStore.getUserInfoSync();
+  if (!updatedUserInfo || !tokenStore.hasAdminToken()) {
     console.warn("[Router] 未登录，重定向到登录页");
     return {
       path: "/login",
@@ -418,14 +447,9 @@ router.beforeEach(async (to: RouteLocationNormalized) => {
     }
   }
 
-  // 4. 检查路由是否存在
-  // 动态路由已就绪，现在可以安全检查路由匹配
-  if (to.matched.length === 0) {
-    console.warn("[Router] 路由不存在:", to.path);
-    return { path: "/404" };
-  }
-
-  // 5. 所有检查通过，放行
+  // 4. 所有检查通过，放行
+  // Vue Router 会自动处理路由匹配
+  // 如果路由真正不存在，Vue Router 会自动导航到 404（通过通配符路由）
   return true;
 });
 

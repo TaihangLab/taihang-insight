@@ -94,6 +94,20 @@ async function initializeApp() {
       const { markDynamicRoutesReady } = await import("./router");
       markDynamicRoutesReady();
       console.log("✅ 动态路由已建立");
+
+      // 🔧 修复刷新后白屏问题（仅处理无匹配路由的情况）
+      await nextTick(); // 等待 DOM 更新
+
+      // 检查当前路由是否匹配（如果 matched 为空，说明没有找到匹配的路由）
+      const currentRoute = router.currentRoute.value;
+      if (!currentRoute || currentRoute.matched.length === 0) {
+        // 尝试从 hash 获取当前路径
+        const hashPath = window.location.hash.slice(1);
+        if (hashPath && hashPath !== "/login" && hashPath !== "/") {
+          console.log("[main.ts] 检测到未匹配路由，重新导航到:", hashPath);
+          await router.replace(hashPath);
+        }
+      }
     } else {
       console.info("⚠️ 菜单树为空，跳过动态路由建立");
       // 即使没有动态路由，也要标记就绪，避免路由守卫一直等待

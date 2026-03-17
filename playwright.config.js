@@ -18,11 +18,11 @@ export default defineConfig({
   ],
   use: {
     browserName: 'chromium',
-    headless: true, // 后台运行，不打扰前端服务
+    headless: true, // 2. 启用无头模式，静默运行
     viewport: { width: 1920, height: 1080 }, // 大屏测试使用更大视口
-    ignoreHTTPSErrors: true,
-    video: 'off', // 关闭视频录制以减少资源占用
-    screenshot: 'only-on-failure',
+    ignoreHTTPSErrors: true, // 允许 HTTPS 自签名证书
+    video: 'off', // 6. 关闭视频录制
+    screenshot: 'off', // 6. 禁用所有截图功能
     // 所有操作默认超时10秒
     actionTimeout: 10000,
     navigationTimeout: 10000,
