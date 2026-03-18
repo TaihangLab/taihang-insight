@@ -7,7 +7,7 @@
     <template v-slot:footer>
 <span  class="dialog-footer">
       <el-button @click="handleCancel">取消</el-button>
-      <el-button type="primary" @click="handleConfirm">确定删除</el-button>
+      <el-button type="danger" @click="handleConfirm">确定删除</el-button>
     </span>
 </template>
   </el-dialog>

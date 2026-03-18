@@ -11,8 +11,8 @@
 
       <!-- 辅助操作按钮 -->
       <div class="action-bar">
-        <el-button size="small" @click="checkAll">全选</el-button>
-        <el-button size="small" @click="uncheckAll">全不选</el-button>
+        <el-button type="primary" size="small" @click="checkAll">全选</el-button>
+        <el-button type="info" size="small" @click="uncheckAll">全不选</el-button>
         <el-button size="small" @click="expandAll">展开全部</el-button>
         <el-button size="small" @click="collapseAll">收起全部</el-button>
       </div>

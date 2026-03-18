@@ -52,12 +52,12 @@
       <el-table-column label="操作" min-width="240" fixed="right" align="center">
         <template #default="scope">
           <div class="flex justify-center gap-2">
-            <el-button link class="text-green-500" @click="handleAuthorization(scope.row)">
+            <el-button link type="success" @click="handleAuthorization(scope.row)">
               授权
             </el-button>
-            <el-button link class="text-blue-500" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button link class="text-red-500" @click="handleDelete(scope.row)">删除</el-button>
-            <el-button link class="text-amber-500" @click="handleResetPassword(scope.row)">
+            <el-button link type="primary" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button link type="danger" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button link type="warning" @click="handleResetPassword(scope.row)">
               重置
             </el-button>
           </div>

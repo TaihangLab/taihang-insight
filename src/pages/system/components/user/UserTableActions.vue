@@ -5,13 +5,13 @@
         <i class="i-carbon-add"></i>
         新增
       </el-button>
-      <el-button size="small" data-testid="btn-batch-delete" @click="handleBatchDelete">
+      <el-button type="danger" size="small" data-testid="btn-batch-delete" @click="handleBatchDelete">
         <i class="i-carbon-trash-can"></i>
         删除
       </el-button>
     </div>
     <div class="right-buttons">
-      <el-button size="small" circle @click="handleAdvancedSearch">
+      <el-button type="info" size="small" circle @click="handleAdvancedSearch">
         <i class="i-carbon-search"></i>
       </el-button>
       <el-button size="small" circle @click="handleRefresh">
