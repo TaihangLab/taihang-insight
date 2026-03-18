@@ -24,6 +24,8 @@ import authAxios from '../../../src/api/commons/index';
 import axios from 'axios';
 import PermissionService from '../../../src/api/system/permissionService';
 import type { CreatePermissionRequest, UpdatePermissionRequest } from '../../../src/api/system/permissionService';
+import { PermissionType } from '../../../src/types/rbac/permission';
+import type { PermissionDetail, PermissionTreeNode } from '../../../src/types/rbac/permission';
 
 // 后端配置
 const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:8000';
@@ -104,7 +106,7 @@ describe('RBAC 权限管理 CRUD 集成测试（真实后端调用）', () => {
     const createData: CreatePermissionRequest = {
       permission_name: `集成测试权限 ${TEST_PERM_CODE}`,
       permission_code: `TEST:${TEST_PERM_CODE}`,
-      permission_type: 'menu',
+      permission_type: PermissionType.MENU,  // 使用枚举值
       path: `/test/integration/${TEST_PERM_CODE.toLowerCase()}`,
       method: 'GET',
       parent_id: 0,
@@ -115,23 +117,24 @@ describe('RBAC 权限管理 CRUD 集成测试（真实后端调用）', () => {
     };
 
     const response = await PermissionService.createPermissionNode(createData);
+    // 响应拦截器已提取 data 字段，实际返回的是 PermissionDetail 类型
+    const data = (response as any) as PermissionDetail;
 
-    // 验证响应 - 后端返回的是 PermissionDetail 类型，不包含 node_type
-    expect(response).toBeDefined();
-    expect(response.id).toBeDefined();
-    expect(response.permission_name).toBe(createData.permission_name);
-    expect(response.permission_code).toBe(createData.permission_code);
-    expect(response.permission_type).toBe(createData.permission_type);
+    // 验证响应 - 后端返回的是 PermissionDetail 类型
+    expect(data).toBeDefined();
+    expect(data.id).toBeDefined();
+    expect(data.permission_name).toBe(createData.permission_name);
+    expect(data.permission_code).toBe(createData.permission_code);
+    expect(data.permission_type).toBe(createData.permission_type);
     // 注意：后端不返回 node_type 字段，所以跳过此断言
-    expect(response.path).toBe(createData.path);
-    expect(response.method).toBe(createData.method);
-    expect(response.parent_id).toBe(createData.parent_id);
-    // 后端可能不返回 description 字段，跳过此断言
-    expect(response.visible).toBe(createData.visible);
-    expect(response.create_time).toBeDefined();
+    expect(data.path).toBe(createData.path);
+    expect(data.method).toBe(createData.method);
+    expect(data.parent_id).toBe(createData.parent_id);
+    expect(data.visible).toBe(createData.visible);
+    expect(data.create_time).toBeDefined();
 
     // 保存 ID 用于后续测试
-    createdPermissionId = response.id;
+    createdPermissionId = data.id;
     expect(createdPermissionId).toBeGreaterThan(0);
 
     console.log('✓ 创建权限成功，ID:', createdPermissionId);
@@ -140,21 +143,22 @@ describe('RBAC 权限管理 CRUD 集成测试（真实后端调用）', () => {
   it('2. 获取权限树 - 应该能查到刚创建的权限节点', async () => {
     expect(createdPermissionId).not.toBeNull();
 
-    const tree = await PermissionService.getPermissionTree({
+    const response = await PermissionService.getPermissionTree({
       include_disabled: true,
     });
+    // 响应拦截器已提取 data 字段，实际返回的是 PermissionTreeNode[] 类型
+    const tree = (response as any) as PermissionTreeNode[];
 
     expect(Array.isArray(tree)).toBe(true);
 
     // 在权限树中查找创建的节点
-    function findNodeInTree(nodes: Array<unknown>): { permission_code: string; permission_name: string } | null {
+    function findNodeInTree(nodes: PermissionTreeNode[]): PermissionTreeNode | null {
       for (const node of nodes) {
-        const n = node as { id?: number; children?: Array<unknown> };
-        if (n.id === createdPermissionId) {
-          return node as { permission_code: string; permission_name: string };
+        if (node.id === createdPermissionId) {
+          return node;
         }
-        if (n.children && n.children.length > 0) {
-          const found = findNodeInTree(n.children);
+        if (node.children && node.children.length > 0) {
+          const found = findNodeInTree(node.children);
           if (found) return found;
         }
       }
@@ -181,13 +185,15 @@ describe('RBAC 权限管理 CRUD 集成测试（真实后端调用）', () => {
     expect(createdPermissionId).not.toBeNull();
 
     const response = await PermissionService.getPermissionNode(createdPermissionId!);
+    // 响应拦截器已提取 data 字段，实际返回的是 PermissionDetail 类型
+    const data = (response as any) as PermissionDetail;
 
-    expect(response).toBeDefined();
-    expect(response.id).toBe(createdPermissionId);
-    expect(response.permission_code).toBe(`TEST:${TEST_PERM_CODE}`);
-    expect(response.permission_name).toBe(`集成测试权限 ${TEST_PERM_CODE}`);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(createdPermissionId);
+    expect(data.permission_code).toBe(`TEST:${TEST_PERM_CODE}`);
+    expect(data.permission_name).toBe(`集成测试权限 ${TEST_PERM_CODE}`);
     // 注意：后端不返回 description 字段，使用 remark 代替
-    // expect(response.description).toBe('这是一个集成测试创建的权限节点');
+    // expect(data.description).toBe('这是一个集成测试创建的权限节点');
 
     console.log('✓ 获取权限详情成功');
   });
@@ -204,6 +210,7 @@ describe('RBAC 权限管理 CRUD 集成测试（真实后端调用）', () => {
     expect(createdPermissionId).not.toBeNull();
 
     const updateData: UpdatePermissionRequest = {
+      id: createdPermissionId!,  // 必填字段
       permission_name: `集成测试权限 ${TEST_PERM_CODE} (已修改)`,
       sort_order: 1000,
       visible: false,
@@ -213,16 +220,18 @@ describe('RBAC 权限管理 CRUD 集成测试（真实后端调用）', () => {
       createdPermissionId!,
       updateData,
     );
+    // 响应拦截器已提取 data 字段，实际返回的是 PermissionDetail 类型
+    const data = (response as any) as PermissionDetail;
 
-    expect(response).toBeDefined();
-    expect(response.id).toBe(createdPermissionId);
-    expect(response.permission_name).toBe(updateData.permission_name);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(createdPermissionId);
+    expect(data.permission_name).toBe(updateData.permission_name);
     // 注意：后端不返回 description 字段
-    // expect(response.description).toBe(updateData.description);
-    expect(response.sort_order).toBe(updateData.sort_order);
-    expect(response.visible).toBe(updateData.visible);
+    // expect(data.description).toBe(updateData.description);
+    expect(data.sort_order).toBe(updateData.sort_order);
+    expect(data.visible).toBe(updateData.visible);
     // 权限码不应该改变
-    expect(response.permission_code).toBe(`TEST:${TEST_PERM_CODE}`);
+    expect(data.permission_code).toBe(`TEST:${TEST_PERM_CODE}`);
 
     console.log('✓ 更新权限成功');
   });
@@ -231,19 +240,21 @@ describe('RBAC 权限管理 CRUD 集成测试（真实后端调用）', () => {
     expect(createdPermissionId).not.toBeNull();
 
     const response = await PermissionService.getPermissionNode(createdPermissionId!);
+    // 响应拦截器已提取 data 字段，实际返回的是 PermissionDetail 类型
+    const data = (response as any) as PermissionDetail;
 
-    expect(response).toBeDefined();
-    expect(response.id).toBe(createdPermissionId);
-    expect(response.permission_name).toBe(`集成测试权限 ${TEST_PERM_CODE} (已修改)`);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(createdPermissionId);
+    expect(data.permission_name).toBe(`集成测试权限 ${TEST_PERM_CODE} (已修改)`);
     // 注意：后端不返回 description 字段
-    // expect(response.description).toBe('这是经过集成测试修改后的描述信息');
-    expect(response.sort_order).toBe(1000);
-    expect(response.visible).toBe(false);
+    // expect(data.description).toBe('这是经过集成测试修改后的描述信息');
+    expect(data.sort_order).toBe(1000);
+    expect(data.visible).toBe(false);
     // 验证未修改的字段保持不变
-    expect(response.permission_code).toBe(`TEST:${TEST_PERM_CODE}`);
+    expect(data.permission_code).toBe(`TEST:${TEST_PERM_CODE}`);
     // 注意：后端不返回 node_type 字段
-    // expect(response.node_type).toBe('menu');
-    expect(response.method).toBe('GET');
+    // expect(data.node_type).toBe('menu');
+    expect(data.method).toBe('GET');
 
     console.log('✓ 修改已验证生效');
   });
@@ -257,7 +268,8 @@ describe('RBAC 权限管理 CRUD 集成测试（真实后端调用）', () => {
 
     // 验证状态已更新
     const response = await PermissionService.getPermissionNode(createdPermissionId!);
-    expect(response.status).toBe(false);
+    const data = (response as any) as PermissionDetail;
+    expect(data.status).toBe(false);
 
     console.log('✓ 状态更新成功');
   });

@@ -72,8 +72,8 @@ describe('usePermissionData', () => {
       await fetchPermissionTree();
 
       expect(permissionTree.value).toHaveLength(1);
-      expect(permissionTree.value[0].node_type).toBe('folder');
-      expect(permissionTree.value[0].children![0].node_type).toBe('menu');
+      expect(permissionTree.value[0]!.node_type).toBe('folder');
+      expect(permissionTree.value[0]!.children![0]!.node_type).toBe('menu');
     });
 
     it('应该处理空数组响应', async () => {
@@ -114,8 +114,8 @@ describe('usePermissionData', () => {
       const { permissionTree, fetchPermissionTree } = usePermissionData();
       await fetchPermissionTree();
 
-      expect(permissionTree.value[0].node_type).toBe('folder');
-      expect(permissionTree.value[0].children![0].node_type).toBe('menu');
+      expect(permissionTree.value[0]!.node_type).toBe('folder');
+      expect(permissionTree.value[0]!.children![0]!.node_type).toBe('menu');
     });
 
     it('应该递归处理嵌套的子节点', async () => {
@@ -142,9 +142,9 @@ describe('usePermissionData', () => {
       const { permissionTree, fetchPermissionTree } = usePermissionData();
       await fetchPermissionTree();
 
-      expect(permissionTree.value[0].node_type).toBe('folder');
-      expect(permissionTree.value[0].children![0].node_type).toBe('menu');
-      expect(permissionTree.value[0].children![0].children![0].node_type).toBe('button');
+      expect(permissionTree.value[0]!.node_type).toBe('folder');
+      expect(permissionTree.value[0]!.children![0]!.node_type).toBe('menu');
+      expect(permissionTree.value[0]!.children![0]!.children![0]!.node_type).toBe('button');
     });
 
     it('应该处理空子节点数组', async () => {
@@ -162,8 +162,8 @@ describe('usePermissionData', () => {
       const { permissionTree, fetchPermissionTree } = usePermissionData();
       await fetchPermissionTree();
 
-      expect(permissionTree.value[0].node_type).toBe('menu');
-      expect(permissionTree.value[0].children).toEqual([]);
+      expect(permissionTree.value[0]!.node_type).toBe('menu');
+      expect(permissionTree.value[0]!.children).toEqual([]);
     });
 
     it('应该处理没有 children 字段的节点', async () => {
@@ -180,7 +180,7 @@ describe('usePermissionData', () => {
       const { permissionTree, fetchPermissionTree } = usePermissionData();
       await fetchPermissionTree();
 
-      expect(permissionTree.value[0].node_type).toBe('menu');
+      expect(permissionTree.value[0]!.node_type).toBe('menu');
     });
   });
 
@@ -289,8 +289,8 @@ describe('usePermissionData', () => {
       await fetchPermissions({});
 
       expect(permissions.value).toHaveLength(2);
-      expect(permissions.value[0].permission_name).toBe('用户管理');
-      expect(permissions.value[1].permission_name).toBe('新增用户');
+      expect(permissions.value[0]!.permission_name).toBe('用户管理');
+      expect(permissions.value[1]!.permission_name).toBe('新增用户');
     });
 
     it('应该处理空权限列表', async () => {
