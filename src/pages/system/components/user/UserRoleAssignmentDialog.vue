@@ -47,7 +47,7 @@ import { ref, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 import associationService from "@/api/system/associationService";
 import type { User } from "@/types/rbac/user";
-import type { Role } from "@/types/rbac/role";
+import type { Role, UserRoleResponse } from "@/types/rbac/role";
 
 const props = withDefaults(
   defineProps<{
@@ -143,7 +143,7 @@ const loadRolesAndUserRoles = async () => {
     }
 
     console.log('处理后的用户角色:', userRoles);
-    selectedRoleIds.value = userRoles.map((r: Role) => r.role_id || r.id);
+    selectedRoleIds.value = userRoles.map((r: UserRoleResponse) => r.role_id);
   } catch (error: unknown) {
     console.error("加载角色数据失败:", error);
     ElMessage.error(`加载角色数据失败: ${error.message}`);

@@ -367,10 +367,11 @@ const handleAuthorization = (row: User) => {
 
 /**
  * 授权提交成功回调
+ * 注意：成功消息已在 UserRoleAssignmentDialog 内部处理
  */
 const handleAuthorizationSubmit = () => {
   authorizationDialogVisible.value = false;
-  ElMessage.success("角色分配成功");
+  loadData(); // 刷新用户列表
 };
 </script>
 

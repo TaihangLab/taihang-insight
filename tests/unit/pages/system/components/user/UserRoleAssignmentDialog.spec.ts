@@ -36,9 +36,9 @@ describe('UserRoleAssignmentDialog.vue', () => {
     { id: 3, role_name: '访客', role_code: 'GUEST', tenant_id: '0' },
   ];
 
-  // Mock 用户已有角色数据（拦截器已提取 data，非分页数据直接返回数组）
+  // Mock 用户已有角色数据（后端 UserRoleResponse 结构）
   const mockUserRoles = [
-    { id: 1, role_id: 1, role_name: '管理员', role_code: 'ADMIN' },
+    { role_id: 1, role_name: '管理员', role_code: 'ADMIN', user_name: '测试用户', tenant_id: '0' },
   ];
 
   const mockUser = {
@@ -107,9 +107,9 @@ describe('UserRoleAssignmentDialog.vue', () => {
   });
 
   it('应该正确处理不同的 roleId 字段格式', async () => {
-    // 测试不同的字段名（role_id vs id）
-    const mockUserRolesWithId = [
-      { id: 2, role_name: '普通用户', role_code: 'USER' },
+    // 测试后端返回的 UserRoleResponse 结构（包含 role_id）
+    const mockUserRolesWithRoleId = [
+      { role_id: 2, role_name: '普通用户', role_code: 'USER', user_name: '测试用户', tenant_id: '0' },
     ];
 
     vi.mocked(associationService.getRoles).mockResolvedValue({
@@ -117,7 +117,7 @@ describe('UserRoleAssignmentDialog.vue', () => {
       total: 3,
     } as any);
     vi.mocked(associationService.getUserRoles).mockResolvedValue(
-      mockUserRolesWithId as any
+      mockUserRolesWithRoleId as any
     );
 
     const wrapper = await createWrapper();

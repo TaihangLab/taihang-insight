@@ -203,3 +203,24 @@ export interface RemoveRolePermissionRequest {
   /** 权限ID（必填） */
   permission_id: number;
 }
+
+// ============================================
+// 用户-角色关联类型
+// ============================================
+
+/**
+ * 用户角色关联响应
+ * 匹配后端 UserRoleResponse 结构
+ */
+export interface UserRoleResponse {
+  /** 用户名 */
+  user_name: string;
+  /** 角色ID */
+  role_id: number;
+  /** 角色编码 */
+  role_code: string;
+  /** 租户ID */
+  tenant_id: string;
+  /** 角色名称 */
+  role_name: string;
+}
