@@ -4,7 +4,7 @@
  * @see .claude/rules/testing-guide.md
  */
 
-import { Page, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export class TenantManagementPage extends BasePage {
@@ -197,7 +197,6 @@ export class TenantManagementPage extends BasePage {
    * 点击编辑按钮
    */
   async clickEditButton(rowIndex: number = 0): Promise<void> {
-    const editButtons = await this.page.locator(this.selectors.editButton).count();
     await this.page.locator(this.selectors.editButton).nth(rowIndex).click();
     await this.waitForVisible(this.selectors.dialog);
   }
@@ -295,7 +294,7 @@ export class TenantManagementPage extends BasePage {
   /**
    * 获取表格行数
    */
-  async getTableRowCount(): Promise<number> {
+  override async getTableRowCount(): Promise<number> {
     return await this.page.locator(this.selectors.tableRow).count();
   }
 

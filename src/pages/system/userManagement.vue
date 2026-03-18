@@ -1,27 +1,136 @@
+<!--
+  用户管理页面
+  使用 <script setup> + TypeScript
+  布局风格与角色管理保持一致
+-->
 <template>
-  <div class="user-management-page">
-    <!-- 查询区 -->
-    <UserSearchBar v-model="searchConditions" @search="handleSearch" @reset="handleReset" />
+  <div class="user-management-page p-6 bg-neutral-50 min-h-screen">
+    <!-- 搜索表单 -->
+    <el-card class="search-card mb-5 rounded-xl border border-neutral-200 shadow-sm" shadow="never">
+      <el-form :model="queryForm" inline>
+        <el-form-item v-permission="'tenant:list:view'" label="租户">
+          <TenantSelector v-model="queryForm.tenant_id" @change="handleSearch" />
+        </el-form-item>
 
-    <!-- 列表区 -->
-    <UserList
-      :users="users"
-      :loading="loading"
-      :pagination="{ currentPage: pagination.currentPage, pageSize: pagination.pageSize }"
-      :total="pagination.total"
-      @selection-change="handleSelectionChange"
-      @add="handleAdd"
-      @edit="handleEdit"
-      @delete="handleDelete"
-      @batch-delete="handleBatchDelete"
-      @status-change="handleStatusChange"
-      @reset-password="handleResetPassword"
-      @authorization="handleAuthorization"
-      @page-change="handlePageChange"
-      @size-change="handleSizeChange"
-    />
+        <el-form-item label="用户名">
+          <el-input
+            v-model="queryForm.username"
+            placeholder="请输入用户名"
+            clearable
+            class="w-[200px]"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
 
-    <!-- 用户编辑表单 -->
+        <el-form-item label="手机号">
+          <el-input
+            v-model="queryForm.phone"
+            placeholder="请输入手机号"
+            clearable
+            class="w-[200px]"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+
+        <el-form-item label="状态">
+          <el-select
+            v-model="queryForm.status"
+            placeholder="请选择状态"
+            clearable
+            class="w-[120px]"
+          >
+            <el-option label="启用" :value="Status.ENABLED" />
+            <el-option label="停用" :value="Status.DISABLED" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">查询</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <!-- 操作按钮 -->
+    <el-card class="table-card rounded-xl border border-neutral-200 shadow-sm" shadow="never">
+      <template #header>
+        <div class="flex items-center justify-between">
+          <span class="text-base font-medium text-text-primary">用户列表</span>
+          <div class="flex gap-2">
+            <el-button
+              type="primary"
+              icon="Plus"
+              data-testid="btn-add-user"
+              @click="handleAdd"
+            >
+              新增用户
+            </el-button>
+            <el-button
+              :disabled="!hasSelection"
+              data-testid="btn-batch-delete"
+              @click="handleBatchDelete"
+            >
+              批量删除
+            </el-button>
+          </div>
+        </div>
+      </template>
+
+      <!-- 用户表格 -->
+      <el-table
+        v-loading="loading"
+        :data="users"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" align="center" width="55" />
+        <el-table-column prop="user_name" label="用户名称" align="center" min-width="140" />
+        <el-table-column prop="nick_name" label="用户昵称" align="center" min-width="150" />
+        <el-table-column prop="dept_name" label="部门" align="center" min-width="120" />
+        <el-table-column prop="phone" label="手机号码" align="center" min-width="130" />
+        <el-table-column prop="status" label="状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-switch
+              :model-value="row.status"
+              :active-value="Status.ENABLED"
+              :inactive-value="Status.DISABLED"
+              @change="() => handleStatusChange(row)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column prop="create_time" label="创建时间" align="center" min-width="170" />
+        <el-table-column label="操作" width="280" fixed="right" align="center">
+          <template #default="{ row }">
+            <el-button link type="success" size="small" @click="handleAuthorization(row)">
+              授权
+            </el-button>
+            <el-button link type="primary" size="small" @click="handleEdit(row)">
+              编辑
+            </el-button>
+            <el-button link type="danger" size="small" @click="handleDelete(row)">
+              删除
+            </el-button>
+            <el-button link type="warning" size="small" @click="handleResetPassword(row)">
+              重置
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="mt-5 flex justify-end">
+        <el-pagination
+          v-model:current-page="pagination.currentPage"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="loadData"
+          @size-change="handleSizeChange"
+        />
+      </div>
+    </el-card>
+
+    <!-- 用户编辑对话框 -->
     <UserEditDialog
       v-model:visible="editDialogVisible"
       :current-user="currentUser"
@@ -51,15 +160,17 @@ import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { useUserData } from "@/pages/system/composable/user/useUserData";
 import { useUserInfoStore } from "@/stores/modules/userInfo";
-import UserSearchBar from "@/pages/system/components/user/UserSearchBar.vue";
-import UserList from "@/pages/system/components/user/UserList.vue";
-import DeleteConfirmDialog from "@/pages/system/components/user/DeleteConfirmDialog.vue";
+import { Status } from "@/types/rbac";
+import TenantSelector from "@/pages/system/components/commons/TenantSelector.vue";
 import UserEditDialog from "@/pages/system/components/user/UserEditDialog.vue";
 import UserRoleAssignmentDialog from "@/pages/system/components/user/UserRoleAssignmentDialog.vue";
+import DeleteConfirmDialog from "@/pages/system/components/user/DeleteConfirmDialog.vue";
 import type { User } from "@/types/rbac/user";
 
-// 搜索条件接口
-interface SearchConditions {
+// ============================================
+// 类型定义
+// ============================================
+interface QueryForm {
   tenant_id: string | number | null;
   username: string;
   phone: string;
@@ -85,58 +196,48 @@ const userInfoStore = useUserInfoStore();
 // ============================================
 // 响应式状态
 // ============================================
-
-// 当前用户的租户ID（使用 getter 方法）
 const currentUserTenantId = userInfoStore.getUserInfoSync()?.tenantId ?? null;
 
-// 搜索条件（使用 ref，避免 reactive 的响应式问题）
-const searchConditions = ref<SearchConditions>({
+const queryForm = reactive<QueryForm>({
   tenant_id: currentUserTenantId,
   username: "",
   phone: "",
   status: null,
 });
 
-// 选中的用户ID
 const selectedIds = ref<string[]>([]);
 
-// 计算对话框的租户ID（安全地获取，避免运行时错误）
 const dialogTenantId = computed(() => {
-  // 优先使用当前用户的租户ID
   if (currentUser.value?.tenant_id) {
     return currentUser.value.tenant_id;
   }
-  // 其次使用搜索条件的租户ID
-  if (searchConditions.value?.tenant_id) {
-    return searchConditions.value.tenant_id;
+  if (queryForm.tenant_id) {
+    return queryForm.tenant_id;
   }
-  // 最后使用当前用户登录的租户ID
   return currentUserTenantId;
 });
 
-// 对话框状态
 const editDialogVisible = ref(false);
 const deleteDialogVisible = ref(false);
 const authorizationDialogVisible = ref(false);
 const currentUser = ref<User | null>(null);
 
-// 删除相关
 const deleteTargetType = ref<"single" | "batch">("single");
 const deleteTargetName = ref("");
 const deleteTargetIds = ref<string[]>([]);
+
+const hasSelection = computed(() => selectedIds.value.length > 0);
 
 // ============================================
 // 生命周期
 // ============================================
 onMounted(() => {
-  // 用户信息已在 main.ts 中初始化，直接加载数据
   loadData();
 });
 
 // ============================================
 // 方法
 // ============================================
-
 /**
  * 计算当前页的 skip 值
  */
@@ -148,22 +249,22 @@ const getSkip = (): number => {
  * 构建查询参数
  */
 const buildParams = () => {
-  const params: Record<string, any> = {
+  const params: Record<string, unknown> = {
     skip: getSkip(),
     limit: pagination.value.pageSize,
   };
 
-  if (searchConditions.value.tenant_id) {
-    params.tenant_id = searchConditions.value.tenant_id;
+  if (queryForm.tenant_id) {
+    params.tenant_id = queryForm.tenant_id;
   }
-  if (searchConditions.value.username) {
-    params.username = searchConditions.value.username;
+  if (queryForm.username) {
+    params.username = queryForm.username;
   }
-  if (searchConditions.value.phone) {
-    params.phone = searchConditions.value.phone;
+  if (queryForm.phone) {
+    params.phone = queryForm.phone;
   }
-  if (searchConditions.value.status !== null) {
-    params.status = searchConditions.value.status;
+  if (queryForm.status !== null) {
+    params.status = queryForm.status;
   }
 
   return params;
@@ -176,7 +277,8 @@ const loadData = async () => {
   try {
     users.value = await fetchUsers(buildParams());
   } catch (error: unknown) {
-    ElMessage.error(`获取用户列表失败: ${error.message}`);
+    const message = error instanceof Error ? error.message : "未知错误";
+    ElMessage.error(`获取用户列表失败: ${message}`);
     clearData();
   }
 };
@@ -189,25 +291,21 @@ const clearData = () => {
 };
 
 /**
- * 搜索
+ * 查询处理
  */
-const handleSearch = (conditions: SearchConditions) => {
-  Object.assign(searchConditions.value, conditions);
+const handleSearch = () => {
   pagination.value.currentPage = 1;
   loadData();
 };
 
 /**
- * 重置
+ * 重置处理
  */
 const handleReset = () => {
-  // 保留当前租户ID，只重置其他搜索条件
-  searchConditions.value = {
-    tenant_id: currentUserTenantId,
-    username: "",
-    phone: "",
-    status: null,
-  };
+  queryForm.tenant_id = currentUserTenantId;
+  queryForm.username = "";
+  queryForm.phone = "";
+  queryForm.status = null;
   pagination.value.currentPage = 1;
   loadData();
 };
@@ -244,7 +342,6 @@ const handleUserSubmit = async (formData: Partial<User>) => {
       await updateUser(currentUser.value.user_id, formData);
       ElMessage.success("用户修改成功");
     } else {
-      // 新增逻辑需要在 useUserData 中实现 createUser
       ElMessage.success("用户添加成功");
     }
     editDialogVisible.value = false;
@@ -268,10 +365,14 @@ const handleDelete = (row: User) => {
 /**
  * 批量删除
  */
-const handleBatchDelete = (ids: string[]) => {
+const handleBatchDelete = () => {
+  if (!hasSelection.value) {
+    ElMessage.warning("请选择要删除的用户");
+    return;
+  }
   deleteTargetType.value = "batch";
-  deleteTargetName.value = String(ids.length);
-  deleteTargetIds.value = ids;
+  deleteTargetName.value = String(selectedIds.value.length);
+  deleteTargetIds.value = selectedIds.value;
   deleteDialogVisible.value = true;
 };
 
@@ -286,44 +387,28 @@ const handleDeleteConfirm = async () => {
       await deleteUsers(deleteTargetIds.value);
     }
 
-    ElMessage({
-      message: "删除成功",
-      type: "success",
-    });
+    ElMessage.success("删除成功");
     loadData();
   } catch (error: unknown) {
-    ElMessage({
-      message: `删除失败: ${error.message || "未知错误"}`,
-      type: "error",
-    });
+    ElMessage.error(`删除失败: ${error.message || "未知错误"}`);
   }
 };
 
 /**
  * 状态切换
  */
-const handleStatusChange = async (row: User, callback?: (success: boolean) => void) => {
-  // v-model 已经自动更新了 row.status，直接使用即可
-  const newStatus = row.status;
+const handleStatusChange = async (row: User) => {
+  const originalStatus = row.status;
+  row.status = row.status === 0 ? 1 : 0;
 
   try {
-    await updateUser(row.id, { status: newStatus });
+    await updateUser(row.user_id!, { status: row.status });
     ElMessage.success("状态更新成功");
-    // 通知子组件状态更新成功
-    callback?.(true);
     loadData();
   } catch (error: unknown) {
-    let errorMessage = "更新用户状态失败";
-    if (error instanceof Error) {
-      if (!error.message.includes("Network Error")) {
-        errorMessage = error.message;
-      }
-    }
-
+    row.status = originalStatus;
+    const errorMessage = error instanceof Error ? error.message : "更新用户状态失败";
     ElMessage.error(errorMessage);
-    // 通知子组件状态更新失败，子组件会恢复原始状态
-    callback?.(false);
-    loadData();
   }
 };
 
@@ -338,14 +423,6 @@ const handleResetPassword = async (row: User) => {
     const message = error instanceof Error ? error.message : "未知错误";
     ElMessage.error(`重置密码失败: ${message}`);
   }
-};
-
-/**
- * 页码变化
- */
-const handlePageChange = (page: number) => {
-  pagination.value.currentPage = page;
-  loadData();
 };
 
 /**
@@ -367,16 +444,26 @@ const handleAuthorization = (row: User) => {
 
 /**
  * 授权提交成功回调
- * 注意：成功消息已在 UserRoleAssignmentDialog 内部处理
  */
 const handleAuthorizationSubmit = () => {
   authorizationDialogVisible.value = false;
-  loadData(); // 刷新用户列表
+  loadData();
 };
 </script>
 
 <style scoped>
 .user-management-page {
-  padding: var(--design-spacing-md);
+  min-height: calc(100vh - var(--header-height, 60px));
+}
+
+:deep(.el-table) {
+  --el-table-header-bg-color: var(--design-bg-secondary);
+  --el-table-header-text-color: var(--design-text-primary);
+}
+
+:deep(.el-table th) {
+  background-color: var(--design-bg-secondary);
+  color: var(--design-text-primary);
+  font-weight: 500;
 }
 </style>

@@ -2,6 +2,11 @@
  * RBAC 权限管理 CRUD 集成测试
  * 直接调用后端 API 测试新增和修改功能的完备性
  *
+ * ⚠️ 重要提示：
+ * 1. 测试数据必须使用唯一标识（时间戳），避免与真实数据冲突
+ * 2. 测试结束后必须清理所有创建的数据
+ * 3. 如果测试失败，手动检查后端并删除测试数据
+ *
  * 测试流程：
  * 1. 登录获取 token → 设置到 token store
  * 2. 创建权限节点 → 验证创建成功
@@ -80,13 +85,17 @@ describe('RBAC 权限管理 CRUD 集成测试（真实后端调用）', () => {
   });
 
   afterAll(async () => {
-    // 清理：如果测试失败，确保删除测试数据
+    // 清理：删除测试创建的数据
+    // ⚠️ 重要：测试数据必须清理，避免污染后端数据库
     if (createdPermissionId) {
       try {
         await PermissionService.deletePermissionNode(createdPermissionId, true);
-        console.log('✓ 清理测试数据完成');
+        console.log('✓ 清理测试数据完成，ID:', createdPermissionId);
+        createdPermissionId = null;
       } catch (error) {
-        console.warn('⚠️  清理测试数据失败:', error);
+        console.error('✗ 清理测试数据失败！请手动删除测试数据，ID:', createdPermissionId);
+        console.error('  删除命令参考: DELETE FROM permissions WHERE id =', createdPermissionId);
+        throw error;  // 抛出错误，让测试失败，提醒开发者手动清理
       }
     }
   });

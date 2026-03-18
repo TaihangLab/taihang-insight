@@ -77,11 +77,11 @@
 
       <!-- 角色表格 -->
       <el-table v-loading="loading" :data="roles">
-        <el-table-column prop="roleName" label="角色名称" width="150" />
+        <el-table-column prop="roleName" label="角色名称"  />
 
-        <el-table-column prop="roleCode" label="角色编码" width="150" />
+        <el-table-column prop="roleCode" label="角色编码"  />
 
-        <el-table-column prop="dataScope" label="数据权限范围" width="180">
+        <el-table-column prop="dataScope" label="数据权限范围" >
           <template #default="{ row }">
             <el-tag :type="getDataScopeTagType(row.dataScope)">
               {{ getDataScopeLabel(row.dataScope) }}
@@ -89,7 +89,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" label="状态" >
           <template #default="{ row }">
             <el-tag :type="row.status === Status.ENABLED ? 'success' : 'danger'">
               {{ row.status === Status.ENABLED ? "正常" : "停用" }}
@@ -97,9 +97,9 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="createTime" label="创建时间" width="180" />
+        <el-table-column prop="createTime" label="创建时间" />
 
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
             <el-button link type="primary" size="small" @click="handleAssignPermissions(row)">

@@ -1,22 +1,138 @@
+<!--
+  租户管理页面
+  使用 <script setup> + TypeScript
+  布局风格与角色管理保持一致
+-->
 <template>
-  <div class="tenant-management-page">
-    <!-- 查询区 -->
-    <TenantSearchBar v-model="searchConditions" @search="handleSearch" @reset="handleReset" />
-    <!-- 列表区 -->
-    <TenantList
-      :tenants="tenants"
-      :loading="loading"
-      :pagination="{ currentPage: pagination.currentPage, pageSize: pagination.pageSize }"
-      :total="pagination.total"
-      @selection-change="handleSelectionChange"
-      @add="handleAdd"
-      @edit="handleEdit"
-      @delete="handleDelete"
-      @batch-delete="handleBatchDelete"
-      @status-change="handleStatusChange"
-      @page-change="handlePageChange"
-      @size-change="handleSizeChange"
-    />
+  <div class="tenant-management-page p-6 bg-neutral-50 min-h-screen">
+    <!-- 搜索表单 -->
+    <el-card class="search-card mb-5 rounded-xl border border-neutral-200 shadow-sm" shadow="never">
+      <el-form :model="queryForm" inline>
+        <el-form-item label="租户名称">
+          <el-input
+            v-model="queryForm.tenant_name"
+            placeholder="请输入租户名称"
+            clearable
+            class="w-[200px]"
+            data-testid="input-tenant-name"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+
+        <el-form-item label="企业名称">
+          <el-input
+            v-model="queryForm.company_name"
+            placeholder="请输入企业名称"
+            clearable
+            class="w-[200px]"
+            data-testid="input-company-name"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+
+        <el-form-item label="状态">
+          <el-select
+            v-model="queryForm.status"
+            placeholder="请选择状态"
+            clearable
+            class="w-[120px]"
+            data-testid="select-status"
+          >
+            <el-option label="启用" :value="Status.ENABLED" />
+            <el-option label="停用" :value="Status.DISABLED" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" data-testid="btn-search" @click="handleSearch">
+            查询
+          </el-button>
+          <el-button data-testid="btn-reset" @click="handleReset">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <!-- 操作按钮 -->
+    <el-card class="table-card rounded-xl border border-neutral-200 shadow-sm" shadow="never">
+      <template #header>
+        <div class="flex items-center justify-between">
+          <span class="text-base font-medium text-text-primary">租户列表</span>
+          <div class="flex gap-2">
+            <el-button
+              type="primary"
+              icon="Plus"
+              data-testid="btn-add-tenant"
+              @click="handleAdd"
+            >
+              新增租户
+            </el-button>
+            <el-button
+              :disabled="!hasSelection"
+              data-testid="btn-batch-delete"
+              @click="handleBatchDelete"
+            >
+              批量删除
+            </el-button>
+          </div>
+        </div>
+      </template>
+
+      <!-- 租户表格 -->
+      <el-table
+        v-loading="loading"
+        :data="tenants"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" align="center" width="55" />
+        <el-table-column prop="id" label="租户编号" align="center" width="120" />
+        <el-table-column prop="tenant_name" label="租户名称" align="center" min-width="150" />
+        <el-table-column prop="company_name" label="企业名称" align="center" min-width="180" />
+        <el-table-column prop="package" label="租户套餐" align="center" width="120">
+          <template #default="{ row }">
+            {{ packageLabels[row.package] || row.package || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="expire_time" label="过期时间" width="140" align="center">
+          <template #default="{ row }">
+            {{ formatDate(row.expire_time) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-switch
+              :data-testid="'switch-status-' + row.id"
+              :model-value="row.status"
+              :active-value="Status.ENABLED"
+              :inactive-value="Status.DISABLED"
+              @change="(val) => handleStatusChange(row, val)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="180" fixed="right" align="center">
+          <template #default="{ row }">
+            <el-button link type="primary" size="small" @click="handleEdit(row)">
+              编辑
+            </el-button>
+            <el-button link type="danger" size="small" @click="handleDelete(row)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页 -->
+      <div class="mt-5 flex justify-end">
+        <el-pagination
+          v-model:current-page="pagination.currentPage"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="loadData"
+          @size-change="handleSizeChange"
+        />
+      </div>
+    </el-card>
 
     <!-- 租户编辑表单 -->
     <TenantEditForm
@@ -36,35 +152,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { useTenantData } from "@/pages/system/composable/tenant/useTenantData";
+import { Status } from "@/types/rbac";
 import type { TenantAPI } from "@/types/rbac/tenant";
-import TenantSearchBar from "@/pages/system/components/tenant/TenantSearchBar.vue";
-import TenantList from "@/pages/system/components/tenant/TenantList.vue";
-import DeleteConfirmDialog from "@/pages/system/components/tenant/DeleteConfirmDialog.vue";
 import TenantEditForm from "@/pages/system/components/tenant/tenantEditForm.vue";
+import DeleteConfirmDialog from "@/pages/system/components/tenant/DeleteConfirmDialog.vue";
 
-/**
- * 查询条件类型
- */
-interface SearchConditions {
-  tenant_id: string;
+// ============================================
+// 类型定义
+// ============================================
+interface QueryForm {
   tenant_name: string;
   company_name: string;
   status: number | null;
-}
-
-/**
- * API 查询参数类型
- */
-interface QueryParams {
-  skip?: number;
-  limit?: number;
-  tenant_id?: string;
-  tenant_name?: string;
-  company_name?: string;
-  status?: number | null;
 }
 
 // ============================================
@@ -83,27 +185,30 @@ const {
 // ============================================
 // 响应式状态
 // ============================================
-
-// 搜索条件（使用 let 声明，因为 v-model 需要修改整个对象）
-let searchConditions = reactive({
-  tenant_id: "",
+const queryForm = reactive<QueryForm>({
   tenant_name: "",
   company_name: "",
-  status: null as number | null,
+  status: null,
 });
 
-// 选中的租户编码
 const selectedCodes = ref<number[]>([]);
-
-// 对话框状态
 const editDialogVisible = ref(false);
 const deleteDialogVisible = ref(false);
 const currentTenant = ref<TenantAPI | null>(null);
-
-// 删除相关
 const deleteTargetType = ref<"single" | "batch">("single");
 const deleteTargetName = ref("");
 const deleteTargetCodes = ref<number[]>([]);
+
+// 租户套餐标签映射
+const packageLabels: Record<string, string> = {
+  basic: "基础版",
+  standard: "标准版",
+  premium: "高级版",
+  enterprise: "企业版",
+};
+
+// 是否有选中项
+const hasSelection = computed(() => selectedCodes.value.length > 0);
 
 // ============================================
 // 生命周期
@@ -115,7 +220,6 @@ onMounted(() => {
 // ============================================
 // 方法
 // ============================================
-
 /**
  * 计算当前页的 skip 值
  */
@@ -124,70 +228,51 @@ const getSkip = (): number => {
 };
 
 /**
- * 构建查询参数
- */
-const buildParams = (): QueryParams => {
-  const params: QueryParams = {
-    skip: getSkip(),
-    limit: pagination.value.pageSize,
-  };
-
-  if (searchConditions.tenant_id) {
-    params.tenant_id = searchConditions.tenant_id;
-  }
-  if (searchConditions.tenant_name) {
-    params.tenant_name = searchConditions.tenant_name;
-  }
-  if (searchConditions.company_name) {
-    params.company_name = searchConditions.company_name;
-  }
-  if (searchConditions.status !== null) {
-    params.status = searchConditions.status;
-  }
-
-  return params;
-};
-
-/**
  * 加载数据
  */
 const loadData = async () => {
   try {
-    tenants.value = await fetchTenants(
-      buildParams(),
+    const params: Record<string, unknown> = {
+      skip: getSkip(),
+      limit: pagination.value.pageSize,
+    };
+
+    if (queryForm.tenant_name) {
+      params.tenant_name = queryForm.tenant_name;
+    }
+    if (queryForm.company_name) {
+      params.company_name = queryForm.company_name;
+    }
+    if (queryForm.status !== null) {
+      params.status = queryForm.status;
+    }
+
+    await fetchTenants(
+      params,
       pagination.value.currentPage,
       pagination.value.pageSize,
     );
   } catch (error: unknown) {
-    ElMessage.error(`获取租户列表失败: ${error.message}`);
-    clearData();
+    const message = error instanceof Error ? error.message : "未知错误";
+    ElMessage.error(`获取租户列表失败: ${message}`);
   }
 };
 
 /**
- * 清空数据
+ * 查询处理
  */
-const clearData = () => {
-  tenants.value = [];
-};
-
-/**
- * 搜索
- */
-const handleSearch = (conditions: SearchConditions) => {
-  Object.assign(searchConditions, conditions);
+const handleSearch = () => {
   pagination.value.currentPage = 1;
   loadData();
 };
 
 /**
- * 重置
+ * 重置处理
  */
 const handleReset = () => {
-  searchConditions.tenant_id = "";
-  searchConditions.tenant_name = "";
-  searchConditions.company_name = "";
-  searchConditions.status = null;
+  queryForm.tenant_name = "";
+  queryForm.company_name = "";
+  queryForm.status = null;
   pagination.value.currentPage = 1;
   loadData();
 };
@@ -195,8 +280,8 @@ const handleReset = () => {
 /**
  * 选择变化
  */
-const handleSelectionChange = (codes: number[]) => {
-  selectedCodes.value = codes;
+const handleSelectionChange = (selection: TenantAPI[]) => {
+  selectedCodes.value = selection.map((row) => row.id);
 };
 
 /**
@@ -235,10 +320,14 @@ const handleDelete = (row: TenantAPI) => {
 /**
  * 批量删除
  */
-const handleBatchDelete = (codes: number[]) => {
+const handleBatchDelete = () => {
+  if (!hasSelection.value) {
+    ElMessage.warning("请选择要删除的租户");
+    return;
+  }
   deleteTargetType.value = "batch";
-  deleteTargetName.value = String(codes.length);
-  deleteTargetCodes.value = codes;
+  deleteTargetName.value = String(selectedCodes.value.length);
+  deleteTargetCodes.value = selectedCodes.value;
   deleteDialogVisible.value = true;
 };
 
@@ -247,78 +336,34 @@ const handleBatchDelete = (codes: number[]) => {
  */
 const handleDeleteConfirm = async () => {
   try {
-    let result: any;
     if (deleteTargetType.value === "single") {
-      result = await deleteTenant(deleteTargetCodes.value[0]);
+      await deleteTenant(deleteTargetCodes.value[0]);
     } else {
-      result = await batchDeleteTenants(deleteTargetCodes.value);
+      await batchDeleteTenants(deleteTargetCodes.value);
     }
 
-    ElMessage({
-      message: result.message,
-      type: "success",
-    });
+    ElMessage.success("删除成功");
     loadData();
   } catch (error: unknown) {
-    ElMessage({
-      message: `删除失败: ${error.message || "未知错误"}`,
-      type: "error",
-    });
+    ElMessage.error(`删除失败: ${error.message || "未知错误"}`);
   }
 };
 
 /**
  * 状态切换
- *
- * 修复：避免 v-model 立即修改状态，API 失败时恢复原值
  */
 const handleStatusChange = async (row: TenantAPI, newStatus: number) => {
   const oldStatus = row.status;
 
   try {
-    // 先更新 UI（乐观更新），如果失败则回滚
     await updateTenant(row.id, { status: newStatus });
-
-    ElMessage({
-      message: "状态更新成功",
-      type: "success",
-    });
+    ElMessage.success("状态更新成功");
   } catch (error: unknown) {
     // API 失败，恢复原状态
     row.status = oldStatus;
-
-    let errorMessage = "更新租户状态失败";
-    if (error instanceof Error && error.message && !error.message.includes("Network Error")) {
-      errorMessage = error.message;
-    } else if (error && typeof error === "object" && "response" in error) {
-      const err = error as { response?: { data?: unknown } };
-      const data = err.response?.data;
-      if (data && typeof data === "object") {
-        if ("message" in data && typeof data.message === "string") {
-          errorMessage = data.message;
-        } else if ("detail" in data && typeof data.detail === "string") {
-          errorMessage = data.detail;
-        } else if ("msg" in data && typeof data.msg === "string") {
-          errorMessage = data.msg;
-        }
-      } else if (typeof data === "string") {
-        errorMessage = data;
-      }
-    }
-
-    ElMessage({
-      message: errorMessage,
-      type: "error",
-    });
+    const message = error instanceof Error ? error.message : "更新租户状态失败";
+    ElMessage.error(message);
   }
-};
-
-/**
- * 页码变化
- */
-const handlePageChange = (page: number) => {
-  pagination.value.currentPage = page;
-  loadData();
 };
 
 /**
@@ -329,10 +374,34 @@ const handleSizeChange = (size: number) => {
   pagination.value.currentPage = 1;
   loadData();
 };
+
+/**
+ * 格式化日期
+ */
+const formatDate = (timestamp: string | null | undefined): string => {
+  if (!timestamp) return "-";
+  const date = new Date(timestamp);
+  return date.toLocaleDateString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+};
 </script>
 
 <style scoped>
 .tenant-management-page {
-  padding: var(--design-spacing-md);
+  min-height: calc(100vh - var(--header-height, 60px));
+}
+
+:deep(.el-table) {
+  --el-table-header-bg-color: var(--design-bg-secondary);
+  --el-table-header-text-color: var(--design-text-primary);
+}
+
+:deep(.el-table th) {
+  background-color: var(--design-bg-secondary);
+  color: var(--design-text-primary);
+  font-weight: 500;
 }
 </style>

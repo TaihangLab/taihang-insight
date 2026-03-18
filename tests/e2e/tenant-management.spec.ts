@@ -269,7 +269,6 @@ test.describe('租户管理 E2E 测试', () => {
     for (const tenant of [tenant1, tenant2]) {
       await tenantPage.clickAddButton();
       await tenantPage.fillTenantForm({
-        tenantCode: tenant.tenantCode,
         tenantName: tenant.tenantName,
         companyName: tenant.companyName,
         contactPerson: tenant.contactPerson,

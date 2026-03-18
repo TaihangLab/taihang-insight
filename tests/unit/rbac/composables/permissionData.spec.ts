@@ -187,22 +187,21 @@ describe('usePermissionData', () => {
   describe('fetchPermissionTree - 真实后端响应数据', () => {
     it('应该正确处理用户提供的真实后端响应结构', async () => {
       // 模拟用户提供的真实后端响应
+      // 注意：这里是 Mock 数据，不应该与后端真实数据混淆
+      // 使用测试专用标识，避免误认为是真实数据被修改
       const mockRealResponse = [
         {
-          id: 0,
+          id: 8888888801,  // 测试专用 ID，避免与真实 ID 冲突
           permission_type: 'folder',
-          permission_name: 'Updated Permission 0',
-          permission_code: 'common',
+          permission_name: 'TEST_MOCK_Folder_001',  // 清晰的测试标识
+          permission_code: 'TEST:MOCK:FOLDER',
           node_type: 'folder',
-          path: '/common',
+          path: '/test/mock/folder',
           method: 'POST',
-          description: 'Updated remark for permission 0',
           parent_id: null,
           sort_order: 99,
           status: 0,
           visible: false,
-          display_type: '',
-          has_children: true,
           children: [
             {
               id: 9999999990003,
@@ -212,19 +211,11 @@ describe('usePermissionData', () => {
               node_type: 'button',
               path: '/api/test/test_perm_5d3c47cb',
               method: 'GET',
-              description: null,
-              parent_id: 0,
+              parent_id: 8888888801,
               sort_order: 0,
               status: 0,
               visible: true,
-              display_type: 'success',
-              has_children: false,
               children: [],
-              component: null,
-              layout: true,
-              icon: null,
-              open_new_tab: false,
-              keep_alive: true,
             },
           ],
         },
@@ -235,33 +226,35 @@ describe('usePermissionData', () => {
       const { permissionTree, fetchPermissionTree } = usePermissionData();
       await fetchPermissionTree();
 
-      // 验证根节点
+      // 验证根节点 - 只验证 PermissionTreeNode 中存在的字段
       expect(permissionTree.value).toHaveLength(1);
-      expect(permissionTree.value[0].id).toBe(0);
-      expect(permissionTree.value[0].permission_name).toBe('Updated Permission 0');
-      expect(permissionTree.value[0].permission_code).toBe('common');
-      expect(permissionTree.value[0].node_type).toBe('folder');
-      expect(permissionTree.value[0].path).toBe('/common');
-      expect(permissionTree.value[0].method).toBe('POST');
-      expect(permissionTree.value[0].description).toBe('Updated remark for permission 0');
-      expect(permissionTree.value[0].sort_order).toBe(99);
-      expect(permissionTree.value[0].status).toBe(0);
-      expect(permissionTree.value[0].visible).toBe(false);
-      expect(permissionTree.value[0].has_children).toBe(true);
+      const rootNode = permissionTree.value[0]!;  // 已验证长度为 1，安全访问
+      expect(rootNode.id).toBe(8888888801);
+      expect(rootNode.permission_name).toBe('TEST_MOCK_Folder_001');
+      expect(rootNode.permission_code).toBe('TEST:MOCK:FOLDER');
+      expect(rootNode.permission_type).toBe('folder');
+      expect(rootNode.node_type).toBe('folder');
+      expect(rootNode.path).toBe('/test/mock/folder');
+      expect(rootNode.method).toBe('POST');
+      expect(rootNode.parent_id).toBeNull();
+      expect(rootNode.sort_order).toBe(99);
+      expect(rootNode.status).toBe(0);
+      expect(rootNode.visible).toBe(false);
 
-      // 验证子节点
-      expect(permissionTree.value[0].children).toHaveLength(1);
-      const child = permissionTree.value[0].children![0];
+      // 验证子节点存在
+      expect(rootNode.children).toHaveLength(1);
+      const child = rootNode.children![0]!;
       expect(child.id).toBe(9999999990003);
       expect(child.permission_name).toBe('测试权限 TEST_PERM_5D3C47CB');
       expect(child.permission_code).toBe('TEST_PERM_5D3C47CB');
+      expect(child.permission_type).toBe('button');
       expect(child.node_type).toBe('button');
       expect(child.path).toBe('/api/test/test_perm_5d3c47cb');
       expect(child.method).toBe('GET');
+      expect(child.parent_id).toBe(8888888801);
+      expect(child.sort_order).toBe(0);
+      expect(child.status).toBe(0);
       expect(child.visible).toBe(true);
-      expect(child.display_type).toBe('success');
-      expect(child.layout).toBe(true);
-      expect(child.keep_alive).toBe(true);
     });
   });
 
