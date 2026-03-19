@@ -220,9 +220,18 @@ export default {
       return this.deviceList;
     },
 
-    // 过滤后的技能选项列表（现在使用服务端分页和过滤，直接返回skillOptions）
+    // 过滤后的技能选项列表（服务端过滤 + 客户端兜底过滤）
     filteredSkillOptions() {
-      return this.skillOptions || [];
+      let options = this.skillOptions || [];
+      // 客户端兜底：当搜索关键词存在时，对结果做二次过滤
+      if (this.skillSearchKeyword) {
+        const keyword = this.skillSearchKeyword.toLowerCase();
+        options = options.filter(item =>
+          (item.name_zh && item.name_zh.toLowerCase().includes(keyword)) ||
+          (item.value && item.value.toLowerCase().includes(keyword))
+        );
+      }
+      return options;
     },
     
     // 技能总页数
@@ -561,11 +570,14 @@ export default {
         selectedSkills: []
       };
       this.selectedSkillCache = [];
+
+      // 重置搜索和过滤状态，确保每次打开对话框时都是全新的
+      this.skillSearchKeyword = '';
+      this.skillStatusFilter = 'all';
+      this.skillCurrentPage = 1;
       
-      // 先确保获取最新的技能类列表
-      if (!this.skillOptions || this.skillOptions.length === 0) {
-        this.fetchSkillClasses();
-      }
+      // 每次打开对话框都重新获取技能列表，确保数据最新且不受旧搜索条件影响
+      this.fetchSkillClasses();
       
       // 获取当前摄像头的技能列表和关联任务
       if (row.id) {

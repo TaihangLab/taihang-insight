@@ -490,9 +490,9 @@ export const skillAPI = {
       apiParams.limit = Math.min(params.limit, 100); // 限制最大为100条
     }
 
-    // 处理查询参数
+    // 处理查询参数 - 后端接收的参数名是 query_name
     if (params.query) {
-      apiParams.query = params.query;
+      apiParams.query_name = params.query;
     }
 
     // 处理状态筛选，默认获取启用状态的技能

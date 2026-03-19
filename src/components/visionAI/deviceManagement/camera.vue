@@ -163,7 +163,7 @@
                   共 {{ skillOptionsTotal }} 个{{ skillTotalPages > 1 ? ' | ' + skillCurrentPage + '/' + skillTotalPages + ' 页' : '' }}
                 </span>
                 <el-pagination
-                  v-if="skillOptionsTotal > skillPageSize"
+                  v-if="skillOptionsTotal > 12"
                   :current-page.sync="skillCurrentPage"
                   :page-size.sync="skillPageSize"
                   :page-sizes="[12, 24, 36, 48]"
