@@ -146,6 +146,7 @@ export default {
       deleteArchiveName: '',
       // 添加档案对话框
       addArchiveDialogVisible: false,
+      submittingArchive: false,
       newArchiveForm: {
         name: '',
         location: '',
@@ -1653,12 +1654,14 @@ export default {
     },
      // 提交新档案 - 调用真实API
      async submitNewArchive() {
+       if (this.submittingArchive) return;
        try {
          // 表单验证
          if (!this.newArchiveForm.name || !this.newArchiveForm.location) {
            this.$message.warning('请填写必要的信息（档案名称和所属位置必须填写）');
            return;
          }
+         this.submittingArchive = true;
 
          // 处理时间范围
          let startTime, endTime;
@@ -1724,6 +1727,8 @@ export default {
        } catch (error) {
          console.error('创建档案失败:', error);
          this.$message.error('创建档案失败: ' + error.message);
+       } finally {
+         this.submittingArchive = false;
        }
      },
 
@@ -2379,7 +2384,7 @@ export default {
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="addArchiveDialogVisible = false" class="cancel-btn">取 消</el-button>
-        <el-button type="primary" @click="submitNewArchive" class="confirm-btn">确 定</el-button>
+        <el-button type="primary" @click="submitNewArchive" :loading="submittingArchive" :disabled="submittingArchive" class="confirm-btn">确 定</el-button>
       </div>
     </el-dialog>
 
