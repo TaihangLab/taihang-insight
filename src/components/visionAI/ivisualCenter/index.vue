@@ -33,11 +33,25 @@
         <!-- 左侧统计 -->
         <el-col :span="6">
           <div class="stat-panel panel-box panel-equal-height">
-            <div class="panel-title">预警趋势</div>
+            <div class="panel-header">
+              <div class="panel-title">预警趋势</div>
+              <div class="panel-tabs">
+                <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
+                  :class="['tab-item', { active: trendTimeRange === key }]"
+                  @click="changeTrendTimeRange(key)">{{ label }}</div>
+              </div>
+            </div>
             <div class="trend-chart" ref="trendChart"></div>
           </div>
           <div class="type-panel panel-box panel-equal-height">
-            <div class="panel-title">预警类型排名</div>
+            <div class="panel-header">
+              <div class="panel-title">预警类型排名</div>
+              <div class="panel-tabs">
+                <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
+                  :class="['tab-item', { active: typeTimeRange === key }]"
+                  @click="changeTypeTimeRange(key)">{{ label }}</div>
+              </div>
+            </div>
             <div class="type-list">
               <div v-for="(item, index) in warningTypes" :key="index" class="type-item">
                 <span class="type-name">{{ item.name }}</span>
@@ -58,10 +72,16 @@
               <!-- 主要显示区域 -->
               <div class="main-image-container">
                 <img 
+                  v-if="currentWarningImage.image"
                   :src="currentWarningImage.image" 
                   :alt="currentWarningImage.event"
                   class="main-warning-image"
+                  @error="$event.target.style.display='none'"
                 />
+                <div v-else class="no-image-placeholder">
+                  <i class="el-icon-picture-outline"></i>
+                  <span>暂无预警图片</span>
+                </div>
                 
                 <!-- 顶部信息叠加层 -->
                 <div class="top-info-overlay">
@@ -147,11 +167,25 @@
         <!-- 右侧统计 -->
         <el-col :span="6">
           <div class="level-panel panel-box panel-equal-height">
-            <div class="panel-title">预警等级占比</div>
+            <div class="panel-header">
+              <div class="panel-title">预警等级占比</div>
+              <div class="panel-tabs">
+                <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
+                  :class="['tab-item', { active: levelTimeRange === key }]"
+                  @click="changeLevelTimeRange(key)">{{ label }}</div>
+              </div>
+            </div>
             <div class="level-chart" ref="levelChart"></div>
           </div>
           <div class="top-panel panel-box panel-equal-height">
-            <div class="panel-title">组织预警 Top 5</div>
+            <div class="panel-header">
+              <div class="panel-title">点位预警 Top 5</div>
+              <div class="panel-tabs">
+                <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
+                  :class="['tab-item', { active: locationTimeRange === key }]"
+                  @click="changeLocationTimeRange(key)">{{ label }}</div>
+              </div>
+            </div>
             <div class="top-list">
               <div v-for="(item, index) in topWarnings" :key="index" class="top-item">
                 <span class="item-name">{{ item.name }}</span>
@@ -169,15 +203,12 @@
       <el-row class="bottom-section" :gutter="20">
         <el-col :span="6">
           <div class="status-panel panel-box panel-bottom-equal-height">
-            <div class="panel-title">预警处理情况</div>
-            <div class="status-tabs">
-              <div 
-                v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" 
-                :key="key"
-                :class="['tab-item', { active: statusTimeRange === key }]"
-                @click="changeStatusTimeRange(key)"
-              >
-                {{ label }}
+            <div class="panel-header">
+              <div class="panel-title">预警处理情况</div>
+              <div class="panel-tabs">
+                <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
+                  :class="['tab-item', { active: statusTimeRange === key }]"
+                  @click="changeStatusTimeRange(key)">{{ label }}</div>
               </div>
             </div>
             <div class="status-chart" ref="statusChart"></div>
@@ -208,15 +239,12 @@
         </el-col>
         <el-col :span="6">
           <div class="device-panel panel-box panel-bottom-equal-height">
-            <div class="panel-title">设备预警数量 Top 10</div>
-            <div class="device-tabs">
-              <div 
-                v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" 
-                :key="key"
-                :class="['tab-item', { active: deviceTimeRange === key }]"
-                @click="changeDeviceTimeRange(key)"
-              >
-                {{ label }}
+            <div class="panel-header">
+              <div class="panel-title">设备预警数量 Top 10</div>
+              <div class="panel-tabs">
+                <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
+                  :class="['tab-item', { active: deviceTimeRange === key }]"
+                  @click="changeDeviceTimeRange(key)">{{ label }}</div>
               </div>
             </div>
               
@@ -243,51 +271,44 @@
 
 <script>
 import * as echarts from 'echarts';
-import axios from 'axios';
+import { alertAPI, cameraAPI } from '../../service/VisionAIService.js';
+
+// 预警等级映射
+const LEVEL_MAP = { 1: 'urgent', 2: 'high', 3: 'medium', 4: 'low' };
+const LEVEL_TEXT_MAP = { 1: '一级', 2: '二级', 3: '三级', 4: '四级' };
+const STATUS_CLASS_MAP = { 1: 'pending', 2: 'processing', 3: 'completed', 4: 'completed', 5: 'completed' };
+const STATUS_TEXT_MAP = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' };
+
+/** 统计接口：axios 体可能是 { statistics } 或嵌套在 { data: { statistics } } */
+function statisticsFromResponse(res) {
+  const d = res && res.data;
+  if (!d) return null;
+  if (d.statistics) return d.statistics;
+  if (d.data && d.data.statistics) return d.data.statistics;
+  return null;
+}
+
+/** 实时预警：VisionAIService 把列表放在 response.data.data，与 warningManagement 一致 */
+function alertsFromRealTimeResponse(res) {
+  const d = res && res.data;
+  if (!d) return [];
+  if (Array.isArray(d.data)) return d.data;
+  if (Array.isArray(d.alerts)) return d.alerts;
+  return [];
+}
 
 export default {
   name: 'VisualCenter',
   data() {
     return {
-      // 系统状态数据
       todayWarnings: 0,
       deviceCount: 0,
       totalDevices: 0,
-      currentDetailTime: this.formatDate(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-      currentEvent: '',
-      currentDevice: '',
+      currentDetailTime: '',
 
-      // 天气和位置信息
-      locationInfo: {
-        location: '',
-        weather: '',
-        airQuality: '',
-        loading: true
-      },
+      locationInfo: { location: '太行工业园区', weather: '-- --', airQuality: '', loading: false },
 
-      // 状态数据
-      statusData: {
-        day: [
-          { value: 5, name: '待处理', itemStyle: { color: '#FF8746' } },
-          { value: 3, name: '处理中', itemStyle: { color: '#44FF9B' } },
-          { value: 12, name: '已完成', itemStyle: { color: '#00FFFF' } }
-        ],
-        week: [
-          { value: 18, name: '待处理', itemStyle: { color: '#FF8746' } },
-          { value: 25, name: '处理中', itemStyle: { color: '#44FF9B' } },
-          { value: 65, name: '已完成', itemStyle: { color: '#00FFFF' } }
-        ],
-        month: [
-          { value: 42, name: '待处理', itemStyle: { color: '#FF8746' } },
-          { value: 78, name: '处理中', itemStyle: { color: '#44FF9B' } },
-          { value: 180, name: '已完成', itemStyle: { color: '#00FFFF' } }
-        ]
-      },
-
-      // 全屏状态
       isFullscreen: false,
-
-      // 表格样式
       headerCellStyle: {
         background: 'linear-gradient(180deg, rgba(6, 30, 93, 0.9) 0%, rgba(4, 20, 63, 1) 100%)',
         color: '#00FFFF',
@@ -297,763 +318,523 @@ export default {
         textShadow: '0 0 10px rgba(0, 255, 255, 0.3)'
       },
 
-      // 预警类型数据
-      warningTypes: [
-        { name: '未戴安全帽', count: 9, value: 100 },
-        { name: '区域入侵', count: 7, value: 78 },
-        { name: '垃圾堆积', count: 5, value: 56 },
-        { name: '人员聚集', count: 4, value: 44 },
-        { name: '烟雾识别', count: 2, value: 22 }
-      ],
+      warningTypes: [],
+      topWarnings: [],
+      warningList: [],
+      deviceWarnings: [],
+      
+      trendTimeRange: 'day',
+      typeTimeRange: 'day',
+      levelTimeRange: 'day',
+      locationTimeRange: 'day',
+      statusTimeRange: 'day',
+      deviceTimeRange: 'day',
+      tableHeight: 280,
 
-      // 定时器
-      weatherTimer: null,
-      statusTimer: null,
-      timeTimer: null,
+      warningImages: [],
+      currentWarningImage: { image: '', event: '', time: '', level: '', levelText: '', location: '' },
+      currentImageIndex: 0,
 
       // 图表实例
       trendChart: null,
       levelChart: null,
       statusChart: null,
 
-      // 预警列表
-      warningList: [],
-      
-      // 设备预警
-      deviceWarnings: [],
-      
-      // 时间范围
-      statusTimeRange: 'day',
-      deviceTimeRange: 'day',
-      
-      // 组织预警Top5
-      topWarnings: [
-        { name: '生产车间A', count: 15, value: 100 },
-        { name: '装配车间', count: 12, value: 80 },
-        { name: '机械加工区', count: 9, value: 60 },
-        { name: '原料仓库', count: 6, value: 40 },
-        { name: '成品仓库', count: 3, value: 20 }
-      ],
-
-      // 表格高度
-      tableHeight: 280,
-
-      // 预警图片相关数据
-      currentWarningImage: {
-        image: '',
-        event: '',
-        time: '',
-        level: '',
-        levelText: '',
-        location: ''
-      },
-      warningImages: [],
-      currentImageIndex: 0
+      // 定时器
+      refreshTimer: null,
+      timeTimer: null,
     };
   },
+
   mounted() {
-    // 初始化模拟数据
-    this.initMockData();
-    
-    // 初始化CSS变量 - 只保留面板相关的变量
-    document.documentElement.style.setProperty('--panel-top-height', '210px');
-    document.documentElement.style.setProperty('--panel-bottom-height', '330px');
-    
-    this.fetchWeatherData();
-    this.fetchSystemStatus();
     this.updateCurrentTime();
-    
-    // 设置定时器
-    this.weatherTimer = setInterval(this.fetchWeatherData, 5 * 60 * 1000); // 每5分钟更新天气
-    this.statusTimer = setInterval(this.fetchSystemStatus, 30 * 1000); // 每30秒更新系统状态
-    this.timeTimer = setInterval(this.updateCurrentTime, 1000); // 每秒更新一次时间
-    
-    // 监听全屏变化
+    this.timeTimer = setInterval(this.updateCurrentTime, 1000);
+
+    this.computePanelHeights();
     document.addEventListener('fullscreenchange', this.handleFullscreenChange);
-    
-    // 初始化图表和3D场景
-    this.$nextTick(() => {
-      this.initTrendChart();
-      this.initLevelChart();
-      this.initStatusChart();
-      this.initSimpleMapArea();
-      this.generateMockData();
-      this.initWarningViewer();
-    });
-    
     window.addEventListener('resize', this.handleResize);
-  },
-  beforeDestroy() {
-    // 清理定时器
-    clearInterval(this.weatherTimer);
-    clearInterval(this.statusTimer);
-    clearInterval(this.timeTimer);
     
-    // 移除事件监听
+    this.$nextTick(() => {
+      this.initEmptyCharts();
+      this.fetchAll();
+      document.addEventListener('keydown', this.handleKeyboardNavigation);
+    });
+
+    this.refreshTimer = setInterval(this.fetchAll, 30 * 1000);
+  },
+
+  beforeDestroy() {
+    clearInterval(this.refreshTimer);
+    clearInterval(this.timeTimer);
     document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
     document.removeEventListener('keydown', this.handleKeyboardNavigation);
     window.removeEventListener('resize', this.handleResize);
-    
-    // 销毁图表和3D资源
     if (this.trendChart) this.trendChart.dispose();
     if (this.levelChart) this.levelChart.dispose();
     if (this.statusChart) this.statusChart.dispose();
   },
+
+  watch: {
+    trendTimeRange() { this.fetchTrendData(); },
+    typeTimeRange() { this.fetchTypeData(); },
+    levelTimeRange() { this.fetchLevelData(); },
+    locationTimeRange() { this.fetchLocationData(); },
+    statusTimeRange() { this.fetchStatusStats(); },
+    deviceTimeRange() { this.fetchDeviceTop10(); },
+  },
+
   methods: {
-    // 添加格式化日期的方法
-    formatDate(date, formatStr) {
+    // ── 工具 ────────────────────────────────────────────────────────────────
+
+    formatDate(date, fmt) {
       if (!date) return '';
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      const seconds = String(date.getSeconds()).padStart(2, '0');
-      
-      return formatStr
-        .replace('yyyy', year)
-        .replace('MM', month)
-        .replace('dd', day)
-        .replace('HH', hours)
-        .replace('mm', minutes)
-        .replace('ss', seconds);
+      const y = date.getFullYear();
+      const M = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      const H = String(date.getHours()).padStart(2, '0');
+      const m = String(date.getMinutes()).padStart(2, '0');
+      const s = String(date.getSeconds()).padStart(2, '0');
+      return fmt.replace('yyyy', y).replace('MM', M).replace('dd', d)
+                .replace('HH', H).replace('mm', m).replace('ss', s);
     },
-    
-    // 初始化模拟数据
-    initMockData() {
-      // 初始化数据，以避免undefined错误
-      this.todayWarnings = 25;
-      this.deviceCount = 120;
-      this.totalDevices = 150;
-      this.currentEvent = '未戴安全帽';
-      this.currentDevice = '生产车间A区监控';
-      
-      // 初始化天气信息
-      this.locationInfo = {
-        location: '太行工业园区',
-        weather: '晴 26°C',
-        loading: false
-      };
-      
-      // 初始化预警列表 - 与预警管理页面保持一致
-      this.warningList = [
-        { event: '未戴安全帽', time: '2024-01-15 10:30:25', status: 'pending', statusText: '待处理' },
-        { event: '未穿工作服', time: '2024-01-15 10:28:15', status: 'pending', statusText: '待处理' },
-        { event: '闲杂人员', time: '2024-01-15 10:15:42', status: 'pending', statusText: '待处理' },
-        { event: '违规吸烟', time: '2024-01-15 09:58:30', status: 'completed', statusText: '已完成' },
-        { event: '高空作业未系安全带', time: '2024-01-15 09:45:12', status: 'pending', statusText: '待处理' },
-        { event: '未穿反光背心', time: '2024-01-15 09:32:18', status: 'pending', statusText: '待处理' },
-        { event: '未戴安全帽', time: '2024-01-15 08:45:33', status: 'processing', statusText: '处理中' },
-        { event: '未穿工作服', time: '2024-01-15 08:22:15', status: 'completed', statusText: '已完成' },
-        { event: '违规吸烟', time: '2024-01-15 07:58:42', status: 'completed', statusText: '已完成' },
-        { event: '高空作业未系安全带', time: '2024-01-15 07:15:28', status: 'processing', statusText: '处理中' }
-      ];
-      
-      // 初始化设备预警 - 与预警管理页面保持一致
-      this.deviceWarnings = [
-        { name: '摄像头01-工地东北角', count: 15 },
-        { name: '摄像头03-工地南侧', count: 12 },
-        { name: '摄像头02-材料区', count: 9 },
-        { name: '摄像头05-休息区', count: 6 },
-        { name: '摄像头04-施工作业区', count: 5 },
-        { name: '摄像头06-工地东北角', count: 4 },
-        { name: '摄像头07-塔吊区域', count: 3 },
-        { name: '摄像头08-脚手架区域', count: 2 },
-        { name: '摄像头09-设备存放区', count: 7 },
-        { name: '摄像头10-危险作业区', count: 8 }
-      ];
-      
-      // 初始化预警类型 - 与预警管理页面保持一致
-      this.warningTypes = [
-        { name: '未戴安全帽', count: 9, value: 100 },
-        { name: '未穿工作服', count: 7, value: 78 },
-        { name: '闲杂人员', count: 5, value: 56 },
-        { name: '违规吸烟', count: 4, value: 44 },
-        { name: '高空作业未系安全带', count: 3, value: 33 },
-        { name: '未穿反光背心', count: 2, value: 22 }
-      ];
-      
-      // 初始化组织预警 - 与施工现场主题保持一致
-      this.topWarnings = [
-        { name: '工地东北角', count: 15, value: 100 },
-        { name: '工地南侧', count: 12, value: 80 },
-        { name: '施工作业区', count: 9, value: 60 },
-        { name: '材料区', count: 6, value: 40 },
-        { name: '休息区', count: 3, value: 20 }
-      ];
-      
-      // 初始化预警图片数据 - 使用预警管理页面的真实数据
-      this.warningImages = [
-        {
-          image: require('../monitoringWarning/images/5.jpg'),
-          event: '未戴安全帽',
-          time: '2024.01.15 10:30',
-          level: 'urgent',
-          levelText: '一级',
-          location: '工地东北角'
-        },
-        {
-          image: require('../monitoringWarning/images/4.jpg'),
-          event: '未穿工作服',
-          time: '2024.01.15 10:28',
-          level: 'high',
-          levelText: '二级',
-          location: '工地南侧'
-        },
-        {
-          image: require('../monitoringWarning/images/5.jpg'),
-          event: '闲杂人员',
-          time: '2024.01.15 10:15',
-          level: 'medium',
-          levelText: '三级',
-          location: '材料区'
-        },
-        {
-          image: require('../monitoringWarning/images/6.jpg'),
-          event: '违规吸烟',
-          time: '2024.01.15 09:58',
-          level: 'high',
-          levelText: '二级',
-          location: '休息区'
-        },
-        {
-          image: require('../monitoringWarning/images/1.jpg'),
-          event: '高空作业未系安全带',
-          time: '2024.01.15 09:45',
-          level: 'urgent',
-          levelText: '一级',
-          location: '施工作业区'
-        },
-        {
-          image: require('../monitoringWarning/images/3.jpg'),
-          event: '未穿反光背心',
-          time: '2024.01.15 09:32',
-          level: 'medium',
-          levelText: '三级',
-          location: '工地东北角'
-        }
-      ];
-      
-      // 设置默认显示第一张图片
-      if (this.warningImages.length > 0) {
-        this.currentWarningImage = this.warningImages[0];
-        this.currentImageIndex = 0;
-      }
-    },
-    
-    // 获取系统状态数据
-    async fetchSystemStatus() {
-      try {
-        // 使用模拟数据代替真实API调用
-        // const response = await this.$axios.get('/api/system/status').catch(() => null);
-        
-        // 模拟API响应
-        const response = {
-          data: {
-            todayWarnings: 25,
-            deviceCount: 120,
-            totalDevices: 150,
-            currentEvent: '未戴安全帽',
-            currentDevice: '生产车间A区监控'
-          }
-        };
-        
-        if (response && response.data) {
-          const { data } = response;
-          this.todayWarnings = data.todayWarnings || 0;
-          this.deviceCount = data.deviceCount || 0;
-          this.totalDevices = data.totalDevices || 0;
-          this.currentEvent = data.currentEvent || '';
-          this.currentDevice = data.currentDevice || '';
-        }
-      } catch (error) {
-        console.error('获取系统状态失败:', error);
-      }
-    },
-    
-    // 获取实时位置和天气信息
-    async fetchWeatherData() {
-      try {
-        this.locationInfo.loading = true;
-        
-        // 模拟天气数据，避免跨域和API密钥问题
-        /*
-        // 首先尝试获取用户位置
-        let position;
-        try {
-          position = await this.getCurrentPosition();
-        } catch (error) {
-          console.warn('无法获取用户位置，使用默认位置:', error);
-          position = { latitude: 38.0428, longitude: 114.5149 }; // 石家庄默认坐标
-        }
-        
-        // 使用获取到的位置请求天气信息
-        const response = await axios.get('https://api.weatherapi.com/v1/current.json', {
-          params: {
-            key: 'f0245b8d45c94ca58ba24440251703',
-            q: `${position.latitude},${position.longitude}`,
-            lang: 'zh',
-            aqi: 'yes'
-          }
-        });
-        */
-        
-        // 使用模拟数据
-        const response = {
-          data: {
-            location: {
-              name: '太行工业园区'
-            },
-            current: {
-              condition: {
-                text: '晴'
-              },
-              temp_c: 26,
-              air_quality: {
-                'us-epa-index': 2 // 良
-              }
-            }
-          }
-        };
-        
-        if (response && response.data && response.data.location && response.data.current) {
-          const { location, current } = response.data;
-          this.locationInfo.location = location.name;
-          // 天气和温度合并显示
-          this.locationInfo.weather = `${current.condition.text} ${current.temp_c}°C`;
-          
-        }
-      } catch (error) {
-        console.error('获取天气数据失败:', error);
-        this.locationInfo.location = '太行工业园区';
-        this.locationInfo.weather = '晴 26°C';
-      } finally {
-        this.locationInfo.loading = false;
-      }
-    },
-    
-    // 获取当前位置的Promise封装
-    getCurrentPosition() {
-      return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-          reject(new Error('浏览器不支持地理位置'));
-          return;
-        }
-        
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            resolve({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            });
-          },
-          (error) => {
-            reject(error);
-          },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        );
-      });
-    },
-    
-    // 更新当前时间
+
     updateCurrentTime() {
-      // 获取实时时间
-      const now = new Date();
-      this.currentDetailTime = this.formatDate(now, 'yyyy-MM-dd HH:mm:ss');
+      this.currentDetailTime = this.formatDate(new Date(), 'yyyy-MM-dd HH:mm:ss');
     },
-    
-    // 切换全屏
+
+    /** 根据时间范围标识返回 {start_date, end_date} */
+    getDateRange(range) {
+      const now = new Date();
+      const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const today = fmt(now);
+      if (range === 'day') return { start_date: today, end_date: today };
+      if (range === 'week') {
+        const start = new Date(now); start.setDate(now.getDate() - 6);
+        return { start_date: fmt(start), end_date: today };
+      }
+      // month
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { start_date: fmt(start), end_date: today };
+    },
+
+    // ── 数据获取总入口 ───────────────────────────────────────────────────────
+
+    async fetchAll() {
+      const today = this.getDateRange('day');
+      await Promise.all([
+        this.fetchTodayCount(today).catch(e => console.error('fetchTodayCount:', e)),
+        this.fetchTrendData().catch(e => console.error('fetchTrendData:', e)),
+        this.fetchTypeData().catch(e => console.error('fetchTypeData:', e)),
+        this.fetchLevelData().catch(e => console.error('fetchLevelData:', e)),
+        this.fetchLocationData().catch(e => console.error('fetchLocationData:', e)),
+        this.fetchStatusStats().catch(e => console.error('fetchStatusStats:', e)),
+        this.fetchDeviceTop10().catch(e => console.error('fetchDeviceTop10:', e)),
+        this.fetchRecentAlerts().catch(e => console.error('fetchRecentAlerts:', e)),
+        this.fetchCameraCount().catch(e => console.error('fetchCameraCount:', e)),
+      ]);
+    },
+
+    // ── 今日预警总数（顶部卡片，始终取当天） ─────────────────────────────────
+
+    async fetchTodayCount(today) {
+      try {
+        const dateRange = today || this.getDateRange('day');
+        const res = await alertAPI.getAlertStatistics({ granularity: 'hour', ...dateRange });
+        const stats = statisticsFromResponse(res);
+        if (!stats) return;
+        this.todayWarnings = (stats.summary || {}).total_alerts || 0;
+      } catch (e) {
+        console.error('获取今日预警总数失败:', e);
+      }
+    },
+
+    // ── 预警趋势（支持 day/week/month）───────────────────────────────────────
+
+    async fetchTrendData() {
+      try {
+        const range = this.trendTimeRange;
+        const granularity = range === 'day' ? 'hour' : range === 'month' ? 'month' : 'day';
+        const dateRange = this.getDateRange(range);
+        const res = await alertAPI.getAlertStatistics({ granularity, ...dateRange });
+        const stats = statisticsFromResponse(res);
+        if (!stats) return;
+        const trend = stats.trend || [];
+        this.renderTrendChart(trend.map(t => t.label), trend.map(t => t.count));
+      } catch (e) {
+        console.error('获取趋势数据失败:', e);
+      }
+    },
+
+    // ── 预警类型排名（支持 day/week/month）───────────────────────────────────
+
+    async fetchTypeData() {
+      try {
+        const dateRange = this.getDateRange(this.typeTimeRange);
+        const res = await alertAPI.getAlertStatistics({ granularity: 'day', ...dateRange });
+        const stats = statisticsFromResponse(res);
+        if (!stats) return;
+        const byType = stats.by_type || [];
+        const maxTypeCount = byType.length > 0 ? Math.max(...byType.map(t => t.count), 1) : 1;
+        this.warningTypes = byType.map(t => ({
+          name: t.name,
+          count: t.count,
+          value: Math.round(t.count / maxTypeCount * 100),
+        }));
+      } catch (e) {
+        console.error('获取类型排名失败:', e);
+      }
+    },
+
+    // ── 预警等级占比（支持 day/week/month）───────────────────────────────────
+
+    async fetchLevelData() {
+      try {
+        const dateRange = this.getDateRange(this.levelTimeRange);
+        const res = await alertAPI.getAlertStatistics({ granularity: 'day', ...dateRange });
+        const stats = statisticsFromResponse(res);
+        if (!stats) return;
+        this.renderLevelChart(stats.by_level || {});
+      } catch (e) {
+        console.error('获取等级统计失败:', e);
+      }
+    },
+
+    // ── 点位预警 Top5（支持 day/week/month）──────────────────────────────────
+
+    async fetchLocationData() {
+      try {
+        const dateRange = this.getDateRange(this.locationTimeRange);
+        const res = await alertAPI.getAlertStatistics({ granularity: 'day', ...dateRange });
+        const stats = statisticsFromResponse(res);
+        if (!stats) return;
+        const locs = stats.by_location || [];
+        this.topWarnings = locs.map(l => ({
+          name: l.name,
+          count: l.count,
+          value: l.percent,
+        }));
+      } catch (e) {
+        console.error('获取点位排名失败:', e);
+      }
+    },
+
+    // ── 状态处理饼图（支持 day/week/month）─────────────────────────────────
+
+    async fetchStatusStats() {
+      try {
+        const dateRange = this.getDateRange(this.statusTimeRange);
+        const res = await alertAPI.getAlertStatistics({ granularity: 'day', ...dateRange });
+        const stats = statisticsFromResponse(res);
+        if (!stats) return;
+        this.renderStatusChart(stats.by_status || {});
+      } catch (e) {
+        console.error('获取状态统计失败:', e);
+      }
+    },
+
+    // ── 设备 Top10（支持 day/week/month）────────────────────────────────────
+
+    async fetchDeviceTop10() {
+      try {
+        const dateRange = this.getDateRange(this.deviceTimeRange);
+        const res = await alertAPI.getAlertStatistics({ granularity: 'day', ...dateRange });
+        const stats = statisticsFromResponse(res);
+        if (!stats) return;
+        this.deviceWarnings = (stats.top_cameras || []).slice(0, 10)
+          .map(c => ({ name: c.name, count: c.count }));
+      } catch (e) {
+        console.error('获取设备Top10失败:', e);
+      }
+    },
+
+    // ── 最近预警记录 + 图片查看器 ────────────────────────────────────────────
+
+    async fetchRecentAlerts() {
+      try {
+        const res = await alertAPI.getRealTimeAlerts({ page: 1, limit: 15 });
+        const alerts = alertsFromRealTimeResponse(res);
+
+        // 预警记录表格
+        this.warningList = alerts.map(a => ({
+          event: a.alert_name || a.skill_name_zh || a.alert_type || '未知预警',
+          time: a.alert_time ? a.alert_time.replace('T', ' ').slice(0, 19) : '--',
+          status: STATUS_CLASS_MAP[a.status] || 'pending',
+          statusText: STATUS_TEXT_MAP[a.status] || '待处理',
+        }));
+
+        // 图片查看器 - 取有图片的条目
+        const withImages = alerts.filter(a => a.minio_frame_url);
+        this.warningImages = withImages.map(a => ({
+          image: a.minio_frame_url,
+          event: a.alert_name || a.skill_name_zh || a.alert_type || '未知预警',
+          time: a.alert_time ? a.alert_time.replace('T', ' ').slice(0, 16) : '--',
+          level: LEVEL_MAP[a.alert_level] || 'medium',
+          levelText: LEVEL_TEXT_MAP[a.alert_level] || '--',
+          location: a.location || a.camera_name || '--',
+        }));
+
+        // 重置到第一张
+        if (this.warningImages.length > 0) {
+          this.currentImageIndex = 0;
+          this.currentWarningImage = this.warningImages[0];
+        } else {
+          this.currentWarningImage = { image: '', event: '暂无预警图片', time: '--', level: '', levelText: '--', location: '--' };
+        }
+      } catch (e) {
+        console.error('获取预警记录失败:', e);
+      }
+    },
+
+    // ── 摄像头总数 ───────────────────────────────────────────────────────────
+
+    async fetchCameraCount() {
+      try {
+        const res = await cameraAPI.getCameraList({ limit: 1 });
+        const data = res.data;
+        const total = (data && (data.total || (data.data && data.data.length) || 0)) || 0;
+        this.totalDevices = total;
+        // deviceCount = 有任务在跑的摄像头，暂用总数作近似
+        this.deviceCount = total;
+      } catch (e) {
+        console.error('获取摄像头数量失败:', e);
+      }
+    },
+
+    // ── 图表初始化（空壳）────────────────────────────────────────────────────
+
+    initEmptyCharts() {
+      this.renderTrendChart([], []);
+      this.renderLevelChart({});
+      this.renderStatusChart({});
+    },
+
+    // ── 趋势折线图 ───────────────────────────────────────────────────────────
+
+    renderTrendChart(xData, yData) {
+      const dom = this.$refs.trendChart;
+      if (!dom) return;
+      if (!this.trendChart) this.trendChart = echarts.init(dom);
+
+      this.trendChart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 30, bottom: 20, left: 0, right: 15, containLabel: true },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'line', lineStyle: { color: 'rgba(0,255,255,0.3)', width: 1 } },
+          backgroundColor: 'rgba(0,19,40,0.8)',
+          borderColor: 'rgba(0,255,255,0.3)',
+          textStyle: { color: '#00FFFF' },
+          formatter: params => `${params[0].name}<br/>预警数: <b>${params[0].value}</b>`,
+        },
+        xAxis: {
+          type: 'category',
+          data: xData.length > 0 ? xData : ['--'],
+          axisLine: { lineStyle: { color: 'rgba(0,255,255,0.3)' } },
+          axisLabel: { color: '#7EAEE5', interval: xData.length > 12 ? 'auto' : 0 },
+          axisTick: { show: false },
+          splitLine: { show: false },
+        },
+        yAxis: {
+          type: 'value',
+          min: 0,
+          minInterval: 1,
+          axisLine: { show: false },
+          axisLabel: { color: '#7EAEE5' },
+          splitLine: { lineStyle: { color: 'rgba(35,88,148,0.3)', type: 'dashed' } },
+        },
+        series: [{
+          name: '预警数量', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+          data: yData.length > 0 ? yData : [0],
+          lineStyle: { width: 2, color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: '#00FFFF' }, { offset: 1, color: '#207FFF' }] } },
+          itemStyle: { color: '#00FFFF', borderColor: 'rgba(0,255,255,0.3)', borderWidth: 4 },
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,255,255,0.3)' }, { offset: 1, color: 'rgba(0,255,255,0)' }] } },
+        }],
+      }, true);
+    },
+
+    // ── 等级占比饼图 ─────────────────────────────────────────────────────────
+
+    renderLevelChart(byLevel) {
+      const dom = this.$refs.levelChart;
+      if (!dom) return;
+      if (!this.levelChart) this.levelChart = echarts.init(dom);
+
+      const colorMap = { '一级预警': '#FF4D4F', '二级预警': '#FF8746', '三级预警': '#44FF9B', '四级预警': '#00C5FF' };
+      const entries = Object.entries(byLevel);
+      const isEmpty = entries.length === 0 || entries.every(([, v]) => v === 0);
+
+      const pieData = isEmpty
+        ? [{ value: 1, name: '暂无数据', itemStyle: { color: 'rgba(35,88,148,0.2)' }, tooltip: { show: false }, emphasis: { disabled: true } }]
+        : entries.map(([name, val]) => ({ value: val, name, itemStyle: { color: colorMap[name] || '#999' } }));
+
+      this.levelChart.setOption({
+        backgroundColor: 'transparent',
+        graphic: isEmpty ? [{ type: 'text', left: '28%', top: 'middle', style: { text: '暂无数据', fill: 'rgba(126,174,229,0.4)', fontSize: 13 } }] : [],
+        tooltip: {
+          trigger: 'item',
+          formatter: p => `${p.name}<br/>数量: <b>${p.value}</b>次 (${p.percent.toFixed(1)}%)`,
+          backgroundColor: 'rgba(0,19,40,0.8)',
+          borderColor: 'rgba(0,255,255,0.3)',
+          textStyle: { color: '#00FFFF' },
+        },
+        legend: {
+          orient: 'vertical', right: 0, top: 'center',
+          itemWidth: 12, itemHeight: 12, itemGap: 16,
+          textStyle: { color: '#7EAEE5' },
+          formatter: name => {
+            const item = pieData.find(d => d.name === name);
+            return item ? `${name}  ${item.value}次` : name;
+          },
+        },
+        series: [{
+          name: '预警等级', type: 'pie',
+          radius: ['60%', '85%'], center: ['30%', '50%'],
+            avoidLabelOverlap: false,
+          label: { show: false }, labelLine: { show: false },
+          emphasis: { label: { show: false } },
+          data: pieData,
+        }],
+      }, true);
+    },
+
+    // ── 状态处理饼图 ─────────────────────────────────────────────────────────
+
+    renderStatusChart(byStatus) {
+      const dom = this.$refs.statusChart;
+      if (!dom) return;
+      if (!this.statusChart) this.statusChart = echarts.init(dom);
+
+      const colorMap = { '待处理': '#FF8746', '处理中': '#44FF9B', '已处理': '#00FFFF', '已归档': '#6677AA', '误报': '#ee6666' };
+      const allStatuses = ['待处理', '处理中', '已处理', '已归档', '误报'];
+      const total = allStatuses.reduce((s, k) => s + (byStatus[k] || 0), 0);
+      const isEmpty = total === 0;
+
+      const pieData = isEmpty
+        ? [{ value: 1, name: '暂无数据', itemStyle: { color: 'rgba(35,88,148,0.2)' }, tooltip: { show: false }, emphasis: { disabled: true } }]
+        : allStatuses.map(name => ({ value: byStatus[name] || 0, name, itemStyle: { color: colorMap[name] } }));
+
+      this.statusChart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'item',
+          formatter: p => `${p.name}: <b>${p.value}</b>条 (${p.percent.toFixed(1)}%)`,
+          backgroundColor: 'rgba(0,19,40,0.8)',
+          borderColor: 'rgba(0,255,255,0.3)',
+          textStyle: { color: '#00FFFF' },
+        },
+        legend: {
+          show: !isEmpty,
+          orient: 'vertical',
+          right: 0,
+          top: 'center',
+          itemWidth: 12,
+          itemHeight: 12,
+          itemGap: 16,
+          textStyle: { color: '#7EAEE5' },
+          formatter: name => {
+            const item = pieData.find(d => d.name === name);
+            return item ? `${name}  ${item.value}条` : name;
+          },
+        },
+        series: [{
+          name: '状态分布', type: 'pie',
+          radius: ['45%', '65%'], center: ['35%', '50%'],
+          avoidLabelOverlap: false,
+          label: { show: false },
+          labelLine: { show: false },
+          emphasis: { label: { show: false } },
+          data: pieData,
+        }],
+      }, true);
+    },
+
+    // ── 全屏 / 布局 ──────────────────────────────────────────────────────────
+
     async toggleFullscreen() {
       try {
         if (!document.fullscreenElement) {
           await this.$refs.visualCenter.requestFullscreen();
-          this.isFullscreen = true;
         } else {
           await document.exitFullscreen();
-          this.isFullscreen = false;
         }
       } catch (err) {
         console.error('全屏切换失败:', err);
       }
     },
-    
-    // 处理全屏变化事件
+
     handleFullscreenChange() {
       this.isFullscreen = !!document.fullscreenElement;
-      
-      // 根据全屏状态调整表格高度和面板高度
-      if (this.isFullscreen) {
-        this.tableHeight = 280; // 全屏模式下适中的表格高度
-        // 调整全屏下的面板高度 - 适当缩小以避免滚动
-        document.documentElement.style.setProperty('--panel-top-height', '240px');
-        document.documentElement.style.setProperty('--panel-bottom-height', '320px');
-      } else {
-        this.tableHeight = 280; // 非全屏模式下使用与全屏相同的表格高度，确保显示效果一致
-        // 恢复正常模式下的面板高度
-        document.documentElement.style.setProperty('--panel-top-height', '210px');
-        document.documentElement.style.setProperty('--panel-bottom-height', '330px');
-      }
-      
-      // 全屏状态变化后，重新调整图表大小
+      this.computePanelHeights();
       setTimeout(() => {
         if (this.trendChart) this.trendChart.resize();
         if (this.levelChart) this.levelChart.resize();
         if (this.statusChart) this.statusChart.resize();
       }, 300);
     },
-    
-    // 处理窗口大小变化
-    handleResize() {
-      if (this.trendChart) this.trendChart.resize();
-      if (this.levelChart) this.levelChart.resize();
-      if (this.statusChart) this.statusChart.resize();
-    },
-    
-    // 初始化趋势图表
-    initTrendChart() {
-      const trendChartDom = this.$refs.trendChart;
-      if (!trendChartDom) return;
-      
-      this.trendChart = echarts.init(trendChartDom);
-      
-      const option = {
-        backgroundColor: 'transparent',
-        grid: {
-          top: 40,
-          bottom: 20,
-          left: 0,
-          right: 20,
-          containLabel: true
-        },
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'line',
-            lineStyle: {
-              color: 'rgba(0, 255, 255, 0.3)',
-              width: 1
-            }
-          },
-          backgroundColor: 'rgba(0, 19, 40, 0.8)',
-          borderColor: 'rgba(0, 255, 255, 0.3)',
-          textStyle: {
-            color: '#00FFFF'
-          }
-        },
-        xAxis: {
-          type: 'category',
-          data: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
-          axisLine: {
-            lineStyle: {
-              color: 'rgba(0, 255, 255, 0.3)'
-            }
-          },
-          axisLabel: {
-            color: '#7EAEE5'
-          },
-          axisTick: {
-            show: false
-          },
-          splitLine: {
-            show: false
-          }
-        },
-        yAxis: {
-          type: 'value',
-          axisLine: {
-            show: false
-          },
-          axisLabel: {
-            color: '#7EAEE5'
-          },
-          splitLine: {
-            lineStyle: {
-              color: 'rgba(35, 88, 148, 0.3)',
-              type: 'dashed'
-            }
-          }
-        },
-        series: [
-          {
-            name: '预警数量',
-            type: 'line',
-            smooth: true,
-            symbol: 'circle',
-            symbolSize: 8,
-            data: [3, 5, 10, 14, 12, 7, 5],
-            lineStyle: {
-              width: 3,
-              color: {
-                type: 'linear',
-                x: 0, y: 0, x2: 1, y2: 0,
-                colorStops: [
-                  { offset: 0, color: '#00FFFF' },
-                  { offset: 1, color: '#207FFF' }
-                ]
-              }
-            },
-            itemStyle: {
-              color: '#00FFFF',
-              borderColor: 'rgba(0, 255, 255, 0.3)',
-              borderWidth: 6
-            },
-            areaStyle: {
-              color: {
-                type: 'linear',
-                x: 0, y: 0, x2: 0, y2: 1,
-                colorStops: [
-                  { offset: 0, color: 'rgba(0, 255, 255, 0.3)' },
-                  { offset: 1, color: 'rgba(0, 255, 255, 0)' }
-                ]
-              }
-            }
-          }
-        ]
-      };
-      
-      this.trendChart.setOption(option);
-    },
-    
-    // 初始化等级占比图表
-    initLevelChart() {
-      const levelChartDom = this.$refs.levelChart;
-      if (!levelChartDom) return;
-      
-      this.levelChart = echarts.init(levelChartDom);
-      
-      const option = {
-        backgroundColor: 'transparent',
-        tooltip: {
-          trigger: 'item',
-          formatter: '{b}: {c} ({d}%)',
-          backgroundColor: 'rgba(0, 19, 40, 0.8)',
-          borderColor: 'rgba(0, 255, 255, 0.3)',
-          textStyle: {
-            color: '#00FFFF'
-          }
-        },
-        color: ['#FF4D4F', '#FF8746', '#44FF9B', '#00C5FF'],
-        legend: {
-          orient: 'vertical',
-          right: 0,
-          top: 'center',
-          itemWidth: 12,
-          itemHeight: 12,
-          itemGap: 20,
-          textStyle: {
-            color: '#7EAEE5'
-          },
-          formatter: function(name) {
-            return name;
-          }
-        },
-        series: [
-          {
-            name: '预警等级',
-            type: 'pie',
-            radius: ['60%', '85%'],
-            center: ['30%', '50%'],
-            avoidLabelOverlap: false,
-            label: {
-              show: false
-            },
-            emphasis: {
-              label: {
-                show: false
-              }
-            },
-            labelLine: {
-              show: false
-            },
-            data: [
-              { value: 8, name: '紧急' },
-              { value: 15, name: '重要' },
-              { value: 21, name: '普通' },
-              { value: 11, name: '提示' }
-            ]
-          }
-        ]
-      };
-      
-      this.levelChart.setOption(option);
-    },
-    
-    // 初始化状态图表
-    initStatusChart() {
-      const statusChartDom = this.$refs.statusChart;
-      if (!statusChartDom) return;
-      
-      this.statusChart = echarts.init(statusChartDom);
-      
-      const option = {
-        backgroundColor: 'transparent',
-        tooltip: {
-          trigger: 'item',
-          formatter: '{b}: {c} ({d}%)',
-          backgroundColor: 'rgba(0, 19, 40, 0.8)',
-          borderColor: 'rgba(0, 255, 255, 0.3)',
-          textStyle: {
-            color: '#00FFFF'
-          }
-        },
-        series: [
-          {
-            name: '状态分布',
-            type: 'pie',
-            radius: ['50%', '70%'],
-            center: ['50%', '50%'], // 修改为50%,50%使其上下左右都居中
-            avoidLabelOverlap: false,
-            label: {
-              show: true,
-              position: 'outside',
-              formatter: '{b}\n{c}条',
-              color: '#7EAEE5'
-            },
-            emphasis: {
-              label: {
-                show: true,
-                fontSize: '14',
-                fontWeight: 'bold',
-                color: '#00FFFF'
-              }
-            },
-            labelLine: {
-              show: true,
-              length: 10,
-              length2: 10,
-              lineStyle: {
-                color: 'rgba(35, 88, 148, 0.8)'
-              }
-            },
-            data: this.statusData.day
-          }
-        ]
-      };
-      
-      this.statusChart.setOption(option);
-    },
-    
-    // 初始化简单地图区域
-    initSimpleMapArea() {
-      // 地图区域已移除
-    },
-    
-    // 更新设备表格数据
-    generateMockData() {
-      // 生成模拟的预警列表 - 与预警管理页面保持一致
-      this.warningList = [
-        { event: '未戴安全帽', time: '2024-01-15 10:30:25', status: 'pending', statusText: '待处理' },
-        { event: '未穿工作服', time: '2024-01-15 10:28:15', status: 'pending', statusText: '待处理' },
-        { event: '闲杂人员', time: '2024-01-15 10:15:42', status: 'pending', statusText: '待处理' },
-        { event: '违规吸烟', time: '2024-01-15 09:58:30', status: 'completed', statusText: '已完成' },
-        { event: '高空作业未系安全带', time: '2024-01-15 09:45:12', status: 'pending', statusText: '待处理' },
-        { event: '未穿反光背心', time: '2024-01-15 09:32:18', status: 'pending', statusText: '待处理' },
-        { event: '未戴安全帽', time: '2024-01-15 08:45:33', status: 'processing', statusText: '处理中' },
-        { event: '未穿工作服', time: '2024-01-15 08:22:15', status: 'completed', statusText: '已完成' },
-        { event: '违规吸烟', time: '2024-01-15 07:58:42', status: 'completed', statusText: '已完成' },
-        { event: '高空作业未系安全带', time: '2024-01-15 07:15:28', status: 'processing', statusText: '处理中' }
-      ];
-      
-      // 生成模拟的设备预警 - 与预警管理页面保持一致
-      this.deviceWarnings = [
-        { name: '摄像头01-工地东北角', count: 15 },
-        { name: '摄像头03-工地南侧', count: 12 },
-        { name: '摄像头02-材料区', count: 9 },
-        { name: '摄像头05-休息区', count: 6 },
-        { name: '摄像头04-施工作业区', count: 5 },
-        { name: '摄像头06-工地东北角', count: 4 },
-        { name: '摄像头07-塔吊区域', count: 3 },
-        { name: '摄像头08-脚手架区域', count: 2 },
-        { name: '摄像头09-设备存放区', count: 7 },
-        { name: '摄像头10-危险作业区', count: 8 }
-      ];
-    },
-    
-    // 切换状态时间范围
-    changeStatusTimeRange(range) {
-      this.statusTimeRange = range;
-      if (this.statusChart) {
-        this.statusChart.setOption({
-          series: [
-            {
-              data: this.statusData[range]
-            }
-          ]
-        });
-      }
-    },
-    
-    // 切换设备时间范围
-    changeDeviceTimeRange(range) {
-      this.deviceTimeRange = range;
-      // 这里可以根据不同时间范围加载不同设备数据
-    },
 
-    // 预警图片相关方法
-    initWarningViewer() {
-      // 添加键盘导航功能
-      document.addEventListener('keydown', this.handleKeyboardNavigation);
-      
-      // 确保图片加载
-      this.preloadImages();
-    },
-    
-    handleKeyboardNavigation(event) {
-      // 只在当前页面激活时处理键盘事件
-      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
-        return;
-      }
-      
-      switch (event.key) {
-        case 'ArrowLeft':
-          event.preventDefault();
-          this.slidePrev();
-          break;
-        case 'ArrowRight':
-          event.preventDefault();
-          this.slideNext();
-          break;
-        case 'Escape':
-          event.preventDefault();
-          // 可以添加退出全屏等功能
-          break;
-      }
-    },
-    
-    preloadImages() {
-      // 预加载所有图片以提升用户体验
-      this.warningImages.forEach(warning => {
-        const img = new Image();
-        img.src = warning.image;
+    computePanelHeights() {
+      // 由 CSS flex 自动分配，仅计算 tableHeight
+      this.$nextTick(() => {
+        const bottomRow = this.$el && this.$el.querySelector('.bottom-section');
+        if (bottomRow) {
+          this.tableHeight = Math.max(120, bottomRow.clientHeight - 80);
+        }
       });
     },
-    
-    // 滑动到指定缩略图位置
+
+    handleResize() {
+      this.computePanelHeights();
+      this.$nextTick(() => {
+        if (this.trendChart) this.trendChart.resize();
+        if (this.levelChart) this.levelChart.resize();
+        if (this.statusChart) this.statusChart.resize();
+      });
+    },
+
+    // ── 时间范围切换 ─────────────────────────────────────────────────────────
+
+    changeTrendTimeRange(range) {
+      this.trendTimeRange = range;
+    },
+
+    changeTypeTimeRange(range) {
+      this.typeTimeRange = range;
+    },
+
+    changeLevelTimeRange(range) {
+      this.levelTimeRange = range;
+    },
+
+    changeLocationTimeRange(range) {
+      this.locationTimeRange = range;
+    },
+
+    changeStatusTimeRange(range) {
+      this.statusTimeRange = range;
+    },
+
+    changeDeviceTimeRange(range) {
+      this.deviceTimeRange = range;
+    },
+
+    // ── 图片查看器导航 ───────────────────────────────────────────────────────
+
     scrollToThumbnail(index) {
-      const thumbnailSlider = this.$refs.thumbnailSlider;
-      if (thumbnailSlider) {
-        const thumbnailItem = thumbnailSlider.children[index];
-        if (thumbnailItem) {
-          thumbnailItem.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-            inline: 'center'
-          });
-        }
+      const slider = this.$refs.thumbnailSlider;
+      if (slider && slider.children[index]) {
+        slider.children[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
       }
     },
-    
-    // 重写选择图片方法，添加滚动效果
+
     selectWarningImage(index) {
       this.currentImageIndex = index;
       this.currentWarningImage = this.warningImages[index];
       this.scrollToThumbnail(index);
     },
     
-    // 重写滑动方法，添加滚动效果
     slidePrev() {
       if (this.currentImageIndex > 0) {
-        this.currentImageIndex = this.currentImageIndex - 1;
+        this.currentImageIndex--;
         this.currentWarningImage = this.warningImages[this.currentImageIndex];
         this.scrollToThumbnail(this.currentImageIndex);
       }
@@ -1061,21 +842,23 @@ export default {
     
     slideNext() {
       if (this.currentImageIndex < this.warningImages.length - 1) {
-        this.currentImageIndex = this.currentImageIndex + 1;
+        this.currentImageIndex++;
         this.currentWarningImage = this.warningImages[this.currentImageIndex];
         this.scrollToThumbnail(this.currentImageIndex);
       }
-    }
-  }
+    },
+
+    handleKeyboardNavigation(event) {
+      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+      if (event.key === 'ArrowLeft') { event.preventDefault(); this.slidePrev(); }
+      else if (event.key === 'ArrowRight') { event.preventDefault(); this.slideNext(); }
+    },
+  },
 }
 </script>
 
 <style scoped>
 /* Vue2项目中使用普通CSS样式 */
-:root {
-  --panel-top-height: 210px;
-  --panel-bottom-height: 330px;
-}
 
 /* 全局隐藏滚动条样式 */
 * {
@@ -1087,18 +870,17 @@ export default {
   display: none; /* Chrome, Safari, Opera */
 }
 
-/* 标题与内容一体：整屏不滚动 */
+/* 标题与内容一体：高度跟随视口，内容溢出时可隐藏滚动条滚动 */
 .visual-center {
+  width: 100%;
   height: 100%;
-  min-height: 0;
   background: linear-gradient(135deg, #001529 0%, #000B18 100%);
   color: #fff;
   padding: 10px 14px;
-  position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .top-bar {
@@ -1207,7 +989,23 @@ export default {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  gap: 8px;
   overflow: hidden;
+}
+
+/* 两行 el-row 按 55:45 分配 */
+.main-content > .el-row:first-child {
+  flex: 55 1 0;
+  min-height: 0;
+}
+.main-content > .el-row.bottom-section {
+  flex: 45 1 0;
+  min-height: 0;
+}
+
+/* el-col 撑满行高 */
+.main-content > .el-row > .el-col {
+  height: 100%;
 }
 
 .panel-box {
@@ -1222,36 +1020,59 @@ export default {
   flex-direction: column;
 }
 
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
 .panel-title {
   color: #00FFFF;
   font-size: 16px;
-  margin-bottom: 8px;
   padding-left: 10px;
   border-left: 3px solid #00FFFF;
   text-align: left;
+  flex-shrink: 0;
+}
+
+.panel-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .panel-equal-height {
-  height: var(--panel-top-height);
+  flex: 1 1 0;
+  min-height: 0;
   overflow: hidden;
 }
 
 .panel-bottom-equal-height {
-  height: var(--panel-bottom-height);
+  height: 100%;
   overflow: hidden;
+  margin-bottom: 0;
 }
 
-/* 上排总高度：与左右两列底部对齐，使用 52px 间距填满 */
+/* 中间大图面板撑满整行高度 */
 .map-panel {
-  height: calc(var(--panel-top-height) + 52px + var(--panel-top-height));
-  margin-bottom: 12px;
+  height: 100%;
+  margin-bottom: 0;
   display: flex;
   flex-direction: column;
 }
-/* 左、右列第二个面板（预警类型排名、组织预警TOP5）拉高填满，与中间列底部对齐 */
-.main-content > .el-row:first-child .el-col:first-child .panel-box:nth-child(2),
-.main-content > .el-row:first-child .el-col:last-child .panel-box:nth-child(2) {
-  height: calc(var(--panel-top-height) + 40px);
+
+/* 左、右列用 flex 列布局，两个面板各占一半 */
+.main-content > .el-row:first-child > .el-col:first-child,
+.main-content > .el-row:first-child > .el-col:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.main-content > .el-row:first-child > .el-col:first-child .panel-box,
+.main-content > .el-row:first-child > .el-col:last-child .panel-box {
+  margin-bottom: 0;
 }
 
 .map-container {
@@ -1276,34 +1097,22 @@ export default {
   margin-left: 2px;
 }
 
-.status-tabs,
-.device-tabs {
-  display: flex;
-  margin-bottom: 8px;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-}
-
 .tab-item {
-  padding: 8px 12px;
+  padding: 4px 8px;
   cursor: pointer;
   color: #7EAEE5;
-  font-size: 13px;
-  position: relative;
+  font-size: 12px;
+  border-radius: 3px;
   transition: all 0.3s ease;
+}
+
+.tab-item:hover {
+  color: #00FFFF;
 }
 
 .tab-item.active {
   color: #00FFFF;
-}
-
-.tab-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: #00FFFF;
+  background: rgba(0, 255, 255, 0.12);
 }
 
 .status-tag {
@@ -1494,7 +1303,8 @@ export default {
 
 .type-list,
 .top-list {
-  height: calc(100% - 20px);
+  flex: 1 1 0;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1565,19 +1375,17 @@ export default {
 
 .trend-chart,
 .level-chart {
-  height: calc(100% - 20px);
+  flex: 1 1 0;
+  min-height: 0;
   width: 100%;
   position: relative;
 }
-/* 预警处理情况在底部面板，用 panel-bottom-height 计算图表高度 */
 .status-chart {
-  height: calc(var(--panel-bottom-height) - 80px);
+  flex: 1 1 0;
+  min-height: 0;
   width: 100%;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
 }
 
 /* 更新图表组件样式 */
@@ -1651,6 +1459,23 @@ export default {
 
 .main-warning-image.loading {
   opacity: 0.5;
+}
+
+.no-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 30, 93, 0.4);
+  color: rgba(126, 174, 229, 0.5);
+  font-size: 14px;
+  gap: 10px;
+}
+
+.no-image-placeholder i {
+  font-size: 48px;
 }
 
 .warning-info-overlay {

@@ -1823,14 +1823,22 @@ export const alertAPI = {
 
   /**
    * 获取预警统计信息
-   * @param {number} [days=7] - 统计天数
-   * @returns {Promise} 包含统计信息的Promise对象
+   * @param {Object} params - 查询参数
+   * @param {string} params.granularity - 趋势粒度: hour | day | month
+   * @param {string} [params.start_date] - 开始日期 YYYY-MM-DD（与 days 二选一）
+   * @param {string} [params.end_date]   - 结束日期 YYYY-MM-DD
+   * @param {number} [params.days=7]     - 统计天数（start_date/end_date 优先）
+   * @returns {Promise}
    */
-  getAlertStatistics(days = 7) {
-    console.log('获取预警统计信息，天数:', days);
-    return visionAIAxios.get('/api/v1/alerts/statistics', {
-      params: { days }
-    });
+  getAlertStatistics({ granularity = 'day', start_date, end_date, days = 7 } = {}) {
+    const params = { granularity };
+    if (start_date && end_date) {
+      params.start_date = start_date;
+      params.end_date = end_date;
+    } else {
+      params.days = days;
+    }
+    return visionAIAxios.get('/api/v1/alerts/statistics', { params });
   },
 
   /**
