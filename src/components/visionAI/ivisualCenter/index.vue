@@ -11,15 +11,11 @@
             <span>加载中...</span>
           </div>
           <template v-else>
-            <div class="location">
-              <i class="el-icon-location"></i>
-              <span>{{ locationInfo.location }}</span>
-            </div>
-            <div class="weather-info">
-              <i class="el-icon-sunny"></i>
-              <span>{{ locationInfo.weather }}</span>
+            <span class="location"><i class="el-icon-location"></i> {{ locationInfo.location }}</span>
+            <span class="weather-divider">|</span>
+            <span class="weather-info"><i class="el-icon-sunny"></i> {{ locationInfo.weather }}</span>
+            <span class="weather-divider">|</span>
               <span class="air-quality">{{ locationInfo.airQuality }}</span>
-            </div>
           </template>
         </div>
         <div class="fullscreen-btn" @click="toggleFullscreen">
@@ -34,7 +30,7 @@
         <el-col :span="6">
           <div class="stat-panel panel-box panel-equal-height">
             <div class="panel-header">
-              <div class="panel-title">预警趋势</div>
+            <div class="panel-title">预警趋势</div>
               <div class="panel-tabs">
                 <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
                   :class="['tab-item', { active: trendTimeRange === key }]"
@@ -45,7 +41,7 @@
           </div>
           <div class="type-panel panel-box panel-equal-height">
             <div class="panel-header">
-              <div class="panel-title">预警类型排名</div>
+            <div class="panel-title">预警类型排名</div>
               <div class="panel-tabs">
                 <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
                   :class="['tab-item', { active: typeTimeRange === key }]"
@@ -168,7 +164,7 @@
         <el-col :span="6">
           <div class="level-panel panel-box panel-equal-height">
             <div class="panel-header">
-              <div class="panel-title">预警等级占比</div>
+            <div class="panel-title">预警等级占比</div>
               <div class="panel-tabs">
                 <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
                   :class="['tab-item', { active: levelTimeRange === key }]"
@@ -204,10 +200,10 @@
         <el-col :span="6">
           <div class="status-panel panel-box panel-bottom-equal-height">
             <div class="panel-header">
-              <div class="panel-title">预警处理情况</div>
+            <div class="panel-title">预警处理情况</div>
               <div class="panel-tabs">
                 <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
-                  :class="['tab-item', { active: statusTimeRange === key }]"
+                :class="['tab-item', { active: statusTimeRange === key }]"
                   @click="changeStatusTimeRange(key)">{{ label }}</div>
               </div>
             </div>
@@ -240,10 +236,10 @@
         <el-col :span="6">
           <div class="device-panel panel-box panel-bottom-equal-height">
             <div class="panel-header">
-              <div class="panel-title">设备预警数量 Top 10</div>
+            <div class="panel-title">设备预警数量 Top 10</div>
               <div class="panel-tabs">
                 <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
-                  :class="['tab-item', { active: deviceTimeRange === key }]"
+                :class="['tab-item', { active: deviceTimeRange === key }]"
                   @click="changeDeviceTimeRange(key)">{{ label }}</div>
               </div>
             </div>
@@ -357,6 +353,7 @@ export default {
     this.$nextTick(() => {
       this.initEmptyCharts();
       this.fetchAll();
+      this.fetchWeather();
       document.addEventListener('keydown', this.handleKeyboardNavigation);
     });
 
@@ -600,6 +597,42 @@ export default {
       }
     },
 
+    // ── 天气与位置（wttr.in 免费 API，无需 key）────────────────────────────
+
+    async fetchWeather() {
+      this.locationInfo.loading = true;
+      try {
+        // 1. IP 定位获取中文城市名（ip-api.com 免费、无需 key）
+        const ipResp = await fetch('http://ip-api.com/json/?lang=zh-CN&fields=city,regionName');
+        const ipData = await ipResp.json();
+        const province = ipData.regionName || '';
+        const city = ipData.city || '';
+        if (province && city && province !== city) {
+          this.locationInfo.location = `${province} ${city}`;
+        } else {
+          this.locationInfo.location = city || province || '未知地区';
+        }
+
+        // 2. 天气数据（wttr.in 用中文城市名请求，确保匹配）
+        const weatherCity = encodeURIComponent(city || '');
+        const wttrResp = await fetch(`https://wttr.in/${weatherCity}?format=j1&lang=zh`);
+        const wttrData = await wttrResp.json();
+        const cur = wttrData.current_condition && wttrData.current_condition[0];
+        if (cur) {
+          const tempC = cur.temp_C || '--';
+          const desc = (cur.lang_zh && cur.lang_zh[0] && cur.lang_zh[0].value)
+            || (cur.weatherDesc && cur.weatherDesc[0] && cur.weatherDesc[0].value) || '';
+          const humidity = cur.humidity || '--';
+          this.locationInfo.weather = `${desc} ${tempC}°C`;
+          this.locationInfo.airQuality = `湿度 ${humidity}%`;
+        }
+      } catch (e) {
+        console.error('获取天气失败:', e);
+      } finally {
+        this.locationInfo.loading = false;
+      }
+    },
+
     // ── 图表初始化（空壳）────────────────────────────────────────────────────
 
     initEmptyCharts() {
@@ -739,7 +772,7 @@ export default {
         series: [{
           name: '状态分布', type: 'pie',
           radius: ['45%', '65%'], center: ['35%', '50%'],
-          avoidLabelOverlap: false,
+            avoidLabelOverlap: false,
           label: { show: false },
           labelLine: { show: false },
           emphasis: { label: { show: false } },
@@ -941,31 +974,34 @@ export default {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 20px;
+  gap: 12px;
   flex: 0 0 auto;
-  width: 300px;
 }
 
 .location-info {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 8px;
+  white-space: nowrap;
 }
 
-.location, .weather-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.location, .weather-info, .air-quality {
   color: #7EAEE5;
+  font-size: 13px;
 }
 
 .location i, .weather-info i {
   color: #00FFFF;
-  font-size: 16px;
+  font-size: 14px;
+  margin-right: 2px;
+}
+
+.weather-divider {
+  color: rgba(126, 174, 229, 0.3);
+  font-size: 13px;
 }
 
 .air-quality {
-  margin-left: 8px;
   color: #44FF9B;
 }
 
@@ -993,13 +1029,13 @@ export default {
   overflow: hidden;
 }
 
-/* 两行 el-row 按 55:45 分配 */
+/* 两行 el-row 按 62:38 分配 */
 .main-content > .el-row:first-child {
-  flex: 55 1 0;
+  flex: 62 1 0;
   min-height: 0;
 }
 .main-content > .el-row.bottom-section {
-  flex: 45 1 0;
+  flex: 38 1 0;
   min-height: 0;
 }
 

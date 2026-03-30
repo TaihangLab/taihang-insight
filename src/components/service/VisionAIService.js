@@ -3701,13 +3701,21 @@ export const reviewRecordAPI = {
   },
 
   /**
-   * 获取复判记录统计信息
-   * @param {Object} params - 查询参数
-   * @returns {Promise} 包含统计信息的Promise对象
+   * 获取复判记录统计概览（与后端 GET /review-records/statistics/overview 一致）
    */
-  getReviewRecordStatistics(params = {}) {
-    return visionAIAxios.get('/api/v1/review-records/statistics', { params });
-  }
+  getReviewRecordStatistics() {
+    return visionAIAxios.get('/api/v1/review-records/statistics/overview');
+  },
+
+  /**
+   * 复判人员排行（按复判次数）
+   * @param {number} limit - 返回条数，默认 10
+   */
+  getReviewerStatistics(limit = 10) {
+    return visionAIAxios.get('/api/v1/review-records/statistics/reviewers', {
+      params: { limit },
+    });
+  },
 };
 
 /**
@@ -4049,6 +4057,13 @@ export const systemMonitorAPI = {
    */
   getHealthCheck() {
     return visionAIAxios.get('/api/v1/system/health');
+  },
+
+  /**
+   * 获取服务器系统资源（CPU/内存/磁盘/GPU/运行任务/已加载模型）
+   */
+  getSystemResources() {
+    return visionAIAxios.get('/api/v1/system/resources');
   }
 };
 

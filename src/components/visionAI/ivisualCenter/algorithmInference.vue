@@ -14,15 +14,11 @@
             <span>加载中...</span>
           </div>
           <template v-else>
-            <div class="location" style="margin-right: -10px;">
-              <i class="el-icon-location"></i>
-              <span>{{ locationInfo ? locationInfo.location : '太行山工业园区' }}</span>
-            </div>
-            <div class="weather-info">
-              <i class="el-icon-sunny"></i>
-              <span>{{ locationInfo ? locationInfo.weather : '晴 26°C' }}</span>
-              <span class="air-quality">{{ locationInfo ? locationInfo.airQuality : '空气质量: 良' }}</span>
-            </div>
+            <span class="location"><i class="el-icon-location"></i> {{ locationInfo.location }}</span>
+            <span class="weather-divider">|</span>
+            <span class="weather-info"><i class="el-icon-sunny"></i> {{ locationInfo.weather }}</span>
+            <span class="weather-divider">|</span>
+            <span class="air-quality">{{ locationInfo.airQuality }}</span>
             <div class="fullscreen-btn" @click="toggleFullScreen">
               <i class="el-icon-full-screen"></i>
             </div>
@@ -129,6 +125,10 @@
               <div class="stat-label">加载模型</div>
             </div>
             <div class="brain-stat-item">
+              <div class="stat-value">{{ skillCount }}</div>
+              <div class="stat-label">AI技能</div>
+            </div>
+            <div class="brain-stat-item">
               <div class="stat-value">{{ cameraStats.analyzing }}</div>
               <div class="stat-label">分析中</div>
             </div>
@@ -163,7 +163,7 @@
         <div class="card-content">
           <div class="alert-preview-layout">
             <div class="alert-main-image" @click="showAlertImageDialog = true">
-              <img :src="selectedAlert ? selectedAlert.image : ''" alt="" />
+              <img :src="selectedAlert ? selectedAlert.image : ''" alt="" @error="e => e.target.src='/static/img/ai-brain.png'" />
               <div class="alert-image-overlay">
                 <span class="alert-image-timestamp">{{ selectedAlert ? selectedAlert.time : '' }}</span>
                 <span v-if="selectedAlert" class="alert-image-level-tag" :class="'alarm-level-' + selectedAlert.level">{{ selectedAlert.levelText }}</span>
@@ -174,7 +174,7 @@
                    v-for="(alert, index) in latestAlerts" :key="index"
                    :class="{ active: selectedAlert === alert }"
                    @click="selectedAlert = alert">
-                <img :src="alert.image" alt="" />
+                <img :src="alert.image" alt="" @error="e => e.target.src='/static/img/ai-brain.png'" />
               </div>
             </div>
           </div>
@@ -199,6 +199,11 @@
       <div class="dashboard-card alarm-statistics">
         <div class="card-header">
           <div class="title">预警类型分布</div>
+          <div class="panel-tabs">
+            <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
+              :class="['tab-item', { active: alarmDistTimeRange === key }]"
+              @click="changeAlarmDistTimeRange(key)">{{ label }}</div>
+          </div>
         </div>
         <div class="card-content">
           <div class="alarm-chart-section">
@@ -223,7 +228,7 @@
                 <svg viewBox="0 0 80 80">
                   <circle cx="40" cy="40" r="34" class="ring-bg" />
                   <circle cx="40" cy="40" r="34" class="ring-fg online-fg"
-                    :style="{ strokeDasharray: (2 * Math.PI * 34), strokeDashoffset: (2 * Math.PI * 34) * (1 - cameraStats.online / cameraStats.total) }" />
+                    :style="{ strokeDasharray: (2 * Math.PI * 34), strokeDashoffset: (2 * Math.PI * 34) * (1 - (cameraStats.total ? cameraStats.online / cameraStats.total : 0)) }" />
                 </svg>
                 <span class="cam-ring-num online-num">{{ cameraStats.online }}</span>
               </div>
@@ -234,7 +239,7 @@
                 <svg viewBox="0 0 80 80">
                   <circle cx="40" cy="40" r="34" class="ring-bg" />
                   <circle cx="40" cy="40" r="34" class="ring-fg analyzing-fg"
-                    :style="{ strokeDasharray: (2 * Math.PI * 34), strokeDashoffset: (2 * Math.PI * 34) * (1 - cameraStats.analyzing / cameraStats.total) }" />
+                    :style="{ strokeDasharray: (2 * Math.PI * 34), strokeDashoffset: (2 * Math.PI * 34) * (1 - (cameraStats.total ? cameraStats.analyzing / cameraStats.total : 0)) }" />
                 </svg>
                 <span class="cam-ring-num analyzing-num">{{ cameraStats.analyzing }}</span>
               </div>
@@ -245,7 +250,7 @@
                 <svg viewBox="0 0 80 80">
                   <circle cx="40" cy="40" r="34" class="ring-bg" />
                   <circle cx="40" cy="40" r="34" class="ring-fg offline-fg"
-                    :style="{ strokeDasharray: (2 * Math.PI * 34), strokeDashoffset: (2 * Math.PI * 34) * (1 - cameraStats.offline / cameraStats.total) }" />
+                    :style="{ strokeDasharray: (2 * Math.PI * 34), strokeDashoffset: (2 * Math.PI * 34) * (1 - (cameraStats.total ? cameraStats.offline / cameraStats.total : 0)) }" />
                 </svg>
                 <span class="cam-ring-num offline-num">{{ cameraStats.offline }}</span>
               </div>
@@ -259,120 +264,35 @@
       <div class="dashboard-card alarm-info">
         <div class="card-header">
           <div class="title">预警趋势</div>
+          <div class="panel-tabs">
+            <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
+              :class="['tab-item', { active: alertTrendRange === key }]"
+              @click="changeAlertTrendRange(key)">{{ label }}</div>
+          </div>
         </div>
         <div class="card-content">
-          <div class="date-filter">
-            <div class="date-filter-left">
-              <span
-                class="date-btn"
-                :class="{ active: alertTrendRange === 'today' }"
-                @click.stop.prevent="setAlertTrendRange('today')"
-              >今日</span>
-              <span
-                class="date-btn"
-                :class="{ active: alertTrendRange === 'week' }"
-                @click.stop.prevent="setAlertTrendRange('week')"
-              >近7天</span>
-              <span
-                class="date-btn"
-                :class="{ active: alertTrendRange === 'month' }"
-                @click.stop.prevent="setAlertTrendRange('month')"
-              >本月</span>
-            </div>
-          </div>
           <div class="trend-chart">
             <div class="chart-header">
               <div class="trend-total">
                 <span class="label">预警总数</span>
-                <span class="value">{{ alertTrendLoading ? '加载中...' : alertTrendTotal }}</span>
+                <span class="value">{{ alertTrendLoading ? '...' : alertTrendTotal }}</span>
               </div>
             </div>
-            <div class="trend-chart-svg-wrap">
-            <svg viewBox="0 0 600 150" preserveAspectRatio="none">
-              <!-- 横线 -->
-              <g class="grid-lines">
-                <line x1="0" y1="0" x2="600" y2="0" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="30" x2="600" y2="30" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="60" x2="600" y2="60" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="90" x2="600" y2="90" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="120" x2="600" y2="120" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-                <line x1="0" y1="150" x2="600" y2="150" stroke="rgba(120, 140, 180, 0.2)" stroke-width="1" />
-              </g>
-
-              <!-- 数据曲线 -->
-              <path
-                d="M0,90 C20,70 40,80 60,60 C80,40 100,70 120,65 C140,60 160,50 180,55 C200,60 220,30 240,50 C260,70 280,80 300,75 C320,70 340,60 360,65 C380,70 400,80 420,60 C440,40 460,50 480,55 C500,60 520,80 540,70 C560,60 580,50 600,55"
-                stroke="#0095ff" stroke-width="2" fill="none" />
-
-              <!-- 区域填充 -->
-              <path
-                d="M0,90 C20,70 40,80 60,60 C80,40 100,70 120,65 C140,60 160,50 180,55 C200,60 220,30 240,50 C260,70 280,80 300,75 C320,70 340,60 360,65 C380,70 400,80 420,60 C440,40 460,50 480,55 C500,60 520,80 540,70 C560,60 580,50 600,55 L600,150 L0,150 Z"
-                fill="url(#gradient)" />
-
-              <!-- 渐变定义 -->
-              <defs>
-                <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#0095ff" stop-opacity="0.5" />
-                  <stop offset="100%" stop-color="#0095ff" stop-opacity="0.05" />
-                </linearGradient>
-              </defs>
-
-              <!-- 数据点标记 -->
-              <g class="data-points">
-                <circle cx="60" cy="60" r="3" fill="#ffffff" stroke="#0095ff" stroke-width="1" />
-                <circle cx="120" cy="65" r="3" fill="#ffffff" stroke="#0095ff" stroke-width="1" />
-                <circle cx="180" cy="55" r="3" fill="#ffffff" stroke="#0095ff" stroke-width="1" />
-                <circle cx="240" cy="50" r="3" fill="#ffffff" stroke="#0095ff" stroke-width="1" />
-                <circle cx="300" cy="75" r="3" fill="#ffffff" stroke="#0095ff" stroke-width="1" />
-                <circle cx="360" cy="65" r="3" fill="#ffffff" stroke="#0095ff" stroke-width="1" />
-                <circle cx="420" cy="60" r="3" fill="#ffffff" stroke="#0095ff" stroke-width="1" />
-                <circle cx="480" cy="55" r="3" fill="#ffffff" stroke="#0095ff" stroke-width="1" />
-                <circle cx="540" cy="70" r="3" fill="#ffffff" stroke="#0095ff" stroke-width="1" />
-              </g>
-
-              <!-- 底部日期标签 -->
-              <g class="x-labels" fill="#7888a8" font-size="10">
-                <text x="0" y="165">01</text>
-                <text x="20" y="165">02</text>
-                <text x="40" y="165">03</text>
-                <text x="60" y="165">04</text>
-                <text x="80" y="165">05</text>
-                <text x="100" y="165">06</text>
-                <text x="120" y="165">07</text>
-                <text x="140" y="165">08</text>
-                <text x="160" y="165">09</text>
-                <text x="180" y="165">10</text>
-                <!-- 中间省略 -->
-                <text x="400" y="165">23</text>
-                <text x="420" y="165">24</text>
-                <text x="440" y="165">25</text>
-                <text x="460" y="165">26</text>
-                <text x="480" y="165">27</text>
-                <text x="500" y="165">28</text>
-                <text x="520" y="165">29</text>
-                <text x="540" y="165">30</text>
-                <text x="560" y="165">31</text>
-              </g>
-            </svg>
-            </div>
+            <div ref="trendChartEl" class="trend-chart-echarts"></div>
           </div>
-
         </div>
       </div>
 
-      <!-- 任务运行统计模块 -->
+      <!-- 任务与复判概览（任务总数含离线；在线=已开启任务；复判技能=已发布；已启用复判=配置表开启数） -->
       <div class="dashboard-card alarm-forwarding">
         <div class="card-header">
-          <div class="title">复判调用统计</div>
+          <div class="title">任务与复判概览</div>
         </div>
-        <div class="card-content">
-          <div class="skill-stats-list">
-            <div class="skill-stat-item" v-for="(skill, index) in skillCallStats" :key="index">
-              <div class="skill-stat-name">{{ skill.name }}</div>
-              <div class="skill-stat-bar-wrap">
-                <div class="skill-stat-bar" :style="{ width: skill.percent + '%', background: skill.color }"></div>
-              </div>
-              <div class="skill-stat-count">{{ skill.count }}</div>
+        <div class="card-content review-overview-content">
+          <div class="review-kpi-grid">
+            <div class="review-kpi" v-for="item in reviewKpiItems" :key="item.key">
+              <div class="review-kpi-value">{{ item.value }}</div>
+              <div class="review-kpi-label">{{ item.label }}</div>
             </div>
           </div>
         </div>
@@ -397,59 +317,58 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import * as echarts from 'echarts';
-import { alertAPI } from '@/components/service/VisionAIService.js';
+import { alertAPI, cameraAPI, skillAPI, systemMonitorAPI } from '@/components/service/VisionAIService.js';
+
+const LEVEL_MAP = { 1: 'urgent', 2: 'high', 3: 'medium', 4: 'low' };
+const LEVEL_TEXT_MAP = { 1: '一级预警', 2: '二级预警', 3: '三级预警', 4: '四级预警' };
+
+function statisticsFromResponse(res) {
+  const d = res && res.data;
+  if (!d) return null;
+  if (d.statistics) return d.statistics;
+  if (d.data && d.data.statistics) return d.data.statistics;
+  return null;
+}
+
+function alertsFromRealTimeResponse(res) {
+  const d = res && res.data;
+  if (!d) return [];
+  if (Array.isArray(d.data)) return d.data;
+  if (Array.isArray(d.alerts)) return d.alerts;
+  return [];
+}
 
 export default {
   name: 'AlgorithmInference',
   data() {
     return {
       currentTime: '',
-      cpuUsage: 20.69,
-      memoryUsage: 45.60,
-      diskUsage: 64.35,
-      gpuUsage: 72.34,
-      loadedModels: 8,
-      runningTasks: 5,
+      cpuUsage: 0,
+      memoryUsage: 0,
+      diskUsage: 0,
+      gpuUsage: 0,
+      loadedModels: 0,
+      runningTasks: 0,
+      skillCount: 0,
       timerID: null,
       cubeRotateID: null,
       locationInfo: {
-        location: '太行山工业园区',
-        weather: '晴 26°C',
-        airQuality: '空气质量: 良',
+        location: '--',
+        weather: '-- --',
+        airQuality: '',
         loading: false
       },
-      myAlgorithms: [
-        { id: '1', name: '人员追踪', size: 1 },
-        { id: '2', name: '安全帽检测', size: 1 },
-        { id: '3', name: '火焰检测', size: 1 },
-        { id: '4', name: '烟雾检测', size: 1 },
-        { id: '5', name: '有限空间监测', size: 1 },
-        { id: '6', name: '护目镜检测', size: 1 },
-        { id: '7', name: '人员闯入', size: 1 },
-        { id: '8', name: '通用目标检测', size: 1 },
-        { id: '9', name: '反光衣检测', size: 1 },
-        { id: '10', name: '区域人数统计', size: 1 },
-        { id: '11', name: '离岗检测', size: 1 },
-        { id: '12', name: '睡岗检测', size: 1 },
-        { id: '13', name: '口罩佩戴检测', size: 1 },
-        { id: '14', name: '工服识别', size: 1 },
-        { id: '15', name: '车辆违停检测', size: 1 },
-        { id: '16', name: '周界入侵检测', size: 1 },
-        { id: '17', name: '安全绳检测', size: 1 },
-        { id: '18', name: '明火识别', size: 1 },
-        { id: '19', name: '危险区域逗留', size: 1 },
-        { id: '20', name: '异常行为分析', size: 1 }
-      ],
+      myAlgorithms: [],
       alarmDistChart: null,
       skillDisplayOffset: 0,
       skillCarouselTimer: null,
       brainShowImage: false,
       brainImageUrl: '/static/img/ai-brain.png',
       cameraStats: {
-        total: 36,
-        online: 28,
-        analyzing: 12,
-        offline: 8
+        total: 0,
+        online: 0,
+        analyzing: 0,
+        offline: 0
       },
       selectedAlert: null,
       showAlertImageDialog: false,
@@ -458,26 +377,18 @@ export default {
         'el-icon-warning-outline', 'el-icon-lock', 'el-icon-discover',
         'el-icon-position', 'el-icon-search'
       ],
-      latestAlerts: [
-        { name: '未佩戴安全帽', camera: '3号厂房入口', location: '非机动车道', time: '2025-03-05 14:28:05', level: 3, levelText: '三级预警', image: '/static/img/ai-brain.png' },
-        { name: '人员闯入禁区', camera: '危化品仓库', location: '禁区通道', time: '2025-03-05 14:25:32', level: 1, levelText: '一级预警', image: '/static/img/ai-brain.png' },
-        { name: '烟雾检测', camera: '配电室', location: '配电室B区', time: '2025-03-05 14:22:18', level: 2, levelText: '二级预警', image: '/static/img/ai-brain.png' },
-        { name: '有限空间超时', camera: '地下管廊', location: '管廊3段', time: '2025-03-05 14:18:46', level: 3, levelText: '三级预警', image: '/static/img/ai-brain.png' },
-        { name: '火焰检测', camera: '焊接车间', location: '焊接工位', time: '2025-03-05 14:15:10', level: 1, levelText: '一级预警', image: '/static/img/ai-brain.png' },
-        { name: '护目镜未佩戴', camera: '喷漆车间', location: '喷漆车间', time: '2025-03-05 14:10:33', level: 4, levelText: '四级预警', image: '/static/img/ai-brain.png' }
-      ],
+      latestAlerts: [],
       alertTrendTotal: 0,
-      /** 预警趋势时间范围：today=今日, week=近7天, month=本月 */
-      alertTrendRange: 'week',
+      alertTrendRange: 'day',
       alertTrendLoading: false,
-      skillCallStats: [
-        { name: '安全帽复判', count: 1280, percent: 100, color: 'linear-gradient(90deg, #29de9c, #1abc9c)' },
-        { name: '人员闯入复判', count: 960, percent: 75, color: 'linear-gradient(90deg, #3eaef9, #1e90ff)' },
-        { name: '火焰烟雾复判', count: 820, percent: 64, color: 'linear-gradient(90deg, #ff5a5a, #ff2d55)' },
-        { name: '有限空间复判', count: 650, percent: 51, color: 'linear-gradient(90deg, #ff9c38, #ff7b00)' },
-        { name: '护目镜复判', count: 380, percent: 30, color: 'linear-gradient(90deg, #b980ff, #9b59b6)' },
-        { name: '烟雾复判', count: 210, percent: 16, color: 'linear-gradient(90deg, #4BD8FF, #06b6d4)' }
-      ],
+      alarmDistTimeRange: 'day',
+      reviewStats: {
+        total: 0,
+        online: 0,
+        reviewSkills: 0,
+        reviewEnabled: 0,
+      },
+      trendChartInstance: null,
       // Three.js相关变量
       cubeScene: null,
       cubeCamera: null,
@@ -538,26 +449,41 @@ export default {
       const o = this.skillDisplayOffset % list.length;
       if (o + n <= list.length) return list.slice(o, o + n);
       return [...list.slice(o), ...list.slice(0, o + n - list.length)];
-    }
+    },
+    reviewKpiItems() {
+      const s = this.reviewStats;
+      return [
+        { key: 'total', label: '任务总数', value: s.total },
+        { key: 'online', label: '在线任务数', value: s.online },
+        { key: 'reviewSkills', label: '可用复判技能', value: s.reviewSkills },
+        { key: 'reviewEnabled', label: '已启用复判', value: s.reviewEnabled },
+      ];
+    },
+  },
+  watch: {
+    alertTrendRange() { this.fetchTrendData(); },
+    alarmDistTimeRange() { this.fetchAlarmDistData(); },
   },
   mounted() {
-    // 初始化时间更新
     this.updateTime();
     this.timer = setInterval(this.updateTime, 1000);
 
-    // 添加全屏变化事件监听器
     document.addEventListener('fullscreenchange', this.handleFullscreenChange);
 
-    this.selectedAlert = this.latestAlerts[0];
-    this.fetchAlertTrendStats();
+    this.fetchWeather();
 
     this.$nextTick(() => {
       this.initBrainScene();
-      this.initAlarmDistChart();
+      this.fetchAll();
       this.startSkillCarousel();
       window.addEventListener('resize', this.handleResize);
       window.addEventListener('resize', this.handleAlarmDistChartResize);
+      window.addEventListener('resize', this.handleTrendChartResize);
     });
+
+    this.resourceTimer = setInterval(() => {
+      this.fetchSystemResources();
+    }, 10000);
   },
   beforeDestroy() {
     // 清除定时器
@@ -579,8 +505,11 @@ export default {
     if (this.algoAnimationId) {
       cancelAnimationFrame(this.algoAnimationId);
     }
-    // 移除窗口大小变化监听
+    if (this.resourceTimer) clearInterval(this.resourceTimer);
+    if (this.trendChartInstance) this.trendChartInstance.dispose();
+    if (this.alarmDistChart) this.alarmDistChart.dispose();
     window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('resize', this.handleTrendChartResize);
     window.removeEventListener('resize', this.handleAlgoResize);
     window.removeEventListener('resize', this.handleAlarmDistChartResize);
 
@@ -603,39 +532,248 @@ export default {
     this.disposeBrainScene();
   },
   methods: {
-    /** 根据范围得到统计天数：今日=1，近7天=7，本月=当月总天数(28-31) */
-    getAlertTrendDays(range) {
-      if (range === 'today') return 1;
-      if (range === 'week') return 7;
-      if (range === 'month') {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
-        return new Date(year, month + 1, 0).getDate();
-      }
-      return 7;
-    },
-    /** 拉取预警趋势统计并更新总数 */
-    async fetchAlertTrendStats() {
-      const days = this.getAlertTrendDays(this.alertTrendRange);
-      this.alertTrendLoading = true;
+    async fetchWeather() {
+      this.locationInfo.loading = true;
       try {
-        const res = await alertAPI.getAlertStatistics(days);
-        const data = res && res.data;
-        if (data && data.success && data.statistics && typeof data.statistics.total_alerts === 'number') {
-          this.alertTrendTotal = data.statistics.total_alerts;
+        const ipResp = await fetch('http://ip-api.com/json/?lang=zh-CN&fields=city,regionName');
+        const ipData = await ipResp.json();
+        const province = ipData.regionName || '';
+        const city = ipData.city || '';
+        if (province && city && province !== city) {
+          this.locationInfo.location = `${province} ${city}`;
+        } else {
+          this.locationInfo.location = city || province || '未知地区';
+        }
+        const weatherCity = encodeURIComponent(city || '');
+        const wttrResp = await fetch(`https://wttr.in/${weatherCity}?format=j1&lang=zh`);
+        const wttrData = await wttrResp.json();
+        const cur = wttrData.current_condition && wttrData.current_condition[0];
+        if (cur) {
+          const tempC = cur.temp_C || '--';
+          const desc = (cur.lang_zh && cur.lang_zh[0] && cur.lang_zh[0].value)
+            || (cur.weatherDesc && cur.weatherDesc[0] && cur.weatherDesc[0].value) || '';
+          const humidity = cur.humidity || '--';
+          this.locationInfo.weather = `${desc} ${tempC}°C`;
+          this.locationInfo.airQuality = `湿度 ${humidity}%`;
         }
       } catch (e) {
-        console.warn('预警趋势统计请求失败', e);
+        console.error('获取天气失败:', e);
+      } finally {
+        this.locationInfo.loading = false;
+      }
+    },
+    formatDate(date, fmt) {
+      if (!date) return '';
+      const y = date.getFullYear();
+      const M = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      const H = String(date.getHours()).padStart(2, '0');
+      const m = String(date.getMinutes()).padStart(2, '0');
+      const s = String(date.getSeconds()).padStart(2, '0');
+      return fmt.replace('yyyy', y).replace('MM', M).replace('dd', d)
+                .replace('HH', H).replace('mm', m).replace('ss', s);
+    },
+    getDateRange(range) {
+      const now = new Date();
+      const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const today = fmt(now);
+      if (range === 'day') return { start_date: today, end_date: today };
+      if (range === 'week') {
+        const start = new Date(now); start.setDate(now.getDate() - 6);
+        return { start_date: fmt(start), end_date: today };
+      }
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { start_date: fmt(start), end_date: today };
+    },
+    async fetchAll() {
+      await Promise.all([
+        this.fetchTodayCount().catch(e => console.error('fetchTodayCount:', e)),
+        this.fetchTrendData().catch(e => console.error('fetchTrendData:', e)),
+        this.fetchAlarmDistData().catch(e => console.error('fetchAlarmDistData:', e)),
+        this.fetchRecentAlerts().catch(e => console.error('fetchRecentAlerts:', e)),
+        this.fetchSystemResources().catch(e => console.error('fetchSystemResources:', e)),
+        this.fetchSkillList().catch(e => console.error('fetchSkillList:', e)),
+        this.fetchCameraStats().catch(e => console.error('fetchCameraStats:', e)),
+      ]);
+    },
+    async fetchTodayCount() {
+      try {
+        const dateRange = this.getDateRange('day');
+        const res = await alertAPI.getAlertStatistics({ granularity: 'hour', ...dateRange });
+        const stats = statisticsFromResponse(res);
+        if (!stats) return;
+        this.alertTrendTotal = (stats.summary || {}).total_alerts || 0;
+      } catch (e) {
+        console.error('获取今日预警总数失败:', e);
+      }
+    },
+    async fetchTrendData() {
+      this.alertTrendLoading = true;
+      try {
+        const range = this.alertTrendRange;
+        const granularity = range === 'day' ? 'hour' : range === 'month' ? 'month' : 'day';
+        const dateRange = this.getDateRange(range);
+        const res = await alertAPI.getAlertStatistics({ granularity, ...dateRange });
+        const stats = statisticsFromResponse(res);
+        if (!stats) return;
+        const trend = stats.trend || [];
+        this.renderTrendChart(trend.map(t => t.label), trend.map(t => t.count));
+      } catch (e) {
+        console.error('获取趋势数据失败:', e);
       } finally {
         this.alertTrendLoading = false;
       }
     },
-    /** 切换预警趋势时间范围：today=今日, week=近7天, month=本月 */
-    setAlertTrendRange(range) {
-      if (this.alertTrendRange === range) return;
-      this.alertTrendRange = range;
-      this.fetchAlertTrendStats();
+    async fetchAlarmDistData() {
+      try {
+        const dateRange = this.getDateRange(this.alarmDistTimeRange);
+        const res = await alertAPI.getAlertStatistics({ granularity: 'day', ...dateRange });
+        const stats = statisticsFromResponse(res);
+        if (!stats) return;
+        const byType = stats.by_type || [];
+        const colors = ['#447CF9', '#FF9500', '#FF2D55', '#4CD964', '#9b59b6', '#06b6d4', '#e74c3c', '#f1c40f'];
+        const pieData = byType.map((t, i) => ({
+          value: t.count,
+          name: t.name,
+          itemStyle: { color: colors[i % colors.length] }
+        }));
+        this.renderAlarmDistChart(pieData);
+      } catch (e) {
+        console.error('获取类型分布失败:', e);
+      }
+    },
+    async fetchRecentAlerts() {
+      try {
+        const res = await alertAPI.getRealTimeAlerts({ page: 1, limit: 6 });
+        const alerts = alertsFromRealTimeResponse(res);
+        this.latestAlerts = alerts.map(a => ({
+          name: a.alert_name || a.skill_name_zh || a.alert_type || '未知预警',
+          camera: a.camera_name || a.location || '--',
+          location: a.location || '--',
+          time: a.alert_time ? a.alert_time.replace('T', ' ').slice(0, 19) : '--',
+          level: a.alert_level || 3,
+          levelText: LEVEL_TEXT_MAP[a.alert_level] || '三级预警',
+          image: a.minio_frame_url || '/static/img/ai-brain.png',
+        }));
+        this.selectedAlert = this.latestAlerts[0] || null;
+      } catch (e) {
+        console.error('获取最新预警失败:', e);
+      }
+    },
+    async fetchSystemResources() {
+      try {
+        const res = await systemMonitorAPI.getSystemResources();
+        const d = res && res.data;
+        if (!d) return;
+        this.cpuUsage = d.cpu_percent != null ? d.cpu_percent : 0;
+        this.memoryUsage = d.memory ? d.memory.percent : 0;
+        this.diskUsage = d.disk ? d.disk.percent : 0;
+        if (d.gpu && d.gpu.available && d.gpu.devices && d.gpu.devices.length > 0) {
+          this.gpuUsage = d.gpu.devices[0].utilization_percent || 0;
+        } else {
+          this.gpuUsage = 0;
+        }
+        if (typeof d.running_tasks === 'number') this.runningTasks = d.running_tasks;
+        if (typeof d.loaded_models === 'number') this.loadedModels = d.loaded_models;
+        if (typeof d.skill_count === 'number') this.skillCount = d.skill_count;
+        this.reviewStats = {
+          total: typeof d.ai_task_total === 'number' ? d.ai_task_total : 0,
+          online: typeof d.ai_task_online === 'number' ? d.ai_task_online : 0,
+          reviewSkills: typeof d.available_review_skills === 'number' ? d.available_review_skills : 0,
+          reviewEnabled: typeof d.ai_tasks_review_enabled === 'number' ? d.ai_tasks_review_enabled : 0,
+        };
+
+        // 同步更新"分析中"摄像头数（如果已有摄像头列表）
+        if (this.cameraStats.total > 0 && Array.isArray(d.analyzing_camera_ids)) {
+          const analyzingSet = new Set(d.analyzing_camera_ids.map(Number));
+          this._analyzingSet = analyzingSet;
+          this.cameraStats = {
+            ...this.cameraStats,
+            analyzing: d.analyzing_camera_ids.length,
+          };
+        }
+      } catch (e) {
+        console.error('获取系统资源失败:', e);
+      }
+    },
+    async fetchSkillList() {
+      try {
+        const res = await skillAPI.getSkillList({ page: 1, limit: 100 });
+        const d = res && res.data;
+        const list = (d && Array.isArray(d.data)) ? d.data : [];
+        this.myAlgorithms = list.map(s => ({
+          id: String(s.id || s.skill_class_id || ''),
+          name: s.name_zh || s.name || s.skill_name || '未知技能',
+          size: 1,
+        }));
+        this.skillCount = this.myAlgorithms.length;
+      } catch (e) {
+        console.error('获取技能列表失败:', e);
+      }
+    },
+    async fetchCameraStats() {
+      try {
+        const cameraRes = await cameraAPI.getCameraList({ page: 1, limit: 100 });
+        const d = cameraRes && cameraRes.data;
+        const cameras = (d && Array.isArray(d.data)) ? d.data : [];
+        const total = d.total || cameras.length;
+        const online = cameras.filter(c => c.status === true || c.status === 'online').length;
+        const offline = cameras.filter(c => c.status === false || c.status === 'offline').length;
+
+        let analyzing = 0;
+        try {
+          const sysRes = await systemMonitorAPI.getSystemResources();
+          const analyzingIds = (sysRes && sysRes.data && sysRes.data.analyzing_camera_ids) || [];
+          const analyzingSet = new Set(analyzingIds.map(Number));
+          analyzing = cameras.filter(c => analyzingSet.has(Number(c.id))).length;
+        } catch (_) {
+          analyzing = 0;
+        }
+
+        this.cameraStats = { total, online, analyzing, offline };
+      } catch (e) {
+        console.error('获取摄像头统计失败:', e);
+      }
+    },
+    changeAlertTrendRange(range) { this.alertTrendRange = range; },
+    changeAlarmDistTimeRange(range) { this.alarmDistTimeRange = range; },
+    renderTrendChart(xData, yData) {
+      const dom = this.$refs.trendChartEl;
+      if (!dom) return;
+      if (!this.trendChartInstance) this.trendChartInstance = echarts.init(dom);
+      this.trendChartInstance.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 30, bottom: 20, left: 0, right: 15, containLabel: true },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(0,19,40,0.8)',
+          borderColor: 'rgba(0,149,255,0.3)',
+          textStyle: { color: '#00BFFF' },
+          formatter: params => `${params[0].name}<br/>预警数: <b>${params[0].value}</b>`,
+        },
+        xAxis: {
+          type: 'category', data: xData, boundaryGap: false,
+          axisLine: { lineStyle: { color: 'rgba(120,140,180,0.3)' } },
+          axisLabel: { color: '#7888a8', fontSize: 10 },
+        },
+        yAxis: {
+          type: 'value', min: 0, minInterval: 1,
+          splitLine: { lineStyle: { color: 'rgba(120,140,180,0.15)' } },
+          axisLabel: { color: '#7888a8', fontSize: 10 },
+        },
+        series: [{
+          type: 'line', data: yData, smooth: true, symbol: 'circle', symbolSize: 5,
+          lineStyle: { color: '#0095ff', width: 2 },
+          itemStyle: { color: '#0095ff', borderColor: '#fff', borderWidth: 1 },
+          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(0,149,255,0.4)' },
+            { offset: 1, color: 'rgba(0,149,255,0.02)' },
+          ]) },
+        }],
+      }, true);
+    },
+    handleTrendChartResize() {
+      if (this.trendChartInstance) this.trendChartInstance.resize();
     },
     updateTime() {
       const now = new Date();
@@ -1005,46 +1143,37 @@ export default {
         this.skillDisplayOffset = (this.skillDisplayOffset + 8) % len;
       }, 3000);
     },
-    initAlarmDistChart() {
+    renderAlarmDistChart(data) {
       const el = this.$refs.alarmDistChart;
       if (!el) return;
-      const data = [
-        { value: 15, name: '人员追踪', itemStyle: { color: '#4CD964' } },
-        { value: 35, name: '安全帽检测', itemStyle: { color: '#447CF9' } },
-        { value: 25, name: '火焰烟雾', itemStyle: { color: '#FF9500' } },
-        { value: 25, name: '有限空间', itemStyle: { color: '#FF2D55' } }
-      ];
-      if (this.alarmDistChart) this.alarmDistChart.dispose();
-      this.alarmDistChart = echarts.init(el);
+      if (!this.alarmDistChart) this.alarmDistChart = echarts.init(el);
       this.alarmDistChart.setOption({
         backgroundColor: 'transparent',
-        tooltip: { trigger: 'item', formatter: '{b}: {d}%' },
+        tooltip: { trigger: 'item', formatter: '{b}: {c}条 ({d}%)' },
         legend: {
-          orient: 'horizontal',
-          bottom: '2%',
-          left: 'center',
+          orient: 'vertical',
+          right: '2%',
+          top: 'middle',
           textStyle: { color: '#9eb3d4', fontSize: 11 },
           itemWidth: 10,
           itemHeight: 10,
-          itemGap: 14,
+          itemGap: 10,
+          formatter: name => {
+            const item = data.find(d => d.name === name);
+            return item ? `${name}  ${item.value}` : name;
+          },
           data: data.map(d => d.name)
         },
         series: [{
           type: 'pie',
-          radius: ['40%', '62%'],
-          center: ['50%', '44%'],
+          radius: ['40%', '65%'],
+          center: ['30%', '50%'],
           data: data,
-          label: {
-            show: true,
-            formatter: '{b}\n{d}%',
-            fontSize: 12,
-            color: '#fff',
-            lineHeight: 18
-          },
+          label: { show: false },
           labelLine: { show: false },
           emphasis: { scale: true, itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,0.3)' } }
         }]
-      });
+      }, true);
     },
     handleAlarmDistChartResize() {
       if (this.alarmDistChart) this.alarmDistChart.resize();
@@ -3431,6 +3560,34 @@ export default {
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
 }
 
+.panel-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab-item {
+  padding: 2px 8px;
+  font-size: 11px;
+  color: #7EAEE5;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
+}
+
+.tab-item:hover {
+  color: #00FFFF;
+  border-color: rgba(0, 255, 255, 0.5);
+}
+
+.tab-item.active {
+  color: #00FFFF;
+  border-color: #00FFFF;
+  background: rgba(0, 255, 255, 0.12);
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.4);
+}
+
 .card-content {
   padding: 4px 8px;
   height: calc(100% - 36px);
@@ -5236,6 +5393,12 @@ export default {
   display: block;
 }
 
+.trend-chart-echarts {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
 .chart-header {
   display: flex;
   justify-content: space-between;
@@ -5850,16 +6013,12 @@ export default {
 .location-info {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
 }
 
 .location,
 .weather-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   color: #7EAEE5;
-  margin-right: 40px;
 }
 
 .location i,
@@ -5867,10 +6026,14 @@ export default {
   color: #00FFFF;
   font-size: 16px;
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+  margin-right: 4px;
+}
+
+.weather-divider {
+  color: rgba(126, 174, 229, 0.4);
 }
 
 .air-quality {
-  margin-left: 8px;
   color: #44FF9B;
 }
 
@@ -7008,79 +7171,56 @@ export default {
 .alert-alarm-tag.alarm-level-3 { color: #fff; background: #3eaef9; }
 .alert-alarm-tag.alarm-level-4 { color: #fff; background: #44FF9B; }
 
-/* 技能调用统计样式：填满卡片区域 */
-.alarm-forwarding .skill-stats-list {
-  flex: 1;
+/* 任务与复判概览：铺满 card-content 剩余区域 */
+.alarm-forwarding .review-overview-content {
+  flex: 1 1 0;
   min-height: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
-  gap: 6px;
-  padding: 5px 0;
+  align-self: stretch;
 }
 
-.skill-stats-list {
+.review-kpi-grid {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  align-content: stretch;
+}
+
+.review-kpi {
+  min-height: 0;
+  min-width: 0;
+  box-sizing: border-box;
+  background: rgba(0, 20, 50, 0.35);
+  border: 1px solid rgba(35, 88, 148, 0.35);
+  border-radius: 6px;
+  padding: 8px 6px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 5px 0;
-}
-
-.skill-stat-item {
-  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
-  flex: 1;
-  min-height: 24px;
+  text-align: center;
 }
 
-.skill-stat-name {
-  min-width: 96px;
-  width: 96px;
-  flex-shrink: 0;
-  color: #7EAEE5;
-  font-size: 12px;
-  text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.skill-stat-bar-wrap {
-  flex: 1;
-  height: 16px;
-  background: rgba(0, 20, 50, 0.4);
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid rgba(35, 88, 148, 0.3);
-}
-
-.skill-stat-bar {
-  height: 100%;
-  border-radius: 8px;
-  transition: width 1s ease;
-  position: relative;
-}
-
-.skill-stat-bar::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%);
-  border-radius: 8px;
-}
-
-.skill-stat-count {
-  width: 45px;
-  flex-shrink: 0;
-  color: #00FFFF;
-  font-size: 12px;
+.review-kpi-value {
+  color: #00ffff;
+  font-size: clamp(18px, 2.8vh, 26px);
   font-weight: bold;
-  text-align: right;
-  text-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
+  line-height: 1.2;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.25);
+}
+
+.review-kpi-label {
+  margin-top: 6px;
+  color: #7eaee5;
+  font-size: clamp(10px, 1.5vh, 12px);
+  line-height: 1.25;
+  padding: 0 4px;
 }
 
 /* 摄像头圆环颜色 */

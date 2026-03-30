@@ -1,5 +1,6 @@
 <script>
 import WarningDetail from './warningDetail.vue'
+import { reviewRecordAPI } from '../../service/VisionAIService.js'
 
 export default {
   name: "ReviewRecords",
@@ -13,40 +14,20 @@ export default {
   },
   data() {
     return {
-      // 统计数据
+      // 看板：多模态/复判总数；预警处置覆盖（已处理∪归档∪误报∪有复判记录）/总预警；TOP3 按预警技能复判次数
       statistics: {
-        reviewed: 302,
-        total: 325,
-        percentage: 92.92
+        reviewed: 0,
+        total: 0,
+        percentage: 0,
+        closureCount: 0,
+        closureTotal: 0,
+        closurePct: 0,
+        /** 复判记录条数 / 系统预警总数（复判/预警比），占比可>100% */
+        reviewAlertCount: 0,
+        reviewAlertTotal: 0,
+        reviewAlertRatioPct: 0,
       },
-      
-      // TOP3排行数据
-      topData: [
-        {
-          id: 'bf21b82aa7...',
-          name: 'bf21b82aa7...',
-          count: 626,
-          total: 6210,
-          percentage: 99.94,
-          color: '#409EFF'
-        },
-        {
-          id: 'helmet_detection',
-          name: '戴帽识别',
-          count: 3972,
-          total: 3972,
-          percentage: 100.00,
-          color: '#67C23A'
-        },
-        {
-          id: 'person_crossing',
-          name: '人员穿越线...',
-          count: 164,
-          total: 175,
-          percentage: 93.71,
-          color: '#E6A23C'
-        }
-      ],
+      topData: [],
       
       // 搜索条件
       searchForm: {
@@ -380,25 +361,10 @@ export default {
       return this.filteredData.length
     }
   },
-  watch: {
-    // 监听筛选数据变化，更新统计信息
-    filteredData(newData) {
-      // 根据筛选后的数据更新统计信息
-      const autoCount = newData.filter(item => item.reviewType === 'auto').length
-      const manualCount = newData.filter(item => item.reviewType === 'manual').length
-      
-      // 更新 TOP3 数据（示例逻辑，实际项目中应该根据具体业务需求计算）
-      this.updateStatistics(newData)
-    }
-  },
-  mounted() {
-    this.getReviewList()
-    // 确保初始数据正确显示
-    this.$nextTick(() => {
-      console.log('ReviewList length:', this.reviewList.length)
-      console.log('FilteredData length:', this.filteredData.length)
-      console.log('CurrentPageData length:', this.currentPageData.length)
-    })
+  async mounted() {
+    await this.getReviewList()
+    await this.fetchDashboardStats()
+    this.applyTopFromListIfNeeded()
   },
   methods: {
     // 截断文本
@@ -413,12 +379,86 @@ export default {
       this.$router.go(-1)
     },
     
+    overviewPayload(res) {
+      const raw = res && res.data
+      if (!raw) return null
+      if (typeof raw.total_reviews === 'number') return raw
+      if (raw.data && typeof raw.data.total_reviews === 'number') return raw.data
+      return null
+    },
+
+    /** 接口未返回 TOP3 时，用当前列表按预警名称聚合（与列表数据一致） */
+    applyTopFromListIfNeeded() {
+      if (this.topData.length > 0 || !this.reviewList.length) return
+      const totalR = this.statistics.total > 0 ? this.statistics.total : this.reviewList.length
+      if (!totalR) return
+      const map = {}
+      for (const r of this.reviewList) {
+        const k = (r.title && String(r.title).trim()) || '未知预警'
+        map[k] = (map[k] || 0) + 1
+      }
+      const entries = Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 3)
+      const colors = ['#409EFF', '#67C23A', '#E6A23C']
+      this.topData = entries.map(([name, cnt], i) => ({
+        id: `local-${i}-${name}`,
+        name: this.truncateText(name, 14),
+        count: cnt,
+        total: totalR,
+        percentage: totalR > 0 ? Math.round((cnt / totalR) * 10000) / 100 : 0,
+        color: colors[i] || '#909399',
+      }))
+    },
+
+    async fetchDashboardStats() {
+      try {
+        const overRes = await reviewRecordAPI.getReviewRecordStatistics()
+        const o = this.overviewPayload(overRes)
+        if (!o || typeof o.total_reviews !== 'number') return
+        const totalR = o.total_reviews
+        const auto = typeof o.auto_reviews === 'number' ? o.auto_reviews : 0
+        const closureCount = typeof o.handled_or_reviewed_alerts === 'number'
+          ? o.handled_or_reviewed_alerts
+          : 0
+        const closureTotal = typeof o.total_alerts === 'number' ? o.total_alerts : 0
+        const closurePct = typeof o.alert_handle_rate_pct === 'number'
+          ? o.alert_handle_rate_pct
+          : (closureTotal > 0 ? Math.round((closureCount / closureTotal) * 10000) / 100 : 0)
+        const reviewAlertRatioPct = closureTotal > 0
+          ? Math.round((totalR / closureTotal) * 10000) / 100
+          : 0
+        this.statistics = {
+          reviewed: auto,
+          total: totalR,
+          percentage: totalR > 0 ? Math.round((auto / totalR) * 10000) / 100 : 0,
+          closureCount,
+          closureTotal,
+          closurePct,
+          reviewAlertCount: totalR,
+          reviewAlertTotal: closureTotal,
+          reviewAlertRatioPct,
+        }
+        const skills = Array.isArray(o.top_review_skills) ? o.top_review_skills : []
+        const colors = ['#409EFF', '#67C23A', '#E6A23C']
+        this.topData = skills.slice(0, 3).map((row, i) => {
+          const cnt = row.review_count || 0
+          return {
+            id: `skill-${String(row.name || i)}-${i}`,
+            name: this.truncateText(row.name || '未知', 14),
+            count: cnt,
+            total: totalR,
+            percentage: totalR > 0 ? Math.round((cnt / totalR) * 10000) / 100 : 0,
+            color: colors[i] || '#909399',
+          }
+        })
+      } catch (e) {
+        console.error('获取复判看板统计失败:', e)
+      }
+    },
+
     // 获取复判记录列表
     async getReviewList() {
       this.loading = true
       try {
-        // 调用后端API获取复判记录
-        const { reviewRecordAPI } = await import('../../service/VisionAIService.js')
         const response = await reviewRecordAPI.getReviewRecords({
           page: 1,
           limit: 1000, // 获取所有记录
@@ -621,15 +661,16 @@ export default {
     
     // 刷新数据
     async handleRefresh() {
-      this.loading = true
       this.selectedRecords = []
       this.cardHoverStates = {}
       try {
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500))
+        await this.getReviewList()
+        await this.fetchDashboardStats()
+        this.applyTopFromListIfNeeded()
         this.$message.success('数据已刷新')
-      } finally {
-        this.loading = false
+      } catch (e) {
+        console.error(e)
+        this.$message.error('刷新失败')
       }
     },
     
@@ -973,13 +1014,6 @@ export default {
       }
     },
     
-    // 更新统计信息
-    updateStatistics(newData) {
-      // 根据筛选后的数据更新统计信息，这里主要是为了演示功能
-      // 实际项目中，统计数据应该由后端API提供
-      console.log('筛选后数据量:', newData.length)
-    },
-    
     // 将日期时间转换为标准格式（YYYY-MM-DD HH:mm:ss）
     formatDateTimeToStandard(date) {
       try {
@@ -1059,28 +1093,44 @@ export default {
         <div class="overview-item">
           <div class="overview-label">智能复判数量</div>
           <div class="overview-value">{{ statistics.reviewed }}/{{ statistics.total }}</div>
-          <div class="overview-subtitle">复判完成数/分析完成数</div>
+          <div class="overview-subtitle">多模态复判 / 复判总条数</div>
         </div>
         
-        <!-- 完成率 -->
+        <!-- 预警处置覆盖：已处理/归档/误报 或 已有复判记录，相对全部预警 -->
         <div class="overview-item">
-          <div class="overview-label">完成率</div>
-          <div class="overview-value percentage-value">{{ statistics.percentage }}%</div>
-          <div class="overview-subtitle">总体完成率</div>
+          <div class="overview-label">预警处置覆盖</div>
+          <div class="overview-value overview-value-mixed">
+            <span class="mixed-fraction">{{ statistics.closureCount }}/{{ statistics.closureTotal }}</span>
+            <span class="mixed-sep" aria-hidden="true">·</span>
+            <span class="mixed-pct">{{ statistics.closurePct }}%</span>
+          </div>
+          <div class="overview-subtitle">已处理、已归档、误报或已产生复判的预警 / 全部预警</div>
+        </div>
+
+        <!-- 复判记录条数 vs 系统预警总数（复判/预警比，亦称复判密度） -->
+        <div class="overview-item">
+          <div class="overview-label">复判/预警比</div>
+          <div class="overview-value overview-value-mixed">
+            <span class="mixed-fraction">{{ statistics.reviewAlertCount }}/{{ statistics.reviewAlertTotal }}</span>
+            <span class="mixed-sep" aria-hidden="true">·</span>
+            <span class="mixed-pct">{{ statistics.reviewAlertRatioPct }}%</span>
+          </div>
+          <div class="overview-subtitle">复判记录数 / 预警总数（一条预警可多次复判，占比可大于100%）</div>
         </div>
         
-        <!-- TOP3排行 -->
+        <!-- 按预警技能/名称的复判次数 TOP3 -->
         <div class="overview-ranking">
           <div class="ranking-header">
-            <span class="ranking-title">智能复判数量TOP3</span>
+            <span class="ranking-title">预警类型复判 TOP3</span>
             <div class="ranking-legend">
               <span class="legend-dot completed"></span>
-              <span class="legend-text">复判完成数</span>
+              <span class="legend-text">该类型复判次数</span>
               <span class="legend-dot total"></span>
-              <span class="legend-text">分析完成数</span>
+              <span class="legend-text">复判总条数</span>
             </div>
           </div>
           <div class="ranking-items">
+            <div v-if="!topData.length" class="ranking-empty">暂无数据（无复判记录或统计未就绪）</div>
             <div v-for="(item, index) in topData" :key="item.id" class="ranking-row">
               <div class="ranking-index" :style="{ backgroundColor: item.color }">{{ index + 1 }}</div>
               <div class="ranking-name">{{ item.name }}</div>
@@ -1417,6 +1467,8 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  text-align: center;
   min-width: 180px;
   padding: 0 20px;
   border-right: 1px solid #f0f0f0;
@@ -1443,6 +1495,32 @@ export default {
 
 .overview-value.percentage-value {
   color: #409eff;
+}
+
+/* 分数与百分比同一行（在栏内水平居中） */
+.overview-value-mixed {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.overview-value-mixed .mixed-fraction {
+  color: #303133;
+}
+
+.overview-value-mixed .mixed-sep {
+  color: #dcdfe6;
+  font-weight: 400;
+  user-select: none;
+}
+
+.overview-value-mixed .mixed-pct {
+  color: #409eff;
+  font-weight: bold;
 }
 
 .overview-subtitle {
@@ -1502,6 +1580,13 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.ranking-empty {
+  font-size: 12px;
+  color: #c0c4cc;
+  padding: 12px 0;
+  text-align: center;
 }
 
 .ranking-row {
