@@ -474,11 +474,22 @@ export default {
 
     this.$nextTick(() => {
       this.initBrainScene();
-      this.fetchAll();
+      this.fetchAll().then(() => {
+        this.$nextTick(() => {
+          this.handleTrendChartResize();
+          this.handleAlarmDistChartResize();
+        });
+      });
       this.startSkillCarousel();
       window.addEventListener('resize', this.handleResize);
       window.addEventListener('resize', this.handleAlarmDistChartResize);
       window.addEventListener('resize', this.handleTrendChartResize);
+
+      setTimeout(() => {
+        this.handleResize();
+        this.handleTrendChartResize();
+        this.handleAlarmDistChartResize();
+      }, 500);
     });
 
     this.resourceTimer = setInterval(() => {
@@ -6780,9 +6791,10 @@ export default {
 .skill-card-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr 1fr;
   gap: 12px;
   padding: 10px 0;
-  height: 100%;
+  flex: 1;
   min-height: 120px;
 }
 
