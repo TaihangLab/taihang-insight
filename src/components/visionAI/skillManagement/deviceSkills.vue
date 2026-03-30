@@ -1762,8 +1762,9 @@ export default {
 .skills-grid .skill-card .skill-thumbnail {
   position: relative;
   width: 100%;
-  padding-top: 63%; 
+  padding-top: 63%;
   background-color: #f5f7fa;
+  overflow: hidden;
 }
 
 .skills-grid .skill-card .skill-thumbnail .thumbnail-img {
@@ -1772,8 +1773,10 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  padding: 0;
+  object-fit: contain;
+  object-position: center;
+  box-sizing: border-box;
+  padding: 6px;
 }
 
 .skills-grid .skill-card .skill-thumbnail .status-badge {
