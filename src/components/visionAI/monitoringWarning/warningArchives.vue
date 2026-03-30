@@ -333,8 +333,8 @@ export default {
         archive_id: this.normalizeId(a.archive_id || a.id),
         name: a.name,
         location: a.location,
-        timeRange: `${a.start_time}-${a.end_time}`,
-        createTime: a.created_at,
+        timeRange: `${this.normalizeTimeStr(a.start_time)}-${this.normalizeTimeStr(a.end_time)}`,
+        createTime: this.normalizeTimeStr(a.created_at),
         description: a.description || '-',
         image: a.image_url || ''
       }));
@@ -399,8 +399,8 @@ export default {
         archive_id: this.normalizeId(d.archive_id || d.id),
         name: d.name,
         location: d.location,
-        timeRange: `${d.start_time}-${d.end_time}`,
-        createTime: d.created_at,
+        timeRange: `${this.normalizeTimeStr(d.start_time)}-${this.normalizeTimeStr(d.end_time)}`,
+        createTime: this.normalizeTimeStr(d.created_at),
         description: d.description || '-',
         image: d.image_url || ''
       };
@@ -449,7 +449,7 @@ export default {
         id: record.alert_id,
         name: record.alert_name,
         deviceName: record.camera_name,
-        warningTime: record.alert_time,
+        warningTime: this.normalizeTimeStr(record.alert_time),
         warningLevel: this.convertAlertLevel(record.alert_level),
         warningType: record.alert_type || '',
         location: record.location || '',
@@ -458,7 +458,7 @@ export default {
         violationImage: record.minio_frame_url || '',
         violationVideo: record.minio_video_url || '',
         status: record.status || 1,
-        createTime: record.created_at,
+        createTime: this.normalizeTimeStr(record.created_at),
         _apiData: record
       }));
       this.pagination.total = totalCount;
@@ -1863,9 +1863,16 @@ export default {
       this.addForm.violationVideo = '';
     },
     // 格式化时间
+    // 将后端返回的各种时间格式统一为 "YYYY-MM-DD HH:mm:ss"
+    normalizeTimeStr(t) {
+      if (!t) return '';
+      return t.replace('T', ' ').replace(/\.\d+Z?$/, '').replace(/Z$/, '').trim();
+    },
+
     formatTime(timeString) {
       try {
         if (!timeString) return timeString;
+        timeString = this.normalizeTimeStr(timeString);
 
         // 检查是否是时间范围格式（包含" HH:mm:ss-"这样的模式）
         const rangePattern = /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})-(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/;
@@ -1973,7 +1980,10 @@ export default {
             :class="{'active': currentArchiveId === archive.id}"
           >
             <div class="archive-content" @click="switchToArchive(archive.id)">
-              <div class="archive-name">{{ archive.name }}</div>
+              <div class="archive-name-row">
+                <span class="archive-name">{{ archive.name }}</span>
+                <span class="archive-item-id" :title="archive.id">#{{ archive.id }}</span>
+              </div>
               <div class="archive-location">位置: {{ archive.location }}</div>
               <div class="archive-time">创建: {{ formatTime(archive.createTime) }}</div>
             </div>
@@ -2011,6 +2021,10 @@ export default {
             </div>
             <div class="archive-detail-body">
               <div class="info-grid">
+                <div class="info-item">
+                  <span class="label">档案编号：</span>
+                  <span class="value archive-id-value" :title="archiveInfo.id">{{ archiveInfo.id || '-' }}</span>
+                </div>
                 <div class="info-item">
                   <span class="label">所属位置：</span>
                   <span class="value">{{ archiveInfo.location }}</span>
@@ -2867,6 +2881,28 @@ export default {
   color: #1e40af;
 }
 
+.archive-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.archive-item-id {
+  font-size: 10px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .archive-location, .archive-time {
   font-size: 12px;
   color: #6b7280;
@@ -2959,6 +2995,13 @@ export default {
   flex: 1;
   text-align: left;
   word-break: break-all;
+}
+
+.info-item .archive-id-value {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  color: #909399;
+  letter-spacing: 0.5px;
 }
 
 /* 档案操作按钮 */
