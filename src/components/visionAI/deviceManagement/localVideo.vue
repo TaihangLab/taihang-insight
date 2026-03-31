@@ -725,7 +725,9 @@ export default {
 .local-video-container {
   padding: 20px;
   background: #f5f7fa;
-  min-height: calc(100vh - 60px);
+  height: 100%;
+  overflow-y: auto !important;
+  box-sizing: border-box;
 }
 
 /* 页面标题 */

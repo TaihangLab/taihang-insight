@@ -1158,11 +1158,37 @@
   align-items: center;
   margin: 2px 5px;
   padding: 2px 0;
+  line-height: 1.2;
 }
 
 .skill-tag-item .skill-name {
   font-size: 12px;
+  color: #606266;
   white-space: nowrap;
+  margin: 0;
+  padding: 0;
+  line-height: 1.2;
+}
+
+.skill-tag-item .skill-type-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  height: 14px;
+  border-radius: 3px;
+  padding: 0 4px;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.skill-tag-item .skill-type-ai {
+  background: #409EFF;
+  color: #fff;
+}
+
+.skill-tag-item .el-icon-magic-stick {
+  flex-shrink: 0;
 }
 
 .status-dot {
@@ -1263,28 +1289,6 @@
   margin-left: 85px;
 }
 
-.table-skill-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 5px;
-}
-
-.table-skill-item:last-child {
-  margin-bottom: 0;
-}
-
-.table-skill-item .skill-name {
-  margin-right: 8px;
-  font-size: 13px;
-}
-
-.table-skill-item .el-tag {
-  margin-left: 5px;
-  padding: 0 6px;
-  height: 20px;
-  line-height: 18px;
-}
 
 .tag-add-area {
   margin-top: 10px;

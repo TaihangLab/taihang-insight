@@ -97,9 +97,10 @@
               <template slot-scope="{ row }">
                 <div v-if="row.skill && row.skill !== '-'" class="skill-tags-container">
                   <div v-for="(skillName, idx) in row.skill.split(',')" :key="idx" class="skill-tag-item">
-                    <span class="skill-name" :style="{color: row.config && row.config[skillName.trim()] && row.config[skillName.trim()].status ? '#67C23A' : '#909399'}">
-                      {{ skillName.trim() }}
-                    </span>
+                    <i v-if="row.llm_skill_names && row.llm_skill_names.includes(skillName.trim())"
+                       class="el-icon-magic-stick" style="color: #E6A23C; margin-right: 4px; font-size: 13px;" title="大模型技能"></i>
+                    <span v-else class="skill-type-badge skill-type-ai" title="视觉技能">AI</span>
+                    <span class="skill-name">{{ skillName.trim() }}</span>
                   </div>
                 </div>
                 <span v-else>-</span>
@@ -794,8 +795,11 @@
               v-for="skill in deviceDetailData.skill_names"
               :key="skill"
               effect="plain"
-              type="success"
+              :type="deviceDetailData.llm_skill_names && deviceDetailData.llm_skill_names.includes(skill) ? 'warning' : 'success'"
               class="skill-tag">
+              <i v-if="deviceDetailData.llm_skill_names && deviceDetailData.llm_skill_names.includes(skill)"
+                 class="el-icon-magic-stick" style="margin-right: 4px;"></i>
+              <span v-else class="skill-type-badge skill-type-ai" style="margin-right: 4px;">AI</span>
               {{ skill }}
             </el-tag>
           </div>
