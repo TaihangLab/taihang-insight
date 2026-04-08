@@ -1,21 +1,21 @@
 <template>
   <div class="visual-center" ref="visualCenter">
     <div class="top-bar">
-      <div class="left-controls">
-        <div class="time">{{ currentDetailTime }}</div>
-        <div class="time-filter">
-          <el-radio-group v-model="timeRange" size="mini" @change="handleTimeRangeChange">
-            <el-radio-button label="day">日</el-radio-button>
-            <el-radio-button label="week">周</el-radio-button>
-            <el-radio-button label="month">月</el-radio-button>
-            <el-radio-button label="year">年</el-radio-button>
-            <el-radio-button label="custom" @click.native="onCustomClick">自定义</el-radio-button>
-          </el-radio-group>
-        </div>
-      </div>
-      <div class="title">
-        <span>太行视觉AI平台</span>
-      </div>
+      <span class="top-time">{{ currentDetailTime }}</span>
+      <el-radio-group
+        class="time-tabs"
+        v-model="timeRange"
+        size="mini"
+        :style="{ display: 'inline-flex', alignItems: 'center', flexWrap: 'nowrap' }"
+        @change="handleTimeRangeChange"
+      >
+        <el-radio-button label="day">日</el-radio-button>
+        <el-radio-button label="week">周</el-radio-button>
+        <el-radio-button label="month">月</el-radio-button>
+        <el-radio-button label="year">年</el-radio-button>
+        <el-radio-button label="custom">自定义</el-radio-button>
+      </el-radio-group>
+      <div class="title"><span>太行视觉AI平台</span></div>
       <div class="right-controls">
         <div class="location-info">
           <div v-if="locationInfo.loading" class="loading-indicator">
@@ -26,7 +26,7 @@
             <span class="weather-divider">|</span>
             <span class="weather-info"><i class="el-icon-sunny"></i> {{ locationInfo.weather }}</span>
             <span class="weather-divider">|</span>
-              <span class="air-quality">{{ locationInfo.airQuality }}</span>
+            <span class="air-quality">{{ locationInfo.airQuality }}</span>
           </template>
         </div>
         <div class="fullscreen-btn" @click="toggleFullscreen">
@@ -340,11 +340,14 @@ function alertsFromRealTimeResponse(res) {
 export default {
   name: 'VisualCenter',
   data() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const initTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     return {
       todayWarnings: 0,
       deviceCount: 0,
       totalDevices: 0,
-      currentDetailTime: '',
+      currentDetailTime: initTime,
 
       locationInfo: { location: '太行工业园区', weather: '-- --', airQuality: '', loading: false },
 
@@ -482,12 +485,6 @@ export default {
         this.datePickerDialogVisible = true;
       } else {
         this.fetchAllStats();
-      }
-    },
-
-    onCustomClick() {
-      if (this.timeRange === 'custom') {
-        this.datePickerDialogVisible = true;
       }
     },
 
@@ -988,45 +985,25 @@ export default {
 
 .top-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  height: 30px;
+  padding: 0 12px;
   margin-bottom: 6px;
   position: relative;
   z-index: 2;
-  padding: 0 12px;
-  height: 30px;
   flex-shrink: 0;
 }
 
-.left-controls {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.top-bar .time {
+.top-time {
   font-size: 18px;
   font-weight: bold;
   color: #00ffff;
   white-space: nowrap;
   line-height: 30px;
+  margin-right: 14px;
 }
 
-.time-filter {
-  display: inline-flex;
-  align-items: center;
-  line-height: 1;
-  vertical-align: middle;
-}
-
-.time-filter >>> .el-radio-group {
-  display: inline-flex;
-  align-items: center;
-  vertical-align: middle;
-  line-height: 1;
-}
-
-.time-filter >>> .el-radio-button__inner {
+.time-tabs >>> .el-radio-button__inner {
   background-color: rgba(6, 30, 93, 0.5);
   border-color: rgba(0, 255, 255, 0.3);
   color: #7eaee5;
@@ -1035,7 +1012,7 @@ export default {
   line-height: 1;
 }
 
-.time-filter >>> .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+.time-tabs >>> .el-radio-button__orig-radio:checked + .el-radio-button__inner {
   background-color: rgba(0, 255, 255, 0.2);
   border-color: #00ffff;
   color: #00ffff;
@@ -2065,7 +2042,8 @@ export default {
   right: 0;
   z-index: 10;
   margin-bottom: 0;
-  padding: 10px 20px;
+  padding: 0 20px;
+  height: 36px;
   background: linear-gradient(180deg, rgba(0, 20, 45, 0.95) 0%, rgba(0, 10, 25, 0.9) 100%);
 }
 

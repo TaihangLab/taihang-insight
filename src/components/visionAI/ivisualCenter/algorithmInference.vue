@@ -2,21 +2,21 @@
   <div class="algorithm-inference-platform">
     <!-- 顶部标题 -->
     <div class="top-bar">
-      <div class="left-section">
-        <div class="time">{{ currentTime }}</div>
-        <div class="time-filter">
-          <el-radio-group v-model="timeRange" size="mini" @change="handleTimeRangeChange">
-            <el-radio-button label="day">日</el-radio-button>
-            <el-radio-button label="week">周</el-radio-button>
-            <el-radio-button label="month">月</el-radio-button>
-            <el-radio-button label="year">年</el-radio-button>
-            <el-radio-button label="custom" @click.native="onCustomClick">自定义</el-radio-button>
-          </el-radio-group>
-        </div>
-      </div>
-      <div class="title">
-        <span>太行AI智算中心</span>
-      </div>
+      <span class="top-time">{{ currentTime }}</span>
+      <el-radio-group
+        class="time-tabs"
+        v-model="timeRange"
+        size="mini"
+        :style="{ display: 'inline-flex', alignItems: 'center', flexWrap: 'nowrap' }"
+        @change="handleTimeRangeChange"
+      >
+        <el-radio-button label="day">日</el-radio-button>
+        <el-radio-button label="week">周</el-radio-button>
+        <el-radio-button label="month">月</el-radio-button>
+        <el-radio-button label="year">年</el-radio-button>
+        <el-radio-button label="custom">自定义</el-radio-button>
+      </el-radio-group>
+      <div class="title"><span>太行AI智算中心</span></div>
       <div class="right-controls">
         <div class="location-info">
           <div v-if="locationInfo && locationInfo.loading" class="loading-indicator">
@@ -383,8 +383,11 @@ function fetchStatsDedupe(params) {
 export default {
   name: 'AlgorithmInference',
   data() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const initTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     return {
-      currentTime: '',
+      currentTime: initTime,
       cpuUsage: 0,
       memoryUsage: 0,
       diskUsage: 0,
@@ -653,11 +656,6 @@ export default {
         this.datePickerDialogVisible = true;
       } else {
         this.fetchAllStats();
-      }
-    },
-    onCustomClick() {
-      if (this.timeRange === 'custom') {
-        this.datePickerDialogVisible = true;
       }
     },
     handleCustomDateChange() {
@@ -5028,24 +5026,20 @@ export default {
 .my-algorithms {
   grid-column: 1;
   grid-row: 2;
-  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  /* 添加定位上下文 */
 }
 
 .my-algorithms .card-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  padding: 0;
-  height: calc(100% - 40px);
-  /* 减去标题高度 */
-  position: relative;
-  /* 添加定位上下文 */
+  min-height: 0;
+  height: 0 !important;
+  padding: 8px 10px;
+  overflow: hidden !important;
 }
 
 .algorithm-bubbles {
@@ -6034,15 +6028,15 @@ export default {
 
 .top-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  height: 42px;
+  padding: 0 14px;
   position: relative;
   z-index: 2;
-  padding: 6px 14px;
+  flex-shrink: 0;
   background: linear-gradient(180deg, rgba(0, 30, 60, 0.95) 0%, rgba(0, 15, 35, 0.85) 100%);
   border-bottom: 1px solid rgba(0, 255, 255, 0.15);
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(0, 255, 255, 0.1);
-  flex-shrink: 0;
 }
 
 .top-bar::after {
@@ -6055,29 +6049,17 @@ export default {
   background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.4), transparent);
 }
 
-.left-section {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-shrink: 0;
-  flex-wrap: nowrap;
+.top-time {
+  font-size: 18px;
+  font-weight: bold;
+  color: #00ffff;
+  white-space: nowrap;
+  line-height: 42px;
+  margin-right: 14px;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 
-.time-filter {
-  display: inline-flex;
-  align-items: center;
-  line-height: 1;
-  vertical-align: middle;
-}
-
-.time-filter >>> .el-radio-group {
-  display: inline-flex;
-  align-items: center;
-  vertical-align: middle;
-  line-height: 1;
-}
-
-.time-filter >>> .el-radio-button__inner {
+.time-tabs >>> .el-radio-button__inner {
   background-color: rgba(6, 30, 93, 0.5);
   border-color: rgba(0, 149, 255, 0.3);
   color: #7888a8;
@@ -6086,7 +6068,7 @@ export default {
   line-height: 1;
 }
 
-.time-filter >>> .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+.time-tabs >>> .el-radio-button__orig-radio:checked + .el-radio-button__inner {
   background-color: rgba(0, 149, 255, 0.2);
   border-color: #0095ff;
   color: #00BFFF;
@@ -6243,15 +6225,6 @@ export default {
   position: absolute !important;
 }
 
-.top-bar .time {
-  font-size: 18px;
-  font-weight: bold;
-  color: #00ffff;
-  white-space: nowrap;
-  line-height: 30px;
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-}
-
 .top-bar .title {
   position: absolute;
   left: 50%;
@@ -6268,6 +6241,7 @@ export default {
   justify-content: flex-end;
   gap: 15px;
   flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .top-bar .title span {
@@ -6757,7 +6731,8 @@ export default {
 :-webkit-full-screen .top-bar,
 :-moz-full-screen .top-bar,
 :-ms-fullscreen .top-bar {
-  padding: 12px 20px;
+  padding: 0 20px;
+  height: 42px;
   background: linear-gradient(180deg, rgba(0, 20, 45, 0.95) 0%, rgba(0, 10, 25, 0.9) 100%);
   position: fixed;
   top: 0;
@@ -7087,23 +7062,22 @@ export default {
 
 /* AI技能：固定 4x2 共 8 个，定时换一批显示 */
 .skill-card-grid {
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: 1fr 1fr;
-  gap: 12px;
-  padding: 10px 0;
-  flex: 1;
+  gap: 8px;
   min-height: 0;
-  overflow: hidden;
 }
 
 .skill-card {
   background: linear-gradient(160deg, rgba(15, 45, 85, 0.75) 0%, rgba(8, 28, 52, 0.85) 100%);
   border: 1px solid rgba(68, 124, 249, 0.35);
-  border-radius: 10px;
-  padding: 12px 10px;
+  border-radius: 8px;
+  padding: 4px 6px;
   text-align: center;
   min-height: 0;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7121,7 +7095,7 @@ export default {
   bottom: 0;
   width: 3px;
   background: linear-gradient(180deg, rgba(0, 200, 255, 0.6), rgba(68, 124, 249, 0.4));
-  border-radius: 10px 0 0 10px;
+  border-radius: 8px 0 0 8px;
 }
 
 .skill-card:hover {
@@ -7131,19 +7105,17 @@ export default {
 }
 
 .skill-card-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: rgba(230, 242, 255, 0.95);
-  line-height: 1.35;
+  line-height: 1.3;
   word-break: break-all;
   letter-spacing: 0.02em;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.my-algorithms .card-content {
-  padding: 8px 12px;
-  height: calc(100% - 40px);
-  min-height: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 /* ========== 预警行内缩略图 ========== */
