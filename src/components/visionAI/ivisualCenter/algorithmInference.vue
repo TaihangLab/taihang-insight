@@ -178,15 +178,15 @@
       </div>
 
       <!-- AI技能：卡片网格 -->
-      <div class="dashboard-card my-algorithms">
+      <div class="dashboard-card my-algorithms ai-skill-panel">
         <div class="card-header">
           <div class="title">AI技能</div>
           <span class="skill-count-badge">{{ myAlgorithms.length }}个</span>
         </div>
-        <div class="card-content">
-          <div class="skill-card-grid">
-            <div class="skill-card" v-for="item in displayedSkills" :key="item.id">
-              <div class="skill-card-name">{{ item.name }}</div>
+        <div class="card-content ai-skill-body">
+          <div class="ai-skill-grid">
+            <div class="ai-skill-card" v-for="item in displayedSkills" :key="item.id">
+              <div class="ai-skill-name">{{ item.name }}</div>
             </div>
           </div>
         </div>
@@ -5032,16 +5032,6 @@ export default {
   position: relative;
 }
 
-.my-algorithms .card-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 0 !important;
-  padding: 8px 10px;
-  overflow: hidden !important;
-}
-
 .algorithm-bubbles {
   width: 100%;
   height: 100%;
@@ -7060,62 +7050,95 @@ export default {
   border: 1px solid rgba(0, 255, 255, 0.2);
 }
 
-/* AI技能：固定 4x2 共 8 个，定时换一批显示 */
-.skill-card-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: 1fr 1fr;
-  gap: 8px;
+/* AI技能全新布局：固定 4x2，不依赖旧样式 */
+.ai-skill-panel {
   min-height: 0;
 }
 
-.skill-card {
-  background: linear-gradient(160deg, rgba(15, 45, 85, 0.75) 0%, rgba(8, 28, 52, 0.85) 100%);
-  border: 1px solid rgba(68, 124, 249, 0.35);
-  border-radius: 8px;
-  padding: 4px 6px;
-  text-align: center;
+.ai-skill-panel .ai-skill-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   min-height: 0;
+  height: auto !important;
+  padding: 8px 10px !important;
+  overflow: hidden !important;
+}
+
+.ai-skill-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ai-skill-card {
   min-width: 0;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  padding: 4px 6px;
+  text-align: center;
+  border-radius: 10px;
+  border: 1px solid rgba(76, 155, 255, 0.42);
+  background:
+    linear-gradient(145deg, rgba(19, 53, 98, 0.78) 0%, rgba(10, 31, 58, 0.92) 100%);
+  box-shadow:
+    0 3px 10px rgba(0, 20, 50, 0.36),
+    inset 0 1px 0 rgba(178, 228, 255, 0.12),
+    inset 0 -10px 16px rgba(5, 16, 36, 0.24);
   overflow: hidden;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 20, 50, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  position: relative;
+  transition: transform 0.2s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.skill-card::before {
+.ai-skill-card::before {
   content: '';
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
   width: 3px;
-  background: linear-gradient(180deg, rgba(0, 200, 255, 0.6), rgba(68, 124, 249, 0.4));
-  border-radius: 8px 0 0 8px;
+  background: linear-gradient(180deg, rgba(45, 225, 255, 0.9), rgba(86, 144, 255, 0.58));
+  opacity: 0.9;
 }
 
-.skill-card:hover {
-  border-color: rgba(100, 180, 255, 0.5);
-  box-shadow: 0 4px 16px rgba(68, 124, 249, 0.2), 0 0 20px rgba(0, 200, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+.ai-skill-card::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(173, 227, 255, 0.55), rgba(255, 255, 255, 0));
+}
+
+.ai-skill-card:hover {
   transform: translateY(-1px);
+  border-color: rgba(96, 193, 255, 0.75);
+  box-shadow:
+    0 6px 16px rgba(16, 66, 124, 0.32),
+    0 0 14px rgba(55, 176, 255, 0.16),
+    inset 0 1px 0 rgba(193, 236, 255, 0.2);
 }
 
-.skill-card-name {
+.ai-skill-name {
   font-size: 12px;
-  font-weight: 500;
-  color: rgba(230, 242, 255, 0.95);
   line-height: 1.3;
-  word-break: break-all;
+  color: rgba(238, 248, 255, 0.98);
+  font-weight: 500;
   letter-spacing: 0.02em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  word-break: break-word;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  text-shadow: 0 1px 3px rgba(2, 12, 30, 0.65);
+  padding: 0 2px;
 }
 
 /* ========== 预警行内缩略图 ========== */
