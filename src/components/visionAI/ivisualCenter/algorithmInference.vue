@@ -4,6 +4,15 @@
     <div class="top-bar">
       <div class="left-section">
         <div class="time">{{ currentTime }}</div>
+        <div class="time-filter">
+          <el-radio-group v-model="timeRange" size="mini" @change="handleTimeRangeChange">
+            <el-radio-button label="day">日</el-radio-button>
+            <el-radio-button label="week">周</el-radio-button>
+            <el-radio-button label="month">月</el-radio-button>
+            <el-radio-button label="year">年</el-radio-button>
+            <el-radio-button label="custom" @click.native="onCustomClick">自定义</el-radio-button>
+          </el-radio-group>
+        </div>
       </div>
       <div class="title">
         <span>太行AI智算中心</span>
@@ -26,6 +35,34 @@
         </div>
       </div>
     </div>
+
+    <!-- 自定义日期选择弹框 -->
+    <el-dialog
+      title="选择日期范围"
+      :visible.sync="datePickerDialogVisible"
+      width="420px"
+      custom-class="custom-dialog"
+      :append-to-body="true"
+      :close-on-click-modal="false"
+      :modal-append-to-body="false"
+    >
+      <el-date-picker
+        v-model="customDateRange"
+        type="daterange"
+        value-format="yyyy-MM-dd"
+        range-separator="至"
+        start-placeholder="开始日期"
+        end-placeholder="结束日期"
+        :append-to-body="false"
+        style="width: 100%"
+        :picker-options="{ disabledDate(time) { return time.getTime() > Date.now(); } }"
+        popper-class="date-picker-dropdown"
+      />
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="cancelDatePicker" size="small">取 消</el-button>
+        <el-button type="primary" @click="handleCustomDateChange" size="small">确 定</el-button>
+      </span>
+    </el-dialog>
 
     <div class="dashboard-container">
       <!-- 推理服务资源模块 -->
@@ -199,11 +236,6 @@
       <div class="dashboard-card alarm-statistics">
         <div class="card-header">
           <div class="title">预警类型分布</div>
-          <div class="panel-tabs">
-            <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
-              :class="['tab-item', { active: alarmDistTimeRange === key }]"
-              @click="changeAlarmDistTimeRange(key)">{{ label }}</div>
-          </div>
         </div>
         <div class="card-content">
           <div class="alarm-chart-section">
@@ -264,11 +296,6 @@
       <div class="dashboard-card alarm-info">
         <div class="card-header">
           <div class="title">预警趋势</div>
-          <div class="panel-tabs">
-            <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
-              :class="['tab-item', { active: alertTrendRange === key }]"
-              @click="changeAlertTrendRange(key)">{{ label }}</div>
-          </div>
         </div>
         <div class="card-content">
           <div class="trend-chart">
@@ -338,6 +365,17 @@ function alertsFromRealTimeResponse(res) {
   return [];
 }
 
+const _inflightStats = {};
+function fetchStatsDedupe(params) {
+  const key = `${params.granularity}:${params.start_date}:${params.end_date}`;
+  if (_inflightStats[key]) return _inflightStats[key];
+  const promise = alertAPI.getAlertStatistics(params).finally(() => {
+    delete _inflightStats[key];
+  });
+  _inflightStats[key] = promise;
+  return promise;
+}
+
 export default {
   name: 'AlgorithmInference',
   data() {
@@ -379,9 +417,10 @@ export default {
       ],
       latestAlerts: [],
       alertTrendTotal: 0,
-      alertTrendRange: 'day',
+      timeRange: 'day',
+      customDateRange: [],
+      datePickerDialogVisible: false,
       alertTrendLoading: false,
-      alarmDistTimeRange: 'day',
       reviewStats: {
         total: 0,
         online: 0,
@@ -460,10 +499,7 @@ export default {
       ];
     },
   },
-  watch: {
-    alertTrendRange() { this.fetchTrendData(); },
-    alarmDistTimeRange() { this.fetchAlarmDistData(); },
-  },
+  watch: {},
   mounted() {
     this.updateTime();
     this.timer = setInterval(this.updateTime, 1000);
@@ -593,8 +629,48 @@ export default {
         const start = new Date(now); start.setDate(now.getDate() - 6);
         return { start_date: fmt(start), end_date: today };
       }
+      if (range === 'year') {
+        const start = new Date(now.getFullYear(), 0, 1);
+        return { start_date: fmt(start), end_date: today };
+      }
+      if (range === 'custom') {
+        if (this.customDateRange && this.customDateRange.length === 2) {
+          return { start_date: this.customDateRange[0], end_date: this.customDateRange[1] };
+        }
+        return null;
+      }
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
       return { start_date: fmt(start), end_date: today };
+    },
+    handleTimeRangeChange(value) {
+      if (value === 'custom') {
+        this.datePickerDialogVisible = true;
+      } else {
+        this.fetchAllStats();
+      }
+    },
+    onCustomClick() {
+      if (this.timeRange === 'custom') {
+        this.datePickerDialogVisible = true;
+      }
+    },
+    handleCustomDateChange() {
+      if (this.customDateRange && this.customDateRange.length === 2) {
+        this.datePickerDialogVisible = false;
+        this.fetchAllStats();
+      }
+    },
+    cancelDatePicker() {
+      this.datePickerDialogVisible = false;
+      if (!this.customDateRange || this.customDateRange.length !== 2) {
+        this.timeRange = 'day';
+      }
+    },
+    async fetchAllStats() {
+      await Promise.all([
+        this.fetchTrendData().catch(e => console.error('fetchTrendData:', e)),
+        this.fetchAlarmDistData().catch(e => console.error('fetchAlarmDistData:', e)),
+      ]);
     },
     async fetchAll() {
       await Promise.all([
@@ -610,7 +686,7 @@ export default {
     async fetchTodayCount() {
       try {
         const dateRange = this.getDateRange('day');
-        const res = await alertAPI.getAlertStatistics({ granularity: 'hour', ...dateRange });
+        const res = await fetchStatsDedupe({ granularity: 'hour', ...dateRange });
         const stats = statisticsFromResponse(res);
         if (!stats) return;
         this.alertTrendTotal = (stats.summary || {}).total_alerts || 0;
@@ -621,10 +697,10 @@ export default {
     async fetchTrendData() {
       this.alertTrendLoading = true;
       try {
-        const range = this.alertTrendRange;
-        const granularity = range === 'day' ? 'hour' : range === 'month' ? 'month' : 'day';
+        const range = this.timeRange;
+        const granularity = range === 'day' ? 'hour' : range === 'year' ? 'month' : 'day';
         const dateRange = this.getDateRange(range);
-        const res = await alertAPI.getAlertStatistics({ granularity, ...dateRange });
+        const res = await fetchStatsDedupe({ granularity, ...dateRange });
         const stats = statisticsFromResponse(res);
         if (!stats) return;
         const trend = stats.trend || [];
@@ -637,8 +713,8 @@ export default {
     },
     async fetchAlarmDistData() {
       try {
-        const dateRange = this.getDateRange(this.alarmDistTimeRange);
-        const res = await alertAPI.getAlertStatistics({ granularity: 'day', ...dateRange });
+        const dateRange = this.getDateRange(this.timeRange);
+        const res = await fetchStatsDedupe({ granularity: 'day', ...dateRange });
         const stats = statisticsFromResponse(res);
         if (!stats) return;
         const byType = stats.by_type || [];
@@ -746,15 +822,17 @@ export default {
         console.error('获取摄像头统计失败:', e);
       }
     },
-    changeAlertTrendRange(range) { this.alertTrendRange = range; },
-    changeAlarmDistTimeRange(range) { this.alarmDistTimeRange = range; },
     renderTrendChart(xData, yData) {
       const dom = this.$refs.trendChartEl;
       if (!dom) return;
       if (!this.trendChartInstance) this.trendChartInstance = echarts.init(dom);
+
+      const needRotate = this.timeRange === 'month'
+        || (this.timeRange === 'custom' && xData.length > 10);
+
       this.trendChartInstance.setOption({
         backgroundColor: 'transparent',
-        grid: { top: 30, bottom: 20, left: 0, right: 15, containLabel: true },
+        grid: { top: 30, bottom: needRotate ? 40 : 20, left: 0, right: 15, containLabel: true },
         tooltip: {
           trigger: 'axis',
           backgroundColor: 'rgba(0,19,40,0.8)',
@@ -765,7 +843,12 @@ export default {
         xAxis: {
           type: 'category', data: xData, boundaryGap: false,
           axisLine: { lineStyle: { color: 'rgba(120,140,180,0.3)' } },
-          axisLabel: { color: '#7888a8', fontSize: 10 },
+          axisLabel: {
+            color: '#7888a8',
+            fontSize: 10,
+            rotate: needRotate ? 45 : 0,
+            interval: needRotate ? 'auto' : xData.length > 20 ? 'auto' : 0,
+          },
         },
         yAxis: {
           type: 'value', min: 0, minInterval: 1,
@@ -5940,8 +6023,7 @@ export default {
   align-items: center;
   position: relative;
   z-index: 2;
-  padding: 8px 14px;
-  height: 42px;
+  padding: 6px 14px;
   background: linear-gradient(180deg, rgba(0, 30, 60, 0.95) 0%, rgba(0, 15, 35, 0.85) 100%);
   border-bottom: 1px solid rgba(0, 255, 255, 0.15);
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(0, 255, 255, 0.1);
@@ -5959,8 +6041,191 @@ export default {
 }
 
 .left-section {
-  width: 280px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
   flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+.time-filter {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.time-filter >>> .el-radio-group {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.time-filter >>> .el-radio-button__inner {
+  background-color: rgba(6, 30, 93, 0.5);
+  border-color: rgba(0, 149, 255, 0.3);
+  color: #7888a8;
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.time-filter >>> .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+  background-color: rgba(0, 149, 255, 0.2);
+  border-color: #0095ff;
+  color: #00BFFF;
+  box-shadow: -1px 0 0 0 #0095ff;
+}
+
+/* 自定义日期选择弹框 */
+.algorithm-inference-platform >>> .custom-dialog {
+  background: linear-gradient(180deg, rgba(6, 30, 93, 0.95) 0%, rgba(4, 20, 63, 0.98) 100%);
+  border: 1px solid rgba(0, 149, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+}
+
+.algorithm-inference-platform >>> .custom-dialog .el-dialog__header {
+  background: rgba(6, 30, 93, 0.9);
+  border-bottom: 1px solid rgba(0, 149, 255, 0.2);
+  padding: 12px 20px;
+}
+
+.algorithm-inference-platform >>> .custom-dialog .el-dialog__title {
+  color: #00BFFF;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.algorithm-inference-platform >>> .custom-dialog .el-dialog__headerbtn .el-dialog__close {
+  color: #7888a8;
+}
+
+.algorithm-inference-platform >>> .custom-dialog .el-dialog__headerbtn:hover .el-dialog__close {
+  color: #00BFFF;
+}
+
+.algorithm-inference-platform >>> .custom-dialog .el-dialog__body {
+  background: transparent;
+  padding: 20px;
+  color: #7888a8;
+}
+
+.algorithm-inference-platform >>> .custom-dialog .el-dialog__footer {
+  background: rgba(6, 30, 93, 0.9);
+  border-top: 1px solid rgba(0, 149, 255, 0.2);
+  padding: 10px 20px;
+}
+
+.algorithm-inference-platform >>> .custom-dialog .el-button--primary {
+  background-color: rgba(0, 149, 255, 0.2) !important;
+  border-color: #0095ff !important;
+  color: #00BFFF !important;
+}
+
+.algorithm-inference-platform >>> .custom-dialog .el-button {
+  background-color: rgba(6, 30, 93, 0.5) !important;
+  border-color: rgba(0, 149, 255, 0.3) !important;
+  color: #7888a8 !important;
+}
+
+.algorithm-inference-platform >>> .custom-dialog .el-button:hover {
+  background-color: rgba(0, 149, 255, 0.1) !important;
+  border-color: #0095ff !important;
+  color: #00BFFF !important;
+}
+
+.algorithm-inference-platform >>> .el-range-editor.el-input__inner {
+  background-color: rgba(0, 30, 60, 0.3) !important;
+  border: 1px solid rgba(0, 149, 255, 0.3) !important;
+  color: #7888a8 !important;
+}
+
+.algorithm-inference-platform >>> .el-range-editor .el-range-input {
+  background-color: transparent !important;
+  color: #7888a8 !important;
+}
+
+.algorithm-inference-platform >>> .el-range-editor .el-range-separator {
+  color: #7888a8 !important;
+}
+
+.algorithm-inference-platform >>> .el-range-editor .el-range__icon,
+.algorithm-inference-platform >>> .el-range-editor .el-range__close-icon {
+  color: #0095ff !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown.el-picker-panel {
+  background: linear-gradient(180deg, rgba(6, 30, 93, 0.98) 0%, rgba(4, 20, 63, 0.98) 100%) !important;
+  border: 1px solid rgba(0, 149, 255, 0.4) !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8) !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-picker__header-label,
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-range-picker__header {
+  color: #00BFFF !important;
+  font-weight: bold !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-picker-panel__icon-btn {
+  color: #7888a8 !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-picker-panel__icon-btn:hover {
+  color: #00BFFF !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-table th {
+  color: #00BFFF !important;
+  border-bottom-color: rgba(0, 149, 255, 0.2) !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-table td.available span {
+  color: #7888a8 !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-table td.available:hover span {
+  background-color: rgba(0, 149, 255, 0.15) !important;
+  color: #fff !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-table td.today span {
+  color: #00BFFF !important;
+  border: 1px solid rgba(0, 149, 255, 0.5) !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-table td.current:not(.disabled) span {
+  background: linear-gradient(135deg, rgba(0, 149, 255, 0.3), rgba(0, 95, 200, 0.4)) !important;
+  color: #ffffff !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-table td.in-range div {
+  background: linear-gradient(90deg, rgba(0, 149, 255, 0.05), rgba(0, 95, 200, 0.1)) !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-table td.start-date span,
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-table td.end-date span {
+  background: linear-gradient(90deg, rgba(0, 149, 255, 0.3), rgba(0, 95, 200, 0.5)) !important;
+  color: #ffffff !important;
+  font-weight: bold !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-table td.disabled div span {
+  color: rgba(120, 136, 168, 0.2) !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-table td.next-month span,
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-table td.prev-month span {
+  color: rgba(120, 136, 168, 0.2) !important;
+}
+
+.algorithm-inference-platform >>> .date-picker-dropdown .el-date-range-picker__content.is-left {
+  border-right: 1px solid rgba(0, 149, 255, 0.2) !important;
+}
+
+::v-deep .date-picker-dropdown {
+  position: absolute !important;
 }
 
 .top-bar .time {
@@ -5968,7 +6233,7 @@ export default {
   font-weight: bold;
   color: #00ffff;
   white-space: nowrap;
-  line-height: 1;
+  line-height: 30px;
   text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 

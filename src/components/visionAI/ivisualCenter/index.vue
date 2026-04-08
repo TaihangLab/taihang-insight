@@ -1,7 +1,18 @@
 <template>
   <div class="visual-center" ref="visualCenter">
     <div class="top-bar">
-      <div class="time">{{ currentDetailTime }}</div>
+      <div class="left-controls">
+        <div class="time">{{ currentDetailTime }}</div>
+        <div class="time-filter">
+          <el-radio-group v-model="timeRange" size="mini" @change="handleTimeRangeChange">
+            <el-radio-button label="day">日</el-radio-button>
+            <el-radio-button label="week">周</el-radio-button>
+            <el-radio-button label="month">月</el-radio-button>
+            <el-radio-button label="year">年</el-radio-button>
+            <el-radio-button label="custom" @click.native="onCustomClick">自定义</el-radio-button>
+          </el-radio-group>
+        </div>
+      </div>
       <div class="title">
         <span>太行视觉AI平台</span>
       </div>
@@ -24,30 +35,44 @@
       </div>
     </div>
 
+    <!-- 自定义日期选择弹框 -->
+    <el-dialog
+      title="选择日期范围"
+      :visible.sync="datePickerDialogVisible"
+      width="420px"
+      custom-class="custom-dialog"
+      :append-to-body="true"
+      :close-on-click-modal="false"
+      :modal-append-to-body="false"
+    >
+      <el-date-picker
+        v-model="customDateRange"
+        type="daterange"
+        value-format="yyyy-MM-dd"
+        range-separator="至"
+        start-placeholder="开始日期"
+        end-placeholder="结束日期"
+        :append-to-body="false"
+        style="width: 100%"
+        :picker-options="{ disabledDate(time) { return time.getTime() > Date.now(); } }"
+        popper-class="date-picker-dropdown"
+      />
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="cancelDatePicker" size="small">取 消</el-button>
+        <el-button type="primary" @click="handleCustomDateChange" size="small">确 定</el-button>
+      </span>
+    </el-dialog>
+
     <div class="main-content">
       <el-row :gutter="20">
         <!-- 左侧统计 -->
         <el-col :span="6">
           <div class="stat-panel panel-box panel-equal-height">
-            <div class="panel-header">
             <div class="panel-title">预警趋势</div>
-              <div class="panel-tabs">
-                <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
-                  :class="['tab-item', { active: trendTimeRange === key }]"
-                  @click="changeTrendTimeRange(key)">{{ label }}</div>
-              </div>
-            </div>
             <div class="trend-chart" ref="trendChart"></div>
           </div>
           <div class="type-panel panel-box panel-equal-height">
-            <div class="panel-header">
             <div class="panel-title">预警类型排名</div>
-              <div class="panel-tabs">
-                <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
-                  :class="['tab-item', { active: typeTimeRange === key }]"
-                  @click="changeTypeTimeRange(key)">{{ label }}</div>
-              </div>
-            </div>
             <div class="type-list">
               <div v-for="(item, index) in warningTypes" :key="index" class="type-item">
                 <span class="type-name">{{ item.name }}</span>
@@ -163,25 +188,11 @@
         <!-- 右侧统计 -->
         <el-col :span="6">
           <div class="level-panel panel-box panel-equal-height">
-            <div class="panel-header">
             <div class="panel-title">预警等级占比</div>
-              <div class="panel-tabs">
-                <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
-                  :class="['tab-item', { active: levelTimeRange === key }]"
-                  @click="changeLevelTimeRange(key)">{{ label }}</div>
-              </div>
-            </div>
             <div class="level-chart" ref="levelChart"></div>
           </div>
           <div class="top-panel panel-box panel-equal-height">
-            <div class="panel-header">
-              <div class="panel-title">点位预警 Top 5</div>
-              <div class="panel-tabs">
-                <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
-                  :class="['tab-item', { active: locationTimeRange === key }]"
-                  @click="changeLocationTimeRange(key)">{{ label }}</div>
-              </div>
-            </div>
+            <div class="panel-title">点位预警 Top 5</div>
             <div class="top-list">
               <div v-for="(item, index) in topWarnings" :key="index" class="top-item">
                 <span class="item-name">{{ item.name }}</span>
@@ -199,14 +210,7 @@
       <el-row class="bottom-section" :gutter="20">
         <el-col :span="6">
           <div class="status-panel panel-box panel-bottom-equal-height">
-            <div class="panel-header">
             <div class="panel-title">预警处理情况</div>
-              <div class="panel-tabs">
-                <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
-                :class="['tab-item', { active: statusTimeRange === key }]"
-                  @click="changeStatusTimeRange(key)">{{ label }}</div>
-              </div>
-            </div>
             <div class="status-chart" ref="statusChart"></div>
           </div>
         </el-col>
@@ -235,14 +239,7 @@
         </el-col>
         <el-col :span="6">
           <div class="device-panel panel-box panel-bottom-equal-height">
-            <div class="panel-header">
             <div class="panel-title">设备预警数量 Top 10</div>
-              <div class="panel-tabs">
-                <div v-for="(label, key) in { day: '本日', week: '本周', month: '本月' }" :key="key"
-                :class="['tab-item', { active: deviceTimeRange === key }]"
-                  @click="changeDeviceTimeRange(key)">{{ label }}</div>
-              </div>
-            </div>
               
             <div class="device-table">
               <el-table
@@ -284,6 +281,21 @@ function statisticsFromResponse(res) {
   return null;
 }
 
+/**
+ * 请求去重：相同参数的并发请求共享同一个 Promise，
+ * 避免 fetchAll 中多个面板重复请求同一接口。
+ */
+const _inflightStats = {};
+function fetchStatsDedupe(params) {
+  const key = `${params.granularity}:${params.start_date}:${params.end_date}`;
+  if (_inflightStats[key]) return _inflightStats[key];
+  const promise = alertAPI.getAlertStatistics(params).finally(() => {
+    delete _inflightStats[key];
+  });
+  _inflightStats[key] = promise;
+  return promise;
+}
+
 /** 实时预警：VisionAIService 把列表放在 response.data.data，与 warningManagement 一致 */
 function alertsFromRealTimeResponse(res) {
   const d = res && res.data;
@@ -319,12 +331,9 @@ export default {
       warningList: [],
       deviceWarnings: [],
       
-      trendTimeRange: 'day',
-      typeTimeRange: 'day',
-      levelTimeRange: 'day',
-      locationTimeRange: 'day',
-      statusTimeRange: 'day',
-      deviceTimeRange: 'day',
+      timeRange: 'day',
+      customDateRange: [],
+      datePickerDialogVisible: false,
       tableHeight: 280,
 
       warningImages: [],
@@ -371,14 +380,7 @@ export default {
     if (this.statusChart) this.statusChart.dispose();
   },
 
-  watch: {
-    trendTimeRange() { this.fetchTrendData(); },
-    typeTimeRange() { this.fetchTypeData(); },
-    levelTimeRange() { this.fetchLevelData(); },
-    locationTimeRange() { this.fetchLocationData(); },
-    statusTimeRange() { this.fetchStatusStats(); },
-    deviceTimeRange() { this.fetchDeviceTop10(); },
-  },
+  watch: {},
 
   methods: {
     // ── 工具 ────────────────────────────────────────────────────────────────
@@ -409,7 +411,16 @@ export default {
         const start = new Date(now); start.setDate(now.getDate() - 6);
         return { start_date: fmt(start), end_date: today };
       }
-      // month
+      if (range === 'year') {
+        const start = new Date(now.getFullYear(), 0, 1);
+        return { start_date: fmt(start), end_date: today };
+      }
+      if (range === 'custom') {
+        if (this.customDateRange && this.customDateRange.length === 2) {
+          return { start_date: this.customDateRange[0], end_date: this.customDateRange[1] };
+        }
+        return null;
+      }
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
       return { start_date: fmt(start), end_date: today };
     },
@@ -431,12 +442,51 @@ export default {
       ]);
     },
 
+    handleTimeRangeChange(value) {
+      if (value === 'custom') {
+        this.datePickerDialogVisible = true;
+      } else {
+        this.fetchAllStats();
+      }
+    },
+
+    onCustomClick() {
+      if (this.timeRange === 'custom') {
+        this.datePickerDialogVisible = true;
+      }
+    },
+
+    handleCustomDateChange() {
+      if (this.customDateRange && this.customDateRange.length === 2) {
+        this.datePickerDialogVisible = false;
+        this.fetchAllStats();
+      }
+    },
+
+    cancelDatePicker() {
+      this.datePickerDialogVisible = false;
+      if (!this.customDateRange || this.customDateRange.length !== 2) {
+        this.timeRange = 'day';
+      }
+    },
+
+    async fetchAllStats() {
+      await Promise.all([
+        this.fetchTrendData().catch(e => console.error('fetchTrendData:', e)),
+        this.fetchTypeData().catch(e => console.error('fetchTypeData:', e)),
+        this.fetchLevelData().catch(e => console.error('fetchLevelData:', e)),
+        this.fetchLocationData().catch(e => console.error('fetchLocationData:', e)),
+        this.fetchStatusStats().catch(e => console.error('fetchStatusStats:', e)),
+        this.fetchDeviceTop10().catch(e => console.error('fetchDeviceTop10:', e)),
+      ]);
+    },
+
     // ── 今日预警总数（顶部卡片，始终取当天） ─────────────────────────────────
 
     async fetchTodayCount(today) {
       try {
         const dateRange = today || this.getDateRange('day');
-        const res = await alertAPI.getAlertStatistics({ granularity: 'hour', ...dateRange });
+        const res = await fetchStatsDedupe({ granularity: 'hour', ...dateRange });
         const stats = statisticsFromResponse(res);
         if (!stats) return;
         this.todayWarnings = (stats.summary || {}).total_alerts || 0;
@@ -449,10 +499,10 @@ export default {
 
     async fetchTrendData() {
       try {
-        const range = this.trendTimeRange;
-        const granularity = range === 'day' ? 'hour' : range === 'month' ? 'month' : 'day';
+        const range = this.timeRange;
+        const granularity = range === 'day' ? 'hour' : range === 'year' ? 'month' : 'day';
         const dateRange = this.getDateRange(range);
-        const res = await alertAPI.getAlertStatistics({ granularity, ...dateRange });
+        const res = await fetchStatsDedupe({ granularity, ...dateRange });
         const stats = statisticsFromResponse(res);
         if (!stats) return;
         const trend = stats.trend || [];
@@ -466,8 +516,8 @@ export default {
 
     async fetchTypeData() {
       try {
-        const dateRange = this.getDateRange(this.typeTimeRange);
-        const res = await alertAPI.getAlertStatistics({ granularity: 'day', ...dateRange });
+        const dateRange = this.getDateRange(this.timeRange);
+        const res = await fetchStatsDedupe({ granularity: 'day', ...dateRange });
         const stats = statisticsFromResponse(res);
         if (!stats) return;
         const byType = stats.by_type || [];
@@ -486,8 +536,8 @@ export default {
 
     async fetchLevelData() {
       try {
-        const dateRange = this.getDateRange(this.levelTimeRange);
-        const res = await alertAPI.getAlertStatistics({ granularity: 'day', ...dateRange });
+        const dateRange = this.getDateRange(this.timeRange);
+        const res = await fetchStatsDedupe({ granularity: 'day', ...dateRange });
         const stats = statisticsFromResponse(res);
         if (!stats) return;
         this.renderLevelChart(stats.by_level || {});
@@ -500,8 +550,8 @@ export default {
 
     async fetchLocationData() {
       try {
-        const dateRange = this.getDateRange(this.locationTimeRange);
-        const res = await alertAPI.getAlertStatistics({ granularity: 'day', ...dateRange });
+        const dateRange = this.getDateRange(this.timeRange);
+        const res = await fetchStatsDedupe({ granularity: 'day', ...dateRange });
         const stats = statisticsFromResponse(res);
         if (!stats) return;
         const locs = stats.by_location || [];
@@ -519,8 +569,8 @@ export default {
 
     async fetchStatusStats() {
       try {
-        const dateRange = this.getDateRange(this.statusTimeRange);
-        const res = await alertAPI.getAlertStatistics({ granularity: 'day', ...dateRange });
+        const dateRange = this.getDateRange(this.timeRange);
+        const res = await fetchStatsDedupe({ granularity: 'day', ...dateRange });
         const stats = statisticsFromResponse(res);
         if (!stats) return;
         this.renderStatusChart(stats.by_status || {});
@@ -533,8 +583,8 @@ export default {
 
     async fetchDeviceTop10() {
       try {
-        const dateRange = this.getDateRange(this.deviceTimeRange);
-        const res = await alertAPI.getAlertStatistics({ granularity: 'day', ...dateRange });
+        const dateRange = this.getDateRange(this.timeRange);
+        const res = await fetchStatsDedupe({ granularity: 'day', ...dateRange });
         const stats = statisticsFromResponse(res);
         if (!stats) return;
         this.deviceWarnings = (stats.top_cameras || []).slice(0, 10)
@@ -648,9 +698,12 @@ export default {
       if (!dom) return;
       if (!this.trendChart) this.trendChart = echarts.init(dom);
 
+      const needRotate = this.timeRange === 'month'
+        || (this.timeRange === 'custom' && xData.length > 10);
+
       this.trendChart.setOption({
         backgroundColor: 'transparent',
-        grid: { top: 30, bottom: 20, left: 0, right: 15, containLabel: true },
+        grid: { top: 30, bottom: needRotate ? 40 : 20, left: 0, right: 15, containLabel: true },
         tooltip: {
           trigger: 'axis',
           axisPointer: { type: 'line', lineStyle: { color: 'rgba(0,255,255,0.3)', width: 1 } },
@@ -663,7 +716,11 @@ export default {
           type: 'category',
           data: xData.length > 0 ? xData : ['--'],
           axisLine: { lineStyle: { color: 'rgba(0,255,255,0.3)' } },
-          axisLabel: { color: '#7EAEE5', interval: xData.length > 12 ? 'auto' : 0 },
+          axisLabel: {
+            color: '#7EAEE5',
+            rotate: needRotate ? 45 : 0,
+            interval: needRotate ? 'auto' : xData.length > 20 ? 'auto' : 0,
+          },
           axisTick: { show: false },
           splitLine: { show: false },
         },
@@ -826,29 +883,6 @@ export default {
 
     // ── 时间范围切换 ─────────────────────────────────────────────────────────
 
-    changeTrendTimeRange(range) {
-      this.trendTimeRange = range;
-    },
-
-    changeTypeTimeRange(range) {
-      this.typeTimeRange = range;
-    },
-
-    changeLevelTimeRange(range) {
-      this.levelTimeRange = range;
-    },
-
-    changeLocationTimeRange(range) {
-      this.locationTimeRange = range;
-    },
-
-    changeStatusTimeRange(range) {
-      this.statusTimeRange = range;
-    },
-
-    changeDeviceTimeRange(range) {
-      this.deviceTimeRange = range;
-    },
 
     // ── 图片查看器导航 ───────────────────────────────────────────────────────
 
@@ -928,13 +962,200 @@ export default {
   flex-shrink: 0;
 }
 
+.left-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .top-bar .time {
-  width: 300px;
   font-size: 18px;
   font-weight: bold;
   color: #00ffff;
   white-space: nowrap;
+  line-height: 30px;
+}
+
+.time-filter {
+  display: inline-flex;
+  align-items: center;
   line-height: 1;
+  vertical-align: middle;
+}
+
+.time-filter >>> .el-radio-group {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.time-filter >>> .el-radio-button__inner {
+  background-color: rgba(6, 30, 93, 0.5);
+  border-color: rgba(0, 255, 255, 0.3);
+  color: #7eaee5;
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.time-filter >>> .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+  background-color: rgba(0, 255, 255, 0.2);
+  border-color: #00ffff;
+  color: #00ffff;
+  box-shadow: -1px 0 0 0 #00ffff;
+}
+
+/* 自定义日期选择弹框 */
+.visual-center >>> .custom-dialog {
+  background: linear-gradient(180deg, rgba(6, 30, 93, 0.95) 0%, rgba(4, 20, 63, 0.98) 100%);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+}
+
+.visual-center >>> .custom-dialog .el-dialog__header {
+  background: rgba(6, 30, 93, 0.9);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+  padding: 12px 20px;
+}
+
+.visual-center >>> .custom-dialog .el-dialog__title {
+  color: #00ffff;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.visual-center >>> .custom-dialog .el-dialog__headerbtn .el-dialog__close {
+  color: #7eaee5;
+}
+
+.visual-center >>> .custom-dialog .el-dialog__headerbtn:hover .el-dialog__close {
+  color: #00ffff;
+}
+
+.visual-center >>> .custom-dialog .el-dialog__body {
+  background: transparent;
+  padding: 20px;
+  color: #7eaee5;
+}
+
+.visual-center >>> .custom-dialog .el-dialog__footer {
+  background: rgba(6, 30, 93, 0.9);
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  padding: 10px 20px;
+}
+
+.visual-center >>> .custom-dialog .el-button--primary {
+  background-color: rgba(0, 255, 255, 0.2) !important;
+  border-color: #00ffff !important;
+  color: #00ffff !important;
+}
+
+.visual-center >>> .custom-dialog .el-button {
+  background-color: rgba(6, 30, 93, 0.5) !important;
+  border-color: rgba(0, 255, 255, 0.3) !important;
+  color: #7eaee5 !important;
+}
+
+.visual-center >>> .custom-dialog .el-button:hover {
+  background-color: rgba(0, 255, 255, 0.1) !important;
+  border-color: #00ffff !important;
+  color: #00ffff !important;
+}
+
+/* 日期选择器输入框 */
+.visual-center >>> .el-range-editor.el-input__inner {
+  background-color: rgba(0, 30, 60, 0.3) !important;
+  border: 1px solid rgba(0, 255, 255, 0.3) !important;
+  color: #7eaee5 !important;
+}
+
+.visual-center >>> .el-range-editor .el-range-input {
+  background-color: transparent !important;
+  color: #7eaee5 !important;
+}
+
+.visual-center >>> .el-range-editor .el-range-separator {
+  color: #7eaee5 !important;
+}
+
+.visual-center >>> .el-range-editor .el-range__icon,
+.visual-center >>> .el-range-editor .el-range__close-icon {
+  color: #00ffff !important;
+}
+
+/* 日期选择面板 */
+.visual-center >>> .date-picker-dropdown.el-picker-panel {
+  background: linear-gradient(180deg, rgba(6, 30, 93, 0.98) 0%, rgba(4, 20, 63, 0.98) 100%) !important;
+  border: 1px solid rgba(0, 255, 255, 0.4) !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8) !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-date-picker__header-label,
+.visual-center >>> .date-picker-dropdown .el-date-range-picker__header {
+  color: #00ffff !important;
+  font-weight: bold !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-picker-panel__icon-btn {
+  color: #7eaee5 !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-picker-panel__icon-btn:hover {
+  color: #00ffff !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-date-table th {
+  color: #00ffff !important;
+  border-bottom-color: rgba(0, 255, 255, 0.2) !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-date-table td.available span {
+  color: #7eaee5 !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-date-table td.available:hover span {
+  background-color: rgba(0, 255, 255, 0.15) !important;
+  color: #fff !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-date-table td.today span {
+  color: #00ffff !important;
+  border: 1px solid rgba(0, 255, 255, 0.5) !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-date-table td.current:not(.disabled) span {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 127, 255, 0.4)) !important;
+  color: #ffffff !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-date-table td.in-range div {
+  background: linear-gradient(90deg, rgba(0, 255, 255, 0.05), rgba(0, 127, 255, 0.1)) !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-date-table td.start-date span,
+.visual-center >>> .date-picker-dropdown .el-date-table td.end-date span {
+  background: linear-gradient(90deg, rgba(0, 255, 255, 0.3), rgba(0, 127, 255, 0.5)) !important;
+  color: #ffffff !important;
+  font-weight: bold !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-date-table td.disabled div span {
+  color: rgba(126, 174, 229, 0.2) !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-date-table td.next-month span,
+.visual-center >>> .date-picker-dropdown .el-date-table td.prev-month span {
+  color: rgba(126, 174, 229, 0.2) !important;
+}
+
+.visual-center >>> .date-picker-dropdown .el-date-range-picker__content.is-left {
+  border-right: 1px solid rgba(0, 255, 255, 0.2) !important;
+}
+
+::v-deep .date-picker-dropdown {
+  position: absolute !important;
 }
 
 .top-bar .title {

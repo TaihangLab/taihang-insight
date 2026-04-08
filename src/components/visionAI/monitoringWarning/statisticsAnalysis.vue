@@ -466,6 +466,12 @@ export default {
       }
     },
 
+    onCustomClick() {
+      if (this.timeRange === "custom") {
+        this.datePickerDialogVisible = true;
+      }
+    },
+
     handleCustomDateChange() {
       if (this.customDateRange && this.customDateRange.length === 2) {
         this.datePickerDialogVisible = false;
@@ -541,7 +547,7 @@ export default {
           <el-radio-button label="week">周</el-radio-button>
           <el-radio-button label="month">月</el-radio-button>
           <el-radio-button label="year">年</el-radio-button>
-          <el-radio-button label="custom">自定义</el-radio-button>
+          <el-radio-button label="custom" @click.native="onCustomClick">自定义</el-radio-button>
         </el-radio-group>
       </div>
 
