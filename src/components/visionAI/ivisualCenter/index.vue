@@ -74,12 +74,18 @@
           <div class="type-panel panel-box panel-equal-height">
             <div class="panel-title">预警类型排名</div>
             <div class="type-list">
-              <div v-for="(item, index) in warningTypes" :key="index" class="type-item">
-                <span class="type-name">{{ item.name }}</span>
-                <div class="type-bar">
-                  <div class="bar-inner" :style="{ width: item.value + '%' }"></div>
+              <template v-if="warningTypes.length > 0">
+                <div v-for="(item, index) in warningTypes" :key="index" class="type-item">
+                  <span class="type-name">{{ item.name }}</span>
+                  <div class="type-bar">
+                    <div class="bar-inner" :style="{ width: item.value + '%' }"></div>
+                  </div>
+                  <span class="type-count">{{ item.count }}个</span>
                 </div>
-                <span class="type-count">{{ item.count }}个</span>
+              </template>
+              <div v-else class="empty-data-placeholder">
+                <i class="el-icon-s-data"></i>
+                <span>暂无类型数据</span>
               </div>
             </div>
           </div>
@@ -189,17 +195,27 @@
         <el-col :span="6">
           <div class="level-panel panel-box panel-equal-height">
             <div class="panel-title">预警等级占比</div>
-            <div class="level-chart" ref="levelChart"></div>
+            <div v-show="!levelChartEmpty" class="level-chart" ref="levelChart"></div>
+            <div v-show="levelChartEmpty" class="empty-data-placeholder">
+              <i class="el-icon-pie-chart"></i>
+              <span>暂无等级数据</span>
+            </div>
           </div>
           <div class="top-panel panel-box panel-equal-height">
             <div class="panel-title">点位预警 Top 5</div>
             <div class="top-list">
-              <div v-for="(item, index) in topWarnings" :key="index" class="top-item">
-                <span class="item-name">{{ item.name }}</span>
-                <div class="item-bar">
-                  <div class="bar-inner" :style="{ width: item.value + '%' }"></div>
+              <template v-if="topWarnings.length > 0">
+                <div v-for="(item, index) in topWarnings" :key="index" class="top-item">
+                  <span class="item-name">{{ item.name }}</span>
+                  <div class="item-bar">
+                    <div class="bar-inner" :style="{ width: item.value + '%' }"></div>
+                  </div>
+                  <span class="item-count">{{ item.count }}个</span>
                 </div>
-                <span class="item-count">{{ item.count }}个</span>
+              </template>
+              <div v-else class="empty-data-placeholder">
+                <i class="el-icon-location-outline"></i>
+                <span>暂无点位数据</span>
               </div>
             </div>
           </div>
@@ -211,7 +227,11 @@
         <el-col :span="6">
           <div class="status-panel panel-box panel-bottom-equal-height">
             <div class="panel-title">预警处理情况</div>
-            <div class="status-chart" ref="statusChart"></div>
+            <div v-show="!statusChartEmpty" class="status-chart" ref="statusChart"></div>
+            <div v-show="statusChartEmpty" class="empty-data-placeholder">
+              <i class="el-icon-finished"></i>
+              <span>暂无处理数据</span>
+            </div>
           </div>
         </el-col>
         <el-col :span="12">
@@ -226,6 +246,12 @@
                 :row-style="{ background: 'transparent' }"
                 :row-class-name="'transparent-row'"
                 :height="tableHeight">
+                <template slot="empty">
+                  <div class="empty-data-placeholder">
+                    <i class="el-icon-document"></i>
+                    <span>暂无预警记录</span>
+                  </div>
+                </template>
                 <el-table-column prop="event" label="预警事件" min-width="120" />
                 <el-table-column prop="time" label="预警时间" width="180" />
                 <el-table-column prop="status" label="处理状态" width="120">
@@ -251,6 +277,12 @@
                 style="width: 100%"
                 :height="tableHeight"
               >
+                <template slot="empty">
+                  <div class="empty-data-placeholder">
+                    <i class="el-icon-video-camera-solid"></i>
+                    <span>暂无设备预警</span>
+                  </div>
+                </template>
                 <el-table-column prop="name" label="设备位置" />
                 <el-table-column prop="count" label="预警数量" align="center" width="100" />
               </el-table>
@@ -339,6 +371,9 @@ export default {
       warningImages: [],
       currentWarningImage: { image: '', event: '', time: '', level: '', levelText: '', location: '' },
       currentImageIndex: 0,
+
+      levelChartEmpty: true,
+      statusChartEmpty: true,
 
       // 图表实例
       trendChart: null,
@@ -541,6 +576,7 @@ export default {
         const stats = statisticsFromResponse(res);
         if (!stats) return;
         this.renderLevelChart(stats.by_level || {});
+        this.$nextTick(() => { if (this.levelChart) this.levelChart.resize(); });
       } catch (e) {
         console.error('获取等级统计失败:', e);
       }
@@ -574,6 +610,7 @@ export default {
         const stats = statisticsFromResponse(res);
         if (!stats) return;
         this.renderStatusChart(stats.by_status || {});
+        this.$nextTick(() => { if (this.statusChart) this.statusChart.resize(); });
       } catch (e) {
         console.error('获取状态统计失败:', e);
       }
@@ -745,21 +782,21 @@ export default {
     // ── 等级占比饼图 ─────────────────────────────────────────────────────────
 
     renderLevelChart(byLevel) {
+      const colorMap = { '一级预警': '#FF4D4F', '二级预警': '#FF8746', '三级预警': '#44FF9B', '四级预警': '#00C5FF' };
+      const entries = Object.entries(byLevel);
+      const isEmpty = entries.length === 0 || entries.every(([, v]) => v === 0);
+      this.levelChartEmpty = isEmpty;
+      if (isEmpty) return;
+
       const dom = this.$refs.levelChart;
       if (!dom) return;
       if (!this.levelChart) this.levelChart = echarts.init(dom);
 
-      const colorMap = { '一级预警': '#FF4D4F', '二级预警': '#FF8746', '三级预警': '#44FF9B', '四级预警': '#00C5FF' };
-      const entries = Object.entries(byLevel);
-      const isEmpty = entries.length === 0 || entries.every(([, v]) => v === 0);
+      const pieData = entries.map(([name, val]) => ({ value: val, name, itemStyle: { color: colorMap[name] || '#999' } }));
 
-      const pieData = isEmpty
-        ? [{ value: 1, name: '暂无数据', itemStyle: { color: 'rgba(35,88,148,0.2)' }, tooltip: { show: false }, emphasis: { disabled: true } }]
-        : entries.map(([name, val]) => ({ value: val, name, itemStyle: { color: colorMap[name] || '#999' } }));
-
+      if (!this.levelChart) this.levelChart = echarts.init(dom);
       this.levelChart.setOption({
         backgroundColor: 'transparent',
-        graphic: isEmpty ? [{ type: 'text', left: '28%', top: 'middle', style: { text: '暂无数据', fill: 'rgba(126,174,229,0.4)', fontSize: 13 } }] : [],
         tooltip: {
           trigger: 'item',
           formatter: p => `${p.name}<br/>数量: <b>${p.value}</b>次 (${p.percent.toFixed(1)}%)`,
@@ -779,7 +816,7 @@ export default {
         series: [{
           name: '预警等级', type: 'pie',
           radius: ['60%', '85%'], center: ['30%', '50%'],
-            avoidLabelOverlap: false,
+          avoidLabelOverlap: false,
           label: { show: false }, labelLine: { show: false },
           emphasis: { label: { show: false } },
           data: pieData,
@@ -790,18 +827,18 @@ export default {
     // ── 状态处理饼图 ─────────────────────────────────────────────────────────
 
     renderStatusChart(byStatus) {
-      const dom = this.$refs.statusChart;
-      if (!dom) return;
-      if (!this.statusChart) this.statusChart = echarts.init(dom);
-
       const colorMap = { '待处理': '#FF8746', '处理中': '#44FF9B', '已处理': '#00FFFF', '已归档': '#6677AA', '误报': '#ee6666' };
       const allStatuses = ['待处理', '处理中', '已处理', '已归档', '误报'];
       const total = allStatuses.reduce((s, k) => s + (byStatus[k] || 0), 0);
       const isEmpty = total === 0;
+      this.statusChartEmpty = isEmpty;
+      if (isEmpty) return;
 
-      const pieData = isEmpty
-        ? [{ value: 1, name: '暂无数据', itemStyle: { color: 'rgba(35,88,148,0.2)' }, tooltip: { show: false }, emphasis: { disabled: true } }]
-        : allStatuses.map(name => ({ value: byStatus[name] || 0, name, itemStyle: { color: colorMap[name] } }));
+      const dom = this.$refs.statusChart;
+      if (!dom) return;
+      if (!this.statusChart) this.statusChart = echarts.init(dom);
+
+      const pieData = allStatuses.map(name => ({ value: byStatus[name] || 0, name, itemStyle: { color: colorMap[name] } }));
 
       this.statusChart.setOption({
         backgroundColor: 'transparent',
@@ -813,7 +850,6 @@ export default {
           textStyle: { color: '#00FFFF' },
         },
         legend: {
-          show: !isEmpty,
           orient: 'vertical',
           right: 0,
           top: 'center',
@@ -829,7 +865,7 @@ export default {
         series: [{
           name: '状态分布', type: 'pie',
           radius: ['45%', '65%'], center: ['35%', '50%'],
-            avoidLabelOverlap: false,
+          avoidLabelOverlap: false,
           label: { show: false },
           labelLine: { show: false },
           emphasis: { label: { show: false } },
@@ -2167,6 +2203,24 @@ export default {
 .warning-table >>> .el-table--striped .el-table__body tr.el-table__row--striped td,
 .device-table >>> .el-table--striped .el-table__body tr.el-table__row--striped td {
   background-color: rgba(6, 30, 93, 0.3) !important;
+}
+
+.empty-data-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(126, 174, 229, 0.4);
+  padding: 20px 0;
+}
+.empty-data-placeholder i {
+  font-size: 32px;
+}
+.empty-data-placeholder span {
+  font-size: 12px;
+  letter-spacing: 1px;
 }
 </style>
 

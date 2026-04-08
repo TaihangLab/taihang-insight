@@ -27,9 +27,12 @@ export default {
       },
 
       deviceWarnings: [],
-      deviceTimeRange: "day",
       refreshing: false,
       loading: false,
+
+      statusChartEmpty: true,
+      levelChartEmpty: true,
+      typeChartEmpty: true,
     };
   },
   mounted() {
@@ -44,11 +47,7 @@ export default {
     window.removeEventListener("resize", this.handleResize);
     this.disposeCharts();
   },
-  watch: {
-    deviceTimeRange() {
-      this.fetchStatistics();
-    },
-  },
+  watch: {},
   methods: {
     // ──────────────────────────── 时间范围计算 ──────────────────────────────
 
@@ -141,9 +140,9 @@ export default {
 
     initEmptyCharts() {
       this.initTrendChart([], []);
-      this.initWarningStatusChart([]);
-      this.initWarningLevelChart([]);
-      this.initTopWarningTypeChart([], []);
+      this.statusChartEmpty = true;
+      this.levelChartEmpty = true;
+      this.typeChartEmpty = true;
     },
 
     disposeCharts() {
@@ -181,7 +180,7 @@ export default {
         (this.timeRange === "custom" && xData.length > 10);
       const option = {
         backgroundColor: "transparent",
-        grid: { top: 40, bottom: 20, left: 0, right: 20, containLabel: true },
+        grid: { top: 40, bottom: 20, left: 10, right: 20, containLabel: true },
         tooltip: {
           trigger: "axis",
           axisPointer: { type: "line", lineStyle: { color: "rgba(0,255,255,0.3)", width: 1 } },
@@ -210,7 +209,7 @@ export default {
           name: "预警数量",
           min: 0,
           minInterval: 1,
-          nameTextStyle: { color: "#7EAEE5" },
+          nameTextStyle: { color: "#7EAEE5", padding: [0, 0, 0, 10] },
           axisLine: { show: false },
           axisLabel: { color: "#7EAEE5" },
           splitLine: { lineStyle: { color: "rgba(35,88,148,0.3)", type: "dashed" } },
@@ -255,14 +254,8 @@ export default {
       if (!this.charts.warningStatusChart) {
         this.charts.warningStatusChart = echarts.init(el);
       }
-
-      const isEmpty = pieData.length === 0 || pieData.every((d) => d.count === 0);
-
-      const option = {
+      this.charts.warningStatusChart.setOption({
         backgroundColor: "transparent",
-        graphic: isEmpty
-          ? [{ type: "text", left: "28%", top: "middle", style: { text: "暂无数据", fill: "rgba(126,174,229,0.4)", fontSize: 14 } }]
-          : [],
         tooltip: {
           trigger: "item",
           formatter: (p) => `${p.name}<br/>数量: <b>${p.data.count}</b>次 (${p.percent.toFixed(1)}%)`,
@@ -283,20 +276,14 @@ export default {
             return `${name}  ${item.count}次`;
           },
         },
-        series: [
-          {
-            type: "pie",
-            radius: ["50%", "70%"],
-            center: ["30%", "50%"],
-            label: { show: false },
-            emptyCircleStyle: { color: "rgba(35,88,148,0.2)" },
-            data: isEmpty
-              ? [{ value: 1, name: "暂无数据", count: 0, itemStyle: { color: "rgba(35,88,148,0.2)" }, tooltip: { show: false }, emphasis: { disabled: true } }]
-              : pieData,
-          },
-        ],
-      };
-      this.charts.warningStatusChart.setOption(option, true);
+        series: [{
+          type: "pie",
+          radius: ["50%", "70%"],
+          center: ["30%", "50%"],
+          label: { show: false },
+          data: pieData,
+        }],
+      }, true);
     },
 
     renderStatusChart(byStatus) {
@@ -315,7 +302,9 @@ export default {
           count: cnt,
           itemStyle: { color: colorMap[name] || "#999" },
         }));
-      this.initWarningStatusChart(pieData);
+      this.statusChartEmpty = pieData.length === 0 || pieData.every((d) => d.count === 0);
+      if (this.statusChartEmpty) return;
+      this.$nextTick(() => this.initWarningStatusChart(pieData));
     },
 
     // ──────────────────────────── 预警等级饼图 ──────────────────────────────
@@ -326,14 +315,8 @@ export default {
       if (!this.charts.warningLevelChart) {
         this.charts.warningLevelChart = echarts.init(el);
       }
-
-      const isEmpty = pieData.length === 0 || pieData.every((d) => d.count === 0);
-
-      const option = {
+      this.charts.warningLevelChart.setOption({
         backgroundColor: "transparent",
-        graphic: isEmpty
-          ? [{ type: "text", left: "28%", top: "middle", style: { text: "暂无数据", fill: "rgba(126,174,229,0.4)", fontSize: 14 } }]
-          : [],
         tooltip: {
           trigger: "item",
           formatter: (p) => `${p.name}<br/>数量: <b>${p.data.count}</b>次 (${p.percent.toFixed(1)}%)`,
@@ -354,20 +337,14 @@ export default {
             return `${name}  ${item.count}次`;
           },
         },
-        series: [
-          {
-            type: "pie",
-            radius: "60%",
-            center: ["30%", "50%"],
-            label: { show: false },
-            emptyCircleStyle: { color: "rgba(35,88,148,0.2)" },
-            data: isEmpty
-              ? [{ value: 1, name: "暂无数据", count: 0, itemStyle: { color: "rgba(35,88,148,0.2)" }, tooltip: { show: false }, emphasis: { disabled: true } }]
-              : pieData,
-          },
-        ],
-      };
-      this.charts.warningLevelChart.setOption(option, true);
+        series: [{
+          type: "pie",
+          radius: "60%",
+          center: ["30%", "50%"],
+          label: { show: false },
+          data: pieData,
+        }],
+      }, true);
     },
 
     renderLevelChart(byLevel) {
@@ -383,7 +360,9 @@ export default {
         count: cnt,
         itemStyle: { color: colorMap[name] || "#999" },
       }));
-      this.initWarningLevelChart(pieData);
+      this.levelChartEmpty = pieData.length === 0 || pieData.every((d) => d.count === 0);
+      if (this.levelChartEmpty) return;
+      this.$nextTick(() => this.initWarningLevelChart(pieData));
     },
 
     // ──────────────────────────── 预警类型横向柱状图 ─────────────────────────
@@ -394,14 +373,8 @@ export default {
       if (!this.charts.topWarningTypeChart) {
         this.charts.topWarningTypeChart = echarts.init(el);
       }
-
-      const isEmpty = counts.length === 0 || counts.every((v) => v === 0);
-
-      const option = {
+      this.charts.topWarningTypeChart.setOption({
         backgroundColor: "transparent",
-        graphic: isEmpty
-          ? [{ type: "text", left: "center", top: "middle", style: { text: "暂无数据", fill: "rgba(126,174,229,0.4)", fontSize: 14 } }]
-          : [],
         tooltip: {
           trigger: "axis",
           axisPointer: { type: "shadow" },
@@ -425,34 +398,33 @@ export default {
         },
         yAxis: {
           type: "category",
-          data: categories.length > 0 ? categories : ["暂无数据"],
+          data: categories,
           axisTick: { show: false },
           axisLine: { lineStyle: { color: "rgba(0,255,255,0.3)" } },
           axisLabel: { color: "#7EAEE5" },
         },
-        series: [
-          {
-            name: "预警数",
-            type: "bar",
-            data: counts.length > 0 ? counts : [0],
-            itemStyle: {
-              color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                { offset: 0, color: "#00FFFF" },
-                { offset: 1, color: "#207FFF" },
-              ]),
-            },
-            barWidth: "60%",
-            barMinHeight: 2,
+        series: [{
+          name: "预警数",
+          type: "bar",
+          data: counts,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: "#00FFFF" },
+              { offset: 1, color: "#207FFF" },
+            ]),
           },
-        ],
-      };
-      this.charts.topWarningTypeChart.setOption(option, true);
+          barWidth: "60%",
+          barMinHeight: 2,
+        }],
+      }, true);
     },
 
     renderTypeChart(byType) {
       const categories = byType.map((t) => t.name);
       const counts = byType.map((t) => t.count);
-      this.initTopWarningTypeChart(categories, counts);
+      this.typeChartEmpty = counts.length === 0 || counts.every((v) => v === 0);
+      if (this.typeChartEmpty) return;
+      this.$nextTick(() => this.initTopWarningTypeChart(categories, counts));
     },
 
     // ──────────────────────────── 交互处理 ──────────────────────────────────
@@ -667,7 +639,11 @@ export default {
         <el-col :span="12">
           <div class="panel-box panel-equal-height">
             <div class="panel-title">预警类型TOP5</div>
-            <div id="topWarningTypeChart" class="top-chart"></div>
+            <div v-show="!typeChartEmpty" id="topWarningTypeChart" class="top-chart"></div>
+            <div v-show="typeChartEmpty" class="empty-data-placeholder">
+              <i class="el-icon-s-data"></i>
+              <span>暂无类型数据</span>
+            </div>
           </div>
         </el-col>
       </el-row>
@@ -678,7 +654,11 @@ export default {
         <el-col :span="8">
           <div class="panel-box panel-bottom-equal-height">
             <div class="panel-title">预警状态</div>
-            <div id="warningStatusChart" class="status-chart"></div>
+            <div v-show="!statusChartEmpty" id="warningStatusChart" class="status-chart"></div>
+            <div v-show="statusChartEmpty" class="empty-data-placeholder">
+              <i class="el-icon-finished"></i>
+              <span>暂无状态数据</span>
+            </div>
           </div>
         </el-col>
 
@@ -686,7 +666,11 @@ export default {
         <el-col :span="8">
           <div class="panel-box panel-bottom-equal-height">
             <div class="panel-title">预警等级</div>
-            <div id="warningLevelChart" class="level-chart"></div>
+            <div v-show="!levelChartEmpty" id="warningLevelChart" class="level-chart"></div>
+            <div v-show="levelChartEmpty" class="empty-data-placeholder">
+              <i class="el-icon-pie-chart"></i>
+              <span>暂无等级数据</span>
+            </div>
           </div>
         </el-col>
 
@@ -694,35 +678,27 @@ export default {
         <el-col :span="8">
           <div class="panel-box panel-bottom-equal-height">
             <div class="panel-title">设备预警数量TOP10</div>
-            <div class="device-tabs">
-              <div
-                v-for="(label, key) in {
-                  day: '本日',
-                  week: '本周',
-                  month: '本月',
-                }"
-                :key="key"
-                :class="['tab-item', { active: deviceTimeRange === key }]"
-                @click="deviceTimeRange = key"
-              >
-                {{ label }}
-              </div>
-            </div>
             <div class="device-top-list">
-              <div
-                v-for="(device, index) in deviceWarnings"
-                :key="index"
-                class="device-item"
-              >
-                <span class="device-rank">{{ index + 1 }}</span>
-                <span class="device-name">{{ device.name }}</span>
-                <div class="device-progress">
-                  <div
-                    class="progress-bar"
-                    :style="{ width: device.percent + '%' }"
-                  ></div>
+              <template v-if="deviceWarnings.length > 0">
+                <div
+                  v-for="(device, index) in deviceWarnings"
+                  :key="index"
+                  class="device-item"
+                >
+                  <span class="device-rank">{{ index + 1 }}</span>
+                  <span class="device-name">{{ device.name }}</span>
+                  <div class="device-progress">
+                    <div
+                      class="progress-bar"
+                      :style="{ width: device.percent + '%' }"
+                    ></div>
+                  </div>
+                  <span class="device-count">{{ device.count }}</span>
                 </div>
-                <span class="device-count">{{ device.count }}</span>
+              </template>
+              <div v-else class="empty-data-placeholder">
+                <i class="el-icon-video-camera-solid"></i>
+                <span>暂无设备数据</span>
               </div>
             </div>
           </div>
@@ -1216,39 +1192,13 @@ export default {
 }
 
 /* 设备TOP10列表 */
-.device-tabs {
-  display: flex;
-  margin-bottom: 15px;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-}
-
-.tab-item {
-  padding: 8px 12px;
-  cursor: pointer;
-  color: #7eaee5;
-  font-size: 13px;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.tab-item.active {
-  color: #00ffff;
-}
-
-.tab-item.active::after {
-  content: "";
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: #00ffff;
-}
-
 .device-top-list {
-  height: calc(100% - 50px);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 10px 0;
+  display: flex;
+  flex-direction: column;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
@@ -1472,5 +1422,23 @@ export default {
 /* 解决选择时间界面被覆盖的问题 */
 ::v-deep .date-picker-dropdown {
   position: absolute !important;
+}
+
+.empty-data-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(126, 174, 229, 0.4);
+  padding: 20px 0;
+}
+.empty-data-placeholder i {
+  font-size: 32px;
+}
+.empty-data-placeholder span {
+  font-size: 12px;
+  letter-spacing: 1px;
 }
 </style>

@@ -170,7 +170,7 @@
               <div class="stat-label">分析中</div>
             </div>
             <div class="brain-stat-item">
-              <div class="stat-value">{{ alertTrendTotal }}</div>
+              <div class="stat-value">{{ todayAlertCount }}</div>
               <div class="stat-label">今日预警</div>
             </div>
           </div>
@@ -239,7 +239,11 @@
         </div>
         <div class="card-content">
           <div class="alarm-chart-section">
-            <div ref="alarmDistChart" class="alarm-dist-chart"></div>
+            <div v-show="!alarmDistEmpty" ref="alarmDistChart" class="alarm-dist-chart"></div>
+            <div v-show="alarmDistEmpty" class="empty-data-placeholder">
+              <i class="el-icon-pie-chart"></i>
+              <span>暂无预警数据</span>
+            </div>
           </div>
         </div>
       </div>
@@ -398,6 +402,7 @@ export default {
       },
       myAlgorithms: [],
       alarmDistChart: null,
+      alarmDistEmpty: true,
       skillDisplayOffset: 0,
       skillCarouselTimer: null,
       brainShowImage: false,
@@ -417,6 +422,7 @@ export default {
       ],
       latestAlerts: [],
       alertTrendTotal: 0,
+      todayAlertCount: 0,
       timeRange: 'day',
       customDateRange: [],
       datePickerDialogVisible: false,
@@ -689,7 +695,7 @@ export default {
         const res = await fetchStatsDedupe({ granularity: 'hour', ...dateRange });
         const stats = statisticsFromResponse(res);
         if (!stats) return;
-        this.alertTrendTotal = (stats.summary || {}).total_alerts || 0;
+        this.todayAlertCount = (stats.summary || {}).total_alerts || 0;
       } catch (e) {
         console.error('获取今日预警总数失败:', e);
       }
@@ -703,6 +709,7 @@ export default {
         const res = await fetchStatsDedupe({ granularity, ...dateRange });
         const stats = statisticsFromResponse(res);
         if (!stats) return;
+        this.alertTrendTotal = (stats.summary || {}).total_alerts || 0;
         const trend = stats.trend || [];
         this.renderTrendChart(trend.map(t => t.label), trend.map(t => t.count));
       } catch (e) {
@@ -724,7 +731,18 @@ export default {
           name: t.name,
           itemStyle: { color: colors[i % colors.length] }
         }));
-        this.renderAlarmDistChart(pieData);
+        const wasEmpty = this.alarmDistEmpty;
+        this.alarmDistEmpty = pieData.length === 0 || pieData.every(d => d.value === 0);
+        if (!this.alarmDistEmpty) {
+          if (wasEmpty) {
+            this.$nextTick(() => {
+              this.renderAlarmDistChart(pieData);
+              if (this.alarmDistChart) this.alarmDistChart.resize();
+            });
+          } else {
+            this.renderAlarmDistChart(pieData);
+          }
+        }
       } catch (e) {
         console.error('获取类型分布失败:', e);
       }
@@ -785,7 +803,7 @@ export default {
     },
     async fetchSkillList() {
       try {
-        const res = await skillAPI.getSkillList({ page: 1, limit: 100 });
+        const res = await skillAPI.getSkillList({ page: 1, limit: 100, is_detail: false });
         const d = res && res.data;
         const list = (d && Array.isArray(d.data)) ? d.data : [];
         this.myAlgorithms = list.map(s => ({
@@ -3478,19 +3496,16 @@ export default {
 .algorithm-inference-platform {
   width: 100%;
   height: 100%;
-  min-height: 100%;
+  min-height: 0;
   background: linear-gradient(135deg, #001529 0%, #000B18 50%, #001020 100%);
   color: #ffffff;
   font-family: "Microsoft YaHei", Arial, sans-serif;
   position: relative;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   box-sizing: border-box;
 }
 
@@ -6677,6 +6692,24 @@ export default {
   min-height: 180px;
 }
 
+.empty-data-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(126, 174, 229, 0.4);
+  padding: 20px 0;
+}
+.empty-data-placeholder i {
+  font-size: 32px;
+}
+.empty-data-placeholder span {
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
 /* 圆环饼图容器（已改用 ECharts，保留样式兼容） */
 .donut-container {
   flex: 1;
@@ -7060,7 +7093,8 @@ export default {
   gap: 12px;
   padding: 10px 0;
   flex: 1;
-  min-height: 120px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .skill-card {
@@ -7069,7 +7103,7 @@ export default {
   border-radius: 10px;
   padding: 12px 10px;
   text-align: center;
-  min-height: 40px;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7109,7 +7143,7 @@ export default {
 .my-algorithms .card-content {
   padding: 8px 12px;
   height: calc(100% - 40px);
-  min-height: 200px;
+  min-height: 0;
 }
 
 /* ========== 预警行内缩略图 ========== */
