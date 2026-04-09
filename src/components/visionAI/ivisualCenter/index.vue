@@ -686,29 +686,49 @@ export default {
     async fetchWeather() {
       this.locationInfo.loading = true;
       try {
-        // 1. IP 定位获取中文城市名（ip-api.com 免费、无需 key）
-        const ipResp = await fetch('http://ip-api.com/json/?lang=zh-CN&fields=city,regionName');
+        const ipResp = await fetch('http://ip-api.com/json/?lang=zh-CN&fields=city,regionName,lat,lon');
         const ipData = await ipResp.json();
         const province = ipData.regionName || '';
         const city = ipData.city || '';
+        const lat = ipData.lat;
+        const lon = ipData.lon;
         if (province && city && province !== city) {
           this.locationInfo.location = `${province} ${city}`;
         } else {
           this.locationInfo.location = city || province || '未知地区';
         }
 
-        // 2. 天气数据（wttr.in 用中文城市名请求，确保匹配）
-        const weatherCity = encodeURIComponent(city || '');
-        const wttrResp = await fetch(`https://wttr.in/${weatherCity}?format=j1&lang=zh`);
-        const wttrData = await wttrResp.json();
-        const cur = wttrData.current_condition && wttrData.current_condition[0];
-        if (cur) {
-          const tempC = cur.temp_C || '--';
-          const desc = (cur.lang_zh && cur.lang_zh[0] && cur.lang_zh[0].value)
-            || (cur.weatherDesc && cur.weatherDesc[0] && cur.weatherDesc[0].value) || '';
-          const humidity = cur.humidity || '--';
-          this.locationInfo.weather = `${desc} ${tempC}°C`;
-          this.locationInfo.airQuality = `湿度 ${humidity}%`;
+        let weatherOk = false;
+        try {
+          const weatherCity = encodeURIComponent(city || '');
+          const wttrResp = await fetch(`https://wttr.in/${weatherCity}?format=j1&lang=zh`);
+          const wttrData = await wttrResp.json();
+          const cur = wttrData && wttrData.current_condition && wttrData.current_condition[0];
+          if (cur) {
+            const tempC = cur.temp_C || '--';
+            const desc = (cur.lang_zh && cur.lang_zh[0] && cur.lang_zh[0].value)
+              || (cur.weatherDesc && cur.weatherDesc[0] && cur.weatherDesc[0].value) || '';
+            const humidity = cur.humidity || '--';
+            this.locationInfo.weather = `${desc} ${tempC}°C`;
+            this.locationInfo.airQuality = `湿度 ${humidity}%`;
+            weatherOk = true;
+          }
+        } catch (_) { /* wttr.in 失败，走备用 */ }
+
+        if (!weatherOk && lat && lon) {
+          try {
+            const meteoResp = await fetch(
+              `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code`
+            );
+            const meteo = await meteoResp.json();
+            const c = meteo && meteo.current;
+            if (c) {
+              const wmoMap = {0:'晴',1:'大部晴朗',2:'多云',3:'阴天',45:'雾',48:'雾凇',51:'小毛毛雨',53:'毛毛雨',55:'密毛毛雨',61:'小雨',63:'中雨',65:'大雨',71:'小雪',73:'中雪',75:'大雪',77:'雪粒',80:'小阵雨',81:'阵雨',82:'大阵雨',85:'小阵雪',86:'大阵雪',95:'雷暴',96:'雷暴伴冰雹',99:'强雷暴伴冰雹'};
+              const desc = wmoMap[c.weather_code] || '未知';
+              this.locationInfo.weather = `${desc} ${Math.round(c.temperature_2m)}°C`;
+              this.locationInfo.airQuality = `湿度 ${Math.round(c.relative_humidity_2m)}%`;
+            }
+          } catch (_) { /* 备用也失败，保持默认值 */ }
         }
       } catch (e) {
         console.error('获取天气失败:', e);
