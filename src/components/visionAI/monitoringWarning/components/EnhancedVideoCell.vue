@@ -170,60 +170,24 @@ export default {
       this.$emit('task-change', taskId)
     },
     
-    /**
-     * 连接WebSocket
-     */
     connectWebSocket(taskId) {
-      try {
-        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsUrl = `${protocol}//${location.host}/api/realtime-detection/ws/detection/${taskId}`
-        
-        console.log(`🔌 连接检测WebSocket: ${wsUrl}`)
-        
-        this.wsConnection = new WebSocket(wsUrl)
-        
-        this.wsConnection.onopen = () => {
-          console.log(`✅ WebSocket连接成功: task_id=${taskId}`)
+      const { createDetectionWebSocket } = require('../utils/detectionWebSocket')
+      this.wsConnection = createDetectionWebSocket(taskId, {
+        onMessage: (parsed) => {
+          this.detections = parsed.detections
+          this.videoWidth = parsed.frameSize.width
+          this.videoHeight = parsed.frameSize.height
+        },
+        onClose: () => {
+          this.wsConnection = null
         }
-        
-        this.wsConnection.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data)
-            
-            // 更新检测结果
-            this.detections = data.detections || []
-            
-            // 更新视频分辨率
-            if (data.frame_size) {
-              this.videoWidth = data.frame_size.width
-              this.videoHeight = data.frame_size.height
-            }
-          } catch (error) {
-            console.error('❌ 解析检测结果失败:', error)
-          }
-        }
-        
-        this.wsConnection.onerror = (error) => {
-          console.error(`❌ WebSocket错误: task_id=${taskId}`, error)
-        }
-        
-        this.wsConnection.onclose = () => {
-          console.log(`🔌 WebSocket已断开: task_id=${taskId}`)
-        }
-        
-      } catch (error) {
-        console.error('❌ 创建WebSocket连接失败:', error)
-      }
+      })
     },
     
-    /**
-     * 断开WebSocket
-     */
     disconnectWebSocket() {
-      if (this.wsConnection) {
-        this.wsConnection.close()
-        this.wsConnection = null
-      }
+      const { closeWebSocket } = require('../utils/detectionWebSocket')
+      closeWebSocket(this.wsConnection)
+      this.wsConnection = null
     },
     
     /**

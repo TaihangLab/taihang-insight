@@ -3702,6 +3702,18 @@ export const reviewRecordAPI = {
     return visionAIAxios.delete(`/api/v1/review-records/${reviewId}`);
   },
 
+  countFalseAlarmImages(params = {}) {
+    return visionAIAxios.get('/api/v1/review-records/false-alarm-images/count', { params });
+  },
+
+  downloadFalseAlarmImages(params = {}) {
+    return visionAIAxios.get('/api/v1/review-records/false-alarm-images/download', {
+      params,
+      responseType: 'blob',
+      timeout: 120000
+    });
+  },
+
   /**
    * 获取复判记录统计概览（与后端 GET /review-records/statistics/overview 一致）
    */

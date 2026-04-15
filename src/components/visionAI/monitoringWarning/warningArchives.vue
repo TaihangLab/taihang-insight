@@ -154,9 +154,8 @@ export default {
         description: '',
         image: ''
       },
-      // 预警详情相关
       warningDetailVisible: false,
-      currentWarning: null
+      currentAlertId: null
     }
   },
   computed: {
@@ -635,69 +634,10 @@ export default {
       this.selectedRows = selection; // 保存完整的选中对象数组
       this.selectAll = selection.length === this.archiveList.length;
     },
-    // 查看详情（对齐warningManagement：拉取详情并构建时间线）
-    async showDetail(record) {
-      try {
-        console.log('warningArchives showDetail - 原始记录数据:', record);
-
-        // 先构建基础对象（立即展示基本信息）
-        const baseWarning = {
-        id: record.id,
-        device: record.deviceName,
-          deviceInfo: {
-            name: record.deviceName,
-            position: record.location || this.archiveInfo.location
-          },
-        type: record.name,
-        time: record.warningTime,
-        level: record.warningLevel,
-        location: record.location || this.archiveInfo.location,
-        remark: record.remark,
-          description: record.description || this.getDescriptionByType(record.name),
-          imageUrl: record.violationImage || null,
-          videoUrl: record.violationVideo || null,
-          minio_frame_url: record.violationImage || null,
-          minio_video_url: record.violationVideo || null,
-          status: 'completed',
-          operationHistory: [],
-          _apiData: record._apiData || null
-        };
-
-        this.currentWarning = baseWarning;
-      this.warningDetailVisible = true;
-
-        // 获取详情以还原完整process，与管理页一致
-        const apiAlertId = (record._apiData && record._apiData.alert_id) || record.id;
-        if (!apiAlertId) return;
-
-        const resp = await alertAPI.getAlertDetail(apiAlertId);
-        const apiDetail = resp && resp.data ? resp.data : null;
-        if (!apiDetail) return;
-
-        // 优先用process构建时间线，其次用其他字段，最后回退基础构建
-        let history = [];
-        if (apiDetail.process) {
-          history = this.processApiDataHistory(apiDetail);
-        } else {
-          history = this.buildFromApiData(apiDetail);
-        }
-
-        // 更新currentWarning，覆盖operationHistory与_apiData
-        this.currentWarning = {
-          ...this.currentWarning,
-          operationHistory: history,
-          _apiData: apiDetail
-        };
-
-        console.log('warningArchives showDetail - 详情拉取完成，时间线条数:', history.length);
-      } catch (error) {
-        console.error('warningArchives showDetail 获取详情失败，使用基础时间线:', error);
-        // 回退：如果没有详情，则用本地构建
-        this.currentWarning = {
-          ...this.currentWarning,
-          operationHistory: this.buildOperationHistory(record)
-        };
-      }
+    showDetail(record) {
+      const alertId = (record._apiData && record._apiData.alert_id) || record.id
+      this.currentAlertId = alertId
+      this.warningDetailVisible = true
     },
 
     // 为档案预警构建完整的操作历史，参考warningManagement页面的逻辑
@@ -992,11 +932,7 @@ export default {
     },
 
     // 从预警详情组件处理预警
-    handleWarningFromDetail(warning) {
-      this.$message({
-        message: `正在处理 ${warning.device} 的 ${warning.type} 预警`,
-        type: 'success'
-      });
+    handleWarningFromDetail(eventData) {
       this.warningDetailVisible = false;
     },
     // 处理单条删除
@@ -1511,92 +1447,13 @@ export default {
 
 
       // 预览预警详情 - 在添加预警对话框中查看预警详情
-      async previewAlert(alert) {
-        try {
-          console.log('previewAlert - 原始预警数据:', alert);
-
-          // 将 availableAlerts 表格数据格式转换为 WarningDetail 组件需要的格式
-          const levelMap = {
-            1: 'level1',
-            2: 'level2',
-            3: 'level3',
-            4: 'level4'
-          };
-
-          // 构建基础 warning 对象
-          const baseWarning = {
-            id: alert.alert_id,
-            device: alert.camera_name,
-            deviceInfo: {
-              name: alert.camera_name,
-              position: alert.location || ''
-            },
-            alertName: alert.alert_name || '未知预警',  // 预警名称（如：未佩戴安全带）
-            type: alert.alert_type || '未知类型',        // 预警类型（如：安全生产预警）
-            time: alert.alert_time,
-            level: levelMap[alert.alert_level] || 'level1',
-            location: alert.location || '',
-            description: this.getDescriptionByType(alert.alert_type || alert.alert_name),
-            imageUrl: alert.minio_frame_url || null,
-            videoUrl: alert.minio_video_url || null,
-            minio_frame_url: alert.minio_frame_url || null,
-            minio_video_url: alert.minio_video_url || null,
-            status: this.convertStatusToText(alert.status),
-            operationHistory: [],
-            _apiData: alert
-          };
-
-          this.currentWarning = baseWarning;
-          this.warningDetailVisible = true;
-
-          // 调用 API 获取完整的预警详情
-          const alertId = alert.alert_id;
-          if (!alertId) {
-            console.warn('previewAlert - 缺少预警ID，使用基础数据');
-            return;
-          }
-
-          const resp = await alertAPI.getAlertDetail(alertId);
-          const apiDetail = resp && resp.data ? resp.data : null;
-
-          if (!apiDetail) {
-            console.warn('previewAlert - 获取详情失败，使用基础数据');
-            return;
-          }
-
-          console.log('previewAlert - API返回详情:', apiDetail);
-
-          // 更新 warning 对象，添加更多详细信息
-          let history = [];
-          if (apiDetail.process) {
-            history = this.processApiDataHistory(apiDetail);
-          } else {
-            history = this.buildFromApiData(apiDetail);
-          }
-
-          // 更新 currentWarning，覆盖图片、视频和操作历史
-          this.currentWarning = {
-            ...this.currentWarning,
-            imageUrl: apiDetail.minio_frame_url || this.currentWarning.imageUrl,
-            videoUrl: apiDetail.minio_video_url || this.currentWarning.videoUrl,
-            minio_frame_url: apiDetail.minio_frame_url || this.currentWarning.minio_frame_url,
-            minio_video_url: apiDetail.minio_video_url || this.currentWarning.minio_video_url,
-            description: apiDetail.description || this.currentWarning.description,
-            operationHistory: history,
-            _apiData: apiDetail
-          };
-
-          console.log('previewAlert - 详情构建完成，时间线条数:', history.length);
-        } catch (error) {
-          console.error('previewAlert - 获取预警详情失败:', error);
-          // 出错时仍然显示基础信息
-          if (this.currentWarning) {
-            this.currentWarning = {
-              ...this.currentWarning,
-              operationHistory: this.buildBasicHistoryFromAlert(alert)
-            };
-          }
+      previewAlert(alert) {
+        if (!alert || !alert.alert_id) {
+          this.$message.warning('缺少预警ID');
+          return;
         }
+        this.currentAlertId = alert.alert_id;
+        this.warningDetailVisible = true;
       },
 
       // 将状态码转换为文本状态
@@ -2143,9 +2000,11 @@ export default {
     <!-- 替换原有的预警详情弹框 -->
     <WarningDetail
       :visible.sync="warningDetailVisible"
-      :warning="currentWarning"
-      source="warningArchives"
+      :alert-id="currentAlertId"
       @handle-warning="handleWarningFromDetail"
+      @handle-report="handleWarningFromDetail"
+      @handle-archive="handleWarningFromDetail"
+      @handle-false-alarm="handleWarningFromDetail"
     />
 
     <!-- 图片预览弹框 -->
@@ -2420,9 +2279,11 @@ export default {
     <!-- 预警详情对话框 -->
     <WarningDetail
       :visible.sync="warningDetailVisible"
-      :warning="currentWarning"
-      source="warningArchives"
+      :alert-id="currentAlertId"
       @handle-warning="handleWarningFromDetail"
+      @handle-report="handleWarningFromDetail"
+      @handle-archive="handleWarningFromDetail"
+      @handle-false-alarm="handleWarningFromDetail"
     />
   </div>
 </template>

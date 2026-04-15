@@ -86,9 +86,8 @@ export default {
       selectedArchiveId: '',
       archiveListLoading: false,
       
-      // 预警详情对话框
       warningDetailVisible: false,
-      currentWarningDetail: null,
+      currentAlertId: null,
       
       // 删除确认对话框
       deleteDialogVisible: false,
@@ -1112,190 +1111,35 @@ export default {
       this.archiveListLoading = false
     },
     
-    // 显示预警详情
-    async showWarningDetail(item) {
-      try {
-        this.loading = true
-        
-        // 获取API预警ID
-        const apiAlertId = item._apiData ? item._apiData.alert_id : parseInt(item.id)
-        
-        console.log('获取预警详情:', apiAlertId, item)
-        
-        // 调用API获取完整的预警详情
-        const response = await alertAPI.getAlertDetail(apiAlertId)
-        
-        console.log('预警详情API完整响应:', response)
-        console.log('预警详情API响应数据:', response.data)
-        console.log('检查条件 response.data:', !!response.data)
-        console.log('检查条件 response.data.alert_id:', response.data ? response.data.alert_id : 'undefined')
-        
-        if (response.data && response.data.alert_id) {
-          // 转换API数据为页面数据格式
-          const apiDetail = response.data
-          
-          // 创建增强的预警详情对象，包含API返回的完整信息
-          const enhancedDetail = {
-            // 基本信息（保持原有结构用于兼容）
-            ...item,
-            
-            // API返回的完整数据
-            apiData: apiDetail,
-            
-            // 增强的详情信息
-            alert_id: apiDetail.alert_id,
-            alert_time: apiDetail.alert_time,
-            alert_type: apiDetail.alert_type,
-            alert_level: apiDetail.alert_level,
-            alert_name: apiDetail.alert_name,
-            alert_description: apiDetail.alert_description,
-            location: apiDetail.location,
-            camera_id: apiDetail.camera_id,
-            camera_name: apiDetail.camera_name,
-            task_id: apiDetail.task_id,
-            
-            // 电子围栏信息
-            electronic_fence: apiDetail.electronic_fence,
-            
-            // 检测结果
-            result: apiDetail.result,
-            
-            // 媒体URL
-            minio_frame_url: apiDetail.minio_frame_url,
-            minio_video_url: apiDetail.minio_video_url,
-            
-            // 技能信息
-            skill_class_id: apiDetail.skill_class_id,
-            skill_name_zh: apiDetail.skill_name_zh,
-            
-            // 状态和处理信息
-            status: apiDetail.status,
-            status_display: apiDetail.status_display,
-            processed_at: apiDetail.processed_at,
-            processed_by: apiDetail.processed_by,
-            processing_notes: apiDetail.processing_notes,
-            
-            // 时间信息
-            created_at: apiDetail.created_at,
-            updated_at: apiDetail.updated_at,
-            
-            // 处理流程信息
-            process: apiDetail.process,
-            
-            // 更新图片URL使用API返回的
-            imageUrl: apiDetail.minio_frame_url || item.imageUrl,
-            
-            // 更新描述使用API返回的
-            description: apiDetail.alert_description || item.description,
-            
-            // 🔧 修复：添加合并预警相关字段
-            is_merged: apiDetail.is_merged || false,
-            alert_count: apiDetail.alert_count || 1,
-            alert_duration: apiDetail.alert_duration || 0,
-            first_alert_time: apiDetail.first_alert_time,
-            last_alert_time: apiDetail.last_alert_time,
-            alert_images: apiDetail.alert_images || []
-          }
-          
-          console.log('预警详情API响应:', apiDetail)
-          console.log('增强后的预警详情:', enhancedDetail)
-          
-          this.currentWarningDetail = enhancedDetail
-        } else {
-          console.warn('API返回数据格式不正确，使用原始数据:', response.data)
-          this.currentWarningDetail = item
-        }
-        
-        this.warningDetailVisible = true
-      } catch (error) {
-        console.error('获取预警详情失败:', error)
-        this.$message.error('获取预警详情失败：' + (error.message || '网络错误'))
-        // 如果API调用失败，仍然显示基本信息
-        this.currentWarningDetail = item
-        this.warningDetailVisible = true
-      } finally {
-        this.loading = false
-      }
+    showWarningDetail(item) {
+      const alertId = item._apiData ? item._apiData.alert_id : parseInt(item.id)
+      this.currentAlertId = alertId
+      this.warningDetailVisible = true
     },
     
-    // 处理预警详情对话框中的事件
-    async handleWarningFromDetail(warning) {
-      if (!warning || !warning.id) {
-        return;
-      }
+    async handleWarningFromDetail(eventData) {
+      if (!eventData || !eventData.alert_id) return;
       
-      // 根据action类型处理不同的操作
-      if (warning.action === 'record-added') {
-        // 确认处理 - 更新本地状态为处理中
-        console.log('处理DetailDialog的确认处理事件:', warning);
-        
-        // 如果有API响应数据，更新本地预警状态
-        if (warning.apiResponse) {
-          const index = this.warningList.findIndex(item => 
-            (item._apiData && item._apiData.alert_id === warning.apiResponse.alert_id) ||
-            item.id === warning.id
-          );
-          
-          if (index !== -1) {
-            // 更新状态相关字段
-            this.$set(this.warningList[index], 'status', 'processing');
-            this.$set(this.warningList[index], 'processed_by', warning.apiResponse.processed_by);
-            this.$set(this.warningList[index], 'processing_notes', warning.apiResponse.processing_notes);
-            
-            console.log('本地状态已更新为处理中:', this.warningList[index]);
-          }
-        }
-        
-        // 刷新列表以获取最新数据
+      if (eventData.action === 'record-added' || eventData.action === 'finished') {
         await this.getWarningList()
-      } else if (warning.action === 'finished') {
-        // 结束处理 - 更新本地状态为已处理
-        console.log('处理DetailDialog的结束处理事件:', warning);
-        
-        // 如果有API响应数据，更新本地预警状态
-        if (warning.apiResponse) {
-          const index = this.warningList.findIndex(item => 
-            (item._apiData && item._apiData.alert_id === warning.apiResponse.alert_id) ||
-            item.id === warning.id
-          );
-          
-          if (index !== -1) {
-            // 更新状态相关字段
-            this.$set(this.warningList[index], 'status', 'resolved');
-            this.$set(this.warningList[index], 'processed_by', warning.apiResponse.processed_by);
-            this.$set(this.warningList[index], 'processing_notes', warning.apiResponse.processing_notes);
-            this.$set(this.warningList[index], 'processed_at', warning.apiResponse.processed_at);
-            
-            console.log('本地状态已更新为已处理:', this.warningList[index]);
-          }
-        }
-        
-        // 刷新列表以获取最新数据
-        await this.getWarningList()
-      } else {
-        // 兼容原有逻辑
-        this.handleWarning(warning.id, 'markProcessed');
       }
     },
     
-    // 处理预警详情对话框中的上报事件
-    handleReportFromDetail(warning) {
-      if (warning && warning.id) {
-        this.handleWarning(warning.id, 'report')
+    handleReportFromDetail(eventData) {
+      if (eventData && eventData.alert_id) {
+        this.handleWarning(eventData.alert_id, 'report')
       }
     },
     
-    // 处理预警详情对话框中的归档事件
-    handleArchiveFromDetail(warning) {
-      if (warning && warning.id) {
-        this.handleWarning(warning.id, 'archive')
+    handleArchiveFromDetail(eventData) {
+      if (eventData && eventData.alert_id) {
+        this.handleWarning(eventData.alert_id, 'archive')
       }
     },
     
-    // 处理预警详情对话框中的误报事件
-    handleFalseAlarmFromDetail(warning) {
-      if (warning && warning.id) {
-        this.handleWarning(warning.id, 'falseAlarm')
+    handleFalseAlarmFromDetail(eventData) {
+      if (eventData && eventData.alert_id) {
+        this.handleWarning(eventData.alert_id, 'falseAlarm')
       }
     },
     
@@ -2575,8 +2419,7 @@ export default {
     <!-- 预警详情对话框 -->
     <WarningDetail
       :visible.sync="warningDetailVisible"
-      :warning="currentWarningDetail"
-      source="warningManagement"
+      :alert-id="currentAlertId"
       @handle-warning="handleWarningFromDetail"
       @handle-report="handleReportFromDetail"
       @handle-archive="handleArchiveFromDetail"
