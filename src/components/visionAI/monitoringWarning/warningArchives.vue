@@ -775,7 +775,7 @@ export default {
           statusText: '误报',
           time: this.formatApiTime(apiData.processed_at || apiData.updated_at),
           description: '预警已标记为误报',
-          operationType: 'falseAlarm',
+          operationType: 'false_alarm',
           operator: apiData.processed_by || '管理员'
         });
       }
@@ -1461,9 +1461,9 @@ export default {
         const statusMap = {
           1: 'pending',      // 待处理
           2: 'processing',   // 处理中
-          3: 'completed',    // 已完成
-          4: 'ignored',      // 已忽略
-          5: 'archived'      // 已归档
+          3: 'completed',    // 已处理
+          4: 'archived',     // 已归档
+          5: 'false_alarm'   // 误报
         };
         return statusMap[status] || 'pending';
       },

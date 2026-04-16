@@ -243,7 +243,7 @@ export default {
           2: 'processing', // 处理中
           3: 'completed',  // 已处理
           4: 'archived',   // 已归档
-          5: 'falseAlarm'  // 误报
+          5: 'false_alarm'  // 误报
         }
 
         // 🔧 统一处理操作历史（与realTimeMonitoring保持一致）
@@ -393,7 +393,7 @@ export default {
             statusText: '误报',
             time: processTime,
             description: '预警已标记为误报',
-            operationType: 'falseAlarm',
+            operationType: 'false_alarm',
             operator: defaultOperator
           })
         }
@@ -446,7 +446,7 @@ export default {
             this.archiveWarningId = id
             await this.handleArchiveProcess()
             return // 不关闭loading，等确认后再关闭
-          } else if (action === 'falseAlarm') {
+          } else if (action === 'false_alarm') {
             this.archiveWarningId = id
             this.falseAlarmDialogVisible = true
             return // 不关闭loading，等用户输入完成后再关闭
@@ -1139,7 +1139,7 @@ export default {
     
     handleFalseAlarmFromDetail(eventData) {
       if (eventData && eventData.alert_id) {
-        this.handleWarning(eventData.alert_id, 'falseAlarm')
+        this.handleWarning(eventData.alert_id, 'false_alarm')
       }
     },
     
@@ -1222,12 +1222,12 @@ export default {
             statusText: '误报处理',
             time: this.getCurrentTime(),
             description: `预警被标记为误报：${this.falseAlarmForm.reviewNotes}`,
-            operationType: 'falseAlarm',
+            operationType: 'false_alarm',
             operator: this.getCurrentUserName()
           }
           
           this.warningList[warningIndex].operationHistory.push(newRecord)
-          this.warningList[warningIndex].status = 'archived'
+          this.warningList[warningIndex].status = 'false_alarm'
           this.warningList[warningIndex].isFalseAlarm = true
           this.warningList[warningIndex].archiveTime = new Date().toLocaleString()
           
@@ -1537,14 +1537,14 @@ export default {
       console.log('🔒 检查处理按钮状态:', warning.id, 'status:', warning.status);
       
       // 优先检查API状态
-      if (warning.status === 'archived' || warning.status === 'falseAlarm' || warning.status === 'completed') {
+      if (warning.status === 'archived' || warning.status === 'false_alarm' || warning.status === 'completed') {
         console.log('✅ 按API状态禁用按钮:', warning.status);
         return true;
       }
       
       // 如果已归档，禁用处理按钮
       const hasArchived = warning.operationHistory.some(record => 
-        record.operationType === 'archive' || record.operationType === 'falseAlarm'
+        record.operationType === 'archive' || record.operationType === 'false_alarm'
       );
       
       if (hasArchived) {
@@ -1587,7 +1587,7 @@ export default {
         return true
       }
       
-      if (warning.status === 'falseAlarm') {
+      if (warning.status === 'false_alarm') {
         console.log('📁 归档按钮禁用: 误报状态')
         return true
       }
@@ -1600,7 +1600,7 @@ export default {
       
       // 检查是否已归档
       const hasArchived = warning.operationHistory.some(record => 
-        record.operationType === 'archive' || record.operationType === 'falseAlarm'
+        record.operationType === 'archive' || record.operationType === 'false_alarm'
       )
       
       if (hasArchived) {
@@ -1677,7 +1677,7 @@ export default {
         }
       }
       
-      if (warning.status === 'falseAlarm') {
+      if (warning.status === 'false_alarm') {
         return {
           text: '误报',
           class: 'status-false-alarm'
@@ -1693,7 +1693,7 @@ export default {
       
       // 检查操作历史中的归档和误报状态
       const hasArchived = warning.operationHistory.some(record => 
-        record.operationType === 'archive' || record.operationType === 'falseAlarm'
+        record.operationType === 'archive' || record.operationType === 'false_alarm'
       );
       
       if (hasArchived) {
@@ -2122,7 +2122,7 @@ export default {
                     <el-button 
                       size="mini" 
                       class="action-btn false-alarm-btn"
-                      @click.stop="handleWarning(item.id, 'falseAlarm')"
+                      @click.stop="handleWarning(item.id, 'false_alarm')"
                       :disabled="isFalseAlarmDisabled(item)"
                     >
                       误报

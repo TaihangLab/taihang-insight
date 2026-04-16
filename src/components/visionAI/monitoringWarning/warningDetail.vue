@@ -1046,7 +1046,7 @@ export default {
             statusText: '标记误报',
             time: this.getCurrentTime(),
             description: `已标记为误报。${this.falseAlarmReason ? '原因：' + this.falseAlarmReason : ''}`,
-            operationType: 'falseAlarm',
+            operationType: 'false_alarm',
             operator: this.getCurrentUserName()
           });
           this.detail.status = 5;
@@ -2335,7 +2335,7 @@ export default {
 }
 
 /* 误报 */
-.timeline-item[data-type="falseAlarm"] .timeline-content::before {
+.timeline-item[data-type="false_alarm"] .timeline-content::before {
   background: #909399;
 }
 

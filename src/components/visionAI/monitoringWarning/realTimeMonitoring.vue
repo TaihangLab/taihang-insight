@@ -1363,7 +1363,7 @@ export default {
             this.currentCameraId = this.warningList[index].cameraId || 'camera_1';
             await this.handleArchiveProcess();
             return; // 不关闭loading，等归档完成后再关闭
-          } else if (action === 'falseAlarm') {
+          } else if (action === 'false_alarm') {
             // 误报 - 显示输入对话框
             this.archiveWarningId = id;
             this.currentCameraId = this.warningList[index].cameraId || 'camera_1';
@@ -1392,7 +1392,7 @@ export default {
 
     handleFalseAlarmFromDialog(eventData) {
       if (eventData && eventData.alert_id) {
-        this.handleWarning(eventData.alert_id, 'falseAlarm');
+        this.handleWarning(eventData.alert_id, 'false_alarm');
       }
     },
 
@@ -1747,12 +1747,12 @@ export default {
             statusText: '误报处理',
             time: this.getCurrentTime(),
             description: `预警被标记为误报：${this.falseAlarmForm.reviewNotes}`,
-            operationType: 'falseAlarm',
+            operationType: 'false_alarm',
             operator: operatorName
           };
 
           this.warningList[warningIndex].operationHistory.push(newRecord);
-          this.warningList[warningIndex].status = 'archived';
+          this.warningList[warningIndex].status = 'false_alarm';
           this.warningList[warningIndex].isFalseAlarm = true;
           this.warningList[warningIndex].archiveTime = new Date().toLocaleString();
 
@@ -2149,16 +2149,15 @@ export default {
         };
       }
 
-      // 检查是否已归档
+      // 检查是否已归档或误报
       const hasArchived = warning.operationHistory.some(record =>
-        record.operationType === 'archive' || record.operationType === 'falseAlarm'
-      ) || warning.status === 'archived';
+        record.operationType === 'archive' || record.operationType === 'false_alarm'
+      ) || warning.status === 'archived' || warning.status === 'false_alarm';
 
       if (hasArchived) {
-        return {
-          text: '已归档',
-          class: 'status-archived'
-        };
+        return warning.status === 'false_alarm'
+          ? { text: '误报', class: 'status-false-alarm' }
+          : { text: '已归档', class: 'status-archived' };
       }
 
       // 检查是否有已处理状态
@@ -2210,10 +2209,10 @@ export default {
         return false; // 没有历史记录，可以处理
       }
 
-      // 如果已归档，禁用处理按钮
+      // 如果已归档或误报，禁用处理按钮
       const hasArchived = warning.operationHistory.some(record =>
-        record.operationType === 'archive' || record.operationType === 'falseAlarm'
-      ) || warning.status === 'archived';
+        record.operationType === 'archive' || record.operationType === 'false_alarm'
+      ) || warning.status === 'archived' || warning.status === 'false_alarm';
 
       if (hasArchived) {
         return true;
@@ -2297,7 +2296,7 @@ export default {
 
           const convertedWarnings = apiWarnings.map(warning =>
             this.convertAPIWarningToFrontend(warning)
-          ).filter(warning => warning !== null);
+          ).filter(warning => warning !== null && !this.isProcessedStatus(warning.status));
 
           // 更新预警列表
           this.warningList = convertedWarnings;
@@ -2712,7 +2711,7 @@ export default {
         // 将后端预警数据转换为前端格式 - 统一使用API转换方法
         const newWarning = this.convertAPIWarningToFrontend(alertData);
 
-        if (!newWarning) {
+        if (!newWarning || this.isProcessedStatus(newWarning.status)) {
           return;
         }
 
@@ -2746,6 +2745,12 @@ export default {
             return;
           }
 
+          // 如果预警已处理，从列表中移除
+          if (this.isProcessedStatus(updatedWarning.status)) {
+            this.warningList.splice(index, 1);
+            return;
+          }
+
           this.$set(this.warningList, index, updatedWarning);
         }
       } catch (error) {
@@ -2755,6 +2760,12 @@ export default {
 
 
 
+
+    // 判断预警状态是否为已处理（已处理/已归档/误报等不需要在实时预警中展示的状态）
+    isProcessedStatus(status) {
+      const processedStatuses = ['completed', 'archived', 'false_alarm'];
+      return processedStatuses.includes(status);
+    },
 
     // 转换预警等级
     convertAlertLevel(backendLevel) {
@@ -2775,8 +2786,8 @@ export default {
           '待处理': 'pending',
           '处理中': 'processing',
           '已处理': 'completed',
-          '已忽略': 'ignored',
-          '已过期': 'expired'
+          '已归档': 'archived',
+          '误报': 'false_alarm'
         };
         return statusMap[statusDisplay] || 'pending';
       }
@@ -2784,11 +2795,11 @@ export default {
       // 如果没有显示文本，根据数字状态映射
       if (statusNumber !== undefined && statusNumber !== null) {
         const numberStatusMap = {
-          1: 'pending',     // 待处理
-          2: 'processing',  // 处理中
-          3: 'completed',   // 已处理
-          4: 'ignored',     // 已忽略
-          5: 'expired'      // 已过期
+          1: 'pending',      // 待处理
+          2: 'processing',   // 处理中
+          3: 'completed',    // 已处理
+          4: 'archived',     // 已归档
+          5: 'false_alarm'   // 误报
         };
         return numberStatusMap[statusNumber] || 'pending';
       }
@@ -2872,7 +2883,7 @@ export default {
             statusText: '误报',
             time: processTime, // 🔧 使用处理时间
             description: '预警已标记为误报',
-            operationType: 'falseAlarm',
+            operationType: 'false_alarm',
             operator: defaultOperator
           });
         }

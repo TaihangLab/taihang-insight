@@ -1583,7 +1583,7 @@ export const alertAPI = {
           'processing': '处理中',
           'completed': '已处理',
           'archived': '已归档',
-          'falseAlarm': '误报'
+          'false_alarm': '误报'
         };
         apiParams.status = statusMap[apiParams.statusFilter];
         delete apiParams.statusFilter;
