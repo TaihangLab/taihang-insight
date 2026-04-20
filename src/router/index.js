@@ -61,6 +61,9 @@ import knowledgeBase from '../components/visionAI/systemManagement/knowledgeBase
 import knowledgeBaseDetail from '../components/visionAI/systemManagement/knowledgeBaseDetail.vue'
 // 知识库管理
 
+// ML Pipeline 模块（模型工厂）
+import modelFactory from '../components/visionAI/mlPipeline/modelFactory.vue'
+
 const originalPush = VueRouter.prototype.push
 VueRouter.prototype.push = function push(location) {
   return originalPush.call(this, location).catch(err => err)
@@ -244,6 +247,11 @@ export default new VueRouter({
           path: '/systemManage/profile',
           name: 'profile',
           component: profile,
+        },
+        {
+          path: '/mlPipeline',
+          name: 'modelFactory',
+          component: modelFactory,
         },
 
         {

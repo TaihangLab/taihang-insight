@@ -42,6 +42,7 @@ export default {
         position: { x: 0, y: 100, side: 'right' }, // x, y为绝对位置，side表示在左侧还是右侧
         tempPosition: null, // 拖拽时的临时位置
         dragged: false, // 标记是否发生了实际拖拽
+        dragStartPos: { x: 0, y: 0 }, // 拖拽起始鼠标位置，用于判断是否超过拖拽阈值
         // 自动隐藏相关
         isAutoHidden: false,
         hideTimer: null,
@@ -451,12 +452,27 @@ export default {
         this.dragOffset.x = event.clientX - rect.left;
         this.dragOffset.y = event.clientY - rect.top;
         
+        // 记录鼠标按下的初始位置，用于判断是否真正发生了拖拽
+        this.dragStartPos = { x: event.clientX, y: event.clientY };
+        
         document.addEventListener('mousemove', this.onDrag);
         document.addEventListener('mouseup', this.stopDrag);
         event.preventDefault();
       },
       onDrag(event) {
         if (this.isDragging) {
+          // 计算鼠标移动距离，只有超过阈值才视为真正拖拽
+          // 解决 Linux 下点击时微小鼠标位移导致误判为拖拽的问题
+          const dragThreshold = 5; // 5像素的拖拽阈值
+          const dx = event.clientX - this.dragStartPos.x;
+          const dy = event.clientY - this.dragStartPos.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < dragThreshold) {
+            // 移动距离小于阈值，不视为拖拽，忽略
+            return;
+          }
+          
           this.dragged = true; // 标记发生了实际拖拽
           const windowWidth = window.innerWidth;
           const windowHeight = window.innerHeight;
@@ -808,32 +824,6 @@ export default {
         }
       },
 
-      /**
-       * 用户手动停止生成（类似ChatGPT的停止按钮）
-       */
-      stopGeneration() {
-        console.log('用户手动停止生成');
-        this.userStoppedGeneration = true;
-        this.stopCurrentChat();
-        
-        // 在当前消息末尾添加停止标识
-        const lastMessage = this.messages[this.messages.length - 1];
-        if (lastMessage && lastMessage.type === 'assistant' && !lastMessage.isTyping) {
-          // 如果回复内容不为空，保留已生成的内容
-          if (lastMessage.content && lastMessage.content.trim()) {
-            lastMessage.content += '\n\n[已停止生成]';
-            lastMessage.displayContent = lastMessage.content;
-          } else {
-            // 如果没有内容，显示停止消息
-            lastMessage.content = '[生成已停止]';
-            lastMessage.displayContent = lastMessage.content;
-          }
-        }
-        
-        // 保存当前会话状态
-        this.saveCurrentChat();
-      },
-      
       /**
        * 用户手动停止生成（模仿Cursor的停止机制）
        */
