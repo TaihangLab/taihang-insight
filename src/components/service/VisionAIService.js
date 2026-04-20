@@ -3904,9 +3904,6 @@ export const mlPipelineAPI = {
   getLabelStudioStatus() {
     return visionAIAxios.get('/api/v1/ml-pipeline/annotation/label-studio/status');
   },
-  getLsCredentials() {
-    return visionAIAxios.get('/api/v1/ml-pipeline/annotation/label-studio/credentials');
-  },
 
   // ---- 数据集 ----
   listDatasets() {
