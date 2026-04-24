@@ -92,12 +92,10 @@
         <div class="skills-container">
           <!-- 加载状态 -->
           <div v-if="loading" class="loading-container">
-            <el-loading 
-              :loading="loading"
-              text="正在加载技能列表..."
-              spinner="el-icon-loading"
-              background="rgba(255, 255, 255, 0.8)">
-            </el-loading>
+            <div class="loading-spinner">
+              <i class="el-icon-loading"></i>
+              <p>正在加载技能列表...</p>
+            </div>
           </div>
           
           <!-- 空状态 -->
@@ -116,7 +114,7 @@
           </div>
           
           <!-- 技能卡片列表 -->
-          <div v-else class="skills-grid">
+          <div v-else class="llm-skills-grid">
             <div 
               v-for="skill in paginatedSkills" 
               :key="skill.id" 
@@ -783,7 +781,6 @@ export default {
             image_url: skill.skill_icon_url || '/static/logo.png' // 直接使用后端返回的临时访问URL
           }))
 
-          // 更新总数和分页信息
           this.totalCount = response.data.total || 0
           
           console.log('技能列表加载成功:', this.skills.length, '条记录')
@@ -1779,10 +1776,7 @@ export default {
   },
 
   mounted() {
-    // 初始化数据
     this.searchKeyword = this.searchInput
-  
-    // 加载技能列表
     this.loadSkillList()
   }
 }
@@ -2046,7 +2040,6 @@ export default {
   overflow-y: auto;
   padding: 20px 24px 24px 24px;
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  position: relative;
 }
 
 /* 加载状态 */
@@ -2056,6 +2049,27 @@ export default {
   justify-content: center;
   height: 400px;
   width: 100%;
+}
+
+.loading-spinner {
+  text-align: center;
+  color: #3b82f6;
+}
+
+.loading-spinner i {
+  font-size: 32px;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner p {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* 空状态 */
@@ -2124,7 +2138,7 @@ export default {
   transform: translateY(-2px);
 } */
 
-.skills-grid {
+.llm-skills-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 16px;
@@ -2139,10 +2153,10 @@ export default {
   aspect-ratio: 16/19;
   display: flex;
   flex-direction: column;
-  min-height: 0;
   border: 1px solid #f3f4f6;
   position: relative;
   overflow: hidden;
+  height: auto;
 }
 
 .skill-card::before {
@@ -2251,7 +2265,7 @@ export default {
 .skill-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .card-header {
@@ -2714,25 +2728,25 @@ export default {
 
 /* 响应式设计 */
 @media (max-width: 1600px) {
-  .skills-grid {
+  .llm-skills-grid {
     grid-template-columns: repeat(5, 1fr);
   }
 }
 
 @media (max-width: 1400px) {
-  .skills-grid {
+  .llm-skills-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
 @media (max-width: 1200px) {
-  .skills-grid {
+  .llm-skills-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 1024px) {
-  .skills-grid {
+  .llm-skills-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -2759,10 +2773,6 @@ export default {
 
   .skills-container {
     padding: 16px;
-  }
-
-  .skills-grid {
-    grid-template-columns: 1fr;
   }
 
   .filter-tabs {
@@ -3260,7 +3270,7 @@ export default {
     flex-wrap: wrap;
   }
 
-  .skills-grid {
+  .llm-skills-grid {
     grid-template-columns: 1fr;
   }
 

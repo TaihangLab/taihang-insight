@@ -1,4 +1,4 @@
-import { cameraAPI, skillAPI } from '@/components/service/VisionAIService.js';
+import { cameraAPI, skillAPI, systemMonitorAPI } from '@/components/service/VisionAIService.js';
 import MediaServer from '@/components/service/MediaServer.js';
 
 export default {
@@ -51,6 +51,10 @@ export default {
       cameraRelatedTasks: [],
       // 任务加载状态
       taskLoading: false,
+      
+      // 推流健康状态映射 { task_id: { state, message, ... } }
+      streamingHealthMap: {},
+      streamingHealthTimer: null,
 
       // 摄像头类型筛选 - 新增
       currentCameraTypeFilter: 0,
@@ -203,6 +207,9 @@ export default {
       // 大模型技能配置相关（移除状态，改用 ref 调用）
       // configLlmVisible: false, // 已移除
       // currentSelectedCamera: null, // 已移除
+
+      // 任务保存后已刷新标志，防止对话框关闭时重复刷新
+      skipCloseRefresh: false,
     };
   },
 
@@ -216,9 +223,18 @@ export default {
       return this.deviceList;
     },
 
-    // 过滤后的技能选项列表（现在使用服务端分页和过滤，直接返回skillOptions）
+    // 过滤后的技能选项列表（服务端过滤 + 客户端兜底过滤）
     filteredSkillOptions() {
-      return this.skillOptions || [];
+      let options = this.skillOptions || [];
+      // 客户端兜底：当搜索关键词存在时，对结果做二次过滤
+      if (this.skillSearchKeyword) {
+        const keyword = this.skillSearchKeyword.toLowerCase();
+        options = options.filter(item =>
+          (item.name_zh && item.name_zh.toLowerCase().includes(keyword)) ||
+          (item.value && item.value.toLowerCase().includes(keyword))
+        );
+      }
+      return options;
     },
     
     // 技能总页数
@@ -239,13 +255,21 @@ export default {
     // 获取摄像头列表
     this.fetchCameraList();
     
-    
-    
     // 初始化摄像头类型筛选为全部(0)
     this.currentCameraTypeFilter = 0;
 
     // 获取技能类列表
     this.fetchSkillClasses();
+    
+    // 启动推流健康状态轮询
+    this.startStreamingHealthPolling();
+  },
+  
+  beforeDestroy() {
+    if (this.streamingHealthTimer) {
+      clearInterval(this.streamingHealthTimer);
+      this.streamingHealthTimer = null;
+    }
   },
 
   watch: {
@@ -271,6 +295,72 @@ export default {
   },
 
   methods: {
+    // ---- 推流健康状态 ----
+    startStreamingHealthPolling() {
+      this.fetchStreamingHealth();
+      this.streamingHealthTimer = setInterval(() => {
+        this.fetchStreamingHealth();
+      }, 10000);
+    },
+    
+    fetchStreamingHealth() {
+      systemMonitorAPI.getStreamingHealth()
+        .then(response => {
+          const data = response.data;
+          if (data && data.task_streamers) {
+            const map = {};
+            data.task_streamers.forEach(item => {
+              map[item.task_id] = {
+                state: item.state,
+                message: item.message || '',
+                is_running: item.is_running,
+                last_error: item.last_error,
+                frames_sent: item.frames_sent,
+                errors: item.errors,
+              };
+            });
+            this.streamingHealthMap = map;
+          }
+        })
+        .catch(() => {});
+    },
+    
+    getStreamingHealthType(health) {
+      if (!health) return 'info';
+      switch (health.state) {
+        case 'healthy': return 'success';
+        case 'starting': return 'warning';
+        case 'degraded': return 'warning';
+        case 'failed': return 'danger';
+        case 'stopped': return 'info';
+        default: return 'info';
+      }
+    },
+    
+    getStreamingHealthIcon(health) {
+      if (!health) return 'el-icon-question';
+      switch (health.state) {
+        case 'healthy': return 'el-icon-circle-check';
+        case 'starting': return 'el-icon-loading';
+        case 'degraded': return 'el-icon-warning';
+        case 'failed': return 'el-icon-circle-close';
+        case 'stopped': return 'el-icon-remove';
+        default: return 'el-icon-question';
+      }
+    },
+    
+    getStreamingHealthText(health) {
+      if (!health) return '未知';
+      switch (health.state) {
+        case 'healthy': return '正常';
+        case 'starting': return '启动中';
+        case 'degraded': return '异常';
+        case 'failed': return '失败';
+        case 'stopped': return '已停止';
+        default: return '未知';
+      }
+    },
+    
     // 获取摄像头列表数据
     fetchCameraList(params = {}) {
       this.loading = true;
@@ -308,6 +398,7 @@ export default {
                 status: camera.status,
                 location: camera.location || '-',
                 skill: Array.isArray(camera.skill_names) ? camera.skill_names.join(', ') : '-',
+                llm_skill_names: Array.isArray(camera.llm_skill_names) ? camera.llm_skill_names : [],
                 camera_type: camera.camera_type,
               };
             });
@@ -483,11 +574,14 @@ export default {
         selectedSkills: []
       };
       this.selectedSkillCache = [];
+
+      // 重置搜索和过滤状态，确保每次打开对话框时都是全新的
+      this.skillSearchKeyword = '';
+      this.skillStatusFilter = 'all';
+      this.skillCurrentPage = 1;
       
-      // 先确保获取最新的技能类列表
-      if (!this.skillOptions || this.skillOptions.length === 0) {
-        this.fetchSkillClasses();
-      }
+      // 每次打开对话框都重新获取技能列表，确保数据最新且不受旧搜索条件影响
+      this.fetchSkillClasses();
       
       // 获取当前摄像头的技能列表和关联任务
       if (row.id) {
@@ -524,17 +618,9 @@ export default {
       }
     },
 
-    // 关闭选择技能对话框
+    // 关闭选择技能对话框（刷新由 handleSkillSelectClose 统一处理）
     closeSkillSelectDialog() {
-      // 关闭对话框
       this.skillSelectDialogVisible = false;
-      
-      // 重新获取设备详情，确保显示的是已成功配置的技能
-      if (this.currentDeviceId) {
-        this.refreshCameraDetail(this.currentDeviceId);
-        // 重新获取关联任务数据
-        this.fetchCameraRelatedTasks(this.currentDeviceId);
-      }
     },
     
     // 更新设备技能显示
@@ -1463,6 +1549,7 @@ export default {
               this.$set(this.deviceList[index], 'location', camera.location || '-');
               
               // 更新技能列表（这是最关键的部分）
+              this.$set(this.deviceList[index], 'llm_skill_names', Array.isArray(camera.llm_skill_names) ? camera.llm_skill_names : []);
               if (camera.skill_names && Array.isArray(camera.skill_names)) {
                 // 更新设备显示的技能列表文本
                 this.$set(this.deviceList[index], 'skill', camera.skill_names.join(', '));
@@ -1489,13 +1576,15 @@ export default {
         });
     },
 
-    // 处理技能选择对话框关闭事件
+    // 处理技能选择对话框关闭事件（统一刷新入口）
     handleSkillSelectClose() {
-      // 当用户关闭技能选择对话框（点击X或按ESC）时，刷新摄像头数据
-      // 以确保只显示已成功配置的技能
+      // 如果刚保存过任务且已在成功回调中刷新，跳过重复刷新
+      if (this.skipCloseRefresh) {
+        this.skipCloseRefresh = false;
+        return;
+      }
       if (this.currentDeviceId) {
         this.refreshCameraDetail(this.currentDeviceId);
-        // 重新加载关联任务数据
         this.fetchCameraRelatedTasks(this.currentDeviceId);
       }
     },
@@ -2037,8 +2126,9 @@ export default {
             
             // AI任务创建成功后，刷新摄像头数据获取最新的技能列表
             this.refreshCameraDetail(this.currentDeviceId);
-            // 刷新关联任务列表
             this.fetchCameraRelatedTasks(this.currentDeviceId);
+            // 已刷新，后续对话框关闭时跳过重复刷新
+            this.skipCloseRefresh = true;
           } else {
             console.error('创建AI任务失败:', response.data);
             this.$message.error('创建AI任务失败：' + (response.data && response.data.msg ? response.data.msg : '未知错误'));
@@ -2050,13 +2140,9 @@ export default {
         })
         .finally(() => {
           this.loading = false;
-          // 关闭配置技能对话框
           this.skillDialogVisible = false;
-          
-          // 重置左侧菜单标志
           this.showLeftSkillMenu = false;
           
-          // 如果不是从左侧菜单点击的，则重新打开选择技能对话框
           if (!this.showLeftSkillMenu) {
             this.skillSelectDialogVisible = true;
           }
@@ -2504,8 +2590,9 @@ export default {
             
             // 刷新摄像头数据获取最新的技能列表
             this.refreshCameraDetail(this.currentDeviceId);
-            // 刷新关联任务列表
             this.fetchCameraRelatedTasks(this.currentDeviceId);
+            // 已刷新，后续对话框关闭时跳过重复刷新
+            this.skipCloseRefresh = true;
           } else {
             console.error('更新AI任务失败:', response.data);
             this.$message.error('更新AI任务失败：' + (response.data && response.data.msg ? response.data.msg : '未知错误'));
@@ -2517,16 +2604,11 @@ export default {
         })
         .finally(() => {
           this.loading = false;
-          // 重置更新模式
           this.isUpdateMode = false;
           this.currentTaskId = null;
-          // 关闭配置技能对话框
           this.skillDialogVisible = false;
-          
-          // 重置左侧菜单标志
           this.showLeftSkillMenu = false;
           
-          // 如果不是从左侧菜单点击的，则重新打开选择技能对话框
           if (!this.showLeftSkillMenu) {
             this.skillSelectDialogVisible = true;
           }

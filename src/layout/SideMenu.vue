@@ -104,21 +104,6 @@
         <el-menu-item index="/systemManage/appSettings">
           <span slot="title">应用设置</span>
         </el-menu-item>
-        <el-menu-item index="/systemManage/userManagement">
-          <span slot="title">用户管理</span>
-        </el-menu-item>
-        <el-menu-item index="/systemManage/roleManagement">
-          <span slot="title">角色管理</span>
-        </el-menu-item>
-        <el-menu-item index="/systemManage/tenantManagement">
-          <span slot="title">租户管理</span>
-        </el-menu-item>
-        <el-menu-item index="/systemManage/departmentManagement">
-          <span slot="title">部门管理</span>
-        </el-menu-item>
-        <el-menu-item index="/systemManage/positionManagement">
-          <span slot="title">岗位管理</span>
-        </el-menu-item>
         <el-menu-item index="/systemManage/knowledgeBase">
           <span slot="title">知识库管理</span>
         </el-menu-item>

@@ -15,7 +15,6 @@
         <router-view></router-view>
       </el-main>
     </div>
-
     <!-- 太行智能助手 -->
     <intelligent-assistant />
   </div>

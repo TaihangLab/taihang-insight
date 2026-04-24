@@ -1,5 +1,9 @@
 <script>
 import WarningDetail from './warningDetail.vue'
+import { reviewRecordAPI, skillAPI } from '../../service/VisionAIService.js'
+
+const SKILL_SOURCE_VISION = 'vision'
+const SKILL_SOURCE_LLM = 'llm'
 
 export default {
   name: "ReviewRecords",
@@ -13,46 +17,27 @@ export default {
   },
   data() {
     return {
-      // 统计数据
+      // 看板：多模态/复判总数；预警处置覆盖（已处理∪归档∪误报∪有复判记录）/总预警；TOP3 按预警技能复判次数
       statistics: {
-        reviewed: 302,
-        total: 325,
-        percentage: 92.92
+        reviewed: 0,
+        total: 0,
+        percentage: 0,
+        closureCount: 0,
+        closureTotal: 0,
+        closurePct: 0,
+        /** 已复判预警数 / 系统预警总数（复判覆盖率） */
+        reviewAlertCount: 0,
+        reviewAlertTotal: 0,
+        reviewAlertRatioPct: 0,
       },
-      
-      // TOP3排行数据
-      topData: [
-        {
-          id: 'bf21b82aa7...',
-          name: 'bf21b82aa7...',
-          count: 626,
-          total: 6210,
-          percentage: 99.94,
-          color: '#409EFF'
-        },
-        {
-          id: 'helmet_detection',
-          name: '戴帽识别',
-          count: 3972,
-          total: 3972,
-          percentage: 100.00,
-          color: '#67C23A'
-        },
-        {
-          id: 'person_crossing',
-          name: '人员穿越线...',
-          count: 164,
-          total: 175,
-          percentage: 93.71,
-          color: '#E6A23C'
-        }
-      ],
+      topData: [],
       
       // 搜索条件
       searchForm: {
         startDate: '',
         endDate: '',
         reviewType: '',
+        reviewResult: 'false_alarm',
         warningSkill: '',
         warningLocation: '',
         warningName: '',
@@ -64,6 +49,7 @@ export default {
         startDate: '',
         endDate: '',
         reviewType: '',
+        reviewResult: 'false_alarm',
         warningSkill: '',
         warningLocation: '',
         warningName: '',
@@ -71,188 +57,7 @@ export default {
       },
       
              // 复判记录列表
-       reviewList: [
-         {
-           id: '1',
-           title: '人员越界',
-           image: require('./images/5.jpg'),
-           cameraName: '门禁1',
-           location: '工地入口区域',
-           startTime: '2025-06-06 19:51',
-           duration: '2秒',
-           reviewType: 'manual'
-         },
-         {
-           id: '2',
-           title: '未穿着反光衣',
-           image: require('./images/3.jpg'),
-           cameraName: '摄像头01',
-           location: '工地东北角',
-           startTime: '2025-06-06 14:58',
-           duration: '2秒',
-           reviewType: 'auto'
-         },
-         {
-           id: '3',
-           title: '未佩戴安全帽',
-           image: require('./images/5.jpg'),
-           cameraName: '摄像头01',
-           location: '工地东北角',
-           startTime: '2025-06-06 14:57',
-           duration: '14秒',
-           reviewType: 'auto'
-         },
-         {
-           id: '4',
-           title: '未佩戴安全帽',
-           image: require('./images/5.jpg'),
-           cameraName: '摄像头01',
-           location: '工地东北角',
-           startTime: '2025-06-06 14:56',
-           duration: '6秒',
-           reviewType: 'auto'
-         },
-         {
-           id: '5',
-           title: '人员穿越禁止区域',
-           image: require('./images/5.jpg'),
-           cameraName: '摄像头02',
-           location: '材料区',
-           startTime: '2025-06-05 17:44',
-           duration: '1秒',
-           reviewType: 'manual'
-         },
-         {
-           id: '6',
-           title: '未穿工作服',
-           image: require('./images/4.jpg'),
-           cameraName: '摄像头03',
-           location: '工地南侧',
-           startTime: '2025-06-05 16:32',
-           duration: '3秒',
-           reviewType: 'auto'
-         },
-         {
-           id: '7',
-           title: '违规吸烟',
-           image: require('./images/6.jpg'),
-           cameraName: '摄像头05',
-           location: '休息区',
-           startTime: '2025-06-05 15:28',
-           duration: '8秒',
-           reviewType: 'manual'
-         },
-         {
-           id: '8',
-           title: '高空作业未系安全带',
-           image: require('./images/1.jpg'),
-           cameraName: '摄像头04',
-           location: '施工作业区',
-           startTime: '2025-06-05 14:15',
-           duration: '12秒',
-           reviewType: 'auto'
-         },
-         {
-           id: '9',
-           title: '闲杂人员入侵',
-           image: require('./images/5.jpg'),
-           cameraName: '摄像头02',
-           location: '材料区',
-           startTime: '2025-06-05 13:45',
-           duration: '5秒',
-           reviewType: 'manual'
-         },
-         {
-           id: '10',
-           title: '未穿反光背心',
-           image: require('./images/3.jpg'),
-           cameraName: '摄像头06',
-           location: '工地东北角',
-           startTime: '2025-06-05 12:20',
-           duration: '4秒',
-           reviewType: 'auto'
-         },
-         {
-           id: '11',
-           title: '安全帽佩戴异常',
-           image: require('./images/5.jpg'),
-           cameraName: '摄像头01',
-           location: '工地东北角',
-           startTime: '2025-06-05 11:35',
-           duration: '7秒',
-           reviewType: 'auto'
-         },
-         {
-           id: '12',
-           title: '危险区域人员滞留',
-           image: require('./images/5.jpg'),
-           cameraName: '摄像头07',
-           location: '施工作业区',
-           startTime: '2025-06-05 10:48',
-           duration: '15秒',
-           reviewType: 'manual'
-         },
-         {
-           id: '13',
-           title: '工作服穿着不规范',
-           image: require('./images/4.jpg'),
-           cameraName: '摄像头08',
-           location: '工地南侧',
-           startTime: '2025-06-05 09:22',
-           duration: '6秒',
-           reviewType: 'auto'
-         },
-         {
-           id: '14',
-           title: '火源烟雾检测',
-           image: require('./images/6.jpg'),
-           cameraName: '摄像头09',
-           location: '休息区',
-           startTime: '2025-06-05 08:55',
-           duration: '11秒',
-           reviewType: 'manual'
-         },
-         {
-           id: '15',
-           title: '高空作业安全带检查',
-           image: require('./images/1.jpg'),
-           cameraName: '摄像头10',
-           location: '施工作业区',
-           startTime: '2025-06-04 17:30',
-           duration: '9秒',
-           reviewType: 'auto'
-         },
-         {
-           id: '16',
-           title: '无关人员进入施工区',
-           image: require('./images/5.jpg'),
-           cameraName: '摄像头11',
-           location: '施工作业区',
-           startTime: '2025-06-04 16:45',
-           duration: '13秒',
-           reviewType: 'manual'
-         },
-         {
-           id: '17',
-           title: '反光服装缺失检测',
-           image: require('./images/3.jpg'),
-           cameraName: '摄像头12',
-           location: '材料区',
-           startTime: '2025-06-04 15:18',
-           duration: '3秒',
-           reviewType: 'auto'
-         },
-         {
-           id: '18',
-           title: '防护用具佩戴检查',
-           image: require('./images/2.jpg'),
-           cameraName: '摄像头13',
-           location: '工地南侧',
-           startTime: '2025-06-04 14:22',
-           duration: '8秒',
-           reviewType: 'auto'
-         }
-       ],
+       reviewList: [],
       
       // 分页
       pagination: {
@@ -279,129 +84,92 @@ export default {
         { label: '多模态大模型复判', value: 'auto' },
         { label: '人工审核', value: 'manual' }
       ],
-      
-      // 预警技能选项
-      warningSkillOptions: [
-        { label: '全部智能技能', value: '' },
-        { label: '安全帽检测', value: 'safety_helmet_detection' },
-        { label: '工作服检测', value: 'work_clothes_detection' },
-        { label: '反光背心检测', value: 'reflective_vest_detection' },
-        { label: '安全带检测', value: 'safety_belt_detection' },
-        { label: '烟火检测', value: 'smoke_fire_detection' },
-        { label: '人员入侵检测', value: 'personnel_intrusion_detection' },
-        { label: '高空作业检测', value: 'high_altitude_work_detection' },
-        { label: '区域入侵检测', value: 'area_intrusion_detection' }
+
+      // 复判结论选项（搜索下拉用）
+      reviewResultOptions: [
+        { label: '全部', value: '' },
+        { label: '误报', value: 'false_alarm' },
+        { label: '真实预警', value: 'real_alert' },
+        { label: '需人工复核', value: 'need_review' }
+      ],
+
+      // 结论标签页
+      activeResultTab: 'false_alarm',
+      resultTabs: [
+        { label: '全部', value: '' },
+        { label: '误报', value: 'false_alarm' },
+        { label: '真实预警', value: 'real_alert' },
+        { label: '需人工复核', value: 'need_review' }
       ],
       
-      // 预警详情对话框
+      // 预警技能选项（从后端动态加载）
+      warningSkillOptions: [
+        { label: '全部智能技能', value: '' }
+      ],
+      
       warningDetailVisible: false,
-      currentWarningDetail: null
+      currentAlertId: null,
+      currentReviewData: null,
+      zipDownloading: false
     }
   },
   computed: {
-    // 根据筛选条件过滤的数据
     filteredData() {
-      let filtered = [...this.reviewList]
-      
-      // 按日期范围筛选
-      if (this.activeSearchForm.startDate) {
-        filtered = filtered.filter(item => {
-          const itemDate = new Date(item.startTime)
-          const startDate = new Date(this.activeSearchForm.startDate + ' 00:00:00')
-          return itemDate >= startDate
-        })
-      }
-      
-      if (this.activeSearchForm.endDate) {
-        filtered = filtered.filter(item => {
-          const itemDate = new Date(item.startTime)
-          const endDate = new Date(this.activeSearchForm.endDate + ' 23:59:59')
-          return itemDate <= endDate
-        })
-      }
-      
-      // 按复判类型筛选
-      if (this.activeSearchForm.reviewType) {
-        filtered = filtered.filter(item => item.reviewType === this.activeSearchForm.reviewType)
-      }
-      
-      // 按预警技能筛选
-      if (this.activeSearchForm.warningSkill) {
-        filtered = filtered.filter(item => {
-          // 根据预警技能关键词匹配
-          const skillMap = {
-            'safety_helmet_detection': ['安全帽'],
-            'work_clothes_detection': ['工作服'],
-            'reflective_vest_detection': ['反光'],
-            'safety_belt_detection': ['安全带'],
-            'smoke_fire_detection': ['吸烟', '烟火', '火源'],
-            'personnel_intrusion_detection': ['人员', '越界', '入侵'],
-            'area_intrusion_detection': ['区域', '禁止']
-          }
-          
-          const keywords = skillMap[this.activeSearchForm.warningSkill] || []
-          return keywords.some(keyword => item.title.includes(keyword))
-        })
-      }
-      
-      // 按违规位置筛选
-      if (this.activeSearchForm.warningLocation) {
-        filtered = filtered.filter(item => 
-          item.cameraName.toLowerCase().includes(this.activeSearchForm.warningLocation.toLowerCase())
-        )
-      }
-      
-      // 按预警名称筛选
-      if (this.activeSearchForm.warningName) {
-        filtered = filtered.filter(item => 
-          item.title.toLowerCase().includes(this.activeSearchForm.warningName.toLowerCase())
-        )
-      }
-      
-      // 按预警ID筛选
-      if (this.activeSearchForm.warningId) {
-        filtered = filtered.filter(item => 
-          item.id.toLowerCase().includes(this.activeSearchForm.warningId.toLowerCase())
-        )
-      }
-      
-      return filtered
+      return this.reviewList
     },
     
-    // 当前页显示的数据
     currentPageData() {
-      const start = (this.pagination.currentPage - 1) * this.pagination.pageSize
-      const end = start + this.pagination.pageSize
-      return this.filteredData.slice(start, end)
+      return this.reviewList
     },
     
-    // 更新分页总数
     totalRecords() {
-      return this.filteredData.length
+      return this.pagination.total
     }
   },
-  watch: {
-    // 监听筛选数据变化，更新统计信息
-    filteredData(newData) {
-      // 根据筛选后的数据更新统计信息
-      const autoCount = newData.filter(item => item.reviewType === 'auto').length
-      const manualCount = newData.filter(item => item.reviewType === 'manual').length
-      
-      // 更新 TOP3 数据（示例逻辑，实际项目中应该根据具体业务需求计算）
-      this.updateStatistics(newData)
-    }
-  },
-  mounted() {
-    this.getReviewList()
-    // 确保初始数据正确显示
-    this.$nextTick(() => {
-      console.log('ReviewList length:', this.reviewList.length)
-      console.log('FilteredData length:', this.filteredData.length)
-      console.log('CurrentPageData length:', this.currentPageData.length)
-    })
+  async mounted() {
+    await Promise.all([
+      this.getReviewList(),
+      this.fetchDashboardStats(),
+      this.loadSkillOptions()
+    ])
+    this.applyTopFromListIfNeeded()
   },
   methods: {
-    // 截断文本
+    async loadSkillOptions() {
+      const options = [{ label: '全部智能技能', value: '' }]
+      try {
+        const [visionRes, llmRes] = await Promise.allSettled([
+          skillAPI.getSkillList({ page: 1, limit: 200 }),
+          skillAPI.getLlmSkillList({ page: 1, limit: 200 })
+        ])
+
+        if (visionRes.status === 'fulfilled') {
+          const skills = (visionRes.value && visionRes.value.data) || []
+          skills.forEach(s => {
+            options.push({
+              label: `[视觉] ${s.name_zh || s.name || '技能#' + s.id}`,
+              value: `${SKILL_SOURCE_VISION}:${s.id}`
+            })
+          })
+        }
+
+        if (llmRes.status === 'fulfilled') {
+          const raw = llmRes.value && llmRes.value.data
+          const llmSkills = Array.isArray(raw) ? raw
+            : (raw && Array.isArray(raw.data) ? raw.data
+              : (raw && Array.isArray(raw.skill_classes) ? raw.skill_classes : []))
+          llmSkills.forEach(s => {
+            options.push({
+              label: `[大模型] ${s.skill_name || s.name || '技能#' + s.id}`,
+              value: `${SKILL_SOURCE_LLM}:${s.id}`
+            })
+          })
+        }
+      } catch (e) {
+        console.error('加载技能选项失败:', e)
+      }
+      this.warningSkillOptions = options
+    },
     truncateText(text, maxLength = 30) {
       if (!text) return ''
       if (text.length <= maxLength) return text
@@ -413,48 +181,142 @@ export default {
       this.$router.go(-1)
     },
     
-    // 获取复判记录列表
+    overviewPayload(res) {
+      const raw = res && res.data
+      if (!raw) return null
+      if (typeof raw.total_reviews === 'number') return raw
+      if (raw.data && typeof raw.data.total_reviews === 'number') return raw.data
+      return null
+    },
+
+    /** 接口未返回 TOP3 时，用当前列表按预警名称聚合（与列表数据一致） */
+    applyTopFromListIfNeeded() {
+      if (this.topData.length > 0 || !this.reviewList.length) return
+      const totalR = this.statistics.total > 0 ? this.statistics.total : this.reviewList.length
+      if (!totalR) return
+      const map = {}
+      for (const r of this.reviewList) {
+        const k = (r.title && String(r.title).trim()) || '未知预警'
+        map[k] = (map[k] || 0) + 1
+      }
+      const entries = Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 3)
+      const colors = ['#409EFF', '#67C23A', '#E6A23C']
+      this.topData = entries.map(([name, cnt], i) => ({
+        id: `local-${i}-${name}`,
+        name: this.truncateText(name, 14),
+        count: cnt,
+        total: totalR,
+        percentage: totalR > 0 ? Math.round((cnt / totalR) * 10000) / 100 : 0,
+        color: colors[i] || '#909399',
+      }))
+    },
+
+    async fetchDashboardStats() {
+      try {
+        const overRes = await reviewRecordAPI.getReviewRecordStatistics()
+        const o = this.overviewPayload(overRes)
+        if (!o || typeof o.total_reviews !== 'number') return
+        const totalR = o.total_reviews
+        const auto = typeof o.auto_reviews === 'number' ? o.auto_reviews : 0
+        const closureCount = typeof o.handled_or_reviewed_alerts === 'number'
+          ? o.handled_or_reviewed_alerts
+          : 0
+        const closureTotal = typeof o.total_alerts === 'number' ? o.total_alerts : 0
+        const closurePct = typeof o.alert_handle_rate_pct === 'number'
+          ? o.alert_handle_rate_pct
+          : (closureTotal > 0 ? Math.round((closureCount / closureTotal) * 10000) / 100 : 0)
+        const reviewAlertRatioPct = closureTotal > 0
+          ? Math.round((totalR / closureTotal) * 10000) / 100
+          : 0
+        this.statistics = {
+          reviewed: auto,
+          total: totalR,
+          percentage: totalR > 0 ? Math.round((auto / totalR) * 10000) / 100 : 0,
+          closureCount,
+          closureTotal,
+          closurePct,
+          reviewAlertCount: totalR,
+          reviewAlertTotal: closureTotal,
+          reviewAlertRatioPct,
+        }
+        const skills = Array.isArray(o.top_review_skills) ? o.top_review_skills : []
+        const colors = ['#409EFF', '#67C23A', '#E6A23C']
+        this.topData = skills.slice(0, 3).map((row, i) => {
+          const cnt = row.review_count || 0
+          return {
+            id: `skill-${String(row.name || i)}-${i}`,
+            name: this.truncateText(row.name || '未知', 14),
+            count: cnt,
+            total: totalR,
+            percentage: totalR > 0 ? Math.round((cnt / totalR) * 10000) / 100 : 0,
+            color: colors[i] || '#909399',
+          }
+        })
+      } catch (e) {
+        console.error('获取复判看板统计失败:', e)
+      }
+    },
+
+    // 获取复判记录列表（服务端分页）
     async getReviewList() {
       this.loading = true
       try {
-        // 调用后端API获取复判记录
-        const { reviewRecordAPI } = await import('../../service/VisionAIService.js')
-        const response = await reviewRecordAPI.getReviewRecords({
-          page: 1,
-          limit: 1000, // 获取所有记录
+        const params = {
+          page: this.pagination.currentPage,
+          limit: this.pagination.pageSize,
           review_type: this.activeSearchForm.reviewType || undefined,
-          reviewer_name: this.activeSearchForm.warningName || undefined,
+          review_result: this.activeSearchForm.reviewResult || undefined,
           start_date: this.activeSearchForm.startDate || undefined,
-          end_date: this.activeSearchForm.endDate || undefined
-        })
+          end_date: this.activeSearchForm.endDate || undefined,
+          alert_name: this.activeSearchForm.warningName || undefined,
+          camera_name: this.activeSearchForm.warningLocation || undefined
+        }
+        if (this.activeSearchForm.warningSkill) {
+          const [source, idStr] = this.activeSearchForm.warningSkill.split(':')
+          params.skill_class_id = Number(idStr)
+          params.skill_source = source
+        }
+        const response = await reviewRecordAPI.getReviewRecords(params)
         
         if (response.data && response.data.code === 0) {
-          // 转换API数据格式为前端需要的格式
-          this.reviewList = response.data.data.map(record => ({
-            id: record.review_id.toString(),
-            title: record.alert_name || '未知预警',
-            image: record.image_url || require('./images/5.jpg'),
-            cameraName: record.camera_name || '未知摄像头',
-            location: record.location || '未知位置',
-            startTime: record.created_at ? new Date(record.created_at).toLocaleString('zh-CN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit'
-            }).replace(/\//g, '-') : '未知时间',
-            duration: '2秒', // 默认值，实际项目中可以从alert数据获取
-            reviewType: record.review_type,
-            reviewNotes: record.review_notes,
-            reviewerName: record.reviewer_name,
-            alertId: record.alert_id
-          }))
+          this.reviewList = response.data.data.map(record => {
+            const isLlm = record.alert_type && record.alert_type.startsWith('llm_')
+            return {
+              id: record.review_id.toString(),
+              title: record.alert_name || '未知预警',
+              image: record.image_url || require('./images/5.jpg'),
+              cameraName: record.camera_name || '未知摄像头',
+              location: record.location || '未知位置',
+              startTime: record.created_at ? new Date(record.created_at).toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }).replace(/\//g, '-') : '未知时间',
+              duration: '2秒',
+              reviewType: record.review_type,
+              reviewResult: record.review_result || 'false_alarm',
+              reviewResultDisplay: record.review_result_display || '误报',
+              reviewNotes: record.review_notes,
+              reviewerName: record.reviewer_name,
+              alertId: record.alert_id,
+              alertType: record.alert_type || '',
+              skillClassId: record.skill_class_id || null,
+              skillNameZh: record.skill_name_zh || '',
+              skillSource: isLlm ? SKILL_SOURCE_LLM : SKILL_SOURCE_VISION,
+              reviewSkillName: record.review_skill_name || ''
+            }
+          })
+          
+          if (response.data.pagination) {
+            this.pagination.total = response.data.pagination.total
+          }
         } else {
           console.error('获取复判记录失败:', response.data && response.data.msg)
           this.$message.error('获取复判记录失败: ' + ((response.data && response.data.msg) || '未知错误'))
         }
         
-        // 清空悬停状态
         this.cardHoverStates = {}
       } catch (error) {
         console.error('获取复判记录异常:', error)
@@ -464,53 +326,35 @@ export default {
       }
     },
     
-    // 搜索
-    handleSearch() {
-      // 将搜索条件复制到活跃搜索条件，触发计算属性更新
+    async handleSearch() {
       this.activeSearchForm = { ...this.searchForm }
-      
+      this.activeSearchForm.reviewResult = this.activeResultTab
       this.pagination.currentPage = 1
       this.selectedRecords = []
       
-      // 等待计算属性更新后再显示结果
-      this.$nextTick(() => {
-        const totalCount = this.reviewList.length
-        const filteredCount = this.totalRecords
-        
-        if (filteredCount === totalCount) {
-          this.$message.success('显示全部记录')
-        } else if (filteredCount === 0) {
-          this.$message.warning('未找到匹配的记录，请调整搜索条件')
-        } else {
-          this.$message.success(`找到 ${filteredCount} 条匹配记录，共 ${totalCount} 条`)
-        }
-      })
+      await this.getReviewList()
+      this.$message.success(`找到 ${this.pagination.total} 条记录`)
     },
-    
-    // 重置搜索
-    resetSearch() {
-      this.searchForm = {
-        startDate: '',
-        endDate: '',
-        reviewType: '',
-        warningSkill: '',
-        warningLocation: '',
-        warningName: '',
-        warningId: ''
-      }
-      // 同时重置活跃搜索条件，立即显示全部数据
-      this.activeSearchForm = {
-        startDate: '',
-        endDate: '',
-        reviewType: '',
-        warningSkill: '',
-        warningLocation: '',
-        warningName: '',
-        warningId: ''
-      }
+
+    switchResultTab(value) {
+      this.activeResultTab = value
+      this.searchForm.reviewResult = value
+      this.activeSearchForm = { ...this.searchForm }
+      this.activeSearchForm.reviewResult = value
       this.pagination.currentPage = 1
       this.selectedRecords = []
       this.cardHoverStates = {}
+      this.getReviewList()
+    },
+    
+    async resetSearch() {
+      const empty = { startDate: '', endDate: '', reviewType: '', reviewResult: this.activeResultTab, warningSkill: '', warningLocation: '', warningName: '', warningId: '' }
+      this.searchForm = { ...empty }
+      this.activeSearchForm = { ...empty }
+      this.pagination.currentPage = 1
+      this.selectedRecords = []
+      this.cardHoverStates = {}
+      await this.getReviewList()
       this.$message.info('搜索条件已重置')
     },
     
@@ -555,14 +399,17 @@ export default {
       }
       
       try {
-        // 获取要导出的数据
         const exportData = this.filteredData
           .filter(item => this.selectedRecords.includes(item.id))
           .map(item => ({
             预警名称: item.title,
+            AI技能: item.skillNameZh || '-',
             违规位置: item.cameraName,
+            预警位置: item.location,
             开始时间: item.startTime,
-            复判类型: this.getReviewTypeText(item.reviewType)
+            复判类型: this.getReviewTypeText(item.reviewType),
+            复判结论: item.reviewResultDisplay,
+            复判意见: item.reviewNotes || '-'
           }))
         
         // 导出为CSV
@@ -574,6 +421,123 @@ export default {
       }
     },
     
+    // 批量下载预警图片
+    async handleBatchDownloadImages() {
+      if (this.selectedRecords.length === 0) {
+        this.$message.warning('请先选择要下载图片的记录')
+        return
+      }
+
+      const selectedItems = this.filteredData.filter(item =>
+        this.selectedRecords.includes(item.id)
+      )
+      const itemsWithImages = selectedItems.filter(item =>
+        item.image && !item._imageError && typeof item.image === 'string' && item.image.startsWith('http')
+      )
+
+      if (itemsWithImages.length === 0) {
+        this.$message.warning('选中的记录中没有可下载的预警图片（仅支持远程图片）')
+        return
+      }
+
+      this.$message.info(`正在下载 ${itemsWithImages.length} 张预警图片...`)
+      this.loading = true
+
+      let successCount = 0
+      let failCount = 0
+      for (const item of itemsWithImages) {
+        try {
+          const response = await fetch(item.image)
+          if (!response.ok) throw new Error(`HTTP ${response.status}`)
+          const blob = await response.blob()
+          const ext = this.guessImageExt(blob.type)
+          const skillPart = item.skillNameZh ? `_${item.skillNameZh}` : ''
+          const fileName = `预警${item.alertId || item.id}${skillPart}_${item.title}${ext}`
+          this.downloadFile(blob, fileName)
+          successCount++
+        } catch (e) {
+          console.error(`下载图片失败: ${item.id}`, e)
+          failCount++
+        }
+      }
+
+      this.loading = false
+      if (failCount === 0) {
+        this.$message.success(`成功下载 ${successCount} 张预警图片`)
+      } else {
+        this.$message.warning(`下载完成：成功 ${successCount} 张，失败 ${failCount} 张`)
+      }
+    },
+
+    guessImageExt(mimeType) {
+      const map = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif' }
+      return map[mimeType] || '.jpg'
+    },
+
+    async handleDownloadFalseAlarmZip() {
+      const params = {}
+      const skillVal = this.activeSearchForm.warningSkill
+      if (skillVal) {
+        const [source, id] = skillVal.split(':')
+        params.skill_class_id = Number(id)
+        params.skill_source = source
+      }
+
+      this.zipDownloading = true
+      try {
+        const countRes = await reviewRecordAPI.countFalseAlarmImages(params)
+        const info = countRes.data
+        if (!info || info.total === 0) {
+          this.$message.warning('该技能下没有误报预警图片')
+          return
+        }
+
+        const { total, batch_limit, batches_needed } = info
+        const batchHint = batches_needed > 1
+          ? `，将分 ${batches_needed} 批下载（每批最多 ${batch_limit} 条）`
+          : ''
+        
+        await this.$confirm(
+          `该技能共有 ${total} 条误报预警${batchHint}。\n确定开始下载吗？`,
+          '下载误报图片',
+          { confirmButtonText: '开始下载', cancelButtonText: '取消', type: 'info' }
+        )
+
+        for (let batch = 1; batch <= batches_needed; batch++) {
+          if (batches_needed > 1) {
+            this.$message.info(`正在下载第 ${batch}/${batches_needed} 批...`)
+          } else {
+            this.$message.info('正在打包下载...')
+          }
+          const response = await reviewRecordAPI.downloadFalseAlarmImages({ ...params, batch })
+          const blob = new Blob([response.data], { type: 'application/zip' })
+          const url = window.URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          const disp = response.headers['content-disposition'] || ''
+          const match = disp.match(/filename="?([^"]+)"?/)
+          a.download = match ? match[1] : `false_alarm_batch${batch}_${Date.now()}.zip`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          window.URL.revokeObjectURL(url)
+        }
+        this.$message.success(batches_needed > 1
+          ? `全部 ${batches_needed} 批下载完成`
+          : '误报图片下载完成')
+      } catch (e) {
+        if (e === 'cancel') return
+        console.error('下载误报图片失败:', e)
+        if (e.response && e.response.status === 404) {
+          this.$message.warning('没有找到符合条件的误报图片')
+        } else {
+          this.$message.error('下载失败，请稍后重试')
+        }
+      } finally {
+        this.zipDownloading = false
+      }
+    },
+
     // 批量删除
     async handleBatchDelete() {
       if (this.selectedRecords.length === 0) {
@@ -621,15 +585,16 @@ export default {
     
     // 刷新数据
     async handleRefresh() {
-      this.loading = true
       this.selectedRecords = []
       this.cardHoverStates = {}
       try {
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500))
+        await this.getReviewList()
+        await this.fetchDashboardStats()
+        this.applyTopFromListIfNeeded()
         this.$message.success('数据已刷新')
-      } finally {
-        this.loading = false
+      } catch (e) {
+        console.error(e)
+        this.$message.error('刷新失败')
       }
     },
     
@@ -678,126 +643,33 @@ export default {
       }, 100)
     },
     
-    // 分页改变
     handlePageChange(page) {
       this.pagination.currentPage = page
-      // 不清除选择状态，让用户可以跨页选择
+      this.getReviewList()
     },
     
-    // 每页数量改变
     handleSizeChange(size) {
       this.pagination.pageSize = size
       this.pagination.currentPage = 1
-      // 保持选择状态，但需要确保选中的项目仍然有效
-      this.selectedRecords = this.selectedRecords.filter(id => 
-        this.filteredData.some(item => item.id === id)
-      )
+      this.getReviewList()
     },
     
-    // 查看复判详情
     viewDetail(item) {
-      // 将复判记录数据转换为预警详情格式
-      this.currentWarningDetail = this.convertToWarningFormat(item)
+      if (!item.alertId) {
+        this.$message.warning('该复判记录缺少关联的预警ID，无法获取完整详情')
+        return
+      }
+      this.currentAlertId = item.alertId
+      this.currentReviewData = {
+        reviewType: item.reviewType,
+        reviewTypeText: this.getReviewTypeText(item.reviewType),
+        reviewResult: item.reviewResult,
+        reviewResultDisplay: item.reviewResultDisplay,
+        reviewNotes: item.reviewNotes,
+        reviewerName: item.reviewerName,
+        reviewSkillName: item.reviewSkillName || ''
+      }
       this.warningDetailVisible = true
-    },
-    
-    // 将复判记录数据转换为预警详情格式
-    convertToWarningFormat(reviewItem) {
-      // 计算预警产生时间（比开始时间早一些）
-      const startTime = new Date(reviewItem.startTime)
-      const warningTime = new Date(startTime.getTime() - 5 * 60 * 1000) // 提前5分钟
-      const reviewCompleteTime = new Date(startTime.getTime() + 10 * 60 * 1000) // 复判完成时间（开始时间后10分钟）
-      
-      return {
-        id: reviewItem.id,
-        alert_id: reviewItem.alertId, // 添加预警ID（用于在详情中显示）
-        type: reviewItem.title,
-        device: reviewItem.cameraName,
-        deviceInfo: {
-          name: reviewItem.cameraName,
-          position: reviewItem.location
-        },
-        location: reviewItem.location,
-        time: this.formatDateTimeToStandard(warningTime),
-        level: this.getWarningLevelByType(reviewItem.title), // 根据类型判断等级
-        imageUrl: reviewItem.image,
-        description: `复判记录：${reviewItem.title}`,
-        reviewType: reviewItem.reviewType, // 添加复判类型
-        reviewTypeText: this.getReviewTypeText(reviewItem.reviewType), // 添加复判类型文本
-        reviewNotes: reviewItem.reviewNotes, // 添加复判意见
-        reviewerName: reviewItem.reviewerName, // 添加复判人员
-        status: 'completed',
-        // 添加操作历史（按时间倒序）
-        operationHistory: [
-          {
-            id: 1,
-            status: 'completed',
-            statusText: '复判完成',
-            time: this.formatDateTimeToStandard(reviewCompleteTime),
-            description: `${this.getReviewTypeText(reviewItem.reviewType)}已完成，复判结果：${this.getReviewResult(reviewItem)}`,
-            operationType: 'review_completed',
-            operator: reviewItem.reviewType === 'auto' ? '多模态大模型' : '复判人员'
-          },
-          {
-            id: 2,
-            status: 'completed',
-            statusText: '开始复判',
-            time: this.formatDateTimeToStandard(new Date(reviewItem.startTime)),
-            description: `开始进行${this.getReviewTypeText(reviewItem.reviewType)}`,
-            operationType: 'review_start',
-            operator: reviewItem.reviewType === 'auto' ? '智能复判系统' : '复判人员'
-          },
-          {
-            id: 3,
-            status: 'completed',
-            statusText: '预警触发',
-            time: this.formatDateTimeToStandard(warningTime),
-            description: `${reviewItem.title}：检测到异常情况，已记录预警信息并排队等待复判`,
-            operationType: 'create',
-            operator: '监控系统'
-          }
-        ]
-      }
-    },
-    
-    // 根据预警类型判断等级
-    getWarningLevelByType(type) {
-      const levelMap = {
-        '人员越界': '一级预警',
-        '未佩戴安全帽': '一级预警',
-        '高空作业未系安全带': '一级预警',
-        '违规吸烟检测': '二级预警',
-        '火源烟雾检测': '一级预警',
-        '未穿工作服': '三级预警',
-        '未穿反光背心': '三级预警',
-        '闲杂人员入侵': '二级预警',
-        '无关人员进入施工区': '二级预警',
-        '危险区域人员滞留': '一级预警'
-      }
-      
-      // 模糊匹配
-      for (const [key, level] of Object.entries(levelMap)) {
-        if (type.includes(key.substring(0, 3))) {
-          return level
-        }
-      }
-      
-      return '二级预警' // 默认等级
-    },
-    
-    // 获取复判结果
-    getReviewResult(reviewItem) {
-      const results = [
-        '确认为真实预警，已记录',
-        '预警信息准确，处理完成',
-        '检测结果有效，已归档',
-        '复判通过，预警成立',
-        '验证完成，信息属实'
-      ]
-      
-      // 根据ID生成固定的结果
-      const index = parseInt(reviewItem.id) % results.length
-      return results[index]
     },
     
     // 格式化时间显示
@@ -894,8 +766,6 @@ export default {
         })
         localStorage.setItem('restoredWarnings', JSON.stringify(restoredWarnings))
         
-        // 触发全局事件，通知其他页面有新的还原预警
-        this.$bus && this.$bus.$emit('warning-restored', restoredWarning)
         
       } catch (error) {
         console.error('还原复判失败:', error)
@@ -941,13 +811,6 @@ export default {
       }
     },
     
-    // 更新统计信息
-    updateStatistics(newData) {
-      // 根据筛选后的数据更新统计信息，这里主要是为了演示功能
-      // 实际项目中，统计数据应该由后端API提供
-      console.log('筛选后数据量:', newData.length)
-    },
-    
     // 将日期时间转换为标准格式（YYYY-MM-DD HH:mm:ss）
     formatDateTimeToStandard(date) {
       try {
@@ -985,6 +848,11 @@ export default {
     // 隐藏卡片选择框
     hideCardCheckbox(recordId) {
       this.$set(this.cardHoverStates, recordId, false)
+    },
+    
+    // 卡片图片加载失败时标记，触发占位符显示
+    handleImageError(item) {
+      this.$set(item, '_imageError', true)
     }
   }
 }
@@ -1022,28 +890,44 @@ export default {
         <div class="overview-item">
           <div class="overview-label">智能复判数量</div>
           <div class="overview-value">{{ statistics.reviewed }}/{{ statistics.total }}</div>
-          <div class="overview-subtitle">复判完成数/分析完成数</div>
+          <div class="overview-subtitle">多模态复判 / 复判总条数</div>
         </div>
         
-        <!-- 完成率 -->
+        <!-- 预警处置覆盖：已处理/归档/误报 或 已有复判记录，相对全部预警 -->
         <div class="overview-item">
-          <div class="overview-label">完成率</div>
-          <div class="overview-value percentage-value">{{ statistics.percentage }}%</div>
-          <div class="overview-subtitle">总体完成率</div>
+          <div class="overview-label">预警处置覆盖</div>
+          <div class="overview-value overview-value-mixed">
+            <span class="mixed-fraction">{{ statistics.closureCount }}/{{ statistics.closureTotal }}</span>
+            <span class="mixed-sep" aria-hidden="true">·</span>
+            <span class="mixed-pct">{{ statistics.closurePct }}%</span>
+          </div>
+          <div class="overview-subtitle">已处理、已归档、误报或已产生复判的预警 / 全部预警</div>
+        </div>
+
+        <!-- 已复判预警数 / 系统预警总数（复判覆盖率） -->
+        <div class="overview-item">
+          <div class="overview-label">复判覆盖率</div>
+          <div class="overview-value overview-value-mixed">
+            <span class="mixed-fraction">{{ statistics.reviewAlertCount }}/{{ statistics.reviewAlertTotal }}</span>
+            <span class="mixed-sep" aria-hidden="true">·</span>
+            <span class="mixed-pct">{{ statistics.reviewAlertRatioPct }}%</span>
+          </div>
+          <div class="overview-subtitle">已产生复判结论的预警数 / 全部预警数</div>
         </div>
         
-        <!-- TOP3排行 -->
+        <!-- 按预警技能/名称的复判次数 TOP3 -->
         <div class="overview-ranking">
           <div class="ranking-header">
-            <span class="ranking-title">智能复判数量TOP3</span>
+            <span class="ranking-title">预警类型复判 TOP3</span>
             <div class="ranking-legend">
               <span class="legend-dot completed"></span>
-              <span class="legend-text">复判完成数</span>
+              <span class="legend-text">该类型复判次数</span>
               <span class="legend-dot total"></span>
-              <span class="legend-text">分析完成数</span>
+              <span class="legend-text">复判总条数</span>
             </div>
           </div>
           <div class="ranking-items">
+            <div v-if="!topData.length" class="ranking-empty">暂无数据（无复判记录或统计未就绪）</div>
             <div v-for="(item, index) in topData" :key="item.id" class="ranking-row">
               <div class="ranking-index" :style="{ backgroundColor: item.color }">{{ index + 1 }}</div>
               <div class="ranking-name">{{ item.name }}</div>
@@ -1066,6 +950,20 @@ export default {
     
     <!-- 下半部分：内容卡片 -->
     <div class="content-card">
+      <!-- 复判结论标签页 -->
+      <div class="result-tabs">
+        <div
+          v-for="tab in resultTabs"
+          :key="tab.value"
+          class="result-tab"
+          :class="{ active: activeResultTab === tab.value }"
+          @click="switchResultTab(tab.value)"
+        >
+          <span class="tab-label">{{ tab.label }}</span>
+          <span v-if="tab.value !== ''" class="tab-dot" :class="'dot-' + tab.value"></span>
+        </div>
+      </div>
+
       <!-- 筛选区域 -->
       <div class="filter-section">
         <div class="filter-tabs">
@@ -1073,13 +971,7 @@ export default {
             size="small"
             @click="handleSelectAll"
           >
-            {{ selectedRecords.length === filteredData.length && filteredData.length > 0 ? '取消全选' : '全选' }}
-          </el-button>
-          <el-button 
-            size="small"
-            @click="handleSelectPage"
-          >
-            选择本页
+            {{ selectedRecords.length === filteredData.length && filteredData.length > 0 ? '取消全选' : '全选本页' }}
           </el-button>
           <el-button 
             size="small"
@@ -1091,10 +983,37 @@ export default {
           <el-button 
             size="small"
             :disabled="selectedRecords.length === 0"
+            @click="handleBatchDownloadImages"
+            icon="el-icon-download"
+          >
+            下载图片
+          </el-button>
+          <el-button 
+            size="small"
+            :disabled="selectedRecords.length === 0"
             @click="handleBatchDelete"
           >
             删除
           </el-button>
+          <el-divider direction="vertical"></el-divider>
+          <el-tooltip
+            :disabled="!!activeSearchForm.warningSkill"
+            content="请先在搜索条件中选择一个预警技能"
+            placement="top"
+          >
+            <span>
+              <el-button 
+                size="small"
+                type="warning"
+                icon="el-icon-folder-opened"
+                :loading="zipDownloading"
+                :disabled="!activeSearchForm.warningSkill"
+                @click="handleDownloadFalseAlarmZip"
+              >
+                下载全部误报图片
+              </el-button>
+            </span>
+          </el-tooltip>
         </div>
         
         <div class="filter-actions">
@@ -1147,7 +1066,7 @@ export default {
               />
             </el-select>
           </div>
-          
+
           <div class="search-item">
             <label>预警技能：</label>
             <el-select 
@@ -1229,7 +1148,16 @@ export default {
             </div>
             
             <div class="card-image">
-              <img :src="item.image" :alt="item.title" />
+              <img 
+                v-if="item.image && !item._imageError" 
+                :src="item.image" 
+                :alt="item.title" 
+                @error="handleImageError(item)"
+              />
+              <div v-else class="image-placeholder">
+                <i class="el-icon-picture-outline"></i>
+                <span>暂无截图</span>
+              </div>
             </div>
             
             <div class="card-content">
@@ -1242,8 +1170,38 @@ export default {
                 >
                   {{ item.reviewType === 'auto' ? 'AI复判' : '人工审核' }}
                 </el-tag>
+                <el-tooltip
+                  :content="item.reviewResult === 'false_alarm' ? 'AI判定该预警非真实事件（is_real_alert=false）' : item.reviewResult === 'real_alert' ? 'AI判定该预警为真实事件（is_real_alert=true）' : 'AI无法确定，建议人工复核'"
+                  placement="top"
+                >
+                  <el-tag
+                    :type="item.reviewResult === 'false_alarm' ? 'danger' : item.reviewResult === 'real_alert' ? 'success' : 'info'"
+                    size="mini"
+                    class="review-result-tag"
+                  >
+                    {{ item.reviewResultDisplay }}
+                  </el-tag>
+                </el-tooltip>
               </div>
               <div class="card-info">
+                <div class="info-item" v-if="item.skillNameZh">
+                  <span class="label">AI技能：</span>
+                  <span class="value">
+                    <el-tag
+                      size="mini"
+                      :type="item.skillSource === 'llm' ? 'warning' : 'primary'"
+                      effect="plain"
+                      class="skill-tag"
+                    >{{ item.skillSource === 'llm' ? '大模型' : '视觉' }}</el-tag>
+                    <span class="skill-name-text">{{ item.skillNameZh }}</span>
+                  </span>
+                </div>
+                <div class="info-item" v-if="item.reviewType === 'auto' && item.reviewSkillName">
+                  <span class="label">复判技能：</span>
+                  <span class="value">
+                    <span class="skill-name-text">{{ item.reviewSkillName }}</span>
+                  </span>
+                </div>
                 <div class="info-item">
                   <span class="label">设备名称：</span>
                   <span class="value">{{ item.cameraName }}</span>
@@ -1291,12 +1249,12 @@ export default {
 
       <div style="height: 10px;"></div>
     </div>
-    
+
     <!-- 预警详情对话框 -->
     <WarningDetail
       :visible.sync="warningDetailVisible"
-      :warning="currentWarningDetail"
-      source="reviewRecords"
+      :alert-id="currentAlertId"
+      :review-data="currentReviewData"
       @handle-warning="handleWarningFromDetail"
       @handle-report="handleReportFromDetail"
       @handle-archive="handleArchiveFromDetail"
@@ -1310,11 +1268,10 @@ export default {
 .review-records-container {
   height: 100%;
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  padding: 12px;
+  padding: 16px 20px;
   width: 100%;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto !important;
 }
 
 /* 页面头部 - 科技感样式 */
@@ -1373,6 +1330,8 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  text-align: center;
   min-width: 180px;
   padding: 0 20px;
   border-right: 1px solid #f0f0f0;
@@ -1399,6 +1358,32 @@ export default {
 
 .overview-value.percentage-value {
   color: #409eff;
+}
+
+/* 分数与百分比同一行（在栏内水平居中） */
+.overview-value-mixed {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.overview-value-mixed .mixed-fraction {
+  color: #303133;
+}
+
+.overview-value-mixed .mixed-sep {
+  color: #dcdfe6;
+  font-weight: 400;
+  user-select: none;
+}
+
+.overview-value-mixed .mixed-pct {
+  color: #409eff;
+  font-weight: bold;
 }
 
 .overview-subtitle {
@@ -1458,6 +1443,13 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.ranking-empty {
+  font-size: 12px;
+  color: #c0c4cc;
+  padding: 12px 0;
+  text-align: center;
 }
 
 .ranking-row {
@@ -1550,11 +1542,6 @@ export default {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 0;
   position: relative;
 }
 
@@ -1628,37 +1615,24 @@ export default {
 
 /* 记录列表区域 */
 .records-section {
-  padding: 16px 24px 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
+  padding: 20px 24px;
 }
 
 .records-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 16px;
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 4px 20px 0;
-  align-content: start;
 }
 
 @media (max-width: 1600px) {
   .records-grid {
     grid-template-columns: repeat(5, 1fr);
-    gap: 15px;
-    align-content: start;
   }
 }
 
 @media (max-width: 1300px) {
   .records-grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    align-content: start;
   }
 }
 
@@ -1666,28 +1640,17 @@ export default {
   .records-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 14px;
-    align-content: start;
-    padding: 0 2px 18px 0;
-  }
-  
-  .record-card {
-    height: 260px;
-  }
-  
-  .card-image {
-    height: 140px;
   }
 }
 
 .record-card {
-  border: 1px solid #f3f4f6;
+  border: 1px solid #e8eaed;
   border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
   background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  height: 260px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -1710,8 +1673,27 @@ export default {
   height: 140px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(45deg, #0a1526, #1e3c72);
+  background: linear-gradient(135deg, #0a1526, #1e3c72);
   flex-shrink: 0;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  gap: 6px;
+}
+
+.image-placeholder i {
+  font-size: 32px;
+}
+
+.image-placeholder span {
+  font-size: 12px;
 }
 
 .card-image img {
@@ -1721,11 +1703,14 @@ export default {
 }
 
 .card-content {
-  padding: 12px;
-  flex: 1;
+  padding: 10px 12px;
+}
+
+.card-header {
   display: flex;
-  flex-direction: column;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
 .card-header {
@@ -1737,6 +1722,8 @@ export default {
 
 .card-title {
   font-size: 12px;
+  font-weight: 600;
+  color: #303133;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1748,6 +1735,78 @@ export default {
   margin-left: 8px;
 }
 
+.review-result-tag {
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.result-tabs {
+  display: flex;
+  border-bottom: 1px solid #ebeef5;
+  padding: 0 16px;
+  background: #fff;
+}
+
+.result-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px;
+  cursor: pointer;
+  color: #909399;
+  font-size: 14px;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.result-tab:hover {
+  color: #606266;
+}
+
+.result-tab.active {
+  color: #409EFF;
+  border-bottom-color: #409EFF;
+  font-weight: 500;
+}
+
+.tab-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot-false_alarm {
+  background-color: #F56C6C;
+}
+
+.dot-real_alert {
+  background-color: #67C23A;
+}
+
+.dot-need_review {
+  background-color: #909399;
+}
+
+.skill-tag {
+  font-size: 10px !important;
+  padding: 0 4px !important;
+  height: 18px !important;
+  line-height: 16px !important;
+  border-radius: 3px !important;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.skill-name-text {
+  font-size: 12px;
+  color: #606266;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .review-notes-item .notes-text {
   color: #606266;
   font-style: italic;
@@ -1756,7 +1815,7 @@ export default {
 .card-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   text-align: left;
 }
 
@@ -1783,9 +1842,9 @@ export default {
 }
 
 .time-item {
-  margin-top: 8px;
-  display: flex;
-  justify-content: flex-start;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #f2f3f5;
 }
 
 .time-item .time {
@@ -1799,6 +1858,7 @@ export default {
 .pagination-section {
   display: flex;
   justify-content: center;
+  align-items: center;
   background: white;
   padding-bottom: 10px;
   /* padding: 12px 24px;
@@ -1906,12 +1966,11 @@ export default {
   }
   
   .records-section {
-    padding: 12px 16px 0;
+    padding: 12px 16px;
   }
   
   .pagination-section {
     padding: 10px 16px;
-    margin: 0 -16px 0 -16px;
   }
   
   .search-row {
@@ -1932,37 +1991,12 @@ export default {
   }
   
   .records-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
-    align-content: start;
-    padding: 0 2px 16px 0;
-  }
-  
-  .record-card {
-    height: 220px;
   }
   
   .card-image {
-    height: 110px;
-  }
-  
-  .card-content {
-    padding: 10px;
-  }
-  
-  .card-title {
-    font-size: 12px;
-    margin-bottom: 4px;
-  }
-  
-  .info-item {
-    font-size: 11px;
-    text-align: left;
-  }
-  
-  .info-item .label {
-    min-width: 55px;
-    text-align: left;
+    height: 140px;
   }
   
   .pagination-section {
@@ -1972,68 +2006,14 @@ export default {
   }
 }
 
-@media (max-width: 600px) {
-  .records-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    align-content: start;
-    padding: 0 0 16px 0;
-  }
-  
-  .record-card {
-    height: 200px;
-  }
-  
-  .card-image {
-    height: 100px;
-  }
-  
-  .card-content {
-    padding: 8px;
-  }
-  
-  .card-title {
-    font-size: 12px;
-    margin-bottom: 4px;
-  }
-  
-  .info-item {
-    font-size: 10px;
-    text-align: left;
-  }
-  
-  .info-item .label {
-    min-width: 50px;
-    text-align: left;
-  }
-}
-
-@media (max-width: 400px) {
+@media (max-width: 500px) {
   .records-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  
-  .record-card {
-    height: 220px;
+    gap: 14px;
   }
   
   .card-image {
-    height: 110px;
-  }
-  
-  .card-content {
-    padding: 10px;
-  }
-  
-  .card-title {
-    font-size: 12px;
-    margin-bottom: 4px;
-  }
-  
-  .info-item {
-    font-size: 11px;
-    text-align: left;
+    height: 160px;
   }
 }
 

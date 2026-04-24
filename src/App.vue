@@ -44,8 +44,7 @@ export default {
 <style>
 /* 全局样式重置 */
 html,
-body,
-#app {
+body {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -54,6 +53,12 @@ body,
   background-color: var(--bg-secondary);
   font-family: var(--font-family-base);
   color: var(--text-primary);
+  box-sizing: border-box;
+}
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
 }
 
 /* Element UI 组件全局样式调整 */

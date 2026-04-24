@@ -1936,9 +1936,11 @@
   
   <style scoped>
   .create-detail-wrapper {
-    min-height: 100vh;
+    height: 100%;
     background: linear-gradient(135deg, #f5f7fa 0%, #f1f5f9 100%);
     padding: 20px;
+    overflow-y: auto !important;
+    box-sizing: border-box;
   }
   
   .create-detail-container {

@@ -98,13 +98,13 @@ export default {
         if (res.data.code === 0) {
           this.$message({
             showClose: true,
-            message: '修改成功，请重新登录',
+            message: '修改成功',
             type: 'success'
           });
           this.showDialog = false;
           setTimeout(()=>{
             userService.clearToken();
-            this.$router.push('/login');
+            this.$router.push('/');
             this.sseSource.close();
           },800)
         }else {

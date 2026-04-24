@@ -89,17 +89,17 @@
             </div>
             
             <div class="card-header">
-              <h3 class="skill-title">{{ skill.name }}</h3>
-              <div class="skill-id">
-                <span class="id-label">ID</span>
-                <span class="id-value">{{ skill.id }}</span>
+              <div class="title-row">
+                <h3 class="skill-title">{{ skill.name }}</h3>
+                <span class="skill-id-group">
+                  <span class="id-label">ID</span>
+                  <span class="skill-id-tag">{{ skill.id }}</span>
+                </span>
               </div>
             </div>
 
             <div class="card-content">
-              <p class="skill-description" 
-                 @mouseenter="showTooltip($event, skill.description)" 
-                 @mouseleave="hideTooltip">
+              <p class="skill-description">
                 {{ skill.description }}
               </p>
 
@@ -1361,6 +1361,7 @@ export default {
   border: 1px solid #f3f4f6;
   position: relative;
   overflow: hidden;
+  height: auto;
 }
 
 .skill-card::before {
@@ -1441,47 +1442,54 @@ export default {
   flex-shrink: 0;
 }
 
+.title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
 .skill-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 8px 0;
+  margin: 0;
   white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 65%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.skill-id {
-  font-size: 11px;
-  background: transparent;
-  padding: 0;
-  border-radius: 0;
+.skill-id-group {
   display: flex;
   align-items: center;
-  text-align: left;
-  width: 100%;
-  position: relative;
+  gap: 4px;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  margin-left: auto;
 }
 
 .id-label {
   color: #3b82f6;
   font-weight: 500;
-  margin-right: 4px;
   background-color: rgba(59, 130, 246, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 10px;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
-.id-value {
+.skill-id-tag {
+  font-size: 10px;
   color: #9ca3af;
-  font-weight: 400;
-  flex: 1;
-  margin-right: 8px;
-  font-size: 11px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 

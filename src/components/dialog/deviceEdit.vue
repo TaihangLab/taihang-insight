@@ -1,7 +1,7 @@
 <template>
   <div id="deviceEdit" v-loading="isLoging">
     <el-dialog
-      title="设备编辑"
+      title="设备管理"
       width="40%"
       top="2rem"
       :close-on-click-modal="false"
@@ -17,7 +17,7 @@
           </el-form-item>
 
           <el-form-item label="设备名称" prop="name">
-            <el-input v-model="form.name" clearable  placeholder="请输入设备名称"></el-input>
+            <el-input v-model="form.name" clearable placeholder="请输入设备名称"></el-input>
           </el-form-item>
           <el-form-item label="密码" prop="password">
             <el-input v-model="form.password" clearable placeholder="请输入密码"></el-input>

@@ -2,64 +2,45 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Layout from "../layout/index.vue"
 
-
-
-
-import gbRecordDetail from '../components/visionAI/deviceManagement/managementPages/GBRecordDetail.vue'
-
-
-
-import login from '../components/Login.vue'
-
-
-import cloudRecordDetail from '../components/visionAI/deviceManagement/managementPages/CloudRecordDetail.vue'
-
-
-
-
-
+// 基础/小体积组件保持同步加载
 import deviceTree from '../components/common/DeviceTree.vue'
-
-
 import wasmPlayer from '../components/common/jessibuca.vue'
 import rtcPlayer from '../components/dialog/rtcPlayer.vue'
 
-
-
-
-import visualCenter from '../components/visionAI/ivisualCenter/index.vue'
-import algorithmInference from '../components/visionAI/ivisualCenter/algorithmInference.vue'
-import realTimeMonitoring from '../components/visionAI/monitoringWarning/realTimeMonitoring.vue'
-import statisticsAnalysis from '../components/visionAI/monitoringWarning/statisticsAnalysis.vue'
-import warningArchives from '../components/visionAI/monitoringWarning/warningArchives.vue'
-import warningManagement from '../components/visionAI/monitoringWarning/warningManagement.vue'
-import reviewRecords from '../components/visionAI/monitoringWarning/reviewRecords.vue'
-import intelligentReview from '../components/visionAI/monitoringWarning/intelligentReview.vue'
-import camera from '../components/visionAI/deviceManagement/camera.vue'
-import CameraManagementMain from '../components/visionAI/deviceManagement/CameraManagementMain.vue'
-import localVideo from '../components/visionAI/deviceManagement/localVideo.vue'
-import modelList from '../components/visionAI/modelManagement/modelList.vue'
-import deviceSkills from '../components/visionAI/skillManagement/deviceSkills.vue'
-import multimodalLlmSkills from '../components/visionAI/skillManagement/multimodalLlmSkills.vue'
-import multimodalCreateDetail from '../components/visionAI/skillManagement/LlmSkillCreateDialogDetail.vue'
-import multimodalReview from '../components/visionAI/skillManagement/multimodalReview.vue'
-import multimodalReviewCreate from '../components/visionAI/skillManagement/multimodalReviewCreate.vue'
-import logRecords from '../components/visionAI/smartControl/logRecords.vue'
-import edgeServer from '../components/visionAI/edgeManagement/edgeServer.vue'
-import edgeBox from '../components/visionAI/edgeManagement/edgeBox.vue'
-import applicationSettings from '../components/visionAI/systemManagement/applicationSettings.vue'
-import userManagement from '../components/visionAI/systemManagement/userManagement.vue'
-import roleManagement from '../components/visionAI/systemManagement/roleManagement.vue'
-import roleAssignment from '../components/visionAI/systemManagement/roleAssignment.vue'
-import userAssignment from '../components/visionAI/systemManagement/userAssignment.vue'
-import tenantManagement from '../components/visionAI/systemManagement/tenantManagement.vue'
-import departmentManagement from '../components/visionAI/systemManagement/departmentManagement.vue'
-import positionManagement from '../components/visionAI/systemManagement/positionManagement.vue'
-import profile from '../components/visionAI/systemManagement/profile.vue'
-import parkManagement from '../components/visionAI/ivisualCenter/parkManagement.vue'
-import knowledgeBase from '../components/visionAI/systemManagement/knowledgeBase.vue'
-import knowledgeBaseDetail from '../components/visionAI/systemManagement/knowledgeBaseDetail.vue'
-// 知识库管理
+// visionAI 业务页面全部懒加载，按路由按需加载以减小首包体积
+const visualCenter = () => import('../components/visionAI/ivisualCenter/index.vue')
+const algorithmInference = () => import('../components/visionAI/ivisualCenter/algorithmInference.vue')
+const realTimeMonitoring = () => import('../components/visionAI/monitoringWarning/realTimeMonitoring.vue')
+const statisticsAnalysis = () => import('../components/visionAI/monitoringWarning/statisticsAnalysis.vue')
+const warningArchives = () => import('../components/visionAI/monitoringWarning/warningArchives.vue')
+const warningManagement = () => import('../components/visionAI/monitoringWarning/warningManagement.vue')
+const reviewRecords = () => import('../components/visionAI/monitoringWarning/reviewRecords.vue')
+const intelligentReview = () => import('../components/visionAI/monitoringWarning/intelligentReview.vue')
+const camera = () => import('../components/visionAI/deviceManagement/camera.vue')
+const CameraManagementMain = () => import('../components/visionAI/deviceManagement/CameraManagementMain.vue')
+const localVideo = () => import('../components/visionAI/deviceManagement/localVideo.vue')
+const gbRecordDetail = () => import('../components/visionAI/deviceManagement/managementPages/GBRecordDetail.vue')
+const cloudRecordDetail = () => import('../components/visionAI/deviceManagement/managementPages/CloudRecordDetail.vue')
+const modelList = () => import('../components/visionAI/modelManagement/modelList.vue')
+const deviceSkills = () => import('../components/visionAI/skillManagement/deviceSkills.vue')
+const multimodalLlmSkills = () => import('../components/visionAI/skillManagement/multimodalLlmSkills.vue')
+const multimodalCreateDetail = () => import('../components/visionAI/skillManagement/LlmSkillCreateDialogDetail.vue')
+const multimodalReview = () => import('../components/visionAI/skillManagement/multimodalReview.vue')
+const multimodalReviewCreate = () => import('../components/visionAI/skillManagement/multimodalReviewCreate.vue')
+const logRecords = () => import('../components/visionAI/smartControl/logRecords.vue')
+const edgeServer = () => import('../components/visionAI/edgeManagement/edgeServer.vue')
+const edgeBox = () => import('../components/visionAI/edgeManagement/edgeBox.vue')
+const profile = () => import('../components/visionAI/systemManagement/profile.vue')
+const applicationSettings = () => import('../components/visionAI/systemManagement/applicationSettings.vue')
+const userManagement = () => import('../components/visionAI/systemManagement/userManagement.vue')
+const roleManagement = () => import('../components/visionAI/systemManagement/roleManagement.vue')
+const tenantManagement = () => import('../components/visionAI/systemManagement/tenantManagement.vue')
+const departmentManagement = () => import('../components/visionAI/systemManagement/departmentManagement.vue')
+const positionManagement = () => import('../components/visionAI/systemManagement/positionManagement.vue')
+const knowledgeBase = () => import('../components/visionAI/systemManagement/knowledgeBase.vue')
+const knowledgeBaseDetail = () => import('../components/visionAI/systemManagement/knowledgeBaseDetail.vue')
+const modelFactory = () => import('../components/visionAI/mlPipeline/modelFactory.vue')
+const parkManagement = () => import('../components/visionAI/ivisualCenter/parkManagement.vue')
 
 const originalPush = VueRouter.prototype.push
 VueRouter.prototype.push = function push(location) {
@@ -90,11 +71,6 @@ export default new VueRouter({
         {
           path: '/algorithmInference',
           component: algorithmInference,
-        },
-        {
-          path: '/visualCenter/parkManagement',
-          name: 'parkManagement',
-          component: parkManagement,
         },
         {
           path: '/monitoring/realtime',
@@ -191,6 +167,11 @@ export default new VueRouter({
           component: edgeBox,
         },
         {
+          path: '/systemManage/profile',
+          name: 'profile',
+          component: profile,
+        },
+        {
           path: '/systemManage/appSettings',
           name: 'applicationSettings',
           component: applicationSettings,
@@ -204,16 +185,6 @@ export default new VueRouter({
           path: '/systemManage/roleManagement',
           name: 'roleManagement',
           component: roleManagement,
-        },
-              {
-        path: '/systemManage/roleAssignment/:userId/:userName',
-        name: 'RoleAssignment',
-        component: roleAssignment,
-        },
-        {
-          path: '/visionAI/systemManagement/userAssignment',
-          name: 'userAssignment',
-          component: userAssignment,
         },
         {
           path: '/systemManage/tenantManagement',
@@ -236,14 +207,19 @@ export default new VueRouter({
           component: knowledgeBase,
         },
         {
-          path: '/system/knowledge-detail',
+          path: '/systemManage/knowledgeBaseDetail',
           name: 'knowledgeBaseDetail',
           component: knowledgeBaseDetail,
         },
         {
-          path: '/systemManage/profile',
-          name: 'profile',
-          component: profile,
+          path: '/mlPipeline',
+          name: 'modelFactory',
+          component: modelFactory,
+        },
+        {
+          path: '/visualCenter/parkManagement',
+          name: 'parkManagement',
+          component: parkManagement,
         },
 
         {
@@ -276,11 +252,6 @@ export default new VueRouter({
 
 
         ]
-    },
-    {
-      path: '/login',
-      name: '登录',
-      component: login,
     },
     {
       path: '/test',

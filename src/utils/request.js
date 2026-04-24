@@ -57,19 +57,15 @@ service.interceptors.response.use(
       } else {
         // 业务错误处理
         if (res.code === 401) {
-          // 未授权，跳转登录页
+          // 未授权，清除登录态并回到首页（访客模式）
           if (!isRefreshing) {
             isRefreshing = true
-            MessageBox.confirm('登录状态已过期，请重新登录', '系统提示', {
-              confirmButtonText: '重新登录',
-              cancelButtonText: '取消',
+            MessageBox.alert('登录状态已过期，已切换为访客模式', '系统提示', {
+              confirmButtonText: '确定',
               type: 'warning'
             }).then(() => {
-              // 清除用户信息
               userService.clearToken()
-              router.push('/login')
-            }).catch(() => {
-              // 用户取消
+              router.push('/')
             }).finally(() => {
               isRefreshing = false
             })
@@ -98,13 +94,12 @@ service.interceptors.response.use(
           message = '请求参数错误'
           break
         case 401:
-          message = '未授权，请重新登录'
-          // 避免重复弹窗
+          message = '未授权'
           if (!isRefreshing) {
             isRefreshing = true
             setTimeout(() => {
               userService.clearToken()
-              router.push('/login')
+              router.push('/')
               isRefreshing = false
             }, 1500)
           }

@@ -102,14 +102,10 @@
             {{ formatFileSize(scope.row.file_size) }}
           </template>
         </el-table-column>
-        <el-table-column label="推流状态" width="120" align="center">
+        <el-table-column label="流ID" width="140" align="center">
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.is_streaming" type="success" effect="dark">
-              <i class="el-icon-video-play"></i> 推流中
-            </el-tag>
-            <el-tag v-else type="info" effect="plain">
-              <i class="el-icon-video-pause"></i> 未推流
-            </el-tag>
+            <span v-if="scope.row.stream_id">{{ scope.row.stream_id }}</span>
+            <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
         <el-table-column label="RTSP地址" min-width="250">
@@ -401,15 +397,6 @@ export default {
   },
   mounted() {
     this.loadVideos();
-    // 定时刷新推流状态
-    this.timer = setInterval(() => {
-      this.refreshStreamingStatus();
-    }, 10000); // 每10秒刷新一次
-  },
-  beforeDestroy() {
-    if (this.timer) {
-      clearInterval(this.timer);
-    }
   },
   methods: {
     // 加载视频列表
@@ -435,9 +422,6 @@ export default {
         this.videoList = response.data;
         this.totalVideos = this.videoList.length;
         this.streamingVideos = this.videoList.filter(v => v.is_streaming).length;
-        
-        // 获取推流状态
-        await this.loadStreamingStatus();
       } catch (error) {
         this.$message.error('加载视频列表失败: ' + ((error.response && error.response.data && error.response.data.detail) ? error.response.data.detail : error.message));
       } finally {
@@ -445,49 +429,6 @@ export default {
       }
     },
     
-     // 加载推流状态
-     async loadStreamingStatus() {
-       for (const video of this.videoList) {
-         if (video.is_streaming) {
-           try {
-             const response = await localVideoAxios.get(
-               `/api/v1/local-videos/${video.id}/stream-status`
-             );
-             if (response.data) {
-               // 使用 $set 确保Vue能追踪新属性的变化
-               this.$set(video, 'rtsp_url', response.data.rtsp_url);
-               this.$set(video, 'stream_stats', response.data.stats);
-             }
-           } catch (error) {
-             console.error(`获取视频${video.id}推流状态失败:`, error);
-           }
-         }
-       }
-     },
-    
-     // 刷新推流状态
-     async refreshStreamingStatus() {
-       if (this.loading) return;
-       
-       const streamingVideos = this.videoList.filter(v => v.is_streaming);
-       for (const video of streamingVideos) {
-         try {
-           const response = await localVideoAxios.get(
-             `/api/v1/local-videos/${video.id}/stream-status`
-           );
-           if (response.data) {
-             // 使用 $set 确保Vue能追踪新属性的变化
-             this.$set(video, 'rtsp_url', response.data.rtsp_url);
-             this.$set(video, 'stream_stats', response.data.stats);
-           } else {
-             // 推流状态不一致，刷新列表
-             this.$set(video, 'is_streaming', false);
-           }
-         } catch (error) {
-           console.error(`刷新视频${video.id}推流状态失败:`, error);
-         }
-       }
-     },
     
     // 搜索处理
     handleSearch() {
@@ -785,6 +726,8 @@ export default {
   padding: 20px;
   background: #f5f7fa;
   height: 100%;
+  overflow-y: auto !important;
+  box-sizing: border-box;
 }
 
 /* 页面标题 */

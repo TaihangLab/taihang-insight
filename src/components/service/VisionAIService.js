@@ -492,9 +492,9 @@ export const skillAPI = {
       apiParams.limit = Math.min(params.limit, 100); // 限制最大为100条
     }
 
-    // 处理查询参数
+    // 处理查询参数 - 后端接收的参数名是 query_name
     if (params.query) {
-      apiParams.query = params.query;
+      apiParams.query_name = params.query;
     }
 
     // 处理状态筛选，默认获取启用状态的技能
@@ -1391,6 +1391,7 @@ export const cameraAPI = {
               tags: camera.tags || [],
               camera_type: camera.camera_type || '-',
               skill_names: camera.skill_names || [],
+              llm_skill_names: camera.llm_skill_names || [],
             };
           });
           transformedData.total = originalData.total || transformedData.data.length;
@@ -1412,6 +1413,7 @@ export const cameraAPI = {
               tags: camera.tags || [],
               camera_type: camera.camera_type || '-',
               skill_names: camera.skill_names || [],
+              llm_skill_names: camera.llm_skill_names || [],
             };
           });
           transformedData.total = originalData.data.total || transformedData.data.length;
@@ -1583,7 +1585,7 @@ export const alertAPI = {
           'processing': '处理中',
           'completed': '已处理',
           'archived': '已归档',
-          'falseAlarm': '误报'
+          'false_alarm': '误报'
         };
         apiParams.status = statusMap[apiParams.statusFilter];
         delete apiParams.statusFilter;
@@ -1825,14 +1827,22 @@ export const alertAPI = {
 
   /**
    * 获取预警统计信息
-   * @param {number} [days=7] - 统计天数
-   * @returns {Promise} 包含统计信息的Promise对象
+   * @param {Object} params - 查询参数
+   * @param {string} params.granularity - 趋势粒度: hour | day | month
+   * @param {string} [params.start_date] - 开始日期 YYYY-MM-DD（与 days 二选一）
+   * @param {string} [params.end_date]   - 结束日期 YYYY-MM-DD
+   * @param {number} [params.days=7]     - 统计天数（start_date/end_date 优先）
+   * @returns {Promise}
    */
-  getAlertStatistics(days = 7) {
-    console.log('获取预警统计信息，天数:', days);
-    return visionAIAxios.get('/api/v1/alerts/statistics', {
-      params: { days }
-    });
+  getAlertStatistics({ granularity = 'day', start_date, end_date, days = 7 } = {}) {
+    const params = { granularity };
+    if (start_date && end_date) {
+      params.start_date = start_date;
+      params.end_date = end_date;
+    } else {
+      params.days = days;
+    }
+    return visionAIAxios.get('/api/v1/alerts/statistics', { params });
   },
 
   /**
@@ -1926,7 +1936,7 @@ export const alertAPI = {
 
     // 处理导出参数
     const exportParams = { ...params };
-    
+
     // 设置默认导出格式
     if (!exportParams.format) {
       exportParams.format = 'csv';
@@ -3694,14 +3704,34 @@ export const reviewRecordAPI = {
     return visionAIAxios.delete(`/api/v1/review-records/${reviewId}`);
   },
 
+  countFalseAlarmImages(params = {}) {
+    return visionAIAxios.get('/api/v1/review-records/false-alarm-images/count', { params });
+  },
+
+  downloadFalseAlarmImages(params = {}) {
+    return visionAIAxios.get('/api/v1/review-records/false-alarm-images/download', {
+      params,
+      responseType: 'blob',
+      timeout: 120000
+    });
+  },
+
   /**
-   * 获取复判记录统计信息
-   * @param {Object} params - 查询参数
-   * @returns {Promise} 包含统计信息的Promise对象
+   * 获取复判记录统计概览（与后端 GET /review-records/statistics/overview 一致）
    */
-  getReviewRecordStatistics(params = {}) {
-    return visionAIAxios.get('/api/v1/review-records/statistics', { params });
-  }
+  getReviewRecordStatistics() {
+    return visionAIAxios.get('/api/v1/review-records/statistics/overview');
+  },
+
+  /**
+   * 复判人员排行（按复判次数）
+   * @param {number} limit - 返回条数，默认 10
+   */
+  getReviewerStatistics(limit = 10) {
+    return visionAIAxios.get('/api/v1/review-records/statistics/reviewers', {
+      params: { limit },
+    });
+  },
 };
 
 /**
@@ -3724,7 +3754,7 @@ export const realtimeMonitorAPI = {
    */
   getChannelList(params = {}) {
     console.log('📤 获取实时监控通道列表 - 参数:', params);
-    
+
     return visionAIAxios.get('/api/v1/realtime-monitor/channels', { params })
       .then(response => {
         console.log('📥 获取实时监控通道列表成功:', response.data);
@@ -3743,7 +3773,7 @@ export const realtimeMonitorAPI = {
    */
   getChannelDetail(channelId) {
     console.log('📤 获取通道详情 - 通道ID:', channelId);
-    
+
     return visionAIAxios.get(`/api/v1/realtime-monitor/channels/${channelId}`)
       .then(response => {
         console.log('📥 获取通道详情成功:', response.data);
@@ -3762,7 +3792,7 @@ export const realtimeMonitorAPI = {
    */
   playChannel(channelId) {
     console.log('📤 播放通道 - 通道ID:', channelId);
-    
+
     return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`)
       .then(response => {
         console.log('📥 播放通道成功:', response.data);
@@ -3781,7 +3811,7 @@ export const realtimeMonitorAPI = {
    */
   stopChannel(channelId) {
     console.log('📤 停止播放通道 - 通道ID:', channelId);
-    
+
     return visionAIAxios.get(`/api/v1/realtime-monitor/stop/${channelId}`)
       .then(response => {
         console.log('📥 停止播放成功:', response.data);
@@ -3802,7 +3832,7 @@ export const realtimeMonitorAPI = {
    */
   getChannelTree(params = {}) {
     console.log('📤 获取通道树 - 参数:', params);
-    
+
     return visionAIAxios.get('/api/v1/realtime-monitor/channels/tree', { params })
       .then(response => {
         console.log('📥 获取通道树成功:', response.data);
@@ -3820,12 +3850,12 @@ export const realtimeMonitorAPI = {
    * @param {number} params.parent - 父节点ID (Integer类型)
    * @param {boolean} params.hasChannel - 是否包含通道
    * @returns {Promise} 行政区划树数据
-   * 
+   *
    * 注意：RegionController没有query参数（与GroupController不同）
    */
   getRegionTree(params = {}) {
     console.log('📤 获取行政区划树 - 参数:', params);
-    
+
     return visionAIAxios.get('/api/v1/realtime-monitor/region/tree', { params })
       .then(response => {
         console.log('📥 获取行政区划树成功:', response.data);
@@ -3844,12 +3874,12 @@ export const realtimeMonitorAPI = {
    * @param {number} params.parent - 父节点ID (Integer类型, 可选)
    * @param {boolean} params.hasChannel - 是否包含通道
    * @returns {Promise} 业务分组树数据
-   * 
+   *
    * 注意：GroupController有query参数（与RegionController不同）
    */
   getGroupTree(params = {}) {
     console.log('📤 获取业务分组树 - 参数:', params);
-    
+
     return visionAIAxios.get('/api/v1/realtime-monitor/group/tree', { params })
       .then(response => {
         console.log('📥 获取业务分组树成功:', response.data);
@@ -3896,6 +3926,163 @@ export const realtimeDetectionAPI = {
   }
 };
 
+/**
+ * ML Pipeline API - 标注-训练-推理-服务化
+ */
+export const mlPipelineAPI = {
+  // ---- Label Studio 状态 ----
+  getLabelStudioStatus() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/annotation/label-studio/status');
+  },
+  // ---- 数据集 ----
+  listDatasets() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/annotation/datasets');
+  },
+  createDataset(data) {
+    return visionAIAxios.post('/api/v1/ml-pipeline/annotation/datasets', data);
+  },
+  getDataset(id) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${id}`);
+  },
+  deleteDataset(id) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/annotation/datasets/${id}`);
+  },
+  addImages(datasetId, data) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images`, data);
+  },
+  uploadImages(datasetId, files) {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f.raw || f));
+    return visionAIAxios.post(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/upload`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 }
+    );
+  },
+  listImages(datasetId) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images`);
+  },
+  syncAnnotations(datasetId) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/sync`);
+  },
+  checkLsProject(datasetId) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/check-ls`);
+  },
+  exportDataset(datasetId, valRatio = 0.2) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/export?val_ratio=${valRatio}`);
+  },
+
+  // ---- 训练信息 ----
+  getSupportedModels() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/models');
+  },
+  getExportFormats() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/export-formats');
+  },
+  getGpuInfo() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/gpu-info');
+  },
+
+  // ---- TensorBoard ----
+  startTensorBoard(taskId) {
+    const params = taskId ? { task_id: taskId } : {};
+    return visionAIAxios.post('/api/v1/ml-pipeline/training/tensorboard/start', null, { params });
+  },
+  stopTensorBoard() {
+    return visionAIAxios.post('/api/v1/ml-pipeline/training/tensorboard/stop');
+  },
+  getTensorBoardStatus() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/tensorboard/status');
+  },
+
+  // ---- 训练任务 ----
+  listTrainingTasks() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/tasks');
+  },
+  createTrainingTask(data) {
+    return visionAIAxios.post('/api/v1/ml-pipeline/training/tasks', data);
+  },
+  getTrainingTask(id) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${id}`);
+  },
+  getTrainingTaskLog(id, tail = 200) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${id}/log`, { params: { tail } });
+  },
+  startTrainingTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/start`);
+  },
+  cancelTrainingTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/cancel`);
+  },
+  interruptTrainingTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/interrupt`);
+  },
+  deleteTrainingTask(id) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/training/tasks/${id}`);
+  },
+
+  // ---- 模型导出 ----
+  exportModel(taskId, format) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${taskId}/export`, { format });
+  },
+  getExportStatus(taskId) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${taskId}/export-status`);
+  },
+
+  // ---- 模型下载 ----
+  getModelDownloadUrl(taskId, type = 'export') {
+    return `${config.API_BASE_URL}/api/v1/ml-pipeline/training/tasks/${taskId}/download?type=${type}`;
+  }
+};
+
+/**
+ * 系统监控 API - 推流诊断与健康检查
+ */
+export const systemMonitorAPI = {
+  /**
+   * 获取推流环境完整诊断信息
+   * 包括 FFmpeg 安装状态、NVENC 可用性、RTSP 服务器可达性等
+   */
+  getStreamingDiagnostics() {
+    return visionAIAxios.get('/api/v1/system/streaming-diagnostics');
+  },
+
+  /**
+   * 获取推流健康状态摘要（轻量级，适合轮询）
+   */
+  getStreamingHealth() {
+    return visionAIAxios.get('/api/v1/system/streaming-health');
+  },
+
+  /**
+   * 获取AI任务执行器状态（含推流健康）
+   */
+  getExecutorStatus() {
+    return visionAIAxios.get('/api/v1/ai/monitor/executor-status');
+  },
+
+  /**
+   * 获取指定任务的性能报告（含推流详情）
+   */
+  getTaskPerformance(taskId) {
+    return visionAIAxios.get(`/api/v1/ai/monitor/task-performance/${taskId}`);
+  },
+
+  /**
+   * 获取系统健康检查
+   */
+  getHealthCheck() {
+    return visionAIAxios.get('/api/v1/system/health');
+  },
+
+  /**
+   * 获取服务器系统资源（CPU/内存/磁盘/GPU/运行任务/已加载模型）
+   */
+  getSystemResources() {
+    return visionAIAxios.get('/api/v1/system/resources');
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
@@ -3908,5 +4095,7 @@ export default {
   taskReviewAPI,
   realtimeMonitorAPI,
   realtimeDetectionAPI,
+  mlPipelineAPI,
+  systemMonitorAPI,
   visionAIAxios
 };

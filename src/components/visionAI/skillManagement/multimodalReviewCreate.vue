@@ -109,13 +109,16 @@
                 <el-input 
                   v-model="skillForm.description"
                   type="textarea"
-                  placeholder="1.请将您的需求通过疑问句描述出来，问题应能够通过「是」或「否」进行回答，当大模型分析结果为「是」，将输出任务结果；&#10; 2.尽量使用「形容词+名词」形式描述目标，输出结果会更准确的"
+                  placeholder="请用疑问句描述复判条件，例如：&#10;「图中是否有人未佩戴安全帽？」&#10;「画面中是否存在明火或浓烟？」&#10;&#10;大模型将根据图像判断：&#10;· 回答「是」→ 确认为真实预警&#10;· 回答「否」→ 判定为误报"
                   :rows="6"
                   maxlength="1000"
                   show-word-limit
                   :disabled="isViewMode"
                   class="form-textarea">
                 </el-input>
+                <div class="form-tips" v-if="!isViewMode">
+                  复判逻辑：大模型对图像分析后，若判定描述的情况<b>存在</b>则确认为真实预警，若判定<b>不存在</b>则标记为误报
+                </div>
                 <div class="form-link">
                   <el-button type="text" @click="showDescriptionExample">技能描述示例</el-button>
                 </div>
@@ -869,29 +872,17 @@ export default {
         
         if (response.data && response.data.success) {
           const testData = response.data.data || response.data
+          const analysis = testData.analysis_result || {}
           
-          // 格式化显示结果
-          const reviewResult = testData.review_result || '无复判结果'
-          const analysisResult = testData.analysis_result || {}
+          // is_real_alert: true → 真实预警, false → 误报
+          const isReal = testData.review_result === true
+          const resultLabel = isReal ? '真实预警（is_real_alert=true）' : '误报（is_real_alert=false）'
+          const confidence = analysis.confidence != null ? analysis.confidence : '-'
+          const reason = analysis.reason || testData.raw_response || '无分析理由'
           
-          // 构建显示内容
-          let displayText = `复判结果: ${reviewResult}\n`
-          
-          // 格式化分析结果
-          if (typeof analysisResult === 'object' && analysisResult !== null) {
-            displayText += '详细分析:\n'
-            // 遍历所有键值对
-            Object.keys(analysisResult).forEach(key => {
-              const value = analysisResult[key]
-              if (typeof value === 'boolean') {
-                displayText += `• ${key}: ${value}\n`
-              } else {
-                displayText += `• ${key}: ${value}\n`
-              }
-            })
-          } else {
-            displayText += `详细分析: ${analysisResult}`
-          }
+          let displayText = `复判结论: ${resultLabel}\n`
+          displayText += `置信度: ${confidence}\n`
+          displayText += `分析理由: ${reason}`
           
           this.analysisResult = displayText
           this.$message.success('AI分析完成')

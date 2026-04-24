@@ -7,15 +7,15 @@
       :before-close="handleClose"
       v-loading="loading"
       element-loading-text="处理中...">
-      <div v-if="internalWarning" class="warning-detail-container">
+      <div v-if="detail" class="warning-detail-container">
         <!-- 预警详情头部 -->
         <div class="warning-detail-header">
-          <div class="warning-level-badge" :class="getWarningLevelClass(internalWarning.level)">
-            {{ getWarningLevelText(internalWarning.level) }}预警
+          <div class="warning-level-badge" :class="getWarningLevelClass(detail.alert_level)">
+            {{ getWarningLevelText(detail.alert_level) }}预警
           </div>
           <div class="warning-detail-time">
             <i class="el-icon-time"></i>
-            {{ formatTime(internalWarning.time) }}
+            {{ formatTime(detail.alert_time) }}
           </div>
         </div>
 
@@ -35,37 +35,44 @@
                   <div class="info-row">
                     <div class="info-cell">
                       <span class="label">预警ID</span>
-                      <span class="value alert-id">{{ getAlertId(internalWarning) }}</span>
+                      <span class="value alert-id">{{ getAlertId() }}</span>
                     </div>
                     <div class="info-cell">
                       <span class="label">设备名称</span>
-                      <span class="value">{{ internalWarning.device }}</span>
+                      <span class="value">{{ detail.camera_name || '未知摄像头' }}</span>
                     </div>
                   </div>
                   <div class="info-row">
                     <div class="info-cell">
                       <span class="label">违规位置</span>
-                      <span class="value">{{ internalWarning.location || (internalWarning.deviceInfo && internalWarning.deviceInfo.position) || '未知位置' }}</span>
+                      <span class="value">{{ detail.location || '未知位置' }}</span>
                     </div>
                     <div class="info-cell">
                       <span class="label">预警名称</span>
-                      <span class="value">{{ internalWarning.alertName || internalWarning.type }}</span>
+                      <span class="value">{{ detail.alert_name || '未知预警' }}</span>
                     </div>
                   </div>
                   <div class="info-row">
                     <div class="info-cell">
                       <span class="label">预警类型</span>
-                      <span class="value">{{ internalWarning.type }}</span>
+                      <span class="value">{{ detail.alert_type || '未知类型' }}</span>
+                    </div>
+                    <div class="info-cell" v-if="detail.skill_name_zh">
+                      <span class="label">AI技能</span>
+                      <span class="value">
+                        <el-tag size="mini" :type="isLLMSkill ? 'warning' : 'primary'" effect="plain" style="margin-right:4px">{{ isLLMSkill ? '大模型' : '视觉' }}</el-tag>
+                        {{ detail.skill_name_zh }}
+                      </span>
                     </div>
                   </div>
                   <!-- 复判信息行 (仅在复判记录页面显示) -->
-                  <div class="info-row" v-if="internalWarning.reviewType && source === 'reviewRecords'">
+                  <div class="info-row" v-if="reviewData && reviewData.reviewType">
                     <div class="info-cell">
                       <span class="label">复判分类</span>
-                      <span class="value review-classification" :class="'review-' + internalWarning.reviewType">
-                        {{ getReviewClassificationText(internalWarning.reviewType) }}
+                      <span class="value review-classification" :class="'review-' + reviewData.reviewType">
+                        {{ getReviewClassificationText(reviewData.reviewType) }}
                         <el-tooltip
-                          v-if="internalWarning.reviewType === 'auto'"
+                          v-if="reviewData.reviewResult === 'false_alarm'"
                           content="还原复判"
                           placement="top"
                         >
@@ -79,16 +86,24 @@
                         </el-tooltip>
                       </span>
                     </div>
-                    <div class="info-cell" v-if="internalWarning.reviewerName">
+                    <div class="info-cell" v-if="reviewData.reviewerName">
                       <span class="label">复判人员</span>
-                      <span class="value">{{ internalWarning.reviewerName }}</span>
+                      <span class="value">{{ reviewData.reviewerName }}</span>
                     </div>
                   </div>
-                  <!-- 复判意见行 (仅在复判记录页面且有复判意见时显示) -->
-                  <div class="info-row" v-if="internalWarning.reviewNotes && source === 'reviewRecords'">
+                  <div class="info-row" v-if="reviewData && reviewData.reviewSkillName">
+                    <div class="info-cell">
+                      <span class="label">复判技能</span>
+                      <span class="value">
+                        <el-tag size="mini" type="success" effect="plain" style="margin-right:4px">LLM</el-tag>
+                        {{ reviewData.reviewSkillName }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="info-row" v-if="reviewData && reviewData.reviewNotes">
                     <div class="info-cell full-width">
                       <span class="label">复判意见</span>
-                      <span class="value review-notes">{{ internalWarning.reviewNotes }}</span>
+                      <span class="value review-notes">{{ reviewData.reviewNotes }}</span>
                     </div>
                   </div>
                 </div>
@@ -101,7 +116,7 @@
                   预警描述
                 </div>
                 <div class="info-content">
-                  <p class="description-content">{{ internalWarning.description || '检测到工作人员未佩戴安全帽，存在安全隐患，请立即整改' }}</p>
+                  <p class="description-content">{{ detail.alert_description || '检测到异常情况，请立即处理' }}</p>
                 </div>
               </div>
             </div>
@@ -114,7 +129,7 @@
                   违规截图
                   <!-- 合并预警查看按钮 -->
                   <el-button
-                    v-if="internalWarning.is_merged"
+                    v-if="detail.is_merged"
                     type="warning"
                     size="mini"
                     plain
@@ -122,19 +137,19 @@
                     @click.stop="showMergedDialog = true"
                   >
                     <i class="el-icon-folder-opened"></i>
-                    查看合并 ({{ internalWarning.alert_count }})
+                    查看合并 ({{ detail.alert_count }})
                   </el-button>
                 </h4>
                 <div class="image-container" @click="openImageViewer">
-                  <div v-if="internalWarning.imageUrl" class="real-image">
-                    <img :src="internalWarning.imageUrl" :alt="internalWarning.type" />
+                  <div v-if="detail.minio_frame_url" class="real-image">
+                    <img :src="detail.minio_frame_url" :alt="detail.alert_type" />
                     <div class="media-overlay">
                       <i class="el-icon-zoom-in"></i>
                       <span>点击放大查看</span>
                     </div>
                   </div>
                   <div v-else class="placeholder-image">
-                    <i :class="getWarningIcon(internalWarning.level)"></i>
+                    <i :class="getWarningIcon(detail.alert_level)"></i>
                     <span>违规截图</span>
                   </div>
                 </div>
@@ -146,9 +161,9 @@
                   视频片段
                 </h4>
                 <div class="video-container" @click="openVideoViewer">
-                  <div v-if="internalWarning.videoUrl || internalWarning.minio_video_url" class="real-video">
+                  <div v-if="detail.minio_video_url" class="real-video">
                     <video
-                      :src="internalWarning.videoUrl || internalWarning.minio_video_url"
+                      :src="detail.minio_video_url"
                       preload="metadata"
                       style="width: 100%; height: 100%; object-fit: cover;"
                     ></video>
@@ -170,8 +185,8 @@
             </div>
           </div>
 
-          <!-- 右侧：处理进展时间线 (复判记录页面不显示) -->
-          <div class="warning-right-content" v-if="source !== 'reviewRecords'">
+          <!-- 右侧：处理进展时间线 -->
+          <div class="warning-right-content">
             <div class="process-timeline">
               <h4 class="timeline-title">
                 <i class="el-icon-time"></i>
@@ -206,13 +221,17 @@
       </div>
 
       <span slot="footer" class="dialog-footer">
-        <!-- 实时监控页面显示所有按钮 -->
-        <template v-if="source === 'realTimeMonitoring'">
+        <template v-if="detail && detail.status === 5">
+          <span class="false-alarm-status-text">
+            <i class="el-icon-warning-outline"></i>
+            该预警已标记为误报
+          </span>
+        </template>
+        <template v-else>
           <el-button plain @click="handleReport" class="action-btn report-btn">
             <i class="el-icon-upload"></i>
             上报
           </el-button>
-          <!-- 归档按钮根据状态禁用（只有已处理状态才能归档） -->
           <el-button
             plain
             :disabled="isArchiveDisabled()"
@@ -221,7 +240,6 @@
             <i class="el-icon-folder"></i>
             归档
           </el-button>
-          <!-- 误报按钮根据状态禁用（只有待处理状态才能点击） -->
           <el-button
             plain
             :disabled="isFalseAlarmDisabled()"
@@ -230,7 +248,6 @@
             <i class="el-icon-close"></i>
             误报
           </el-button>
-          <!-- 处理按钮根据状态禁用 -->
           <el-button
             plain
             :disabled="isProcessingDisabled()"
@@ -238,30 +255,6 @@
             class="action-btn process-btn">
             <i class="el-icon-check"></i>
             {{ isProcessingDisabled() ? '已完成' : '处理' }}
-          </el-button>
-        </template>
-        <!-- 预警管理页面只显示处理和关闭按钮 -->
-        <template v-else-if="source === 'warningManagement'">
-        </template>
-        <!-- 预警档案页面只显示关闭按钮 -->
-        <template v-else-if="source === 'warningArchives'">
-        </template>
-        <!-- 复判记录页面只显示关闭按钮 -->
-        <template v-else-if="source === 'reviewRecords'">
-        </template>
-        <!-- 默认情况显示处理和关闭按钮 -->
-        <template v-else>
-          <!-- 处理按钮根据状态禁用 -->
-          <el-button
-            plain
-            :disabled="isProcessingDisabled()"
-            @click="handleWarning"
-            class="action-btn process-btn">
-            <i class="el-icon-check"></i>
-            {{ isProcessingDisabled() ? '已完成' : '处理' }}
-          </el-button>
-          <el-button @click="closeDialog" class="action-btn">
-            关闭
           </el-button>
         </template>
       </span>
@@ -272,7 +265,8 @@
       title="上报确认"
       :visible.sync="reportDialogVisible"
       width="400px"
-      center>
+      center
+      append-to-body>
       <div class="confirm-content">
         <p>确定要上报此预警吗？</p>
         <p style="color: #909399; font-size: 12px;">上报后预警将提交给上级部门处理</p>
@@ -289,6 +283,7 @@
       :visible.sync="archiveDialogVisible"
       width="40%"
       center
+      append-to-body
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
@@ -358,6 +353,7 @@
       :visible.sync="remarkDialogVisible"
       width="30%"
       center
+      append-to-body
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
@@ -383,6 +379,41 @@
       </span>
     </el-dialog>
 
+    <!-- 误报确认对话框 -->
+    <el-dialog
+      title="标记误报"
+      :visible.sync="falseAlarmDialogVisible"
+      width="30%"
+      center
+      append-to-body
+      :close-on-click-modal="false"
+    >
+      <el-form label-width="80px">
+        <el-form-item label="误报原因">
+          <el-input
+            v-model="falseAlarmReason"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入误报原因（可选）"
+            maxlength="300"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <div style="margin-top: 8px;">
+        <el-alert
+          title="标记为误报后，该预警将不再出现在待处理列表中"
+          type="warning"
+          :closable="false"
+          show-icon
+        />
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="closeFalseAlarmDialog">取 消</el-button>
+        <el-button type="danger" @click="confirmFalseAlarm">确认误报</el-button>
+      </span>
+    </el-dialog>
+
     <!-- 合并预警详情弹窗 -->
     <el-dialog
       title="合并预警详情"
@@ -393,17 +424,17 @@
       :modal-append-to-body="true"
       :z-index="3000"
     >
-      <div v-if="internalWarning && internalWarning.is_merged" class="merged-content">
+      <div v-if="detail && detail.is_merged" class="merged-content">
         <!-- 合并统计信息 -->
         <div class="merged-stats-wrapper">
           <!-- 数值统计行 -->
           <div class="merged-stats-row stats-numbers">
             <div class="stat-item">
-              <div class="stat-value">{{ internalWarning.alert_count }}</div>
+              <div class="stat-value">{{ detail.alert_count }}</div>
               <div class="stat-label">检测次数</div>
             </div>
             <div class="stat-item">
-              <div class="stat-value">{{ formatMergeDuration(internalWarning.alert_duration) }}</div>
+              <div class="stat-value">{{ formatMergeDuration(detail.alert_duration) }}</div>
               <div class="stat-label">持续时长</div>
             </div>
           </div>
@@ -411,11 +442,11 @@
           <div class="merged-stats-row stats-times">
             <div class="time-item">
               <span class="time-label">首次检测：</span>
-              <span class="time-value">{{ formatTime(internalWarning.first_alert_time) }}</span>
+              <span class="time-value">{{ formatTime(detail.first_alert_time) }}</span>
             </div>
             <div class="time-item">
               <span class="time-label">最后检测：</span>
-              <span class="time-value">{{ formatTime(internalWarning.last_alert_time) }}</span>
+              <span class="time-value">{{ formatTime(detail.last_alert_time) }}</span>
             </div>
           </div>
         </div>
@@ -425,7 +456,7 @@
           <div class="section-title">全部截图</div>
           <div class="merged-images-grid">
             <div
-              v-for="(img, index) in internalWarning.alert_images"
+              v-for="(img, index) in detail.alert_images"
               :key="index"
               class="merged-image-item"
               :class="{ 'is-primary': index === getMergedMiddleIndex() }"
@@ -451,18 +482,18 @@
     >
       <div class="merged-image-viewer-container" @click.stop>
         <div class="viewer-header">
-          <span>{{ currentMergedImageIndex + 1 }} / {{ internalWarning.alert_images.length }}</span>
-          <span class="viewer-time">+{{ internalWarning.alert_images[currentMergedImageIndex].relative_time.toFixed(1) }}s</span>
+          <span>{{ currentMergedImageIndex + 1 }} / {{ detail.alert_images.length }}</span>
+          <span class="viewer-time">+{{ detail.alert_images[currentMergedImageIndex].relative_time.toFixed(1) }}s</span>
           <i class="el-icon-close" @click="closeMergedImageViewer"></i>
         </div>
         <div class="viewer-body">
           <i class="el-icon-arrow-left nav-btn" @click="prevMergedImage"></i>
-          <img :src="getMergedImageUrl(internalWarning.alert_images[currentMergedImageIndex])" />
+          <img :src="getMergedImageUrl(detail.alert_images[currentMergedImageIndex])" />
           <i class="el-icon-arrow-right nav-btn" @click="nextMergedImage"></i>
         </div>
         <div class="viewer-thumbnails">
           <div
-            v-for="(img, index) in internalWarning.alert_images"
+            v-for="(img, index) in detail.alert_images"
             :key="index"
             class="viewer-thumb"
             :class="{ active: index === currentMergedImageIndex }"
@@ -481,9 +512,9 @@
       @click="closeImageViewer">
        <div class="simple-image-container" @click.stop>
          <img
-           v-if="internalWarning && internalWarning.imageUrl"
-           :src="internalWarning.imageUrl"
-           :alt="internalWarning.type"
+           v-if="detail && detail.minio_frame_url"
+           :src="detail.minio_frame_url"
+           :alt="detail.alert_type"
            class="simple-enlarged-image" />
        </div>
      </div>
@@ -501,9 +532,9 @@
           <!-- 视频预览区域 -->
           <div class="video-preview">
                           <video
-               v-if="internalWarning && (internalWarning.minio_video_url || internalWarning.videoUrl)"
+               v-if="detail && detail.minio_video_url"
                ref="videoPlayer"
-               :src="internalWarning.minio_video_url || internalWarning.videoUrl"
+               :src="detail.minio_video_url"
                @loadedmetadata="onVideoLoaded"
                @timeupdate="onVideoTimeUpdate"
                @ended="onVideoEnded"
@@ -512,9 +543,9 @@
                controls
              ></video>
             <img
-              v-else-if="internalWarning && (internalWarning.minio_frame_url || internalWarning.imageUrl)"
-              :src="internalWarning.minio_frame_url || internalWarning.imageUrl"
-              :alt="internalWarning.type"
+              v-else-if="detail && detail.minio_frame_url"
+              :src="detail.minio_frame_url"
+              :alt="detail.alert_type"
               style="width: 100%; height: 100%; object-fit: contain;" />
             <div v-else class="no-media-placeholder">
               <i class="el-icon-video-camera" style="font-size: 48px; color: #909399;"></i>
@@ -556,29 +587,25 @@ export default {
       type: Boolean,
       default: false
     },
-    warning: {
-      type: Object,
-      default: null
-    },
-    warningId: {
+    alertId: {
       type: [String, Number],
       default: null
     },
-    source: {
-      type: String,
-      default: ''
+    reviewData: {
+      type: Object,
+      default: null
     }
   },
   data() {
     return {
       dialogVisible: false,
       loading: false,
-      // 内部预警数据（从API获取或使用传入的props）
-      internalWarning: null,
+      detail: null,
       // 归档相关
       archiveDialogVisible: false,
       selectedArchiveId: '',
       archivesList: [],
+      archivesListLoading: false,
       currentCameraId: '',
       // 上报相关
       reportDialogVisible: false,
@@ -589,6 +616,10 @@ export default {
       remarkForm: {
         remark: ''
       },
+
+      // 误报对话框
+      falseAlarmDialogVisible: false,
+      falseAlarmReason: '',
 
       // 处理进展时间线 - 改为数据属性，动态记录操作历史
       operationHistory: [],
@@ -610,30 +641,18 @@ export default {
     visible: {
       handler(val) {
         this.dialogVisible = val;
-        if (val) {
-          // 当对话框打开时，获取或设置预警数据
-          this.loadWarningData();
+        if (val && this.alertId) {
+          this.loadDetail();
         }
       },
       immediate: true
     },
-    warning: {
-      handler(val) {
-        if (val) {
-          this.internalWarning = val;
-          this.initArchivesList();
-          this.initOperationHistory();
-        }
-      },
-      immediate: true
-    },
-    warningId: {
+    alertId: {
       handler(val) {
         if (val && this.visible) {
-          this.loadWarningData();
+          this.loadDetail();
         }
-      },
-      immediate: true
+      }
     }
   },
   mounted() {
@@ -641,20 +660,29 @@ export default {
     // 添加键盘事件监听
     document.addEventListener('keydown', this.handleKeydown);
   },
-  destroyed() {
-    // 移除键盘事件监听
+  beforeDestroy() {
     document.removeEventListener('keydown', this.handleKeydown);
+    if (this.videoTimer) {
+      clearInterval(this.videoTimer);
+    }
+    document.removeEventListener('mousemove', this.onDrag);
+    document.removeEventListener('mouseup', this.endDrag);
   },
   computed: {
-    // 可用档案列表
     availableArchives() {
       return this.archivesList.filter(archive =>
         archive.cameraId === this.currentCameraId || archive.isDefault
       );
     },
-    // 默认档案
     defaultArchive() {
       return this.availableArchives.find(archive => archive.isDefault);
+    },
+    isLLMSkill() {
+      if (!this.detail) return false
+      if (this.detail.skill_name_zh && this.detail.alert_type) {
+        return this.detail.alert_type.startsWith('llm_')
+      }
+      return false
     }
   },
   methods: {
@@ -668,8 +696,8 @@ export default {
 
     // 获取合并图片的中间索引
     getMergedMiddleIndex() {
-      if (!this.internalWarning || !this.internalWarning.alert_images) return 0
-      return Math.floor(this.internalWarning.alert_images.length / 2)
+      if (!this.detail || !this.detail.alert_images) return 0
+      return Math.floor(this.detail.alert_images.length / 2)
     },
 
     // 获取合并图片URL
@@ -692,7 +720,7 @@ export default {
       if (imageData.startsWith('http')) return imageData
       
       // 否则通过后端API代理访问（使用baseUrl）
-      const taskId = (this.internalWarning && this.internalWarning.task_id) || ''
+      const taskId = (this.detail && this.detail.task_id) || ''
       return `${window.baseUrl || ''}/api/v1/alerts/image/${taskId}/${imageData}`
     },
 
@@ -716,45 +744,30 @@ export default {
 
     // 下一张合并图片
     nextMergedImage() {
-      if (this.currentMergedImageIndex < this.internalWarning.alert_images.length - 1) {
+      if (this.currentMergedImageIndex < this.detail.alert_images.length - 1) {
         this.currentMergedImageIndex++
       }
     },
 
-    // ==================== 原有方法 ====================
-    // 加载预警数据（从props或API获取）
-    async loadWarningData() {
+    // ==================== 数据加载 ====================
+    async loadDetail() {
+      if (!this.alertId) {
+        this.$message.error('缺少预警ID');
+        this.closeDialog();
+        return;
+      }
       try {
-        if (this.warning) {
-          // 如果传入了完整的预警对象，直接使用
-          this.internalWarning = this.warning;
+        this.loading = true;
+        const response = await alertAPI.getAlertDetail(this.alertId);
+        if (response.data && response.data.alert_id) {
+          this.detail = response.data;
           this.initArchivesList();
           this.initOperationHistory();
-        } else if (this.warningId) {
-          // 如果只传入了ID，调用API获取详情
-          this.loading = true;
-          console.log('通过ID获取预警详情:', this.warningId);
-
-          const response = await alertAPI.getAlertDetail(this.warningId);
-          console.log('预警详情API响应:', response.data);
-
-          if (response.data && response.data.alert_id) {
-            // API直接返回预警详情对象，转换API数据为页面数据格式
-            this.internalWarning = this.transformApiDetailToPageData(response.data);
-            this.initArchivesList();
-            this.initOperationHistory();
-          } else {
-            console.error('获取预警详情失败:', response.data);
-            this.$message.error('获取预警详情失败：' + (response.data && response.data.msg || '服务器错误'));
-            this.closeDialog();
-          }
         } else {
-          console.warn('缺少预警数据或预警ID');
-          this.$message.error('缺少预警数据');
+          this.$message.error('获取预警详情失败');
           this.closeDialog();
         }
       } catch (error) {
-        console.error('加载预警数据失败:', error);
         this.$message.error('获取预警详情失败：' + (error.message || '网络错误'));
         this.closeDialog();
       } finally {
@@ -762,120 +775,16 @@ export default {
       }
     },
 
-    // 转换API详情数据为页面数据格式
-    transformApiDetailToPageData(apiData) {
-      if (!apiData) {
-        console.warn('API详情数据为空');
-        return null;
-      }
-
-      // 预警等级映射
-      const levelMap = {
-        1: '一级预警',
-        2: '二级预警',
-        3: '三级预警',
-        4: '四级预警'
-      };
-
-      // 状态映射
-      const statusMap = {
-        1: 'pending',
-        2: 'processing',
-        3: 'completed'
-      };
-
-      // 转换格式（类似warningManagement.vue中的转换逻辑）
-      const transformedData = {
-        // 基本信息映射
-        id: String(apiData.alert_id || apiData.id || Date.now()),
-        deviceName: apiData.alert_name || '未知预警',
-        imageUrl: apiData.minio_frame_url || null,
-        videoUrl: apiData.minio_video_url || null, // 添加视频URL
-        // 同时保留API原始字段名，用于视频播放器
-        minio_frame_url: apiData.minio_frame_url || null,
-        minio_video_url: apiData.minio_video_url || null,
-        level: levelMap[apiData.alert_level] || '未知等级',
-        time: this.formatApiTime(apiData.alert_time || apiData.created_at),
-        status: statusMap[apiData.status] || 'pending',
-
-        // 设备信息
-        device: apiData.camera_name || '未知摄像头',
-        deviceInfo: {
-          name: apiData.camera_name || '未知摄像头',
-          position: apiData.location || '未知位置'
-        },
-
-        // 预警详细信息
-        alertName: apiData.alert_name || '未知预警',  // 预警名称（如：未佩戴安全带）
-        type: apiData.alert_type || '未知类型',        // 预警类型（如：安全生产预警）
-        location: apiData.location || '未知位置',
-        description: apiData.alert_description || '未知描述',
-        skill: apiData.alert_type || 'unknown_skill',
-
-        // 处理信息
-        remark: apiData.processing_notes || '',
-
-        // 检测结果（如果有的话）
-        detectionResults: apiData.result || [],
-
-        // 电子围栏信息（如果有的话）
-        electronicFence: apiData.electronic_fence || null,
-
-        // 技能相关信息
-        skillClassId: apiData.skill_class_id,
-        skillNameZh: apiData.skill_name_zh,
-        taskId: apiData.task_id,
-
-        // 处理时间信息
-        processedAt: apiData.processed_at,
-        processedBy: apiData.processed_by,
-        createdAt: apiData.created_at,
-        updatedAt: apiData.updated_at,
-
-        // 原始API数据（用于调试和扩展）
-        _apiData: apiData
-      };
-
-      console.log('API详情数据转换完成:', transformedData);
-      return transformedData;
-    },
-
-    // 格式化API时间格式（复用warningManagement.vue的方法）
-    formatApiTime(timeString) {
-      if (!timeString) return new Date().toLocaleString();
-
-      try {
-        // 处理ISO格式时间 (2025-06-27T15:15:52)
-        if (timeString.includes('T')) {
-          const date = new Date(timeString);
-          if (!isNaN(date.getTime())) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-          }
-        }
-
-        // 如果已经是标准格式，直接返回
-        return timeString;
-      } catch (error) {
-        console.warn('时间格式转换失败:', timeString, error);
-        return timeString || new Date().toLocaleString();
-      }
-    },
-
     // 初始化档案列表 - 调用真实API
     async initArchivesList() {
+      if (this.archivesListLoading) return;
+      this.archivesListLoading = true;
       try {
         const { archiveAPI } = await import('../../service/VisionAIService.js');
 
         const response = await archiveAPI.getArchiveList({
           page: 1,
           limit: 100,
-          // status: 1 // 获取所有正常状态的档案
         });
 
         console.log('📥 获取档案列表响应:', response.data);
@@ -886,7 +795,7 @@ export default {
             name: archive.name,
             cameraId: archive.camera_id || 'unknown',
             cameraName: archive.location || '未知位置',
-            isDefault: false, // 真实API中可能没有isDefault字段
+            isDefault: false,
             createTime: archive.created_at
           }));
           console.log('✅ 加载档案列表成功:', this.archivesList.length, '个档案');
@@ -897,30 +806,13 @@ export default {
       } catch (error) {
         console.error('❌ 加载档案列表失败:', error);
         this.archivesList = [];
-        // 不显示错误提示,避免影响页面主要功能
+      } finally {
+        this.archivesListLoading = false;
       }
     },
 
-    // 获取预警ID
-    getAlertId(warning) {
-      if (!warning) return '未知';
-
-      // 优先从API原始数据中获取alert_id
-      if (warning._apiData && warning._apiData.alert_id) {
-        return warning._apiData.alert_id;
-      }
-
-      // 其次检查alert_id字段（复判记录页面使用）
-      if (warning.alert_id) {
-        return warning.alert_id;
-      }
-
-      // 最后从id字段获取（warningManagement中已映射）
-      if (warning.id) {
-        return warning.id;
-      }
-
-      return '未知';
+    getAlertId() {
+      return this.detail ? this.detail.alert_id : '未知';
     },
 
     // 关闭对话框
@@ -934,9 +826,8 @@ export default {
       if (done) done();
     },
 
-    // 处理还原复判
     async handleRestoreReview() {
-      if (!this.internalWarning || !this.internalWarning.id) {
+      if (!this.detail || !this.detail.alert_id) {
         this.$message.error('预警信息不完整');
         return;
       }
@@ -953,33 +844,10 @@ export default {
         );
 
         this.loading = true;
-
-        // 模拟API调用
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        // 创建要还原到预警管理页面的预警数据
-        const restoredWarning = {
-          id: this.internalWarning.id,
-          type: this.internalWarning.type,
-          device: this.internalWarning.device,
-          deviceInfo: this.internalWarning.deviceInfo,
-          location: this.internalWarning.location,
-          time: this.internalWarning.time,
-          level: this.internalWarning.level,
-          imageUrl: this.internalWarning.imageUrl,
-          description: this.internalWarning.description,
-          status: 'pending', // 重新设置为待处理状态
-          // 重置操作历史，只保留预警触发记录
-          operationHistory: this.internalWarning.operationHistory ?
-            this.internalWarning.operationHistory.filter(record => record.operationType === 'create') : []
-        };
-
-        // 触发还原事件，通知父组件将预警添加到预警管理页面
-        this.$emit('restore-review', restoredWarning);
-
+        this.$emit('restore-review', { alert_id: this.detail.alert_id });
         this.$message.success('预警已成功还原到预警管理页面');
-
-        // 关闭详情对话框
         this.closeDialog();
 
       } catch (error) {
@@ -992,133 +860,70 @@ export default {
       }
     },
 
-    // 处理预警事件 - 复制预警管理页面的核心逻辑
     async handleWarningAction(action) {
-      if (!this.internalWarning || !this.internalWarning.id) {
+      if (!this.detail || !this.detail.alert_id) {
         this.$message.error('预警信息不完整');
         return;
       }
 
       try {
         this.loading = true;
-        // 模拟API调用
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        if (action === 'markProcessed') {
-          // 标记为已处理
-          this.warning.status = 'completed';
-          this.$message.success('已标记为已处理');
-          this.$emit('handle-warning', this.warning);
-          // 不立即关闭对话框，让用户看到状态变化
-        } else if (action === 'report') {
-          // 上报
-          this.reportWarningId = this.warning.id;
+        if (action === 'report') {
+          this.reportWarningId = this.detail.alert_id;
           this.reportDialogVisible = true;
-          return; // 不关闭loading，等确认后再关闭
+          return;
         } else if (action === 'archive') {
-          // 归档 - 需要选择档案
-          this.currentCameraId = this.warning.cameraId || 'camera_1';
+          this.currentCameraId = this.detail.camera_id || '';
           this.initArchiveSelection();
           this.archiveDialogVisible = true;
-          return; // 不关闭loading，等确认后再关闭
-        } else if (action === 'falseAlarm') {
-          // 误报 - 已改为由父组件统一处理，这个分支不应该被执行
-          console.warn('⚠️ handleWarningAction中的falseAlarm分支不应该被调用，请使用handleFalseAlarm方法');
           return;
         }
       } catch (error) {
-        console.error('处理失败:', error);
         this.$message.error('处理预警失败');
       } finally {
         this.loading = false;
       }
     },
 
-    // 处理预警
     handleWarning() {
-      // 🔧 检查当前是否已经在处理中（通过API状态判断）
-      const isProcessing = (this.internalWarning._apiData && this.internalWarning._apiData.status === 2) || 
-                           this.internalWarning.status === 'processing';
-
-      if (isProcessing) {
-        // 如果已在处理中，直接弹出处理意见对话框
+      if (this.detail.status === 2) {
         this.remarkDialogVisible = true;
       } else {
-        // 如果不在处理中，开始处理流程
         this.startProcessing();
       }
     },
 
-    // 开始处理
     async startProcessing() {
       try {
         this.loading = true;
-
-        console.log('🔄 开始处理预警:', this.warning.id);
-
-        // 1. 先调用后端API更新状态为"处理中"
-        const apiAlertId = this.warning._apiData ? this.warning._apiData.alert_id : this.warning.id;
         const updateData = {
-          status: 2, // 处理中状态
+          status: 2,
           processing_notes: '开始处理预警',
           processed_by: this.getCurrentUserName()
         };
 
-        // 发送真实的API请求
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
-        console.log('✅ 后端状态更新成功:', response);
+        await alertAPI.updateAlertStatus(this.detail.alert_id, updateData);
 
-        // 2. 后端更新成功后，更新本地状态
-        // 更新待处理记录为已完成状态
         this.operationHistory = this.operationHistory.map(record => {
           if (record.operationType === 'pending' && record.status === 'active') {
-            return {
-              ...record,
-              status: 'completed',
-              description: '预警已确认，开始处理'
-            };
+            return { ...record, status: 'completed', description: '预警已确认，开始处理' };
           }
           return record;
         });
 
-        // 🔧 不再添加"处理中"记录到时间线，只更新状态
-        // 用户添加的处理意见会作为 processing-action 类型单独显示
-
-        // 同步更新warning对象的操作历史（更新待处理状态为已完成）
-        if (this.warning && this.warning.operationHistory) {
-          this.warning.operationHistory = this.warning.operationHistory.map(record => {
-            if (record.operationType === 'pending' && record.status === 'active') {
-              return {
-                ...record,
-                status: 'completed',
-                description: '预警已确认，开始处理'
-              };
-            }
-            return record;
-          });
-        }
-
-        // 更新 _apiData.status 字段为处理中
-        if (this.warning._apiData) {
-          this.warning._apiData.status = 2; // 处理中状态
-        }
-
-        console.log('✅ 开始处理，本地状态已更新为处理中');
-
+        this.detail.status = 2;
         this.$message.success('预警已开始处理');
-
-        // 3. 弹出处理意见对话框
         this.remarkDialogVisible = true;
 
       } catch (error) {
-        console.error('❌ 开始处理预警失败:', error);
-        this.$message.error('开始处理失败: ' + (error.message || (error.response && error.response.data && error.response.data.message) || '未知错误'));
+        this.$message.error('开始处理失败: ' + (error.message || '未知错误'));
       } finally {
         this.loading = false;
       }
     },
 
-    // 保存处理意见（添加处理中记录）
     async saveRemark() {
       if (!this.remarkForm.remark.trim()) {
         this.$message.warning('请输入处理意见');
@@ -1127,21 +932,15 @@ export default {
 
       try {
         this.loading = true;
-
-        // 调用后端API更新预警状态为处理中
-        const apiAlertId = this.warning._apiData ? this.warning._apiData.alert_id : this.warning.id;
         const updateData = {
-          status: 2, // 处理中状态
+          status: 2,
           processing_notes: this.remarkForm.remark,
           processed_by: this.getCurrentUserName()
         };
 
-        console.log('确认处理 - 调用API:', apiAlertId, updateData);
-
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        const response = await alertAPI.updateAlertStatus(this.detail.alert_id, updateData);
 
         if (response.data && response.data.code === 0) {
-          // 🔧 API调用成功，添加处理意见记录（使用 processing-action 类型）
           this.addOperationRecord({
             status: 'completed',
             statusText: '处理记录',
@@ -1152,9 +951,8 @@ export default {
           });
 
           this.$message.success('确认处理成功，状态已更新为处理中');
-          // 发出处理记录添加事件，传递action标识和API响应数据
           this.$emit('handle-warning', {
-            ...this.warning,
+            alert_id: this.detail.alert_id,
             action: 'record-added',
             apiResponse: response.data.data
           });
@@ -1163,32 +961,24 @@ export default {
           throw new Error(response.data ? response.data.msg : '更新失败');
         }
       } catch (error) {
-        console.error('确认处理失败:', error);
         this.$message.error(`确认处理失败: ${error.message || error}`);
       } finally {
         this.loading = false;
       }
     },
 
-    // 结束处理
     async finishProcessing() {
       try {
         this.loading = true;
-
-        // 调用后端API更新预警状态为已处理
-        const apiAlertId = this.warning._apiData ? this.warning._apiData.alert_id : this.warning.id;
         const updateData = {
-          status: 3, // 已处理状态
+          status: 3,
           processing_notes: this.remarkForm.remark ? `${this.remarkForm.remark}\n处理已完成` : '处理已完成',
           processed_by: this.getCurrentUserName()
         };
 
-        console.log('结束处理 - 调用API:', apiAlertId, updateData);
-
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
+        const response = await alertAPI.updateAlertStatus(this.detail.alert_id, updateData);
 
         if (response.data && response.data.code === 0) {
-          // API调用成功，添加本地操作记录
           this.addOperationRecord({
             status: 'completed',
             statusText: '已处理',
@@ -1198,10 +988,10 @@ export default {
             operator: this.getCurrentUserName()
           });
 
+          this.detail.status = 3;
           this.$message.success('处理已完成，现在可以进行归档等操作');
-          // 发出完成处理事件，传递API响应数据
           this.$emit('handle-warning', {
-            ...this.warning,
+            alert_id: this.detail.alert_id,
             action: 'finished',
             apiResponse: response.data.data
           });
@@ -1210,7 +1000,6 @@ export default {
           throw new Error(response.data ? response.data.msg : '更新失败');
         }
       } catch (error) {
-        console.error('结束处理失败:', error);
         this.$message.error(`结束处理失败: ${error.message || error}`);
       } finally {
         this.loading = false;
@@ -1229,37 +1018,53 @@ export default {
     handleReport() {
       this.handleWarningAction('report');
     },
-    // 归档处理
     handleArchive() {
-      // 检查预警状态，只有已处理状态（status=3）才能归档
-      const currentStatus = this.warning._apiData ? this.warning._apiData.status : null;
-
-      if (currentStatus !== 3) {
-        const statusNames = {
-          1: '待处理',
-          2: '处理中',
-          3: '已处理',
-          4: '已归档',
-          5: '误报'
-        };
-        const currentStatusName = statusNames[currentStatus] || '未知状态';
-        this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${currentStatusName}`);
+      if (this.detail.status !== 3) {
+        const statusNames = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' };
+        this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[this.detail.status] || '未知状态'}`);
         return;
       }
-
-      // 不在详情组件内部处理，直接emit给父组件
-      // 父组件会弹出归档选择对话框，走完整的归档流程
-      this.$emit('handle-archive', this.warning);
-      // 关闭详情对话框
-      this.closeDialog();
+      this.currentCameraId = this.detail.camera_id || '';
+      this.initArchiveSelection();
+      this.archiveDialogVisible = true;
     },
-    // 误报处理 - 直接交给父组件处理（统一的误报流程）
     handleFalseAlarm() {
-      // 不在详情组件内部处理，直接emit给父组件
-      // 父组件会弹出输入对话框，走完整的误报流程
-      this.$emit('handle-false-alarm', this.warning);
-      // 关闭详情对话框
-      this.closeDialog();
+      this.falseAlarmDialogVisible = true;
+    },
+    async confirmFalseAlarm() {
+      try {
+        this.loading = true;
+        const updateData = {
+          status: 5,
+          processing_notes: this.falseAlarmReason || '标记为误报',
+          processed_by: this.getCurrentUserName()
+        };
+        const response = await alertAPI.updateAlertStatus(this.detail.alert_id, updateData);
+        if (response.data && response.data.code === 0) {
+          this.addOperationRecord({
+            status: 'completed',
+            statusText: '标记误报',
+            time: this.getCurrentTime(),
+            description: `已标记为误报。${this.falseAlarmReason ? '原因：' + this.falseAlarmReason : ''}`,
+            operationType: 'false_alarm',
+            operator: this.getCurrentUserName()
+          });
+          this.detail.status = 5;
+          this.$message.success('已标记为误报');
+          this.$emit('handle-false-alarm', { alert_id: this.detail.alert_id });
+          this.closeFalseAlarmDialog();
+        } else {
+          throw new Error(response.data ? response.data.msg : '操作失败');
+        }
+      } catch (error) {
+        this.$message.error('标记误报失败: ' + (error.message || '未知错误'));
+      } finally {
+        this.loading = false;
+      }
+    },
+    closeFalseAlarmDialog() {
+      this.falseAlarmDialogVisible = false;
+      this.falseAlarmReason = '';
     },
 
     // 初始化归档选择
@@ -1273,13 +1078,10 @@ export default {
       }
     },
 
-    // 确认上报
     async confirmReport() {
       try {
-        // 模拟API调用
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        // 记录上报操作到历史
         this.addOperationRecord({
           status: 'completed',
           statusText: '预警上报',
@@ -1289,11 +1091,9 @@ export default {
           operator: this.getCurrentUserName()
         });
 
-        this.$emit('handle-report', this.warning);
+        this.$emit('handle-report', { alert_id: this.detail.alert_id });
         this.closeReportDialog();
-        // 不关闭详情对话框，让用户可以继续查看和操作
       } catch (error) {
-        console.error('上报失败:', error);
         this.$message.error('上报失败');
       } finally {
         this.loading = false;
@@ -1306,49 +1106,36 @@ export default {
       this.reportWarningId = '';
     },
 
-    // 确认归档
     async confirmArchive() {
       try {
         this.loading = true;
-
         let targetArchiveId = this.selectedArchiveId;
         let archiveName = '';
         let archiveLocation = '';
 
-        // 如果没有选择档案，自动创建默认档案
         if (!targetArchiveId) {
           targetArchiveId = await this.createDefaultArchive();
           archiveName = '默认档案';
           archiveLocation = this.getCurrentCameraName();
         } else {
-          // 🔧 修复：获取选中档案的名称和位置
           const selectedArchive = this.availableArchives.find(archive => archive.id === targetArchiveId);
           archiveName = selectedArchive ? selectedArchive.name : '未知档案';
           archiveLocation = selectedArchive ? selectedArchive.cameraName : '未知位置';
         }
-
-        console.log('📍 选中的档案信息:', { targetArchiveId, archiveName, archiveLocation });
 
         if (!targetArchiveId) {
           this.$message.error('无法创建默认档案');
           return;
         }
 
-        // 获取预警ID
-        const alertId = this.warning._apiData ? this.warning._apiData.alert_id : parseInt(this.warning.id);
-
-        // 调用真实的归档API
         const { archiveAPI } = await import('../../service/VisionAIService.js');
         const response = await archiveAPI.linkAlertsToArchive(
           targetArchiveId,
-          [alertId],
-          `预警详情页面归档 - 预警类型: ${this.warning.type || this.warning.alert_type}`
+          [this.detail.alert_id],
+          `预警详情页面归档 - 预警类型: ${this.detail.alert_type}`
         );
 
-        console.log('📤 归档API响应:', response.data);
-
         if (response.data && response.data.code === 0) {
-          // 🔧 修复：记录归档操作到历史，包含位置信息
           this.addOperationRecord({
             status: 'completed',
             statusText: '预警归档',
@@ -1356,26 +1143,17 @@ export default {
             description: `预警已归档到：${archiveName}（${archiveLocation}），可在预警档案中查看`,
             operationType: 'archive',
             operator: this.getCurrentUserName(),
-            archiveInfo: {
-              archiveId: targetArchiveId,
-              archiveName: archiveName,
-              location: archiveLocation // 🔧 添加位置信息
-            }
+            archiveInfo: { archiveId: targetArchiveId, archiveName, location: archiveLocation }
           });
 
+          this.detail.status = 4;
           this.$message.success('预警已成功归档');
-          console.log('✅ 预警详情页面 - 预警归档成功:', alertId, '档案ID:', targetArchiveId);
-
-          this.$emit('handle-archive', this.warning);
+          this.$emit('handle-archive', { alert_id: this.detail.alert_id });
           this.closeArchiveDialog();
-          // 不关闭详情对话框，让用户可以继续查看操作历史
         } else {
-          const errorMessage = (response.data && response.data.message) || '归档失败';
-          this.$message.error(errorMessage);
-          console.warn('⚠️ 预警详情页面 - 预警归档失败:', response.data);
+          this.$message.error((response.data && response.data.message) || '归档失败');
         }
       } catch (error) {
-        console.error('❌ 预警详情页面 - 预警归档异常:', error);
         this.$message.error('归档失败: ' + (error.message || '未知错误'));
       } finally {
         this.loading = false;
@@ -1472,20 +1250,6 @@ export default {
       }
     },
 
-    // 获取当前时间
-    getCurrentTime() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    },
-
-    // 给时间添加指定秒数
     addSecondsToTime(timeString, seconds) {
       try {
         let date;
@@ -1516,242 +1280,67 @@ export default {
       }
     },
 
-    // 格式化API时间
-    formatApiTime(timeString) {
-      try {
-        if (!timeString) {
-          return this.getCurrentTime();
-        }
 
-        // 处理不同的时间格式
-        let date;
-        if (timeString.includes('T')) {
-          // ISO格式: "2025-06-30T17:05:35"
-          date = new Date(timeString);
-        } else if (timeString.includes(' ')) {
-          // 标准格式 YYYY-MM-DD HH:mm:ss
-          date = new Date(timeString);
-        } else {
-          // 其他格式
-          date = new Date(timeString);
-        }
-
-        if (isNaN(date.getTime())) {
-          return timeString; // 如果解析失败，返回原字符串
-        }
-
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-      } catch (error) {
-        return timeString || this.getCurrentTime();
-      }
-    },
-
-    // 注意：误报处理已统一由父组件处理
-    // handleFalseAlarmArchive 和 saveToReviewRecords 方法已删除
-    // 误报流程：点击误报按钮 → emit事件给父组件 → 父组件弹出输入对话框 → 完整的误报处理流程
-
-    // 获取预警等级文字
     getWarningLevelText(level) {
-      // 如果已经是中文格式，直接返回等级部分
-      if (level && level.includes('预警')) {
-        return level.replace('预警', '');
-      }
-
-      // 如果是英文格式，转换为中文
-      const levelMap = {
-        'level1': '一级',
-        'level2': '二级',
-        'level3': '三级',
-        'level4': '四级'
-      };
+      const levelMap = { 1: '一级', 2: '二级', 3: '三级', 4: '四级' };
       return levelMap[level] || '未知';
     },
-    // 获取预警图标
     getWarningIcon(level) {
-      // 如果是中文格式，转换为对应图标
-      if (level && level.includes('预警')) {
-        const chineseIconMap = {
-          '一级预警': 'el-icon-warning',
-          '二级预警': 'el-icon-warning-outline',
-          '三级预警': 'el-icon-warning-outline',
-          '四级预警': 'el-icon-warning-outline'
-        };
-        return chineseIconMap[level] || 'el-icon-warning';
-      }
-
-      // 如果是英文格式，使用原有映射
-      const iconMap = {
-        'level1': 'el-icon-warning',
-        'level2': 'el-icon-warning-outline',
-        'level3': 'el-icon-warning-outline',
-        'level4': 'el-icon-warning-outline'
-      };
-      return iconMap[level] || 'el-icon-warning';
+      return level === 1 ? 'el-icon-warning' : 'el-icon-warning-outline';
     },
-    // 获取预警等级颜色
     getWarningLevelColor(level) {
-      // 如果是中文格式，转换为对应颜色
-      if (level && level.includes('预警')) {
-        const chineseColorMap = {
-          '一级预警': '#f56c6c',
-          '二级预警': '#e6a23c',
-          '三级预警': '#409EFF',
-          '四级预警': '#67c23a'
-        };
-        return chineseColorMap[level] || '#f56c6c';
-      }
-
-      // 如果是英文格式，使用原有映射
-      const colorMap = {
-        'level1': '#f56c6c',
-        'level2': '#e6a23c',
-        'level3': '#409EFF',
-        'level4': '#67c23a'
-      };
+      const colorMap = { 1: '#f56c6c', 2: '#e6a23c', 3: '#409EFF', 4: '#67c23a' };
       return colorMap[level] || '#f56c6c';
     },
-    // 获取预警等级CSS类名
     getWarningLevelClass(level) {
-      // 如果是中文格式，转换为对应类名
-      if (level && level.includes('预警')) {
-        const chineseClassMap = {
-          '一级预警': 'level1-tag',
-          '二级预警': 'level2-tag',
-          '三级预警': 'level3-tag',
-          '四级预警': 'level4-tag'
-        };
-        return chineseClassMap[level] || 'level1-tag';
-      }
-
-      // 如果是英文格式，使用原有映射
-      const classMap = {
-        'level1': 'level1-tag',
-        'level2': 'level2-tag',
-        'level3': 'level3-tag',
-        'level4': 'level4-tag'
-      };
+      const classMap = { 1: 'level1-tag', 2: 'level2-tag', 3: 'level3-tag', 4: 'level4-tag' };
       return classMap[level] || 'level1-tag';
     },
-    // 获取预警类型文字
-    getWarningTypeText(type) {
-      // 直接返回原始类型，不再进行映射转换
-      return type || '未知类型';
-    },
-    // 初始化操作历史
     initOperationHistory() {
-      if (!this.internalWarning) return;
-
-      // 重置操作历史
+      if (!this.detail) return;
       this.operationHistory = [];
 
-      // 如果预警有保存的操作历史，则直接加载并排序
-      if (this.internalWarning.operationHistory && Array.isArray(this.internalWarning.operationHistory) && this.internalWarning.operationHistory.length > 0) {
-        this.operationHistory = [...this.internalWarning.operationHistory];
-        // 🔧 统一按时间排序（最新的在前面，时间倒序）
-        this.sortOperationHistory();
-        return;
-      }
-
-      // 如果是通过API获取的数据，处理API中的process信息
-      if (this.internalWarning._apiData && this.internalWarning._apiData.process) {
+      if (this.detail.process) {
         this.processApiOperationHistory();
         return;
       }
 
-      // 如果没有操作历史，则创建默认的初始记录
-      // 预警产生时状态就是"待处理"，不需要单独的待处理记录
       this.addOperationRecord({
         status: 'active',
         statusText: '待处理',
-        time: this.internalWarning.time || this.getCurrentTime(),
-        description: `${this.internalWarning.type || '系统检测'}：${this.internalWarning.description || '检测到异常情况，等待处理人员确认'}`,
+        time: this.formatTime(this.detail.alert_time) || this.getCurrentTime(),
+        description: `${this.detail.alert_type || '系统检测'}：${this.detail.alert_description || '检测到异常情况，等待处理人员确认'}`,
         operationType: 'pending',
         operator: '系统'
       });
     },
 
-    // 处理API中的process信息转换为操作历史
     processApiOperationHistory() {
-      const processData = this.internalWarning._apiData.process;
-
-      // 收集所有记录
+      const processData = this.detail.process;
       const allRecords = [];
 
-      // 处理API步骤
       if (processData.steps && Array.isArray(processData.steps)) {
         processData.steps.forEach(step => {
-          const record = {
+          allRecords.push({
             id: Date.now() + Math.random(),
             status: 'completed',
             statusText: step.step || '处理步骤',
-            time: this.formatApiTime(step.time),
+            time: this.formatTime(step.time),
             description: step.desc || '处理描述',
             operationType: step.step === '预警产生' ? 'create' : 'process',
             operator: step.operator || '系统'
-          };
-          allRecords.push(record);
+          });
         });
       }
 
-      // 根据预警状态添加当前状态记录
-      const status = this.internalWarning.status;
-      if (status === 'pending') {
-        const pendingRecord = {
-          id: Date.now() + Math.random(),
-          status: 'active',
-          statusText: '待处理',
-          time: this.internalWarning.createdAt || this.getCurrentTime(),
-          description: '预警已产生，等待处理人员确认并开始处理',
-          operationType: 'pending',
-          operator: ''
-        };
-        allRecords.push(pendingRecord);
-      } else if (status === 'processing') {
-        // 🔧 处理中状态 - 不在时间线中显示，通过预警状态标签体现
-        // 用户添加的处理意见会作为 processing-action 类型单独显示
-      } else if (status === 'completed') {
-        const completedRecord = {
-          id: Date.now() + Math.random(),
-          status: 'completed',
-          statusText: '已处理',
-          time: this.internalWarning.processedAt || this.getCurrentTime(),
-          description: '预警处理已完成。' + (this.internalWarning.remark || ''),
-          operationType: 'completed',
-          operator: this.internalWarning.processedBy || '处理人员'
-        };
-        allRecords.push(completedRecord);
+      if (allRecords.length > 0) {
+        allRecords[allRecords.length - 1].status = 'active';
       }
 
-      // 🔧 按时间排序（最新的在最下面，时间正序）
-      allRecords.sort((a, b) => {
-        const timeA = new Date(a.time).getTime();
-        const timeB = new Date(b.time).getTime();
-        // 如果时间无效，保持原有顺序
-        if (isNaN(timeA) || isNaN(timeB)) return 0;
-        return timeA - timeB; // 升序排列，最新的在最下面
-      });
-
-      // 添加到操作历史
       this.operationHistory = allRecords;
 
-      // 更新预警对象的操作历史
-      if (this.internalWarning) {
-        if (!this.internalWarning.operationHistory) {
-          this.$set(this.internalWarning, 'operationHistory', []);
-        }
-        this.internalWarning.operationHistory = [...allRecords];
-      }
-
-      // 如果有备注信息，添加到描述中
       if (processData.remark && this.operationHistory.length > 0) {
-        const lastRecord = this.operationHistory[0];
+        const lastRecord = this.operationHistory[this.operationHistory.length - 1];
         if (lastRecord) {
           lastRecord.description += ' 备注：' + processData.remark;
         }
@@ -1789,130 +1378,30 @@ export default {
       this.operationHistory.push(newRecord);
 
       // 更新预警对象的操作历史
-      if (this.internalWarning) {
-        if (!this.internalWarning.operationHistory) {
-          this.$set(this.internalWarning, 'operationHistory', []);
+      if (this.detail) {
+        if (!this.detail.operationHistory) {
+          this.$set(this.detail, 'operationHistory', []);
         }
-        this.internalWarning.operationHistory.push(newRecord);
+        this.detail.operationHistory.push(newRecord);
       }
     },
 
-    // 检查处理按钮是否应该禁用
     isProcessingDisabled() {
-      if (!this.internalWarning || !this.internalWarning.operationHistory || this.internalWarning.operationHistory.length === 0) {
-        return false; // 没有历史记录，可以处理
-      }
-
-      // 如果已归档，禁用处理按钮
-      const hasArchived = this.internalWarning.operationHistory.some(record =>
-        record.operationType === 'archive' || record.operationType === 'falseAlarm'
-      ) || this.internalWarning.status === 'archived';
-
-      if (hasArchived) {
-        return true;
-      }
-
-      // 如果已完成处理，禁用处理按钮
-      const hasCompletedProcessing = this.internalWarning.operationHistory.some(record =>
-        record.operationType === 'completed'
-      );
-
-      return hasCompletedProcessing;
+      if (!this.detail) return false;
+      // status: 3=已处理, 4=已归档, 5=误报 → 禁用
+      return [3, 4, 5].includes(this.detail.status);
     },
 
-    // 检查误报按钮是否应该禁用（只有待处理状态才能点击误报）
     isFalseAlarmDisabled() {
-      // 如果没有预警数据，禁用
-      if (!this.internalWarning) {
-        return true;
-      }
-
-      // 检查是否有API数据和状态信息
-      if (this.internalWarning._apiData && typeof this.internalWarning._apiData.status !== 'undefined') {
-        // 只有状态为1（待处理）时才能点击误报
-        // 状态定义：1-待处理(允许) 2-处理中(禁用) 3-已处理(禁用) 4-已归档(禁用) 5-误报(禁用)
-        const status = this.internalWarning._apiData.status;
-        console.log('🔍 检查误报按钮状态 - API status:', status, '是否禁用:', status !== 1);
-        return status !== 1;
-      }
-
-      // 如果没有API数据，检查operationHistory
-      // 如果已经有误报或归档记录，也禁用
-      if (this.internalWarning.operationHistory && this.internalWarning.operationHistory.length > 0) {
-        const hasArchived = this.internalWarning.operationHistory.some(record =>
-          record.operationType === 'archive' || record.operationType === 'falseAlarm'
-        ) || this.internalWarning.status === 'archived';
-
-        if (hasArchived) {
-          console.log('🔍 检查误报按钮状态 - 已归档或误报，禁用按钮');
-          return true;
-        }
-
-        // 如果有处理中或已处理记录，也禁用
-        const hasProcessing = this.internalWarning.operationHistory.some(record =>
-          record.operationType === 'processing' || record.operationType === 'completed'
-        );
-
-        if (hasProcessing) {
-          console.log('🔍 检查误报按钮状态 - 处理中或已完成，禁用按钮');
-          return true;
-        }
-      }
-
-      // 默认不禁用（允许操作）
-      console.log('🔍 检查误报按钮状态 - 待处理状态，允许点击');
-      return false;
+      if (!this.detail) return true;
+      // 只有 status=1（待处理）时才能点击误报
+      return this.detail.status !== 1;
     },
 
-    // 检查归档按钮是否应该禁用（只有已处理状态才能归档）
     isArchiveDisabled() {
-      // 如果没有预警数据，禁用
-      if (!this.internalWarning) {
-        return true;
-      }
-
-      // 检查是否有API数据和状态信息
-      if (this.internalWarning._apiData && typeof this.internalWarning._apiData.status !== 'undefined') {
-        const status = this.internalWarning._apiData.status;
-        // 只有状态为3（已处理）时才能归档
-        // 状态定义：1-待处理(禁用) 2-处理中(禁用) 3-已处理(允许) 4-已归档(禁用) 5-误报(禁用)
-        if (status !== 3) {
-          console.log('🔍 检查归档按钮状态 - API status:', status, '禁用按钮');
-          return true;
-        }
-        console.log('🔍 检查归档按钮状态 - 已处理状态，允许归档');
-        return false;
-      }
-
-      // 如果没有API数据，检查operationHistory
-      if (this.internalWarning.operationHistory && this.internalWarning.operationHistory.length > 0) {
-        // 检查是否有已完成处理的记录
-        const hasCompletedProcessing = this.internalWarning.operationHistory.some(record =>
-          record.operationType === 'completed'
-        );
-
-        if (!hasCompletedProcessing) {
-          console.log('🔍 检查归档按钮状态 - 未完成处理，禁用按钮');
-          return true;
-        }
-
-        // 检查是否已归档或误报
-        const hasArchived = this.internalWarning.operationHistory.some(record =>
-          record.operationType === 'archive' || record.operationType === 'falseAlarm'
-        ) || this.internalWarning.status === 'archived';
-
-        if (hasArchived) {
-          console.log('🔍 检查归档按钮状态 - 已归档或误报，禁用按钮');
-          return true;
-        }
-
-        console.log('🔍 检查归档按钮状态 - 已完成处理，允许归档');
-        return false;
-      }
-
-      // 默认禁用（未处理完成）
-      console.log('🔍 检查归档按钮状态 - 默认禁用');
-      return true;
+      if (!this.detail) return true;
+      // 只有 status=3（已处理）时才能归档
+      return this.detail.status !== 3;
     },
 
     // 格式化时间
@@ -1975,7 +1464,7 @@ export default {
 
     // 打开图片查看器
     openImageViewer() {
-      if (this.internalWarning && this.internalWarning.imageUrl) {
+      if (this.detail && this.detail.minio_frame_url) {
         this.imageViewerVisible = true;
       } else {
         this.$message.warning('暂无违规截图');
@@ -2012,8 +1501,8 @@ export default {
           // 打开视频播放器
       openVideoViewer() {
         console.log('打开视频播放器');
-        console.log('预警数据:', this.internalWarning);
-        console.log('视频URL:', this.internalWarning ? this.internalWarning.minio_video_url || this.internalWarning.videoUrl : 'null');
+        console.log('预警数据:', this.detail);
+        console.log('视频URL:', this.detail ? this.detail.minio_video_url : 'null');
 
         this.resetVideoPlayer();
         // 重置视频显示模式为默认的cover模式（无黑边）
@@ -2096,24 +1585,14 @@ export default {
          // 下载视频
      downloadVideo() {
        // 实际项目中这里应该提供真实的视频下载链接
-       if (this.internalWarning && this.internalWarning.minio_video_url) {
-         window.open(this.internalWarning.minio_video_url, '_blank');
+       if (this.detail && this.detail.minio_video_url) {
+         window.open(this.detail.minio_video_url, '_blank');
        } else {
          this.$message.warning('暂无视频下载链接');
        }
      }
-   },
-
-   // 组件销毁时清理定时器
-   beforeDestroy() {
-     if (this.videoTimer) {
-       clearInterval(this.videoTimer);
-     }
-     // 清理全局事件监听
-     document.removeEventListener('mousemove', this.onDrag);
-     document.removeEventListener('mouseup', this.endDrag);
    }
- }
+}
 </script>
 
 <style scoped>
@@ -2323,7 +1802,7 @@ export default {
 
 /* 预警ID特殊样式 */
 .info-cell .value.alert-id {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   color: white;
   font-weight: 600;
   font-family: 'Courier New', monospace;
@@ -2619,7 +2098,7 @@ export default {
 /* 处理进展时间线样式 */
 .process-timeline {
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid #ebeef5;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
   overflow: hidden;
@@ -2856,7 +2335,7 @@ export default {
 }
 
 /* 误报 */
-.timeline-item[data-type="falseAlarm"] .timeline-content::before {
+.timeline-item[data-type="false_alarm"] .timeline-content::before {
   background: #909399;
 }
 
@@ -2970,12 +2449,24 @@ export default {
 .dialog-footer {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 12px;
   padding: 16px 20px;
   background: transparent !important;
   border-top: none !important;
   border: none !important;
   box-shadow: none !important;
+}
+
+.false-alarm-status-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #909399;
+  padding: 8px 20px;
+  background: #f4f4f5;
+  border-radius: 6px;
 }
 
 .action-btn {

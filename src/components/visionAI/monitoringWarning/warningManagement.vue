@@ -1,6 +1,6 @@
 <script>
 import WarningDetail from './warningDetail.vue'
-import { alertAPI } from '@/components/service/VisionAIService.js'
+import { alertAPI, archiveAPI } from '@/components/service/VisionAIService.js'
 
 export default {
   name: "WarningManagement",
@@ -82,15 +82,12 @@ export default {
       },
       
       // 档案管理数据
-      archivesList: [],
       availableArchives: [],
       selectedArchiveId: '',
-      currentCameraId: '',
       archiveListLoading: false,
       
-      // 预警详情对话框
       warningDetailVisible: false,
-      currentWarningDetail: null,
+      currentAlertId: null,
       
       // 删除确认对话框
       deleteDialogVisible: false,
@@ -113,21 +110,11 @@ export default {
       
       // 分页相关
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 12,
       totalCount: 0
     }
   },
   computed: {
-    
-    // 当前摄像头可用的档案列表
-    availableArchives() {
-      return this.archivesList.filter(archive => archive.cameraId === this.currentCameraId)
-    },
-    
-    // 当前摄像头的默认档案
-    defaultArchive() {
-      return this.availableArchives.find(archive => archive.isDefault)
-    }
   },
   watch: {
     dateRange(newVal) {
@@ -207,7 +194,7 @@ export default {
           if (response.data.pagination) {
             this.totalCount = response.data.pagination.total || 0
             this.currentPage = response.data.pagination.page || 1
-            this.pageSize = response.data.pagination.limit || 10
+            this.pageSize = response.data.pagination.limit || 12
           } else {
             this.totalCount = response.data.total || 0
           }
@@ -256,7 +243,7 @@ export default {
           2: 'processing', // 处理中
           3: 'completed',  // 已处理
           4: 'archived',   // 已归档
-          5: 'falseAlarm'  // 误报
+          5: 'false_alarm'  // 误报
         }
 
         // 🔧 统一处理操作历史（与realTimeMonitoring保持一致）
@@ -406,7 +393,7 @@ export default {
             statusText: '误报',
             time: processTime,
             description: '预警已标记为误报',
-            operationType: 'falseAlarm',
+            operationType: 'false_alarm',
             operator: defaultOperator
           })
         }
@@ -459,10 +446,8 @@ export default {
             this.archiveWarningId = id
             await this.handleArchiveProcess()
             return // 不关闭loading，等确认后再关闭
-          } else if (action === 'falseAlarm') {
-            // 误报 - 显示输入对话框
+          } else if (action === 'false_alarm') {
             this.archiveWarningId = id
-            this.currentCameraId = this.warningList[index].cameraId || ''
             this.falseAlarmDialogVisible = true
             return // 不关闭loading，等用户输入完成后再关闭
           }
@@ -481,122 +466,71 @@ export default {
       }
     },
     
-    // 加载可用档案列表 - 与 realtime 页面使用相同的接口
     async loadAvailableArchives() {
+      this.archiveListLoading = true
       try {
-        this.archiveListLoading = true
-        const { archiveAPI } = await import('../../service/VisionAIService.js')
-
         const response = await archiveAPI.getArchiveList({
           page: 1,
           limit: 100,
-          status: 1 // 只获取正常状态的档案
+          status: 1
         })
 
-        console.log('📥 预警管理 - 获取档案列表响应:', response.data)
-
-        // 后端返回格式：{ code: 0, msg: "获取成功", data: [...], pagination: {...} }
-        if (response.data && response.data.code === 0 && response.data.data) {
-          this.availableArchives = response.data.data
-          console.log('✅ 预警管理 - 加载档案列表成功:', this.availableArchives.length, '个档案')
-        } else if (response.data && response.data.archives) {
-          // 兼容其他可能的返回格式
-          this.availableArchives = response.data.archives
-          console.log('✅ 预警管理 - 加载档案列表成功(archives):', this.availableArchives.length, '个档案')
-        } else if (response.data && Array.isArray(response.data)) {
-          // 兼容直接返回数组的格式
-          this.availableArchives = response.data
-          console.log('✅ 预警管理 - 加载档案列表成功(数组):', this.availableArchives.length, '个档案')
+        const resData = response.data
+        if (resData && resData.code === 0 && Array.isArray(resData.data)) {
+          this.availableArchives = resData.data
+        } else if (resData && Array.isArray(resData.archives)) {
+          this.availableArchives = resData.archives
+        } else if (Array.isArray(resData)) {
+          this.availableArchives = resData
         } else {
-          console.warn('⚠️ 预警管理 - 获取档案列表格式异常:', response.data)
           this.availableArchives = []
         }
-
-        // 如果没有档案，提示用户
-        if (this.availableArchives.length === 0) {
-          console.warn('⚠️ 预警管理 - 当前没有可用档案，请先在预警档案页面创建档案')
-        }
       } catch (error) {
-        console.error('❌ 预警管理 - 加载档案列表失败:', error)
+        console.error('加载档案列表失败:', error)
         this.availableArchives = []
-        this.$message.warning('加载档案列表失败，请检查网络连接或联系管理员')
+        this.$message.warning('加载档案列表失败，请检查网络连接')
       } finally {
         this.archiveListLoading = false
       }
     },
 
-    // 处理归档流程 - 显示档案选择对话框
     async handleArchiveProcess() {
       try {
-        // 获取当前预警信息
         const index = this.warningList.findIndex(item => item.id === this.archiveWarningId)
         if (index === -1) {
           this.$message.error('未找到预警信息')
+          this.loading = false
           return
         }
 
         const warningInfo = this.warningList[index]
 
-        // 检查预警状态，只有已处理状态（status=3）才能归档
         if (warningInfo._apiData && warningInfo._apiData.status !== 3) {
-          const statusNames = {
-            1: '待处理',
-            2: '处理中',
-            3: '已处理',
-            4: '已归档',
-            5: '误报'
-          }
-          const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态'
-          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${currentStatusName}`)
+          const statusNames = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' }
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[warningInfo._apiData.status] || '未知'}`)
           this.loading = false
           return
         }
 
-        console.log('📁 开始归档流程，当前档案列表长度:', this.availableArchives.length)
+        this.selectedArchiveId = null
+        this.availableArchives = []
 
-        // 刷新档案列表
         await this.loadAvailableArchives()
 
-        console.log('📁 刷新后档案列表长度:', this.availableArchives.length)
-        if (this.availableArchives.length > 0) {
-          console.log('📁 档案列表第一项数据结构:', this.availableArchives[0])
-          console.log('📁 档案列表所有ID:', this.availableArchives.map(a => ({
-            archive_id: a.archive_id,
-            id: a.id,
-            name: a.name
-          })))
-        }
-
-        // 显示档案选择对话框
-        this.archiveDialogVisible = true
-        this.selectedArchiveId = null // 重置选择
-
-        console.log('📁 显示档案选择对话框，可用档案数:', this.availableArchives.length)
-        console.log('📁 selectedArchiveId:', this.selectedArchiveId)
-        console.log('📁 archiveDialogVisible:', this.archiveDialogVisible)
-
-        // 如果没有档案，提示用户
-        if (this.availableArchives.length === 0) {
-          this.$message.warning('当前没有可用档案，请先创建档案')
-        }
+        this.$nextTick(() => {
+          this.archiveDialogVisible = true
+          if (this.availableArchives.length === 0) {
+            this.$message.warning('当前没有可用档案，请先创建档案')
+          }
+        })
       } catch (error) {
-        console.error('❌ 打开归档对话框失败:', error)
-        this.$message.error('打开归档对话框失败: ' + (error.message || '未知错误'))
-      }
-    },
-
-    // 初始化归档选择
-    initArchiveSelection() {
-      // 自动选择默认档案（如果存在）
-      if (this.defaultArchive) {
-        this.selectedArchiveId = this.defaultArchive.id
-      } else {
-        // 如果没有默认档案，则准备创建
-        this.selectedArchiveId = ''
+        console.error('打开归档对话框失败:', error)
+        this.$message.error('打开归档对话框失败')
+      } finally {
+        this.loading = false
       }
     },
     
-    // 确认归档
     async confirmArchive() {
       if (!this.selectedArchiveId) {
         this.$message.warning('请选择要归档到的档案')
@@ -606,24 +540,12 @@ export default {
       try {
         this.loading = true
 
-        let targetArchiveId = this.selectedArchiveId
-        let archiveName = ''
-        
-        // 获取选中档案的名称（兼容archive_id和id两种字段名）
-        const selectedArchive = this.availableArchives.find(archive => 
-          (archive.archive_id || archive.id) === targetArchiveId
+        const targetArchiveId = this.selectedArchiveId
+        const selectedArchive = this.availableArchives.find(a =>
+          (a.archive_id || a.id) === targetArchiveId
         )
-        archiveName = selectedArchive ? selectedArchive.name : '未知档案'
-        
-        console.log('🔍 confirmArchive - 选中的档案ID:', targetArchiveId)
-        console.log('🔍 confirmArchive - 找到的档案:', selectedArchive)
-        
-        if (!targetArchiveId) {
-          this.$message.error('请选择要归档的档案')
-          return
-        }
-        
-        // 获取当前预警信息
+        const archiveName = selectedArchive ? selectedArchive.name : '未知档案'
+
         const index = this.warningList.findIndex(item => item.id === this.archiveWarningId)
         if (index === -1) {
           this.$message.error('未找到预警信息')
@@ -632,150 +554,64 @@ export default {
 
         const warning = this.warningList[index]
 
-        // 再次检查预警状态，只有已处理状态（status=3）才能归档
         if (warning._apiData && warning._apiData.status !== 3) {
-          const statusNames = {
-            1: '待处理',
-            2: '处理中',
-            3: '已处理',
-            4: '已归档',
-            5: '误报'
-          }
-          const currentStatusName = statusNames[warning._apiData.status] || '未知状态'
-          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${currentStatusName}`)
+          const statusNames = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' }
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[warning._apiData.status] || '未知'}`)
           this.closeArchiveDialog()
           return
         }
 
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(this.archiveWarningId)
-        
-        // 1. 先调用updateAlertStatus更新预警状态为已归档
-        const updateData = {
-          status: 4, // 已归档状态
+
+        await alertAPI.updateAlertStatus(apiAlertId, {
+          status: 4,
           processing_notes: `预警已归档到：${archiveName}`,
           processed_by: this.getCurrentUserName()
-        }
-        
-        console.log('📤 更新预警状态为已归档:', apiAlertId, updateData)
-        const updateResponse = await alertAPI.updateAlertStatus(apiAlertId, updateData)
-        console.log('✅ 预警状态更新成功:', updateResponse)
-        
-        // 2. 更新本地的_apiData.status字段
-        if (this.warningList[index]._apiData) {
-          this.$set(this.warningList[index]._apiData, 'status', 4)
-        }
-        this.$set(this.warningList[index], 'status', 'archived')
-        this.$set(this.warningList[index], 'archiveId', targetArchiveId)
-        this.$set(this.warningList[index], 'archiveTime', new Date().toLocaleString())
+        })
 
-        // 3. 添加归档记录到操作历史
-        if (!this.warningList[index].operationHistory) {
-          this.$set(this.warningList[index], 'operationHistory', [])
-        }
-        
-        const archiveRecord = {
-          id: Date.now() + Math.random(),
-          status: 'completed',
-          statusText: '预警归档',
-          time: this.getCurrentTime(),
-          description: `预警已归档到：${archiveName}，可在预警档案中查看`,
-          operationType: 'archive',
-          operator: this.getCurrentUserName(),
-          archiveInfo: {
-            archiveId: targetArchiveId,
-            archiveName: archiveName
-          }
-        }
-        
-        this.warningList[index].operationHistory.push(archiveRecord)
-
-        console.log('✅ 本地状态已更新为已归档')
-        
-        // 4. 调用归档API关联预警到档案
-        const { archiveAPI } = await import('../../service/VisionAIService.js')
         const response = await archiveAPI.linkAlertsToArchive(
           targetArchiveId,
           [apiAlertId],
           `预警管理归档 - 预警类型: ${warning.type || warning.alert_type}`
         )
 
-        console.log('📤 归档API响应:', response.data)
-
         if (response.data && response.data.code === 0) {
-          // 5. 延迟移除记录，让用户能看到状态变化
-          setTimeout(() => {
-            const currentIndex = this.warningList.findIndex(item => item.id === this.archiveWarningId)
-            if (currentIndex !== -1) {
-              // 从预警列表中移除已归档的预警
-              this.warningList.splice(currentIndex, 1)
-            }
-          }, 500)
+          if (this.warningList[index]._apiData) {
+            this.$set(this.warningList[index]._apiData, 'status', 4)
+          }
+          this.$set(this.warningList[index], 'status', 'archived')
+
+          if (!this.warningList[index].operationHistory) {
+            this.$set(this.warningList[index], 'operationHistory', [])
+          }
+          this.warningList[index].operationHistory.push({
+            id: Date.now() + Math.random(),
+            status: 'completed',
+            statusText: '预警归档',
+            time: this.getCurrentTime(),
+            description: `预警已归档到：${archiveName}，可在预警档案中查看`,
+            operationType: 'archive',
+            operator: this.getCurrentUserName(),
+            archiveInfo: { archiveId: targetArchiveId, archiveName }
+          })
 
           this.$message.success('预警已成功归档')
-          console.log('✅ 预警管理 - 预警归档成功:', apiAlertId, '档案ID:', targetArchiveId)
-
-          // 关闭对话框
           this.closeArchiveDialog()
-          
-          // 刷新列表以获取最新数据
           await this.getWarningList()
         } else {
-          const errorMessage = (response.data && response.data.message) || '归档失败'
-          this.$message.error(errorMessage)
-          console.warn('⚠️ 预警管理 - 预警归档失败:', response.data)
+          this.$message.error((response.data && response.data.message) || '归档失败')
         }
-        
-        // 如果在选中列表中，也移除
+
         const selectedIndex = this.selectedWarnings.indexOf(this.archiveWarningId)
         if (selectedIndex !== -1) {
           this.selectedWarnings.splice(selectedIndex, 1)
         }
       } catch (error) {
-        console.error('❌ 预警管理 - 预警归档异常:', error)
+        console.error('预警归档异常:', error)
         this.$message.error('归档失败: ' + (error.message || '未知错误'))
       } finally {
         this.loading = false
       }
-    },
-    
-    // 自动创建默认档案
-    async createDefaultArchive() {
-      try {
-        // 这里是创建本地默认档案，通常不需要后端API
-        console.log('📁 创建默认档案');
-        
-        const newArchive = {
-          id: `archive_${Date.now()}`,
-          name: `${this.getCurrentCameraName()}默认档案`,
-          cameraId: this.currentCameraId,
-          cameraName: this.getCurrentCameraName(),
-          isDefault: true,
-          createTime: new Date().toLocaleString()
-        }
-        
-        this.archivesList.push(newArchive)
-        
-        return newArchive.id
-      } catch (error) {
-        console.error('创建默认档案失败:', error)
-        this.$message.error('创建默认档案失败')
-        return null
-      }
-    },
-    
-    // 获取当前摄像头名称
-    getCurrentCameraName() {
-      // 从实际的预警数据中获取摄像头名称
-      if (this.currentCameraId) {
-        const warning = this.warningList.find(item => item.cameraId === this.currentCameraId)
-        if (warning && warning.deviceInfo && warning.deviceInfo.name) {
-          return warning.deviceInfo.name
-        }
-        if (warning && warning.device) {
-          return warning.device
-        }
-      }
-      return '摄像头'
     },
     
     // 获取当前时间
@@ -1267,197 +1103,43 @@ export default {
       this.reportWarningId = ''
     },
     
-    // 关闭归档对话框
     closeArchiveDialog() {
       this.archiveDialogVisible = false
       this.archiveWarningId = ''
       this.selectedArchiveId = ''
+      this.availableArchives = []
+      this.archiveListLoading = false
     },
     
-    // 显示预警详情
-    async showWarningDetail(item) {
-      try {
-        this.loading = true
-        
-        // 获取API预警ID
-        const apiAlertId = item._apiData ? item._apiData.alert_id : parseInt(item.id)
-        
-        console.log('获取预警详情:', apiAlertId, item)
-        
-        // 调用API获取完整的预警详情
-        const response = await alertAPI.getAlertDetail(apiAlertId)
-        
-        console.log('预警详情API完整响应:', response)
-        console.log('预警详情API响应数据:', response.data)
-        console.log('检查条件 response.data:', !!response.data)
-        console.log('检查条件 response.data.alert_id:', response.data ? response.data.alert_id : 'undefined')
-        
-        if (response.data && response.data.alert_id) {
-          // 转换API数据为页面数据格式
-          const apiDetail = response.data
-          
-          // 创建增强的预警详情对象，包含API返回的完整信息
-          const enhancedDetail = {
-            // 基本信息（保持原有结构用于兼容）
-            ...item,
-            
-            // API返回的完整数据
-            apiData: apiDetail,
-            
-            // 增强的详情信息
-            alert_id: apiDetail.alert_id,
-            alert_time: apiDetail.alert_time,
-            alert_type: apiDetail.alert_type,
-            alert_level: apiDetail.alert_level,
-            alert_name: apiDetail.alert_name,
-            alert_description: apiDetail.alert_description,
-            location: apiDetail.location,
-            camera_id: apiDetail.camera_id,
-            camera_name: apiDetail.camera_name,
-            task_id: apiDetail.task_id,
-            
-            // 电子围栏信息
-            electronic_fence: apiDetail.electronic_fence,
-            
-            // 检测结果
-            result: apiDetail.result,
-            
-            // 媒体URL
-            minio_frame_url: apiDetail.minio_frame_url,
-            minio_video_url: apiDetail.minio_video_url,
-            
-            // 技能信息
-            skill_class_id: apiDetail.skill_class_id,
-            skill_name_zh: apiDetail.skill_name_zh,
-            
-            // 状态和处理信息
-            status: apiDetail.status,
-            status_display: apiDetail.status_display,
-            processed_at: apiDetail.processed_at,
-            processed_by: apiDetail.processed_by,
-            processing_notes: apiDetail.processing_notes,
-            
-            // 时间信息
-            created_at: apiDetail.created_at,
-            updated_at: apiDetail.updated_at,
-            
-            // 处理流程信息
-            process: apiDetail.process,
-            
-            // 更新图片URL使用API返回的
-            imageUrl: apiDetail.minio_frame_url || item.imageUrl,
-            
-            // 更新描述使用API返回的
-            description: apiDetail.alert_description || item.description,
-            
-            // 🔧 修复：添加合并预警相关字段
-            is_merged: apiDetail.is_merged || false,
-            alert_count: apiDetail.alert_count || 1,
-            alert_duration: apiDetail.alert_duration || 0,
-            first_alert_time: apiDetail.first_alert_time,
-            last_alert_time: apiDetail.last_alert_time,
-            alert_images: apiDetail.alert_images || []
-          }
-          
-          console.log('预警详情API响应:', apiDetail)
-          console.log('增强后的预警详情:', enhancedDetail)
-          
-          this.currentWarningDetail = enhancedDetail
-        } else {
-          console.warn('API返回数据格式不正确，使用原始数据:', response.data)
-          this.currentWarningDetail = item
-        }
-        
-        this.warningDetailVisible = true
-      } catch (error) {
-        console.error('获取预警详情失败:', error)
-        this.$message.error('获取预警详情失败：' + (error.message || '网络错误'))
-        // 如果API调用失败，仍然显示基本信息
-        this.currentWarningDetail = item
-        this.warningDetailVisible = true
-      } finally {
-        this.loading = false
-      }
+    showWarningDetail(item) {
+      const alertId = item._apiData ? item._apiData.alert_id : parseInt(item.id)
+      this.currentAlertId = alertId
+      this.warningDetailVisible = true
     },
     
-    // 处理预警详情对话框中的事件
-    async handleWarningFromDetail(warning) {
-      if (!warning || !warning.id) {
-        return;
-      }
+    async handleWarningFromDetail(eventData) {
+      if (!eventData || !eventData.alert_id) return;
       
-      // 根据action类型处理不同的操作
-      if (warning.action === 'record-added') {
-        // 确认处理 - 更新本地状态为处理中
-        console.log('处理DetailDialog的确认处理事件:', warning);
-        
-        // 如果有API响应数据，更新本地预警状态
-        if (warning.apiResponse) {
-          const index = this.warningList.findIndex(item => 
-            (item._apiData && item._apiData.alert_id === warning.apiResponse.alert_id) ||
-            item.id === warning.id
-          );
-          
-          if (index !== -1) {
-            // 更新状态相关字段
-            this.$set(this.warningList[index], 'status', 'processing');
-            this.$set(this.warningList[index], 'processed_by', warning.apiResponse.processed_by);
-            this.$set(this.warningList[index], 'processing_notes', warning.apiResponse.processing_notes);
-            
-            console.log('本地状态已更新为处理中:', this.warningList[index]);
-          }
-        }
-        
-        // 刷新列表以获取最新数据
+      if (eventData.action === 'record-added' || eventData.action === 'finished') {
         await this.getWarningList()
-      } else if (warning.action === 'finished') {
-        // 结束处理 - 更新本地状态为已处理
-        console.log('处理DetailDialog的结束处理事件:', warning);
-        
-        // 如果有API响应数据，更新本地预警状态
-        if (warning.apiResponse) {
-          const index = this.warningList.findIndex(item => 
-            (item._apiData && item._apiData.alert_id === warning.apiResponse.alert_id) ||
-            item.id === warning.id
-          );
-          
-          if (index !== -1) {
-            // 更新状态相关字段
-            this.$set(this.warningList[index], 'status', 'resolved');
-            this.$set(this.warningList[index], 'processed_by', warning.apiResponse.processed_by);
-            this.$set(this.warningList[index], 'processing_notes', warning.apiResponse.processing_notes);
-            this.$set(this.warningList[index], 'processed_at', warning.apiResponse.processed_at);
-            
-            console.log('本地状态已更新为已处理:', this.warningList[index]);
-          }
-        }
-        
-        // 刷新列表以获取最新数据
-        await this.getWarningList()
-      } else {
-        // 兼容原有逻辑
-        this.handleWarning(warning.id, 'markProcessed');
       }
     },
     
-    // 处理预警详情对话框中的上报事件
-    handleReportFromDetail(warning) {
-      if (warning && warning.id) {
-        this.handleWarning(warning.id, 'report')
+    handleReportFromDetail(eventData) {
+      if (eventData && eventData.alert_id) {
+        this.handleWarning(eventData.alert_id, 'report')
       }
     },
     
-    // 处理预警详情对话框中的归档事件
-    handleArchiveFromDetail(warning) {
-      if (warning && warning.id) {
-        this.handleWarning(warning.id, 'archive')
+    handleArchiveFromDetail(eventData) {
+      if (eventData && eventData.alert_id) {
+        this.handleWarning(eventData.alert_id, 'archive')
       }
     },
     
-    // 处理预警详情对话框中的误报事件
-    handleFalseAlarmFromDetail(warning) {
-      if (warning && warning.id) {
-        this.handleWarning(warning.id, 'falseAlarm')
+    handleFalseAlarmFromDetail(eventData) {
+      if (eventData && eventData.alert_id) {
+        this.handleWarning(eventData.alert_id, 'false_alarm')
       }
     },
     
@@ -1540,12 +1222,12 @@ export default {
             statusText: '误报处理',
             time: this.getCurrentTime(),
             description: `预警被标记为误报：${this.falseAlarmForm.reviewNotes}`,
-            operationType: 'falseAlarm',
+            operationType: 'false_alarm',
             operator: this.getCurrentUserName()
           }
           
           this.warningList[warningIndex].operationHistory.push(newRecord)
-          this.warningList[warningIndex].status = 'archived'
+          this.warningList[warningIndex].status = 'false_alarm'
           this.warningList[warningIndex].isFalseAlarm = true
           this.warningList[warningIndex].archiveTime = new Date().toLocaleString()
           
@@ -1855,14 +1537,14 @@ export default {
       console.log('🔒 检查处理按钮状态:', warning.id, 'status:', warning.status);
       
       // 优先检查API状态
-      if (warning.status === 'archived' || warning.status === 'falseAlarm' || warning.status === 'completed') {
+      if (warning.status === 'archived' || warning.status === 'false_alarm' || warning.status === 'completed') {
         console.log('✅ 按API状态禁用按钮:', warning.status);
         return true;
       }
       
       // 如果已归档，禁用处理按钮
       const hasArchived = warning.operationHistory.some(record => 
-        record.operationType === 'archive' || record.operationType === 'falseAlarm'
+        record.operationType === 'archive' || record.operationType === 'false_alarm'
       );
       
       if (hasArchived) {
@@ -1905,7 +1587,7 @@ export default {
         return true
       }
       
-      if (warning.status === 'falseAlarm') {
+      if (warning.status === 'false_alarm') {
         console.log('📁 归档按钮禁用: 误报状态')
         return true
       }
@@ -1918,7 +1600,7 @@ export default {
       
       // 检查是否已归档
       const hasArchived = warning.operationHistory.some(record => 
-        record.operationType === 'archive' || record.operationType === 'falseAlarm'
+        record.operationType === 'archive' || record.operationType === 'false_alarm'
       )
       
       if (hasArchived) {
@@ -1995,7 +1677,7 @@ export default {
         }
       }
       
-      if (warning.status === 'falseAlarm') {
+      if (warning.status === 'false_alarm') {
         return {
           text: '误报',
           class: 'status-false-alarm'
@@ -2011,7 +1693,7 @@ export default {
       
       // 检查操作历史中的归档和误报状态
       const hasArchived = warning.operationHistory.some(record => 
-        record.operationType === 'archive' || record.operationType === 'falseAlarm'
+        record.operationType === 'archive' || record.operationType === 'false_alarm'
       );
       
       if (hasArchived) {
@@ -2198,6 +1880,8 @@ export default {
             />
           </div>
           
+
+          
           <div class="select-wrapper">
             <el-select 
               v-model="searchForm.warningLevel" 
@@ -2324,6 +2008,7 @@ export default {
           
           <div class="action-buttons">
             <el-button 
+              class="export-data-btn"
               size="small" 
               icon="el-icon-download"
               @click="exportData"
@@ -2437,7 +2122,7 @@ export default {
                     <el-button 
                       size="mini" 
                       class="action-btn false-alarm-btn"
-                      @click.stop="handleWarning(item.id, 'falseAlarm')"
+                      @click.stop="handleWarning(item.id, 'false_alarm')"
                       :disabled="isFalseAlarmDisabled(item)"
                     >
                       误报
@@ -2472,7 +2157,7 @@ export default {
           @size-change="handleSizeChange" 
           @current-change="handleCurrentChange" 
           :current-page="currentPage"
-          :page-sizes="[10, 20, 50, 100]" 
+          :page-sizes="[12, 24, 48, 96]" 
           :page-size="pageSize" 
           :total="totalCount"
           layout="total, sizes, prev, pager, next, jumper" 
@@ -2632,6 +2317,8 @@ export default {
       center
       :close-on-click-modal="false"
       :close-on-press-escape="false"
+      destroy-on-close
+      @close="closeArchiveDialog"
     >
       <div class="archive-dialog-content">
         <div class="archive-info">
@@ -2646,10 +2333,9 @@ export default {
                 v-model="selectedArchiveId" 
                 placeholder="请选择档案"
                 style="width: 100%"
-                :disabled="availableArchives.length === 0"
+                :disabled="archiveListLoading || availableArchives.length === 0"
                 :loading="archiveListLoading"
                 popper-append-to-body
-                :popper-class="'archive-select-dropdown'"
               >
                 <el-option
                   v-for="archive in availableArchives"
@@ -2658,22 +2344,20 @@ export default {
                   :value="archive.archive_id || archive.id"
                 >
                   <span style="float: left">{{ archive.name }}</span>
-                  <span style="float: right; color: #8492a6; font-size: 13px">{{ archive.location || '未知位置' }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ archive.location || '' }}</span>
                 </el-option>
               </el-select>
             </el-form-item>
             
-            <el-form-item v-if="availableArchives.length === 0">
+            <el-form-item v-if="!archiveListLoading && availableArchives.length === 0">
               <el-alert
-                title="当前摄像头位置没有可用档案"
-                description="系统将自动创建默认档案进行归档"
+                title="当前没有可用档案"
+                description="请先在预警档案页面创建档案后再进行归档操作"
                 type="info"
                 :closable="false"
                 show-icon
               />
             </el-form-item>
-            
-
           </el-form>
         </div>
         
@@ -2690,7 +2374,7 @@ export default {
       
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeArchiveDialog">取 消</el-button>
-        <el-button type="danger" @click="confirmArchive">确认归档</el-button>
+        <el-button type="danger" @click="confirmArchive" :loading="loading" :disabled="!selectedArchiveId">确认归档</el-button>
       </span>
     </el-dialog>
     
@@ -2735,8 +2419,7 @@ export default {
     <!-- 预警详情对话框 -->
     <WarningDetail
       :visible.sync="warningDetailVisible"
-      :warning="currentWarningDetail"
-      source="warningManagement"
+      :alert-id="currentAlertId"
       @handle-warning="handleWarningFromDetail"
       @handle-report="handleReportFromDetail"
       @handle-archive="handleArchiveFromDetail"
@@ -2806,8 +2489,8 @@ export default {
 
 <style scoped>
 .warning-management-container {
-  height: 100%; /* 减去顶部导航栏高度，增加缓冲空间 */
-  background: #fff;
+  height: calc(100vh - 80px); /* 减去顶部导航栏高度，增加缓冲空间 */
+  background: #f5f5f5;
   padding: 0;
   overflow: hidden; /* 防止出现外部滚动条 */
 }
@@ -2820,16 +2503,15 @@ export default {
   padding: 16px 16px 8px 16px; /* 减少底部内边距 */
   overflow: hidden; /* 防止内容区域产生滚动条 */
   box-sizing: border-box;
-  background: #f5f7fa;
 }
 
 /* 搜索和筛选区域 - 科技感样式 */
 .search-filter-area {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  padding: 16px;
   margin-bottom: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
   position: relative;
   overflow: hidden;
@@ -2851,19 +2533,19 @@ export default {
 .select-wrapper,
 .input-wrapper {
   margin-right: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .date-picker-wrapper {
-  width: 360px;
+  width: 340px;
 }
 
 .select-wrapper {
-  width: 160px;
+  width: 140px;
 }
 
 .input-wrapper {
-  width: 160px;
+  width: 140px;
 }
 
 .filter-actions {
@@ -2892,7 +2574,7 @@ export default {
   border-radius: 6px;
 }
 
-/* .filter-buttons .el-button:hover {
+.filter-buttons .el-button:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e3a8a;
@@ -2905,7 +2587,7 @@ export default {
   color: #fff;
   border-color: #3b82f6;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-} */
+}
 
 .action-buttons {
   display: flex;
@@ -2920,7 +2602,7 @@ export default {
   border-radius: 6px;
 }
 
-/* .action-buttons .el-button--primary {
+.action-buttons .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -2930,9 +2612,9 @@ export default {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   font-weight: 600;
   letter-spacing: 0.3px;
-} */
+}
 
-/* .action-buttons .el-button--primary::before {
+.action-buttons .el-button--primary::before {
   content: '';
   position: absolute;
   top: 0;
@@ -2941,13 +2623,13 @@ export default {
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left 0.6s ease;
-} */
+}
 
-/* .action-buttons .el-button--primary:hover {
+.action-buttons .el-button--primary:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4);
   transform: translateY(-2px);
-} */
+}
 
 .action-buttons .el-button--primary:hover::before {
   left: 100%;
@@ -2956,12 +2638,12 @@ export default {
 /* 预警卡片样式 - 科技感设计 */
 .warning-cards-container {
   flex: 1;
-  height: calc(100vh - 240px); /* 优化空间分配 */
+  height: calc(100vh - 200px); /* 进一步减少预留空间，让分页栏紧贴底部 */
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px;
-  background: #f8f9fa;
-  border-radius: 12px;
+  padding: 20px;
+  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
+  border-radius: 16px;
   margin: 1px;
   /* 自定义滚动条样式 - 灰色主题 */
   scrollbar-width: thin;
@@ -2990,30 +2672,32 @@ export default {
 }
 
 .warning-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
   gap: 16px;
-  padding: 12px;
+  margin: 0;
+  padding-bottom: 20px; /* 底部预留空间，避免最后一行卡片贴底 */
   min-height: 100%; /* 确保网格填满容器 */
   align-content: flex-start; /* 卡片从顶部开始排列 */
 }
 
 .warning-col {
-  width: 100%;
+  width: calc(16.66% - 13.33px);
   margin: 0;
 }
 
 .warning-card {
-  height: 380px;
+  height: 370px;
   background: white;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 0;
   position: relative;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
   width: 100%;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #f3f4f6;
 }
 
 
@@ -3024,13 +2708,13 @@ export default {
 }
 
 .warning-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .warning-card.selected {
-  border: 2px solid #3b82f6;
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
+  border: 1px solid #3b82f6;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
 }
 
 .warning-card.selected .selection-overlay {
@@ -3223,12 +2907,11 @@ export default {
 
 /* 底部按钮样式 - 统一样式 */
 .action-btn {
-  padding: 8px 18px;
-  font-size: 13px;
-  border-radius: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin: 0 3px;
-  font-weight: 500;
+  padding: 6px 16px;
+  font-size: 12px;
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  margin: 0 2px;
   font-weight: 500;
   border: 1px solid #dcdfe6;
   background: #ffffff;
@@ -3237,10 +2920,10 @@ export default {
 
 .action-btn:hover {
   background: #ecf5ff;
-  border-color: #3b82f6;
-  color: #3b82f6;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  border-color: #409eff;
+  color: #409eff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
 }
 
 
@@ -3348,21 +3031,15 @@ export default {
 }
 
 /* 响应式调整 */
-@media (max-width: 1920px) {
-  .warning-cards-grid {
-    grid-template-columns: repeat(5, 1fr);
-  }
-}
-
 @media (max-width: 1600px) {
-  .warning-cards-grid {
-    grid-template-columns: repeat(4, 1fr);
+  .warning-col {
+    width: calc(20% - 12.8px);
   }
 }
 
 @media (max-width: 1280px) {
-  .warning-cards-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .warning-col {
+    width: calc(25% - 12px);
   }
   
   .date-picker-wrapper {
@@ -3373,7 +3050,7 @@ export default {
   .select-wrapper,
   .input-wrapper {
     width: calc(33.33% - 8px);
-    min-width: 140px;
+    min-width: 120px;
   }
   
   .filter-actions {
@@ -3393,7 +3070,7 @@ export default {
   
   /* 调整卡片容器高度以适应更大的搜索区域 */
   .warning-cards-container {
-    height: calc(100vh - 260px) !important;
+    height: calc(100vh - 250px) !important;
   }
   
   .search-filter-area {
@@ -3402,32 +3079,27 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .warning-cards-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  
   .select-wrapper,
   .input-wrapper {
     width: 100%;
     margin-right: 0;
   }
   
+  .warning-col {
+    width: calc(50% - 8px);
+  }
+  
   .warning-management-container {
-    height: 100% !important;
+    height: calc(100vh - 80px) !important;
   }
   
   /* 移动端调整卡片容器高度 */
   .warning-cards-container {
-    height: calc(100vh - 320px) !important;
+    height: calc(100vh - 300px) !important;
   }
   
   .search-filter-area {
-    min-height: 180px !important;
-  }
-  
-  .warning-card {
-    height: 360px;
+    min-height: 160px !important;
   }
 }
 
@@ -3492,38 +3164,30 @@ export default {
   align-items: center;
   justify-content: center;
   height: 100%; /* 填满整个容器高度 */
-  padding: 60px 20px;
+  padding: 40px 20px;
   color: #909399;
   text-align: center;
   box-sizing: border-box;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-  border-radius: 12px;
 }
 
 .no-data i {
-  font-size: 72px;
-  margin-bottom: 24px;
-  color: #d1d5db;
-  opacity: 0.7;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 0.4; }
+  font-size: 64px;
+  margin-bottom: 20px;
+  color: #dcdfe6;
+  opacity: 0.6;
 }
 
 .no-data p {
-  font-size: 18px;
-  margin: 0 0 12px 0;
-  color: #4b5563;
-  font-weight: 600;
+  font-size: 16px;
+  margin: 0 0 8px 0;
+  color: #606266;
+  font-weight: 500;
 }
 
 .no-data-tip {
-  font-size: 14px;
-  color: #9ca3af;
-  opacity: 0.9;
+  font-size: 13px;
+  color: #909399;
+  opacity: 0.8;
 }
 
 /* 对话框内容样式 */
@@ -3698,7 +3362,7 @@ export default {
 }
 
 /* 科技感导出数据按钮样式 */
-/* .export-data-btn {
+.export-data-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   color: white;
@@ -3736,7 +3400,7 @@ export default {
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left 0.5s;
-} */
+}
 
 .export-data-btn:hover::before {
   left: 100%;
@@ -3774,7 +3438,7 @@ export default {
   background: #ffffff;
 }
 
-/* .warning-management-container >>> .el-button--primary {
+.warning-management-container >>> .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
@@ -3788,7 +3452,7 @@ export default {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
   transform: translateY(-1px);
-} */
+}
 
 .warning-management-container >>> .el-button--success {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -3855,80 +3519,73 @@ export default {
 
 /* 输入框和选择框样式优化 */
 .warning-management-container >>> .el-input__inner {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: #fafafa;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  transition: all 0.3s ease;
 }
 
 .warning-management-container >>> .el-input__inner:focus {
   border-color: #3b82f6;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 .warning-management-container >>> .el-select .el-input__inner {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fafafa;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
 }
 
 .warning-management-container >>> .el-select .el-input__inner:focus {
   border-color: #3b82f6;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 .warning-management-container >>> .el-date-editor.el-input {
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .warning-management-container >>> .el-date-editor .el-input__inner {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fafafa;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
 }
 
 .warning-management-container >>> .el-date-editor .el-input__inner:focus {
   border-color: #3b82f6;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-/* 分页样式 - 优化设计 */
+/* 分页样式 - 参照multimodalLlmSkills.vue */
 .pagination-section {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 16px;
   background: white;
-  margin-top: 12px !important;
-  padding: 16px 0 !important;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.pagination-section >>> .el-pagination .el-pager li.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
-  border-color: #3b82f6 !important;
-  color: white !important;
-  font-weight: 600 !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-  transform: scale(1.05);
+  padding: 8px 24px; /* 减少上下内边距 */
+  margin-top: 8px; /* 减少上边距 */
+  margin-bottom: 0; /* 取消底边距 */
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  flex-shrink: 0; /* 不允许收缩 */
+  height: 60px; /* 减少固定高度 */
+  box-sizing: border-box;
 }
 
 /* 覆盖Element UI分页组件样式 */
-/* .pagination-section >>> .el-pagination .el-pager li {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 4px;
-  color: #3b82f6;
-  margin: 0 2px;
+.pagination-section >>> .el-pagination .el-pager li {
+  background: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
+  transition: all 0.3s ease !important;
+  border-radius: 6px !important;
+  margin: 0 2px !important;
 }
 
 .pagination-section >>> .el-pagination .el-pager li:hover {
-  color: #1d4ed8;
-  border-color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.05);
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+  border-color: #3b82f6 !important;
+  color: #1e40af !important;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
 }
 
 .pagination-section >>> .el-pagination .el-pager li.active {
@@ -3953,10 +3610,10 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-} */
+}
 
 /* 更强的Element UI样式覆盖 */
-/* .pagination-section >>> .el-pagination .el-pager li.number {
+.pagination-section >>> .el-pagination .el-pager li.number {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -3974,7 +3631,7 @@ export default {
   border-color: #3b82f6 !important;
   color: white !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-} */
+}
 
 .pagination-section >>> .el-pagination .btn-prev,
 .pagination-section >>> .el-pagination .btn-next {
@@ -3984,12 +3641,12 @@ export default {
 }
 
 .pagination-section >>> .el-pagination .btn-prev:hover,
-/* .pagination-section >>> .el-pagination .btn-next:hover {
+.pagination-section >>> .el-pagination .btn-next:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-} */
+}
 
 .pagination-section >>> .el-pagination .el-select .el-input .el-input__inner {
   border-color: #dcdfe6 !important;

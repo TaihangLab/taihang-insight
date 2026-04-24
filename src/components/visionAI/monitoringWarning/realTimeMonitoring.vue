@@ -307,8 +307,7 @@
     <!-- 引入预警详情组件 -->
     <WarningDetail
       :visible.sync="warningDetailVisible"
-      :warning="currentWarning"
-      source="realTimeMonitoring"
+      :alert-id="currentAlertId"
       @handle-warning="handleWarningFromDialog"
       @handle-report="handleReportFromDialog"
       @handle-archive="handleArchiveFromDialog"
@@ -544,7 +543,7 @@ export default {
       // 预警列表数据 - 从API获取
       warningList: [],
       warningDetailVisible: false,
-      currentWarning: null,
+      currentAlertId: null,
 
       // 添加预警管理相关的数据属性
       // archivesList: [],  // 已废弃，使用 availableArchivesList
@@ -686,23 +685,21 @@ export default {
     });
   },
   beforeDestroy() {
-    // 组件销毁时清理
     this.exitFullscreen();
     document.body.classList.remove('camera-fullscreen-mode');
     clearInterval(this.timer);
 
-    // 清理SSE连接
     this.cleanupSSEConnection();
 
-    // 移除事件监听器
     document.removeEventListener('keydown', this.handleKeyDown);
     document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
     document.removeEventListener('webkitfullscreenchange', this.handleFullscreenChange);
     document.removeEventListener('mozfullscreenchange', this.handleFullscreenChange);
     document.removeEventListener('MSFullscreenChange', this.handleFullscreenChange);
 
-    // 移除窗口大小变化监听器
     window.removeEventListener('resize', this.handleResize);
+
+    this.cleanupAllOSDResources();
   },
   methods: {
     // 切换分组展开/折叠
@@ -1076,8 +1073,9 @@ export default {
     },
     // 查看预警详情
     viewWarningDetail(warning) {
-      this.currentWarning = warning;
-      this.warningDetailVisible = true;
+      const alertId = (warning._apiData && warning._apiData.alert_id) || warning.id
+      this.currentAlertId = alertId
+      this.warningDetailVisible = true
     },
     // 处理预警（原有方法，保持兼容性）
     handleWarningOld(warning) {
@@ -1314,53 +1312,28 @@ export default {
     },
 
     // 从对话框处理预警 - 也使用处理意见流程
-    handleWarningFromDialog(warning) {
-      if (warning && warning.id) {
-        // 如果是完成处理的事件，只更新状态，不再弹出对话框
-        if (warning.action === 'finished') {
-          // 更新本地预警列表的状态
-          const index = this.warningList.findIndex(item => item.id === warning.id);
-          if (index !== -1) {
-            this.warningList[index].operationHistory = warning.operationHistory;
+    handleWarningFromDialog(eventData) {
+      if (!eventData || !eventData.alert_id) return;
+      
+      const alertId = eventData.alert_id;
+      const index = this.warningList.findIndex(item => 
+        item.id === alertId || (item._apiData && item._apiData.alert_id === alertId)
+      );
 
-            // 🔧 关键修复：更新状态字段
-            if (this.warningList[index]._apiData) {
-              this.warningList[index]._apiData.status = 3; // 已处理状态
-            }
-            this.$set(this.warningList[index], 'status', 'completed');
-
-            console.log('✅ 从详情对话框完成处理，状态已更新:', this.warningList[index]);
-          }
-          return;
+      if (eventData.action === 'finished' && index !== -1) {
+        if (this.warningList[index]._apiData) {
+          this.warningList[index]._apiData.status = 3;
         }
+        this.$set(this.warningList[index], 'status', 'completed');
+        return;
+      }
 
-        // 如果是添加处理记录的事件，只更新状态，不再弹出对话框
-        if (warning.action === 'record-added') {
-          // 更新本地预警列表的状态
-          const index = this.warningList.findIndex(item => item.id === warning.id);
-          if (index !== -1) {
-            this.warningList[index].operationHistory = warning.operationHistory;
-            // 🔧 状态已在后端更新，同步到前端
-            if (this.warningList[index]._apiData) {
-              this.warningList[index]._apiData.status = 2; // 处理中状态
-              this.$set(this.warningList[index], 'status', 'processing');
-            }
-            console.log('✅ 从详情对话框添加处理记录，状态已更新:', this.warningList[index]);
-          }
-          return;
+      if (eventData.action === 'record-added' && index !== -1) {
+        if (this.warningList[index]._apiData) {
+          this.warningList[index]._apiData.status = 2;
+          this.$set(this.warningList[index], 'status', 'processing');
         }
-
-        // 🔧 检查当前是否已经在处理中（通过API状态判断）
-        const isProcessing = (warning._apiData && warning._apiData.status === 2) || warning.status === 'processing';
-
-        if (isProcessing) {
-          // 如果已在处理中，直接弹出处理意见对话框
-          this.currentProcessingWarningId = warning.id;
-          this.remarkDialogVisible = true;
-        } else {
-          // 如果不在处理中，开始处理流程
-          this.startProcessingWarning(warning);
-        }
+        return;
       }
     },
 
@@ -1390,7 +1363,7 @@ export default {
             this.currentCameraId = this.warningList[index].cameraId || 'camera_1';
             await this.handleArchiveProcess();
             return; // 不关闭loading，等归档完成后再关闭
-          } else if (action === 'falseAlarm') {
+          } else if (action === 'false_alarm') {
             // 误报 - 显示输入对话框
             this.archiveWarningId = id;
             this.currentCameraId = this.warningList[index].cameraId || 'camera_1';
@@ -1405,25 +1378,21 @@ export default {
       }
     },
 
-    // 处理上报事件
-    handleReportFromDialog(warning) {
-      if (warning && warning.id) {
-        this.handleWarning(warning.id, 'report');
+    handleReportFromDialog(eventData) {
+      if (eventData && eventData.alert_id) {
+        this.handleWarning(eventData.alert_id, 'report');
       }
     },
 
-    // 处理归档事件
-    handleArchiveFromDialog(warning) {
-      if (warning && warning.id) {
-        this.handleWarning(warning.id, 'archive');
+    handleArchiveFromDialog(eventData) {
+      if (eventData && eventData.alert_id) {
+        this.handleWarning(eventData.alert_id, 'archive');
       }
     },
 
-    // 处理预警详情对话框中的误报事件 - 与预警管理页面保持完全一致
-    handleFalseAlarmFromDialog(warning) {
-      if (warning && warning.id) {
-        // 调用统一的误报处理流程（弹出误报输入对话框）
-        this.handleWarning(warning.id, 'falseAlarm');
+    handleFalseAlarmFromDialog(eventData) {
+      if (eventData && eventData.alert_id) {
+        this.handleWarning(eventData.alert_id, 'false_alarm');
       }
     },
 
@@ -1778,12 +1747,12 @@ export default {
             statusText: '误报处理',
             time: this.getCurrentTime(),
             description: `预警被标记为误报：${this.falseAlarmForm.reviewNotes}`,
-            operationType: 'falseAlarm',
+            operationType: 'false_alarm',
             operator: operatorName
           };
 
           this.warningList[warningIndex].operationHistory.push(newRecord);
-          this.warningList[warningIndex].status = 'archived';
+          this.warningList[warningIndex].status = 'false_alarm';
           this.warningList[warningIndex].isFalseAlarm = true;
           this.warningList[warningIndex].archiveTime = new Date().toLocaleString();
 
@@ -2180,16 +2149,15 @@ export default {
         };
       }
 
-      // 检查是否已归档
+      // 检查是否已归档或误报
       const hasArchived = warning.operationHistory.some(record =>
-        record.operationType === 'archive' || record.operationType === 'falseAlarm'
-      ) || warning.status === 'archived';
+        record.operationType === 'archive' || record.operationType === 'false_alarm'
+      ) || warning.status === 'archived' || warning.status === 'false_alarm';
 
       if (hasArchived) {
-        return {
-          text: '已归档',
-          class: 'status-archived'
-        };
+        return warning.status === 'false_alarm'
+          ? { text: '误报', class: 'status-false-alarm' }
+          : { text: '已归档', class: 'status-archived' };
       }
 
       // 检查是否有已处理状态
@@ -2241,10 +2209,10 @@ export default {
         return false; // 没有历史记录，可以处理
       }
 
-      // 如果已归档，禁用处理按钮
+      // 如果已归档或误报，禁用处理按钮
       const hasArchived = warning.operationHistory.some(record =>
-        record.operationType === 'archive' || record.operationType === 'falseAlarm'
-      ) || warning.status === 'archived';
+        record.operationType === 'archive' || record.operationType === 'false_alarm'
+      ) || warning.status === 'archived' || warning.status === 'false_alarm';
 
       if (hasArchived) {
         return true;
@@ -2328,7 +2296,7 @@ export default {
 
           const convertedWarnings = apiWarnings.map(warning =>
             this.convertAPIWarningToFrontend(warning)
-          ).filter(warning => warning !== null);
+          ).filter(warning => warning !== null && !this.isProcessedStatus(warning.status));
 
           // 更新预警列表
           this.warningList = convertedWarnings;
@@ -2743,7 +2711,7 @@ export default {
         // 将后端预警数据转换为前端格式 - 统一使用API转换方法
         const newWarning = this.convertAPIWarningToFrontend(alertData);
 
-        if (!newWarning) {
+        if (!newWarning || this.isProcessedStatus(newWarning.status)) {
           return;
         }
 
@@ -2777,6 +2745,12 @@ export default {
             return;
           }
 
+          // 如果预警已处理，从列表中移除
+          if (this.isProcessedStatus(updatedWarning.status)) {
+            this.warningList.splice(index, 1);
+            return;
+          }
+
           this.$set(this.warningList, index, updatedWarning);
         }
       } catch (error) {
@@ -2786,6 +2760,12 @@ export default {
 
 
 
+
+    // 判断预警状态是否为已处理（已处理/已归档/误报等不需要在实时预警中展示的状态）
+    isProcessedStatus(status) {
+      const processedStatuses = ['completed', 'archived', 'false_alarm'];
+      return processedStatuses.includes(status);
+    },
 
     // 转换预警等级
     convertAlertLevel(backendLevel) {
@@ -2806,8 +2786,8 @@ export default {
           '待处理': 'pending',
           '处理中': 'processing',
           '已处理': 'completed',
-          '已忽略': 'ignored',
-          '已过期': 'expired'
+          '已归档': 'archived',
+          '误报': 'false_alarm'
         };
         return statusMap[statusDisplay] || 'pending';
       }
@@ -2815,11 +2795,11 @@ export default {
       // 如果没有显示文本，根据数字状态映射
       if (statusNumber !== undefined && statusNumber !== null) {
         const numberStatusMap = {
-          1: 'pending',     // 待处理
-          2: 'processing',  // 处理中
-          3: 'completed',   // 已处理
-          4: 'ignored',     // 已忽略
-          5: 'expired'      // 已过期
+          1: 'pending',      // 待处理
+          2: 'processing',   // 处理中
+          3: 'completed',    // 已处理
+          4: 'archived',     // 已归档
+          5: 'false_alarm'   // 误报
         };
         return numberStatusMap[statusNumber] || 'pending';
       }
@@ -2903,7 +2883,7 @@ export default {
             statusText: '误报',
             time: processTime, // 🔧 使用处理时间
             description: '预警已标记为误报',
-            operationType: 'falseAlarm',
+            operationType: 'false_alarm',
             operator: defaultOperator
           });
         }
@@ -3026,67 +3006,32 @@ export default {
      * 连接检测结果WebSocket
      */
     connectDetectionWebSocket(index, taskId) {
-      try {
-        // 构建WebSocket URL - 直接连接到后端服务器
-        // 使用与 VisionAIService 相同的后端地址
-        const backendUrl = config.API_BASE_URL // 从配置文件获取
-        const wsProtocol = backendUrl.startsWith('https') ? 'wss:' : 'ws:'
-        const wsHost = backendUrl.replace(/^https?:\/\//, '') // 移除 http:// 或 https://
-        const wsUrl = `${wsProtocol}//${wsHost}/api/v1/realtime-detection/ws/detection/${taskId}`
-        
-        const ws = new WebSocket(wsUrl)
-        
-        // 先设置为未连接状态
-        this.$set(this.wsConnections, index, null)
-        
-        ws.onopen = () => {
-          // 连接成功后才设置
+      const { createDetectionWebSocket } = require('./utils/detectionWebSocket')
+      this.$set(this.wsConnections, index, null)
+
+      createDetectionWebSocket(taskId, {
+        onOpen: (ws) => {
           this.$set(this.wsConnections, index, ws)
-        }
-        
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data)
-            
-            // 更新检测结果
-            this.$set(this.detectionResults, index, {
-              detections: data.detections || [],
-              frame_size: data.frame_size || {width: 1920, height: 1080}
-            })
-            
-            // 更新时间戳
-            const now = new Date()
-            this.$set(this.detectionUpdateTime, index, 
-              `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`)
-            
-            // 更新视频分辨率
-            if (data.frame_size) {
-              this.$set(this.videoResolutions, index, {
-                width: data.frame_size.width,
-                height: data.frame_size.height
-              })
-            }
-          } catch (error) {
-            console.error('❌ 解析检测结果失败:', error)
-          }
-        }
-        
-        ws.onerror = (error) => {
-          console.error(`❌ WebSocket错误: task_id=${taskId}`, error)
-        }
-        
-        ws.onclose = () => {
-          // 清理
+        },
+        onMessage: (parsed) => {
+          this.$set(this.detectionResults, index, {
+            detections: parsed.detections,
+            frame_size: parsed.frameSize
+          })
+          const now = new Date()
+          this.$set(this.detectionUpdateTime, index,
+            `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`)
+          this.$set(this.videoResolutions, index, {
+            width: parsed.frameSize.width,
+            height: parsed.frameSize.height
+          })
+        },
+        onClose: (ws) => {
           if (this.wsConnections[index] === ws) {
             delete this.wsConnections[index]
           }
         }
-        
-        // 不在这里保存连接，等onopen成功后再保存
-        
-      } catch (error) {
-        console.error('❌ 创建WebSocket连接失败:', error)
-      }
+      })
     },
     
     /**
@@ -3225,15 +3170,6 @@ export default {
     }
     // 🆕 ========== OSD检测框叠加功能结束 ==========
 
-  },
-  beforeDestroy() {
-    // 清理定时器
-    if (this.timer) {
-      clearInterval(this.timer)
-    }
-    
-    // 🆕 清理所有OSD资源
-    this.cleanupAllOSDResources()
   }
 }
 </script>

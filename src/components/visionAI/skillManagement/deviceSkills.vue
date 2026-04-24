@@ -716,21 +716,7 @@ export default {
   },
 
   mounted() {
-    // 简单直接：每次进入页面自动刷新一次（避免状态污染）
-    if (!sessionStorage.getItem('deviceSkillsLoaded')) {
-      sessionStorage.setItem('deviceSkillsLoaded', 'true')
-      window.location.reload()
-      return
-    }
-    
     this.fetchSkills();
-    // 设置默认每页显示12条数据
-    this.pageSize = 12;
-  },
-
-  beforeDestroy() {
-    // 页面销毁时清除标志
-    sessionStorage.removeItem('deviceSkillsLoaded')
   },
 
   methods: {
@@ -805,10 +791,7 @@ export default {
         
         if (response.data.code === 0) {
           this.processSkillsData(response.data.data);
-          // 更新总数和分页信息
           this.total = response.data.total;
-          // 删除数据获取成功的消息提示
-          // this.$message.success('数据获取成功');
         } else {
           this.$message.error(response.data.msg || '获取技能列表失败');
         }
@@ -828,7 +811,6 @@ export default {
         return;
       }
       
-      // 转换API数据格式为组件所需格式
       this.skillsList = skillsData.map(skill => {
         // 计算关联设备总数
         const deviceCount = skill.total_device_count || 0;
@@ -1780,8 +1762,9 @@ export default {
 .skills-grid .skill-card .skill-thumbnail {
   position: relative;
   width: 100%;
-  padding-top: 63%; 
+  padding-top: 63%;
   background-color: #f5f7fa;
+  overflow: hidden;
 }
 
 .skills-grid .skill-card .skill-thumbnail .thumbnail-img {
@@ -1790,8 +1773,10 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  padding: 0;
+  object-fit: contain;
+  object-position: center;
+  box-sizing: border-box;
+  padding: 6px;
 }
 
 .skills-grid .skill-card .skill-thumbnail .status-badge {

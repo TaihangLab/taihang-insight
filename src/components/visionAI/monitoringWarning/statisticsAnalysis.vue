@@ -1,29 +1,24 @@
 <script>
 import * as echarts from "echarts";
+import { alertAPI } from "../../service/VisionAIService.js";
 
 export default {
   name: "StatisticsAnalysis",
   data() {
     return {
-      // 页面数据
       statisticsData: {
-        totalCount: 10,
-        successRate: 81.36,
-        warningCount: 13,
-        processedCount: 8,
+        totalCount: 0,
+        successRate: 0,
+        processedCount: 0,
+        pendingCount: 0,
       },
 
-      // 时间筛选相关
       timeRange: "today",
       customDateRange: [],
       datePickerDialogVisible: false,
 
-      // 导出对话框
-      exportDialogVisible: false,
       exportLoading: false,
-      exportFormat: "excel",
 
-      // 图表实例
       charts: {
         trendChart: null,
         warningStatusChart: null,
@@ -31,54 +26,125 @@ export default {
         topWarningTypeChart: null,
       },
 
-      // 设备预警数量TOP10
-      deviceWarnings: [
-        { name: "中控测试摄像头01", count: 42, percent: 26 },
-        { name: "门禁监控设备A32", count: 38, percent: 23 },
-        { name: "仓库角落摄像头B12", count: 31, percent: 19 },
-        { name: "办公室入口监控", count: 24, percent: 15 },
-        { name: "停车场监控C区", count: 18, percent: 11 },
-        { name: "后门通道摄像头", count: 15, percent: 9 },
-        { name: "前台监控设备", count: 12, percent: 7 },
-        { name: "会议室摄像头", count: 9, percent: 5 },
-        { name: "电梯监控", count: 7, percent: 4 },
-        { name: "楼梯间摄像头", count: 5, percent: 3 },
-      ],
-
-      // 时间范围
-      deviceTimeRange: "day",
-
-      // 刷新状态
+      deviceWarnings: [],
       refreshing: false,
+      loading: false,
+
+      statusChartEmpty: true,
+      levelChartEmpty: true,
+      typeChartEmpty: true,
     };
   },
   mounted() {
-    this.initCharts();
+    this.computePanelHeights();
     window.addEventListener("resize", this.handleResize);
-
-    // 初始化CSS变量 - 设置适当的面板高度
-    document.documentElement.style.setProperty("--panel-top-height", "35vh");
-    document.documentElement.style.setProperty(
-      "--panel-bottom-height",
-      "33vh"
-    );
+    this.$nextTick(() => {
+      this.initEmptyCharts();
+      this.fetchStatistics();
+    });
   },
   beforeDestroy() {
     window.removeEventListener("resize", this.handleResize);
     this.disposeCharts();
   },
+  watch: {},
   methods: {
-    // 初始化所有图表
-    initCharts() {
-      this.$nextTick(() => {
-        this.initTrendChart();
-        this.initWarningStatusChart();
-        this.initWarningLevelChart();
-        this.initTopWarningTypeChart();
-      });
+    // ──────────────────────────── 时间范围计算 ──────────────────────────────
+
+    /**
+     * 根据当前 timeRange 计算 start_date, end_date, granularity
+     */
+    getTimeParams() {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, "0");
+      const fmt = (d) =>
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+      switch (this.timeRange) {
+        case "today":
+          return { start_date: fmt(now), end_date: fmt(now), granularity: "hour" };
+
+        case "week": {
+          const start = new Date(now);
+          start.setDate(now.getDate() - 6);
+          return { start_date: fmt(start), end_date: fmt(now), granularity: "day" };
+        }
+
+        case "month": {
+          const start = new Date(now.getFullYear(), now.getMonth(), 1);
+          return { start_date: fmt(start), end_date: fmt(now), granularity: "day" };
+        }
+
+        case "year": {
+          const start = new Date(now.getFullYear(), 0, 1);
+          return { start_date: fmt(start), end_date: fmt(now), granularity: "month" };
+        }
+
+        case "custom":
+          if (this.customDateRange && this.customDateRange.length === 2) {
+            return {
+              start_date: this.customDateRange[0],
+              end_date: this.customDateRange[1],
+              granularity: "day",
+            };
+          }
+          return null;
+
+        default:
+          return null;
+      }
     },
 
-    // 销毁所有图表实例
+    // ──────────────────────────── 数据获取 ──────────────────────────────────
+
+    async fetchStatistics() {
+      const params = this.getTimeParams();
+      if (!params) return;
+
+      this.loading = true;
+      try {
+        const res = await alertAPI.getAlertStatistics(params);
+        const stats = res.data && res.data.statistics ? res.data.statistics : null;
+        if (!stats) return;
+
+        // 更新顶部卡片
+        const s = stats.summary || {};
+        this.statisticsData = {
+          totalCount: s.total_alerts || 0,
+          successRate: s.processed_rate || 0,
+          processedCount: s.processed_count || 0,
+          pendingCount: s.pending_count || 0,
+        };
+
+        // 更新各图表
+        this.renderTrendChart(stats.trend || []);
+        this.renderStatusChart(stats.by_status || {});
+        this.renderLevelChart(stats.by_level || {});
+        this.renderTypeChart(stats.by_type || []);
+
+        // 更新设备列表
+        this.deviceWarnings = (stats.top_cameras || []).map((c) => ({
+          name: c.name,
+          count: c.count,
+          percent: c.percent,
+        }));
+      } catch (e) {
+        console.error("获取统计数据失败:", e);
+        this.$message.error("获取统计数据失败，请稍后重试");
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // ──────────────────────────── 图表初始化（空壳）────────────────────────
+
+    initEmptyCharts() {
+      this.initTrendChart([], []);
+      this.statusChartEmpty = true;
+      this.levelChartEmpty = true;
+      this.typeChartEmpty = true;
+    },
+
     disposeCharts() {
       Object.keys(this.charts).forEach((key) => {
         if (this.charts[key]) {
@@ -88,85 +154,65 @@ export default {
       });
     },
 
-    // 窗口大小变化时重新调整图表
+    // 根据视口高度动态计算面板高度，确保页面在任意窗口尺寸下铺满屏幕
+    computePanelHeights() {
+      // 不再硬算，由 CSS flex 自动分配
+    },
+
     handleResize() {
-      Object.keys(this.charts).forEach((key) => {
-        if (this.charts[key]) {
-          this.charts[key].resize();
-        }
+      this.$nextTick(() => {
+        Object.keys(this.charts).forEach((key) => {
+          if (this.charts[key]) this.charts[key].resize();
+        });
       });
     },
 
-    // 初始化预警趋势图
-    initTrendChart() {
-      const trendChart = document.getElementById("trendChart");
-      if (!trendChart) return;
+    // ──────────────────────────── 趋势折线图 ────────────────────────────────
 
-      this.charts.trendChart = echarts.init(trendChart);
-      const { xData, yData } = this.generateTimeData(this.timeRange);
-
+    initTrendChart(xData, yData) {
+      const el = document.getElementById("trendChart");
+      if (!el) return;
+      if (!this.charts.trendChart) {
+        this.charts.trendChart = echarts.init(el);
+      }
+      const needRotate =
+        this.timeRange === "month" ||
+        (this.timeRange === "custom" && xData.length > 10);
       const option = {
         backgroundColor: "transparent",
-        grid: {
-          top: 40,
-          bottom: 20,
-          left: 0,
-          right: 20,
-          containLabel: true,
-        },
+        grid: { top: 40, bottom: 20, left: 10, right: 20, containLabel: true },
         tooltip: {
           trigger: "axis",
-          axisPointer: {
-            type: "line",
-            lineStyle: {
-              color: "rgba(0, 255, 255, 0.3)",
-              width: 1,
-            },
-          },
-          backgroundColor: "rgba(0, 19, 40, 0.8)",
-          borderColor: "rgba(0, 255, 255, 0.3)",
-          textStyle: {
-            color: "#00FFFF",
+          axisPointer: { type: "line", lineStyle: { color: "rgba(0,255,255,0.3)", width: 1 } },
+          backgroundColor: "rgba(0,19,40,0.8)",
+          borderColor: "rgba(0,255,255,0.3)",
+          textStyle: { color: "#00FFFF" },
+          formatter: (params) => {
+            const p = params[0];
+            return `${p.name}<br/>预警数量: <b>${p.value}</b>`;
           },
         },
         xAxis: {
           type: "category",
           data: xData,
-          axisLine: {
-            lineStyle: {
-              color: "rgba(0, 255, 255, 0.3)",
-            },
-          },
+          axisLine: { lineStyle: { color: "rgba(0,255,255,0.3)" } },
           axisLabel: {
             color: "#7EAEE5",
-            rotate: this.timeRange === "month" ? 45 : 0,
-            interval: this.timeRange === "month" ? "auto" : 0,
+            rotate: needRotate ? 45 : 0,
+            interval: needRotate ? "auto" : xData.length > 20 ? "auto" : 0,
           },
-          axisTick: {
-            show: false,
-          },
-          splitLine: {
-            show: false,
-          },
+          axisTick: { show: false },
+          splitLine: { show: false },
         },
         yAxis: {
           type: "value",
           name: "预警数量",
-          nameTextStyle: {
-            color: "#7EAEE5",
-          },
-          axisLine: {
-            show: false,
-          },
-          axisLabel: {
-            color: "#7EAEE5",
-          },
-          splitLine: {
-            lineStyle: {
-              color: "rgba(35, 88, 148, 0.3)",
-              type: "dashed",
-            },
-          },
+          min: 0,
+          minInterval: 1,
+          nameTextStyle: { color: "#7EAEE5", padding: [0, 0, 0, 10] },
+          axisLine: { show: false },
+          axisLabel: { color: "#7EAEE5" },
+          splitLine: { lineStyle: { color: "rgba(35,88,148,0.3)", type: "dashed" } },
         },
         series: [
           {
@@ -178,170 +224,44 @@ export default {
             symbolSize: 8,
             lineStyle: {
               width: 3,
-              color: {
-                type: "linear",
-                x: 0,
-                y: 0,
-                x2: 1,
-                y2: 0,
-                colorStops: [
-                  { offset: 0, color: "#00FFFF" },
-                  { offset: 1, color: "#207FFF" },
-                ],
-              },
+              color: { type: "linear", x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: "#00FFFF" }, { offset: 1, color: "#207FFF" }] },
             },
-            itemStyle: {
-              color: "#00FFFF",
-              borderColor: "rgba(0, 255, 255, 0.3)",
-              borderWidth: 6,
-            },
+            itemStyle: { color: "#00FFFF", borderColor: "rgba(0,255,255,0.3)", borderWidth: 6 },
             areaStyle: {
-              color: {
-                type: "linear",
-                x: 0,
-                y: 0,
-                x2: 0,
-                y2: 1,
-                colorStops: [
-                  { offset: 0, color: "rgba(0, 255, 255, 0.3)" },
-                  { offset: 1, color: "rgba(0, 255, 255, 0)" },
-                ],
-              },
+              color: { type: "linear", x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: "rgba(0,255,255,0.3)" }, { offset: 1, color: "rgba(0,255,255,0)" }] },
             },
           },
         ],
       };
-
-      this.charts.trendChart.setOption(option);
+      this.charts.trendChart.setOption(option, true);
     },
 
-    // 生成不同时间维度的数据
-    generateTimeData(timeType) {
-      const now = new Date();
-
-      switch (timeType) {
-        case "today":
-          // 生成24小时的数据
-          return {
-            xData: Array.from(
-              { length: 24 },
-              (_, i) => `${i.toString().padStart(2, "0")}:00`
-            ),
-            yData: [
-              40, 38, 10, 19, 5, 3, 20, 15, 30, 12, 7, 4, 5, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0,
-            ],
-          };
-
-        case "week":
-          // 生成最近7天的数据
-          return {
-            xData: Array.from({ length: 7 }, (_, i) => {
-              const date = new Date(now);
-              date.setDate(date.getDate() - (6 - i));
-              return `${date.getMonth() + 1}/${date.getDate()}`;
-            }),
-            yData: Array.from({ length: 7 }, () =>
-              Math.floor(Math.random() * 50)
-            ),
-          };
-
-        case "month":
-          // 生成当月每天的数据
-          const daysInMonth = new Date(
-            now.getFullYear(),
-            now.getMonth() + 1,
-            0
-          ).getDate();
-          return {
-            xData: Array.from({ length: daysInMonth }, (_, i) => `${i + 1}日`),
-            yData: Array.from({ length: daysInMonth }, () =>
-              Math.floor(Math.random() * 50)
-            ),
-          };
-
-        case "year":
-          // 生成12个月的数据
-          return {
-            xData: [
-              "1月",
-              "2月",
-              "3月",
-              "4月",
-              "5月",
-              "6月",
-              "7月",
-              "8月",
-              "9月",
-              "10月",
-              "11月",
-              "12月",
-            ],
-            yData: Array.from({ length: 12 }, () =>
-              Math.floor(Math.random() * 50)
-            ),
-          };
-
-        case "custom":
-          // 如果是自定义范围，使用自定义日期范围的数据
-          if (this.customDateRange && this.customDateRange.length === 2) {
-            return this.generateCustomDateData();
-          }
-          // 自定义日期范围无效时返回空数据
-          return {
-            xData: [],
-            yData: [],
-          };
-
-        default:
-          return {
-            xData: [],
-            yData: [],
-          };
-      }
+    renderTrendChart(trend) {
+      const xData = trend.map((t) => t.label);
+      const yData = trend.map((t) => t.count);
+      this.initTrendChart(xData, yData);
     },
 
-    // 生成自定义日期范围的数据
-    generateCustomDateData() {
-      if (!this.customDateRange || this.customDateRange.length !== 2) {
-        return { xData: [], yData: [] };
+    // ──────────────────────────── 预警状态饼图 ──────────────────────────────
+
+    /**
+     * statusMap: { 待处理: N, 处理中: N, 已处理: N, 已归档: N, 误报: N }
+     * 前端合并展示为 4 项（已归档+误报 → 已忽略）
+     */
+    initWarningStatusChart(pieData) {
+      const el = document.getElementById("warningStatusChart");
+      if (!el) return;
+      if (!this.charts.warningStatusChart) {
+        this.charts.warningStatusChart = echarts.init(el);
       }
-
-      const startDate = new Date(this.customDateRange[0]);
-      const endDate = new Date(this.customDateRange[1]);
-      const daysDiff =
-        Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-
-      // 生成日期范围内的每一天
-      const xData = [];
-      const yData = [];
-
-      for (let i = 0; i < daysDiff; i++) {
-        const currentDate = new Date(startDate);
-        currentDate.setDate(startDate.getDate() + i);
-        xData.push(`${currentDate.getMonth() + 1}/${currentDate.getDate()}`);
-        yData.push(Math.floor(Math.random() * 50));
-      }
-
-      return { xData, yData };
-    },
-
-    // 初始化预警状态图表
-    initWarningStatusChart() {
-      const warningStatusChart = document.getElementById("warningStatusChart");
-      if (!warningStatusChart) return;
-
-      this.charts.warningStatusChart = echarts.init(warningStatusChart);
-      const option = {
+      this.charts.warningStatusChart.setOption({
         backgroundColor: "transparent",
         tooltip: {
           trigger: "item",
-          formatter: "{b}: {c} ({d}%)",
-          backgroundColor: "rgba(0, 19, 40, 0.8)",
-          borderColor: "rgba(0, 255, 255, 0.3)",
-          textStyle: {
-            color: "#00FFFF",
-          },
+          formatter: (p) => `${p.name}<br/>数量: <b>${p.data.count}</b>次 (${p.percent.toFixed(1)}%)`,
+          backgroundColor: "rgba(0,19,40,0.8)",
+          borderColor: "rgba(0,255,255,0.3)",
+          textStyle: { color: "#00FFFF" },
         },
         legend: {
           orient: "vertical",
@@ -349,71 +269,60 @@ export default {
           top: "center",
           itemWidth: 10,
           itemHeight: 10,
-          textStyle: {
-            color: "#7EAEE5",
-          },
+          textStyle: { color: "#7EAEE5" },
           formatter: (name) => {
-            const data = option.series[0].data;
-            const item = data.find((i) => i.name === name);
-            return `${name} ${item.value}% ${item.count}次`;
+            const item = pieData.find((d) => d.name === name);
+            if (!item) return name;
+            return `${name}  ${item.count}次`;
           },
         },
-        series: [
-          {
-            type: "pie",
-            radius: ["50%", "70%"],
-            center: ["30%", "50%"],
-            label: {
-              show: false,
-            },
-            data: [
-              {
-                value: 45,
-                name: "待处理",
-                count: 26,
-                itemStyle: { color: "#FF8746" },
-              },
-              {
-                value: 28,
-                name: "处理中",
-                count: 16,
-                itemStyle: { color: "#44FF9B" },
-              },
-              {
-                value: 18,
-                name: "已完成",
-                count: 10,
-                itemStyle: { color: "#00FFFF" },
-              },
-              {
-                value: 9,
-                name: "已忽略",
-                count: 5,
-                itemStyle: { color: "#ee6666" },
-              },
-            ],
-          },
-        ],
-      };
-      this.charts.warningStatusChart.setOption(option);
+        series: [{
+          type: "pie",
+          radius: ["50%", "70%"],
+          center: ["30%", "50%"],
+          label: { show: false },
+          data: pieData,
+        }],
+      }, true);
     },
 
-    // 初始化预警等级图表
-    initWarningLevelChart() {
-      const warningLevelChart = document.getElementById("warningLevelChart");
-      if (!warningLevelChart) return;
+    renderStatusChart(byStatus) {
+      const colorMap = {
+        待处理: "#FF8746",
+        处理中: "#44FF9B",
+        已处理: "#00FFFF",
+        已归档: "#6677AA",
+        误报: "#ee6666",
+      };
+      const pieData = Object.entries(byStatus)
+        .filter(([, cnt]) => cnt >= 0)
+        .map(([name, cnt]) => ({
+          name,
+          value: cnt,
+          count: cnt,
+          itemStyle: { color: colorMap[name] || "#999" },
+        }));
+      this.statusChartEmpty = pieData.length === 0 || pieData.every((d) => d.count === 0);
+      if (this.statusChartEmpty) return;
+      this.$nextTick(() => this.initWarningStatusChart(pieData));
+    },
 
-      this.charts.warningLevelChart = echarts.init(warningLevelChart);
-      const option = {
+    // ──────────────────────────── 预警等级饼图 ──────────────────────────────
+
+    initWarningLevelChart(pieData) {
+      const el = document.getElementById("warningLevelChart");
+      if (!el) return;
+      if (!this.charts.warningLevelChart) {
+        this.charts.warningLevelChart = echarts.init(el);
+      }
+      this.charts.warningLevelChart.setOption({
         backgroundColor: "transparent",
         tooltip: {
           trigger: "item",
-          formatter: "{b}: {c} ({d}%)",
-          backgroundColor: "rgba(0, 19, 40, 0.8)",
-          borderColor: "rgba(0, 255, 255, 0.3)",
-          textStyle: {
-            color: "#00FFFF",
-          },
+          formatter: (p) => `${p.name}<br/>数量: <b>${p.data.count}</b>次 (${p.percent.toFixed(1)}%)`,
+          backgroundColor: "rgba(0,19,40,0.8)",
+          borderColor: "rgba(0,255,255,0.3)",
+          textStyle: { color: "#00FFFF" },
         },
         legend: {
           orient: "vertical",
@@ -421,309 +330,174 @@ export default {
           top: "center",
           itemWidth: 10,
           itemHeight: 10,
-          textStyle: {
-            color: "#7EAEE5",
-          },
+          textStyle: { color: "#7EAEE5" },
           formatter: (name) => {
-            const data = option.series[0].data;
-            const item = data.find((i) => i.name === name);
-            return `${name} ${item.value}% ${item.count}次`;
+            const item = pieData.find((d) => d.name === name);
+            if (!item) return name;
+            return `${name}  ${item.count}次`;
           },
         },
-        series: [
-          {
-            type: "pie",
-            radius: "60%",
-            center: ["30%", "50%"],
-            label: {
-              show: false,
-            },
-            data: [
-              {
-                value: 40,
-                name: "四级预警",
-                count: 23,
-                itemStyle: { color: "#00C5FF" },
-              },
-              {
-                value: 32,
-                name: "三级预警",
-                count: 18,
-                itemStyle: { color: "#44FF9B" },
-              },
-              {
-                value: 18,
-                name: "二级预警",
-                count: 10,
-                itemStyle: { color: "#FF8746" },
-              },
-              {
-                value: 10,
-                name: "一级预警",
-                count: 6,
-                itemStyle: { color: "#FF4D4F" },
-              },
-            ],
-          },
-        ],
-      };
-      this.charts.warningLevelChart.setOption(option);
+        series: [{
+          type: "pie",
+          radius: "60%",
+          center: ["30%", "50%"],
+          label: { show: false },
+          data: pieData,
+        }],
+      }, true);
     },
 
-    // 初始化TOP预警类型图表
-    initTopWarningTypeChart() {
-      const topWarningTypeChart = document.getElementById(
-        "topWarningTypeChart"
-      );
-      if (!topWarningTypeChart) return;
+    renderLevelChart(byLevel) {
+      const colorMap = {
+        一级预警: "#FF4D4F",
+        二级预警: "#FF8746",
+        三级预警: "#44FF9B",
+        四级预警: "#00C5FF",
+      };
+      const pieData = Object.entries(byLevel).map(([name, cnt]) => ({
+        name,
+        value: cnt,
+        count: cnt,
+        itemStyle: { color: colorMap[name] || "#999" },
+      }));
+      this.levelChartEmpty = pieData.length === 0 || pieData.every((d) => d.count === 0);
+      if (this.levelChartEmpty) return;
+      this.$nextTick(() => this.initWarningLevelChart(pieData));
+    },
 
-      this.charts.topWarningTypeChart = echarts.init(topWarningTypeChart);
-      const option = {
+    // ──────────────────────────── 预警类型横向柱状图 ─────────────────────────
+
+    initTopWarningTypeChart(categories, counts) {
+      const el = document.getElementById("topWarningTypeChart");
+      if (!el) return;
+      if (!this.charts.topWarningTypeChart) {
+        this.charts.topWarningTypeChart = echarts.init(el);
+      }
+      this.charts.topWarningTypeChart.setOption({
         backgroundColor: "transparent",
         tooltip: {
           trigger: "axis",
-          axisPointer: {
-            type: "shadow",
-          },
-          backgroundColor: "rgba(0, 19, 40, 0.8)",
-          borderColor: "rgba(0, 255, 255, 0.3)",
-          textStyle: {
-            color: "#00FFFF",
-          },
-        },
-        legend: {
-          data: ["预警数", "已完成"],
-          top: 0,
-          right: 0,
-          textStyle: {
-            color: "#7EAEE5",
+          axisPointer: { type: "shadow" },
+          backgroundColor: "rgba(0,19,40,0.8)",
+          borderColor: "rgba(0,255,255,0.3)",
+          textStyle: { color: "#00FFFF" },
+          formatter: (params) => {
+            const p = params[0];
+            return `${p.name}<br/>预警数: <b>${p.value}</b>`;
           },
         },
-        grid: {
-          left: "3%",
-          right: "4%",
-          bottom: "3%",
-          top: "40px",
-          containLabel: true,
-        },
+        grid: { left: "3%", right: "4%", bottom: "3%", top: "10px", containLabel: true },
         xAxis: {
           type: "value",
-          axisTick: {
-            show: false,
-          },
-          axisLine: {
-            show: false,
-          },
-          axisLabel: {
-            color: "#7EAEE5",
-          },
-          splitLine: {
-            lineStyle: {
-              color: "rgba(35, 88, 148, 0.3)",
-              type: "dashed",
-            },
-          },
+          min: 0,
+          minInterval: 1,
+          axisTick: { show: false },
+          axisLine: { show: false },
+          axisLabel: { color: "#7EAEE5" },
+          splitLine: { lineStyle: { color: "rgba(35,88,148,0.3)", type: "dashed" } },
         },
         yAxis: {
           type: "category",
-          data: ["车辆识别", "烟火", "人员异常", "室内人群聚集", "人员闯入"],
-          axisTick: {
-            show: false,
-          },
-          axisLine: {
-            lineStyle: {
-              color: "rgba(0, 255, 255, 0.3)",
-            },
-          },
-          axisLabel: {
-            color: "#7EAEE5",
-          },
+          data: categories,
+          axisTick: { show: false },
+          axisLine: { lineStyle: { color: "rgba(0,255,255,0.3)" } },
+          axisLabel: { color: "#7EAEE5" },
         },
-        series: [
-          {
-            name: "预警数",
-            type: "bar",
-            stack: "total",
-            data: [35, 28, 22, 15, 8],
-            itemStyle: {
-              color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                { offset: 0, color: "#00FFFF" },
-                { offset: 1, color: "#207FFF" },
-              ]),
-            },
-            barWidth: "60%",
+        series: [{
+          name: "预警数",
+          type: "bar",
+          data: counts,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: "#00FFFF" },
+              { offset: 1, color: "#207FFF" },
+            ]),
           },
-          {
-            name: "已完成",
-            type: "bar",
-            stack: "total",
-            data: [15, 12, 8, 5, 3],
-            itemStyle: {
-              color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                { offset: 0, color: "#44FF9B" },
-                { offset: 1, color: "#00C5FF" },
-              ]),
-            },
-          },
-        ],
-      };
-      this.charts.topWarningTypeChart.setOption(option);
+          barWidth: "60%",
+          barMinHeight: 2,
+        }],
+      }, true);
     },
 
-    // 更新趋势图配置
-    updateTrendChart(timeType) {
-      if (!this.charts.trendChart) return;
-
-      const { xData, yData } = this.generateTimeData(timeType);
-
-      const option = {
-        xAxis: {
-          data: xData,
-          axisLabel: {
-            rotate:
-              timeType === "month" ||
-              (timeType === "custom" && xData.length > 10)
-                ? 45
-                : 0,
-            interval:
-              timeType === "month" ||
-              (timeType === "custom" && xData.length > 15)
-                ? "auto"
-                : 0,
-          },
-        },
-        series: [{ data: yData }],
-      };
-
-      this.charts.trendChart.setOption(option);
+    renderTypeChart(byType) {
+      const categories = byType.map((t) => t.name);
+      const counts = byType.map((t) => t.count);
+      this.typeChartEmpty = counts.length === 0 || counts.every((v) => v === 0);
+      if (this.typeChartEmpty) return;
+      this.$nextTick(() => this.initTopWarningTypeChart(categories, counts));
     },
 
-    // 处理时间范围变化
+    // ──────────────────────────── 交互处理 ──────────────────────────────────
+
     handleTimeRangeChange(value) {
       this.timeRange = value;
       if (value === "custom") {
         this.datePickerDialogVisible = true;
       } else {
-        this.updateTrendChart(value);
-        this.refreshData();
+        this.fetchStatistics();
       }
     },
 
-    // 处理自定义日期范围变化
+    onCustomClick() {
+      if (this.timeRange === "custom") {
+        this.datePickerDialogVisible = true;
+      }
+    },
+
     handleCustomDateChange() {
       if (this.customDateRange && this.customDateRange.length === 2) {
         this.datePickerDialogVisible = false;
-        this.updateTrendChart("custom");
-        this.refreshData();
+        this.fetchStatistics();
       }
     },
 
-    // 取消日期选择
     cancelDatePicker() {
       this.datePickerDialogVisible = false;
-      // 如果没有选择过自定义日期，则回到之前的选择
       if (!this.customDateRange || this.customDateRange.length !== 2) {
         this.timeRange = "today";
       }
     },
 
-    // 刷新数据
-    refreshData() {
+    async refreshData() {
       if (this.refreshing) return;
-
       this.refreshing = true;
       const loadingInstance = this.$loading({
         lock: true,
         text: "正在刷新数据...",
         spinner: "el-icon-loading",
-        background: "rgba(0, 0, 0, 0.7)",
+        background: "rgba(0,0,0,0.7)",
       });
-
-      // 模拟数据刷新
-      setTimeout(() => {
-        // 更新统计数据
-        this.statisticsData = {
-          totalCount: Math.floor(Math.random() * 30) + 30,
-          successRate: (Math.random() * 20 + 70).toFixed(2),
-          processedCount: Math.floor(Math.random() * 20) + 5,
-        };
-
-        // 更新图表数据
-        this.updateTrendChart(this.timeRange);
-        this.initWarningStatusChart();
-        this.initWarningLevelChart();
-        this.initTopWarningTypeChart();
-
-        // 更新设备数据
-        this.deviceWarnings = this.deviceWarnings
-          .map((device) => {
-            const count = Math.floor(Math.random() * 40) + 5;
-            return {
-              ...device,
-              count,
-              percent: Math.floor((count / 50) * 100),
-            };
-          })
-          .sort((a, b) => b.count - a.count);
-
+      try {
+        await this.fetchStatistics();
+        this.$message.success("数据刷新成功");
+      } finally {
         loadingInstance.close();
         this.refreshing = false;
-        this.$message.success("数据刷新成功");
-      }, 1500);
+      }
     },
 
-    // 导出数据
     exportData() {
+      if (!this.deviceWarnings.length) {
+        this.$message.warning("暂无设备数据可导出");
+        return;
+      }
       this.exportLoading = true;
-
-      // 准备要导出的数据
-      const headers = ["设备名称", "预警数量", "百分比"];
-      const data = this.deviceWarnings.map((device) => [
-        device.name,
-        device.count,
-        device.percent + "%",
-      ]);
-
-      // 生成CSV内容
-      let csvContent = headers.join(",") + "\n";
-      data.forEach((row) => {
-        csvContent += row.join(",") + "\n";
-      });
-
-      // 创建Blob对象
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-
-      // 创建下载链接
+      const headers = ["设备名称", "预警数量", "占比(%)"];
+      const rows = this.deviceWarnings.map((d) => [d.name, d.count, d.percent]);
+      let csv = headers.join(",") + "\n";
+      rows.forEach((r) => { csv += r.join(",") + "\n"; });
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-
-      // 设置下载属性
-      const timestamp = new Date().getTime();
-      const fileName = `预警统计数据_${timestamp}.csv`;
-
-      // 设置下载属性并触发下载
-      link.setAttribute("href", url);
-      link.setAttribute("download", fileName);
+      link.setAttribute("href", URL.createObjectURL(blob));
+      link.setAttribute("download", `预警统计数据_${Date.now()}.csv`);
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      // 完成下载后的处理
       this.exportLoading = false;
-      this.$message({
-        message: `数据已成功导出为: ${fileName}`,
-        type: "success",
-      });
+      this.$message.success(`数据已导出`);
     },
 
-    // 关闭导出对话框 - 可以保留但不再使用
-    handleCloseExportDialog() {
-      this.exportDialogVisible = false;
-      this.exportLoading = false;
-    },
-
-    // 获取总预警数
     getTotalWarnings() {
       return this.statisticsData.totalCount;
     },
@@ -745,7 +519,7 @@ export default {
           <el-radio-button label="week">周</el-radio-button>
           <el-radio-button label="month">月</el-radio-button>
           <el-radio-button label="year">年</el-radio-button>
-          <el-radio-button label="custom">自定义</el-radio-button>
+          <el-radio-button label="custom" @click.native="onCustomClick">自定义</el-radio-button>
         </el-radio-group>
       </div>
 
@@ -820,7 +594,7 @@ export default {
           <i class="el-icon-data-analysis"></i>
         </div>
         <div class="stat-info">
-          <div class="stat-title">预警准确率</div>
+          <div class="stat-title">预警处理率</div>
           <div class="stat-value">
             {{ statisticsData.successRate }}<span class="unit">%</span>
           </div>
@@ -844,8 +618,7 @@ export default {
         <div class="stat-info">
           <div class="stat-title">未处理预警数</div>
           <div class="stat-value">
-            {{ statisticsData.totalCount - statisticsData.processedCount
-            }}<span class="unit">个</span>
+            {{ statisticsData.pendingCount }}<span class="unit">个</span>
           </div>
         </div>
       </div>
@@ -866,7 +639,11 @@ export default {
         <el-col :span="12">
           <div class="panel-box panel-equal-height">
             <div class="panel-title">预警类型TOP5</div>
-            <div id="topWarningTypeChart" class="top-chart"></div>
+            <div v-show="!typeChartEmpty" id="topWarningTypeChart" class="top-chart"></div>
+            <div v-show="typeChartEmpty" class="empty-data-placeholder">
+              <i class="el-icon-s-data"></i>
+              <span>暂无类型数据</span>
+            </div>
           </div>
         </el-col>
       </el-row>
@@ -877,7 +654,11 @@ export default {
         <el-col :span="8">
           <div class="panel-box panel-bottom-equal-height">
             <div class="panel-title">预警状态</div>
-            <div id="warningStatusChart" class="status-chart"></div>
+            <div v-show="!statusChartEmpty" id="warningStatusChart" class="status-chart"></div>
+            <div v-show="statusChartEmpty" class="empty-data-placeholder">
+              <i class="el-icon-finished"></i>
+              <span>暂无状态数据</span>
+            </div>
           </div>
         </el-col>
 
@@ -885,7 +666,11 @@ export default {
         <el-col :span="8">
           <div class="panel-box panel-bottom-equal-height">
             <div class="panel-title">预警等级</div>
-            <div id="warningLevelChart" class="level-chart"></div>
+            <div v-show="!levelChartEmpty" id="warningLevelChart" class="level-chart"></div>
+            <div v-show="levelChartEmpty" class="empty-data-placeholder">
+              <i class="el-icon-pie-chart"></i>
+              <span>暂无等级数据</span>
+            </div>
           </div>
         </el-col>
 
@@ -893,35 +678,27 @@ export default {
         <el-col :span="8">
           <div class="panel-box panel-bottom-equal-height">
             <div class="panel-title">设备预警数量TOP10</div>
-            <div class="device-tabs">
-              <div
-                v-for="(label, key) in {
-                  day: '本日',
-                  week: '本周',
-                  month: '本月',
-                }"
-                :key="key"
-                :class="['tab-item', { active: deviceTimeRange === key }]"
-                @click="deviceTimeRange = key"
-              >
-                {{ label }}
-              </div>
-            </div>
             <div class="device-top-list">
-              <div
-                v-for="(device, index) in deviceWarnings"
-                :key="index"
-                class="device-item"
-              >
-                <span class="device-rank">{{ index + 1 }}</span>
-                <span class="device-name">{{ device.name }}</span>
-                <div class="device-progress">
-                  <div
-                    class="progress-bar"
-                    :style="{ width: device.percent + '%' }"
-                  ></div>
+              <template v-if="deviceWarnings.length > 0">
+                <div
+                  v-for="(device, index) in deviceWarnings"
+                  :key="index"
+                  class="device-item"
+                >
+                  <span class="device-rank">{{ index + 1 }}</span>
+                  <span class="device-name">{{ device.name }}</span>
+                  <div class="device-progress">
+                    <div
+                      class="progress-bar"
+                      :style="{ width: device.percent + '%' }"
+                    ></div>
+                  </div>
+                  <span class="device-count">{{ device.count }}</span>
                 </div>
-                <span class="device-count">{{ device.count }}</span>
+              </template>
+              <div v-else class="empty-data-placeholder">
+                <i class="el-icon-video-camera-solid"></i>
+                <span>暂无设备数据</span>
               </div>
             </div>
           </div>
@@ -932,22 +709,16 @@ export default {
 </template>
 
 <style scoped>
-:root {
-  --panel-top-height: 35vh;
-  --panel-bottom-height: 33vh;
-}
-
 .visual-statistics {
+  width: 100%;
   height: 100%;
   background: linear-gradient(135deg, #001529 0%, #000b18 100%);
   color: #fff;
   padding: 16px;
-  position: relative;
-  width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
-  margin: 0;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* 顶部标题栏 */
@@ -959,7 +730,8 @@ export default {
   padding: 12px 20px;
   position: relative;
   border-bottom: 1px solid #002140;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .page-title {
@@ -1268,7 +1040,7 @@ export default {
   border: 1px solid rgba(35, 88, 148, 0.5);
   border-radius: 4px;
   padding: 15px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   position: relative;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -1290,12 +1062,14 @@ export default {
 }
 
 .panel-equal-height {
-  height: var(--panel-top-height);
+  flex: 1 1 0;
+  min-height: 0;
   overflow: hidden;
 }
 
 .panel-bottom-equal-height {
-  height: var(--panel-bottom-height);
+  flex: 1 1 0;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -1303,8 +1077,9 @@ export default {
 .statistics-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
-  gap: 20px;
+  margin-bottom: 12px;
+  gap: 16px;
+  flex-shrink: 0;
 }
 
 .stat-card {
@@ -1378,9 +1153,31 @@ export default {
   margin-left: 2px;
 }
 
-/* 主内容区域 */
+/* 主内容区域：flex 伸展填满剩余空间 */
 .main-content {
   padding: 0;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 两行 el-row 各占一半 */
+.main-content > .el-row {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* el-col 也要撑满行高 */
+.main-content > .el-row > .el-col {
+  height: 100%;
+}
+
+/* panel-box 在 flex 行内撑满 */
+.main-content .panel-box {
+  height: 100%;
+  margin-bottom: 0;
 }
 
 /* 图表样式 */
@@ -1395,39 +1192,13 @@ export default {
 }
 
 /* 设备TOP10列表 */
-.device-tabs {
-  display: flex;
-  margin-bottom: 15px;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-}
-
-.tab-item {
-  padding: 8px 12px;
-  cursor: pointer;
-  color: #7eaee5;
-  font-size: 13px;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.tab-item.active {
-  color: #00ffff;
-}
-
-.tab-item.active::after {
-  content: "";
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: #00ffff;
-}
-
 .device-top-list {
-  height: calc(100% - 50px);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 10px 0;
+  display: flex;
+  flex-direction: column;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
@@ -1500,7 +1271,7 @@ export default {
 
 /* 底部分区 */
 .bottom-section {
-  margin-top: 20px;
+  margin-top: 0 !important;
 }
 
 /* 响应式调整 */
@@ -1651,5 +1422,23 @@ export default {
 /* 解决选择时间界面被覆盖的问题 */
 ::v-deep .date-picker-dropdown {
   position: absolute !important;
+}
+
+.empty-data-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(126, 174, 229, 0.4);
+  padding: 20px 0;
+}
+.empty-data-placeholder i {
+  font-size: 32px;
+}
+.empty-data-placeholder span {
+  font-size: 12px;
+  letter-spacing: 1px;
 }
 </style>

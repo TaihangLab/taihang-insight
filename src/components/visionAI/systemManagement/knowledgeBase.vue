@@ -461,7 +461,7 @@ export default {
     viewKnowledgeDetail(knowledge) {
       // 跳转到知识库详情页，传递知识库信息
       this.$router.push({
-        path: '/system/knowledge-detail',
+        path: '/systemManage/knowledgeBaseDetail',
         query: {
           id: knowledge.id,
           name: knowledge.name

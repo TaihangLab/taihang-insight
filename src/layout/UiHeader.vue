@@ -18,6 +18,7 @@
       </div>
 
       <!-- 用户信息 - 仅在已登录时显示 -->
+      <!--
       <el-dropdown v-if="isLoggedIn" trigger="click" @command="handleCommand">
         <div class="user-info">
           <el-avatar :size="32" icon="el-icon-user" class="user-avatar"></el-avatar>
@@ -39,6 +40,7 @@
           </el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
+      -->
     </div>
 
     <!-- 修改密码对话框 -->
@@ -54,9 +56,10 @@ export default {
   name: "UiHeader",
   components: { changePasswordDialog },
   data() {
+    const user = userService.getUser() || {};
     return {
-      username: userService.getUser().username || '访客',
-      isLoggedIn: userService.getToken() != null,
+      // username: (user.username != null ? user.username : '') || '访客',
+      // isLoggedIn: userService.getToken() != null,
       currentTime: '',
       currentMenuName: '',
       currentPageName: ''
@@ -100,11 +103,6 @@ export default {
         '/skillManage/multimodalLlmSkills': { menu: '技能管理', page: '多模态大模型技能' },
         '/skillManage/multimodalReview': { menu: '技能管理', page: '多模态大模型复判' },
         '/systemManage/appSettings': { menu: '系统管理', page: '应用设置' },
-        '/systemManage/userManagement': { menu: '系统管理', page: '用户管理' },
-        '/systemManage/roleManagement': { menu: '系统管理', page: '角色管理' },
-        '/systemManage/tenantManagement': { menu: '系统管理', page: '租户管理' },
-        '/systemManage/departmentManagement': { menu: '系统管理', page: '部门管理' },
-        '/systemManage/positionManagement': { menu: '系统管理', page: '岗位管理' },
         '/systemManage/knowledgeBase': { menu: '系统管理', page: '知识库管理' },
         '/visualCenter': { menu: '可视中心', page: '可视中心首页' },
         '/algorithmInference': { menu: '可视中心', page: '算法推理平台' },
@@ -120,32 +118,34 @@ export default {
         this.currentPageName = '';
       }
     },
-    handleCommand(command) {
-      switch (command) {
-        case 'profile':
-          this.$router.push('/systemManage/profile');
-          break;
-        case 'password':
-          this.$refs.changePasswordDialog.openDialog();
-          break;
-        case 'logout':
-          this.logout();
-          break;
-      }
-    },
-    logout() {
-      userService.clearToken();
+    // handleCommand(command) {
+    //   switch (command) {
+    //     case 'profile':
+    //       this.$router.push('/systemManage/profile');
+    //       break;
+    //     case 'password':
+    //       this.$refs.changePasswordDialog.openDialog();
+    //       break;
+    //     case 'logout':
+    //       this.logout();
+    //       break;
+    //   }
+    // },
+    // logout() {
+    //   userService.clearToken();
+    //   // this.isLoggedIn = false;
+    //   this.username = '访客';
 
-      this.$message({
-        showClose: true,
-        message: '已安全退出登录',
-        type: 'success'
-      });
+    //   this.$message({
+    //     showClose: true,
+    //     message: '已安全退出登录',
+    //     type: 'success'
+    //   });
 
-      setTimeout(() => {
-        this.$router.push('/login');
-      }, 500);
-    }
+    //   setTimeout(() => {
+    //     this.$router.push('/');
+    //   }, 500);
+    // }
   }
 }
 </script>
@@ -228,7 +228,7 @@ export default {
   border: 2px solid var(--primary-color-light);
 }
 
-.username {
+/* .username {
   font-size: var(--font-size-base);
   color: var(--text-primary);
   font-weight: var(--font-weight-medium);
@@ -236,7 +236,7 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
+} */
 
 .user-info i.el-icon-arrow-down {
   font-size: 12px;

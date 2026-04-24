@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="page-container">
     <div class="camera-management">
       <!-- 左侧分类卡片 -->
@@ -97,9 +97,10 @@
               <template slot-scope="{ row }">
                 <div v-if="row.skill && row.skill !== '-'" class="skill-tags-container">
                   <div v-for="(skillName, idx) in row.skill.split(',')" :key="idx" class="skill-tag-item">
-                    <span class="skill-name" :style="{color: row.config && row.config[skillName.trim()] && row.config[skillName.trim()].status ? '#67C23A' : '#909399'}">
-                      {{ skillName.trim() }}
-                    </span>
+                    <i v-if="row.llm_skill_names && row.llm_skill_names.includes(skillName.trim())"
+                       class="el-icon-magic-stick" style="color: #E6A23C; margin-right: 4px; font-size: 13px;" title="大模型技能"></i>
+                    <span v-else class="skill-type-badge skill-type-ai" title="视觉技能">AI</span>
+                    <span class="skill-name">{{ skillName.trim() }}</span>
                   </div>
                 </div>
                 <span v-else>-</span>
@@ -163,7 +164,7 @@
                   共 {{ skillOptionsTotal }} 个{{ skillTotalPages > 1 ? ' | ' + skillCurrentPage + '/' + skillTotalPages + ' 页' : '' }}
                 </span>
                 <el-pagination
-                  v-if="skillOptionsTotal > skillPageSize"
+                  v-if="skillOptionsTotal > 12"
                   :current-page.sync="skillCurrentPage"
                   :page-size.sync="skillPageSize"
                   :page-sizes="[12, 24, 36, 48]"
@@ -243,6 +244,24 @@
                       {{ getAlertLevelName(task.alert_level) }}
                     </el-tag>
                   </div>
+                </div>
+                <!-- 推流健康状态 -->
+                <div v-if="task.config && task.config.rtsp_streaming && task.config.rtsp_streaming.enabled" class="task-streaming-health">
+                  <div class="streaming-indicator">
+                    <span class="streaming-label">推流状态：</span>
+                    <el-tag size="mini" 
+                      :type="getStreamingHealthType(streamingHealthMap[task.id])"
+                      effect="dark">
+                      <i :class="getStreamingHealthIcon(streamingHealthMap[task.id])"></i>
+                      {{ getStreamingHealthText(streamingHealthMap[task.id]) }}
+                    </el-tag>
+                  </div>
+                  <el-tooltip v-if="streamingHealthMap[task.id] && streamingHealthMap[task.id].message" 
+                    :content="streamingHealthMap[task.id].message" placement="top">
+                    <i class="el-icon-warning-outline streaming-error-icon" 
+                       v-if="streamingHealthMap[task.id] && (streamingHealthMap[task.id].state === 'failed' || streamingHealthMap[task.id].state === 'degraded')"
+                       style="color: #E6A23C; margin-left: 6px; cursor: help;"></i>
+                  </el-tooltip>
                 </div>
               </el-card>
             </div>
@@ -776,8 +795,11 @@
               v-for="skill in deviceDetailData.skill_names"
               :key="skill"
               effect="plain"
-              type="success"
+              :type="deviceDetailData.llm_skill_names && deviceDetailData.llm_skill_names.includes(skill) ? 'warning' : 'success'"
               class="skill-tag">
+              <i v-if="deviceDetailData.llm_skill_names && deviceDetailData.llm_skill_names.includes(skill)"
+                 class="el-icon-magic-stick" style="margin-right: 4px;"></i>
+              <span v-else class="skill-type-badge skill-type-ai" style="margin-right: 4px;">AI</span>
               {{ skill }}
             </el-tag>
           </div>
