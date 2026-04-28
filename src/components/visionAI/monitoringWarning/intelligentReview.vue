@@ -97,7 +97,7 @@
 
       <!-- 任务列表 -->
       <el-table
-        :data="filteredTaskList"
+        :data="pagedTaskList"
         v-loading="tableLoading"
         style="width: 100%; margin-top: 20px;"
         :row-class-name="tableRowClassName"
@@ -165,14 +165,14 @@
 
       <!-- 分页 -->
       <el-pagination
-        v-if="total > 0"
+        v-if="filteredTaskList.length > 0"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         :current-page="currentPage"
         :page-sizes="[10, 20, 50, 100]"
         :page-size="pageSize"
         layout="total, sizes, prev, pager, next, jumper"
-        :total="total"
+        :total="filteredTaskList.length"
         style="margin-top: 20px; text-align: right;"
       >
       </el-pagination>
@@ -365,6 +365,10 @@ export default {
 
       return list;
     },
+    pagedTaskList() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      return this.filteredTaskList.slice(start, start + this.pageSize);
+    },
     // 选中的技能详情
     selectedSkillDetail() {
       if (!this.configForm.review_skill_class_id) return null;
@@ -502,12 +506,12 @@ export default {
 
     // 搜索
     handleSearch() {
-      // 搜索是响应式的，无需额外处理
+      this.currentPage = 1;
     },
 
     // 过滤变化
     handleFilterChange() {
-      // 过滤是响应式的，无需额外处理
+      this.currentPage = 1;
     },
 
     // 刷新数据
@@ -617,6 +621,7 @@ export default {
     // 分页
     handleSizeChange(val) {
       this.pageSize = val;
+      this.currentPage = 1;
     },
     handleCurrentChange(val) {
       this.currentPage = val;
@@ -629,7 +634,11 @@ export default {
 .intelligent-review-container {
   padding: 20px;
   background-color: #f5f7fa;
-  min-height: calc(100vh - 60px);
+  height: calc(100vh - 60px);
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* 页面头部 */
@@ -924,4 +933,3 @@ export default {
   }
 }
 </style>
-
