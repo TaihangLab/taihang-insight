@@ -2361,8 +2361,9 @@ export default {
   display: flex;
   gap: 16px;
   padding: 16px;
-  align-items: flex-start;
+  align-items: stretch;
   height: 100%;
+  box-sizing: border-box;
 }
 
 /* 右侧容器包装器 */
@@ -2371,6 +2372,10 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
+  min-height: 0;
+  padding-bottom: 0;
+  box-sizing: border-box;
 }
 
 
@@ -2391,9 +2396,13 @@ export default {
 }
 
 .table-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e40af;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #303133;
+  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .table-actions {
@@ -2662,9 +2671,13 @@ export default {
 }
 
 .detail-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e40af;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #303133;
+  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .header-actions {
@@ -2693,6 +2706,14 @@ export default {
   padding-bottom: 10px!important;
 }
 
+/* 主内容区分页距离底部固定 24px（不影响弹窗内分页） */
+.table-container-wrapper > .archives-pagination {
+  position: static;
+  margin-top: auto !important;
+  padding-top: 12px;
+  padding-bottom: 24px !important;
+}
+
 .archives-pagination >>> .el-pagination__total {
   padding-top: 3px;
 }
@@ -2717,11 +2738,11 @@ export default {
 }
 
 .archives-pagination >>> .el-pagination .el-pager li.active {
-  background: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
   color: white !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3);
 }
 
 .archives-pagination >>> .el-pagination button {
@@ -2913,6 +2934,26 @@ export default {
 .edit-archive-btn {
   width: 100%;
   border-radius: 4px;
+}
+
+.detail-header .el-button--primary,
+.add-btn,
+.edit-archive-btn {
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+  color: #FFFFFF !important;
+}
+
+.detail-header .el-button--primary:hover,
+.add-btn:hover,
+.edit-archive-btn:hover,
+.detail-header .el-button--primary:focus,
+.add-btn:focus,
+.edit-archive-btn:focus {
+  background: #3D85FF !important;
+  border-color: #3D85FF !important;
+  color: #FFFFFF !important;
+  box-shadow: none !important;
 }
 
 /* 弹框样式 - 与 warningManagement.vue 一致 */

@@ -13,10 +13,12 @@
       </div>
     </div>
 
-    <!-- 折叠按钮 -->
+    <!-- 折叠按钮（临时隐藏，保留代码便于后续恢复） -->
+    <!--
     <div class="collapse-trigger" @click="toggleCollapse">
       <i :class="isCollapsed ? 'el-icon-s-unfold' : 'el-icon-s-fold'"></i>
     </div>
+    -->
 
     <!-- 菜单区域 -->
     <el-menu
@@ -25,9 +27,9 @@
       :collapse-transition="false"
       :unique-opened="true"
       class="sidebar-menu"
-      background-color="#FFFFFF"
-      text-color="#1F2937"
-      active-text-color="#4185F7"
+      background-color="#10233F"
+      text-color="#FFFFFF"
+      active-text-color="#FFFFFF"
       router
     >
       <!-- 监控预警 -->
@@ -157,8 +159,8 @@ export default {
 .side-menu-container {
   width: var(--sidebar-width);
   height: 100vh;
-  background-color: var(--bg-primary);
-  border-right: 1px solid var(--border-color);
+  background-color: #10233f;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   transition: width var(--transition-base);
@@ -175,19 +177,21 @@ export default {
 
 /* Logo 区域 */
 .logo-section {
-  min-height: 88px;
-  height: auto;
+  min-height: 148px;
+  height: 148px;
   display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  padding: var(--spacing-base);
-  border-bottom: 1px solid var(--border-color);
-  background-color: var(--bg-primary);
-  gap: var(--spacing-base);
+  padding: 12px 10px;
+  border-bottom: none;
+  background-color: #10233f;
+  gap: 8px;
 }
 
 .logo-img {
-  height: 52px;
-  width: auto;
+  width: 46px;
+  height: 46px;
   transition: all var(--transition-base);
   flex-shrink: 0;
 }
@@ -202,15 +206,19 @@ export default {
 .logo-text-container {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
   flex: 1;
+  justify-content: center;
   min-width: 0;
+  text-align: center;
 }
 
 /* 太行·慧眼横排文字 */
 .brand-row {
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
 .brand-name-text {
@@ -223,17 +231,17 @@ export default {
 }
 
 .system-title {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
-  line-height: 1.3;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
   white-space: nowrap;
 }
 
 .system-subtitle {
   font-size: 11px;
-  color: var(--text-secondary);
-  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.2;
   white-space: nowrap;
 }
 
@@ -243,15 +251,15 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
+  background-color: #10233f;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: all var(--transition-base);
 }
 
 .collapse-trigger:hover {
-  background-color: var(--primary-color-light);
-  color: var(--primary-color);
+  background-color: #1a6dff;
+  color: #ffffff;
 }
 
 .collapse-trigger i {
@@ -265,6 +273,9 @@ export default {
   border-right: none;
   overflow-y: auto;
   overflow-x: hidden;
+  background-color: #10233f !important;
+  padding-top: 24px;
+  box-sizing: border-box;
 }
 
 /* 滚动条样式 */
@@ -288,66 +299,72 @@ export default {
 /* 菜单项样式 */
 .sidebar-menu >>> .el-submenu__title,
 .sidebar-menu >>> .el-menu-item {
-  height: var(--menu-item-height);
-  line-height: var(--menu-item-height);
-  font-size: var(--font-size-base);
-  color: var(--text-primary);
-  padding-left: var(--spacing-lg) !important;
+  height: 44px;
+  line-height: 44px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff !important;
+  padding-left: 16px !important;
+  margin: 0 8px;
+  border-radius: 4px;
   transition: all var(--transition-base);
 }
 
 /* 图标样式 */
 .menu-icon {
-  font-size: var(--menu-icon-size);
-  margin-right: var(--menu-icon-gap);
-  color: var(--text-secondary);
+  font-size: 16px;
+  margin-right: 10px;
+  color: #ffffff;
   transition: color var(--transition-base);
 }
 
 /* 悬停效果 */
 .sidebar-menu >>> .el-submenu__title:hover,
 .sidebar-menu >>> .el-menu-item:hover {
-  background-color: var(--bg-secondary) !important;
+  background-color: #1a6dff !important;
+  color: #ffffff !important;
 }
 
 .sidebar-menu >>> .el-submenu__title:hover .menu-icon,
 .sidebar-menu >>> .el-menu-item:hover i {
-  color: var(--primary-color);
+  color: #ffffff;
 }
 
 /* 激活状态 */
 .sidebar-menu >>> .el-menu-item.is-active {
-  background-color: var(--primary-color-light) !important;
-  color: var(--primary-color) !important;
-  font-weight: var(--font-weight-semibold);
+  background-color: #1a6dff !important;
+  color: #ffffff !important;
+  font-weight: 700;
   position: relative;
 }
 
 .sidebar-menu >>> .el-menu-item.is-active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background-color: var(--primary-color);
+  display: none;
 }
 
 .sidebar-menu >>> .el-menu-item.is-active i {
-  color: var(--primary-color);
+  color: #ffffff;
 }
 
 /* 子菜单项样式 */
 .sidebar-menu >>> .el-menu--inline .el-menu-item {
-  height: 48px;
-  line-height: 48px;
-  padding-left: calc(var(--spacing-lg) + var(--submenu-indent)) !important;
-  font-size: var(--font-size-sm);
+  height: 40px;
+  line-height: 40px;
+  padding-left: 56px !important;
+  font-size: 14px;
+  font-weight: 700;
+  margin: 4px 8px;
+  border-radius: 4px;
+}
+
+/* 三级标题相对二级标题再错开一个字符（14px） */
+.sidebar-menu >>> .el-menu--inline .el-submenu .el-menu-item {
+  padding-left: 70px !important;
 }
 
 /* 展开的子菜单标题 */
 .sidebar-menu >>> .el-submenu.is-opened > .el-submenu__title {
-  background-color: var(--bg-secondary);
+  background-color: #10233f;
 }
 
 /* 折叠状态样式 */
@@ -377,11 +394,11 @@ export default {
 /* 箭头图标 */
 .sidebar-menu >>> .el-submenu__icon-arrow {
   font-size: 12px;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .sidebar-menu >>> .el-submenu.is-opened > .el-submenu__title .el-submenu__icon-arrow {
-  color: var(--primary-color);
+  color: #ffffff;
 }
 </style>
 
