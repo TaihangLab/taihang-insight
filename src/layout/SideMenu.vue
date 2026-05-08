@@ -2,14 +2,10 @@
   <div class="side-menu-container" :class="{ collapsed: isCollapsed }">
     <!-- Logo 区域 -->
     <div class="logo-section">
-      <img src="../../static/logo.png" alt="Logo" class="logo-img" v-if="!isCollapsed"/>
-      <img src="../../static/logo.png" alt="Logo" class="logo-img-small" v-else/>
+      <img src="../../static/images/logo.png" alt="Logo" class="logo-img" v-if="!isCollapsed"/>
+      <img src="../../static/images/logo.png" alt="Logo" class="logo-img-small" v-else/>
       <div class="logo-text-container" v-if="!isCollapsed">
-        <div class="brand-row">
-          <span class="brand-name-text">太行·慧眼</span>
-        </div>
-        <div class="system-title">太行视觉AI平台</div>
-        <div class="system-subtitle">洞察万象，识图于微</div>
+        <div class="system-title">AI算法平台</div>
       </div>
     </div>
 
@@ -181,17 +177,18 @@ export default {
   height: 148px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  padding: 12px 10px;
+  padding: 44px 10px 12px;
   border-bottom: none;
   background-color: #10233f;
-  gap: 8px;
+  gap: 0;
 }
 
 .logo-img {
   width: 46px;
   height: 46px;
+  margin-bottom: 12px;
   transition: all var(--transition-base);
   flex-shrink: 0;
 }
@@ -207,9 +204,9 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  flex: 1;
-  justify-content: center;
+  gap: 0;
+  flex: none;
+  justify-content: flex-start;
   min-width: 0;
   text-align: center;
 }
@@ -234,7 +231,7 @@ export default {
   font-size: 20px;
   font-weight: 700;
   color: #ffffff;
-  line-height: 1.2;
+  line-height: 1;
   white-space: nowrap;
 }
 
