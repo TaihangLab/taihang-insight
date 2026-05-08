@@ -117,7 +117,7 @@
 }
 
 /* 科技感按钮样式 - 与 camera.vue 一致 */
-.management-page-container .el-button,
+/* .management-page-container .el-button,
 .management-page-container >>> .el-button {
   height: 28px !important;
   padding: 4px 12px !important;
@@ -126,10 +126,10 @@
   font-weight: 500 !important;
   transition: all 0.3s ease !important;
   margin: 0 2px !important;
-}
+} */
 
 /* 专门针对表格中的操作按钮进一步缩小 */
-.management-page-container .el-table .el-button,
+/* .management-page-container .el-table .el-button,
 .management-page-container >>> .el-table .el-button {
   height: 24px !important;
   padding: 2px 8px !important;
@@ -139,10 +139,10 @@
   transition: all 0.3s ease !important;
   margin: 0 1px !important;
   min-width: 50px !important;
-}
+} */
 
 /* 卡片视图中的按钮样式 - 小按钮一行显示 */
-.management-page-container .stream-card-actions .el-button,
+/* .management-page-container .stream-card-actions .el-button,
 .management-page-container .proxy-card-actions .el-button,
 .management-page-container >>> .stream-card-actions .el-button,
 .management-page-container >>> .proxy-card-actions .el-button {
@@ -155,7 +155,7 @@
   margin: 0 !important;
   min-width: 60px !important;
   line-height: 1 !important;
-}
+} */
 
 /* 卡片视图区域添加滚动条 */
 .management-page-container .stream-cards,
@@ -187,7 +187,7 @@
   background: #a8a8a8 !important;
 }
 
-.management-page-container .el-button--primary,
+/* .management-page-container .el-button--primary,
 .management-page-container >>> .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
   border: none !important;
@@ -279,7 +279,7 @@
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 /* 输入框样式 */
 .management-page-container .el-input__inner,

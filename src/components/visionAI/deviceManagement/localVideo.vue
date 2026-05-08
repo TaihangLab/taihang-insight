@@ -302,10 +302,10 @@
       >
          <el-form-item label="推流地址">
            <el-input
-             :value="currentVideo && currentVideo.stream_id ? currentVideo.stream_id : '首次推流时自动生成'"
+             :value="`video_${currentVideo ? currentVideo.id : ''}`"
              disabled
            />
-           <span class="form-tip">首次推流自动生成随机ID，之后固定不变</span>
+           <span class="form-tip">推流ID固定为 video_视频ID，重启后地址不变</span>
          </el-form-item>
          <el-form-item label="推流帧率（可选）">
            <el-input-number
@@ -850,6 +850,7 @@ export default {
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
+  height: calc(100% - 330px);
 }
 
 .video-name-cell {

@@ -5,14 +5,14 @@
       <el-aside width="250px" class="device-tree-aside">
         <div class="custom-tree-header">
           <div class="header-title">
-            <i class="el-icon-video-camera"></i>
+            <!-- <i class="el-icon-video-camera"></i> -->
             <span>通道列表</span>
           </div>
           <div class="header-switch">
             <el-switch
               v-model="showRegion"
-              active-color="#3b82f6"
-              inactive-color="#10b981"
+              active-color="#1A6DFF"
+              inactive-color="#999999"
               active-text="行政区划"
               inactive-text="业务分组">
             </el-switch>
@@ -235,7 +235,10 @@
     <div class="warning-list">
       <div class="list-header">
         <div class="header-left">
-          <span>实时预警</span>
+          <div class="warning-header-title">
+            <!-- <i class="el-icon-bell"></i> -->
+            <span>实时预警</span>
+          </div>
           <div class="sse-status-indicator" :class="getSSEStatusClass()">
             <span class="status-dot"></span>
             <span class="status-text">{{ getSSEStatusText() }}</span>
@@ -319,11 +322,11 @@
       title="处理预警"
       :visible.sync="remarkDialogVisible"
       width="30%"
-      center
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       append-to-body
     >
+      <span slot="title" class="dialog-title-text">处理预警</span>
       <el-form :model="remarkForm" label-width="80px">
         <el-form-item label="处理意见" required>
           <el-input
@@ -342,7 +345,7 @@
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="saveRemark">确认处理</el-button>
-        <el-button type="success" @click="finishProcessing">结束处理</el-button>
+        <el-button class="secondary-action-btn" @click="finishProcessing">结束处理</el-button>
       </span>
     </el-dialog>
 
@@ -3177,8 +3180,8 @@ export default {
 <style scoped>
 /* 实时监控容器 - 科技感蓝色风格 */
 .realtime-monitoring-container {
-  height: calc(100vh - 60px);
-  max-height: calc(100vh - 60px);
+  height: 100%;
+  max-height: 100%;
   background: #f5f5f5;
   padding: 0;
   overflow: hidden;
@@ -3186,8 +3189,8 @@ export default {
 
 /* 主容器 - 科技感设计 */
 .main-container {
-  height: calc(100vh - 60px);
-  max-height: calc(100vh - 60px);
+  height: 100%;
+  max-height: 100%;
   background: #f5f5f5;
   position: relative;
   padding: 16px;
@@ -3206,8 +3209,8 @@ export default {
   height: 100%;
   overflow: hidden;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
-  border-radius: 16px;
-  margin-right: 16px;
+  border-radius: 8px;
+  /* margin-right: 16px; */
   z-index: 10;
   position: relative;
   display: flex;
@@ -3224,13 +3227,13 @@ export default {
 
 .custom-tree-header {
   padding: 20px 16px;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  color: #1e40af;
+  background: #fff;
+  color: #333333;
   border-bottom: 1px solid rgba(59, 130, 246, 0.2);
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
   min-height: 80px;
   flex-shrink: 0;
-  border-radius: 16px 16px 0 0;
+  border-radius: 8px 8px 0 0;
   position: relative;
   overflow: hidden;
   text-shadow: none;
@@ -3253,33 +3256,72 @@ export default {
 .header-title i {
   font-size: 18px;
   margin-right: 8px;
+  color: #1A6DFF;
 }
 
 .header-title span {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
+  color: #333333;
+}
+
+.dialog-title-text {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333333;
 }
 
 .header-switch {
   margin-top: 6px;
+  display: flex;
+  align-items: center;
 }
 
 .header-switch /deep/ .el-switch__label {
-  color: #1e40af !important;
-  font-weight: 600 !important;
+  color: rgba(51, 51, 51, 0.8) !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
   text-shadow: none !important;
+  margin: 0 8px !important;
+  line-height: 24px !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
 }
 
 .header-switch /deep/ .el-switch__label.is-active {
-  color: #1e40af !important;
+  color: rgba(51, 51, 51, 0.8) !important;
+}
+
+.header-switch /deep/ .el-switch__core {
+  width: 48px !important;
+  height: 24px !important;
+  border-radius: 12px !important;
+  border: none !important;
+}
+
+.header-switch /deep/ .el-switch__core:after {
+  width: 18px !important;
+  height: 18px !important;
+  top: 3px !important;
+  left: 3px !important;
+}
+
+.header-switch /deep/ .el-switch.is-checked .el-switch__core:after {
+  left: 100% !important;
+  margin-left: -21px !important;
+}
+
+.header-switch /deep/ .el-switch.is-disabled .el-switch__core {
+  background-color: #cccccc !important;
+  border-color: #cccccc !important;
 }
 
 .custom-tree-container {
   flex: 1;
   overflow: auto;
-  height: calc(100% - 80px);
-  padding: 16px;
-  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
+  height: calc(100% - 40px);
+  padding: 16px 0 16px 16px;
+  background: #fff;
 }
 
 /* 覆盖树组件样式 */
@@ -3305,11 +3347,13 @@ export default {
 /* 简单修复树节点样式 */
 .device-tree-aside /deep/ .el-tree-node__content {
   height: auto !important;
-  min-height: 34px !important;
+  min-height: 36px !important;
   transition: all 0.2s ease !important;
   border-radius: 0 !important;
-  margin: 2px 0 !important;
-  padding: 0 8px !important;
+  padding-top: 0 !important;
+  padding-right: 8px !important;
+  padding-bottom: 0 !important;
+  box-sizing: border-box !important;
 }
 
 /* 修正文字显示不全问题 */
@@ -3317,14 +3361,22 @@ export default {
   font-size: 14px !important;
   line-height: 20px !important;
   transition: all 0.3s ease !important;
-  font-weight: 500 !important;
+  font-weight: normal !important;
+  color: rgba(51, 51, 51, 0.8) !important;
   width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
   display: flex !important;
   align-items: center !important;
-  padding: 0 !important;
+  gap: 0 !important;
+  padding: 8px 8px !important;
+  border-radius: 0 !important;
+  border-bottom: 2px solid #FFFFFF !important;
+  box-sizing: border-box !important;
 }
 
 .device-tree-aside /deep/ .flow-tree {
@@ -3337,7 +3389,7 @@ export default {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   position: relative;
   margin: 0 16px;
-  border-radius: 16px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -3386,8 +3438,8 @@ export default {
 .warning-aside {
   width: 270px;
   flex: none;
-  height: calc(100vh - 120px);
-  max-height: calc(100vh - 120px);
+  height: 100%;
+  max-height: 100%;
   position: relative;
   overflow: hidden;
 }
@@ -3396,7 +3448,7 @@ export default {
   width: 100%;
   height: 100%;
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -3429,7 +3481,7 @@ export default {
   align-content: flex-start !important;
   justify-content: space-between !important;
   gap: 4px !important;
-  padding: 4px !important;
+  padding: 16px !important;
 }
 
 .video-grid.four .video-cell {
@@ -3504,6 +3556,7 @@ export default {
   background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   transform: translateY(-2px);
+  color: white;
 }
 
 
@@ -3526,9 +3579,9 @@ export default {
   width: 100%;
   height: 100%;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  /* border-radius: 12px; */
+  /* box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); */
+  /* border: 1px solid rgba(59, 130, 246, 0.1); */
   padding: 16px;
   position: relative;
   display: grid;
@@ -3550,9 +3603,9 @@ export default {
 .video-grid.four {
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
-  padding: 2px;
-  background-color: #2c3e50;
+  gap: 4px;
+  padding: 16px;
+  /* background-color: #2c3e50; */
   width: 100%;
   height: 100%;
   box-sizing: border-box;
@@ -3562,7 +3615,7 @@ export default {
   grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
   gap: 4px; /* 九分屏保留间隙 */
-  padding: 4px 8px 4px 4px; /* 右侧增加padding */
+  padding: 16px !important; /* 四周留白与单分屏一致 */
 }
 
 /* 视频单元格 - 科技感设计 */
@@ -3744,12 +3797,12 @@ export default {
 
 /* 预警列表头部 - 科技感设计，调整高度 */
 .warning-list .list-header {
-  padding: 16px 20px;
-  font-size: 16px;
+  padding: 16px;
+  font-size: 18px;
   font-weight: 600;
   border-bottom: 1px solid rgba(59, 130, 246, 0.2);
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  color: #1e40af;
+  background: #fff;
+  color: #333333;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -3763,7 +3816,24 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 6px;
+}
+
+.warning-list .list-header .warning-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.warning-list .list-header .warning-header-title i {
+  font-size: 18px;
+  color: #1A6DFF;
+}
+
+.warning-list .list-header .warning-header-title > span {
+  color: #333333;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 /* SSE连接状态指示器 */
@@ -3846,7 +3916,8 @@ export default {
   padding: 12px;
   overflow-y: auto;
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  height: calc(100% - 60px);
+  max-height: calc(100% - 80px);
+  min-height: 200px;
 }
 
 /* 加载状态样式 */
@@ -4120,9 +4191,9 @@ export default {
 .warning-list .list-content .warning-item .warning-info .warning-detail .violation-type {
   color: #909399;
   font-weight: 500;
-  background: rgba(144, 147, 153, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
   font-size: 12px;
 }
 
@@ -4416,30 +4487,42 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
   font-size: 14px !important;
   line-height: 20px !important;
   transition: all 0.3s ease !important;
-  font-weight: 500 !important;
+  font-weight: normal !important;
+  color: rgba(51, 51, 51, 0.8) !important;
   width: 100% !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  margin: 2px 0 !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
   display: flex !important;
   align-items: center !important;
-  padding: 0 !important;
+  gap: 0 !important;
+  padding: 0 8px !important;
+  border-radius: 4px !important;
+  box-sizing: border-box !important;
 }
 
 /* 调整树节点高度，确保文本显示完整 */
 .device-tree-aside /deep/ .el-tree-node__content {
   height: auto !important;
-  min-height: 34px !important;
+  min-height: 36px !important;
   transition: all 0.2s ease !important;
   border-radius: 0 !important;
-  margin: 2px 0 !important;
-  padding: 0 8px !important;
+  padding-top: 0 !important;
+  padding-right: 8px !important;
+  padding-bottom: 0 !important;
+  box-sizing: border-box !important;
 }
 
-/* 修改树节点悬浮效果，使其更加轻微 */
+/* 修改树节点悬浮效果，确保不会出现背景色重叠 */
 .device-tree-aside /deep/ .el-tree-node__content:hover {
+  background-color: transparent !important;
+}
+
+.device-tree-aside /deep/ .el-tree-node:not(.is-current) > .el-tree-node__content:hover > .custom-tree-node {
   background-color: rgba(64, 158, 255, 0.1) !important;
-  transform: translateX(2px) !important;
 }
 
 /* 在自定义树容器中添加底部内边距，确保最后一项完全显示 */
@@ -4447,15 +4530,22 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
   flex: 1;
   overflow: auto;
   height: calc(100% - 80px);
-  padding-bottom: 20px !important; /* 添加底部内边距 */
+  padding: 16px 0 20px 16px !important; /* 添加底部内边距 */
 }
 
-/* 添加树节点选中样式以区分悬浮状态 */
-.device-tree-aside /deep/ .is-current>.el-tree-node__content {
-  background-color: rgba(64, 158, 255, 0.15) !important;
-  color: #409EFF !important;
+/* 添加树节点选中样式以区分悬浮状态，提升优先级，去除 transform 以防重叠 */
+.device-tree-aside /deep/ .el-tree-node.is-current > .el-tree-node__content {
+  background-color: transparent !important;
+}
+
+.device-tree-aside /deep/ .el-tree-node.is-current > .el-tree-node__content > .custom-tree-node {
+  background-color: rgba(26, 109, 255, 0.12) !important;
+  color: #1A6DFF !important;
   font-weight: bold !important;
-  transform: none !important;
+}
+
+.device-tree-aside /deep/ .el-tree-node.is-current > .el-tree-node__content:hover > .custom-tree-node {
+  background-color: rgba(26, 109, 255, 0.12) !important;
 }
 
 /* 修复图标显示 */
@@ -4471,9 +4561,9 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
 
 /* 确保文本容器有足够的空间 */
 .device-tree-aside /deep/ .custom-tree-node span {
-  line-height: 1.5 !important;
+  line-height: 20px !important;
   display: inline-block !important;
-  padding-bottom: 2px !important; /* 底部添加小间距 */
+  padding-bottom: 0 !important;
   vertical-align: middle !important;
 }
 
@@ -4629,8 +4719,9 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
 }
 
 .realtime-monitoring-container >>> .el-dialog__title {
-  color: #1f2937;
-  font-weight: 600;
+  color: #333333 !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
 }
 
 .realtime-monitoring-container >>> .el-dialog__close {
@@ -4677,6 +4768,21 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
   transform: translateY(-1px);
+}
+
+.realtime-monitoring-container >>> .secondary-action-btn {
+  background: rgba(26, 109, 255, 0.1) !important;
+  border: 1px solid rgba(26, 109, 255, 0.1) !important;
+  color: #1A6DFF !important;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.realtime-monitoring-container >>> .secondary-action-btn:hover,
+.realtime-monitoring-container >>> .secondary-action-btn:focus {
+  background: rgba(26, 109, 255, 0.05) !important;
+  border-color: rgba(26, 109, 255, 0.1) !important;
+  color: #1A6DFF !important;
 }
 
 .realtime-monitoring-container >>> .el-button--default {

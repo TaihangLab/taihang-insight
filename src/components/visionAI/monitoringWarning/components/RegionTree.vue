@@ -6,8 +6,9 @@
         ref="veTree"
         node-key="treeId"
         :height="treeHeight?treeHeight:'78vh'"
+        :indent="16"
         lazy
-        style="padding: 0 0 2rem 0.5rem"
+        style="padding: 0 0 2rem 16px"
         :load="loadNode"
         :data="treeData"
         :props="props"
@@ -16,12 +17,16 @@
       >
         <template class="custom-tree-node" v-slot:default="{ node, data }">
         <span class="custom-tree-node" >
-          <span v-if="node.data.type === 0 && chooseId !== node.data.deviceId" style="color: #409EFF" class="iconfont icon-bianzubeifen3"></span>
-          <span v-if="node.data.type === 0 && chooseId === node.data.deviceId" style="color: #c60135;" class="iconfont icon-bianzubeifen3"></span>
-          <span v-if="node.data.type === 1 && node.data.status === 'ON'" style="color: #409EFF" class="iconfont icon-shexiangtou2"></span>
-          <span v-if="node.data.type === 1 && node.data.status !== 'ON'" style="color: #808181" class="iconfont icon-shexiangtou2"></span>
-          <span style=" padding-left: 1px" v-if="node.data.deviceId !=='' && showCode" :title="node.data.deviceId">{{ node.label }}（编号：{{ node.data.deviceId }}）</span>
-          <span style=" padding-left: 1px" v-if="node.data.deviceId ==='' || !showCode" :title="node.data.deviceId">{{ node.label }}</span>
+          <i
+            v-if="node.data.type === 0"
+            class="el-icon-caret-right tree-arrow"
+            :class="{ expanded: node.expanded }"
+            @click.stop="toggleNode(node)"
+          ></i>
+          <span v-else class="tree-arrow-space"></span>
+          <!-- 移除了摄像头的 iconfont 标签，仅保留文字 -->
+          <span v-if="node.data.deviceId !=='' && showCode" :title="node.data.deviceId">{{ node.label }}（编号：{{ node.data.deviceId }}）</span>
+          <span v-if="node.data.deviceId ==='' || !showCode" :title="node.data.deviceId">{{ node.label }}</span>
         </span>
         </template>
       </vue-easy-tree>
@@ -42,6 +47,7 @@ export default {
     return {
       props: {
         label: "name",
+        isLeaf: "leaf"
       },
       showCode: false,
       chooseId: "",
@@ -57,7 +63,7 @@ export default {
             treeId: "",
             deviceId: "",
             name: "根资源组",
-            isLeaf: false,
+            leaf: false,
             type: 0
           }]);
         } else if (node.data.deviceId.length <= 8) {
@@ -104,12 +110,48 @@ export default {
       if (this.clickEvent) {
         this.clickEvent(data);
       }
+    },
+    toggleNode: function (node) {
+      if (!node) return;
+      if (node.expanded && typeof node.collapse === "function") {
+        node.collapse();
+        return;
+      }
+      if (!node.expanded && typeof node.expand === "function") {
+        node.expand();
+      }
     }
   },
 }
 </script>
 
 <style scoped>
+/deep/ .el-tree-node__expand-icon {
+  display: none !important;
+}
+
+.tree-arrow,
+.tree-arrow-space {
+  width: 12px;
+  min-width: 12px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 16px;
+}
+
+.tree-arrow {
+  cursor: pointer;
+  color: rgba(51, 51, 51, 0.8);
+  font-size: 14px;
+}
+
+.tree-arrow.expanded {
+  transform: rotate(90deg);
+}
+
 .custom-tree-node .el-radio__label {
   padding-left: 4px !important;
 }

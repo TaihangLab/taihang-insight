@@ -22,11 +22,11 @@
         <el-descriptions-item label="采样率">{{ info.audioSampleRate }}</el-descriptions-item>
       </el-descriptions>
     </div>
-
   </div>
 </template>
 
 <script>
+import { getMediaInfo as apiGetMediaInfo } from '@/api/mediaServer'
 
 export default {
   name: "mediaInfo",
@@ -43,22 +43,16 @@ export default {
   },
   methods: {
     getMediaInfo: function () {
-      this.$axios({
-        method: 'get',
-        url: `/api/server/media_server/media_info`,
-        params: {
-          app: this.app,
-          stream: this.stream,
-          mediaServerId: this.mediaServerId,
-        }
+      apiGetMediaInfo({
+        app: this.app,
+        stream: this.stream,
+        mediaServerId: this.mediaServerId,
       }).then((res)=> {
-        console.log(res.data.data);
-        if (res.data.code === 0) {
-          this.info = res.data.data
+        console.log(res.data);
+        if (res.code === 0) {
+          this.info = res.data
         }
-
       }).catch((error)=> {
-
         console.log(error);
       });
     },
@@ -70,18 +64,17 @@ export default {
         window.clearInterval(this.task);
         this.task = null;
       }
-
     },
     formatByteSpeed: function (){
       let bytesSpeed = this.info.bytesSpeed
-      let num = 1024.0 //byte
+      let num = 1024.0
       if (bytesSpeed < num) return bytesSpeed + ' B/S'
-      if (bytesSpeed < Math.pow(num, 2)) return (bytesSpeed / num).toFixed(2) + ' KB/S' //kb
+      if (bytesSpeed < Math.pow(num, 2)) return (bytesSpeed / num).toFixed(2) + ' KB/S'
       if (bytesSpeed < Math.pow(num, 3))
-        return (bytesSpeed / Math.pow(num, 2)).toFixed(2) + ' MB/S' //M
+        return (bytesSpeed / Math.pow(num, 2)).toFixed(2) + ' MB/S'
       if (bytesSpeed < Math.pow(num, 4))
-        return (bytesSpeed / Math.pow(num, 3)).toFixed(2) + ' G/S' //G
-      return (bytesSpeed / Math.pow(num, 4)).toFixed(2) + ' T/S' //T
+        return (bytesSpeed / Math.pow(num, 3)).toFixed(2) + ' G/S'
+      return (bytesSpeed / Math.pow(num, 4)).toFixed(2) + ' T/S'
     },
     formatAliveSecond: function (){
       let aliveSecond = this.info.aliveSecond

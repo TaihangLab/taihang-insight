@@ -27,6 +27,7 @@
 </template>
 
 <script>
+import { getMediaInfo } from '@/api/mediaServer'
 
 export default {
   name: "mediaInfo",
@@ -43,22 +44,16 @@ export default {
   },
   methods: {
     getMediaInfo: function () {
-      this.$axios({
-        method: 'get',
-        url: `/api/server/media_server/media_info`,
-        params: {
-          app: this.app,
-          stream: this.stream,
-          mediaServerId: this.mediaServerId,
-        }
+      getMediaInfo({
+        app: this.app,
+        stream: this.stream,
+        mediaServerId: this.mediaServerId,
       }).then((res)=> {
         console.log(res.data.data);
         if (res.data.code === 0) {
           this.info = res.data.data
         }
-
       }).catch((error)=> {
-
         console.log(error);
       });
     },

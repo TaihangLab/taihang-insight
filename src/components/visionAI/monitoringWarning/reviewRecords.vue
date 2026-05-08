@@ -170,7 +170,6 @@ export default {
       }
       this.warningSkillOptions = options
     },
-
     truncateText(text, maxLength = 30) {
       if (!text) return ''
       if (text.length <= maxLength) return text
@@ -1233,9 +1232,9 @@ export default {
       
       <!-- 分页 -->
       <div class="pagination-section">
-        <div class="pagination-info">
+        <!-- <div class="pagination-info">
           共 {{ totalRecords }} 条数据
-        </div>
+        </div> -->
         <el-pagination
           @size-change="handleSizeChange"
           @current-change="handlePageChange"
@@ -1243,10 +1242,12 @@ export default {
           :page-sizes="[12, 18, 24, 30]"
           :page-size="pagination.pageSize"
           :total="totalRecords"
-          layout="sizes, prev, pager, next, jumper"
+          layout="total, sizes, prev, pager, next, jumper"
           class="pagination-controls"
         />
       </div>
+
+      <div style="height: 10px;"></div>
     </div>
 
     <!-- 预警详情对话框 -->
@@ -1275,7 +1276,7 @@ export default {
 
 /* 页面头部 - 科技感样式 */
 .page-header {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   padding: 12px 24px;
   border-radius: 12px;
   display: flex;
@@ -1303,7 +1304,7 @@ export default {
 
 /* 上半部分：数据统计卡片 - 科技感样式 */
 .statistics-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -1537,7 +1538,7 @@ export default {
 
 /* 下半部分：内容卡片 - 科技感样式 */
 .content-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -1712,6 +1713,13 @@ export default {
   margin-bottom: 8px;
 }
 
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
 .card-title {
   font-size: 12px;
   font-weight: 600;
@@ -1801,6 +1809,7 @@ export default {
 
 .review-notes-item .notes-text {
   color: #606266;
+  font-style: italic;
 }
 
 .card-info {
@@ -1848,11 +1857,48 @@ export default {
 /* 分页区域 */
 .pagination-section {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  padding: 16px 24px;
+  background: white;
+  padding-bottom: 10px;
+  /* padding: 12px 24px;
   border-top: 1px solid #f0f2f5;
   background: #fafafa;
+  margin: 0 -24px 0 -24px;
+  flex-shrink: 0; */
+}
+
+.pagination-section >>> .el-pagination__total {
+  padding-top: 3px;
+}
+
+.pagination-section >>> .el-pagination .el-pager li {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: #3b82f6;
+  margin: 0 2px;
+}
+
+.pagination-section >>> .el-pagination .el-pager li:hover {
+  color: #1d4ed8;
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.pagination-section >>> .el-pagination .el-pager li.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.pagination-section >>> .el-pagination .btn-prev,
+.pagination-section >>> .el-pagination .btn-next {
+  background-color: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
 }
 
 .pagination-info {
@@ -2067,7 +2113,7 @@ export default {
 }
 
 /* 科技感按钮样式 */
-.review-records-container >>> .el-button--primary {
+/* .review-records-container >>> .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   border: none;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
@@ -2123,10 +2169,10 @@ export default {
 .review-records-container >>> .el-button--text:hover {
   color: #3b82f6;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-}
+} */
 
 /* 科技感输入框样式 */
-.review-records-container >>> .el-input__inner {
+/* .review-records-container >>> .el-input__inner {
   border: 1px solid #e4e7ed;
   border-radius: 6px;
   transition: all 0.3s ease;
@@ -2159,10 +2205,10 @@ export default {
 .review-records-container >>> .el-date-editor .el-input__inner:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
+} */
 
 /* 科技感分页样式 */
-.review-records-container >>> .el-pagination {
+/* .review-records-container >>> .el-pagination {
   justify-content: center;
 }
 
@@ -2204,7 +2250,7 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
+} */
 
 /* 对话框样式优化 - 科技感设计 */
 .review-records-container >>> .el-dialog {

@@ -44,6 +44,13 @@
 </template>
 
 <script>
+import { 
+  setScanLeft, 
+  setScanRight, 
+  setScanSpeed, 
+  startFrontEndScan, 
+  stopFrontEndScan 
+} from '@/api/ptz'
 
 export default {
   name: "ptzScan",
@@ -67,13 +74,9 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/scan/set/speed/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          scanId: this.scanId,
-          speed: this.speed
-        }
+      setScanSpeed(this.deviceId, this.channelDeviceId, {
+        scanId: this.scanId,
+        speed: this.speed
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message({
@@ -112,12 +115,8 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/scan/set/left/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          scanId: this.scanId,
-        }
+      setScanLeft(this.deviceId, this.channelDeviceId, {
+        scanId: this.scanId,
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message({
@@ -150,12 +149,8 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/scan/set/right/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          scanId: this.scanId,
-        }
+      setScanRight(this.deviceId, this.channelDeviceId, {
+        scanId: this.scanId,
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message({
@@ -190,12 +185,8 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/scan/start/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          scanId: this.scanId
-        }
+      startFrontEndScan(this.deviceId, this.channelDeviceId, {
+        scanId: this.scanId
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message({
@@ -228,12 +219,8 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/scan/stop/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          scanId: this.scanId
-        }
+      stopFrontEndScan(this.deviceId, this.channelDeviceId, {
+        scanId: this.scanId
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message({

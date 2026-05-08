@@ -626,7 +626,7 @@ export default {
 
     <div class="main-content">
       <!-- 上方面板：预警趋势和预警类型TOP5 -->
-      <el-row :gutter="20">
+      <el-row :gutter="24">
         <!-- 左侧 - 预警趋势图表 -->
         <el-col :span="12">
           <div class="panel-box panel-equal-height">
@@ -649,7 +649,7 @@ export default {
       </el-row>
 
       <!-- 下方面板：预警状态、预警等级和设备预警数量TOP10 -->
-      <el-row :gutter="20" class="bottom-section">
+      <el-row :gutter="24" class="bottom-section">
         <!-- 左侧 - 预警状态饼图 -->
         <el-col :span="8">
           <div class="panel-box panel-bottom-equal-height">
@@ -714,7 +714,7 @@ export default {
   height: 100%;
   background: linear-gradient(135deg, #001529 0%, #000b18 100%);
   color: #fff;
-  padding: 16px;
+  padding: 14px 24px 24px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -727,11 +727,13 @@ export default {
   justify-content: space-between;
   align-items: center;
   background-color: #001529;
-  padding: 12px 20px;
+  height: 60px;
+  padding: 0 18px;
   position: relative;
   border-bottom: 1px solid #002140;
-  margin-bottom: 12px;
+  margin-bottom: 24px;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .page-title {
@@ -739,15 +741,20 @@ export default {
   text-align: center;
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .page-title span {
-  font-size: 24px;
+  font-size: 36px;
   font-weight: bold;
   color: #fff;
   letter-spacing: 1px;
   position: relative;
+  display: inline-block;
+  height: 36px;
+  line-height: 36px;
   padding: 0 10px;
+  transform: translateY(2px);
 }
 
 .page-title span::before,
@@ -785,7 +792,7 @@ export default {
 .action-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 8px;
   width: 330px;
 }
 
@@ -1039,8 +1046,8 @@ export default {
   );
   border: 1px solid rgba(35, 88, 148, 0.5);
   border-radius: 4px;
-  padding: 15px;
-  margin-bottom: 12px;
+  padding: 14px;
+  margin-bottom: 24px;
   position: relative;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -1055,8 +1062,8 @@ export default {
 .panel-title {
   color: #00ffff;
   font-size: 16px;
-  margin-bottom: 15px;
-  padding-left: 10px;
+  margin-bottom: 12px;
+  padding-left: 8px;
   border-left: 3px solid #00ffff;
   text-align: left;
 }
@@ -1077,8 +1084,8 @@ export default {
 .statistics-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
-  gap: 16px;
+  margin-bottom: 24px;
+  gap: 24px;
   flex-shrink: 0;
 }
 
@@ -1091,14 +1098,14 @@ export default {
   );
   border: 1px solid rgba(35, 88, 148, 0.5);
   border-radius: 4px;
-  padding: 15px;
+  padding: 14px;
   display: flex;
   align-items: center;
   transition: all 0.3s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-5px);
+  transform: none;
   border-color: rgba(0, 255, 255, 0.6);
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
 }
@@ -1160,7 +1167,7 @@ export default {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 24px;
 }
 
 /* 两行 el-row 各占一半 */
@@ -1333,14 +1340,14 @@ export default {
 /* 添加媒体查询确保在任何屏幕尺寸下内容都能充满整个宽度 */
 @media (min-width: 1200px) {
   .visual-statistics {
-    padding: 16px 0;
+    padding: 14px 24px 24px;
   }
 
   .header-bar,
   .statistics-header,
   .main-content {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 0;
+    padding-right: 0;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;

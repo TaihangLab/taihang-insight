@@ -190,7 +190,7 @@ export default {
     // 上传请求头
     uploadHeaders() {
       return {
-        'Authorization': 'Bearer ' + (localStorage.getItem('token') || ''),
+        'Authorization': 'Bearer ' + (localStorage.getItem('Admin-Token') || ''),
         'Accept': 'application/json'
       }
     }
@@ -218,9 +218,27 @@ export default {
         this.$message.warning('该预警暂无图片');
       }
     },
-    // 兼容不同接口字段，解析预警图片地址
-    getAlertImageUrl(row) {
-      if (!row) return '';
+     // 初始化数据 - 直接使用真实API
+     async initData() {
+       try {
+         // 加载档案列表
+         await this.loadArchivesList();
+
+         // 如果有档案，加载第一个档案的详情
+         if (this.archivesList.length > 0) {
+           const firstArchive = this.archivesList[0];
+           this.currentArchiveId = firstArchive.archive_id || firstArchive.id;
+
+           await Promise.all([
+             this.loadArchiveDetail(this.currentArchiveId),
+             this.loadArchiveAlerts(this.currentArchiveId)
+           ]);
+         }
+       } catch (error) {
+         console.error('初始化数据失败:', error);
+         this.$message.error('加载数据失败: ' + error.message);
+       }
+     },
 
       const candidates = [
         row.violationImage,
@@ -305,26 +323,52 @@ export default {
       }
     },
 
-    // ---- 档案列表 ----
+        const response = await archiveAPI.getArchiveList(queryParams);
 
-    parseArchiveListResponse(response) {
-      let archiveData = [];
-      let paginationData = null;
+        // 适配新的API响应格式：检查是否为包装格式或直接数据格式
+        let archiveData;
+        let paginationData;
 
-      if (response.data.code !== undefined) {
-        if (response.data.code === 0) {
+        if (response.data.code !== undefined) {
+          // 包装格式 {code, msg, data, pagination}
+          if (response.data.code === 0) {
+            archiveData = response.data.data || [];
+            paginationData = response.data.pagination;
+          } else {
+            throw new Error(response.data.msg || '获取档案列表失败');
+          }
+        } else if (response.data.data) {
+          // 新的包装格式 {data, pagination}
           archiveData = response.data.data || [];
           paginationData = response.data.pagination;
         } else {
           throw new Error(response.data.msg || '获取档案列表失败');
         }
-      } else if (response.data.data) {
-        archiveData = response.data.data || [];
-        paginationData = response.data.pagination;
-      } else if (Array.isArray(response.data)) {
-        archiveData = response.data;
-      } else {
-        archiveData = [response.data];
+
+        // 更新档案列表数据，转换格式以适配前端显示
+        this.archivesList = archiveData.map(archive => ({
+          id: archive.archive_id,
+          archive_id: archive.archive_id,
+          name: archive.name,
+          location: archive.location,
+          timeRange: `${archive.start_time}-${archive.end_time}`,
+          createTime: archive.created_at,
+          description: archive.description || '-',
+          image: archive.image_url || ''
+        }));
+
+        // 更新分页信息
+        if (paginationData) {
+          this.archivesPagination.total = paginationData.total || 0;
+          this.archivesPagination.currentPage = paginationData.page || 1;
+          this.archivesPagination.pageSize = paginationData.limit || 20;
+        }
+
+        console.log('档案列表加载成功:', this.archivesList);
+        console.log('分页信息:', this.archivesPagination);
+      } catch (error) {
+        console.error('加载档案列表失败:', error);
+        throw error;
       }
 
       const items = archiveData.map(a => ({
@@ -350,10 +394,37 @@ export default {
       const response = await archiveAPI.getArchiveList(queryParams);
       const { items, paginationData } = this.parseArchiveListResponse(response);
 
-      if (paginationData) {
-        this.archivesPagination.total = paginationData.total || 0;
-        this.archivesPagination.currentPage = paginationData.page || 1;
-        this.archivesPagination.pageSize = paginationData.limit || 20;
+        const response = await archiveAPI.getArchiveDetail(archiveId);
+
+        // 适配新的API响应格式
+        let archiveData;
+        if (response.data.code !== undefined) {
+          // 包装格式 {code, msg, data}
+          if (response.data.code === 0) {
+            archiveData = response.data.data;
+          } else {
+            throw new Error(response.data.msg || '获取档案详情失败');
+          }
+        } else {
+          // 直接数据格式
+          archiveData = response.data;
+        }
+
+        this.archiveInfo = {
+          id: archiveData.archive_id,
+          archive_id: archiveData.archive_id,
+          name: archiveData.name,
+          location: archiveData.location,
+          timeRange: `${archiveData.start_time}-${archiveData.end_time}`,
+          createTime: archiveData.created_at,
+          description: archiveData.description || '-',
+          image: archiveData.image_url || ''
+        };
+
+        console.log('档案详情加载成功:', this.archiveInfo);
+      } catch (error) {
+        console.error('加载档案详情失败:', error);
+        throw error;
       }
 
       return items;
@@ -363,14 +434,79 @@ export default {
       const list = await this.fetchArchivesList(params);
       this.archivesList = list;
 
-      if (list.length > 0) {
-        const stillExists = list.some(a => a.id === this.currentArchiveId);
-        if (!stillExists) {
-          await this.switchToArchive(list[0].id);
+        // 使用当前分页配置，但限制在后端允许的范围内
+        const limit = Math.min(this.pagination.pageSize, 100); // 不超过后端限制100
+        const queryParams = {
+          page: this.pagination.currentPage,
+          limit: limit,
+          ...params
+        };
+
+        console.log(`加载第${this.pagination.currentPage}页预警记录，每页${limit}条...`);
+        const response = await archiveAPI.getArchiveLinkedAlerts(archiveId, queryParams);
+
+        // 适配新的API响应格式
+        let alertRecords = [];
+        let totalCount = 0;
+        let pages = 0;
+
+        if (response.data.code !== undefined) {
+          // 包装格式 {code, message, data}
+          if (response.data.code === 0) {
+            const data = response.data.data || {};
+            alertRecords = data.items || [];
+            totalCount = data.total || 0;
+            pages = data.pages || 1;
+          } else {
+            throw new Error(response.data.message || '获取预警记录失败');
+          }
+        } else if (response.data.data) {
+          // 新的包装格式 {data, pagination}
+          alertRecords = response.data.data || [];
+          if (response.data.pagination) {
+            totalCount = response.data.pagination.total;
+            pages = response.data.pagination.pages;
+          } else {
+            totalCount = alertRecords.length;
+            pages = 1;
+          }
+        } else if (Array.isArray(response.data)) {
+          // 直接数组格式
+          alertRecords = response.data;
+          totalCount = alertRecords.length;
+          pages = 1;
+        } else {
+          // 单个对象格式，转为数组
+          alertRecords = [response.data];
+          totalCount = 1;
+          pages = 1;
         }
-      } else {
-        this.currentArchiveId = null;
-        this.archiveInfo = { name: '', location: '', timeRange: '', createTime: '', description: '', image: '' };
+
+        // 转换数据格式以适配前端显示，同时保留原始API数据
+        this.archiveList = alertRecords.map(record => ({
+          id: record.alert_id,
+          name: record.alert_name,
+          deviceName: record.camera_name,
+          warningTime: record.alert_time,
+          warningLevel: this.convertAlertLevel(record.alert_level),
+          warningType: record.alert_type || '',
+          location: record.location || '',
+          description: record.alert_description || '',
+          remark: record.processing_notes || '',
+          violationImage: record.minio_frame_url || '',
+          violationVideo: record.minio_video_url || '',
+          status: record.status || 1,
+          createTime: record.created_at,
+          // 保留原始API数据供详情页面构建完整的处理进展使用
+          _apiData: record
+        }));
+
+        // 更新分页信息
+        this.pagination.total = totalCount;
+
+        console.log(`预警记录加载成功，第${this.pagination.currentPage}页，共${totalCount}条记录`);
+      } catch (error) {
+        console.error('加载预警记录失败:', error);
         this.archiveList = [];
         this.pagination.total = 0;
       }
@@ -590,7 +726,15 @@ export default {
 
       this.archiveSwitching = true;
       try {
-        this.currentArchiveId = nid;
+        this.currentArchiveId = archiveId;
+
+        // 并行加载档案详情和预警记录
+        await Promise.all([
+          this.loadArchiveDetail(archiveId),
+          this.loadArchiveAlerts(archiveId)
+        ]);
+
+        // 重置分页到第一页
         this.pagination.currentPage = 1;
         await Promise.all([
           this.fetchAndApplyArchiveDetail(nid),
@@ -1041,7 +1185,8 @@ export default {
           this.selectedRows = [];
         }
 
-        await this.fetchAndApplyArchiveAlerts(this.currentArchiveId);
+        // 重新加载当前页数据
+        await this.loadArchiveAlerts(this.currentArchiveId);
         this.deleteConfirmVisible = false;
       } catch (error) {
         console.error('删除操作失败:', error);
@@ -1220,7 +1365,9 @@ export default {
         }
 
         this.$message.success('预警记录添加成功');
-        await this.fetchAndApplyArchiveAlerts(this.currentArchiveId);
+
+        // 重新加载当前档案的预警记录
+        await this.loadArchiveAlerts(this.currentArchiveId);
 
         // 关闭对话框并重置表单
         this.addDialogVisible = false;
@@ -1366,7 +1513,8 @@ export default {
             if (result.success_count > 0) {
               this.$message.success(`成功添加 ${result.success_count} 个预警到档案`);
 
-              await this.fetchAndApplyArchiveAlerts(this.currentArchiveId);
+              // 重新加载当前档案的预警记录
+              await this.loadArchiveAlerts(this.currentArchiveId);
             }
 
             if (result.failed_count > 0) {
@@ -1447,13 +1595,92 @@ export default {
 
 
       // 预览预警详情 - 在添加预警对话框中查看预警详情
-      previewAlert(alert) {
-        if (!alert || !alert.alert_id) {
-          this.$message.warning('缺少预警ID');
-          return;
+      async previewAlert(alert) {
+        try {
+          console.log('previewAlert - 原始预警数据:', alert);
+
+          // 将 availableAlerts 表格数据格式转换为 WarningDetail 组件需要的格式
+          const levelMap = {
+            1: 'level1',
+            2: 'level2',
+            3: 'level3',
+            4: 'level4'
+          };
+
+          // 构建基础 warning 对象
+          const baseWarning = {
+            id: alert.alert_id,
+            device: alert.camera_name,
+            deviceInfo: {
+              name: alert.camera_name,
+              position: alert.location || ''
+            },
+            alertName: alert.alert_name || '未知预警',  // 预警名称（如：未佩戴安全带）
+            type: alert.alert_type || '未知类型',        // 预警类型（如：安全生产预警）
+            time: alert.alert_time,
+            level: levelMap[alert.alert_level] || 'level1',
+            location: alert.location || '',
+            description: this.getDescriptionByType(alert.alert_type || alert.alert_name),
+            imageUrl: alert.minio_frame_url || null,
+            videoUrl: alert.minio_video_url || null,
+            minio_frame_url: alert.minio_frame_url || null,
+            minio_video_url: alert.minio_video_url || null,
+            status: this.convertStatusToText(alert.status),
+            operationHistory: [],
+            _apiData: alert
+          };
+
+          this.currentWarning = baseWarning;
+          this.warningDetailVisible = true;
+
+          // 调用 API 获取完整的预警详情
+          const alertId = alert.alert_id;
+          if (!alertId) {
+            console.warn('previewAlert - 缺少预警ID，使用基础数据');
+            return;
+          }
+
+          const resp = await alertAPI.getAlertDetail(alertId);
+          const apiDetail = resp && resp.data ? resp.data : null;
+
+          if (!apiDetail) {
+            console.warn('previewAlert - 获取详情失败，使用基础数据');
+            return;
+          }
+
+          console.log('previewAlert - API返回详情:', apiDetail);
+
+          // 更新 warning 对象，添加更多详细信息
+          let history = [];
+          if (apiDetail.process) {
+            history = this.processApiDataHistory(apiDetail);
+          } else {
+            history = this.buildFromApiData(apiDetail);
+          }
+
+          // 更新 currentWarning，覆盖图片、视频和操作历史
+          this.currentWarning = {
+            ...this.currentWarning,
+            imageUrl: apiDetail.minio_frame_url || this.currentWarning.imageUrl,
+            videoUrl: apiDetail.minio_video_url || this.currentWarning.videoUrl,
+            minio_frame_url: apiDetail.minio_frame_url || this.currentWarning.minio_frame_url,
+            minio_video_url: apiDetail.minio_video_url || this.currentWarning.minio_video_url,
+            description: apiDetail.description || this.currentWarning.description,
+            operationHistory: history,
+            _apiData: apiDetail
+          };
+
+          console.log('previewAlert - 详情构建完成，时间线条数:', history.length);
+        } catch (error) {
+          console.error('previewAlert - 获取预警详情失败:', error);
+          // 出错时仍然显示基础信息
+          if (this.currentWarning) {
+            this.currentWarning = {
+              ...this.currentWarning,
+              operationHistory: this.buildBasicHistoryFromAlert(alert)
+            };
+          }
         }
-        this.currentAlertId = alert.alert_id;
-        this.warningDetailVisible = true;
       },
 
       // 将状态码转换为文本状态
@@ -1461,9 +1688,9 @@ export default {
         const statusMap = {
           1: 'pending',      // 待处理
           2: 'processing',   // 处理中
-          3: 'completed',    // 已处理
-          4: 'archived',     // 已归档
-          5: 'false_alarm'   // 误报
+          3: 'completed',    // 已完成
+          4: 'ignored',      // 已忽略
+          5: 'archived'      // 已归档
         };
         return statusMap[status] || 'pending';
       },
@@ -1564,9 +1791,11 @@ export default {
 
         this.$message.success('档案创建成功');
 
+        // 重置档案分页到第一页并重新加载档案列表
         this.archivesPagination.currentPage = 1;
-        await this.reloadArchivesList();
+        await this.loadArchivesList();
 
+        // 如果创建成功，切换到新创建的档案
         if (newArchive && newArchive.archive_id) {
           const nid = this.normalizeId(newArchive.archive_id);
           this.currentArchiveId = nid;
@@ -1729,7 +1958,6 @@ export default {
     formatTime(timeString) {
       try {
         if (!timeString) return timeString;
-        timeString = this.normalizeTimeStr(timeString);
 
         // 检查是否是时间范围格式（包含" HH:mm:ss-"这样的模式）
         const rangePattern = /(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})-(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/;
@@ -1787,13 +2015,15 @@ export default {
           this.$message.success('档案删除成功');
         }
 
-        if (this.currentArchiveId === this.normalizeId(this.deleteArchiveId)) {
+        // 如果删除的是当前选中的档案，清空详情
+        if (this.currentArchiveId === this.deleteArchiveId) {
           this.currentArchiveId = null;
           this.archiveInfo = { name: '', location: '', timeRange: '', createTime: '', description: '', image: '' };
           this.archiveList = [];
         }
 
-        await this.reloadArchivesList();
+        // 重新加载档案列表
+        await this.loadArchivesList();
 
         // 关闭确认对话框
         this.deleteArchiveConfirmVisible = false;
@@ -1811,13 +2041,8 @@ export default {
 
 <template>
   <div class="page-container">
-    <!-- 首屏加载完成前不渲染内容，从根本上防止选中态闪烁 -->
-    <div v-if="!pageReady" class="page-loading" style="display:flex;align-items:center;justify-content:center;height:300px;">
-      <i class="el-icon-loading" style="font-size:28px;color:#3b82f6;"></i>
-      <span style="margin-left:8px;color:#6b7280;">加载中...</span>
-    </div>
-
-    <div v-else class="content-wrapper">
+    <!-- 内容区域 -->
+    <div class="content-wrapper">
 
       <!-- 左侧档案信息区域 -->
       <div class="detail-section">
@@ -1858,13 +2083,14 @@ export default {
         </div>
 
         <!-- 档案列表分页区域 -->
+         <!-- layout="total, sizes, prev, pager, next, jumper" -->
         <div class="archives-pagination">
           <el-pagination
             :current-page.sync="archivesPagination.currentPage"
             :page-size.sync="archivesPagination.pageSize"
             :total="archivesPagination.total"
             :page-sizes="[10, 20, 50, 100]"
-            layout="total, sizes, prev, pager, next, jumper"
+            layout="total, prev, pager, next"
             @size-change="handleArchivesSizeChange"
             @current-change="handleArchivesCurrentChange"
           />
@@ -1982,7 +2208,7 @@ export default {
         </div>
 
         <!-- 分页区域 - 改为与 deviceSkills.vue 一致的样式 -->
-        <div class="pagination">
+        <div class="archives-pagination">
           <el-pagination
             :current-page.sync="pagination.currentPage"
             :page-size.sync="pagination.pageSize"
@@ -2179,7 +2405,7 @@ export default {
       </el-table>
 
       <!-- 分页 -->
-      <div class="alert-pagination">
+        <div class="archives-pagination">
         <el-pagination
           :current-page.sync="availableAlertsPagination.currentPage"
           :page-size.sync="availableAlertsPagination.pageSize"
@@ -2292,7 +2518,7 @@ export default {
 .page-container {
   padding: 0;
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  min-height: calc(100vh - 60px);
+  height: 100%;
   position: relative;
 }
 
@@ -2301,8 +2527,9 @@ export default {
   display: flex;
   gap: 16px;
   padding: 16px;
-  align-items: flex-start;
-  height: calc(100vh - 92px);
+  align-items: stretch;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 /* 右侧容器包装器 */
@@ -2311,6 +2538,10 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
+  min-height: 0;
+  padding-bottom: 0;
+  box-sizing: border-box;
 }
 
 
@@ -2321,8 +2552,8 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
+  background: #fff;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(59, 130, 246, 0.1);
   margin-bottom: 16px;
@@ -2331,9 +2562,13 @@ export default {
 }
 
 .table-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e40af;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #303133;
+  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .table-actions {
@@ -2343,8 +2578,8 @@ export default {
 
 /* 表格区域 */
 .table-section {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
+  background: #fff;
+  /* border-radius: 16px; */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
   overflow: hidden;
@@ -2585,8 +2820,8 @@ export default {
 /* 左侧详情部分 */
 .detail-section {
   width: 330px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
+  background: #fff;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -2609,9 +2844,13 @@ export default {
 }
 
 .detail-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e40af;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #303133;
+  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .header-actions {
@@ -2633,9 +2872,23 @@ export default {
 
 /* 档案分页样式 */
 .archives-pagination {
-  padding: 10px;
-  border-top: 1px solid rgba(59, 130, 246, 0.2);
-  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  background: white;
+  margin-top: 0!important;
+  padding-bottom: 10px!important;
+}
+
+/* 主内容区分页距离底部固定 24px（不影响弹窗内分页） */
+.table-container-wrapper > .archives-pagination {
+  position: static;
+  margin-top: auto !important;
+  padding-top: 12px;
+  padding-bottom: 24px !important;
+}
+
+.archives-pagination >>> .el-pagination__total {
+  padding-top: 3px;
 }
 
 .archives-pagination >>> .el-pagination {
@@ -2658,9 +2911,11 @@ export default {
 }
 
 .archives-pagination >>> .el-pagination .el-pager li.active {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3);
 }
 
 .archives-pagination >>> .el-pagination button {
@@ -2672,6 +2927,13 @@ export default {
 .archives-pagination >>> .el-pagination button:hover {
   color: #1d4ed8;
   border-color: #3b82f6;
+}
+
+.archives-pagination >>> .el-pagination .btn-prev,
+.archives-pagination >>> .el-pagination .btn-next {
+  background-color: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
 }
 
 .archive-item {
@@ -2876,6 +3138,26 @@ export default {
   border-radius: 4px;
 }
 
+.detail-header .el-button--primary,
+.add-btn,
+.edit-archive-btn {
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+  color: #FFFFFF !important;
+}
+
+.detail-header .el-button--primary:hover,
+.add-btn:hover,
+.edit-archive-btn:hover,
+.detail-header .el-button--primary:focus,
+.add-btn:focus,
+.edit-archive-btn:focus {
+  background: #3D85FF !important;
+  border-color: #3D85FF !important;
+  color: #FFFFFF !important;
+  box-shadow: none !important;
+}
+
 /* 弹框样式 - 与 warningManagement.vue 一致 */
 .page-container >>> .el-dialog {
   border-radius: 12px;
@@ -3030,14 +3312,14 @@ export default {
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: -20px;
-  padding: 20px 0;
+  /* margin-top: -20px;
+  padding: 20px 0; */
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  /* border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); */
 }
 
-.pagination >>> .el-pagination {
+/* .pagination >>> .el-pagination {
   justify-content: center;
 }
 
@@ -3048,9 +3330,9 @@ export default {
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
   margin: 0 2px !important;
-}
+} */
 
-.pagination >>> .el-pagination .el-pager li:hover {
+/* .pagination >>> .el-pagination .el-pager li:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
@@ -3079,7 +3361,7 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
+} */
 
 /* 详情弹窗 */
 ::v-deep .warning-detail-dialog .el-dialog {
@@ -3356,7 +3638,7 @@ export default {
   gap: 12px;
 }
 
-.overlay-actions .el-button {
+/* .overlay-actions .el-button {
   background-color: rgba(255, 255, 255, 0.9);
   border: none;
   border-radius: 6px;
@@ -3372,7 +3654,7 @@ export default {
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(64, 158, 255, 0.3);
-}
+} */
 
 .overlay-actions .el-button i {
   margin-right: 4px;
@@ -3454,11 +3736,11 @@ export default {
   font-size: 14px;
   border-radius: 6px;
   font-weight: 500;
-  transition: all 0.3s ease;
+  /* transition: all 0.3s ease; */
   margin-right: 0;
 }
 
-.page-container >>> .el-button--primary,
+/* .page-container >>> .el-button--primary,
 .page-container >>> .add-btn,
 .page-container >>> .edit-archive-btn {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
@@ -3471,17 +3753,17 @@ export default {
   font-weight: 600 !important;
   letter-spacing: 0.3px !important;
   border-radius: 6px !important;
-}
+} */
 
 
 
-.page-container >>> .el-button--primary:hover,
+/* .page-container >>> .el-button--primary:hover,
 .page-container >>> .add-btn:hover,
 .page-container >>> .edit-archive-btn:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%) !important;
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4) !important;
   transform: translateY(-2px) !important;
-}
+} */
 
 
 
@@ -3520,7 +3802,7 @@ export default {
 }
 
 /* 保持其他危险按钮的红色样式 */
-.page-container >>> .el-button--danger:not(.batch-delete-btn) {
+/* .page-container >>> .el-button--danger:not(.batch-delete-btn) {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4), 0 2px 4px rgba(185, 28, 28, 0.3) !important;
@@ -3531,19 +3813,19 @@ export default {
   font-weight: 600 !important;
   letter-spacing: 0.3px !important;
   border-radius: 6px !important;
-}
+} */
 
 
 
-.page-container >>> .el-button--danger:not(.batch-delete-btn):hover {
+/* .page-container >>> .el-button--danger:not(.batch-delete-btn):hover {
   background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
   box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5), 0 4px 8px rgba(185, 28, 28, 0.4) !important;
   transform: translateY(-2px) !important;
-}
+} */
 
 
 
-.page-container >>> .el-button:not(.el-button--primary):not(.el-button--danger):not(.add-btn):not(.edit-archive-btn):not(.batch-delete-btn) {
+/* .page-container >>> .el-button:not(.el-button--primary):not(.el-button--danger):not(.add-btn):not(.edit-archive-btn):not(.batch-delete-btn) {
   background: #f5f7fa !important;
   border-color: #e4e7ed !important;
   color: #606266 !important;
@@ -3556,10 +3838,10 @@ export default {
   color: #1e3a8a !important;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 /* 弹框按钮统一样式 */
-.page-container >>> .el-dialog .el-button--primary {
+/* .page-container >>> .el-dialog .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -3567,9 +3849,9 @@ export default {
   font-weight: 500 !important;
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
-}
+} */
 
-.page-container >>> .el-dialog .el-button--primary:hover {
+/* .page-container >>> .el-dialog .el-button--primary:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
@@ -3581,14 +3863,14 @@ export default {
   color: #4b5563 !important;
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
-}
+} */
 
-.page-container >>> .el-dialog .el-button--default:hover {
+/* .page-container >>> .el-dialog .el-button--default:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-}
+} */
 
 /* 修复时间选择器z-index层级问题 - 确保弹出层显示在弹框上方 */
 .page-container >>> .el-date-picker {
@@ -3752,7 +4034,7 @@ body .el-time-picker.el-popper {
 
 /* 筛选条件区域 */
 .alert-filters {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: #fff;
   border-radius: 8px;
   padding: 20px;
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -3862,12 +4144,13 @@ body .el-time-picker.el-popper {
 
 /* 分页区域 */
 .alert-pagination {
-  margin-top: 20px;
+  /* margin-top: 20px; */
   display: flex;
   justify-content: center;
-  padding: 20px 0;
-  border-top: 1px solid #f0f2f5;
-  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  background: white;
+  /* padding: 20px 0; */
+  /* border-top: 1px solid #f0f2f5;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%); */
 }
 
 /* 弹框底部样式 */
@@ -3896,21 +4179,21 @@ body .el-time-picker.el-popper {
   gap: 12px;
 }
 
-.cancel-btn {
+/* .cancel-btn {
   background: #f3f4f6;
   border-color: #d1d5db;
   color: #374151;
   padding: 8px 20px;
   border-radius: 6px;
   font-weight: 500;
-}
+} */
 
-.cancel-btn:hover {
+/* .cancel-btn:hover {
   background: #e5e7eb;
   border-color: #9ca3af;
-}
+} */
 
-.confirm-btn {
+/* .confirm-btn {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   border-color: #3b82f6;
   color: white;
@@ -3918,9 +4201,9 @@ body .el-time-picker.el-popper {
   border-radius: 6px;
   font-weight: 500;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-}
+} */
 
-.confirm-btn:hover {
+/* .confirm-btn:hover {
   background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
   border-color: #2563eb;
   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
@@ -3931,7 +4214,7 @@ body .el-time-picker.el-popper {
   border-color: #d1d5db;
   color: #9ca3af;
   box-shadow: none;
-}
+} */
 
 /* 表格样式增强 */
 .select-alert-dialog >>> .el-table {

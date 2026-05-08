@@ -36,6 +36,8 @@
 <script>
 import crypto from 'crypto'
 import userService from "../service/UserService";
+import { changePassword } from '@/api/dialog'
+
 export default {
   name: "changePassword",
   props: {},
@@ -89,25 +91,20 @@ export default {
       this.showDialog = true;
     },
     onSubmit: function () {
-      this.$axios({
-        method: 'post',
-        url:"/api/user/changePassword",
-        params: {
-          oldPassword: crypto.createHash('md5').update(this.oldPassword, "utf8").digest('hex'),
-          password: this.newPassword
-        }
-      }).then((res)=> {
+      changePassword(
+        crypto.createHash('md5').update(this.oldPassword, "utf8").digest('hex'),
+        this.newPassword
+      ).then((res)=> {
         if (res.data.code === 0) {
           this.$message({
             showClose: true,
-            message: '修改成功，请重新登录',
+            message: '修改成功',
             type: 'success'
           });
           this.showDialog = false;
           setTimeout(()=>{
-            // 删除cookie，回到登录页面
-            userService.clearUserInfo();
-            this.$router.push('/login');
+            userService.clearToken();
+            this.$router.push('/');
             this.sseSource.close();
           },800)
         }else {

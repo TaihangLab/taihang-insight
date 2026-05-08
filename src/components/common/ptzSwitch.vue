@@ -23,6 +23,7 @@
 </template>
 
 <script>
+import { controlAuxiliary } from '@/api/ptz'
 
 export default {
   name: "ptzScan",
@@ -44,13 +45,9 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/auxiliary/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          command: command,
-          switchId: this.switchId,
-        }
+      controlAuxiliary(this.deviceId, this.channelDeviceId, {
+        command: command,
+        switchId: this.switchId,
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message({

@@ -1038,11 +1038,11 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .model-list {
   padding: 20px;
   background-color: #f5f5f5;
-  height: calc(100vh - 100px); /* 固定整体高度 */
+  height: 100%; /* 固定整体高度 */
   display: flex;
   flex-direction: column;
   overflow: hidden; /* 防止整体页面出现滚动条 */
@@ -1144,9 +1144,9 @@ export default {
 
 /* 科技感蓝色主题的过滤区域 */
 .filter-section {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   padding: 12px 24px;
-  border-radius: 16px;
+  border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   margin-bottom: 20px;
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -1182,7 +1182,7 @@ export default {
   margin-right: 0;
 }
 
-.left-operations .el-button--primary {
+/* .left-operations .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -1279,7 +1279,7 @@ export default {
   color: #c0c4cc !important;
   box-shadow: none !important;
   transform: none !important;
-}
+} */
 
 .right-operations {
   display: flex;
@@ -1361,14 +1361,14 @@ export default {
 /* 表格容器样式 */
 .table-container {
   background: white;
-  border-radius: 16px;
+  /* border-radius: 16px; */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  margin-bottom: 20px;
+  /* margin-bottom: 20px; */
   border: 1px solid rgba(59, 130, 246, 0.1);
   overflow: hidden;
   flex: 1; /* 占据剩余空间 */
   min-height: 0; /* 确保flex子元素可以收缩 */
-  height: calc(100vh - 250px); /* 增加表格容器高度，与卡片高度保持一致 */
+  height: 100%; /* 增加表格容器高度，与卡片高度保持一致 */
   padding: 0; /* 移除内边距让表格贴合容器边缘 */
 }
 
@@ -1400,7 +1400,6 @@ export default {
 
 /* 科技感表格样式 */
 .tech-table {
-  border-radius: 16px;
   overflow: hidden; /* 确保圆角效果 */
   height: 100%; /* 表格占满容器高度 */
   border: none; /* 移除默认边框 */
@@ -1408,26 +1407,14 @@ export default {
 
 .tech-table>>>.el-table__header-wrapper {
   background: #f5f7fa;
-  border-radius: 16px 16px 0 0; /* 表头顶部圆角 */
 }
 
-.tech-table>>>.el-table__body-wrapper {
-  border-radius: 0 0 16px 16px; /* 表体底部圆角 */
-}
+
 
 /* 确保表格边框圆角 */
 .tech-table>>>.el-table {
-  border-radius: 16px;
   overflow: hidden;
   border: none;
-}
-
-.tech-table>>>.el-table__header {
-  border-radius: 16px 16px 0 0;
-}
-
-.tech-table>>>.el-table__body {
-  border-radius: 0 0 16px 16px;
 }
 
 .tech-table>>>.el-table th {
@@ -1440,23 +1427,10 @@ export default {
   border-top: none !important;
 }
 
-/* 第一列和最后一列的圆角处理 */
-.tech-table>>>.el-table th:first-child {
-  border-top-left-radius: 16px !important;
-}
 
-.tech-table>>>.el-table th:last-child {
-  border-top-right-radius: 16px !important;
-}
 
-/* 表格最后一行的圆角处理 */
-.tech-table>>>.el-table__body tr:last-child td:first-child {
-  border-bottom-left-radius: 16px !important;
-}
 
-.tech-table>>>.el-table__body tr:last-child td:last-child {
-  border-bottom-right-radius: 16px !important;
-}
+
 
 .tech-table>>>.el-table--enable-row-hover .el-table__body tr:hover>td {
   background-color: rgba(59, 130, 246, 0.05) !important;
@@ -1523,22 +1497,68 @@ export default {
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
-  padding: 20px 0;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  flex-shrink: 0; /* 防止收缩 */
+  margin-top: 0!important;
+  padding-bottom: 10px!important;
 }
 
-/* 深度选择器 - 使用多种语法确保兼容性 */
-.pagination /deep/ .el-pagination,
-.pagination ::v-deep .el-pagination,
+.pagination >>> .el-pagination__total {
+  padding-top: 3px;
+}
+
 .pagination >>> .el-pagination {
+  display: flex;
   justify-content: center;
 }
 
-.pagination /deep/ .el-pagination .el-pager li,
+.pagination >>> .el-pagination .el-pager li {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  color: #3b82f6;
+  margin: 0 2px;
+}
+
+.pagination >>> .el-pagination .el-pager li:hover {
+  color: #1d4ed8;
+  border-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.pagination >>> .el-pagination .el-pager li.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+.pagination >>> .el-pagination button {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.pagination >>> .el-pagination button:hover {
+  color: #1d4ed8;
+  border-color: #3b82f6;
+}
+
+.pagination >>> .el-pagination .btn-prev,
+.pagination >>> .el-pagination .btn-next {
+  background-color: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
+}
+
+/* 深度选择器 - 使用多种语法确保兼容性 */
+/* .pagination /deep/ .el-pagination,
+.pagination ::v-deep .el-pagination,
+.pagination >>> .el-pagination {
+  justify-content: center;
+} */
+
+/* .pagination /deep/ .el-pagination .el-pager li,
 .pagination ::v-deep .el-pagination .el-pager li,
 .pagination >>> .el-pagination .el-pager li {
   background: white !important;
@@ -1547,18 +1567,18 @@ export default {
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
   margin: 0 2px !important;
-}
+} */
 
-.pagination /deep/ .el-pagination .el-pager li:hover,
+/* .pagination /deep/ .el-pagination .el-pager li:hover,
 .pagination ::v-deep .el-pagination .el-pager li:hover,
 .pagination >>> .el-pagination .el-pager li:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15) !important;
-}
+} */
 
-.pagination /deep/ .el-pagination .el-pager li.active,
+/* .pagination /deep/ .el-pagination .el-pager li.active,
 .pagination ::v-deep .el-pagination .el-pager li.active,
 .pagination >>> .el-pagination .el-pager li.active {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
@@ -1566,9 +1586,9 @@ export default {
   color: white !important;
   font-weight: 600 !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
-}
+} */
 
-.pagination /deep/ .el-pagination button,
+/* .pagination /deep/ .el-pagination button,
 .pagination ::v-deep .el-pagination button,
 .pagination >>> .el-pagination button {
   background: white !important;
@@ -1586,7 +1606,7 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15) !important;
-}
+} */
 
 /* 表单布局相关样式 */
 .form-row {
@@ -1701,16 +1721,25 @@ export default {
   border-bottom: none;
 }
 
+.el-card__header {
+  padding: 0 0!important;
+}
+
+.el-card__body {
+  padding: 0 0!important;
+}
+
 .card-header {
   display: flex;
   align-items: center;
   color: #1f2937;
   font-weight: 600;
   font-size: 16px;
-  padding: 12px 15px;
+  /* padding: 12px 15px; */
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 8px 8px 0 0;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+  margin-bottom: 0!important;
 }
 
 .card-header .el-tag {
@@ -2300,7 +2329,7 @@ export default {
 }
 
 /* 科技感对话框样式 - 与deviceSkills.vue保持一致 */
-.tech-dialog>>>.el-dialog {
+/* .tech-dialog>>>.el-dialog {
   background: #ffffff !important;
   border-radius: 12px !important;
   overflow: hidden !important;
@@ -2332,10 +2361,10 @@ export default {
 .tech-dialog>>>.el-dialog__body {
   background: #ffffff !important;
   padding: 20px !important;
-}
+} */
 
 /* 科技感表单样式 */
-.tech-form>>>.el-form-item__label {
+/* .tech-form>>>.el-form-item__label {
   color: #1F2329 !important;
   font-weight: 600 !important;
 }
@@ -2368,10 +2397,10 @@ export default {
 .tech-form>>>.el-textarea__inner:focus {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
-}
+} */
 
 /* 对话框按钮样式 - 与deviceSkills.vue保持一致 */
-.tech-dialog>>>.el-button--primary {
+/* .tech-dialog>>>.el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -2400,7 +2429,7 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-}
+} */
 
 /* 上传组件样式 */
 .tech-dialog>>>.el-upload-dragger {
@@ -2478,8 +2507,8 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
   background-color: #fff !important;
   overflow: hidden !important;
-  margin-bottom: 16px !important;
-  margin-top: 0 !important;
+  /* margin-bottom: 16px !important;
+  margin-top: 0 !important; */
 }
 
 .model-detail-dialog.el-dialog .detail-card .el-card__header {
@@ -2688,7 +2717,7 @@ body .el-dialog__wrapper .model-detail-dialog {
 }
 
 /* 对话框按钮样式 */
-.tech-dialog.el-dialog .el-button--primary {
+/* .tech-dialog.el-dialog .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -2702,7 +2731,7 @@ body .el-dialog__wrapper .model-detail-dialog {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 .tech-dialog.el-dialog .el-button--default {
   background: white !important;
@@ -2854,7 +2883,7 @@ body .el-dialog__wrapper .model-detail-dialog {
   border-radius: 0 0 16px 16px !important;
 }
 
-.tech-confirm-dialog.el-message-box .el-button {
+/* .tech-confirm-dialog.el-message-box .el-button {
   border-radius: 8px !important;
   font-weight: 500 !important;
   padding: 8px 20px !important;
@@ -2887,7 +2916,7 @@ body .el-dialog__wrapper .model-detail-dialog {
   background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
   box-shadow: 0 6px 16px rgba(220, 38, 38, 0.5) !important;
   transform: translateY(-2px) !important;
-}
+} */
 
 /* 确认对话框动画效果 */
 .tech-confirm-dialog.el-message-box {
@@ -2913,7 +2942,7 @@ body .el-dialog__wrapper .model-detail-dialog {
 }
 
 /* 全局分页栏样式覆盖 - 使用更高优先级确保样式生效 */
-body .model-list .pagination .el-pagination {
+/* body .model-list .pagination .el-pagination {
   justify-content: center !important;
 }
 
@@ -2955,10 +2984,10 @@ body .model-list .pagination .el-pagination button:hover {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15) !important;
-}
+} */
 
 /* 确保分页栏输入框和选择器也有科技感样式 */
-body .model-list .pagination .el-pagination .el-pagination__sizes .el-select .el-input__inner {
+/* body .model-list .pagination .el-pagination .el-pagination__sizes .el-select .el-input__inner {
   border: 1px solid #dcdfe6 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
@@ -2976,7 +3005,7 @@ body .model-list .pagination .el-pagination .el-pagination__jump .el-input__inne
 
 body .model-list .pagination .el-pagination .el-pagination__jump .el-input__inner:hover {
   border-color: #3b82f6 !important;
-}
+} */
 
 /* ========================================
    状态标签样式优化 - 参照camera.vue使用浅色

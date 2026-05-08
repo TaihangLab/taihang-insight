@@ -63,28 +63,9 @@ export default {
     },
     onSubmit: function () {
       console.log("onSubmit");
-      console.log(this.form);
-      this.$axios({
-        method:"post",
-        url:`/api/platform/catalog/${!this.isEdit? "add":"edit"}`,
-        data: this.form
-      })
-        .then((res)=> {
-          if (res.data.code === 0) {
-            console.log("添加/修改成功")
-            if (this.submitCallback)this.submitCallback()
-          }else {
-            this.$message({
-              showClose: true,
-              message: res.data.msg,
-              type: "error",
-            });
-          }
-          this.close();
-        })
-        .catch((error)=> {
-          console.log(error);
-        });
+      // 注意：该方法在 importChannel.vue 中已被注释或未使用
+      // 文件上传通过 el-upload 组件的 action 和 on-success/on-error 钩子处理
+      // 如需使用此方法，请根据实际需求进行封装
     },
     close: function () {
       this.showDialog = false;

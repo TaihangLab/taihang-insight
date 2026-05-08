@@ -332,10 +332,30 @@
     </div>
 
     <!-- 图片放大弹窗 -->
-    <el-dialog :visible.sync="showAlertImageDialog" width="70%" top="5vh" custom-class="alert-image-dialog" append-to-body>
-      <div class="dialog-image-wrap" v-if="selectedAlert">
-        <img :src="selectedAlert.image" alt="预警截图" />
-        <div class="dialog-alert-info">
+    <el-dialog
+      title="预警截图"
+      :visible.sync="showAlertImageDialog"
+      width="70%"
+      top="5vh"
+      custom-class="alert-image-dialog"
+      append-to-body
+      :modal-append-to-body="true"
+      :z-index="3000"
+      :close-on-click-modal="true"
+      :destroy-on-close="true"
+    >
+      <div class="dialog-image-wrap">
+        <img
+          v-if="selectedAlert && selectedAlert.image"
+          :src="selectedAlert.image"
+          alt="预警截图"
+          @error="$event.target.src='/static/img/ai-brain.png'"
+        />
+        <div v-else class="dialog-image-empty">
+          <i class="el-icon-picture-outline"></i>
+          <span>暂无预警图片</span>
+        </div>
+        <div class="dialog-alert-info" v-if="selectedAlert">
           <span>{{ selectedAlert.name }}</span>
           <span>{{ selectedAlert.camera }}</span>
           <span>{{ selectedAlert.time }}</span>
@@ -3199,7 +3219,7 @@ export default {
 }
 
 .date-btn.active {
-  background-color: #1e90ff;
+  /* background-color: #1e90ff; */
   color: #ffffff;
   box-shadow: 0 0 8px rgba(30, 144, 255, 0.5);
 }
@@ -3334,7 +3354,7 @@ export default {
 }
 
 .tab.active {
-  background-color: #1e90ff;
+  /* background-color: #1e90ff; */
   color: #ffffff;
   box-shadow: 0 0 8px rgba(30, 144, 255, 0.5);
 }
@@ -5315,18 +5335,58 @@ body::-webkit-scrollbar {
 </style>
 
 <style>
-.alert-image-dialog .el-dialog {
+.el-dialog.alert-image-dialog {
   background: linear-gradient(180deg, #001529 0%, #000B18 100%) !important;
   border: 1px solid rgba(0, 255, 255, 0.2);
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.65);
+  margin-top: 0 !important;
+  min-width: 520px;
 }
 
-.alert-image-dialog .el-dialog__header {
-  display: none;
+.el-dialog.alert-image-dialog .el-dialog__header {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.15);
 }
 
-.alert-image-dialog .el-dialog__body {
+.el-dialog.alert-image-dialog .el-dialog__title {
+  color: rgba(0, 255, 255, 0.9);
+  font-weight: 600;
+}
+
+.el-dialog.alert-image-dialog .el-dialog__headerbtn .el-dialog__close {
+  color: rgba(0, 255, 255, 0.8);
+}
+
+.el-dialog.alert-image-dialog .el-dialog__body {
   padding: 0 !important;
+}
+
+.el-dialog.alert-image-dialog .dialog-image-wrap {
+  position: relative;
+  background: rgba(0, 11, 24, 0.9);
+}
+
+.el-dialog.alert-image-dialog .dialog-image-wrap img {
+  display: block;
+  width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+}
+
+.el-dialog.alert-image-dialog .dialog-image-empty {
+  height: 45vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(126, 174, 229, 0.7);
+  gap: 10px;
+}
+
+.el-dialog.alert-image-dialog .dialog-image-empty i {
+  font-size: 46px;
+  color: rgba(0, 255, 255, 0.55);
 }
 </style>

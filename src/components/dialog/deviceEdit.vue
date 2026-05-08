@@ -13,7 +13,7 @@
         <el-form ref="form" :rules="rules" :model="form" label-width="200px" >
           <el-form-item label="设备编号" prop="deviceId">
             <el-input v-if="isEdit" v-model="form.deviceId" disabled></el-input>
-            <el-input v-if="!isEdit" v-model="form.deviceId" placeholder="请输入设备编号"  clearable></el-input>
+            <el-input v-if="!isEdit" v-model="form.deviceId" placeholder="请输入设备编号" clearable></el-input>
           </el-form-item>
 
           <el-form-item label="设备名称" prop="name">
@@ -63,6 +63,8 @@
 
 <script>
 import MediaServer from '../service/MediaServer'
+import { saveDevice } from '@/api/dialog'
+
 export default {
   name: "deviceEdit",
   props: {},
@@ -107,11 +109,7 @@ export default {
     onSubmit: function () {
       console.log("onSubmit");
       console.log(this.form);
-      this.$axios({
-        method: 'post',
-        url:`/api/device/query/device/${this.isEdit?'update':'add'}`,
-        data: this.form
-      }).then((res) => {
+      saveDevice(this.form, this.isEdit).then((res) => {
         console.log(res.data)
         if (res.data.code === 0) {
           this.listChangeCallback()

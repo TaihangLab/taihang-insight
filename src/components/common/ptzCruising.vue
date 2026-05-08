@@ -91,6 +91,15 @@
 </template>
 
 <script>
+import { 
+  getFrontEndPresetList, 
+  addCruisePoint, 
+  deleteCruisePoint, 
+  setCruiseSpeed, 
+  setCruiseTime, 
+  startFrontEndCruise, 
+  stopFrontEndCruise 
+} from '@/api/ptz'
 
 export default {
   name: "ptzCruising",
@@ -115,16 +124,11 @@ export default {
   },
   methods: {
     getPresetList: function () {
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/preset/query/${this.deviceId}/${this.channelDeviceId}`,
-      }).then((res)=> {
+      getFrontEndPresetList(this.deviceId, this.channelDeviceId).then((res)=> {
         if (res.data.code === 0) {
           this.allPresetList = res.data.data;
         }
-
       }).catch((error)=> {
-
         console.log(error);
       });
     },
@@ -136,13 +140,9 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/cruise/point/add/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          cruiseId: this.cruiseId,
-          presetId: this.selectPreset.presetId
-        }
+      addCruisePoint(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId,
+        presetId: this.selectPreset.presetId
       }).then((res)=> {
         if (res.data.code === 0) {
           this.presetList.push(this.selectPreset)
@@ -177,13 +177,9 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/cruise/point/delete/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          cruiseId: this.cruiseId,
-          presetId: preset.presetId
-        }
+      deleteCruisePoint(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId,
+        presetId: preset.presetId
       }).then((res)=> {
         if (res.data.code === 0) {
           this.presetList.splice(index, 1)
@@ -218,13 +214,9 @@ export default {
           spinner: 'el-icon-loading',
           background: 'rgba(0, 0, 0, 0.7)'
         })
-        this.$axios({
-          method: 'get',
-          url: `/api/front-end/cruise/point/delete/${this.deviceId}/${this.channelDeviceId}`,
-          params: {
-            cruiseId: this.cruiseId,
-            presetId: 0
-          }
+        deleteCruisePoint(this.deviceId, this.channelDeviceId, {
+          cruiseId: this.cruiseId,
+          presetId: 0
         }).then((res)=> {
           if (res.data.code === 0) {
             this.presetList = []
@@ -254,13 +246,9 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/cruise/speed/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          cruiseId: this.cruiseId,
-          speed: this.cruiseSpeed
-        }
+      setCruiseSpeed(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId,
+        speed: this.cruiseSpeed
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message({
@@ -299,13 +287,9 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/cruise/time/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          cruiseId: this.cruiseId,
-          time: this.cruiseTime
-        }
+      setCruiseTime(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId,
+        time: this.cruiseTime
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message({
@@ -344,12 +328,8 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/cruise/start/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          cruiseId: this.cruiseId
-        }
+      startFrontEndCruise(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message({
@@ -382,12 +362,8 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/cruise/stop/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          cruiseId: this.cruiseId
-        }
+      stopFrontEndCruise(this.deviceId, this.channelDeviceId, {
+        cruiseId: this.cruiseId
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message({

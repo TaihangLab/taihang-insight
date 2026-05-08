@@ -20,7 +20,6 @@
                 :value="item">
               </el-option>
             </el-select>
-
           </el-form-item>
           <el-form-item label="用户名" prop="username">
             <el-input v-model="form.username" clearable></el-input>
@@ -33,7 +32,6 @@
               <el-button type="primary" @click="onSubmit" >确认</el-button>
               <el-button @click="close">取消</el-button>
             </div>
-
           </el-form-item>
         </el-form>
       </div>
@@ -42,6 +40,8 @@
 </template>
 
 <script>
+import { getOnvifRtsp } from '@/api/onvif'
+
 export default {
   name: "onvifEdit",
   props: {},
@@ -58,7 +58,6 @@ export default {
         username: "admin",
         password: "admin123",
       },
-
       rules: {
         hostName: [{ required: true, message: "请选择", trigger: "blur" }],
         username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
@@ -74,37 +73,31 @@ export default {
       if (hostNamesParam != null) {
         this.hostNames = hostNamesParam;
       }
-
     },
     onSubmit: function () {
       console.log("onSubmit");
       console.log(this.form);
-      this.$axios({
-        method: 'get',
-        url:`/api/onvif/rtsp`,
-        params: {
-          hostname: this.form.hostName,
-          timeout: 3000,
-          username: this.form.username,
-          password: this.form.password,
-        }
+      getOnvifRtsp({
+        hostname: this.form.hostName,
+        timeout: 3000,
+        username: this.form.username,
+        password: this.form.password,
       }).then((res) => {
-        console.log(res.data)
-        if (res.data.code === 0) {
-          if (res.data.data != null) {
-            this.listChangeCallback(res.data.data)
+        console.log(res)
+        if (res.code === 0) {
+          if (res.data != null) {
+            this.listChangeCallback(res.data)
           }else {
             this.$message({
               showClose: true,
-              message: res.data.msg,
+              message: res.msg,
               type: "error",
             });
           }
-
         }else {
           this.$message({
             showClose: true,
-            message: res.data.msg,
+            message: res.msg,
             type: "error",
           });
         }

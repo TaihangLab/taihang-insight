@@ -7,6 +7,7 @@
       :before-close="handleClose"
       v-loading="loading"
       element-loading-text="处理中...">
+      <span slot="title" class="dialog-title-text">预警详情</span>
       <div v-if="detail" class="warning-detail-container">
         <!-- 预警详情头部 -->
         <div class="warning-detail-header">
@@ -265,7 +266,6 @@
       title="上报确认"
       :visible.sync="reportDialogVisible"
       width="400px"
-      center
       append-to-body>
       <div class="confirm-content">
         <p>确定要上报此预警吗？</p>
@@ -273,7 +273,7 @@
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeReportDialog">取 消</el-button>
-        <el-button type="warning" @click="confirmReport">确定上报</el-button>
+        <el-button type="primary" @click="confirmReport">确定上报</el-button>
       </span>
     </el-dialog>
 
@@ -282,7 +282,6 @@
       title="归档预警"
       :visible.sync="archiveDialogVisible"
       width="40%"
-      center
       append-to-body
       :close-on-click-modal="false"
       :close-on-press-escape="false"
@@ -343,7 +342,7 @@
 
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeArchiveDialog">取 消</el-button>
-        <el-button type="danger" @click="confirmArchive">确认归档</el-button>
+        <el-button type="primary" @click="confirmArchive">确认归档</el-button>
       </span>
     </el-dialog>
 
@@ -352,11 +351,11 @@
       title="处理预警"
       :visible.sync="remarkDialogVisible"
       width="30%"
-      center
       append-to-body
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
+      <span slot="title" class="dialog-title-text">处理预警</span>
       <el-form :model="remarkForm" label-width="80px">
         <el-form-item label="处理意见" required>
           <el-input
@@ -375,7 +374,7 @@
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="saveRemark">确认处理</el-button>
-        <el-button type="success" @click="finishProcessing">结束处理</el-button>
+        <el-button @click="finishProcessing">结束处理</el-button>
       </span>
     </el-dialog>
 
@@ -384,7 +383,6 @@
       title="标记误报"
       :visible.sync="falseAlarmDialogVisible"
       width="30%"
-      center
       append-to-body
       :close-on-click-modal="false"
     >
@@ -410,7 +408,7 @@
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeFalseAlarmDialog">取 消</el-button>
-        <el-button type="danger" @click="confirmFalseAlarm">确认误报</el-button>
+        <el-button type="primary" @click="confirmFalseAlarm">确认误报</el-button>
       </span>
     </el-dialog>
 
@@ -2451,7 +2449,7 @@ export default {
   justify-content: center;
   align-items: center;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 16px 24px;
   background: transparent !important;
   border-top: none !important;
   border: none !important;
@@ -2472,8 +2470,11 @@ export default {
 .action-btn {
   padding: 8px 20px;
   font-size: 14px;
-  border-radius: 20px;
+  border-radius: 6px;
   transition: all 0.3s ease;
+  background: rgba(26, 109, 255, 0.1) !important;
+  border: 1px solid rgba(26, 109, 255, 0.1) !important;
+  color: #1A6DFF !important;
 }
 
 .action-btn i {
@@ -2481,60 +2482,52 @@ export default {
 }
 
 .report-btn {
-  background-color: transparent;
-  border-color: #d1d5db;
-  color: #4b5563;
+  background: rgba(26, 109, 255, 0.1) !important;
+  border-color: rgba(26, 109, 255, 0.1) !important;
+  color: #1A6DFF !important;
 }
 
 .report-btn:hover {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border-color: #3b82f6;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: rgba(26, 109, 255, 0.05) !important;
+  border-color: rgba(26, 109, 255, 0.1) !important;
+  color: #1A6DFF !important;
 }
 
 .archive-btn {
-  background-color: transparent;
-  border-color: #d1d5db;
-  color: #4b5563;
+  background: rgba(26, 109, 255, 0.1) !important;
+  border-color: rgba(26, 109, 255, 0.1) !important;
+  color: #1A6DFF !important;
 }
 
 .archive-btn:hover {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border-color: #3b82f6;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: rgba(26, 109, 255, 0.05) !important;
+  border-color: rgba(26, 109, 255, 0.1) !important;
+  color: #1A6DFF !important;
 }
 
 .false-alarm-btn {
-  background-color: transparent;
-  border-color: #d1d5db;
-  color: #4b5563;
+  background: rgba(26, 109, 255, 0.1) !important;
+  border-color: rgba(26, 109, 255, 0.1) !important;
+  color: #1A6DFF !important;
 }
 
 .false-alarm-btn:hover {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border-color: #3b82f6;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: rgba(26, 109, 255, 0.05) !important;
+  border-color: rgba(26, 109, 255, 0.1) !important;
+  color: #1A6DFF !important;
 }
 
 /* 处理按钮 - 科技感蓝色交互效果 */
 .process-btn {
-  background-color: transparent;
-  border-color: #d1d5db;
-  color: #4b5563;
+  background: rgba(26, 109, 255, 0.1) !important;
+  border-color: rgba(26, 109, 255, 0.1) !important;
+  color: #1A6DFF !important;
 }
 
 .process-btn:hover {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border-color: #3b82f6;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: rgba(26, 109, 255, 0.05) !important;
+  border-color: rgba(26, 109, 255, 0.1) !important;
+  color: #1A6DFF !important;
 }
 
 /* 动画效果 */
@@ -2576,11 +2569,23 @@ export default {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
   padding: 16px 20px;
+  text-align: left !important;
 }
 
 .warning-detail-component >>> .el-dialog__title {
-  color: #1f2937;
-  font-weight: 600;
+  color: #333333 !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  display: block;
+  text-align: left !important;
+}
+
+.dialog-title-text {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333333;
+  display: block;
+  text-align: left;
 }
 
 .warning-detail-component >>> .el-dialog__close {
@@ -2593,14 +2598,14 @@ export default {
 }
 
 .warning-detail-component >>> .el-dialog__body {
-  padding: 20px;
+  padding: 20px 24px;
   background: #ffffff;
 }
 
 .warning-detail-component >>> .el-button--primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border: none;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  background: #1A6DFF;
+  border: 1px solid #1A6DFF;
+  box-shadow: none;
   color: white;
   font-weight: 500;
   transition: all 0.3s ease;
@@ -2608,9 +2613,10 @@ export default {
 }
 
 .warning-detail-component >>> .el-button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
-  transform: translateY(-1px);
+  background: #3D85FF;
+  border-color: #3D85FF;
+  box-shadow: none;
+  transform: none;
 }
 
 .warning-detail-component >>> .el-button--success {
@@ -2638,10 +2644,10 @@ export default {
 }
 
 .warning-detail-component >>> .el-button--default:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  background: #ffffff;
   border-color: #3b82f6;
   color: #1e40af;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  box-shadow: none;
 }
 
 .warning-detail-component >>> .el-button--danger {

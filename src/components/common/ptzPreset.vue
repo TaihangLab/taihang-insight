@@ -32,6 +32,12 @@
 </template>
 
 <script>
+import { 
+  getFrontEndPresetList, 
+  addFrontEndPreset, 
+  callFrontEndPreset, 
+  deleteFrontEndPreset 
+} from '@/api/ptz'
 
 export default {
   name: "ptzPreset",
@@ -49,10 +55,7 @@ export default {
   },
   methods: {
     getPresetList: function () {
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/preset/query/${this.deviceId}/${this.channelDeviceId}`,
-      }).then((res)=> {
+      getFrontEndPresetList(this.deviceId, this.channelDeviceId).then((res)=> {
         if (res.data.code === 0) {
           this.presetList = res.data.data;
           // 防止出现表格错位
@@ -60,9 +63,7 @@ export default {
             this.$refs.channelListTable.doLayout();
           })
         }
-
       }).catch((error)=> {
-
         console.log(error);
       });
     },
@@ -80,12 +81,8 @@ export default {
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/preset/add/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          presetId: this.ptzPresetId
-        }
+      addFrontEndPreset(this.deviceId, this.channelDeviceId, {
+        presetId: this.ptzPresetId
       }).then((res)=> {
         if (res.data.code === 0) {
           setTimeout(()=>{
@@ -121,12 +118,8 @@ export default {
     },
     gotoPreset: function (preset){
       console.log(preset)
-      this.$axios({
-        method: 'get',
-        url: `/api/front-end/preset/call/${this.deviceId}/${this.channelDeviceId}`,
-        params: {
-          presetId: preset.presetId
-        }
+      callFrontEndPreset(this.deviceId, this.channelDeviceId, {
+        presetId: preset.presetId
       }).then((res)=> {
         if (res.data.code === 0) {
           this.$message({
@@ -163,12 +156,8 @@ export default {
           spinner: 'el-icon-loading',
           background: 'rgba(0, 0, 0, 0.7)'
         })
-        this.$axios({
-          method: 'get',
-          url: `/api/front-end/preset/delete/${this.deviceId}/${this.channelDeviceId}`,
-          params: {
-            presetId: preset.presetId
-          }
+        deleteFrontEndPreset(this.deviceId, this.channelDeviceId, {
+          presetId: preset.presetId
         }).then((res)=> {
           if (res.data.code === 0) {
             setTimeout(()=>{
@@ -183,7 +172,6 @@ export default {
               type: 'error'
             });
           }
-
         }).catch((error)=> {
           loading.close()
           this.$message({

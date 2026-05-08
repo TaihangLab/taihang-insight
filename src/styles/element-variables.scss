@@ -1,0 +1,180 @@
+/**
+ * Element UI 主题定制
+ * 铜矿峪矿综合管控平台 UI 设计规范
+ */
+
+/* 主色调 Primary Colors */
+$--color-primary: #4185F7 !default;
+$--color-primary-light-1: #5a96f8 !default;
+$--color-primary-light-2: #6fa5f9 !default;
+$--color-primary-light-3: #84b4fa !default;
+$--color-primary-light-4: #99c3fb !default;
+$--color-primary-light-5: #aed2fc !default;
+$--color-primary-light-6: #c3e1fd !default;
+$--color-primary-light-7: #d8f0fe !default;
+$--color-primary-light-8: #e8f5ff !default;
+$--color-primary-light-9: #f3faff !default;
+
+/* 功能色 Functional Colors */
+$--color-success: #67c23a !default;
+$--color-warning: #e6a23c !default;
+$--color-danger: #f56c6c !default;
+$--color-info: #409eff !default;
+
+/* 中性色 Neutral Colors */
+$--color-text-primary: #1F2937 !default;
+$--color-text-regular: #6B7280 !default;
+$--color-text-secondary: #9CA3AF !default;
+$--color-text-placeholder: #C0C4CC !default;
+
+$--background-color-base: #F9FAFB !default;
+$--border-color-base: #E5E7EB !default;
+$--border-color-light: #F3F4F6 !default;
+$--border-color-lighter: #FAFAFA !default;
+$--border-color-extra-light: #FCFCFC !default;
+
+/* 字体 Typography */
+$--font-family: "Microsoft YaHei", "微软雅黑", sans-serif !default;
+$--font-size-extra-large: 20px !default;
+$--font-size-large: 18px !default;
+$--font-size-medium: 16px !default;
+$--font-size-base: 14px !default;
+$--font-size-small: 12px !default;
+$--font-size-extra-small: 12px !default;
+
+/* 圆角 Border Radius */
+$--border-radius-base: 4px !default;
+$--border-radius-small: 2px !default;
+$--border-radius-medium: 6px !default;
+$--border-radius-large: 8px !default;
+
+/* 按钮 Button */
+$--button-font-size: 14px !default;
+$--button-border-radius: 4px !default;
+
+/* 小按钮 */
+$--button-small-font-size: 12px !default;
+$--button-small-padding-vertical: 7px !default;
+$--button-small-padding-horizontal: 12px !default;
+
+/* 中按钮 */
+$--button-medium-font-size: 14px !default;
+$--button-medium-padding-vertical: 10px !default;
+$--button-medium-padding-horizontal: 16px !default;
+
+/* 大按钮 */
+$--button-large-font-size: 16px !default;
+$--button-large-padding-vertical: 12px !default;
+$--button-large-padding-horizontal: 24px !default;
+
+/* 输入框 Input */
+$--input-height: 40px !default;
+$--input-font-size: 14px !default;
+$--input-border-color: #E5E7EB !default;
+$--input-border-radius: 4px !default;
+$--input-background-color: #FFFFFF !default;
+
+/* 小输入框 */
+$--input-small-height: 32px !default;
+$--input-small-font-size: 14px !default;
+
+/* 中输入框 */
+$--input-medium-height: 40px !default;
+$--input-medium-font-size: 14px !default;
+
+/* 表格 Table */
+$--table-border-color: #F3F4F6 !default;
+$--table-header-background-color: #F3F4F6 !default;
+$--table-header-text-color: #1F2937 !default;
+$--table-row-hover-background-color: #F9FAFB !default;
+$--table-current-row-background-color: rgba(65, 133, 247, 0.1) !default;
+
+/* 表格字体 */
+$--table-font-size: 14px !default;
+$--table-header-font-size: 14px !default;
+
+/* 卡片 Card */
+$--card-border-color: #E5E7EB !default;
+$--card-border-radius: 8px !default;
+$--card-padding: 24px !default;
+
+/* 对话框 Dialog */
+$--dialog-border-radius: 8px !default;
+$--dialog-padding-primary: 24px !default;
+
+/* 分页 Pagination */
+$--pagination-font-size: 14px !default;
+$--pagination-button-width: 32px !default;
+$--pagination-button-height: 32px !default;
+$--pagination-button-disabled-color: #C0C4CC !default;
+$--pagination-button-disabled-background-color: #FFFFFF !default;
+$--pagination-hover-color: #4185F7 !default;
+
+/* 标签 Tag */
+$--tag-border-radius: 4px !default;
+$--tag-font-size: 12px !default;
+$--tag-padding: 0 8px !default;
+
+/* 下拉菜单 Dropdown */
+$--dropdown-menu-box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1) !default;
+$--dropdown-menuItem-hover-fill: #F9FAFB !default;
+$--dropdown-menuItem-hover-color: #4185F7 !default;
+
+/* 导航菜单 Menu */
+$--menu-item-height: 60px !default;
+$--menu-item-font-size: 16px !default;
+$--menu-item-hover-fill: #F9FAFB !default;
+$--menu-text-color: #1F2937 !default;
+$--menu-active-color: #4185F7 !default;
+$--menu-background-color: #FFFFFF !default;
+
+/* 子菜单 */
+$--menu-item-sub-height: 48px !default;
+$--menu-item-sub-font-size: 14px !default;
+
+/* 表单 Form */
+$--form-label-font-size: 14px !default;
+$--label-color: #1F2937 !default;
+
+/* 间距 Spacing */
+$--spacing-xs: 8px !default;
+$--spacing-sm: 12px !default;
+$--spacing-base: 16px !default;
+$--spacing-lg: 24px !default;
+$--spacing-xl: 32px !default;
+
+/* 阴影 Shadow */
+$--box-shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !default;
+$--box-shadow-light: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !default;
+$--box-shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !default;
+$--box-shadow-dark: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !default;
+
+/* 消息提示 Message */
+$--message-padding: 16px 24px !default;
+$--message-border-radius: 4px !default;
+
+/* 通知 Notification */
+$--notification-width: 360px !default;
+$--notification-padding: 16px 24px !default;
+$--notification-border-radius: 8px !default;
+
+/* 加载 Loading */
+$--loading-spinner-size: 32px !default;
+$--loading-fullscreen-spinner-size: 48px !default;
+
+/* 滚动条 Scrollbar */
+$--scrollbar-width: 8px !default;
+$--scrollbar-thumb-background: #E5E7EB !default;
+$--scrollbar-track-background: #F3F4F6 !default;
+
+/* 过渡动画 Transitions */
+$--all-transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1) !default;
+$--fade-transition: opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1) !default;
+$--fade-linear-transition: opacity 0.2s linear !default;
+$--md-fade-transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1) !default;
+$--border-transition-base: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1) !default;
+$--color-transition-base: color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1) !default;
+
+/* 引入 Element UI 基础变量（如果需要） */
+/* @import "~element-ui/packages/theme-chalk/src/common/var.scss"; */
+

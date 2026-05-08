@@ -92,7 +92,13 @@
           <el-option label="已启用" value="enabled"></el-option>
           <el-option label="未启用" value="disabled"></el-option>
         </el-select>
-        <el-button type="primary" icon="el-icon-refresh" @click="refreshData">刷新</el-button>
+        <el-button
+          type="primary"
+          class="refresh-btn"
+          icon="el-icon-refresh"
+          style="background-color:#1A6DFF !important;background-image:none !important;border-color:#1A6DFF !important;color:#FFFFFF !important;opacity:1 !important;"
+          @click="refreshData"
+        >刷新</el-button>
       </div>
 
       <!-- 任务列表 -->
@@ -634,11 +640,7 @@ export default {
 .intelligent-review-container {
   padding: 20px;
   background-color: #f5f7fa;
-  height: calc(100vh - 60px);
-  min-height: 0;
-  overflow-y: auto !important;
-  overflow-x: hidden;
-  box-sizing: border-box;
+  height: 100%;
 }
 
 /* 页面头部 */
@@ -903,6 +905,40 @@ export default {
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
+}
+
+/* 主按钮统一色值 */
+::v-deep .el-button--primary {
+  background: #1A6DFF;
+  border-color: #1A6DFF;
+}
+
+::v-deep .el-button--primary:hover,
+::v-deep .el-button--primary:focus {
+  background: #1A6DFF;
+  border-color: #1A6DFF;
+}
+
+/* 刷新按钮单独锁定主色，避免被其他样式覆盖 */
+::v-deep .refresh-btn,
+::v-deep .refresh-btn:hover,
+::v-deep .refresh-btn:focus,
+::v-deep .refresh-btn:active {
+  background: #1A6DFF !important;
+  background-color: #1A6DFF !important;
+  background-image: none !important;
+  border-color: #1A6DFF !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+/* 分页选中态统一色值 */
+::v-deep .el-pagination .el-pager li.active,
+::v-deep .el-pagination.is-background .el-pager li.active {
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+  color: #ffffff !important;
 }
 
 /* 响应式 */

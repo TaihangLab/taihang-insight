@@ -1102,7 +1102,7 @@ export default {
   font-weight: 500;
 }
 
-.header-right .el-button--primary {
+/* .header-right .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -1154,7 +1154,7 @@ export default {
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
-}
+} */
 
 .content-container {
   flex: 1;
@@ -1715,29 +1715,29 @@ export default {
 
 .analysis-action {
   text-align: center;
-  padding: 16px 0 0 0;
+  /* padding: 16px 0 0 0; */
   flex-shrink: 0;
   border-top: 1px solid #f0f2f5;
   margin-top: 16px;
 }
 
 .analysis-btn {
-  padding: 12px 32px;
+  /* padding: 12px 32px; */
   font-size: 14px;
   font-weight: 600;
   border-radius: 20px;
   margin-bottom: 6px;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
+  /* background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   color: white;
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); */
 }
 
-.analysis-btn::before {
+/* .analysis-btn::before {
   content: '';
   position: absolute;
   top: 0;
@@ -1765,7 +1765,7 @@ export default {
 .analysis-btn.is-loading {
   background: linear-gradient(135deg, #a0a0a0 0%, #808080 100%);
   box-shadow: 0 4px 15px rgba(160, 160, 160, 0.4);
-}
+} */
 
 
 
@@ -1856,7 +1856,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #fff;
   flex-shrink: 0;
 }
 
@@ -1987,14 +1987,14 @@ export default {
   font-size: 13px;
   font-weight: 500;
   border-radius: 6px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  /* background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); */
   border: none;
   color: white;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-  transition: all 0.3s ease;
+  /* box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3); */
+  /* transition: all 0.3s ease; */
 }
 
-.reference-btn:hover {
+/* .reference-btn:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
   transform: translateY(-1px);
@@ -2002,7 +2002,7 @@ export default {
 
 .reference-btn:active {
   transform: translateY(0);
-}
+} */
 
 /* 响应式设计 */
 @media (max-width: 1024px) {

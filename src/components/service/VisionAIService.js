@@ -1,6 +1,7 @@
 import axios from 'axios';
-const config = require('../../../config/index.js');
+import userService from '@/components/service/UserService'
 
+const config = require('../../../config/index.js');
 // 创建专用于visionAI模块的axios实例
 const visionAIAxios = axios.create({
   baseURL: config.API_BASE_URL,
@@ -33,10 +34,11 @@ visionAIAxios.defaults.paramsSerializer = function (params) {
 visionAIAxios.interceptors.request.use(
   config => {
     // 这里可以添加token等通用请求头
-    const token = localStorage.getItem('token');
+    const token = userService.getAdminToken()
     if (token) {
-      config.headers['access-token'] = token;
+      config.headers['Authorization'] = 'Bearer ' + token;
     }
+    config.headers['clientid'] = '02bb9cfe8d7844ecae8dbe62b1ba971a';
     return config;
   },
   error => {

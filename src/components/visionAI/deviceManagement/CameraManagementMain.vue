@@ -267,7 +267,7 @@ export default {
 
 <style scoped>
 /* 引入通用管理页面样式 */
-@import './managementPages/common-style.css';
+/* @import './managementPages/common-style.css'; */
 
 /* ========================================
    科技感蓝色UI样式 - 与 camera.vue 一致
@@ -283,15 +283,15 @@ export default {
 
 /* 页面头部 - 科技感卡片样式 */
 .page-header {
-  margin-bottom: 16px;
+  padding-bottom: 0!important;
 }
 
 .header-content {
-  padding: 20px;
+  /* padding: 20px;
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.1); */
 }
 
 .page-title {
@@ -300,7 +300,7 @@ export default {
   gap: 16px;
 }
 
-.back-btn {
+/* .back-btn {
   color: #3b82f6 !important;
   font-size: 14px !important;
   padding: 8px 16px !important;
@@ -316,7 +316,7 @@ export default {
   color: white !important;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
   transform: translateY(-2px) !important;
-}
+} */
 
 .title-info {
   display: flex;
@@ -732,7 +732,7 @@ export default {
 }
 
 /* 科技感按钮样式 - 与 camera.vue 一致 */
-.camera-management-main >>> .el-button {
+/* .camera-management-main >>> .el-button {
   height: 32px;
   padding: 6px 16px;
   font-size: 14px;
@@ -788,7 +788,7 @@ export default {
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
   transform: translateY(-1px) !important;
-}
+} */
 
 /* 响应式设计 */
 @media (max-width: 768px) {

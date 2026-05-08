@@ -71,6 +71,7 @@
 </template>
 
 <script>
+import RegionChannelService from "../service/RegionChannelService";
 
 export default {
   name: "gbDeviceSelect",
@@ -114,22 +115,18 @@ export default {
     },
     getDeviceList: function () {
       this.getDeviceListLoading = true;
-      this.$axios({
-        method: 'get',
-        url: `/api/device/query/devices`,
-        params: {
-          page: this.currentPage,
-          count: this.count,
-          query: this.searchSrt,
-          status: this.online,
-        }
-      }).then( (res)=> {
-        if (res.data.code === 0) {
-          this.total = res.data.data.total;
-          this.deviceList = res.data.data.list;
+      RegionChannelService.getDeviceList({
+        page: this.currentPage,
+        count: this.count,
+        query: this.searchSrt,
+        status: this.online,
+      }, (res) => {
+        if (res.code === 0) {
+          this.total = res.data.total;
+          this.deviceList = res.data.list;
         }
         this.getDeviceListLoading = false;
-      }).catch( (error)=> {
+      }, (error) => {
         console.error(error);
         this.getDeviceListLoading = false;
       });

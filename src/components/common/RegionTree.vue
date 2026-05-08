@@ -51,6 +51,7 @@ import VueEasyTree from "@wchbrad/vue-easy-tree";
 import regionEdit from '../visionAI/deviceManagement/managementPages/dialogs/regionEdit.vue'
 import gbDeviceSelect from './../dialog/GbDeviceSelect'
 import GbChannelSelect from "../dialog/GbChannelSelect.vue";
+import { getRegionTreeList, deleteRegion, addDeviceToRegion, removeDeviceFromRegion } from '@/api/region'
 
 export default {
   name: 'DeviceTree',
@@ -91,14 +92,10 @@ export default {
           resolve([]);
           return
         }
-        this.$axios({
-          method: 'get',
-          url: `/api/region/tree/list`,
-          params: {
-            query: this.searchSrt,
-            parent: node.data.id,
-            hasChannel: this.hasChannel
-          }
+        getRegionTreeList({
+          query: this.searchSrt,
+          parent: node.data.id,
+          hasChannel: this.hasChannel
         }).then((res) => {
           if (res.data.code === 0) {
             if (res.data.data.length > 0) {
@@ -106,7 +103,6 @@ export default {
             }
             resolve(res.data.data);
           }
-
         }).catch(function (error) {
           console.log(error);
         });
@@ -212,13 +208,7 @@ export default {
       return false;
     },
     removeRegion: function (id, node) {
-      this.$axios({
-        method: "delete",
-        url: `/api/region/delete`,
-        params: {
-          id: node.data.id,
-        }
-      }).then((res) => {
+      deleteRegion(node.data.id).then((res) => {
         if (res.data.code === 0) {
           console.log("移除成功")
           node.parent.loaded = false
@@ -234,13 +224,9 @@ export default {
         for (let i = 0; i < rows.length; i++) {
           deviceIds.push(rows[i].id)
         }
-        this.$axios({
-          method: 'post',
-          url: `/api/common/channel/region/device/add`,
-          data: {
-            civilCode: node.data.deviceId,
-            deviceIds: deviceIds,
-          }
+        addDeviceToRegion({
+          civilCode: node.data.deviceId,
+          deviceIds: deviceIds,
         }).then((res)=> {
           if (res.data.code === 0) {
             this.$message.success({
@@ -274,12 +260,8 @@ export default {
         for (let i = 0; i < rows.length; i++) {
           deviceIds.push(rows[i].id)
         }
-        this.$axios({
-          method: 'post',
-          url: `/api/common/channel/region/device/delete`,
-          data: {
-            deviceIds: deviceIds,
-          }
+        removeDeviceFromRegion({
+          deviceIds: deviceIds,
         }).then((res)=> {
           if (res.data.code === 0) {
             this.$message.success({

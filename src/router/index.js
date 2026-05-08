@@ -3,7 +3,6 @@ import VueRouter from 'vue-router'
 import Layout from "../layout/index.vue"
 
 // 基础/小体积组件保持同步加载
-import login from '../components/Login.vue'
 import deviceTree from '../components/common/DeviceTree.vue'
 import wasmPlayer from '../components/common/jessibuca.vue'
 import rtcPlayer from '../components/dialog/rtcPlayer.vue'
@@ -32,7 +31,16 @@ const logRecords = () => import('../components/visionAI/smartControl/logRecords.
 const edgeServer = () => import('../components/visionAI/edgeManagement/edgeServer.vue')
 const edgeBox = () => import('../components/visionAI/edgeManagement/edgeBox.vue')
 const profile = () => import('../components/visionAI/systemManagement/profile.vue')
+const applicationSettings = () => import('../components/visionAI/systemManagement/applicationSettings.vue')
+const userManagement = () => import('../components/visionAI/systemManagement/userManagement.vue')
+const roleManagement = () => import('../components/visionAI/systemManagement/roleManagement.vue')
+const tenantManagement = () => import('../components/visionAI/systemManagement/tenantManagement.vue')
+const departmentManagement = () => import('../components/visionAI/systemManagement/departmentManagement.vue')
+const positionManagement = () => import('../components/visionAI/systemManagement/positionManagement.vue')
+const knowledgeBase = () => import('../components/visionAI/systemManagement/knowledgeBase.vue')
+const knowledgeBaseDetail = () => import('../components/visionAI/systemManagement/knowledgeBaseDetail.vue')
 const modelFactory = () => import('../components/visionAI/mlPipeline/modelFactory.vue')
+const parkManagement = () => import('../components/visionAI/ivisualCenter/parkManagement.vue')
 
 const originalPush = VueRouter.prototype.push
 VueRouter.prototype.push = function push(location) {
@@ -164,6 +172,56 @@ export default new VueRouter({
           component: profile,
         },
         {
+          path: '/systemManage/appSettings',
+          name: 'applicationSettings',
+          component: applicationSettings,
+        },
+        {
+          path: '/systemManage/userManagement',
+          name: 'userManagement',
+          component: userManagement,
+        },
+        {
+          path: '/systemManage/roleManagement',
+          name: 'roleManagement',
+          component: roleManagement,
+        },
+        {
+          path: '/systemManage/tenantManagement',
+          name: 'tenantManagement',
+          component: tenantManagement,
+        },
+        {
+          path: '/systemManage/departmentManagement',
+          name: 'departmentManagement',
+          component: departmentManagement,
+        },
+        {
+          path: '/systemManage/positionManagement',
+          name: 'positionManagement',
+          component: positionManagement,
+        },
+        {
+          path: '/systemManage/knowledgeBase',
+          name: 'knowledgeBase',
+          component: knowledgeBase,
+        },
+        {
+          path: '/systemManage/knowledgeBaseDetail',
+          name: 'knowledgeBaseDetail',
+          component: knowledgeBaseDetail,
+        },
+        {
+          path: '/mlPipeline',
+          name: 'modelFactory',
+          component: modelFactory,
+        },
+        {
+          path: '/visualCenter/parkManagement',
+          name: 'parkManagement',
+          component: parkManagement,
+        },
+        {
           path: '/mlPipeline',
           name: 'modelFactory',
           component: modelFactory,
@@ -199,11 +257,6 @@ export default new VueRouter({
 
 
         ]
-    },
-    {
-      path: '/login',
-      name: '登录',
-      component: login,
     },
     {
       path: '/test',

@@ -221,6 +221,7 @@
 import channelCode from './channelCode'
 import ChooseCivilCode from "./chooseCivilCode.vue";
 import ChooseGroup from "./chooseGroup.vue";
+import { getChannelInfo, addChannel, updateChannel, resetChannel } from '@/api/channel'
 
 export default {
   name: "CommonChannelEdit",
@@ -254,65 +255,35 @@ export default {
       if (this.form.gbDownloadSpeedArray) {
         this.form.gbDownloadSpeed = this.form.gbDownloadSpeedArray.join("/")
       }
-      if (this.form.gbId) {
-        this.$axios({
-          method: 'post',
-          url: "/api/common/channel/update",
-          data: this.form
-        }).then((res) => {
-          if (res.data.code === 0) {
-            this.$message.success({
+      
+      const apiCall = this.form.gbId ? updateChannel(this.form) : addChannel(this.form);
+      
+      apiCall.then((res) => {
+        if (res.code === 0) {
+          this.$message.success({
             showClose: true,
             message: "保存成功"
           });
-            if (this.saveSuccess) {
-              this.saveSuccess()
-            }
-          }else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
+          if (!this.form.gbId) {
+            this.form = res.data
           }
-        }).catch((error) => {
+          if (this.saveSuccess) {
+            this.saveSuccess()
+          }
+        } else {
           this.$message.error({
             showClose: true,
-            message: error
-          });
-        }).finally(()=>{
-          this.locading = false
-        })
-      }else {
-        this.$axios({
-          method: 'post',
-          url: "/api/common/channel/add",
-          data: this.form
-        }).then((res) => {
-          if (res.data.code === 0) {
-            this.$message.success({
-              showClose: true,
-              message: "保存成功"
-            });
-            this.form = res.data.data
-            if (this.saveSuccess) {
-              this.saveSuccess()
-            }
-          }else {
-            this.$message.error({
-              showClose: true,
-              message: res.data.msg
-            })
-          }
-        }).catch((error) => {
-          this.$message.error({
-            showClose: true,
-            message: error
-          });
-        }).finally(()=>{
-          this.locading = false
-        })
-      }
-
+            message: res.msg
+          })
+        }
+      }).catch((error) => {
+        this.$message.error({
+          showClose: true,
+          message: error
+        });
+      }).finally(()=>{
+        this.locading = false
+      })
     },
     reset: function () {
       this.$confirm("确定重置为默认内容?", '提示', {
@@ -322,14 +293,8 @@ export default {
         type: 'warning'
       }).then(() => {
         this.locading = true
-        this.$axios({
-          method: 'post',
-          url: "/api/common/channel/reset",
-          params: {
-            id: this.form.gbId
-          }
-        }).then((res) => {
-          if (res.data.code === 0) {
+        resetChannel(this.form.gbId).then((res) => {
+          if (res.code === 0) {
             this.$message.success({
               showClose: true,
               message: "重置成功 已保存"
@@ -344,22 +309,15 @@ export default {
       }).catch(() => {
 
       });
-
     },
     getCommonChannel:function () {
       this.locading = true
-      this.$axios({
-        method: 'get',
-        url: "/api/common/channel/one",
-        params: {
-          id: this.id
-        }
-      }).then((res) => {
-        if (res.data.code === 0) {
-          if (res.data.data.gbDownloadSpeed) {
-            res.data.data.gbDownloadSpeedArray = res.data.data.gbDownloadSpeed.split("/")
+      getChannelInfo(this.id).then((res) => {
+        if (res.code === 0) {
+          if (res.data.gbDownloadSpeed) {
+            res.data.gbDownloadSpeedArray = res.data.gbDownloadSpeed.split("/")
           }
-          this.form = res.data.data;
+          this.form = res.data;
         }
       }).catch((error) => {
         console.error(error)
