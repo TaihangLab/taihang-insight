@@ -1,29 +1,7 @@
 <template>
-  <div class="gb-devices-container">
-    <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="header-left">
-        <h2 class="page-title">
-          <i class="el-icon-video-camera"></i>
-          国标设备管理
-        </h2>
-        <p class="page-subtitle">管理和监控所有GB28181国标设备</p>
-      </div>
-      <div class="header-right">
-        <el-button type="primary" icon="el-icon-plus" @click="handleAddDevice">
-          添加设备
-        </el-button>
-        <el-button type="info" icon="el-icon-info" @click="showInfo">
-          平台信息
-        </el-button>
-        <el-button type="success" icon="el-icon-refresh" @click="handleRefresh" :loading="getDeviceListLoading">
-          刷新列表
-        </el-button>
-      </div>
-    </div>
-
+  <div class="gb-devices-container management-page-container">
     <!-- 搜索筛选区域 -->
-    <el-card class="search-card" shadow="never">
+    <el-card class="search-card management-search-card" shadow="never">
       <div class="search-form">
         <div class="search-row">
           <div class="search-item">
@@ -61,8 +39,8 @@
     </el-card>
 
     <!-- 设备统计卡片 -->
-    <div class="stats-cards">
-      <el-card class="stat-card" shadow="hover">
+    <div class="stats-cards management-stats-cards">
+      <el-card class="stat-card management-stat-card" shadow="hover">
         <div class="stat-content">
           <div class="stat-icon online">
             <i class="el-icon-video-camera"></i>
@@ -74,7 +52,7 @@
         </div>
       </el-card>
       
-      <el-card class="stat-card" shadow="hover">
+      <el-card class="stat-card management-stat-card" shadow="hover">
         <div class="stat-content">
           <div class="stat-icon offline">
             <i class="el-icon-video-pause"></i>
@@ -86,7 +64,7 @@
         </div>
       </el-card>
       
-      <el-card class="stat-card" shadow="hover">
+      <el-card class="stat-card management-stat-card" shadow="hover">
         <div class="stat-content">
           <div class="stat-icon total">
             <i class="el-icon-box"></i>
@@ -98,13 +76,13 @@
         </div>
       </el-card>
       
-      <el-card class="stat-card" shadow="hover">
+      <el-card class="stat-card management-stat-card" shadow="hover">
         <div class="stat-content">
-          <div class="stat-icon channels">
+          <div class="stat-icon total">
             <i class="el-icon-menu"></i>
           </div>
           <div class="stat-info">
-            <div class="stat-number">{{ deviceStats.channels }}</div>
+            <div class="stat-number">{{ deviceStats.channelCount }}</div>
             <div class="stat-label">通道总数</div>
           </div>
         </div>
@@ -112,13 +90,21 @@
     </div>
 
     <!-- 设备列表 -->
-    <el-card class="table-card" shadow="never">
+    <el-card class="table-card management-table-card" shadow="never">
       <div slot="header" class="card-header">
-        <span class="card-title">设备列表</span>
+        <div class="header-left-group">
+          <span class="card-title">设备列表</span>
+        </div>
         <div class="card-actions">
+          <el-button type="primary" size="mini" icon="el-icon-plus" @click="handleAddDevice">添加设备</el-button>
+          <el-button type="info" size="mini" icon="el-icon-info" @click="showInfo">信息</el-button>
+          <el-button type="success" size="mini" icon="el-icon-refresh" @click="handleRefresh" :loading="getDeviceListLoading">刷新</el-button>
+          
+          <el-divider direction="vertical"></el-divider>
+          
           <el-button-group>
-            <el-button :type="viewMode === 'table' ? 'primary' : ''" icon="el-icon-menu" @click="viewMode = 'table'">列表</el-button>
-            <el-button :type="viewMode === 'card' ? 'primary' : ''" icon="el-icon-s-grid" @click="viewMode = 'card'">卡片</el-button>
+            <el-button size="mini" :type="viewMode === 'table' ? 'primary' : ''" icon="el-icon-menu" @click="viewMode = 'table'">列表</el-button>
+            <el-button size="mini" :type="viewMode === 'card' ? 'primary' : ''" icon="el-icon-s-grid" @click="viewMode = 'card'">卡片</el-button>
           </el-button-group>
         </div>
       </div>
@@ -133,7 +119,6 @@
           element-loading-background="rgba(0, 0, 0, 0.8)"
           empty-text="暂无设备数据"
           style="width: 100%"
-          :height="tableHeight"
           stripe
           border
           @selection-change="handleSelectionChange">
@@ -220,7 +205,7 @@
           <el-table-column prop="keepaliveTime" label="最近心跳" min-width="140" align="center" show-overflow-tooltip></el-table-column>
           <el-table-column prop="registerTime" label="最近注册" min-width="140" align="center" show-overflow-tooltip></el-table-column>
           
-          <el-table-column label="操作" width="280" align="center" fixed="right">
+          <el-table-column label="操作" width="320" align="center" fixed="right">
             <template slot-scope="{ row }">
               <div class="operation-buttons">
                 <el-tooltip content="刷新设备" placement="top">
@@ -328,13 +313,14 @@
       <!-- 分页 -->
       <div class="pagination-container">
         <el-pagination
+          background
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
           :current-page.sync="currentPage"
           :page-size.sync="pageSize"
           :page-sizes="[15, 25, 35, 50]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange">
+          layout="total, sizes, prev, pager, next"
+          :total="total">
         </el-pagination>
       </div>
     </el-card>
@@ -403,7 +389,10 @@ export default {
       updateLooper: null,
       
       // 服务ID
-      serverId: null
+      serverId: null,
+      
+      // 多选
+      multipleSelection: []
     }
   },
   
@@ -432,6 +421,10 @@ export default {
   },
   
   methods: {
+    // 处理多选
+    handleSelectionChange(val) {
+      this.multipleSelection = val;
+    },
     // 初始化数据
     initData() {
       this.currentPage = 1;
@@ -777,198 +770,63 @@ export default {
 </script>
 
 <style scoped>
-/* ========================================
-   科技感蓝色UI样式 - 与 camera.vue 一致
-   ======================================== */
-
 .gb-devices-container {
-  padding: 16px;
-  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  min-height: 100vh;
-}
-
-/* 页面头部 - 科技感卡片样式 */
-.page-header {
+  height: auto;
+  min-height: auto;
+  padding: 0;
+  background-color: transparent;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+}
+
+/* 搜索筛选区域 */
+.management-search-card {
+  flex-shrink: 0;
   margin-bottom: 16px;
-  padding: 24px;
-  /* background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); */
-  border-radius: 16px;
-  /* box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.1); */
-  color: #1e40af;
-}
-
-.header-left .page-title {
-  font-size: 28px;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-  display: flex;
-  align-items: center;
-  color: #1e40af;
-}
-
-.header-left .page-title i {
-  margin-right: 12px;
-  font-size: 32px;
-  color: #3b82f6;
-}
-
-.header-left .page-subtitle {
-  font-size: 16px;
-  margin: 0;
-  font-weight: 400;
-  color: #6b7280;
-}
-
-/* .header-right .el-button {
-  margin-left: 12px;
-  height: 36px;
-  padding: 8px 20px;
-  font-size: 14px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  color: #1e40af;
-}
-
-.header-right .el-button:hover {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  transform: translateY(-2px);
-} */
-
-/* 搜索卡片 - 科技感优化 */
-.search-card {
-  margin-bottom: 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  background: #fff;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
 }
 
 .search-form .search-row {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 20px;
+  flex-wrap: nowrap;
+  gap: 24px;
 }
 
 .search-item {
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .search-item label {
   font-weight: 600;
-  color: #374151;
-  white-space: nowrap;
-}
-
-/* 搜索框布局混乱 */
-.search-item >>> .el-input__prefix {
-  top:7px;
-  left:5px;
+  color: #333333;
 }
 
 .search-actions {
   margin-left: auto;
+  display: flex;
+  gap: 12px;
 }
 
-/* 统计卡片 - 科技感优化 */
-.stats-cards {
+/* 统计卡片布局 */
+.management-stats-cards {
+  flex-shrink: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
   margin-bottom: 16px;
 }
 
-.stat-card {
-  border-radius: 16px;
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  background: #fff;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
+/* 列表卡片布局优化 */
+.management-table-card {
+  flex: none;
 }
 
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.2);
-  border-color: rgba(59, 130, 246, 0.3);
-}
-
-.stat-content {
-  display: flex;
-  align-items: center;
-  padding: 8px 0;
-}
-
-.stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 16px;
-  font-size: 24px;
-  color: white;
-}
-
-.stat-icon.online {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-}
-
-.stat-icon.offline {
-  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-}
-
-.stat-icon.total {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-}
-
-.stat-icon.channels {
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-}
-
-.stat-info .stat-number {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1e40af;
-  line-height: 1;
-}
-
-.stat-info .stat-label {
-  font-size: 14px;
-  color: #6b7280;
-  margin-top: 4px;
-}
-
-/* 表格卡片 - 科技感优化 */
-.table-card {
-  border-radius: 16px;
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  background: #fff;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e40af;
+.management-table-card >>> .el-card__body {
+  padding: 20px !important;
+  overflow: visible !important;
 }
 
 /* 表格样式 */
@@ -991,7 +849,7 @@ export default {
 
 .device-icon {
   margin-right: 8px;
-  color: #3b82f6;
+  color: #1A6DFF;
 }
 
 .subscribe-status {
@@ -1024,269 +882,40 @@ export default {
 }
 
 .device-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .device-card-header {
   display: flex;
-  align-items: flex-start;
-  margin-bottom: 16px;
-  position: relative;
-}
-
-.device-status-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-
-.device-title h4 {
-  margin: 0 0 4px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.device-title p {
-  margin: 0;
-  font-size: 13px;
-  color: #909399;
-  font-family: 'Courier New', monospace;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .device-card-content {
-  margin-bottom: 16px;
+  padding: 16px 0;
 }
 
 .device-info-row {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-
-.info-label {
-  color: #606266;
-  font-weight: 500;
-}
-
-.info-value {
-  color: #303133;
-  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 13px;
 }
 
 .device-card-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
 }
 
-.device-card-actions .el-button {
-  flex: 1;
-  font-size: 12px;
-}
-
-/* 分页 */
+/* 分页容器 */
 .pagination-container {
-  margin-top: 20px;
-  text-align: right;
-}
-
-.el-pagination {
-  font-weight: 600;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .gb-devices-container {
-    padding: 10px;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    text-align: center;
-    gap: 16px;
-  }
-  
-  .search-form .search-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .search-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .search-actions {
-    margin-left: 0;
-    margin-top: 16px;
-  }
-  
-  .stats-cards {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-  }
-  
-  .operation-buttons {
-    flex-direction: column;
-    gap: 2px;
-  }
-  
-  .device-cards {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* 通道数样式 */
-.channel-count {
-  display: inline-block;
-  padding: 4px 8px;
-  background-color: #f0f9ff;
-  color: #1d4ed8;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 14px;
-  border: 1px solid #dbeafe;
-}
-
-/* 科技感按钮样式 - 与 camera.vue 一致 */
-/* .gb-devices-container >>> .el-button {
-  height: 32px;
-  padding: 6px 16px;
-  font-size: 14px;
-  border-radius: 6px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  margin: 0;
-}
-
-.gb-devices-container >>> .el-button--primary {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3) !important;
-  position: relative !important;
-  overflow: hidden !important;
-  color: white !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.3px !important;
-}
-
-.gb-devices-container >>> .el-button--primary::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.gb-devices-container >>> .el-button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%) !important;
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4) !important;
-  transform: translateY(-2px) !important;
-}
-
-.gb-devices-container >>> .el-button--primary:hover::before {
-  left: 100%;
-}
-
-.gb-devices-container >>> .el-button--success {
-  background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%) !important;
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4), 0 2px 4px rgba(5, 150, 105, 0.3) !important;
-  position: relative !important;
-  overflow: hidden !important;
-  color: white !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.3px !important;
-}
-
-.gb-devices-container >>> .el-button--success:hover {
-  background: linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%) !important;
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5), 0 4px 8px rgba(5, 150, 105, 0.4) !important;
-  transform: translateY(-2px) !important;
-}
-
-.gb-devices-container >>> .el-button--info {
-  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 50%, #22d3ee 100%) !important;
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4), 0 2px 4px rgba(8, 145, 178, 0.3) !important;
-  position: relative !important;
-  overflow: hidden !important;
-  color: white !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.3px !important;
-}
-
-.gb-devices-container >>> .el-button--info:hover {
-  background: linear-gradient(135deg, #0e7490 0%, #0891b2 50%, #06b6d4 100%) !important;
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5), 0 4px 8px rgba(8, 145, 178, 0.4) !important;
-  transform: translateY(-2px) !important;
-}
-
-.gb-devices-container >>> .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--info):not(.el-button--danger):not(.el-button--warning) {
-  background: white !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #4b5563 !important;
-  transition: all 0.3s ease !important;
-}
-
-.gb-devices-container >>> .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--info):not(.el-button--danger):not(.el-button--warning):hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-  transform: translateY(-1px) !important;
-} */
-
-/* 输入框样式 */
-/* .gb-devices-container >>> .el-input__inner {
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 6px !important;
-  transition: all 0.3s ease !important;
-}
-
-.gb-devices-container >>> .el-input__inner:hover {
-  border-color: #3b82f6 !important;
-}
-
-.gb-devices-container >>> .el-input__inner:focus {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
-}
-
-/* 选择器样式 */
-.gb-devices-container >>> .el-select .el-input__inner {
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 6px !important;
-  transition: all 0.3s ease !important;
-}
-
-.gb-devices-container >>> .el-select .el-input__inner:hover {
-  border-color: #3b82f6 !important;
-}
-
-.gb-devices-container >>> .el-select .el-input__inner:focus {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
-} */
-
-/* 深色主题支持 */
-@media (prefers-color-scheme: dark) {
-  .gb-devices-container {
-    background-color: #1a1a1a;
-  }
-  
-  .channel-count {
-    background-color: #1e3a8a;
-    color: #dbeafe;
-    border-color: #1e40af;
-  }
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style> 

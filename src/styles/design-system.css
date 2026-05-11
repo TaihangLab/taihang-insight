@@ -502,20 +502,90 @@
     border-radius: var(--border-radius-lg) !important;
   }
   
-  .el-dialog__header {
+  body .el-dialog__header {
     padding: var(--spacing-lg) var(--card-padding) !important;
     border-bottom: 1px solid var(--border-color) !important;
+    text-align: left !important;
+    position: relative !important;
   }
   
-  .el-dialog__title {
-    font-size: var(--font-size-base) !important;
-    font-weight: var(--font-weight-semibold) !important;
-    color: var(--text-primary) !important;
+  body .el-dialog__title {
+    font-size: var(--font-size-lg) !important;
+    font-weight: var(--font-weight-bold) !important;
+    color: #333333 !important;
+    display: block !important;
+    text-align: left !important;
+  }
+
+  body .el-dialog__headerbtn {
+    top: 20px !important;
+    right: 20px !important;
+  }
+
+  body .el-dialog__headerbtn .el-dialog__close {
+    color: #909399 !important;
+    font-size: 20px !important;
+    font-weight: bold !important;
+    transition: all 0.3s ease !important;
+  }
+
+  body .el-dialog__headerbtn:hover .el-dialog__close {
+    color: #333333 !important;
+  }
+
+  /* 统一 Radio Button 选中样式 */
+  body .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+    background-color: #1A6DFF !important;
+    border-color: #1A6DFF !important;
+    box-shadow: -1px 0 0 0 #1A6DFF !important;
+    color: #FFFFFF !important;
+  }
+
+  body .el-radio-button__inner:hover {
+    color: #1A6DFF !important;
   }
   
   .el-dialog__body {
     padding: var(--card-padding) !important;
     color: var(--text-secondary) !important;
+  }
+
+  .el-dialog__footer {
+    padding: 16px 24px 24px !important;
+    border-top: 1px solid var(--border-color) !important;
+    text-align: right !important;
+  }
+
+  body .el-dialog__footer .el-button + .el-button {
+    margin-left: 16px !important;
+  }
+
+  body .el-dialog__footer .el-button {
+    padding: 10px 24px !important;
+    font-size: 14px !important;
+    border-radius: 6px !important;
+    line-height: 1.4 !important;
+    height: auto !important;
+    min-width: 88px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .el-dialog__footer .el-button--primary {
+    background-color: #1A6DFF !important;
+    border-color: #1A6DFF !important;
+  }
+
+  .el-dialog__footer .el-button--default {
+    background-color: #F4F4F4 !important;
+    border: none !important;
+    color: #333333 !important;
+  }
+
+  .el-dialog__footer .el-button--default:hover {
+    background-color: rgba(244, 244, 244, 0.9) !important;
+    color: #333333 !important;
   }
   
   /* 表单项间距 */
@@ -589,7 +659,9 @@
   }
   
   .el-pagination .el-pager li.active {
-    color: var(--primary-color) !important;
+    background-color: #1A6DFF !important;
+    color: #FFFFFF !important;
+    border-radius: 4px !important;
   }
   
   /* ========================================

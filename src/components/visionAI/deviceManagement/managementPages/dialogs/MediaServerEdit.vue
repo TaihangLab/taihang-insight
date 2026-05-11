@@ -12,7 +12,7 @@
       <div id="formStep" style="margin-top: 1rem; margin-right: 20px;">
         <el-form v-if="currentStep == 1" ref="mediaServerForm" :rules="rules" :model="mediaServerForm" label-width="140px" >
           <el-form-item label="IP" prop="ip">
-            <el-input v-model="mediaServerForm.ip"  placeholder="媒体服务IP" clearable  :disabled="mediaServerForm.defaultServer"></el-input>
+            <el-input v-model="mediaServerForm.ip" @input="handleIpInput"  placeholder="媒体服务IP (支持直接粘贴URL)" clearable  :disabled="mediaServerForm.defaultServer"></el-input>
           </el-form-item>
           <el-form-item label="HTTP端口" prop="httpPort">
             <el-input v-model="mediaServerForm.httpPort" placeholder="媒体服务HTTP端口"  clearable :disabled="mediaServerForm.defaultServer"></el-input>
@@ -138,14 +138,16 @@ export default {
   },
   data() {
     const isValidIp = (rule, value, callback) => { // 校验IP是否符合规则
-      var reg = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/
-      console.log(this.mediaServerForm.ip)
-      if (!reg.test(this.mediaServerForm.ip)) {
-        return callback(new Error('请输入有效的IP地址'))
+      // 允许 IP、域名、localhost
+      var reg = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$|^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}$|^localhost$/
+      if (!value) {
+        return callback(new Error('请输入IP地址'))
+      }
+      if (!reg.test(value)) {
+        return callback(new Error('请输入有效的IP地址或域名'))
       } else {
         callback()
       }
-      return true
     }
     const isValidPort = (rule, value, callback) => { // 校验IP是否符合规则
       var reg = /^(([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-5]{2}[0-3][0-5]))$/
@@ -221,6 +223,21 @@ export default {
         this.dialogWidth = '100%'
       } else {
         this.dialogWidth = this.defaultWidth + 'px'
+      }
+    },
+    handleIpInput(val) {
+      if (!val) return;
+      // 如果输入的是完整的 URL，尝试解析出 IP 和端口
+      if (val.startsWith('http://') || val.startsWith('https://')) {
+        try {
+          const url = new URL(val);
+          this.mediaServerForm.ip = url.hostname;
+          if (url.port) {
+            this.mediaServerForm.httpPort = url.port;
+          }
+        } catch (e) {
+          // 解析失败则不处理
+        }
       }
     },
     openDialog: function (param, callback) {

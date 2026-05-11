@@ -32,7 +32,7 @@
             @select="handleMenuSelect"
             background-color="transparent"
             text-color="#606266"
-            active-text-color="#409EFF">
+            active-text-color="#1A6DFF">
             
             <el-menu-item index="gb-devices" class="menu-item">
               <div class="menu-item-content">
@@ -265,10 +265,14 @@ export default {
 }
 </script>
 
-<style scoped>
-/* 引入通用管理页面样式 */
-/* @import './managementPages/common-style.css'; */
+<style>
+/* ========================================
+   全局通用管理页面样式 - 影响弹窗和下拉框
+   ======================================== */
+@import './managementPages/common-style.css';
+</style>
 
+<style scoped>
 /* ========================================
    科技感蓝色UI样式 - 与 camera.vue 一致
    ======================================== */
@@ -276,22 +280,16 @@ export default {
 .camera-management-main {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
   padding: 16px;
+  box-sizing: border-box; /* 确保 padding 不会增加总宽度 */
 }
 
 /* 页面头部 - 科技感卡片样式 */
 .page-header {
-  padding-bottom: 0!important;
-}
-
-.header-content {
-  /* padding: 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.1); */
+  flex-shrink: 0;
+  padding-bottom: 8px;
 }
 
 .page-title {
@@ -300,35 +298,40 @@ export default {
   gap: 16px;
 }
 
-/* .back-btn {
-  color: #3b82f6 !important;
+.back-btn {
+  color: #1A6DFF !important;
   font-size: 14px !important;
-  padding: 8px 16px !important;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border: 1px solid rgba(59, 130, 246, 0.3) !important;
-  border-radius: 6px !important;
+  padding: 8px 0 !important;
+  background: transparent !important;
+  border: none !important;
   transition: all 0.3s ease !important;
   font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
 }
 
 .back-btn:hover {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
-  color: white !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
-  transform: translateY(-2px) !important;
-} */
+  color: #1A6DFF !important;
+  opacity: 0.8;
+  transform: translateX(-2px);
+}
+
+.back-btn i {
+  font-size: 16px;
+}
 
 .title-info {
   display: flex;
   align-items: center;
   font-size: 18px;
-  font-weight: 600;
-  color: #1e40af;
+  font-weight: 700;
+  color: #333333;
 }
 
 .title-info i {
   font-size: 20px;
-  color: #3b82f6;
+  color: #1A6DFF;
   margin-right: 8px;
 }
 
@@ -338,32 +341,34 @@ export default {
   margin-left: 8px;
 }
 
-/* 主要内容区域 */
 .management-content {
   display: flex;
-  flex: 1;
   gap: 16px;
-  overflow: hidden;
+  margin-top: 4px;
+  width: 100%; /* 确保宽度铺满 */
 }
 
 /* 左侧菜单 - 科技感卡片样式 */
 .sidebar-menu {
   width: 280px;
   flex-shrink: 0;
+  position: sticky;
+  top: 16px;
+  height: fit-content;
 }
 
 .menu-card {
   height: 100%;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  background: #ffffff !important;
   border-radius: 16px !important;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.08) !important;
-  border: 1px solid rgba(59, 130, 246, 0.1) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid #e5e7eb !important;
   overflow: hidden !important;
 }
 
 .menu-card >>> .el-card__header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
   padding: 20px !important;
 }
 
@@ -375,21 +380,21 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e40af;
+  font-size: 18px;
+  font-weight: 700;
+  color: #333333;
   cursor: pointer;
   transition: all 0.3s;
   padding: 0;
 }
 
 .menu-header:hover {
-  color: #3b82f6;
+  color: #1A6DFF;
 }
 
 .menu-header i {
   font-size: 18px;
-  color: #3b82f6;
+  color: #1A6DFF;
 }
 
 .back-to-home-icon {
@@ -416,6 +421,13 @@ export default {
   margin: 8px 0;
   border-radius: 12px;
   transition: all 0.3s;
+  background: transparent;
+}
+
+.menu-item:hover,
+.menu-sub-item:hover,
+.menu-submenu .el-submenu__title:hover {
+  background: rgba(26, 109, 255, 0.05);
 }
 
 .menu-item-content {
@@ -472,139 +484,131 @@ export default {
 }
 
 /* 激活状态 - 科技感优化 */
-.management-menu .el-menu-item.is-active {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-}
-
-.management-menu .el-menu-item.is-active .menu-icon {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.management-menu .el-menu-item.is-active .menu-icon i {
-  color: #fff;
-}
-
-.management-menu .el-menu-item.is-active .menu-text {
-  color: #1e40af;
-  font-weight: 600;
-}
-
-/* 子菜单样式 - 科技感优化 */
-.management-menu .el-submenu__title:hover .menu-icon {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  border-color: rgba(59, 130, 246, 0.3);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
-}
-
-.management-menu .el-submenu__title:hover .menu-icon i {
-  color: #3b82f6;
-}
-
-.management-menu .el-submenu__title:hover .menu-text {
-  color: #1e40af;
-}
-
-.management-menu .el-submenu.is-active .el-submenu__title .menu-icon {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border-color: #3b82f6;
-}
-
-.management-menu .el-submenu.is-active .el-submenu__title .menu-icon i {
-  color: #fff;
-}
-
-.management-menu .el-submenu.is-active .el-submenu__title .menu-text {
-  color: #1e40af;
-  font-weight: 600;
-}
-
-/* 子菜单项样式 */
-.menu-sub-item .menu-icon {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-}
-
-.menu-sub-item .menu-icon i {
-  font-size: 14px;
-}
-
-.menu-sub-item .menu-text {
-  font-size: 13px;
-}
-
-/* 移除原有的菜单项样式 */
+/* ============================================================
+   菜单基础样式 & 重置
+   ============================================================ */
 .management-menu .el-menu-item,
 .management-menu .el-submenu__title {
-  height: auto;
-  line-height: normal;
+  height: auto !important;
+  line-height: normal !important;
   padding: 16px !important;
-  border-radius: 12px;
-  margin: 8px 0;
-  border: none;
-  background: transparent !important;
+  border-radius: 12px !important;
+  margin: 8px 0 !important;
+  border: none !important;
+  background-color: transparent !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
 }
 
-/* 特别处理submenu标题的对齐问题 */
-.management-menu .el-submenu__title {
-  padding: 16px !important;
-  margin: 8px 0;
-  position: relative;
-}
-
-/* 重置submenu默认样式，确保与menu-item对齐 */
-.management-menu .el-submenu > .el-submenu__title {
-  padding-left: 16px !important;
-  padding-right: 16px !important;
-}
-
-/* 调整submenu展开图标位置 */
-.management-menu .el-submenu__title .el-submenu__icon-arrow {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-right: 0;
-  margin-left: 0;
-  color: #6b7280;
+/* 菜单文字和图标默认颜色 */
+.management-menu .menu-text {
+  color: #606266;
+  font-size: 14px;
   transition: all 0.3s;
 }
 
-.management-menu .el-submenu__title:hover .el-submenu__icon-arrow {
-  color: #3b82f6;
+.management-menu .menu-icon i {
+  color: #1A6DFF;
+  transition: all 0.3s;
 }
 
-/* 确保submenu内容与其他菜单项内容对齐 */
-.management-menu .el-submenu__title .menu-item-content {
-  margin-right: 30px; /* 为展开图标留出空间 */
-}
-
+/* ============================================================
+   悬停状态 (Hover)
+   ============================================================ */
 .management-menu .el-menu-item:hover,
 .management-menu .el-submenu__title:hover {
-  background-color: transparent !important;
+  background-color: rgba(26, 109, 255, 0.05) !important;
 }
 
+.management-menu .el-menu-item:hover .menu-text,
+.management-menu .el-submenu__title:hover .menu-text {
+  color: #1A6DFF !important;
+}
+
+/* ============================================================
+   激活路径样式 (父级菜单展开且子项被选中)
+   ============================================================ */
+.management-menu .el-submenu.is-active .el-submenu__title {
+  background-color: rgba(26, 109, 255, 0.08) !important;
+}
+
+.management-menu .el-submenu.is-active .el-submenu__title .menu-text {
+  color: #1A6DFF !important;
+  font-weight: 700 !important;
+}
+
+.management-menu .el-submenu.is-active .el-submenu__title .menu-icon {
+  background: #f0f7ff !important;
+  border-color: #1A6DFF !important;
+}
+
+.management-menu .el-submenu.is-active .el-submenu__title .menu-icon i {
+  color: #1A6DFF !important;
+}
+
+.management-menu .el-submenu.is-active .el-submenu__title .el-submenu__icon-arrow {
+  color: #1A6DFF !important;
+}
+
+/* ============================================================
+   激活项样式 (当前选中的 pill)
+   ============================================================ */
+.management-menu .el-menu-item.is-active {
+  background-color: #1A6DFF !important;
+  box-shadow: 0 4px 12px rgba(26, 109, 255, 0.3) !important;
+}
+
+.management-menu .el-menu-item.is-active .menu-text {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+}
+
+.management-menu .el-menu-item.is-active .menu-icon {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.management-menu .el-menu-item.is-active .menu-icon i {
+  color: #FFFFFF !important;
+}
+
+/* 激活项悬停保持白色文字 */
+.management-menu .el-menu-item.is-active:hover {
+  background-color: #1A6DFF !important;
+}
+
+.management-menu .el-menu-item.is-active:hover .menu-text {
+  color: #FFFFFF !important;
+}
+
+/* ============================================================
+   子菜单专用细节
+   ============================================================ */
 .management-menu .el-submenu .el-menu-item {
   padding: 12px 16px !important;
-  height: auto;
-  line-height: normal;
-  margin: 4px 0;
+  margin: 4px 0 !important;
+}
+
+.management-menu .el-submenu__title .el-submenu__icon-arrow {
+  position: absolute !important;
+  right: 16px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
 }
 
 /* 右侧内容区域 - 科技感优化 */
 .content-area {
   flex: 1;
-  overflow: hidden;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  min-width: 0; /* 防止内容撑开容器 */
 }
 
 .content-wrapper {
-  height: 100%;
-  overflow-y: auto;
+  padding: 16px;
 }
 
 /* 默认内容 - 科技感优化 */
@@ -633,19 +637,15 @@ export default {
 
 .welcome-icon i {
   font-size: 64px;
-  color: #3b82f6;
+  color: #1A6DFF;
   margin-bottom: 24px;
-  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .welcome-title {
   font-size: 24px;
-  color: #1e40af;
+  color: #333333;
   margin-bottom: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .welcome-desc {
@@ -672,8 +672,9 @@ export default {
 
 .feature-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.2) !important;
-  border-color: rgba(59, 130, 246, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(26, 109, 255, 0.2) !important;
+  border-color: #1A6DFF !important;
+  background: #1A6DFF !important;
 }
 
 .feature-card >>> .el-card__body {
@@ -692,27 +693,35 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
   margin-right: 16px;
   transition: all 0.3s;
 }
 
 .feature-card:hover .feature-icon {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: none !important;
 }
 
 .feature-icon i {
   font-size: 24px;
-  color: #3b82f6;
+  color: #1A6DFF;
   transition: all 0.3s;
 }
 
 .feature-card:hover .feature-icon i {
   color: #fff;
+}
+
+.feature-card:hover .feature-title {
+  color: #FFFFFF !important;
+}
+
+.feature-card:hover .feature-desc {
+  color: rgba(255, 255, 255, 0.8) !important;
 }
 
 .feature-info {
@@ -721,9 +730,10 @@ export default {
 
 .feature-title {
   font-size: 16px;
-  font-weight: 600;
-  color: #1e40af;
+  font-weight: 700;
+  color: #333333;
   margin-bottom: 6px;
+  transition: all 0.3s;
 }
 
 .feature-desc {

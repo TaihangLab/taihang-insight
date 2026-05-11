@@ -4739,65 +4739,63 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
 }
 
 .realtime-monitoring-container >>> .el-button--primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border: none;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-  color: white;
+  background: #1A6DFF !important;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3);
+  color: white !important;
   font-weight: 500;
   transition: all 0.3s ease;
   border-radius: 6px;
 }
 
 .realtime-monitoring-container >>> .el-button--primary:hover {
-  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+  background: rgba(26, 109, 255, 0.9) !important;
+  box-shadow: 0 4px 10px rgba(26, 109, 255, 0.4);
   transform: translateY(-1px);
 }
 
 .realtime-monitoring-container >>> .el-button--success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: none;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
-  color: white;
+  background: #1A6DFF !important;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3);
+  color: white !important;
   font-weight: 500;
   transition: all 0.3s ease;
   border-radius: 6px;
 }
 
 .realtime-monitoring-container >>> .el-button--success:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+  background: rgba(26, 109, 255, 0.9) !important;
+  box-shadow: 0 4px 10px rgba(26, 109, 255, 0.4);
   transform: translateY(-1px);
 }
 
 .realtime-monitoring-container >>> .secondary-action-btn {
-  background: rgba(26, 109, 255, 0.1) !important;
-  border: 1px solid rgba(26, 109, 255, 0.1) !important;
-  color: #1A6DFF !important;
+  background: #F4F4F4 !important;
+  border: none !important;
+  color: #333333 !important;
   font-weight: 500;
   border-radius: 6px;
 }
 
 .realtime-monitoring-container >>> .secondary-action-btn:hover,
 .realtime-monitoring-container >>> .secondary-action-btn:focus {
-  background: rgba(26, 109, 255, 0.05) !important;
-  border-color: rgba(26, 109, 255, 0.1) !important;
-  color: #1A6DFF !important;
+  background: rgba(244, 244, 244, 0.9) !important;
+  color: #333333 !important;
 }
 
 .realtime-monitoring-container >>> .el-button--default {
-  background: white;
-  border: 1px solid #d1d5db;
-  color: #4b5563;
+  background: #F4F4F4 !important;
+  border: none !important;
+  color: #333333 !important;
   transition: all 0.3s ease;
   border-radius: 6px;
 }
 
 .realtime-monitoring-container >>> .el-button--default:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: #3b82f6;
-  color: #1e40af;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  background: rgba(244, 244, 244, 0.9) !important;
+  color: #333333 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* 输入框和选择框样式优化 */

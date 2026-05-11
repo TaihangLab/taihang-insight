@@ -2795,7 +2795,8 @@ export default {
   border-color: #1A6DFF !important;
   color: white !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3);
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3) !important;
+  border-radius: 4px !important;
 }
 
 .archives-pagination >>> .el-pagination button {
@@ -3046,23 +3047,27 @@ export default {
 }
 
 .page-container >>> .el-dialog__header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
   padding: 16px 20px !important;
+  text-align: left !important;
 }
 
 .page-container >>> .el-dialog__title {
-  color: #1f2937 !important;
-  font-weight: 600 !important;
+  color: #333333 !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  display: block !important;
+  text-align: left !important;
 }
 
 .page-container >>> .el-dialog__close {
-  color: #6b7280 !important;
-  transition: color 0.3s ease !important;
+  color: #909399 !important;
+  transition: all 0.3s ease !important;
 }
 
 .page-container >>> .el-dialog__close:hover {
-  color: #3b82f6 !important;
+  color: #333333 !important;
 }
 
 .page-container >>> .el-dialog__body {
@@ -3071,10 +3076,14 @@ export default {
 }
 
 .page-container >>> .el-dialog__footer {
-  padding: 10px 20px 20px;
-  text-align: right;
-  border-top: 1px solid rgba(59, 130, 246, 0.1);
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 16px 24px 24px !important;
+  text-align: right !important;
+  border-top: 1px solid #e5e7eb !important;
+  background: #ffffff !important;
+}
+
+.page-container >>> .el-dialog .el-button + .el-button {
+  margin-left: 16px !important;
 }
 
 /* 上传组件样式优化 */
@@ -3220,11 +3229,12 @@ export default {
 }
 
 .pagination >>> .el-pagination .el-pager li.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
-  border-color: #3b82f6 !important;
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
   color: white !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3) !important;
+  border-radius: 4px !important;
 }
 
 .pagination >>> .el-pagination button {
@@ -3620,30 +3630,43 @@ export default {
   margin-right: 0;
 }
 
-/* .page-container >>> .el-button--primary,
+/* 主要按钮样式 - #1A6DFF */
+.page-container >>> .el-button--primary,
 .page-container >>> .add-btn,
 .page-container >>> .edit-archive-btn {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%) !important;
+  background: #1A6DFF !important;
   border: none !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3) !important;
-  position: relative !important;
-  overflow: hidden !important;
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3) !important;
   color: white !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.3px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
   border-radius: 6px !important;
-} */
+}
 
-
-
-/* .page-container >>> .el-button--primary:hover,
+.page-container >>> .el-button--primary:hover,
 .page-container >>> .add-btn:hover,
 .page-container >>> .edit-archive-btn:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%) !important;
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4) !important;
-  transform: translateY(-2px) !important;
-} */
+  background: rgba(26, 109, 255, 0.9) !important;
+  box-shadow: 0 4px 10px rgba(26, 109, 255, 0.4) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 辅助按钮样式 - #F4F4F4 */
+.page-container >>> .el-button--default,
+.page-container >>> .cancel-btn {
+  background: #F4F4F4 !important;
+  border: none !important;
+  color: #333333 !important;
+  transition: all 0.3s ease !important;
+  border-radius: 6px !important;
+}
+
+.page-container >>> .el-button--default:hover,
+.page-container >>> .cancel-btn:hover {
+  background: rgba(244, 244, 244, 0.9) !important;
+  color: #333333 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
 
 
 
@@ -3721,36 +3744,41 @@ export default {
 } */
 
 /* 弹框按钮统一样式 */
-/* .page-container >>> .el-dialog .el-button--primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+.page-container >>> .el-dialog .el-button--primary {
+  background: #1A6DFF !important;
   border: none !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3) !important;
   color: white !important;
   font-weight: 500 !important;
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
-} */
+  padding: 10px 24px !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+}
 
-/* .page-container >>> .el-dialog .el-button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
+.page-container >>> .el-dialog .el-button--primary:hover {
+  background: rgba(26, 109, 255, 0.9) !important;
+  box-shadow: 0 4px 10px rgba(26, 109, 255, 0.4) !important;
   transform: translateY(-1px) !important;
 }
 
 .page-container >>> .el-dialog .el-button--default {
-  background: white !important;
-  border: 1px solid #d1d5db !important;
-  color: #4b5563 !important;
+  background: #F4F4F4 !important;
+  border: none !important;
+  color: #333333 !important;
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
-} */
+  padding: 10px 24px !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+}
 
-/* .page-container >>> .el-dialog .el-button--default:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-} */
+.page-container >>> .el-dialog .el-button--default:hover {
+  background: rgba(244, 244, 244, 0.9) !important;
+  color: #333333 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
 
 /* 修复时间选择器z-index层级问题 - 确保弹出层显示在弹框上方 */
 .page-container >>> .el-date-picker {

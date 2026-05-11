@@ -2451,7 +2451,7 @@
   align-items: center;
   width: 100%;
   padding: 8px 12px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s;
   justify-content: center;
@@ -2461,6 +2461,20 @@
   overflow: hidden;
   color: #333333;
   font-weight: 500;
+  background: transparent;
+  margin-bottom: 8px;
+}
+
+.location-filter-container .location-item:hover {
+  background: rgba(26, 109, 255, 0.05);
+  color: #1A6DFF;
+}
+
+.location-filter-container .location-item.active {
+  background-color: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(26, 109, 255, 0.3);
 }
 
 .location-filter-container .location-item-all {
@@ -2490,6 +2504,19 @@
 }
 
 /* 操作按钮样式 */
+.camera-management >>> .el-table .camera-type-tag {
+  background-color: rgba(26, 109, 255, 0.05) !important;
+  border: 1px solid rgba(26, 109, 255, 0.3) !important;
+  color: #1A6DFF !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  padding: 0 8px !important;
+  height: 24px !important;
+  line-height: 22px !important;
+  display: inline-block;
+}
+
 .el-table .operation-buttons {
   display: flex;
   justify-content: center;
@@ -3507,23 +3534,15 @@
 }
 
 .camera-management >>> .el-dialog__header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
   padding: 16px 20px !important;
 }
 
 .camera-management >>> .el-dialog__title {
-  color: #1f2937 !important;
-  font-weight: 600 !important;
-}
-
-.camera-management >>> .el-dialog__close {
-  color: #6b7280 !important;
-  transition: color 0.3s ease !important;
-}
-
-.camera-management >>> .el-dialog__close:hover {
-  color: #3b82f6 !important;
+  color: #333333 !important;
+  font-weight: bold !important;
+  font-size: 18px !important;
 }
 
 .camera-management >>> .el-dialog__body {
@@ -3532,42 +3551,48 @@
 }
 
 .camera-management >>> .el-dialog__footer {
-  padding: 10px 20px 20px;
-  text-align: right;
-  border-top: 1px solid rgba(59, 130, 246, 0.1);
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 16px 24px 24px !important;
+  text-align: right !important;
+  border-top: 1px solid #e5e7eb !important;
+  background: #ffffff !important;
 }
 
-/* 弹框内按钮样式 */
-.camera-management >>> .el-dialog .el-button--primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
-  border: none !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
-  color: white !important;
-  font-weight: 500 !important;
-  transition: all 0.3s ease !important;
+.camera-management >>> .el-dialog .el-button + .el-button {
+  margin-left: 16px !important;
+}
+
+.camera-management >>> .el-dialog .el-button {
+  padding: 10px 24px !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  height: auto !important;
+  min-width: 88px !important;
   border-radius: 6px !important;
 }
 
+.camera-management >>> .el-dialog .el-button--primary {
+  background: #1A6DFF !important;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3) !important;
+  color: white !important;
+  font-weight: 500 !important;
+}
+
 .camera-management >>> .el-dialog .el-button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
+  background: rgba(26, 109, 255, 0.9) !important;
+  box-shadow: 0 4px 10px rgba(26, 109, 255, 0.4) !important;
   transform: translateY(-1px) !important;
 }
 
 .camera-management >>> .el-dialog .el-button--default {
-  background: white !important;
-  border: 1px solid #d1d5db !important;
-  color: #4b5563 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
+  background: #F4F4F4 !important;
+  border: none !important;
+  color: #333333 !important;
 }
 
 .camera-management >>> .el-dialog .el-button--default:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
+  background: rgba(244, 244, 244, 0.9) !important;
+  color: #333333 !important;
 }
 
 /* 输入框样式 */
@@ -3649,13 +3674,17 @@
 }
 
 /* 分页样式 */
+.camera-management >>> .el-pagination .el-pager li.active {
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3) !important;
+  border-radius: 4px !important;
+}
+
 .camera-management >>> .el-pagination .el-pager li {
   background: white !important;
-  /* border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
-  margin: 0 2px !important; */
 }
 
 /* .camera-management >>> .el-pagination .el-pager li:hover {
@@ -3715,14 +3744,37 @@
   border-color: #3b82f6 !important;
 }
 
-/* Switch 样式 */
-.camera-management >>> .el-switch.is-checked .el-switch__core {
-  background-color: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+/* 统一弹窗内 Radio Button 选中样式 */
+.camera-management >>> .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+  background-color: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+  box-shadow: -1px 0 0 0 #1A6DFF !important;
 }
 
-.camera-management >>> .el-switch__core:hover {
-  border-color: #3b82f6 !important;
+.camera-management >>> .el-radio-button__inner:hover {
+  color: #1A6DFF !important;
+}
+
+/* 技能管理弹窗特定样式 */
+.llm-skill-management-dialog >>> .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+  background-color: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+  box-shadow: -1px 0 0 0 #1A6DFF !important;
+}
+
+.llm-skill-management-dialog >>> .el-radio-button__inner:hover {
+  color: #1A6DFF !important;
+}
+
+/* 技能选择弹窗特定样式 */
+.skill-select-dialog >>> .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+  background-color: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+  box-shadow: -1px 0 0 0 #1A6DFF !important;
+}
+
+.skill-select-dialog >>> .el-radio-button__inner:hover {
+  color: #1A6DFF !important;
 }
 
 /* 上传组件样式 */
@@ -3835,15 +3887,15 @@
 .card-title {
   display: flex;
   align-items: center;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e40af;
+  font-size: 18px;
+  font-weight: 700;
+  color: #333333;
 }
 
 .card-title .title-icon {
   margin-right: 8px;
   font-size: 18px;
-  color: #3b82f6;
+  color: #1A6DFF;
 }
 
 .card-content {
@@ -3878,10 +3930,10 @@
 
 .filter-item.active {
   /* background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); */
-  background: #4185F7;
-  border-color: #3b82f6;
+  background: #1A6DFF;
+  border-color: #1A6DFF;
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(26, 109, 255, 0.3);
 }
 
 .filter-item i {
@@ -3929,6 +3981,34 @@
   font-weight: 500 !important;
   transition: all 0.3s ease !important;
   margin-right: 0 !important;
+}
+
+/* 主按钮：刷新列表 */
+.operation-left .el-button--primary {
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+  color: #ffffff !important;
+}
+
+.operation-left .el-button--primary:hover,
+.operation-left .el-button--primary:focus {
+  background: rgba(26, 109, 255, 0.9) !important;
+  border-color: rgba(26, 109, 255, 0.9) !important;
+  color: #ffffff !important;
+}
+
+/* 次要按钮：摄像头管理 */
+.operation-left .el-button--success {
+  background: rgba(26, 109, 255, 0.1) !important;
+  border-color: transparent !important;
+  color: #1A6DFF !important;
+}
+
+.operation-left .el-button--success:hover,
+.operation-left .el-button--success:focus {
+  background: rgba(26, 109, 255, 0.05) !important;
+  border-color: transparent !important;
+  color: #1A6DFF !important;
 }
 
 /* 刷新列表按钮样式 */
@@ -4142,24 +4222,28 @@ body .el-dialog__wrapper .skill-select-dialog {
 }
 
 .skill-select-dialog.el-dialog .el-dialog__header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
   padding: 16px 20px !important;
+  text-align: left !important;
 }
 
 .skill-select-dialog.el-dialog .el-dialog__title {
-  color: #1f2937 !important;
-  font-weight: 600 !important;
-  font-size: 16px !important;
+  color: #333333 !important;
+  font-weight: bold !important;
+  font-size: 18px !important;
+  display: block !important;
+  text-align: left !important;
 }
 
 .skill-select-dialog.el-dialog .el-dialog__close {
-  color: #6b7280 !important;
-  transition: color 0.3s ease !important;
+  color: #909399 !important;
+  font-size: 20px !important;
+  transition: all 0.3s ease !important;
 }
 
 .skill-select-dialog.el-dialog .el-dialog__close:hover {
-  color: #3b82f6 !important;
+  color: #333333 !important;
 }
 
 .skill-select-dialog.el-dialog .el-dialog__body {
@@ -4169,7 +4253,7 @@ body .el-dialog__wrapper .skill-select-dialog {
 
 .skill-select-dialog.el-dialog .el-dialog__footer {
   background: #ffffff !important;
-  padding: 16px 20px !important;
+  padding: 16px 24px 24px !important;
   border-top: 1px solid #e5e7eb !important;
   text-align: right !important;
 }
@@ -4195,28 +4279,32 @@ body .el-dialog__wrapper .skill-config-dialog {
 }
 
 .skill-config-dialog.el-dialog .el-dialog__header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
+  background: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
   padding: 16px 20px !important;
   position: relative !important;
   z-index: 10 !important;
+  text-align: left !important;
 }
 
 .skill-config-dialog.el-dialog .el-dialog__title {
-  color: #1f2937 !important;
-  font-weight: 600 !important;
-  font-size: 16px !important;
+  color: #333333 !important;
+  font-weight: bold !important;
+  font-size: 18px !important;
+  display: block !important;
+  text-align: left !important;
 }
 
 .skill-config-dialog.el-dialog .el-dialog__close {
-  color: #6b7280 !important;
-  transition: color 0.3s ease !important;
+  color: #909399 !important;
+  font-size: 20px !important;
+  transition: all 0.3s ease !important;
   pointer-events: auto !important;
   z-index: 20 !important;
 }
 
 .skill-config-dialog.el-dialog .el-dialog__close:hover {
-  color: #3b82f6 !important;
+  color: #333333 !important;
 }
 
 .skill-config-dialog.el-dialog .el-dialog__body {
@@ -4226,7 +4314,7 @@ body .el-dialog__wrapper .skill-config-dialog {
 
 .skill-config-dialog.el-dialog .el-dialog__footer {
   background: #ffffff !important;
-  padding: 16px 20px !important;
+  padding: 16px 24px 24px !important;
   border-top: 1px solid #e5e7eb !important;
   text-align: right !important;
 }
@@ -4265,12 +4353,13 @@ body .el-dialog__wrapper .skill-params-dialog {
 }
 
 .skill-params-dialog.el-dialog .el-dialog__close {
-  color: #6b7280 !important;
-  transition: color 0.3s ease !important;
+  color: #909399 !important;
+  font-size: 20px !important;
+  transition: all 0.3s ease !important;
 }
 
 .skill-params-dialog.el-dialog .el-dialog__close:hover {
-  color: #3b82f6 !important;
+  color: #333333 !important;
 }
 
 .skill-params-dialog.el-dialog .el-dialog__body {
@@ -4280,49 +4369,65 @@ body .el-dialog__wrapper .skill-params-dialog {
 
 .skill-params-dialog.el-dialog .el-dialog__footer {
   background: #ffffff !important;
-  padding: 16px 20px !important;
+  padding: 16px 24px 24px !important;
   border-top: 1px solid #e5e7eb !important;
   text-align: right !important;
 }
 
 /* 对话框按钮样式 - 参考modelList.vue */
+.skill-config-dialog.el-dialog .el-button,
+.skill-select-dialog.el-dialog .el-button,
+.skill-params-dialog.el-dialog .el-button,
+.llm-skill-management-dialog.el-dialog .el-button,
+.llm-skill-config-dialog.el-dialog .el-button {
+  padding: 10px 24px !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  height: auto !important;
+  min-width: 88px !important;
+  border-radius: 6px !important;
+}
+
 .skill-config-dialog.el-dialog .el-button--primary,
 .skill-select-dialog.el-dialog .el-button--primary,
-.skill-params-dialog.el-dialog .el-button--primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+.skill-params-dialog.el-dialog .el-button--primary,
+.llm-skill-management-dialog.el-dialog .el-button--primary,
+.llm-skill-config-dialog.el-dialog .el-button--primary {
+  background: #1A6DFF !important;
   border: none !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3) !important;
   color: white !important;
   font-weight: 500 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
 }
 
 .skill-config-dialog.el-dialog .el-button--primary:hover,
 .skill-select-dialog.el-dialog .el-button--primary:hover,
-.skill-params-dialog.el-dialog .el-button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
+.skill-params-dialog.el-dialog .el-button--primary:hover,
+.llm-skill-management-dialog.el-dialog .el-button--primary:hover,
+.llm-skill-config-dialog.el-dialog .el-button--primary:hover {
+  background: rgba(26, 109, 255, 0.9) !important;
+  box-shadow: 0 4px 10px rgba(26, 109, 255, 0.4) !important;
   transform: translateY(-1px) !important;
 }
 
 .skill-config-dialog.el-dialog .el-button--default,
 .skill-select-dialog.el-dialog .el-button--default,
-.skill-params-dialog.el-dialog .el-button--default {
-  background: white !important;
-  border: 1px solid #d1d5db !important;
-  color: #4b5563 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
+.skill-params-dialog.el-dialog .el-button--default,
+.llm-skill-management-dialog.el-dialog .el-button--default,
+.llm-skill-config-dialog.el-dialog .el-button--default {
+  background: #F4F4F4 !important;
+  border: none !important;
+  color: #333333 !important;
 }
 
 .skill-config-dialog.el-dialog .el-button--default:hover,
 .skill-select-dialog.el-dialog .el-button--default:hover,
-.skill-params-dialog.el-dialog .el-button--default:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
+.skill-params-dialog.el-dialog .el-button--default:hover,
+.llm-skill-management-dialog.el-dialog .el-button--default:hover,
+.llm-skill-config-dialog.el-dialog .el-button--default:hover {
+  background: rgba(244, 244, 244, 0.9) !important;
+  color: #333333 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* 对话框表单样式 - 参考modelList.vue */

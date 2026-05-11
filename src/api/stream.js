@@ -9,7 +9,7 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function getPushStreamList(params) {
-  return request({
+   return request({
     url: '/api/v1/wvp/api/push/list',
     method: 'get',
     params: params

@@ -2,15 +2,15 @@
   <div id="deviceEdit" v-loading="isLoging">
     <el-dialog
       title="设备管理"
-      width="40%"
-      top="2rem"
+      width="520px"
+      top="15vh"
       :close-on-click-modal="false"
       :visible.sync="showDialog"
       :destroy-on-close="true"
       @close="close()"
     >
-      <div id="shared" style="margin-top: 1rem;margin-right: 100px;">
-        <el-form ref="form" :rules="rules" :model="form" label-width="200px" >
+      <div id="shared" style="padding: 10px 0;">
+        <el-form ref="form" :rules="rules" :model="form" label-width="120px" size="small">
           <el-form-item label="设备编号" prop="deviceId">
             <el-input v-if="isEdit" v-model="form.deviceId" disabled></el-input>
             <el-input v-if="!isEdit" v-model="form.deviceId" placeholder="请输入设备编号" clearable></el-input>
@@ -26,7 +26,7 @@
             <el-input type="sdpIp" v-model="form.sdpIp" clearable placeholder="请输入收流IP"></el-input>
           </el-form-item>
           <el-form-item label="流媒体ID" prop="mediaServerId">
-            <el-select v-model="form.mediaServerId" style="float: left; width: 100%" >
+            <el-select v-model="form.mediaServerId" style="width: 100%" >
               <el-option key="auto" label="自动负载最小" value="auto"></el-option>
               <el-option
                 v-for="item in mediaServerList"
@@ -38,25 +38,22 @@
           </el-form-item>
 
           <el-form-item label="字符集" prop="charset" >
-            <el-select v-model="form.charset" style="float: left; width: 100%" >
+            <el-select v-model="form.charset" style="width: 100%" >
                 <el-option key="GB2312" label="GB2312" value="gb2312"></el-option>
               <el-option key="UTF-8" label="UTF-8" value="utf-8"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="其他选项">
-            <el-checkbox label="SSRC校验" v-model="form.ssrcCheck" style="float: left"></el-checkbox>
-            <el-checkbox label="作为消息通道" v-model="form.asMessageChannel" style="float: left"></el-checkbox>
-            <el-checkbox label="收到ACK后发流" v-model="form.broadcastPushAfterAck" style="float: left"></el-checkbox>
-          </el-form-item>
-          <el-form-item>
-            <div style="float: right;">
-              <el-button type="primary" @click="onSubmit" >确认</el-button>
-              <el-button @click="close">取消</el-button>
-            </div>
-
+            <el-checkbox label="SSRC校验" v-model="form.ssrcCheck"></el-checkbox>
+            <el-checkbox label="作为消息通道" v-model="form.asMessageChannel"></el-checkbox>
+            <el-checkbox label="收到ACK后发流" v-model="form.broadcastPushAfterAck"></el-checkbox>
           </el-form-item>
         </el-form>
       </div>
+      <template slot="footer">
+        <el-button type="primary" @click="onSubmit" >确认</el-button>
+        <el-button @click="close">取消</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>

@@ -1,3 +1,6 @@
+/*
+ * @Descripttion: 
+ */
 import Vue from 'vue';
 import App from './App.vue';
 import ElementUI, {Notification} from 'element-ui';

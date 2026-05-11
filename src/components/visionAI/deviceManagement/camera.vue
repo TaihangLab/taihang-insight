@@ -71,7 +71,7 @@
             <el-table-column prop="name" label="摄像头名称" width="150" align="center" />
             <el-table-column prop="camera_type" label="类型" width="100" align="center">
               <template slot-scope="{ row }">
-                <el-tag size="mini" effect="plain" type="">{{ getCameraTypeText(row.camera_type) }}</el-tag>
+                <el-tag size="mini" class="camera-type-tag">{{ getCameraTypeText(row.camera_type) }}</el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="status" label="状态" width="100" align="center">

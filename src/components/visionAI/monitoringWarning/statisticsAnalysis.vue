@@ -842,38 +842,39 @@ export default {
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__header {
-  background: rgba(6, 30, 93, 0.9);
-  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-  padding: 12px 20px;
+  background: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  padding: 16px 20px !important;
+  text-align: left !important;
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__title {
-  color: #00ffff;
-  font-size: 16px;
-  font-weight: bold;
+  color: #333333 !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  display: block !important;
+  text-align: left !important;
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__headerbtn .el-dialog__close {
-  color: #7eaee5;
+  color: #909399 !important;
+  transition: all 0.3s ease !important;
 }
 
-.visual-statistics
-  >>> .custom-dialog
-  .el-dialog__headerbtn:hover
-  .el-dialog__close {
-  color: #00ffff;
+.visual-statistics >>> .custom-dialog .el-dialog__headerbtn:hover .el-dialog__close {
+  color: #333333 !important;
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__body {
-  background: transparent;
-  padding: 20px;
-  color: #7eaee5;
+  padding: 20px !important;
+  background: #ffffff !important;
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__footer {
-  background: rgba(6, 30, 93, 0.9);
-  border-top: 1px solid rgba(0, 255, 255, 0.2);
-  padding: 10px 20px;
+  background: #ffffff !important;
+  padding: 16px 20px !important;
+  border-top: 1px solid #e5e7eb !important;
+  text-align: right !important;
 }
 
 /* 日期选择器组件样式 */
@@ -1356,21 +1357,35 @@ export default {
 
 /* 自定义对话框按钮样式 */
 .visual-statistics >>> .custom-dialog .el-button--primary {
-  background-color: rgba(0, 255, 255, 0.2) !important;
-  border-color: #00ffff !important;
-  color: #00ffff !important;
+  background: #1A6DFF !important;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3) !important;
+  color: white !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  border-radius: 6px !important;
+  padding: 10px 24px !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
 }
 
-.visual-statistics >>> .custom-dialog .el-button {
-  background-color: rgba(6, 30, 93, 0.5) !important;
-  border-color: rgba(0, 255, 255, 0.3) !important;
-  color: #7eaee5 !important;
+.visual-statistics >>> .custom-dialog .el-button--primary:hover {
+  background: rgba(26, 109, 255, 0.9) !important;
 }
 
-.visual-statistics >>> .custom-dialog .el-button:hover {
-  background-color: rgba(0, 255, 255, 0.1) !important;
-  border-color: #00ffff !important;
-  color: #00ffff !important;
+.visual-statistics >>> .custom-dialog .el-button--default {
+  background: #F4F4F4 !important;
+  border: none !important;
+  color: #333333 !important;
+  transition: all 0.3s ease !important;
+  border-radius: 6px !important;
+  padding: 10px 24px !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+}
+
+.visual-statistics >>> .custom-dialog .el-button--default:hover {
+  background: rgba(244, 244, 244, 0.9) !important;
 }
 
 .visual-statistics >>> .date-picker-dropdown .el-date-table td.next-month span,
