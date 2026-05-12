@@ -63,18 +63,20 @@
             </div>
           </div>
 
-          <!-- 文档表格 -->
+          <!-- 表格容器 -->
           <div class="table-container">
-            <el-table
-              :data="documentData"
-              v-loading="loading"
-              :border="false"
-              class="custom-table"
-              style="width: 100%"
-              table-layout="fixed"
-              size="medium">
+            <div class="table-main">
+              <el-table
+                :data="documentData"
+                v-loading="loading"
+                :border="false"
+                class="custom-table"
+                style="width: 100%"
+                height="100%"
+                table-layout="fixed"
+                size="medium">
               
-              <el-table-column prop="fileName" label="文档名称" width="150" align="center" show-overflow-tooltip>
+              <el-table-column prop="fileName" label="文档名称" min-width="200" align="center" show-overflow-tooltip>
                 <template slot-scope="scope">
                   <span class="file-name">{{ scope.row.fileName }}</span>
                 </template>
@@ -137,6 +139,7 @@
                 </template>
               </el-table-column>
             </el-table>
+            </div>
 
             <!-- 分页 -->
             <div class="pagination-container">
@@ -187,17 +190,19 @@
           </div>
 
           <!-- 预设回答表格 -->
-          <div class="table-container tech-table-container">
-            <el-table
-              :data="presetAnswerData"
-              v-loading="presetLoading"
-              :border="false"
-              class="tech-table"
-              style="width: 100%"
-              table-layout="fixed"
-              size="medium">
+          <div class="table-container">
+            <div class="table-main">
+              <el-table
+                :data="presetAnswerData"
+                v-loading="presetLoading"
+                :border="false"
+                class="tech-table"
+                style="width: 100%"
+                height="100%"
+                table-layout="fixed"
+                size="medium">
               
-              <el-table-column prop="question" label="问题" width="320" align="left" show-overflow-tooltip>
+              <el-table-column prop="question" label="问题" min-width="350" align="left">
                 <template slot-scope="scope">
                   <div class="question-cell">
                     <el-tag size="mini" :type="getQuestionTagType(scope.row.question)" class="question-tag">
@@ -208,7 +213,7 @@
                 </template>
               </el-table-column>
               
-              <el-table-column prop="answer" label="答案" width="600" align="left" show-overflow-tooltip>
+              <el-table-column prop="answer" label="答案" min-width="400" align="left" show-overflow-tooltip>
                 <template slot-scope="scope">
                   <div class="answer-cell">
                     <span class="answer-text">{{ scope.row.answer }}</span>
@@ -227,19 +232,20 @@
                 </template>
               </el-table-column>
               
-              <el-table-column label="操作" width="100" align="center">
+              <el-table-column label="操作" width="120" align="center">
                 <template slot-scope="scope">
                   <div class="operation-buttons tech-operations">
-                    <el-button type="text" class="tech-edit-btn" @click="editPresetAnswer(scope.row)" title="编辑">
-                      编辑
+                    <el-button type="text" @click="editPresetAnswer(scope.row)" title="编辑">
+                      <i class="el-icon-edit"></i>
                     </el-button>
-                    <el-button type="text" class="tech-delete-btn" @click="deletePresetAnswer(scope.row)" title="删除">
-                      删除
+                    <el-button type="text" class="delete-btn" @click="deletePresetAnswer(scope.row)" title="删除">
+                      <i class="el-icon-delete"></i>
                     </el-button>
                   </div>
                 </template>
               </el-table-column>
             </el-table>
+            </div>
 
             <!-- 分页 -->
             <div class="pagination-container tech-pagination">
@@ -758,10 +764,12 @@ export default {
 </script>
 
 <style scoped>
+@import "../deviceManagement/managementPages/common-style.css";
+
 /* 整体容器 */
 .knowledge-detail-container {
-  padding: 20px 20px 5px 20px;
-  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
+  padding: 20px 20px 20px 20px;
+  background: #ffffff; /* 去掉灰色渐变背景，改为纯白色 */
   min-height: calc(100vh - 90px);
   height: calc(100vh - 90px);
   overflow: hidden;
@@ -780,10 +788,13 @@ export default {
   width: 200px;
   min-width: 200px;
   background: #fff;
-  border-radius: 12px;
+  border-radius: 16px; /* 统一为 16px */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid #ebeef5;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px; /* 统一为 24px */
 }
 
 .menu-container {
@@ -807,7 +818,7 @@ export default {
 }
 
 .back-button {
-  color: #3b82f6 !important;
+  color: #1A6DFF !important;
   font-size: 16px !important;
   padding: 4px !important;
   margin: 0 !important;
@@ -815,15 +826,15 @@ export default {
 }
 
 .back-button:hover {
-  color: #1d4ed8 !important;
-  background: rgba(59, 130, 246, 0.1) !important;
+  color: #1A6DFF !important;
+  background: rgba(26, 109, 255, 0.1) !important;
   transform: translateX(-2px) !important;
 }
 
 .knowledge-name {
   font-size: 16px;
   font-weight: 600;
-  color: #1e40af;
+  color: #333333;
   flex: 1;
 }
 
@@ -854,12 +865,12 @@ export default {
 }
 
 .menu-item:hover {
-  background: #3b82f6;
-  color: white;
+  background: #eff6ff;
+  color: #1A6DFF;
 }
 
 .menu-item.active {
-  background: #3b82f6;
+  background: #1A6DFF;
   color: white;
   font-weight: 500;
 }
@@ -869,13 +880,16 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
+  margin-bottom: 24px; /* 统一为 24px */
 }
 
 /* 文档页面 */
-.documents-section {
-  height: 100%;
+.documents-section,
+.preset-section {
+  flex: 1; /* 改为 flex: 1 确保填充右侧面板 */
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 /* 工具栏 */
@@ -887,7 +901,7 @@ export default {
   padding: 14px 18px;
   border-radius: 12px;
   border: 1px solid #ebeef5;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.05);
+  box-shadow: 0 2px 8px rgba(26, 109, 255, 0.05);
   margin-bottom: 12px;
   flex-shrink: 0;
 }
@@ -904,15 +918,15 @@ export default {
 }
 
 .toolbar >>> .el-button--primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  background: linear-gradient(135deg, #1A6DFF 0%, #1e40af 100%);
   border: none;
   color: #fff;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3);
 }
 
 .toolbar >>> .el-button--primary:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 10px rgba(26, 109, 255, 0.4);
   transform: translateY(-1px);
 }
 
@@ -924,9 +938,9 @@ export default {
 
 .toolbar >>> .el-button:not(.el-button--primary):hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: #3b82f6;
+  border-color: #1A6DFF;
   color: #1e3a8a;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 2px 8px rgba(26, 109, 255, 0.2);
   transform: translateY(-1px);
 } */
 
@@ -975,16 +989,20 @@ export default {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 500px;
-  height: 100%;
-  width: 100%;
-  max-width: 100%;
+  height: 0; /* 关键：让容器能够被 flex 压缩 */
+  min-height: 400px;
+}
+
+.table-main {
+  flex: 1;
+  height: 0;
+  overflow: hidden;
+  position: relative;
 }
 
 .table-container .el-table {
   width: 100% !important;
   max-width: 100% !important;
-  table-layout: fixed !important;
 }
 
 /* 表格样式 */
@@ -1010,11 +1028,22 @@ export default {
 }
 
 .custom-table >>> .el-table__body-wrapper {
-  max-height: calc(100vh - 320px);
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.custom-table >>> .el-table__empty-block {
   width: 100% !important;
-  max-width: 100% !important;
+  height: 100% !important;
+  min-height: 200px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.custom-table >>> .el-table__empty-text {
+  color: #909399 !important;
+  font-size: 14px !important;
 }
 
 .custom-table >>> .el-table__header-wrapper {
@@ -1031,12 +1060,12 @@ export default {
 }
 
 .custom-table >>> .el-table__header-wrapper th {
-  font-weight: bold;
+  font-weight: 600 !important;
   text-align: center;
-  background: #f5f7fa !important;
-  color: #303133 !important;
+  background: #fafafa !important;
+  color: #333333 !important;
   border-bottom: 1px solid #ebeef5 !important;
-  height: 50px !important;
+  height: 48px !important;
   padding: 8px 4px !important;
   white-space: nowrap !important;
   overflow: hidden !important;
@@ -1046,8 +1075,8 @@ export default {
 .custom-table >>> .el-table__row td {
   text-align: center;
   vertical-align: middle;
-  height: 50px !important;
-  padding: 8px 4px !important;
+  height: 48px !important;
+  padding: 12px 4px !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   border-right: none !important;
@@ -1070,7 +1099,7 @@ export default {
 }
 
 .file-name {
-  color: #3b82f6;
+  color: #1A6DFF;
   font-weight: 500;
 }
 
@@ -1084,8 +1113,44 @@ export default {
 .operation-buttons {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
   flex-wrap: nowrap;
+}
+
+.operation-buttons .el-button {
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  transition: all 0.2s ease !important;
+  margin: 0 !important;
+}
+
+.operation-buttons i {
+  color: #1A6DFF !important;
+  font-size: 16px !important;
+  font-weight: bold;
+}
+
+.operation-buttons .el-button:hover {
+  background: rgba(26, 109, 255, 0.1) !important;
+}
+
+.operation-buttons .el-button:hover i {
+  transform: scale(1.1);
+  color: #1A6DFF !important;
+}
+
+.operation-buttons .delete-btn:hover {
+  background: rgba(245, 108, 108, 0.1) !important;
+}
+
+.operation-buttons .delete-btn:hover i {
+  color: #f56c6c !important;
 }
 
 /* .operation-buttons .el-button {
@@ -1104,61 +1169,75 @@ export default {
 
 .operation-buttons .el-button:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
+  border-color: #1A6DFF !important;
   color: #1e3a8a !important;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;
+  box-shadow: 0 2px 8px rgba(26, 109, 255, 0.2) !important;
   transform: translateY(-1px) !important;
 } */
 
 /* 分页样式 */
 .pagination-container {
+  padding: 12px 20px 24px 20px !important;
+  background: white;
   display: flex;
   justify-content: center;
-  background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  align-items: center;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.pagination-container >>> .el-pagination {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
 }
 
 .pagination-container >>> .el-pagination__total {
   padding-top: 3px;
 }
 
-.pagination-container >>> .el-pagination {
-  display: flex;
-  justify-content: center;
-}
-
 .pagination-container >>> .el-pagination .el-pager li {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background-color: white;
+  border: 1px solid #dcdfe6;
   border-radius: 4px;
-  color: #3b82f6;
+  color: #333333;
   margin: 0 2px;
+  font-weight: 600 !important;
 }
 
 .pagination-container >>> .el-pagination .el-pager li:hover {
-  color: #1d4ed8;
-  border-color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.05);
+  color: #1A6DFF;
+  border-color: #1A6DFF;
 }
 
 .pagination-container >>> .el-pagination .el-pager li.active {
-  background: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
   color: white !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
 .pagination-container >>> .el-pagination button {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
+  background-color: white;
+  border: 1px solid #dcdfe6;
+  color: #333333;
 }
 
 .pagination-container >>> .el-pagination button:hover {
-  color: #1d4ed8;
-  border-color: #3b82f6;
+  color: #1A6DFF;
+  border-color: #1A6DFF;
+}
+
+.pagination-container >>> .el-pagination__total,
+.pagination-container >>> .el-pagination__jump {
+  color: #333333 !important;
+  font-weight: 600 !important;
+}
+
+.pagination-container >>> .el-input__inner {
+  color: #333333 !important;
+  font-weight: 600 !important;
 }
 
 .pagination-container >>> .el-pagination .btn-prev,
@@ -1172,12 +1251,13 @@ export default {
 .placeholder-section {
   flex: 1;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid #ebeef5;
+  height: 100%;
 }
 
 /* 标签样式 */
@@ -1211,7 +1291,7 @@ export default {
 
   .knowledge-detail-container >>> .el-dialog.log-dialog .el-dialog__header {
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-    border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
+    border-bottom: 1px solid rgba(26, 109, 255, 0.1) !important;
     padding: 16px 20px !important;
   }
 
@@ -1226,7 +1306,7 @@ export default {
   }
 
   .knowledge-detail-container >>> .el-dialog.log-dialog .el-dialog__close:hover {
-    color: #3b82f6 !important;
+    color: #1A6DFF !important;
   }
 
   .knowledge-detail-container >>> .el-dialog.log-dialog .el-dialog__body {
@@ -1272,16 +1352,16 @@ export default {
 }
 
 .tech-primary-btn {
-  background: #3b82f6 !important;
-  border: 1px solid #3b82f6 !important;
+  background: #1A6DFF !important;
+  border: 1px solid #1A6DFF !important;
   color: #ffffff !important;
   box-shadow: none !important;
   border-radius: 4px !important;
 }
 
 .tech-primary-btn:hover {
-  background: #2563eb !important;
-  border-color: #2563eb !important;
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
   color: #ffffff !important;
   transform: none !important;
   box-shadow: none !important;
@@ -1340,25 +1420,24 @@ export default {
   font-size: 13px !important;
 }
 
-.tech-table-container {
-  background: #ffffff !important;
-  border: 1px solid #e4e7ed !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-  width: 100% !important;
-  overflow-x: auto !important;
-  max-width: 100% !important;
-}
-
 .tech-table >>> .el-table {
   background: #ffffff !important;
   width: 100% !important;
   table-layout: fixed !important;
-  min-width: 1120px !important;
 }
 
 .tech-table >>> .el-table__body-wrapper {
+  overflow-y: auto !important;
   overflow-x: auto !important;
+}
+
+.tech-table >>> .el-table__empty-block {
   width: 100% !important;
+  height: 100% !important;
+  min-height: 200px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
 }
 
 .tech-table >>> .el-table__header-wrapper {
@@ -1367,11 +1446,16 @@ export default {
 }
 
 .tech-table >>> .el-table__header-wrapper th {
-  background: #f5f7fa !important;
-  color: #303133 !important;
+  background: #fafafa !important;
+  color: #333333 !important;
   font-weight: 600 !important;
   border-bottom: 1px solid #ebeef5 !important;
   text-align: center !important;
+  height: 48px !important;
+}
+
+.tech-table >>> .el-table__row td {
+  padding: 12px 0 !important;
 }
 
 .tech-table >>> .el-table__row {
@@ -1392,7 +1476,7 @@ export default {
 }
 
 .question-tag {
-  background: #3b82f6 !important;
+  background: #1A6DFF !important;
   color: #ffffff !important;
   border: none !important;
   font-weight: 500 !important;
@@ -1404,14 +1488,40 @@ export default {
 }
 
 .question-text {
-  color: #3b82f6 !important;
-  font-weight: 400 !important;
+  color: #1A6DFF !important;
+  font-weight: 500 !important;
   font-size: 13px !important;
-  line-height: 1.4 !important;
+  cursor: pointer;
+  line-height: 1.6 !important; /* 增加行高，换行更美观 */
   word-break: break-all !important;
-  white-space: normal !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  white-space: normal !important; /* 允许换行 */
+}
+
+.question-text:hover {
+  text-decoration: underline;
+}
+
+.answer-text {
+  color: #606266 !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+.tech-status-tag {
+  border-radius: 4px !important;
+  padding: 2px 10px !important;
+  font-weight: 500 !important;
+  border: none !important;
+}
+
+.tech-status-tag.el-tag--success {
+  background-color: #ecfdf5 !important;
+  color: #059669 !important;
+}
+
+.tech-status-tag.el-tag--warning {
+  background-color: #fffbeb !important;
+  color: #d97706 !important;
 }
 
 .answer-cell {
@@ -1453,7 +1563,7 @@ export default {
 
 .tech-edit-btn {
   background: transparent !important;
-  color: #3b82f6 !important;
+  color: #1A6DFF !important;
   border: none !important;
   padding: 4px 8px !important;
   border-radius: 4px !important;
@@ -1464,8 +1574,8 @@ export default {
 }
 
 .tech-edit-btn:hover {
-  background: #f0f9ff !important;
-  color: #2563eb !important;
+  background: #eff6ff !important;
+  color: #1A6DFF !important;
   transform: none !important;
   box-shadow: none !important;
 }
@@ -1495,34 +1605,34 @@ export default {
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  padding: 16px 20px !important;
+  padding: 20px 20px 24px 20px !important; /* 确保距离底部 24px */
 }
 
 .pagination-info {
-  color: #606266 !important;
+  color: #333333 !important;
   font-size: 14px !important;
-  font-weight: 400 !important;
+  font-weight: 600 !important;
 }
 
 .tech-pagination-controls >>> .el-pagination .el-pager li {
   background: #ffffff !important;
   border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
-  font-weight: 400 !important;
+  color: #333333 !important;
+  font-weight: 600 !important;
   transition: none !important;
 }
 
 .tech-pagination-controls >>> .el-pagination .el-pager li:hover {
   background: #f5f7fa !important;
-  border-color: #c0c4cc !important;
-  color: #409eff !important;
+  border-color: #1A6DFF !important;
+  color: #1A6DFF !important;
   transform: none !important;
   box-shadow: none !important;
 }
 
 .tech-pagination-controls >>> .el-pagination .el-pager li.active {
-  background: #409eff !important;
-  border-color: #409eff !important;
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
   color: #ffffff !important;
   box-shadow: none !important;
 }
@@ -1530,22 +1640,26 @@ export default {
 .tech-pagination-controls >>> .el-pagination button {
   background: #ffffff !important;
   border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
+  color: #333333 !important;
   transition: none !important;
 }
 
 .tech-pagination-controls >>> .el-pagination button:hover {
+  color: #1A6DFF !important;
+  border-color: #1A6DFF !important;
   background: #f5f7fa !important;
-  border-color: #c0c4cc !important;
-  color: #409eff !important;
-  transform: none !important;
-  box-shadow: none !important;
 }
 
-.tech-pagination-controls >>> .el-select .el-input .el-input__inner {
+.tech-pagination-controls >>> .el-input__inner {
   background: #ffffff !important;
   border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
+  color: #333333 !important;
+  font-weight: 600 !important;
+}
+
+.tech-pagination-controls >>> .el-pagination__jump {
+  color: #333333 !important;
+  font-weight: 600 !important;
 }
 
   /* 响应式设计 */

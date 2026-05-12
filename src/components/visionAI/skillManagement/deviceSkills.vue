@@ -67,90 +67,92 @@
     </div>
 
     <!-- 技能列表卡片区域 -->
-    <div class="skills-grid">
-      <el-row :gutter="15" type="flex" justify="start">
-        <el-col
-          v-for="skill in displaySkills"
-          :key="skill.id"
-          :xs="12"
-          :sm="8"
-          :md="6"
-          :lg="4"
-          class="skill-col"
-        >
-          <div class="skill-card-wrapper">
-            <el-card 
-              class="skill-card" 
-              :body-style="{ padding: '0px' }"
-              shadow="hover" 
-              :class="{ 'selected': isSelected(skill.id) }" 
-              @click.native="viewSkillDetails(skill)"
-              @mouseenter.native="showCardCheckbox(skill.id)"
-              @mouseleave.native="hideCardCheckbox(skill.id)"
-            >
-              <div class="selection-overlay" v-if="isSelected(skill.id)"></div>
-              
-              <!-- 选择框 -->
-              <div 
-                v-show="cardHoverStates[skill.id] || selectedSkills.includes(skill.id)" 
-                class="card-checkbox"
-                @click.stop>
-                <el-checkbox 
-                  :value="selectedSkills.includes(skill.id)"
-                  @input="handleSkillSelect(skill.id, $event)">
-                </el-checkbox>
-              </div>
-              <div class="skill-thumbnail">
-                <img :src="skill.image_url || './static/logo.png'" class="thumbnail-img" alt="技能图标">
-              </div>
-              <div class="skill-info">
-                <h3 class="skill-title">{{ skill.name_zh }}</h3>
-                <div class="version-line">
-                  <el-tag 
-                    size="mini" 
-                    :type="skill.status === 'published' ? 'success' : 'info'" 
-                    class="status-mini-tag"
-                  >
-                    {{ skill.status === 'published' ? '已发布' : '未发布' }}
-                  </el-tag>
-                  <span class="version-text">版本 {{ skill.version }}</span>
+    <el-card class="management-table-card" shadow="never" style="margin-top: 0; flex: 1; display: flex; flex-direction: column;">
+      <div class="skills-grid" style="padding: 20px; flex: 1; overflow-y: auto;">
+        <el-row :gutter="15" type="flex" justify="start">
+          <el-col
+            v-for="skill in displaySkills"
+            :key="skill.id"
+            :xs="12"
+            :sm="8"
+            :md="6"
+            :lg="4"
+            class="skill-col"
+          >
+            <div class="skill-card-wrapper">
+              <el-card 
+                class="skill-card" 
+                :body-style="{ padding: '0px' }"
+                shadow="hover" 
+                :class="{ 'selected': isSelected(skill.id) }" 
+                @click.native="viewSkillDetails(skill)"
+                @mouseenter.native="showCardCheckbox(skill.id)"
+                @mouseleave.native="hideCardCheckbox(skill.id)"
+              >
+                <div class="selection-overlay" v-if="isSelected(skill.id)"></div>
+                
+                <!-- 选择框 -->
+                <div 
+                  v-show="cardHoverStates[skill.id] || selectedSkills.includes(skill.id)" 
+                  class="card-checkbox"
+                  @click.stop>
+                  <el-checkbox 
+                    :value="selectedSkills.includes(skill.id)"
+                    @input="handleSkillSelect(skill.id, $event)">
+                  </el-checkbox>
                 </div>
-                <div class="info-line">
-                  <span class="info-item">类型：{{ skill.type }}</span>
-                  <span class="info-item">关联设备：{{ skill.deviceCount }}</span>
+                <div class="skill-thumbnail">
+                  <img :src="skill.image_url || './static/logo.png'" class="thumbnail-img" alt="技能图标">
                 </div>
-                <p class="model-info">
-                  模型：
-                  <span class="model-name" :title="getModelTitle(skill.models)">
-                    <template v-if="skill.models && skill.models.length > 0">
-                      {{ skill.models[0] }}
-                      <template v-if="skill.models.length > 1">
-                        , {{ skill.models[1] }}
-                        <span v-if="skill.models.length > 2" class="model-more">...</span>
+                <div class="skill-info">
+                  <h3 class="skill-title">{{ skill.name_zh }}</h3>
+                  <div class="version-line">
+                    <el-tag 
+                      size="mini" 
+                      :type="skill.status === 'published' ? 'success' : 'info'" 
+                      class="status-mini-tag"
+                    >
+                      {{ skill.status === 'published' ? '已发布' : '未发布' }}
+                    </el-tag>
+                    <span class="version-text">版本 {{ skill.version }}</span>
+                  </div>
+                  <div class="info-line">
+                    <span class="info-item">类型：{{ skill.type }}</span>
+                    <span class="info-item">关联设备：{{ skill.deviceCount }}</span>
+                  </div>
+                  <p class="model-info">
+                    模型：
+                    <span class="model-name" :title="getModelTitle(skill.models)">
+                      <template v-if="skill.models && skill.models.length > 0">
+                        {{ skill.models[0] }}
+                        <template v-if="skill.models.length > 1">
+                          , {{ skill.models[1] }}
+                          <span v-if="skill.models.length > 2" class="model-more">...</span>
+                        </template>
                       </template>
-                    </template>
-                    <template v-else>-</template>
-                  </span>
-                </p>
-              </div>
-            </el-card>
-          </div>
-        </el-col>
-      </el-row>
-    </div>
-  
-    <!-- 分页 -->
-    <div class="pagination">
-      <el-pagination
-        :current-page.sync="currentPage"
-        :page-size.sync="pageSize"
-        :total="total"
-        :page-sizes="[12, 24, 36]"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
+                      <template v-else>-</template>
+                    </span>
+                  </p>
+                </div>
+              </el-card>
+            </div>
+          </el-col>
+        </el-row>
+      </div>
+    
+      <!-- 分页 -->
+      <div class="pagination-custom">
+        <el-pagination
+          :current-page.sync="currentPage"
+          :page-size.sync="pageSize"
+          :total="total"
+          :page-sizes="[12, 24, 36]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </el-card>
 
     <!-- 导入技能对话框 -->
     <el-dialog title="导入技能" :visible.sync="importDialogVisible" width="50%" @close="resetImportForm">
@@ -1453,12 +1455,13 @@ export default {
 
 <style scoped>
 .device-skills-container {
-  padding: 20px;
+  padding: 20px 20px 24px 20px;
   background-color: #f5f5f5;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .filter-section {
@@ -1568,9 +1571,9 @@ export default {
 
 .filter-label {
   font-size: 14px;
-  color: #1e40af;
+  color: #333333 !important;
   white-space: nowrap;
-  font-weight: 500;
+  font-weight: 600;
   margin-right: 0;
 }
 
@@ -1630,15 +1633,31 @@ export default {
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
+.management-table-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px !important;
+  border: 1px solid rgba(59, 130, 246, 0.1) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+.management-table-card >>> .el-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
 .skills-grid {
-  /* margin-bottom: 20px; */
   padding: 20px;
   background: #ffffff;
-  /* border-radius: 16px; */
-  flex: 1; /* 占据剩余空间 */
-  overflow-y: auto; /* 添加垂直滚动条 */
-  overflow-x: hidden; /* 隐藏水平滚动条 */
-  min-height: 0; /* 确保flex子元素可以收缩 */
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
 }
 
 .skills-grid .el-row {
@@ -1886,58 +1905,71 @@ export default {
   margin: 0 10px;
 }
 
-.pagination {
+.pagination-custom {
+  padding: 20px 0 24px 0 !important;
+  background: white;
   display: flex;
   justify-content: center;
-  background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  align-items: center;
+  border-top: 1px solid #f0f0f0;
 }
 
-.pagination >>> .el-pagination__total {
+.pagination-custom >>> .el-pagination {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+}
+
+.pagination-custom >>> .el-pagination__total {
   padding-top: 3px;
 }
 
-.pagination >>> .el-pagination {
-  display: flex;
-  justify-content: center;
-}
-
-.pagination >>> .el-pagination .el-pager li {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+.pagination-custom >>> .el-pagination .el-pager li {
+  background-color: white;
+  border: 1px solid #dcdfe6;
   border-radius: 4px;
-  color: #3b82f6;
+  color: #333333;
   margin: 0 2px;
+  font-weight: 600 !important;
 }
 
-.pagination >>> .el-pagination .el-pager li:hover {
-  color: #1d4ed8;
-  border-color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.05);
+.pagination-custom >>> .el-pagination .el-pager li:hover {
+  color: #1A6DFF;
+  border-color: #1A6DFF;
 }
 
-.pagination >>> .el-pagination .el-pager li.active {
-  background: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+.pagination-custom >>> .el-pagination .el-pager li.active {
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
   color: white !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination >>> .el-pagination button {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
+.pagination-custom >>> .el-pagination button {
+  background-color: white;
+  border: 1px solid #dcdfe6;
+  color: #333333;
 }
 
-.pagination >>> .el-pagination button:hover {
-  color: #1d4ed8;
-  border-color: #3b82f6;
+.pagination-custom >>> .el-pagination button:hover {
+  color: #1A6DFF;
+  border-color: #1A6DFF;
 }
 
-.pagination >>> .el-pagination .btn-prev,
-.pagination >>> .el-pagination .btn-next {
+.pagination-custom >>> .el-pagination__total,
+.pagination-custom >>> .el-pagination__jump {
+  color: #333333 !important;
+  font-weight: 600 !important;
+}
+
+.pagination-custom >>> .el-input__inner {
+  color: #333333 !important;
+  font-weight: 600 !important;
+}
+
+.pagination-custom >>> .el-pagination .btn-prev,
+.pagination-custom >>> .el-pagination .btn-next {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;
@@ -2011,9 +2043,10 @@ export default {
 }
 
 .skill-title h2 {
-  margin: 0 0 15px;
-  font-size: 24px;
-  color: #303133;
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #333333;
+  font-weight: 600;
 }
 
 .skill-subtitle {
@@ -2029,10 +2062,11 @@ export default {
 }
 
 .version {
-  color: #909399;
+  color: #333333;
   font-size: 14px;
   margin-left: 15px;
   white-space: nowrap;
+  font-weight: 600;
 }
 
 .skill-info-section {
@@ -2084,13 +2118,13 @@ export default {
 }
 
 .info-label {
-  font-weight: bold;
-  color: #606266;
+  font-weight: 600;
+  color: #333333;
   min-width: 90px;
 }
 
 .info-value {
-  color: #303133;
+  color: #333333;
 }
 
 .model-tags {
@@ -2125,7 +2159,8 @@ export default {
 .description-content {
   line-height: 1.6;
   white-space: pre-line;
-  color: #606266;
+  color: #333333;
+  font-weight: 600;
 }
 
 .model-info {
@@ -2185,8 +2220,9 @@ export default {
   justify-content: space-between;
   margin: 9px 0;
   font-size: 12px;
-  color: #666;
+  color: #333333;
   line-height: 1.3;
+  font-weight: 600;
 }
 
 .info-line .info-item {

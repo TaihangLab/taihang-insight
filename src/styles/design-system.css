@@ -769,3 +769,120 @@
   .bg-tertiary { background-color: var(--bg-tertiary) !important; }
   
   
+/* ========================================
+   全局开关按钮 (Global Switch)
+   参考设计稿：宽度 48/高度 24，按钮直径 18
+   ======================================== */
+
+body .el-switch {
+  height: 24px !important;
+  line-height: 24px !important;
+  vertical-align: middle !important;
+}
+
+body .el-switch__core {
+  width: 48px !important;
+  height: 24px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  position: relative !important;
+  background-color: #999999 !important;
+  transition: all 0.3s !important;
+}
+
+/* 按钮圆点样式 */
+body .el-switch__core:after {
+  content: "" !important;
+  position: absolute !important;
+  top: 3px !important;
+  left: 3px !important;
+  width: 18px !important;
+  height: 18px !important;
+  background-color: #ffffff !important;
+  border-radius: 50% !important;
+  transition: all 0.3s !important;
+  margin-left: 0 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 开启状态样式 */
+body .el-switch.is-checked .el-switch__core {
+  background-color: #1A6DFF !important;
+}
+
+body .el-switch.is-checked .el-switch__core:after {
+  left: 100% !important;
+  margin-left: -21px !important;
+}
+
+/* 禁用状态样式 */
+body .el-switch.is-disabled .el-switch__core {
+  background-color: #cccccc !important;
+  cursor: not-allowed !important;
+  opacity: 0.8 !important;
+}
+
+/* 增加“开/关”文字标识 */
+body .el-switch__core:before {
+  content: "关" !important;
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  z-index: 1 !important;
+  transition: all 0.3s !important;
+}
+
+body .el-switch.is-checked .el-switch__core:before {
+  content: "开" !important;
+  left: 8px !important;
+  right: auto !important;
+}
+
+/* ========================================
+   复选框与单选框 (Checkbox & Radio)
+   ======================================== */
+
+/* 复选框选中颜色 */
+body .el-checkbox__input.is-checked .el-checkbox__inner,
+body .el-checkbox__input.is-indeterminate .el-checkbox__inner {
+  background-color: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+}
+
+body .el-checkbox__input.is-checked + .el-checkbox__label {
+  color: #1A6DFF !important;
+}
+
+/* 单选框选中颜色 */
+body .el-radio__input.is-checked .el-radio__inner {
+  background-color: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+}
+
+body .el-radio__input.is-checked + .el-radio__label {
+  color: #1A6DFF !important;
+}
+
+/* 滑块 (Slider) 颜色 */
+body .el-slider__bar {
+  background-color: #1A6DFF !important;
+}
+
+body .el-slider__button {
+  border-color: #1A6DFF !important;
+}
+
+/* 标签页 (Tabs) 选中颜色 */
+body .el-tabs__item.is-active {
+  color: #1A6DFF !important;
+}
+
+body .el-tabs__active-bar {
+  background-color: #1A6DFF !important;
+}
+  
+  

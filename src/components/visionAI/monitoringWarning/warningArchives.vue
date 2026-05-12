@@ -218,27 +218,6 @@ export default {
         this.$message.warning('该预警暂无图片');
       }
     },
-     // 初始化数据 - 直接使用真实API
-     async initData() {
-       try {
-         // 加载档案列表
-         await this.loadArchivesList();
-
-         // 如果有档案，加载第一个档案的详情
-         if (this.archivesList.length > 0) {
-           const firstArchive = this.archivesList[0];
-           this.currentArchiveId = firstArchive.archive_id || firstArchive.id;
-
-           await Promise.all([
-             this.loadArchiveDetail(this.currentArchiveId),
-             this.loadArchiveAlerts(this.currentArchiveId)
-           ]);
-         }
-       } catch (error) {
-         console.error('初始化数据失败:', error);
-         this.$message.error('加载数据失败: ' + error.message);
-       }
-     },
     // 获取预警图片URL（兼容多种字段）
     getAlertImageUrl(row) {
       if (!row) {
@@ -1673,7 +1652,7 @@ export default {
 
         // 重置档案分页到第一页并重新加载档案列表
         this.archivesPagination.currentPage = 1;
-        await this.loadArchivesList();
+        await this.reloadArchivesList();
 
         // 如果创建成功，切换到新创建的档案
         if (newArchive && newArchive.archive_id) {
@@ -1903,7 +1882,7 @@ export default {
         }
 
         // 重新加载档案列表
-        await this.loadArchivesList();
+        await this.reloadArchivesList();
 
         // 关闭确认对话框
         this.deleteArchiveConfirmVisible = false;

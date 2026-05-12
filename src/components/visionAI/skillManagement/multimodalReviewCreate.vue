@@ -980,6 +980,8 @@ export default {
 </script>
 
 <style scoped>
+@import "../deviceManagement/managementPages/common-style.css";
+
 .multimodal-create-wrapper {
   position: relative;
   width: 100%;
@@ -1372,7 +1374,8 @@ export default {
 .form-link .el-button {
   padding: 0;
   font-size: 12px;
-  color: #3b82f6;
+  color: #1A6DFF;
+  font-weight: 600;
 }
 
 /* 技能状态显示样式 */
@@ -1427,18 +1430,18 @@ export default {
 }
 
 .copy-id-btn {
-  color: #3b82f6 !important;
+  color: #1A6DFF !important;
   padding: 2px 8px !important;
   font-size: 12px !important;
-  border: 1px solid rgba(59, 130, 246, 0.2) !important;
+  border: 1px solid rgba(26, 109, 255, 0.2) !important;
   border-radius: 4px !important;
-  background: rgba(59, 130, 246, 0.05) !important;
+  background: rgba(26, 109, 255, 0.05) !important;
   flex-shrink: 0;
 }
 
 .copy-id-btn:hover {
-  background: rgba(59, 130, 246, 0.1) !important;
-  border-color: rgba(59, 130, 246, 0.3) !important;
+  background: rgba(26, 109, 255, 0.1) !important;
+  border-color: rgba(26, 109, 255, 0.3) !important;
 }
 
 .verification-section {
@@ -1491,11 +1494,11 @@ export default {
   font-family: 'Arial Black', 'Microsoft YaHei', sans-serif;
   font-size: 18px;
   font-weight: 900;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #1A6DFF 50%, #06b6d4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+  text-shadow: 0 0 10px rgba(26, 109, 255, 0.3);
   letter-spacing: 1px;
   position: relative;
 }
@@ -1507,7 +1510,7 @@ export default {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
+  background: linear-gradient(90deg, #1e40af 0%, #1A6DFF 50%, #06b6d4 100%);
   border-radius: 1px;
   opacity: 0.6;
 }
@@ -1634,12 +1637,12 @@ export default {
 }
 
 .verification-card .upload-dragger /deep/ .el-upload-dragger:hover {
-  border-color: #3b82f6;
+  border-color: #1A6DFF;
   background: #eff6ff;
 }
 
 .verification-card .upload-dragger ::v-deep .el-upload-dragger:hover {
-  border-color: #3b82f6;
+  border-color: #1A6DFF;
   background: #eff6ff;
 }
 

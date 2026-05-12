@@ -5,10 +5,10 @@
       <!-- 头部操作区域 -->
       <div class="header-section">
         <div class="header-left">
-          <el-button type="primary" icon="el-icon-plus" @click="createSkill">
+          <el-button type="primary" icon="el-icon-plus" size="small" @click="createSkill">
             创建技能
           </el-button>
-          <el-button @click="batchImport">
+          <el-button size="small" @click="batchImport">
             批量删除
           </el-button>
         </div>
@@ -66,7 +66,7 @@
         <!-- 空状态 -->
         <div v-else-if="!loading && skills.length === 0" class="empty-state">
           <el-empty description="暂无技能数据" image-size="120">
-            <el-button type="primary" @click="createSkill">创建第一个技能</el-button>
+            <el-button type="primary" size="small" @click="createSkill">创建第一个技能</el-button>
           </el-empty>
         </div>
         
@@ -1057,6 +1057,8 @@ export default {
 </script>
 
 <style scoped>
+@import "../deviceManagement/managementPages/common-style.css";
+
 .multimodal-review-wrapper {
   position: relative;
   width: 100%;
@@ -1621,10 +1623,9 @@ export default {
 }
 
 .card-actions .el-button:hover {
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  border-color: #1A6DFF !important;
+  color: #1A6DFF !important;
+  background: rgba(26, 109, 255, 0.05) !important;
 }
 
 .card-actions .el-button.is-disabled {
@@ -1642,53 +1643,69 @@ export default {
 
 /* 分页样式 */
 .pagination-section {
+  padding: 20px 0 24px 0 !important;
+  background: white;
   display: flex;
   justify-content: center;
-  background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
-}
-
-.pagination-section >>> .el-pagination__total {
-  padding-top: 3px;
+  align-items: center;
+  border-top: 1px solid #f0f0f0;
 }
 
 .pagination-section >>> .el-pagination {
+  margin: 0 !important;
+  padding: 0 !important;
   display: flex;
-  justify-content: center;
+  align-items: center;
 }
 
 .pagination-section >>> .el-pagination .el-pager li {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background-color: white;
+  border: 1px solid #dcdfe6;
   border-radius: 4px;
-  color: #3b82f6;
+  color: #333333;
   margin: 0 2px;
+  font-weight: 600 !important;
 }
 
 .pagination-section >>> .el-pagination .el-pager li:hover {
-  color: #1d4ed8;
-  border-color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.05);
+  color: #1A6DFF;
+  border-color: #1A6DFF;
 }
 
 .pagination-section >>> .el-pagination .el-pager li.active {
-  background: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
   color: white !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
 .pagination-section >>> .el-pagination button {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
+  background-color: white;
+  border: 1px solid #dcdfe6;
+  color: #333333;
 }
 
 .pagination-section >>> .el-pagination button:hover {
-  color: #1d4ed8;
-  border-color: #3b82f6;
+  color: #1A6DFF;
+  border-color: #1A6DFF;
+}
+
+.pagination-section >>> .el-pagination__total,
+.pagination-section >>> .el-pagination__jump {
+  color: #333333 !important;
+  font-weight: 600 !important;
+}
+
+.pagination-section >>> .el-input__inner {
+  color: #333333 !important;
+  font-weight: 600 !important;
+}
+
+.pagination-section >>> .el-pagination .btn-prev,
+.pagination-section >>> .el-pagination .btn-next {
+  background-color: white !important;
+  border: 1px solid #dcdfe6 !important;
+  color: #606266 !important;
 }
 
 .pagination-section >>> .el-pagination .btn-prev,
@@ -1706,10 +1723,9 @@ export default {
 }
 
 .go-button:hover {
-  border-color: #3b82f6;
-  color: #1e40af;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  border-color: #1A6DFF;
+  color: #1A6DFF;
+  background: rgba(26, 109, 255, 0.05);
 }
 
 /* 覆盖Element UI分页组件样式 */

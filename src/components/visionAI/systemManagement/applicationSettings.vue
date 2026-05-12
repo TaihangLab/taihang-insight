@@ -53,8 +53,7 @@
                 <template slot-scope="scope">
                   <div class="skill-status">
                     <el-switch
-                      v-model="scope.row.isEnabled"
-                      active-color="#3b82f6">
+                      v-model="scope.row.isEnabled">
                     </el-switch>
                   </div>
                 </template>
@@ -113,8 +112,8 @@
                   <p class="settings-desc">为不同等级的预警设置不同的通知方式</p>
                 </div>
                 <div class="settings-form-card">
-                  <el-form :model="warningLevelForm" label-width="120px">
-                    <el-form-item label="高级预警">
+                  <el-form :model="warningLevelForm" label-width="auto" label-position="left">
+                    <el-form-item label="高级预警：">
                       <el-checkbox-group v-model="warningLevelForm.highLevel">
                         <el-checkbox label="短信通知"></el-checkbox>
                         <el-checkbox label="邮件通知"></el-checkbox>
@@ -122,7 +121,7 @@
                         <el-checkbox label="微信通知"></el-checkbox>
                       </el-checkbox-group>
                     </el-form-item>
-                    <el-form-item label="中级预警">
+                    <el-form-item label="中级预警：">
                       <el-checkbox-group v-model="warningLevelForm.mediumLevel">
                         <el-checkbox label="短信通知"></el-checkbox>
                         <el-checkbox label="邮件通知"></el-checkbox>
@@ -130,7 +129,7 @@
                         <el-checkbox label="微信通知"></el-checkbox>
                       </el-checkbox-group>
                     </el-form-item>
-                    <el-form-item label="低级预警">
+                    <el-form-item label="低级预警：">
                       <el-checkbox-group v-model="warningLevelForm.lowLevel">
                         <el-checkbox label="短信通知"></el-checkbox>
                         <el-checkbox label="邮件通知"></el-checkbox>
@@ -138,7 +137,7 @@
                         <el-checkbox label="微信通知"></el-checkbox>
                       </el-checkbox-group>
                     </el-form-item>
-                    <el-form-item>
+                    <el-form-item class="form-actions">
                       <el-button type="primary" @click="saveWarningLevelSettings">保存设置</el-button>
                     </el-form-item>
                   </el-form>
@@ -152,16 +151,13 @@
                   <p class="settings-desc">对平台预警的展示进行配置，将同一时间段同类型预警合并展示</p>
                 </div>
                 <div class="settings-form-card">
-                  <el-form :model="warningMergeForm" label-width="180px">
-                    <el-form-item label="预警合并功能">
+                  <el-form :model="warningMergeForm" label-width="auto" label-position="left">
+                    <el-form-item label="预警合并功能：">
                       <el-switch
-                        v-model="warningMergeForm.enabled"
-                        active-text="开启"
-                        inactive-text="关闭"
-                        active-color="#3b82f6">
+                        v-model="warningMergeForm.enabled">
                       </el-switch>
                     </el-form-item>
-                    <el-form-item label="预警合并时间(分钟)" v-if="warningMergeForm.enabled">
+                    <el-form-item label="预警合并时间(分钟)：" v-if="warningMergeForm.enabled" class="slider-form-item">
                       <el-slider
                         v-model="warningMergeForm.mergeTime"
                         :min="1"
@@ -170,14 +166,14 @@
                         show-input>
                       </el-slider>
                     </el-form-item>
-                    <el-form-item label="预警合并方式" v-if="warningMergeForm.enabled">
+                    <el-form-item label="预警合并方式：" v-if="warningMergeForm.enabled">
                       <el-radio-group v-model="warningMergeForm.mergeType">
                         <el-radio :label="1">按技能类型合并</el-radio>
                         <el-radio :label="2">按设备合并</el-radio>
                         <el-radio :label="3">按区域合并</el-radio>
                       </el-radio-group>
                     </el-form-item>
-                    <el-form-item>
+                    <el-form-item class="form-actions">
                       <el-button type="primary" @click="saveWarningMergeSettings">保存设置</el-button>
                     </el-form-item>
                   </el-form>
@@ -191,29 +187,26 @@
                   <p class="settings-desc">支持将预警推送至 C 端地图（仅对政府客户开放）</p>
                 </div>
                 <div class="settings-form-card">
-                  <el-form :model="warningPublishForm" label-width="150px">
-                    <el-form-item label="预警发布功能">
+                  <el-form :model="warningPublishForm" label-width="auto" label-position="left">
+                    <el-form-item label="预警发布功能：">
                       <el-switch
-                        v-model="warningPublishForm.enabled"
-                        active-text="开启"
-                        inactive-text="关闭"
-                        active-color="#3b82f6">
+                        v-model="warningPublishForm.enabled">
                       </el-switch>
                     </el-form-item>
-                    <el-form-item label="发布平台" v-if="warningPublishForm.enabled">
+                    <el-form-item label="发布平台：" v-if="warningPublishForm.enabled">
                       <el-select v-model="warningPublishForm.platform" placeholder="请选择">
                         <el-option label="政务地图" value="gov_map"></el-option>
                         <el-option label="城市大脑" value="city_brain"></el-option>
                         <el-option label="智慧城市平台" value="smart_city"></el-option>
                       </el-select>
                     </el-form-item>
-                    <el-form-item label="API密钥" v-if="warningPublishForm.enabled">
+                    <el-form-item label="API密钥：" v-if="warningPublishForm.enabled">
                       <el-input v-model="warningPublishForm.apiKey" placeholder="请输入API密钥"></el-input>
                     </el-form-item>
-                    <el-form-item label="发布URL" v-if="warningPublishForm.enabled">
+                    <el-form-item label="发布URL：" v-if="warningPublishForm.enabled">
                       <el-input v-model="warningPublishForm.publishUrl" placeholder="请输入发布URL"></el-input>
                     </el-form-item>
-                    <el-form-item>
+                    <el-form-item class="form-actions">
                       <el-button type="primary" @click="saveWarningPublishSettings">保存设置</el-button>
                     </el-form-item>
                   </el-form>
@@ -234,8 +227,7 @@
           </el-form-item>
           <el-form-item label="技能状态">
             <el-switch
-              v-model="currentSkill.isEnabled"
-              active-color="#3b82f6">
+              v-model="currentSkill.isEnabled">
             </el-switch>
           </el-form-item>
           <el-form-item label="预警周期 (秒)">
@@ -491,6 +483,8 @@ export default {
 </script>
 
 <style scoped>
+@import "../deviceManagement/managementPages/common-style.css";
+
 /* 删除main-card相关样式 */
 .app-settings-container {
   padding: 20px;
@@ -845,8 +839,67 @@ export default {
   background: white;
   border: 1px solid #ebeef5;
   border-radius: 8px;
-  padding: 20px;
+  padding: 20px 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.form-actions {
+  margin-top: 24px;
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.form-actions >>> .el-form-item__content {
+  margin-left: 0 !important;
+}
+
+.settings-form-card >>> .el-form-item__label {
+  text-align: left;
+  padding-left: 0;
+  padding-right: 16px !important;
+  color: #999 !important;
+  font-weight: normal !important;
+}
+
+.slider-form-item {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.slider-form-item >>> .el-form-item__label {
+  display: inline-block !important;
+  width: auto !important;
+  margin-bottom: 0 !important;
+  line-height: 32px !important;
+}
+
+.slider-form-item >>> .el-form-item__content {
+  margin-left: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  width: auto !important;
+  flex: none !important;
+}
+
+.settings-form-card >>> .el-slider {
+  padding-left: 0;
+  width: 350px !important; /* 缩小宽度到 350px，确保不换行且不重合 */
+}
+
+.settings-form-card >>> .el-slider__input {
+  margin-top: 0;
+}
+
+.settings-form-card >>> .el-slider__runway {
+  margin-right: 150px !important; /* 为右侧输入框留出空间 */
+}
+
+.settings-form-card >>> .el-checkbox {
+  margin-right: 24px !important;
+}
+
+.settings-form-card >>> .el-radio {
+  margin-right: 24px !important;
 }
 
 /* 开关样式 */
@@ -854,17 +907,6 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.app-settings-container >>> .el-switch__core {
-  background-color: #dcdfe6;
-  border-color: #dcdfe6;
-  transition: all 0.3s ease;
-}
-
-.app-settings-container >>> .el-switch.is-checked .el-switch__core {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-color: #10b981;
 }
 
 /* 按钮样式 */
@@ -987,8 +1029,9 @@ export default {
 }
 
 .config-dialog >>> .el-dialog__title {
-  color: #1e40af !important;
+  color: #333333 !important;
   font-weight: 600 !important;
+  font-size: 18px !important;
 }
 
 .config-dialog >>> .el-dialog__close {
@@ -1021,7 +1064,7 @@ export default {
 }
 
 .config-form .el-form-item__label {
-  color: #1e40af;
+  color: #333333;
   font-weight: 600;
   font-size: 14px;
   line-height: 32px;

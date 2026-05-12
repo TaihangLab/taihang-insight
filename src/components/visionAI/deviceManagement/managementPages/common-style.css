@@ -337,3 +337,54 @@ body .el-button--danger:hover {
   height: auto !important;
   max-height: none !important;
 }
+
+/* ========================================
+   分页组件 (Pagination)
+   ======================================== */
+
+.pagination,
+.pagination-container {
+  margin-top: 20px !important;
+  margin-bottom: 0 !important;
+}
+
+/* 确保管理页面的分页居中或靠右对齐的兼容性 */
+.model-list .pagination,
+.management-page-container .pagination-container {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.model-list .pagination {
+  justify-content: center !important;
+}
+
+.management-page-container .pagination-container {
+  justify-content: flex-end !important;
+}
+
+/* ========================================
+   对话框与消息框 (Dialog & Message Box)
+   ======================================== */
+
+/* 确保底部操作按钮距离右侧恰好 24px */
+body .el-dialog__footer,
+body .el-message-box__btns,
+body .tech-dialog .el-dialog__footer {
+  padding: 16px 24px !important;
+  text-align: right !important;
+}
+
+/* 兼容使用了 slot="footer" 且内部嵌套 .dialog-footer 的情况 */
+body .el-dialog__footer .dialog-footer {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+}
+
+/* 兼容表格中的开关对齐 */
+.el-table .el-switch {
+  display: inline-flex !important;
+  align-items: center !important;
+}
