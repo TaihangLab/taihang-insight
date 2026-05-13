@@ -1,22 +1,23 @@
 <template>
   <div class="visual-center" ref="visualCenter">
     <div class="top-bar">
-      <span class="top-time">{{ currentDetailTime }}</span>
-      <el-radio-group
-        class="time-tabs"
-        v-model="timeRange"
-        size="mini"
-        :style="{ display: 'inline-flex', alignItems: 'center', flexWrap: 'nowrap' }"
-        @change="handleTimeRangeChange"
-      >
-        <el-radio-button label="day">日</el-radio-button>
-        <el-radio-button label="week">周</el-radio-button>
-        <el-radio-button label="month">月</el-radio-button>
-        <el-radio-button label="year">年</el-radio-button>
-        <el-radio-button label="custom">自定义</el-radio-button>
-      </el-radio-group>
+      <div class="left-controls">
+        <el-radio-group
+          class="time-tabs"
+          v-model="timeRange"
+          size="mini"
+          @change="handleTimeRangeChange"
+        >
+          <el-radio-button label="day">日</el-radio-button>
+          <el-radio-button label="week">周</el-radio-button>
+          <el-radio-button label="month">月</el-radio-button>
+          <el-radio-button label="year">年</el-radio-button>
+          <el-radio-button label="custom">自定义</el-radio-button>
+        </el-radio-group>
+      </div>
       <div class="title"><span>太行视觉AI平台</span></div>
       <div class="right-controls">
+        <span class="top-time">{{ currentDetailTime }}</span>
         <div class="location-info">
           <div v-if="locationInfo.loading" class="loading-indicator">
             <span>加载中...</span>
@@ -64,7 +65,7 @@
     </el-dialog>
 
     <div class="main-content">
-      <el-row :gutter="20">
+      <el-row :gutter="24">
         <!-- 左侧统计 -->
         <el-col :span="6">
           <div class="stat-panel panel-box panel-equal-height">
@@ -223,7 +224,7 @@
       </el-row>
 
       <!-- 底部表格 -->
-      <el-row class="bottom-section" :gutter="20">
+      <el-row class="bottom-section" :gutter="24">
         <el-col :span="6">
           <div class="status-panel panel-box panel-bottom-equal-height">
             <div class="panel-title">预警处理情况</div>
@@ -242,7 +243,7 @@
                 :data="warningList" 
                 style="width: 100%" 
                 :header-cell-style="headerCellStyle" 
-                :cell-style="{ background: 'transparent', color: '#7EAEE5', borderBottom: '1px solid rgba(35, 88, 148, 0.3)' }"
+                :cell-style="{ background: 'transparent', color: '#E0E0E0', borderBottom: '1px solid rgba(35, 88, 148, 0.1)' }"
                 :row-style="{ background: 'transparent' }"
                 :row-class-name="'transparent-row'"
                 :height="tableHeight">
@@ -271,7 +272,7 @@
               <el-table
                 :data="deviceWarnings"
                 :header-cell-style="headerCellStyle"
-                :cell-style="{ background: 'transparent', color: '#7EAEE5', borderBottom: '1px solid rgba(35, 88, 148, 0.3)' }"
+                :cell-style="{ background: 'transparent', color: '#E0E0E0', borderBottom: '1px solid rgba(35, 88, 148, 0.1)' }"
                 :row-style="{ background: 'transparent' }"
                 :row-class-name="'transparent-row'"
                 style="width: 100%"
@@ -353,12 +354,11 @@ export default {
 
       isFullscreen: false,
       headerCellStyle: {
-        background: 'linear-gradient(180deg, rgba(6, 30, 93, 0.9) 0%, rgba(4, 20, 63, 1) 100%)',
-        color: '#00FFFF',
-        borderBottom: '1px solid rgba(0, 255, 255, 0.3)',
-        fontWeight: 'normal',
+        background: 'rgba(6, 30, 93, 0.5)',
+        color: '#FFFFFF',
+        borderBottom: '1px solid rgba(35, 88, 148, 0.4)',
+        fontWeight: 'bold',
         padding: '12px 0',
-        textShadow: '0 0 10px rgba(0, 255, 255, 0.3)'
       },
 
       warningTypes: [],
@@ -790,8 +790,8 @@ export default {
           name: '预警数量', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
           data: yData.length > 0 ? yData : [0],
           lineStyle: { width: 2, color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: '#00FFFF' }, { offset: 1, color: '#207FFF' }] } },
-          itemStyle: { color: '#00FFFF', borderColor: 'rgba(0,255,255,0.3)', borderWidth: 4 },
-          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0,255,255,0.3)' }, { offset: 1, color: 'rgba(0,255,255,0)' }] } },
+          itemStyle: { color: '#00FFFF', borderColor: 'rgba(0, 255, 255, 0.3)', borderWidth: 4 },
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(0, 255, 255, 0.3)' }, { offset: 1, color: 'rgba(0, 255, 255, 0)' }] } },
         }],
       }, true);
     },
@@ -942,7 +942,18 @@ export default {
     scrollToThumbnail(index) {
       const slider = this.$refs.thumbnailSlider;
       if (slider && slider.children[index]) {
-        slider.children[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        const item = slider.children[index];
+        const containerWidth = slider.offsetWidth;
+        const itemOffsetLeft = item.offsetLeft;
+        const itemWidth = item.offsetWidth;
+
+        // 计算目标滚动位置，使点击的项目居中
+        const targetScrollLeft = itemOffsetLeft - (containerWidth / 2) + (itemWidth / 2);
+        
+        slider.scrollTo({
+          left: targetScrollLeft,
+          behavior: 'smooth'
+        });
       }
     },
 
@@ -994,9 +1005,12 @@ export default {
 .visual-center {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #001529 0%, #000B18 100%);
+  background: #000814;
+  background-image: 
+    radial-gradient(circle at 0% 100%, rgba(0, 255, 255, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(0, 255, 255, 0.08) 0%, transparent 40%);
   color: #fff;
-  padding: 10px 14px;
+  padding: 0 24px 24px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -1006,37 +1020,64 @@ export default {
 .top-bar {
   display: flex;
   align-items: center;
-  height: 30px;
-  padding: 0 12px;
-  margin-bottom: 6px;
+  justify-content: space-between;
+  height: 70px;
+  padding: 0 24px;
+  margin-bottom: 24px;
+  background: transparent;
   position: relative;
   z-index: 2;
   flex-shrink: 0;
 }
 
+.top-bar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.5), transparent);
+}
+
+.left-controls {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
 .top-time {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
-  color: #00ffff;
+  color: #7EAEE5;
   white-space: nowrap;
-  line-height: 30px;
   margin-right: 14px;
+  opacity: 0.8;
 }
 
 .time-tabs >>> .el-radio-button__inner {
-  background-color: rgba(6, 30, 93, 0.5);
-  border-color: rgba(0, 255, 255, 0.3);
-  color: #7eaee5;
-  padding: 4px 10px;
+  background-color: rgba(0, 255, 255, 0.05) !important;
+  border: 1px solid rgba(0, 255, 255, 0.3) !important;
+  color: #7eaee5 !important;
+  padding: 6px 14px;
   font-size: 12px;
-  line-height: 1;
+  transition: all 0.3s ease;
 }
 
 .time-tabs >>> .el-radio-button__orig-radio:checked + .el-radio-button__inner {
-  background-color: rgba(0, 255, 255, 0.2);
-  border-color: #00ffff;
-  color: #00ffff;
-  box-shadow: -1px 0 0 0 #00ffff;
+  background-color: #00FFFF !important;
+  border-color: #00FFFF !important;
+  color: #000814 !important;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.6) !important;
+  font-weight: bold !important;
+}
+
+.time-tabs >>> .el-radio-button:first-child .el-radio-button__inner {
+  border-radius: 4px 0 0 4px;
+}
+
+.time-tabs >>> .el-radio-button:last-child .el-radio-button__inner {
+  border-radius: 0 4px 4px 0;
 }
 
 /* 自定义日期选择弹框 */
@@ -1200,10 +1241,11 @@ export default {
 }
 
 .top-bar .title span {
-  font-size: 24px;
+  font-size: 34px;
   font-weight: bold;
   color: #fff;
   position: relative;
+  letter-spacing: 4px;
 }
 
 .top-bar .title span::before,
@@ -1211,8 +1253,8 @@ export default {
   content: '';
   position: absolute;
   height: 2px;
-  width: 70px;
-  background: linear-gradient(90deg, transparent, #00ffff, transparent);
+  width: 120px;
+  background: linear-gradient(90deg, transparent, #00FFFF, transparent);
   top: 50%;
 }
 
@@ -1279,7 +1321,7 @@ export default {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 24px;
   overflow: hidden;
 }
 
@@ -1299,31 +1341,55 @@ export default {
 }
 
 .panel-box {
-  background: linear-gradient(180deg, rgba(6, 30, 93, 0.8) 0%, rgba(4, 20, 63, 0.9) 100%);
-  border: 1px solid rgba(35, 88, 148, 0.5);
+  background: rgba(6, 30, 93, 0.4);
+  border: 1px solid rgba(0, 255, 255, 0.3);
   border-radius: 4px;
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 0 24px 24px;
+  margin-bottom: 24px;
   position: relative;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
+}
+
+.panel-box:hover {
+  border-color: rgba(0, 255, 255, 0.6);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
 }
 
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  padding-top: 18px;
+  margin-bottom: 24px;
 }
 
 .panel-title {
-  color: #00FFFF;
+  color: #FFFFFF;
   font-size: 16px;
-  padding-left: 10px;
-  border-left: 3px solid #00FFFF;
+  padding-left: 12px;
+  position: relative;
   text-align: left;
   flex-shrink: 0;
+  padding-top: 18px;
+  margin-bottom: 24px;
+  line-height: 16px;
+}
+
+.panel-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18px;
+  height: 16px;
+  width: 3px;
+  background-color: #00FFFF;
+  border-radius: 1px;
+}
+
+.panel-header .panel-title {
+  margin-bottom: 0;
 }
 
 .panel-tabs {
@@ -1357,7 +1423,7 @@ export default {
 .main-content > .el-row:first-child > .el-col:last-child {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 24px;
 }
 
 .main-content > .el-row:first-child > .el-col:first-child .panel-box,
@@ -1434,161 +1500,79 @@ export default {
   border: 1px solid rgba(0, 255, 255, 0.3);
 }
 
+/* 统一表格基础样式 */
 .warning-table,
 .device-table {
-  height: calc(100% - 40px);
   flex: 1;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 特别针对预警记录表格的高度调整 */
-.warning-table {
-  height: calc(100% - 10px) !important;
-}
-
-/* 表格边框处理 */
 .warning-table >>> .el-table,
 .device-table >>> .el-table {
+  background-color: transparent !important;
+  color: #7EAEE5 !important;
   border: none !important;
 }
 
-/* 完全移除表格边框和白边 */
-.warning-table >>> .el-table,
-.device-table >>> .el-table {
-  border: none !important;
-  border-collapse: collapse !important;
-  border-spacing: 0 !important;
+.warning-table >>> .el-table th,
+.device-table >>> .el-table th {
+  background-color: rgba(6, 30, 93, 0.4) !important;
+  color: #FFFFFF !important;
+  font-weight: bold !important;
+  border-bottom: 1px solid rgba(35, 88, 148, 0.3) !important;
+  height: 44px !important;
+  padding: 0 !important;
 }
 
-/* 移除表格容器边框 */
-.warning-table >>> .el-table__border-left-patch,
-.warning-table >>> .el-table__border-right-patch,
-.device-table >>> .el-table__border-left-patch,
-.device-table >>> .el-table__border-right-patch {
-  display: none !important;
+.warning-table >>> .el-table td,
+.device-table >>> .el-table td {
+  background-color: transparent !important;
+  border-bottom: 1px solid rgba(35, 88, 148, 0.1) !important;
+  height: 44px !important;
+  padding: 0 !important;
+  color: #E0E0E0 !important;
 }
 
-/* 移除表格外边框伪元素 */
+.warning-table >>> .el-table--enable-row-hover .el-table__body tr:hover > td,
+.device-table >>> .el-table--enable-row-hover .el-table__body tr:hover > td {
+  background-color: rgba(0, 255, 255, 0.05) !important;
+}
+
+/* 隐藏表格所有边框和白边 */
 .warning-table >>> .el-table::before,
-.warning-table >>> .el-table::after,
 .device-table >>> .el-table::before,
+.warning-table >>> .el-table::after,
 .device-table >>> .el-table::after {
   display: none !important;
-}
-
-/* 删除所有表格边框 */
-.warning-table >>> .el-table td,
-.warning-table >>> .el-table th,
-.device-table >>> .el-table td,
-.device-table >>> .el-table th {
-  background-color: transparent;
-  border: none !important; /* 删除所有边框 */
-  border-left: none !important;
-  border-right: none !important;
-  border-top: none !important;
-  border-bottom: 1px solid rgba(35, 88, 148, 0.3) !important; /* 只保留底部分隔线 */
-}
-
-/* 删除表格最后一行的底部边框 */
-.warning-table >>> .el-table tbody tr:last-child td,
-.device-table >>> .el-table tbody tr:last-child td {
-  border-bottom: none !important;
-}
-
-/* 删除表格底部边框 */
-.warning-table >>> .el-table__append-wrapper,
-.device-table >>> .el-table__append-wrapper {
-  border: none !important;
-}
-
-/* 删除表格所有可能的边框 */
-.warning-table >>> .el-table__header,
-.warning-table >>> .el-table__body,
-.warning-table >>> .el-table__footer,
-.device-table >>> .el-table__header,
-.device-table >>> .el-table__body,
-.device-table >>> .el-table__footer {
-  border: none !important;
-}
-
-/* 删除表格固定列边框 */
-.warning-table >>> .el-table__fixed,
-.warning-table >>> .el-table__fixed-right,
-.device-table >>> .el-table__fixed,
-.device-table >>> .el-table__fixed-right {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.warning-table >>> .el-table__fixed::before,
-.warning-table >>> .el-table__fixed-right::before,
-.device-table >>> .el-table__fixed::before,
-.device-table >>> .el-table__fixed-right::before {
-  display: none !important;
-}
-
-/* 统一表格高度 - 两个表格底边完全对齐 */
-.warning-table {
-  height: calc(100% - 15px) !important; /* 进一步增加预警记录表格高度，确保显示5行数据 */
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.device-table {
-  height: calc(100% - 45px) !important; /* 设备表格有Tab，需要减去更多高度以对齐底部 */
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-/* 移除表格包装器的边框和阴影 */
-.warning-table >>> .el-table__body-wrapper,
-.device-table >>> .el-table__body-wrapper {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
 }
 
 .warning-table >>> .el-table__header-wrapper,
 .device-table >>> .el-table__header-wrapper {
   border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
 }
 
-/* 移除表格内部所有可能的边框线 */
-.warning-table >>> .el-table__empty-block,
-.device-table >>> .el-table__empty-block {
+.warning-table >>> .el-table__body-wrapper,
+.device-table >>> .el-table__body-wrapper {
   border: none !important;
+  scrollbar-width: none;
 }
 
-.warning-table >>> .el-table__empty-text,
-.device-table >>> .el-table__empty-text {
-  border: none !important;
+.warning-table >>> .el-table__body-wrapper::-webkit-scrollbar,
+.device-table >>> .el-table__body-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
-/* 强制移除所有可能的白色边框 */
-.warning-table >>> *,
-.device-table >>> * {
-  border-color: transparent !important;
-  outline-color: transparent !important;
+/* 针对设备表格有 Tab 的高度微调 */
+.device-table .device-list-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 特别处理可能存在的边框伪元素 */
-.warning-table >>> .el-table--border .el-table__cell:first-child::before,
-.warning-table >>> .el-table--border .el-table__cell:last-child::after,
-.device-table >>> .el-table--border .el-table__cell:first-child::before,
-.device-table >>> .el-table--border .el-table__cell:last-child::after {
-  display: none !important;
-}
-
-/* 移除表格分组相关的边框 */
-.warning-table >>> .el-table--group::after,
-.warning-table >>> .el-table--group::before,
-.device-table >>> .el-table--group::after,
-.device-table >>> .el-table--group::before {
-  display: none !important;
+.device-table >>> .el-tabs__header {
+  margin-bottom: 12px;
 }
 
 .type-list,

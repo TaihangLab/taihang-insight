@@ -1299,10 +1299,10 @@ export default {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
-  grid-gap: 6px;
+  grid-gap: 24px;
   flex: 1;
   min-height: 0;
-  padding: 6px;
+  padding: 0 24px 24px;
   overflow: hidden;
 }
 
@@ -1357,30 +1357,32 @@ export default {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
-  grid-gap: 6px;
+  grid-gap: 24px;
   flex: 1;
   min-height: 0;
-  padding: 6px;
+  padding: 0 24px 24px;
   overflow: hidden;
 }
 
 /* 卡片样式 */
 .dashboard-card {
-  background: linear-gradient(180deg, rgba(6, 30, 63, 0.85) 0%, rgba(3, 15, 35, 0.9) 100%);
+  background: rgba(6, 30, 93, 0.4);
+  border: 1px solid rgba(0, 255, 255, 0.3);
   border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid rgba(35, 88, 148, 0.4);
+  padding: 0 24px 24px;
+  margin-bottom: 0;
   position: relative;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(75, 216, 255, 0.08);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
 }
 
 .dashboard-card:hover {
-  border-color: rgba(35, 88, 148, 0.6);
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(75, 216, 255, 0.12);
+  border-color: rgba(0, 255, 255, 0.6);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
 }
 
-/* 卡片头部蓝色边框 */
+/* 卡片头部装饰线条 */
 .dashboard-card::before {
   content: '';
   position: absolute;
@@ -1392,7 +1394,7 @@ export default {
   z-index: 1;
 }
 
-/* 卡片蓝色边角 */
+/* 卡片左上角装饰边角 */
 .dashboard-card::after {
   content: '';
   position: absolute;
@@ -1410,31 +1412,30 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 12px;
+  padding-top: 18px;
+  margin-bottom: 24px;
   flex-shrink: 0;
-  background: linear-gradient(180deg, rgba(6, 30, 93, 0.9) 0%, rgba(4, 20, 63, 0.95) 100%);
-  border-bottom: 1px solid rgba(0, 255, 255, 0.15);
 }
 
 .card-header .title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: bold;
-  color: #00FFFF;
+  color: #FFFFFF;
   position: relative;
-  padding-left: 15px;
-  text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+  padding-left: 12px;
+  line-height: 16px;
+  text-shadow: none;
 }
 
 .card-header .title::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
-  top: 2px;
+  top: 0;
   height: 16px;
   width: 3px;
-  background: linear-gradient(180deg, #00FFFF, #1e90ff);
-  border-radius: 2px;
-  box-shadow: 0 0 6px rgba(0, 255, 255, 0.5);
+  background-color: #00FFFF;
+  border-radius: 1px;
 }
 
 .card-header i {
@@ -3489,7 +3490,7 @@ export default {
 /* 响应式设计 */
 @media (max-width: 1440px) {
   .dashboard-container {
-    grid-gap: 8px;
+    grid-gap: 24px;
   }
 
   .chart-circle {
@@ -3598,8 +3599,8 @@ export default {
   }
 
   .dashboard-container {
-    grid-gap: 5px;
-    padding: 5px;
+    grid-gap: 24px;
+    padding: 0 24px 24px;
   }
 
   .card-header {
@@ -3800,24 +3801,23 @@ export default {
 .top-bar {
   display: flex;
   align-items: center;
-  height: 42px;
-  padding: 0 14px;
+  height: 70px;
+  padding: 0 24px;
+  margin-bottom: 24px;
   position: relative;
   z-index: 2;
   flex-shrink: 0;
-  background: linear-gradient(180deg, rgba(0, 30, 60, 0.95) 0%, rgba(0, 15, 35, 0.85) 100%);
-  border-bottom: 1px solid rgba(0, 255, 255, 0.15);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(0, 255, 255, 0.1);
+  background: transparent;
 }
 
 .top-bar::after {
   content: '';
   position: absolute;
   bottom: 0;
-  left: 10%;
-  right: 10%;
+  left: 0;
+  right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.5), transparent);
 }
 
 .top-time {
@@ -3831,19 +3831,28 @@ export default {
 }
 
 .time-tabs >>> .el-radio-button__inner {
-  background-color: rgba(6, 30, 93, 0.5);
-  border-color: rgba(0, 149, 255, 0.3);
-  color: #7888a8;
-  padding: 4px 10px;
+  background-color: rgba(0, 255, 255, 0.05) !important;
+  border: 1px solid rgba(0, 255, 255, 0.3) !important;
+  color: #7eaee5 !important;
+  padding: 6px 14px;
   font-size: 12px;
-  line-height: 1;
+  transition: all 0.3s ease;
 }
 
 .time-tabs >>> .el-radio-button__orig-radio:checked + .el-radio-button__inner {
-  background-color: rgba(0, 149, 255, 0.2);
-  border-color: #0095ff;
-  color: #00BFFF;
-  box-shadow: -1px 0 0 0 #0095ff;
+  background-color: #00FFFF !important;
+  border-color: #00FFFF !important;
+  color: #000814 !important;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.6) !important;
+  font-weight: bold !important;
+}
+
+.time-tabs >>> .el-radio-button:first-child .el-radio-button__inner {
+  border-radius: 4px 0 0 4px;
+}
+
+.time-tabs >>> .el-radio-button:last-child .el-radio-button__inner {
+  border-radius: 0 4px 4px 0;
 }
 
 /* 自定义日期选择弹框 */
@@ -4016,16 +4025,11 @@ export default {
 }
 
 .top-bar .title span {
-  font-size: 26px;
+  font-size: 34px;
   font-weight: bold;
-  color: #fff;
+  color: #ffffff;
   position: relative;
   letter-spacing: 4px;
-  text-shadow: 0 0 15px rgba(0, 255, 255, 0.6), 0 0 30px rgba(0, 150, 255, 0.3);
-  background: linear-gradient(180deg, #ffffff 0%, #b0d8ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .top-bar .title span::before,
