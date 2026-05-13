@@ -15,13 +15,13 @@
 
         <!-- 中间标题 -->
         <div class="title-container">
-          <dv-decoration-8 style="width:300px;height:20px;" :reverse="true" />
+          <dv-decoration-8 style="width:300px;height:50px;" :reverse="true" />
           <div class="title-wrapper">
             <dv-decoration-6 style="width:200px;height:50px;" />
             <div class="title-text">园区封闭管理平台</div>
             <dv-decoration-6 style="width:200px;height:50px;" :reverse="true" />
           </div>
-          <dv-decoration-5 style="width:600px;height:40px;" />
+          <dv-decoration-8 style="width:300px;height:50px;" />
         </div>
 
         <!-- 右侧装饰 -->
@@ -710,13 +710,11 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: auto;
-  padding: 0 24px !important; /* 统一设置根容器左右间距为 24px */
-  box-sizing: border-box;
 }
 
 .header-box {
   width: 100%;
-  height: 100px;
+  height: 80px;
   margin: 0;
   background: linear-gradient(180deg, rgba(1,19,56,0.8) 0%, rgba(1,19,56,0.6) 100%);
 }
@@ -727,7 +725,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0;
+  padding: 0 20px;
 }
 
 .left-decoration,
@@ -803,7 +801,7 @@ export default {
   text-shadow: 0 0 10px rgba(51,255,255,0.5);
   letter-spacing: 4px;
   position: relative;
-  padding: 0;
+  padding: 0 20px;
 }
 
 .content-wrapper {
@@ -812,14 +810,13 @@ export default {
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  padding: 0 !important; /* 彻底清除全局 design-system.css 带来的额外边距 */
 }
 
 .main-content {
   flex: 1;
   display: flex;
   gap: 10px;
-  padding: 0;
+  padding: 0 20px;
   height: calc(100vh - 290px);
   position: relative;
   z-index: 1;
@@ -1143,7 +1140,7 @@ export default {
 .bottom-container {
   position: relative;
   height: 180px;
-  padding: 0;
+  padding: 0 20px;
   margin-top: 10px;
   z-index: 2;
 }
@@ -1382,14 +1379,5 @@ export default {
 
 .park-management.fullscreen-mode .alert-panel {
   min-height: var(--main-height);
-}
-</style>
-
-<style>
-/* 终极覆盖：强制清除上级布局带来的所有额外边距，确保根容器的 24px 为唯一生效值 */
-html body .el-main.layout-content,
-html body .layout-content {
-  padding: 0 !important;
-  margin: 0 !important;
 }
 </style> 
