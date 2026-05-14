@@ -93,19 +93,11 @@
         </el-menu-item>
       </el-submenu>
 
-      <!-- 系统管理 -->
-      <el-submenu index="/systemManage">
-        <template slot="title">
-          <i class="el-icon-setting menu-icon"></i>
-          <span slot="title">系统管理</span>
-        </template>
-        <el-menu-item index="/systemManage/appSettings">
-          <span slot="title">应用设置</span>
-        </el-menu-item>
-        <el-menu-item index="/systemManage/knowledgeBase">
-          <span slot="title">知识库管理</span>
-        </el-menu-item>
-      </el-submenu>
+      <!-- 模型工厂 -->
+      <el-menu-item index="/mlPipeline">
+        <i class="el-icon-monitor menu-icon"></i>
+        <span slot="title">模型工厂</span>
+      </el-menu-item>
 
       <!-- 可视中心 -->
       <el-submenu index="/visualAI">
@@ -117,10 +109,7 @@
           <span slot="title">可视中心首页</span>
         </el-menu-item>
         <el-menu-item index="/algorithmInference">
-          <span slot="title">算法推理平台</span>
-        </el-menu-item>
-        <el-menu-item index="/visualCenter/parkManagement">
-          <span slot="title">园区封闭管理平台</span>
+          <span slot="title">AI智算中心</span>
         </el-menu-item>
       </el-submenu>
     </el-menu>

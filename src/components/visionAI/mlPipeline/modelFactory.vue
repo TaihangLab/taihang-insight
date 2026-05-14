@@ -44,19 +44,15 @@
             @click="selectDataset(ds)">
             <div class="card-top">
               <span class="card-name">{{ ds.name }}</span>
-              <el-tag :type="statusTagType(ds.status)" size="mini">{{ statusLabel(ds.status) }}</el-tag>
+              <span class="card-id">#{{ ds.id }}</span>
             </div>
-            <div class="card-labels" v-if="ds.label_names && ds.label_names.length">
-              <el-tag v-for="lb in ds.label_names.slice(0, 3)" :key="lb" size="mini" effect="plain" class="label-tag">{{ lb }}</el-tag>
-              <span v-if="ds.label_names.length > 3" class="label-more">+{{ ds.label_names.length - 3 }}</span>
+            <div class="card-info">
+              <span class="info-label">位置:</span>
+              <span class="info-value">默认位置</span>
             </div>
-            <div class="card-progress">
-              <el-progress
-                :percentage="ds.image_count ? Math.round(ds.labeled_count / ds.image_count * 100) : 0"
-                :stroke-width="6"
-                :show-text="false">
-              </el-progress>
-              <span class="progress-text">{{ ds.labeled_count || 0 }}/{{ ds.image_count || 0 }}</span>
+            <div class="card-info">
+              <span class="info-label">创建:</span>
+              <span class="info-value">{{ ds.created_at || ds.create_time || '2026-05-14 01:17:50' }}</span>
             </div>
           </div>
         </div>
@@ -86,12 +82,12 @@
           <div class="detail-header">
             <div class="detail-header-left">
               <h3 class="detail-name">{{ selectedDataset.name }}</h3>
-              <el-tag :type="statusTagType(selectedDataset.status)" size="small">{{ statusLabel(selectedDataset.status) }}</el-tag>
+              <el-tag :type="statusTagType(selectedDataset.status)" size="small" :class="{'created-tag': selectedDataset.status === 'created'}">{{ statusLabel(selectedDataset.status) }}</el-tag>
               <span class="detail-desc" v-if="selectedDataset.description">{{ selectedDataset.description }}</span>
             </div>
             <div class="detail-header-right">
               <el-popconfirm title="确定删除此数据集？关联的 Label Studio 项目也会被删除。" @confirm="handleDeleteDataset">
-                <el-button slot="reference" type="danger" size="mini" icon="el-icon-delete" plain>删除数据集</el-button>
+                <el-button slot="reference" type="danger" size="mini" icon="el-icon-delete">删除数据集</el-button>
               </el-popconfirm>
             </div>
           </div>
@@ -1196,31 +1192,88 @@ export default {
 
 /* ---- 数据集卡片 ---- */
 .dataset-card {
-  padding: 10px 12px;
-  margin-bottom: 6px;
-  border-radius: 6px;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 8px 0;
   cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.2s;
+  transition: all 0.3s;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
-.dataset-card:hover { background: #f5f7fa; }
+
+.dataset-card:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 197, 253, 0.03) 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
 .dataset-card.active {
-  background: #ecf5ff;
-  border-color: #409eff;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #1A6DFF;
+  box-shadow: 0 4px 12px rgba(26, 109, 255, 0.2);
 }
+
 .card-top {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  justify-content: space-between;
+  margin-bottom: 2px;
 }
-.card-name { font-size: 14px; font-weight: 500; color: #303133; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
-.card-labels { margin-bottom: 6px; }
-.label-tag { margin-right: 4px; }
-.label-more { font-size: 11px; color: #909399; }
-.card-progress { display: flex; align-items: center; gap: 8px; }
-.card-progress .el-progress { flex: 1; }
-.progress-text { font-size: 12px; color: #909399; white-space: nowrap; }
+
+.card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e40af;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.card-id {
+  font-size: 10px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #1A6DFF;
+  background: rgba(26, 109, 255, 0.1);
+  border: 1px solid rgba(26, 109, 255, 0.3);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+.card-info {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-label {
+  color: #6b7280;
+}
+
+.info-value {
+  color: #333;
+}
+
+.dataset-card.active .card-name {
+  color: #1e40af;
+}
+
+.dataset-card.active .info-label,
+.dataset-card.active .info-value {
+  color: #4b5563;
+}
+
+.dataset-card.active .card-id {
+  background: rgba(26, 109, 255, 0.15);
+  border-color: rgba(26, 109, 255, 0.4);
+}
 
 /* ---- 右侧面板 ---- */
 .right-panel {
@@ -1361,4 +1414,28 @@ export default {
 
 /* ---- 其他 ---- */
 .form-tip { font-size: 12px; color: #909399; line-height: 1.4; margin-top: 4px; }
+
+/* 修复危险按钮文字颜色 */
+.el-button--danger {
+  color: #fff !important;
+}
+
+/* 主题色按钮及标签 */
+.el-button--primary {
+  background-color: #1A6DFF !important;
+  border-color: #1A6DFF !important;
+}
+
+.created-tag {
+  color: #1A6DFF !important;
+  border-color: rgba(26, 109, 255, 0.3) !important;
+  background-color: rgba(26, 109, 255, 0.1) !important;
+}
+
+/* 当卡片激活时，内部的已创建标签改为白色 */
+.dataset-card.active .created-tag {
+  color: #fff !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
 </style>

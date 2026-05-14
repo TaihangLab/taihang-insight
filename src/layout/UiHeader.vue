@@ -103,10 +103,9 @@ export default {
         '/skillManage/multimodalLlmSkills': { menu: '技能管理', page: '多模态大模型技能' },
         '/skillManage/multimodalReview': { menu: '技能管理', page: '多模态大模型复判' },
         '/systemManage/appSettings': { menu: '系统管理', page: '应用设置' },
-        '/systemManage/knowledgeBase': { menu: '系统管理', page: '知识库管理' },
+        '/mlPipeline': { menu: '模型工厂', page: '' },
         '/visualCenter': { menu: '可视中心', page: '可视中心首页' },
-        '/algorithmInference': { menu: '可视中心', page: '算法推理平台' },
-        '/visualCenter/parkManagement': { menu: '可视中心', page: '园区封闭管理平台' }
+        '/algorithmInference': { menu: '可视中心', page: 'AI智算中心' }
       };
       
       const route = routeMap[path];

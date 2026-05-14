@@ -16,7 +16,7 @@
         <el-radio-button label="year">年</el-radio-button>
         <el-radio-button label="custom">自定义</el-radio-button>
       </el-radio-group>
-      <div class="title"><span>太行AI智算中心</span></div>
+      <div class="title"><span>AI智算中心</span></div>
       <div class="right-controls">
         <div class="location-info">
           <div v-if="locationInfo && locationInfo.loading" class="loading-indicator">
