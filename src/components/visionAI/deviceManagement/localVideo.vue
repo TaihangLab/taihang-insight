@@ -494,6 +494,10 @@ export default {
                  headers: {
                    'Content-Type': 'multipart/form-data'
                  },
+                 // 大文件上传：禁用超时（0 表示不超时），避免 100MB+ 视频被默认 15s 截断
+                 timeout: 0,
+                 maxContentLength: Infinity,
+                 maxBodyLength: Infinity,
                  onUploadProgress: (progressEvent) => {
                    // 计算上传进度
                    if (progressEvent.total) {
