@@ -1044,6 +1044,7 @@ export default {
   flex: 1;
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .top-time {
@@ -1233,11 +1234,12 @@ export default {
 }
 
 .top-bar .title {
-  flex: 1;
+  flex: 0 0 auto;
   text-align: center;
   display: flex;
   justify-content: center;
   align-items: center;
+  margin: 0 20px;
 }
 
 .top-bar .title span {
@@ -1267,11 +1269,12 @@ export default {
 }
 
 .right-controls {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  flex: 0 0 auto;
+  min-width: 0;
 }
 
 .location-info {
