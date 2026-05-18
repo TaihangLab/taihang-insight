@@ -1,31 +1,5 @@
 <template>
   <div class="push-streams-container management-page-container">
-    <!-- 页面头部 -->
-    <div class="page-header management-page-header">
-      <div class="header-left">
-        <h2 class="page-title">
-          <i class="el-icon-upload2"></i>
-          推流列表管理
-        </h2>
-        <p class="page-subtitle">管理和监控所有推流通道</p>
-      </div>
-      <div class="header-right">
-        <el-button type="primary" icon="el-icon-plus" @click="addStream">
-          添加推流
-        </el-button>
-        <el-button type="info" icon="el-icon-info" @click="importChannel">
-          通道导入
-        </el-button>
-        <el-button icon="el-icon-download" type="primary">
-          <a style="color: #FFFFFF; text-align: center; text-decoration: none" href="/static/file/推流通道导入.zip"
-             download='推流通道导入.zip'>下载模板</a>
-        </el-button>
-        <el-button type="success" icon="el-icon-refresh" @click="refresh" :loading="loading">
-          刷新列表
-        </el-button>
-      </div>
-    </div>
-
     <!-- 搜索筛选区域 -->
     <el-card class="search-card management-search-card" shadow="never">
       <div class="search-form">
@@ -113,7 +87,7 @@
       <el-card class="stat-card management-stat-card" shadow="hover">
         <div class="stat-content">
           <div class="stat-icon total">
-            <i class="el-icon-menu"></i>
+            <i class="el-icon-box"></i>
           </div>
           <div class="stat-info">
             <div class="stat-number">{{ total }}</div>
@@ -126,11 +100,22 @@
     <!-- 推流列表 -->
     <el-card class="table-card management-table-card" shadow="never">
       <div slot="header" class="card-header">
-        <span class="card-title">推流列表</span>
+        <div class="header-left-group">
+          <span class="card-title">推流列表</span>
+        </div>
         <div class="card-actions">
+          <el-button type="primary" size="mini" icon="el-icon-plus" @click="addStream">添加推流</el-button>
+          <el-button type="info" size="mini" icon="el-icon-upload2" @click="importChannel">导入</el-button>
+          <el-button size="mini" icon="el-icon-download">
+            <a style="color: inherit; text-decoration: none" href="/static/file/推流通道导入.zip" download>模板</a>
+          </el-button>
+          <el-button type="success" size="mini" icon="el-icon-refresh" @click="refresh" :loading="loading">刷新</el-button>
+          
+          <el-divider direction="vertical"></el-divider>
+          
           <el-button-group>
-            <el-button :type="viewMode === 'table' ? 'primary' : ''" icon="el-icon-menu" @click="viewMode = 'table'">列表</el-button>
-            <el-button :type="viewMode === 'card' ? 'primary' : ''" icon="el-icon-s-grid" @click="viewMode = 'card'">卡片</el-button>
+            <el-button size="mini" :type="viewMode === 'table' ? 'primary' : ''" icon="el-icon-menu" @click="viewMode = 'table'">列表</el-button>
+            <el-button size="mini" :type="viewMode === 'card' ? 'primary' : ''" icon="el-icon-s-grid" @click="viewMode = 'card'">卡片</el-button>
           </el-button-group>
           <el-button
             icon="el-icon-delete"
@@ -154,7 +139,6 @@
           element-loading-background="rgba(0, 0, 0, 0.8)"
           empty-text="暂无推流数据"
           style="width: 100%"
-          :height="tableHeight"
           stripe
           border
           @selection-change="handleSelectionChange"
@@ -203,7 +187,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="350" align="center" fixed="right">
+        <el-table-column label="操作" width="420" align="center" fixed="right">
           <template slot-scope="{ row }">
             <div class="operation-buttons">
               <el-button 
@@ -307,13 +291,15 @@
       <!-- 分页 -->
       <div class="pagination-container">
         <el-pagination
-          :current-page="currentPage"
+          background
+          :hide-on-single-page="false"
+          @size-change="handleSizeChange"
+          @current-change="currentChange"
+          :current-page.sync="currentPage"
           :page-size="count"
           :page-sizes="[15, 25, 35, 50]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="currentChange">
+          layout="total, sizes, prev, pager, next"
+          :total="total">
         </el-pagination>
       </div>
     </el-card>
@@ -355,7 +341,6 @@ export default {
       streamPush: null,
       updateLooper: 0, //数据刷新轮训标志
       mediaServerObj: new MediaServer(),
-      tableHeight: 400,
       viewMode: 'table' // table | card
     }
   },
@@ -377,13 +362,10 @@ export default {
   mounted() {
     this.initData();
     this.updateLooper = setInterval(this.getPushList, 2000);
-    this.calculateTableHeight();
-    window.addEventListener('resize', this.calculateTableHeight);
   },
   
   destroyed() {
     clearTimeout(this.updateLooper);
-    window.removeEventListener('resize', this.calculateTableHeight);
   },
   
   methods: {
@@ -393,19 +375,6 @@ export default {
         this.mediaServerList = data.data;
       })
       this.getPushList();
-    },
-    
-    calculateTableHeight() {
-      this.$nextTick(() => {
-        const windowHeight = window.innerHeight;
-        const headerHeight = 200; // 页面头部高度
-        const searchHeight = 100; // 搜索区域高度
-        const statsHeight = 120; // 统计卡片高度
-        const paginationHeight = 80; // 分页高度
-        const padding = 60; // 额外间距
-        this.tableHeight = windowHeight - headerHeight - searchHeight - statsHeight - paginationHeight - padding;
-        if (this.tableHeight < 300) this.tableHeight = 300;
-      });
     },
     
     currentChange: function (val) {
@@ -433,14 +402,18 @@ export default {
       }).then(function (res) {
           if (res.data.code === 0) {
             that.total = res.data.data.total;
-            that.pushList = res.data.data.list;
-            that.pushList.forEach(e => {
+            const newList = res.data.data.list;
+            newList.forEach(e => {
+              // 查找当前列表中是否存在相同项，并保留其加载状态
+              const existingItem = that.pushList.find(item => item.app === e.app && item.stream === e.stream);
+              that.$set(e, "playLoading", existingItem ? existingItem.playLoading : false);
+              
               that.$set(e, "location", "");
-              that.$set(e, "playLoading", false);
               if (e.gbLongitude && e.gbLatitude) {
                 that.$set(e, "location", e.gbLongitude + "," + e.gbLatitude);
               }
             });
+            that.pushList = newList;
           }
       }).catch(function (error) {
         console.error(error);
@@ -551,364 +524,135 @@ export default {
 </script>
 
 <style scoped>
-/* 引入通用管理页面样式 */
-@import './common-style.css';
 .push-streams-container {
-  height: 100%;
-  padding: 20px;
-  background-color: #f5f7fa;
+  height: auto;
+  min-height: auto;
+  padding: 0;
+  background-color: transparent;
   display: flex;
   flex-direction: column;
 }
 
-/* 页面头部样式 */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  color: white;
-  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-}
-
-.header-left .page-title {
-  font-size: 28px;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-  display: flex;
-  align-items: center;
-}
-
-.header-left .page-title i {
-  margin-right: 12px;
-  font-size: 32px;
-}
-
-.header-left .page-subtitle {
-  font-size: 16px;
-  opacity: 0.9;
-  margin: 0;
-  font-weight: 400;
-}
-
-.header-right .el-button {
-  margin-left: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  font-weight: 600;
-}
-
-.header-right .el-button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
 /* 搜索卡片 */
 .search-card {
-  margin-bottom: 20px;
+  flex-shrink: 0;
+  margin-bottom: 16px;
   border-radius: 12px;
   border: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .search-form .search-row {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 20px;
+  flex-wrap: nowrap;
+  gap: 24px;
 }
 
 .search-item {
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .search-item label {
   font-weight: 600;
-  color: #606266;
-  white-space: nowrap;
-}
-
-/* 搜索框布局混乱 */
-.search-item >>> .el-input__prefix {
-  top:7px;
-  left:5px;
 }
 
 .search-actions {
   margin-left: auto;
+  display: flex;
+  gap: 12px;
 }
 
-/* 统计卡片样式 */
-.stats-cards {
+/* 列表卡片布局优化 */
+.management-table-card {
+  flex: none; /* 让卡片根据内容撑开 */
+}
+
+.management-table-card >>> .el-card__body {
+  padding: 20px !important;
+  overflow: visible !important; /* 允许撑开，不再产生内部滚动条 */
+}
+
+/* 卡片视图区域优化 */
+.stream-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
   margin-bottom: 20px;
 }
 
-.stat-card {
-  border-radius: 12px;
-  border: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.stat-content {
-  display: flex;
-  align-items: center;
-  padding: 8px 0;
-}
-
-.stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 16px;
-}
-
-.stat-icon.online {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.stat-icon.offline {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-}
-
-.stat-icon.total {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  color: white;
-}
-
-.stat-icon i {
-  font-size: 24px;
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-number {
-  font-size: 28px;
-  font-weight: 700;
-  color: #303133;
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #909399;
-  font-weight: 500;
-}
-
-/* 表格卡片样式 */
-.table-card {
-  flex: 1;
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.card-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.card-actions {
-  display: flex;
-  gap: 8px;
-}
-
-/* 表格样式 */
-.el-table {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.el-table th {
-  background-color: #f8f9fa !important;
-  color: #606266;
-  font-weight: 600;
-  border-bottom: 2px solid #e9ecef;
-}
-
-.stream-name {
-  display: flex;
-  align-items: center;
-}
-
-.stream-icon {
-  margin-right: 8px;
-  color: #409EFF;
-}
-
-.location-info {
-  font-size: 12px;
-  line-height: 1.2;
-}
-
-.operation-buttons {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.operation-buttons .el-button--mini {
-  padding: 6px 8px;
-  font-size: 12px;
-}
-
-/* 卡片视图样式 */
-.stream-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
-  max-height: calc(100vh - 400px);
-  overflow-y: auto;
-  padding-right: 10px;
-}
-
-/* 滚动条样式 */
-.stream-cards::-webkit-scrollbar {
-  width: 6px;
-}
-
-.stream-cards::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.stream-cards::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.stream-cards::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+.stream-card-item {
+  margin-bottom: 0;
 }
 
 .stream-card {
+  height: 100%;
   border-radius: 12px;
-  border: none;
+  border: 1px solid #ebeef5;
   transition: all 0.3s ease;
 }
 
 .stream-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .stream-card-header {
   display: flex;
-  align-items: flex-start;
-  margin-bottom: 16px;
-  position: relative;
-}
-
-.stream-status-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-
-.stream-title {
-  flex: 1;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .stream-title h4 {
-  margin: 0 0 4px 0;
+  margin: 0;
   font-size: 16px;
-  font-weight: 600;
   color: #303133;
 }
 
 .stream-title p {
-  margin: 0;
-  font-size: 13px;
+  margin: 4px 0 0;
+  font-size: 12px;
   color: #909399;
-  font-family: 'Courier New', monospace;
 }
 
 .stream-card-content {
-  margin-bottom: 16px;
+  padding: 16px 0;
 }
 
 .stream-info-row {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
+  margin-bottom: 10px;
+  font-size: 13px;
 }
 
 .info-label {
-  color: #606266;
-  font-weight: 500;
-  min-width: 80px;
+  width: 70px;
+  flex-shrink: 0;
 }
 
 .info-value {
-  color: #303133;
-  font-weight: 600;
-  flex: 1;
-  text-align: right;
+  color: #606266;
   word-break: break-all;
 }
 
 .stream-card-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
 }
 
-.stream-card-actions .el-button {
-  flex: 1;
-  font-size: 10px;
-  min-width: 60px;
-  max-width: calc(25% - 3px);
-  text-align: center;
-  padding: 4px 6px;
-  height: 24px;
-  line-height: 1;
-  border-radius: 4px;
-}
-
-/* 分页样式 */
+/* 分页容器 */
 .pagination-container {
-  margin-top: 20px;
-  text-align: right;
-}
-
-.el-pagination {
-  font-weight: 600;
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* 响应式设计 */

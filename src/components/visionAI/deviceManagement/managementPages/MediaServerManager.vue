@@ -1,79 +1,63 @@
 <template>
 	<div class="media-server-manager management-page-container">
-		<!-- 页面头部 -->
-		<div class="page-header management-page-header">
-			<div class="header-left">
-				<h2 class="page-title">
-					<i class="el-icon-connection"></i>
-					媒体节点管理
-				</h2>
-				<p class="page-subtitle">管理和监控所有媒体服务节点</p>
-			</div>
-			<div class="header-right">
-				<el-button type="primary" icon="el-icon-plus" @click="add">
-					添加节点
-				</el-button>
-				<el-button type="success" icon="el-icon-refresh" @click="initData">
-					刷新列表
-				</el-button>
-			</div>
-		</div>
-
 		<!-- 节点统计卡片 -->
-		<div class="stats-cards management-stats-cards">
-			<el-card class="stat-card management-stat-card" shadow="hover">
+		<div class="management-stats-cards">
+			<div class="management-stat-card">
 				<div class="stat-content">
 					<div class="stat-icon online">
-						<i class="el-icon-connection"></i>
+						<i class="el-icon-monitor"></i>
 					</div>
 					<div class="stat-info">
-						<div class="stat-number">{{ mediaServerList.filter(item => item.status).length }}</div>
+						<div class="stat-number">{{ stats.online }}</div>
 						<div class="stat-label">在线节点</div>
 					</div>
 				</div>
-			</el-card>
-			
-			<el-card class="stat-card management-stat-card" shadow="hover">
+			</div>
+			<div class="management-stat-card">
 				<div class="stat-content">
 					<div class="stat-icon offline">
-						<i class="el-icon-close"></i>
+						<i class="el-icon-warning-outline"></i>
 					</div>
 					<div class="stat-info">
-						<div class="stat-number">{{ mediaServerList.filter(item => !item.status).length }}</div>
+						<div class="stat-number">{{ stats.offline }}</div>
 						<div class="stat-label">离线节点</div>
 					</div>
 				</div>
-			</el-card>
-			
-			<el-card class="stat-card management-stat-card" shadow="hover">
+			</div>
+			<div class="management-stat-card">
 				<div class="stat-content">
 					<div class="stat-icon total">
-						<i class="el-icon-box"></i>
+						<i class="el-icon-office-building"></i>
 					</div>
 					<div class="stat-info">
-						<div class="stat-number">{{ mediaServerList.length }}</div>
+						<div class="stat-number">{{ stats.total }}</div>
 						<div class="stat-label">节点总数</div>
 					</div>
 				</div>
-			</el-card>
-			
-			<el-card class="stat-card management-stat-card" shadow="hover">
+			</div>
+			<div class="management-stat-card">
 				<div class="stat-content">
 					<div class="stat-icon default">
-						<i class="el-icon-star-on"></i>
+						<i class="el-icon-star-off"></i>
 					</div>
 					<div class="stat-info">
-						<div class="stat-number">{{ mediaServerList.filter(item => item.defaultServer).length }}</div>
+						<div class="stat-number">{{ stats.default }}</div>
 						<div class="stat-label">默认节点</div>
 					</div>
 				</div>
-			</el-card>
+			</div>
 		</div>
 
 		<!-- 节点列表 -->
 		<el-card class="server-list-card management-table-card" shadow="never">
 			<div slot="header" class="card-header">
-				<span class="card-title">节点列表</span>
+				<div class="header-left-group">
+					<span class="card-title">节点列表</span>
+				</div>
+				<div class="card-actions">
+					<el-button type="primary" size="mini" icon="el-icon-plus" @click="add">添加节点</el-button>
+					<el-button type="success" size="mini" icon="el-icon-refresh" @click="initData">刷新</el-button>
+				</div>
 			</div>
 
 			<div class="server-grid" v-loading="loading" element-loading-text="加载节点列表中...">
@@ -160,6 +144,20 @@
 					<el-button type="primary" icon="el-icon-plus" @click="add">添加第一个节点</el-button>
 				</div>
 			</div>
+
+			<!-- 分页 -->
+			<div class="pagination-container">
+				<el-pagination
+					background
+					@size-change="handleSizeChange"
+					@current-change="currentChange"
+					:current-page.sync="currentPage"
+					:page-size="count"
+					:page-sizes="[15, 25, 35, 50]"
+					layout="total, sizes, prev, pager, next"
+					:total="total">
+				</el-pagination>
+			</div>
 		</el-card>
 
 		<!-- 编辑弹窗 -->
@@ -193,14 +191,25 @@ export default {
 	computed: {
 		Vue() {
 			return Vue
+		},
+		stats() {
+			return {
+				online: this.mediaServerList.filter(item => item.status).length,
+				offline: this.mediaServerList.filter(item => !item.status).length,
+				total: this.total,
+				default: this.mediaServerList.filter(item => item.defaultServer).length
+			};
 		}
 	},
 	mounted() {
 		this.initData();
-		this.updateLooper = setInterval(this.initData, 2000);
+		// 延长刷新间隔至 5 秒，减少网络开销
+		this.updateLooper = setInterval(this.getServerListSilently, 5000);
 	},
 	destroyed() {
-		clearTimeout(this.updateLooper);
+		if (this.updateLooper) {
+			clearInterval(this.updateLooper);
+		}
 	},
 	methods: {
 		initData: function() {
@@ -214,12 +223,54 @@ export default {
 			this.count = val;
 			this.getServerList();
 		},
+		/**
+		 * 静默刷新列表，不显示全局 Loading
+		 */
+		getServerListSilently: function() {
+			const params = {
+				page: this.currentPage,
+				count: this.count
+			};
+			this.mediaServerObj.getMediaServerList(params, (data) => {
+				if (data && data.list) {
+					this.mediaServerList = data.list;
+					this.total = data.total;
+				} else if (Array.isArray(data)) {
+					this.mediaServerList = data;
+					this.total = data.length;
+				}
+			}).catch(err => {
+				console.warn("静默刷新节点列表失败:", err);
+			});
+		},
 		getServerList: function(){
+			// 如果已经在加载中，则不再重复触发
+			if (this.loading) return;
+			
 			this.loading = true;
-			this.mediaServerObj.getMediaServerList((data)=>{
-				this.mediaServerList = data.data;
-				this.loading = false;
-			}).catch(() => {
+			
+			const params = {
+				page: this.currentPage,
+				count: this.count
+			};
+			
+			this.mediaServerObj.getMediaServerList(params, (data)=>{
+				if (data && data.list) {
+					this.mediaServerList = data.list;
+					this.total = data.total;
+				} else if (Array.isArray(data)) {
+					// 兼容非分页返回格式
+					this.mediaServerList = data;
+					this.total = data.length;
+				} else {
+					this.mediaServerList = [];
+					this.total = 0;
+				}
+			}).catch((err) => {
+				this.$message.error(err.message || "获取节点列表失败");
+				this.mediaServerList = [];
+				this.total = 0;
+			}).finally(() => {
 				this.loading = false;
 			});
 		},
@@ -241,12 +292,12 @@ export default {
 							type: 'success',
 							message: '删除成功!'
 						});
+						this.initData();
 					}
 				})
 
 			}).catch(() => {
 			});
-
 		},
 		getNumberByWidth(){
 			let candidateNums = [1, 2, 3, 4, 6, 8, 12, 24]
@@ -287,316 +338,60 @@ export default {
 </script>
 
 <style scoped>
-/* 引入通用管理页面样式 */
-@import './common-style.css';
-
+/* 页面主容器 */
 .media-server-manager {
-	padding: 20px;
-	background-color: #f5f7fa;
-	min-height: 100vh;
-}
-
-/* 页面头部 */
-.page-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 20px;
-	padding: 24px;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	border-radius: 12px;
-	color: white;
-	box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-}
-
-.header-left h2.page-title {
-	font-size: 28px;
-	font-weight: 700;
-	margin: 0 0 8px 0;
-	display: flex;
-	align-items: center;
-}
-
-.header-left .page-title i {
-	margin-right: 12px;
-	font-size: 32px;
-}
-
-.page-subtitle {
-	font-size: 16px;
-	opacity: 0.9;
-	margin: 0;
-	font-weight: 400;
-}
-
-.header-right .el-button {
-	margin-left: 12px;
-	border: 2px solid rgba(255, 255, 255, 0.3);
-	background: rgba(255, 255, 255, 0.1);
-	color: white;
-	font-weight: 600;
-}
-
-.header-right .el-button:hover {
-	background: rgba(255, 255, 255, 0.2);
-	border-color: rgba(255, 255, 255, 0.5);
-}
-
-/* 统计卡片 */
-.stats-cards {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-	gap: 20px;
-	margin-bottom: 24px;
-}
-
-.stat-card {
-	border-radius: 12px;
-	border: none;
-	overflow: hidden;
-	transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-	transform: translateY(-4px);
-	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.stat-content {
-	display: flex;
-	align-items: center;
-	padding: 8px 0;
-}
-
-.stat-icon {
-	width: 60px;
-	height: 60px;
-	border-radius: 12px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	margin-right: 16px;
-	font-size: 24px;
-	color: white;
-}
-
-.stat-icon.online {
-	background: linear-gradient(135deg, #67C23A, #85ce61);
-}
-
-.stat-icon.offline {
-	background: linear-gradient(135deg, #F56C6C, #f78989);
-}
-
-.stat-icon.total {
-	background: linear-gradient(135deg, #409EFF, #66b1ff);
-}
-
-.stat-icon.default {
-	background: linear-gradient(135deg, #E6A23C, #ebb563);
-}
-
-.stat-info .stat-number {
-	font-size: 32px;
-	font-weight: 700;
-	color: #303133;
-	line-height: 1;
-}
-
-.stat-info .stat-label {
-	font-size: 14px;
-	color: #909399;
-	margin-top: 4px;
-}
-
-/* 节点列表卡片 */
-.server-list-card {
-	border-radius: 12px;
-	border: none;
-	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-.card-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.card-title {
-	font-size: 18px;
-	font-weight: 600;
-	color: #303133;
-}
-
-/* 节点网格 */
-.server-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-	gap: 20px;
-}
-
-/* 单个节点卡片 */
-.server-card {
-	position: relative;
-	border-radius: 12px;
-	border: none;
-	transition: all 0.3s ease;
-	overflow: hidden;
-}
-
-.server-card:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-/* 节点类型图标区域 */
-.server-type-section {
-	height: 200px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-}
-
-.card-img-zlm {
-	width: 160px; 
-	height: 160px;
-	background: url('~@static/images/zlm-logo.png') no-repeat center;
-	background-position: center;
-	background-size: contain;
-	border-radius: 8px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.card-img-abl {
-	width: 160px; 
-	height: 160px;
-	background: url('~@static/images/abl-logo.jpg') no-repeat center;
-	background-position: center;
-	background-size: contain;
-	border-radius: 8px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* 节点信息区域 */
-.server-info {
-	padding: 20px;
-}
-
-.server-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: flex-start;
-	margin-bottom: 16px;
-}
-
-.server-name {
-	margin: 0;
-	font-size: 18px;
-	font-weight: 600;
-	color: #303133;
-}
-
-.server-actions {
-	display: flex;
-	gap: 8px;
-}
-
-.server-actions .el-button--text {
-	padding: 4px 8px;
-	font-size: 12px;
-	border-radius: 4px;
-}
-
-.server-details {
-	margin-bottom: 12px;
-}
-
-.detail-row {
-	display: flex;
-	justify-content: space-between;
-	margin-bottom: 8px;
-	font-size: 14px;
-}
-
-.detail-label {
-	color: #606266;
-	font-weight: 500;
-}
-
-.detail-value {
-	color: #303133;
-	font-weight: 600;
-	font-family: 'Courier New', monospace;
-}
-
-/* 状态标识 */
-.server-badges {
-	position: absolute;
-	top: 16px;
-	right: 16px;
+	height: auto;
+	min-height: auto;
+	padding: 0;
+	background: transparent;
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
 }
 
-.status-badge, .default-badge {
-	font-size: 12px;
+/* 列表卡片布局优化 */
+.management-table-card {
+	flex: none;
 }
 
-/* 空状态 */
+.management-table-card >>> .el-card__body {
+	padding: 20px !important;
+}
+
+/* 头部样式由 common-style.css 统一处理 */
+
+/* 空状态样式优化 */
 .empty-state {
-	grid-column: 1 / -1;
-	text-align: center;
-	padding: 60px 20px;
-	color: #909399;
+	padding: 80px 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	background: #fff;
+	border-radius: 8px;
 }
 
 .empty-icon {
-	font-size: 64px;
-	color: #c0c4cc;
-	margin-bottom: 16px;
+	font-size: 80px;
+	color: #E4E7ED;
+	margin-bottom: 20px;
 }
 
 .empty-text {
 	font-size: 16px;
-	margin-bottom: 24px;
-	color: #606266;
+	color: #909399;
+	margin-bottom: 30px;
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-	.media-server-manager {
-		padding: 10px;
-	}
-	
-	.page-header {
-		flex-direction: column;
-		text-align: center;
-		gap: 16px;
-	}
-	
-	.server-grid {
-		grid-template-columns: 1fr;
-	}
-	
-	.stats-cards {
-		grid-template-columns: repeat(2, 1fr);
-	}
+.empty-state .el-button--primary {
+	padding: 12px 30px;
+	font-size: 14px;
+	border-radius: 8px;
 }
 
-@media (max-width: 480px) {
-	.stats-cards {
-		grid-template-columns: 1fr;
-	}
-	
-	.server-header {
-		flex-direction: column;
-		gap: 8px;
-	}
-	
-	.server-actions {
-		align-self: stretch;
-	}
+/* 分页容器 */
+.pagination-container {
+	margin-top: 24px;
+	display: flex;
+	justify-content: flex-end;
 }
 </style>

@@ -18,21 +18,33 @@ class MediaServer {
    * 获取在线流媒体服务器列表
    */
   getOnlineMediaServerList(callback) {
-    getOnlineMediaServerList().then((res) => {
+    return getOnlineMediaServerList().then((res) => {
       if (typeof (callback) == "function") callback(res.data)
+      return res.data
     }).catch((error) => {
       console.log(error);
+      throw error
     });
   }
 
   /**
    * 获取流媒体服务器列表
    */
-  getMediaServerList(callback) {
-    getMediaServerList().then((res) => {
-      if (typeof (callback) == "function") callback(res.data)
+  getMediaServerList(params, callback) {
+    if (typeof (params) == "function") {
+      callback = params;
+      params = {};
+    }
+    return getMediaServerList(params).then((res) => {
+      if (res.data.code === 0) {
+        if (typeof (callback) == "function") callback(res.data.data)
+        return res.data.data
+      } else {
+        throw new Error(res.data.msg || '获取节点列表失败')
+      }
     }).catch((error) => {
-      console.log(error);
+      console.error(error);
+      throw error
     });
   }
 
@@ -40,10 +52,16 @@ class MediaServer {
    * 获取流媒体服务器详情
    */
   getMediaServer(id, callback) {
-    getMediaServerInfo(id).then((res) => {
-      if (typeof (callback) == "function") callback(res.data)
+    return getMediaServerInfo(id).then((res) => {
+      if (res.data.code === 0) {
+        if (typeof (callback) == "function") callback(res.data.data)
+        return res.data.data
+      } else {
+        throw new Error(res.data.msg || '获取节点详情失败')
+      }
     }).catch((error) => {
-      console.log(error);
+      console.error(error);
+      throw error
     });
   }
 
@@ -51,10 +69,12 @@ class MediaServer {
    * 检查流媒体服务器连接
    */
   checkServer(param, callback) {
-    apiCheckMediaServer(param).then((res) => {
+    return apiCheckMediaServer(param).then((res) => {
       if (typeof (callback) == "function") callback(res.data)
+      return res.data
     }).catch((error) => {
       console.log(error);
+      throw error
     });
   }
 
@@ -62,10 +82,12 @@ class MediaServer {
    * 检查录像服务器连接
    */
   checkRecordServer(param, callback) {
-    apiCheckRecordServer(param).then((res) => {
+    return apiCheckRecordServer(param).then((res) => {
       if (typeof (callback) == "function") callback(res.data)
+      return res.data
     }).catch((error) => {
       console.log(error);
+      throw error
     });
   }
 
@@ -73,10 +95,12 @@ class MediaServer {
    * 添加或更新流媒体服务器
    */
   addServer(param, callback) {
-    saveMediaServer(param).then((res) => {
+    return saveMediaServer(param).then((res) => {
       if (typeof (callback) == "function") callback(res.data)
+      return res.data
     }).catch((error) => {
       console.log(error);
+      throw error
     });
   }
 
@@ -84,10 +108,12 @@ class MediaServer {
    * 删除流媒体服务器
    */
   delete(id, callback) {
-    deleteMediaServerByParams(id).then((res) => {
+    return deleteMediaServerByParams(id).then((res) => {
       if (typeof (callback) == "function") callback(res.data)
+      return res.data
     }).catch((error) => {
       console.log(error);
+      throw error
     });
   }
 

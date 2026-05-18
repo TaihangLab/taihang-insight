@@ -6,8 +6,8 @@
         <div class="left-operations">
           <el-button type="primary" icon="el-icon-plus" size="small" @click="handleImport">导入模型</el-button>
           <el-button type="danger" icon="el-icon-delete" size="small" :disabled="!multipleSelection.length"
-            @click="handleBatchDelete">批量删除</el-button>
-          <el-button type="success" icon="el-icon-refresh-right" size="small" @click="handleRefresh"
+            @click="handleBatchDelete">批量删除 ({{ multipleSelection.length }})</el-button>
+          <el-button type="primary" icon="el-icon-refresh-right" size="small" @click="handleRefresh"
             :loading="refreshLoading">刷新列表</el-button>
         </div>
 
@@ -154,10 +154,16 @@
       </div>
     </el-dialog>
 
-    <!-- 模型列表 -->
-    <div class="table-container">
+    <!-- 模型列表卡片 -->
+    <el-card class="table-card management-table-card" shadow="never">
+      <div slot="header" class="card-header">
+        <div class="header-left-group">
+          <span class="card-title">模型列表</span>
+        </div>
+      </div>
+      <div class="table-container">
       <el-table v-loading="loading" :data="currentPageData" @selection-change="handleSelectionChange" class="tech-table"
-        height="calc(100vh - 280px)"
+          height="100%"
         :header-cell-style="{ background: '#f5f7fa', color: '#303133', fontWeight: '500', textAlign: 'center' }"
         :cell-style="{ textAlign: 'center', backgroundColor: '#ffffff' }" :row-style="{ backgroundColor: '#ffffff' }">
         <el-table-column type="selection" width="55" align="center" />
@@ -317,11 +323,12 @@
     </el-dialog>
 
     <!-- 分页控件 -->
-    <div class="pagination">
+    <div class="pagination-custom">
       <el-pagination :current-page.sync="pagination.currentPage" :page-size.sync="pagination.pageSize"
         :page-sizes="[10, 20, 50]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
         @size-change="handleSizeChange" @current-change="handlePageChange" />
     </div>
+    </el-card>
   </div>
 </template>
 
@@ -1039,13 +1046,43 @@ export default {
 </script>
 
 <style scoped>
+@import "../deviceManagement/managementPages/common-style.css";
+
 .model-list {
-  padding: 20px;
+  padding: 20px 20px 24px 20px;
   background-color: #f5f5f5;
   height: 100%; /* 固定整体高度 */
   display: flex;
   flex-direction: column;
   overflow: hidden; /* 防止整体页面出现滚动条 */
+  box-sizing: border-box;
+}
+
+.management-table-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.management-table-card >>> .el-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px 0 20px !important;
+  overflow: hidden;
+}
+
+.table-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+.pagination {
+  padding: 24px 0 !important;
+  background: white;
+  display: flex;
+  justify-content: center;
 }
 
 /* ==================== 导入模型对话框样式 ==================== */
@@ -1296,9 +1333,9 @@ export default {
 
 .filter-label {
   font-size: 14px;
-  color: #1e40af;
+  color: #333333 !important;
   white-space: nowrap;
-  font-weight: 500;
+  font-weight: 600;
   margin-right: 0;
 }
 
@@ -1352,10 +1389,10 @@ export default {
 }
 
 .refresh-btn:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: #3b82f6;
-  color: #1e40af;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  background: rgba(26, 109, 255, 0.1) !important;
+  border-color: #1A6DFF !important;
+  color: #1A6DFF !important;
+  box-shadow: 0 2px 4px rgba(26, 109, 255, 0.2) !important;
 }
 
 /* 表格容器样式 */
@@ -1493,59 +1530,72 @@ export default {
   font-weight: 500 !important;
 }
 
-/* 分页样式 */
-.pagination {
+/* 分页样式已在 common-style.css 中统一处理 */
+.pagination-custom {
+  padding: 20px 0 24px 0 !important;
+  background: white;
   display: flex;
   justify-content: center;
-  background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  align-items: center;
 }
 
-.pagination >>> .el-pagination__total {
+.pagination-custom >>> .el-pagination {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+}
+
+.pagination-custom >>> .el-pagination__total {
   padding-top: 3px;
 }
 
-.pagination >>> .el-pagination {
-  display: flex;
-  justify-content: center;
-}
-
-.pagination >>> .el-pagination .el-pager li {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+.pagination-custom >>> .el-pagination .el-pager li {
+  background-color: white;
+  border: 1px solid #dcdfe6;
   border-radius: 4px;
-  color: #3b82f6;
+  color: #333333;
   margin: 0 2px;
+  font-weight: 600 !important;
 }
 
-.pagination >>> .el-pagination .el-pager li:hover {
-  color: #1d4ed8;
-  border-color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.05);
+.pagination-custom >>> .el-pagination .el-pager li:hover {
+  color: #1A6DFF;
+  border-color: #1A6DFF;
 }
 
-.pagination >>> .el-pagination .el-pager li.active {
-  background: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+.pagination-custom >>> .el-pagination .el-pager li.active {
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
   color: white !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
-.pagination >>> .el-pagination button {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
+.pagination-custom >>> .el-pagination button {
+  background-color: white;
+  border: 1px solid #dcdfe6;
+  color: #333333;
 }
 
-.pagination >>> .el-pagination button:hover {
-  color: #1d4ed8;
-  border-color: #3b82f6;
+.pagination-custom >>> .el-pagination button:hover {
+  color: #1A6DFF;
+  border-color: #1A6DFF;
 }
 
-.pagination >>> .el-pagination .btn-prev,
-.pagination >>> .el-pagination .btn-next {
+/* 确保总条数和前往页码文字为黑色并加粗 */
+.pagination-custom >>> .el-pagination__total,
+.pagination-custom >>> .el-pagination__jump {
+  color: #333333 !important;
+  font-weight: 600 !important;
+}
+
+.pagination-custom >>> .el-input__inner {
+  color: #333333 !important;
+  font-weight: 600 !important;
+}
+
+.pagination-custom >>> .el-pagination .btn-prev,
+.pagination-custom >>> .el-pagination .btn-next {
   background-color: white !important;
   border: 1px solid #dcdfe6 !important;
   color: #606266 !important;

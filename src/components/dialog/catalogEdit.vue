@@ -1,33 +1,29 @@
 <template>
   <div id="catalogEdit" v-loading="isLoging">
     <el-dialog
-      title="通道共享"
-      width="40%"
-      top="2rem"
+      title="节点共享"
+      width="520px"
+      top="15vh"
       :append-to-body="true"
       :close-on-click-modal="false"
       :visible.sync="showDialog"
       :destroy-on-close="true"
       @close="close()"
     >
-      <div id="shared" style="margin-top: 1rem;margin-right: 100px;">
-        <el-form ref="form" :rules="rules" :model="form" label-width="140px" >
+      <div id="shared" style="padding: 10px 0;">
+        <el-form ref="form" :rules="rules" :model="form" label-width="120px" size="small">
           <el-form-item label="节点编号" prop="id" >
-            <el-input v-model="form.id" :disabled="isEdit" clearable></el-input>
+            <el-input v-model="form.id" :disabled="isEdit" placeholder="请输入节点编号" clearable></el-input>
           </el-form-item>
           <el-form-item label="节点名称" prop="name">
-            <el-input v-model="form.name" clearable></el-input>
-          </el-form-item>
-
-          <el-form-item>
-            <div style="float: right;">
-              <el-button type="primary" @click="onSubmit" >确认</el-button>
-              <el-button @click="close">取消</el-button>
-            </div>
-
+            <el-input v-model="form.name" placeholder="请输入节点名称" clearable></el-input>
           </el-form-item>
         </el-form>
       </div>
+      <template slot="footer">
+        <el-button type="primary" @click="onSubmit" >确认</el-button>
+        <el-button @click="close">取消</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>

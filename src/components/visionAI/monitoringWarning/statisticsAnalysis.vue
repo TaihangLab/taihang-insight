@@ -712,9 +712,12 @@ export default {
 .visual-statistics {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #001529 0%, #000b18 100%);
+  background: #000814;
+  background-image: 
+    radial-gradient(circle at 0% 100%, rgba(0, 255, 255, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(0, 255, 255, 0.08) 0%, transparent 40%);
   color: #fff;
-  padding: 14px 24px 24px;
+  padding: 0 24px 24px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -726,14 +729,23 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #001529;
-  height: 60px;
-  padding: 0 18px;
+  background: transparent;
+  height: 70px;
+  padding: 0 24px;
   position: relative;
-  border-bottom: 1px solid #002140;
   margin-bottom: 24px;
   flex-shrink: 0;
   box-sizing: border-box;
+}
+
+.header-bar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.5), transparent);
 }
 
 .page-title {
@@ -745,10 +757,10 @@ export default {
 }
 
 .page-title span {
-  font-size: 36px;
+  font-size: 34px;
   font-weight: bold;
   color: #fff;
-  letter-spacing: 1px;
+  letter-spacing: 4px;
   position: relative;
   display: inline-block;
   height: 36px;
@@ -762,13 +774,13 @@ export default {
   content: "";
   position: absolute;
   top: 50%;
-  width: 60px;
+  width: 120px;
   height: 2px;
   background: linear-gradient(
     90deg,
-    rgba(0, 255, 255, 0) 0%,
-    #00ffff 50%,
-    rgba(0, 255, 255, 0) 100%
+    transparent,
+    #00ffff,
+    transparent
   );
   transform: translateY(-50%);
 }
@@ -797,18 +809,22 @@ export default {
 }
 
 .time-filter >>> .el-radio-button__inner {
-  background-color: rgba(6, 30, 93, 0.5) !important;
-  border-color: rgba(0, 255, 255, 0.3) !important;
+  background-color: rgba(0, 255, 255, 0.05) !important;
+  border: 1px solid rgba(0, 255, 255, 0.3) !important;
   color: #7eaee5 !important;
+  padding: 6px 14px;
+  font-size: 12px;
+  transition: all 0.3s ease;
 }
 
 .time-filter
   >>> .el-radio-button__orig-radio:checked
   + .el-radio-button__inner {
-  background-color: rgba(0, 255, 255, 0.2) !important;
-  border-color: #00ffff !important;
-  color: #00ffff !important;
-  box-shadow: -1px 0 0 0 #00ffff !important;
+  background-color: #00FFFF !important;
+  border-color: #00FFFF !important;
+  color: #000814 !important;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.6) !important;
+  font-weight: bold !important;
 }
 
 .action-buttons >>> .el-button--primary {
@@ -842,38 +858,39 @@ export default {
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__header {
-  background: rgba(6, 30, 93, 0.9);
-  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-  padding: 12px 20px;
+  background: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  padding: 16px 20px !important;
+  text-align: left !important;
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__title {
-  color: #00ffff;
-  font-size: 16px;
-  font-weight: bold;
+  color: #333333 !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  display: block !important;
+  text-align: left !important;
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__headerbtn .el-dialog__close {
-  color: #7eaee5;
+  color: #909399 !important;
+  transition: all 0.3s ease !important;
 }
 
-.visual-statistics
-  >>> .custom-dialog
-  .el-dialog__headerbtn:hover
-  .el-dialog__close {
-  color: #00ffff;
+.visual-statistics >>> .custom-dialog .el-dialog__headerbtn:hover .el-dialog__close {
+  color: #333333 !important;
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__body {
-  background: transparent;
-  padding: 20px;
-  color: #7eaee5;
+  padding: 20px !important;
+  background: #ffffff !important;
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__footer {
-  background: rgba(6, 30, 93, 0.9);
-  border-top: 1px solid rgba(0, 255, 255, 0.2);
-  padding: 10px 20px;
+  background: #ffffff !important;
+  padding: 16px 20px !important;
+  border-top: 1px solid #e5e7eb !important;
+  text-align: right !important;
 }
 
 /* 日期选择器组件样式 */
@@ -1039,12 +1056,8 @@ export default {
 
 /* 面板盒子样式 */
 .panel-box {
-  background: linear-gradient(
-    180deg,
-    rgba(6, 30, 93, 0.8) 0%,
-    rgba(4, 20, 63, 0.9) 100%
-  );
-  border: 1px solid rgba(35, 88, 148, 0.5);
+  background: rgba(6, 30, 93, 0.4);
+  border: 1px solid rgba(0, 255, 255, 0.2);
   border-radius: 4px;
   padding: 14px;
   margin-bottom: 24px;
@@ -1060,12 +1073,26 @@ export default {
 }
 
 .panel-title {
-  color: #00ffff;
+  color: #FFFFFF;
   font-size: 16px;
-  margin-bottom: 12px;
-  padding-left: 8px;
-  border-left: 3px solid #00ffff;
+  font-weight: bold;
+  padding-left: 12px;
+  position: relative;
   text-align: left;
+  padding-top: 18px;
+  margin-bottom: 24px;
+  line-height: 16px;
+}
+
+.panel-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18px;
+  height: 16px;
+  width: 3px;
+  background-color: #00FFFF;
+  border-radius: 1px;
 }
 
 .panel-equal-height {
@@ -1091,12 +1118,8 @@ export default {
 
 .stat-card {
   flex: 1;
-  background: linear-gradient(
-    180deg,
-    rgba(6, 30, 93, 0.8) 0%,
-    rgba(4, 20, 63, 0.9) 100%
-  );
-  border: 1px solid rgba(35, 88, 148, 0.5);
+  background: rgba(6, 30, 93, 0.4);
+  border: 1px solid rgba(0, 255, 255, 0.2);
   border-radius: 4px;
   padding: 14px;
   display: flex;
@@ -1356,21 +1379,35 @@ export default {
 
 /* 自定义对话框按钮样式 */
 .visual-statistics >>> .custom-dialog .el-button--primary {
-  background-color: rgba(0, 255, 255, 0.2) !important;
-  border-color: #00ffff !important;
-  color: #00ffff !important;
+  background: #1A6DFF !important;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3) !important;
+  color: white !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  border-radius: 6px !important;
+  padding: 10px 24px !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
 }
 
-.visual-statistics >>> .custom-dialog .el-button {
-  background-color: rgba(6, 30, 93, 0.5) !important;
-  border-color: rgba(0, 255, 255, 0.3) !important;
-  color: #7eaee5 !important;
+.visual-statistics >>> .custom-dialog .el-button--primary:hover {
+  background: rgba(26, 109, 255, 0.9) !important;
 }
 
-.visual-statistics >>> .custom-dialog .el-button:hover {
-  background-color: rgba(0, 255, 255, 0.1) !important;
-  border-color: #00ffff !important;
-  color: #00ffff !important;
+.visual-statistics >>> .custom-dialog .el-button--default {
+  background: #F4F4F4 !important;
+  border: none !important;
+  color: #333333 !important;
+  transition: all 0.3s ease !important;
+  border-radius: 6px !important;
+  padding: 10px 24px !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+}
+
+.visual-statistics >>> .custom-dialog .el-button--default:hover {
+  background: rgba(244, 244, 244, 0.9) !important;
 }
 
 .visual-statistics >>> .date-picker-dropdown .el-date-table td.next-month span,

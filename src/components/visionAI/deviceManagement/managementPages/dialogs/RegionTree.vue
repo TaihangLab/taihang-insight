@@ -20,7 +20,7 @@
         node-key="treeId"
         :height="treeHeight?treeHeight:'78vh'"
         lazy
-        style="padding: 0 0 2rem 0.5rem"
+        style="padding: 0 0 2rem 24px"
         :load="loadNode"
         :data="treeData"
         :props="props"
@@ -29,14 +29,10 @@
         @node-click="nodeClickHandler"
       >
         <template class="custom-tree-node" v-slot:default="{ node, data }">
-        <span class="custom-tree-node" >
-          <span v-if="node.data.type === 0 && chooseId !== node.data.deviceId" style="color: #409EFF" class="iconfont icon-bianzubeifen3"></span>
-          <span v-if="node.data.type === 0 && chooseId === node.data.deviceId" style="color: #c60135;" class="iconfont icon-bianzubeifen3"></span>
-          <span v-if="node.data.type === 1 && node.data.status === 'ON'" style="color: #409EFF" class="iconfont icon-shexiangtou2"></span>
-          <span v-if="node.data.type === 1 && node.data.status !== 'ON'" style="color: #808181" class="iconfont icon-shexiangtou2"></span>
-          <span style=" padding-left: 1px" v-if="node.data.deviceId !=='' && showCode" :title="node.data.deviceId">{{ node.label }}（编号：{{ node.data.deviceId }}）</span>
-          <span style=" padding-left: 1px" v-if="node.data.deviceId ==='' || !showCode" :title="node.data.deviceId">{{ node.label }}</span>
-        </span>
+          <span class="custom-tree-node">
+            <span v-if="node.data.deviceId !=='' && showCode" :title="node.data.deviceId">{{ node.label }}（编号：{{ node.data.deviceId }}）</span>
+            <span v-else :title="node.data.deviceId">{{ node.label }}</span>
+          </span>
         </template>
       </vue-easy-tree>
     </div>
@@ -101,9 +97,6 @@ export default {
           }
         }).then((res) => {
           if (res.data.code === 0) {
-            if (res.data.data.length > 0) {
-              this.showAlert = false
-            }
             resolve(res.data.data);
           }
 

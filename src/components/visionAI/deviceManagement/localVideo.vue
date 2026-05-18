@@ -754,7 +754,7 @@ export default {
 }
 
 .page-title i {
-  color: #409EFF;
+  color: #1A6DFF;
   margin-right: 10px;
 }
 
@@ -777,62 +777,60 @@ export default {
 }
 
 .stat-card {
-  border-radius: 8px;
-  transition: all 0.3s;
+  border-radius: 16px !important;
+  border: 1px solid rgba(26, 109, 255, 0.4) !important;
+  background-color: rgba(26, 109, 255, 0.02) !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
 }
 
 .stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 20px rgba(0,0,0,.15);
-}
-
-.stat-card.streaming {
-  background: linear-gradient(135deg, #67C23A 0%, #85CE61 100%);
-  color: white;
-}
-
-.stat-card.streaming >>> .el-card__body {
-  padding: 20px;
+  transform: translateY(-4px) !important;
+  box-shadow: 0 8px 32px rgba(26, 109, 255, 0.15) !important;
+  border-color: #1A6DFF !important;
+  background-color: rgba(26, 109, 255, 0.05) !important;
 }
 
 .stat-content {
   display: flex;
   align-items: center;
-  gap: 20px;
+  justify-content: center;
+  padding: 20px;
+  gap: 16px;
 }
 
 .stat-icon {
-  font-size: 48px;
-  color: #409EFF;
-}
-
-.stat-card.streaming .stat-icon {
-  color: white;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 24px !important;
+  background: rgba(26, 109, 255, 0.1) !important;
+  color: #1A6DFF !important;
+  border: 1px solid rgba(26, 109, 255, 0.2) !important;
 }
 
 .stat-info {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .stat-value {
-  font-size: 32px;
-  font-weight: bold;
-  color: #303133;
-  line-height: 1.2;
-}
-
-.stat-card.streaming .stat-value {
-  color: white;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #1A6DFF !important;
+  line-height: 1.2 !important;
+  margin-bottom: 4px !important;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #909399;
-  margin-top: 5px;
-}
-
-.stat-card.streaming .stat-label {
-  color: rgba(255,255,255,0.9);
+  font-size: 14px !important;
+  color: #333333 !important;
+  margin-top: 4px !important;
+  font-weight: 500 !important;
 }
 
 /* 筛选栏 */

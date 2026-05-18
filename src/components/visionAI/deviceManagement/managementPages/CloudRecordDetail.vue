@@ -1,8 +1,11 @@
 <template>
-  <div id="recordDetail" style="width: 100%">
-    <div class="page-header" style="margin-bottom: 0">
-      <div class="page-title">
-        <el-page-header @back="backToList" content="云端录像"></el-page-header>
+  <div id="recordDetail" class="management-page-container" style="display: flex; flex-direction: column; height: 100vh;">
+    <div class="page-header management-page-header" style="margin-bottom: 16px; flex-shrink: 0;">
+      <div class="header-left">
+        <div class="page-title" style="cursor: pointer;" @click="backToList">
+          <i class="el-icon-back"></i>
+          <span>云端录像</span>
+        </div>
       </div>
 
       <div class="page-header-btn" v-if="!this.$route.params.mediaServerId" style="padding-right: 1rem">
@@ -26,40 +29,39 @@
         <span>流媒体：{{ this.$route.params.mediaServerId }}</span>
       </div>
     </div>
-    <el-container>
-      <el-aside width="260px">
-        <div class="record-list-box-box">
-          <div style="margin-top: 20px">
-            <el-date-picker size="mini" v-model="chooseDate" :picker-options="pickerOptions" type="date"
-                            value-format="yyyy-MM-dd" placeholder="日期" @change="dateChange()"></el-date-picker>
-            <!--            <el-button :disabled="!mediaServerId" size="mini" type="primary" icon="fa fa-cloud-download" style="margin: auto; margin-left: 12px " title="裁剪合并" @click="drawerOpen"></el-button>-->
+    <div class="management-page-content" style="display: flex; flex: 1; overflow: hidden;">
+      <div class="management-table-card" style="width: 280px; flex-shrink: 0; margin-right: 16px; display: flex; flex-direction: column;">
+        <div class="record-list-box-box" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+          <div style="padding: 20px 16px 10px;">
+            <el-date-picker size="small" v-model="chooseDate" :picker-options="pickerOptions" type="date"
+                            style="width: 100%"
+                            value-format="yyyy-MM-dd" placeholder="选择日期" @change="dateChange()"></el-date-picker>
           </div>
-          <div class="record-list-box" :style="recordListStyle">
+          <div class="record-list-box" style="flex: 1; overflow-y: auto; padding: 0 16px 20px;">
             <ul v-if="detailFiles.length >0" class="infinite-list record-list" v-infinite-scroll="infiniteScroll" >
               <li v-for="(item,index) in detailFiles" :key="index" class="infinite-list-item record-list-item" >
-                <el-tag v-if="choosedFile !== item.fileName" @click="chooseFile(item)">
-                  <i class="el-icon-video-camera"  ></i>
+                <el-tag v-if="choosedFile !== item.fileName" @click="chooseFile(item)" style="width: calc(100% - 30px); cursor: pointer;">
+                  <i class="el-icon-video-camera"></i>
                   {{ getFileShowName(item) }}
                 </el-tag>
-                <el-tag type="danger" v-if="choosedFile === item.fileName">
-                  <i class="el-icon-video-camera"  ></i>
+                <el-tag type="danger" v-if="choosedFile === item.fileName" style="width: calc(100% - 30px); cursor: pointer;">
+                  <i class="el-icon-video-camera"></i>
                   {{ getFileShowName(item) }}
                 </el-tag>
-                <a class="el-icon-download" @click="downloadFile(item)" style="color: #409EFF;font-weight: 600;margin-left: 10px;"
+                <a class="el-icon-download" @click="downloadFile(item)" style="color: #1A6DFF; font-weight: 600; margin-left: 10px; font-size: 16px;"
                    target="_blank"/>
               </li>
             </ul>
+            <div v-if="detailFiles.length === 0" class="record-list-no-val">暂无数据</div>
           </div>
-          <div v-if="detailFiles.length === 0" class="record-list-no-val">暂无数据</div>
         </div>
+      </div>
 
-
-      </el-aside>
-      <el-main style="padding: 22px">
-        <div class="playBox" :style="playerStyle">
-          <player ref="recordVideoPlayer" :videoUrl="videoUrl" :height="true" style="width: 100%" ></player>
+      <div class="management-table-card" style="flex: 1; padding: 24px; display: flex; flex-direction: column; overflow: hidden;">
+        <div class="playBox" style="flex: 1; background: #000; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 400px;">
+          <player ref="recordVideoPlayer" :videoUrl="videoUrl" :height="true" style="width: 100%; height: 100%;" ></player>
         </div>
-        <div class="player-option-box" >
+        <div class="player-option-box" style="margin-top: 20px; flex-shrink: 0;">
           <el-slider
             class="playtime-slider"
             v-model="playTime"
@@ -75,9 +77,8 @@
             <div class="slider-val" v-for="(item,index) of detailFiles" :key="index" :style="'width:'  +  getDataWidth(item) + '%; left:' + getDataLeft(item) + '%'"></div>
           </div>
         </div>
-
-      </el-main>
-    </el-container>
+      </div>
+    </div>
     <el-drawer
       title="录像下载"
       :visible.sync="drawer"
@@ -566,7 +567,7 @@ import player from '../../../common/easyPlayer.vue'
 	};
 </script>
 
-<style>
+<style scoped>
   .el-slider__runway {
     background-color:rgba(206, 206, 206, 0.47) !important;
   }
@@ -605,32 +606,30 @@ import player from '../../../common/easyPlayer.vue'
     position: absolute;
   }
   .record-list-box-box{
-    width: 250px;
-    float: left;
+    width: 100%;
+    padding: 0 16px;
+    box-sizing: border-box;
   }
   .record-list-box{
     overflow: auto;
-    width: 220px;
+    width: 100%;
     list-style: none;
     padding: 0;
     margin: 0;
-    margin-top: 0px;
-    padding: 1rem 0;
-    background-color: #FFF;
     margin-top: 10px;
+    padding: 1rem 0;
+    background-color: transparent;
   }
   .record-list{
     list-style: none;
     padding: 0;
     margin: 0;
-    background-color: #FFF;
-
+    background-color: transparent;
   }
   .record-list-no-val {
-    position: absolute;
+    text-align: center;
     color: #9f9f9f;
-    top: 50%;
-    left: 110px;
+    margin-top: 50px;
   }
   .record-list-item{
     padding: 0;

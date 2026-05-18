@@ -1,18 +1,18 @@
 <template>
   <div id="onvif搜索" v-loading="isLoging">
     <el-dialog
-      title="onvif搜索"
-      width="40%"
-      top="2rem"
+      title="Onvif 搜索"
+      width="520px"
+      top="15vh"
       :close-on-click-modal="false"
       :visible.sync="showDialog"
       :destroy-on-close="true"
       @close="close()"
     >
-      <div id="shared" style="margin-top: 1rem;margin-right: 100px;">
-        <el-form ref="form" :rules="rules" :model="form" label-width="140px" >
+      <div id="shared" style="padding: 10px 0;">
+        <el-form ref="form" :rules="rules" :model="form" label-width="120px" size="small">
           <el-form-item label="地址" prop="hostName" >
-            <el-select v-model="form.hostName" style="float: left; width: 100%" >
+            <el-select v-model="form.hostName" style="width: 100%" >
               <el-option
                 v-for="item in hostNames"
                 :key="item"
@@ -20,23 +20,19 @@
                 :value="item">
               </el-option>
             </el-select>
-
           </el-form-item>
           <el-form-item label="用户名" prop="username">
-            <el-input v-model="form.username" clearable></el-input>
+            <el-input v-model="form.username" placeholder="请输入用户名" clearable></el-input>
           </el-form-item>
           <el-form-item label="密码" prop="password">
-            <el-input v-model="form.password" clearable></el-input>
-          </el-form-item>
-          <el-form-item>
-            <div style="float: right;">
-              <el-button type="primary" @click="onSubmit" >确认</el-button>
-              <el-button @click="close">取消</el-button>
-            </div>
-
+            <el-input v-model="form.password" type="password" placeholder="请输入密码" clearable></el-input>
           </el-form-item>
         </el-form>
       </div>
+      <template slot="footer">
+        <el-button type="primary" @click="onSubmit" >确认</el-button>
+        <el-button @click="close">取消</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>

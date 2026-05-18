@@ -5,10 +5,10 @@
         <!-- 头部操作区域 -->
         <div class="header-section">
           <div class="header-left">
-            <el-button type="primary" icon="el-icon-plus" @click="createKnowledge">
+            <el-button type="primary" icon="el-icon-plus" size="small" @click="createKnowledge">
               创建知识库
             </el-button>
-            <el-button @click="batchDelete">
+            <el-button size="small" @click="batchDelete">
               批量删除
             </el-button>
           </div>
@@ -53,7 +53,7 @@
           <!-- 空状态 -->
           <div v-else-if="!loading && knowledgeBases.length === 0" class="empty-state">
             <el-empty description="暂无知识库数据" image-size="120">
-              <el-button type="primary" @click="createKnowledge">创建第一个知识库</el-button>
+              <el-button type="primary" size="small" @click="createKnowledge">创建第一个知识库</el-button>
             </el-empty>
           </div>
           
@@ -632,6 +632,8 @@ export default {
 </script>
 
 <style scoped>
+@import "../deviceManagement/managementPages/common-style.css";
+
 .knowledge-base-wrapper {
   position: relative;
   width: 100%;
@@ -1130,53 +1132,66 @@ export default {
 
 /* 分页样式 */
 .pagination-section {
+  padding: 20px 0 24px 0 !important;
+  background: white;
   display: flex;
   justify-content: center;
-  background: white;
-  margin-top: 0!important;
-  padding-bottom: 10px!important;
+  align-items: center;
+  border-top: 1px solid #f0f0f0;
+}
+
+.pagination-section >>> .el-pagination {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
 }
 
 .pagination-section >>> .el-pagination__total {
   padding-top: 3px;
 }
 
-.pagination-section >>> .el-pagination {
-  display: flex;
-  justify-content: center;
-}
-
 .pagination-section >>> .el-pagination .el-pager li {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background-color: white;
+  border: 1px solid #dcdfe6;
   border-radius: 4px;
-  color: #3b82f6;
+  color: #333333;
   margin: 0 2px;
+  font-weight: 600 !important;
 }
 
 .pagination-section >>> .el-pagination .el-pager li:hover {
-  color: #1d4ed8;
-  border-color: #3b82f6;
-  background-color: rgba(59, 130, 246, 0.05);
+  color: #1A6DFF;
+  border-color: #1A6DFF;
 }
 
 .pagination-section >>> .el-pagination .el-pager li.active {
-  background: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+  background: #1A6DFF !important;
+  border-color: #1A6DFF !important;
   color: white !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
 .pagination-section >>> .el-pagination button {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
+  background-color: white;
+  border: 1px solid #dcdfe6;
+  color: #333333;
 }
 
 .pagination-section >>> .el-pagination button:hover {
-  color: #1d4ed8;
-  border-color: #3b82f6;
+  color: #1A6DFF;
+  border-color: #1A6DFF;
+}
+
+.pagination-section >>> .el-pagination__total,
+.pagination-section >>> .el-pagination__jump {
+  color: #333333 !important;
+  font-weight: 600 !important;
+}
+
+.pagination-section >>> .el-input__inner {
+  color: #333333 !important;
+  font-weight: 600 !important;
 }
 
 .pagination-section >>> .el-pagination .btn-prev,

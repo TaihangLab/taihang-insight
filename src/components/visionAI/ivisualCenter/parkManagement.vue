@@ -41,72 +41,116 @@
     </dv-border-box-12>
 
     <div class="content-wrapper">
-      <div class="main-content">
-        <!-- 左侧面板 -->
-        <div class="left-panel">
-          <!-- 设备树状图 -->
-          <dv-border-box-12 class="panel device-panel">
-            <div class="panel-header">
-              <span>设备树状图</span>
-              <div class="watermark">TSINGSEE</div>
+      <div class="dashboard-grid">
+        <!-- 左侧和中间的组合区域 -->
+        <div class="left-center-wrapper">
+          <!-- 上半部分：设备树、CPU、视频 -->
+          <div class="top-row">
+            <div class="left-top-col">
+              <!-- 设备树状图 -->
+              <dv-border-box-12 class="panel device-panel">
+                <div class="panel-header">
+                  <span>设备树状图</span>
+                  <div class="watermark">TSINGSEE</div>
+                </div>
+                <div class="device-tree">
+                  <el-tree
+                    :data="treeData"
+                    :props="defaultProps"
+                    node-key="id"
+                    :default-expanded-keys="['1']"
+                    class="custom-tree">
+                  </el-tree>
+                </div>
+              </dv-border-box-12>
+              
+              <!-- CPU使用率 -->
+              <dv-border-box-12 class="panel cpu-panel">
+                <div class="panel-header">
+                  <span>内存/CPU</span>
+                  <div class="watermark">TSINGSEE</div>
+                </div>
+                <div class="chart-wrapper">
+                  <div id="cpuChart" style="width: 100%; height: 100%;"></div>
+                </div>
+              </dv-border-box-12>
             </div>
-            <div class="device-tree">
-              <el-tree
-                :data="treeData"
-                :props="defaultProps"
-                node-key="id"
-                :default-expanded-keys="['1']"
-                class="custom-tree">
-              </el-tree>
-            </div>
-          </dv-border-box-12>
-          
-          <!-- CPU使用率 -->
-          <dv-border-box-12 class="panel cpu-panel">
-            <div class="panel-header">
-              <span>内存/CPU</span>
-              <div class="watermark">TSINGSEE</div>
-            </div>
-            <!-- <dv-charts :option="cpuOption" /> -->
-            <div id="cpuChart" style="width: 90%; height: 90%;"></div>
-          </dv-border-box-12>
-          
-          <!-- 存储使用 -->
-          <dv-border-box-12 class="panel storage-panel">
-            <div class="panel-header">
-              <span>存储使用</span>
-              <div class="watermark">TSINGSEE</div>
-            </div>
-            <!-- <dv-charts :option="storageOption" /> -->
-            <div id="storageChart" style="width: 90%; height: 90%;"></div>
-          </dv-border-box-12>
-        </div>
 
-        <!-- 中间视频区域 -->
-        <div class="center-panel">
-          <dv-border-box-12 class="video-container">
-            <div class="panel-header">
-              <span>实时画面</span>
-              <div class="screen-controls">
-                <span>分屏：</span>
-                <i class="el-icon-menu active"></i>
-                <i class="el-icon-s-grid"></i>
-              </div>
-              <div class="watermark">TSINGSEE</div>
-            </div>
-            <div class="video-grid">
-              <div v-for="i in 4" :key="i" class="video-item">
-                <dv-border-box-8>
-                  <div class="video-content">
-                    <img :src="getRandomImage(i)" alt="监控画面">
+            <div class="center-top-col">
+              <dv-border-box-12 class="video-container">
+                <div class="panel-header">
+                  <span>实时画面</span>
+                  <div class="screen-controls">
+                    <span>分屏：</span>
+                    <i class="el-icon-menu" :class="{ active: splitMode === 4 }" @click="splitMode = 4"></i>
+                    <i class="el-icon-s-grid" :class="{ active: splitMode === 9 }" @click="splitMode = 9"></i>
                   </div>
-                </dv-border-box-8>
-              </div>
+                  <div class="watermark">TSINGSEE</div>
+                </div>
+                <div class="video-grid" :class="'grid-' + splitMode">
+                  <div v-for="i in splitMode" :key="i" class="video-item">
+                    <dv-border-box-8>
+                      <div class="video-content">
+                        <img :src="getRandomImage(i)" alt="监控画面">
+                      </div>
+                    </dv-border-box-8>
+                  </div>
+                </div>
+              </dv-border-box-12>
             </div>
-          </dv-border-box-12>
+          </div>
+
+          <!-- 下半部分：存储、设备状态、带宽 -->
+          <div class="bottom-row">
+            <!-- 存储使用 -->
+            <dv-border-box-12 class="panel storage-panel">
+              <div class="panel-header">
+                <span>存储使用</span>
+                <div class="watermark">TSINGSEE</div>
+              </div>
+              <div class="chart-wrapper">
+                <div id="storageChart" style="width: 100%; height: 100%;"></div>
+              </div>
+            </dv-border-box-12>
+
+            <!-- 设备状态 -->
+            <dv-border-box-12 class="panel status-panel">
+              <div class="panel-header">
+                <span>设备状态</span>
+                <div class="watermark">TSINGSEE</div>
+              </div>
+              <div class="status-content">
+                <div class="status-item">
+                  <dv-active-ring-chart :config="deviceStatusConfig1" />
+                  <div class="status-text">
+                    <p>总数量: 27</p>
+                    <p>离线数: 3</p>
+                  </div>
+                </div>
+                <div class="status-item">
+                  <dv-active-ring-chart :config="deviceStatusConfig2" />
+                  <div class="status-text">
+                    <p>在线: 18</p>
+                    <p>离线: 9</p>
+                  </div>
+                </div>
+              </div>
+            </dv-border-box-12>
+
+            <!-- 带宽使用 -->
+            <dv-border-box-12 class="panel bandwidth-panel">
+              <div class="panel-header">
+                <span>带宽使用(Mbps)</span>
+                <div class="watermark">TSINGSEE</div>
+              </div>
+              <div class="bandwidth-content">
+                <div id="bandwidthChart"></div>
+              </div>
+            </dv-border-box-12>
+          </div>
         </div>
 
-        <!-- 右侧预警区域 -->
+        <!-- 右侧全高列：预警区域 -->
         <div class="right-panel">
           <dv-border-box-12 class="panel alert-panel">
             <div class="panel-header">
@@ -114,110 +158,21 @@
               <div class="watermark">TSINGSEE</div>
             </div>
             <div class="alert-list">
-              <div class="alert-item">
-                <div class="category-label">在岗检测</div>
+              <div v-for="(item, index) in alertItems" :key="index" class="alert-item">
+                <div class="category-label">{{ item.label }}</div>
                 <div class="alert-image-container">
-                  <img :src="getRandomImage(14)" alt="在岗检测">
+                  <img :src="getRandomImage(item.imgIndex)" :alt="item.label">
                 </div>
                 <div class="alert-info single-line">
                   <div class="info-content">
-                    <p>抓拍时间: 2023-04-14 17:23:12</p>
-                    <p>布点名称: 115号探头</p>
+                    <p>抓拍时间: {{ item.time }}</p>
+                    <p>布点名称: {{ item.name }}</p>
                   </div>
                   <div class="view-btn">
-                    <span class="view-large" @click="showLargeImage(14)">查看大图</span>
+                    <span class="view-large" @click="showLargeImage(item.imgIndex)">查看大图</span>
                   </div>
                 </div>
               </div>
-
-              <div class="alert-item">
-                <div class="category-label">安全帽检测</div>
-                <div class="alert-image-container">
-                  <img :src="getRandomImage(12)" alt="安全帽检测">
-                </div>
-                <div class="alert-info single-line">
-                  <div class="info-content">
-                    <p>抓拍时间: 2023-04-14 17:23:12</p>
-                    <p>布点名称: 115号探头</p>
-                  </div>
-                  <div class="view-btn">
-                    <span class="view-large" @click="showLargeImage(12)">查看大图</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="alert-item">
-                <div class="category-label">安全帽检测</div>
-                <div class="alert-image-container">
-                  <img :src="getRandomImage(13)" alt="安全帽检测">
-                </div>
-                <div class="alert-info single-line">
-                  <div class="info-content">
-                    <p>抓拍时间: 2023-04-14 17:23:12</p>
-                    <p>布点名称: 115号探头</p>
-                  </div>
-                  <div class="view-btn">
-                    <span class="view-large" @click="showLargeImage(13)">查看大图</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="alert-item">
-                <div class="category-label">在岗检测</div>
-                <div class="alert-image-container">
-                  <img :src="getRandomImage(11)" alt="在岗检测">
-                </div>
-                <div class="alert-info single-line">
-                  <div class="info-content">
-                    <p>抓拍时间: 2023-04-14 17:23:12</p>
-                    <p>布点名称: 115号探头</p>
-                  </div>
-                  <div class="view-btn">
-                    <span class="view-large" @click="showLargeImage(11)">查看大图</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </dv-border-box-12>
-        </div>
-      </div>
-
-      <!-- 底部状态区域 -->
-      <div class="bottom-container">
-        <div class="bottom-area">
-          <!-- 设备状态 -->
-          <dv-border-box-12 class="panel status-panel">
-            <div class="panel-header">
-              <span>设备状态</span>
-              <div class="watermark">TSINGSEE</div>
-            </div>
-            <div class="status-content">
-              <div class="status-item">
-                <dv-active-ring-chart :config="deviceStatusConfig1" />
-                <div class="status-text">
-                  <p>总数量: 27</p>
-                  <p>离线数: 3</p>
-                </div>
-              </div>
-              <div class="status-item">
-                <dv-active-ring-chart :config="deviceStatusConfig2" />
-                <div class="status-text">
-                  <p>在线: 18</p>
-                  <p>离线: 9</p>
-                </div>
-              </div>
-            </div>
-          </dv-border-box-12>
-
-          <!-- 带宽使用 -->
-          <dv-border-box-12 class="panel bandwidth-panel">
-            <div class="panel-header">
-              <span>带宽使用(Mbps)</span>
-              <div class="watermark">TSINGSEE</div>
-            </div>
-            <div class="bandwidth-content">
-              <!-- <dv-charts :option="bandwidthOption" /> -->
-              <div id="bandwidthChart" style="width: 90%; height: 90%;"></div>
             </div>
           </dv-border-box-12>
         </div>
@@ -276,6 +231,13 @@ export default {
   data() {
     return {
       isFullScreen: false,
+      splitMode: 4,
+      alertItems: [
+        { label: '在岗检测', imgIndex: 14, time: '2023-04-14 17:23:12', name: '115号探头' },
+        { label: '安全帽检测', imgIndex: 12, time: '2023-04-14 17:23:12', name: '115号探头' },
+        { label: '安全帽检测', imgIndex: 13, time: '2023-04-14 17:23:12', name: '115号探头' },
+        { label: '在岗检测', imgIndex: 11, time: '2023-04-14 17:23:12', name: '115号探头' }
+      ],
       treeData: [{
         id: '1',
         label: '市直单位',
@@ -311,10 +273,10 @@ export default {
       },
       cpuOption: {
         grid: {
-          left: '5%',
-          right: '5%',
-          top: '10%',
-          bottom: '20%',
+          left: '10',
+          right: '25',
+          top: '10',
+          bottom: '25',
           containLabel: true
         },
         xAxis: {
@@ -327,12 +289,12 @@ export default {
             }
           },
           axisLabel: {
+            fontSize: 10,
             style: {
               fill: '#fff'
             },
             textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                //  fontSize : 10      //更改坐标轴文字大小
+                color: '#fff'
               }
           }
         },
@@ -350,12 +312,12 @@ export default {
             }
           },
           axisLabel: {
+            fontSize: 10,
             style: {
               fill: '#fff'
             },
             textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
+                color: '#fff'
               }
           }
         },
@@ -374,10 +336,10 @@ export default {
       },
       storageOption: {
         grid: {
-          left: '5%',
-          right: '5%',
-          top: '10%',
-          bottom: '20%',
+          left: '10',
+          right: '25',
+          top: '10',
+          bottom: '25',
           containLabel: true
         },
         xAxis: {
@@ -389,12 +351,13 @@ export default {
             }
           },
           axisLabel: {
+            fontSize: 10,
+            interval: 0,
             style: {
               fill: '#fff'
             },
             textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
+                color: '#fff'
               }
           }
         },
@@ -412,12 +375,12 @@ export default {
             }
           },
           axisLabel: {
+            fontSize: 10,
             style: {
               fill: '#fff'
             },
             textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
+                color: '#fff'
               }
           }
         },
@@ -439,19 +402,20 @@ export default {
       },
       bandwidthOption: {
         grid: {
-          left: '5%',
-          right: '5%',
-          top: '5%',
-          bottom: '20%',
+          left: '10',
+          right: '30',
+          top: '40',
+          bottom: '25',
           containLabel: true
         },
         legend: {
           data: ['上行带宽', '下行带宽'],
           textStyle: {
-            fill: '#fff'
+            fill: '#fff',
+            fontSize: 10
           },
-          right: 0,
-          top: 0
+          right: 30,
+          top: 5
         },
         xAxis: {
           type: 'category',
@@ -463,12 +427,12 @@ export default {
             }
           },
           axisLabel: {
+            fontSize: 10,
             style: {
               fill: '#fff'
             },
             textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
+                color: '#fff'
               }
           }
         },
@@ -486,12 +450,12 @@ export default {
             }
           },
           axisLabel: {
+            fontSize: 10,
             style: {
               fill: '#fff'
             },
             textStyle: {
-                color: '#fff' //更改坐标轴文字颜色
-                // fontSize : 8      //更改坐标轴文字大小
+                color: '#fff'
               }
           }
         },
@@ -519,8 +483,8 @@ export default {
           {name: '离线', value: 3}
         ],
         color: ['#1B96FF', 'rgba(27,150,255,0.2)'],
-        radius: '80%',
-        activeRadius: '85%'
+        radius: '70%',
+        activeRadius: '75%'
       },
       deviceStatusConfig2: {
         data: [
@@ -528,8 +492,8 @@ export default {
           {name: '离线', value: 9}
         ],
         color: ['#1B96FF', 'rgba(27,150,255,0.2)'],
-        radius: '80%',
-        activeRadius: '85%'
+        radius: '70%',
+        activeRadius: '75%'
       },
       showModal: false,
       largeImage: '',
@@ -650,9 +614,12 @@ export default {
     
     // 添加窗口大小变化监听
     handleResize() {
-      // 在窗口大小变化时可以进行额外调整
-      // 此处仅作为示例，实际实现可能需要调整其他组件
-      console.log('Window resized');
+      // 在窗口大小变化时自动调整图表大小
+      Object.values(this.charts).forEach(chart => {
+        if (chart && typeof chart.resize === 'function') {
+          chart.resize();
+        }
+      });
     },
     
     // 添加全屏切换方法
@@ -704,12 +671,12 @@ export default {
 <style scoped>
 .park-management {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   background-color: #000B2A;
   color: #fff;
   display: flex;
   flex-direction: column;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .header-box {
@@ -725,7 +692,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
 .left-decoration,
@@ -801,7 +768,7 @@ export default {
   text-shadow: 0 0 10px rgba(51,255,255,0.5);
   letter-spacing: 4px;
   position: relative;
-  padding: 0 20px;
+  padding: 0;
 }
 
 .content-wrapper {
@@ -810,81 +777,133 @@ export default {
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  padding: 20px 0 24px 0 !important;
 }
 
-.main-content {
+.dashboard-grid {
   flex: 1;
   display: flex;
-  gap: 10px;
-  padding: 0 20px;
-  height: calc(100vh - 290px);
-  position: relative;
-  z-index: 1;
+  gap: 24px;
+  padding: 0 24px;
+  min-height: 0;
 }
 
-.left-panel {
+.left-center-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.top-row {
+  flex: 1;
+  display: flex;
+  gap: 24px;
+  min-height: 0;
+}
+
+.left-top-col {
   width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  height: 100%;
+  gap: 24px;
+  flex-shrink: 0;
 }
 
-.device-panel {
-  flex: 3;
-}
-
-.cpu-panel, .storage-panel {
-  flex: 2;
-}
-
-.device-panel, .cpu-panel, .storage-panel {
-  height: auto;
-}
-
-.center-panel {
+.center-top-col {
   flex: 1;
+  min-width: 0;
+}
+
+.bottom-row {
+  height: 200px;
   display: flex;
-  flex-direction: column;
-  height: 100%;
+  gap: 24px;
+  flex-shrink: 0;
 }
 
 .right-panel {
   width: 310px;
-  display: flex;
-  flex-direction: column;
   height: 100%;
-  background-color: transparent;
-  position: relative;
+  flex-shrink: 0;
 }
 
-.panel {
+.device-panel {
+  flex: 1.5; /* 增加设备树高度 */
+  min-height: 0;
+}
+
+.cpu-panel {
+  flex: 1; /* 缩减内存/CPU高度 */
+  min-height: 0;
+}
+
+.storage-panel {
+  width: 300px; /* 固定宽度，与上方左侧面板对齐 */
+  flex-shrink: 0;
+}
+
+.video-container {
+  height: 100%;
   background: #001135;
   border: 1px solid #0a2550;
   border-radius: 4px;
   overflow: hidden;
 }
 
+.status-panel {
+  flex: 1.5;
+}
+
+.bandwidth-panel {
+  flex: 2.2;
+  min-width: 0;
+}
+
+.bandwidth-content {
+  height: calc(100% - 36px);
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+#bandwidthChart {
+  min-width: 500px;
+  height: 100%;
+}
+
+.panel {
+  background: transparent; /* 移除冗余背景，让 DataV 组件处理底层色 */
+  border: none; /* 移除手动边框，解决与 DataV 边框重叠问题 */
+  border-radius: 4px;
+  overflow: hidden;
+}
+
 .panel-header {
-  height: 36px;
+  height: 44px; /* 增加高度，为顶部留出空间 */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 15px;
-  background: linear-gradient(90deg, #001135 0%, rgba(0,17,53,0.8) 100%);
-  border-bottom: 1px solid #0a2550;
+  padding: 10px 24px 0 24px; /* 增加左侧间距至 24px，增加顶部间距至 10px */
+  background: transparent;
   font-size: 14px;
   position: relative;
 }
 
-.panel-header::before {
+.panel-header > span {
+  display: flex;
+  align-items: center;
+}
+
+.panel-header > span::before {
   content: '';
-  width: 4px;
-  height: 16px;
-  background: #1B96FF;
-  position: absolute;
-  left: 0;
-  margin-left: -15px;
+  width: 3px;
+  height: 14px;
+  background: #00ffff;
+  margin-right: 8px; /* 微调文字间距 */
+  border-radius: 1px;
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
 }
 
 .device-tree {
@@ -903,13 +922,20 @@ export default {
 
 .video-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 10px;
+  gap: 24px;
   padding: 10px;
   background: #001135;
   height: calc(100% - 36px);
-  min-height: 400px;
+}
+
+.video-grid.grid-4 {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.video-grid.grid-9 {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
 }
 
 .video-item {
@@ -959,13 +985,13 @@ export default {
 }
 
 .alert-list {
-  height: calc(100% - 60px);
+  height: calc(100% - 36px);
   padding: 10px;
   padding-bottom: 5px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 24px;
 }
 
 .alert-item {
@@ -1114,58 +1140,44 @@ export default {
 
 .chart-wrapper {
   height: calc(100% - 36px);
-  padding: 10px;
+  padding: 5px; /* 减少内边距以给图表更多空间 */
 }
 
-/* 自定义滚动条 */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: #001135;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #0a2550;
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #1B96FF;
-}
-
-/* 底部容器样式 */
-.bottom-container {
-  position: relative;
-  height: 180px;
-  padding: 0 20px;
-  margin-top: 10px;
-  z-index: 2;
-}
-
-/* 底部区域样式 */
-.bottom-area {
-  display: flex;
-  gap: 10px;
-  height: 100%;
-  /* 中间区域的布局定位 */
-  margin-left: 310px; /* 左侧面板宽度 + gap */
-  width: calc(100% - 630px); /* 屏幕宽度 - (左面板宽度 + 右面板宽度 + 边距) */
-}
-
-.status-panel, .bandwidth-panel {
-  flex: 1;
+#cpuChart, #storageChart {
+  width: 100%;
   height: 100%;
 }
 
-.status-content, .bandwidth-content {
+.bandwidth-content {
+  height: calc(100% - 36px);
+  width: 100%;
+  padding: 5px;
+}
+
+#bandwidthChart {
+  width: 100%;
+  height: 100%;
+}
+
+/* 隐藏所有模块的滚动条，但保留滚动功能 */
+* {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE 10+ */
+}
+
+*::-webkit-scrollbar {
+  display: none !important; /* Chrome/Safari/Edge */
+}
+
+
+
+.status-content {
   height: calc(100% - 36px);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 5px;
+  padding: 10px;
+  overflow: auto;
 }
 
 .status-item {
@@ -1180,24 +1192,6 @@ export default {
 
 .status-text p {
   margin: 5px 0;
-}
-
-/* 修改媒体查询以适应新布局 */
-@media screen and (max-height: 900px) {
-  .main-content {
-    height: calc(100vh - 270px);
-  }
-}
-
-@media screen and (max-height: 750px) {
-  .main-content {
-    height: calc(100vh - 250px);
-  }
-}
-
-/* 全屏模式下的调整 */
-.park-management.fullscreen-mode .main-content {
-  height: calc(100vh - 130px);
 }
 
 .modal-overlay {
@@ -1345,11 +1339,18 @@ export default {
   background: rgba(0, 17, 53, 0.5);
   border: 1px solid #0a2550;
   border-radius: 4px;
-  color: #1B96FF;
+  color: #00ffff;
   font-size: 22px;
   cursor: pointer;
   transition: all 0.3s;
   z-index: 10;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+}
+
+.fullscreen-btn:hover {
+  background: rgba(0, 255, 255, 0.1);
+  border-color: #00ffff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
 }
 
 .fullscreen-btn:hover {
@@ -1379,5 +1380,24 @@ export default {
 
 .park-management.fullscreen-mode .alert-panel {
   min-height: var(--main-height);
+}
+ 
+</style>
+
+<style>
+/* 终极覆盖：强制清除上级布局带来的所有额外边距和滚动条，确保 24px 规范为唯一生效值 */
+html body .el-main.layout-content,
+html body .layout-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+.right-panel .border-box-content {
+  padding-bottom: 30px !important;
+  box-sizing: border-box;
+}
+.center-top-col .border-box-content {
+  padding-bottom: 30px !important;
+  box-sizing: border-box;
 }
 </style> 

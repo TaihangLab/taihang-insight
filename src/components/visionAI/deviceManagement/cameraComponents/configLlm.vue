@@ -1285,75 +1285,82 @@ export default {
 }
 
 .llm-skill-management-dialog .el-dialog__header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  padding: 24px 32px;
-  border-bottom: none;
+  background: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  padding: 16px 20px !important;
+  text-align: left !important;
 }
 
 .llm-skill-management-dialog .el-dialog__title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #fff;
+  color: #333333 !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  display: block !important;
+  text-align: left !important;
 }
 
 .llm-skill-management-dialog .el-dialog__headerbtn .el-dialog__close {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 20px;
+  color: #909399 !important;
+  font-size: 20px !important;
 }
 
 .llm-skill-management-dialog .el-dialog__headerbtn .el-dialog__close:hover {
-  color: #fff;
+  color: #333333 !important;
 }
 
  .llm-skill-management-dialog .el-dialog__body {
    padding: 24px;
-   background: #f8fafe;
+   background: #ffffff !important;
  }
 
 .llm-skill-management-dialog .el-dialog__footer {
-  background: #fff;
-  border-top: 1px solid #ebeef5;
-  padding: 20px 32px;
+  background: #ffffff !important;
+  border-top: 1px solid #e5e7eb !important;
+  padding: 16px 24px 24px !important;
+}
+
+.llm-skill-management-dialog .el-dialog__footer .el-button + .el-button {
+  margin-left: 16px !important;
 }
 
 /* 技能配置对话框样式 */
-.llm-skill-config-dialog {
-  border-radius: 16px;
-  overflow: hidden;
-}
-
 .llm-skill-config-dialog .el-dialog__header {
-  background: linear-gradient(135deg, #409eff 0%, #36cfc9 100%);
-  color: #fff;
-  padding: 24px 32px;
-  border-bottom: none;
+  background: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  padding: 16px 20px !important;
+  text-align: left !important;
 }
 
 .llm-skill-config-dialog .el-dialog__title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #fff;
+  color: #333333 !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  display: block !important;
+  text-align: left !important;
 }
 
 .llm-skill-config-dialog .el-dialog__headerbtn .el-dialog__close {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 20px;
+  color: #909399 !important;
+  font-size: 20px !important;
 }
 
 .llm-skill-config-dialog .el-dialog__headerbtn .el-dialog__close:hover {
-  color: #fff;
+  color: #333333 !important;
 }
 
 .llm-skill-config-dialog .el-dialog__body {
   padding: 32px;
-  background: #f8fafe;
+  background: #ffffff !important;
 }
 
 .llm-skill-config-dialog .el-dialog__footer {
-  background: #fff;
-  border-top: 1px solid #ebeef5;
-  padding: 20px 32px;
+  background: #ffffff !important;
+  border-top: 1px solid #e5e7eb !important;
+  padding: 16px 24px 24px !important;
+}
+
+.llm-skill-config-dialog .el-dialog__footer .el-button + .el-button {
+  margin-left: 16px !important;
 }
 
  /* 技能区域样式 */
