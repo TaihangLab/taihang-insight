@@ -5,47 +5,14 @@
 </template>
 
 <script>
-import  userService from './components/service/UserService'
+// 登录态/动态路由全部交由 src/router/permission.js 中的全局守卫处理。
+// 这里只保留组件骨架，避免在 created 中做重复跳转逻辑。
 export default {
   name: 'app',
-  data(){
-    return {
-      isLogin: false,
-      excludeLoginCheck: ["/play/wasm", "/play/rtc"],
-      userInfo: { //保存用户信息
-        nick: null,
-        ulevel: null,
-        uid: null,
-        portrait: null
-      }
-    }
+  data () {
+    return {}
   },
-  created() {
-    if (userService.getToken() == null){
-      console.log(22222)
-      console.log(this.$route.path)
-      try {
-        if (this.excludeLoginCheck && this.excludeLoginCheck.length > 0) {
-          for (let i = 0; i < this.excludeLoginCheck.length; i++) {
-            if (this.$route.path.startsWith(this.excludeLoginCheck[i])){
-              return;
-            }
-          }
-        }
-      }catch (e) {
-        console.error(e)
-      }
-      //如果没有登录状态则跳转到登录页
-      this.$router.push('/login');
-    }
-  },
-
-  mounted(){
-    //组件开始挂载时获取用户信息
-    // this.getUserInfo();
-  },
-  methods: {
-  },
+  methods: {},
   components: {}
 };
 </script>

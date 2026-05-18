@@ -40,24 +40,18 @@
 
         <!-- 登录表单 -->
         <div class="login-form">
-          <!-- 租户选择框 -->
-          <div class="input-group">
-            <div class="input-wrapper" :class="{'focused': tenantSelectFocused}">
+          <!-- 租户下拉（启用多租户时显示） -->
+          <div class="input-group" v-if="tenantEnabled && tenantOptions.length > 0">
+            <div class="input-wrapper" :class="{ focused: tenantFocused }">
               <i class="input-icon fa fa-building"></i>
-              <select 
-                v-model="selectedTenant" 
-                class="tech-select"
-                @focus="tenantSelectFocused = true"
-                @blur="tenantSelectFocused = false"
-                @change="onTenantChange"
+              <select
+                v-model="tenantId"
+                class="tech-input tech-select"
+                @focus="tenantFocused = true"
+                @blur="tenantFocused = false"
               >
-                <option value="" disabled>请选择租户</option>
-                <option 
-                  v-for="tenant in tenantList" 
-                  :key="tenant.tenantNumber" 
-                  :value="tenant.tenantNumber"
-                >
-                  {{ tenant.companyName }}
+                <option v-for="opt in tenantOptions" :key="opt.tenantId" :value="opt.tenantId">
+                  {{ opt.companyName }}（{{ opt.tenantId }}）
                 </option>
               </select>
               <i class="select-arrow fa fa-chevron-down"></i>
@@ -101,12 +95,35 @@
             </div>
           </div>
 
+          <!-- 验证码 -->
+          <div class="input-group captcha-row" v-if="captchaEnabled">
+            <div class="input-wrapper captcha-input">
+              <i class="input-icon fa fa-shield"></i>
+              <input
+                type="text"
+                v-model="captchaCode"
+                placeholder="请输入验证码"
+                class="tech-input"
+                maxlength="6"
+              >
+              <div class="input-border"></div>
+            </div>
+            <img
+              v-if="captchaImg"
+              :src="captchaImg"
+              class="captcha-image"
+              alt="验证码"
+              @click="loadCaptcha"
+              title="点击刷新"
+            >
+          </div>
+
           <!-- 登录按钮 -->
           <div class="login-btn-container">
             <button 
               class="tech-login-btn" 
               :class="{'loading': isLoging}"
-              @click="login"
+              @click="doLogin"
               :disabled="isLoging"
             >
               <span v-if="!isLoging">登录系统</span>
@@ -116,6 +133,11 @@
               </span>
               <div class="btn-glow"></div>
             </button>
+          </div>
+
+          <!-- 注册入口 -->
+          <div class="register-link">
+            <router-link to="/register">还没有账号？立即注册</router-link>
           </div>
         </div>
 
@@ -133,7 +155,8 @@
 </template>
 
 <script>
-import userService from './service/UserService'
+import { getCaptcha } from '@/api/auth'
+import { getLoginTenantList } from '@/api/tenant'
 
 export default {
   name: 'Login',
@@ -141,27 +164,32 @@ export default {
     return {
       isLoging: false,
       showPassword: false,
-      loginLoading: false,
       username: '',
       password: '',
-      selectedTenant: '',
-      tenantSelectFocused: false,
-      tenantList: []
+      captchaEnabled: true,
+      captchaCode: '',
+      captchaUuid: '',
+      captchaImg: '',
+      redirect: '/',
+      tenantEnabled: false,
+      tenantOptions: [],
+      tenantId: '',
+      tenantFocused: false
     }
   },
   created(){
-    var that = this;
+    const that = this;
     document.onkeydown = function(e) {
-      var key = window.event.keyCode;
-      if (key == 13) {
-        that.login();
+      const key = window.event.keyCode;
+      if (key === 13) {
+        that.doLogin();
       }
     }
-    // 页面加载时获取租户列表
-    this.getTenantList();
+    this.redirect = (this.$route && this.$route.query && this.$route.query.redirect) || '/';
+    this.loadCaptcha();
+    this.loadTenants();
   },
   methods:{
-    // 获取粒子样式
     getParticleStyle() {
       return {
         left: Math.random() * 100 + '%',
@@ -171,131 +199,79 @@ export default {
       }
     },
 
-    // 获取租户列表
-    getTenantList() {
-      // 直接使用写死的租户数据
-      this.tenantList = this.getMockTenantList();
-      this.loadingTenants = false;
+    loadCaptcha() {
+      getCaptcha().then(res => {
+        const data = res.data || {};
+        this.captchaEnabled = !!data.captchaEnabled;
+        this.captchaUuid = data.uuid || '';
+        this.captchaImg = data.img ? `data:image/png;base64,${data.img}` : '';
+      }).catch(() => {
+        this.captchaEnabled = false;
+      });
     },
 
-    // 模拟租户数据（从租户管理模块提取）
-    getMockTenantList() {
-      return [
-        {
-          tenantNumber: '000000',
-          companyName: 'XXX有限公司',
-          contactPerson: '管理组',
-          status: true
-        },
-        {
-          tenantNumber: '952742',
-          companyName: '123',
-          contactPerson: '123',
-          status: true
-        },
-        {
-          tenantNumber: '415387',
-          companyName: '6666',
-          contactPerson: '66',
-          status: true
-        },
-        {
-          tenantNumber: '297659',
-          companyName: '16888',
-          contactPerson: '16888',
-          status: true
-        },
-        {
-          tenantNumber: '789133',
-          companyName: '测试租户企业名称',
-          contactPerson: '测试租户联系人',
-          status: true
-        },
-        {
-          tenantNumber: '646214',
-          companyName: 'test999',
-          contactPerson: 'test999',
-          status: true
-        },
-        {
-          tenantNumber: '252800',
-          companyName: 'ce',
-          contactPerson: 'ce',
-          status: true
+    loadTenants() {
+      getLoginTenantList().then(res => {
+        const data = res.data || {};
+        this.tenantEnabled = !!data.tenantEnabled;
+        const list = Array.isArray(data.voList) ? data.voList : [];
+        // 按 host 自动选中：若启用了 domain 则匹配 window.location.host
+        const host = (window.location && window.location.host) || '';
+        const matched = list.find(t => t.domain && host.indexOf(t.domain) >= 0);
+        this.tenantOptions = list;
+        if (this.tenantEnabled) {
+          if (matched) {
+            this.tenantId = matched.tenantId;
+          } else if (list.length > 0) {
+            this.tenantId = list[0].tenantId;
+          } else {
+            this.tenantId = '000000';
+          }
         }
-      ];
+      }).catch(() => {
+        this.tenantEnabled = false;
+        this.tenantOptions = [];
+      });
     },
 
-    // 租户选择变化处理
-    onTenantChange() {
-      const selectedTenantData = this.tenantList.find(tenant => tenant.tenantNumber === this.selectedTenant);
-      if (selectedTenantData) {
-        console.log('选择的租户:', selectedTenantData.companyName);
-      }
-    },
-
-    // 输入框聚焦效果
     focusInput(event) {
       event.target.parentElement.classList.add('focused');
     },
 
-    // 输入框失焦效果
     blurInput(event) {
       if (!event.target.value) {
         event.target.parentElement.classList.remove('focused');
       }
     },
 
-    //登录逻辑 - 模拟登录并保持登录状态
-    login(){
-      if(this.selectedTenant === '') {
-        this.$message({
-          showClose: true,
-          message: '请选择租户',
-          type: 'warning'
-        });
+    doLogin(){
+      if (!this.username || !this.password) {
+        this.$message({ showClose: true, message: '请输入用户名和密码', type: 'warning' });
         return;
       }
-      if(this.username!='' && this.password!=''){
-        this.isLoging = true;
-        
-        // 模拟登录延迟
-        setTimeout(() => {
-          // 保存用户信息和登录状态
-          const userInfo = {
-            username: this.username,
-            tenantNumber: this.selectedTenant,
-            loginTime: new Date().toISOString()
-          };
-          
-          userService.setUser(userInfo);
-          userService.setToken('mock-login-token');
-          
-          this.$message({
-            showClose: true,
-            message: '登录成功',
-            type: 'success'
-          });
-          
-          this.isLoging = false;
-          this.$router.push('/');
-        }, 800);
-      } else {
-        this.$message({
-          showClose: true,
-          message: '请输入用户名和密码',
-          type: 'warning'
-        });
+      if (this.captchaEnabled && !this.captchaCode) {
+        this.$message({ showClose: true, message: '请输入验证码', type: 'warning' });
+        return;
       }
-    },
-    
-    cancelEnterkeyDefaultAction: function() {
-        document.onkeydown = function(e) {
-        var key = window.event.keyCode;
-        if (key == 13) {
-          return false;
-        }
-      }
+      this.isLoging = true;
+      this.$store.dispatch('Login', {
+        username: this.username,
+        password: this.password,
+        code: this.captchaCode,
+        uuid: this.captchaUuid,
+        tenantId: this.tenantEnabled ? (this.tenantId || '000000') : ''
+      }).then(() => Promise.all([
+        this.$store.dispatch('GetInfo'),
+        this.$store.dispatch('GenerateRoutes')
+      ])).then(() => {
+        this.$message({ showClose: true, message: '登录成功', type: 'success' });
+        this.$router.push(this.redirect || '/');
+      }).catch(err => {
+        console.error('登录失败', err);
+        this.loadCaptcha();
+      }).finally(() => {
+        this.isLoging = false;
+      });
     }
   }
 }
@@ -740,6 +716,40 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+/* 验证码 */
+.captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.captcha-input {
+  flex: 1;
+}
+.captcha-image {
+  width: 120px;
+  height: 55px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #fff;
+  object-fit: contain;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+/* 注册入口 */
+.register-link {
+  margin-top: 18px;
+  text-align: center;
+}
+.register-link a {
+  color: rgba(0, 212, 255, 0.9);
+  font-size: 13px;
+  text-decoration: none;
+}
+.register-link a:hover {
+  color: #00d4ff;
+  text-decoration: underline;
 }
 
 /* 底部信息 */

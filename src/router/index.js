@@ -4,6 +4,7 @@ import Layout from "../layout/index.vue"
 
 // 基础/小体积组件保持同步加载
 import login from '../components/Login.vue'
+import register from '../components/Register.vue'
 import deviceTree from '../components/common/DeviceTree.vue'
 import wasmPlayer from '../components/common/jessibuca.vue'
 import rtcPlayer from '../components/dialog/rtcPlayer.vue'
@@ -204,6 +205,11 @@ export default new VueRouter({
       path: '/login',
       name: '登录',
       component: login,
+    },
+    {
+      path: '/register',
+      name: '注册',
+      component: register,
     },
     {
       path: '/test',

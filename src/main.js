@@ -3,6 +3,9 @@ import App from './App.vue';
 import ElementUI, {Notification} from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import router from './router/index.js';
+import './router/permission';
+import store from './store';
+import permissionDirective from './directive/permission';
 import axios from 'axios';
 import VueCookies from 'vue-cookies';
 import VCharts from 'v-charts';
@@ -14,8 +17,10 @@ import Fingerprint2 from 'fingerprintjs2';
 import VueClipboards from 'vue-clipboards';
 import Contextmenu from "vue-contextmenujs"
 import userService from "./components/service/UserService"
+import { getToken as _getTokenForGlobal, removeToken as _removeTokenForGlobal, removeUser as _removeUserForGlobal } from './utils/auth';
 
 Vue.config.productionTip = false;
+Vue.use(permissionDirective);
 
 
 // 生成唯一ID
@@ -50,13 +55,31 @@ Vue.use(dataV);
 const config = require('../config/index.js');
 axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp';
 axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS错误
-// 简化的axios拦截器 - 认证由Python后端统一处理
+
+// 请求拦截：注入统一 token
+axios.interceptors.request.use((cfg) => {
+  const token = _getTokenForGlobal();
+  if (token) {
+    cfg.headers = cfg.headers || {};
+    cfg.headers['Authorization'] = `Bearer ${token}`;
+    cfg.headers['access-token'] = token;
+  }
+  return cfg;
+}, (error) => Promise.reject(error));
+
+// 响应拦截：401 清 token 并跳登录
 axios.interceptors.response.use((response) => {
-  // 只处理响应数据，不处理认证
   return response;
 }, (error) => {
-  // 简化错误处理
-  console.log("API请求错误:", error);
+  if (error && error.response && error.response.status === 401) {
+    _removeTokenForGlobal();
+    _removeUserForGlobal();
+    if (typeof window !== 'undefined' && window.location && window.location.hash !== '#/login') {
+      window.location.hash = '#/login';
+    }
+  } else {
+    console.log("API请求错误:", error);
+  }
   return Promise.reject(error);
 });
 
@@ -93,5 +116,6 @@ new Vue({
 
   },
   router: router,
+  store: store,
   render: h => h(App),
 }).$mount('#app')

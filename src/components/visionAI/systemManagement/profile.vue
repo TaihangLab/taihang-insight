@@ -10,19 +10,19 @@
           <el-card class="profile-card">
             <div class="profile-avatar">
               <el-avatar :size="80" icon="el-icon-user" class="avatar"></el-avatar>
-              <h3 class="username">{{ userInfo.username }}</h3>
-              <p class="role">{{ userInfo.role }}</p>
+              <h3 class="username">{{ userInfo.nickName || userInfo.userName || '-' }}</h3>
+              <p class="role">{{ roleNames || '-' }}</p>
             </div>
             <el-divider></el-divider>
             <div class="profile-stats">
               <div class="stat-item">
-                <span class="stat-label">上次登录</span>
-                <span class="stat-value">{{ userInfo.lastLoginTime }}</span>
+                <span class="stat-label">账号</span>
+                <span class="stat-value">{{ userInfo.userName || '-' }}</span>
               </div>
               <div class="stat-item">
                 <span class="stat-label">账户状态</span>
-                <el-tag :type="userInfo.status === '正常' ? 'success' : 'danger'" size="mini" class="status-tag">
-                  {{ userInfo.status }}
+                <el-tag :type="userInfo.status === '0' ? 'success' : 'danger'" size="mini" class="status-tag">
+                  {{ userInfo.status === '0' ? '正常' : '停用' }}
                 </el-tag>
               </div>
             </div>
@@ -51,114 +51,109 @@
           <el-card class="info-card">
             <div slot="header" class="card-header">
               <span>基本信息</span>
-              <el-button type="primary" size="mini" @click="editMode = !editMode" class="edit-btn">
-                {{ editMode ? '取消编辑' : '编辑信息' }}
-              </el-button>
             </div>
-            
+
             <el-form :model="userInfo" label-width="100px" class="profile-form">
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="用户名">
-                    <el-input v-model="userInfo.username" :disabled="!editMode"></el-input>
+                  <el-form-item label="账号">
+                    <el-input :value="userInfo.userName" disabled></el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="邮箱">
-                    <el-input v-model="userInfo.email" :disabled="!editMode"></el-input>
+                  <el-form-item label="昵称">
+                    <el-input :value="userInfo.nickName" disabled></el-input>
                   </el-form-item>
                 </el-col>
               </el-row>
-              
+
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="手机号">
-                    <el-input v-model="userInfo.phone" :disabled="!editMode"></el-input>
+                  <el-form-item label="邮箱">
+                    <el-input :value="userInfo.email" disabled></el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="部门">
-                    <el-input v-model="userInfo.department" :disabled="!editMode"></el-input>
+                  <el-form-item label="手机号">
+                    <el-input :value="userInfo.phonenumber" disabled></el-input>
                   </el-form-item>
                 </el-col>
               </el-row>
-              
+
               <el-row :gutter="20">
                 <el-col :span="12">
                   <el-form-item label="创建时间">
-                    <el-input v-model="userInfo.createTime" disabled></el-input>
+                    <el-input :value="userInfo.createTime" disabled></el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="角色权限">
-                    <el-input v-model="userInfo.role" disabled></el-input>
+                    <el-input :value="roleNames" disabled></el-input>
                   </el-form-item>
                 </el-col>
               </el-row>
-              
-              <el-form-item label="个人简介">
-                <el-input 
-                  type="textarea" 
-                  v-model="userInfo.description" 
-                  :rows="3" 
-                  :disabled="!editMode"
-                  placeholder="请输入个人简介...">
-                </el-input>
-              </el-form-item>
-              
-              <el-form-item v-if="editMode" class="form-actions">
-                <el-button type="primary" @click="saveProfile" class="save-btn">保存修改</el-button>
-                <el-button @click="editMode = false" class="cancel-btn">取消</el-button>
-              </el-form-item>
             </el-form>
           </el-card>
         </el-col>
       </el-row>
     </div>
+
+    <!-- 修改密码对话框（与顶部菜单复用同一个组件） -->
+    <changePasswordDialog ref="changePasswordDialog"></changePasswordDialog>
   </div>
 </template>
 
 <script>
-import userService from '../../service/UserService'
+import { getUserProfile } from '@/api/auth'
+import changePasswordDialog from '../../dialog/changePassword.vue'
 
 export default {
   name: 'Profile',
+  components: { changePasswordDialog },
   data() {
     return {
-      editMode: false,
       userInfo: {
-        username: 'admin',
-        email: 'admin@example.com',
-        phone: '138****8888',
-        department: '系统管理部',
-        role: '系统管理员',
-        status: '正常',
-        createTime: '2024-01-01 10:00:00',
-        lastLoginTime: '2024-12-26 09:30:15',
-        description: '系统管理员，负责平台的日常维护和用户管理工作。'
-      }
+        userName: '',
+        nickName: '',
+        email: '',
+        phonenumber: '',
+        status: '0',
+        createTime: ''
+      },
+      roles: []
+    }
+  },
+  computed: {
+    roleNames() {
+      const storeRoles = (this.$store && this.$store.getters && this.$store.getters.roles) || []
+      const list = this.roles && this.roles.length ? this.roles : storeRoles
+      return (list || []).join('、')
     }
   },
   mounted() {
-    this.loadUserInfo();
+    this.loadUserInfo()
   },
   methods: {
     loadUserInfo() {
-      // 从userService获取用户信息
-      const user = userService.getUser();
-      if (user) {
-        this.userInfo.username = user.username;
-        // 其他信息可以通过API获取
-      }
-    },
-    saveProfile() {
-      // 保存用户信息的逻辑
-      this.$message.success('个人信息保存成功');
-      this.editMode = false;
+      const storeUser = (this.$store && this.$store.getters && this.$store.getters.userInfo) || {}
+      Object.assign(this.userInfo, storeUser)
+      this.roles = ((this.$store && this.$store.getters && this.$store.getters.roles) || []).slice()
+
+      getUserProfile().then((res) => {
+        const data = (res && res.data) || {}
+        const user = data.user || data
+        if (user && typeof user === 'object') {
+          Object.assign(this.userInfo, user)
+        }
+        if (Array.isArray(data.roles)) {
+          this.roles = data.roles
+        }
+      }).catch((err) => {
+        console.warn('[profile] 拉取个人信息失败，使用 store 缓存数据', err)
+      })
     },
     changePassword() {
-      // 跳转到修改密码功能
-      this.$message.info('请在用户菜单中选择修改密码');
+      this.$refs.changePasswordDialog.openDialog()
     }
   }
 }

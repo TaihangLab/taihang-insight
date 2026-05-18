@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getToken, removeToken, removeUser } from '@/utils/auth';
 const config = require('../../../config/index.js');
 
 // 创建专用于visionAI模块的axios实例
@@ -29,13 +30,13 @@ visionAIAxios.defaults.paramsSerializer = function (params) {
   return queryParams.join('&');
 };
 
-// 添加请求拦截器
+// 添加请求拦截器：注入统一 token（兼容旧后端的 access-token 头，同时附 Bearer）
 visionAIAxios.interceptors.request.use(
   config => {
-    // 这里可以添加token等通用请求头
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (token) {
       config.headers['access-token'] = token;
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
@@ -44,17 +45,17 @@ visionAIAxios.interceptors.request.use(
   }
 );
 
-// 添加响应拦截器（只处理认证等通用错误）
+// 添加响应拦截器：401 时清 token 并跳转登录
 visionAIAxios.interceptors.response.use(
-  response => {
-    // 直接返回原始响应，不进行任何数据转换
-    return response;
-  },
+  response => response,
   error => {
-    // 处理响应错误
     if (error.response && error.response.status === 401) {
-      // 处理认证失败
       console.log('认证失败，请重新登录');
+      removeToken();
+      removeUser();
+      if (typeof window !== 'undefined' && window.location && window.location.hash !== '#/login') {
+        window.location.hash = '#/login';
+      }
     }
     return Promise.reject(error);
   }
