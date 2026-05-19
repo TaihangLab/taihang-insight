@@ -126,8 +126,12 @@
         <template slot="title">
           <el-avatar :size="28" icon="el-icon-user" class="user-avatar"></el-avatar>
           <span>{{ username }}</span>
-          <span v-if="isSuperAdmin && currentViewingTenantId" class="tenant-badge" :title="'当前查看的租户：' + currentViewingTenantId">
-            ［租户 {{ currentViewingTenantId }}］
+          <span
+            v-if="isSuperAdmin && isViewingOtherTenant"
+            class="tenant-badge"
+            :title="'当前以租户 ' + dynamicTenantId + ' 的视角查看数据（本人租户：' + selfTenantId + '）'"
+          >
+            ［查看租户 {{ dynamicTenantId }}］
           </span>
         </template>
         <el-menu-item v-if="isSuperAdmin" @click="openSwitchTenantDialog">
@@ -216,8 +220,13 @@ export default {
     selfTenantId () {
       return (this.$store && this.$store.getters && this.$store.getters.tenantId) || '';
     },
-    currentViewingTenantId () {
-      return this.dynamicTenantId || this.selfTenantId || '';
+    /** 超管已切换到其它租户（非本人所属租户） */
+    isViewingOtherTenant () {
+      return !!(
+        this.dynamicTenantId
+        && this.selfTenantId
+        && this.dynamicTenantId !== this.selfTenantId
+      );
     }
   },
   created() {
@@ -278,11 +287,24 @@ export default {
     },
     confirmSwitchTenant() {
       if (!this.targetTenantId) return;
+      if (this.targetTenantId === this.selfTenantId) {
+        this.$message({ message: '目标租户与当前所属租户相同，无需切换', type: 'info' });
+        return;
+      }
       switchTenant(this.targetTenantId).then(res => {
         this.$store.commit('SET_DYNAMIC_TENANT_ID', this.targetTenantId);
         this.switchDialogVisible = false;
-        this.$message({ message: res.msg || ('已切换到租户 ' + this.targetTenantId + '；刷新页面后生效'), type: 'success' });
+        this.$message({
+          message: res.msg || ('已切换到租户 ' + this.targetTenantId + '，正在刷新…'),
+          type: 'success'
+        });
         setTimeout(() => window.location.reload(), 600);
+      }).catch(() => {
+        this.$message({
+          message: '切换失败：请确认 Redis 已启动（动态租户状态保存在 Redis）',
+          type: 'error',
+          duration: 5000
+        });
       });
     },
     resetTenantView() {

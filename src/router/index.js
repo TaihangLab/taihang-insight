@@ -33,6 +33,12 @@ const logRecords = () => import('../components/visionAI/smartControl/logRecords.
 const edgeServer = () => import('../components/visionAI/edgeManagement/edgeServer.vue')
 const edgeBox = () => import('../components/visionAI/edgeManagement/edgeBox.vue')
 const profile = () => import('../components/visionAI/systemManagement/profile.vue')
+const userManagement = () => import('../components/visionAI/systemManagement/userManagement.vue')
+const roleManagement = () => import('../components/visionAI/systemManagement/roleManagement.vue')
+const menuManagement = () => import('../components/visionAI/systemManagement/menuManagement.vue')
+const deptManagement = () => import('../components/visionAI/systemManagement/deptManagement.vue')
+const tenantManagement = () => import('../components/visionAI/systemManagement/tenantManagement.vue')
+const tenantPackageManagement = () => import('../components/visionAI/systemManagement/tenantPackageManagement.vue')
 const modelFactory = () => import('../components/visionAI/mlPipeline/modelFactory.vue')
 
 const originalPush = VueRouter.prototype.push
@@ -164,6 +170,13 @@ export default new VueRouter({
           name: 'profile',
           component: profile,
         },
+        // 系统管理（来自后端动态菜单：path=system 下 user/role/menu/dept/tenant/tenantPackage）
+        { path: '/system/user', name: 'userManagement', component: userManagement },
+        { path: '/system/role', name: 'roleManagement', component: roleManagement },
+        { path: '/system/menu', name: 'menuManagement', component: menuManagement },
+        { path: '/system/dept', name: 'deptManagement', component: deptManagement },
+        { path: '/system/tenant', name: 'tenantManagement', component: tenantManagement },
+        { path: '/system/tenantPackage', name: 'tenantPackageManagement', component: tenantPackageManagement },
         {
           path: '/mlPipeline',
           name: 'modelFactory',

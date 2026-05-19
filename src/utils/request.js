@@ -20,6 +20,22 @@ const service = axios.create({
   withCredentials: false
 })
 
+/**
+ * 剔除 query / params 中的空字符串、null、undefined，避免后端把空串当作"=='' "过滤条件。
+ * 例如：{ pageNum:1, status:'' } → { pageNum:1 }
+ * 注意：保留 0 / false 等合法假值。
+ */
+function pruneEmptyParams (params) {
+  if (!params || typeof params !== 'object') return params
+  const cleaned = {}
+  Object.keys(params).forEach((k) => {
+    const v = params[k]
+    if (v === '' || v === null || typeof v === 'undefined') return
+    cleaned[k] = v
+  })
+  return cleaned
+}
+
 service.interceptors.request.use(
   (cfg) => {
     const token = getToken()
@@ -27,6 +43,10 @@ service.interceptors.request.use(
       cfg.headers = cfg.headers || {}
       cfg.headers['Authorization'] = `Bearer ${token}`
       cfg.headers['access-token'] = token
+    }
+    // 统一清洗查询参数（GET / DELETE 的 params；不动 body 防止误删合法字段）
+    if (cfg.params) {
+      cfg.params = pruneEmptyParams(cfg.params)
     }
     return cfg
   },

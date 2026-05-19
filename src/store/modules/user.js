@@ -101,6 +101,11 @@ const actions = {
         commit('SET_USER_INFO', user)
         commit('SET_ROLES', roles)
         commit('SET_PERMISSIONS', permissions)
+        // 多租户：恢复账号所属租户与超管动态切换状态（刷新页面后仍能从后端 Redis 读回）
+        if (data.homeTenantId) {
+          commit('SET_TENANT_ID', data.homeTenantId)
+        }
+        commit('SET_DYNAMIC_TENANT_ID', data.dynamicTenantId || '')
         setUser(user)
         resolve({ user, roles, permissions })
       }).catch(err => reject(err))
