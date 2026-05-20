@@ -279,7 +279,9 @@ export default {
     /** 把后端的 icon 字段（"video-camera" / "el-icon-cpu" / "#" 等）规整为 class */
     iconClass(icon) {
       if (!icon || icon === '#') return 'el-icon-menu'
-      return icon.startsWith('el-icon-') ? icon : ('el-icon-' + icon)
+      const alias = { system: 'setting' }
+      const name = alias[icon] || icon
+      return name.startsWith('el-icon-') ? name : ('el-icon-' + name)
     }
   },
   destroyed() {
