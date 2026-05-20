@@ -33,6 +33,15 @@ export function getCaptcha () {
   })
 }
 
+/** 登录页一次性拉取验证码 + 租户列表 */
+export function getLoginBootstrap () {
+  return request({
+    url: '/auth/bootstrap',
+    method: 'get',
+    timeout: 10000
+  })
+}
+
 export function refreshToken () {
   return request({
     url: '/auth/refresh',

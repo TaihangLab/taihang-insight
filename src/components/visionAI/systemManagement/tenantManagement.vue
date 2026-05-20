@@ -48,10 +48,9 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280">
+        <el-table-column label="操作" width="220">
           <template slot-scope="scope">
             <el-button type="text" @click="openEditDialog(scope.row)">编辑</el-button>
-            <el-button type="text" @click="onSyncPackage(scope.row)">同步套餐菜单</el-button>
             <el-button type="text" @click="onSwitchTenant(scope.row)" v-if="scope.row.tenantId !== '000000'">切换查看</el-button>
             <el-button type="text" style="color:#f56c6c" :disabled="scope.row.tenantId === '000000'" @click="onDelete(scope.row)">删除</el-button>
           </template>
@@ -129,8 +128,7 @@ import {
   updateTenant,
   deleteTenants,
   changeTenantStatus,
-  switchTenant,
-  syncTenantPackage
+  switchTenant
 } from '@/api/tenant'
 import { selectTenantPackages } from '@/api/tenantPackage'
 
@@ -244,17 +242,6 @@ export default {
         switchTenant(row.tenantId).then(res => {
           this.$store.commit('SET_DYNAMIC_TENANT_ID', row.tenantId)
           this.$message({ message: res.msg || '切换成功，刷新页面后生效', type: 'success' })
-        })
-      }).catch(() => {})
-    },
-    onSyncPackage (row) {
-      if (!row.packageId) {
-        this.$message({ message: '该租户尚未绑定套餐', type: 'warning' })
-        return
-      }
-      this.$confirm(`确认按套餐 #${row.packageId} 同步该租户管理员角色菜单？`, '同步菜单', { type: 'warning' }).then(() => {
-        syncTenantPackage(row.tenantId, row.packageId).then(res => {
-          this.$message({ message: res.msg || '同步成功', type: 'success' })
         })
       }).catch(() => {})
     }

@@ -72,11 +72,3 @@ export function clearDynamicTenant () {
     method: 'get'
   })
 }
-
-export function syncTenantPackage (tenantId, packageId) {
-  return request({
-    url: '/system/tenant/syncTenantPackage',
-    method: 'put',
-    params: { tenantId, packageId }
-  })
-}

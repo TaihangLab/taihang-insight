@@ -18,8 +18,14 @@
         </div>
 
         <el-form ref="registerForm" :model="form" :rules="rules" label-width="0" class="register-form">
-          <el-form-item v-if="tenantEnabled && tenantOptions.length > 0" prop="tenantId">
-            <el-select v-model="form.tenantId" placeholder="请选择租户" style="width:100%" filterable>
+          <el-form-item v-if="showTenantField" prop="tenantId">
+            <el-select
+              v-model="form.tenantId"
+              placeholder="请选择租户"
+              style="width:100%"
+              filterable
+              :loading="tenantLoading && !tenantOptions.length"
+            >
               <el-option v-for="opt in tenantOptions" :key="opt.tenantId" :label="opt.companyName + '（' + opt.tenantId + '）'" :value="opt.tenantId"></el-option>
             </el-select>
           </el-form-item>
@@ -44,7 +50,7 @@
           <el-form-item v-if="captchaEnabled" prop="code">
             <div class="captcha-row">
               <el-input v-model="form.code" placeholder="验证码" maxlength="6" prefix-icon="el-icon-key"/>
-              <img v-if="captchaImg" :src="captchaImg" class="captcha-image" alt="验证码" @click="loadCaptcha" title="点击刷新">
+              <img v-if="captchaImg" :src="captchaImg" class="captcha-image" alt="验证码" @click="refreshCaptcha" title="点击刷新">
             </div>
           </el-form-item>
           <el-form-item>
@@ -62,8 +68,13 @@
 </template>
 
 <script>
-import { getCaptcha, register as registerApi } from '@/api/auth'
-import { getLoginTenantList } from '@/api/tenant'
+import { getLoginBootstrap, register as registerApi } from '@/api/auth'
+import {
+  readLoginBootstrapCache,
+  prefetchLoginBootstrap,
+  refreshLoginBootstrap,
+  resolveDefaultTenantId
+} from '@/utils/loginBootstrap'
 
 export default {
   name: 'Register',
@@ -79,6 +90,7 @@ export default {
       captchaImg: '',
       tenantEnabled: false,
       tenantOptions: [],
+      tenantLoading: false,
       form: {
         tenantId: '',
         username: '',
@@ -115,32 +127,50 @@ export default {
       }
     }
   },
+  computed: {
+    showTenantField () {
+      return this.tenantLoading || (this.tenantEnabled && this.tenantOptions.length > 0)
+    }
+  },
   created () {
-    this.loadCaptcha()
-    this.loadTenants()
+    this.initRegisterPage()
   },
   methods: {
-    loadCaptcha () {
-      getCaptcha().then(res => {
-        const data = res.data || {}
-        this.captchaEnabled = !!data.captchaEnabled
-        this.form.uuid = data.uuid || ''
-        this.captchaImg = data.img ? `data:image/png;base64,${data.img}` : ''
+    initRegisterPage () {
+      const cached = readLoginBootstrapCache()
+      if (cached) {
+        this.applyBootstrap(cached)
+      } else {
+        this.tenantLoading = true
+      }
+      prefetchLoginBootstrap()
+        .then((data) => {
+          if (data) this.applyBootstrap(data)
+        })
+        .finally(() => {
+          this.tenantLoading = false
+        })
+    },
+    applyBootstrap (data) {
+      if (!data) return
+      this.captchaEnabled = !!data.captchaEnabled
+      this.form.uuid = data.uuid || ''
+      this.captchaImg = data.img ? `data:image/png;base64,${data.img}` : ''
+      this.tenantEnabled = !!data.tenantEnabled
+      const list = Array.isArray(data.voList) ? data.voList : []
+      this.tenantOptions = list
+      if (this.tenantEnabled) {
+        const nextId = resolveDefaultTenantId(list)
+        if (!this.form.tenantId || !list.some((t) => t.tenantId === this.form.tenantId)) {
+          this.form.tenantId = nextId
+        }
+      }
+    },
+    refreshCaptcha () {
+      refreshLoginBootstrap().then((data) => {
+        if (data) this.applyBootstrap(data)
       }).catch(() => {
         this.captchaEnabled = false
-      })
-    },
-    loadTenants () {
-      getLoginTenantList().then(res => {
-        const data = res.data || {}
-        this.tenantEnabled = !!data.tenantEnabled
-        this.tenantOptions = Array.isArray(data.voList) ? data.voList : []
-        if (this.tenantEnabled) {
-          this.form.tenantId = this.tenantOptions.length > 0 ? this.tenantOptions[0].tenantId : '000000'
-        }
-      }).catch(() => {
-        this.tenantEnabled = false
-        this.tenantOptions = []
       })
     },
     doRegister () {
@@ -160,7 +190,7 @@ export default {
           this.$message({ message: '注册成功，请登录', type: 'success' })
           this.$router.push('/login')
         }).catch(() => {
-          this.loadCaptcha()
+          this.refreshCaptcha()
         }).finally(() => {
           this.isLoading = false
         })

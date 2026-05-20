@@ -4,6 +4,9 @@
  * 白名单：/login、/register、/play/wasm/*、/play/rtc/*
  * 有 token 但无用户信息：拉取 GetInfo + GenerateRoutes
  * 无 token：跳转 /login?redirect=...
+ *
+ * 注意：不能用 roles.length 判断「是否已拉取用户信息」——无角色绑定的租户用户
+ * getInfo 会返回 roles=[]，若用 roles 作门槛会陷入 GetInfo/getRouters 死循环。
  */
 import router from './index'
 import store from '@/store'
@@ -18,6 +21,12 @@ function isWhite (path) {
   return PUBLIC_PREFIX.some(prefix => path.startsWith(prefix))
 }
 
+/** 是否已成功加载过当前登录用户（以 userInfo 为准，而非 roles） */
+function hasUserProfile (store) {
+  const info = store.state.user && store.state.user.userInfo
+  return !!(info && (info.userId || info.userName))
+}
+
 router.beforeEach(async (to, from, next) => {
   const token = getToken()
 
@@ -26,8 +35,7 @@ router.beforeEach(async (to, from, next) => {
       next({ path: '/' })
       return
     }
-    const hasRoles = store.state.user && store.state.user.roles && store.state.user.roles.length > 0
-    if (hasRoles) {
+    if (hasUserProfile(store)) {
       next()
       return
     }

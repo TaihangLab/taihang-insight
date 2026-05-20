@@ -40,16 +40,18 @@
 
         <!-- 登录表单 -->
         <div class="login-form">
-          <!-- 租户下拉（启用多租户时显示） -->
-          <div class="input-group" v-if="tenantEnabled && tenantOptions.length > 0">
-            <div class="input-wrapper" :class="{ focused: tenantFocused }">
+          <!-- 租户下拉（启用多租户时显示；预留高度避免接口返回后布局跳动） -->
+          <div class="input-group tenant-group" v-if="showTenantField">
+            <div class="input-wrapper" :class="{ focused: tenantFocused, 'tenant-loading': tenantLoading && !tenantOptions.length }">
               <i class="input-icon fa fa-building"></i>
               <select
                 v-model="tenantId"
                 class="tech-input tech-select"
+                :disabled="tenantLoading && !tenantOptions.length"
                 @focus="tenantFocused = true"
                 @blur="tenantFocused = false"
               >
+                <option v-if="tenantLoading && !tenantOptions.length" disabled value="">加载租户列表...</option>
                 <option v-for="opt in tenantOptions" :key="opt.tenantId" :value="opt.tenantId">
                   {{ opt.companyName }}（{{ opt.tenantId }}）
                 </option>
@@ -113,7 +115,7 @@
               :src="captchaImg"
               class="captcha-image"
               alt="验证码"
-              @click="loadCaptcha"
+              @click="refreshCaptcha"
               title="点击刷新"
             >
           </div>
@@ -155,8 +157,13 @@
 </template>
 
 <script>
-import { getCaptcha } from '@/api/auth'
-import { getLoginTenantList } from '@/api/tenant'
+import { getLoginBootstrap } from '@/api/auth'
+import {
+  readLoginBootstrapCache,
+  prefetchLoginBootstrap,
+  refreshLoginBootstrap,
+  resolveDefaultTenantId
+} from '@/utils/loginBootstrap'
 
 export default {
   name: 'Login',
@@ -174,7 +181,13 @@ export default {
       tenantEnabled: false,
       tenantOptions: [],
       tenantId: '',
-      tenantFocused: false
+      tenantFocused: false,
+      tenantLoading: false
+    }
+  },
+  computed: {
+    showTenantField () {
+      return this.tenantLoading || (this.tenantEnabled && this.tenantOptions.length > 0)
     }
   },
   created(){
@@ -186,8 +199,7 @@ export default {
       }
     }
     this.redirect = (this.$route && this.$route.query && this.$route.query.redirect) || '/';
-    this.loadCaptcha();
-    this.loadTenants();
+    this.initLoginPage();
   },
   methods:{
     getParticleStyle() {
@@ -199,39 +211,44 @@ export default {
       }
     },
 
-    loadCaptcha() {
-      getCaptcha().then(res => {
-        const data = res.data || {};
-        this.captchaEnabled = !!data.captchaEnabled;
-        this.captchaUuid = data.uuid || '';
-        this.captchaImg = data.img ? `data:image/png;base64,${data.img}` : '';
-      }).catch(() => {
-        this.captchaEnabled = false;
-      });
+    initLoginPage () {
+      const cached = readLoginBootstrapCache()
+      if (cached) {
+        this.applyBootstrap(cached)
+      } else {
+        this.tenantLoading = true
+      }
+      prefetchLoginBootstrap()
+        .then((data) => {
+          if (data) this.applyBootstrap(data)
+        })
+        .finally(() => {
+          this.tenantLoading = false
+        })
     },
 
-    loadTenants() {
-      getLoginTenantList().then(res => {
-        const data = res.data || {};
-        this.tenantEnabled = !!data.tenantEnabled;
-        const list = Array.isArray(data.voList) ? data.voList : [];
-        // 按 host 自动选中：若启用了 domain 则匹配 window.location.host
-        const host = (window.location && window.location.host) || '';
-        const matched = list.find(t => t.domain && host.indexOf(t.domain) >= 0);
-        this.tenantOptions = list;
-        if (this.tenantEnabled) {
-          if (matched) {
-            this.tenantId = matched.tenantId;
-          } else if (list.length > 0) {
-            this.tenantId = list[0].tenantId;
-          } else {
-            this.tenantId = '000000';
-          }
+    applyBootstrap (data) {
+      if (!data) return
+      this.captchaEnabled = !!data.captchaEnabled
+      this.captchaUuid = data.uuid || ''
+      this.captchaImg = data.img ? `data:image/png;base64,${data.img}` : ''
+      this.tenantEnabled = !!data.tenantEnabled
+      const list = Array.isArray(data.voList) ? data.voList : []
+      this.tenantOptions = list
+      if (this.tenantEnabled) {
+        const nextId = resolveDefaultTenantId(list)
+        if (!this.tenantId || !list.some((t) => t.tenantId === this.tenantId)) {
+          this.tenantId = nextId
         }
+      }
+    },
+
+    refreshCaptcha () {
+      refreshLoginBootstrap().then((data) => {
+        if (data) this.applyBootstrap(data)
       }).catch(() => {
-        this.tenantEnabled = false;
-        this.tenantOptions = [];
-      });
+        this.captchaEnabled = false
+      })
     },
 
     focusInput(event) {
@@ -268,7 +285,7 @@ export default {
         this.$router.push(this.redirect || '/');
       }).catch(err => {
         console.error('登录失败', err);
-        this.loadCaptcha();
+        this.refreshCaptcha();
       }).finally(() => {
         this.isLoging = false;
       });
@@ -542,6 +559,14 @@ export default {
 
 .input-group {
   margin-bottom: 25px;
+}
+
+.tenant-group {
+  min-height: 55px;
+}
+
+.input-wrapper.tenant-loading .tech-select {
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .input-wrapper {

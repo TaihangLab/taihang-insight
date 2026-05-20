@@ -2,7 +2,7 @@
   <div class="user-mgmt">
     <div class="page-header">
       <h2>用户管理</h2>
-      <p class="subtitle">管理本租户内的账号、角色与所属部门</p>
+      <p class="subtitle">管理本租户内的账号、角色与所属部门（账号在本租户内不可重复）</p>
     </div>
 
     <el-card class="filter-card">
@@ -59,7 +59,7 @@
     <el-dialog :title="dialogMode === 'create' ? '新增用户' : '编辑用户'" :visible.sync="dialogVisible" width="560px" :close-on-click-modal="false">
       <el-form ref="form" :model="form" :rules="rules" label-width="100px" size="small">
         <el-form-item label="账号" prop="userName">
-          <el-input v-model="form.userName" :disabled="dialogMode === 'edit'" placeholder="2-64 字符"/>
+          <el-input v-model="form.userName" :disabled="dialogMode === 'edit'" placeholder="2-64 字符，本租户内唯一"/>
         </el-form-item>
         <el-form-item label="昵称" prop="nickName">
           <el-input v-model="form.nickName" placeholder="留空则使用账号"/>
@@ -182,6 +182,7 @@ export default {
         if (!valid) return
         this.submitting = true
         const payload = Object.assign({}, this.form)
+        if (payload.userName) payload.userName = String(payload.userName).trim()
         if (this.dialogMode === 'edit') delete payload.password
         const api = this.dialogMode === 'create' ? addUser(payload) : updateUser(this.form.userId, payload)
         api.then(res => {

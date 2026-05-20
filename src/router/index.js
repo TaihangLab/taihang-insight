@@ -8,6 +8,13 @@ import register from '../components/Register.vue'
 import deviceTree from '../components/common/DeviceTree.vue'
 import wasmPlayer from '../components/common/jessibuca.vue'
 import rtcPlayer from '../components/dialog/rtcPlayer.vue'
+import { prefetchLoginBootstrap } from '../utils/loginBootstrap'
+
+/** 进入登录/注册页前预取初始化数据，缩短租户下拉出现时间 */
+function warmupAuthPage (to, from, next) {
+  prefetchLoginBootstrap()
+  next()
+}
 
 // visionAI 业务页面全部懒加载，按路由按需加载以减小首包体积
 const visualCenter = () => import('../components/visionAI/ivisualCenter/index.vue')
@@ -218,11 +225,13 @@ export default new VueRouter({
       path: '/login',
       name: '登录',
       component: login,
+      beforeEnter: warmupAuthPage
     },
     {
       path: '/register',
       name: '注册',
       component: register,
+      beforeEnter: warmupAuthPage
     },
     {
       path: '/test',
