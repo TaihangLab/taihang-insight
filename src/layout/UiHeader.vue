@@ -26,85 +26,25 @@
         </div>
       </div>
 
-      <!-- 监控预警菜单 -->
-      <el-submenu index="/monitoring" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-video-camera"></i>
-          <span>监控预警</span>
-        </template>
-        <el-menu-item index="/monitoring/realtime">实时监控</el-menu-item>
-        <el-menu-item index="/monitoring/statistics">统计分析</el-menu-item>
-        <el-menu-item index="/monitoring/warningArchive">预警档案</el-menu-item>
-        <el-menu-item index="/monitoring/warningManage">预警管理</el-menu-item>
-        <el-menu-item index="/monitoring/intelligentReview">智能复判</el-menu-item>
-      </el-submenu>
-
-      <!-- 设备管理菜单 -->
-      <el-submenu index="/deviceManage" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-cpu"></i>
-          <span>设备配置</span>
-        </template>
-        <el-menu-item index="/deviceManage/camera">摄像头</el-menu-item>
-        <el-menu-item index="/deviceManage/localVideo">本地视频</el-menu-item>
-      </el-submenu>
-
-      <!-- 模型管理菜单 -->
-      <el-submenu index="/modelManage" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-data-analysis"></i>
-          <span>模型管理</span>
-        </template>
-        <el-menu-item index="/modelManage/modelList">模型列表</el-menu-item>
-      </el-submenu>
-
-      <!-- 技能管理菜单 -->
-      <el-submenu index="/skillManage" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-magic-stick"></i>
-          <span>技能管理</span>
-        </template>
-        <el-menu-item index="/skillManage/deviceSkills">视觉模型技能</el-menu-item>
-        <el-menu-item index="/skillManage/multimodalLlmSkills">多模态大模型技能</el-menu-item>
-        <el-menu-item index="/skillManage/multimodalReview">多模态大模型复判</el-menu-item>
-      </el-submenu>
-
-      <!-- ML Pipeline 模块（模型工厂） -->
-      <el-menu-item index="/mlPipeline">
-        <i class="el-icon-s-platform"></i>
-        <span>模型工厂</span>
-      </el-menu-item>
-
-      <!-- 可视中心菜单 -->
-      <el-submenu index="/visualAI" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-view"></i>
-          <span>可视中心</span>
-        </template>
-        <el-menu-item index="/visualCenter">可视中心首页</el-menu-item>
-        <el-menu-item index="/algorithmInference">AI智算中心</el-menu-item>
-      </el-submenu>
-
-
-
-      <!-- 来自后端的动态菜单（RBAC） -->
+      <!-- 全部业务菜单与系统管理菜单都来自后端 RBAC（/system/menu/getRouters）。
+           顶栏只负责渲染，权限粒度仅到菜单级——没有按钮/接口级控制 -->
       <template v-for="menu in dynamicMenus">
         <template v-if="!menu.hidden">
           <el-submenu
             v-if="menu.children && menu.children.length > 0"
-            :key="menu.path || menu.name"
-            :index="(menu.path && menu.path.indexOf('/') === 0) ? menu.path : ('/' + (menu.path || ''))"
+            :key="'sub-' + (menu.path || menu.name)"
+            :index="buildMenuIndex(menu)"
             popper-class="modern-submenu"
           >
             <template slot="title">
-              <i class="el-icon-menu"></i>
+              <i :class="iconClass(menu.icon)"></i>
               <span>{{ menu.title }}</span>
             </template>
             <template v-for="child in menu.children">
               <el-menu-item
                 v-if="!child.hidden"
-                :key="(menu.path || '') + '/' + (child.path || '')"
-                :index="(menu.path && menu.path.indexOf('/') === 0 ? menu.path : ('/' + (menu.path || ''))) + '/' + (child.path || '')"
+                :key="'item-' + buildChildIndex(menu, child)"
+                :index="buildChildIndex(menu, child)"
               >
                 {{ child.title }}
               </el-menu-item>
@@ -112,10 +52,10 @@
           </el-submenu>
           <el-menu-item
             v-else
-            :key="menu.path || menu.name"
-            :index="(menu.path && menu.path.indexOf('/') === 0) ? menu.path : ('/' + (menu.path || ''))"
+            :key="'item-' + (menu.path || menu.name)"
+            :index="buildMenuIndex(menu)"
           >
-            <i class="el-icon-document"></i>
+            <i :class="iconClass(menu.icon)"></i>
             <span>{{ menu.title }}</span>
           </el-menu-item>
         </template>
@@ -317,6 +257,29 @@ export default {
     openDoc() {
       console.log(process.env.BASE_API)
       window.open(!!process.env.BASE_API ? process.env.BASE_API + "/doc.html" : "/doc.html")
+    },
+    /** 顶层菜单 / 单菜单的 index：保证以 "/" 开头 */
+    buildMenuIndex(menu) {
+      const p = (menu && menu.path) || ''
+      if (!p) return '/' + (menu && menu.name ? menu.name : '')
+      return p.charAt(0) === '/' ? p : ('/' + p)
+    },
+    /**
+     * 子菜单 index：
+     *  - 若子菜单 path 以 "/" 开头视为绝对路径（如 /visualCenter），直接使用
+     *  - 否则与父路径拼接（如 /monitoring + realtime → /monitoring/realtime）
+     */
+    buildChildIndex(parent, child) {
+      const cp = (child && child.path) || ''
+      if (cp.charAt(0) === '/') return cp
+      const base = this.buildMenuIndex(parent)
+      if (!cp) return base
+      return (base.endsWith('/') ? base.slice(0, -1) : base) + '/' + cp
+    },
+    /** 把后端的 icon 字段（"video-camera" / "el-icon-cpu" / "#" 等）规整为 class */
+    iconClass(icon) {
+      if (!icon || icon === '#') return 'el-icon-menu'
+      return icon.startsWith('el-icon-') ? icon : ('el-icon-' + icon)
     }
   },
   destroyed() {
