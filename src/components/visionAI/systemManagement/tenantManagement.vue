@@ -131,6 +131,7 @@ import {
   switchTenant
 } from '@/api/tenant'
 import { selectTenantPackages } from '@/api/tenantPackage'
+import { clearLoginBootstrapCache } from '@/utils/loginBootstrap'
 
 const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[~!@#$%^&*()_+`\-={}:";'<>?,.\/]).{8,20}$/
 
@@ -216,6 +217,7 @@ export default {
         const payload = Object.assign({}, this.form)
         const api = this.dialogMode === 'create' ? addTenant(payload) : updateTenant(payload)
         api.then(res => {
+          clearLoginBootstrapCache()
           this.$message({ message: res.msg || '操作成功', type: 'success' })
           this.dialogVisible = false
           this.loadList()
@@ -225,6 +227,7 @@ export default {
     onToggleStatus (row, on) {
       const newStatus = on ? '0' : '1'
       changeTenantStatus(row.id, newStatus).then(() => {
+        clearLoginBootstrapCache()
         row.status = newStatus
         this.$message({ message: '已更新', type: 'success' })
       })
@@ -232,6 +235,7 @@ export default {
     onDelete (row) {
       this.$confirm(`确认删除租户「${row.companyName}」？该操作不可恢复`, '确认删除', { type: 'warning' }).then(() => {
         deleteTenants(row.id).then(res => {
+          clearLoginBootstrapCache()
           this.$message({ message: res.msg || '删除成功', type: 'success' })
           this.loadList()
         })

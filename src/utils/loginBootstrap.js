@@ -63,6 +63,16 @@ export function writeLoginBootstrapCache (data) {
   }
 }
 
+/** 租户增删改后调用，避免登录页仍展示旧的下拉列表 */
+export function clearLoginBootstrapCache () {
+  try {
+    sessionStorage.removeItem(CACHE_KEY)
+  } catch (e) {
+    /* ignore */
+  }
+  inflightPromise = null
+}
+
 async function fetchLoginBootstrapData () {
   try {
     const res = await getLoginBootstrap()
@@ -79,19 +89,19 @@ async function fetchLoginBootstrapData () {
  * 路由预取：进入 /login、/register 前发起请求，组件 created 时往往已命中缓存或 in-flight。
  */
 export function prefetchLoginBootstrap () {
-  const cached = readLoginBootstrapCache()
-  if (cached) {
-    return Promise.resolve(cached)
-  }
   if (inflightPromise) {
     return inflightPromise
   }
+  const cached = readLoginBootstrapCache()
   inflightPromise = fetchLoginBootstrapData()
     .then((data) => {
       if (data) writeLoginBootstrapCache(data)
       return data
     })
-    .catch(() => null)
+    .catch((err) => {
+      if (cached) return cached
+      return null
+    })
     .finally(() => {
       inflightPromise = null
     })

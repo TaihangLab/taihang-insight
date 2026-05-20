@@ -155,7 +155,16 @@ export default {
           { required: true, message: '请输入密码', trigger: 'blur' },
           { pattern: PASSWORD_PATTERN, message: '密码 8-20 位，必须含字母+数字+特殊字符', trigger: 'blur' }
         ],
-        email: [{ type: 'email', message: '邮箱格式不正确', trigger: 'blur' }]
+        email: [{
+          validator: (rule, value, cb) => {
+            const v = (value == null ? '' : String(value)).trim()
+            if (!v) return cb()
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            if (!re.test(v)) cb(new Error('邮箱格式不正确'))
+            else cb()
+          },
+          trigger: 'blur'
+        }]
       },
       resetPwdRules: {
         password: [
@@ -230,6 +239,7 @@ export default {
         this.submitting = true
         const payload = Object.assign({}, this.form)
         if (payload.userName) payload.userName = String(payload.userName).trim()
+        if (payload.email != null && !String(payload.email).trim()) payload.email = null
         if (this.dialogMode === 'edit') delete payload.password
         const api = this.dialogMode === 'create' ? addUser(payload) : updateUser(this.form.userId, payload)
         api.then(res => {
