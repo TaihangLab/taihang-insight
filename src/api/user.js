@@ -23,6 +23,10 @@ export function deleteUser (userId) {
   return request({ url: `/system/user/${userId}`, method: 'delete' })
 }
 
-export function getUserRoles (userId) {
-  return request({ url: `/system/user/${userId}/roles`, method: 'get' })
+export function resetUserPassword (userId, password) {
+  return request({
+    url: `/system/user/${userId}/resetPwd`,
+    method: 'put',
+    data: { password }
+  })
 }

@@ -42,10 +42,16 @@
           </template>
         </el-table-column>
         <el-table-column label="创建时间" prop="createTime" width="160"/>
-        <el-table-column label="操作" width="180">
+        <el-table-column label="操作" width="260">
           <template slot-scope="scope">
             <el-button type="text" @click="openEditDialog(scope.row)">编辑</el-button>
-            <el-button type="text" style="color:#f56c6c" :disabled="scope.row.userId === 1" @click="onDelete(scope.row)">删除</el-button>
+            <el-button
+              v-hasPerm="'system:user:resetPwd'"
+              type="text"
+              :disabled="isProtectedSuperUser(scope.row) && !$hasRole('superadmin')"
+              @click="openResetPwdDialog(scope.row)"
+            >重置密码</el-button>
+            <el-button type="text" style="color:#f56c6c" :disabled="isProtectedSuperUser(scope.row)" @click="onDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -86,10 +92,11 @@
           </el-select>
         </el-form-item>
         <el-form-item v-if="dialogMode === 'edit'" label="状态">
-          <el-radio-group v-model="form.status">
+          <el-radio-group v-model="form.status" :disabled="isProtectedSuperUser(form)">
             <el-radio label="0">正常</el-radio>
             <el-radio label="1">停用</el-radio>
           </el-radio-group>
+          <span v-if="isProtectedSuperUser(form)" class="protected-tip">超级管理员账号不可停用</span>
         </el-form-item>
       </el-form>
       <div slot="footer">
@@ -97,11 +104,27 @@
         <el-button type="primary" :loading="submitting" @click="onSubmit">保 存</el-button>
       </div>
     </el-dialog>
+
+    <el-dialog title="重置密码" :visible.sync="resetPwdVisible" width="480px" :close-on-click-modal="false" @closed="onResetPwdClosed">
+      <p class="reset-tip">为用户 <strong>{{ resetPwdTarget.userName }}</strong> 设置新密码（无需旧密码）</p>
+      <el-form ref="resetPwdForm" :model="resetPwdForm" :rules="resetPwdRules" label-width="100px" size="small">
+        <el-form-item label="新密码" prop="password">
+          <el-input v-model="resetPwdForm.password" type="password" show-password placeholder="8-20 位，字母+数字+特殊字符"/>
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input v-model="resetPwdForm.confirmPassword" type="password" show-password placeholder="再次输入新密码"/>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="resetPwdVisible = false">取消</el-button>
+        <el-button type="primary" :loading="resetPwdSubmitting" @click="onResetPwdSubmit">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listUsers, addUser, updateUser, deleteUser, getUserRoles } from '@/api/user'
+import { listUsers, addUser, updateUser, deleteUser, getUserRoles, resetUserPassword } from '@/api/user'
 import { listRoles } from '@/api/role'
 
 const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[~!@#$%^&*()_+`\-={}:";'<>?,./]).{8,20}$/
@@ -119,6 +142,10 @@ export default {
       dialogMode: 'create',
       submitting: false,
       form: this.emptyForm(),
+      resetPwdVisible: false,
+      resetPwdSubmitting: false,
+      resetPwdTarget: { userId: null, userName: '' },
+      resetPwdForm: { password: '', confirmPassword: '' },
       rules: {
         userName: [
           { required: true, message: '请输入账号', trigger: 'blur' },
@@ -129,6 +156,22 @@ export default {
           { pattern: PASSWORD_PATTERN, message: '密码 8-20 位，必须含字母+数字+特殊字符', trigger: 'blur' }
         ],
         email: [{ type: 'email', message: '邮箱格式不正确', trigger: 'blur' }]
+      },
+      resetPwdRules: {
+        password: [
+          { required: true, message: '请输入新密码', trigger: 'blur' },
+          { pattern: PASSWORD_PATTERN, message: '密码 8-20 位，必须含字母+数字+特殊字符', trigger: 'blur' }
+        ],
+        confirmPassword: [
+          { required: true, message: '请再次输入密码', trigger: 'blur' },
+          {
+            validator: (rule, value, cb) => {
+              if (value !== this.resetPwdForm.password) cb(new Error('两次输入的密码不一致'))
+              else cb()
+            },
+            trigger: 'blur'
+          }
+        ]
       }
     }
   },
@@ -137,6 +180,10 @@ export default {
     this.loadList()
   },
   methods: {
+    isProtectedSuperUser (row) {
+      if (!row) return false
+      return row.userId === 1 || row.isSuperuser === true
+    },
     emptyForm () {
       return {
         userId: null, userName: '', nickName: '', password: '',
@@ -199,6 +246,28 @@ export default {
           this.loadList()
         })
       }).catch(() => {})
+    },
+    openResetPwdDialog (row) {
+      this.resetPwdTarget = { userId: row.userId, userName: row.userName }
+      this.resetPwdForm = { password: '', confirmPassword: '' }
+      this.resetPwdVisible = true
+      this.$nextTick(() => this.$refs.resetPwdForm && this.$refs.resetPwdForm.clearValidate())
+    },
+    onResetPwdClosed () {
+      this.resetPwdForm = { password: '', confirmPassword: '' }
+      this.resetPwdTarget = { userId: null, userName: '' }
+    },
+    onResetPwdSubmit () {
+      this.$refs.resetPwdForm.validate(valid => {
+        if (!valid) return
+        this.resetPwdSubmitting = true
+        resetUserPassword(this.resetPwdTarget.userId, this.resetPwdForm.password)
+          .then(res => {
+            this.$message({ message: res.msg || '密码重置成功', type: 'success' })
+            this.resetPwdVisible = false
+          })
+          .finally(() => { this.resetPwdSubmitting = false })
+      })
     }
   }
 }
@@ -211,4 +280,6 @@ export default {
 .subtitle { margin: 0; color: #909399; font-size: 12px; }
 .filter-card { margin-bottom: 12px; }
 .pagination-row { margin-top: 12px; text-align: right; }
+.reset-tip { margin: 0 0 16px; color: #606266; font-size: 13px; }
+.protected-tip { margin-left: 8px; color: #909399; font-size: 12px; }
 </style>
