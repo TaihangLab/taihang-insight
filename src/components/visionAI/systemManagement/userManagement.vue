@@ -10,6 +10,9 @@
         <el-form-item label="账号">
           <el-input v-model="query.userName" placeholder="账号" clearable @keyup.enter.native="loadList(1)"/>
         </el-form-item>
+        <el-form-item label="昵称">
+          <el-input v-model="query.nickName" placeholder="昵称" clearable @keyup.enter.native="loadList(1)"/>
+        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="query.status" placeholder="全部" clearable style="width:120px">
             <el-option label="正常" value="0"/>
@@ -191,7 +194,7 @@ export default {
   name: 'UserManagement',
   data () {
     return {
-      query: { pageNum: 1, pageSize: 10, userName: '', status: '' },
+      query: { pageNum: 1, pageSize: 10, userName: '', nickName: '', status: '' },
       list: [],
       total: 0,
       loading: false,
@@ -346,7 +349,7 @@ export default {
       }).finally(() => { this.loading = false })
     },
     resetQuery () {
-      this.query = { pageNum: 1, pageSize: 10, userName: '', status: '' }
+      this.query = { pageNum: 1, pageSize: 10, userName: '', nickName: '', status: '' }
       this.loadList()
     },
     openCreateDialog () {

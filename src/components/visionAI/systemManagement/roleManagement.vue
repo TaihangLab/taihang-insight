@@ -40,8 +40,9 @@
           </template>
         </el-table-column>
         <el-table-column label="创建时间" prop="createTime" width="160"/>
-        <el-table-column label="操作" width="180">
+        <el-table-column label="操作" width="260">
           <template slot-scope="scope">
+            <el-button type="text" @click="openAssignUsersDialog(scope.row)">分配用户</el-button>
             <el-button type="text" @click="openEditDialog(scope.row)">编辑</el-button>
             <el-button type="text" style="color:#f56c6c"
               :disabled="isProtectedAdminRole(scope.row)"
@@ -96,11 +97,134 @@
         <el-button type="primary" :loading="submitting" @click="onSubmit">保 存</el-button>
       </div>
     </el-dialog>
+
+    <el-dialog
+      title="分配用户"
+      :visible.sync="assignDialogVisible"
+      width="960px"
+      :close-on-click-modal="false"
+      @closed="onAssignDialogClosed"
+    >
+      <p v-if="assignRole" class="assign-tip">
+        为角色 <strong>{{ assignRole.roleName }}</strong>（{{ assignRole.roleKey }}）分配用户；支持按账号搜索与分页。
+        <span v-if="isProtectedAdminRole(assignRole)" class="protected-tip">内置管理员不可从管理员角色移除。</span>
+      </p>
+      <el-row :gutter="16" class="assign-panels">
+        <el-col :span="12">
+          <div class="panel-head">
+            <span class="panel-title">未分配</span>
+            <el-input
+              v-model="unallocQuery.userName"
+              size="small"
+              clearable
+              placeholder="搜索账号"
+              class="panel-search"
+              @keyup.enter.native="loadUnallocated(1)"
+            />
+            <el-button type="primary" size="small" @click="loadUnallocated(1)">搜索</el-button>
+          </div>
+          <el-table
+            v-loading="unallocLoading"
+            :data="unallocList"
+            size="small"
+            border
+            max-height="320"
+            @selection-change="onUnallocSelectionChange"
+          >
+            <el-table-column type="selection" width="42"/>
+            <el-table-column label="账号" prop="userName" min-width="100" show-overflow-tooltip/>
+            <el-table-column label="昵称" prop="nickName" min-width="90" show-overflow-tooltip/>
+            <el-table-column label="部门" prop="deptName" min-width="120" show-overflow-tooltip>
+              <template slot-scope="scope">{{ scope.row.deptName || '—' }}</template>
+            </el-table-column>
+          </el-table>
+          <el-pagination
+            small
+            layout="total, prev, pager, next"
+            class="panel-pagination"
+            :total="unallocTotal"
+            :current-page.sync="unallocQuery.pageNum"
+            :page-size.sync="unallocQuery.pageSize"
+            :page-sizes="[10, 20, 50]"
+            @current-change="loadUnallocated"
+          />
+          <el-button
+            type="primary"
+            size="small"
+            class="panel-action"
+            :disabled="!unallocSelected.length"
+            :loading="assignSubmitting"
+            @click="onAddUsers"
+          >添加选中 →</el-button>
+        </el-col>
+        <el-col :span="12">
+          <div class="panel-head">
+            <span class="panel-title">已分配</span>
+            <el-input
+              v-model="allocQuery.userName"
+              size="small"
+              clearable
+              placeholder="搜索账号"
+              class="panel-search"
+              @keyup.enter.native="loadAllocated(1)"
+            />
+            <el-button type="primary" size="small" @click="loadAllocated(1)">搜索</el-button>
+          </div>
+          <el-table
+            v-loading="allocLoading"
+            :data="allocList"
+            size="small"
+            border
+            max-height="320"
+            @selection-change="onAllocSelectionChange"
+          >
+            <el-table-column type="selection" width="42" :selectable="allocRowSelectable"/>
+            <el-table-column label="账号" prop="userName" min-width="100" show-overflow-tooltip/>
+            <el-table-column label="昵称" prop="nickName" min-width="90" show-overflow-tooltip/>
+            <el-table-column label="部门" prop="deptName" min-width="120" show-overflow-tooltip>
+              <template slot-scope="scope">{{ scope.row.deptName || '—' }}</template>
+            </el-table-column>
+          </el-table>
+          <el-pagination
+            small
+            layout="total, prev, pager, next"
+            class="panel-pagination"
+            :total="allocTotal"
+            :current-page.sync="allocQuery.pageNum"
+            :page-size.sync="allocQuery.pageSize"
+            :page-sizes="[10, 20, 50]"
+            @current-change="loadAllocated"
+          />
+          <el-button
+            type="warning"
+            size="small"
+            plain
+            class="panel-action"
+            :disabled="!allocSelected.length"
+            :loading="assignSubmitting"
+            @click="onRemoveUsers"
+          >← 移除选中</el-button>
+        </el-col>
+      </el-row>
+      <div slot="footer">
+        <el-button @click="assignDialogVisible = false">关 闭</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listRoles, addRole, updateRole, deleteRole, getRole } from '@/api/role'
+import {
+  listRoles,
+  addRole,
+  updateRole,
+  deleteRole,
+  getRole,
+  listRoleAllocatedUsers,
+  listRoleUnallocatedUsers,
+  addRoleUsers,
+  removeRoleUsers
+} from '@/api/role'
 import { menuTree } from '@/api/menu'
 
 export default {
@@ -111,6 +235,19 @@ export default {
       list: [], total: 0, loading: false,
       menuTreeData: [],
       dialogVisible: false, dialogMode: 'create', submitting: false,
+      assignDialogVisible: false,
+      assignSubmitting: false,
+      assignRole: null,
+      unallocQuery: { pageNum: 1, pageSize: 10, userName: '' },
+      allocQuery: { pageNum: 1, pageSize: 10, userName: '' },
+      unallocList: [],
+      unallocTotal: 0,
+      unallocLoading: false,
+      unallocSelected: [],
+      allocList: [],
+      allocTotal: 0,
+      allocLoading: false,
+      allocSelected: [],
       form: this.emptyForm(),
       rules: {
         roleName: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
@@ -195,6 +332,88 @@ export default {
           this.loadList()
         })
       }).catch(() => {})
+    },
+    isBuiltinAdminUser (row) {
+      if (!row) return false
+      const name = (row.userName || '').trim()
+      return name === 'admin' || name === 'admin2'
+    },
+    allocRowSelectable (row) {
+      if (!this.assignRole || !this.isProtectedAdminRole(this.assignRole)) return true
+      return !this.isBuiltinAdminUser(row)
+    },
+    openAssignUsersDialog (row) {
+      this.assignRole = row
+      this.unallocQuery = { pageNum: 1, pageSize: 10, userName: '' }
+      this.allocQuery = { pageNum: 1, pageSize: 10, userName: '' }
+      this.unallocSelected = []
+      this.allocSelected = []
+      this.assignDialogVisible = true
+      this.loadUnallocated(1)
+      this.loadAllocated(1)
+    },
+    loadUnallocated (page) {
+      if (!this.assignRole) return
+      if (page) this.unallocQuery.pageNum = page
+      this.unallocLoading = true
+      listRoleUnallocatedUsers(this.assignRole.roleId, this.unallocQuery)
+        .then(res => {
+          const data = res.data || {}
+          this.unallocList = data.rows || []
+          this.unallocTotal = data.total || 0
+        })
+        .finally(() => { this.unallocLoading = false })
+    },
+    loadAllocated (page) {
+      if (!this.assignRole) return
+      if (page) this.allocQuery.pageNum = page
+      this.allocLoading = true
+      listRoleAllocatedUsers(this.assignRole.roleId, this.allocQuery)
+        .then(res => {
+          const data = res.data || {}
+          this.allocList = data.rows || []
+          this.allocTotal = data.total || 0
+        })
+        .finally(() => { this.allocLoading = false })
+    },
+    onUnallocSelectionChange (rows) {
+      this.unallocSelected = rows || []
+    },
+    onAllocSelectionChange (rows) {
+      this.allocSelected = rows || []
+    },
+    onAddUsers () {
+      if (!this.assignRole || !this.unallocSelected.length) return
+      const userIds = this.unallocSelected.map(u => u.userId)
+      this.assignSubmitting = true
+      addRoleUsers(this.assignRole.roleId, userIds)
+        .then(res => {
+          this.$message({ message: res.msg || '添加成功', type: 'success' })
+          this.unallocSelected = []
+          this.loadUnallocated(this.unallocQuery.pageNum)
+          this.loadAllocated(1)
+        })
+        .finally(() => { this.assignSubmitting = false })
+    },
+    onRemoveUsers () {
+      if (!this.assignRole || !this.allocSelected.length) return
+      const userIds = this.allocSelected.map(u => u.userId)
+      this.assignSubmitting = true
+      removeRoleUsers(this.assignRole.roleId, userIds)
+        .then(res => {
+          this.$message({ message: res.msg || '移除成功', type: 'success' })
+          this.allocSelected = []
+          this.loadAllocated(this.allocQuery.pageNum)
+          this.loadUnallocated(1)
+        })
+        .finally(() => { this.assignSubmitting = false })
+    },
+    onAssignDialogClosed () {
+      this.assignRole = null
+      this.unallocList = []
+      this.allocList = []
+      this.unallocSelected = []
+      this.allocSelected = []
     }
   }
 }
@@ -209,4 +428,11 @@ export default {
 .pagination-row { margin-top: 12px; text-align: right; }
 .menu-tree { max-height: 280px; overflow: auto; border: 1px solid #ebeef5; border-radius: 4px; padding: 4px; }
 .protected-tip { margin-left: 8px; color: #909399; font-size: 12px; }
+.assign-tip { margin: 0 0 12px; color: #606266; font-size: 13px; }
+.assign-panels { margin-top: 4px; }
+.panel-head { display: flex; align-items: center; margin-bottom: 8px; gap: 8px; }
+.panel-title { font-weight: 600; color: #303133; white-space: nowrap; }
+.panel-search { flex: 1; }
+.panel-pagination { margin-top: 8px; text-align: right; }
+.panel-action { margin-top: 8px; width: 100%; }
 </style>
