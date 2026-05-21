@@ -165,6 +165,7 @@
           <el-select v-model="form.roleIds" multiple placeholder="选择角色" style="width:100%">
             <el-option v-for="r in roleOptions" :key="r.roleId" :label="r.roleName" :value="r.roleId"/>
           </el-select>
+          <div v-if="dialogMode === 'create'" class="form-tip">未选择角色时将自动分配「默认角色」（可见除系统管理外的全部菜单）</div>
         </el-form-item>
         <el-form-item v-if="dialogMode === 'edit'" label="状态">
           <el-radio-group v-model="form.status" :disabled="isBuiltinAdmin(form)">
@@ -485,6 +486,7 @@ export default {
 .dept-tree-input >>> .el-input__inner { cursor: pointer; }
 .dept-clear-icon { cursor: pointer; }
 .dept-clear-icon:hover { color: #909399; }
+.form-tip { margin-top: 4px; font-size: 12px; color: #909399; line-height: 1.4; }
 </style>
 
 <style>
