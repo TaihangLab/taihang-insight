@@ -36,9 +36,23 @@
         <el-table-column label="昵称" prop="nickName" min-width="120"/>
         <el-table-column label="邮箱" prop="email" min-width="180" show-overflow-tooltip/>
         <el-table-column label="手机号" prop="phonenumber" width="130"/>
-        <el-table-column label="部门" prop="deptName" min-width="200" show-overflow-tooltip>
+        <el-table-column label="部门" prop="deptName" min-width="180" show-overflow-tooltip>
           <template slot-scope="scope">
             {{ scope.row.deptName || '—' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="角色" min-width="160" show-overflow-tooltip>
+          <template slot-scope="scope">
+            <template v-if="roleNamesOf(scope.row).length">
+              <el-tag
+                v-for="(name, idx) in roleNamesOf(scope.row)"
+                :key="scope.row.userId + '-' + idx + '-' + name"
+                size="mini"
+                type="info"
+                class="role-tag"
+              >{{ name }}</el-tag>
+            </template>
+            <span v-else class="text-muted">—</span>
           </template>
         </el-table-column>
         <el-table-column label="状态" width="100">
@@ -268,6 +282,13 @@ export default {
       const name = (row.userName || '').trim()
       return name === 'admin' || name === 'admin2'
     },
+    roleNamesOf (row) {
+      if (!row) return []
+      const names = row.roleNames || row.role_names
+      if (Array.isArray(names)) return names.filter(Boolean)
+      if (typeof names === 'string' && names.trim()) return [names.trim()]
+      return []
+    },
     emptyForm () {
       return {
         userId: null, userName: '', nickName: '', password: '',
@@ -441,6 +462,8 @@ export default {
 .pagination-row { margin-top: 12px; text-align: right; }
 .reset-tip { margin: 0 0 16px; color: #606266; font-size: 13px; }
 .protected-tip { margin-left: 8px; color: #909399; font-size: 12px; }
+.role-tag { margin: 0 4px 4px 0; }
+.text-muted { color: #909399; }
 .dept-tree-panel { max-height: 320px; display: flex; flex-direction: column; gap: 8px; }
 .dept-select-tree {
   max-height: 260px;
