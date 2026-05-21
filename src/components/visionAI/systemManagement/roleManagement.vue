@@ -2,7 +2,7 @@
   <div class="role-mgmt">
     <div class="page-header">
       <h2>角色管理</h2>
-      <p class="subtitle">管理本租户内的角色，并通过菜单树分配权限</p>
+      <p class="subtitle">管理系统角色，并通过菜单树分配权限</p>
     </div>
 
     <el-card class="filter-card">
@@ -44,7 +44,7 @@
           <template slot-scope="scope">
             <el-button type="text" @click="openEditDialog(scope.row)">编辑</el-button>
             <el-button type="text" style="color:#f56c6c"
-              :disabled="isProtectedSuperRole(scope.row)"
+              :disabled="isProtectedAdminRole(scope.row)"
               @click="onDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -62,7 +62,7 @@
           <el-input v-model="form.roleName"/>
         </el-form-item>
         <el-form-item label="角色权限字符" prop="roleKey">
-          <el-input v-model="form.roleKey" :disabled="dialogMode === 'edit' && isProtectedSuperRole(form)" placeholder="如 common / manager"/>
+          <el-input v-model="form.roleKey" :disabled="dialogMode === 'edit' && isProtectedAdminRole(form)" placeholder="如 common / manager"/>
         </el-form-item>
         <el-form-item label="排序">
           <el-input-number v-model="form.roleSort" :min="0"/>
@@ -81,11 +81,11 @@
             :default-checked-keys="form.menuIds" :props="{ label: 'menuName' }" class="menu-tree"/>
         </el-form-item>
         <el-form-item label="状态">
-          <el-radio-group v-model="form.status" :disabled="isProtectedSuperRole(form)">
+          <el-radio-group v-model="form.status" :disabled="isProtectedAdminRole(form)">
             <el-radio label="0">正常</el-radio>
             <el-radio label="1">停用</el-radio>
           </el-radio-group>
-          <span v-if="isProtectedSuperRole(form)" class="protected-tip">超级管理员角色不可停用</span>
+          <span v-if="isProtectedAdminRole(form)" class="protected-tip">管理员角色不可停用</span>
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remark" type="textarea" rows="2"/>
@@ -123,8 +123,8 @@ export default {
     this.loadList()
   },
   methods: {
-    isProtectedSuperRole (row) {
-      return row && row.roleKey === 'superadmin'
+    isProtectedAdminRole (row) {
+      return row && row.roleKey === 'admin'
     },
     emptyForm () {
       return {

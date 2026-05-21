@@ -5,7 +5,7 @@
  * 有 token 但无用户信息：拉取 GetInfo + GenerateRoutes
  * 无 token：跳转 /login?redirect=...
  *
- * 注意：不能用 roles.length 判断「是否已拉取用户信息」——无角色绑定的租户用户
+ * 注意：不能用 roles.length 判断「是否已拉取用户信息」——无角色绑定的用户
  * getInfo 会返回 roles=[]，若用 roles 作门槛会陷入 GetInfo/getRouters 死循环。
  */
 import router from './index'

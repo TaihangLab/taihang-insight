@@ -141,11 +141,10 @@ export default {
   },
   methods: {
     emptyForm () {
-      // 权限粒度仅到菜单级：不再使用 perms / F 按钮，statically pass through 字段保持后端兼容
       return {
         menuId: null, parentId: 0, menuName: '', menuType: 'C', orderNum: 0,
         path: '', component: '', icon: '#', status: '0',
-        isFrame: 1, isCache: 0, visible: '0', perms: null
+        isFrame: 1, isCache: 0, visible: '0'
       }
     },
     typeLabel (t) { return { M: '目录', C: '菜单' }[t] || t },
@@ -166,20 +165,50 @@ export default {
       })
     },
     filterMenuTree (list) {
-      return (list || []).filter(m => m.menuType !== 'F').map(m => ({
+      return (list || []).map(m => ({
         ...m,
         children: this.filterMenuTree(m.children)
       }))
     },
+    /** 筛选命中节点时补齐祖先链，避免树表出现“孤儿”根节点 */
+    withAncestorChain (matched, all) {
+      const byId = {}
+      ;(all || []).forEach(m => { byId[m.menuId] = m })
+      const out = new Map()
+      const add = (m) => {
+        if (!m || out.has(m.menuId)) return
+        out.set(m.menuId, m)
+        if (m.parentId && m.parentId !== 0 && byId[m.parentId]) {
+          add(byId[m.parentId])
+        }
+      }
+      ;(matched || []).forEach(add)
+      return Array.from(out.values())
+    },
+    applyClientFilter (allFlat) {
+      let rows = allFlat
+      const kw = (this.query.menuName || '').trim()
+      if (kw) {
+        rows = rows.filter(m => (m.menuName || '').includes(kw))
+      }
+      if (this.query.status) {
+        rows = rows.filter(m => String(m.status) === String(this.query.status))
+      }
+      if (kw || this.query.status) {
+        rows = this.withAncestorChain(rows, allFlat)
+      }
+      return rows
+    },
     loadList () {
       this.loading = true
-      // 列表/筛选走 list（支持 status）；上级菜单级联走 tree（全量，不受筛选影响）
-      Promise.all([listMenus(this.query), menuTree()]).then(([listRes, treeRes]) => {
-        this.flatList = (listRes.data || []).filter(m => m.menuType !== 'F')
+      // 全量拉取后在客户端筛选，保证树形结构完整；级联上级菜单走 tree
+      Promise.all([listMenus({}), menuTree()]).then(([listRes, treeRes]) => {
+        const allFlat = listRes.data || []
+        this.flatList = this.applyClientFilter(allFlat)
         const tableTree = this.filterMenuTree(this.buildTree(this.flatList))
         this.applyTableData(tableTree)
 
-        const cascaderTree = this.filterMenuTree(treeRes.data || this.buildTree(this.flatList))
+        const cascaderTree = this.filterMenuTree(treeRes.data || this.buildTree(allFlat))
         this.cascaderOptions = [{ menuId: 0, menuName: '顶层菜单', children: this.dirOnly(cascaderTree) }]
       }).finally(() => { this.loading = false })
     },
@@ -222,10 +251,13 @@ export default {
       getMenu(row.menuId).then(res => {
         const data = res.data || row
         this.form = Object.assign(this.emptyForm(), data, {
+          parentId: data.parentId != null ? data.parentId : 0,
           status: data.status != null ? String(data.status) : '0'
         })
         this.dialogVisible = true
         this.$nextTick(() => this.$refs.form && this.$refs.form.clearValidate())
+      }).catch(() => {
+        this.$message.error('加载菜单详情失败')
       })
     },
     onSubmit () {
@@ -246,7 +278,7 @@ export default {
       })
     },
     onDelete (row) {
-      this.$confirm(`确认删除菜单「${row.menuName}」？如果它有子菜单将一并失败`, '确认删除', { type: 'warning' }).then(() => {
+      this.$confirm(`确认删除菜单「${row.menuName}」？其下子菜单将一并删除`, '确认删除', { type: 'warning' }).then(() => {
         deleteMenu(row.menuId).then(res => {
           this.$message({ message: res.msg || '删除成功', type: 'success' })
           this.loadList()

@@ -18,17 +18,6 @@
         </div>
 
         <el-form ref="registerForm" :model="form" :rules="rules" label-width="0" class="register-form">
-          <el-form-item v-if="showTenantField" prop="tenantId">
-            <el-select
-              v-model="form.tenantId"
-              placeholder="请选择租户"
-              style="width:100%"
-              filterable
-              :loading="tenantLoading && !tenantOptions.length"
-            >
-              <el-option v-for="opt in tenantOptions" :key="opt.tenantId" :label="opt.companyName + '（' + opt.tenantId + '）'" :value="opt.tenantId"></el-option>
-            </el-select>
-          </el-form-item>
           <el-form-item prop="username">
             <el-input v-model="form.username" placeholder="登录账号 (2-64 字符)" maxlength="64" prefix-icon="el-icon-user"/>
           </el-form-item>
@@ -72,8 +61,7 @@ import { getLoginBootstrap, register as registerApi } from '@/api/auth'
 import {
   readLoginBootstrapCache,
   prefetchLoginBootstrap,
-  refreshLoginBootstrap,
-  resolveDefaultTenantId
+  refreshLoginBootstrap
 } from '@/utils/loginBootstrap'
 
 export default {
@@ -88,11 +76,7 @@ export default {
       isLoading: false,
       captchaEnabled: true,
       captchaImg: '',
-      tenantEnabled: false,
-      tenantOptions: [],
-      tenantLoading: false,
       form: {
-        tenantId: '',
         username: '',
         nickName: '',
         password: '',
@@ -127,44 +111,22 @@ export default {
       }
     }
   },
-  computed: {
-    showTenantField () {
-      return this.tenantLoading || (this.tenantEnabled && this.tenantOptions.length > 0)
-    }
-  },
   created () {
     this.initRegisterPage()
   },
   methods: {
     initRegisterPage () {
       const cached = readLoginBootstrapCache()
-      if (cached) {
-        this.applyBootstrap(cached)
-      } else {
-        this.tenantLoading = true
-      }
-      prefetchLoginBootstrap()
-        .then((data) => {
-          if (data) this.applyBootstrap(data)
-        })
-        .finally(() => {
-          this.tenantLoading = false
-        })
+      if (cached) this.applyBootstrap(cached)
+      prefetchLoginBootstrap().then((data) => {
+        if (data) this.applyBootstrap(data)
+      })
     },
     applyBootstrap (data) {
       if (!data) return
       this.captchaEnabled = !!data.captchaEnabled
       this.form.uuid = data.uuid || ''
       this.captchaImg = data.img ? `data:image/png;base64,${data.img}` : ''
-      this.tenantEnabled = !!data.tenantEnabled
-      const list = Array.isArray(data.voList) ? data.voList : []
-      this.tenantOptions = list
-      if (this.tenantEnabled) {
-        const nextId = resolveDefaultTenantId(list)
-        if (!this.form.tenantId || !list.some((t) => t.tenantId === this.form.tenantId)) {
-          this.form.tenantId = nextId
-        }
-      }
     },
     refreshCaptcha () {
       refreshLoginBootstrap().then((data) => {
@@ -185,7 +147,6 @@ export default {
           phonenumber: this.form.phonenumber || undefined,
           code: this.form.code,
           uuid: this.form.uuid,
-          tenantId: this.tenantEnabled ? (this.form.tenantId || '000000') : undefined
         }).then(() => {
           this.$message({ message: '注册成功，请登录', type: 'success' })
           this.$router.push('/login')

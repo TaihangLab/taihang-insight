@@ -2,7 +2,7 @@
   <div class="user-mgmt">
     <div class="page-header">
       <h2>用户管理</h2>
-      <p class="subtitle">管理本租户内的账号、角色与所属部门（账号在本租户内不可重复）</p>
+      <p class="subtitle">管理系统账号、角色与所属部门</p>
     </div>
 
     <el-card class="filter-card">
@@ -33,7 +33,11 @@
         <el-table-column label="昵称" prop="nickName" min-width="120"/>
         <el-table-column label="邮箱" prop="email" min-width="180" show-overflow-tooltip/>
         <el-table-column label="手机号" prop="phonenumber" width="130"/>
-        <el-table-column label="部门" prop="deptId" width="80"/>
+        <el-table-column label="部门" prop="deptName" min-width="200" show-overflow-tooltip>
+          <template slot-scope="scope">
+            {{ scope.row.deptName || '—' }}
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="100">
           <template slot-scope="scope">
             <el-tag :type="scope.row.status === '0' ? 'success' : 'danger'" size="mini">
@@ -46,12 +50,10 @@
           <template slot-scope="scope">
             <el-button type="text" @click="openEditDialog(scope.row)">编辑</el-button>
             <el-button
-              v-hasPerm="'system:user:resetPwd'"
               type="text"
-              :disabled="isProtectedSuperUser(scope.row) && !$hasRole('superadmin')"
               @click="openResetPwdDialog(scope.row)"
             >重置密码</el-button>
-            <el-button type="text" style="color:#f56c6c" :disabled="isProtectedSuperUser(scope.row)" @click="onDelete(scope.row)">删除</el-button>
+            <el-button type="text" style="color:#f56c6c" :disabled="isBuiltinAdmin(scope.row)" @click="onDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -65,7 +67,7 @@
     <el-dialog :title="dialogMode === 'create' ? '新增用户' : '编辑用户'" :visible.sync="dialogVisible" width="560px" :close-on-click-modal="false">
       <el-form ref="form" :model="form" :rules="rules" label-width="100px" size="small">
         <el-form-item label="账号" prop="userName">
-          <el-input v-model="form.userName" :disabled="dialogMode === 'edit'" placeholder="2-64 字符，本租户内唯一"/>
+          <el-input v-model="form.userName" :disabled="dialogMode === 'edit'" placeholder="2-64 字符，全局唯一"/>
         </el-form-item>
         <el-form-item label="昵称" prop="nickName">
           <el-input v-model="form.nickName" placeholder="留空则使用账号"/>
@@ -86,17 +88,73 @@
             <el-option label="未知" value="2"/>
           </el-select>
         </el-form-item>
+        <el-form-item label="部门">
+          <el-popover
+            ref="deptPopover"
+            placement="bottom-start"
+            width="380"
+            trigger="click"
+            popper-class="user-dept-tree-popover"
+            @show="onDeptPopoverShow"
+          >
+            <div class="dept-tree-panel">
+              <el-input
+                v-model="deptTreeFilter"
+                size="small"
+                clearable
+                prefix-icon="el-icon-search"
+                placeholder="搜索部门名称或路径"
+                @input="filterDeptTree"
+              />
+              <el-tree
+                ref="deptTree"
+                class="dept-select-tree"
+                :data="deptTreeOptions"
+                node-key="deptId"
+                :props="deptTreeProps"
+                default-expand-all
+                highlight-current
+                :expand-on-click-node="false"
+                :filter-node-method="filterDeptNode"
+                @node-click="selectDept"
+              >
+                <span slot-scope="{ data }" class="dept-tree-node" @click.stop="selectDept(data)">
+                  <span class="dept-tree-node__name">{{ data.deptName }}</span>
+                  <span v-if="data.deptPath && data.deptPath !== data.deptName" class="dept-tree-node__path">
+                    {{ data.deptPath }}
+                  </span>
+                </span>
+              </el-tree>
+            </div>
+            <el-input
+              slot="reference"
+              readonly
+              :value="selectedDeptLabel"
+              placeholder="点击选择所属部门"
+              style="width:100%"
+              class="dept-tree-input"
+            >
+              <i
+                v-if="form.deptId"
+                slot="suffix"
+                class="el-input__icon el-icon-circle-close dept-clear-icon"
+                @click.stop="clearDept"
+              />
+              <i v-else slot="suffix" class="el-input__icon el-icon-arrow-down"/>
+            </el-input>
+          </el-popover>
+        </el-form-item>
         <el-form-item label="角色">
           <el-select v-model="form.roleIds" multiple placeholder="选择角色" style="width:100%">
             <el-option v-for="r in roleOptions" :key="r.roleId" :label="r.roleName" :value="r.roleId"/>
           </el-select>
         </el-form-item>
         <el-form-item v-if="dialogMode === 'edit'" label="状态">
-          <el-radio-group v-model="form.status" :disabled="isProtectedSuperUser(form)">
+          <el-radio-group v-model="form.status" :disabled="isBuiltinAdmin(form)">
             <el-radio label="0">正常</el-radio>
             <el-radio label="1">停用</el-radio>
           </el-radio-group>
-          <span v-if="isProtectedSuperUser(form)" class="protected-tip">超级管理员账号不可停用</span>
+          <span v-if="isBuiltinAdmin(form)" class="protected-tip">内置管理员账号不可停用</span>
         </el-form-item>
       </el-form>
       <div slot="footer">
@@ -124,7 +182,7 @@
 </template>
 
 <script>
-import { listUsers, addUser, updateUser, deleteUser, getUserRoles, resetUserPassword } from '@/api/user'
+import { listUsers, addUser, updateUser, deleteUser, getUser, getUserDeptTree, resetUserPassword } from '@/api/user'
 import { listRoles } from '@/api/role'
 
 const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[~!@#$%^&*()_+`\-={}:";'<>?,./]).{8,20}$/
@@ -138,6 +196,10 @@ export default {
       total: 0,
       loading: false,
       roleOptions: [],
+      deptTreeOptions: [],
+      deptFlatMap: {},
+      deptTreeProps: { label: 'deptName', children: 'children' },
+      deptTreeFilter: '',
       dialogVisible: false,
       dialogMode: 'create',
       submitting: false,
@@ -184,20 +246,89 @@ export default {
       }
     }
   },
+  computed: {
+    selectedDeptLabel () {
+      if (!this.form.deptId) return ''
+      const node = this.deptFlatMap[this.form.deptId]
+      if (!node) return ''
+      return node.deptPath || node.deptName || ''
+    }
+  },
   mounted () {
     this.loadRoles()
+    this.loadDeptTree()
     this.loadList()
   },
   methods: {
-    isProtectedSuperUser (row) {
+    isBuiltinAdmin (row) {
       if (!row) return false
-      return row.userId === 1 || row.isSuperuser === true
+      const name = (row.userName || '').trim()
+      return name === 'admin' || name === 'admin2'
     },
     emptyForm () {
       return {
         userId: null, userName: '', nickName: '', password: '',
-        email: '', phonenumber: '', sex: '0', roleIds: [], status: '0'
+        email: '', phonenumber: '', sex: '0', deptId: null, roleIds: [], status: '0'
       }
+    },
+    flattenDeptTree (nodes) {
+      ;(nodes || []).forEach(n => {
+        this.deptFlatMap[n.deptId] = n
+        if (n.children && n.children.length) this.flattenDeptTree(n.children)
+      })
+    },
+    loadDeptTree () {
+      getUserDeptTree().then(res => {
+        this.deptTreeOptions = res.data || []
+        this.deptFlatMap = {}
+        this.flattenDeptTree(this.deptTreeOptions)
+      }).catch(() => {
+        this.deptTreeOptions = []
+        this.deptFlatMap = {}
+      })
+    },
+    onDeptPopoverShow () {
+      this.deptTreeFilter = ''
+      this.$nextTick(() => {
+        const tree = this.$refs.deptTree
+        if (tree) {
+          tree.filter('')
+          if (this.form.deptId) tree.setCurrentKey(this.form.deptId)
+        }
+      })
+    },
+    filterDeptTree (val) {
+      if (this.$refs.deptTree) this.$refs.deptTree.filter(val)
+    },
+    filterDeptNode (value, data) {
+      if (!value) return true
+      const kw = String(value).trim().toLowerCase()
+      const name = (data.deptName || '').toLowerCase()
+      const path = (data.deptPath || '').toLowerCase()
+      return name.includes(kw) || path.includes(kw)
+    },
+    closeDeptPopover () {
+      const pop = this.$refs.deptPopover
+      if (pop && typeof pop.doClose === 'function') {
+        pop.doClose()
+      }
+    },
+    selectDept (data) {
+      if (!data || data.deptId == null) return
+      this.form.deptId = data.deptId
+      // 延迟关闭，避免与 popover 的 click 触发逻辑冲突
+      setTimeout(() => this.closeDeptPopover(), 0)
+    },
+    clearDept () {
+      this.form.deptId = null
+      if (this.$refs.deptTree) this.$refs.deptTree.setCurrentKey(null)
+    },
+    syncDeptTreeCurrent () {
+      this.$nextTick(() => {
+        if (this.$refs.deptTree && this.form.deptId) {
+          this.$refs.deptTree.setCurrentKey(this.form.deptId)
+        }
+      })
     },
     loadRoles () {
       listRoles({ pageNum: 1, pageSize: 200 }).then(res => {
@@ -226,12 +357,21 @@ export default {
     },
     openEditDialog (row) {
       this.dialogMode = 'edit'
-      this.form = Object.assign(this.emptyForm(), row)
       this.dialogVisible = true
-      getUserRoles(row.userId).then(res => {
-        this.$set(this.form, 'roleIds', res.data || [])
+      getUser(row.userId).then(res => {
+        const data = res.data || {}
+        const user = data.user || row
+        this.form = Object.assign(this.emptyForm(), user, {
+          deptId: user.deptId != null ? user.deptId : null,
+          roleIds: data.roleIds || [],
+          status: user.status != null ? String(user.status) : '0'
+        })
+        this.syncDeptTreeCurrent()
+        this.$nextTick(() => this.$refs.form && this.$refs.form.clearValidate())
+      }).catch(() => {
+        this.$message.error('加载用户详情失败')
+        this.dialogVisible = false
       })
-      this.$nextTick(() => this.$refs.form && this.$refs.form.clearValidate())
     },
     onSubmit () {
       this.$refs.form.validate(valid => {
@@ -240,7 +380,13 @@ export default {
         const payload = Object.assign({}, this.form)
         if (payload.userName) payload.userName = String(payload.userName).trim()
         if (payload.email != null && !String(payload.email).trim()) payload.email = null
-        if (this.dialogMode === 'edit') delete payload.password
+        if (!payload.deptId) payload.deptId = null
+        delete payload.deptName
+        delete payload.createTime
+        if (this.dialogMode === 'edit') {
+          delete payload.password
+          delete payload.userId
+        }
         const api = this.dialogMode === 'create' ? addUser(payload) : updateUser(this.form.userId, payload)
         api.then(res => {
           this.$message({ message: res.msg || '操作成功', type: 'success' })
@@ -292,4 +438,30 @@ export default {
 .pagination-row { margin-top: 12px; text-align: right; }
 .reset-tip { margin: 0 0 16px; color: #606266; font-size: 13px; }
 .protected-tip { margin-left: 8px; color: #909399; font-size: 12px; }
+.dept-tree-panel { max-height: 320px; display: flex; flex-direction: column; gap: 8px; }
+.dept-select-tree {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  padding: 4px 0;
+}
+.dept-tree-node {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+  padding: 2px 0;
+  cursor: pointer;
+  flex: 1;
+}
+.dept-tree-node__name { font-size: 13px; color: #303133; }
+.dept-tree-node__path { font-size: 11px; color: #909399; margin-top: 2px; }
+.dept-tree-input >>> .el-input__inner { cursor: pointer; }
+.dept-clear-icon { cursor: pointer; }
+.dept-clear-icon:hover { color: #909399; }
+</style>
+
+<style>
+/* popover 挂载在 body，需非 scoped */
+.user-dept-tree-popover { padding: 12px !important; }
 </style>

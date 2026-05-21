@@ -40,27 +40,6 @@
 
         <!-- 登录表单 -->
         <div class="login-form">
-          <!-- 租户下拉（启用多租户时显示；预留高度避免接口返回后布局跳动） -->
-          <div class="input-group tenant-group" v-if="showTenantField">
-            <div class="input-wrapper" :class="{ focused: tenantFocused, 'tenant-loading': tenantLoading && !tenantOptions.length }">
-              <i class="input-icon fa fa-building"></i>
-              <select
-                v-model="tenantId"
-                class="tech-input tech-select"
-                :disabled="tenantLoading && !tenantOptions.length"
-                @focus="tenantFocused = true"
-                @blur="tenantFocused = false"
-              >
-                <option v-if="tenantLoading && !tenantOptions.length" disabled value="">加载租户列表...</option>
-                <option v-for="opt in tenantOptions" :key="opt.tenantId" :value="opt.tenantId">
-                  {{ opt.companyName }}（{{ opt.tenantId }}）
-                </option>
-              </select>
-              <i class="select-arrow fa fa-chevron-down"></i>
-              <div class="input-border"></div>
-            </div>
-          </div>
-
           <!-- 用户名输入框 -->
           <div class="input-group">
             <div class="input-wrapper">
@@ -161,8 +140,7 @@ import { getLoginBootstrap } from '@/api/auth'
 import {
   readLoginBootstrapCache,
   prefetchLoginBootstrap,
-  refreshLoginBootstrap,
-  resolveDefaultTenantId
+  refreshLoginBootstrap
 } from '@/utils/loginBootstrap'
 
 export default {
@@ -177,17 +155,7 @@ export default {
       captchaCode: '',
       captchaUuid: '',
       captchaImg: '',
-      redirect: '/',
-      tenantEnabled: false,
-      tenantOptions: [],
-      tenantId: '',
-      tenantFocused: false,
-      tenantLoading: false
-    }
-  },
-  computed: {
-    showTenantField () {
-      return this.tenantLoading || (this.tenantEnabled && this.tenantOptions.length > 0)
+      redirect: '/'
     }
   },
   created(){
@@ -213,18 +181,10 @@ export default {
 
     initLoginPage () {
       const cached = readLoginBootstrapCache()
-      if (cached) {
-        this.applyBootstrap(cached)
-      } else {
-        this.tenantLoading = true
-      }
-      prefetchLoginBootstrap()
-        .then((data) => {
-          if (data) this.applyBootstrap(data)
-        })
-        .finally(() => {
-          this.tenantLoading = false
-        })
+      if (cached) this.applyBootstrap(cached)
+      prefetchLoginBootstrap().then((data) => {
+        if (data) this.applyBootstrap(data)
+      })
     },
 
     applyBootstrap (data) {
@@ -232,15 +192,6 @@ export default {
       this.captchaEnabled = !!data.captchaEnabled
       this.captchaUuid = data.uuid || ''
       this.captchaImg = data.img ? `data:image/png;base64,${data.img}` : ''
-      this.tenantEnabled = !!data.tenantEnabled
-      const list = Array.isArray(data.voList) ? data.voList : []
-      this.tenantOptions = list
-      if (this.tenantEnabled) {
-        const nextId = resolveDefaultTenantId(list)
-        if (!this.tenantId || !list.some((t) => t.tenantId === this.tenantId)) {
-          this.tenantId = nextId
-        }
-      }
     },
 
     refreshCaptcha () {
@@ -276,7 +227,6 @@ export default {
         password: this.password,
         code: this.captchaCode,
         uuid: this.captchaUuid,
-        tenantId: this.tenantEnabled ? (this.tenantId || '000000') : ''
       }).then(() => Promise.all([
         this.$store.dispatch('GetInfo'),
         this.$store.dispatch('GenerateRoutes')
@@ -559,14 +509,6 @@ export default {
 
 .input-group {
   margin-bottom: 25px;
-}
-
-.tenant-group {
-  min-height: 55px;
-}
-
-.input-wrapper.tenant-loading .tech-select {
-  color: rgba(255, 255, 255, 0.45);
 }
 
 .input-wrapper {

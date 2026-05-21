@@ -33,7 +33,7 @@ export function getCaptcha () {
   })
 }
 
-/** 登录页一次性拉取验证码 + 租户列表 */
+/** 登录页一次性拉取验证码 */
 export function getLoginBootstrap () {
   return request({
     url: '/auth/bootstrap',

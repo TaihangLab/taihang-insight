@@ -6,9 +6,7 @@ const getters = {
   avatar: state => (state.user.userInfo && state.user.userInfo.avatar) || '',
   roles: state => state.user.roles,
   permissions: state => state.user.permissions,
-  tenantId: state => state.user.tenantId,
-  dynamicTenantId: state => state.user.dynamicTenantId,
-  isSuperAdmin: state => Array.isArray(state.user.roles) && state.user.roles.indexOf('superadmin') >= 0,
+  isAdmin: state => Array.isArray(state.user.roles) && state.user.roles.indexOf('admin') >= 0,
   sidebarMenus: state => state.permission.sidebarMenus,
   addRoutes: state => state.permission.addRoutes,
   routes: state => state.permission.routes

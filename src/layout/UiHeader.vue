@@ -66,22 +66,7 @@
         <template slot="title">
           <el-avatar :size="28" icon="el-icon-user" class="user-avatar"></el-avatar>
           <span>{{ username }}</span>
-          <span
-            v-if="isSuperAdmin && isViewingOtherTenant"
-            class="tenant-badge"
-            :title="'当前以租户 ' + dynamicTenantId + ' 的视角查看数据（本人租户：' + selfTenantId + '）'"
-          >
-            ［查看租户 {{ dynamicTenantId }}］
-          </span>
         </template>
-        <el-menu-item v-if="isSuperAdmin" @click="openSwitchTenantDialog">
-          <i class="el-icon-refresh"></i>
-          <span>切换租户视图</span>
-        </el-menu-item>
-        <el-menu-item v-if="isSuperAdmin && dynamicTenantId" @click="resetTenantView">
-          <i class="el-icon-back"></i>
-          <span>回到我的租户</span>
-        </el-menu-item>
         <el-menu-item @click="goToProfile">
           <i class="el-icon-user-solid"></i>
           <span>个人中心</span>
@@ -98,24 +83,6 @@
     </el-menu>
     <changePasswordDialog ref="changePasswordDialog"></changePasswordDialog>
 
-    <!-- 切换租户视图对话框（仅超管） -->
-    <el-dialog title="切换租户视图" :visible.sync="switchDialogVisible" width="420px" :close-on-click-modal="false">
-      <el-form size="small" label-width="80px">
-        <el-form-item label="目标租户">
-          <el-select v-model="targetTenantId" placeholder="选择要查看的租户" style="width:100%" filterable>
-            <el-option v-for="opt in tenantOptions" :key="opt.tenantId" :label="opt.companyName + '（' + opt.tenantId + '）'" :value="opt.tenantId"/>
-          </el-select>
-        </el-form-item>
-        <div style="color:#909399;font-size:12px;line-height:1.6">
-          切换后，本次会话中查询到的用户、角色、部门等数据将归属于目标租户。<br/>
-          通过「回到我的租户」可立即恢复。
-        </div>
-      </el-form>
-      <div slot="footer">
-        <el-button @click="switchDialogVisible = false">取消</el-button>
-        <el-button type="primary" :disabled="!targetTenantId" @click="confirmSwitchTenant">切 换</el-button>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
@@ -123,8 +90,6 @@
 import changePasswordDialog from '../components/dialog/changePassword.vue'
 import userService from '../components/service/UserService'
 import {Notification} from 'element-ui';
-import { getLoginTenantList, switchTenant, clearDynamicTenant } from '@/api/tenant'
-
 export default {
   name: "UiHeader",
   components: {Notification, changePasswordDialog},
@@ -133,10 +98,7 @@ export default {
     const secondSlash = path.indexOf('/', 1);
     const activeIndex = secondSlash > 0 ? path.substring(0, secondSlash) : path;
     return {
-      activeIndex,
-      switchDialogVisible: false,
-      tenantOptions: [],
-      targetTenantId: ''
+      activeIndex
     };
   },
   computed: {
@@ -149,24 +111,7 @@ export default {
     },
     editUser () {
       const roles = (this.$store && this.$store.getters && this.$store.getters.roles) || [];
-      return roles.indexOf('superadmin') !== -1 || roles.indexOf('admin') !== -1;
-    },
-    isSuperAdmin () {
-      return !!(this.$store && this.$store.getters && this.$store.getters.isSuperAdmin);
-    },
-    dynamicTenantId () {
-      return (this.$store && this.$store.getters && this.$store.getters.dynamicTenantId) || '';
-    },
-    selfTenantId () {
-      return (this.$store && this.$store.getters && this.$store.getters.tenantId) || '';
-    },
-    /** 超管已切换到其它租户（非本人所属租户） */
-    isViewingOtherTenant () {
-      return !!(
-        this.dynamicTenantId
-        && this.selfTenantId
-        && this.dynamicTenantId !== this.selfTenantId
-      );
+      return roles.indexOf('admin') !== -1;
     }
   },
   created() {
@@ -216,43 +161,6 @@ export default {
     },
     goToProfile() {
       this.$router.push('/systemManage/profile');
-    },
-    openSwitchTenantDialog() {
-      this.switchDialogVisible = true;
-      this.targetTenantId = this.dynamicTenantId || '';
-      getLoginTenantList().then(res => {
-        const data = res.data || {};
-        this.tenantOptions = Array.isArray(data.voList) ? data.voList : [];
-      });
-    },
-    confirmSwitchTenant() {
-      if (!this.targetTenantId) return;
-      if (this.targetTenantId === this.selfTenantId) {
-        this.$message({ message: '目标租户与当前所属租户相同，无需切换', type: 'info' });
-        return;
-      }
-      switchTenant(this.targetTenantId).then(res => {
-        this.$store.commit('SET_DYNAMIC_TENANT_ID', this.targetTenantId);
-        this.switchDialogVisible = false;
-        this.$message({
-          message: res.msg || ('已切换到租户 ' + this.targetTenantId + '，正在刷新…'),
-          type: 'success'
-        });
-        setTimeout(() => window.location.reload(), 600);
-      }).catch(() => {
-        this.$message({
-          message: '切换失败：请确认 Redis 已启动（动态租户状态保存在 Redis）',
-          type: 'error',
-          duration: 5000
-        });
-      });
-    },
-    resetTenantView() {
-      clearDynamicTenant().then(() => {
-        this.$store.commit('SET_DYNAMIC_TENANT_ID', '');
-        this.$message({ message: '已恢复到本人租户', type: 'success' });
-        setTimeout(() => window.location.reload(), 600);
-      });
     },
     openDoc() {
       console.log(process.env.BASE_API)
@@ -739,16 +647,4 @@ export default {
   }
 }
 
-/* 多租户：当前查看租户徽章（仅超管 + 动态切换时显示） */
-.tenant-badge {
-  margin-left: 8px;
-  padding: 2px 8px;
-  font-size: 12px;
-  color: #FFE066;
-  border: 1px solid rgba(255, 224, 102, 0.5);
-  border-radius: 10px;
-  background: rgba(255, 224, 102, 0.08);
-  vertical-align: middle;
-  line-height: 1;
-}
 </style>

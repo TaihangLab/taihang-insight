@@ -1,9 +1,7 @@
 /**
- * 登录/注册页初始化数据缓存（验证码 + 租户列表）
- * 用于首屏立即展示租户下拉，后台再静默刷新。
+ * 登录/注册页验证码初始化缓存
  */
 import { getLoginBootstrap, getCaptcha } from '@/api/auth'
-import { getLoginTenantList } from '@/api/tenant'
 
 const CACHE_KEY = 'login_bootstrap_v1'
 const TTL_MS = 5 * 60 * 1000
@@ -15,28 +13,14 @@ function isBootstrapNotFound (err) {
   return status === 404
 }
 
-function mergeLegacyBootstrap (captchaData, tenantData) {
-  const c = captchaData || {}
-  const t = tenantData || {}
+async function fetchLegacyCaptcha () {
+  const cRes = await getCaptcha()
+  const c = (cRes && cRes.data) ? cRes.data : {}
   return {
     captchaEnabled: !!c.captchaEnabled,
     uuid: c.uuid || '',
-    img: c.img || '',
-    tenantEnabled: !!t.tenantEnabled,
-    voList: Array.isArray(t.voList) ? t.voList : []
+    img: c.img || ''
   }
-}
-
-/** 旧版后端无 bootstrap 时，并行请求 code + tenant/list */
-async function fetchLegacyBootstrap () {
-  const [cRes, tRes] = await Promise.all([
-    getCaptcha(),
-    getLoginTenantList()
-  ])
-  return mergeLegacyBootstrap(
-    (cRes && cRes.data) ? cRes.data : {},
-    (tRes && tRes.data) ? tRes.data : {}
-  )
 }
 
 export function readLoginBootstrapCache () {
@@ -59,11 +43,10 @@ export function writeLoginBootstrapCache (data) {
   try {
     sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }))
   } catch (e) {
-    /* quota / private mode */
+    /* ignore */
   }
 }
 
-/** 租户增删改后调用，避免登录页仍展示旧的下拉列表 */
 export function clearLoginBootstrapCache () {
   try {
     sessionStorage.removeItem(CACHE_KEY)
@@ -79,15 +62,12 @@ async function fetchLoginBootstrapData () {
     return (res && res.data) ? res.data : {}
   } catch (err) {
     if (isBootstrapNotFound(err)) {
-      return fetchLegacyBootstrap()
+      return fetchLegacyCaptcha()
     }
     throw err
   }
 }
 
-/**
- * 路由预取：进入 /login、/register 前发起请求，组件 created 时往往已命中缓存或 in-flight。
- */
 export function prefetchLoginBootstrap () {
   if (inflightPromise) {
     return inflightPromise
@@ -108,18 +88,6 @@ export function prefetchLoginBootstrap () {
   return inflightPromise
 }
 
-/** 刷新验证码（登录失败或点击验证码图） */
 export function refreshLoginBootstrap () {
   return fetchLoginBootstrapData()
-}
-
-/**
- * 解析租户默认选中（按 domain 匹配 host，否则取第一项）
- */
-export function resolveDefaultTenantId (list) {
-  const host = (typeof window !== 'undefined' && window.location && window.location.host) || ''
-  const matched = list.find((t) => t.domain && host.indexOf(t.domain) >= 0)
-  if (matched) return matched.tenantId
-  if (list.length > 0) return list[0].tenantId
-  return '000000'
 }
