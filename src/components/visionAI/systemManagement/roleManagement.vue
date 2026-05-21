@@ -32,6 +32,11 @@
         <el-table-column label="角色名称" prop="roleName" min-width="140"/>
         <el-table-column label="角色权限字符" prop="roleKey" min-width="140"/>
         <el-table-column label="排序" prop="roleSort" width="80"/>
+        <el-table-column label="用户数" prop="userCount" width="80" align="center">
+          <template slot-scope="scope">
+            {{ scope.row.userCount != null ? scope.row.userCount : 0 }}
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="100">
           <template slot-scope="scope">
             <el-tag :type="scope.row.status === '0' ? 'success' : 'danger'" size="mini">
@@ -45,7 +50,7 @@
             <el-button type="text" @click="openAssignUsersDialog(scope.row)">分配用户</el-button>
             <el-button type="text" @click="openEditDialog(scope.row)">编辑</el-button>
             <el-button type="text" style="color:#f56c6c"
-              :disabled="isProtectedAdminRole(scope.row)"
+              :disabled="isRoleDeleteDisabled(scope.row)"
               @click="onDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -82,11 +87,12 @@
             :default-checked-keys="form.menuIds" :props="{ label: 'menuName' }" class="menu-tree"/>
         </el-form-item>
         <el-form-item label="状态">
-          <el-radio-group v-model="form.status" :disabled="isProtectedAdminRole(form)">
+          <el-radio-group v-model="form.status" :disabled="isRoleStatusDisabled(form)">
             <el-radio label="0">正常</el-radio>
             <el-radio label="1">停用</el-radio>
           </el-radio-group>
           <span v-if="isProtectedAdminRole(form)" class="protected-tip">管理员角色不可停用</span>
+          <span v-else-if="form.userCount > 0" class="protected-tip">已分配 {{ form.userCount }} 个用户，不可停用</span>
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remark" type="textarea" rows="2"/>
@@ -263,10 +269,19 @@ export default {
     isProtectedAdminRole (row) {
       return row && row.roleKey === 'admin'
     },
+    hasAssignedUsers (row) {
+      return row && Number(row.userCount) > 0
+    },
+    isRoleDeleteDisabled (row) {
+      return this.isProtectedAdminRole(row) || this.hasAssignedUsers(row)
+    },
+    isRoleStatusDisabled (row) {
+      return this.isProtectedAdminRole(row) || this.hasAssignedUsers(row)
+    },
     emptyForm () {
       return {
         roleId: null, roleName: '', roleKey: '', roleSort: 0, dataScope: '1',
-        status: '0', remark: '', menuIds: []
+        status: '0', remark: '', menuIds: [], userCount: 0
       }
     },
     loadMenus () {
@@ -301,7 +316,10 @@ export default {
       getRole(row.roleId).then(res => {
         const data = res.data || {}
         const role = data.role || data
-        this.form = Object.assign(this.emptyForm(), role, { menuIds: data.menuIds || [] })
+        this.form = Object.assign(this.emptyForm(), role, {
+          menuIds: data.menuIds || [],
+          userCount: role.userCount != null ? role.userCount : 0
+        })
         this.dialogVisible = true
         this.$nextTick(() => {
           if (this.$refs.menuTree) this.$refs.menuTree.setCheckedKeys(this.form.menuIds || [])
@@ -315,7 +333,12 @@ export default {
         const checked = this.$refs.menuTree ? this.$refs.menuTree.getCheckedKeys() : []
         const halfChecked = this.$refs.menuTree ? this.$refs.menuTree.getHalfCheckedKeys() : []
         const menuIds = Array.from(new Set([].concat(checked, halfChecked).filter(x => x != null)))
+        if (this.form.status === '1' && this.hasAssignedUsers(this.form)) {
+          this.$message.warning(`该角色已分配 ${this.form.userCount} 个用户，不可停用`)
+          return
+        }
         const payload = Object.assign({}, this.form, { menuIds })
+        delete payload.userCount
         this.submitting = true
         const api = this.dialogMode === 'create' ? addRole(payload) : updateRole(this.form.roleId, payload)
         api.then(res => {
@@ -326,6 +349,10 @@ export default {
       })
     },
     onDelete (row) {
+      if (this.hasAssignedUsers(row)) {
+        this.$message.warning(`角色「${row.roleName}」已分配 ${row.userCount} 个用户，请先在「分配用户」中移除后再删除`)
+        return
+      }
       this.$confirm(`确认删除角色「${row.roleName}」？`, '确认删除', { type: 'warning' }).then(() => {
         deleteRole(row.roleId).then(res => {
           this.$message({ message: res.msg || '删除成功', type: 'success' })

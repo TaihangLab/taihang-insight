@@ -70,6 +70,14 @@ export function getUserProfile () {
   })
 }
 
+export function updateUserProfile (data) {
+  return request({
+    url: '/system/user/profile',
+    method: 'put',
+    data
+  })
+}
+
 export function updateUserPwd (oldPassword, newPassword) {
   return request({
     url: '/system/user/profile/updatePwd',

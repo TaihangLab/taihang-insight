@@ -51,9 +51,16 @@
           <el-card class="info-card">
             <div slot="header" class="card-header">
               <span>基本信息</span>
+              <el-button
+                type="primary"
+                size="small"
+                class="edit-btn"
+                :loading="saving"
+                @click="saveProfile"
+              >保存</el-button>
             </div>
 
-            <el-form :model="userInfo" label-width="100px" class="profile-form">
+            <el-form ref="profileForm" :model="userInfo" :rules="profileRules" label-width="100px" class="profile-form">
               <el-row :gutter="20">
                 <el-col :span="12">
                   <el-form-item label="账号">
@@ -61,21 +68,21 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="昵称">
-                    <el-input :value="userInfo.nickName" disabled></el-input>
+                  <el-form-item label="昵称" prop="nickName">
+                    <el-input v-model="userInfo.nickName" placeholder="请输入昵称" maxlength="64" clearable/>
                   </el-form-item>
                 </el-col>
               </el-row>
 
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="邮箱">
-                    <el-input :value="userInfo.email" disabled></el-input>
+                  <el-form-item label="邮箱" prop="email">
+                    <el-input v-model="userInfo.email" placeholder="可选" clearable/>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="手机号">
-                    <el-input :value="userInfo.phonenumber" disabled></el-input>
+                  <el-form-item label="手机号" prop="phonenumber">
+                    <el-input v-model="userInfo.phonenumber" placeholder="可选" maxlength="20" clearable/>
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -104,7 +111,8 @@
 </template>
 
 <script>
-import { getUserProfile } from '@/api/auth'
+import { getUserProfile, updateUserProfile } from '@/api/auth'
+import { setUser } from '@/utils/auth'
 import changePasswordDialog from '../../dialog/changePassword.vue'
 
 export default {
@@ -120,7 +128,25 @@ export default {
         status: '0',
         createTime: ''
       },
-      roles: []
+      roles: [],
+      saving: false,
+      profileRules: {
+        nickName: [
+          { required: true, message: '请输入昵称', trigger: 'blur' },
+          { max: 64, message: '昵称长度不能超过 64 个字符', trigger: 'blur' }
+        ],
+        email: [{
+          validator: (rule, value, cb) => {
+            const v = (value == null ? '' : String(value)).trim()
+            if (!v) return cb()
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            if (!re.test(v)) cb(new Error('邮箱格式不正确'))
+            else cb()
+          },
+          trigger: 'blur'
+        }],
+        phonenumber: [{ max: 20, message: '手机号长度不能超过 20 个字符', trigger: 'blur' }]
+      }
     }
   },
   computed: {
@@ -154,6 +180,37 @@ export default {
     },
     changePassword() {
       this.$refs.changePasswordDialog.openDialog()
+    },
+    syncStoreUser () {
+      if (this.$store && this.$store.commit) {
+        this.$store.commit('SET_USER_INFO', { ...this.userInfo })
+      }
+      setUser(this.userInfo)
+    },
+    saveProfile () {
+      this.$refs.profileForm.validate(valid => {
+        if (!valid) return
+        this.saving = true
+        const payload = {
+          nickName: (this.userInfo.nickName || '').trim(),
+          phonenumber: (this.userInfo.phonenumber || '').trim() || null,
+          email: (this.userInfo.email || '').trim() || null
+        }
+        updateUserProfile(payload)
+          .then((res) => {
+            const data = (res && res.data) || {}
+            const user = data.user || data
+            if (user && typeof user === 'object') {
+              Object.assign(this.userInfo, user)
+            }
+            if (Array.isArray(data.roles)) {
+              this.roles = data.roles
+            }
+            this.syncStoreUser()
+            this.$message.success((res && res.msg) || data.msg || '保存成功')
+          })
+          .finally(() => { this.saving = false })
+      })
     }
   }
 }
