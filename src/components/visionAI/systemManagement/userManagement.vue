@@ -106,60 +106,18 @@
           </el-select>
         </el-form-item>
         <el-form-item label="部门">
-          <el-popover
-            ref="deptPopover"
-            placement="bottom-start"
-            width="380"
-            trigger="click"
-            popper-class="user-dept-tree-popover"
-            @show="onDeptPopoverShow"
-          >
-            <div class="dept-tree-panel">
-              <el-input
-                v-model="deptTreeFilter"
-                size="small"
-                clearable
-                prefix-icon="el-icon-search"
-                placeholder="搜索部门名称或路径"
-                @input="filterDeptTree"
-              />
-              <el-tree
-                ref="deptTree"
-                class="dept-select-tree"
-                :data="deptTreeOptions"
-                node-key="deptId"
-                :props="deptTreeProps"
-                default-expand-all
-                highlight-current
-                :expand-on-click-node="false"
-                :filter-node-method="filterDeptNode"
-                @node-click="selectDept"
-              >
-                <span slot-scope="{ data }" class="dept-tree-node" @click.stop="selectDept(data)">
-                  <span class="dept-tree-node__name">{{ data.deptName }}</span>
-                  <span v-if="data.deptPath && data.deptPath !== data.deptName" class="dept-tree-node__path">
-                    {{ data.deptPath }}
-                  </span>
-                </span>
-              </el-tree>
-            </div>
-            <el-input
-              slot="reference"
-              readonly
-              :value="selectedDeptLabel"
-              placeholder="点击选择所属部门"
-              style="width:100%"
-              class="dept-tree-input"
-            >
-              <i
-                v-if="form.deptId"
-                slot="suffix"
-                class="el-input__icon el-icon-circle-close dept-clear-icon"
-                @click.stop="clearDept"
-              />
-              <i v-else slot="suffix" class="el-input__icon el-icon-arrow-down"/>
-            </el-input>
-          </el-popover>
+          <el-cascader
+            ref="deptCascader"
+            v-model="form.deptId"
+            :options="deptTreeOptions"
+            :props="deptCascaderProps"
+            clearable
+            filterable
+            placeholder="请选择所属部门"
+            style="width:100%"
+            @change="onDeptChange"
+          />
+          <div v-if="deptSelectWarning" class="form-tip dept-warn">{{ deptSelectWarning }}</div>
         </el-form-item>
         <el-form-item label="角色">
           <el-select v-model="form.roleIds" multiple placeholder="选择角色" style="width:100%">
@@ -216,8 +174,13 @@ export default {
       roleOptions: [],
       deptTreeOptions: [],
       deptFlatMap: {},
-      deptTreeProps: { label: 'deptName', children: 'children' },
-      deptTreeFilter: '',
+      deptCascaderProps: {
+        value: 'deptId',
+        label: 'deptName',
+        children: 'children',
+        checkStrictly: true,
+        emitPath: false
+      },
       dialogVisible: false,
       dialogMode: 'create',
       submitting: false,
@@ -265,11 +228,13 @@ export default {
     }
   },
   computed: {
-    selectedDeptLabel () {
-      if (!this.form.deptId) return ''
-      const node = this.deptFlatMap[this.form.deptId]
-      if (!node) return ''
-      return node.deptPath || node.deptName || ''
+    deptSelectWarning () {
+      const deptId = this.normalizeDeptId(this.form.deptId)
+      if (!deptId) return ''
+      if (this.deptFlatMap[deptId]) return ''
+      const name = (this.form.deptName || '').trim()
+      if (name) return `当前部门「${name}」已停用或不在可选列表中，请重新选择`
+      return '当前所选部门已停用或不在可选列表中，请重新选择'
     }
   },
   mounted () {
@@ -293,67 +258,75 @@ export default {
     emptyForm () {
       return {
         userId: null, userName: '', nickName: '', password: '',
-        email: '', phonenumber: '', sex: '0', deptId: null, roleIds: [], status: '0'
+        email: '', phonenumber: '', sex: '0', deptId: null, deptName: '',
+        roleIds: [], status: '0'
       }
+    },
+    normalizeDeptId (deptId) {
+      if (deptId == null || deptId === '') return null
+      const n = Number(deptId)
+      return Number.isNaN(n) ? null : n
+    },
+    prepareDeptTreeOptions (nodes) {
+      return (nodes || []).map(node => {
+        const item = Object.assign({}, node, {
+          deptId: this.normalizeDeptId(node.deptId),
+          deptName: (node.deptName || '').trim() || '未命名部门'
+        })
+        if (node.children && node.children.length) {
+          item.children = this.prepareDeptTreeOptions(node.children)
+        } else {
+          delete item.children
+        }
+        return item
+      })
+    },
+    closeDeptCascader () {
+      this.$nextTick(() => {
+        const cascader = this.$refs.deptCascader
+        if (!cascader) return
+        if (typeof cascader.toggleDropDownVisible === 'function') {
+          cascader.toggleDropDownVisible(false)
+        } else {
+          cascader.dropDownVisible = false
+        }
+      })
     },
     flattenDeptTree (nodes) {
       ;(nodes || []).forEach(n => {
-        this.deptFlatMap[n.deptId] = n
+        const id = this.normalizeDeptId(n.deptId)
+        if (id != null) this.deptFlatMap[id] = n
         if (n.children && n.children.length) this.flattenDeptTree(n.children)
       })
     },
     loadDeptTree () {
-      getUserDeptTree().then(res => {
-        this.deptTreeOptions = res.data || []
+      return getUserDeptTree().then(res => {
+        const raw = res.data || []
+        this.deptTreeOptions = this.prepareDeptTreeOptions(raw)
         this.deptFlatMap = {}
         this.flattenDeptTree(this.deptTreeOptions)
+        this.syncFormDeptId()
       }).catch(() => {
         this.deptTreeOptions = []
         this.deptFlatMap = {}
+        return []
       })
     },
-    onDeptPopoverShow () {
-      this.deptTreeFilter = ''
-      this.$nextTick(() => {
-        const tree = this.$refs.deptTree
-        if (tree) {
-          tree.filter('')
-          if (this.form.deptId) tree.setCurrentKey(this.form.deptId)
-        }
-      })
+    syncFormDeptId () {
+      const id = this.normalizeDeptId(this.form.deptId)
+      this.form.deptId = id
     },
-    filterDeptTree (val) {
-      if (this.$refs.deptTree) this.$refs.deptTree.filter(val)
-    },
-    filterDeptNode (value, data) {
-      if (!value) return true
-      const kw = String(value).trim().toLowerCase()
-      const name = (data.deptName || '').toLowerCase()
-      const path = (data.deptPath || '').toLowerCase()
-      return name.includes(kw) || path.includes(kw)
-    },
-    closeDeptPopover () {
-      const pop = this.$refs.deptPopover
-      if (pop && typeof pop.doClose === 'function') {
-        pop.doClose()
+    onDeptChange (value) {
+      const id = this.normalizeDeptId(value)
+      this.form.deptId = id
+      if (id == null) {
+        this.form.deptName = ''
+        this.closeDeptCascader()
+        return
       }
-    },
-    selectDept (data) {
-      if (!data || data.deptId == null) return
-      this.form.deptId = data.deptId
-      // 延迟关闭，避免与 popover 的 click 触发逻辑冲突
-      setTimeout(() => this.closeDeptPopover(), 0)
-    },
-    clearDept () {
-      this.form.deptId = null
-      if (this.$refs.deptTree) this.$refs.deptTree.setCurrentKey(null)
-    },
-    syncDeptTreeCurrent () {
-      this.$nextTick(() => {
-        if (this.$refs.deptTree && this.form.deptId) {
-          this.$refs.deptTree.setCurrentKey(this.form.deptId)
-        }
-      })
+      const node = this.deptFlatMap[id]
+      this.form.deptName = node ? (node.deptName || '') : ''
+      this.closeDeptCascader()
     },
     loadRoles () {
       listRoles({ pageNum: 1, pageSize: 200 }).then(res => {
@@ -378,20 +351,22 @@ export default {
       this.dialogMode = 'create'
       this.form = this.emptyForm()
       this.dialogVisible = true
+      this.loadDeptTree()
       this.$nextTick(() => this.$refs.form && this.$refs.form.clearValidate())
     },
     openEditDialog (row) {
       this.dialogMode = 'edit'
       this.dialogVisible = true
-      getUser(row.userId).then(res => {
+      Promise.all([getUser(row.userId), this.loadDeptTree()]).then(([res]) => {
         const data = res.data || {}
         const user = data.user || row
         this.form = Object.assign(this.emptyForm(), user, {
-          deptId: user.deptId != null ? user.deptId : null,
+          deptId: this.normalizeDeptId(user.deptId),
+          deptName: user.deptName || '',
           roleIds: data.roleIds || [],
           status: user.status != null ? String(user.status) : '0'
         })
-        this.syncDeptTreeCurrent()
+        this.syncFormDeptId()
         this.$nextTick(() => this.$refs.form && this.$refs.form.clearValidate())
       }).catch(() => {
         this.$message.error('加载用户详情失败')
@@ -465,31 +440,6 @@ export default {
 .protected-tip { margin-left: 8px; color: #909399; font-size: 12px; }
 .role-tag { margin: 0 4px 4px 0; }
 .text-muted { color: #909399; }
-.dept-tree-panel { max-height: 320px; display: flex; flex-direction: column; gap: 8px; }
-.dept-select-tree {
-  max-height: 260px;
-  overflow-y: auto;
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
-  padding: 4px 0;
-}
-.dept-tree-node {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.35;
-  padding: 2px 0;
-  cursor: pointer;
-  flex: 1;
-}
-.dept-tree-node__name { font-size: 13px; color: #303133; }
-.dept-tree-node__path { font-size: 11px; color: #909399; margin-top: 2px; }
-.dept-tree-input >>> .el-input__inner { cursor: pointer; }
-.dept-clear-icon { cursor: pointer; }
-.dept-clear-icon:hover { color: #909399; }
 .form-tip { margin-top: 4px; font-size: 12px; color: #909399; line-height: 1.4; }
-</style>
-
-<style>
-/* popover 挂载在 body，需非 scoped */
-.user-dept-tree-popover { padding: 12px !important; }
+.dept-warn { color: #e6a23c; }
 </style>
