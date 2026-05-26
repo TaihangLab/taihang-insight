@@ -1,3 +1,6 @@
+/*
+ * @Descripttion: 
+ */
 'use strict'
 // Template version: 1.3.1
 // see http://vuejs-templates.github.io/webpack for documentation.
@@ -13,6 +16,11 @@ module.exports = {
   API_BASE_URL: API_BASE_URL,
   dev: {
     // Paths
+    watchOptions: {
+      ignored: /node_modules/, // 忽略监听 node_modules
+      aggregateTimeout: 300,    // 文件变化后延迟300ms再构建
+      poll: false               // 不使用轮询模式（默认）
+    },
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
     proxyTable: {},  // 不再使用代理，前端直接通过 baseURL 访问
