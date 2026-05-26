@@ -17,9 +17,15 @@ module.exports = {
   dev: {
     // Paths
     watchOptions: {
-      ignored: /node_modules/, // 忽略监听 node_modules
-      aggregateTimeout: 300,    // 文件变化后延迟300ms再构建
-      poll: false               // 不使用轮询模式（默认）
+      ignored: [
+        /node_modules/,
+        /\.git/,
+        /\.history/,
+        /dist/,
+        /static/
+      ],
+      aggregateTimeout: 500,
+      poll: false // 先 false，不行再设 1000
     },
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
