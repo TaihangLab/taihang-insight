@@ -10,7 +10,7 @@ import request from '@/utils/request'
  */
 export function getPushStreamList(params) {
    return request({
-    url: '/api/v1/wvp/api/push/list',
+    url: '/api/push/list',
     method: 'get',
     params: params
   })
@@ -28,7 +28,7 @@ export function getPushStreamList(params) {
  */
 export function getPushList(params) {
   return request({
-    url: '/api/v1/wvp/api/push/list',
+    url: '/api/push/list',
     method: 'get',
     params: params
   })
@@ -40,7 +40,7 @@ export function getPushList(params) {
  */
 export function addPushStream(data) {
   return request({
-    url: '/api/v1/wvp/api/push/save',
+    url: '/api/push/save',
     method: 'post',
     data: data
   })
@@ -52,7 +52,7 @@ export function addPushStream(data) {
  */
 export function updatePushStream(data) {
   return request({
-    url: '/api/v1/wvp/api/push/save',
+    url: '/api/push/save',
     method: 'post',
     data: data
   })
@@ -65,7 +65,7 @@ export function updatePushStream(data) {
  */
 export function deletePushStream(app, stream) {
   return request({
-    url: '/api/v1/wvp/api/push/del',
+    url: '/api/push/del',
     method: 'delete',
     params: { app, stream }
   })
@@ -77,7 +77,7 @@ export function deletePushStream(app, stream) {
  */
 export function getStreamProxyList(params) {
   return request({
-    url: '/api/v1/wvp/api/proxy/list',
+    url: '/api/proxy/list',
     method: 'get',
     params: params
   })
@@ -89,7 +89,7 @@ export function getStreamProxyList(params) {
  */
 export function addStreamProxy(data) {
   return request({
-    url: '/api/v1/wvp/api/proxy/save',
+    url: '/api/proxy/save',
     method: 'post',
     data: data
   })
@@ -101,7 +101,7 @@ export function addStreamProxy(data) {
  */
 export function updateStreamProxy(data) {
   return request({
-    url: '/api/v1/wvp/api/proxy/save',
+    url: '/api/proxy/save',
     method: 'post',
     data: data
   })
@@ -114,7 +114,7 @@ export function updateStreamProxy(data) {
  */
 export function deleteStreamProxy(app, stream) {
   return request({
-    url: '/api/v1/wvp/api/proxy/del',
+    url: '/api/proxy/del',
     method: 'delete',
     params: { app, stream }
   })
@@ -127,7 +127,7 @@ export function deleteStreamProxy(app, stream) {
  */
 export function enableStreamProxy(app, stream) {
   return request({
-    url: '/api/v1/wvp/api/proxy/start',
+    url: '/api/proxy/start',
     method: 'get',
     params: { app, stream }
   })
@@ -140,7 +140,7 @@ export function enableStreamProxy(app, stream) {
  */
 export function disableStreamProxy(app, stream) {
   return request({
-    url: '/api/v1/wvp/api/proxy/stop',
+    url: '/api/proxy/stop',
     method: 'get',
     params: { app, stream }
   })
@@ -153,7 +153,7 @@ export function disableStreamProxy(app, stream) {
  */
 export function startPushStream(id) {
   return request({
-    url: '/api/v1/wvp/api/push/start',
+    url: '/api/push/start',
     method: 'get',
     params: { id }
   })
@@ -166,7 +166,7 @@ export function startPushStream(id) {
  */
 export function stopPushStream(id) {
   return request({
-    url: '/api/v1/wvp/api/push/stop',
+    url: '/api/push/stop',
     method: 'get',
     params: { id }
   })
@@ -180,7 +180,7 @@ export function stopPushStream(id) {
  */
 export function removePushStream(id, mediaServerId) {
   return request({
-    url: '/api/v1/wvp/api/push/del',
+    url: '/api/push/del',
     method: 'delete',
     params: { id, mediaServerId }
   })
@@ -194,7 +194,7 @@ export function removePushStream(id, mediaServerId) {
  */
 export function batchRemovePushStream(ids, mediaServerId) {
   return request({
-    url: '/api/v1/wvp/api/push/batchDel',
+    url: '/api/push/batchDel',
     method: 'delete',
     params: { ids: ids.join(','), mediaServerId }
   })
@@ -208,7 +208,7 @@ export function batchRemovePushStream(ids, mediaServerId) {
  */
 export function deleteStreamProxyById(id, mediaServerId) {
   return request({
-    url: '/api/v1/wvp/api/proxy/del',
+    url: '/api/proxy/del',
     method: 'delete',
     params: { id, mediaServerId }
   })
@@ -222,7 +222,7 @@ export function deleteStreamProxyById(id, mediaServerId) {
  */
 export function batchRemoveStreamProxy(ids, mediaServerId) {
   return request({
-    url: '/api/v1/wvp/api/proxy/batchDel',
+    url: '/api/proxy/batchDel',
     method: 'delete',
     params: { ids: ids.join(','), mediaServerId }
   })
@@ -236,7 +236,7 @@ export function batchRemoveStreamProxy(ids, mediaServerId) {
  */
 export function startStreamProxyById(id, mediaServerId) {
   return request({
-    url: '/api/v1/wvp/api/proxy/start',
+    url: '/api/proxy/start',
     method: 'get',
     params: { id, mediaServerId }
   })
@@ -250,7 +250,7 @@ export function startStreamProxyById(id, mediaServerId) {
  */
 export function stopStreamProxyById(id, mediaServerId) {
   return request({
-    url: '/api/v1/wvp/api/proxy/stop',
+    url: '/api/proxy/stop',
     method: 'get',
     params: { id, mediaServerId }
   })

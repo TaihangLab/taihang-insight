@@ -13,7 +13,7 @@ import request from '@/utils/request'
  */
 export function getOnvifRtsp(params) {
   return request({
-    url: '/api/v1/onvif/rtsp',
+    url: '/api/onvif/rtsp',
     method: 'get',
     params: params
   })

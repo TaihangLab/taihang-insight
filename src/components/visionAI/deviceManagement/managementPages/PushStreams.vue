@@ -423,6 +423,10 @@ export default {
     },
 
     playPush: function (row) {
+      if (!row.id) {
+        this.$message.error("推流ID不可为NULL");
+        return;
+      }
       row.playLoading = true;
       startPushStream(row.id).then((res) =>{
         if (res.data.code === 0 ) {
@@ -437,6 +441,11 @@ export default {
         console.error(error);
       }).finally(()=>{
         row.playLoading = false;
+        // 修复由于列表定时刷新导致的转圈状态无法消除的问题
+        const currentItem = this.pushList.find(item => item.app === row.app && item.stream === row.stream);
+        if (currentItem) {
+          currentItem.playLoading = false;
+        }
       })
     },
     

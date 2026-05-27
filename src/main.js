@@ -75,7 +75,7 @@ new Vue({
     if (!this.$myServerId) {
       axios({
         method: 'get',
-        url: config.API_BASE_URL + `/api/v1/server/system/configInfo`,
+        url: config.API_BASE_URL + `/api/v1/wvp/api/server/system/configInfo`,
       }).then( (res)=> {
         if (res.data.code === 0) {
           console.log(res.data)
