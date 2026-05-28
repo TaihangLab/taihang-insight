@@ -40,13 +40,17 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     proxy: config.dev.proxyTable,
     quiet: true, // necessary for FriendlyErrorsPlugin
     watchOptions: {
-      poll: config.dev.poll,
+      poll: 1000, // config.dev.poll
       ignored: [
         /node_modules/,
         /\.git/,
         /\.history/,
         /dist/,
-        /static/
+        /static/,
+        /\.vscode/,
+        /\.idea/,
+        /logs/,
+        /tmp/,
       ],
     }
   },
