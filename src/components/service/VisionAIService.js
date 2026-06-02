@@ -4081,6 +4081,77 @@ export const systemMonitorAPI = {
   }
 };
 
+/**
+ * 技能图编排 API - 节点拖拽式创建技能
+ */
+export const skillGraphAPI = {
+  // 节点面板：列出所有可用节点类型
+  getNodeTypes() {
+    return visionAIAxios.get('/api/v1/skill-graphs/node-types');
+  },
+  // 校验技能图（不落库）
+  validateGraph(graphJson) {
+    return visionAIAxios.post('/api/v1/skill-graphs/validate', { graph_json: graphJson });
+  },
+  // 在线试跑（image_base64 可选）
+  testRun(graphJson, imageBase64, roi) {
+    return visionAIAxios.post('/api/v1/skill-graphs/test-run', {
+      graph_json: graphJson, image_base64: imageBase64, roi: roi
+    });
+  },
+  // 列表
+  listGraphs(params) {
+    return visionAIAxios.get('/api/v1/skill-graphs', { params });
+  },
+  // 创建
+  createGraph(data) {
+    return visionAIAxios.post('/api/v1/skill-graphs', data);
+  },
+  // 详情
+  getGraph(skillId) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}`);
+  },
+  // 更新
+  updateGraph(skillId, data) {
+    return visionAIAxios.put(`/api/v1/skill-graphs/${skillId}`, data);
+  },
+  // 删除
+  deleteGraph(skillId) {
+    return visionAIAxios.delete(`/api/v1/skill-graphs/${skillId}`);
+  },
+  // 发布 / 下线
+  publishGraph(skillId) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/publish`);
+  },
+  unpublishGraph(skillId) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/unpublish`);
+  },
+  // 效果评测：用一批标注样本给技能图打分
+  evaluate(graphJson, samples) {
+    return visionAIAxios.post('/api/v1/skill-graphs/evaluate', {
+      graph_json: graphJson, samples: samples
+    });
+  },
+  // 历史版本列表
+  listVersions(skillId) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}/versions`);
+  },
+  // 回滚到指定版本
+  rollbackVersion(skillId, version) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/rollback`, { version: version });
+  },
+  // 调用监控统计
+  callStats(skillId, recent) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}/stats`, { params: { recent: recent || 20 } });
+  },
+  // 独立调用（传图分析，仅已发布）
+  invokeSkill(skillId, imageBase64, roi, source) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/invoke`, {
+      image_base64: imageBase64, roi: roi, source: source
+    });
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
@@ -4095,5 +4166,6 @@ export default {
   realtimeDetectionAPI,
   mlPipelineAPI,
   systemMonitorAPI,
+  skillGraphAPI,
   visionAIAxios
 };

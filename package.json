@@ -14,6 +14,8 @@
     "@femessage/log-viewer": "^1.5.0",
     "@jiaminghi/data-view": "^2.10.0",
     "@liveqing/liveplayer": "^2.7.10",
+    "@logicflow/core": "^1.2.28",
+    "@logicflow/extension": "^1.2.28",
     "@wchbrad/vue-easy-tree": "^1.0.12",
     "axios": "^0.24.0",
     "byte-weektime-picker": "^1.1.1",

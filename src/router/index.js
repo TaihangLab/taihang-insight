@@ -28,6 +28,8 @@ const multimodalLlmSkills = () => import('../components/visionAI/skillManagement
 const multimodalCreateDetail = () => import('../components/visionAI/skillManagement/LlmSkillCreateDialogDetail.vue')
 const multimodalReview = () => import('../components/visionAI/skillManagement/multimodalReview.vue')
 const multimodalReviewCreate = () => import('../components/visionAI/skillManagement/multimodalReviewCreate.vue')
+const skillGraphList = () => import('../components/visionAI/skillManagement/skillGraph/SkillGraphList.vue')
+const skillGraphEditor = () => import('../components/visionAI/skillManagement/skillGraph/SkillGraphEditor.vue')
 const logRecords = () => import('../components/visionAI/smartControl/logRecords.vue')
 const edgeServer = () => import('../components/visionAI/edgeManagement/edgeServer.vue')
 const edgeBox = () => import('../components/visionAI/edgeManagement/edgeBox.vue')
@@ -142,6 +144,16 @@ export default new VueRouter({
           path: '/skillManage/multimodalReviewCreate',
           name: 'multimodalReviewCreate',
           component: multimodalReviewCreate,
+        },
+        {
+          path: '/skillManage/skillGraphList',
+          name: 'skillGraphList',
+          component: skillGraphList,
+        },
+        {
+          path: '/skillManage/skillGraphEditor',
+          name: 'skillGraphEditor',
+          component: skillGraphEditor,
         },
         {
           path: '/intelligentControl/logRecord',

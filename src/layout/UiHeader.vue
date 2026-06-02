@@ -67,6 +67,7 @@
         <el-menu-item index="/skillManage/deviceSkills">视觉模型技能</el-menu-item>
         <el-menu-item index="/skillManage/multimodalLlmSkills">多模态大模型技能</el-menu-item>
         <el-menu-item index="/skillManage/multimodalReview">多模态大模型复判</el-menu-item>
+        <el-menu-item index="/skillManage/skillGraphList">可视化技能编排</el-menu-item>
       </el-submenu>
 
       <!-- ML Pipeline 模块（模型工厂） -->
