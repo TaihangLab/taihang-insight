@@ -937,7 +937,8 @@ export default {
       // 🆕 保存摄像头ID映射
       this.$set(this.cameraIdMapping, idxTmp, channelId);
       
-      this.loading = true;
+      // 注意：拉流只在对应视频格子里显示"正在拉流..."提示，
+      // 不再使用整页 v-loading 遮罩，避免通道离线/不存在时整页转圈卡死
 
       try {
         console.log('🎬 开始播放通道 - 通道ID:', channelId, '播放器索引:', idxTmp);
@@ -980,10 +981,10 @@ export default {
         }
       } catch (error) {
         console.error('❌ 播放通道异常:', error);
-        const errorMsg = error.message || '网络错误';
+        // axios 超时(ECONNABORTED)时给出更友好的提示
+        const isTimeout = error.code === 'ECONNABORTED' || /timeout/i.test(error.message || '');
+        const errorMsg = isTimeout ? '拉流超时，通道可能已离线或不存在' : (error.message || '网络错误');
         this.$set(this.videoTip, idxTmp, "播放失败: " + errorMsg);
-      } finally {
-        this.loading = false;
       }
     },
     // 获取视频状态类

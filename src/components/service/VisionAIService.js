@@ -3791,7 +3791,9 @@ export const realtimeMonitorAPI = {
   playChannel(channelId) {
     console.log('📤 播放通道 - 通道ID:', channelId);
 
-    return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`)
+    // 单独设置较短超时：通道离线/不存在时后端可能长时间挂起，
+    // 这里快速失败，避免前端长时间等待
+    return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`, { timeout: 8000 })
       .then(response => {
         console.log('📥 播放通道成功:', response.data);
         return response;
