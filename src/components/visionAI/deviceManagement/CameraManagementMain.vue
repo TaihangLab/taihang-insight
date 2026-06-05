@@ -206,11 +206,13 @@ export default {
         this.currentComponent = menuConfig.component;
         this.currentMenuName = menuConfig.name;
         
-        // 更新路由（不刷新页面）
-        this.$router.replace({ 
-          name: 'CameraManagementMain', 
-          params: { type: index } 
-        });
+        // 更新路由（不刷新页面），忽略重复导航的报错
+        if (this.$route.params.type !== index) {
+          this.$router.replace({
+            name: 'CameraManagementMain',
+            params: { type: index }
+          }).catch(() => {});
+        }
       } else {
         console.warn('未找到对应的组件配置:', index);
       }
@@ -223,7 +225,7 @@ export default {
       this.currentMenuName = '';
       
       // 更新路由
-      this.$router.replace({ name: 'CameraManagementMain' });
+      this.$router.replace({ name: 'CameraManagementMain' }).catch(() => {});
     },
 
     // 获取功能图标
@@ -259,7 +261,7 @@ export default {
       this.currentMenuName = '';
       
       // 更新路由
-      this.$router.replace({ name: 'CameraManagementMain' });
+      this.$router.replace({ name: 'CameraManagementMain' }).catch(() => {});
     }
   }
 }

@@ -217,9 +217,7 @@ export default {
 		getServerList: function(){
 			this.loading = true;
 			this.mediaServerObj.getMediaServerList((data)=>{
-				this.mediaServerList = data.data;
-				this.loading = false;
-			}).catch(() => {
+				this.mediaServerList = (data && data.data) ? data.data : [];
 				this.loading = false;
 			});
 		},
