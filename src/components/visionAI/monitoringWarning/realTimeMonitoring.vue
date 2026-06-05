@@ -132,8 +132,9 @@
                         v-if="selectedAITasks[index-1] && detectionResults[index-1]"
                         :container-width="getVideoWidth(index-1)"
                         :container-height="getVideoHeight(index-1)"
-                        :video-width="getActualVideoWidth(index-1)"
-                        :video-height="getActualVideoHeight(index-1)"
+                        :video-width="videoResolutions[index-1] ? videoResolutions[index-1].width : 1920"
+                        :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
+                        :frame-timestamp="detectionResults[index-1].frame_timestamp || 0"
                         :detections="detectionResults[index-1].detections || []">
                       </detection-overlay>
                     </div>
@@ -219,6 +220,7 @@
                         :container-height="getVideoHeight(index-1)"
                         :video-width="videoResolutions[index-1] ? videoResolutions[index-1].width : 1920"
                         :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
+                        :frame-timestamp="detectionResults[index-1].frame_timestamp || 0"
                         :detections="detectionResults[index-1].detections || []">
                       </detection-overlay>
                     </div>
@@ -3017,7 +3019,8 @@ export default {
         onMessage: (parsed) => {
           this.$set(this.detectionResults, index, {
             detections: parsed.detections,
-            frame_size: parsed.frameSize
+            frame_size: parsed.frameSize,
+            frame_timestamp: parsed.frameTimestamp
           })
           const now = new Date()
           this.$set(this.detectionUpdateTime, index,
@@ -3081,56 +3084,6 @@ export default {
         return ref[0].clientHeight || 480
       }
       return 480
-    },
-    
-    /**
-     * 获取实际视频分辨率宽度
-     */
-    getActualVideoWidth(index) {
-      const playerRef = this.$refs[`player${index}`]
-      if (playerRef && playerRef[0]) {
-        const playerEl = playerRef[0].$el
-        if (playerEl) {
-          const videoEl = playerEl.querySelector('video') || playerEl.querySelector('canvas')
-          if (videoEl && videoEl.videoWidth) {
-            return videoEl.videoWidth
-          }
-          if (videoEl && videoEl.width) {
-            return videoEl.width
-          }
-        }
-      }
-      
-      // 降级方案：使用后端返回的分辨率
-      if (this.videoResolutions[index]) {
-        return this.videoResolutions[index].width
-      }
-      return 1920
-    },
-    
-    /**
-     * 获取实际视频分辨率高度
-     */
-    getActualVideoHeight(index) {
-      const playerRef = this.$refs[`player${index}`]
-      if (playerRef && playerRef[0]) {
-        const playerEl = playerRef[0].$el
-        if (playerEl) {
-          const videoEl = playerEl.querySelector('video') || playerEl.querySelector('canvas')
-          if (videoEl && videoEl.videoHeight) {
-            return videoEl.videoHeight
-          }
-          if (videoEl && videoEl.height) {
-            return videoEl.height
-          }
-        }
-      }
-      
-      // 降级方案：使用后端返回的分辨率
-      if (this.videoResolutions[index]) {
-        return this.videoResolutions[index].height
-      }
-      return 1080
     },
     
     /**

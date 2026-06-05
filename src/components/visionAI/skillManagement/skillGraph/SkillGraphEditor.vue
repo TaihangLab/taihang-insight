@@ -2,49 +2,73 @@
   <div class="sg-editor">
     <!-- 顶部工具栏 -->
     <div class="sg-toolbar">
-      <el-button icon="el-icon-back" size="small" @click="goBack">返回</el-button>
-      <el-input v-model="skillName" size="small" placeholder="技能名称" style="width: 200px; margin: 0 8px;" />
-      <el-input v-model="skillId" size="small" placeholder="技能ID(英文)" :disabled="isEdit" style="width: 160px;" />
+      <i class="el-icon-back sg-back" title="返回" @click="goBack"></i>
+      <div class="sg-title-block">
+        <el-input v-model="skillName" placeholder="未命名技能" class="sg-name-input" />
+        <el-input v-model="skillId" placeholder="技能ID(英文)" :disabled="isEdit" class="sg-id-input" />
+      </div>
       <div class="sg-toolbar-right">
-        <el-button-group style="margin-right:8px">
-          <el-button size="small" icon="el-icon-zoom-in" title="放大" @click="zoom(true)" />
-          <el-button size="small" icon="el-icon-zoom-out" title="缩小" @click="zoom(false)" />
-          <el-button size="small" icon="el-icon-rank" title="适应画布" @click="fitView" />
-        </el-button-group>
-        <el-button size="small" @click="doValidate">校验</el-button>
-        <el-button size="small" type="primary" @click="doTestRun">试跑</el-button>
-        <el-button size="small" @click="openEval">评测</el-button>
-        <el-button size="small" type="success" @click="doSave">保存草稿</el-button>
-        <el-button size="small" type="warning" @click="doPublish" :disabled="!isEdit">发布</el-button>
+        <el-button class="sg-tb-btn" size="small" plain @click="doValidate">校验</el-button>
+        <el-button class="sg-tb-btn" size="small" icon="el-icon-video-play" plain @click="doTestRun">试运行</el-button>
+        <el-button class="sg-tb-btn" size="small" icon="el-icon-data-analysis" plain @click="openEval">评测</el-button>
+        <el-button class="sg-tb-btn" size="small" icon="el-icon-folder-checked" plain @click="doSave">预发布</el-button>
+        <el-button class="sg-tb-btn sg-tb-primary" size="small" type="primary" icon="el-icon-position"
+                   :disabled="!isEdit" @click="doPublish">发布</el-button>
       </div>
     </div>
 
     <div class="sg-body">
       <!-- 左侧：节点面板 -->
       <div class="sg-palette">
-        <div class="sg-palette-title">节点面板</div>
-        <div v-for="(group, cat) in groupedNodeTypes" :key="cat" class="sg-palette-group">
+        <div class="sg-palette-search">
+          <i class="el-icon-search"></i>
+          <input v-model="palKeyword" placeholder="搜索节点名称或描述" />
+        </div>
+        <div v-for="(group, cat) in filteredNodeTypes" :key="cat" class="sg-palette-group">
           <div class="sg-palette-cat">{{ categoryName(cat) }}</div>
           <div
             v-for="nt in group"
             :key="nt.type"
             class="sg-palette-item"
             :title="nt.description"
-            @click="addNode(nt)"
+            @mousedown="startDragNode(nt)"
           >
-            <i class="el-icon-plus"></i> {{ nt.name_zh }}
+            <span class="sg-pal-ic" :style="palIconStyle(nt)"><i :class="palIconClass(nt)"></i></span>
+            <div class="sg-pal-meta">
+              <div class="sg-pal-name">{{ nt.name_zh }}<span class="sg-pal-ver">V1</span></div>
+              <div class="sg-pal-desc">{{ nt.description }}</div>
+            </div>
           </div>
         </div>
-        <div class="sg-tip">点击节点添加到画布；拖动节点连接线即可串联。</div>
+        <div class="sg-tip">从左侧拖动节点到画布；拖动节点锚点连线即可串联。开始/结束节点已默认放置。</div>
       </div>
 
       <!-- 中间：画布 -->
-      <div ref="canvas" class="sg-canvas"></div>
+      <div class="sg-canvas-wrap">
+        <div ref="canvas" class="sg-canvas"></div>
 
-      <!-- 右侧：配置面板 -->
-      <div class="sg-config">
-        <div class="sg-config-title">{{ selectedNode ? '节点配置' : '请选择一个节点' }}</div>
-        <div v-if="selectedNode" class="sg-config-body">
+        <!-- 底部缩放工具条 -->
+        <div class="sg-zoombar">
+          <i class="el-icon-aim" title="适应画布" @click="fitView"></i>
+          <span class="sg-zoombar-sep"></span>
+          <i class="el-icon-minus" title="缩小" @click="zoom(false)"></i>
+          <span class="sg-zoombar-pct" title="重置缩放" @click="resetZoom">{{ zoomPct }}%</span>
+          <i class="el-icon-plus" title="放大" @click="zoom(true)"></i>
+        </div>
+
+        <!-- 右侧：配置抽屉（拖入节点/选中节点时弹出，点击空白缩回） -->
+        <div class="sg-config" :class="{ 'is-open': !!selectedNode }">
+          <div v-if="selectedNode" class="sg-config-head">
+            <span class="sg-config-ic" :style="{ background: selColor }"><i :class="selIcon"></i></span>
+            <div class="sg-config-hd-meta">
+              <div class="sg-config-hd-title">
+                {{ form._name || selName }}<span class="sg-config-ver">V1</span>
+              </div>
+              <div class="sg-config-hd-desc">{{ selDesc }}</div>
+            </div>
+            <i class="el-icon-close sg-config-close" @click="closeConfig"></i>
+          </div>
+          <div v-if="selectedNode" class="sg-config-body">
           <el-form label-position="top" size="small">
             <el-form-item label="节点名称">
               <el-input v-model="form._name" @change="applyConfig" />
@@ -207,14 +231,39 @@
               </el-form-item>
             </template>
 
-            <!-- 开始节点 -->
+            <!-- 开始节点：定义技能运行需要输入的信息 -->
             <template v-else-if="selectedType === 'start'">
-              <div class="sg-tip">开始节点输出当前帧图像与电子围栏，无需配置。</div>
+              <div class="sg-params">
+                <div class="sg-params-head">
+                  <span>输入</span>
+                  <i class="el-icon-plus sg-params-add" title="添加参数" @click="addStartParam"></i>
+                </div>
+                <div class="sg-params-cols">
+                  <span class="c-name">参数名</span>
+                  <span class="c-type">参数类型</span>
+                  <span class="c-req">必填</span>
+                  <span class="c-act"></span>
+                </div>
+                <div v-for="(pp, pi) in form.input_params" :key="pi" class="sg-param-row">
+                  <el-input v-model="pp.name" size="mini" maxlength="30" placeholder="请输入参数名"
+                            class="c-name" @input="applyConfig" />
+                  <el-select v-model="pp.type" size="mini" class="c-type" @change="applyConfig">
+                    <el-option v-for="t in startParamTypes" :key="t.v" :label="t.l" :value="t.v" />
+                  </el-select>
+                  <el-checkbox v-model="pp.required" class="c-req" @change="applyConfig" />
+                  <i class="el-icon-remove-outline sg-param-del c-act" title="删除"
+                     @click="removeStartParam(pi)"></i>
+                </div>
+              </div>
+              <div class="sg-tip">开始节点定义技能运行所需的输入；其中 image 为当前帧图像。</div>
             </template>
 
-            <el-button type="danger" size="mini" icon="el-icon-delete" style="margin-top:12px"
+            <el-button v-if="selectedType !== 'start' && selectedType !== 'end'"
+                       type="danger" size="mini" icon="el-icon-delete" style="margin-top:12px"
                        @click="deleteSelected">删除此节点</el-button>
+            <div v-else class="sg-tip">开始/结束节点为固定节点，不可删除。</div>
           </el-form>
+        </div>
         </div>
       </div>
     </div>
@@ -283,33 +332,161 @@
 <script>
 import LogicFlow from '@logicflow/core'
 import '@logicflow/core/dist/style/index.css'
-import { RectNode, RectNodeModel } from '@logicflow/core'
+import { HtmlNode, HtmlNodeModel } from '@logicflow/core'
 import { skillGraphAPI } from '@/components/service/VisionAIService.js'
 
 // 节点类型 -> 端口（用于自定义锚点）的缓存，由 node-types 接口填充
 const PORT_MAP = {}
 
-// 自定义节点：根据 inputPorts/outputPorts 生成左右命名锚点
-class SGNodeModel extends RectNodeModel {
-  setAttributes() {
-    this.width = 170
-    this.height = 46
-    this.radius = 6
+// 节点大类的主题色与图标
+const CAT_META = {
+  start: { color: '#16b777', icon: 'el-icon-video-play' },
+  model: { color: '#7c5cff', icon: 'el-icon-picture-outline' },
+  process: { color: '#2f7bff', icon: 'el-icon-set-up' },
+  judge: { color: '#13c2c2', icon: 'el-icon-sort' },
+  end: { color: '#f5566c', icon: 'el-icon-finished' },
+  other: { color: '#909399', icon: 'el-icon-cpu' }
+}
+// 具体节点类型的图标覆盖
+const TYPE_ICON = {
+  start: 'el-icon-video-play',
+  end: 'el-icon-finished',
+  detection_model: 'el-icon-picture-outline',
+  vlm_model: 'el-icon-cpu',
+  region_filter: 'el-icon-crop',
+  size_filter: 'el-icon-full-screen',
+  intersect: 'el-icon-connection',
+  line_crossing: 'el-icon-right',
+  distance: 'el-icon-rank',
+  dwell: 'el-icon-time',
+  count: 'el-icon-data-line',
+  judge: 'el-icon-sort'
+}
+// 端口类型 -> 展示标签与颜色
+const PT_META = {
+  Image: { label: '图片', color: '#2f7bff' },
+  Detection: { label: '目标', color: '#7c5cff' },
+  ROI: { label: '电子围栏', color: '#16b777' },
+  Tripwire: { label: '绊线', color: '#fa8c16' },
+  Number: { label: '数值', color: '#13c2c2' },
+  Boolean: { label: '布尔', color: '#eb2f96' },
+  String: { label: '文本', color: '#722ed1' },
+  Params: { label: '参数', color: '#faad14' },
+  Any: { label: '任意', color: '#909399' }
+}
+// 端口名 -> 友好中文（找不到则回退到端口类型标签 / 端口名）
+const PORT_LABELS = {
+  image: '图片', roi: '电子围栏', trigger: '触发',
+  targets: '目标', targets1: '目标1', targets2: '目标2',
+  target: '目标', target1: '目标1', target2: '目标2',
+  count: '数量', passed: '判定', value: '值', result: '结果',
+  detections: '检测目标', crossed: '越线目标', matched: '配对目标',
+  dwelled: '停留目标', output: '输出', filtered: '过滤结果'
+}
+
+// 开始节点的"输入参数"类型（对标参考产品）
+const PARAM_TYPE_META = {
+  String: { label: '文本', color: '#722ed1' },
+  TemplateString: { label: '模板', color: '#722ed1' },
+  Integer: { label: '整数', color: '#13c2c2' },
+  Double: { label: '小数', color: '#13c2c2' },
+  Boolean: { label: '布尔', color: '#eb2f96' },
+  Time: { label: '时间', color: '#fa8c16' },
+  Image: { label: '图片', color: '#2f7bff' },
+  Video: { label: '视频', color: '#2f7bff' },
+  Attribute: { label: '属性', color: '#7c5cff' }
+}
+
+function catMeta(cat) { return CAT_META[cat] || CAT_META.other }
+function typeIcon(type, cat) { return TYPE_ICON[type] || catMeta(cat).icon }
+function portLabel(name, type) {
+  return PORT_LABELS[name] || (PT_META[type] && PT_META[type].label) || name
+}
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
+  ))
+}
+function chipHtml(name, type) {
+  const meta = PT_META[type] || PT_META.Any
+  return `<span class="sgx-chip" style="--c:${meta.color}">`
+    + `<span class="sgx-chip-dot"></span>${escapeHtml(portLabel(name, type))}</span>`
+}
+// 开始节点的输入参数 -> chip
+function paramChipHtml(pp) {
+  const name = pp && pp.name
+  if (!name) {
+    return '<span class="sgx-chip sgx-chip-warn" style="--c:#f0a020">'
+      + '<i class="el-icon-warning-outline"></i>未定义</span>'
   }
-  getNodeStyle() {
-    const style = super.getNodeStyle()
-    if (this.properties && this.properties.isError) {
-      style.stroke = '#f56c6c'
-      style.strokeWidth = 2
+  const meta = PARAM_TYPE_META[pp.type] || PARAM_TYPE_META.String
+  return `<span class="sgx-chip" style="--c:${meta.color}">`
+    + `<span class="sgx-chip-dot"></span>${escapeHtml(PORT_LABELS[name] || name)}</span>`
+}
+
+// 自定义 HTML 卡片节点：左右命名锚点 + 卡片样式
+class SGNodeModel extends HtmlNodeModel {
+  setAttributes() {
+    const p = this.properties || {}
+    this.width = 248
+    if (p.nodeType === 'start') {
+      const n = (((p.config || {}).input_params) || []).length || 1
+      this.height = 18 + 40 + (12 + Math.ceil(n / 2) * 26)
+      return
     }
+    if (p.nodeType === 'end') {
+      this.height = 18 + 40 + (12 + 26)
+      return
+    }
+    const inCount = (p.inputPorts || []).length + (p.dynamic ? 1 : 0)
+    const outCount = (p.outputPorts || []).length
+    const inLines = inCount ? Math.ceil(inCount / 2) : 0
+    const outLines = outCount ? Math.ceil(outCount / 2) : 0
+    this.height = 18 + 40
+      + (inCount ? (12 + inLines * 26) : 0)
+      + (outCount ? (12 + outLines * 26) : 0)
+  }
+  getOutlineStyle() {
+    const style = super.getOutlineStyle()
+    const cat = (this.properties && this.properties.category) || 'other'
+    style.stroke = catMeta(cat).color
+    style.strokeWidth = 1
+    style.strokeDasharray = '4 4'
+    if (style.hover) { style.hover.stroke = catMeta(cat).color }
+    return style
+  }
+  getAnchorStyle(anchorInfo) {
+    const style = super.getAnchorStyle(anchorInfo)
+    const cat = (this.properties && this.properties.category) || 'other'
+    const c = catMeta(cat).color
+    style.r = 4
+    style.fill = '#fff'
+    style.stroke = c
+    style.strokeWidth = 2
+    style.hover = { r: 8, fill: c, fillOpacity: 0.2, stroke: c, strokeWidth: 2 }
+    return style
+  }
+  getAnchorLineStyle(anchorInfo) {
+    const style = super.getAnchorLineStyle(anchorInfo)
+    const cat = (this.properties && this.properties.category) || 'other'
+    style.stroke = catMeta(cat).color
     return style
   }
   getDefaultAnchor() {
     const { x, y, width, height, id } = this
     const props = this.properties || {}
+    const nodeType = props.nodeType
+    // 开始节点：仅一个输出锚点，位于底部中心
+    if (nodeType === 'start') {
+      const port = (props.outputPorts && props.outputPorts[0]) || 'image'
+      return [{ x, y: y + height / 2, id: `${id}__out__${port}`, type: 'outgoing', portName: port }]
+    }
+    // 结束节点：仅一个输入锚点，位于顶部中心
+    if (nodeType === 'end') {
+      return [{ x, y: y - height / 2, id: `${id}__in__*`, type: 'incoming', portName: '*' }]
+    }
     const outs = props.outputPorts || []
     const anchors = []
-    // 输入锚点：固定端口 + （动态输入节点）一个通用入口
     const inList = (props.inputPorts || []).slice()
     if (props.dynamic) inList.push('*')
     inList.forEach((p, i) => {
@@ -333,7 +510,57 @@ class SGNodeModel extends RectNodeModel {
     return anchors
   }
 }
-class SGNode extends RectNode {}
+
+class SGNode extends HtmlNode {
+  // 隐藏默认的 SVG 文本（标题改在 HTML 卡片里渲染，避免重影）
+  getText() { return '' }
+  setHtml(rootEl) {
+    const m = this.props ? this.props.model : this
+    const p = (m && m.properties) || {}
+    const cat = p.category || 'other'
+    const meta = catMeta(cat)
+    const title = (m && m.text && m.text.value) || p.name_zh || ''
+    const types = p.portTypes || {}
+    const cfg = p.config || {}
+
+    const row = (label, chips) => chips.length
+      ? `<div class="sgx-row"><span class="sgx-row-l">${label}</span><span class="sgx-chips">${chips.join('')}</span></div>`
+      : ''
+
+    let body = ''
+    if (p.nodeType === 'start') {
+      // 开始节点：展示用户定义的输入参数
+      const list = (cfg.input_params && cfg.input_params.length) ? cfg.input_params : [{}]
+      body = row('输入', list.map(paramChipHtml))
+    } else if (p.nodeType === 'end') {
+      // 结束节点：展示输出文本（未配置时占位）
+      const msg = cfg.message
+      body = `<div class="sgx-row"><span class="sgx-row-l">输出</span>`
+        + `<span class="sgx-out${msg ? '' : ' is-empty'}">${msg ? escapeHtml(msg) : '未配置输出'}</span></div>`
+    } else {
+      const ins = (p.inputPorts || []).map(n => chipHtml(n, types[n]))
+      if (p.dynamic) ins.push('<span class="sgx-chip sgx-chip-dyn" style="--c:#909399"><span class="sgx-chip-dot"></span>动态输入</span>')
+      const outs = (p.outputPorts || []).map(n => chipHtml(n, types[n]))
+      body = row('输入', ins) + row('输出', outs)
+    }
+
+    const html =
+      `<div class="sgx-card sgx-cat-${cat}">`
+      + `<div class="sgx-hd">`
+      + `<span class="sgx-ic" style="background:${meta.color}"><i class="${typeIcon(p.nodeType, cat)}"></i></span>`
+      + `<span class="sgx-ti">${escapeHtml(title)}</span>`
+      + `<span class="sgx-ver">V1</span>`
+      + `</div>`
+      + body
+      + `</div>`
+    // rootEl 是 <foreignObject>，必须用 HTML 命名空间的 div 承载内容，否则不渲染
+    while (rootEl.firstChild) rootEl.removeChild(rootEl.firstChild)
+    const wrap = document.createElement('div')
+    wrap.className = 'sgx-root' + (p.isError ? ' is-error' : '')
+    wrap.innerHTML = html
+    rootEl.appendChild(wrap)
+  }
+}
 
 export default {
   name: 'SkillGraphEditor',
@@ -346,6 +573,8 @@ export default {
       isEdit: false,
       selectedNode: null,
       selectedType: '',
+      zoomPct: 100,
+      palKeyword: '',
       form: {},
       testDialogVisible: false,
       testResultText: '',
@@ -353,6 +582,17 @@ export default {
       evalSamples: [],
       evalResult: null,
       evalLoading: false,
+      startParamTypes: [
+        { v: 'String', l: 'String' },
+        { v: 'TemplateString', l: 'TemplateString' },
+        { v: 'Integer', l: 'Integer' },
+        { v: 'Double', l: 'Double' },
+        { v: 'Boolean', l: 'Boolean' },
+        { v: 'Time', l: 'Time' },
+        { v: 'Image', l: 'Image' },
+        { v: 'Video', l: 'Video' },
+        { v: 'Attribute', l: 'Attribute' }
+      ],
       operators: [
         { v: 'eq', l: '等于' }, { v: 'ne', l: '不等于' },
         { v: 'gt', l: '大于' }, { v: 'gte', l: '大于等于' },
@@ -366,8 +606,40 @@ export default {
     groupedNodeTypes() {
       const g = {}
       this.nodeTypes.forEach(nt => {
+        // 开始/结束为固定节点，已默认放置在画布上，不在面板中提供拖拽
+        if (nt.category === 'start' || nt.category === 'end') return
         if (!g[nt.category]) g[nt.category] = []
         g[nt.category].push(nt)
+      })
+      return g
+    },
+    selCat() {
+      return (this.selectedNode && this.selectedNode.properties && this.selectedNode.properties.category) || this.selectedType || 'other'
+    },
+    selColor() {
+      return catMeta(this.selCat).color
+    },
+    selIcon() {
+      return typeIcon(this.selectedType, this.selCat)
+    },
+    selName() {
+      const p = this.selectedNode && this.selectedNode.properties
+      return (p && p.name_zh) || this.selectedType
+    },
+    selDesc() {
+      const nt = this.nodeTypes.find(n => n.type === this.selectedType)
+      return (nt && nt.description) || ''
+    },
+    filteredNodeTypes() {
+      const kw = (this.palKeyword || '').trim().toLowerCase()
+      if (!kw) return this.groupedNodeTypes
+      const g = {}
+      Object.keys(this.groupedNodeTypes).forEach(cat => {
+        const items = this.groupedNodeTypes[cat].filter(nt =>
+          (nt.name_zh || '').toLowerCase().includes(kw) ||
+          (nt.description || '').toLowerCase().includes(kw)
+        )
+        if (items.length) g[cat] = items
       })
       return g
     }
@@ -380,7 +652,11 @@ export default {
       this.isEdit = true
       this.skillId = sid
       await this.loadGraph(sid)
+    } else {
+      // 新建技能：默认放置开始 / 结束两个节点
+      this.addDefaultNodes()
     }
+    this.$nextTick(() => this.fitView())
     window.addEventListener('keydown', this.onKeydown)
   },
   beforeDestroy() {
@@ -388,7 +664,13 @@ export default {
   },
   methods: {
     categoryName(cat) {
-      return { start: '开始', model: '模型', process: '处理', judge: '判断', end: '结束' }[cat] || cat
+      return { start: '开始', model: '模型节点', process: '处理节点', judge: '判断节点', end: '结束' }[cat] || cat
+    },
+    palIconClass(nt) {
+      return typeIcon(nt.type, nt.category)
+    },
+    palIconStyle(nt) {
+      return { background: catMeta(nt.category).color }
     },
     async loadNodeTypes() {
       try {
@@ -398,8 +680,10 @@ export default {
           PORT_MAP[nt.type] = {
             inputs: Object.keys(nt.input_ports || {}),
             outputs: Object.keys(nt.output_ports || {}),
+            types: { ...(nt.input_ports || {}), ...(nt.output_ports || {}) },
             dynamic: !!nt.dynamic_inputs,
-            name_zh: nt.name_zh
+            name_zh: nt.name_zh,
+            category: nt.category
           }
         })
       } catch (e) {
@@ -409,19 +693,98 @@ export default {
     initLogicFlow() {
       this.lf = new LogicFlow({
         container: this.$refs.canvas,
-        grid: true,
+        grid: { size: 16, visible: true, type: 'dot', config: { color: '#d6dbe4', thickness: 1 } },
+        background: { backgroundColor: '#f6f8fb' },
         adjustEdge: true,
-        nodeTextEdit: false
+        nodeTextEdit: false,
+        edgeType: 'bezier'
       })
       this.lf.register({ type: 'sg-node', view: SGNode, model: SGNodeModel })
-      this.lf.setDefaultEdgeType('polyline')
+      this.lf.setTheme({
+        bezier: { stroke: '#b9c2d0', strokeWidth: 2, hoverStroke: '#7c5cff', selectedStroke: '#7c5cff' },
+        anchor: { stroke: '#7c5cff', fill: '#fff', r: 4, hover: { r: 8, fill: '#7c5cff', fillOpacity: 0.2, stroke: '#7c5cff', strokeWidth: 2 } },
+        nodeText: { color: '#1f2329', fontSize: 12 },
+        edgeText: { color: '#8a94a6', fontSize: 12, background: { fill: '#f6f8fb' } }
+      })
+      this.lf.setDefaultEdgeType('bezier')
       this.lf.render({ nodes: [], edges: [] })
 
       // 选中节点 → 打开配置面板
       this.lf.on('node:click', ({ data }) => this.onSelectNode(data))
-      this.lf.on('blank:click', () => { this.selectedNode = null; this.selectedType = '' })
+      // 点击空白区域 → 收起配置抽屉
+      this.lf.on('blank:click', () => this.closeConfig())
+      // 拖入新节点 → 自动选中并弹出配置抽屉
+      this.lf.on('node:dnd-add', (evt) => {
+        const data = (evt && evt.data) || evt
+        if (!data || !data.id) return
+        this.$nextTick(() => {
+          if (this.lf.selectElementById) this.lf.selectElementById(data.id, false)
+          this.onSelectNode(data)
+        })
+      })
       // 连线建立 → 记录端口名到边的 properties
       this.lf.on('edge:add', ({ data }) => this.onEdgeAdd(data))
+    },
+    // 默认放置开始 / 结束两个固定节点
+    addDefaultNodes() {
+      const sp = PORT_MAP['start'] || { inputs: [], outputs: [], dynamic: false }
+      const ep = PORT_MAP['end'] || { inputs: [], outputs: [], dynamic: false }
+      this.lf.addNode({
+        id: 'start',
+        type: 'sg-node',
+        x: 420,
+        y: 140,
+        text: sp.name_zh || '开始节点',
+        properties: {
+          nodeType: 'start',
+          name_zh: sp.name_zh || '开始节点',
+          category: sp.category || 'start',
+          inputPorts: sp.inputs,
+          outputPorts: sp.outputs,
+          portTypes: sp.types || {},
+          dynamic: sp.dynamic,
+          config: this.defaultConfig('start')
+        }
+      })
+      this.lf.addNode({
+        id: 'end',
+        type: 'sg-node',
+        x: 420,
+        y: 460,
+        text: ep.name_zh || '结束节点',
+        properties: {
+          nodeType: 'end',
+          name_zh: ep.name_zh || '结束节点',
+          category: ep.category || 'end',
+          inputPorts: ep.inputs,
+          outputPorts: ep.outputs,
+          portTypes: ep.types || {},
+          dynamic: ep.dynamic,
+          config: this.defaultConfig('end')
+        }
+      })
+    },
+    // 在面板上按下鼠标 → 启动拖拽，松开时落到画布
+    startDragNode(nt) {
+      const ports = PORT_MAP[nt.type] || { inputs: [], outputs: [], dynamic: false }
+      this.lf.dnd.startDrag({
+        type: 'sg-node',
+        text: nt.name_zh,
+        properties: {
+          nodeType: nt.type,
+          name_zh: nt.name_zh,
+          category: nt.category || ports.category,
+          inputPorts: ports.inputs,
+          outputPorts: ports.outputs,
+          portTypes: ports.types || {},
+          dynamic: ports.dynamic,
+          config: this.defaultConfig(nt.type)
+        }
+      })
+    },
+    closeConfig() {
+      this.selectedNode = null
+      this.selectedType = ''
     },
     onEdgeAdd(edge) {
       // 边的锚点id在 model 上，data 不一定带；从 model 取最稳
@@ -440,23 +803,6 @@ export default {
       const i = anchorId.indexOf(sep)
       return i >= 0 ? anchorId.substring(i + sep.length) : null
     },
-    addNode(nt) {
-      const ports = PORT_MAP[nt.type] || { inputs: [], outputs: [], dynamic: false }
-      this.lf.addNode({
-        type: 'sg-node',
-        x: 220 + Math.round(Math.random() * 180),
-        y: 120 + Math.round(Math.random() * 220),
-        text: nt.name_zh,
-        properties: {
-          nodeType: nt.type,
-          name_zh: nt.name_zh,
-          inputPorts: ports.inputs,
-          outputPorts: ports.outputs,
-          dynamic: ports.dynamic,
-          config: this.defaultConfig(nt.type)
-        }
-      })
-    },
     defaultConfig(type) {
       const d = {
         detection_model: { model_name: 'coco_detector', target_classes: ['person'], confidence_threshold: 0.5 },
@@ -469,7 +815,7 @@ export default {
         dwell: { min_seconds: 5, max_move: 50 },
         judge: { conditions: { condition_groups: [{ conditions: [], relation: 'all' }], global_relation: 'or' }, duration: 0, buffer: 0 },
         end: { message: '' },
-        start: { params: {} }
+        start: { params: {}, input_params: [{ name: 'image', type: 'Image', required: true }] }
       }
       return d[type] || {}
     },
@@ -521,8 +867,22 @@ export default {
         f.buffer = cfg.buffer || 0
       } else if (this.selectedType === 'end') {
         f.message = cfg.message || ''
+      } else if (this.selectedType === 'start') {
+        const list = (cfg.input_params || []).map(pp => ({
+          name: pp.name || '', type: pp.type || 'String', required: !!pp.required
+        }))
+        f.input_params = list.length ? list : [{ name: 'image', type: 'Image', required: true }]
       }
       this.form = f
+    },
+    addStartParam() {
+      if (!this.form.input_params) this.$set(this.form, 'input_params', [])
+      this.form.input_params.push({ name: '', type: 'String', required: false })
+      this.applyConfig()
+    },
+    removeStartParam(pi) {
+      this.form.input_params.splice(pi, 1)
+      this.applyConfig()
     },
     addGroup() {
       if (!this.form.groups) this.$set(this.form, 'groups', [])
@@ -591,26 +951,48 @@ export default {
       } else if (t === 'end') {
         cfg.message = this.form.message
       } else if (t === 'start') {
-        cfg.params = {}
+        const list = (this.form.input_params || []).map(pp => ({
+          name: (pp.name || '').trim(), type: pp.type || 'String', required: !!pp.required
+        }))
+        cfg.input_params = list
+        // image / roi 由开始节点内置输出，自定义参数才进 params 字典（后端用）
+        const params = {}
+        list.forEach(pp => { if (pp.name && pp.name !== 'image' && pp.name !== 'roi') params[pp.name] = '' })
+        cfg.params = params
       }
       const props = this.selectedNode.properties || {}
       props.config = cfg
-      this.lf.setProperties(id, props)
+      // 先更新文本，再 setProperties 触发 HTML 节点重渲染，使标题改名即时生效
       if (this.form._name) {
         this.lf.updateText(id, this.form._name)
+        props.name_zh = this.form._name
       }
+      this.lf.setProperties(id, props)
     },
     deleteSelected() {
       if (!this.selectedNode) return
+      if (this.selectedType === 'start' || this.selectedType === 'end') {
+        this.$message.warning('开始/结束节点不可删除')
+        return
+      }
       this.lf.deleteNode(this.selectedNode.id)
       this.selectedNode = null
       this.selectedType = ''
     },
     zoom(zoomIn) {
-      if (this.lf) this.lf.zoom(zoomIn)
+      if (this.lf) { this.lf.zoom(zoomIn); this.syncZoom() }
+    },
+    resetZoom() {
+      if (this.lf) { this.lf.resetZoom(); this.syncZoom() }
     },
     fitView() {
-      if (this.lf) this.lf.fitView(40, 40)
+      if (this.lf) { this.lf.fitView(60, 60); this.syncZoom() }
+    },
+    syncZoom() {
+      try {
+        const t = this.lf && this.lf.getTransform && this.lf.getTransform()
+        if (t && t.SCALE_X) this.zoomPct = Math.round(t.SCALE_X * 100)
+      } catch (e) { /* ignore */ }
     },
     // Delete/Backspace 删除选中的节点或连线（输入框内不拦截）
     onKeydown(e) {
@@ -621,7 +1003,11 @@ export default {
       const els = this.lf.getSelectElements ? this.lf.getSelectElements(true) : { nodes: [], edges: [] }
       let removed = false
       ;(els.edges || []).forEach(ed => { this.lf.deleteEdge(ed.id); removed = true })
-      ;(els.nodes || []).forEach(n => { this.lf.deleteNode(n.id); removed = true })
+      ;(els.nodes || []).forEach(n => {
+        const t = n.properties && n.properties.nodeType
+        if (t === 'start' || t === 'end') return  // 固定节点不可删除
+        this.lf.deleteNode(n.id); removed = true
+      })
       if (removed) {
         e.preventDefault()
         this.selectedNode = null
@@ -693,8 +1079,10 @@ export default {
           properties: {
             nodeType: n.type,
             name_zh: ports.name_zh || n.type,
+            category: ports.category || n.type,
             inputPorts: ports.inputs,
             outputPorts: ports.outputs,
+            portTypes: ports.types || {},
             dynamic: ports.dynamic,
             config: n.config || {}
           }
@@ -708,7 +1096,7 @@ export default {
           : (tPorts.dynamic ? '*' : e.target_port)
         return {
           id: e.id || undefined,
-          type: 'polyline',
+          type: 'bezier',
           sourceNodeId: e.source,
           targetNodeId: e.target,
           sourceAnchorId: `${e.source}__out__${e.source_port}`,
@@ -724,8 +1112,10 @@ export default {
         const d = res.data
         this.skillName = d.skill_name
         this.skillId = d.skill_id
-        if (d.graph_json && d.graph_json.nodes) {
+        if (d.graph_json && d.graph_json.nodes && d.graph_json.nodes.length) {
           this.fromGraphDef(d.graph_json)
+        } else {
+          this.addDefaultNodes()
         }
       } catch (e) {
         this.$message.error('加载技能图失败')
@@ -826,23 +1216,95 @@ export default {
 </script>
 
 <style scoped>
-.sg-editor { display: flex; flex-direction: column; height: calc(100vh - 84px); background: #f5f7fa; }
-.sg-toolbar { display: flex; align-items: center; padding: 8px 12px; background: #fff; border-bottom: 1px solid #e4e7ed; }
-.sg-toolbar-right { margin-left: auto; }
+.sg-editor { display: flex; flex-direction: column; height: calc(100vh - 84px); background: #f1f3f7; }
+/* 顶部工具栏 */
+.sg-toolbar { display: flex; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid #edeff3;
+  box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+.sg-back { font-size: 18px; color: #5b667a; cursor: pointer; margin-right: 12px; }
+.sg-back:hover { color: #7c5cff; }
+.sg-title-block { display: flex; align-items: center; gap: 8px; }
+.sg-title-block >>> .sg-name-input .el-input__inner { border: none; font-size: 15px; font-weight: 600; color: #1f2329;
+  padding-left: 0; width: 200px; }
+.sg-title-block >>> .sg-id-input .el-input__inner { border: 1px dashed #dfe3ea; border-radius: 6px; font-size: 12px;
+  height: 30px; line-height: 30px; color: #8a94a6; width: 160px; }
+.sg-toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.sg-toolbar-right >>> .sg-tb-btn { border-radius: 8px; }
+.sg-toolbar-right >>> .sg-tb-primary { background: #7c5cff; border-color: #7c5cff; box-shadow: 0 4px 10px rgba(124,92,255,.3); }
+.sg-toolbar-right >>> .sg-tb-primary:hover { background: #6b49f0; border-color: #6b49f0; }
+
 .sg-body { display: flex; flex: 1; overflow: hidden; }
-.sg-palette { width: 180px; background: #fff; border-right: 1px solid #e4e7ed; overflow-y: auto; padding: 8px; }
-.sg-palette-title, .sg-config-title { font-weight: bold; margin-bottom: 8px; color: #303133; }
-.sg-palette-cat { font-size: 12px; color: #909399; margin: 8px 0 4px; }
-.sg-palette-item { padding: 6px 8px; margin-bottom: 4px; background: #ecf5ff; border: 1px solid #d9ecff;
-  border-radius: 4px; cursor: pointer; font-size: 13px; color: #409eff; }
-.sg-palette-item:hover { background: #409eff; color: #fff; }
-.sg-canvas { flex: 1; background: #fafafa; }
-.sg-config { width: 280px; background: #fff; border-left: 1px solid #e4e7ed; overflow-y: auto; padding: 12px; }
+
+/* 左侧节点面板 */
+.sg-palette { width: 240px; background: #fff; border-right: 1px solid #edeff3; overflow-y: auto; padding: 12px; }
+.sg-palette-search { display: flex; align-items: center; gap: 6px; background: #f3f5f9; border-radius: 8px;
+  padding: 7px 10px; margin-bottom: 14px; color: #9aa3b2; }
+.sg-palette-search input { border: none; outline: none; background: transparent; flex: 1; font-size: 13px; color: #1f2329; }
+.sg-palette-cat { font-size: 13px; font-weight: 600; color: #1f2329; margin: 14px 0 8px; }
+.sg-palette-group:first-child .sg-palette-cat { margin-top: 0; }
+.sg-palette-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px; margin-bottom: 8px;
+  background: #fff; border: 1px solid #edeff3; border-radius: 10px; cursor: grab; user-select: none; transition: all .15s; }
+.sg-palette-item:hover { border-color: #c9bbff; box-shadow: 0 6px 16px rgba(124,92,255,.12); transform: translateY(-1px); }
+.sg-palette-item:active { cursor: grabbing; }
+.sg-pal-ic { flex: none; width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; color: #fff; font-size: 16px; }
+.sg-pal-meta { min-width: 0; }
+.sg-pal-name { font-size: 13px; font-weight: 600; color: #1f2329; display: flex; align-items: center; gap: 6px; }
+.sg-pal-ver { font-size: 10px; color: #9aa3b2; background: #f1f2f5; border-radius: 4px; padding: 0 4px; line-height: 15px; font-weight: 500; }
+.sg-pal-desc { font-size: 12px; color: #9aa3b2; line-height: 1.5; margin-top: 3px;
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* 画布 */
+.sg-canvas-wrap { position: relative; flex: 1; overflow: hidden; }
+.sg-canvas { width: 100%; height: 100%; }
+
+/* 底部缩放条 */
+.sg-zoombar { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; align-items: center;
+  gap: 4px; background: #fff; border: 1px solid #edeff3; border-radius: 10px; padding: 6px 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.08); z-index: 9; }
+.sg-zoombar i { font-size: 15px; color: #5b667a; cursor: pointer; padding: 3px; border-radius: 6px; }
+.sg-zoombar i:hover { color: #7c5cff; background: #f3f0ff; }
+.sg-zoombar-sep { width: 1px; height: 16px; background: #edeff3; margin: 0 2px; }
+.sg-zoombar-pct { font-size: 12px; color: #5b667a; cursor: pointer; min-width: 42px; text-align: center; user-select: none; }
+.sg-zoombar-pct:hover { color: #7c5cff; }
+
+/* 右侧配置抽屉 */
+.sg-config {
+  position: absolute; top: 0; right: 0; height: 100%; width: 360px;
+  background: #fff; border-left: 1px solid #edeff3; overflow-y: auto; padding: 0 16px 16px;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.06);
+  transform: translateX(106%); transition: transform .25s ease; z-index: 10;
+}
+.sg-config.is-open { transform: translateX(0); }
+.sg-config-head { display: flex; align-items: flex-start; gap: 10px; padding: 16px 0 12px; position: sticky; top: 0;
+  background: #fff; border-bottom: 1px solid #f1f2f5; margin-bottom: 12px; z-index: 1; }
+.sg-config-ic { flex: none; width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center;
+  justify-content: center; color: #fff; font-size: 17px; }
+.sg-config-hd-meta { flex: 1; min-width: 0; }
+.sg-config-hd-title { font-size: 15px; font-weight: 600; color: #1f2329; display: flex; align-items: center; gap: 6px; }
+.sg-config-ver { font-size: 10px; color: #9aa3b2; background: #f1f2f5; border-radius: 4px; padding: 0 4px; line-height: 15px; font-weight: 500; }
+.sg-config-hd-desc { font-size: 12px; color: #9aa3b2; line-height: 1.5; margin-top: 3px; }
+.sg-config-close { cursor: pointer; color: #b4bbc7; font-size: 16px; padding: 2px; }
+.sg-config-close:hover { color: #7c5cff; }
+/* 开始节点：输入参数编辑器 */
+.sg-params { margin-bottom: 6px; }
+.sg-params-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.sg-params-head > span { font-size: 13px; font-weight: 600; color: #1f2329; }
+.sg-params-add { cursor: pointer; color: #7c5cff; font-size: 16px; padding: 2px; border-radius: 6px; }
+.sg-params-add:hover { background: #f3f0ff; }
+.sg-params-cols { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #9aa3b2; margin-bottom: 6px; }
+.sg-param-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.sg-param-row .c-name, .sg-params-cols .c-name { flex: 1 1 0; min-width: 0; }
+.sg-param-row .c-type, .sg-params-cols .c-type { flex: 1 1 0; min-width: 0; }
+.sg-param-row .c-req, .sg-params-cols .c-req { flex: none; width: 34px; text-align: center; }
+.sg-param-row .c-act, .sg-params-cols .c-act { flex: none; width: 18px; text-align: center; }
+.sg-param-del { cursor: pointer; color: #b4bbc7; font-size: 16px; }
+.sg-param-del:hover { color: #f5566c; }
+.sg-param-row >>> .el-checkbox__label { display: none; }
 .sg-cond-row { display: flex; gap: 4px; margin-bottom: 6px; align-items: center; }
-.sg-cond-group { border: 1px solid #ebeef5; border-radius: 4px; padding: 8px; margin-bottom: 8px; background: #fafafa; }
+.sg-cond-group { border: 1px solid #ebeef5; border-radius: 8px; padding: 8px; margin-bottom: 8px; background: #f8f9fc; }
 .sg-cond-group-head { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; font-size: 12px; color: #606266; }
 .sg-cond-group-head > span { flex: 1; font-weight: bold; }
-.sg-tip { font-size: 12px; color: #909399; margin-top: 8px; line-height: 1.5; }
+.sg-tip { font-size: 12px; color: #9aa3b2; margin-top: 8px; line-height: 1.5; }
 .sg-result { max-height: 400px; overflow: auto; background: #f5f7fa; padding: 12px; font-size: 12px; }
 .sg-eval-tip { font-size: 12px; color: #909399; line-height: 1.6; margin-bottom: 6px; }
 .sg-eval-grid { display: flex; flex-wrap: wrap; gap: 10px; max-height: 240px; overflow-y: auto; margin-bottom: 12px; }
@@ -854,4 +1316,50 @@ export default {
 .sg-metric { flex: 1; background: #f5f7fa; border-radius: 6px; padding: 12px; text-align: center; }
 .sg-metric-v { font-size: 22px; font-weight: bold; color: #409eff; }
 .sg-metric-l { font-size: 12px; color: #909399; margin-top: 4px; }
+</style>
+
+<!-- 非 scoped：作用于 LogicFlow 注入的 HTML 节点卡片 -->
+<style>
+.sg-canvas .lf-html { overflow: visible; }
+.sgx-root { width: 100%; height: 100%; }
+.sgx-card {
+  position: relative; width: 100%; height: 100%; box-sizing: border-box;
+  background: #fff; border: 1px solid #e7eaf0; border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(31, 35, 41, .06);
+  padding: 10px 12px 10px 14px; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  cursor: move; transition: box-shadow .15s, border-color .15s; overflow: hidden;
+}
+.sgx-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  border-radius: 12px 0 0 12px; background: var(--accent, #909399);
+}
+.sgx-cat-start { --accent: #16b777; }
+.sgx-cat-model { --accent: #7c5cff; }
+.sgx-cat-process { --accent: #2f7bff; }
+.sgx-cat-judge { --accent: #13c2c2; }
+.sgx-cat-end { --accent: #f5566c; }
+.sgx-card:hover { box-shadow: 0 8px 22px rgba(31, 35, 41, .12); border-color: #d6d2f5; }
+.sgx-root.is-error .sgx-card { border-color: #f5566c; box-shadow: 0 0 0 2px rgba(245, 86, 108, .25); }
+
+.sgx-hd { display: flex; align-items: center; gap: 8px; }
+.sgx-ic { flex: none; width: 24px; height: 24px; border-radius: 7px; display: flex; align-items: center;
+  justify-content: center; color: #fff; font-size: 14px; }
+.sgx-ti { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: #1f2329;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sgx-ver { flex: none; font-size: 10px; color: #9aa3b2; background: #f1f2f5; border-radius: 4px;
+  padding: 1px 5px; font-weight: 500; }
+
+.sgx-row { display: flex; align-items: flex-start; gap: 8px; margin-top: 9px; }
+.sgx-row-l { flex: none; font-size: 12px; color: #8a94a6; line-height: 22px; }
+.sgx-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sgx-chip { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px;
+  background: #f5f7fb; border: 1px solid #eaedf3; border-radius: 6px; font-size: 12px; color: #4a5365; }
+.sgx-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c, #909399); }
+.sgx-chip-dyn { border-style: dashed; color: #9aa3b2; }
+.sgx-chip-warn { border-color: #ffe1b3; background: #fff7e8; color: #d48806; }
+.sgx-chip-warn i { font-size: 12px; }
+.sgx-out { flex: 1; min-width: 0; height: 22px; line-height: 22px; padding: 0 8px; border-radius: 6px;
+  background: #f5f7fb; border: 1px solid #eaedf3; font-size: 12px; color: #4a5365;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sgx-out.is-empty { color: #b4bbc7; }
 </style>

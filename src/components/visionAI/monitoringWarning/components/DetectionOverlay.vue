@@ -28,7 +28,7 @@ export default {
       type: Array,
       default: () => []
     },
-    // 原始视频分辨率
+    // 原始视频分辨率（bbox 坐标所参照的检测帧分辨率，由后端 frame_size 提供）
     videoWidth: {
       type: Number,
       default: 1920
@@ -36,6 +36,28 @@ export default {
     videoHeight: {
       type: Number,
       default: 1080
+    },
+    // 采集帧时间戳(epoch ms)。后端按~30fps重复推同一结果，用它去重，
+    // 仅当时间戳变化时才视为“新的一帧检测”，从而正确触发短保持+淡出。
+    frameTimestamp: {
+      type: Number,
+      default: 0
+    },
+    // 检测框全亮保持时长(ms)
+    holdDuration: {
+      type: Number,
+      default: 700
+    },
+    // 检测框淡出时长(ms)
+    fadeDuration: {
+      type: Number,
+      default: 500
+    },
+    // 时间戳对齐偏移(ms)：将检测框延后显示以匹配视频播放延迟。
+    // 0 表示不延后；可按实际视频延迟(如 FLV 缓冲)调大。
+    alignOffset: {
+      type: Number,
+      default: 0
     }
   },
   data() {
@@ -43,9 +65,12 @@ export default {
       canvasWidth: 640,
       canvasHeight: 480,
       ctx: null,
-      animationFrameId: null,
-      lastDrawTime: 0,
-      drawThrottle: 16 // 限制绘制频率为60fps
+      rafId: null,
+      // 待显示/正在淡出的检测批次队列：{ detections, startAt }
+      batches: [],
+      // 去重用：上一次已处理的帧时间戳 / 内容签名(后端无时间戳时回退)
+      lastFrameTimestamp: 0,
+      lastSignature: ''
     }
   },
   watch: {
@@ -61,20 +86,22 @@ export default {
     videoHeight() {
       this.updateCanvasSize()
     },
+    frameTimestamp() {
+      this.onNewData()
+    },
     detections: {
       handler() {
-        this.drawDetections()
+        this.onNewData()
       },
       deep: true
     }
   },
   mounted() {
     this.updateCanvasSize()
+    this.onNewData()
   },
   beforeDestroy() {
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId)
-    }
+    this.stopRaf()
   },
   methods: {
     /**
@@ -126,35 +153,146 @@ export default {
     },
     
     /**
-     * 绘制检测框（使用requestAnimationFrame优化）
+     * 收到新数据：去重后决定是否作为“新的一帧检测”入队。
+     * 后端按~30fps重复推送同一结果，必须去重，否则批次被反复重置、永不淡出。
      */
-    drawDetections() {
-      // 节流：避免过于频繁的绘制
-      const now = Date.now()
-      if (now - this.lastDrawTime < this.drawThrottle) {
-        return
+    onNewData() {
+      const ft = this.frameTimestamp || 0
+      let isNew = false
+      if (ft > 0) {
+        if (ft !== this.lastFrameTimestamp) {
+          isNew = true
+          this.lastFrameTimestamp = ft
+        }
+      } else {
+        // 后端未提供时间戳时的回退：用检测内容签名去重
+        const sig = this.computeSignature(this.detections)
+        if (sig !== this.lastSignature) {
+          isNew = true
+          this.lastSignature = sig
+        }
       }
-      this.lastDrawTime = now
+      if (isNew) {
+        this.pushBatch(this.detections)
+      }
+    },
+    
+    /**
+     * 计算检测内容签名（仅用于无时间戳的回退去重）
+     */
+    computeSignature(dets) {
+      if (!dets || !dets.length) return 'empty'
+      return dets
+        .map(d => (d.bbox || []).map(v => Math.round(v)).join(',') + ':' + (d.label || d.class_name || ''))
+        .join('|')
+    },
+    
+    /**
+     * 入队一个新批次。startAt 加上 alignOffset 以延后显示、对齐视频延迟。
+     */
+    pushBatch(detections) {
+      const startAt = (typeof performance !== 'undefined' ? performance.now() : Date.now()) + this.alignOffset
+      this.batches.push({
+        detections: detections ? detections.slice() : [],
+        startAt
+      })
+      this.ensureRaf()
+    },
+    
+    ensureRaf() {
+      if (this.rafId == null) {
+        this.rafId = requestAnimationFrame(this.renderLoop)
+      }
+    },
+    
+    stopRaf() {
+      if (this.rafId != null) {
+        cancelAnimationFrame(this.rafId)
+        this.rafId = null
+      }
+    },
+    
+    clearCanvas() {
+      if (this.ctx) {
+        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+      }
+    },
+    
+    /**
+     * 渲染主循环：短保持 + 淡出，由 requestAnimationFrame 驱动（随显示刷新率）。
+     */
+    renderLoop() {
+      this.rafId = requestAnimationFrame(this.renderLoop)
       
       if (!this.ctx) {
         return
       }
       
-      // 清空画布
-      this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
       
-      if (!this.detections || this.detections.length === 0) {
+      // 若已有更新的批次到达其显示时刻，丢弃被取代的旧批次（保证不出现空窗）
+      while (this.batches.length > 1 && this.batches[1].startAt <= now) {
+        this.batches.shift()
+      }
+      
+      // 选出当前应显示的批次（已到 startAt）
+      let current = null
+      if (this.batches.length && this.batches[0].startAt <= now) {
+        current = this.batches[0]
+      }
+      
+      if (!current) {
+        // 没有到显示时刻的批次：清空；若队列也空则停止循环省CPU
+        this.clearCanvas()
+        if (!this.batches.length) {
+          this.stopRaf()
+        }
         return
       }
       
-      // 计算缩放比例（从原始视频分辨率到Canvas显示尺寸）
+      const elapsed = now - current.startAt
+      const total = this.holdDuration + this.fadeDuration
+      let alpha
+      if (elapsed <= this.holdDuration) {
+        alpha = 1
+      } else if (elapsed <= total) {
+        alpha = 1 - (elapsed - this.holdDuration) / this.fadeDuration
+      } else {
+        alpha = 0
+      }
+      
+      if (alpha <= 0) {
+        // 当前批次淡出完毕：移除；若无后续批次则停止循环
+        this.clearCanvas()
+        this.batches.shift()
+        if (!this.batches.length) {
+          this.stopRaf()
+        }
+        return
+      }
+      
+      this.renderBatch(current.detections, alpha)
+    },
+    
+    /**
+     * 以指定透明度绘制一个批次的所有检测框
+     */
+    renderBatch(detections, alpha) {
+      this.clearCanvas()
+      if (!detections || detections.length === 0) {
+        return
+      }
+      
+      // 缩放比例：从检测帧分辨率(videoWidth/Height)到Canvas显示尺寸
       const scaleX = this.canvasWidth / this.videoWidth
       const scaleY = this.canvasHeight / this.videoHeight
       
-      // 绘制每个检测框
-      this.detections.forEach(detection => {
+      const prevAlpha = this.ctx.globalAlpha
+      this.ctx.globalAlpha = alpha
+      detections.forEach(detection => {
         this.drawSingleDetection(detection, scaleX, scaleY)
       })
+      this.ctx.globalAlpha = prevAlpha
     },
     
     /**
@@ -255,12 +393,12 @@ export default {
     },
     
     /**
-     * 清空画布
+     * 清空画布并重置批次队列
      */
     clear() {
-      if (this.ctx) {
-        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
-      }
+      this.batches = []
+      this.stopRaf()
+      this.clearCanvas()
     }
   }
 }
