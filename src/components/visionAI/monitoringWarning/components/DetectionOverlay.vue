@@ -1,11 +1,9 @@
 <template>
   <div class="detection-overlay-container">
-    <!-- Canvas层用于绘制检测框 -->
-    <canvas 
+    <!-- Canvas层用于绘制检测框（尺寸/位置由 syncToVideoElement 贴合真实 video 元素，命令式管理） -->
+    <canvas
       ref="overlayCanvas"
-      class="detection-canvas"
-      :width="canvasWidth"
-      :height="canvasHeight">
+      class="detection-canvas">
     </canvas>
   </div>
 </template>
@@ -74,18 +72,6 @@ export default {
     }
   },
   watch: {
-    containerWidth() {
-      this.updateCanvasSize()
-    },
-    containerHeight() {
-      this.updateCanvasSize()
-    },
-    videoWidth() {
-      this.updateCanvasSize()
-    },
-    videoHeight() {
-      this.updateCanvasSize()
-    },
     frameTimestamp() {
       this.onNewData()
     },
@@ -97,7 +83,8 @@ export default {
     }
   },
   mounted() {
-    this.updateCanvasSize()
+    this.initCanvas()
+    this.syncToVideoElement()
     this.onNewData()
   },
   beforeDestroy() {
@@ -105,35 +92,7 @@ export default {
   },
   methods: {
     /**
-     * 更新Canvas尺寸以匹配视频实际显示尺寸（考虑aspect ratio）
-     */
-    updateCanvasSize() {
-      // 计算视频的宽高比
-      const videoAspect = this.videoWidth / this.videoHeight
-      const containerAspect = this.containerWidth / this.containerHeight
-      
-      let displayWidth, displayHeight
-      
-      if (containerAspect > videoAspect) {
-        // 容器更宽，视频高度占满，宽度按比例缩放
-        displayHeight = this.containerHeight
-        displayWidth = displayHeight * videoAspect
-      } else {
-        // 容器更高，视频宽度占满，高度按比例缩放
-        displayWidth = this.containerWidth
-        displayHeight = displayWidth / videoAspect
-      }
-      
-      this.canvasWidth = Math.round(displayWidth)
-      this.canvasHeight = Math.round(displayHeight)
-      
-      this.$nextTick(() => {
-        this.initCanvas()
-      })
-    },
-    
-    /**
-     * 初始化Canvas
+     * 初始化Canvas（仅获取一次 2D 上下文；尺寸由 syncToVideoElement 命令式设置）
      */
     initCanvas() {
       const canvas = this.$refs.overlayCanvas
@@ -144,12 +103,60 @@ export default {
         desynchronized: true // 降低延迟
       })
       
-      // 启用图像平滑以获得更好的渲染质量
       this.ctx.imageSmoothingEnabled = true
       this.ctx.imageSmoothingQuality = 'high'
+    },
+    
+    /**
+     * 将叠加 canvas 精确贴合到播放器真实的视频元素上。
+     *
+     * 不再依赖 CSS 居中 + 估算尺寸（视频盒子 margin:0 auto 只水平居中、垂直靠上，
+     * flex 叠加层却上下都居中，二者在不同单元格宽高比下会错位）。
+     * 直接用 getBoundingClientRect 读取视频元素的真实位置与尺寸，
+     * 让 canvas 绝对定位覆盖到完全相同的矩形。
+     * 播放器 isResize:false 视频拉伸铺满该元素，故视频内容矩形 == 视频元素矩形。
+     */
+    syncToVideoElement() {
+      const canvas = this.$refs.overlayCanvas
+      if (!canvas) return false
+      const host = this.$el && this.$el.parentNode // .video-player-wrapper
+      if (!host) return false
       
-      // 设置画布背景为透明
-      this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+      // 找到播放器的视频元素（Jessibuca MSE 渲染为 <video>），排除本组件自己的 canvas
+      let videoEl = host.querySelector('video')
+      if (!videoEl) {
+        const cs = host.querySelectorAll('canvas')
+        for (let i = 0; i < cs.length; i++) {
+          if (cs[i] !== canvas) { videoEl = cs[i]; break }
+        }
+      }
+      if (!videoEl) return false
+      
+      const vRect = videoEl.getBoundingClientRect()
+      const cRect = this.$el.getBoundingClientRect()
+      const w = Math.round(vRect.width)
+      const h = Math.round(vRect.height)
+      if (w <= 0 || h <= 0) return false
+      
+      // 相对叠加层容器的偏移
+      canvas.style.position = 'absolute'
+      canvas.style.left = Math.round(vRect.left - cRect.left) + 'px'
+      canvas.style.top = Math.round(vRect.top - cRect.top) + 'px'
+      canvas.style.width = w + 'px'
+      canvas.style.height = h + 'px'
+      
+      // 内部像素尺寸变化时重置（改 canvas.width 会清空并复位上下文）
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w
+        canvas.height = h
+        this.canvasWidth = w
+        this.canvasHeight = h
+        if (this.ctx) {
+          this.ctx.imageSmoothingEnabled = true
+          this.ctx.imageSmoothingQuality = 'high'
+        }
+      }
+      return true
     },
     
     /**
@@ -225,6 +232,12 @@ export default {
       this.rafId = requestAnimationFrame(this.renderLoop)
       
       if (!this.ctx) {
+        return
+      }
+      
+      // 每帧贴合视频元素的位置/尺寸（视频加载、布局变化、全屏切换时都能跟上）
+      if (!this.syncToVideoElement()) {
+        // 视频元素尚未就绪：本帧不绘制
         return
       }
       
@@ -414,26 +427,17 @@ export default {
   pointer-events: none; /* 不阻止下层视频的交互 */
   z-index: 10;
   background: transparent; /* 明确设置透明背景 */
-  display: flex;
-  justify-content: center;
-  align-items: center;
   overflow: hidden;
 }
 
 .detection-canvas {
-  /* 不使用width/height 100%，而是让Canvas自己的尺寸决定 */
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  /* 位置与尺寸由 syncToVideoElement 命令式设置（绝对定位贴合真实 video 元素） */
+  position: absolute;
+  left: 0;
+  top: 0;
   background: transparent; /* Canvas本身也要透明 */
-  /* 关键trick：禁用图像平滑以获得精确的像素对齐 */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  /* 确保Canvas不会被缩放导致模糊 */
   transform: translateZ(0);
   will-change: transform;
-  /* 亚像素渲染优化 */
-  -webkit-font-smoothing: subpixel-antialiased;
   backface-visibility: hidden;
 }
 </style>
