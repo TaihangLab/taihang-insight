@@ -49,11 +49,16 @@
 
         <!-- 底部缩放工具条 -->
         <div class="sg-zoombar">
-          <i class="el-icon-aim" title="适应画布" @click="fitView"></i>
+          <i class="el-icon-magic-stick" title="优化布局" @click="optimizeLayout"></i>
+          <span class="sg-zoombar-sep"></span>
+          <i class="el-icon-aim" title="居中视图" @click="centerView"></i>
           <span class="sg-zoombar-sep"></span>
           <i class="el-icon-minus" title="缩小" @click="zoom(false)"></i>
           <span class="sg-zoombar-pct" title="重置缩放" @click="resetZoom">{{ zoomPct }}%</span>
           <i class="el-icon-plus" title="放大" @click="zoom(true)"></i>
+          <span class="sg-zoombar-sep"></span>
+          <i :class="edgeMode === 'bezier' ? 'el-icon-share' : 'el-icon-position'"
+             :title="edgeMode === 'bezier' ? '切换成折线' : '切换成平滑线'" @click="toggleEdgeType"></i>
         </div>
 
         <!-- 右侧：配置抽屉（拖入节点/选中节点时弹出，点击空白缩回） -->
@@ -62,7 +67,7 @@
             <span class="sg-config-ic" :style="{ background: selColor }"><i :class="selIcon"></i></span>
             <div class="sg-config-hd-meta">
               <div class="sg-config-hd-title">
-                {{ form._name || selName }}<span class="sg-config-ver">V1</span>
+                {{ isFixedNode ? selName : (form._name || selName) }}<span class="sg-config-ver">V1</span>
               </div>
               <div class="sg-config-hd-desc">{{ selDesc }}</div>
             </div>
@@ -70,7 +75,7 @@
           </div>
           <div v-if="selectedNode" class="sg-config-body">
           <el-form label-position="top" size="small">
-            <el-form-item label="节点名称">
+            <el-form-item v-if="!isFixedNode" label="节点名称">
               <el-input v-model="form._name" @change="applyConfig" />
             </el-form-item>
 
@@ -225,10 +230,33 @@
 
             <!-- 结束节点 -->
             <template v-else-if="selectedType === 'end'">
-              <el-form-item label="告警文本(可用{字段}占位)">
-                <el-input v-model="form.message" type="textarea" :rows="2"
-                          placeholder="如 围栏内聚集 {count} 人" @change="applyConfig" />
-              </el-form-item>
+              <div class="sg-params">
+                <div class="sg-params-head">
+                  <span>输出</span>
+                  <i class="el-icon-plus sg-params-add" title="添加参数" @click="addEndParam"></i>
+                </div>
+                <div v-if="form.out_params && form.out_params.length" class="sg-params-cols">
+                  <span class="c-name">参数名 <i class="sg-req-star">*</i></span>
+                  <span class="c-type">引用参数 <i class="sg-req-star">*</i></span>
+                  <span class="c-act"></span>
+                </div>
+                <div v-for="(op, oi) in form.out_params" :key="oi" class="sg-param-row">
+                  <el-input v-model="op.name" size="mini" maxlength="30" placeholder="请输入参数名"
+                            class="c-name" @input="applyConfig" />
+                  <el-select v-model="op.ref" size="mini" class="c-type" placeholder="请选择参数" @change="applyConfig">
+                    <el-option v-for="r in refParamOptions" :key="r" :label="r" :value="r" />
+                  </el-select>
+                  <i class="el-icon-remove-outline sg-param-del c-act" title="删除"
+                     @click="removeEndParam(oi)"></i>
+                </div>
+
+                <div class="sg-out-label">输出信息</div>
+                <el-input v-model="form.message" type="textarea" :rows="4" maxlength="255" show-word-limit
+                          placeholder='请输入输出信息，可输入"{"可快捷插入标签' @input="applyConfig" />
+                <div class="sg-out-foot">
+                  <el-button type="text" class="sg-out-clear" @click="clearEndMessage">清空</el-button>
+                </div>
+              </div>
             </template>
 
             <!-- 开始节点：定义技能运行需要输入的信息 -->
@@ -239,7 +267,7 @@
                   <i class="el-icon-plus sg-params-add" title="添加参数" @click="addStartParam"></i>
                 </div>
                 <div class="sg-params-cols">
-                  <span class="c-name">参数名</span>
+                  <span class="c-name">参数名 <i class="sg-req-star">*</i></span>
                   <span class="c-type">参数类型</span>
                   <span class="c-req">必填</span>
                   <span class="c-act"></span>
@@ -247,9 +275,31 @@
                 <div v-for="(pp, pi) in form.input_params" :key="pi" class="sg-param-row">
                   <el-input v-model="pp.name" size="mini" maxlength="30" placeholder="请输入参数名"
                             class="c-name" @input="applyConfig" />
-                  <el-select v-model="pp.type" size="mini" class="c-type" @change="applyConfig">
-                    <el-option v-for="t in startParamTypes" :key="t.v" :label="t.l" :value="t.v" />
-                  </el-select>
+                  <el-popover v-model="pp._typeOpen" placement="bottom-start" trigger="click"
+                              popper-class="sg-typemenu-popper" :width="170"
+                              @hide="pp._arrayHover = false">
+                    <div class="sg-typemenu">
+                      <div class="sg-typemenu-list">
+                        <div v-for="t in startParamTypes" :key="t.v"
+                             class="sg-typemenu-item" :class="{ 'has-child': t.v === 'Array', 'is-active': t.v === 'Array' && pp._arrayHover }"
+                             @mouseenter="t.v === 'Array' ? showArray(pp) : hideArray(pp)"
+                             @click="t.v === 'Array' ? null : selectType(pp, t.v)">
+                          <span>{{ t.l }}</span>
+                          <i v-if="t.v === 'Array'" class="el-icon-arrow-right"></i>
+                        </div>
+                      </div>
+                      <div v-show="pp._arrayHover" class="sg-typemenu-sub"
+                           @mouseenter="showArray(pp)" @mouseleave="hideArray(pp)">
+                        <div v-for="it in arrayItemTypes" :key="it.v"
+                             class="sg-typemenu-item"
+                             @click.stop="selectArrayType(pp, it.v)">{{ it.l }}</div>
+                      </div>
+                    </div>
+                    <div slot="reference" class="c-type sg-type-box">
+                      <span class="sg-type-box-txt">{{ typeLabel(pp) }}</span>
+                      <i class="el-icon-arrow-down"></i>
+                    </div>
+                  </el-popover>
                   <el-checkbox v-model="pp.required" class="c-req" @change="applyConfig" />
                   <i class="el-icon-remove-outline sg-param-del c-act" title="删除"
                      @click="removeStartParam(pi)"></i>
@@ -394,7 +444,14 @@ const PARAM_TYPE_META = {
   Time: { label: '时间', color: '#fa8c16' },
   Image: { label: '图片', color: '#2f7bff' },
   Video: { label: '视频', color: '#2f7bff' },
-  Attribute: { label: '属性', color: '#7c5cff' }
+  Detection: { label: '目标', color: '#7c5cff' },
+  TrackDetection: { label: '跟踪目标', color: '#7c5cff' },
+  AttributeGroup: { label: '属性组', color: '#7c5cff' },
+  Attribute: { label: '属性', color: '#7c5cff' },
+  ROI: { label: '电子围栏', color: '#16b777' },
+  Tripwire: { label: '绊线', color: '#fa8c16' },
+  Target: { label: '目标', color: '#7c5cff' },
+  Array: { label: '数组', color: '#faad14' }
 }
 
 function catMeta(cat) { return CAT_META[cat] || CAT_META.other }
@@ -570,10 +627,14 @@ export default {
       nodeTypes: [],
       skillId: '',
       skillName: '',
+      skillDescription: '',
+      skillTags: [],
+      skillCover: '',
       isEdit: false,
       selectedNode: null,
       selectedType: '',
       zoomPct: 100,
+      edgeMode: 'bezier',
       palKeyword: '',
       form: {},
       testDialogVisible: false,
@@ -591,7 +652,27 @@ export default {
         { v: 'Time', l: 'Time' },
         { v: 'Image', l: 'Image' },
         { v: 'Video', l: 'Video' },
-        { v: 'Attribute', l: 'Attribute' }
+        { v: 'Detection', l: 'Detection' },
+        { v: 'TrackDetection', l: 'TrackDetection' },
+        { v: 'AttributeGroup', l: 'AttributeGroup' },
+        { v: 'Attribute', l: 'Attribute' },
+        { v: 'ROI', l: 'ROI' },
+        { v: 'Tripwire', l: 'Tripwire' },
+        { v: 'Array', l: 'Array' }
+      ],
+      arrayItemTypes: [
+        { v: 'String', l: 'String' },
+        { v: 'Integer', l: 'Integer' },
+        { v: 'Double', l: 'Double' },
+        { v: 'Boolean', l: 'Boolean' },
+        { v: 'Image', l: 'Image' },
+        { v: 'Video', l: 'Video' },
+        { v: 'Detection', l: 'Detection' },
+        { v: 'TrackDetection', l: 'TrackDetection' },
+        { v: 'Attribute', l: 'Attribute' },
+        { v: 'ROI', l: 'ROI' },
+        { v: 'Tripwire', l: 'Tripwire' },
+        { v: 'Target', l: 'Target' }
       ],
       operators: [
         { v: 'eq', l: '等于' }, { v: 'ne', l: '不等于' },
@@ -625,6 +706,21 @@ export default {
     selName() {
       const p = this.selectedNode && this.selectedNode.properties
       return (p && p.name_zh) || this.selectedType
+    },
+    isFixedNode() {
+      return this.selectedType === 'start' || this.selectedType === 'end'
+    },
+    refParamOptions() {
+      // 引用参数候选：取画布上开始节点定义的输入参数名
+      void this.selectedNode
+      try {
+        const g = this.lf.getGraphData()
+        const startNode = (g.nodes || []).find(n => ((n.properties && n.properties.nodeType) || n.type) === 'start')
+        const params = (startNode && startNode.properties && startNode.properties.config && startNode.properties.config.input_params) || []
+        return params.map(p => p.name).filter(Boolean)
+      } catch (e) {
+        return []
+      }
     },
     selDesc() {
       const nt = this.nodeTypes.find(n => n.type === this.selectedType)
@@ -697,6 +793,7 @@ export default {
         background: { backgroundColor: '#f6f8fb' },
         adjustEdge: true,
         nodeTextEdit: false,
+        stopScrollGraph: true,
         edgeType: 'bezier'
       })
       this.lf.register({ type: 'sg-node', view: SGNode, model: SGNodeModel })
@@ -707,7 +804,15 @@ export default {
         edgeText: { color: '#8a94a6', fontSize: 12, background: { fill: '#f6f8fb' } }
       })
       this.lf.setDefaultEdgeType('bezier')
+      // 缩放范围限制：最小 50%，最大 200%
+      this.lf.setZoomMiniSize(0.5)
+      this.lf.setZoomMaxSize(2)
+      // 加大滚轮缩放步长（默认偏小，滚一下太慢）
+      try { this.lf.graphModel.transformModel.ZOOM_SIZE = 0.12 } catch (e) { /* ignore */ }
       this.lf.render({ nodes: [], edges: [] })
+
+      // 缩放/平移变化（含滚轮缩放）时实时同步比例数字
+      this.lf.on('graph:transform', () => this.syncZoom())
 
       // 选中节点 → 打开配置面板
       this.lf.on('node:click', ({ data }) => this.onSelectNode(data))
@@ -867,17 +972,55 @@ export default {
         f.buffer = cfg.buffer || 0
       } else if (this.selectedType === 'end') {
         f.message = cfg.message || ''
+        f.out_params = (cfg.output_params || []).map(op => ({ name: op.name || '', ref: op.ref || '' }))
       } else if (this.selectedType === 'start') {
         const list = (cfg.input_params || []).map(pp => ({
-          name: pp.name || '', type: pp.type || 'String', required: !!pp.required
+          name: pp.name || '', type: pp.type || 'String', required: !!pp.required,
+          item_type: pp.item_type || 'String', _typeOpen: false, _arrayHover: false
         }))
-        f.input_params = list.length ? list : [{ name: 'image', type: 'Image', required: true }]
+        f.input_params = list.length ? list : [{ name: 'image', type: 'Image', required: true, item_type: 'String', _typeOpen: false, _arrayHover: false }]
       }
       this.form = f
     },
     addStartParam() {
       if (!this.form.input_params) this.$set(this.form, 'input_params', [])
-      this.form.input_params.push({ name: '', type: 'String', required: false })
+      this.form.input_params.push({ name: '', type: 'String', required: false, item_type: 'String', _typeOpen: false, _arrayHover: false })
+      this.applyConfig()
+    },
+    typeLabel(pp) {
+      if (pp.type === 'Array') return `Array<${pp.item_type || 'String'}>`
+      return pp.type || 'String'
+    },
+    showArray(pp) {
+      if (this._arrayHideTimer) { clearTimeout(this._arrayHideTimer); this._arrayHideTimer = null }
+      pp._arrayHover = true
+    },
+    hideArray(pp) {
+      if (this._arrayHideTimer) clearTimeout(this._arrayHideTimer)
+      this._arrayHideTimer = setTimeout(() => { pp._arrayHover = false }, 220)
+    },
+    selectType(pp, v) {
+      this.$set(pp, 'type', v)
+      pp._typeOpen = false
+      this.applyConfig()
+    },
+    selectArrayType(pp, v) {
+      this.$set(pp, 'type', 'Array')
+      this.$set(pp, 'item_type', v)
+      pp._typeOpen = false
+      this.applyConfig()
+    },
+    clearEndMessage() {
+      this.form.message = ''
+      this.applyConfig()
+    },
+    addEndParam() {
+      if (!this.form.out_params) this.$set(this.form, 'out_params', [])
+      this.form.out_params.push({ name: '', ref: '' })
+      this.applyConfig()
+    },
+    removeEndParam(oi) {
+      this.form.out_params.splice(oi, 1)
       this.applyConfig()
     },
     removeStartParam(pi) {
@@ -950,10 +1093,15 @@ export default {
         cfg.buffer = Number(this.form.buffer) || 0
       } else if (t === 'end') {
         cfg.message = this.form.message
+        cfg.output_params = (this.form.out_params || [])
+          .map(op => ({ name: (op.name || '').trim(), ref: op.ref || '' }))
+          .filter(op => op.name)
       } else if (t === 'start') {
-        const list = (this.form.input_params || []).map(pp => ({
-          name: (pp.name || '').trim(), type: pp.type || 'String', required: !!pp.required
-        }))
+        const list = (this.form.input_params || []).map(pp => {
+          const o = { name: (pp.name || '').trim(), type: pp.type || 'String', required: !!pp.required }
+          if (o.type === 'Array') o.item_type = pp.item_type || 'String'
+          return o
+        })
         cfg.input_params = list
         // image / roi 由开始节点内置输出，自定义参数才进 params 字典（后端用）
         const params = {}
@@ -988,11 +1136,93 @@ export default {
     fitView() {
       if (this.lf) { this.lf.fitView(60, 60); this.syncZoom() }
     },
+    // 居中视图：将图形平移到画布中心（不改变缩放比例）
+    centerView() {
+      if (this.lf) { this.lf.translateCenter(); this.syncZoom() }
+    },
     syncZoom() {
       try {
         const t = this.lf && this.lf.getTransform && this.lf.getTransform()
         if (t && t.SCALE_X) this.zoomPct = Math.round(t.SCALE_X * 100)
       } catch (e) { /* ignore */ }
+    },
+    // 平滑曲线 / 折线 切换
+    toggleEdgeType() {
+      if (!this.lf) return
+      this.edgeMode = this.edgeMode === 'bezier' ? 'polyline' : 'bezier'
+      this.lf.setDefaultEdgeType(this.edgeMode)
+      const g = this.lf.getGraphData()
+      const edges = (g.edges || []).map(e => ({ ...e, type: this.edgeMode }))
+      this.lf.render({ nodes: g.nodes || [], edges })
+    },
+    // 自动整理布局：连通的节点沿连线方向竖着分层排，互不相连的链横向并排
+    optimizeLayout() {
+      if (!this.lf) return
+      const g = this.lf.getGraphData()
+      const nodes = g.nodes || []
+      const edges = g.edges || []
+      if (!nodes.length) return
+      const ids = nodes.map(n => n.id)
+      const adjU = {}   // 无向（求连通分量）
+      const adjD = {}   // 有向（求层级）
+      const indeg = {}
+      ids.forEach(id => { adjU[id] = []; adjD[id] = []; indeg[id] = 0 })
+      edges.forEach(e => {
+        if (adjD[e.sourceNodeId] && indeg[e.targetNodeId] != null) {
+          adjD[e.sourceNodeId].push(e.targetNodeId)
+          indeg[e.targetNodeId]++
+          adjU[e.sourceNodeId].push(e.targetNodeId)
+          adjU[e.targetNodeId].push(e.sourceNodeId)
+        }
+      })
+      // 连通分量划分
+      const comp = {}
+      let cnt = 0
+      ids.forEach(id => {
+        if (comp[id] != null) return
+        const stack = [id]
+        comp[id] = cnt
+        while (stack.length) {
+          const x = stack.pop()
+          adjU[x].forEach(y => { if (comp[y] == null) { comp[y] = cnt; stack.push(y) } })
+        }
+        cnt++
+      })
+      // 最长路径分层（层 = 竖向行）
+      const layer = {}
+      const ind = { ...indeg }
+      const q = ids.filter(id => ind[id] === 0)
+      q.forEach(id => { layer[id] = 0 })
+      while (q.length) {
+        const id = q.shift()
+        adjD[id].forEach(t => {
+          layer[t] = Math.max(layer[t] || 0, (layer[id] || 0) + 1)
+          if (--ind[t] === 0) q.push(t)
+        })
+      }
+      ids.forEach(id => { if (layer[id] == null) layer[id] = 0 })
+      // 逐分量布局，分量之间横向偏移
+      const yGap = 150, xGap = 280, compGap = 360, x0 = 240, y0 = 120
+      let offsetX = x0
+      for (let c = 0; c < cnt; c++) {
+        const members = ids.filter(id => comp[id] === c)
+        const layers = {}
+        members.forEach(id => { (layers[layer[id]] || (layers[layer[id]] = [])).push(id) })
+        const maxCols = Math.max.apply(null, Object.keys(layers).map(l => layers[l].length))
+        const compW = (maxCols - 1) * xGap
+        Object.keys(layers).forEach(l => {
+          const li = Number(l)
+          const list = layers[l]
+          const totalW = (list.length - 1) * xGap
+          list.forEach((id, i) => {
+            const x = offsetX + compW / 2 + (i * xGap - totalW / 2)
+            const y = y0 + li * yGap
+            this.lf.graphModel.moveNode2Coordinate(id, x, y)
+          })
+        })
+        offsetX += compW + compGap
+      }
+      this.$nextTick(() => this.fitView())
     },
     // Delete/Backspace 删除选中的节点或连线（输入框内不拦截）
     onKeydown(e) {
@@ -1056,12 +1286,15 @@ export default {
         target: e.targetNodeId,
         target_port: (e.properties && e.properties.targetPort) || this.parsePort(e.targetAnchorId, 'in') || 'image'
       }))
-      return {
+      const def = {
         skill_id: this.skillId || 'draft',
         skill_name: this.skillName || '未命名技能',
         nodes,
         edges
       }
+      if (this.skillTags && this.skillTags.length) def.tags = this.skillTags
+      if (this.skillCover) def.cover = this.skillCover
+      return def
     },
     // ---- 反序列化：后端 GraphDef -> LogicFlow 图 ----
     fromGraphDef(gd) {
@@ -1112,6 +1345,9 @@ export default {
         const d = res.data
         this.skillName = d.skill_name
         this.skillId = d.skill_id
+        this.skillDescription = d.description || ''
+        this.skillTags = (d.graph_json && d.graph_json.tags) || []
+        this.skillCover = (d.graph_json && d.graph_json.cover) || ''
         if (d.graph_json && d.graph_json.nodes && d.graph_json.nodes.length) {
           this.fromGraphDef(d.graph_json)
         } else {
@@ -1151,12 +1387,12 @@ export default {
       const payload = {
         skill_id: this.skillId,
         skill_name: this.skillName,
-        description: '',
+        description: this.skillDescription || '',
         graph_json: this.toGraphDef()
       }
       try {
         if (this.isEdit) {
-          await skillGraphAPI.updateGraph(this.skillId, { skill_name: this.skillName, graph_json: payload.graph_json })
+          await skillGraphAPI.updateGraph(this.skillId, { skill_name: this.skillName, description: this.skillDescription || '', graph_json: payload.graph_json })
         } else {
           await skillGraphAPI.createGraph(payload)
           this.isEdit = true
@@ -1292,11 +1528,24 @@ export default {
 .sg-params-add { cursor: pointer; color: #7c5cff; font-size: 16px; padding: 2px; border-radius: 6px; }
 .sg-params-add:hover { background: #f3f0ff; }
 .sg-params-cols { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #9aa3b2; margin-bottom: 6px; }
-.sg-param-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.sg-req-star { color: #f56c6c; font-style: normal; }
+.sg-out-label { font-size: 13px; color: #1f2329; margin-bottom: 8px; }
+.sg-out-foot { display: flex; justify-content: flex-end; margin-top: 6px; }
+.sg-out-clear { color: #9aa3b2; padding: 0; }
+.sg-out-clear:hover { color: #7c5cff; }
+.sg-param-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .sg-param-row .c-name, .sg-params-cols .c-name { flex: 1 1 0; min-width: 0; }
 .sg-param-row .c-type, .sg-params-cols .c-type { flex: 1 1 0; min-width: 0; }
 .sg-param-row .c-req, .sg-params-cols .c-req { flex: none; width: 34px; text-align: center; }
 .sg-param-row .c-act, .sg-params-cols .c-act { flex: none; width: 18px; text-align: center; }
+.sg-type-box {
+  display: flex; align-items: center; justify-content: space-between; gap: 4px;
+  height: 28px; padding: 0 8px; border: 1px solid #dcdfe6; border-radius: 4px;
+  background: #fff; cursor: pointer; font-size: 12px; color: #606266; box-sizing: border-box;
+}
+.sg-type-box:hover { border-color: #c0c4cc; }
+.sg-type-box-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sg-type-box .el-icon-arrow-down { color: #c0c4cc; flex: none; }
 .sg-param-del { cursor: pointer; color: #b4bbc7; font-size: 16px; }
 .sg-param-del:hover { color: #f5566c; }
 .sg-param-row >>> .el-checkbox__label { display: none; }
@@ -1320,6 +1569,26 @@ export default {
 
 <!-- 非 scoped：作用于 LogicFlow 注入的 HTML 节点卡片 -->
 <style>
+/* 参数类型二级菜单（popover 渲染到 body，需非 scoped） */
+.sg-typemenu-popper.el-popover { padding: 6px 0 !important; overflow: visible !important; min-width: 150px; }
+.sg-typemenu { position: relative; font-size: 13px; color: #1f2329; }
+.sg-typemenu-list { max-height: 280px; overflow-y: auto; }
+.sg-typemenu-item {
+  position: relative; display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; cursor: pointer; white-space: nowrap;
+}
+.sg-typemenu-item:hover, .sg-typemenu-item.is-active { background: #f5f7fa; }
+.sg-typemenu-item .el-icon-arrow-right { color: #c0c4cc; margin-left: 12px; }
+.sg-typemenu-sub {
+  position: absolute; right: 100%; top: -6px; min-width: 140px;
+  max-height: 300px; overflow-y: auto; background: #fff; border: 1px solid #ebeef5;
+  border-radius: 6px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12); z-index: 5; padding: 6px 0;
+}
+/* 透明桥，避免主菜单与二级菜单之间出现空隙导致 hover 丢失 */
+.sg-typemenu-sub::after {
+  content: ''; position: absolute; top: 0; bottom: 0; right: -8px; width: 8px;
+}
+
 .sg-canvas .lf-html { overflow: visible; }
 .sgx-root { width: 100%; height: 100%; }
 .sgx-card {
