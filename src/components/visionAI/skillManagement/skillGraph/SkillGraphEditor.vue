@@ -73,38 +73,442 @@
             </div>
             <i class="el-icon-close sg-config-close" @click="closeConfig"></i>
           </div>
+          <div v-if="showUpstreamWarn" class="sg-upstream-warn">
+            <span class="sg-upstream-warn-ic">!</span>
+            <span>请先连接前序节点</span>
+          </div>
           <div v-if="selectedNode" class="sg-config-body">
           <el-form label-position="top" size="small">
-            <el-form-item v-if="!isFixedNode" label="节点名称">
-              <el-input v-model="form._name" @change="applyConfig" />
-            </el-form-item>
+
+            <!-- 通用：输入来源选择（除视觉模型/开始/结束外，其余有输入的节点统一在这里选） -->
+            <template v-if="hasInputSelector && selectedType !== 'detection_model' && selectedType !== 'vlm_model' && selectedType !== 'custom_code' && selectedType !== 'video_slice'">
+              <div class="sg-sec-title">输入</div>
+              <el-form-item v-for="sel in inputSelectors" :key="sel.port" :label="sel.label" :required="!sel.optional">
+                <el-popover v-model="sel.popOpen" placement="bottom-start" trigger="click"
+                            :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
+                  <el-tree v-if="sel.treeData.length" :data="sel.treeData" node-key="id"
+                           default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                           :current-node-key="sel.value" @node-click="onParamPick(sel, $event)">
+                    <span slot-scope="{ data }" class="sg-tree-node">
+                      <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                      <span>{{ data.label }}</span>
+                    </span>
+                  </el-tree>
+                  <div v-else class="sg-tree-empty">暂无数据</div>
+                  <div slot="reference" class="sg-ref-box" :class="{ 'is-empty': !sel.value }">
+                    <span class="sg-ref-txt">{{ selLabel(sel) || ('请选择参数（' + sel.type + (sel.optional ? '，可选' : '') + '）') }}</span>
+                    <i v-if="sel.value" class="el-icon-circle-close sg-ref-clear" @click.stop="clearInput(sel)"></i>
+                    <i v-else class="el-icon-arrow-down sg-ref-arrow"></i>
+                  </div>
+                </el-popover>
+              </el-form-item>
+            </template>
 
             <!-- 视觉模型 -->
             <template v-if="selectedType === 'detection_model'">
-              <el-form-item label="检测模型名">
-                <el-input v-model="form.model_name" placeholder="如 coco_detector" @change="applyConfig" />
+              <div class="sg-sec-title">模型选择</div>
+              <el-form-item label="模型选择" required>
+                <el-select v-model="form.model_id" placeholder="请选择模型" filterable remote reserve-keyword
+                           :remote-method="searchModels" :loading="modelLoading" style="width:100%"
+                           @change="onModelChange" @visible-change="onModelSelectVisible">
+                  <el-option v-for="m in modelOptions" :key="m.id" :label="m._label" :value="m.id" />
+                </el-select>
               </el-form-item>
-              <el-form-item label="目标类别(逗号分隔)">
-                <el-input v-model="form.target_classes" placeholder="如 person,car" @change="applyConfig" />
+              <el-form-item label="模型标签" required>
+                <el-select v-model="form.target_classes" multiple collapse-tags placeholder="请选择模型标签"
+                           :loading="classLoading" :disabled="!form.model_id" style="width:100%" @change="onClassesChange">
+                  <el-option v-for="c in modelClassOptions" :key="c.name" :label="c.name_zh" :value="c.name" />
+                </el-select>
+                <div v-if="form.model_id && !modelClassOptions.length && !classLoading" class="sg-tip">
+                  该模型暂无可用标签，请先在模型管理中维护检测类别。
+                </div>
               </el-form-item>
-              <el-form-item label="置信度阈值">
-                <el-input-number v-model="form.confidence_threshold" :min="0" :max="1" :step="0.05" @change="applyConfig" />
+
+              <div class="sg-sec-title">输入</div>
+              <el-form-item v-for="sel in inputSelectors" :key="sel.port" :label="sel.label" :required="!sel.optional">
+                <el-popover v-model="sel.popOpen" placement="bottom-start" trigger="click"
+                            :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
+                  <el-tree v-if="sel.treeData.length" :data="sel.treeData" node-key="id"
+                           default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                           :current-node-key="sel.value" @node-click="onParamPick(sel, $event)">
+                    <span slot-scope="{ data }" class="sg-tree-node">
+                      <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                      <span>{{ data.label }}</span>
+                    </span>
+                  </el-tree>
+                  <div v-else class="sg-tree-empty">暂无数据</div>
+                  <div slot="reference" class="sg-ref-box" :class="{ 'is-empty': !sel.value }">
+                    <span class="sg-ref-txt">{{ selLabel(sel) || ('请选择参数（' + sel.type + (sel.optional ? '，可选' : '') + '）') }}</span>
+                    <i v-if="sel.value" class="el-icon-circle-close sg-ref-clear" @click.stop="clearInput(sel)"></i>
+                    <i v-else class="el-icon-arrow-down sg-ref-arrow"></i>
+                  </div>
+                </el-popover>
               </el-form-item>
+
+              <div class="sg-sec-title">配置</div>
+              <template v-if="form.target_classes && form.target_classes.length">
+                <el-form-item v-for="cls in form.target_classes" :key="cls" :label="classLabel(cls)" required>
+                  <el-input-number v-model="form.class_thresholds[cls]" :min="0" :max="1" :step="0.05" :precision="4"
+                                   controls-position="right" style="width:100%" @change="applyConfig" />
+                  <div class="sg-tip">仅支持输入数字，取值范围[0，1]，最多保留4位小数</div>
+                </el-form-item>
+              </template>
+              <div v-else class="sg-io-empty">请先配置模型和标签</div>
+
+              <div class="sg-sec-title">输出</div>
+              <div v-if="form.target_classes && form.target_classes.length" class="sg-io-list">
+                <div v-for="cls in form.target_classes" :key="cls" class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#7c5cff"></span>{{ classLabel(cls) }}
+                  <span class="sg-io-tag">det.</span>
+                </div>
+              </div>
+              <div v-else class="sg-io-empty">请先配置模型和标签</div>
             </template>
 
             <!-- 多模态大模型 -->
             <template v-else-if="selectedType === 'vlm_model'">
-              <el-form-item label="系统提示词">
-                <el-input v-model="form.system_prompt" type="textarea" :rows="2" @change="applyConfig" />
+              <el-select v-model="form.model_name" placeholder="请选择多模态大模型" filterable
+                         :loading="vlmModelLoading" style="width:100%;margin-bottom:12px" @change="applyConfig"
+                         @visible-change="onVlmModelSelectVisible">
+                <el-option v-for="m in vlmModelOptions" :key="m.value" :label="m.label" :value="m.value" />
+              </el-select>
+
+              <div class="sg-params">
+                <div class="sg-params-head">
+                  <span>输入</span>
+                  <i class="el-icon-plus sg-params-add" title="添加输入参数" @click="addVlmInputParam"></i>
+                </div>
+                <div v-for="(ip, ii) in form.input_params" :key="'vlm-in-' + ii" class="sg-vlm-input-item">
+                  <div class="sg-param-row sg-vlm-param-row">
+                    <el-input v-model="ip.name" size="mini" maxlength="30" show-word-limit placeholder="请输入参数名"
+                              class="c-name" :class="{ 'is-invalid': !paramNameValid(ip.name) }" @input="applyConfig" />
+                    <el-popover v-model="ip._typeOpen" placement="bottom-start" trigger="click"
+                                popper-class="sg-typemenu-popper" :width="170"
+                                @hide="ip._arrayHover = false">
+                      <div class="sg-typemenu">
+                        <div class="sg-typemenu-list">
+                          <div v-for="t in vlmInputParamTypes" :key="t.v"
+                               class="sg-typemenu-item" :class="{ 'has-child': t.v === 'Array', 'is-active': t.v === 'Array' && ip._arrayHover }"
+                               @mouseenter="t.v === 'Array' ? showArray(ip) : hideArray(ip)"
+                               @click="t.v === 'Array' ? null : selectVlmInputType(ip, t.v)">
+                            <span class="sg-vlm-type-opt">
+                              <i v-if="t.v === 'Image'" class="el-icon-picture-outline sg-vlm-type-ic"></i>{{ t.l }}
+                            </span>
+                            <i v-if="t.v === 'Array'" class="el-icon-arrow-right"></i>
+                          </div>
+                        </div>
+                        <div v-show="ip._arrayHover" class="sg-typemenu-sub"
+                             @mouseenter="showArray(ip)" @mouseleave="hideArray(ip)">
+                          <div v-for="it in vlmInputArrayItemTypes" :key="it.v"
+                               class="sg-typemenu-item"
+                               @click.stop="selectVlmInputArrayType(ip, it.v)">{{ it.l }}</div>
+                        </div>
+                      </div>
+                      <div slot="reference" class="c-type sg-type-box">
+                        <i v-if="ip.type === 'Image' || ip.type === 'Array'" class="el-icon-picture-outline sg-vlm-type-ic"></i>
+                        <span class="sg-type-box-txt">{{ vlmInputTypeLabel(ip) }}</span>
+                        <i class="el-icon-arrow-down"></i>
+                      </div>
+                    </el-popover>
+                    <i class="el-icon-remove-outline sg-param-del c-act" title="删除"
+                       @click="removeVlmInputParam(ii)"></i>
+                  </div>
+                  <div v-if="!paramNameValid(ip.name)" class="sg-param-err">参数名必须以字母开头，只能包含字母、数字、下划线</div>
+                  <el-popover v-if="ip.name" v-model="ip._bindOpen" placement="bottom-start" trigger="click"
+                              :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
+                    <el-tree v-if="vlmInputTreeData(ip).length" :data="vlmInputTreeData(ip)" node-key="id"
+                             default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                             :current-node-key="vlmInputBindingValue(ip.name)"
+                             @node-click="onVlmInputPick(ip, $event)">
+                      <span slot-scope="{ data }" class="sg-tree-node">
+                        <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                        <span>{{ data.label }}</span>
+                      </span>
+                    </el-tree>
+                    <div v-else class="sg-tree-empty">暂无数据</div>
+                    <div slot="reference" class="sg-vlm-bind" :class="{ 'is-empty': !vlmInputBindingValue(ip.name) }">
+                      <i :class="paramTypeIcon(ip.type === 'Array' ? 'Image' : ip.type)"></i>
+                      <span class="sg-vlm-bind-txt">{{ vlmInputBindLabel(ip.name) || '请选择参数' }}</span>
+                      <i v-if="vlmInputBindingValue(ip.name)" class="el-icon-circle-close sg-vlm-bind-clear"
+                         @click.stop="clearVlmInput(ip)"></i>
+                      <i v-else class="el-icon-link sg-vlm-bind-link"></i>
+                    </div>
+                  </el-popover>
+                </div>
+              </div>
+
+              <el-form-item required>
+                <span slot="label">
+                  提示词
+                  <el-tooltip content="描述希望多模态大模型对输入内容进行的分析任务" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-input v-model="form.prompt" type="textarea" :rows="4" maxlength="1000" show-word-limit
+                          placeholder="请输入提示词" @input="applyConfig" />
               </el-form-item>
-              <el-form-item label="用户提示词(分析指令)">
-                <el-input v-model="form.prompt" type="textarea" :rows="4" @change="applyConfig" />
+
+              <div class="sg-params">
+                <div class="sg-params-head">
+                  <span>输出</span>
+                  <i class="el-icon-plus sg-params-add" title="添加输出参数" @click="addVlmOutputParam"></i>
+                </div>
+                <div v-if="form.output_parameters && form.output_parameters.length" class="sg-params-cols">
+                  <span class="c-name">
+                    参数名 <i class="sg-req-star">*</i>
+                    <el-tooltip content="支持1～30字中英文、数字或下划线；必须以字母开头" placement="top">
+                      <i class="el-icon-question sg-field-help"></i>
+                    </el-tooltip>
+                  </span>
+                  <span class="c-type">
+                    参数类型
+                    <el-tooltip content="大模型返回的结构化字段类型" placement="top">
+                      <i class="el-icon-question sg-field-help"></i>
+                    </el-tooltip>
+                  </span>
+                  <span class="c-act"></span>
+                </div>
+                <div v-for="(op, oi) in form.output_parameters" :key="'vlm-out-' + oi" class="sg-param-item">
+                  <div class="sg-param-row">
+                    <el-input v-model="op.name" size="mini" maxlength="30" show-word-limit placeholder="请输入参数名"
+                              class="c-name" :class="{ 'is-invalid': !paramNameValid(op.name) }" @input="applyConfig" />
+                    <el-popover v-model="op._typeOpen" placement="bottom-start" trigger="click"
+                                popper-class="sg-typemenu-popper" :width="190">
+                      <div class="sg-typemenu">
+                        <div class="sg-typemenu-list">
+                          <div v-for="t in vlmOutputParamTypes" :key="t.v"
+                               class="sg-typemenu-item" :class="{ 'is-selected': op.type === t.v }"
+                               @click="selectVlmOutputType(op, t.v)">
+                            <span>{{ t.l }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div slot="reference" class="c-type sg-type-box has-prefix">
+                        <span class="sg-type-prefix">{{ vlmTypePrefix(op.type) }}</span>
+                        <span class="sg-type-box-txt">{{ vlmOutputTypeLabel(op.type) }}</span>
+                        <i class="el-icon-arrow-down"></i>
+                      </div>
+                    </el-popover>
+                    <i class="el-icon-remove-outline sg-param-del c-act" title="删除"
+                       @click="removeVlmOutputParam(oi)"></i>
+                  </div>
+                  <div v-if="!paramNameValid(op.name)" class="sg-param-err">参数名必须以字母开头，只能包含字母、数字、下划线</div>
+                </div>
+              </div>
+            </template>
+
+            <!-- 自定义节点 -->
+            <template v-else-if="selectedType === 'custom_code'">
+              <div class="sg-params">
+                <div class="sg-params-head">
+                  <span>输入</span>
+                  <i class="el-icon-plus sg-params-add" title="添加输入参数" @click="addCustomInputParam"></i>
+                </div>
+                <div v-for="(ip, ii) in form.input_params" :key="'cc-in-' + ii" class="sg-vlm-input-item">
+                  <div class="sg-param-row sg-vlm-param-row">
+                    <el-input v-model="ip.name" size="mini" maxlength="30" show-word-limit placeholder="请输入参数名"
+                              class="c-name" :class="{ 'is-invalid': !paramNameValid(ip.name) }" @input="applyConfig" />
+                    <el-popover v-model="ip._typeOpen" placement="bottom-start" trigger="click"
+                                popper-class="sg-typemenu-popper" :width="170"
+                                @hide="ip._arrayHover = false">
+                      <div class="sg-typemenu">
+                        <div class="sg-typemenu-list">
+                          <div v-for="t in startParamTypes" :key="t.v"
+                               class="sg-typemenu-item" :class="{ 'has-child': t.v === 'Array', 'is-active': t.v === 'Array' && ip._arrayHover }"
+                               @mouseenter="t.v === 'Array' ? showArray(ip) : hideArray(ip)"
+                               @click="t.v === 'Array' ? null : selectCustomInputType(ip, t.v)">
+                            <span>{{ t.l }}</span>
+                            <i v-if="t.v === 'Array'" class="el-icon-arrow-right"></i>
+                          </div>
+                        </div>
+                        <div v-show="ip._arrayHover" class="sg-typemenu-sub"
+                             @mouseenter="showArray(ip)" @mouseleave="hideArray(ip)">
+                          <div v-for="it in arrayItemTypes" :key="it.v"
+                               class="sg-typemenu-item"
+                               @click.stop="selectCustomInputArrayType(ip, it.v)">{{ it.l }}</div>
+                        </div>
+                      </div>
+                      <div slot="reference" class="c-type sg-type-box">
+                        <span class="sg-type-box-txt">{{ typeLabel(ip) }}</span>
+                        <i class="el-icon-arrow-down"></i>
+                      </div>
+                    </el-popover>
+                    <i class="el-icon-remove-outline sg-param-del c-act" title="删除"
+                       @click="removeCustomInputParam(ii)"></i>
+                  </div>
+                  <div v-if="!paramNameValid(ip.name)" class="sg-param-err">参数名必须以字母开头，只能包含字母、数字、下划线</div>
+                  <el-popover v-if="ip.name" v-model="ip._bindOpen" placement="bottom-start" trigger="click"
+                              :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
+                    <el-tree v-if="customInputTreeData(ip).length" :data="customInputTreeData(ip)" node-key="id"
+                             default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                             :current-node-key="customInputBindingValue(ip.name)"
+                             @node-click="onCustomInputPick(ip, $event)">
+                      <span slot-scope="{ data }" class="sg-tree-node">
+                        <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                        <span>{{ data.label }}</span>
+                      </span>
+                    </el-tree>
+                    <div v-else class="sg-tree-empty">暂无数据</div>
+                    <div slot="reference" class="sg-vlm-bind" :class="{ 'is-empty': !customInputBindingValue(ip.name) }">
+                      <i :class="paramTypeIcon(customPortType(ip.type))"></i>
+                      <span class="sg-vlm-bind-txt">{{ customInputBindLabel(ip.name) || '请选择参数' }}</span>
+                      <i v-if="customInputBindingValue(ip.name)" class="el-icon-circle-close sg-vlm-bind-clear"
+                         @click.stop="clearCustomInput(ip)"></i>
+                      <i v-else class="el-icon-link sg-vlm-bind-link"></i>
+                    </div>
+                  </el-popover>
+                </div>
+              </div>
+
+              <div class="sg-params">
+                <div class="sg-params-head">
+                  <span>代码</span>
+                  <el-button size="mini" type="text" icon="el-icon-edit-outline" @click="openCodeEditor">编辑代码</el-button>
+                </div>
+                <pre class="sg-code-preview">{{ codePreview }}</pre>
+              </div>
+
+              <div class="sg-params">
+                <div class="sg-params-head">
+                  <span>输出</span>
+                  <i class="el-icon-plus sg-params-add" title="添加输出参数" @click="addCustomOutputParam"></i>
+                </div>
+                <div v-if="form.output_parameters && form.output_parameters.length" class="sg-params-cols">
+                  <span class="c-name">参数名 <i class="sg-req-star">*</i></span>
+                  <span class="c-type">参数类型</span>
+                  <span class="c-act"></span>
+                </div>
+                <div v-for="(op, oi) in form.output_parameters" :key="'cc-out-' + oi" class="sg-param-item">
+                  <div class="sg-param-row">
+                    <el-input v-model="op.name" size="mini" maxlength="30" show-word-limit placeholder="请输入参数名"
+                              class="c-name" :class="{ 'is-invalid': !paramNameValid(op.name) }" @input="applyConfig" />
+                    <el-popover v-model="op._typeOpen" placement="bottom-start" trigger="click"
+                                popper-class="sg-typemenu-popper" :width="170"
+                                @hide="op._arrayHover = false">
+                      <div class="sg-typemenu">
+                        <div class="sg-typemenu-list">
+                          <div v-for="t in startParamTypes" :key="t.v"
+                               class="sg-typemenu-item" :class="{ 'has-child': t.v === 'Array', 'is-active': t.v === 'Array' && op._arrayHover }"
+                               @mouseenter="t.v === 'Array' ? showArray(op) : hideArray(op)"
+                               @click="t.v === 'Array' ? null : selectCustomOutputType(op, t.v)">
+                            <span>{{ t.l }}</span>
+                            <i v-if="t.v === 'Array'" class="el-icon-arrow-right"></i>
+                          </div>
+                        </div>
+                        <div v-show="op._arrayHover" class="sg-typemenu-sub"
+                             @mouseenter="showArray(op)" @mouseleave="hideArray(op)">
+                          <div v-for="it in arrayItemTypes" :key="it.v"
+                               class="sg-typemenu-item"
+                               @click.stop="selectCustomOutputArrayType(op, it.v)">{{ it.l }}</div>
+                        </div>
+                      </div>
+                      <div slot="reference" class="c-type sg-type-box">
+                        <span class="sg-type-box-txt">{{ typeLabel(op) }}</span>
+                        <i class="el-icon-arrow-down"></i>
+                      </div>
+                    </el-popover>
+                    <i class="el-icon-remove-outline sg-param-del c-act" title="删除"
+                       @click="removeCustomOutputParam(oi)"></i>
+                  </div>
+                  <div v-if="!paramNameValid(op.name)" class="sg-param-err">参数名必须以字母开头，只能包含字母、数字、下划线</div>
+                </div>
+              </div>
+
+              <div class="sg-params">
+                <div class="sg-params-head">
+                  <span>异常处理</span>
+                </div>
+                <el-form-item required>
+                  <span slot="label">
+                    超时时间(ms)
+                    <el-tooltip content="代码执行超时时间，取值范围[1, 10000]" placement="top">
+                      <i class="el-icon-question sg-field-help"></i>
+                    </el-tooltip>
+                  </span>
+                  <el-input-number v-model="form.timeout_ms" :min="1" :max="10000" :step="100"
+                                   controls-position="right" style="width:100%" @change="applyConfig" />
+                  <div class="sg-tip">请输入整数，取值范围[1, 10000]</div>
+                </el-form-item>
+              </div>
+            </template>
+
+            <!-- 视频切片 -->
+            <template v-else-if="selectedType === 'video_slice'">
+              <div class="sg-sec-title">输入</div>
+              <el-form-item required>
+                <span slot="label">
+                  原视频
+                  <el-tooltip content="待切片的原始视频" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-popover v-model="form._vsPop.video" placement="bottom-start" trigger="click"
+                            :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
+                  <el-tree v-if="videoSliceBindTree('Video').length" :data="videoSliceBindTree('Video')" node-key="id"
+                           default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                           :current-node-key="videoSliceBindingValue('video')"
+                           @node-click="onVideoSlicePick('video', $event)">
+                    <span slot-scope="{ data }" class="sg-tree-node">
+                      <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                      <span>{{ data.label }}</span>
+                    </span>
+                  </el-tree>
+                  <div v-else class="sg-tree-empty">暂无数据</div>
+                  <div slot="reference" class="sg-vlm-bind" :class="{ 'is-empty': !videoSliceBindingValue('video') }">
+                    <i class="el-icon-video-camera sg-vlm-type-ic"></i>
+                    <span class="sg-vlm-bind-txt">{{ videoSliceBindLabel('video') || '请选择参数' }}</span>
+                    <i v-if="videoSliceBindingValue('video')" class="el-icon-circle-close sg-vlm-bind-clear"
+                       @click.stop="clearVideoSliceInput('video')"></i>
+                    <i v-else class="el-icon-link sg-vlm-bind-link"></i>
+                  </div>
+                </el-popover>
               </el-form-item>
-              <el-form-item label="输出参数(JSON数组)">
-                <el-input v-model="form.output_parameters_text" type="textarea" :rows="4"
-                          placeholder='[{"name":"has_helmet","type":"boolean","description":"是否戴安全帽"}]'
-                          @change="applyConfig" />
+
+              <el-form-item v-for="nf in videoSliceNumericFields" :key="nf.port" required>
+                <span slot="label">
+                  {{ nf.label }}
+                  <el-tooltip :content="nf.tip" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <div class="sg-vs-num-row">
+                  <el-input-number v-model="form[nf.port]" :min="0" :max="1800" :step="0.1" :precision="4"
+                                   controls-position="right" style="flex:1" :disabled="videoSliceBound(nf.port)"
+                                   :placeholder="nf.placeholder" @change="applyConfig" />
+                  <el-popover v-model="form._vsPop[nf.port]" placement="bottom-start" trigger="click"
+                              :width="300" popper-class="sg-param-pop">
+                    <el-tree v-if="videoSliceBindTree('Number').length" :data="videoSliceBindTree('Number')" node-key="id"
+                             default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                             :current-node-key="videoSliceBindingValue(nf.port)"
+                             @node-click="onVideoSlicePick(nf.port, $event)">
+                      <span slot-scope="{ data }" class="sg-tree-node">
+                        <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                        <span>{{ data.label }}</span>
+                      </span>
+                    </el-tree>
+                    <div v-else class="sg-tree-empty">暂无数据</div>
+                    <i slot="reference" class="el-icon-link sg-vs-link" title="连接上游参数"></i>
+                  </el-popover>
+                </div>
+                <div v-if="videoSliceBound(nf.port)" class="sg-tip">已连接：{{ videoSliceBindLabel(nf.port) }}</div>
+                <div v-else class="sg-tip">仅支持输入数字，取值范围[0, 1800]，最多保留4位小数</div>
               </el-form-item>
+
+              <div class="sg-sec-title">输出</div>
+              <div class="sg-io-list">
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#2f7bff"></span>视频片段
+                  <i class="el-icon-video-camera sg-io-type-ic"></i>
+                </div>
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#eb2f96"></span>成功状态
+                  <span class="sg-io-tag">bool.</span>
+                </div>
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#722ed1"></span>错误信息
+                  <span class="sg-io-tag">str.</span>
+                </div>
+              </div>
             </template>
 
             <!-- 区域过滤 -->
@@ -240,19 +644,28 @@
                   <span class="c-type">引用参数 <i class="sg-req-star">*</i></span>
                   <span class="c-act"></span>
                 </div>
-                <div v-for="(op, oi) in form.out_params" :key="oi" class="sg-param-row">
+                <div v-for="(op, oi) in form.out_params" :key="oi" class="sg-param-item">
+                <div class="sg-param-row">
                   <el-input v-model="op.name" size="mini" maxlength="30" placeholder="请输入参数名"
-                            class="c-name" @input="applyConfig" />
+                            class="c-name" :class="{ 'is-invalid': !paramNameValid(op.name) }" @input="applyConfig" />
                   <el-select v-model="op.ref" size="mini" class="c-type" placeholder="请选择参数" @change="applyConfig">
                     <el-option v-for="r in refParamOptions" :key="r" :label="r" :value="r" />
                   </el-select>
                   <i class="el-icon-remove-outline sg-param-del c-act" title="删除"
                      @click="removeEndParam(oi)"></i>
                 </div>
+                <div v-if="!paramNameValid(op.name)" class="sg-param-err">参数名必须以字母开头，只能包含字母、数字、下划线</div>
+                </div>
 
                 <div class="sg-out-label">输出信息</div>
-                <el-input v-model="form.message" type="textarea" :rows="4" maxlength="255" show-word-limit
-                          placeholder='请输入输出信息，可输入"{"可快捷插入标签' @input="applyConfig" />
+                <el-input ref="endMsgInput" v-model="form.message" type="textarea" :rows="4" maxlength="255" show-word-limit
+                          placeholder='请输入输出信息，点击下方标签可快捷插入' @input="applyConfig" />
+                <div v-if="endRefTokens.length" class="sg-token-bar">
+                  <span class="sg-token-tip">可插入标签：</span>
+                  <span v-for="t in endRefTokens" :key="t.token" class="sg-token" :title="t.token"
+                        @click="insertToken(t.token)">{{ t.label }}</span>
+                </div>
+                <div v-else class="sg-tip">先把上游节点（如计数、视觉模型）连到本结束节点，这里会列出可插入的标签。</div>
                 <div class="sg-out-foot">
                   <el-button type="text" class="sg-out-clear" @click="clearEndMessage">清空</el-button>
                 </div>
@@ -272,9 +685,10 @@
                   <span class="c-req">必填</span>
                   <span class="c-act"></span>
                 </div>
-                <div v-for="(pp, pi) in form.input_params" :key="pi" class="sg-param-row">
+                <div v-for="(pp, pi) in form.input_params" :key="pi" class="sg-param-item">
+                <div class="sg-param-row">
                   <el-input v-model="pp.name" size="mini" maxlength="30" placeholder="请输入参数名"
-                            class="c-name" @input="applyConfig" />
+                            class="c-name" :class="{ 'is-invalid': !paramNameValid(pp.name) }" @input="applyConfig" />
                   <el-popover v-model="pp._typeOpen" placement="bottom-start" trigger="click"
                               popper-class="sg-typemenu-popper" :width="170"
                               @hide="pp._arrayHover = false">
@@ -304,6 +718,8 @@
                   <i class="el-icon-remove-outline sg-param-del c-act" title="删除"
                      @click="removeStartParam(pi)"></i>
                 </div>
+                <div v-if="!paramNameValid(pp.name)" class="sg-param-err">参数名必须以字母开头，只能包含字母、数字、下划线</div>
+                </div>
               </div>
               <div class="sg-tip">开始节点定义技能运行所需的输入；其中 image 为当前帧图像。</div>
             </template>
@@ -314,6 +730,38 @@
             <div v-else class="sg-tip">开始/结束节点为固定节点，不可删除。</div>
           </el-form>
         </div>
+        </div>
+      </div>
+
+      <!-- 自定义节点：代码编辑面板（覆盖左侧节点面板 + 画布，保留右侧配置抽屉） -->
+      <div v-if="codeEditorOpen" class="sg-code-panel">
+        <div class="sg-code-panel-head">
+          <span class="sg-code-panel-lang">Python</span>
+          <i class="el-icon-s-fold sg-code-panel-close" title="收起" @click="closeCodeEditor"></i>
+        </div>
+        <div class="sg-code-panel-body">
+          <textarea v-model="form.code" class="sg-code-textarea" spellcheck="false"
+                    placeholder="def main(inputs): ..." @input="applyConfig"></textarea>
+        </div>
+        <div class="sg-code-panel-foot">
+          <div class="sg-code-test-col">
+            <div class="sg-code-test-head">
+              <span>输入参数</span>
+              <el-button size="mini" type="primary" plain :loading="codeTestLoading" @click="runCustomCodeTest">模拟测试</el-button>
+            </div>
+            <textarea v-model="codeTestInput" class="sg-code-test-input" spellcheck="false"
+                      placeholder='{"input": "hello"}'></textarea>
+          </div>
+          <div class="sg-code-test-col">
+            <div class="sg-code-test-head">
+              <span>输出结果</span>
+              <span class="sg-code-test-actions">
+                <el-button v-if="codeTestOutput" size="mini" type="text" @click="parseTestOutputToParams">解析到输出参数</el-button>
+                <el-button v-if="codeTestOutput" size="mini" type="text" @click="copyCodeTestOutput">复制</el-button>
+              </span>
+            </div>
+            <pre class="sg-code-test-output">{{ codeTestOutput || '请在左侧填写输入数据，进行查看输出结果' }}</pre>
+          </div>
         </div>
       </div>
     </div>
@@ -383,10 +831,26 @@
 import LogicFlow from '@logicflow/core'
 import '@logicflow/core/dist/style/index.css'
 import { HtmlNode, HtmlNodeModel } from '@logicflow/core'
-import { skillGraphAPI } from '@/components/service/VisionAIService.js'
+import { skillGraphAPI, modelAPI } from '@/components/service/VisionAIService.js'
 
 // 节点类型 -> 端口（用于自定义锚点）的缓存，由 node-types 接口填充
 const PORT_MAP = {}
+
+const DEFAULT_CUSTOM_CODE = `def main(inputs):
+    """
+    inputs: 这是一个字典，包含了当前输入配置中映射的所有变量
+    """
+    # 1. 获取输入
+    input_value = inputs.get("input", "")
+
+    # 2. 编写你的逻辑
+    result_value = input_value
+
+    # 3. 返回结果
+    result = {
+        "output": result_value
+    }
+    return result`
 
 // 节点大类的主题色与图标
 const CAT_META = {
@@ -410,11 +874,14 @@ const TYPE_ICON = {
   distance: 'el-icon-rank',
   dwell: 'el-icon-time',
   count: 'el-icon-data-line',
-  judge: 'el-icon-sort'
+  video_slice: 'el-icon-video-camera',
+  judge: 'el-icon-sort',
+  custom_code: 'el-icon-edit-outline'
 }
 // 端口类型 -> 展示标签与颜色
 const PT_META = {
   Image: { label: '图片', color: '#2f7bff' },
+  Video: { label: '视频', color: '#2f7bff' },
   Detection: { label: '目标', color: '#7c5cff' },
   ROI: { label: '电子围栏', color: '#16b777' },
   Tripwire: { label: '绊线', color: '#fa8c16' },
@@ -431,8 +898,24 @@ const PORT_LABELS = {
   target: '目标', target1: '目标1', target2: '目标2',
   count: '数量', passed: '判定', value: '值', result: '结果',
   detections: '检测目标', crossed: '越线目标', matched: '配对目标',
-  dwelled: '停留目标', output: '输出', filtered: '过滤结果'
+  dwelled: '停留目标', output: '输出', filtered: '过滤结果',
+  video: '原视频', start_time: '开始时间（秒）', end_time: '结束时间（秒）', buffer: '前后缓冲区间（秒）',
+  video_clip: '视频片段', success: '成功状态', error_message: '错误信息'
 }
+
+const VIDEO_SLICE_NUMERIC_FIELDS = [
+  { port: 'start_time', label: '开始时间（秒）', placeholder: '请输入开始时间（秒）', tip: '切片起始时间，单位秒' },
+  { port: 'end_time', label: '结束时间（秒）', placeholder: '请输入结束时间（秒）', tip: '切片结束时间，单位秒' },
+  { port: 'buffer', label: '前后缓冲区间（秒）', placeholder: '0.0', tip: '在开始/结束时间基础上向前后扩展的缓冲时长' }
+]
+
+// 检测目标可引用的常见属性（结束节点文案 {端口.属性} 用）
+const DETECTION_ATTRS = [
+  { k: 'plate_text', l: '车牌号' },
+  { k: 'label', l: '类别' },
+  { k: 'confidence', l: '置信度' },
+  { k: 'track_id', l: '跟踪ID' }
+]
 
 // 开始节点的"输入参数"类型（对标参考产品）
 const PARAM_TYPE_META = {
@@ -464,10 +947,11 @@ function escapeHtml(s) {
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
   ))
 }
-function chipHtml(name, type) {
+function chipHtml(name, type, text) {
   const meta = PT_META[type] || PT_META.Any
+  const label = text != null ? text : portLabel(name, type)
   return `<span class="sgx-chip" style="--c:${meta.color}">`
-    + `<span class="sgx-chip-dot"></span>${escapeHtml(portLabel(name, type))}</span>`
+    + `<span class="sgx-chip-dot"></span>${escapeHtml(label)}</span>`
 }
 // 开始节点的输入参数 -> chip
 function paramChipHtml(pp) {
@@ -479,6 +963,16 @@ function paramChipHtml(pp) {
   const meta = PARAM_TYPE_META[pp.type] || PARAM_TYPE_META.String
   return `<span class="sgx-chip" style="--c:${meta.color}">`
     + `<span class="sgx-chip-dot"></span>${escapeHtml(PORT_LABELS[name] || name)}</span>`
+}
+function vlmOutputPortType(type) {
+  if (!type) return 'String'
+  if (String(type).startsWith('Array<')) return 'Array'
+  return type
+}
+function customPortType(type) {
+  if (!type) return 'String'
+  if (type === 'Array') return 'Array'
+  return type
 }
 
 // 自定义 HTML 卡片节点：左右命名锚点 + 卡片样式
@@ -493,6 +987,39 @@ class SGNodeModel extends HtmlNodeModel {
     }
     if (p.nodeType === 'end') {
       this.height = 18 + 40 + (12 + 26)
+      return
+    }
+    if (p.nodeType === 'detection_model') {
+      // 卡片固定渲染：模型行 + 输入行(图片/电子围栏一行) + 输出行(按标签)
+      const classes = (p.outputPorts && p.outputPorts.length)
+        ? p.outputPorts
+        : (((p.config || {}).target_classes) || [])
+      // 输出行始终显示（空时为"未配置输出"占位），至少占一行
+      const outLines = classes.length ? Math.ceil(classes.length / 2) : 1
+      this.height = 18 + 40
+        + (12 + 26)
+        + (12 + 26)
+        + (12 + outLines * 26)
+      return
+    }
+    if (p.nodeType === 'vlm_model') {
+      const vlmCfg = p.config || {}
+      const inputs = ((vlmCfg.input_params) || [{ name: 'image' }]).length || 1
+      const outputs = ((vlmCfg.output_parameters) || [{ name: 'output' }]).length || 1
+      this.height = 18 + 40
+        + (12 + 26)
+        + (12 + 26)
+        + (12 + Math.ceil(inputs / 2) * 26)
+        + (12 + Math.ceil(outputs / 2) * 26)
+      return
+    }
+    if (p.nodeType === 'custom_code') {
+      const ccCfg = p.config || {}
+      const inputs = ((ccCfg.input_params) || [{ name: 'input' }]).length || 1
+      const outputs = ((ccCfg.output_parameters) || [{ name: 'output' }]).length || 1
+      this.height = 18 + 40
+        + (12 + Math.ceil(inputs / 2) * 26)
+        + (12 + Math.ceil(outputs / 2) * 26)
       return
     }
     const inCount = (p.inputPorts || []).length + (p.dynamic ? 1 : 0)
@@ -542,28 +1069,19 @@ class SGNodeModel extends HtmlNodeModel {
     if (nodeType === 'end') {
       return [{ x, y: y - height / 2, id: `${id}__in__*`, type: 'incoming', portName: '*' }]
     }
-    const outs = props.outputPorts || []
+    // 其余所有节点：统一"顶部一个进点 + 底部一个出点"，分叉也从这一个点分出
     const anchors = []
-    const inList = (props.inputPorts || []).slice()
-    if (props.dynamic) inList.push('*')
-    inList.forEach((p, i) => {
-      anchors.push({
-        x: x - width / 2,
-        y: y - height / 2 + (height / (inList.length + 1)) * (i + 1),
-        id: `${id}__in__${p}`,
-        type: 'incoming',
-        portName: p
-      })
-    })
-    outs.forEach((p, i) => {
-      anchors.push({
-        x: x + width / 2,
-        y: y - height / 2 + (height / (outs.length + 1)) * (i + 1),
-        id: `${id}__out__${p}`,
-        type: 'outgoing',
-        portName: p
-      })
-    })
+    const hasIn = (props.inputPorts && props.inputPorts.length) || props.dynamic || nodeType === 'detection_model'
+    if (hasIn) {
+      const inPort = nodeType === 'detection_model'
+        ? 'image'
+        : (props.dynamic ? '*' : ((props.inputPorts && props.inputPorts[0]) || '*'))
+      anchors.push({ x, y: y - height / 2, id: `${id}__in__${inPort}`, type: 'incoming', portName: inPort })
+    }
+    const outPort = nodeType === 'detection_model'
+      ? 'detections'
+      : ((props.outputPorts && props.outputPorts[0]) || 'out')
+    anchors.push({ x, y: y + height / 2, id: `${id}__out__${outPort}`, type: 'outgoing', portName: outPort })
     return anchors
   }
 }
@@ -594,6 +1112,43 @@ class SGNode extends HtmlNode {
       const msg = cfg.message
       body = `<div class="sgx-row"><span class="sgx-row-l">输出</span>`
         + `<span class="sgx-out${msg ? '' : ' is-empty'}">${msg ? escapeHtml(msg) : '未配置输出'}</span></div>`
+    } else if (p.nodeType === 'detection_model') {
+      // 视觉模型：模型 + 输入(图片/电子围栏) + 按标签输出
+      const modelLabel = p.modelLabel || cfg.model_label || ''
+      const classLabels = p.classLabels || cfg.class_labels || {}
+      const classes = (p.outputPorts && p.outputPorts.length) ? p.outputPorts : (cfg.target_classes || [])
+      const modelRow = `<div class="sgx-row"><span class="sgx-row-l">模型</span>`
+        + `<span class="sgx-out${modelLabel ? '' : ' is-empty'}">${modelLabel ? escapeHtml(modelLabel) : '未配置模型'}</span></div>`
+      const ins = [chipHtml('image', 'Image'), chipHtml('roi', 'ROI')]
+      const outs = classes.map(c => chipHtml(c, 'Detection', classLabels[c] || c))
+      const outRow = outs.length
+        ? row('输出', outs)
+        : `<div class="sgx-row"><span class="sgx-row-l">输出</span><span class="sgx-out is-empty">未配置输出</span></div>`
+      body = modelRow + row('输入', ins) + outRow
+    } else if (p.nodeType === 'vlm_model') {
+      const modelName = cfg.model_name || ''
+      const modelRow = `<div class="sgx-row"><span class="sgx-row-l">模型</span>`
+        + `<span class="sgx-out${modelName ? '' : ' is-empty'}">${modelName ? escapeHtml(modelName) : '未配置模型'}</span></div>`
+      const inputParams = (cfg.input_params && cfg.input_params.length) ? cfg.input_params : [{ name: 'image', type: 'Image' }]
+      const ins = inputParams.filter(x => x && x.name).map(x => chipHtml(x.name, x.type === 'Array' ? 'Array' : (x.type || 'Image')))
+      const outParams = (cfg.output_parameters && cfg.output_parameters.length)
+        ? cfg.output_parameters
+        : [{ name: 'output', type: 'String' }]
+      const outs = outParams.filter(x => x && x.name).map(x => chipHtml(x.name, vlmOutputPortType(x.type)))
+      const outRow = outs.length
+        ? row('输出', outs)
+        : `<div class="sgx-row"><span class="sgx-row-l">输出</span><span class="sgx-out is-empty">未配置输出</span></div>`
+      body = modelRow + row('输入', ins) + outRow
+    } else if (p.nodeType === 'custom_code') {
+      const inputParams = (cfg.input_params && cfg.input_params.length)
+        ? cfg.input_params
+        : [{ name: 'input', type: 'String' }]
+      const ins = inputParams.filter(x => x && x.name).map(x => paramChipHtml(x))
+      const outParams = (cfg.output_parameters && cfg.output_parameters.length)
+        ? cfg.output_parameters
+        : [{ name: 'output', type: 'String' }]
+      const outs = outParams.filter(x => x && x.name).map(x => paramChipHtml(x))
+      body = row('输入', ins) + row('输出', outs)
     } else {
       const ins = (p.inputPorts || []).map(n => chipHtml(n, types[n]))
       if (p.dynamic) ins.push('<span class="sgx-chip sgx-chip-dyn" style="--c:#909399"><span class="sgx-chip-dot"></span>动态输入</span>')
@@ -637,12 +1192,23 @@ export default {
       edgeMode: 'bezier',
       palKeyword: '',
       form: {},
+      modelOptions: [],
+      modelLoading: false,
+      classLoading: false,
+      modelClassesCache: {},
+      inputSelectors: [],
+      graphEdgeRev: 0,
+      _normalizingEdge: false,
       testDialogVisible: false,
       testResultText: '',
       evalDialogVisible: false,
       evalSamples: [],
       evalResult: null,
       evalLoading: false,
+      codeEditorOpen: false,
+      codeTestInput: '',
+      codeTestOutput: '',
+      codeTestLoading: false,
       startParamTypes: [
         { v: 'String', l: 'String' },
         { v: 'TemplateString', l: 'TemplateString' },
@@ -674,6 +1240,28 @@ export default {
         { v: 'Tripwire', l: 'Tripwire' },
         { v: 'Target', l: 'Target' }
       ],
+      vlmModelOptions: [],
+      vlmModelDefault: '',
+      vlmModelLoading: false,
+      vlmInputParamTypes: [
+        { v: 'Image', l: 'Image' },
+        { v: 'Array', l: 'Array' }
+      ],
+      vlmInputArrayItemTypes: [
+        { v: 'Image', l: 'Image' }
+      ],
+      vlmOutputParamTypes: [
+        { v: 'Boolean', l: 'Boolean' },
+        { v: 'String', l: 'String' },
+        { v: 'Integer', l: 'Integer' },
+        { v: 'Double', l: 'Double' },
+        { v: 'Array<String>', l: 'Array<String>' },
+        { v: 'Array<Integer>', l: 'Array<Integer>' },
+        { v: 'Array<Double>', l: 'Array<Double>' },
+        { v: 'Array<Boolean>', l: 'Array<Boolean>' },
+        { v: 'Array<Target>', l: 'Array<Target>' },
+        { v: 'Array<Detection>', l: 'Array<Detection>' }
+      ],
       operators: [
         { v: 'eq', l: '等于' }, { v: 'ne', l: '不等于' },
         { v: 'gt', l: '大于' }, { v: 'gte', l: '大于等于' },
@@ -692,6 +1280,15 @@ export default {
         if (!g[nt.category]) g[nt.category] = []
         g[nt.category].push(nt)
       })
+      // 处理节点：自定义节点第一，视频切片第二
+      if (g.process) {
+        const processRank = (t) => {
+          if (t === 'custom_code') return 0
+          if (t === 'video_slice') return 1
+          return 2
+        }
+        g.process.sort((a, b) => processRank(a.type) - processRank(b.type))
+      }
       return g
     },
     selCat() {
@@ -709,6 +1306,55 @@ export default {
     },
     isFixedNode() {
       return this.selectedType === 'start' || this.selectedType === 'end'
+    },
+    codePreview() {
+      const code = (this.form && this.form.code) || DEFAULT_CUSTOM_CODE
+      const lines = String(code).split('\n')
+      return lines.slice(0, 12).join('\n') + (lines.length > 12 ? '\n...' : '')
+    },
+    hasInputSelector() {
+      const t = this.selectedType
+      if (!t || t === 'start' || t === 'end') return false
+      const props = (this.selectedNode && this.selectedNode.properties) || {}
+      return !!(props.inputPorts && props.inputPorts.length)
+    },
+    // 非开始/结束节点：没有任何连入边时，在抽屉标题下提示先连前序
+    showUpstreamWarn() {
+      if (this.isFixedNode || !this.selectedNode || !this.lf) return false
+      void this.graphEdgeRev
+      const g = this.lf.getGraphData && this.lf.getGraphData()
+      if (!g) return false
+      const nid = this.selectedNode.id
+      return !(g.edges || []).some(e => e.targetNodeId === nid)
+    },
+    modelClassOptions() {
+      const id = this.form && this.form.model_id
+      return (id != null && this.modelClassesCache[id]) || []
+    },
+    // 结束节点：可插入到文案的标签（连进来的上游端口 + 检测目标属性）
+    endRefTokens() {
+      if (this.selectedType !== 'end' || !this.selectedNode || !this.lf) return []
+      let g
+      try { g = this.lf.getGraphData() } catch (e) { return [] }
+      const nodesById = {}
+      ;(g.nodes || []).forEach(n => { nodesById[n.id] = n })
+      const tokens = []
+      const seen = new Set()
+      ;(g.edges || []).filter(e => e.targetNodeId === this.selectedNode.id).forEach(e => {
+        const tp = (e.properties && e.properties.targetPort) || this.parsePort(e.targetAnchorId, 'in')
+        if (!tp || tp === 'trigger' || tp === '*') return
+        const sp = (e.properties && e.properties.sourcePort) || this.parsePort(e.sourceAnchorId, 'out')
+        const srcNode = nodesById[e.sourceNodeId]
+        const srcType = (srcNode && srcNode.properties && srcNode.properties.portTypes && srcNode.properties.portTypes[sp]) || ''
+        if (!seen.has(tp)) { seen.add(tp); tokens.push({ token: tp, label: tp }) }
+        if (srcType === 'Detection') {
+          DETECTION_ATTRS.forEach(a => {
+            const tk = `${tp}.${a.k}`
+            if (!seen.has(tk)) { seen.add(tk); tokens.push({ token: tk, label: `${tp}·${a.l}` }) }
+          })
+        }
+      })
+      return tokens
     },
     refParamOptions() {
       // 引用参数候选：取画布上开始节点定义的输入参数名
@@ -738,10 +1384,14 @@ export default {
         if (items.length) g[cat] = items
       })
       return g
+    },
+    videoSliceNumericFields() {
+      return VIDEO_SLICE_NUMERIC_FIELDS
     }
   },
   async mounted() {
-    await this.loadNodeTypes()
+    await Promise.all([this.loadNodeTypes(), this.loadVlmModels()])
+    this.loadModels()
     this.initLogicFlow()
     const sid = this.$route.query.skillId
     if (sid) {
@@ -768,6 +1418,39 @@ export default {
     palIconStyle(nt) {
       return { background: catMeta(nt.category).color }
     },
+    async loadVlmModels() {
+      this.vlmModelLoading = true
+      try {
+        const res = await skillGraphAPI.getVlmModels()
+        const body = res.data || {}
+        const list = body.data || []
+        this.vlmModelDefault = body.default || ''
+        this.vlmModelOptions = list.map(m => ({
+          value: m.value,
+          label: m.label || m.value,
+          role: m.role || ''
+        }))
+        this.ensureVlmModelOption(this.form && this.form.model_name)
+      } catch (e) {
+        this.vlmModelOptions = []
+        this.vlmModelDefault = ''
+        console.warn('加载多模态大模型列表失败', e)
+      } finally {
+        this.vlmModelLoading = false
+      }
+    },
+    ensureVlmModelOption(modelName) {
+      if (!modelName) return
+      if (!this.vlmModelOptions.some(m => m.value === modelName)) {
+        this.vlmModelOptions = [
+          { value: modelName, label: modelName },
+          ...this.vlmModelOptions
+        ]
+      }
+    },
+    onVlmModelSelectVisible(visible) {
+      if (visible && !this.vlmModelOptions.length) this.loadVlmModels()
+    },
     async loadNodeTypes() {
       try {
         const res = await skillGraphAPI.getNodeTypes()
@@ -786,6 +1469,319 @@ export default {
         this.$message.error('加载节点类型失败')
       }
     },
+    // 视觉模型：加载可选模型列表（服务端按名称搜索 + 分页，取第一页）
+    async loadModels(query) {
+      this.modelLoading = true
+      try {
+        const params = { page: 1, limit: 50 }
+        if (query) params.name = query
+        const res = await modelAPI.getModelList(params)
+        const list = (res.data && res.data.data) || []
+        const mapped = list.map(m => ({ ...m, _label: this.buildModelLabel(m) }))
+        // 保留当前已选模型选项，避免回显丢失
+        const selId = this.form && this.form.model_id
+        if (selId != null && !mapped.some(m => m.id === selId)) {
+          const cur = this.modelOptions.find(m => m.id === selId)
+          if (cur) mapped.unshift(cur)
+        }
+        this.modelOptions = mapped
+      } catch (e) {
+        this.modelOptions = []
+      } finally {
+        this.modelLoading = false
+      }
+    },
+    // el-select 远程搜索回调（按名称服务端检索）
+    searchModels(query) {
+      this.loadModels(query)
+    },
+    // 下拉展开时若列表为空则拉取第一页
+    onModelSelectVisible(visible) {
+      if (visible && !this.modelOptions.length) this.loadModels()
+    },
+    // 确保当前已选模型在选项里（编辑回显用）
+    ensureSelectedModelOption(id, label, name, version) {
+      if (id == null) return
+      if (!this.modelOptions.some(m => m.id === id)) {
+        this.modelOptions = [
+          { id, name: name || '', version: version || '', _label: label || name || String(id) },
+          ...this.modelOptions
+        ]
+      }
+    },
+    buildModelLabel(m) {
+      const v = m.version
+      const ver = v == null || v === '' ? 'V1' : (String(v).toUpperCase().startsWith('V') ? v : 'V' + v)
+      return `${m.name}/${ver}`
+    },
+    uniqueNodeName(nodeType, base, excludeId) {
+      const g = (this.lf && this.lf.getGraphData && this.lf.getGraphData()) || {}
+      const used = new Set()
+      ;(g.nodes || []).forEach((n) => {
+        if (n.id === excludeId) return
+        const t = (n.properties && n.properties.nodeType) || n.type
+        if (t !== nodeType) return
+        const nm = (n.text && (n.text.value != null ? n.text.value : n.text)) ||
+          (n.properties && n.properties.name_zh) || ''
+        if (nm) used.add(nm)
+      })
+      if (!used.has(base)) return base
+      let i = 1
+      while (used.has(`${base}_${i}`)) i++
+      return `${base}_${i}`
+    },
+    // 沿连边反向追溯，得到当前节点的所有前序节点（未连前序则为空）
+    upstreamNodeIds(selfId) {
+      const g = (this.lf && this.lf.getGraphData && this.lf.getGraphData()) || { edges: [] }
+      const upstream = new Set()
+      let frontier = [selfId]
+      const seen = new Set([selfId])
+      while (frontier.length) {
+        const next = []
+        frontier.forEach(nid => {
+          ;(g.edges || []).forEach(e => {
+            if (e.targetNodeId !== nid) return
+            const src = e.sourceNodeId
+            if (seen.has(src)) return
+            seen.add(src)
+            upstream.add(src)
+            next.push(src)
+          })
+        })
+        frontier = next
+      }
+      return upstream
+    },
+    // 按类型聚合「前序路径上」节点的可选输出参数（未连前序则无选项）
+    typedSourceGroups(portType, selfId) {
+      const g = (this.lf && this.lf.getGraphData && this.lf.getGraphData()) || { nodes: [] }
+      const upstream = this.upstreamNodeIds(selfId)
+      if (!upstream.size) return []
+      const groups = []
+      ;(g.nodes || []).forEach(n => {
+        if (!upstream.has(n.id)) return
+        const nt = n.properties && n.properties.nodeType
+        if (nt === 'end') return
+        const outs = this.nodeTypedOutputs(n).filter(o => o.type === portType)
+        if (!outs.length) return
+        const nodeName = (n.text && (n.text.value != null ? n.text.value : n.text)) ||
+          (n.properties && n.properties.name_zh) || n.id
+        groups.push({ nodeId: n.id, nodeName, params: outs })
+      })
+      return groups
+    },
+    // 某节点对外可用的类型化输出参数（供下游按类型选择）
+    nodeTypedOutputs(n) {
+      const props = (n && n.properties) || {}
+      const nt = props.nodeType
+      const types = props.portTypes || {}
+      const out = []
+      if (nt === 'start') {
+        const params = ((props.config || {}).input_params) || []
+        params.forEach(pp => {
+          if (!pp || !pp.name) return
+          out.push({ port: pp.name, type: pp.type || 'String', label: PORT_LABELS[pp.name] || pp.name })
+        })
+      } else {
+        ;(props.outputPorts || []).forEach(p => {
+          out.push({ port: p, type: types[p] || '', label: PORT_LABELS[p] || p })
+        })
+      }
+      return out
+    },
+    paramTypeIcon(type) {
+      const m = { Image: 'el-icon-picture-outline', Video: 'el-icon-video-camera', ROI: 'el-icon-crop', Detection: 'el-icon-aim' }
+      return m[type] || 'el-icon-document'
+    },
+    customPortType(type) {
+      if (!type) return 'String'
+      if (type === 'Array') return 'Array'
+      return type
+    },
+    // 参数名格式校验：必须以字母开头，只能包含字母、数字、下划线（空名由"必填"负责，这里只校验格式）
+    paramNameValid(name) {
+      if (!name) return true
+      return /^[A-Za-z][A-Za-z0-9_]*$/.test(name)
+    },
+    // 某节点类型的"单一进点 / 出点"端口名（所有节点都收敛到单进单出锚点）
+    singleInPort(type) {
+      if (type === 'end') return '*'
+      if (type === 'detection_model') return 'image'
+      const pm = PORT_MAP[type] || {}
+      return pm.dynamic ? '*' : ((pm.inputs && pm.inputs[0]) || '*')
+    },
+    singleOutPort(type) {
+      if (type === 'detection_model') return 'detections'
+      const pm = PORT_MAP[type] || {}
+      return (pm.outputs && pm.outputs[0]) || 'out'
+    },
+    // 分组数据 -> el-tree 树数据（节点为父，参数为叶）
+    groupsToTree(groups) {
+      return (groups || []).map(g => ({
+        id: g.nodeId,
+        label: g.nodeName,
+        isNode: true,
+        icon: 'el-icon-cpu',
+        children: (g.params || []).map(p => ({
+          id: `${g.nodeId}::${p.port}`,
+          label: p.label,
+          icon: this.paramTypeIcon(p.type),
+          leaf: true
+        }))
+      }))
+    },
+    // `${nodeId}::${port}` -> "节点名/参数名"
+    refLabel(val, groups) {
+      if (!val) return ''
+      const idx = val.indexOf('::')
+      const nid = idx >= 0 ? val.substring(0, idx) : val
+      const port = idx >= 0 ? val.substring(idx + 2) : ''
+      const g = (groups || []).find(x => x.nodeId === nid)
+      if (!g) return val
+      const p = (g.params || []).find(x => x.port === port)
+      return `${g.nodeName}/${p ? p.label : port}`
+    },
+    selLabel(sel) {
+      return this.refLabel(sel.value, sel.groups)
+    },
+    // 树里点选：点参数(叶)才算选择，点节点(父)仅展开/收起
+    onParamPick(sel, data) {
+      if (!data || !data.leaf) return
+      sel.value = data.id
+      sel.popOpen = false
+      this.bindInput(sel.port, sel.value)
+    },
+    clearInput(sel) {
+      sel.value = ''
+      sel.popOpen = false
+      if (!this.selectedNode) return
+      const nid = this.selectedNode.id
+      const g = this.lf.getGraphData()
+      // 仅清除参数绑定，保留画布上的结构连线
+      ;(g.edges || []).forEach(x => {
+        if (x.targetNodeId !== nid) return
+        const xtp = (x.properties && x.properties.targetPort) || this.parsePort(x.targetAnchorId, 'in')
+        if (xtp !== sel.port) return
+        this.lf.setProperties(x.id, { ...(x.properties || {}), paramBound: false })
+      })
+    },
+    // 读取本节点各输入端口当前绑定的上游来源：返回 { port: `${nodeId}::${port}` }
+    collectInputBindings(nodeId) {
+      const g = (this.lf && this.lf.getGraphData && this.lf.getGraphData()) || { edges: [] }
+      const map = {}
+      ;(g.edges || []).forEach(e => {
+        if (e.targetNodeId !== nodeId) return
+        if (e.properties && e.properties.paramBound === false) return
+        const sp = (e.properties && e.properties.sourcePort) || this.parsePort(e.sourceAnchorId, 'out') || ''
+        const tp = (e.properties && e.properties.targetPort) || this.parsePort(e.targetAnchorId, 'in')
+        if (tp && !map[tp]) map[tp] = `${e.sourceNodeId}::${sp}`
+      })
+      return map
+    },
+    // 为当前选中节点的每个输入端口构建一个"树形选择器"
+    refreshInputBindings(nodeId) {
+      const node = (this.lf && this.lf.getNodeModelById && this.lf.getNodeModelById(nodeId)) || this.selectedNode
+      const props = (node && node.properties) || {}
+      const t = props.nodeType
+      if (t === 'start' || t === 'end' || !(props.inputPorts && props.inputPorts.length)) {
+        this.inputSelectors = []
+        return
+      }
+      const types = props.portTypes || {}
+      const upstream = this.upstreamNodeIds(nodeId)
+      const bound = this.collectInputBindings(nodeId)
+      this.inputSelectors = (props.inputPorts || []).map(p => {
+        const type = types[p] || ''
+        const groups = this.typedSourceGroups(type, nodeId)
+        let value = bound[p] || ''
+        if (value) {
+          const srcId = value.indexOf('::') >= 0 ? value.substring(0, value.indexOf('::')) : value
+          if (!upstream.has(srcId)) value = ''
+        }
+        return {
+          port: p,
+          label: PORT_LABELS[p] || p,
+          type,
+          optional: type === 'ROI',
+          value,
+          groups,
+          treeData: this.groupsToTree(groups),
+          popOpen: false
+        }
+      })
+    },
+    // 把某输入端口绑定到选中的上游参数：清掉该端口旧边并按真实 sourcePort/targetPort 建新边
+    bindInput(targetPort, val) {
+      if (!this.selectedNode) return
+      const nid = this.selectedNode.id
+      const upstream = this.upstreamNodeIds(nid)
+      if (!upstream.size) return
+      const myType = this.selectedType
+      const g = this.lf.getGraphData()
+      ;(g.edges || []).forEach(x => {
+        if (x.targetNodeId !== nid) return
+        const xtp = (x.properties && x.properties.targetPort) || this.parsePort(x.targetAnchorId, 'in')
+        if (xtp === targetPort) this.lf.deleteEdge(x.id)
+      })
+      if (val) {
+        const idx = val.indexOf('::')
+        const srcId = idx >= 0 ? val.substring(0, idx) : val
+        if (!upstream.has(srcId)) return
+        const port = idx >= 0 ? val.substring(idx + 2) : ''
+        const srcNode = (g.nodes || []).find(n => n.id === srcId)
+        const srcType = (srcNode && srcNode.properties && srcNode.properties.nodeType) || ''
+        this.lf.addEdge({
+          type: this.edgeMode || 'bezier',
+          // 上游出点/本节点进点都收敛到各自的单一锚点；真实端口靠 properties 记录
+          sourceAnchorId: `${srcId}__out__${this.singleOutPort(srcType)}`,
+          targetAnchorId: `${nid}__in__${this.singleInPort(myType)}`,
+          sourceNodeId: srcId,
+          targetNodeId: nid,
+          properties: { sourcePort: port, targetPort, paramBound: true }
+        })
+      }
+      this.$nextTick(() => this.refreshInputBindings(nid))
+    },
+    // 视觉模型：加载某模型的检测类别（模型标签），带缓存
+    async loadModelClasses(modelId) {
+      if (modelId == null || this.modelClassesCache[modelId]) return
+      this.classLoading = true
+      try {
+        const res = await modelAPI.getModelClasses(modelId)
+        const classes = (res.data && res.data.classes) || []
+        this.$set(this.modelClassesCache, modelId, classes)
+      } catch (e) {
+        this.$set(this.modelClassesCache, modelId, [])
+      } finally {
+        this.classLoading = false
+      }
+    },
+    onModelChange(modelId) {
+      const m = this.modelOptions.find(x => x.id === modelId)
+      this.form.model_name = m ? m.name : ''
+      this.form.model_version = m ? m.version : ''
+      this.$set(this.form, '_modelLabel', m ? m._label : '')
+      // 切换模型 → 清空已选标签与阈值
+      this.$set(this.form, 'target_classes', [])
+      this.$set(this.form, 'class_thresholds', {})
+      this.loadModelClasses(modelId)
+      this.applyConfig()
+    },
+    onClassesChange() {
+      if (!this.form.class_thresholds) this.$set(this.form, 'class_thresholds', {})
+      const th = this.form.class_thresholds
+      const selected = this.form.target_classes || []
+      // 新增标签补默认阈值
+      selected.forEach(c => { if (th[c] == null) this.$set(th, c, 0.5) })
+      // 移除已取消的标签阈值
+      Object.keys(th).forEach(c => { if (selected.indexOf(c) < 0) this.$delete(th, c) })
+      this.applyConfig()
+    },
+    classLabel(cls) {
+      const o = (this.modelClassOptions || []).find(x => x.name === cls)
+      if (o) return o.name_zh || o.name
+      return (this.form._classLabels && this.form._classLabels[cls]) || cls
+    },
     initLogicFlow() {
       this.lf = new LogicFlow({
         container: this.$refs.canvas,
@@ -798,7 +1794,14 @@ export default {
       })
       this.lf.register({ type: 'sg-node', view: SGNode, model: SGNodeModel })
       this.lf.setTheme({
-        bezier: { stroke: '#b9c2d0', strokeWidth: 2, hoverStroke: '#7c5cff', selectedStroke: '#7c5cff' },
+        bezier: {
+          stroke: '#b9c2d0', strokeWidth: 2, hoverStroke: '#7c5cff', selectedStroke: '#7c5cff',
+          arrow: { offset: 8, verticalLength: 4 }
+        },
+        polyline: {
+          stroke: '#b9c2d0', strokeWidth: 2, hoverStroke: '#7c5cff', selectedStroke: '#7c5cff',
+          arrow: { offset: 8, verticalLength: 4 }
+        },
         anchor: { stroke: '#7c5cff', fill: '#fff', r: 4, hover: { r: 8, fill: '#7c5cff', fillOpacity: 0.2, stroke: '#7c5cff', strokeWidth: 2 } },
         nodeText: { color: '#1f2329', fontSize: 12 },
         edgeText: { color: '#8a94a6', fontSize: 12, background: { fill: '#f6f8fb' } }
@@ -822,13 +1825,35 @@ export default {
       this.lf.on('node:dnd-add', (evt) => {
         const data = (evt && evt.data) || evt
         if (!data || !data.id) return
+        // 等拖放结算完成后再处理，避免打断 LogicFlow 拖拽状态
         this.$nextTick(() => {
+          // 同类型节点自动命名：第一个用原名，其后 _1 / _2 ...
+          const nodeType = (data.properties && data.properties.nodeType) || data.type
+          const base = (data.properties && data.properties.name_zh) || nodeType
+          const name = this.uniqueNodeName(nodeType, base, data.id)
+          if (name !== base) {
+            this.lf.updateText(data.id, name)
+            const m = this.lf.getNodeModelById && this.lf.getNodeModelById(data.id)
+            if (m && m.setProperties) m.setProperties({ name_zh: name })
+            if (data.text && typeof data.text === 'object') data.text.value = name
+            else data.text = { value: name }
+          }
           if (this.lf.selectElementById) this.lf.selectElementById(data.id, false)
           this.onSelectNode(data)
         })
       })
       // 连线建立 → 记录端口名到边的 properties
-      this.lf.on('edge:add', ({ data }) => this.onEdgeAdd(data))
+      this.lf.on('edge:add', ({ data }) => {
+        this.onEdgeAdd(data)
+        this.graphEdgeRev++
+      })
+      // 连线增删 → 刷新输入来源选择器 / 前序连接提示
+      this.lf.on('edge:delete', () => {
+        this.graphEdgeRev++
+        if (this.selectedNode && this.hasInputSelector) {
+          this.$nextTick(() => this.refreshInputBindings(this.selectedNode.id))
+        }
+      })
     },
     // 默认放置开始 / 结束两个固定节点
     addDefaultNodes() {
@@ -872,35 +1897,74 @@ export default {
     // 在面板上按下鼠标 → 启动拖拽，松开时落到画布
     startDragNode(nt) {
       const ports = PORT_MAP[nt.type] || { inputs: [], outputs: [], dynamic: false }
+      const cfg = this.defaultConfig(nt.type)
+      const props = {
+        nodeType: nt.type,
+        name_zh: nt.name_zh,
+        category: nt.category || ports.category,
+        inputPorts: ports.inputs,
+        outputPorts: ports.outputs,
+        portTypes: ports.types || {},
+        dynamic: ports.dynamic,
+        config: cfg
+      }
+      if (nt.type === 'custom_code') {
+        const inputs = (cfg.input_params || []).filter(p => p.name)
+        const outputs = (cfg.output_parameters || []).filter(p => p.name)
+        const pt = {}
+        inputs.forEach(p => { pt[p.name] = customPortType(p.type) })
+        outputs.forEach(p => { pt[p.name] = customPortType(p.type) })
+        props.inputPorts = inputs.map(p => p.name)
+        props.outputPorts = outputs.map(p => p.name)
+        props.portTypes = pt
+        props.dynamic = true
+      }
       this.lf.dnd.startDrag({
         type: 'sg-node',
         text: nt.name_zh,
-        properties: {
-          nodeType: nt.type,
-          name_zh: nt.name_zh,
-          category: nt.category || ports.category,
-          inputPorts: ports.inputs,
-          outputPorts: ports.outputs,
-          portTypes: ports.types || {},
-          dynamic: ports.dynamic,
-          config: this.defaultConfig(nt.type)
-        }
+        properties: props
       })
     },
     closeConfig() {
+      this.closeCodeEditor()
       this.selectedNode = null
       this.selectedType = ''
     },
     onEdgeAdd(edge) {
-      // 边的锚点id在 model 上，data 不一定带；从 model 取最稳
       const model = this.lf.getEdgeModelById(edge.id)
-      const srcAnchor = (model && model.sourceAnchorId) || edge.sourceAnchorId
-      const tgtAnchor = (model && model.targetAnchorId) || edge.targetAnchorId
-      const sp = this.parsePort(srcAnchor, 'out')
-      let tp = this.parsePort(tgtAnchor, 'in')
+      if (!model) return
+      const srcAnchor = model.sourceAnchorId || edge.sourceAnchorId
+      const tgtAnchor = model.targetAnchorId || edge.targetAnchorId
+      // 允许从后续节点上方(in)拖到前序节点下方(out)；建边后自动纠正为 out → in，箭头指向下游
+      const srcIsIn = srcAnchor && srcAnchor.indexOf('__in__') >= 0
+      const tgtIsOut = tgtAnchor && tgtAnchor.indexOf('__out__') >= 0
+      if (srcIsIn && tgtIsOut && !this._normalizingEdge) {
+        this._normalizingEdge = true
+        const props = { ...(model.properties || {}) }
+        this.lf.deleteEdge(edge.id)
+        this.lf.addEdge({
+          type: model.type || this.edgeMode || 'bezier',
+          sourceNodeId: model.targetNodeId,
+          targetNodeId: model.sourceNodeId,
+          sourceAnchorId: tgtAnchor,
+          targetAnchorId: srcAnchor,
+          properties: props
+        })
+        this._normalizingEdge = false
+        this.graphEdgeRev++
+        return
+      }
+      const existing = model.properties || {}
+      // 若建边时已显式带上 sourcePort/targetPort（抽屉里选参数建的边），以其为准，不被锚点反推覆盖
+      const sp = existing.sourcePort || this.parsePort(srcAnchor, 'out')
+      let tp = existing.targetPort || this.parsePort(tgtAnchor, 'in')
       // 动态输入节点：通用入口 '*' 的端口名沿用上游输出端口名
       if (tp === '*') tp = sp || 'value'
       this.lf.setProperties(edge.id, { sourcePort: sp, targetPort: tp })
+      const tgtNode = (model && model.targetNodeId) || edge.targetNodeId
+      if (this.selectedNode && this.hasInputSelector && tgtNode === this.selectedNode.id) {
+        this.$nextTick(() => this.refreshInputBindings(this.selectedNode.id))
+      }
     },
     parsePort(anchorId, kind) {
       if (!anchorId) return null
@@ -910,36 +1974,121 @@ export default {
     },
     defaultConfig(type) {
       const d = {
-        detection_model: { model_name: 'coco_detector', target_classes: ['person'], confidence_threshold: 0.5 },
-        vlm_model: { system_prompt: '', prompt: '', output_parameters: [] },
+        detection_model: { model_name: '', model_id: null, model_version: '', model_label: '', target_classes: [], class_thresholds: {}, confidence_threshold: 0.5, class_labels: {} },
+        vlm_model: {
+          model_name: '',
+          system_prompt: '',
+          prompt: '',
+          input_params: [{ name: 'image', type: 'Image', item_type: 'Image' }],
+          output_parameters: [{ name: 'output', type: 'String' }]
+        },
         region_filter: { trigger_mode: 'inside' },
+        video_slice: { start_time: 0, end_time: 0, buffer: 0 },
         size_filter: {},
         intersect: { iou_mode: 'union', iou_threshold: 0.1 },
         line_crossing: { line: [{ x: 0.5, y: 0 }, { x: 0.5, y: 1 }], direction: 'both' },
         distance: { max_distance: 100 },
         dwell: { min_seconds: 5, max_move: 50 },
         judge: { conditions: { condition_groups: [{ conditions: [], relation: 'all' }], global_relation: 'or' }, duration: 0, buffer: 0 },
+        custom_code: {
+          input_params: [{ name: 'input', type: 'String' }],
+          output_parameters: [{ name: 'output', type: 'String' }],
+          code: DEFAULT_CUSTOM_CODE,
+          timeout_ms: 10000
+        },
         end: { message: '' },
         start: { params: {}, input_params: [{ name: 'image', type: 'Image', required: true }] }
       }
       return d[type] || {}
     },
     onSelectNode(data) {
-      this.selectedNode = data
-      this.selectedType = (data.properties && data.properties.nodeType) || ''
-      const cfg = (data.properties && data.properties.config) || {}
-      const f = { _name: data.text && data.text.value ? data.text.value : (data.properties.name_zh || '') }
+      if (!data || !data.id) return
+      let nodeData = data
+      try {
+        const model = this.lf && this.lf.getNodeModelById(data.id)
+        if (model && model.getData) nodeData = model.getData()
+      } catch (e) { /* 回退 event data */ }
+      if (this.selectedType === 'custom_code' && ((nodeData.properties && nodeData.properties.nodeType) || '') !== 'custom_code') {
+        this.closeCodeEditor()
+      }
+      this.selectedNode = nodeData
+      this.selectedType = (nodeData.properties && nodeData.properties.nodeType) || ''
+      const cfg = (nodeData.properties && nodeData.properties.config) || {}
+      const f = { _name: nodeData.text && nodeData.text.value ? nodeData.text.value : (nodeData.properties.name_zh || '') }
       // 把各类型配置摊平到表单
       if (this.selectedType === 'detection_model') {
+        f.model_id = cfg.model_id != null ? cfg.model_id : null
         f.model_name = cfg.model_name || ''
-        f.target_classes = (cfg.target_classes || []).join(',')
-        f.confidence_threshold = cfg.confidence_threshold != null ? cfg.confidence_threshold : 0.5
+        f.model_version = cfg.model_version || ''
+        f._modelLabel = cfg.model_label || ''
+        f.target_classes = (cfg.target_classes || []).slice()
+        f.class_thresholds = { ...(cfg.class_thresholds || {}) }
+        f._classLabels = { ...(cfg.class_labels || {}) }
+        f.target_classes.forEach(c => { if (f.class_thresholds[c] == null) f.class_thresholds[c] = 0.5 })
+        if (f.model_id != null) {
+          this.ensureSelectedModelOption(f.model_id, f._modelLabel, f.model_name, f.model_version)
+          this.loadModelClasses(f.model_id)
+        }
       } else if (this.selectedType === 'vlm_model') {
+        f.model_name = cfg.model_name || this.vlmModelDefault || ''
+        this.ensureVlmModelOption(f.model_name)
         f.system_prompt = cfg.system_prompt || ''
         f.prompt = cfg.prompt || ''
-        f.output_parameters_text = JSON.stringify(cfg.output_parameters || [], null, 0)
+        const inList = (cfg.input_params || []).map(ip => {
+          const type = ip.type === 'Array' ? 'Array' : (ip.type || 'Image')
+          return {
+            name: ip.name || '',
+            type: type === 'Array' || type === 'Image' ? type : 'Image',
+            item_type: 'Image',
+            _typeOpen: false,
+            _arrayHover: false,
+            _bindOpen: false
+          }
+        })
+        f.input_params = inList.length
+          ? inList
+          : [{ name: 'image', type: 'Image', item_type: 'Image', _typeOpen: false, _arrayHover: false, _bindOpen: false }]
+        const outList = (cfg.output_parameters || []).map(op => ({
+          name: op.name || '',
+          type: this.backendToVlmType(op.type) || 'String',
+          _typeOpen: false
+        }))
+        f.output_parameters = outList.length
+          ? outList
+          : [{ name: 'output', type: 'String', _typeOpen: false }]
+      } else if (this.selectedType === 'custom_code') {
+        const inList = (cfg.input_params || []).map(ip => ({
+          name: ip.name || '',
+          type: ip.type || 'String',
+          item_type: ip.item_type || 'String',
+          _typeOpen: false,
+          _arrayHover: false,
+          _bindOpen: false
+        }))
+        f.input_params = inList.length
+          ? inList
+          : [{ name: 'input', type: 'String', item_type: 'String', _typeOpen: false, _arrayHover: false, _bindOpen: false }]
+        const outList = (cfg.output_parameters || []).map(op => ({
+          name: op.name || '',
+          type: op.type || 'String',
+          item_type: op.item_type || 'String',
+          _typeOpen: false,
+          _arrayHover: false
+        }))
+        f.output_parameters = outList.length
+          ? outList
+          : [{ name: 'output', type: 'String', _typeOpen: false }]
+        f.code = cfg.code || DEFAULT_CUSTOM_CODE
+        f.timeout_ms = cfg.timeout_ms != null ? cfg.timeout_ms : 10000
+        this.codeTestInput = this.buildCustomTestInput(f.input_params)
+        this.codeTestOutput = ''
       } else if (this.selectedType === 'region_filter') {
         f.trigger_mode = cfg.trigger_mode || 'inside'
+      } else if (this.selectedType === 'video_slice') {
+        f.start_time = cfg.start_time != null ? cfg.start_time : 0
+        f.end_time = cfg.end_time != null ? cfg.end_time : 0
+        f.buffer = cfg.buffer != null ? cfg.buffer : 0
+        f._vsPop = { video: false, start_time: false, end_time: false, buffer: false }
       } else if (this.selectedType === 'size_filter') {
         f.min_width = cfg.min_width || 0
         f.max_width = cfg.max_width || 0
@@ -981,6 +2130,8 @@ export default {
         f.input_params = list.length ? list : [{ name: 'image', type: 'Image', required: true, item_type: 'String', _typeOpen: false, _arrayHover: false }]
       }
       this.form = f
+      // 通用：为任意"有输入端口"的节点构建输入来源选择器（树形）
+      this.refreshInputBindings(nodeData.id)
     },
     addStartParam() {
       if (!this.form.input_params) this.$set(this.form, 'input_params', [])
@@ -1014,6 +2165,26 @@ export default {
       this.form.message = ''
       this.applyConfig()
     },
+    // 在文案光标处插入标签 {token}
+    insertToken(token) {
+      const ins = `{${token}}`
+      const cur = this.form.message || ''
+      const wrap = this.$refs.endMsgInput
+      const ta = wrap && wrap.$el && wrap.$el.querySelector('textarea')
+      if (ta && typeof ta.selectionStart === 'number') {
+        const s = ta.selectionStart
+        const e = ta.selectionEnd
+        this.$set(this.form, 'message', cur.slice(0, s) + ins + cur.slice(e))
+        this.$nextTick(() => {
+          ta.focus()
+          const p = s + ins.length
+          ta.setSelectionRange(p, p)
+        })
+      } else {
+        this.$set(this.form, 'message', cur + ins)
+      }
+      this.applyConfig()
+    },
     addEndParam() {
       if (!this.form.out_params) this.$set(this.form, 'out_params', [])
       this.form.out_params.push({ name: '', ref: '' })
@@ -1026,6 +2197,164 @@ export default {
     removeStartParam(pi) {
       this.form.input_params.splice(pi, 1)
       this.applyConfig()
+    },
+    addVlmInputParam() {
+      if (!this.form.input_params) this.$set(this.form, 'input_params', [])
+      this.form.input_params.push({
+        name: '', type: 'Image', item_type: 'Image',
+        _typeOpen: false, _arrayHover: false, _bindOpen: false
+      })
+      this.applyConfig()
+    },
+    removeVlmInputParam(ii) {
+      const ip = this.form.input_params[ii]
+      if (ip && ip.name) this.clearVlmInput(ip)
+      this.form.input_params.splice(ii, 1)
+      this.applyConfig()
+    },
+    addVlmOutputParam() {
+      if (!this.form.output_parameters) this.$set(this.form, 'output_parameters', [])
+      this.form.output_parameters.push({ name: '', type: 'String', _typeOpen: false })
+      this.applyConfig()
+    },
+    removeVlmOutputParam(oi) {
+      this.form.output_parameters.splice(oi, 1)
+      if (!this.form.output_parameters.length) {
+        this.form.output_parameters.push({ name: 'output', type: 'String', _typeOpen: false })
+      }
+      this.applyConfig()
+    },
+    vlmInputTypeLabel(ip) {
+      if (ip.type === 'Array') return 'Array<Image>'
+      return 'Image'
+    },
+    vlmOutputTypeLabel(type) {
+      return type || 'String'
+    },
+    vlmTypePrefix(type) {
+      if (!type) return 'any.'
+      if (String(type).startsWith('Array<')) return 'arr.'
+      const m = { String: 'str.', Integer: 'int.', Double: 'dbl.', Boolean: 'bool.' }
+      return m[type] || 'any.'
+    },
+    vlmPortType(ip) {
+      return ip.type === 'Array' ? 'Array' : (ip.type || 'Image')
+    },
+    backendToVlmType(type) {
+      if (!type) return 'String'
+      const s = String(type).trim()
+      const arr = s.match(/^array<(.+)>$/i)
+      if (arr) {
+        const inner = this.backendToVlmType(arr[1])
+        return `Array<${inner}>`
+      }
+      const m = {
+        string: 'String', str: 'String',
+        integer: 'Integer', int: 'Integer',
+        double: 'Double', float: 'Double',
+        boolean: 'Boolean', bool: 'Boolean',
+        target: 'Target',
+        detection: 'Detection'
+      }
+      return m[s.toLowerCase()] || s
+    },
+    vlmTypeToBackend(type) {
+      if (!type) return 'string'
+      if (String(type).startsWith('Array<')) {
+        const inner = type.slice(6, -1)
+        return `array<${this.vlmTypeToBackend(inner)}>`
+      }
+      const m = { String: 'string', Integer: 'integer', Double: 'double', Boolean: 'boolean', Target: 'target', Detection: 'detection' }
+      return m[type] || String(type).toLowerCase()
+    },
+    selectVlmInputType(ip, v) {
+      this.$set(ip, 'type', v)
+      ip._typeOpen = false
+      if (ip.name) this.clearVlmInput(ip)
+      this.applyConfig()
+    },
+    selectVlmInputArrayType(ip, v) {
+      this.$set(ip, 'type', 'Array')
+      this.$set(ip, 'item_type', 'Image')
+      ip._typeOpen = false
+      if (ip.name) this.clearVlmInput(ip)
+      this.applyConfig()
+    },
+    selectVlmOutputType(op, v) {
+      this.$set(op, 'type', v)
+      op._typeOpen = false
+      this.applyConfig()
+    },
+    vlmInputBindingValue(portName) {
+      if (!this.selectedNode || !portName) return ''
+      const bound = this.collectInputBindings(this.selectedNode.id)
+      return bound[portName] || ''
+    },
+    vlmInputTreeData(ip) {
+      if (!this.selectedNode || !ip || !ip.name) return []
+      return this.groupsToTree(this.typedSourceGroups(this.vlmPortType(ip), this.selectedNode.id))
+    },
+    vlmInputBindLabel(portName) {
+      const val = this.vlmInputBindingValue(portName)
+      if (!val) return ''
+      const ip = (this.form.input_params || []).find(p => p.name === portName)
+      const groups = this.selectedNode
+        ? this.typedSourceGroups(this.vlmPortType(ip || {}), this.selectedNode.id)
+        : []
+      return this.refLabel(val, groups)
+    },
+    onVlmInputPick(ip, data) {
+      if (!data || !data.leaf || !ip.name) return
+      ip._bindOpen = false
+      this.bindInput(ip.name, data.id)
+    },
+    clearVlmInput(ip) {
+      if (!ip || !ip.name || !this.selectedNode) return
+      ip._bindOpen = false
+      const nid = this.selectedNode.id
+      const g = this.lf.getGraphData()
+      ;(g.edges || []).forEach(x => {
+        if (x.targetNodeId !== nid) return
+        const xtp = (x.properties && x.properties.targetPort) || this.parsePort(x.targetAnchorId, 'in')
+        if (xtp !== ip.name) return
+        this.lf.setProperties(x.id, { ...(x.properties || {}), paramBound: false })
+      })
+    },
+    videoSliceBindingValue(port) {
+      const sel = (this.inputSelectors || []).find(s => s.port === port)
+      return sel ? sel.value : ''
+    },
+    videoSliceBindLabel(port) {
+      const sel = (this.inputSelectors || []).find(s => s.port === port)
+      return sel ? this.selLabel(sel) : ''
+    },
+    videoSliceBound(port) {
+      return !!this.videoSliceBindingValue(port)
+    },
+    videoSliceBindTree(type) {
+      if (!this.selectedNode) return []
+      const types = type === 'Number' ? ['Number', 'Double'] : [type]
+      const seen = new Set()
+      const groups = []
+      types.forEach(t => {
+        this.typedSourceGroups(t, this.selectedNode.id).forEach(g => {
+          const key = `${g.nodeId}::${(g.params || []).map(p => p.port).join(',')}`
+          if (seen.has(key)) return
+          seen.add(key)
+          groups.push(g)
+        })
+      })
+      return this.groupsToTree(groups)
+    },
+    onVideoSlicePick(port, data) {
+      if (!data || !data.leaf) return
+      if (this.form._vsPop) this.$set(this.form._vsPop, port, false)
+      this.bindInput(port, data.id)
+    },
+    clearVideoSliceInput(port) {
+      const sel = (this.inputSelectors || []).find(s => s.port === port)
+      if (sel) this.clearInput(sel)
+      if (this.form._vsPop) this.$set(this.form._vsPop, port, false)
     },
     addGroup() {
       if (!this.form.groups) this.$set(this.form, 'groups', [])
@@ -1053,15 +2382,55 @@ export default {
       const cfg = {}
       const t = this.selectedType
       if (t === 'detection_model') {
-        cfg.model_name = this.form.model_name
-        cfg.target_classes = (this.form.target_classes || '').split(',').map(s => s.trim()).filter(Boolean)
-        cfg.confidence_threshold = Number(this.form.confidence_threshold)
+        const classes = (this.form.target_classes || []).slice()
+        const th = {}
+        classes.forEach(c => {
+          const v = this.form.class_thresholds ? this.form.class_thresholds[c] : null
+          th[c] = v == null || v === '' ? 0.5 : Number(v)
+        })
+        const labels = {}
+        ;(this.modelClassOptions || []).forEach(o => { labels[o.name] = o.name_zh || o.name })
+        const classLabels = {}
+        classes.forEach(c => {
+          classLabels[c] = labels[c] || (this.form._classLabels && this.form._classLabels[c]) || c
+        })
+        cfg.model_id = this.form.model_id != null ? this.form.model_id : null
+        cfg.model_name = this.form.model_name || ''
+        cfg.model_version = this.form.model_version || ''
+        cfg.model_label = this.form._modelLabel || ''
+        cfg.target_classes = classes
+        cfg.class_thresholds = th
+        cfg.confidence_threshold = classes.length ? Math.min.apply(null, Object.values(th)) : 0.5
+        cfg.class_labels = classLabels
       } else if (t === 'vlm_model') {
-        cfg.system_prompt = this.form.system_prompt
-        cfg.prompt = this.form.prompt
-        try { cfg.output_parameters = JSON.parse(this.form.output_parameters_text || '[]') } catch (e) { cfg.output_parameters = [] }
+        cfg.model_name = this.form.model_name || ''
+        cfg.system_prompt = this.form.system_prompt || ''
+        cfg.prompt = this.form.prompt || ''
+        cfg.input_params = (this.form.input_params || []).map(ip => {
+          const rawType = ip.type || 'Image'
+          const o = {
+            name: (ip.name || '').trim(),
+            type: rawType === 'Array' ? 'Array' : 'Image'
+          }
+          if (o.type === 'Array') o.item_type = 'Image'
+          return o
+        }).filter(ip => ip.name)
+        cfg.output_parameters = (this.form.output_parameters || []).map(op => ({
+          name: (op.name || '').trim(),
+          type: this.vlmTypeToBackend(op.type),
+          description: op.description || ''
+        })).filter(op => op.name)
       } else if (t === 'region_filter') {
         cfg.trigger_mode = this.form.trigger_mode
+      } else if (t === 'video_slice') {
+        const clamp = v => {
+          const n = Number(v)
+          if (Number.isNaN(n)) return 0
+          return Math.max(0, Math.min(1800, n))
+        }
+        if (!this.videoSliceBound('start_time')) cfg.start_time = clamp(this.form.start_time)
+        if (!this.videoSliceBound('end_time')) cfg.end_time = clamp(this.form.end_time)
+        if (!this.videoSliceBound('buffer')) cfg.buffer = clamp(this.form.buffer)
       } else if (t === 'size_filter') {
         cfg.min_width = Number(this.form.min_width) || 0
         cfg.max_width = Number(this.form.max_width) || 0
@@ -1091,6 +2460,19 @@ export default {
         }
         cfg.duration = Number(this.form.duration) || 0
         cfg.buffer = Number(this.form.buffer) || 0
+      } else if (t === 'custom_code') {
+        cfg.input_params = (this.form.input_params || []).map(ip => {
+          const o = { name: (ip.name || '').trim(), type: ip.type || 'String' }
+          if (o.type === 'Array') o.item_type = ip.item_type || 'String'
+          return o
+        }).filter(ip => ip.name)
+        cfg.output_parameters = (this.form.output_parameters || []).map(op => {
+          const o = { name: (op.name || '').trim(), type: op.type || 'String' }
+          if (o.type === 'Array') o.item_type = op.item_type || 'String'
+          return o
+        }).filter(op => op.name)
+        cfg.code = this.form.code || DEFAULT_CUSTOM_CODE
+        cfg.timeout_ms = Number(this.form.timeout_ms) || 10000
       } else if (t === 'end') {
         cfg.message = this.form.message
         cfg.output_params = (this.form.out_params || [])
@@ -1109,6 +2491,42 @@ export default {
         cfg.params = params
       }
       const props = this.selectedNode.properties || {}
+      // 视觉模型：输出端口随选中的标签动态生成（每个标签一个 Detection 输出）
+      if (t === 'detection_model') {
+        const classes = (cfg.target_classes || []).slice()
+        const pt = { image: 'Image', roi: 'ROI' }
+        classes.forEach(c => { pt[c] = 'Detection' })
+        props.inputPorts = ['image', 'roi']
+        props.outputPorts = classes
+        props.portTypes = pt
+        props.modelLabel = cfg.model_label
+        props.classLabels = cfg.class_labels
+      }
+      if (t === 'vlm_model') {
+        const inputs = (cfg.input_params || []).filter(p => p.name)
+        const pt = {}
+        inputs.forEach(p => { pt[p.name] = p.type === 'Array' ? 'Array' : (p.type || 'Image') })
+        props.inputPorts = inputs.length ? inputs.map(p => p.name) : ['image']
+        if (!inputs.length) pt.image = 'Image'
+        const outputs = (cfg.output_parameters || []).filter(p => p.name)
+        props.outputPorts = outputs.length ? outputs.map(p => p.name) : ['output']
+        outputs.forEach(p => { pt[p.name] = vlmOutputPortType(p.type) })
+        if (!outputs.length) pt.output = 'String'
+        props.portTypes = pt
+      }
+      if (t === 'custom_code') {
+        const inputs = (cfg.input_params || []).filter(p => p.name)
+        const pt = {}
+        inputs.forEach(p => { pt[p.name] = customPortType(p.type) })
+        props.inputPorts = inputs.length ? inputs.map(p => p.name) : ['input']
+        if (!inputs.length) pt.input = 'String'
+        const outputs = (cfg.output_parameters || []).filter(p => p.name)
+        props.outputPorts = outputs.length ? outputs.map(p => p.name) : ['output']
+        outputs.forEach(p => { pt[p.name] = customPortType(p.type) })
+        if (!outputs.length) pt.output = 'String'
+        props.portTypes = pt
+        props.dynamic = true
+      }
       props.config = cfg
       // 先更新文本，再 setProperties 触发 HTML 节点重渲染，使标题改名即时生效
       if (this.form._name) {
@@ -1123,6 +2541,7 @@ export default {
         this.$message.warning('开始/结束节点不可删除')
         return
       }
+      this.closeCodeEditor()
       this.lf.deleteNode(this.selectedNode.id)
       this.selectedNode = null
       this.selectedType = ''
@@ -1303,36 +2722,67 @@ export default {
       const nodes = (gd.nodes || []).map(n => {
         const ports = PORT_MAP[n.type] || { inputs: [], outputs: [], dynamic: false }
         const pos = n.position || { x: 200, y: 120 }
-        return {
-          id: n.id,
-          type: 'sg-node',
-          x: pos.x,
-          y: pos.y,
-          text: n.name || (ports.name_zh || n.type),
-          properties: {
-            nodeType: n.type,
-            name_zh: ports.name_zh || n.type,
-            category: ports.category || n.type,
-            inputPorts: ports.inputs,
-            outputPorts: ports.outputs,
-            portTypes: ports.types || {},
-            dynamic: ports.dynamic,
-            config: n.config || {}
-          }
+        const props = {
+          nodeType: n.type,
+          name_zh: ports.name_zh || n.type,
+          category: ports.category || n.type,
+          inputPorts: ports.inputs,
+          outputPorts: ports.outputs,
+          portTypes: ports.types || {},
+          dynamic: ports.dynamic,
+          config: n.config || {}
         }
+        // 视觉模型：输出端口随配置里的标签恢复（每个标签一个 Detection 输出）
+        if (n.type === 'detection_model') {
+          const cfg = n.config || {}
+          const classes = (cfg.target_classes || []).slice()
+          const pt = { image: 'Image', roi: 'ROI' }
+          classes.forEach(c => { pt[c] = 'Detection' })
+          props.inputPorts = ['image', 'roi']
+          props.outputPorts = classes
+          props.portTypes = pt
+          props.modelLabel = cfg.model_label || ''
+          props.classLabels = cfg.class_labels || {}
+        }
+        if (n.type === 'vlm_model') {
+          const cfg = n.config || {}
+          const inputs = (cfg.input_params || []).filter(p => p && p.name)
+          const outputs = (cfg.output_parameters || []).filter(p => p && p.name)
+          const pt = {}
+          inputs.forEach(p => { pt[p.name] = p.type === 'Array' ? 'Array' : (p.type || 'Image') })
+          props.inputPorts = inputs.length ? inputs.map(p => p.name) : ['image']
+          if (!inputs.length) pt.image = 'Image'
+          props.outputPorts = outputs.length ? outputs.map(p => p.name) : ['output']
+          outputs.forEach(p => { pt[p.name] = vlmOutputPortType(p.type) })
+          if (!outputs.length) pt.output = 'String'
+          props.portTypes = pt
+        }
+        if (n.type === 'custom_code') {
+          const cfg = n.config || {}
+          const inputs = (cfg.input_params || []).filter(p => p && p.name)
+          const outputs = (cfg.output_parameters || []).filter(p => p && p.name)
+          const pt = {}
+          inputs.forEach(p => { pt[p.name] = customPortType(p.type) })
+          props.inputPorts = inputs.length ? inputs.map(p => p.name) : ['input']
+          if (!inputs.length) pt.input = 'String'
+          props.outputPorts = outputs.length ? outputs.map(p => p.name) : ['output']
+          outputs.forEach(p => { pt[p.name] = customPortType(p.type) })
+          if (!outputs.length) pt.output = 'String'
+          props.portTypes = pt
+          props.dynamic = true
+        }
+        return { id: n.id, type: 'sg-node', x: pos.x, y: pos.y, text: n.name || (ports.name_zh || n.type), properties: props }
       })
       const edges = (gd.edges || []).map(e => {
-        const tPorts = PORT_MAP[typeById[e.target]] || { inputs: [], dynamic: false }
-        // 目标端口若不是固定端口、且目标是动态输入节点，则连到通用入口 '*'
-        const tAnchorPort = (tPorts.inputs.indexOf(e.target_port) >= 0)
-          ? e.target_port
-          : (tPorts.dynamic ? '*' : e.target_port)
+        // 所有边都收敛到目标的单一进点 / 源的单一出点；真实端口存在 properties 里
+        const tAnchorPort = this.singleInPort(typeById[e.target])
+        const sAnchorPort = this.singleOutPort(typeById[e.source])
         return {
           id: e.id || undefined,
           type: 'bezier',
           sourceNodeId: e.source,
           targetNodeId: e.target,
-          sourceAnchorId: `${e.source}__out__${e.source_port}`,
+          sourceAnchorId: `${e.source}__out__${sAnchorPort}`,
           targetAnchorId: `${e.target}__in__${tAnchorPort}`,
           properties: { sourcePort: e.source_port, targetPort: e.target_port }
         }
@@ -1444,6 +2894,221 @@ export default {
     pct(v) {
       return (Number(v || 0) * 100).toFixed(1) + '%'
     },
+    openCodeEditor() {
+      if (this.selectedType !== 'custom_code') return
+      if (!this.form.code) this.$set(this.form, 'code', DEFAULT_CUSTOM_CODE)
+      this.codeEditorOpen = true
+    },
+    closeCodeEditor() {
+      this.codeEditorOpen = false
+    },
+    buildCustomTestInput(inputParams) {
+      const obj = {}
+      ;(inputParams || []).forEach(p => {
+        if (!p || !p.name) return
+        const t = p.type || 'String'
+        if (t === 'Integer') obj[p.name] = 0
+        else if (t === 'Double') obj[p.name] = 0.0
+        else if (t === 'Boolean') obj[p.name] = false
+        else if (t === 'Array') obj[p.name] = []
+        else if (t === 'Detection' || t === 'TrackDetection' || t === 'AttributeGroup' || t === 'Attribute') obj[p.name] = []
+        else if (t === 'ROI' || t === 'Tripwire') obj[p.name] = null
+        else obj[p.name] = ''
+      })
+      return JSON.stringify(obj, null, 2)
+    },
+    async runCustomCodeTest() {
+      if (!this.form.code) {
+        this.$message.warning('请先编写代码')
+        return
+      }
+      let inputs = {}
+      try {
+        inputs = JSON.parse(this.codeTestInput || '{}')
+        if (typeof inputs !== 'object' || inputs === null || Array.isArray(inputs)) {
+          throw new Error('输入必须是 JSON 对象')
+        }
+      } catch (e) {
+        this.$message.error('输入参数 JSON 格式不正确')
+        return
+      }
+      this.codeTestLoading = true
+      try {
+        const res = await skillGraphAPI.testCustomCode(
+          this.form.code,
+          inputs,
+          this.form.timeout_ms || 10000
+        )
+        const body = res.data || {}
+        if (body.success) {
+          this.codeTestOutput = JSON.stringify(body.result, null, 2)
+        } else {
+          this.codeTestOutput = body.error || '执行失败'
+        }
+      } catch (e) {
+        this.codeTestOutput = (e.response && e.response.data && e.response.data.detail) || e.message || '请求失败'
+      } finally {
+        this.codeTestLoading = false
+      }
+    },
+    inferParamTypeFromValue(val) {
+      if (val === null || val === undefined) return { type: 'String', item_type: 'String' }
+      if (typeof val === 'boolean') return { type: 'Boolean', item_type: 'String' }
+      if (typeof val === 'number') {
+        return { type: Number.isInteger(val) ? 'Integer' : 'Double', item_type: 'String' }
+      }
+      if (typeof val === 'string') return { type: 'String', item_type: 'String' }
+      if (Array.isArray(val)) {
+        if (!val.length) return { type: 'Array', item_type: 'String' }
+        const first = val[0]
+        if (first && typeof first === 'object' && (first.bbox || first.label != null)) {
+          return { type: 'Array', item_type: 'Detection' }
+        }
+        const inner = this.inferParamTypeFromValue(first)
+        const itemType = inner.type === 'Array' ? 'String' : inner.type
+        return { type: 'Array', item_type: itemType }
+      }
+      if (typeof val === 'object') {
+        if (val.bbox || val.label != null) return { type: 'Detection', item_type: 'String' }
+        if (val.points) return { type: 'ROI', item_type: 'String' }
+        return { type: 'String', item_type: 'String' }
+      }
+      return { type: 'String', item_type: 'String' }
+    },
+    parseTestOutputToParams() {
+      if (!this.codeTestOutput) {
+        this.$message.warning('暂无输出结果')
+        return
+      }
+      let result
+      try {
+        result = JSON.parse(this.codeTestOutput)
+        if (typeof result !== 'object' || result === null || Array.isArray(result)) {
+          throw new Error('invalid')
+        }
+      } catch (e) {
+        this.$message.error('输出结果不是有效的 JSON 对象，请先执行模拟测试')
+        return
+      }
+      const keys = Object.keys(result)
+      if (!keys.length) {
+        this.$message.warning('输出结果为空')
+        return
+      }
+      const invalid = keys.filter(k => !this.paramNameValid(k))
+      if (invalid.length) {
+        this.$message.error(`参数名不合法：${invalid.join('、')}（须以字母开头，仅含字母数字下划线）`)
+        return
+      }
+      this.$set(this.form, 'output_parameters', keys.map(name => {
+        const { type, item_type } = this.inferParamTypeFromValue(result[name])
+        return { name, type, item_type, _typeOpen: false, _arrayHover: false }
+      }))
+      this.applyConfig()
+      this.$message.success(`已解析 ${keys.length} 个输出参数`)
+    },
+    copyCodeTestOutput() {
+      if (!this.codeTestOutput) return
+      const ta = document.createElement('textarea')
+      ta.value = this.codeTestOutput
+      document.body.appendChild(ta)
+      ta.select()
+      try {
+        document.execCommand('copy')
+        this.$message.success('已复制')
+      } catch (e) {
+        this.$message.error('复制失败')
+      }
+      document.body.removeChild(ta)
+    },
+    addCustomInputParam() {
+      if (!this.form.input_params) this.$set(this.form, 'input_params', [])
+      this.form.input_params.push({
+        name: '', type: 'String', item_type: 'String',
+        _typeOpen: false, _arrayHover: false, _bindOpen: false
+      })
+      this.applyConfig()
+    },
+    removeCustomInputParam(ii) {
+      const ip = this.form.input_params[ii]
+      if (ip && ip.name) this.clearCustomInput(ip)
+      this.form.input_params.splice(ii, 1)
+      if (!this.form.input_params.length) {
+        this.form.input_params.push({
+          name: 'input', type: 'String', item_type: 'String',
+          _typeOpen: false, _arrayHover: false, _bindOpen: false
+        })
+      }
+      this.codeTestInput = this.buildCustomTestInput(this.form.input_params)
+      this.applyConfig()
+    },
+    addCustomOutputParam() {
+      if (!this.form.output_parameters) this.$set(this.form, 'output_parameters', [])
+      this.form.output_parameters.push({
+        name: '', type: 'String', item_type: 'String',
+        _typeOpen: false, _arrayHover: false
+      })
+      this.applyConfig()
+    },
+    removeCustomOutputParam(oi) {
+      this.form.output_parameters.splice(oi, 1)
+      if (!this.form.output_parameters.length) {
+        this.form.output_parameters.push({
+          name: 'output', type: 'String', item_type: 'String',
+          _typeOpen: false, _arrayHover: false
+        })
+      }
+      this.applyConfig()
+    },
+    selectCustomInputType(ip, v) {
+      if (ip.name) this.clearCustomInput(ip)
+      this.selectType(ip, v)
+    },
+    selectCustomInputArrayType(ip, v) {
+      if (ip.name) this.clearCustomInput(ip)
+      this.selectArrayType(ip, v)
+    },
+    selectCustomOutputType(op, v) {
+      this.selectType(op, v)
+    },
+    selectCustomOutputArrayType(op, v) {
+      this.selectArrayType(op, v)
+    },
+    customInputBindingValue(portName) {
+      if (!this.selectedNode || !portName) return ''
+      const bound = this.collectInputBindings(this.selectedNode.id)
+      return bound[portName] || ''
+    },
+    customInputTreeData(ip) {
+      if (!this.selectedNode || !ip || !ip.name) return []
+      return this.groupsToTree(this.typedSourceGroups(customPortType(ip.type), this.selectedNode.id))
+    },
+    customInputBindLabel(portName) {
+      const val = this.customInputBindingValue(portName)
+      if (!val) return ''
+      const ip = (this.form.input_params || []).find(p => p.name === portName)
+      const groups = this.selectedNode
+        ? this.typedSourceGroups(customPortType((ip && ip.type) || 'String'), this.selectedNode.id)
+        : []
+      return this.refLabel(val, groups)
+    },
+    onCustomInputPick(ip, data) {
+      if (!data || !data.leaf || !ip.name) return
+      ip._bindOpen = false
+      this.bindInput(ip.name, data.id)
+    },
+    clearCustomInput(ip) {
+      if (!ip || !ip.name || !this.selectedNode) return
+      ip._bindOpen = false
+      const nid = this.selectedNode.id
+      const g = this.lf.getGraphData()
+      ;(g.edges || []).forEach(x => {
+        if (x.targetNodeId !== nid) return
+        const xtp = (x.properties && x.properties.targetPort) || this.parsePort(x.targetAnchorId, 'in')
+        if (xtp !== ip.name) return
+        this.lf.setProperties(x.id, { ...(x.properties || {}), paramBound: false })
+      })
+    },
     goBack() {
       this.$router.push('/skillManage/skillGraphList')
     }
@@ -1452,7 +3117,7 @@ export default {
 </script>
 
 <style scoped>
-.sg-editor { display: flex; flex-direction: column; height: calc(100vh - 84px); background: #f1f3f7; }
+.sg-editor { display: flex; flex-direction: column; height: calc(100vh - 84px); background: #f1f3f7; text-align: left; }
 /* 顶部工具栏 */
 .sg-toolbar { display: flex; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid #edeff3;
   box-shadow: 0 1px 2px rgba(0,0,0,.03); }
@@ -1468,7 +3133,11 @@ export default {
 .sg-toolbar-right >>> .sg-tb-primary { background: #7c5cff; border-color: #7c5cff; box-shadow: 0 4px 10px rgba(124,92,255,.3); }
 .sg-toolbar-right >>> .sg-tb-primary:hover { background: #6b49f0; border-color: #6b49f0; }
 
-.sg-body { display: flex; flex: 1; overflow: hidden; }
+.sg-body {
+  display: flex; flex: 1; overflow: hidden;
+  position: relative;
+  --sg-config-w: 360px;
+}
 
 /* 左侧节点面板 */
 .sg-palette { width: 240px; background: #fff; border-right: 1px solid #edeff3; overflow-y: auto; padding: 12px; }
@@ -1493,6 +3162,56 @@ export default {
 .sg-canvas-wrap { position: relative; flex: 1; overflow: hidden; }
 .sg-canvas { width: 100%; height: 100%; }
 
+/* 自定义节点：代码编辑面板（覆盖左侧节点面板 + 画布，右侧留出配置抽屉） */
+.sg-code-panel {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: calc(100% - var(--sg-config-w));
+  background: #fff; border-right: 1px solid #edeff3;
+  display: flex; flex-direction: column; overflow: hidden;
+  z-index: 12;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, .06);
+}
+.sg-code-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid #f1f2f5; flex: none;
+}
+.sg-code-panel-lang { font-size: 14px; font-weight: 600; color: #1f2329; }
+.sg-code-panel-close { font-size: 18px; color: #8a94a6; cursor: pointer; padding: 4px; border-radius: 6px; }
+.sg-code-panel-close:hover { color: #7c5cff; background: #f3f0ff; }
+.sg-code-panel-body { flex: 1; min-height: 0; padding: 0; }
+.sg-code-textarea {
+  width: 100%; height: 100%; box-sizing: border-box; border: none; outline: none; resize: none;
+  padding: 14px 16px; background: #1e1e1e; color: #d4d4d4; text-align: left;
+  font-family: Consolas, Monaco, 'Courier New', monospace; font-size: 13px; line-height: 1.6;
+}
+.sg-code-panel-foot {
+  flex: none; display: flex; gap: 12px; padding: 12px 16px 16px;
+  border-top: 1px solid #f1f2f5; background: #fafbfc; min-height: 180px;
+}
+.sg-code-test-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sg-code-test-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #1f2329;
+}
+.sg-code-test-actions { display: flex; align-items: center; gap: 4px; }
+.sg-code-test-actions >>> .el-button { padding: 0 4px; }
+.sg-code-test-input {
+  flex: 1; min-height: 120px; box-sizing: border-box; border: 1px solid #e3e6ee;
+  border-radius: 8px; padding: 10px; resize: none; font-size: 12px; text-align: left;
+  font-family: Consolas, Monaco, 'Courier New', monospace; background: #fff;
+}
+.sg-code-test-output {
+  flex: 1; min-height: 120px; margin: 0; box-sizing: border-box;
+  border: 1px solid #e3e6ee; border-radius: 8px; padding: 10px; text-align: left;
+  font-size: 12px; font-family: Consolas, Monaco, 'Courier New', monospace;
+  background: #f7f8fc; color: #4a5365; overflow: auto; white-space: pre-wrap;
+}
+.sg-code-preview {
+  margin: 0; padding: 10px 12px; background: #1e1e1e; color: #d4d4d4; text-align: left;
+  border-radius: 8px; font-size: 12px; line-height: 1.5; max-height: 180px; overflow: auto;
+  font-family: Consolas, Monaco, 'Courier New', monospace; white-space: pre;
+}
+
 /* 底部缩放条 */
 .sg-zoombar { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; align-items: center;
   gap: 4px; background: #fff; border: 1px solid #edeff3; border-radius: 10px; padding: 6px 10px;
@@ -1505,10 +3224,10 @@ export default {
 
 /* 右侧配置抽屉 */
 .sg-config {
-  position: absolute; top: 0; right: 0; height: 100%; width: 360px;
+  position: absolute; top: 0; right: 0; height: 100%; width: var(--sg-config-w, 360px);
   background: #fff; border-left: 1px solid #edeff3; overflow-y: auto; padding: 0 16px 16px;
   box-shadow: -8px 0 24px rgba(0, 0, 0, 0.06);
-  transform: translateX(106%); transition: transform .25s ease; z-index: 10;
+  transform: translateX(106%); transition: transform .25s ease; z-index: 20;
 }
 .sg-config.is-open { transform: translateX(0); }
 .sg-config-head { display: flex; align-items: flex-start; gap: 10px; padding: 16px 0 12px; position: sticky; top: 0;
@@ -1519,6 +3238,17 @@ export default {
 .sg-config-hd-title { font-size: 15px; font-weight: 600; color: #1f2329; display: flex; align-items: center; gap: 6px; }
 .sg-config-ver { font-size: 10px; color: #9aa3b2; background: #f1f2f5; border-radius: 4px; padding: 0 4px; line-height: 15px; font-weight: 500; }
 .sg-config-hd-desc { font-size: 12px; color: #9aa3b2; line-height: 1.5; margin-top: 3px; }
+.sg-upstream-warn {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+  padding: 10px 12px; background: #fff7e8; border-radius: 8px;
+  font-size: 13px; color: #4a5365; line-height: 1.5;
+}
+.sg-upstream-warn-ic {
+  display: flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%; background: #fa8c16; color: #fff;
+  font-size: 13px; font-weight: 700; line-height: 1; flex: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
 .sg-config-close { cursor: pointer; color: #b4bbc7; font-size: 16px; padding: 2px; }
 .sg-config-close:hover { color: #7c5cff; }
 /* 开始节点：输入参数编辑器 */
@@ -1530,9 +3260,18 @@ export default {
 .sg-params-cols { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #9aa3b2; margin-bottom: 6px; }
 .sg-req-star { color: #f56c6c; font-style: normal; }
 .sg-out-label { font-size: 13px; color: #1f2329; margin-bottom: 8px; }
+.sg-token-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.sg-token-tip { font-size: 12px; color: #9aa3b2; }
+.sg-token { font-size: 12px; color: #7c5cff; background: #f3f0ff; border: 1px solid #e3dbff;
+  border-radius: 6px; padding: 2px 8px; cursor: pointer; user-select: none; }
+.sg-token:hover { background: #e9e2ff; }
 .sg-out-foot { display: flex; justify-content: flex-end; margin-top: 6px; }
 .sg-out-clear { color: #9aa3b2; padding: 0; }
 .sg-out-clear:hover { color: #7c5cff; }
+.sg-param-item { margin-bottom: 8px; }
+.sg-param-item .sg-param-row { margin-bottom: 0; }
+.sg-param-err { color: #f5566c; font-size: 12px; line-height: 1.4; margin-top: 4px; }
+.sg-param-row .c-name.is-invalid >>> .el-input__inner { border-color: #f5566c; }
 .sg-param-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .sg-param-row .c-name, .sg-params-cols .c-name { flex: 1 1 0; min-width: 0; }
 .sg-param-row .c-type, .sg-params-cols .c-type { flex: 1 1 0; min-width: 0; }
@@ -1546,6 +3285,28 @@ export default {
 .sg-type-box:hover { border-color: #c0c4cc; }
 .sg-type-box-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sg-type-box .el-icon-arrow-down { color: #c0c4cc; flex: none; }
+.sg-type-box.has-prefix { padding-left: 6px; }
+.sg-type-prefix {
+  flex: none; font-size: 10px; color: #606266; background: #f2f3f5;
+  border-radius: 3px; padding: 0 4px; line-height: 16px; font-family: monospace;
+}
+.sg-field-help { color: #c0c4cc; font-size: 13px; margin-left: 2px; cursor: help; vertical-align: middle; }
+.sg-vlm-input-item { margin-bottom: 10px; }
+.sg-vlm-param-row { margin-bottom: 0; }
+.sg-vlm-bind {
+  display: flex; align-items: center; gap: 8px; margin-top: 6px;
+  padding: 0 10px; height: 32px; box-sizing: border-box;
+  background: #f7f8fc; border: 1px solid #eef0f5; border-radius: 6px; cursor: pointer;
+}
+.sg-vlm-bind:hover { border-color: #dcdfe6; }
+.sg-vlm-bind.is-empty .sg-vlm-bind-txt { color: #c0c4cc; }
+.sg-vlm-bind-txt { flex: 1; min-width: 0; font-size: 13px; color: #1f2329;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sg-vlm-bind-link { color: #7c5cff; font-size: 14px; flex: none; }
+.sg-vlm-bind-clear { color: #c0c4cc; font-size: 14px; flex: none; }
+.sg-vlm-bind-clear:hover { color: #909399; }
+.sg-vlm-type-ic { color: #2f7bff; font-size: 14px; }
+.sg-vlm-type-opt { display: inline-flex; align-items: center; gap: 6px; }
 .sg-param-del { cursor: pointer; color: #b4bbc7; font-size: 16px; }
 .sg-param-del:hover { color: #f5566c; }
 .sg-param-row >>> .el-checkbox__label { display: none; }
@@ -1554,6 +3315,31 @@ export default {
 .sg-cond-group-head { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; font-size: 12px; color: #606266; }
 .sg-cond-group-head > span { flex: 1; font-weight: bold; }
 .sg-tip { font-size: 12px; color: #9aa3b2; margin-top: 8px; line-height: 1.5; }
+/* 视觉模型抽屉：分区标题与输入/输出列表 */
+.sg-sec-title { font-size: 13px; font-weight: 600; color: #1f2329; margin: 16px 0 10px; }
+.sg-io-list { display: flex; flex-direction: column; gap: 8px; }
+.sg-io-item { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px;
+  background: #f7f8fc; border: 1px solid #eef0f5; border-radius: 8px; font-size: 13px; color: #4a5365; }
+.sg-io-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c, #909399); flex: none; }
+.sg-io-tag { margin-left: auto; font-size: 11px; color: #7c5cff; background: #f3f0ff; border-radius: 4px; padding: 1px 6px; }
+.sg-io-type-ic { margin-left: auto; color: #2f7bff; font-size: 14px; }
+.sg-vs-num-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+.sg-vs-link { color: #7c5cff; font-size: 16px; cursor: pointer; flex: none; padding: 4px; }
+.sg-vs-link:hover { color: #5a3fd6; }
+.sg-io-empty { font-size: 13px; color: #b4bbc7; text-align: center; padding: 18px 0; background: #f7f8fc;
+  border: 1px dashed #e3e6ee; border-radius: 8px; }
+.sg-opt { display: inline-flex; align-items: center; gap: 6px; }
+.sg-opt-ic { color: #7c5cff; font-size: 14px; }
+.sg-ref-box { display: flex; align-items: center; width: 100%; box-sizing: border-box; height: 32px;
+  padding: 0 10px; cursor: pointer; border: 1px solid #dcdfe6; border-radius: 4px; background: #fff; transition: border-color .15s; }
+.sg-ref-box:hover { border-color: #c0c4cc; }
+.sg-ref-box.is-disabled { cursor: not-allowed; background: #f5f7fa; border-color: #e4e7ed; }
+.sg-ref-box.is-disabled .sg-ref-txt { color: #c0c4cc; }
+.sg-ref-box.is-empty .sg-ref-txt { color: #c0c4cc; }
+.sg-ref-txt { flex: 1; font-size: 13px; color: #1f2329; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sg-ref-arrow { color: #c0c4cc; font-size: 14px; }
+.sg-ref-clear { color: #c0c4cc; font-size: 14px; }
+.sg-ref-clear:hover { color: #909399; }
 .sg-result { max-height: 400px; overflow: auto; background: #f5f7fa; padding: 12px; font-size: 12px; }
 .sg-eval-tip { font-size: 12px; color: #909399; line-height: 1.6; margin-bottom: 6px; }
 .sg-eval-grid { display: flex; flex-wrap: wrap; gap: 10px; max-height: 240px; overflow-y: auto; margin-bottom: 12px; }
@@ -1569,6 +3355,13 @@ export default {
 
 <!-- 非 scoped：作用于 LogicFlow 注入的 HTML 节点卡片 -->
 <style>
+/* 视觉模型输入参数树（popover 渲染到 body，需非 scoped） */
+.sg-param-pop.el-popover { padding: 6px 0 !important; max-height: 320px; overflow-y: auto; }
+.sg-param-pop .sg-tree-node { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.sg-param-pop .sg-tree-nodeic { color: #7c5cff; font-size: 14px; }
+.sg-param-pop .sg-opt-ic { color: #2f7bff; font-size: 14px; }
+.sg-param-pop .sg-tree-empty { padding: 16px; text-align: center; color: #b4bbc7; font-size: 13px; }
+
 /* 参数类型二级菜单（popover 渲染到 body，需非 scoped） */
 .sg-typemenu-popper.el-popover { padding: 6px 0 !important; overflow: visible !important; min-width: 150px; }
 .sg-typemenu { position: relative; font-size: 13px; color: #1f2329; }
@@ -1578,6 +3371,8 @@ export default {
   padding: 8px 14px; cursor: pointer; white-space: nowrap;
 }
 .sg-typemenu-item:hover, .sg-typemenu-item.is-active { background: #f5f7fa; }
+.sg-typemenu-item.is-selected { color: #409eff; }
+.sg-typemenu-item.is-selected:hover { background: #f5f7fa; }
 .sg-typemenu-item .el-icon-arrow-right { color: #c0c4cc; margin-left: 12px; }
 .sg-typemenu-sub {
   position: absolute; right: 100%; top: -6px; min-width: 140px;
