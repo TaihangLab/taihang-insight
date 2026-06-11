@@ -5,23 +5,22 @@
         class="flow-tree"
         ref="veTree"
         node-key="treeId"
-        :height="treeHeight?treeHeight:'78vh'"
+        :height="effectiveTreeHeight"
         lazy
         style="padding: 0 0 2rem 0.5rem"
         :load="loadNode"
         :data="treeData"
         :props="props"
         :default-expanded-keys="['']"
-        @node-click="nodeClickHandler"
-      >
+        @node-click="nodeClickHandler">
         <template v-slot:default="{ node, data }">
           <span class="custom-tree-node">
             <span v-if="node.data.type === 0 && chooseId !== node.data.deviceId" style="color: #409EFF" class="iconfont icon-bianzubeifen3"></span>
             <span v-if="node.data.type === 0 && chooseId === node.data.deviceId" style="color: #c60135;" class="iconfont icon-bianzubeifen3"></span>
             <span v-if="node.data.type === 1 && node.data.status === 'ON'" style="color: #409EFF" class="iconfont icon-shexiangtou2"></span>
             <span v-if="node.data.type === 1 && node.data.status !== 'ON'" style="color: #808181" class="iconfont icon-shexiangtou2"></span>
-            <span style=" padding-left: 1px" v-if="node.data.deviceId !=='' && showCode" :title="node.data.deviceId">{{ node.label }}（编号：{{ node.data.deviceId }}）</span>
-            <span style=" padding-left: 1px" v-if="node.data.deviceId ==='' || !showCode" :title="node.data.deviceId">{{ node.label }}</span>
+            <span style="padding-left: 1px" v-if="node.data.deviceId !=='' && showCode" :title="node.data.deviceId">{{ node.label }}（编号：{{ node.data.deviceId }}）</span>
+            <span style="padding-left: 1px" v-if="node.data.deviceId ==='' || !showCode" :title="node.data.deviceId">{{ node.label }}</span>
           </span>
         </template>
       </vue-easy-tree>
@@ -35,22 +34,23 @@ import { realtimeMonitorAPI } from '../../../service/VisionAIService.js';
 
 export default {
   name: 'MonitorGroupTree',
-  components: {
-    VueEasyTree
-  },
+  components: { VueEasyTree },
+  props: ['clickEvent', 'hasChannel', 'treeHeight'],
   data() {
     return {
-      props: {
-        label: "name",
-        id: "treeId"
-      },
+      props: { label: "name", id: "treeId" },
       showCode: false,
       searchSrt: "",
       chooseId: "",
       treeData: [],
+    };
+  },
+  computed: {
+    effectiveTreeHeight() {
+      if (this.treeHeight === 'auto') return undefined;
+      return this.treeHeight || '78vh';
     }
   },
-  props: ['clickEvent', 'hasChannel', 'treeHeight'],
   methods: {
     loadNode: async function (node, resolve) {
       try {
@@ -67,17 +67,12 @@ export default {
             resolve([]);
             return;
           }
-          
-          // 使用专用的实时监控API
           const response = await realtimeMonitorAPI.getGroupTree({
             query: this.searchSrt,
             parent: node.data.id,
             hasChannel: this.hasChannel
           });
-          
-          // 解包后端响应: response.data = {code: 0, msg: "成功", data: [...]}
-          const treeData = (response.data && response.data.data) || [];
-          resolve(treeData);
+          resolve((response.data && response.data.data) || []);
         }
       } catch (error) {
         console.error('加载业务分组树失败:', error);
@@ -85,28 +80,26 @@ export default {
         resolve([]);
       }
     },
-    reset: function () {
+    reset() {
       this.$forceUpdate();
     },
-    refreshNode: function (node) {
+    refreshNode(node) {
       node.loaded = false;
       node.expand();
     },
-    refresh: function (id) {
-      let node = this.$refs.veTree.getNode(id);
+    refresh(id) {
+      const node = this.$refs.veTree.getNode(id);
       if (node) {
         node.loaded = false;
         node.expand();
       }
     },
-    nodeClickHandler: function (data, node, tree) {
+    nodeClickHandler(data) {
       this.chooseId = data.deviceId;
-      if (this.clickEvent) {
-        this.clickEvent(data);
-      }
+      if (this.clickEvent) this.clickEvent(data);
     }
   },
-}
+};
 </script>
 
 <style scoped>
@@ -114,4 +107,3 @@ export default {
   padding-left: 4px !important;
 }
 </style>
-

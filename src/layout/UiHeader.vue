@@ -49,32 +49,26 @@
         <el-menu-item index="/deviceManage/localVideo">本地视频</el-menu-item>
       </el-submenu>
 
-      <!-- 模型管理菜单 -->
-      <el-submenu index="/modelManage" popper-class="modern-submenu">
-        <template slot="title">
-          <i class="el-icon-data-analysis"></i>
-          <span>模型管理</span>
-        </template>
-        <el-menu-item index="/modelManage/modelList">模型列表</el-menu-item>
-      </el-submenu>
-
       <!-- 技能管理菜单 -->
       <el-submenu index="/skillManage" popper-class="modern-submenu">
         <template slot="title">
           <i class="el-icon-magic-stick"></i>
           <span>技能管理</span>
         </template>
-        <el-menu-item index="/skillManage/deviceSkills">视觉模型技能</el-menu-item>
-        <el-menu-item index="/skillManage/multimodalLlmSkills">多模态大模型技能</el-menu-item>
+        <el-menu-item index="/skillManage/skillList">技能列表</el-menu-item>
         <el-menu-item index="/skillManage/multimodalReview">多模态大模型复判</el-menu-item>
-        <el-menu-item index="/skillManage/skillGraphList">可视化技能编排</el-menu-item>
+        <el-menu-item index="/skillManage/runPlan">技能运行计划</el-menu-item>
       </el-submenu>
 
-      <!-- ML Pipeline 模块（模型工厂） -->
-      <el-menu-item index="/mlPipeline">
-        <i class="el-icon-s-platform"></i>
-        <span>模型工厂</span>
-      </el-menu-item>
+      <!-- 模型管理（含模型列表与模型工厂） -->
+      <el-submenu index="/modelManage" popper-class="modern-submenu">
+        <template slot="title">
+          <i class="el-icon-s-platform"></i>
+          <span>模型管理</span>
+        </template>
+        <el-menu-item index="/modelManage/modelList">模型列表</el-menu-item>
+        <el-menu-item index="/modelManage/modelFactory">模型工厂</el-menu-item>
+      </el-submenu>
 
       <!-- 可视中心菜单 -->
       <el-submenu index="/visualAI" popper-class="modern-submenu">

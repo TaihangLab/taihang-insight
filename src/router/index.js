@@ -23,13 +23,12 @@ const localVideo = () => import('../components/visionAI/deviceManagement/localVi
 const gbRecordDetail = () => import('../components/visionAI/deviceManagement/managementPages/GBRecordDetail.vue')
 const cloudRecordDetail = () => import('../components/visionAI/deviceManagement/managementPages/CloudRecordDetail.vue')
 const modelList = () => import('../components/visionAI/modelManagement/modelList.vue')
-const deviceSkills = () => import('../components/visionAI/skillManagement/deviceSkills.vue')
-const multimodalLlmSkills = () => import('../components/visionAI/skillManagement/multimodalLlmSkills.vue')
+const skillList = () => import('../components/visionAI/skillManagement/SkillList.vue')
 const multimodalCreateDetail = () => import('../components/visionAI/skillManagement/LlmSkillCreateDialogDetail.vue')
 const multimodalReview = () => import('../components/visionAI/skillManagement/multimodalReview.vue')
 const multimodalReviewCreate = () => import('../components/visionAI/skillManagement/multimodalReviewCreate.vue')
-const skillGraphList = () => import('../components/visionAI/skillManagement/skillGraph/SkillGraphList.vue')
 const skillGraphEditor = () => import('../components/visionAI/skillManagement/skillGraph/SkillGraphEditor.vue')
+const runPlanList = () => import('../components/visionAI/skillManagement/runPlan/RunPlanList.vue')
 const logRecords = () => import('../components/visionAI/smartControl/logRecords.vue')
 const edgeServer = () => import('../components/visionAI/edgeManagement/edgeServer.vue')
 const edgeBox = () => import('../components/visionAI/edgeManagement/edgeBox.vue')
@@ -121,14 +120,22 @@ export default new VueRouter({
           component: modelList,
         },
         {
-          path: '/skillManage/deviceSkills',
-          name: 'deviceSkills',
-          component: deviceSkills,
+          path: '/modelManage/modelFactory',
+          name: 'modelFactory',
+          component: modelFactory,
         },
         {
-          path: '/skillManage/multimodalLlmSkills',
-          name: 'multimodalLlmSkills',
-          component: multimodalLlmSkills,
+          path: '/mlPipeline/modelList',
+          redirect: '/modelManage/modelList',
+        },
+        {
+          path: '/mlPipeline',
+          redirect: '/modelManage/modelFactory',
+        },
+        {
+          path: '/skillManage/skillList',
+          name: 'skillList',
+          component: skillList,
         },
         {
           path: '/skillManage/multimodalCreateDetail',
@@ -146,9 +153,9 @@ export default new VueRouter({
           component: multimodalReviewCreate,
         },
         {
-          path: '/skillManage/skillGraphList',
-          name: 'skillGraphList',
-          component: skillGraphList,
+          path: '/skillManage/runPlan',
+          name: 'runPlan',
+          component: runPlanList,
         },
         {
           path: '/skillManage/skillGraphEditor',
@@ -175,12 +182,6 @@ export default new VueRouter({
           name: 'profile',
           component: profile,
         },
-        {
-          path: '/mlPipeline',
-          name: 'modelFactory',
-          component: modelFactory,
-        },
-
         {
           path: '/gbRecordDetail/:deviceId/:channelId/',
           name: 'gbRecordDetail',

@@ -732,7 +732,6 @@ export default {
         }
         if (typeof d.running_tasks === 'number') this.runningTasks = d.running_tasks;
         if (typeof d.loaded_models === 'number') this.loadedModels = d.loaded_models;
-        if (typeof d.skill_count === 'number') this.skillCount = d.skill_count;
         this.reviewStats = {
           total: typeof d.ai_task_total === 'number' ? d.ai_task_total : 0,
           online: typeof d.ai_task_online === 'number' ? d.ai_task_online : 0,
@@ -755,15 +754,18 @@ export default {
     },
     async fetchSkillList() {
       try {
-        const res = await skillAPI.getSkillList({ page: 1, limit: 100, is_detail: false });
-        const d = res && res.data;
-        const list = (d && Array.isArray(d.data)) ? d.data : [];
+        const res = await skillAPI.getUnifiedSkills({ page: 1, limit: 100, status: true });
+        const list = (res && res.code === 0 && Array.isArray(res.data)) ? res.data : [];
         this.myAlgorithms = list.map(s => ({
-          id: String(s.id || s.skill_class_id || ''),
-          name: s.name_zh || s.name || s.skill_name || '未知技能',
+          id: String(s.skill_id || ''),
+          name: s.name_zh || s.name || '未知技能',
           size: 1,
         }));
-        this.skillCount = this.myAlgorithms.length;
+        if (res && res.counts && typeof res.counts.all === 'number') {
+          this.skillCount = res.counts.all;
+        } else {
+          this.skillCount = res.total || this.myAlgorithms.length;
+        }
       } catch (e) {
         console.error('获取技能列表失败:', e);
       }

@@ -207,10 +207,16 @@
 
               <div class="sg-sec-title">输出</div>
               <div v-if="form.target_classes && form.target_classes.length" class="sg-io-list">
-                <div v-for="cls in form.target_classes" :key="cls" class="sg-io-item">
-                  <span class="sg-io-dot" style="--c:#7c5cff"></span>{{ classLabel(cls) }}
-                  <span class="sg-io-tag">det.</span>
-                </div>
+                <template v-for="cls in form.target_classes">
+                  <div :key="cls + '-u'" class="sg-io-item">
+                    <span class="sg-io-dot" style="--c:#7c5cff"></span>{{ classLabel(cls) }}
+                    <span class="sg-io-tag">det.</span>
+                  </div>
+                  <div :key="cls + '-t'" class="sg-io-item">
+                    <span class="sg-io-dot" style="--c:#9254de"></span>{{ classLabel(cls) }}(追踪)
+                    <span class="sg-io-tag">trk.</span>
+                  </div>
+                </template>
               </div>
               <div v-else class="sg-io-empty">请先配置模型和标签</div>
             </template>
@@ -222,6 +228,11 @@
                          @visible-change="onVlmModelSelectVisible">
                 <el-option v-for="m in vlmModelOptions" :key="m.value" :label="m.label" :value="m.value" />
               </el-select>
+
+              <el-form-item label="系统提示词">
+                <el-input v-model="form.system_prompt" type="textarea" :rows="2" maxlength="500" show-word-limit
+                          placeholder="可选，设定模型角色与全局约束" @input="applyConfig" />
+              </el-form-item>
 
               <div class="sg-params">
                 <div class="sg-params-head">
@@ -388,6 +399,28 @@
                           placeholder="请输入提示词" @input="applyConfig" />
               </el-form-item>
 
+              <div class="sg-sec-title">批处理</div>
+              <el-form-item>
+                <span slot="label">
+                  并行数量
+                  <el-tooltip content="每轮批量推理的小图张数" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-input-number v-model="form.parallel" :min="1" :max="64" :step="1"
+                                 controls-position="right" style="width:100%" @change="applyConfig" />
+              </el-form-item>
+              <el-form-item>
+                <span slot="label">
+                  运行次数上限
+                  <el-tooltip content="最多运行的轮数，0 表示处理完全部小图" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-input-number v-model="form.max_rounds" :min="0" :max="1000" :step="1"
+                                 controls-position="right" style="width:100%" @change="applyConfig" />
+              </el-form-item>
+
               <div class="sg-params">
                 <div class="sg-params-head">
                   <span>输出</span>
@@ -495,6 +528,28 @@
                 </el-form-item>
               </template>
               <div v-else class="sg-io-empty">请先配置模型和标签</div>
+
+              <div class="sg-sec-title">批处理</div>
+              <el-form-item>
+                <span slot="label">
+                  并行数量
+                  <el-tooltip content="每轮批量推理的小图张数" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-input-number v-model="form.parallel" :min="1" :max="64" :step="1"
+                                 controls-position="right" style="width:100%" @change="applyConfig" />
+              </el-form-item>
+              <el-form-item>
+                <span slot="label">
+                  运行次数上限
+                  <el-tooltip content="最多运行的轮数，0 表示处理完全部小图" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-input-number v-model="form.max_rounds" :min="0" :max="1000" :step="1"
+                                 controls-position="right" style="width:100%" @change="applyConfig" />
+              </el-form-item>
 
               <div class="sg-sec-title">输出</div>
               <div v-if="form.target_classes && form.target_classes.length" class="sg-io-list">
@@ -813,6 +868,14 @@
                     <i v-else class="el-icon-link sg-vlm-bind-link"></i>
                   </div>
                 </el-popover>
+              </el-form-item>
+
+              <div class="sg-sec-title">配置</div>
+              <el-form-item label="过滤模式" required>
+                <el-select v-model="form.trigger_mode" style="width:100%" @change="applyConfig">
+                  <el-option label="围栏内" value="inside" />
+                  <el-option label="围栏外" value="outside" />
+                </el-select>
               </el-form-item>
 
               <div class="sg-sec-title">输出</div>
@@ -1428,6 +1491,8 @@
 
             <!-- 条件分支 -->
             <template v-else-if="selectedType === 'judge'">
+              <el-alert type="warning" :closable="false" show-icon title="编排建议"
+                        description="请至少配置一个有效条件；未编排条件分支时可能每帧都触发预警。持续时间内短暂不满足时，缓冲时间内可恢复累计（见持续时间/缓冲时间说明）。" />
               <div class="sg-sec-title">
                 <span>配置</span>
               </div>
@@ -1593,6 +1658,10 @@
                         @click="insertToken(t.token)">{{ t.label }}</span>
                 </div>
                 <div v-else class="sg-tip">先把上游节点（如计数、视觉模型）连到本结束节点，这里会列出可插入的标签。</div>
+                <div class="sg-tip">
+                  输出信息支持占位符：<b>{参数名}</b> 插入该输入端口的值；<b>{参数名.属性名}</b> 取检测目标的指定属性，多个目标用顿号拼接（如 <b>{车牌.plate_text}</b> → 京A12345、京B67890）。<br />
+                  其中 <b>{时间戳}</b> 是内置动态标签，无需上游连接，运行时由系统自动替换为当前时间（格式 2026-06-11 09:39:00）。
+                </div>
                 <div class="sg-out-foot">
                   <el-button type="text" class="sg-out-clear" @click="clearEndMessage">清空</el-button>
                 </div>
@@ -1610,6 +1679,7 @@
                   <span class="c-name">参数名 <i class="sg-req-star">*</i></span>
                   <span class="c-type">参数类型</span>
                   <span class="c-req">必填</span>
+                  <span class="c-exp"></span>
                   <span class="c-act"></span>
                 </div>
                 <div v-for="(pp, pi) in form.input_params" :key="pi" class="sg-param-item">
@@ -1642,10 +1712,64 @@
                     </div>
                   </el-popover>
                   <el-checkbox v-model="pp.required" class="c-req" @change="applyConfig" />
+                  <i class="sg-param-exp c-exp" :class="pp._expand ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
+                     :title="pp._expand ? '收起' : '展开'" @click="toggleParamExpand(pp)"></i>
                   <i class="el-icon-remove-outline sg-param-del c-act" title="删除"
                      @click="removeStartParam(pi)"></i>
                 </div>
                 <div v-if="!paramNameValid(pp.name)" class="sg-param-err">参数名必须以字母开头，只能包含字母、数字、下划线</div>
+                <div v-if="pp._expand" class="sg-param-detail">
+                  <div class="sg-pd-label">显示名称</div>
+                  <el-input v-model="pp.display_name" size="mini" maxlength="20" show-word-limit
+                            placeholder="更容易理解的汉字名称(选填)" @input="applyConfig" />
+
+                  <template v-if="paramHasDefault(pp.type)">
+                    <div class="sg-pd-label sg-pd-label-row">
+                      <span>默认值</span>
+                      <el-select v-if="pp.type === 'Image' || pp.type === 'Video'" v-model="pp._defaultSource"
+                                 size="mini" class="sg-pd-source" @change="applyConfig">
+                        <el-option label="文件上传" value="file" />
+                        <el-option label="网络URL" value="url" />
+                      </el-select>
+                    </div>
+
+                    <el-input v-if="pp.type === 'String' || pp.type === 'TemplateString'"
+                              v-model="pp.default" size="mini" placeholder="请输入默认值" @input="applyConfig" />
+                    <el-input-number v-else-if="pp.type === 'Integer'" v-model="pp.default" size="mini"
+                                     :controls="false" :precision="0" :step="1" style="width:100%" @change="applyConfig" />
+                    <el-input-number v-else-if="pp.type === 'Double'" v-model="pp.default" size="mini"
+                                     :controls="false" :precision="4" :step="0.0001" style="width:100%" @change="applyConfig" />
+                    <el-select v-else-if="pp.type === 'Boolean'" v-model="pp.default" size="mini"
+                               style="width:100%" @change="applyConfig">
+                      <el-option label="false" :value="false" />
+                      <el-option label="true" :value="true" />
+                    </el-select>
+                    <el-date-picker v-else-if="pp.type === 'Time'" v-model="pp.default" type="datetime"
+                                    size="mini" style="width:100%" value-format="yyyy-MM-dd HH:mm:ss"
+                                    placeholder="请选择时间" @change="applyConfig" />
+                    <template v-else-if="pp.type === 'Image' || pp.type === 'Video'">
+                      <el-input v-if="pp._defaultSource === 'url'" v-model="pp.default" size="mini"
+                                :placeholder="pp.type === 'Image' ? '请输入图片URL' : '请输入视频URL'" @input="applyConfig" />
+                      <div v-else class="sg-pd-upload">
+                        <el-upload drag action="#" :auto-upload="false" :show-file-list="false"
+                                   :accept="pp.type === 'Image' ? 'image/jpeg,image/png,image/bmp' : 'video/mp4,video/x-msvideo,video/x-flv,video/quicktime'"
+                                   :on-change="(f) => onParamFileChange(pp, f)">
+                          <i class="el-icon-upload"></i>
+                          <div class="el-upload__text">将{{ pp.type === 'Image' ? '图片' : '视频' }}拖到此处，或 <em>点击上传</em></div>
+                          <div slot="tip" class="el-upload__tip">{{ pp.type === 'Image' ? '单个文件不超过 10 MB，格式支持jpg、png、jpeg、bmp' : '单个文件不超过 50 MB，格式支持mp4、avi、flv、mov' }}</div>
+                        </el-upload>
+                        <div v-if="pp._fileName" class="sg-pd-filename" :title="pp._fileName">
+                          <i class="el-icon-document"></i>{{ pp._fileName }}
+                          <i class="el-icon-close sg-pd-file-del" @click="clearParamFile(pp)"></i>
+                        </div>
+                      </div>
+                    </template>
+                  </template>
+
+                  <div class="sg-pd-label">参数描述</div>
+                  <el-input v-model="pp.description" type="textarea" :rows="2" maxlength="500" show-word-limit
+                            placeholder="请输入参数描述" @input="applyConfig" />
+                </div>
                 </div>
               </div>
               <div class="sg-tip">开始节点定义技能运行所需的输入；其中 image 为当前帧图像。</div>
@@ -1789,28 +1913,10 @@ import { skillGraphAPI, modelAPI } from '@/components/service/VisionAIService.js
 // 节点类型 -> 端口（用于自定义锚点）的缓存，由 node-types 接口填充
 const PORT_MAP = {}
 
-// 前端扩展节点：目标抠图推理 + 附带小图批处理
-const EXTRA_NODE_TYPES = [
-  {
-    type: 'target_matting',
-    category: 'process',
-    name_zh: '目标抠图推理',
-    description: '对目标区域抠图并进行推理，并将推理结果将还原到原图。',
-    has_companion: true,
-    companion_type: 'small_image_batch',
-    input_ports: { image: 'Image', target: 'Detection' },
-    output_ports: { small_images: 'Array', target: 'Detection' }
-  },
-  {
-    type: 'small_image_batch',
-    category: 'process',
-    name_zh: '小图批处理',
-    description: '对小图序列批量调用推理模型',
-    hidden_in_palette: true,
-    input_ports: { small_images: 'Array' },
-    output_ports: { output: 'String' }
-  }
-]
+const TRACKED_SUFFIX = '__tracked'
+
+// 已由后端 /node-types 注册的扩展节点（保留空数组，兼容旧逻辑）
+const EXTRA_NODE_TYPES = []
 
 const DEFAULT_CUSTOM_CODE = `def main(inputs):
     """
@@ -2228,8 +2334,9 @@ function paramChipHtml(pp) {
       + '<i class="el-icon-warning-outline"></i>未定义</span>'
   }
   const meta = PARAM_TYPE_META[pp.type] || PARAM_TYPE_META.String
+  const label = (pp.display_name && String(pp.display_name).trim()) || name
   return `<span class="sgx-chip" style="--c:${meta.color}">`
-    + `<span class="sgx-chip-dot"></span>${escapeHtml(PORT_LABELS[name] || name)}</span>`
+    + `<span class="sgx-chip-dot"></span>${escapeHtml(label)}</span>`
 }
 function judgeCanvasCondText(cond, part) {
   const c = cond || {}
@@ -2309,7 +2416,8 @@ class SGNodeModel extends HtmlNodeModel {
     const p = this.properties || {}
     this.width = 248
     if (p.nodeType === 'start') {
-      const n = (((p.config || {}).input_params) || []).length || 1
+      const params = ((p.config || {}).input_params) || []
+      const n = params.filter(pp => pp && pp.name).length || 1
       this.height = 18 + 40 + (12 + Math.ceil(n / 2) * 26)
       return
     }
@@ -2318,15 +2426,16 @@ class SGNodeModel extends HtmlNodeModel {
       return
     }
     if (p.nodeType === 'detection_model') {
-      // 卡片固定渲染：模型行 + 输入行(图片/电子围栏一行) + 输出行(按标签)
-      const classes = (p.outputPorts && p.outputPorts.length)
-        ? p.outputPorts
-        : (((p.config || {}).target_classes) || [])
-      // 输出行始终显示（空时为"未配置输出"占位），至少占一行
-      const outLines = classes.length ? Math.ceil(classes.length / 2) : 1
+      // 卡片固定渲染：模型行 + 输入(图片/电子围栏/绊线) + 输出(每类检测+追踪两个 chip)
+      const cfg = p.config || {}
+      const targetClasses = (cfg.target_classes || []).slice()
+      const classCount = targetClasses.length
+        || (p.outputPorts || []).filter(port => port && !String(port).endsWith(TRACKED_SUFFIX)).length
+      const inputLines = Math.ceil(3 / 2)
+      const outLines = classCount ? Math.ceil(classCount * 2 / 2) : 1
       this.height = 18 + 40
         + (12 + 26)
-        + (12 + 26)
+        + (12 + inputLines * 26)
         + (12 + outLines * 26)
       return
     }
@@ -2335,7 +2444,6 @@ class SGNodeModel extends HtmlNodeModel {
       const inputs = ((vlmCfg.input_params) || [{ name: 'image' }]).length || 1
       const outputs = ((vlmCfg.output_parameters) || [{ name: 'output' }]).length || 1
       this.height = 18 + 40
-        + (12 + 26)
         + (12 + 26)
         + (12 + Math.ceil(inputs / 2) * 26)
         + (12 + Math.ceil(outputs / 2) * 26)
@@ -2465,23 +2573,31 @@ class SGNode extends HtmlNode {
 
     let body = ''
     if (p.nodeType === 'start') {
-      // 开始节点：展示用户定义的输入参数
-      const list = (cfg.input_params && cfg.input_params.length) ? cfg.input_params : [{}]
-      body = row('输入', list.map(paramChipHtml))
+      const list = (cfg.input_params && cfg.input_params.length)
+        ? cfg.input_params
+        : [{ name: 'image', type: 'Image', display_name: '图片' }]
+      const chips = list.filter(pp => pp && pp.name).map(pp => paramChipHtml(pp))
+      body = row('输出', chips.length ? chips : [paramChipHtml({ name: 'image', type: 'Image', display_name: '图片' })])
     } else if (p.nodeType === 'end') {
       // 结束节点：展示输出文本（未配置时占位）
       const msg = cfg.message
       body = `<div class="sgx-row"><span class="sgx-row-l">输出</span>`
         + `<span class="sgx-out${msg ? '' : ' is-empty'}">${msg ? escapeHtml(msg) : '未配置输出'}</span></div>`
     } else if (p.nodeType === 'detection_model') {
-      // 视觉模型：模型 + 输入(图片/电子围栏) + 按标签输出
+      // 视觉模型：模型 + 输入(图片/电子围栏/绊线) + 按标签输出（每类检测+追踪）
       const modelLabel = p.modelLabel || cfg.model_label || ''
       const classLabels = p.classLabels || cfg.class_labels || {}
-      const classes = (p.outputPorts && p.outputPorts.length) ? p.outputPorts : (cfg.target_classes || [])
+      const classes = (cfg.target_classes || []).length
+        ? cfg.target_classes
+        : (p.outputPorts || []).filter(port => port && !String(port).endsWith(TRACKED_SUFFIX))
       const modelRow = `<div class="sgx-row"><span class="sgx-row-l">模型</span>`
         + `<span class="sgx-out${modelLabel ? '' : ' is-empty'}">${modelLabel ? escapeHtml(modelLabel) : '未配置模型'}</span></div>`
-      const ins = [chipHtml('image', 'Image'), chipHtml('roi', 'ROI')]
-      const outs = classes.map(c => chipHtml(c, 'Detection', classLabels[c] || c))
+      const ins = [chipHtml('image', 'Image'), chipHtml('roi', 'ROI'), chipHtml('tripwire', 'Tripwire', '绊线')]
+      const outs = []
+      classes.forEach(c => {
+        outs.push(chipHtml(c, 'Detection', classLabels[c] || c))
+        outs.push(chipHtml(c + TRACKED_SUFFIX, 'TrackDetection', (classLabels[c] || c) + '(追踪)'))
+      })
       const outRow = outs.length
         ? row('输出', outs)
         : `<div class="sgx-row"><span class="sgx-row-l">输出</span><span class="sgx-out is-empty">未配置输出</span></div>`
@@ -2919,8 +3035,9 @@ export default {
       try { g = this.lf.getGraphData() } catch (e) { return [] }
       const nodesById = {}
       ;(g.nodes || []).forEach(n => { nodesById[n.id] = n })
-      const tokens = []
-      const seen = new Set()
+      // 动态标签：时间戳由后端渲染为当前时间
+      const tokens = [{ token: '时间戳', label: '时间戳' }]
+      const seen = new Set(['时间戳'])
       ;(g.edges || []).filter(e => e.targetNodeId === this.selectedNode.id).forEach(e => {
         const tp = (e.properties && e.properties.targetPort) || this.parsePort(e.targetAnchorId, 'in')
         if (!tp || tp === 'trigger' || tp === '*') return
@@ -3231,6 +3348,26 @@ export default {
         ]
       }
     },
+    /** 仅有 model_name、无 model_id 时（脚本生成的图）按名称解析并回显 */
+    async resolveDetectionModelForm(f) {
+      if (!f || f.model_id != null) return f
+      const name = (f.model_name || '').trim()
+      if (!name) return f
+      await this.loadModels(name)
+      let m = this.modelOptions.find(x => x.name === name)
+      if (!m) {
+        await this.loadModels('')
+        m = this.modelOptions.find(x => x.name === name)
+      }
+      if (!m) return f
+      f.model_id = m.id
+      f.model_name = m.name
+      f.model_version = m.version || ''
+      f._modelLabel = m._label || this.buildModelLabel(m)
+      this.ensureSelectedModelOption(f.model_id, f._modelLabel, f.model_name, f.model_version)
+      await this.loadModelClasses(f.model_id)
+      return f
+    },
     buildModelLabel(m) {
       const v = m.version
       const ver = v == null || v === '' ? 'V1' : (String(v).toUpperCase().startsWith('V') ? v : 'V' + v)
@@ -3302,6 +3439,16 @@ export default {
       const out = []
       if (nt === 'start') {
         const params = ((props.config || {}).input_params) || []
+        const defaults = [
+          { name: 'image', type: 'Image' },
+          { name: 'roi', type: 'ROI' },
+          { name: 'tripwire', type: 'Tripwire' }
+        ]
+        defaults.forEach(d => {
+          if (!params.some(p => p && p.name === d.name)) {
+            out.push({ port: d.name, type: d.type, label: PORT_LABELS[d.name] || d.name })
+          }
+        })
         params.forEach(pp => {
           if (!pp || !pp.name) return
           out.push({ port: pp.name, type: pp.type || 'String', label: PORT_LABELS[pp.name] || pp.name })
@@ -3751,8 +3898,14 @@ export default {
       // 若建边时已显式带上 sourcePort/targetPort（抽屉里选参数建的边），以其为准，不被锚点反推覆盖
       const sp = existing.sourcePort || this.parsePort(srcAnchor, 'out')
       let tp = existing.targetPort || this.parsePort(tgtAnchor, 'in')
-      // 动态输入节点：通用入口 '*' 的端口名沿用上游输出端口名
-      if (tp === '*') tp = sp || 'value'
+      const tgtNodeModel = this.lf.getNodeModelById(model.targetNodeId)
+      const tgtType = tgtNodeModel && tgtNodeModel.properties && tgtNodeModel.properties.nodeType
+      // 结束节点：judge.passed → trigger，其余沿用上游端口名
+      if (tp === '*' && tgtType === 'end' && sp === 'passed') {
+        tp = 'trigger'
+      } else if (tp === '*') {
+        tp = sp || 'value'
+      }
       this.lf.setProperties(edge.id, { sourcePort: sp, targetPort: tp })
       const tgtNode = (model && model.targetNodeId) || edge.targetNodeId
       if (this.selectedNode && this.hasInputSelector && tgtNode === this.selectedNode.id) {
@@ -3781,7 +3934,7 @@ export default {
           input_params: [{ name: 'image', type: 'Image', item_type: 'Image' }],
           output_parameters: [{ name: 'output', type: 'String' }]
         },
-        region_filter: {},
+        region_filter: { trigger_mode: 'inside' },
         video_slice: { start_time: 0, end_time: 0, buffer: 0 },
         size_filter: { min_width: 0, max_width: 1920, min_height: 0, max_height: 1080 },
         intersect: { iou_mode: 'min', iou_threshold: 0.5, duration: 0, buffer: 0 },
@@ -3812,10 +3965,12 @@ export default {
           timeout_ms: 10000
         },
         end: { message: '' },
-        start: { params: {}, input_params: [{ name: 'image', type: 'Image', required: true }] },
+        start: { params: {}, input_params: [{ name: 'image', type: 'Image', required: true, display_name: '图片' }] },
         target_matting: { width_multiplier: 1.4, height_multiplier: 1.4 },
         small_image_batch: {
           model_mode: '',
+          parallel: 1,
+          max_rounds: 0,
           model_name: '',
           system_prompt: '',
           prompt: '',
@@ -3858,6 +4013,10 @@ export default {
         if (f.model_id != null) {
           this.ensureSelectedModelOption(f.model_id, f._modelLabel, f.model_name, f.model_version)
           this.loadModelClasses(f.model_id)
+        } else if (f.model_name) {
+          this.resolveDetectionModelForm(f).then(resolved => {
+            if (resolved && resolved.model_id != null) this.form = { ...this.form, ...resolved }
+          })
         }
       } else if (this.selectedType === 'vlm_model') {
         f.model_name = cfg.model_name || this.vlmModelDefault || ''
@@ -3913,6 +4072,7 @@ export default {
         this.codeTestInput = this.buildCustomTestInput(f.input_params)
         this.codeTestOutput = ''
       } else if (this.selectedType === 'region_filter') {
+        f.trigger_mode = cfg.trigger_mode || 'inside'
         f._rfPop = { image: false, filter_target: false, roi: false }
       } else if (this.selectedType === 'count') {
         f._countPop = { count_target: false }
@@ -4000,16 +4160,25 @@ export default {
         f.message = cfg.message || ''
         f.out_params = (cfg.output_params || []).map(op => ({ name: op.name || '', ref: op.ref || '' }))
       } else if (this.selectedType === 'start') {
-        const list = (cfg.input_params || []).map(pp => ({
+        const wrapStartParam = pp => ({
           name: pp.name || '', type: pp.type || 'String', required: !!pp.required,
-          item_type: pp.item_type || 'String', _typeOpen: false, _arrayHover: false
-        }))
-        f.input_params = list.length ? list : [{ name: 'image', type: 'Image', required: true, item_type: 'String', _typeOpen: false, _arrayHover: false }]
+          item_type: pp.item_type || 'String',
+          display_name: pp.display_name || '',
+          default: pp.default !== undefined ? pp.default : '',
+          description: pp.description || '',
+          _typeOpen: false, _arrayHover: false, _expand: false,
+          _defaultSource: pp._defaultSource || 'file',
+          _fileName: pp._fileName || ''
+        })
+        const list = (cfg.input_params || []).map(wrapStartParam)
+        f.input_params = list.length ? list : [wrapStartParam({ name: 'image', type: 'Image', required: true, display_name: '图片' })]
       } else if (this.selectedType === 'target_matting') {
         f.width_multiplier = cfg.width_multiplier != null ? cfg.width_multiplier : 1.4
         f.height_multiplier = cfg.height_multiplier != null ? cfg.height_multiplier : 1.4
       } else if (this.selectedType === 'small_image_batch') {
         f.model_mode = cfg.model_mode || ''
+        f.parallel = cfg.parallel != null ? cfg.parallel : 1
+        f.max_rounds = cfg.max_rounds != null ? cfg.max_rounds : 0
         f._sibImgPop = false
         f._sibRoiPop = false
         if (f.model_mode === 'vlm_model') {
@@ -4037,6 +4206,10 @@ export default {
           if (f.model_id != null) {
             this.ensureSelectedModelOption(f.model_id, f._modelLabel, f.model_name, f.model_version)
             this.loadModelClasses(f.model_id)
+          } else if (f.model_name) {
+            this.resolveDetectionModelForm(f).then(resolved => {
+              if (resolved && resolved.model_id != null) this.form = { ...this.form, ...resolved }
+            })
           }
         }
       }
@@ -4049,7 +4222,43 @@ export default {
     },
     addStartParam() {
       if (!this.form.input_params) this.$set(this.form, 'input_params', [])
-      this.form.input_params.push({ name: '', type: 'String', required: false, item_type: 'String', _typeOpen: false, _arrayHover: false })
+      this.form.input_params.push({
+        name: '', type: 'String', required: false, item_type: 'String',
+        display_name: '', default: '', description: '',
+        _typeOpen: false, _arrayHover: false, _expand: false, _defaultSource: 'file', _fileName: ''
+      })
+      this.applyConfig()
+    },
+    // 是否需要"默认值"输入（仅基础数据类型支持默认值）
+    paramHasDefault(type) {
+      return ['String', 'TemplateString', 'Integer', 'Double', 'Boolean', 'Time', 'Image', 'Video'].includes(type)
+    },
+    toggleParamExpand(pp) {
+      this.$set(pp, '_expand', !pp._expand)
+    },
+    // 切换参数类型后，把默认值重置成该类型的合理空值
+    resetDefaultForType(pp) {
+      const t = pp.type === 'Array' ? null : pp.type
+      if (t === 'Integer' || t === 'Double') this.$set(pp, 'default', 0)
+      else if (t === 'Boolean') this.$set(pp, 'default', false)
+      else if (t === 'String' || t === 'TemplateString' || t === 'Time' || t === 'Image' || t === 'Video') this.$set(pp, 'default', '')
+      else this.$set(pp, 'default', undefined)
+      this.$set(pp, '_fileName', '')
+    },
+    onParamFileChange(pp, file) {
+      const raw = (file && file.raw) || file
+      if (!raw) return
+      const reader = new FileReader()
+      reader.onload = e => {
+        this.$set(pp, 'default', e.target.result)
+        this.$set(pp, '_fileName', raw.name || '')
+        this.applyConfig()
+      }
+      reader.readAsDataURL(raw)
+    },
+    clearParamFile(pp) {
+      this.$set(pp, 'default', '')
+      this.$set(pp, '_fileName', '')
       this.applyConfig()
     },
     typeLabel(pp) {
@@ -4067,12 +4276,14 @@ export default {
     selectType(pp, v) {
       this.$set(pp, 'type', v)
       pp._typeOpen = false
+      if (this.selectedType === 'start') this.resetDefaultForType(pp)
       this.applyConfig()
     },
     selectArrayType(pp, v) {
       this.$set(pp, 'type', 'Array')
       this.$set(pp, 'item_type', v)
       pp._typeOpen = false
+      if (this.selectedType === 'start') this.resetDefaultForType(pp)
       this.applyConfig()
     },
     clearEndMessage() {
@@ -4294,14 +4505,21 @@ export default {
     intersectBindTree(type) {
       if (!this.selectedNode) return []
       const types = type === 'Number' ? ['Number', 'Double'] : [type]
+      const trackingTypes = ['displacement', 'intersect', 'tripwire_tracking']
+      const preferTracked = trackingTypes.includes(this.selectedType) && type === 'Detection'
       const seen = new Set()
       const groups = []
       types.forEach(t => {
         this.typedSourceGroups(t, this.selectedNode.id).forEach(g => {
-          const key = `${g.nodeId}::${(g.params || []).map(p => p.port).join(',')}`
+          let params = g.params || []
+          if (preferTracked) {
+            const tracked = params.filter(p => (p.port || '').endsWith(TRACKED_SUFFIX))
+            if (tracked.length) params = tracked
+          }
+          const key = `${g.nodeId}::${params.map(p => p.port).join(',')}`
           if (seen.has(key)) return
           seen.add(key)
-          groups.push(g)
+          groups.push({ ...g, params })
         })
       })
       return this.groupsToTree(groups)
@@ -4526,8 +4744,7 @@ export default {
           description: op.description || ''
         })).filter(op => op.name)
       } else if (t === 'region_filter') {
-        // 默认保留围栏内目标，与节点说明一致
-        cfg.trigger_mode = 'inside'
+        cfg.trigger_mode = this.form.trigger_mode || 'inside'
       } else if (t === 'video_slice') {
         const clamp = v => {
           const n = Number(v)
@@ -4648,13 +4865,14 @@ export default {
         const list = (this.form.input_params || []).map(pp => {
           const o = { name: (pp.name || '').trim(), type: pp.type || 'String', required: !!pp.required }
           if (o.type === 'Array') o.item_type = pp.item_type || 'String'
+          if (pp.display_name) o.display_name = pp.display_name
+          if (pp.description) o.description = pp.description
+          if (this.paramHasDefault(o.type) && pp.default !== undefined && pp.default !== '' && pp.default !== null) {
+            o.default = pp.default
+          }
           return o
         })
         cfg.input_params = list
-        // image / roi 由开始节点内置输出，自定义参数才进 params 字典（后端用）
-        const params = {}
-        list.forEach(pp => { if (pp.name && pp.name !== 'image' && pp.name !== 'roi') params[pp.name] = '' })
-        cfg.params = params
       } else if (t === 'target_matting') {
         const clampMattingMul = v => {
           const n = Number(v)
@@ -4666,6 +4884,8 @@ export default {
       } else if (t === 'small_image_batch') {
         const mode = this.form.model_mode || ''
         cfg.model_mode = mode
+        cfg.parallel = Math.max(1, parseInt(this.form.parallel, 10) || 1)
+        cfg.max_rounds = Math.max(0, parseInt(this.form.max_rounds, 10) || 0)
         if (mode === 'vlm_model') {
           cfg.model_name = this.form.model_name || ''
           cfg.system_prompt = this.form.system_prompt || ''
@@ -4703,9 +4923,14 @@ export default {
       if (t === 'detection_model') {
         const classes = (cfg.target_classes || []).slice()
         const pt = { image: 'Image', roi: 'ROI' }
-        classes.forEach(c => { pt[c] = 'Detection' })
+        const outPorts = []
+        classes.forEach(c => {
+          pt[c] = 'Detection'
+          pt[c + TRACKED_SUFFIX] = 'TrackDetection'
+          outPorts.push(c, c + TRACKED_SUFFIX)
+        })
         props.inputPorts = ['image', 'roi']
-        props.outputPorts = classes
+        props.outputPorts = outPorts.length ? outPorts : classes
         props.portTypes = pt
         props.modelLabel = cfg.model_label
         props.classLabels = cfg.class_labels
@@ -4971,7 +5196,64 @@ export default {
       return def
     },
     // ---- 反序列化：后端 GraphDef -> LogicFlow 图 ----
+    // 缺坐标或全部叠在同一默认点时，按拓扑层级自动排布（上→下）
+    autoLayoutGraphDef(gd) {
+      const nodes = (gd.nodes || []).map(n => ({ ...n, position: n.position ? { ...n.position } : null }))
+      if (!nodes.length) return gd
+      const defaultPos = { x: 200, y: 120 }
+      const posKey = n => {
+        const p = n.position || defaultPos
+        return `${Math.round(p.x)}_${Math.round(p.y)}`
+      }
+      const needLayout = nodes.some(n => !n.position || n.position.x == null || n.position.y == null)
+        || new Set(nodes.map(posKey)).size <= 1
+      if (!needLayout) return gd
+
+      const ids = nodes.map(n => n.id)
+      const inMap = {}; const outMap = {}
+      ids.forEach(id => { inMap[id] = []; outMap[id] = [] })
+      ;(gd.edges || []).forEach(e => {
+        if (inMap[e.target] && outMap[e.source]) {
+          inMap[e.target].push(e.source)
+          outMap[e.source].push(e.target)
+        }
+      })
+      const layer = {}
+      ids.forEach(id => { layer[id] = 0 })
+      const starts = ids.filter(id => !inMap[id].length)
+      ;(starts.length ? starts : [ids[0]]).forEach(id => { layer[id] = 0 })
+      const queue = starts.length ? starts.slice() : [ids[0]]
+      const seen = new Set()
+      while (queue.length) {
+        const cur = queue.shift()
+        if (seen.has(cur)) continue
+        seen.add(cur)
+        ;(outMap[cur] || []).forEach(tgt => {
+          layer[tgt] = Math.max(layer[tgt] || 0, (layer[cur] || 0) + 1)
+          queue.push(tgt)
+        })
+      }
+      const byLayer = {}
+      nodes.forEach(n => {
+        const lv = layer[n.id] || 0
+        if (!byLayer[lv]) byLayer[lv] = []
+        byLayer[lv].push(n)
+      })
+      const H_GAP = 280; const V_GAP = 200; const OX = 420; const OY = 100
+      Object.keys(byLayer).sort((a, b) => +a - +b).forEach(lv => {
+        const group = byLayer[lv]
+        const count = group.length
+        group.forEach((n, i) => {
+          n.position = {
+            x: OX + i * H_GAP - (count - 1) * H_GAP / 2,
+            y: OY + (+lv) * V_GAP
+          }
+        })
+      })
+      return { ...gd, nodes }
+    },
     fromGraphDef(gd) {
+      gd = this.autoLayoutGraphDef(gd || {})
       const typeById = {}
       ;(gd.nodes || []).forEach(n => { typeById[n.id] = n.type })
       const nodes = (gd.nodes || []).map(n => {
@@ -5678,7 +5960,7 @@ export default {
       this.graphEdgeRev++
     },
     goBack() {
-      this.$router.push('/skillManage/skillGraphList')
+      this.$router.push('/skillManage/skillList')
     }
   }
 }
@@ -5876,7 +6158,32 @@ export default {
 .sg-param-row .c-name, .sg-params-cols .c-name { flex: 1 1 0; min-width: 0; }
 .sg-param-row .c-type, .sg-params-cols .c-type { flex: 1 1 0; min-width: 0; }
 .sg-param-row .c-req, .sg-params-cols .c-req { flex: none; width: 34px; text-align: center; }
+.sg-param-row .c-exp, .sg-params-cols .c-exp { flex: none; width: 18px; text-align: center; }
 .sg-param-row .c-act, .sg-params-cols .c-act { flex: none; width: 18px; text-align: center; }
+.sg-param-exp { cursor: pointer; color: #b4bbc7; font-size: 14px; }
+.sg-param-exp:hover { color: #7c5cff; }
+.sg-param-detail {
+  margin-top: 6px; padding: 8px 10px; background: #f7f8fc;
+  border: 1px solid #eef0f5; border-radius: 6px;
+}
+.sg-pd-label { font-size: 12px; color: #606266; margin-bottom: 4px; }
+.sg-pd-label:not(:first-child) { margin-top: 8px; }
+.sg-pd-label-row { display: flex; align-items: center; justify-content: space-between; }
+.sg-pd-source { width: 96px; }
+.sg-pd-detail >>> .el-textarea__inner { min-height: 48px; }
+.sg-param-detail >>> .el-textarea__inner { min-height: 48px; }
+.sg-pd-upload >>> .el-upload-dragger { width: 100%; height: auto; padding: 10px 8px; }
+.sg-pd-upload >>> .el-upload { display: block; width: 100%; }
+.sg-pd-upload >>> .el-upload-dragger .el-icon-upload { margin: 0 0 2px; font-size: 24px; line-height: 1; }
+.sg-pd-upload >>> .el-upload__text { font-size: 12px; line-height: 1.3; }
+.sg-pd-upload >>> .el-upload__tip { font-size: 11px; color: #9aa3b2; margin-top: 4px; line-height: 1.3; }
+.sg-pd-filename {
+  display: flex; align-items: center; gap: 4px; margin-top: 4px;
+  font-size: 12px; color: #606266; overflow: hidden;
+}
+.sg-pd-filename > i.el-icon-document { flex: none; }
+.sg-pd-file-del { margin-left: auto; cursor: pointer; color: #b4bbc7; }
+.sg-pd-file-del:hover { color: #f5566c; }
 .sg-type-box {
   display: flex; align-items: center; justify-content: space-between; gap: 4px;
   height: 28px; padding: 0 8px; border: 1px solid #dcdfe6; border-radius: 4px;

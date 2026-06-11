@@ -417,7 +417,7 @@
       </el-form>
       <div class="export-format-tip">
         <p v-if="exportForm.format === 'onnx'">ONNX：通用格式，支持 CPU/GPU，跨平台部署首选</p>
-        <p v-else-if="exportForm.format === 'engine'">TensorRT：NVIDIA GPU 专属，推理速度最快</p>
+        <p v-else-if="exportForm.format === 'engine'">TensorRT：NVIDIA GPU 专属，推理速度最快（需安装 tensorrt）</p>
         <p v-else-if="exportForm.format === 'openvino'">OpenVINO：Intel CPU/GPU/VPU 优化</p>
         <p v-else-if="exportForm.format === 'torchscript'">TorchScript：PyTorch 原生格式</p>
         <p v-else-if="exportForm.format === 'ncnn'">NCNN：腾讯开源，适合安卓/嵌入式/ARM 设备</p>

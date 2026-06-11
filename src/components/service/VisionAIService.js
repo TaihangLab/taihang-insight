@@ -400,6 +400,133 @@ export const modelAPI = {
 
 // 添加技能服务API
 export const skillAPI = {
+  // 获取统一技能列表（聚合 视觉模型技能 / 技能编排 / 多模态大模型 三类）
+  getUnifiedSkills(params = {}) {
+    return visionAIAxios.get('/api/v1/skills', { params })
+      .then(response => response.data)
+      .catch(error => {
+        console.error('获取统一技能列表失败:', error);
+        throw error;
+      });
+  },
+
+  /** 解析 getAITaskSkillClasses 返回的技能类数组 */
+  parseSkillClassList(scRes) {
+    if (!scRes || !scRes.data) return [];
+    const d = scRes.data;
+    return d.skill_classes || d.data || [];
+  },
+
+  /** 分页拉取全部技能类，构建 name -> id 映射（编排技能关联 skill_class_id 用） */
+  async fetchSkillClassMap(params = {}) {
+    const scMap = {};
+    let page = 1;
+    const limit = 100;
+    for (;;) {
+      const scRes = await this.getAITaskSkillClasses({ ...params, page, limit });
+      const scList = this.parseSkillClassList(scRes);
+      scList.forEach(sc => {
+        if (sc.name) scMap[sc.name] = sc.id;
+      });
+      if (scList.length < limit) break;
+      page += 1;
+      if (page > 50) break;
+    }
+    return scMap;
+  },
+
+  /** 分页拉取统一技能（后端 limit 最大 100） */
+  async fetchAllUnifiedSkills(params = {}) {
+    const all = [];
+    let page = 1;
+    const limit = 100;
+    for (;;) {
+      const res = await this.getUnifiedSkills({ ...params, page, limit });
+      if (!res || res.code !== 0) break;
+      const batch = res.data || [];
+      all.push(...batch);
+      if (batch.length < limit || all.length >= (res.total || 0)) break;
+      page += 1;
+      if (page > 50) break;
+    }
+    return all;
+  },
+
+  parseLlmSkillList(llmRes) {
+    const raw = llmRes && llmRes.data;
+    if (Array.isArray(raw)) return raw;
+    if (raw && Array.isArray(raw.data)) return raw.data;
+    return [];
+  },
+
+  /** 运行计划技能选项：视觉/编排(skill_classes) + 大模型，选项带类型标签 */
+  async fetchRunPlanSkillOptions() {
+    const options = [];
+    const graphNames = new Set();
+    try {
+      let page = 1;
+      const pageSize = 100;
+      for (;;) {
+        const res = await visionAIAxios.get('/api/v1/skill-graphs', {
+          params: { page, page_size: pageSize, status: true }
+        });
+        const d = res.data || {};
+        const list = d.data || [];
+        list.forEach(g => {
+          if (g.skill_id) graphNames.add(g.skill_id);
+        });
+        if (list.length < pageSize || page * pageSize >= (d.total || 0)) break;
+        page += 1;
+      }
+    } catch (e) { /* ignore */ }
+
+    let page = 1;
+    const limit = 100;
+    for (;;) {
+      const scRes = await this.getAITaskSkillClasses({ page, limit, status: true });
+      const scList = this.parseSkillClassList(scRes);
+      scList.forEach(sc => {
+        const isGraph = graphNames.has(sc.name);
+        options.push({
+          ref: 'sc:' + sc.id,
+          kind: isGraph ? 'graph' : 'visual',
+          kindLabel: isGraph ? '编排' : '视觉',
+          skill_class_id: sc.id,
+          llm_skill_id: '',
+          label: sc.name_zh || sc.name,
+          name: sc.name
+        });
+      });
+      if (scList.length < limit) break;
+      page += 1;
+      if (page > 50) break;
+    }
+
+    page = 1;
+    for (;;) {
+      const llmRes = await this.getLlmSkillList({ page, limit, status: true });
+      const llmList = this.parseLlmSkillList(llmRes);
+      llmList.forEach(s => {
+        if (!s.skill_id) return;
+        options.push({
+          ref: 'llm:' + s.skill_id,
+          kind: 'llm',
+          kindLabel: '大模型',
+          skill_class_id: '',
+          llm_skill_id: s.skill_id,
+          label: s.skill_name || s.skill_id,
+          name: s.skill_id
+        });
+      });
+      const total = (llmRes.data && llmRes.data.total) || 0;
+      if (llmList.length < limit || page * limit >= total) break;
+      page += 1;
+      if (page > 50) break;
+    }
+
+    return options;
+  },
+
   // 获取技能列表
   getSkillList(params = {}) {
     // 处理分页参数和查询参数
@@ -1498,6 +1625,14 @@ export const cameraAPI = {
     }
 
     return visionAIAxios.get(`/api/v1/ai-tasks/camera/id/${cameraId}`);
+  },
+
+  /**
+   * 点位实时画面快照 URL（供抓图预览）
+   * @param {string|number} cameraId 摄像头(点位)ID
+   */
+  getCameraSnapshotUrl(cameraId) {
+    return `${config.API_BASE_URL}/api/v1/cameras/${cameraId}/snapshot?t=${Date.now()}`;
   }
 };
 
@@ -4109,6 +4244,15 @@ export const skillGraphAPI = {
   getVlmModels() {
     return visionAIAxios.get('/api/v1/skill-graphs/vlm-models');
   },
+  // 上传技能编排封面图（与视觉技能封面上传方式一致：multipart 文件）
+  uploadCoverFile(skillId, imageFile) {
+    const formData = new FormData();
+    formData.append('skill_id', skillId);
+    formData.append('file', imageFile);
+    return visionAIAxios.post('/api/v1/skill-graphs/upload-cover', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(response => response.data);
+  },
   // 校验技能图（不落库）
   validateGraph(graphJson) {
     return visionAIAxios.post('/api/v1/skill-graphs/validate', { graph_json: graphJson });
@@ -4132,6 +4276,14 @@ export const skillGraphAPI = {
   // 创建
   createGraph(data) {
     return visionAIAxios.post('/api/v1/skill-graphs', data);
+  },
+  // 导出技能编排（标准 JSON 包）
+  exportGraph(skillId) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}/export`);
+  },
+  // 导入技能编排
+  importGraph(data) {
+    return visionAIAxios.post('/api/v1/skill-graphs/import', data);
   },
   // 详情
   getGraph(skillId) {
@@ -4178,6 +4330,61 @@ export const skillGraphAPI = {
   }
 };
 
+/**
+ * 技能运行计划 API
+ * 对接后端 /api/v1/skill-run-plans
+ */
+export const runPlanAPI = {
+  // 运行计划列表
+  listPlans(params) {
+    return visionAIAxios.get('/api/v1/skill-run-plans', { params });
+  },
+  // 创建运行计划（批量创建：1技能 × N点位）
+  createPlan(data) {
+    return visionAIAxios.post('/api/v1/skill-run-plans', data);
+  },
+  // 运行计划详情
+  getPlan(planId) {
+    return visionAIAxios.get(`/api/v1/skill-run-plans/${planId}`);
+  },
+  // 更新运行计划
+  updatePlan(planId, data) {
+    return visionAIAxios.put(`/api/v1/skill-run-plans/${planId}`, data);
+  },
+  // 启停单条计划
+  setEnabled(planId, enabled) {
+    return visionAIAxios.patch(`/api/v1/skill-run-plans/${planId}/enabled`, { enabled });
+  },
+  // 删除单条计划
+  deletePlan(planId) {
+    return visionAIAxios.delete(`/api/v1/skill-run-plans/${planId}`);
+  },
+  // 批量启停
+  batchEnable(planIds, enabled) {
+    return visionAIAxios.post('/api/v1/skill-run-plans/batch-enable', { plan_ids: planIds, enabled });
+  },
+  // 批量删除
+  batchDelete(planIds) {
+    return visionAIAxios.post('/api/v1/skill-run-plans/batch-delete', { plan_ids: planIds });
+  },
+  // 运行任务（计划派生子任务）列表
+  listRunTasks(params) {
+    return visionAIAxios.get('/api/v1/skill-run-plans/run-tasks', { params });
+  },
+  // 点位组织树（供"点位选择"）
+  getOrganizations() {
+    return visionAIAxios.get('/api/v1/skill-run-plans/organizations');
+  },
+  // 创建运行计划时的默认预警配置
+  getDefaults() {
+    return visionAIAxios.get('/api/v1/skill-run-plans/defaults');
+  },
+  // 点位实时画面快照URL（供电子围栏绘制底图）
+  getCameraSnapshotUrl(cameraId) {
+    return `${config.API_BASE_URL}/api/v1/cameras/${cameraId}/snapshot?t=${Date.now()}`;
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
@@ -4193,5 +4400,6 @@ export default {
   mlPipelineAPI,
   systemMonitorAPI,
   skillGraphAPI,
+  runPlanAPI,
   visionAIAxios
 };
