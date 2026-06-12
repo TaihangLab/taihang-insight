@@ -223,7 +223,7 @@
                 </el-button>
               </div>
               <div class="region-preview">
-                <img v-if="currentFenceCam" :src="snapshotUrl(currentFenceCam.camera_id)" class="region-preview__img" @error="onPreviewError" />
+                <img v-if="currentFenceCam" :key="currentFenceCam.camera_id" :src="snapshotUrl(currentFenceCam.camera_id)" class="region-preview__img" @error="onPreviewError" />
                 <div class="region-preview__ph">
                   <i class="el-icon-picture-outline"></i>
                   <span>点位画面预览</span>
@@ -673,6 +673,12 @@ export default {
     },
     innerVisible(v) {
       this.$emit('update:visible', v);
+    },
+    // 点位列表变化（回到上一步删/换摄像头）时，同步围栏预览所选点位，避免残留旧摄像头画面
+    'form.cameras'(cams) {
+      const cur = this.currentFenceCam;
+      const match = cur && cams.find(c => String(c.camera_id) === String(cur.camera_id));
+      this.currentFenceCam = match || cams[0] || null;
     }
   },
   created() {
