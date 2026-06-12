@@ -265,7 +265,7 @@
 <script>
 import { runPlanAPI } from '@/components/service/VisionAIService.js';
 
-const RATIO_TIP_TEXT = '目标占比：指目标在电子围栏中的部分占目标总体的比例，当目标进入电子围栏占比超过所设置占比值时，系统即产生报警，反之将不产生报警。填写时，支持输入 0.00-1.00 的数字。';
+const RATIO_TIP_TEXT = '目标占比：指目标在电子围栏中的部分占目标总体的比例，当目标进入电子围栏占比超过所设置占比值时，系统即产生报警，反之将不产生报警。填写时，支持输入 0.00-1.00 的数字。注意：若技能自定义了判定关键点（如以人脚部位置判定是否入栏），则按关键点是否在围栏内判定，该占比设置不生效。';
 
 const ICON_POLYGON = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2l8 6v8l-8 6-8-6V8l8-6z" fill-opacity="0.15" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>';
 const ICON_TRIPWIRE = '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="5" cy="19" r="2" fill="currentColor"/><circle cx="19" cy="5" r="2" fill="currentColor"/><line x1="6.5" y1="17.5" x2="17.5" y2="6.5" stroke="currentColor" stroke-width="1.8"/></svg>';
@@ -383,13 +383,13 @@ export default {
     }
   },
   beforeDestroy() {
-    this.hideFloatingTip();
+    this.removeFloatingTip();
     document.body.classList.remove('fence-drawer-fullscreen');
   },
   methods: {
     showFloatingTip(e, text) {
       if (!text) return;
-      this.hideFloatingTip();
+      this.removeFloatingTip();
       const el = document.createElement('div');
       el.className = 'fence-float-tip';
       el.textContent = text;
@@ -400,10 +400,25 @@ export default {
       const top = Math.min(e.clientY + 16, window.innerHeight - 80);
       el.style.left = `${left}px`;
       el.style.top = `${top}px`;
+      // 鼠标移入提示框时保持显示，便于选中复制
+      el.addEventListener('mouseenter', () => this.cancelFloatingTipHide());
+      el.addEventListener('mouseleave', () => this.hideFloatingTip());
       document.body.appendChild(el);
       this._floatTipEl = el;
     },
     hideFloatingTip() {
+      this.cancelFloatingTipHide();
+      // 延迟隐藏，给鼠标移动到提示框上的时间
+      this._floatTipHideTimer = setTimeout(() => this.removeFloatingTip(), 300);
+    },
+    cancelFloatingTipHide() {
+      if (this._floatTipHideTimer) {
+        clearTimeout(this._floatTipHideTimer);
+        this._floatTipHideTimer = null;
+      }
+    },
+    removeFloatingTip() {
+      this.cancelFloatingTipHide();
       if (this._floatTipEl && this._floatTipEl.parentNode) {
         this._floatTipEl.parentNode.removeChild(this._floatTipEl);
       }
@@ -415,7 +430,7 @@ export default {
       this.redraw();
     },
     onClosed() {
-      this.hideFloatingTip();
+      this.removeFloatingTip();
       this.showGuide = false;
       this.guideExampleIndex = 0;
       this.drawing = false;
@@ -1619,7 +1634,8 @@ body > .fence-float-tip {
   font-size: 12px;
   line-height: 1.6;
   border-radius: 4px;
-  pointer-events: none;
+  user-select: text;
+  cursor: text;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
 }
 </style>
