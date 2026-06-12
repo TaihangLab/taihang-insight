@@ -40,31 +40,6 @@
 
         <!-- 登录表单 -->
         <div class="login-form">
-          <!-- 租户选择框 -->
-          <div class="input-group">
-            <div class="input-wrapper" :class="{'focused': tenantSelectFocused}">
-              <i class="input-icon fa fa-building"></i>
-              <select 
-                v-model="selectedTenant" 
-                class="tech-select"
-                @focus="tenantSelectFocused = true"
-                @blur="tenantSelectFocused = false"
-                @change="onTenantChange"
-              >
-                <option value="" disabled>请选择租户</option>
-                <option 
-                  v-for="tenant in tenantList" 
-                  :key="tenant.tenantNumber" 
-                  :value="tenant.tenantNumber"
-                >
-                  {{ tenant.companyName }}
-                </option>
-              </select>
-              <i class="select-arrow fa fa-chevron-down"></i>
-              <div class="input-border"></div>
-            </div>
-          </div>
-
           <!-- 用户名输入框 -->
           <div class="input-group">
             <div class="input-wrapper">
@@ -143,10 +118,7 @@ export default {
       showPassword: false,
       loginLoading: false,
       username: '',
-      password: '',
-      selectedTenant: '',
-      tenantSelectFocused: false,
-      tenantList: []
+      password: ''
     }
   },
   created(){
@@ -157,8 +129,6 @@ export default {
         that.login();
       }
     }
-    // 页面加载时获取租户列表
-    this.getTenantList();
   },
   methods:{
     // 获取粒子样式
@@ -168,69 +138,6 @@ export default {
         top: Math.random() * 100 + '%',
         animationDelay: Math.random() * 3 + 's',
         animationDuration: (Math.random() * 3 + 2) + 's'
-      }
-    },
-
-    // 获取租户列表
-    getTenantList() {
-      // 直接使用写死的租户数据
-      this.tenantList = this.getMockTenantList();
-      this.loadingTenants = false;
-    },
-
-    // 模拟租户数据（从租户管理模块提取）
-    getMockTenantList() {
-      return [
-        {
-          tenantNumber: '000000',
-          companyName: 'XXX有限公司',
-          contactPerson: '管理组',
-          status: true
-        },
-        {
-          tenantNumber: '952742',
-          companyName: '123',
-          contactPerson: '123',
-          status: true
-        },
-        {
-          tenantNumber: '415387',
-          companyName: '6666',
-          contactPerson: '66',
-          status: true
-        },
-        {
-          tenantNumber: '297659',
-          companyName: '16888',
-          contactPerson: '16888',
-          status: true
-        },
-        {
-          tenantNumber: '789133',
-          companyName: '测试租户企业名称',
-          contactPerson: '测试租户联系人',
-          status: true
-        },
-        {
-          tenantNumber: '646214',
-          companyName: 'test999',
-          contactPerson: 'test999',
-          status: true
-        },
-        {
-          tenantNumber: '252800',
-          companyName: 'ce',
-          contactPerson: 'ce',
-          status: true
-        }
-      ];
-    },
-
-    // 租户选择变化处理
-    onTenantChange() {
-      const selectedTenantData = this.tenantList.find(tenant => tenant.tenantNumber === this.selectedTenant);
-      if (selectedTenantData) {
-        console.log('选择的租户:', selectedTenantData.companyName);
       }
     },
 
@@ -248,14 +155,6 @@ export default {
 
     //登录逻辑 - 模拟登录并保持登录状态
     login(){
-      if(this.selectedTenant === '') {
-        this.$message({
-          showClose: true,
-          message: '请选择租户',
-          type: 'warning'
-        });
-        return;
-      }
       if(this.username!='' && this.password!=''){
         this.isLoging = true;
         
@@ -264,7 +163,6 @@ export default {
           // 保存用户信息和登录状态
           const userInfo = {
             username: this.username,
-            tenantNumber: this.selectedTenant,
             loginTime: new Date().toISOString()
           };
           
@@ -603,7 +501,7 @@ export default {
   color: #00d4ff;
 }
 
-.tech-input, .tech-select {
+.tech-input {
   width: 100%;
   height: 55px;
   padding: 0 50px 0 45px;
@@ -613,47 +511,10 @@ export default {
   color: #ffffff;
   font-size: 16px;
   font-family: inherit;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
 }
 
 .tech-input::placeholder {
   color: rgba(255, 255, 255, 0.5);
-}
-
-.tech-select {
-  cursor: pointer;
-  padding-right: 45px;
-}
-
-.tech-select option {
-  background-color: #1a1a2e;
-  color: #ffffff;
-  padding: 10px;
-}
-
-.tech-select option:hover {
-  background-color: rgba(0, 212, 255, 0.2);
-}
-
-
-
-.select-arrow {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
-  pointer-events: none;
-  transition: color 0.3s ease, transform 0.3s ease;
-  z-index: 2;
-}
-
-.input-wrapper.focused .select-arrow {
-  color: #00d4ff;
-  transform: translateY(-50%) rotate(180deg);
 }
 
 .password-toggle {

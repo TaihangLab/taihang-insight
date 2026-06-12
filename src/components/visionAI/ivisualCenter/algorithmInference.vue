@@ -911,209 +911,364 @@ export default {
       this.brainControls.rotateSpeed = 0.5;
 
       const brainGroup = new THREE.Group();
+      brainGroup.position.y = 1.5;
       this.brainScene.add(brainGroup);
       this.brainGroup = brainGroup;
 
-      const brainPoints = [];
-      const brainSurfacePoints = [];
+      // ---- 贾维斯风格全息 AI 大脑 ----
+      const CYAN = 0x37d6ff;
+      const ICE = 0xbfefff;
+      const AMBER = 0xffc35c;
 
+      this.jarvisUniforms = {
+        uTime: { value: 0 },
+        uMousePos: { value: new THREE.Vector3(0, 999, 0) },
+        uMouseStrength: { value: 0 },
+        uPulse: { value: 0 },
+        uPulseTime: { value: 100 },
+        uPulsePos: { value: new THREE.Vector3(0, 0, 0) }
+      };
+
+      // 径向渐变光晕贴图
+      const makeGlowTexture = () => {
+        const c = document.createElement('canvas');
+        c.width = c.height = 128;
+        const ctx = c.getContext('2d');
+        const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        g.addColorStop(0, 'rgba(200,245,255,1)');
+        g.addColorStop(0.25, 'rgba(90,200,255,0.5)');
+        g.addColorStop(0.6, 'rgba(40,130,255,0.12)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 128, 128);
+        return new THREE.CanvasTexture(c);
+      };
+      const glowTex = makeGlowTexture();
+
+      // 1. 大脑形态参数方程：左右半球、中央纵裂、脑回起伏
+      // 球形主体：只保留极轻微的表面起伏，整体就是一个圆球
       const brainShape = (u, v) => {
         const theta = u * Math.PI;
         const phi = v * 2 * Math.PI;
-
-        let rx = 7.5, ry = 6.0, rz = 8.5;
-
-        const fissureDepth = 0.9 + 0.1 * Math.cos(phi * 3);
-        const topBulge = theta < Math.PI * 0.5 ? 1.0 + 0.25 * Math.sin(theta * 2) : 1.0;
-        const asymmetry = 1.0 + 0.08 * Math.sin(phi * 2 + 0.5);
-
-        let x = rx * Math.sin(theta) * Math.cos(phi) * fissureDepth * asymmetry;
-        let y = ry * Math.cos(theta) * topBulge;
-        let z = rz * Math.sin(theta) * Math.sin(phi);
-
-        const fissure = Math.abs(Math.cos(phi));
-        if (fissure < 0.15 && theta < Math.PI * 0.8) {
-          const indent = (0.15 - fissure) / 0.15 * 2.5;
-          y -= indent * Math.sin(theta);
-        }
-
-        const gyrus = 0.3 * Math.sin(theta * 6 + phi * 4) + 0.2 * Math.sin(theta * 8 - phi * 3);
-        x += gyrus * Math.sin(theta) * Math.cos(phi) * 0.5;
-        y += gyrus * Math.cos(theta) * 0.3;
-        z += gyrus * Math.sin(theta) * Math.sin(phi) * 0.5;
-
-        y += 1.5;
-
-        return new THREE.Vector3(x, y, z);
+        const R = 6.6;
+        const g = 0.08 * Math.sin(theta * 6 + phi * 4) + 0.05 * Math.sin(theta * 9 - phi * 3);
+        const r = R + g;
+        return new THREE.Vector3(
+          r * Math.sin(theta) * Math.cos(phi),
+          r * Math.cos(theta),
+          r * Math.sin(theta) * Math.sin(phi)
+        );
       };
 
-      const surfRes = 50;
-      for (let i = 0; i <= surfRes; i++) {
-        for (let j = 0; j <= surfRes; j++) {
-          const p = brainShape(i / surfRes, j / surfRes);
-          brainSurfacePoints.push(p);
-        }
+      const brainNet = new THREE.Group();
+      brainGroup.add(brainNet);
+      this.jarvisBrain = brainNet;
+
+      // 2. 神经元节点云：壳层为主 + 少量内部填充
+      const nodePoints = [];
+      for (let i = 0; i < 3800; i++) {
+        const p = brainShape(Math.random(), Math.random());
+        nodePoints.push(p.multiplyScalar(0.985 + Math.random() * 0.03));
       }
-
-      const particleCount = 3000;
-      for (let i = 0; i < particleCount; i++) {
-        const u = Math.random();
-        const v = Math.random();
-        const depth = 0.3 + Math.random() * 0.7;
-        const surfPoint = brainShape(u, v);
-        brainPoints.push(new THREE.Vector3(
-          surfPoint.x * depth,
-          surfPoint.y * depth + (1 - depth) * 1.5,
-          surfPoint.z * depth
-        ));
+      for (let i = 0; i < 450; i++) {
+        const p = brainShape(Math.random(), Math.random());
+        nodePoints.push(p.multiplyScalar(0.45 + Math.random() * 0.45));
       }
-      for (let i = 0; i < 1200; i++) {
-        const u = Math.random();
-        const v = Math.random();
-        const surfPoint = brainShape(u, v);
-        const jitter = 0.92 + Math.random() * 0.16;
-        brainPoints.push(new THREE.Vector3(
-          surfPoint.x * jitter,
-          surfPoint.y * jitter,
-          surfPoint.z * jitter
-        ));
-      }
+      this._nodePoints = nodePoints;
 
-      const particleGeometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(brainPoints.length * 3);
-      const colors = new Float32Array(brainPoints.length * 3);
-      const sizes = new Float32Array(brainPoints.length);
-
-      brainPoints.forEach((p, i) => {
-        positions[i * 3] = p.x;
-        positions[i * 3 + 1] = p.y;
-        positions[i * 3 + 2] = p.z;
-
-        const dist = p.length() / 10;
-        const r = 0.05 + dist * 0.25;
-        const g = 0.75 + Math.random() * 0.25;
-        const b = 0.95 + Math.random() * 0.05;
-        colors[i * 3] = r;
-        colors[i * 3 + 1] = g;
-        colors[i * 3 + 2] = b;
-
-        sizes[i] = 0.15 + Math.random() * 0.25;
+      const nodePos = new Float32Array(nodePoints.length * 3);
+      const nodeSeed = new Float32Array(nodePoints.length);
+      nodePoints.forEach((p, i) => {
+        nodePos[i * 3] = p.x;
+        nodePos[i * 3 + 1] = p.y;
+        nodePos[i * 3 + 2] = p.z;
+        nodeSeed[i] = Math.random() * 100;
       });
-
-      particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-      const particleMaterial = new THREE.ShaderMaterial({
-        uniforms: {},
-        vertexShader: [
-          'attribute float size;',
-          'attribute vec3 color;',
-          'varying vec3 vColor;',
-          'void main() {',
-          '  vColor = color;',
-          '  vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);',
-          '  gl_PointSize = size * (500.0 / -mvPosition.z);',
-          '  gl_Position = projectionMatrix * mvPosition;',
-          '}'
-        ].join('\n'),
-        fragmentShader: [
-          'varying vec3 vColor;',
-          'void main() {',
-          '  float d = length(gl_PointCoord - vec2(0.5));',
-          '  if (d > 0.5) discard;',
-          '  float alpha = 1.0 - smoothstep(0.0, 0.5, d);',
-          '  gl_FragColor = vec4(vColor * 1.5, alpha * 0.9);',
-          '}'
-        ].join('\n'),
+      const nodesGeo = new THREE.BufferGeometry();
+      nodesGeo.setAttribute('position', new THREE.BufferAttribute(nodePos, 3));
+      nodesGeo.setAttribute('aSeed', new THREE.BufferAttribute(nodeSeed, 1));
+      const nodesMat = new THREE.ShaderMaterial({
+        uniforms: this.jarvisUniforms,
+        vertexShader: `
+          uniform float uTime;
+          uniform vec3 uMousePos;
+          uniform float uMouseStrength;
+          uniform float uPulse;
+          uniform float uPulseTime;
+          uniform vec3 uPulsePos;
+          attribute float aSeed;
+          varying float vGlow;
+          void main() {
+            float tw = 0.5 + 0.5 * sin(uTime * 1.6 + aSeed * 9.0);
+            float dM = distance(position, uMousePos);
+            float hover = uMouseStrength * exp(-dM * dM * 0.18);
+            float dP = distance(position, uPulsePos);
+            float ring = uPulse * exp(-pow(dP - uPulseTime * 6.0, 2.0) * 0.6);
+            float scanY = -6.5 + fract(uTime * 0.09) * 14.0;
+            float scan = exp(-pow(position.y - scanY, 2.0) * 1.8);
+            vGlow = 0.3 + 0.35 * tw + hover * 1.5 + ring * 2.0 + scan * 0.55;
+            vec3 p = position + normalize(position + vec3(0.0001)) * (hover * 0.5 + ring * 0.6);
+            vec4 mv = modelViewMatrix * vec4(p, 1.0);
+            gl_PointSize = (34.0 + 22.0 * hover + 26.0 * ring + 10.0 * scan) * (0.75 + 0.25 * tw) / -mv.z;
+            gl_Position = projectionMatrix * mv;
+          }
+        `,
+        fragmentShader: `
+          varying float vGlow;
+          void main() {
+            float d = length(gl_PointCoord - vec2(0.5));
+            if (d > 0.5) discard;
+            float a = (1.0 - smoothstep(0.0, 0.5, d)) * vGlow;
+            vec3 cyan = vec3(0.22, 0.84, 1.0);
+            vec3 white = vec3(0.78, 0.96, 1.0);
+            vec3 col = mix(cyan, white, clamp(vGlow - 0.8, 0.0, 1.0));
+            gl_FragColor = vec4(col, clamp(a, 0.0, 1.0));
+          }
+        `,
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending
       });
+      brainNet.add(new THREE.Points(nodesGeo, nodesMat));
 
-      const particles = new THREE.Points(particleGeometry, particleMaterial);
-      brainGroup.add(particles);
-      this.brainParticles = particles;
-
-      const lineCount = 600;
-      const linePositions = [];
-      const lineColors = [];
-
-      for (let i = 0; i < lineCount; i++) {
-        const idx1 = Math.floor(Math.random() * brainPoints.length);
-        let idx2 = Math.floor(Math.random() * brainPoints.length);
-        const p1 = brainPoints[idx1];
-        const p2 = brainPoints[idx2];
-        const dist = p1.distanceTo(p2);
-        if (dist > 0.5 && dist < 4.0) {
-          linePositions.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
-          const alpha = 1.0 - dist / 4.0;
-          lineColors.push(0.1, 0.85 * alpha, 1.0 * alpha, 0.1, 0.85 * alpha, 1.0 * alpha);
+      // 3. 细密脑表面微粒：让大脑轮廓连续成形
+      const skinPositions = [];
+      const skinRes = 110;
+      for (let i = 1; i < skinRes; i++) {
+        for (let j = 0; j < skinRes; j++) {
+          const p = brainShape(
+            (i + Math.random() * 0.6) / skinRes,
+            (j + Math.random() * 0.6) / skinRes
+          );
+          skinPositions.push(p.x, p.y, p.z);
         }
       }
+      const skinGeo = new THREE.BufferGeometry();
+      skinGeo.setAttribute('position', new THREE.Float32BufferAttribute(skinPositions, 3));
+      const skin = new THREE.Points(skinGeo, new THREE.PointsMaterial({
+        color: 0x2bb8e8,
+        size: 0.055,
+        transparent: true,
+        opacity: 0.32,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        sizeAttenuation: true
+      }));
+      brainNet.add(skin);
 
-      if (linePositions.length > 0) {
-        const lineGeometry = new THREE.BufferGeometry();
-        lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-        lineGeometry.setAttribute('color', new THREE.Float32BufferAttribute(lineColors, 3));
-        const lineMaterial = new THREE.LineBasicMaterial({
-          vertexColors: true,
+      // 4. 神经链路：只连表层相邻神经元的短链，避免横穿内部的杂线
+      const surfaceCount = 3800;
+      this._surfaceCount = surfaceCount;
+      const linkPositions = [];
+      let linkAttempts = 0;
+      while (linkPositions.length < 2400 * 6 / 2 && linkAttempts < 60000) {
+        linkAttempts++;
+        const a = nodePoints[(Math.random() * surfaceCount) | 0];
+        const b = nodePoints[(Math.random() * surfaceCount) | 0];
+        const d = a.distanceTo(b);
+        if (d > 0.35 && d < 1.6) {
+          linkPositions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+        }
+      }
+      const linksGeo = new THREE.BufferGeometry();
+      linksGeo.setAttribute('position', new THREE.Float32BufferAttribute(linkPositions, 3));
+      const links = new THREE.LineSegments(linksGeo, new THREE.LineBasicMaterial({
+        color: CYAN,
+        transparent: true,
+        opacity: 0.13,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      }));
+      brainNet.add(links);
+      this.jarvisLinks = links;
+
+      // 4. 神经冲动：光点在节点之间穿行
+      this.jarvisPulses = [];
+      for (let i = 0; i < 14; i++) {
+        const spr = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: glowTex,
+          color: ICE,
+          transparent: true,
+          opacity: 0.9,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        }));
+        spr.scale.setScalar(0.9);
+        brainNet.add(spr);
+        const origin = nodePoints[(Math.random() * surfaceCount) | 0].clone();
+        this.jarvisPulses.push({
+          spr,
+          origin,
+          target: this._pickNearbyNode(origin),
+          progress: Math.random(),
+          speed: 0.25 + Math.random() * 0.5
+        });
+      }
+
+      // 5. 全息投影底座：光锥 + 底座辉光
+      const cone = new THREE.Mesh(
+        new THREE.CylinderGeometry(7.0, 1.0, 6.2, 48, 1, true),
+        new THREE.MeshBasicMaterial({
+          color: CYAN,
+          transparent: true,
+          opacity: 0.045,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          side: THREE.DoubleSide
+        })
+      );
+      cone.position.y = -4.0;
+      brainGroup.add(cone);
+
+      const baseGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: glowTex,
+        color: CYAN,
+        transparent: true,
+        opacity: 0.5,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      }));
+      baseGlow.scale.setScalar(6);
+      baseGlow.position.y = -7.1;
+      brainGroup.add(baseGlow);
+      this.jarvisBaseGlow = baseGlow;
+
+      // 6. 底座 HUD 罗盘：基准圆 + 刻度 + 旋转弧段
+      const dialGroup = new THREE.Group();
+      dialGroup.position.y = -7.1;
+      brainGroup.add(dialGroup);
+      this.jarvisDial = dialGroup;
+
+      const tickPts = [];
+      const tickCount = 96;
+      for (let i = 0; i < tickCount; i++) {
+        const a = (i / tickCount) * Math.PI * 2;
+        const r1 = 7.2;
+        const r2 = i % 8 === 0 ? 7.75 : 7.45;
+        tickPts.push(
+          new THREE.Vector3(r1 * Math.cos(a), 0, r1 * Math.sin(a)),
+          new THREE.Vector3(r2 * Math.cos(a), 0, r2 * Math.sin(a))
+        );
+      }
+      dialGroup.add(new THREE.LineSegments(
+        new THREE.BufferGeometry().setFromPoints(tickPts),
+        new THREE.LineBasicMaterial({
+          color: CYAN,
           transparent: true,
           opacity: 0.45,
           blending: THREE.AdditiveBlending,
           depthWrite: false
-        });
-        const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
-        brainGroup.add(lines);
-        this.brainLines = lines;
+        })
+      ));
+
+      const baseCirclePts = [];
+      for (let i = 0; i <= 128; i++) {
+        const a = (i / 128) * Math.PI * 2;
+        baseCirclePts.push(new THREE.Vector3(7.0 * Math.cos(a), 0, 7.0 * Math.sin(a)));
       }
-
-      const surfaceGeometry = new THREE.BufferGeometry();
-      const surfPositions = [];
-      const surfColors2 = [];
-      brainSurfacePoints.forEach(p => {
-        surfPositions.push(p.x, p.y, p.z);
-        surfColors2.push(0.1, 0.7, 1.0);
-      });
-      surfaceGeometry.setAttribute('position', new THREE.Float32BufferAttribute(surfPositions, 3));
-      surfaceGeometry.setAttribute('color', new THREE.Float32BufferAttribute(surfColors2, 3));
-
-      const surfMaterial = new THREE.PointsMaterial({
-        size: 0.06,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.25,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-      });
-      const surfaceParticles = new THREE.Points(surfaceGeometry, surfMaterial);
-      brainGroup.add(surfaceParticles);
-
-      const pulseCount = 15;
-      this.brainPulses = [];
-      for (let i = 0; i < pulseCount; i++) {
-        const idx = Math.floor(Math.random() * brainPoints.length);
-        const origin = brainPoints[idx].clone();
-        const pulseGeo = new THREE.SphereGeometry(0.15, 8, 8);
-        const pulseMat = new THREE.MeshBasicMaterial({
-          color: 0x00ffff,
+      dialGroup.add(new THREE.LineLoop(
+        new THREE.BufferGeometry().setFromPoints(baseCirclePts),
+        new THREE.LineBasicMaterial({
+          color: CYAN,
           transparent: true,
-          opacity: 0.8,
-          blending: THREE.AdditiveBlending
-        });
-        const pulseMesh = new THREE.Mesh(pulseGeo, pulseMat);
-        pulseMesh.position.copy(origin);
-        brainGroup.add(pulseMesh);
-        this.brainPulses.push({
-          mesh: pulseMesh,
-          origin: origin,
-          target: brainPoints[Math.floor(Math.random() * brainPoints.length)].clone(),
-          progress: Math.random(),
-          speed: 0.003 + Math.random() * 0.008
-        });
-      }
+          opacity: 0.3,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        })
+      ));
 
-      this.brainPoints = brainPoints;
+      this.jarvisArcs = [];
+      [
+        { r: 8.0, arc: Math.PI * 1.25, tube: 0.04, color: CYAN, speed: 0.25, opacity: 0.7 },
+        { r: 8.25, arc: Math.PI * 0.4, tube: 0.07, color: AMBER, speed: -0.45, opacity: 0.85 },
+        { r: 7.9, arc: Math.PI * 0.12, tube: 0.09, color: ICE, speed: 0.25, opacity: 1.0, phase: Math.PI }
+      ].forEach((def, i) => {
+        const mesh = new THREE.Mesh(
+          new THREE.TorusGeometry(def.r, def.tube, 6, 140, def.arc),
+          new THREE.MeshBasicMaterial({
+            color: def.color,
+            transparent: true,
+            opacity: def.opacity,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+          })
+        );
+        mesh.rotation.x = Math.PI / 2;
+        const pivot = new THREE.Group();
+        pivot.add(mesh);
+        dialGroup.add(pivot);
+        this.jarvisArcs.push({ pivot, speed: def.speed, phase: def.phase || i * 1.3 });
+      });
+
+      // 5. 外围漂浮尘埃
+      const dustCount = 350;
+      const dustPos = new Float32Array(dustCount * 3);
+      for (let i = 0; i < dustCount; i++) {
+        const rr = 9 + Math.random() * 4.5;
+        const th = Math.acos(2 * Math.random() - 1);
+        const ph = Math.random() * Math.PI * 2;
+        dustPos[i * 3] = rr * Math.sin(th) * Math.cos(ph);
+        dustPos[i * 3 + 1] = rr * Math.cos(th) * 0.6;
+        dustPos[i * 3 + 2] = rr * Math.sin(th) * Math.sin(ph);
+      }
+      const dustGeo = new THREE.BufferGeometry();
+      dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+      const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+        color: 0x7fdfff,
+        size: 0.1,
+        transparent: true,
+        opacity: 0.45,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        sizeAttenuation: true
+      }));
+      brainGroup.add(dust);
+      this.jarvisDust = dust;
+
+      // 交互：悬停高亮附近神经元；点击触发神经风暴扩散波
+      const pickSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(1, 24, 24),
+        new THREE.MeshBasicMaterial({ visible: false })
+      );
+      pickSphere.scale.setScalar(6.8);
+      brainNet.add(pickSphere);
+
+      const raycaster = new THREE.Raycaster();
+      const pointerNdc = new THREE.Vector2();
+      this._fluidMouseTarget = 0;
+      this._fluidPulseStart = -100;
+      const dom = this.brainRenderer.domElement;
+      const updatePointer = (e) => {
+        const rect = dom.getBoundingClientRect();
+        pointerNdc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointerNdc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointerNdc, this.brainCamera);
+        const hits = raycaster.intersectObject(pickSphere);
+        if (hits.length > 0) {
+          const local = brainNet.worldToLocal(hits[0].point.clone());
+          this.jarvisUniforms.uMousePos.value.copy(local);
+          this._fluidMouseTarget = 1.0;
+        } else {
+          this._fluidMouseTarget = 0;
+        }
+      };
+      const onPointerLeave = () => { this._fluidMouseTarget = 0; };
+      const onPointerDown = (e) => {
+        updatePointer(e);
+        if (this._fluidMouseTarget > 0 && this.brainClock) {
+          this._fluidPulseStart = this.brainClock.getElapsedTime();
+          this.jarvisUniforms.uPulsePos.value.copy(this.jarvisUniforms.uMousePos.value);
+        }
+      };
+      dom.addEventListener('pointermove', updatePointer);
+      dom.addEventListener('pointerleave', onPointerLeave);
+      dom.addEventListener('pointerdown', onPointerDown);
+      this._fluidListeners = [
+        ['pointermove', updatePointer],
+        ['pointerleave', onPointerLeave],
+        ['pointerdown', onPointerDown]
+      ];
+
       this.brainClock = new THREE.Clock();
 
       this.animateBrain();
@@ -1122,36 +1277,69 @@ export default {
       }
     },
 
+    // 在表层神经元中找一个与 origin 距离适中的节点，保证冲动沿表面跳转
+    _pickNearbyNode(origin) {
+      const pts = this._nodePoints;
+      const n = this._surfaceCount || pts.length;
+      for (let i = 0; i < 24; i++) {
+        const cand = pts[(Math.random() * n) | 0];
+        const d = cand.distanceTo(origin);
+        if (d > 0.8 && d < 3.0) return cand.clone();
+      }
+      return pts[(Math.random() * n) | 0].clone();
+    },
+
     animateBrain() {
       this.brainAnimationId = requestAnimationFrame(this.animateBrain);
 
       const elapsed = this.brainClock.getElapsedTime();
+      const u = this.jarvisUniforms;
+      u.uTime.value = elapsed;
 
-      this.brainGroup.rotation.y = elapsed * 0.15;
-      this.brainGroup.rotation.x = Math.sin(elapsed * 0.2) * 0.05;
+      // 鼠标高亮强度平滑过渡（进入/离开渐变）
+      u.uMouseStrength.value += (this._fluidMouseTarget - u.uMouseStrength.value) * 0.08;
 
-      const sizes = this.brainParticles.geometry.attributes.size.array;
-      for (let i = 0; i < sizes.length; i++) {
-        sizes[i] = 0.15 + 0.12 * Math.sin(elapsed * 2 + i * 0.1);
+      // 点击脉冲：亮波从点击处扩散并在约 2 秒内衰减
+      const pt = elapsed - this._fluidPulseStart;
+      u.uPulseTime.value = pt;
+      u.uPulse.value = Math.max(0, 1 - pt / 2.0);
+
+      // 大脑缓慢自转
+      if (this.jarvisBrain) this.jarvisBrain.rotation.y = elapsed * 0.1;
+
+      // 神经链路亮度呼吸
+      if (this.jarvisLinks) {
+        this.jarvisLinks.material.opacity = 0.16 + 0.08 * Math.sin(elapsed * 1.3);
       }
-      this.brainParticles.geometry.attributes.size.needsUpdate = true;
 
-      if (this.brainLines) {
-        this.brainLines.material.opacity = 0.4 + 0.2 * Math.sin(elapsed * 1.5);
+      // 神经冲动：光点在节点间穿行
+      if (this.jarvisPulses) {
+        this.jarvisPulses.forEach(p => {
+          p.progress += p.speed * 0.016;
+          if (p.progress >= 1) {
+            p.progress = 0;
+            p.origin = p.target;
+            p.target = this._pickNearbyNode(p.origin);
+            p.speed = 0.25 + Math.random() * 0.5;
+          }
+          p.spr.position.lerpVectors(p.origin, p.target, p.progress);
+          const k = Math.sin(p.progress * Math.PI);
+          p.spr.material.opacity = 0.9 * k;
+          p.spr.scale.setScalar(0.5 + 0.7 * k);
+        });
       }
 
-      this.brainPulses.forEach(pulse => {
-        pulse.progress += pulse.speed;
-        if (pulse.progress >= 1) {
-          pulse.progress = 0;
-          pulse.origin = pulse.target.clone();
-          pulse.target = this.brainPoints[Math.floor(Math.random() * this.brainPoints.length)].clone();
-        }
-        pulse.mesh.position.lerpVectors(pulse.origin, pulse.target, pulse.progress);
-        pulse.mesh.material.opacity = 0.8 * Math.sin(pulse.progress * Math.PI);
-        const s = 0.8 + 0.4 * Math.sin(pulse.progress * Math.PI);
-        pulse.mesh.scale.setScalar(s);
-      });
+      // 底座辉光呼吸 + HUD 罗盘旋转
+      if (this.jarvisBaseGlow) {
+        this.jarvisBaseGlow.material.opacity = 0.4 + 0.12 * Math.sin(elapsed * 1.8);
+      }
+      if (this.jarvisDial) this.jarvisDial.rotation.y = elapsed * 0.04;
+      if (this.jarvisArcs) {
+        this.jarvisArcs.forEach(a => {
+          a.pivot.rotation.y = elapsed * a.speed + a.phase;
+        });
+      }
+      if (this.jarvisDust) this.jarvisDust.rotation.y = elapsed * 0.02;
 
       if (this.brainControls) this.brainControls.update();
       this.brainRenderer.render(this.brainScene, this.brainCamera);
@@ -1174,6 +1362,12 @@ export default {
       if (this.brainControls) {
         this.brainControls.dispose();
         this.brainControls = null;
+      }
+      if (this._fluidListeners && this.brainRenderer) {
+        this._fluidListeners.forEach(([ev, fn]) => {
+          this.brainRenderer.domElement.removeEventListener(ev, fn);
+        });
+        this._fluidListeners = null;
       }
       if (this.brainRenderer) {
         this.brainRenderer.dispose();

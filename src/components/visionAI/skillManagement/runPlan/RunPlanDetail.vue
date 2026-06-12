@@ -115,11 +115,11 @@
                   </span>
                 </div>
                 <div class="region-block__preview">
-                  <img
+                  <fence-preview
                     :key="activeCam.camera_id + '-' + refreshKey"
                     :src="snapshotUrl(activeCam.camera_id)"
-                    class="region-block__img"
-                    @error="onPreviewError" />
+                    :fence="activeCam.fence">
+                  </fence-preview>
                   <div class="region-block__ph">
                     <i class="el-icon-picture-outline"></i>
                     <span>点位画面预览</span>
@@ -197,6 +197,7 @@
 <script>
 import { runPlanAPI } from '@/components/service/VisionAIService.js';
 import RunPlanCreateDrawer from './RunPlanCreateDrawer.vue';
+import FencePreview from './FencePreview.vue';
 import {
   formatWeekdays,
   formatPeriods,
@@ -208,7 +209,7 @@ import {
 
 export default {
   name: 'RunPlanDetail',
-  components: { RunPlanCreateDrawer },
+  components: { RunPlanCreateDrawer, FencePreview },
   data() {
     return {
       loading: false,
@@ -302,9 +303,6 @@ export default {
     snapshotUrl(cameraId) {
       // refreshKey 变更可强制刷新底图
       return runPlanAPI.getCameraSnapshotUrl(cameraId) + '&r=' + this.refreshKey;
-    },
-    onPreviewError(e) {
-      if (e && e.target) e.target.style.display = 'none';
     },
     openEdit() {
       if (!this.plan) return;
@@ -527,14 +525,6 @@ export default {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-}
-.region-block__img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  z-index: 1;
 }
 .region-block__ph {
   display: flex; flex-direction: column; align-items: center;

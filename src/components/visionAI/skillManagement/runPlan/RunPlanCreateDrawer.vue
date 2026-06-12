@@ -223,7 +223,11 @@
                 </el-button>
               </div>
               <div class="region-preview">
-                <img v-if="currentFenceCam" :key="currentFenceCam.camera_id" :src="snapshotUrl(currentFenceCam.camera_id)" class="region-preview__img" @error="onPreviewError" />
+                <fence-preview
+                  :key="currentFenceCam.camera_id"
+                  :src="snapshotUrl(currentFenceCam.camera_id)"
+                  :fence="currentFenceCam.fence">
+                </fence-preview>
                 <div class="region-preview__ph">
                   <i class="el-icon-picture-outline"></i>
                   <span>点位画面预览</span>
@@ -517,6 +521,7 @@
 <script>
 import { runPlanAPI, skillAPI } from '@/components/service/VisionAIService.js';
 import FenceDrawer from './FenceDrawer.vue';
+import FencePreview from './FencePreview.vue';
 import ChannelTreePanel from './ChannelTreePanel.vue';
 
 function normalizeImmediateLevels(val) {
@@ -570,7 +575,7 @@ function defaultForm() {
 
 export default {
   name: 'RunPlanCreateDrawer',
-  components: { FenceDrawer, ChannelTreePanel },
+  components: { FenceDrawer, FencePreview, ChannelTreePanel },
   props: {
     visible: { type: Boolean, default: false },
     editPlan: { type: Object, default: null },
@@ -697,7 +702,8 @@ export default {
       }
     },
     kindTagType(kind) {
-      return { visual: '', graph: 'success', llm: 'warning' }[kind] || 'info';
+      // 视觉技能用 Element 默认蓝色标签（''），注意空串是 falsy，不能用 || 兜底
+      return { visual: '', graph: 'success', llm: 'warning' }[kind] || '';
     },
     ensureRtspStreamingConfig() {
       if (!this.form.frame_extraction.rtsp_streaming) {
@@ -939,9 +945,6 @@ export default {
     snapshotUrl(cameraId) {
       return runPlanAPI.getCameraSnapshotUrl(cameraId);
     },
-    onPreviewError(e) {
-      if (e && e.target) e.target.style.display = 'none';
-    },
     openFence(cam) {
       this.currentFenceCam = cam;
       this.fenceEditing = cam.fence ? JSON.parse(JSON.stringify(cam.fence)) : null;
@@ -993,14 +996,18 @@ export default {
       return payload;
     },
     toBackendFence(fence) {
-      if (!fence || !fence.regions || !fence.regions.length) {
+      const regions = (fence && fence.regions) || [];
+      const tripwires = (fence && fence.tripwires) || [];
+      if (!regions.length && !tripwires.length) {
         return { enabled: false, points: [] };
       }
-      return {
+      const out = {
         enabled: true,
-        regions: fence.regions,
-        points: fence.regions[0].points || []
+        regions,
+        points: regions.length ? (regions[0].points || []) : []
       };
+      if (tripwires.length) out.tripwires = tripwires;
+      return out;
     },
     async submit() {
       this.ensureAlertNameDefault();
@@ -1283,7 +1290,6 @@ export default {
   flex: 1; min-height: 220px; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
 }
-.region-preview__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1; }
 .region-preview__ph { position: relative; z-index: 0; display: flex; flex-direction: column; align-items: center; color: #909399; font-size: 12px; }
 .region-preview__ph i { font-size: 36px; margin-bottom: 8px; }
 

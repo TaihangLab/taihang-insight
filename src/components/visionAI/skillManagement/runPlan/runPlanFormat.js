@@ -63,5 +63,6 @@ export function skillKindLabel(kind) {
 }
 
 export function skillKindTagType(kind) {
-  return { visual: '', graph: 'success', llm: 'warning' }[kind] || 'info';
+  // 视觉技能用 Element 默认蓝色标签（''），注意空串是 falsy，不能用 || 'info' 兜底
+  return { visual: '', graph: 'success', llm: 'warning' }[kind] || '';
 }

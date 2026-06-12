@@ -4,7 +4,6 @@ import Layout from "../layout/index.vue"
 
 // 基础/小体积组件保持同步加载
 import login from '../components/Login.vue'
-import deviceTree from '../components/common/DeviceTree.vue'
 import wasmPlayer from '../components/common/jessibuca.vue'
 import rtcPlayer from '../components/dialog/rtcPlayer.vue'
 
@@ -103,7 +102,7 @@ export default new VueRouter({
           component: camera,
         },
         {
-          path: '/deviceManage/cameraManagement',
+          path: '/deviceManage/cameraManagement/:type?',
           name: 'CameraManagementMain',
           component: CameraManagementMain,
         },
@@ -229,11 +228,6 @@ export default new VueRouter({
       path: '/login',
       name: '登录',
       component: login,
-    },
-    {
-      path: '/test',
-      name: 'deviceTree',
-      component: deviceTree,
     },
     {
       path: '/play/wasm/:url',

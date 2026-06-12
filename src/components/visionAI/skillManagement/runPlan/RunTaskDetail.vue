@@ -101,11 +101,10 @@
                   </span>
                 </div>
                 <div class="region-block__preview">
-                  <img
-                    v-if="task.camera_id"
-                    :src="snapshotUrl(task.camera_id)"
-                    class="region-block__img"
-                    @error="onPreviewError" />
+                  <fence-preview
+                    :src="task.camera_id ? snapshotUrl(task.camera_id) : ''"
+                    :fence="task.fence">
+                  </fence-preview>
                   <div class="region-block__ph">
                     <i class="el-icon-picture-outline"></i>
                     <span>点位画面预览</span>
@@ -225,9 +224,11 @@
 <script>
 import { runPlanAPI } from '@/components/service/VisionAIService.js';
 import { formatFrameExtraction, fenceDrawn } from './runPlanFormat.js';
+import FencePreview from './FencePreview.vue';
 
 export default {
   name: 'RunTaskDetail',
+  components: { FencePreview },
   data() {
     return {
       loading: false,
@@ -582,9 +583,6 @@ export default {
     snapshotUrl(cameraId) {
       return runPlanAPI.getCameraSnapshotUrl(cameraId);
     },
-    onPreviewError(e) {
-      if (e && e.target) e.target.style.display = 'none';
-    },
     async deleteTask() {
       try {
         await this.$confirm(`确认删除任务「${this.taskId}」？`, '删除确认', { type: 'warning' });
@@ -754,14 +752,6 @@ export default {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-}
-.region-block__img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  z-index: 1;
 }
 .region-block__ph {
   display: flex; flex-direction: column; align-items: center;
