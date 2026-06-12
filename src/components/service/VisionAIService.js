@@ -4371,6 +4371,22 @@ export const runPlanAPI = {
   listRunTasks(params) {
     return visionAIAxios.get('/api/v1/skill-run-plans/run-tasks', { params });
   },
+  // 运行任务详情
+  getRunTask(taskId) {
+    return visionAIAxios.get(`/api/v1/skill-run-plans/run-tasks/${taskId}`);
+  },
+  // 运行任务日志（状态时间轴 + 异常记录）
+  getRunTaskLogs(taskId) {
+    return visionAIAxios.get(`/api/v1/skill-run-plans/run-tasks/${taskId}/logs`);
+  },
+  // 删除单条运行任务
+  deleteRunTask(taskId) {
+    return visionAIAxios.delete(`/api/v1/skill-run-plans/run-tasks/${taskId}`);
+  },
+  // 批量删除运行任务
+  batchDeleteRunTasks(taskIds) {
+    return visionAIAxios.post('/api/v1/skill-run-plans/run-tasks/batch-delete', { task_ids: taskIds });
+  },
   // 点位组织树（供"点位选择"）
   getOrganizations() {
     return visionAIAxios.get('/api/v1/skill-run-plans/organizations');

@@ -534,7 +534,7 @@ function defaultAlertConfig() {
     merge_immediate_levels: [],
     merge_quick_send_threshold: 10,
     merge_level_delay_factor: 0.5,
-    video_generate_time: 'before',
+    video_generate_time: 'after',
     video_duration_limit_minutes: 1,
     video_before_seconds: 2,
     video_after_seconds: 2

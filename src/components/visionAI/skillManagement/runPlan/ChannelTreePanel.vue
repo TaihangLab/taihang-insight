@@ -122,7 +122,8 @@ export default {
   },
   methods: {
     onTreeClick(data) {
-      this.$emit('node-click', data);
+      // 第二个参数为当前树类型，供"点位聚合"对非叶子节点做下级点位筛选
+      this.$emit('node-click', data, this.showRegion ? 'region' : 'group');
       const channel = resolveTreeChannel(data);
       if (channel) {
         this.activeChannel = channel;

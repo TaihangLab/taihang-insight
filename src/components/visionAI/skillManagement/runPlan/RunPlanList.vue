@@ -101,10 +101,10 @@
               <el-button size="small" :disabled="!multipleSelection.length" @click="batchEnable(true)">批量启用</el-button>
               <el-button size="small" :disabled="!multipleSelection.length" @click="batchDelete">批量删除</el-button>
             </template>
-            <el-button type="primary" size="small" icon="el-icon-plus" @click="openCreate">创建运行计划</el-button>
+            <el-button type="primary" size="small" icon="el-icon-plus" @click="openCreate">批量创建运行计划</el-button>
           </template>
           <template v-else>
-            <el-button v-if="filters.plan_id" size="small" @click="clearPlanFilter">查看全部任务</el-button>
+            <el-button size="small" :disabled="!taskSelection.length" @click="batchDeleteTasks">批量删除</el-button>
           </template>
         </div>
       </div>
@@ -113,12 +113,13 @@
       <transition name="slide-fade">
         <div v-show="showFilter" class="filter-panel">
           <el-form :inline="true" size="small" class="filter-form" @submit.native.prevent="handleSearch">
-            <template v-if="activeTab === 'plan'">
+            <!-- 计划 - 平铺视图 -->
+            <template v-if="activeTab === 'plan' && planViewMode === 'detail'">
               <el-form-item label="计划ID">
-                <el-input v-model="filters.keyword" placeholder="计划ID / 预警名称 / 点位" clearable style="width: 200px;" @clear="handleSearch"></el-input>
+                <el-input v-model="filters.plan_id" placeholder="请输入计划ID" clearable style="width: 180px;" @clear="handleSearch"></el-input>
               </el-form-item>
-              <el-form-item label="启停状态">
-                <el-select v-model="filters.enabled" clearable placeholder="全部" style="width: 120px;" @change="handleSearch">
+              <el-form-item label="计划启停">
+                <el-select v-model="filters.enabled" clearable placeholder="全部启停状态" style="width: 140px;" @change="handleSearch">
                   <el-option label="已启用" :value="true"></el-option>
                   <el-option label="已停用" :value="false"></el-option>
                 </el-select>
@@ -128,8 +129,8 @@
                   v-model="filters.skill_ref"
                   clearable
                   filterable
-                  placeholder="全部技能"
-                  style="width: 240px;"
+                  placeholder="全部AI技能"
+                  style="width: 220px;"
                   @change="handleSkillFilterChange">
                   <el-option
                     v-for="s in skillFilterOptions"
@@ -143,19 +144,109 @@
                   </el-option>
                 </el-select>
               </el-form-item>
+              <el-form-item label="更新时间">
+                <el-date-picker
+                  v-model="filters.updated_range"
+                  type="daterange"
+                  value-format="yyyy-MM-dd"
+                  range-separator="—"
+                  start-placeholder="开始时间"
+                  end-placeholder="结束时间"
+                  style="width: 250px;"
+                  @change="handleSearch">
+                </el-date-picker>
+              </el-form-item>
+              <el-form-item label="点位名称">
+                <el-input v-model="filters.camera_name" placeholder="请输入点位名称" clearable style="width: 160px;" @clear="handleSearch"></el-input>
+              </el-form-item>
             </template>
+
+            <!-- 计划 - 技能聚合 -->
+            <template v-else-if="activeTab === 'plan' && planViewMode === 'skill'">
+              <el-form-item label="AI技能/ID">
+                <el-input v-model="filters.keyword" placeholder="请输入AI技能名称或ID搜索" clearable style="width: 240px;" @clear="handleSearch"></el-input>
+              </el-form-item>
+              <el-form-item label="计划启停">
+                <el-select v-model="filters.enabled" clearable placeholder="全部启停状态" style="width: 140px;" @change="handleSearch">
+                  <el-option label="已启用" :value="true"></el-option>
+                  <el-option label="已停用" :value="false"></el-option>
+                </el-select>
+              </el-form-item>
+            </template>
+
+            <!-- 计划 - 点位聚合 -->
+            <template v-else-if="activeTab === 'plan' && planViewMode === 'point'">
+              <el-form-item label="点位名称">
+                <el-input v-model="filters.camera_name" placeholder="请输入点位名称" clearable style="width: 180px;" @clear="handleSearch"></el-input>
+              </el-form-item>
+              <el-form-item label="关联技能">
+                <el-select
+                  v-model="filters.skill_ref"
+                  clearable
+                  filterable
+                  placeholder="全部关联技能"
+                  style="width: 220px;"
+                  @change="handleSkillFilterChange">
+                  <el-option
+                    v-for="s in skillFilterOptions"
+                    :key="s.ref"
+                    :label="s.label"
+                    :value="s.ref">
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="计划启停">
+                <el-select v-model="filters.enabled" clearable placeholder="全部启停状态" style="width: 140px;" @change="handleSearch">
+                  <el-option label="已启用" :value="true"></el-option>
+                  <el-option label="已停用" :value="false"></el-option>
+                </el-select>
+              </el-form-item>
+            </template>
+
+            <!-- 任务 -->
             <template v-else>
               <el-form-item label="任务ID">
-                <el-input v-model="filters.keyword" placeholder="任务ID / 任务名称" clearable style="width: 180px;" @clear="handleSearch"></el-input>
+                <el-input v-model="filters.task_id" placeholder="请输入任务ID" clearable style="width: 160px;" @clear="handleSearch"></el-input>
               </el-form-item>
               <el-form-item label="任务状态">
-                <el-select v-model="filters.task_status" clearable placeholder="全部" style="width: 120px;" @change="handleSearch">
+                <el-select v-model="filters.task_status" clearable placeholder="全部任务状态" style="width: 140px;" @change="handleSearch">
                   <el-option label="运行中" :value="true"></el-option>
                   <el-option label="已停止" :value="false"></el-option>
                 </el-select>
               </el-form-item>
+              <el-form-item label="AI技能">
+                <el-select
+                  v-model="filters.task_skill_ref"
+                  clearable
+                  filterable
+                  placeholder="全部AI技能"
+                  style="width: 200px;"
+                  @change="handleTaskSkillFilterChange">
+                  <el-option
+                    v-for="s in skillFilterOptions"
+                    :key="s.ref"
+                    :label="s.label"
+                    :value="s.ref">
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="点位名称">
+                <el-input v-model="filters.task_camera_name" placeholder="全部点位" clearable style="width: 150px;" @clear="handleSearch"></el-input>
+              </el-form-item>
               <el-form-item label="所属计划">
-                <el-input v-model="filters.plan_id" placeholder="计划ID" clearable style="width: 160px;" @clear="handleSearch"></el-input>
+                <el-input v-model="filters.task_plan_id" placeholder="请输入所属计划ID" clearable style="width: 160px;" @clear="handleSearch"></el-input>
+              </el-form-item>
+              <el-form-item label="开始时间">
+                <el-date-picker
+                  v-model="filters.start_range"
+                  type="daterange"
+                  value-format="yyyy-MM-dd"
+                  range-separator="—"
+                  start-placeholder="开始时间"
+                  end-placeholder="结束时间"
+                  style="width: 250px;"
+                  @change="handleSearch">
+                </el-date-picker>
               </el-form-item>
             </template>
             <el-form-item class="filter-actions">
@@ -171,16 +262,19 @@
         <!-- 点位聚合：左侧通道树 -->
         <div v-if="planViewMode === 'point'" class="point-layout">
           <div class="channel-tree-sidebar">
-            <channel-tree-panel @channel-click="onPointTreeClick"></channel-tree-panel>
-            <div v-if="selectedChannelId" class="channel-filter-bar">
+            <div class="tree-sidebar-head">
+              <span class="tree-sidebar-head__title">组织列表</span>
+              <el-checkbox v-model="includeSub" size="mini" @change="onIncludeSubChange">包含下级</el-checkbox>
+            </div>
+            <channel-tree-panel @node-click="onPointTreeNodeClick"></channel-tree-panel>
+            <div v-if="pointFilter" class="channel-filter-bar" v-loading="pointFilterLoading">
               <div class="channel-filter-bar__info">
-                <span class="channel-filter-bar__name">{{ selectedChannelName }}</span>
+                <span class="channel-filter-bar__name">{{ pointFilter.label }}</span>
                 <span class="channel-filter-bar__status">
-                  <span class="status-dot" :class="selectedChannelOnline ? 'is-online' : 'is-offline'"></span>
-                  {{ selectedChannelOnline ? '在线' : '离线' }}
+                  覆盖 {{ pointFilter.ids.length }} 个点位
                 </span>
               </div>
-              <el-button type="text" size="mini" @click="clearChannelFilter">显示全部</el-button>
+              <el-button type="text" size="mini" @click="clearPointFilter">显示全部</el-button>
             </div>
           </div>
           <div class="point-table-wrap">
@@ -205,17 +299,23 @@
                 </template>
                 <template slot-scope="{ row }">{{ row.enabled_count }}</template>
               </el-table-column>
-              <el-table-column label="运行中任务" width="110" align="center">
+              <el-table-column label="运行中任务数" width="120" align="center">
                 <template slot="header">
-                  <span>运行中任务</span>
+                  <span>运行中任务数</span>
                   <el-tooltip content="当前正在运行的子任务数" placement="top"><i class="el-icon-info col-tip"></i></el-tooltip>
                 </template>
                 <template slot-scope="{ row }">{{ row.running_count }}</template>
               </el-table-column>
-              <el-table-column label="操作" width="200" align="center" fixed="right">
+              <el-table-column label="计划启停" width="100" align="center">
+                <template slot-scope="{ row }">
+                  <el-switch :value="row.enabled_count > 0" @change="(v) => toggleAggEnabled(row, v)"></el-switch>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="220" align="center" fixed="right">
                 <template slot-scope="{ row }">
                   <el-button type="text" size="mini" @click="viewPlansByPoint(row)">查看计划</el-button>
                   <el-button type="text" size="mini" @click="viewTasksByPoint(row)">查看任务</el-button>
+                  <el-button type="text" size="mini" class="danger-text" @click="deleteAggPlans(row, '点位')">删除</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -229,7 +329,7 @@
           stripe
           style="width: 100%"
           empty-text="暂无运行计划，请先创建">
-          <el-table-column label="技能ID" min-width="140" show-overflow-tooltip>
+          <el-table-column label="技能ID" min-width="160" show-overflow-tooltip>
             <template slot-scope="{ row }">
               <span class="mono-text">{{ row.skill_key }}</span>
             </template>
@@ -251,15 +351,29 @@
             <template slot-scope="{ row }">{{ row.plan_count }}</template>
           </el-table-column>
           <el-table-column label="启用计划数" width="110" align="center">
+            <template slot="header">
+              <span>启用计划数</span>
+              <el-tooltip content="当前处于启用状态的计划数" placement="top"><i class="el-icon-info col-tip"></i></el-tooltip>
+            </template>
             <template slot-scope="{ row }">{{ row.enabled_count }}</template>
           </el-table-column>
-          <el-table-column label="运行中任务" width="110" align="center">
+          <el-table-column label="运行中任务数" width="120" align="center">
+            <template slot="header">
+              <span>运行中任务数</span>
+              <el-tooltip content="当前正在运行的子任务数" placement="top"><i class="el-icon-info col-tip"></i></el-tooltip>
+            </template>
             <template slot-scope="{ row }">{{ row.running_count }}</template>
           </el-table-column>
-          <el-table-column label="操作" width="200" align="center" fixed="right">
+          <el-table-column label="计划启停" width="100" align="center">
+            <template slot-scope="{ row }">
+              <el-switch :value="row.enabled_count > 0" @change="(v) => toggleAggEnabled(row, v)"></el-switch>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="220" align="center" fixed="right">
             <template slot-scope="{ row }">
               <el-button type="text" size="mini" @click="viewPlansBySkill(row)">查看计划</el-button>
               <el-button type="text" size="mini" @click="viewTasksBySkill(row)">查看任务</el-button>
+              <el-button type="text" size="mini" class="danger-text" @click="deleteAggPlans(row, '技能')">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -273,7 +387,7 @@
           empty-text="暂无运行计划，请先创建"
           @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="48" align="center"></el-table-column>
-          <el-table-column label="计划ID" min-width="130">
+          <el-table-column label="计划ID" min-width="140">
             <template slot-scope="{ row }">
               <el-button type="text" size="mini" class="link-btn" @click="viewPlan(row)">{{ row.plan_id }}</el-button>
             </template>
@@ -287,35 +401,43 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="alert_name" label="预警名称" min-width="140" show-overflow-tooltip></el-table-column>
-          <el-table-column label="预警等级" width="90" align="center">
-            <template slot-scope="{ row }">
-              <el-tag v-if="row.alert_level === 3" type="danger" size="mini">高</el-tag>
-              <el-tag v-else-if="row.alert_level === 2" type="warning" size="mini">中</el-tag>
-              <el-tag v-else-if="row.alert_level === 1" type="info" size="mini">低</el-tag>
-              <span v-else>-</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="关联点位" min-width="180" show-overflow-tooltip>
+          <el-table-column label="点位名称" min-width="180" show-overflow-tooltip>
             <template slot-scope="{ row }">
               <span>{{ formatCameras(row) }}</span>
               <el-tag v-if="row.point_count > 1" size="mini" type="info" effect="plain" class="count-tag">{{ row.point_count }}个</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="运行周期" width="160" show-overflow-tooltip>
-            <template slot-scope="{ row }">{{ formatRunCycle(row.run_cycle) }}</template>
+          <el-table-column label="运行中任务数" width="125" align="center">
+            <template slot="header">
+              <span>运行中任务数</span>
+              <el-tooltip content="该计划下正在运行的任务数 / 任务总数；计划已启用但无运行中任务时通常是取流/启动失败，可在任务日志中查看原因" placement="top">
+                <i class="el-icon-info col-tip"></i>
+              </el-tooltip>
+            </template>
+            <template slot-scope="{ row }">
+              <span :class="{ 'warn-text': row.enabled && countRunningTasks(row.plan_id) === 0 }">
+                {{ countRunningTasks(row.plan_id) }}
+              </span>
+              <span class="dim-text"> / {{ row.task_count != null ? row.task_count : row.point_count }}</span>
+              <el-tooltip
+                v-if="row.enabled && countRunningTasks(row.plan_id) === 0"
+                content="计划已启用但没有运行中的任务，可能启动失败或视频流异常"
+                placement="top">
+                <i class="el-icon-warning-outline warn-text"></i>
+              </el-tooltip>
+            </template>
           </el-table-column>
-          <el-table-column label="启停" width="80" align="center">
+          <el-table-column label="计划启停" width="100" align="center">
             <template slot-scope="{ row }">
               <el-switch v-model="row.enabled" @change="(v) => toggleEnabled(row, v)"></el-switch>
             </template>
           </el-table-column>
           <el-table-column prop="updated_at" label="更新时间" width="170" align="center"></el-table-column>
-          <el-table-column label="操作" width="220" align="center" fixed="right">
+          <el-table-column label="操作" width="230" align="center" fixed="right">
             <template slot-scope="{ row }">
-              <el-button type="text" size="mini" @click="viewPlan(row)">详情</el-button>
+              <el-button type="text" size="mini" @click="viewPlan(row)">查看</el-button>
               <el-button type="text" size="mini" @click="editPlan(row)">编辑</el-button>
-              <el-button type="text" size="mini" @click="viewTasks(row)">任务</el-button>
+              <el-button type="text" size="mini" @click="viewTasks(row)">查看任务</el-button>
               <el-button type="text" size="mini" class="danger-text" @click="deletePlan(row)">删除</el-button>
             </template>
           </el-table-column>
@@ -324,32 +446,53 @@
 
       <!-- 任务列表 -->
       <div v-else v-loading="loading" class="table-area">
-        <el-table :data="taskList" stripe style="width: 100%" empty-text="暂无运行任务">
-          <el-table-column label="任务ID" min-width="120">
+        <el-table
+          :data="taskList"
+          stripe
+          style="width: 100%"
+          empty-text="暂无运行任务"
+          @selection-change="handleTaskSelectionChange">
+          <el-table-column type="selection" width="48" align="center"></el-table-column>
+          <el-table-column label="任务ID" min-width="130">
             <template slot-scope="{ row }">
-              <span class="mono-text link-btn">{{ row.task_id }}</span>
+              <el-button type="text" size="mini" class="link-btn" @click="viewTaskDetail(row)">{{ row.task_id }}</el-button>
             </template>
           </el-table-column>
-          <el-table-column label="所属计划" min-width="130">
+          <el-table-column label="AI技能" min-width="190" show-overflow-tooltip>
             <template slot-scope="{ row }">
-              <el-button type="text" size="mini" class="link-btn" @click="filterByPlan(row.plan_id)">{{ row.plan_id }}</el-button>
+              <div class="skill-cell">
+                <el-tag v-if="row.skill_kind === 'llm'" size="mini" type="warning" effect="plain">大模型</el-tag>
+                <el-tag v-else-if="row.skill_kind === 'graph'" size="mini" type="success" effect="plain">编排</el-tag>
+                <span class="skill-name">{{ row.skill_name || '-' }}</span>
+              </div>
             </template>
           </el-table-column>
-          <el-table-column prop="skill_name" label="AI技能" min-width="180" show-overflow-tooltip></el-table-column>
-          <el-table-column prop="name" label="任务名称" min-width="200" show-overflow-tooltip></el-table-column>
-          <el-table-column label="技能类型" width="100" align="center">
-            <template slot-scope="{ row }">
-              <el-tag v-if="row.skill_kind === 'llm'" size="mini" type="warning" effect="plain">大模型</el-tag>
-              <el-tag v-else size="mini" effect="plain">视觉</el-tag>
-            </template>
+          <el-table-column prop="camera_name" label="点位名称" min-width="150" show-overflow-tooltip>
+            <template slot-scope="{ row }">{{ row.camera_name || '-' }}</template>
           </el-table-column>
-          <el-table-column label="运行状态" width="110" align="center">
+          <el-table-column label="任务状态" width="110" align="center">
             <template slot-scope="{ row }">
               <span class="status-dot" :class="row.status ? 'is-running' : 'is-stopped'"></span>
               {{ row.status ? '运行中' : '已停止' }}
             </template>
           </el-table-column>
-          <el-table-column prop="updated_at" label="更新时间" width="170" align="center"></el-table-column>
+          <el-table-column label="所属计划" min-width="140">
+            <template slot-scope="{ row }">
+              <el-button type="text" size="mini" class="link-btn" @click="goPlanDetail(row.plan_id)">{{ row.plan_id }}</el-button>
+            </template>
+          </el-table-column>
+          <el-table-column prop="start_time" label="开始时间" width="170" align="center">
+            <template slot-scope="{ row }">{{ row.start_time || '-' }}</template>
+          </el-table-column>
+          <el-table-column label="结束时间" width="170" align="center">
+            <template slot-scope="{ row }">{{ row.end_time || '-' }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="130" align="center" fixed="right">
+            <template slot-scope="{ row }">
+              <el-button type="text" size="mini" @click="viewTaskDetail(row)">查看</el-button>
+              <el-button type="text" size="mini" class="danger-text" @click="deleteTask(row)">删除</el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
 
@@ -377,13 +520,37 @@
 </template>
 
 <script>
-import { runPlanAPI, skillAPI } from '@/components/service/VisionAIService.js';
+import { runPlanAPI, skillAPI, realtimeMonitorAPI } from '@/components/service/VisionAIService.js';
 import RunPlanCreateDrawer from './RunPlanCreateDrawer.vue';
-import ChannelTreePanel from './ChannelTreePanel.vue';
-
-const WEEKDAY_LABELS = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+import ChannelTreePanel, { resolveTreeChannel } from './ChannelTreePanel.vue';
+import { skillKindTagType } from './runPlanFormat.js';
 
 const GUIDE_STORAGE_KEY = 'run_plan_guide_hidden';
+
+function defaultFilters() {
+  return {
+    // 计划（平铺）
+    plan_id: '',
+    enabled: '',
+    skill_ref: '',
+    skill_class_id: '',
+    llm_skill_id: '',
+    skill_kind: '',
+    camera_name: '',
+    updated_range: [],
+    // 技能聚合
+    keyword: '',
+    // 任务
+    task_id: '',
+    task_status: '',
+    task_skill_ref: '',
+    task_skill_class_id: '',
+    task_llm_skill_id: '',
+    task_camera_name: '',
+    task_plan_id: '',
+    start_range: []
+  };
+}
 
 export default {
   name: 'RunPlanList',
@@ -396,26 +563,20 @@ export default {
       guideNeverShow: false,
       showFilter: true,
       loading: false,
-      filters: {
-        keyword: '',
-        enabled: '',
-        skill_class_id: '',
-        skill_ref: '',
-        skill_kind: '',
-        llm_skill_id: '',
-        plan_id: '',
-        task_status: ''
-      },
+      filters: defaultFilters(),
       skillFilterOptions: [],
       organizations: [],
-      selectedChannelId: '',
-      selectedChannelName: '',
-      selectedChannelOnline: null,
+      // 点位聚合：树筛选（单点位或某节点下级点位集合）
+      pointFilter: null,
+      pointFilterLoading: false,
+      includeSub: true,
+      lastTreeNode: null,
       planList: [],
       allPlans: [],
       taskList: [],
       allTasks: [],
       multipleSelection: [],
+      taskSelection: [],
       page: 1,
       limit: 10,
       total: 0,
@@ -463,9 +624,6 @@ export default {
           (r.skill_key || '').toLowerCase().includes(kw)
         );
       }
-      if (this.filters.enabled !== '' && this.filters.enabled !== null) {
-        list = list.filter(r => this.filters.enabled ? r.enabled_count > 0 : r.enabled_count < r.plan_count);
-      }
       return list;
     },
     pointAggList() {
@@ -496,16 +654,15 @@ export default {
         ...r,
         skill_names: [...r.skill_names].join('、')
       }));
-      if (this.selectedChannelId) {
-        list = list.filter(r => String(r.camera_id) === String(this.selectedChannelId));
+      if (this.pointFilter && this.pointFilter.ids.length) {
+        const idSet = new Set(this.pointFilter.ids.map(String));
+        list = list.filter(r => idSet.has(String(r.camera_id)));
+      } else if (this.pointFilter) {
+        list = [];
       }
-      const kw = (this.filters.keyword || '').trim();
+      const kw = (this.filters.camera_name || '').trim();
       if (kw) {
-        const lower = kw.toLowerCase();
-        list = list.filter(r =>
-          (r.camera_name || '').includes(kw) ||
-          (r.skill_names || '').toLowerCase().includes(lower)
-        );
+        list = list.filter(r => (r.camera_name || '').includes(kw));
       }
       return list;
     },
@@ -539,11 +696,13 @@ export default {
       this.showGuide = false;
       this.guideNeverShow = true;
     }
+    this.applyRouteQuery();
     this.loadSkillFilterOptions();
     this.loadOrganizations();
     this.loadData();
   },
   methods: {
+    skillKindTagType,
     padStepNum(i) {
       return String(i + 1).padStart(2, '0');
     },
@@ -568,6 +727,14 @@ export default {
         localStorage.removeItem(GUIDE_STORAGE_KEY);
       }
     },
+    /** 从详情页跳回时支持 ?tab=task&plan_id=xxx 直达任务列表 */
+    applyRouteQuery() {
+      const q = this.$route.query || {};
+      if (q.tab === 'task') {
+        this.activeTab = 'task';
+        if (q.plan_id) this.filters.task_plan_id = q.plan_id;
+      }
+    },
     async loadSkillFilterOptions() {
       try {
         this.skillFilterOptions = await skillAPI.fetchRunPlanSkillOptions();
@@ -575,9 +742,6 @@ export default {
         console.warn('加载技能选项失败', e);
         this.skillFilterOptions = [];
       }
-    },
-    skillKindTagType(kind) {
-      return { visual: '', graph: 'success', llm: 'warning' }[kind] || 'info';
     },
     applyPlanSkillFilters(list) {
       let result = list || [];
@@ -591,36 +755,35 @@ export default {
       }
       return result;
     },
-    needsClientPlanFilter() {
-      const kw = (this.filters.keyword || '').trim();
-      return !!(kw || this.filters.llm_skill_id);
-    },
-    filterPlanListByKeyword(list) {
-      const kw = (this.filters.keyword || '').trim();
-      if (!kw) return list;
-      const lower = kw.toLowerCase();
-      return list.filter(row => {
-        const matchPlan = (row.plan_id || '').toLowerCase().includes(lower);
-        const matchAlert = (row.alert_name || '').toLowerCase().includes(lower);
-        const matchCam = (row.camera_names || []).some(n => (n || '').includes(kw));
-        return matchPlan || matchAlert || matchCam;
-      });
-    },
     handleSkillFilterChange(ref) {
       this.filters.skill_class_id = '';
       this.filters.llm_skill_id = '';
-      if (!ref) {
-        this.handleSearch();
-        return;
-      }
-      const s = this.skillFilterOptions.find(o => o.ref === ref);
-      if (s) {
-        if (s.kind === 'llm') {
-          this.filters.llm_skill_id = s.llm_skill_id;
-        } else {
-          this.filters.skill_class_id = s.skill_class_id;
+      this.filters.skill_kind = '';
+      if (ref) {
+        const s = this.skillFilterOptions.find(o => o.ref === ref);
+        if (s) {
+          if (s.kind === 'llm') {
+            this.filters.llm_skill_id = s.llm_skill_id;
+          } else {
+            this.filters.skill_class_id = s.skill_class_id;
+          }
+          this.filters.skill_kind = s.kind;
         }
-        this.filters.skill_kind = s.kind;
+      }
+      this.handleSearch();
+    },
+    handleTaskSkillFilterChange(ref) {
+      this.filters.task_skill_class_id = '';
+      this.filters.task_llm_skill_id = '';
+      if (ref) {
+        const s = this.skillFilterOptions.find(o => o.ref === ref);
+        if (s) {
+          if (s.kind === 'llm') {
+            this.filters.task_llm_skill_id = s.llm_skill_id;
+          } else {
+            this.filters.task_skill_class_id = s.skill_class_id;
+          }
+        }
       }
       this.handleSearch();
     },
@@ -636,26 +799,42 @@ export default {
     countRunningTasks(planId) {
       return this.allTasks.filter(t => t.plan_id === planId && t.status).length;
     },
-    buildParams() {
+    buildPlanParams() {
       const p = { page: this.page, limit: this.limit };
+      if (this.filters.plan_id) p.plan_id = this.filters.plan_id.trim();
       if (this.filters.enabled !== '' && this.filters.enabled !== null) {
         p.enabled = this.filters.enabled;
       }
-      if (this.activeTab === 'plan') {
-        if (this.filters.skill_class_id && !this.needsClientPlanFilter()) {
-          p.skill_class_id = this.filters.skill_class_id;
-        }
-        const kw = (this.filters.keyword || '').trim();
-        if (kw) {
-          p.plan_id = kw;
-          p.camera_name = kw;
-        }
-      } else {
-        const planId = this.filters.plan_id || (this.filters.keyword || '').trim();
-        if (planId) p.plan_id = planId;
-        if (this.filters.task_status !== '' && this.filters.task_status !== null) {
-          p.enabled = this.filters.task_status;
-        }
+      if (this.filters.llm_skill_id) {
+        p.llm_skill_id = this.filters.llm_skill_id;
+      } else if (this.filters.skill_class_id) {
+        p.skill_class_id = this.filters.skill_class_id;
+      }
+      if (this.filters.camera_name) p.camera_name = this.filters.camera_name.trim();
+      const r = this.filters.updated_range || [];
+      if (r.length === 2 && r[0] && r[1]) {
+        p.updated_start = `${r[0]} 00:00:00`;
+        p.updated_end = `${r[1]} 23:59:59`;
+      }
+      return p;
+    },
+    buildTaskParams() {
+      const p = { page: this.page, limit: this.limit };
+      if (this.filters.task_id) p.task_id = this.filters.task_id.trim();
+      if (this.filters.task_status !== '' && this.filters.task_status !== null) {
+        p.enabled = this.filters.task_status;
+      }
+      if (this.filters.task_llm_skill_id) {
+        p.llm_skill_id = this.filters.task_llm_skill_id;
+      } else if (this.filters.task_skill_class_id) {
+        p.skill_class_id = this.filters.task_skill_class_id;
+      }
+      if (this.filters.task_camera_name) p.camera_name = this.filters.task_camera_name.trim();
+      if (this.filters.task_plan_id) p.plan_id = this.filters.task_plan_id.trim();
+      const r = this.filters.start_range || [];
+      if (r.length === 2 && r[0] && r[1]) {
+        p.start_time = `${r[0]} 00:00:00`;
+        p.end_time = `${r[1]} 23:59:59`;
       }
       return p;
     },
@@ -674,7 +853,6 @@ export default {
         if (this.filters.enabled !== '' && this.filters.enabled !== null) {
           p.enabled = this.filters.enabled;
         }
-        if (this.filters.skill_class_id) p.skill_class_id = this.filters.skill_class_id;
         const res = await runPlanAPI.listPlans(p);
         const d = res.data || {};
         this.allPlans = d.data || [];
@@ -687,37 +865,15 @@ export default {
       try {
         if (this.activeTab === 'plan') {
           await Promise.all([this.loadAllTasks(), this.loadAllPlans()]);
-          if (this.needsClientPlanFilter()) {
-            let list = this.applyPlanSkillFilters(this.allPlans);
-            list = this.filterPlanListByKeyword(list);
-            this.total = list.length;
-            const start = (this.page - 1) * this.limit;
-            this.planList = list.slice(start, start + this.limit);
-          } else {
-            const res = await runPlanAPI.listPlans(this.buildParams());
-            const d = res.data || {};
-            this.planList = d.data || [];
-            this.total = d.total || 0;
-          }
-        } else {
-          const res = await runPlanAPI.listRunTasks(this.buildParams());
+          const res = await runPlanAPI.listPlans(this.buildPlanParams());
           const d = res.data || {};
-          let list = d.data || [];
-          const kw = (this.filters.keyword || '').trim();
-          if (kw && !this.filters.plan_id) {
-            const lower = kw.toLowerCase();
-            list = list.filter(row =>
-              (row.plan_id || '').toLowerCase().includes(lower) ||
-              (row.name || '').toLowerCase().includes(lower) ||
-              (row.task_id || '').toLowerCase().includes(lower)
-            );
-          }
-          if (this.filters.task_status !== '' && this.filters.task_status !== null) {
-            list = list.filter(row => row.status === this.filters.task_status);
-          }
-          this.taskList = list;
-          this.total = (kw && !this.filters.plan_id) || (this.filters.task_status !== '' && this.filters.task_status !== null)
-            ? list.length : (d.total || 0);
+          this.planList = d.data || [];
+          this.total = d.total || 0;
+        } else {
+          const res = await runPlanAPI.listRunTasks(this.buildTaskParams());
+          const d = res.data || {};
+          this.taskList = d.data || [];
+          this.total = d.total || 0;
         }
       } catch (e) {
         this.$message.error('加载数据失败');
@@ -728,29 +884,82 @@ export default {
     onTabChange() {
       this.page = 1;
       this.multipleSelection = [];
+      this.taskSelection = [];
       this.loadData();
     },
     onViewModeChange() {
       this.page = 1;
       this.multipleSelection = [];
       if (this.planViewMode !== 'point') {
-        this.clearChannelFilter();
+        this.clearPointFilter();
       }
     },
-    onPointTreeClick(channel) {
-      if (String(this.selectedChannelId) === String(channel.camera_id)) {
-        this.clearChannelFilter();
-      } else {
-        this.selectedChannelId = channel.camera_id;
-        this.selectedChannelName = channel.camera_name;
-        this.selectedChannelOnline = !!channel.online;
-      }
+    /** 点位聚合：树节点点击（叶子=单点位；非叶子=该节点下点位集合） */
+    async onPointTreeNodeClick(data, mode) {
+      const channel = resolveTreeChannel(data);
       this.page = 1;
+      if (channel) {
+        if (this.pointFilter && this.pointFilter.single &&
+            String(this.pointFilter.ids[0]) === String(channel.camera_id)) {
+          this.clearPointFilter();
+          return;
+        }
+        this.pointFilter = {
+          label: channel.camera_name,
+          ids: [channel.camera_id],
+          single: true
+        };
+        return;
+      }
+      // 非叶子节点：收集其下（可选含下级）的点位
+      this.lastTreeNode = { data, mode };
+      this.pointFilterLoading = true;
+      this.pointFilter = { label: data.name || data.label || '所选节点', ids: [], single: false };
+      try {
+        const ids = [];
+        await this.collectChannelsUnder(data.id, mode, this.includeSub, 0, ids);
+        this.pointFilter = {
+          label: data.name || data.label || '所选节点',
+          ids,
+          single: false
+        };
+      } catch (e) {
+        console.warn('收集节点下点位失败', e);
+        this.$message.warning('获取该节点下的点位失败');
+        this.pointFilter = null;
+      } finally {
+        this.pointFilterLoading = false;
+      }
     },
-    clearChannelFilter() {
-      this.selectedChannelId = '';
-      this.selectedChannelName = '';
-      this.selectedChannelOnline = null;
+    async collectChannelsUnder(parentId, mode, recursive, depth, acc) {
+      if (depth > 6) return;
+      // 与 RegionTree/GroupTree 的懒加载一致：根节点不传 parent
+      const params = { hasChannel: true };
+      if (parentId !== undefined && parentId !== null && parentId !== '') {
+        params.parent = parentId;
+      }
+      const res = mode === 'group'
+        ? await realtimeMonitorAPI.getGroupTree(params)
+        : await realtimeMonitorAPI.getRegionTree(params);
+      const list = (res.data && res.data.data) || [];
+      for (const item of list) {
+        const ch = resolveTreeChannel(item);
+        if (ch) {
+          acc.push(ch.camera_id);
+        } else if (recursive) {
+          await this.collectChannelsUnder(item.id, mode, recursive, depth + 1, acc);
+        }
+      }
+    },
+    onIncludeSubChange() {
+      // 重新按新口径计算当前所选节点下的点位
+      if (this.lastTreeNode && this.pointFilter && !this.pointFilter.single) {
+        this.onPointTreeNodeClick(this.lastTreeNode.data, this.lastTreeNode.mode);
+      }
+    },
+    clearPointFilter() {
+      this.pointFilter = null;
+      this.lastTreeNode = null;
       this.page = 1;
     },
     handleSearch() {
@@ -758,10 +967,8 @@ export default {
       this.loadData();
     },
     resetFilters() {
-      this.filters = {
-        keyword: '', enabled: '', skill_class_id: '', skill_ref: '', skill_kind: '',
-        llm_skill_id: '', plan_id: '', task_status: ''
-      };
+      this.filters = defaultFilters();
+      this.clearPointFilter();
       this.page = 1;
       this.loadData();
     },
@@ -772,20 +979,31 @@ export default {
     handleSelectionChange(val) {
       this.multipleSelection = val;
     },
+    handleTaskSelectionChange(val) {
+      this.taskSelection = val;
+    },
     formatCameras(row) {
       const names = row.camera_names || [];
       if (!names.length) return '-';
       if (names.length <= 2) return names.join('、');
       return names.slice(0, 2).join('、') + '…';
     },
-    formatRunCycle(cycle) {
-      if (!cycle || !cycle.weekdays || !cycle.weekdays.length) return '全天';
-      const days = [...cycle.weekdays].sort((a, b) => a - b);
-      const dayText = days.length === 7 ? '每天' : days.map(d => WEEKDAY_LABELS[d] || d).join('、');
-      const periods = cycle.periods || [];
-      if (!periods.length) return dayText;
-      const periodText = periods.map(p => `${p.start || '00:00'}-${p.end || '23:59'}`).join('，');
-      return `${dayText} ${periodText}`;
+    // ---------- 跳转 ----------
+    goPlanDetail(planId) {
+      if (!planId) return;
+      this.$router.push(`/skillManage/runPlan/detail/${planId}`);
+    },
+    viewPlan(row) {
+      this.goPlanDetail(row.plan_id);
+    },
+    viewTaskDetail(row) {
+      this.$router.push(`/skillManage/runPlan/task/${row.task_id}`);
+    },
+    viewTasks(row) {
+      this.activeTab = 'task';
+      this.filters.task_plan_id = row.plan_id;
+      this.page = 1;
+      this.$nextTick(() => this.loadData());
     },
     viewPlansBySkill(row) {
       this.planViewMode = 'detail';
@@ -799,66 +1017,50 @@ export default {
         this.filters.llm_skill_id = '';
       }
       this.filters.skill_kind = row.skill_kind || '';
-      this.filters.keyword = '';
       this.handleSearch();
     },
     viewTasksBySkill(row) {
       this.activeTab = 'task';
-      this.filters.plan_id = '';
-      this.filters.keyword = row.skill_name || '';
+      if (row.skill_kind === 'llm') {
+        this.filters.task_skill_ref = 'llm:' + (row.llm_skill_id || '');
+        this.filters.task_llm_skill_id = row.llm_skill_id || '';
+        this.filters.task_skill_class_id = '';
+      } else {
+        this.filters.task_skill_ref = 'sc:' + (row.skill_class_id || '');
+        this.filters.task_skill_class_id = row.skill_class_id || '';
+        this.filters.task_llm_skill_id = '';
+      }
       this.page = 1;
       this.$nextTick(() => this.loadData());
     },
     viewPlansByPoint(row) {
       this.planViewMode = 'detail';
-      this.filters.keyword = row.camera_name || '';
+      this.filters.camera_name = row.camera_name || '';
       this.handleSearch();
     },
     viewTasksByPoint(row) {
       this.activeTab = 'task';
-      if (row.plan_ids && row.plan_ids.length === 1) {
-        this.filters.plan_id = row.plan_ids[0];
-        this.filters.keyword = row.plan_ids[0];
-      } else {
-        this.filters.plan_id = '';
-        this.filters.keyword = row.camera_name || '';
-      }
+      this.filters.task_camera_name = row.camera_name || '';
       this.page = 1;
       this.$nextTick(() => this.loadData());
     },
+    // ---------- 计划操作 ----------
     openCreate() {
       this.editingPlan = null;
       this.drawerMode = 'create';
       this.drawerVisible = true;
     },
-    editPlan(row) {
-      this.editingPlan = JSON.parse(JSON.stringify(row));
+    async editPlan(row) {
+      // 取最新详情，避免列表数据过期
+      try {
+        const res = await runPlanAPI.getPlan(row.plan_id);
+        const d = res.data || {};
+        this.editingPlan = d.data || JSON.parse(JSON.stringify(row));
+      } catch (e) {
+        this.editingPlan = JSON.parse(JSON.stringify(row));
+      }
       this.drawerMode = 'edit';
       this.drawerVisible = true;
-    },
-    viewPlan(row) {
-      this.editingPlan = JSON.parse(JSON.stringify(row));
-      this.drawerMode = 'view';
-      this.drawerVisible = true;
-    },
-    viewTasks(row) {
-      this.activeTab = 'task';
-      this.filters.plan_id = row.plan_id;
-      this.filters.keyword = row.plan_id;
-      this.page = 1;
-      this.$nextTick(() => this.loadData());
-    },
-    filterByPlan(planId) {
-      this.filters.plan_id = planId;
-      this.filters.keyword = planId;
-      this.page = 1;
-      this.loadData();
-    },
-    clearPlanFilter() {
-      this.filters.plan_id = '';
-      this.filters.keyword = '';
-      this.page = 1;
-      this.loadData();
     },
     async toggleEnabled(row, val) {
       try {
@@ -868,6 +1070,34 @@ export default {
       } catch (e) {
         row.enabled = !val;
         this.$message.error('操作失败');
+      }
+    },
+    /** 聚合行启停：批量启停该行关联的所有计划 */
+    async toggleAggEnabled(row, val) {
+      const ids = row.plan_ids || [];
+      if (!ids.length) return;
+      try {
+        await this.$confirm(
+          `确认${val ? '启用' : '停用'}该${this.planViewMode === 'skill' ? '技能' : '点位'}关联的 ${ids.length} 条计划？`,
+          '操作确认', { type: 'warning' }
+        );
+        await runPlanAPI.batchEnable(ids, val);
+        this.$message.success('操作成功');
+        this.loadData();
+      } catch (e) {
+        if (e !== 'cancel') this.$message.error('操作失败');
+      }
+    },
+    async deleteAggPlans(row, label) {
+      const ids = row.plan_ids || [];
+      if (!ids.length) return;
+      try {
+        await this.$confirm(`确认删除该${label}关联的 ${ids.length} 条计划及其运行任务？`, '删除确认', { type: 'warning' });
+        await runPlanAPI.batchDelete(ids);
+        this.$message.success('删除成功');
+        this.loadData();
+      } catch (e) {
+        if (e !== 'cancel') this.$message.error('删除失败');
       }
     },
     async deletePlan(row) {
@@ -897,6 +1127,29 @@ export default {
       try {
         await this.$confirm(`确认删除选中的 ${ids.length} 条计划？`, '删除确认', { type: 'warning' });
         await runPlanAPI.batchDelete(ids);
+        this.$message.success('删除成功');
+        this.loadData();
+      } catch (e) {
+        if (e !== 'cancel') this.$message.error('删除失败');
+      }
+    },
+    // ---------- 任务操作 ----------
+    async deleteTask(row) {
+      try {
+        await this.$confirm(`确认删除任务「${row.task_id}」？`, '删除确认', { type: 'warning' });
+        await runPlanAPI.deleteRunTask(row.task_id);
+        this.$message.success('删除成功');
+        this.loadData();
+      } catch (e) {
+        if (e !== 'cancel') this.$message.error('删除失败');
+      }
+    },
+    async batchDeleteTasks() {
+      const ids = this.taskSelection.map(r => r.task_id).filter(Boolean);
+      if (!ids.length) return;
+      try {
+        await this.$confirm(`确认删除选中的 ${ids.length} 条任务？`, '删除确认', { type: 'warning' });
+        await runPlanAPI.batchDeleteRunTasks(ids);
         this.$message.success('删除成功');
         this.loadData();
       } catch (e) {
@@ -1122,6 +1375,17 @@ export default {
   min-height: 420px;
   align-self: stretch;
 }
+.tree-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px;
+}
+.tree-sidebar-head__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+}
 .channel-tree-sidebar >>> .channel-tree-panel {
   flex: 1;
   min-height: 0;
@@ -1148,14 +1412,6 @@ export default {
   font-size: 11px;
   color: #909399;
 }
-.channel-filter-bar .status-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-.channel-filter-bar .status-dot.is-online { background: #67c23a; }
-.channel-filter-bar .status-dot.is-offline { background: #c0c4cc; }
 .point-table-wrap { flex: 1; min-width: 0; }
 
 /* 单元格 */
@@ -1171,6 +1427,8 @@ export default {
 .mono-text { font-family: 'SF Mono', 'Roboto Mono', Consolas, monospace; font-size: 12px; color: #409eff; }
 .link-btn { padding: 0; font-family: 'SF Mono', 'Roboto Mono', Consolas, monospace; color: #409eff; }
 .danger-text { color: #f56c6c; }
+.warn-text { color: #e6a23c; }
+.dim-text { color: #909399; }
 
 /* 状态点 */
 .status-dot {

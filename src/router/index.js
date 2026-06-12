@@ -29,6 +29,8 @@ const multimodalReview = () => import('../components/visionAI/skillManagement/mu
 const multimodalReviewCreate = () => import('../components/visionAI/skillManagement/multimodalReviewCreate.vue')
 const skillGraphEditor = () => import('../components/visionAI/skillManagement/skillGraph/SkillGraphEditor.vue')
 const runPlanList = () => import('../components/visionAI/skillManagement/runPlan/RunPlanList.vue')
+const runPlanDetail = () => import('../components/visionAI/skillManagement/runPlan/RunPlanDetail.vue')
+const runTaskDetail = () => import('../components/visionAI/skillManagement/runPlan/RunTaskDetail.vue')
 const logRecords = () => import('../components/visionAI/smartControl/logRecords.vue')
 const edgeServer = () => import('../components/visionAI/edgeManagement/edgeServer.vue')
 const edgeBox = () => import('../components/visionAI/edgeManagement/edgeBox.vue')
@@ -156,6 +158,16 @@ export default new VueRouter({
           path: '/skillManage/runPlan',
           name: 'runPlan',
           component: runPlanList,
+        },
+        {
+          path: '/skillManage/runPlan/detail/:planId',
+          name: 'runPlanDetail',
+          component: runPlanDetail,
+        },
+        {
+          path: '/skillManage/runPlan/task/:taskId',
+          name: 'runTaskDetail',
+          component: runTaskDetail,
         },
         {
           path: '/skillManage/skillGraphEditor',
