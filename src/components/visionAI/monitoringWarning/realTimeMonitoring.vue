@@ -132,8 +132,9 @@
                         v-if="selectedAITasks[index-1] && detectionResults[index-1]"
                         :container-width="getVideoWidth(index-1)"
                         :container-height="getVideoHeight(index-1)"
-                        :video-width="getActualVideoWidth(index-1)"
-                        :video-height="getActualVideoHeight(index-1)"
+                        :video-width="videoResolutions[index-1] ? videoResolutions[index-1].width : 1920"
+                        :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
+                        :frame-timestamp="detectionResults[index-1].frame_timestamp || 0"
                         :detections="detectionResults[index-1].detections || []">
                       </detection-overlay>
                     </div>
@@ -219,6 +220,7 @@
                         :container-height="getVideoHeight(index-1)"
                         :video-width="videoResolutions[index-1] ? videoResolutions[index-1].width : 1920"
                         :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
+                        :frame-timestamp="detectionResults[index-1].frame_timestamp || 0"
                         :detections="detectionResults[index-1].detections || []">
                       </detection-overlay>
                     </div>
@@ -940,7 +942,8 @@ export default {
       // 🆕 保存摄像头ID映射
       this.$set(this.cameraIdMapping, idxTmp, channelId);
       
-      this.loading = true;
+      // 注意：拉流只在对应视频格子里显示"正在拉流..."提示，
+      // 不再使用整页 v-loading 遮罩，避免通道离线/不存在时整页转圈卡死
 
       try {
         console.log('🎬 开始播放通道 - 通道ID:', channelId, '播放器索引:', idxTmp);
@@ -983,10 +986,10 @@ export default {
         }
       } catch (error) {
         console.error('❌ 播放通道异常:', error);
-        const errorMsg = error.message || '网络错误';
+        // axios 超时(ECONNABORTED)时给出更友好的提示
+        const isTimeout = error.code === 'ECONNABORTED' || /timeout/i.test(error.message || '');
+        const errorMsg = isTimeout ? '拉流超时，通道可能已离线或不存在' : (error.message || '网络错误');
         this.$set(this.videoTip, idxTmp, "播放失败: " + errorMsg);
-      } finally {
-        this.loading = false;
       }
     },
     // 获取视频状态类
@@ -3019,7 +3022,8 @@ export default {
         onMessage: (parsed) => {
           this.$set(this.detectionResults, index, {
             detections: parsed.detections,
-            frame_size: parsed.frameSize
+            frame_size: parsed.frameSize,
+            frame_timestamp: parsed.frameTimestamp
           })
           const now = new Date()
           this.$set(this.detectionUpdateTime, index,
@@ -3083,56 +3087,6 @@ export default {
         return ref[0].clientHeight || 480
       }
       return 480
-    },
-    
-    /**
-     * 获取实际视频分辨率宽度
-     */
-    getActualVideoWidth(index) {
-      const playerRef = this.$refs[`player${index}`]
-      if (playerRef && playerRef[0]) {
-        const playerEl = playerRef[0].$el
-        if (playerEl) {
-          const videoEl = playerEl.querySelector('video') || playerEl.querySelector('canvas')
-          if (videoEl && videoEl.videoWidth) {
-            return videoEl.videoWidth
-          }
-          if (videoEl && videoEl.width) {
-            return videoEl.width
-          }
-        }
-      }
-      
-      // 降级方案：使用后端返回的分辨率
-      if (this.videoResolutions[index]) {
-        return this.videoResolutions[index].width
-      }
-      return 1920
-    },
-    
-    /**
-     * 获取实际视频分辨率高度
-     */
-    getActualVideoHeight(index) {
-      const playerRef = this.$refs[`player${index}`]
-      if (playerRef && playerRef[0]) {
-        const playerEl = playerRef[0].$el
-        if (playerEl) {
-          const videoEl = playerEl.querySelector('video') || playerEl.querySelector('canvas')
-          if (videoEl && videoEl.videoHeight) {
-            return videoEl.videoHeight
-          }
-          if (videoEl && videoEl.height) {
-            return videoEl.height
-          }
-        }
-      }
-      
-      // 降级方案：使用后端返回的分辨率
-      if (this.videoResolutions[index]) {
-        return this.videoResolutions[index].height
-      }
-      return 1080
     },
     
     /**

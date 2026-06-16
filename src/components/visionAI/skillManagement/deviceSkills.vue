@@ -114,6 +114,14 @@
                     >
                       {{ skill.status === 'published' ? '已发布' : '未发布' }}
                     </el-tag>
+                    <el-tag
+                      v-if="skill.source === 'skill_graph'"
+                      size="mini"
+                      type="warning"
+                      class="status-mini-tag"
+                    >
+                      编排
+                    </el-tag>
                     <span class="version-text">版本 {{ skill.version }}</span>
                   </div>
                   <div class="info-line">
@@ -831,6 +839,7 @@ export default {
           status: skill.status ? 'published' : 'unpublished',
           deviceCount: deviceCount,
           models: models,
+          source: skill.source || 'code',
           createTime: skill.created_at,
           updateTime: skill.updated_at,
         };

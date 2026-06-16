@@ -145,6 +145,8 @@ export const modelAPI = {
               model_status: model.model_status ? 'loaded' : 'unloaded',
               // 转换usage_status布尔值为字符串
               usage_status: model.usage_status ? 'using' : 'unused',
+              // 检测类别（模型标签）
+              classes: model.classes || [],
               created_at: model.created_at,
               updated_at: model.updated_at
             };
@@ -208,7 +210,9 @@ export const modelAPI = {
             // 添加模型配置
             model_config: model.model_config,
             // 相关技能
-            skill_classes: model.skill_classes
+            skill_classes: model.skill_classes,
+            // 检测类别（模型标签）
+            classes: model.classes || []
           };
 
           // 如果包含success字段（更新模型接口）
@@ -241,6 +245,16 @@ export const modelAPI = {
         console.error('更新模型失败:', error);
         throw error;
       });
+  },
+
+  // 获取模型的检测类别（模型标签）
+  getModelClasses(modelId) {
+    return visionAIAxios.get(`/api/v1/models/${modelId}/classes`);
+  },
+
+  // 全量覆盖模型的检测类别（模型标签）
+  updateModelClasses(modelId, classes) {
+    return visionAIAxios.put(`/api/v1/models/${modelId}/classes`, { classes });
   },
 
   // 删除模型
@@ -3793,7 +3807,9 @@ export const realtimeMonitorAPI = {
   playChannel(channelId) {
     console.log('📤 播放通道 - 通道ID:', channelId);
 
-    return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`)
+    // 单独设置较短超时：通道离线/不存在时后端可能长时间挂起，
+    // 这里快速失败，避免前端长时间等待
+    return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`, { timeout: 8000 })
       .then(response => {
         console.log('📥 播放通道成功:', response.data);
         return response;
@@ -4083,6 +4099,87 @@ export const systemMonitorAPI = {
   }
 };
 
+/**
+ * 技能图编排 API - 节点拖拽式创建技能
+ */
+export const skillGraphAPI = {
+  // 节点面板：列出所有可用节点类型
+  getNodeTypes() {
+    return visionAIAxios.get('/api/v1/skill-graphs/node-types');
+  },
+  // 多模态大模型节点：可选模型列表（来自后端系统配置）
+  getVlmModels() {
+    return visionAIAxios.get('/api/v1/skill-graphs/vlm-models');
+  },
+  // 校验技能图（不落库）
+  validateGraph(graphJson) {
+    return visionAIAxios.post('/api/v1/skill-graphs/validate', { graph_json: graphJson });
+  },
+  // 在线试跑（image_base64 可选）
+  testRun(graphJson, imageBase64, roi) {
+    return visionAIAxios.post('/api/v1/skill-graphs/test-run', {
+      graph_json: graphJson, image_base64: imageBase64, roi: roi
+    });
+  },
+  // 自定义节点：代码模拟测试
+  testCustomCode(code, inputs, timeoutMs) {
+    return visionAIAxios.post('/api/v1/skill-graphs/test-custom-code', {
+      code: code, inputs: inputs || {}, timeout_ms: timeoutMs || 10000
+    });
+  },
+  // 列表
+  listGraphs(params) {
+    return visionAIAxios.get('/api/v1/skill-graphs', { params });
+  },
+  // 创建
+  createGraph(data) {
+    return visionAIAxios.post('/api/v1/skill-graphs', data);
+  },
+  // 详情
+  getGraph(skillId) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}`);
+  },
+  // 更新
+  updateGraph(skillId, data) {
+    return visionAIAxios.put(`/api/v1/skill-graphs/${skillId}`, data);
+  },
+  // 删除
+  deleteGraph(skillId) {
+    return visionAIAxios.delete(`/api/v1/skill-graphs/${skillId}`);
+  },
+  // 发布 / 下线
+  publishGraph(skillId) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/publish`);
+  },
+  unpublishGraph(skillId) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/unpublish`);
+  },
+  // 效果评测：用一批标注样本给技能图打分
+  evaluate(graphJson, samples) {
+    return visionAIAxios.post('/api/v1/skill-graphs/evaluate', {
+      graph_json: graphJson, samples: samples
+    });
+  },
+  // 历史版本列表
+  listVersions(skillId) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}/versions`);
+  },
+  // 回滚到指定版本
+  rollbackVersion(skillId, version) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/rollback`, { version: version });
+  },
+  // 调用监控统计
+  callStats(skillId, recent) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}/stats`, { params: { recent: recent || 20 } });
+  },
+  // 独立调用（传图分析，仅已发布）
+  invokeSkill(skillId, imageBase64, roi, source) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/invoke`, {
+      image_base64: imageBase64, roi: roi, source: source
+    });
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
@@ -4097,5 +4194,6 @@ export default {
   realtimeDetectionAPI,
   mlPipelineAPI,
   systemMonitorAPI,
+  skillGraphAPI,
   visionAIAxios
 };
