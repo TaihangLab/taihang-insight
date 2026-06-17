@@ -124,6 +124,8 @@
               </div>
               <div class="sc-footer" @click.stop>
                 <el-tag :type="s.status ? 'success' : 'info'" size="mini">{{ s.status_text }}</el-tag>
+                <el-tag v-if="s.has_unpublished_changes" type="warning" size="mini" effect="plain" style="margin-left:4px"
+                        title="该技能有已保存但未发布的改动，线上仍是上次发布的版本">待发布</el-tag>
                 <div class="sc-actions">
                   <el-button v-if="s.kind === 'graph'" type="text" size="mini" @click="exportGraph(s, $event)">导出</el-button>
                   <el-button type="text" size="mini" @click="viewDetail(s)">详情</el-button>
@@ -172,6 +174,8 @@
         <el-table-column label="状态" width="100" align="center">
           <template slot-scope="{ row }">
             <el-tag :type="row.status ? 'success' : 'info'" size="small">{{ row.status_text }}</el-tag>
+            <el-tag v-if="row.has_unpublished_changes" type="warning" size="small" effect="plain" style="margin-left:4px"
+                    title="该技能有已保存但未发布的改动，线上仍是上次发布的版本">有改动待发布</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="更新时间" width="170" align="center" prop="updated_at"></el-table-column>
