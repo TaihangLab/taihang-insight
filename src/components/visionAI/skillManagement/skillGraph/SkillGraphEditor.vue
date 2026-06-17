@@ -248,17 +248,11 @@
               </template>
 
               <div class="sg-sec-title">输出</div>
-              <div v-if="form.target_classes && form.target_classes.length" class="sg-io-list">
-                <template v-for="cls in form.target_classes">
-                  <div :key="cls + '-u'" class="sg-io-item">
-                    <span class="sg-io-dot" style="--c:#7c5cff"></span>{{ classLabel(cls) }}
-                    <span class="sg-io-tag">det.</span>
-                  </div>
-                  <div v-if="isTrackedClass(cls)" :key="cls + '-t'" class="sg-io-item">
-                    <span class="sg-io-dot" style="--c:#9254de"></span>{{ classLabel(cls) }}(追踪)
-                    <span class="sg-io-tag">trk.</span>
-                  </div>
-                </template>
+              <div v-if="detectionOutputRows.length" class="sg-io-list">
+                <div v-for="r in detectionOutputRows" :key="r.key" class="sg-io-item">
+                  <span class="sg-io-dot" :style="{ '--c': r.color }"></span>{{ r.label }}
+                  <span class="sg-io-tag">{{ r.tag }}</span>
+                </div>
               </div>
               <div v-else class="sg-io-empty">请先配置模型和标签</div>
             </template>
@@ -2466,10 +2460,32 @@ function escapeHtml(s) {
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
   ))
 }
-function chipHtml(name, type, text) {
+/** 读取某节点已连接的输入端口集合（用于判断输入芯片是否已配置） */
+function boundInputPorts(m) {
+  const bound = new Set()
+  const gm = m && m.graphModel
+  const nid = m && m.id
+  if (!gm || !gm.edges || !nid) return bound
+  gm.edges.forEach(e => {
+    if (e.targetNodeId !== nid) return
+    // 仅作结构连线、参数尚未选定(paramBound=false)的边不算"已配置"
+    if (e.properties && e.properties.paramBound === false) return
+    let tp = (e.properties && e.properties.targetPort) || ''
+    if (!tp && e.targetAnchorId) {
+      const idx = String(e.targetAnchorId).indexOf('__in__')
+      if (idx >= 0) tp = String(e.targetAnchorId).substring(idx + '__in__'.length)
+    }
+    if (tp) bound.add(tp)
+  })
+  return bound
+}
+function chipHtml(name, type, text, empty) {
   const meta = PT_META[type] || PT_META.Any
   const label = text != null ? text : portLabel(name, type)
-  return `<span class="sgx-chip" style="--c:${meta.color}">`
+  // empty=未连接上游/未在抽屉里配置：芯片置灰，连接后才显示类型色
+  const cls = empty ? 'sgx-chip sgx-chip-empty' : 'sgx-chip'
+  const color = empty ? '#c0c4cc' : meta.color
+  return `<span class="${cls}" style="--c:${color}">`
     + `<span class="sgx-chip-dot"></span>${escapeHtml(label)}</span>`
 }
 /** 模型标签展示：有中文且与英文名不同时显示「中文 (英文)」，否则只显示一项 */
@@ -2547,7 +2563,7 @@ function estimateNodeLayoutSize(nodeType, config = {}, extra = {}) {
     const classes = (cfg.target_classes || []).slice()
     const chipInnerW = width - 58
     const inputLines = estimateChipLines(
-      [PORT_LABELS.image || '图片', PORT_LABELS.roi || '电子围栏', PORT_LABELS.tripwire || '绊线'],
+      [PORT_LABELS.image || '图片', PORT_LABELS.roi || '电子围栏'],
       chipInnerW
     ) || 1
     const outTexts = []
@@ -2670,7 +2686,7 @@ function placeGraphLayoutUnits(units, centerX, yCenter, getSize, setCenter) {
   })
 }
 // 开始节点的输入参数 -> chip
-function paramChipHtml(pp) {
+function paramChipHtml(pp, empty) {
   const name = pp && pp.name
   if (!name) {
     return '<span class="sgx-chip sgx-chip-warn" style="--c:#f0a020">'
@@ -2678,7 +2694,9 @@ function paramChipHtml(pp) {
   }
   const meta = PARAM_TYPE_META[pp.type] || PARAM_TYPE_META.String
   const label = (pp.display_name && String(pp.display_name).trim()) || name
-  return `<span class="sgx-chip" style="--c:${meta.color}">`
+  const cls = empty ? 'sgx-chip sgx-chip-empty' : 'sgx-chip'
+  const color = empty ? '#c0c4cc' : meta.color
+  return `<span class="${cls}" style="--c:${color}">`
     + `<span class="sgx-chip-dot"></span>${escapeHtml(label)}</span>`
 }
 function judgeFieldToParamRefStatic(field) {
@@ -2715,27 +2733,40 @@ function judgeCondParamDisplayLabel(cond, nodesById) {
   if (port === 'count') return '数量值'
   return PORT_LABELS[port] || port || '已选'
 }
+function judgeCondNeedsValue(operator) {
+  return !!operator && operator !== 'is_empty' && operator !== 'is_not_empty'
+}
 function judgeCanvasCondText(cond, part, nodesById) {
   const c = cond || {}
   if (part === 'param') {
     return judgeCondParamDisplayLabel(c, nodesById)
   }
-  if (!c.field) return '未填写'
-  if (!c.operator) return '未填写'
-  const needVal = c.operator !== 'is_empty' && c.operator !== 'is_not_empty'
-  if (needVal && (c.value === '' || c.value == null)) return '未填写'
-  if (needVal && c.value != null && c.value !== '') return String(c.value)
-  return JUDGE_OP_CODE_TO_LABEL[c.operator] || '已配置'
+  if (part === 'op') {
+    if (!c.field || !c.operator) return '未填写'
+    return JUDGE_OP_CODE_TO_LABEL[c.operator] || '已配置'
+  }
+  // part === 'val'
+  if (!c.field || !c.operator) return '未填写'
+  if (c.value === '' || c.value == null) return '未填写'
+  return String(c.value)
 }
 function judgeCanvasCondPill(cond, part, nodesById) {
   const txt = judgeCanvasCondText(cond, part, nodesById)
   const warn = txt === '未选择' || txt === '未填写'
-  return `<span class="sgx-judge-pill${warn ? ' is-warn' : ''}">`
+  const extra = part === 'op' ? ' sgx-judge-pill-op' : ''
+  return `<span class="sgx-judge-pill${extra}${warn ? ' is-warn' : ''}">`
     + (warn ? '<i class="el-icon-warning-outline"></i>' : '')
     + escapeHtml(txt) + '</span>'
 }
 function judgeCanvasCondRowHtml(cond, nodesById) {
-  return `<div class="sgx-judge-cond-row">${judgeCanvasCondPill(cond, 'param', nodesById)}${judgeCanvasCondPill(cond, 'val', nodesById)}</div>`
+  const c = cond || {}
+  // 参数 + 运算符（+ 值，仅当运算符需要值时）
+  let html = judgeCanvasCondPill(c, 'param', nodesById)
+    + judgeCanvasCondPill(c, 'op', nodesById)
+  if (!c.operator || judgeCondNeedsValue(c.operator)) {
+    html += judgeCanvasCondPill(c, 'val', nodesById)
+  }
+  return `<div class="sgx-judge-cond-row">${html}</div>`
 }
 function judgeCanvasBracketHtml(relation, itemHtmlList, multi) {
   const body = itemHtmlList.join('')
@@ -2806,8 +2837,7 @@ class SGNodeModel extends HtmlNodeModel {
       const chipInnerW = this.width - 58
       const inputTexts = [
         PORT_LABELS.image || '图片',
-        PORT_LABELS.roi || '电子围栏',
-        PORT_LABELS.tripwire || '绊线'
+        PORT_LABELS.roi || '电子围栏'
       ]
       const inputLines = estimateChipLines(inputTexts, chipInnerW) || 1
       // 追踪输出以 track_classes / outputPorts 为准：未开启跟踪的标签不计入高度，关闭后节点自动缩小
@@ -2972,7 +3002,7 @@ class SGNode extends HtmlNode {
       body = `<div class="sgx-row"><span class="sgx-row-l">输出</span>`
         + `<span class="sgx-out${msg ? '' : ' is-empty'}">${msg ? escapeHtml(msg) : '未配置输出'}</span></div>`
     } else if (p.nodeType === 'detection_model') {
-      // 视觉模型：模型 + 输入(图片/电子围栏/绊线) + 按标签输出（每类检测+追踪）
+      // 视觉模型：模型 + 输入(图片/电子围栏) + 按标签输出（每类检测+追踪）
       const modelLabel = p.modelLabel || cfg.model_label || ''
       const classLabels = p.classLabels || cfg.class_labels || {}
       const classes = (cfg.target_classes || []).length
@@ -2980,7 +3010,12 @@ class SGNode extends HtmlNode {
         : (p.outputPorts || []).filter(port => port && !String(port).endsWith(TRACKED_SUFFIX))
       const modelRow = `<div class="sgx-row"><span class="sgx-row-l">模型</span>`
         + `<span class="sgx-out${modelLabel ? '' : ' is-empty'}">${modelLabel ? escapeHtml(modelLabel) : '未配置模型'}</span></div>`
-      const ins = [chipHtml('image', 'Image'), chipHtml('roi', 'ROI'), chipHtml('tripwire', 'Tripwire', '绊线')]
+      // 输入芯片：未连接上游(未在抽屉里配置)时置灰，连接后才显示类型色
+      const boundIn = boundInputPorts(m)
+      const ins = [
+        chipHtml('image', 'Image', null, !boundIn.has('image')),
+        chipHtml('roi', 'ROI', null, !boundIn.has('roi'))
+      ]
       const outs = []
       // 追踪输出以 outputPorts 为准（已按 track_classes 生成）：未开启跟踪的标签不显示「追踪」输出
       const opSet = new Set(p.outputPorts || [])
@@ -3002,7 +3037,8 @@ class SGNode extends HtmlNode {
       const modelRow = `<div class="sgx-row"><span class="sgx-row-l">模型</span>`
         + `<span class="sgx-out${modelName ? '' : ' is-empty'}">${modelName ? escapeHtml(modelName) : '未配置模型'}</span></div>`
       const inputParams = (cfg.input_params && cfg.input_params.length) ? cfg.input_params : [{ name: 'image', type: 'Image' }]
-      const ins = inputParams.filter(x => x && x.name).map(x => chipHtml(x.name, x.type === 'Array' ? 'Array' : (x.type || 'Image')))
+      const vlmBoundIn = boundInputPorts(m)
+      const ins = inputParams.filter(x => x && x.name).map(x => chipHtml(x.name, x.type === 'Array' ? 'Array' : (x.type || 'Image'), null, !vlmBoundIn.has(x.name)))
       const outParams = (cfg.output_parameters && cfg.output_parameters.length)
         ? cfg.output_parameters
         : [{ name: 'output', type: 'String' }]
@@ -3015,7 +3051,8 @@ class SGNode extends HtmlNode {
       const inputParams = (cfg.input_params && cfg.input_params.length)
         ? cfg.input_params
         : [{ name: 'input', type: 'String' }]
-      const ins = inputParams.filter(x => x && x.name).map(x => paramChipHtml(x))
+      const ccBoundIn = boundInputPorts(m)
+      const ins = inputParams.filter(x => x && x.name).map(x => paramChipHtml(x, !ccBoundIn.has(x.name)))
       const outParams = (cfg.output_parameters && cfg.output_parameters.length)
         ? cfg.output_parameters
         : [{ name: 'output', type: 'String' }]
@@ -3023,9 +3060,10 @@ class SGNode extends HtmlNode {
       body = row('输入', ins) + row('输出', outs)
     } else if (p.nodeType === 'intersection') {
       const method = cfg.iou_method != null ? cfg.iou_method : 1
+      const interBoundIn = boundInputPorts(m)
       const ins = [
-        chipHtml('targets1', 'Detection', '相交目标1'),
-        chipHtml('targets2', 'Detection', '相交目标2'),
+        chipHtml('targets1', 'Detection', '相交目标1', !interBoundIn.has('targets1')),
+        chipHtml('targets2', 'Detection', '相交目标2', !interBoundIn.has('targets2')),
         chipHtml('iou_method', 'Number', IOU_METHOD_INT_LABELS[method] || IOU_METHOD_INT_LABELS[1]),
         chipHtml('iou_threshold', 'Number', '交并比阈值下限')
       ]
@@ -3035,9 +3073,10 @@ class SGNode extends HtmlNode {
       ]
       body = row('输入', ins) + row('输出', outs)
     } else if (p.nodeType === 'intersect') {
+      const intsBoundIn = boundInputPorts(m)
       const ins = [
-        chipHtml('targets1', 'Detection'),
-        chipHtml('targets2', 'Detection'),
+        chipHtml('targets1', 'Detection', null, !intsBoundIn.has('targets1')),
+        chipHtml('targets2', 'Detection', null, !intsBoundIn.has('targets2')),
         chipHtml('iou_mode', 'String', IOU_MODE_LABELS[cfg.iou_mode] || IOU_MODE_LABELS.min),
         chipHtml('iou_threshold', 'Number', '交并比阈值下限'),
         chipHtml('duration', 'Number', '持续时间 (s)'),
@@ -3049,16 +3088,18 @@ class SGNode extends HtmlNode {
       ]
       body = row('输入', ins) + row('输出', outs)
     } else if (p.nodeType === 'region_filter') {
+      const rfBoundIn = boundInputPorts(m)
       const ins = [
-        chipHtml('image', 'Image', '尺寸参照图片'),
-        chipHtml('filter_target', 'Detection', '过滤目标'),
-        chipHtml('roi', 'ROI', '电子围栏')
+        chipHtml('image', 'Image', '尺寸参照图片', !rfBoundIn.has('image')),
+        chipHtml('filter_target', 'Detection', '过滤目标', !rfBoundIn.has('filter_target')),
+        chipHtml('roi', 'ROI', '电子围栏', !rfBoundIn.has('roi'))
       ]
       const outs = [chipHtml('filtered_targets', 'Detection', '过滤目标标签')]
       body = row('输入', ins) + row('输出', outs)
     } else if (p.nodeType === 'size_filter') {
+      const sfBoundIn = boundInputPorts(m)
       const ins = [
-        chipHtml('detections', 'Detection', '过滤目标'),
+        chipHtml('detections', 'Detection', '过滤目标', !sfBoundIn.has('detections')),
         chipHtml('min_width', 'Number', '目标宽度下限(px)'),
         chipHtml('max_width', 'Number', '目标宽度上限(px)'),
         chipHtml('min_height', 'Number', '目标高度下限(px)'),
@@ -3067,20 +3108,23 @@ class SGNode extends HtmlNode {
       const outs = [chipHtml('detections', 'Detection', '满足尺寸的目标')]
       body = row('输入', ins) + row('输出', outs)
     } else if (p.nodeType === 'count') {
-      const ins = [chipHtml('count_target', 'Detection', '计数目标')]
+      const countBoundIn = boundInputPorts(m)
+      const ins = [chipHtml('count_target', 'Detection', '计数目标', !countBoundIn.has('count_target'))]
       const outs = [chipHtml('count', 'Number', '数量值')]
       body = row('输入', ins) + row('输出', outs)
     } else if (p.nodeType === 'tripwire_tracking') {
+      const ttBoundIn = boundInputPorts(m)
       const ins = [
-        chipHtml('targets', 'Detection', '跨线目标（追踪）'),
-        chipHtml('tripwire', 'Tripwire', '绊线')
+        chipHtml('targets', 'Detection', '跨线目标（追踪）', !ttBoundIn.has('targets')),
+        chipHtml('tripwire', 'Tripwire', '绊线', !ttBoundIn.has('tripwire'))
       ]
       const outs = [chipHtml('crossed', 'Detection', '跨线目标')]
       body = row('输入', ins) + row('输出', outs)
     } else if (p.nodeType === 'distance') {
+      const distBoundIn = boundInputPorts(m)
       const ins = [
-        chipHtml('targets1', 'Detection', '距离目标1'),
-        chipHtml('targets2', 'Detection', '距离目标2'),
+        chipHtml('targets1', 'Detection', '距离目标1', !distBoundIn.has('targets1')),
+        chipHtml('targets2', 'Detection', '距离目标2', !distBoundIn.has('targets2')),
         chipHtml('h_min', 'Number', '水平距离下限(px)'),
         chipHtml('h_max', 'Number', '水平距离上限(px)'),
         chipHtml('v_min', 'Number', '垂直距离下限(px)'),
@@ -3093,8 +3137,9 @@ class SGNode extends HtmlNode {
       ]
       body = row('输入', ins) + row('输出', outs)
     } else if (p.nodeType === 'displacement') {
+      const dispBoundIn = boundInputPorts(m)
       const ins = [
-        chipHtml('targets', 'Detection', '位移目标（追踪）'),
+        chipHtml('targets', 'Detection', '位移目标（追踪）', !dispBoundIn.has('targets')),
         chipHtml('period', 'Number', '位移计算周期(s)'),
         chipHtml('h_min', 'Number', '水平移动距离下限(px)'),
         chipHtml('h_max', 'Number', '水平移动距离上限(px)'),
@@ -3109,7 +3154,11 @@ class SGNode extends HtmlNode {
       const outs = [chipHtml('matched', 'Detection', '满足位移的目标(追踪)')]
       body = row('输入', ins) + row('输出', outs)
     } else if (p.nodeType === 'target_matting') {
-      const ins = [chipHtml('image', 'Image', '原图'), chipHtml('target', 'Detection', '抠图推理目标')]
+      const tmBoundIn = boundInputPorts(m)
+      const ins = [
+        chipHtml('image', 'Image', '原图', !tmBoundIn.has('image')),
+        chipHtml('target', 'Detection', '抠图推理目标', !tmBoundIn.has('target'))
+      ]
       const outs = [chipHtml('small_images', 'Array', '小图序列'), chipHtml('target', 'Detection', '抠图推理目标')]
       body = row('输入', ins) + row('输出', outs)
     } else if (p.nodeType === 'small_image_batch') {
@@ -3167,7 +3216,8 @@ class SGNode extends HtmlNode {
         + `<span class="sgx-judge-out-lbl false">FALSE</span>`
         + `</div>`
     } else {
-      const ins = (p.inputPorts || []).map(n => chipHtml(n, types[n]))
+      const genBoundIn = boundInputPorts(m)
+      const ins = (p.inputPorts || []).map(n => chipHtml(n, types[n], null, !genBoundIn.has(n)))
       if (p.dynamic) ins.push('<span class="sgx-chip sgx-chip-dyn" style="--c:#909399"><span class="sgx-chip-dot"></span>动态输入</span>')
       const outs = (p.outputPorts || []).map(n => chipHtml(n, types[n]))
       body = row('输入', ins) + row('输出', outs)
@@ -3317,6 +3367,18 @@ export default {
     }
   },
   computed: {
+    // 视觉模型「输出」区展开成扁平行（每个标签一行检测 + 可选一行追踪），
+    // 单层 v-for 渲染，避免 <template v-for> 上挂 key（Vue2 不支持）
+    detectionOutputRows() {
+      const rows = []
+      ;(this.form.target_classes || []).forEach(cls => {
+        rows.push({ key: cls + '-u', label: this.classLabel(cls), tag: 'det.', color: '#7c5cff' })
+        if (this.isTrackedClass(cls)) {
+          rows.push({ key: cls + '-t', label: this.classLabel(cls) + '(追踪)', tag: 'trk.', color: '#9254de' })
+        }
+      })
+      return rows
+    },
     // 顶部发布状态徽标：让用户一眼看出"当前内容有没有发布/有没有未保存的改动"
     publishStatus() {
       if (!this.isEdit) {
@@ -3994,20 +4056,20 @@ export default {
       const types = props.portTypes || {}
       const out = []
       if (nt === 'start') {
+        // 声明式：与后端一致，开始节点对外输出仅由 config.input_params 决定，
+        // 不再注入 roi/绊线 等默认项；未配置时下游就选不到（为空）。
         const params = ((props.config || {}).input_params) || []
-        const defaults = [
-          { name: 'image', type: 'Image' },
-          { name: 'roi', type: 'ROI' },
-          { name: 'tripwire', type: 'Tripwire' }
-        ]
-        defaults.forEach(d => {
-          if (!params.some(p => p && p.name === d.name)) {
-            out.push({ port: d.name, type: d.type, label: PORT_LABELS[d.name] || d.name })
-          }
-        })
+        if (!params.length) {
+          out.push({ port: 'image', type: 'Image', label: PORT_LABELS.image || '图片' })
+          return out
+        }
         params.forEach(pp => {
           if (!pp || !pp.name) return
-          out.push({ port: pp.name, type: pp.type || 'String', label: PORT_LABELS[pp.name] || pp.name })
+          out.push({
+            port: pp.name,
+            type: pp.type || 'String',
+            label: (pp.display_name && String(pp.display_name).trim()) || PORT_LABELS[pp.name] || pp.name
+          })
         })
       } else if (nt === 'detection_model') {
         const classLabels = props.classLabels || (props.config && props.config.class_labels) || {}
@@ -4182,6 +4244,17 @@ export default {
           popOpen: false
         }
       })
+    },
+    // 连线增删后强制目标节点重渲染：使输入芯片的"已配置/未配置"灰色态即时生效
+    refreshNodeInputChips(nodeId) {
+      if (!nodeId) return
+      const m = this.lf && this.lf.getNodeModelById && this.lf.getNodeModelById(nodeId)
+      const nt = m && m.properties && m.properties.nodeType
+      // 开始/结束/判断节点没有"连接型输入芯片"，无需重渲染
+      if (!m || nt === 'start' || nt === 'end' || nt === 'judge') return
+      if (typeof m.setProperties === 'function') {
+        m.setProperties({ _inRev: ((m.properties._inRev || 0) + 1) })
+      }
     },
     // 把某输入端口绑定到选中的上游参数：清掉该端口旧边并按真实 sourcePort/targetPort 建新边
     bindInput(targetPort, val) {
@@ -4477,10 +4550,12 @@ export default {
       this.lf.on('edge:add', ({ data }) => {
         this.onEdgeAdd(data)
         this.graphEdgeRev++
+        this.refreshNodeInputChips(data && data.targetNodeId)
       })
       // 连线增删 → 刷新输入来源选择器 / 前序连接提示
-      this.lf.on('edge:delete', () => {
+      this.lf.on('edge:delete', ({ data } = {}) => {
         this.graphEdgeRev++
+        this.refreshNodeInputChips(data && data.targetNodeId)
         if (this.selectedNode && this.hasInputSelector) {
           this.$nextTick(() => this.refreshInputBindings(this.selectedNode.id))
         }
@@ -4597,17 +4672,31 @@ export default {
       let tp = existing.targetPort || this.parsePort(tgtAnchor, 'in')
       const tgtNodeModel = this.lf.getNodeModelById(model.targetNodeId)
       const tgtType = tgtNodeModel && tgtNodeModel.properties && tgtNodeModel.properties.nodeType
+      const srcNodeModel = this.lf.getNodeModelById(model.sourceNodeId)
+      const srcType = srcNodeModel && srcNodeModel.properties && srcNodeModel.properties.nodeType
       // 结束节点：judge.passed → trigger，其余沿用上游端口名
       if (tp === '*' && tgtType === 'end' && sp === 'passed') {
         tp = 'trigger'
       } else if (tp === '*') {
         tp = sp || 'value'
       }
-      this.lf.setProperties(edge.id, { sourcePort: sp, targetPort: tp })
+      const edgeProps = { ...(existing || {}), sourcePort: sp, targetPort: tp }
+      // 视觉模型底部只有一个占位输出锚点(detections)，并非真实输出端口（后端按标签分端口）。
+      // 画布拖线时不自动绑定到该占位端口，标记为待选，让用户在抽屉里挑选具体标签。
+      if (srcType === 'detection_model' && existing.paramBound == null
+        && (sp === 'detections' || !this.nodeHasOutputPort(srcNodeModel, sp))) {
+        edgeProps.paramBound = false
+      }
+      this.lf.setProperties(edge.id, edgeProps)
       const tgtNode = (model && model.targetNodeId) || edge.targetNodeId
       if (this.selectedNode && this.hasInputSelector && tgtNode === this.selectedNode.id) {
         this.$nextTick(() => this.refreshInputBindings(this.selectedNode.id))
       }
+    },
+    // 该节点是否真实拥有某个输出端口（视觉模型按标签分端口，没有 detections 这种占位端口）
+    nodeHasOutputPort(nodeModel, port) {
+      const ports = (nodeModel && nodeModel.properties && nodeModel.properties.outputPorts) || []
+      return ports.indexOf(port) >= 0
     },
     parsePort(anchorId, kind) {
       if (!anchorId) return null
@@ -7252,6 +7341,8 @@ export default {
 .sgx-chip { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px;
   background: #f5f7fb; border: 1px solid #eaedf3; border-radius: 6px; font-size: 12px; color: #4a5365; }
 .sgx-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c, #909399); }
+.sgx-chip-empty { border-style: dashed; background: #fafbfc; color: #b4bbc7; }
+.sgx-chip-empty .sgx-chip-dot { background: #c0c4cc; }
 .sgx-chip-dyn { border-style: dashed; color: #9aa3b2; }
 .sgx-chip-warn { border-color: #ffe1b3; background: #fff7e8; color: #d48806; }
 .sgx-chip-warn i { font-size: 12px; }
@@ -7300,6 +7391,7 @@ export default {
 }
 .sgx-judge-pill.is-warn { border-color: #ffe1b3; background: #fff7e8; color: #d48806; }
 .sgx-judge-pill.is-warn i { font-size: 11px; flex: none; }
+.sgx-judge-pill-op { flex: 0 0 auto; min-width: auto; padding: 0 8px; background: #eef1f6; color: #8a93a6; }
 .sgx-judge-out-footer {
   display: flex; justify-content: space-between; margin-top: 10px; padding-top: 8px;
   border-top: 1px dashed #eef0f5;
