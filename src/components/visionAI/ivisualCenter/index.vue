@@ -298,6 +298,7 @@
 <script>
 import * as echarts from 'echarts';
 import { alertAPI, cameraAPI, systemMonitorAPI } from '../../service/VisionAIService.js';
+import { translateWeatherDesc, isChineseWeatherDesc } from '@/utils/weatherText.js';
 
 // 预警等级映射
 const LEVEL_MAP = { 1: 'urgent', 2: 'high', 3: 'medium', 4: 'low' };
@@ -714,12 +715,17 @@ export default {
           const cur = wttrData && wttrData.current_condition && wttrData.current_condition[0];
           if (cur) {
             const tempC = cur.temp_C || '--';
-            const desc = (cur.lang_zh && cur.lang_zh[0] && cur.lang_zh[0].value)
+            let desc = (cur.lang_zh && cur.lang_zh[0] && cur.lang_zh[0].value)
               || (cur.weatherDesc && cur.weatherDesc[0] && cur.weatherDesc[0].value) || '';
-            const humidity = cur.humidity || '--';
-            this.locationInfo.weather = `${desc} ${tempC}°C`;
-            this.locationInfo.airQuality = `湿度 ${humidity}%`;
-            weatherOk = true;
+            desc = translateWeatherDesc(desc);
+            if (!isChineseWeatherDesc(desc)) {
+              weatherOk = false;
+            } else {
+              const humidity = cur.humidity || '--';
+              this.locationInfo.weather = `${desc} ${tempC}°C`;
+              this.locationInfo.airQuality = `湿度 ${humidity}%`;
+              weatherOk = true;
+            }
           }
         } catch (_) { /* wttr.in 失败，走备用 */ }
 

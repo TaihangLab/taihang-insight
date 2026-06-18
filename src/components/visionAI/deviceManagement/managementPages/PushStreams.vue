@@ -396,14 +396,21 @@ export default {
     
     calculateTableHeight() {
       this.$nextTick(() => {
+        const tableCard = this.$el && this.$el.querySelector('.table-card');
+        if (tableCard) {
+          const cardRect = tableCard.getBoundingClientRect();
+          const cardHeader = tableCard.querySelector('.el-card__header');
+          const pagination = tableCard.querySelector('.pagination-container');
+          const headerHeight = cardHeader ? cardHeader.offsetHeight : 56;
+          const paginationHeight = pagination ? pagination.offsetHeight : 64;
+          const bodyPadding = 40;
+          const available = window.innerHeight - cardRect.top - paginationHeight - bodyPadding - 16;
+          this.tableHeight = Math.max(400, available - headerHeight);
+          return;
+        }
         const windowHeight = window.innerHeight;
-        const headerHeight = 200; // 页面头部高度
-        const searchHeight = 100; // 搜索区域高度
-        const statsHeight = 120; // 统计卡片高度
-        const paginationHeight = 80; // 分页高度
-        const padding = 60; // 额外间距
-        this.tableHeight = windowHeight - headerHeight - searchHeight - statsHeight - paginationHeight - padding;
-        if (this.tableHeight < 300) this.tableHeight = 300;
+        this.tableHeight = windowHeight - 420;
+        if (this.tableHeight < 400) this.tableHeight = 400;
       });
     },
     
@@ -445,6 +452,7 @@ export default {
         console.error(error);
       }).finally(()=>{
         this.loading = false;
+        this.calculateTableHeight();
       })
     },
 
@@ -731,9 +739,17 @@ export default {
 /* 表格卡片样式 */
 .table-card {
   flex: 1;
+  min-height: 0;
   border-radius: 12px;
   border: none;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.table-card >>> .el-card__body {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }

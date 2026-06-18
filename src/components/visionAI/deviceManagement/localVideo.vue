@@ -132,7 +132,7 @@
             {{ formatDateTime(scope.row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" align="center" fixed="right">
+        <el-table-column label="操作" width="300" align="center" fixed="right">
           <template slot-scope="scope">
             <div class="action-buttons">
               <el-button
@@ -904,7 +904,8 @@ export default {
   display: flex;
   gap: 5px;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .form-tip {

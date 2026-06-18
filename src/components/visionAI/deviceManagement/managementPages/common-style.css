@@ -327,15 +327,9 @@ body .el-button--danger:hover {
   gap: 4px !important;
 }
 
-/* 隐藏冗余滚动条 */
+/* 表格横向溢出时可滚动；纵向滚动由 el-table 的 height 属性控制 */
 .management-page-container .el-table__body-wrapper {
   overflow-x: auto !important;
-  overflow-y: hidden !important;
-}
-
-.management-page-container .el-table {
-  height: auto !important;
-  max-height: none !important;
 }
 
 /* ========================================

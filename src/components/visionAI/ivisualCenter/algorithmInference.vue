@@ -370,6 +370,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import * as echarts from 'echarts';
 import { alertAPI, cameraAPI, skillAPI, systemMonitorAPI } from '@/components/service/VisionAIService.js';
+import { translateWeatherDesc, isChineseWeatherDesc } from '@/utils/weatherText.js';
 
 const LEVEL_MAP = { 1: 'urgent', 2: 'high', 3: 'medium', 4: 'low' };
 const LEVEL_TEXT_MAP = { 1: '一级预警', 2: '二级预警', 3: '三级预警', 4: '四级预警' };
@@ -571,12 +572,17 @@ export default {
           const cur = wttrData && wttrData.current_condition && wttrData.current_condition[0];
           if (cur) {
             const tempC = cur.temp_C || '--';
-            const desc = (cur.lang_zh && cur.lang_zh[0] && cur.lang_zh[0].value)
+            let desc = (cur.lang_zh && cur.lang_zh[0] && cur.lang_zh[0].value)
               || (cur.weatherDesc && cur.weatherDesc[0] && cur.weatherDesc[0].value) || '';
-            const humidity = cur.humidity || '--';
-            this.locationInfo.weather = `${desc} ${tempC}°C`;
-            this.locationInfo.airQuality = `湿度 ${humidity}%`;
-            weatherOk = true;
+            desc = translateWeatherDesc(desc);
+            if (!isChineseWeatherDesc(desc)) {
+              weatherOk = false;
+            } else {
+              const humidity = cur.humidity || '--';
+              this.locationInfo.weather = `${desc} ${tempC}°C`;
+              this.locationInfo.airQuality = `湿度 ${humidity}%`;
+              weatherOk = true;
+            }
           }
         } catch (_) { /* wttr.in 失败，走备用 */ }
 
