@@ -2015,7 +2015,6 @@ export default {
             >导出数据</el-button>
             <el-button 
               type="primary"
-              class="review-record-btn"
               size="small" 
               icon="el-icon-cpu"
               @click="goToReviewRecords"
@@ -2265,6 +2264,7 @@ export default {
       title="处理预警"
       :visible.sync="remarkDialogVisible"
       width="30%"
+      center
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
@@ -2286,7 +2286,7 @@ export default {
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="saveRemark">确认处理</el-button>
-        <el-button @click="finishProcessing">结束处理</el-button>
+        <el-button type="success" @click="finishProcessing">结束处理</el-button>
       </span>
     </el-dialog>
     
@@ -2295,6 +2295,7 @@ export default {
       title="上报确认"
       :visible.sync="reportDialogVisible"
       width="400px"
+      center
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
@@ -2304,7 +2305,7 @@ export default {
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeReportDialog">取 消</el-button>
-        <el-button type="primary" @click="confirmReport">确定上报</el-button>
+        <el-button type="warning" @click="confirmReport">确定上报</el-button>
       </span>
     </el-dialog>
     
@@ -2313,6 +2314,7 @@ export default {
       title="归档预警"
       :visible.sync="archiveDialogVisible"
       width="40%"
+      center
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       destroy-on-close
@@ -2372,7 +2374,7 @@ export default {
       
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeArchiveDialog">取 消</el-button>
-        <el-button type="primary" @click="confirmArchive" :loading="loading" :disabled="!selectedArchiveId">确认归档</el-button>
+        <el-button type="danger" @click="confirmArchive" :loading="loading" :disabled="!selectedArchiveId">确认归档</el-button>
       </span>
     </el-dialog>
     
@@ -2429,6 +2431,7 @@ export default {
       title="标记误报"
       :visible.sync="falseAlarmDialogVisible"
       width="30%"
+      center
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
@@ -2450,7 +2453,7 @@ export default {
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="falseAlarmDialogVisible = false; falseAlarmForm.reviewNotes = ''; archiveWarningId = ''">取消</el-button>
-        <el-button type="primary" @click="handleFalseAlarmArchive">确认误报</el-button>
+        <el-button type="warning" @click="handleFalseAlarmArchive">确认误报</el-button>
       </span>
     </el-dialog>
 
@@ -2497,7 +2500,7 @@ export default {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 16px 16px 24px 16px; /* 底部固定24px */
+  padding: 16px 16px 8px 16px; /* 减少底部内边距 */
   overflow: hidden; /* 防止内容区域产生滚动条 */
   box-sizing: border-box;
 }
@@ -2507,7 +2510,7 @@ export default {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 16px;
   padding: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.1);
   position: relative;
@@ -2520,7 +2523,7 @@ export default {
 
 .search-row {
   display: flex;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
   position: relative;
   z-index: 2;
@@ -2530,7 +2533,7 @@ export default {
 .select-wrapper,
 .input-wrapper {
   margin-right: 12px;
-  margin-bottom: 0;
+  margin-bottom: 8px;
 }
 
 .date-picker-wrapper {
@@ -2549,7 +2552,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 16px;
+  padding-top: 12px;
   border-top: 1px solid rgba(59, 130, 246, 0.1);
   position: relative;
   z-index: 2;
@@ -2562,35 +2565,21 @@ export default {
 
 .filter-buttons .el-button {
   margin-right: 8px;
-  margin-bottom: 0;
-  min-width: 96px;
-  height: 40px;
-  padding: 0 16px;
-  border-color: rgba(26, 109, 255, 0.1);
-  background: rgba(26, 109, 255, 0.1);
-  color: #1A6DFF;
+  margin-bottom: 8px;
+  border-color: #e4e7ed;
+  background: #f5f7fa;
+  color: #606266;
   font-weight: 500;
   transition: all 0.3s ease;
   border-radius: 6px;
 }
 
 .filter-buttons .el-button:hover {
-  background: rgba(26, 109, 255, 0.05);
-  border-color: rgba(26, 109, 255, 0.1);
-  color: #1A6DFF;
-  box-shadow: none;
-  transform: none;
-}
-
-.filter-buttons .el-button.is-disabled,
-.filter-buttons .el-button.is-disabled:hover,
-.filter-buttons .el-button:disabled,
-.filter-buttons .el-button:disabled:hover {
-  background: #F4F4F4 !important;
-  border-color: #F4F4F4 !important;
-  color: #CCCCCC !important;
-  box-shadow: none !important;
-  transform: none !important;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #3b82f6;
+  color: #1e3a8a;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
 }
 
 .filter-buttons .el-button.active {
@@ -2607,77 +2596,53 @@ export default {
 
 .action-buttons .el-button {
   margin-left: 8px;
-  margin-bottom: 0;
-  min-width: 96px;
-  height: 40px;
-  padding: 0 16px;
+  margin-bottom: 8px;
   font-weight: 500;
   transition: all 0.3s ease;
   border-radius: 6px;
 }
 
 .action-buttons .el-button--primary {
-  background: rgba(26, 109, 255, 0.1);
-  border: 1px solid rgba(26, 109, 255, 0.1);
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
   position: relative;
   overflow: hidden;
-  color: #1A6DFF;
-  font-weight: 500;
-  letter-spacing: 0;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .action-buttons .el-button--primary::before {
-  display: none;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease;
 }
 
 .action-buttons .el-button--primary:hover {
-  background: rgba(26, 109, 255, 0.05);
-  border-color: rgba(26, 109, 255, 0.1);
-  color: #1A6DFF;
-  box-shadow: none;
-  transform: none;
-}
-
-.action-buttons .el-button.is-disabled,
-.action-buttons .el-button.is-disabled:hover,
-.action-buttons .el-button:disabled,
-.action-buttons .el-button:disabled:hover {
-  background: #F4F4F4 !important;
-  border-color: #F4F4F4 !important;
-  color: #CCCCCC !important;
-  box-shadow: none !important;
-  transform: none !important;
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4);
+  transform: translateY(-2px);
 }
 
 .action-buttons .el-button--primary:hover::before {
-  display: none;
-}
-
-.action-buttons .review-record-btn {
-  background: #1A6DFF !important;
-  border: 1px solid #1A6DFF !important;
-  color: #FFFFFF !important;
-  font-weight: 500 !important;
-}
-
-.action-buttons .review-record-btn:hover,
-.action-buttons .review-record-btn:focus {
-  background: #66B1FF !important;
-  border-color: #66B1FF !important;
-  color: #FFFFFF !important;
-  box-shadow: none !important;
-  transform: none !important;
+  left: 100%;
 }
 
 /* 预警卡片样式 - 科技感设计 */
 .warning-cards-container {
   flex: 1;
-  height: auto; /* 由flex布局自动分配高度，避免挤压分页区底部留白 */
-  min-height: 0;
+  height: calc(100vh - 200px); /* 进一步减少预留空间，让分页栏紧贴底部 */
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 20px;
-  background: #ffffff;
+  padding: 20px;
+  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
   border-radius: 16px;
   margin: 1px;
   /* 自定义滚动条样式 - 灰色主题 */
@@ -2712,9 +2677,9 @@ export default {
   justify-content: flex-start;
   gap: 16px;
   margin: 0;
-  padding-top: 16px;
-  padding-bottom: 16px; /* 与顶部保持一致 */
-  align-content: center; /* 行内容垂直居中，顶部和底部留白一致 */
+  padding-bottom: 20px; /* 底部预留空间，避免最后一行卡片贴底 */
+  min-height: 100%; /* 确保网格填满容器 */
+  align-content: flex-start; /* 卡片从顶部开始排列 */
 }
 
 .warning-col {
@@ -3398,40 +3363,47 @@ export default {
 
 /* 科技感导出数据按钮样式 */
 .export-data-btn {
-  background: rgba(26, 109, 255, 0.1);
-  border: 1px solid rgba(26, 109, 255, 0.1);
-  color: #1A6DFF;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
   font-weight: 500;
+  position: relative;
+  overflow: hidden;
   transition: all 0.3s ease;
-  box-shadow: none;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .export-data-btn:hover {
-  background: rgba(26, 109, 255, 0.05);
-  border-color: rgba(26, 109, 255, 0.1);
-  color: #1A6DFF;
-  box-shadow: none;
-  transform: none;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  transform: translateY(-2px);
+  color: white;
 }
 
 .export-data-btn:focus {
-  background: rgba(26, 109, 255, 0.1);
-  border-color: rgba(26, 109, 255, 0.1);
-  color: #1A6DFF;
-  box-shadow: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  color: white;
 }
 
 .export-data-btn:active {
-  transform: none;
-  box-shadow: none;
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
 }
 
 .export-data-btn::before {
-  display: none;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
 }
 
 .export-data-btn:hover::before {
-  display: none;
+  left: 100%;
 }
 
 /* 对话框样式优化 - 科技感设计 */
@@ -3445,18 +3417,11 @@ export default {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
   padding: 16px 20px;
-  text-align: left !important;
 }
 
 .warning-management-container >>> .el-dialog__title {
-  color: #333333;
-  font-size: 18px;
+  color: #1f2937;
   font-weight: 600;
-  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  display: block;
-  text-align: left !important;
 }
 
 .warning-management-container >>> .el-dialog__close {
@@ -3474,30 +3439,19 @@ export default {
 }
 
 .warning-management-container >>> .el-button--primary {
-  background: #1A6DFF !important;
-  border: 1px solid #1A6DFF !important;
-  box-shadow: none !important;
-  color: white !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  border: none;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  color: white;
   font-weight: 500;
   transition: all 0.3s ease;
   border-radius: 6px;
 }
 
 .warning-management-container >>> .el-button--primary:hover {
-  background: #1A6DFF !important;
-  border-color: #1A6DFF !important;
-  box-shadow: none !important;
-  color: #ffffff !important;
-  transform: none !important;
-}
-
-.warning-management-container >>> .el-button--primary:focus,
-.warning-management-container >>> .el-button--primary:active {
-  background: #1A6DFF !important;
-  border-color: #1A6DFF !important;
-  color: #ffffff !important;
-  box-shadow: none !important;
-  transform: none !important;
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
 }
 
 .warning-management-container >>> .el-button--success {
@@ -3525,10 +3479,10 @@ export default {
 }
 
 .warning-management-container >>> .el-button--default:hover {
-  background: #ffffff;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-color: #3b82f6;
   color: #1e40af;
-  box-shadow: none;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
 .warning-management-container >>> .el-button--danger {
@@ -3605,26 +3559,16 @@ export default {
   justify-content: center;
   align-items: center;
   gap: 16px;
-  width: 100%;
-  max-width: 100%;
-  background: #ffffff;
-  padding: 24px; /* 上下左右统一24px，顶部和底部一致 */
+  background: white;
+  padding: 8px 24px; /* 减少上下内边距 */
   margin-top: 8px; /* 减少上边距 */
-  margin-bottom: 0; /* 与content-area底部24px保持精确间距 */
-  margin-right: 0;
-  margin-left: 0;
+  margin-bottom: 0; /* 取消底边距 */
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.1);
   flex-shrink: 0; /* 不允许收缩 */
-  height: auto;
+  height: 60px; /* 减少固定高度 */
   box-sizing: border-box;
-}
-
-.pagination-section >>> .el-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 /* 覆盖Element UI分页组件样式 */
@@ -3645,11 +3589,11 @@ export default {
 }
 
 .pagination-section >>> .el-pagination .el-pager li.active {
-  background: #1A6DFF !important;
-  border-color: #1A6DFF !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+  border-color: #3b82f6 !important;
   color: white !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
 .pagination-section >>> .el-pagination button {
@@ -3683,10 +3627,10 @@ export default {
 }
 
 .pagination-section >>> .el-pagination .el-pager li.number.active {
-  background: #1A6DFF !important;
-  border-color: #1A6DFF !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+  border-color: #3b82f6 !important;
   color: white !important;
-  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
 .pagination-section >>> .el-pagination .btn-prev,

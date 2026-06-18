@@ -204,7 +204,7 @@
              <i class="el-icon-upload"></i>
              <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
              <div class="el-upload__tip" slot="tip">
-               支持MP4、AVI、MOV等视频格式，建议使用H.264编码的MP4格式
+               支持 MP4、AVI、MOV 等视频格式，建议使用 H.264 编码的 MP4 格式；单文件不超过 200MB
              </div>
            </el-upload>
          </el-form-item>
@@ -302,10 +302,10 @@
       >
          <el-form-item label="推流地址">
            <el-input
-             :value="`video_${currentVideo ? currentVideo.id : ''}`"
+             :value="currentVideo && currentVideo.stream_id ? currentVideo.stream_id : '首次推流时自动生成'"
              disabled
            />
-           <span class="form-tip">推流ID固定为 video_视频ID，重启后地址不变</span>
+           <span class="form-tip">首次推流自动生成随机ID，之后固定不变</span>
          </el-form-item>
          <el-form-item label="推流帧率（可选）">
            <el-input-number
@@ -456,6 +456,16 @@ export default {
     
     // 文件选择处理
     handleFileChange(file, fileList) {
+      // 客户端预校验：单文件不超过 200MB，避免白等上传完后端再拒绝
+      const MAX_FILE_SIZE = 200 * 1024 * 1024;
+      if (file.size > MAX_FILE_SIZE) {
+        this.$message.error(`文件过大: ${(file.size / (1024 * 1024)).toFixed(2)}MB，最大允许 200MB`);
+        // 移除已加入的文件，保持列表干净
+        this.fileList = fileList.filter(f => f.uid !== file.uid);
+        this.uploadForm.file = null;
+        return;
+      }
+      
       this.uploadForm.file = file.raw;
       this.fileList = fileList;
       
@@ -486,6 +496,14 @@ export default {
              formData.append('stream_fps', this.uploadForm.stream_fps);
            }
           
+          // 按文件大小动态计算超时：基础 60s + 每 MB 预留 2s（按 ~500KB/s 弱网兜底），
+          // 再加 60s 给后端落盘 + cv2 解析；上限 10 分钟，下限 60 秒（文件最大 200MB）
+          const fileSizeMB = this.uploadForm.file.size / (1024 * 1024);
+          const dynamicTimeout = Math.min(
+            Math.max(60 * 1000, Math.ceil(fileSizeMB * 2 * 1000) + 60 * 1000),
+            10 * 60 * 1000
+          );
+          
           try {
              await localVideoAxios.post(
                '/api/v1/local-videos/upload',
@@ -494,6 +512,9 @@ export default {
                  headers: {
                    'Content-Type': 'multipart/form-data'
                  },
+                 timeout: dynamicTimeout,
+                 maxContentLength: Infinity,
+                 maxBodyLength: Infinity,
                  onUploadProgress: (progressEvent) => {
                    // 计算上传进度
                    if (progressEvent.total) {
@@ -754,7 +775,7 @@ export default {
 }
 
 .page-title i {
-  color: #1A6DFF;
+  color: #409EFF;
   margin-right: 10px;
 }
 
@@ -777,60 +798,62 @@ export default {
 }
 
 .stat-card {
-  border-radius: 16px !important;
-  border: 1px solid rgba(26, 109, 255, 0.4) !important;
-  background-color: rgba(26, 109, 255, 0.02) !important;
-  transition: all 0.3s ease !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 8px;
+  transition: all 0.3s;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px) !important;
-  box-shadow: 0 8px 32px rgba(26, 109, 255, 0.15) !important;
-  border-color: #1A6DFF !important;
-  background-color: rgba(26, 109, 255, 0.05) !important;
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.15);
+}
+
+.stat-card.streaming {
+  background: linear-gradient(135deg, #67C23A 0%, #85CE61 100%);
+  color: white;
+}
+
+.stat-card.streaming >>> .el-card__body {
+  padding: 20px;
 }
 
 .stat-content {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 20px;
-  gap: 16px;
+  gap: 20px;
 }
 
 .stat-icon {
-  width: 56px !important;
-  height: 56px !important;
-  border-radius: 12px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 24px !important;
-  background: rgba(26, 109, 255, 0.1) !important;
-  color: #1A6DFF !important;
-  border: 1px solid rgba(26, 109, 255, 0.2) !important;
+  font-size: 48px;
+  color: #409EFF;
+}
+
+.stat-card.streaming .stat-icon {
+  color: white;
 }
 
 .stat-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex: 1;
 }
 
 .stat-value {
-  font-size: 24px !important;
-  font-weight: 700 !important;
-  color: #1A6DFF !important;
-  line-height: 1.2 !important;
-  margin-bottom: 4px !important;
+  font-size: 32px;
+  font-weight: bold;
+  color: #303133;
+  line-height: 1.2;
+}
+
+.stat-card.streaming .stat-value {
+  color: white;
 }
 
 .stat-label {
-  font-size: 14px !important;
-  color: #333333 !important;
-  margin-top: 4px !important;
-  font-weight: 500 !important;
+  font-size: 14px;
+  color: #909399;
+  margin-top: 5px;
+}
+
+.stat-card.streaming .stat-label {
+  color: rgba(255,255,255,0.9);
 }
 
 /* 筛选栏 */
@@ -848,7 +871,6 @@ export default {
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
-  height: calc(100% - 330px);
 }
 
 .video-name-cell {

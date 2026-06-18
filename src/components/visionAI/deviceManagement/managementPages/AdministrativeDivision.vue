@@ -1,5 +1,5 @@
 <template>
-  <div class="administrative-division-container management-page-container">
+  <div class="administrative-division-container">
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
@@ -125,6 +125,7 @@
             element-loading-background="rgba(0, 0, 0, 0.8)"
             empty-text="暂无通道数据"
             style="width: 100%"
+            :height="$tableHeght"
             stripe
             border
             ref="channelListTable"
@@ -185,7 +186,6 @@
 
 <script>
 import DeviceService from "./service/DeviceService";
-import RegionChannelService from "./service/RegionChannelService";
 import RegionTree from "./dialogs/RegionTree.vue";
 import GbChannelSelect from "./dialogs/GbChannelSelect.vue";
 import UnusualRegionChannelSelect from "./dialogs/UnusualRegionChannelSelect.vue";
@@ -230,22 +230,27 @@ export default {
       this.getChannelList();
     },
     getChannelList() {
-      RegionChannelService.getCivilCodeChannelList({
-        page: this.currentPage,
-        count: this.count,
-        query: this.searchSrt,
-        online: this.online,
-        channelType: this.channelType,
-        civilCode: this.regionDeviceId
-      }, (res) => {
-        if (res.code === 0) {
-          this.total = res.data.total;
-          this.channelList = res.data.list;
+      this.$axios({
+        method: 'get',
+        url: `/api/common/channel/civilcode/list`,
+        params: {
+          page: this.currentPage,
+          count: this.count,
+          query: this.searchSrt,
+          online: this.online,
+          channelType: this.channelType,
+          civilCode: this.regionDeviceId
+        }
+      }).then((res) => {
+        if (res.data.code === 0) {
+          this.total = res.data.data.total;
+          this.channelList = res.data.data.list;
+          // 防止出现表格错位
           this.$nextTick(() => {
             this.$refs.channelListTable.doLayout();
           })
         }
-      }, (error) => {
+      }).catch((error) => {
         console.log(error);
       });
     },
@@ -279,11 +284,15 @@ export default {
       }
       this.loading = true
 
-      RegionChannelService.addChannelToRegion({
-        civilCode: regionDeviceId,
-        channelIds: channels
-      }, (res) => {
-        if (res.code === 0) {
+      this.$axios({
+        method: 'post',
+        url: `/api/common/channel/region/add`,
+        data: {
+          civilCode: regionDeviceId,
+          channelIds: channels
+        }
+      }).then((res) => {
+        if (res.data.code === 0) {
           this.$message.success({
             showClose: true,
             message: "保存成功"
@@ -292,14 +301,14 @@ export default {
         } else {
           this.$message.error({
             showClose: true,
-            message: res.msg
+            message: res.data.msg
           })
         }
         this.loading = false
-      }, (error) => {
+      }).catch((error) => {
         this.$message.error({
           showClose: true,
-          message: error.message || error
+          message: error
         })
         this.loading = false
       });
@@ -318,27 +327,32 @@ export default {
       }
       this.loading = true
 
-      RegionChannelService.deleteChannelFromRegion({
-        channelIds: channels
-      }, (res) => {
-        if (res.code === 0) {
+      this.$axios({
+        method: 'post',
+        url: `/api/common/channel/region/delete`,
+        data: {
+          channelIds: channels
+        }
+      }).then((res) => {
+        if (res.data.code === 0) {
           this.$message.success({
             showClose: true,
             message: "保存成功"
           })
           this.getChannelList()
+          // 刷新树节点
           this.$refs.regionTree.refresh(this.regionId)
         } else {
           this.$message.error({
             showClose: true,
-            message: res.msg
+            message: res.data.msg
           })
         }
         this.loading = false
-      }, (error) => {
+      }).catch((error) => {
         this.$message.error({
           showClose: true,
-          message: error.message || error
+          message: error
         })
         this.loading = false
       });
@@ -361,15 +375,22 @@ export default {
         this.regionParents = [];
       }
       this.initData();
-      RegionChannelService.getRegionPath(this.regionDeviceId, (res) => {
-        if (res.code === 0) {
+      // 获取regionDeviceId对应的节点信息
+      this.$axios({
+        method: 'get',
+        url: `/api/region/path`,
+        params: {
+          deviceId: this.regionDeviceId,
+        }
+      }).then((res) => {
+        if (res.data.code === 0) {
           let path = []
-          for (let i = 0; i < res.data.length; i++) {
-            path.push(res.data[i].name)
+          for (let i = 0; i < res.data.data.length; i++) {
+            path.push(res.data.data[i].name)
           }
           this.regionParents = path;
         }
-      }, (error) => {
+      }).catch((error) => {
         console.log(error);
       });
     },
@@ -390,9 +411,9 @@ export default {
 <style scoped>
 /* 主容器 */
 .administrative-division-container {
-  height: auto;
-  background-color: #ffffff !important;
-  padding: 0;
+  height: 100%;
+  background-color: #f5f7fa;
+  padding: 20px;
   box-sizing: border-box;
 }
 
@@ -401,36 +422,32 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   padding: 24px;
-  background: #ffffff;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 12px;
-  color: #333333;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
+  color: #1e40af;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .header-left .page-title {
-  font-size: 18px;
+  font-size: 28px;
   font-weight: 700;
   margin: 0 0 8px 0;
   display: flex;
   align-items: center;
-  color: #333333;
 }
 
 .header-left .page-title i {
   margin-right: 12px;
-  font-size: 20px;
-  color: #1A6DFF;
+  font-size: 32px;
 }
 
 .header-left .page-subtitle {
-  font-size: 14px;
-  opacity: 1;
+  font-size: 16px;
+  opacity: 0.9;
   margin: 0;
   font-weight: 400;
-  color: #6b7280;
 }
 
 .header-right {
@@ -442,133 +459,55 @@ export default {
 
 .header-right .el-button {
   margin-left: 12px;
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.1);
+  color: #1e40af;
   font-weight: 600;
 }
 
-/* 统一按钮样式由 common-style.css 处理 */
+.header-right .el-button:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #1e3a8a;
+}
 
 
 
 /* 主要容器 */
 .main-container {
-  height: auto;
-  background: #ffffff !important;
-  padding: 0;
-  display: flex;
-  align-items: stretch;
-}
-
-.content-main {
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  flex: 1;
-  min-width: 0;
-  background: #ffffff !important;
+  height: calc(100vh - 140px);
+  background: transparent;
 }
 
 /* 侧边栏 */
 .tree-aside {
-  margin-right: 16px;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
-  padding: 16px 0;
+  margin-right: 20px;
 }
 
 .tree-card {
   height: 100%;
+  border-radius: 12px;
   border: none;
-  box-shadow: none;
-  background: transparent;
-}
-
-.tree-card >>> .el-card__body {
-  padding: 0 !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .tree-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 24px 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
-  margin-bottom: 16px;
+  font-weight: 600;
+  color: #303133;
 }
 
 .tree-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #333333;
-}
-
-/* 右侧内容卡片通用优化 */
-.breadcrumb-card,
-.search-card,
-.table-card {
-  border-radius: 16px !important;
-  border: 1px solid #e5e7eb !important;
-  background: #ffffff !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
-}
-
-.table-card {
-  flex: 1; /* 让表格区域撑满高度 */
-  display: flex;
-  flex-direction: column;
-}
-
-.breadcrumb-card >>> .el-card__body,
-.search-card >>> .el-card__body,
-.table-card >>> .el-card__body {
-  padding: 20px !important;
-}
-
-.table-card >>> .el-card__body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.breadcrumb-content {
   display: flex;
   align-items: center;
-}
-
-.no-selection {
-  color: #1A6DFF !important;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-}
-
-.no-selection i {
-  color: #1A6DFF;
   font-size: 16px;
 }
 
-/* 列表卡片头部 */
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #333333;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.card-title i {
-  color: #1A6DFF;
+.tree-title i {
+  margin-right: 8px;
+  color: #F56C6C;
 }
 
 .tree-controls {
@@ -581,30 +520,50 @@ export default {
   margin-left: 8px;
 }
 
-/* 统一复选框主题色 */
-.tree-controls >>> .el-checkbox__input.is-checked .el-checkbox__inner,
-.tree-controls >>> .el-checkbox__input.is-indeterminate .el-checkbox__inner {
-  background-color: #1A6DFF !important;
-  border-color: #1A6DFF !important;
-}
-
-.tree-controls >>> .el-checkbox__input.is-checked + .el-checkbox__label {
-  color: #1A6DFF !important;
-}
-
 .tree-controls .el-checkbox__label {
   color: #606266;
   font-weight: 500;
 }
 
-/* 面包屑导航样式 */
+/* 主内容区 */
+.content-main {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 面包屑卡片 */
+.breadcrumb-card {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
 .breadcrumb-content {
   display: flex;
   align-items: center;
   min-height: 24px;
 }
 
+.no-selection {
+  color: #00c6ff;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.no-selection i {
+  margin-right: 8px;
+}
+
 /* 搜索区域 */
+.search-card {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
 .search-form {
   margin: 0;
 }
@@ -624,13 +583,46 @@ export default {
 }
 
 .search-item label {
-  font-weight: 600;
+  font-weight: 500;
+  color: #606266;
+  font-size: 14px;
+  min-width: max-content;
 }
 
-/* 搜索框图标对齐 */
+/* 搜索框布局混乱 */
 .search-item >>> .el-input__prefix {
-  top: 7px;
-  left: 5px;
+  top:7px;
+  left:5px;
+}
+
+/* 表格卡片 */
+.table-card {
+  flex: 1;
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  display: flex;
+  align-items: center;
+}
+
+.card-title i {
+  margin-right: 8px;
+  color: #409EFF;
 }
 
 .card-info {
@@ -639,11 +631,11 @@ export default {
 }
 
 .total-info {
-  background: rgba(26, 109, 255, 0.1) !important;
-  color: #1A6DFF !important;
+  background: #f0f9ff;
+  color: #1d4ed8;
   padding: 4px 12px;
   border-radius: 12px;
-  font-weight: 600 !important;
+  font-weight: 500;
 }
 
 /* 表格样式 */

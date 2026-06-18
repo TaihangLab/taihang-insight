@@ -1,13 +1,15 @@
 import axios from 'axios';
-import userService from '@/components/service/UserService'
-
 const config = require('../../../config/index.js');
+
 // 创建专用于visionAI模块的axios实例
 const visionAIAxios = axios.create({
   baseURL: config.API_BASE_URL,
   timeout: 15000,
   withCredentials: false,  // 将withCredentials设置为false，避免CORS错误
 });
+
+// 技能试跑、评测、批量创建计划等后端计算耗时较长
+const LONG_RUNNING_TIMEOUT = 300000;
 
 // 自定义参数序列化函数
 visionAIAxios.defaults.paramsSerializer = function (params) {
@@ -34,11 +36,10 @@ visionAIAxios.defaults.paramsSerializer = function (params) {
 visionAIAxios.interceptors.request.use(
   config => {
     // 这里可以添加token等通用请求头
-    const token = userService.getAdminToken()
+    const token = localStorage.getItem('token');
     if (token) {
-      config.headers['Authorization'] = 'Bearer ' + token;
+      config.headers['access-token'] = token;
     }
-    config.headers['clientid'] = '02bb9cfe8d7844ecae8dbe62b1ba971a';
     return config;
   },
   error => {
@@ -145,6 +146,8 @@ export const modelAPI = {
               model_status: model.model_status ? 'loaded' : 'unloaded',
               // 转换usage_status布尔值为字符串
               usage_status: model.usage_status ? 'using' : 'unused',
+              // 检测类别（模型标签）
+              classes: model.classes || [],
               created_at: model.created_at,
               updated_at: model.updated_at
             };
@@ -208,7 +211,9 @@ export const modelAPI = {
             // 添加模型配置
             model_config: model.model_config,
             // 相关技能
-            skill_classes: model.skill_classes
+            skill_classes: model.skill_classes,
+            // 检测类别（模型标签）
+            classes: model.classes || []
           };
 
           // 如果包含success字段（更新模型接口）
@@ -241,6 +246,16 @@ export const modelAPI = {
         console.error('更新模型失败:', error);
         throw error;
       });
+  },
+
+  // 获取模型的检测类别（模型标签）
+  getModelClasses(modelId) {
+    return visionAIAxios.get(`/api/v1/models/${modelId}/classes`);
+  },
+
+  // 全量覆盖模型的检测类别（模型标签）
+  updateModelClasses(modelId, classes) {
+    return visionAIAxios.put(`/api/v1/models/${modelId}/classes`, { classes });
   },
 
   // 删除模型
@@ -388,6 +403,133 @@ export const modelAPI = {
 
 // 添加技能服务API
 export const skillAPI = {
+  // 获取统一技能列表（聚合 视觉模型技能 / 技能编排 / 多模态大模型 三类）
+  getUnifiedSkills(params = {}) {
+    return visionAIAxios.get('/api/v1/skills', { params })
+      .then(response => response.data)
+      .catch(error => {
+        console.error('获取统一技能列表失败:', error);
+        throw error;
+      });
+  },
+
+  /** 解析 getAITaskSkillClasses 返回的技能类数组 */
+  parseSkillClassList(scRes) {
+    if (!scRes || !scRes.data) return [];
+    const d = scRes.data;
+    return d.skill_classes || d.data || [];
+  },
+
+  /** 分页拉取全部技能类，构建 name -> id 映射（编排技能关联 skill_class_id 用） */
+  async fetchSkillClassMap(params = {}) {
+    const scMap = {};
+    let page = 1;
+    const limit = 100;
+    for (;;) {
+      const scRes = await this.getAITaskSkillClasses({ ...params, page, limit });
+      const scList = this.parseSkillClassList(scRes);
+      scList.forEach(sc => {
+        if (sc.name) scMap[sc.name] = sc.id;
+      });
+      if (scList.length < limit) break;
+      page += 1;
+      if (page > 50) break;
+    }
+    return scMap;
+  },
+
+  /** 分页拉取统一技能（后端 limit 最大 100） */
+  async fetchAllUnifiedSkills(params = {}) {
+    const all = [];
+    let page = 1;
+    const limit = 100;
+    for (;;) {
+      const res = await this.getUnifiedSkills({ ...params, page, limit });
+      if (!res || res.code !== 0) break;
+      const batch = res.data || [];
+      all.push(...batch);
+      if (batch.length < limit || all.length >= (res.total || 0)) break;
+      page += 1;
+      if (page > 50) break;
+    }
+    return all;
+  },
+
+  parseLlmSkillList(llmRes) {
+    const raw = llmRes && llmRes.data;
+    if (Array.isArray(raw)) return raw;
+    if (raw && Array.isArray(raw.data)) return raw.data;
+    return [];
+  },
+
+  /** 运行计划技能选项：视觉/编排(skill_classes) + 大模型，选项带类型标签 */
+  async fetchRunPlanSkillOptions() {
+    const options = [];
+    const graphNames = new Set();
+    try {
+      let page = 1;
+      const pageSize = 100;
+      for (;;) {
+        const res = await visionAIAxios.get('/api/v1/skill-graphs', {
+          params: { page, page_size: pageSize, status: true }
+        });
+        const d = res.data || {};
+        const list = d.data || [];
+        list.forEach(g => {
+          if (g.skill_id) graphNames.add(g.skill_id);
+        });
+        if (list.length < pageSize || page * pageSize >= (d.total || 0)) break;
+        page += 1;
+      }
+    } catch (e) { /* ignore */ }
+
+    let page = 1;
+    const limit = 100;
+    for (;;) {
+      const scRes = await this.getAITaskSkillClasses({ page, limit, status: true });
+      const scList = this.parseSkillClassList(scRes);
+      scList.forEach(sc => {
+        const isGraph = graphNames.has(sc.name);
+        options.push({
+          ref: 'sc:' + sc.id,
+          kind: isGraph ? 'graph' : 'visual',
+          kindLabel: isGraph ? '编排' : '视觉',
+          skill_class_id: sc.id,
+          llm_skill_id: '',
+          label: sc.name_zh || sc.name,
+          name: sc.name
+        });
+      });
+      if (scList.length < limit) break;
+      page += 1;
+      if (page > 50) break;
+    }
+
+    page = 1;
+    for (;;) {
+      const llmRes = await this.getLlmSkillList({ page, limit, status: true });
+      const llmList = this.parseLlmSkillList(llmRes);
+      llmList.forEach(s => {
+        if (!s.skill_id) return;
+        options.push({
+          ref: 'llm:' + s.skill_id,
+          kind: 'llm',
+          kindLabel: '大模型',
+          skill_class_id: '',
+          llm_skill_id: s.skill_id,
+          label: s.skill_name || s.skill_id,
+          name: s.skill_id
+        });
+      });
+      const total = (llmRes.data && llmRes.data.total) || 0;
+      if (llmList.length < limit || page * limit >= total) break;
+      page += 1;
+      if (page > 50) break;
+    }
+
+    return options;
+  },
+
   // 获取技能列表
   getSkillList(params = {}) {
     // 处理分页参数和查询参数
@@ -1486,6 +1628,14 @@ export const cameraAPI = {
     }
 
     return visionAIAxios.get(`/api/v1/ai-tasks/camera/id/${cameraId}`);
+  },
+
+  /**
+   * 点位实时画面快照 URL（供抓图预览）
+   * @param {string|number} cameraId 摄像头(点位)ID
+   */
+  getCameraSnapshotUrl(cameraId) {
+    return `${config.API_BASE_URL}/api/v1/cameras/${cameraId}/snapshot?t=${Date.now()}`;
   }
 };
 
@@ -2376,371 +2526,7 @@ export const reviewSkillAPI = {
   }
 };
 
-// ===== 聊天助手相关接口 =====
-const chatAssistantAPI = {
-  /**
-   * 发送聊天消息
-   * @param {Object} chatData 聊天数据
-   * @param {string} chatData.message 用户消息内容
-   * @param {string} [chatData.conversation_id] 会话ID（可选）
-   * @param {string} [chatData.system_prompt] 系统提示词（可选）
-   * @param {boolean} [chatData.stream=true] 是否流式响应
-   * @param {number} [chatData.temperature] 温度参数（可选）
-   * @param {number} [chatData.max_tokens] 最大token数（可选）
-   * @param {number} [chatData.context_length=10] 上下文长度
-   * @param {string} [chatData.model] 指定模型（可选）
-   * @returns {Promise} axios响应
-   */
-  sendChatMessage(chatData) {
-    console.log('发送聊天消息:', chatData);
-    return visionAIAxios.post('/api/v1/chat/chat', {
-      message: chatData.message,
-      conversation_id: chatData.conversation_id || null,
-      system_prompt: chatData.system_prompt || null,
-      stream: chatData.stream !== false, // 默认为true
-      temperature: chatData.temperature || null,
-      max_tokens: chatData.max_tokens || null,
-      context_length: chatData.context_length || 10,
-      model: chatData.model || null
-    });
-  },
-
-  /**
-   * 创建流式聊天连接
-   * @param {Object} chatData 聊天数据
-   * @param {function} onMessage 接收消息回调
-   * @param {function} onError 错误回调
-   * @param {function} onComplete 完成回调
-   * @returns {Promise<Object>} 包含abort方法的控制器对象
-   */
-  async createChatStream(chatData, onMessage, onError, onComplete) {
-    try {
-      console.log('创建流式聊天连接:', chatData);
-
-      // 创建AbortController用于取消请求
-      const abortController = new AbortController();
-
-      // 构建JSON请求体（只传入必要的参数）
-      const requestBody = {
-        message: chatData.message,
-        stream: true,
-        system_prompt: chatData.system_prompt,
-        conversation_id: chatData.conversation_id || null
-      };
-
-      // 发起POST请求（使用完整的chat端点）
-      const response = await fetch(`${visionAIAxios.defaults.baseURL}/api/v1/chat/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/plain',
-          // 添加认证头（如果有）
-          ...(localStorage.getItem('token') && {
-            'access-token': localStorage.getItem('token')
-          })
-        },
-        body: JSON.stringify(requestBody),
-        signal: abortController.signal
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP错误! 状态: ${response.status}`);
-      }
-
-      // 获取流式读取器
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let fullResponse = '';
-      let buffer = '';
-
-      // 用于存储会话ID的变量
-      let conversationId = chatData.conversation_id;
-
-      // 创建返回的控制器对象
-      const controller = {
-        close: () => {
-          abortController.abort();
-          reader.cancel();
-        }
-      };
-
-      // 开始读取流式数据
-      const readStream = async () => {
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-
-            if (done) {
-              if (onComplete) onComplete(fullResponse, conversationId);
-              break;
-            }
-
-            // 解码数据块
-            const chunk = decoder.decode(value, { stream: true });
-            buffer += chunk;
-
-            // 处理完整的数据行
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || ''; // 保留最后不完整的行
-
-            for (const line of lines) {
-              if (line.trim() === '') continue;
-
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6); // 去掉 "data: " 前缀
-
-                if (data === '[DONE]') {
-                  if (onComplete) onComplete(fullResponse, conversationId);
-                  return;
-                }
-
-                try {
-                  const parsed = JSON.parse(data);
-
-                  // 提取会话ID（如果存在）
-                  if (parsed.conversation_id && !conversationId) {
-                    conversationId = parsed.conversation_id;
-                    console.log('获取到新的会话ID:', conversationId);
-                  }
-
-                  // 提取消息内容
-                  if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content) {
-                    const content = parsed.choices[0].delta.content;
-                    fullResponse += content;
-                    if (onMessage) onMessage(content, fullResponse, conversationId);
-                  }
-                } catch (parseError) {
-                  console.error('解析JSON数据错误:', parseError, 'data:', data);
-                }
-              }
-            }
-          }
-        } catch (error) {
-          if (error.name === 'AbortError') {
-            console.log('流式聊天请求被取消');
-            return;
-          }
-          console.error('读取流式数据错误:', error);
-          if (onError) onError(error);
-        }
-      };
-
-      // 开始读取
-      readStream();
-
-      return controller;
-
-    } catch (error) {
-      console.error('创建流式聊天连接失败:', error);
-      if (onError) onError(error);
-      throw error;
-    }
-  },
-
-  /**
-   * 获取会话列表
-   * @param {Object} params 查询参数
-   * @param {number} [params.limit=20] 返回会话数量限制
-   * @returns {Promise} axios响应
-   */
-  getChatConversations(params = {}) {
-    console.log('获取会话列表:', params);
-    return visionAIAxios.get('/api/v1/chat/conversations', {
-      params: {
-        limit: params.limit || 20
-      }
-    });
-  },
-
-  /**
-   * 获取会话消息
-   * @param {string} conversationId 会话ID
-   * @param {Object} params 查询参数
-   * @param {number} [params.limit=50] 返回消息数量限制
-   * @returns {Promise} axios响应
-   */
-  getChatMessages(conversationId, params = {}) {
-    console.log('获取会话消息:', conversationId, params);
-    return visionAIAxios.get(`/api/v1/chat/conversations/${conversationId}/messages`, {
-      params: {
-        limit: params.limit || 50
-      }
-    });
-  },
-
-  /**
-   * 删除会话
-   * @param {string} conversationId 会话ID
-   * @returns {Promise} axios响应
-   */
-  deleteChatConversation(conversationId) {
-    console.log('删除会话:', conversationId);
-    return visionAIAxios.delete(`/api/v1/chat/conversations/${conversationId}`);
-  },
-
-  /**
-   * 清空所有会话
-   * @returns {Promise} axios响应
-   */
-  clearAllChatConversations() {
-    console.log('清空所有会话');
-    return visionAIAxios.delete('/api/v1/chat/conversations');
-  },
-
-  /**
-   * 快速聊天（简化接口）
-   * @param {Object} chatData 聊天数据
-   * @param {string} chatData.message 用户消息内容
-   * @param {boolean} [chatData.stream=false] 是否流式响应
-   * @param {string} [chatData.system_prompt] 系统提示词（可选）
-   * @returns {Promise} axios响应
-   */
-  quickChat(chatData) {
-    console.log('快速聊天:', chatData);
-    const formData = new FormData();
-    formData.append('message', chatData.message);
-    formData.append('stream', chatData.stream || false);
-    if (chatData.system_prompt) {
-      formData.append('system_prompt', chatData.system_prompt);
-    }
-
-    return visionAIAxios.post('/api/v1/chat/quick', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-  },
-
-  /**
-   * 获取可用模型列表
-   * @returns {Promise} axios响应
-   */
-  getChatModels() {
-    console.log('获取聊天模型列表');
-    return visionAIAxios.get('/api/v1/chat/models');
-  },
-
-  /**
-   * 健康检查
-   * @returns {Promise} axios响应
-   */
-  checkChatHealth() {
-    console.log('聊天助手健康检查');
-    return visionAIAxios.get('/api/v1/chat/health');
-  },
-
-  // ==================== 分组管理 ====================
-
-  /**
-   * 创建分组
-   * @param {string} name - 分组名称
-   * @returns {Promise}
-   */
-  createGroup(name) {
-    const formData = new FormData();
-    formData.append('name', name);
-
-    return visionAIAxios.post('/api/v1/chat/groups', formData);
-  },
-
-  /**
-   * 获取分组列表
-   * @returns {Promise}
-   */
-  getGroups() {
-    return visionAIAxios.get('/api/v1/chat/groups');
-  },
-
-  /**
-   * 删除分组
-   * @param {string} groupId - 分组ID
-   * @returns {Promise}
-   */
-  deleteGroup(groupId) {
-    return visionAIAxios.delete(`/api/v1/chat/groups/${groupId}`);
-  },
-
-  /**
-   * 更新会话分组
-   * @param {string} conversationId - 会话ID
-   * @param {string|null} groupId - 分组ID，null表示移动到无分组
-   * @returns {Promise}
-   */
-  updateConversationGroup(conversationId, groupId) {
-    const formData = new FormData();
-    if (groupId) {
-      formData.append('group_id', groupId);
-    }
-
-    return visionAIAxios.put(`/api/v1/chat/conversations/${conversationId}/group`, formData);
-  },
-
-  /**
-   * 获取分组内的对话列表
-   * @param {string} groupId - 分组ID
-   * @param {Object} params - 查询参数
-   * @returns {Promise}
-   */
-  getGroupConversations(groupId, params = {}) {
-    return visionAIAxios.get(`/api/v1/chat/groups/${groupId}/conversations`, { params });
-  },
-
-  /**
-   * 自动生成对话标题
-   * @param {string} conversationId - 会话ID
-   * @returns {Promise}
-   */
-  autoGenerateTitle(conversationId) {
-    return visionAIAxios.post(`/api/v1/chat/conversations/${conversationId}/auto-title`);
-  },
-
-  /**
-   * 更新会话标题
-   * @param {string} conversationId - 会话ID
-   * @param {string} title - 新的标题
-   * @returns {Promise}
-   */
-  updateConversationTitle(conversationId, title) {
-    const formData = new FormData();
-    formData.append('title', title);
-    return visionAIAxios.put(`/api/v1/chat/conversations/${conversationId}/title`, formData);
-  },
-
-  /**
-   * 保存消息到会话（用于手动停止等场景）
-   * @param {string} conversationId - 会话ID
-   * @param {string} role - 消息角色：user、assistant、system
-   * @param {string} content - 消息内容
-   * @param {string} [messageId] - 消息ID（可选）
-   * @returns {Promise}
-   */
-  saveMessageToConversation(conversationId, role, content, messageId = null) {
-    const formData = new FormData();
-    formData.append('role', role);
-    formData.append('content', content);
-    if (messageId) {
-      formData.append('message_id', messageId);
-    }
-
-    return visionAIAxios.post(`/api/v1/chat/conversations/${conversationId}/save-message`, formData);
-  },
-
-  /**
-   * 停止生成并保存部分内容（模仿Cursor的停止机制）
-   * @param {string} conversationId - 会话ID
-   * @param {string} messageId - 助手消息ID
-   * @param {string} partialContent - 已生成的部分内容
-   * @returns {Promise}
-   */
-  stopGeneration(conversationId, messageId, partialContent = '') {
-    console.log('停止生成并保存:', conversationId, messageId, partialContent.length);
-    const formData = new FormData();
-    formData.append('message_id', messageId);
-    formData.append('partial_content', partialContent);
-
-    return visionAIAxios.post(`/api/v1/chat/conversations/${conversationId}/stop-generation`, formData);
-  }
-};
+// 聊天助手接口统一在 chatAssistant/services/chatApi.js 中维护
 
 // 预警档案管理API
 export const archiveAPI = {
@@ -3793,7 +3579,9 @@ export const realtimeMonitorAPI = {
   playChannel(channelId) {
     console.log('📤 播放通道 - 通道ID:', channelId);
 
-    return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`)
+    // 单独设置较短超时：通道离线/不存在时后端可能长时间挂起，
+    // 这里快速失败，避免前端长时间等待
+    return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`, { timeout: 8000 })
       .then(response => {
         console.log('📥 播放通道成功:', response.data);
         return response;
@@ -4083,13 +3871,182 @@ export const systemMonitorAPI = {
   }
 };
 
+/**
+ * 技能图编排 API - 节点拖拽式创建技能
+ */
+export const skillGraphAPI = {
+  // 节点面板：列出所有可用节点类型
+  getNodeTypes() {
+    return visionAIAxios.get('/api/v1/skill-graphs/node-types');
+  },
+  // 多模态大模型节点：可选模型列表（来自后端系统配置）
+  getVlmModels() {
+    return visionAIAxios.get('/api/v1/skill-graphs/vlm-models');
+  },
+  // 上传技能编排封面图（与视觉技能封面上传方式一致：multipart 文件）
+  uploadCoverFile(skillId, imageFile) {
+    const formData = new FormData();
+    formData.append('skill_id', skillId);
+    formData.append('file', imageFile);
+    return visionAIAxios.post('/api/v1/skill-graphs/upload-cover', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(response => response.data);
+  },
+  // 校验技能图（不落库）
+  validateGraph(graphJson) {
+    return visionAIAxios.post('/api/v1/skill-graphs/validate', { graph_json: graphJson });
+  },
+  // 在线试跑（image_base64 可选）
+  testRun(graphJson, imageBase64, roi) {
+    return visionAIAxios.post('/api/v1/skill-graphs/test-run', {
+      graph_json: graphJson, image_base64: imageBase64, roi: roi
+    }, { timeout: LONG_RUNNING_TIMEOUT });
+  },
+  // 自定义节点：代码模拟测试
+  testCustomCode(code, inputs, timeoutMs) {
+    const ms = timeoutMs || 10000;
+    return visionAIAxios.post('/api/v1/skill-graphs/test-custom-code', {
+      code: code, inputs: inputs || {}, timeout_ms: ms
+    }, { timeout: Math.max(ms + 5000, 30000) });
+  },
+  // 列表
+  listGraphs(params) {
+    return visionAIAxios.get('/api/v1/skill-graphs', { params });
+  },
+  // 创建
+  createGraph(data) {
+    return visionAIAxios.post('/api/v1/skill-graphs', data);
+  },
+  // 导出技能编排（标准 JSON 包）
+  exportGraph(skillId) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}/export`);
+  },
+  // 导入技能编排
+  importGraph(data) {
+    return visionAIAxios.post('/api/v1/skill-graphs/import', data);
+  },
+  // 详情
+  getGraph(skillId) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}`);
+  },
+  // 更新
+  updateGraph(skillId, data) {
+    return visionAIAxios.put(`/api/v1/skill-graphs/${skillId}`, data);
+  },
+  // 删除
+  deleteGraph(skillId) {
+    return visionAIAxios.delete(`/api/v1/skill-graphs/${skillId}`);
+  },
+  // 发布 / 下线
+  publishGraph(skillId) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/publish`);
+  },
+  unpublishGraph(skillId) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/unpublish`);
+  },
+  // 效果评测：用一批标注样本给技能图打分
+  evaluate(graphJson, samples) {
+    return visionAIAxios.post('/api/v1/skill-graphs/evaluate', {
+      graph_json: graphJson, samples: samples
+    }, { timeout: LONG_RUNNING_TIMEOUT });
+  },
+  // 历史版本列表
+  listVersions(skillId) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}/versions`);
+  },
+  // 回滚到指定版本
+  rollbackVersion(skillId, version) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/rollback`, { version: version });
+  },
+  // 调用监控统计
+  callStats(skillId, recent) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}/stats`, { params: { recent: recent || 20 } });
+  },
+  // 独立调用（传图分析，仅已发布）
+  invokeSkill(skillId, imageBase64, roi, source) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/invoke`, {
+      image_base64: imageBase64, roi: roi, source: source
+    });
+  }
+};
+
+/**
+ * 技能运行计划 API
+ * 对接后端 /api/v1/skill-run-plans
+ */
+export const runPlanAPI = {
+  // 运行计划列表
+  listPlans(params) {
+    return visionAIAxios.get('/api/v1/skill-run-plans', { params });
+  },
+  // 创建运行计划（批量创建：1技能 × N点位）
+  createPlan(data) {
+    return visionAIAxios.post('/api/v1/skill-run-plans', data, { timeout: LONG_RUNNING_TIMEOUT });
+  },
+  // 运行计划详情
+  getPlan(planId) {
+    return visionAIAxios.get(`/api/v1/skill-run-plans/${planId}`);
+  },
+  // 更新运行计划
+  updatePlan(planId, data) {
+    return visionAIAxios.put(`/api/v1/skill-run-plans/${planId}`, data);
+  },
+  // 启停单条计划
+  setEnabled(planId, enabled) {
+    return visionAIAxios.patch(`/api/v1/skill-run-plans/${planId}/enabled`, { enabled });
+  },
+  // 删除单条计划
+  deletePlan(planId) {
+    return visionAIAxios.delete(`/api/v1/skill-run-plans/${planId}`);
+  },
+  // 批量启停
+  batchEnable(planIds, enabled) {
+    return visionAIAxios.post('/api/v1/skill-run-plans/batch-enable', { plan_ids: planIds, enabled });
+  },
+  // 批量删除
+  batchDelete(planIds) {
+    return visionAIAxios.post('/api/v1/skill-run-plans/batch-delete', { plan_ids: planIds });
+  },
+  // 运行任务（计划派生子任务）列表
+  listRunTasks(params) {
+    return visionAIAxios.get('/api/v1/skill-run-plans/run-tasks', { params });
+  },
+  // 运行任务详情
+  getRunTask(taskId) {
+    return visionAIAxios.get(`/api/v1/skill-run-plans/run-tasks/${taskId}`);
+  },
+  // 运行任务日志（状态时间轴 + 异常记录）
+  getRunTaskLogs(taskId) {
+    return visionAIAxios.get(`/api/v1/skill-run-plans/run-tasks/${taskId}/logs`);
+  },
+  // 删除单条运行任务
+  deleteRunTask(taskId) {
+    return visionAIAxios.delete(`/api/v1/skill-run-plans/run-tasks/${taskId}`);
+  },
+  // 批量删除运行任务
+  batchDeleteRunTasks(taskIds) {
+    return visionAIAxios.post('/api/v1/skill-run-plans/run-tasks/batch-delete', { task_ids: taskIds });
+  },
+  // 点位组织树（供"点位选择"）
+  getOrganizations() {
+    return visionAIAxios.get('/api/v1/skill-run-plans/organizations');
+  },
+  // 创建运行计划时的默认预警配置
+  getDefaults() {
+    return visionAIAxios.get('/api/v1/skill-run-plans/defaults');
+  },
+  // 点位实时画面快照URL（供电子围栏绘制底图）
+  getCameraSnapshotUrl(cameraId) {
+    return `${config.API_BASE_URL}/api/v1/cameras/${cameraId}/snapshot?t=${Date.now()}`;
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
   cameraAPI,
   alertAPI,
   reviewSkillAPI,
-  chatAssistantAPI,
   archiveAPI,
   reviewRecordAPI,
   taskReviewAPI,
@@ -4097,5 +4054,7 @@ export default {
   realtimeDetectionAPI,
   mlPipelineAPI,
   systemMonitorAPI,
+  skillGraphAPI,
+  runPlanAPI,
   visionAIAxios
 };

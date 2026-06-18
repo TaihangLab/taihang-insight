@@ -804,6 +804,12 @@ export default {
   color: #333333;
 }
 
+/* 搜索框布局混乱 */
+.search-item >>> .el-input__prefix {
+  top:7px;
+  left:5px;
+}
+
 .search-actions {
   margin-left: auto;
   display: flex;

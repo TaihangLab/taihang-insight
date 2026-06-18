@@ -16,31 +16,6 @@
         <i class="el-icon-time"></i>
         <span>{{ currentTime }}</span>
       </div>
-
-      <!-- 用户信息 - 仅在已登录时显示 -->
-      <!--
-      <el-dropdown v-if="isLoggedIn" trigger="click" @command="handleCommand">
-        <div class="user-info">
-          <el-avatar :size="32" icon="el-icon-user" class="user-avatar"></el-avatar>
-          <span class="username">{{ username }}</span>
-          <i class="el-icon-arrow-down"></i>
-        </div>
-        <el-dropdown-menu slot="dropdown" class="user-dropdown">
-          <el-dropdown-item command="profile">
-            <i class="el-icon-user-solid"></i>
-            <span>个人中心</span>
-          </el-dropdown-item>
-          <el-dropdown-item command="password">
-            <i class="el-icon-key"></i>
-            <span>修改密码</span>
-          </el-dropdown-item>
-          <el-dropdown-item divided command="logout">
-            <i class="el-icon-switch-button"></i>
-            <span>退出登录</span>
-          </el-dropdown-item>
-        </el-dropdown-menu>
-      </el-dropdown>
-      -->
     </div>
 
     <!-- 修改密码对话框 -->
@@ -56,10 +31,7 @@ export default {
   name: "UiHeader",
   components: { changePasswordDialog },
   data() {
-    const user = userService.getUser() || {};
     return {
-      // username: (user.username != null ? user.username : '') || '访客',
-      // isLoggedIn: userService.getToken() != null,
       currentTime: '',
       currentMenuName: '',
       currentPageName: ''
@@ -68,7 +40,6 @@ export default {
   created() {
     this.updateTime();
     this.updateBreadcrumb();
-    // 每秒更新时间
     setInterval(this.updateTime, 1000);
   },
   watch: {
@@ -96,18 +67,27 @@ export default {
         '/monitoring/warningArchive': { menu: '监控预警', page: '预警档案' },
         '/monitoring/warningManage': { menu: '监控预警', page: '预警管理' },
         '/monitoring/intelligentReview': { menu: '监控预警', page: '智能复判' },
+        '/monitoring/reviewRecords': { menu: '监控预警', page: '复判记录' },
         '/deviceManage/camera': { menu: '设备配置', page: '摄像头' },
         '/deviceManage/localVideo': { menu: '设备配置', page: '本地视频' },
         '/modelManage/modelList': { menu: '模型管理', page: '模型列表' },
-        '/skillManage/deviceSkills': { menu: '技能管理', page: '视觉模型技能' },
-        '/skillManage/multimodalLlmSkills': { menu: '技能管理', page: '多模态大模型技能' },
+        '/modelManage/modelFactory': { menu: '模型管理', page: '模型工厂' },
+        '/skillManage/skillList': { menu: '技能管理', page: '技能列表' },
         '/skillManage/multimodalReview': { menu: '技能管理', page: '多模态大模型复判' },
+        '/skillManage/runPlan': { menu: '技能管理', page: '技能运行计划' },
+        '/skillManage/skillGraphEditor': { menu: '技能管理', page: '技能图编辑器' },
         '/systemManage/appSettings': { menu: '系统管理', page: '应用设置' },
+        '/systemManage/userManagement': { menu: '系统管理', page: '用户管理' },
+        '/systemManage/roleManagement': { menu: '系统管理', page: '角色管理' },
+        '/systemManage/tenantManagement': { menu: '系统管理', page: '租户管理' },
+        '/systemManage/departmentManagement': { menu: '系统管理', page: '部门管理' },
+        '/systemManage/positionManagement': { menu: '系统管理', page: '岗位管理' },
+        '/systemManage/knowledgeBase': { menu: '系统管理', page: '知识库' },
         '/mlPipeline': { menu: '模型工厂', page: '' },
         '/visualCenter': { menu: '可视中心', page: '可视中心首页' },
         '/algorithmInference': { menu: '可视中心', page: 'AI智算中心' }
       };
-      
+
       const route = routeMap[path];
       if (route) {
         this.currentMenuName = route.menu;
@@ -117,34 +97,6 @@ export default {
         this.currentPageName = '';
       }
     },
-    // handleCommand(command) {
-    //   switch (command) {
-    //     case 'profile':
-    //       this.$router.push('/systemManage/profile');
-    //       break;
-    //     case 'password':
-    //       this.$refs.changePasswordDialog.openDialog();
-    //       break;
-    //     case 'logout':
-    //       this.logout();
-    //       break;
-    //   }
-    // },
-    // logout() {
-    //   userService.clearToken();
-    //   // this.isLoggedIn = false;
-    //   this.username = '访客';
-
-    //   this.$message({
-    //     showClose: true,
-    //     message: '已安全退出登录',
-    //     type: 'success'
-    //   });
-
-    //   setTimeout(() => {
-    //     this.$router.push('/');
-    //   }, 500);
-    // }
   }
 }
 </script>
@@ -205,79 +157,5 @@ export default {
 
 .system-time i {
   font-size: var(--font-size-base);
-}
-
-/* 用户信息 */
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-base);
-  cursor: pointer;
-  border-radius: var(--border-radius-base);
-  transition: all var(--transition-base);
-}
-
-.user-info:hover {
-  background-color: var(--bg-secondary);
-}
-
-.user-avatar {
-  background: linear-gradient(135deg, var(--primary-color) 0%, #5a96f8 100%);
-  border: 2px solid var(--primary-color-light);
-}
-
-/* .username {
-  font-size: var(--font-size-base);
-  color: var(--text-primary);
-  font-weight: var(--font-weight-medium);
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-} */
-
-.user-info i.el-icon-arrow-down {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  transition: transform var(--transition-base);
-}
-
-.user-info:hover i.el-icon-arrow-down {
-  transform: rotate(180deg);
-}
-
-/* 用户下拉菜单 */
-.user-dropdown {
-  margin-top: var(--spacing-xs);
-}
-
-.user-dropdown >>> .el-dropdown-menu__item {
-  padding: 0 var(--spacing-base);
-  font-size: var(--font-size-base);
-  color: var(--text-primary);
-}
-
-.user-dropdown >>> .el-dropdown-menu__item i {
-  margin-right: var(--spacing-xs);
-  color: var(--text-secondary);
-}
-
-.user-dropdown >>> .el-dropdown-menu__item:hover {
-  background-color: var(--bg-secondary);
-  color: var(--primary-color);
-}
-
-.user-dropdown >>> .el-dropdown-menu__item:hover i {
-  color: var(--primary-color);
-}
-
-/* 分割线 */
-.user-dropdown >>> .el-dropdown-menu__item--divided {
-  border-top: 1px solid var(--border-color);
-}
-
-.user-dropdown >>> .el-dropdown-menu__item--divided:before {
-  display: none;
 }
 </style>

@@ -626,7 +626,7 @@ export default {
 
     <div class="main-content">
       <!-- 上方面板：预警趋势和预警类型TOP5 -->
-      <el-row :gutter="24">
+      <el-row :gutter="20">
         <!-- 左侧 - 预警趋势图表 -->
         <el-col :span="12">
           <div class="panel-box panel-equal-height">
@@ -649,7 +649,7 @@ export default {
       </el-row>
 
       <!-- 下方面板：预警状态、预警等级和设备预警数量TOP10 -->
-      <el-row :gutter="24" class="bottom-section">
+      <el-row :gutter="20" class="bottom-section">
         <!-- 左侧 - 预警状态饼图 -->
         <el-col :span="8">
           <div class="panel-box panel-bottom-equal-height">
@@ -712,12 +712,9 @@ export default {
 .visual-statistics {
   width: 100%;
   height: 100%;
-  background: #000814;
-  background-image: 
-    radial-gradient(circle at 0% 100%, rgba(0, 255, 255, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(0, 255, 255, 0.08) 0%, transparent 40%);
+  background: linear-gradient(135deg, #001529 0%, #000b18 100%);
   color: #fff;
-  padding: 0 24px 24px;
+  padding: 16px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -729,23 +726,12 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: transparent;
-  height: 70px;
-  padding: 0 24px;
+  background-color: #001529;
+  padding: 12px 20px;
   position: relative;
-  margin-bottom: 24px;
+  border-bottom: 1px solid #002140;
+  margin-bottom: 12px;
   flex-shrink: 0;
-  box-sizing: border-box;
-}
-
-.header-bar::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 24px;
-  right: 24px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.5), transparent);
 }
 
 .page-title {
@@ -753,20 +739,15 @@ export default {
   text-align: center;
   display: flex;
   justify-content: center;
-  align-items: center;
 }
 
 .page-title span {
-  font-size: 34px;
+  font-size: 24px;
   font-weight: bold;
   color: #fff;
-  letter-spacing: 4px;
+  letter-spacing: 1px;
   position: relative;
-  display: inline-block;
-  height: 36px;
-  line-height: 36px;
   padding: 0 10px;
-  transform: translateY(2px);
 }
 
 .page-title span::before,
@@ -774,13 +755,13 @@ export default {
   content: "";
   position: absolute;
   top: 50%;
-  width: 120px;
+  width: 60px;
   height: 2px;
   background: linear-gradient(
     90deg,
-    transparent,
-    #00ffff,
-    transparent
+    rgba(0, 255, 255, 0) 0%,
+    #00ffff 50%,
+    rgba(0, 255, 255, 0) 100%
   );
   transform: translateY(-50%);
 }
@@ -804,27 +785,23 @@ export default {
 .action-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 10px;
   width: 330px;
 }
 
 .time-filter >>> .el-radio-button__inner {
-  background-color: rgba(0, 255, 255, 0.05) !important;
-  border: 1px solid rgba(0, 255, 255, 0.3) !important;
+  background-color: rgba(6, 30, 93, 0.5) !important;
+  border-color: rgba(0, 255, 255, 0.3) !important;
   color: #7eaee5 !important;
-  padding: 6px 14px;
-  font-size: 12px;
-  transition: all 0.3s ease;
 }
 
 .time-filter
   >>> .el-radio-button__orig-radio:checked
   + .el-radio-button__inner {
-  background-color: #00FFFF !important;
-  border-color: #00FFFF !important;
-  color: #000814 !important;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.6) !important;
-  font-weight: bold !important;
+  background-color: rgba(0, 255, 255, 0.2) !important;
+  border-color: #00ffff !important;
+  color: #00ffff !important;
+  box-shadow: -1px 0 0 0 #00ffff !important;
 }
 
 .action-buttons >>> .el-button--primary {
@@ -858,39 +835,38 @@ export default {
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__header {
-  background: #ffffff !important;
-  border-bottom: 1px solid #e5e7eb !important;
-  padding: 16px 20px !important;
-  text-align: left !important;
+  background: rgba(6, 30, 93, 0.9);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+  padding: 12px 20px;
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__title {
-  color: #333333 !important;
-  font-size: 18px !important;
-  font-weight: bold !important;
-  display: block !important;
-  text-align: left !important;
+  color: #00ffff;
+  font-size: 16px;
+  font-weight: bold;
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__headerbtn .el-dialog__close {
-  color: #909399 !important;
-  transition: all 0.3s ease !important;
+  color: #7eaee5;
 }
 
-.visual-statistics >>> .custom-dialog .el-dialog__headerbtn:hover .el-dialog__close {
-  color: #333333 !important;
+.visual-statistics
+  >>> .custom-dialog
+  .el-dialog__headerbtn:hover
+  .el-dialog__close {
+  color: #00ffff;
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__body {
-  padding: 20px !important;
-  background: #ffffff !important;
+  background: transparent;
+  padding: 20px;
+  color: #7eaee5;
 }
 
 .visual-statistics >>> .custom-dialog .el-dialog__footer {
-  background: #ffffff !important;
-  padding: 16px 20px !important;
-  border-top: 1px solid #e5e7eb !important;
-  text-align: right !important;
+  background: rgba(6, 30, 93, 0.9);
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  padding: 10px 20px;
 }
 
 /* 日期选择器组件样式 */
@@ -1056,11 +1032,15 @@ export default {
 
 /* 面板盒子样式 */
 .panel-box {
-  background: rgba(6, 30, 93, 0.4);
-  border: 1px solid rgba(0, 255, 255, 0.2);
+  background: linear-gradient(
+    180deg,
+    rgba(6, 30, 93, 0.8) 0%,
+    rgba(4, 20, 63, 0.9) 100%
+  );
+  border: 1px solid rgba(35, 88, 148, 0.5);
   border-radius: 4px;
-  padding: 14px;
-  margin-bottom: 24px;
+  padding: 15px;
+  margin-bottom: 12px;
   position: relative;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -1073,26 +1053,12 @@ export default {
 }
 
 .panel-title {
-  color: #FFFFFF;
+  color: #00ffff;
   font-size: 16px;
-  font-weight: bold;
-  padding-left: 12px;
-  position: relative;
+  margin-bottom: 15px;
+  padding-left: 10px;
+  border-left: 3px solid #00ffff;
   text-align: left;
-  padding-top: 18px;
-  margin-bottom: 24px;
-  line-height: 16px;
-}
-
-.panel-title::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 18px;
-  height: 16px;
-  width: 3px;
-  background-color: #00FFFF;
-  border-radius: 1px;
 }
 
 .panel-equal-height {
@@ -1111,24 +1077,28 @@ export default {
 .statistics-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 24px;
-  gap: 24px;
+  margin-bottom: 12px;
+  gap: 16px;
   flex-shrink: 0;
 }
 
 .stat-card {
   flex: 1;
-  background: rgba(6, 30, 93, 0.4);
-  border: 1px solid rgba(0, 255, 255, 0.2);
+  background: linear-gradient(
+    180deg,
+    rgba(6, 30, 93, 0.8) 0%,
+    rgba(4, 20, 63, 0.9) 100%
+  );
+  border: 1px solid rgba(35, 88, 148, 0.5);
   border-radius: 4px;
-  padding: 14px;
+  padding: 15px;
   display: flex;
   align-items: center;
   transition: all 0.3s ease;
 }
 
 .stat-card:hover {
-  transform: none;
+  transform: translateY(-5px);
   border-color: rgba(0, 255, 255, 0.6);
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
 }
@@ -1190,7 +1160,7 @@ export default {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 12px;
 }
 
 /* 两行 el-row 各占一半 */
@@ -1363,14 +1333,14 @@ export default {
 /* 添加媒体查询确保在任何屏幕尺寸下内容都能充满整个宽度 */
 @media (min-width: 1200px) {
   .visual-statistics {
-    padding: 14px 24px 24px;
+    padding: 16px 0;
   }
 
   .header-bar,
   .statistics-header,
   .main-content {
-    padding-left: 0;
-    padding-right: 0;
+    padding-left: 16px;
+    padding-right: 16px;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -1379,35 +1349,21 @@ export default {
 
 /* 自定义对话框按钮样式 */
 .visual-statistics >>> .custom-dialog .el-button--primary {
-  background: #1A6DFF !important;
-  border: none !important;
-  box-shadow: 0 2px 6px rgba(26, 109, 255, 0.3) !important;
-  color: white !important;
-  font-weight: 500 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
-  padding: 10px 24px !important;
-  font-size: 14px !important;
-  line-height: 1 !important;
+  background-color: rgba(0, 255, 255, 0.2) !important;
+  border-color: #00ffff !important;
+  color: #00ffff !important;
 }
 
-.visual-statistics >>> .custom-dialog .el-button--primary:hover {
-  background: rgba(26, 109, 255, 0.9) !important;
+.visual-statistics >>> .custom-dialog .el-button {
+  background-color: rgba(6, 30, 93, 0.5) !important;
+  border-color: rgba(0, 255, 255, 0.3) !important;
+  color: #7eaee5 !important;
 }
 
-.visual-statistics >>> .custom-dialog .el-button--default {
-  background: #F4F4F4 !important;
-  border: none !important;
-  color: #333333 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
-  padding: 10px 24px !important;
-  font-size: 14px !important;
-  line-height: 1 !important;
-}
-
-.visual-statistics >>> .custom-dialog .el-button--default:hover {
-  background: rgba(244, 244, 244, 0.9) !important;
+.visual-statistics >>> .custom-dialog .el-button:hover {
+  background-color: rgba(0, 255, 255, 0.1) !important;
+  border-color: #00ffff !important;
+  color: #00ffff !important;
 }
 
 .visual-statistics >>> .date-picker-dropdown .el-date-table td.next-month span,

@@ -21,8 +21,7 @@ export default {
     }
   },
   created() {
-    // 🔓 已移除强制登录检查 - 允许访客访问所有页面
-    // 用户可以选择在登录页面登录，登录后可以使用用户相关功能
+    // 已移除强制登录检查 - 允许访客访问所有页面
     console.log('系统启动 - 无需登录即可访问');
     if (userService.getToken() != null) {
       console.log('检测到已登录用户:', userService.getUser().username);
@@ -42,18 +41,42 @@ export default {
 </script>
 
 <style>
-/* 全局样式重置 */
+/* 整站一屏：标题与内容一体，自适应填满、不溢出 */
 html,
 body {
   margin: 0;
   padding: 0;
   height: 100%;
   width: 100%;
-  overflow-x: hidden;
+  overflow: hidden !important;
   background-color: var(--bg-secondary);
   font-family: var(--font-family-base);
   color: var(--text-primary);
   box-sizing: border-box;
+}
+html {
+  height: 100vh;
+  max-height: 100vh;
+}
+body {
+  max-height: 100vh;
+}
+#app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  min-height: 0;
+  max-height: 100vh;
+  width: 100%;
+  overflow: hidden !important;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+#app > * {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
 }
 *,
 *::before,

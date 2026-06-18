@@ -31,8 +31,10 @@
 </template>
 
 <script>
+
 import ShowErrorData from './importChannelShowErrorData.vue'
-import userService from "../service/UserService";
+
+import userService from "../../../../service/UserService";
 
 export default {
   name: "importChannel",
@@ -58,6 +60,31 @@ export default {
     openDialog: function (callback) {
       this.showDialog = true;
       this.submitCallback = callback;
+    },
+    onSubmit: function () {
+      console.log("onSubmit");
+      console.log(this.form);
+      this.$axios({
+        method:"post",
+        url:`/api/platform/catalog/${!this.isEdit? "add":"edit"}`,
+        data: this.form
+      })
+        .then((res)=> {
+          if (res.data.code === 0) {
+            console.log("添加/修改成功")
+            if (this.submitCallback)this.submitCallback()
+          }else {
+            this.$message({
+              showClose: true,
+              message: res.data.msg,
+              type: "error",
+            });
+          }
+          this.close();
+        })
+        .catch((error)=> {
+          console.log(error);
+        });
     },
     close: function () {
       this.showDialog = false;

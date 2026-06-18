@@ -48,11 +48,12 @@
           
           <!-- 检测框OSD叠加层 -->
           <detection-overlay
-            v-if="selectedTaskId && detections.length > 0"
+            v-if="selectedTaskId"
             :container-width="containerWidth"
             :container-height="containerHeight"
             :video-width="videoWidth"
             :video-height="videoHeight"
+            :frame-timestamp="frameTimestamp"
             :detections="detections">
           </detection-overlay>
         </div>
@@ -116,6 +117,7 @@ export default {
       selectedTaskId: null,
       wsConnection: null,
       detections: [],
+      frameTimestamp: 0,
       videoWidth: 1920,
       videoHeight: 1080,
       containerWidth: 640,
@@ -160,6 +162,7 @@ export default {
       
       // 清空检测结果
       this.detections = []
+      this.frameTimestamp = 0
       
       // 如果选择了任务，建立新连接
       if (taskId) {
@@ -175,6 +178,7 @@ export default {
       this.wsConnection = createDetectionWebSocket(taskId, {
         onMessage: (parsed) => {
           this.detections = parsed.detections
+          this.frameTimestamp = parsed.frameTimestamp
           this.videoWidth = parsed.frameSize.width
           this.videoHeight = parsed.frameSize.height
         },
@@ -221,6 +225,7 @@ export default {
     cleanup() {
       this.disconnectWebSocket()
       this.detections = []
+      this.frameTimestamp = 0
       this.selectedTaskId = null
     }
   }

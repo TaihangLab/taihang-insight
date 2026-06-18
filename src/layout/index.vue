@@ -12,31 +12,33 @@
 
       <!-- 主内容区 -->
       <el-main class="layout-content">
-        <router-view></router-view>
+        <div class="layout-main-inner">
+          <router-view :key="$route.fullPath"></router-view>
+        </div>
       </el-main>
     </div>
-    <!-- 太行智能助手 -->
-    <intelligent-assistant />
+    <!-- 太行·问道助手 -->
+    <taihang-assistant />
   </div>
 </template>
 
 <script>
 import SideMenu from "./SideMenu.vue";
 import uiHeader from "./UiHeader.vue";
-import IntelligentAssistant from "../components/visionAI/chatAssistant/IntelligentAssistant.vue";
+import TaihangAssistant from "../components/visionAI/chatAssistant/TaihangAssistant.vue";
 
 export default {
   name: "index",
   components: {
     SideMenu,
     uiHeader,
-    IntelligentAssistant,
+    TaihangAssistant
   },
   created() {},
   data() {
     return {
-      fixedHeader: true, // 固定 Header : boolean
-      fixSiderbar: true, // 固定左侧菜单栏 ： boolean
+      fixedHeader: true,
+      fixSiderbar: true,
     };
   },
   methods: {
@@ -65,6 +67,7 @@ export default {
   transition: margin-left var(--transition-base);
   height: 100vh;
   overflow: hidden;
+  min-height: 0;
 }
 
 .layout-collapsed {
@@ -79,15 +82,25 @@ export default {
   padding: 0;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 /* 主内容区 */
 .layout-content {
-  flex: 1;
+  flex: 1 1 0;
+  min-height: 0;
   background-color: var(--bg-secondary);
-  /* padding: var(--spacing-lg); */
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden !important;
+  padding: 0;
+}
+
+.layout-main-inner {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
 }
 
 /* 内容区滚动条样式 */
@@ -131,8 +144,15 @@ export default {
   display: flex;
   gap: var(--spacing-sm);
 }
+</style>
+<style>
+/* 子页面根节点填满内容区 */
+.layout-main-inner > * {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden !important;
+}
 
-/* 动画效果 */
 .fade-enter {
   visibility: hidden;
   opacity: 0;

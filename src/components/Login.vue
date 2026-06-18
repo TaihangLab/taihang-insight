@@ -40,31 +40,6 @@
 
         <!-- 登录表单 -->
         <div class="login-form">
-          <!-- 租户选择框 -->
-          <div class="input-group">
-            <div class="input-wrapper" :class="{'focused': tenantSelectFocused}">
-              <i class="input-icon fa fa-building"></i>
-              <select 
-                v-model="selectedTenant" 
-                class="tech-select"
-                @focus="tenantSelectFocused = true"
-                @blur="tenantSelectFocused = false"
-                @change="onTenantChange"
-              >
-                <option value="" disabled>请选择租户</option>
-                <option 
-                  v-for="tenant in tenantList" 
-                  :key="tenant.tenantNumber" 
-                  :value="tenant.tenantNumber"
-                >
-                  {{ tenant.companyName }}
-                </option>
-              </select>
-              <i class="select-arrow fa fa-chevron-down"></i>
-              <div class="input-border"></div>
-            </div>
-          </div>
-
           <!-- 用户名输入框 -->
           <div class="input-group">
             <div class="input-wrapper">
@@ -143,10 +118,7 @@ export default {
       showPassword: false,
       loginLoading: false,
       username: '',
-      password: '',
-      selectedTenant: '',
-      tenantSelectFocused: false,
-      tenantList: []
+      password: ''
     }
   },
   created(){
@@ -157,8 +129,6 @@ export default {
         that.login();
       }
     }
-    // 页面加载时获取租户列表
-    this.getTenantList();
   },
   methods:{
     // 获取粒子样式
@@ -168,69 +138,6 @@ export default {
         top: Math.random() * 100 + '%',
         animationDelay: Math.random() * 3 + 's',
         animationDuration: (Math.random() * 3 + 2) + 's'
-      }
-    },
-
-    // 获取租户列表
-    getTenantList() {
-      // 直接使用写死的租户数据
-      this.tenantList = this.getMockTenantList();
-      this.loadingTenants = false;
-    },
-
-    // 模拟租户数据（从租户管理模块提取）
-    getMockTenantList() {
-      return [
-        {
-          tenantNumber: '000000',
-          companyName: 'XXX有限公司',
-          contactPerson: '管理组',
-          status: true
-        },
-        {
-          tenantNumber: '952742',
-          companyName: '123',
-          contactPerson: '123',
-          status: true
-        },
-        {
-          tenantNumber: '415387',
-          companyName: '6666',
-          contactPerson: '66',
-          status: true
-        },
-        {
-          tenantNumber: '297659',
-          companyName: '16888',
-          contactPerson: '16888',
-          status: true
-        },
-        {
-          tenantNumber: '789133',
-          companyName: '测试租户企业名称',
-          contactPerson: '测试租户联系人',
-          status: true
-        },
-        {
-          tenantNumber: '646214',
-          companyName: 'test999',
-          contactPerson: 'test999',
-          status: true
-        },
-        {
-          tenantNumber: '252800',
-          companyName: 'ce',
-          contactPerson: 'ce',
-          status: true
-        }
-      ];
-    },
-
-    // 租户选择变化处理
-    onTenantChange() {
-      const selectedTenantData = this.tenantList.find(tenant => tenant.tenantNumber === this.selectedTenant);
-      if (selectedTenantData) {
-        console.log('选择的租户:', selectedTenantData.companyName);
       }
     },
 
@@ -246,32 +153,21 @@ export default {
       }
     },
 
+    //登录逻辑 - 模拟登录并保持登录状态
     login(){
-      if(this.selectedTenant === '') {
-        this.$message({
-          showClose: true,
-          message: '请选择租户',
-          type: 'warning'
-        });
-        return;
-      }
       if(this.username!='' && this.password!=''){
         this.isLoging = true;
         
+        // 模拟登录延迟
         setTimeout(() => {
-          const timestamp = Date.now();
-          const token = `mock-token-${this.username}-${this.selectedTenant}-${timestamp}`;
-          
+          // 保存用户信息和登录状态
           const userInfo = {
             username: this.username,
-            tenantNumber: this.selectedTenant,
             loginTime: new Date().toISOString()
           };
           
           userService.setUser(userInfo);
-          userService.setToken(token);
-          
-          console.log('登录成功，Token已保存:', token);
+          userService.setToken('mock-login-token');
           
           this.$message({
             showClose: true,
@@ -313,11 +209,11 @@ export default {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(135deg, #0c1929 0%, #1a2f47 50%, #2d4563 100%);
+  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-family-base);
+  font-family: 'Microsoft YaHei', Arial, sans-serif;
 }
 
 /* 粒子背景效果 */
@@ -335,9 +231,9 @@ export default {
   position: absolute;
   width: 2px;
   height: 2px;
-  background: var(--primary-color);
+  background: #00d4ff;
   border-radius: 50%;
-  box-shadow: 0 0 10px var(--primary-color);
+  box-shadow: 0 0 10px #00d4ff;
   animation: float 3s ease-in-out infinite;
 }
 
@@ -372,7 +268,7 @@ export default {
 .login-decoration {
   flex: 1;
   position: relative;
-  background: linear-gradient(45deg, rgba(65, 133, 247, 0.1), rgba(90, 150, 248, 0.1));
+  background: linear-gradient(45deg, rgba(0, 212, 255, 0.1), rgba(183, 33, 255, 0.1));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -387,7 +283,7 @@ export default {
 
 .line {
   position: absolute;
-  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+  background: linear-gradient(90deg, transparent, #00d4ff, transparent);
   opacity: 0.6;
 }
 
@@ -430,7 +326,7 @@ export default {
 .tech-circle {
   width: 300px;
   height: 300px;
-  border: 2px solid rgba(65, 133, 247, 0.3);
+  border: 2px solid rgba(0, 212, 255, 0.3);
   border-radius: 50%;
   position: relative;
   animation: rotate 20s linear infinite;
@@ -439,7 +335,7 @@ export default {
 .inner-circle {
   width: 200px;
   height: 200px;
-  border: 1px solid rgba(90, 150, 248, 0.3);
+  border: 1px solid rgba(183, 33, 255, 0.3);
   border-radius: 50%;
   position: absolute;
   top: 50%;
@@ -488,12 +384,12 @@ export default {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  color: var(--primary-color);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  text-shadow: 0 0 15px rgba(65, 133, 247, 0.6);
-  border-right: 3px solid rgba(65, 133, 247, 0.4);
-  padding-right: var(--spacing-sm);
+  color: #00d4ff;
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+  border-right: 3px solid rgba(0, 212, 255, 0.4);
+  padding-right: 12px;
   height: 70px;
   gap: 4px;
 }
@@ -502,13 +398,13 @@ export default {
   width: 50px;
   height: 50px;
   object-fit: contain;
-  margin-right: var(--spacing-xs);
-  filter: drop-shadow(0 0 10px rgba(65, 133, 247, 0.5));
-  transition: all var(--transition-base);
+  margin-right: 8px;
+  filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
+  transition: all 0.3s ease;
 }
 
 .brand-logo:hover {
-  filter: drop-shadow(0 0 15px rgba(65, 133, 247, 0.8));
+  filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.8));
   transform: scale(1.05);
 }
 
@@ -520,9 +416,9 @@ export default {
 }
 
 .brand-name .brand-dot {
-  font-size: var(--font-size-xs);
-  color: var(--primary-color);
-  text-shadow: 0 0 15px rgba(65, 133, 247, 0.8);
+  font-size: 12px;
+  color: #00BFFF;
+  text-shadow: 0 0 15px rgba(0, 191, 255, 0.8);
   margin: 0;
   line-height: 1;
   align-self: center;
@@ -539,26 +435,26 @@ export default {
 
 .platform-title {
   font-size: 28px;
-  font-weight: var(--font-weight-semibold);
+  font-weight: 600;
   color: #ffffff;
   margin: 0;
   letter-spacing: 2px;
-  text-shadow: 0 0 20px rgba(65, 133, 247, 0.5);
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
 }
 
 .platform-subtitle {
-  font-size: var(--font-size-sm);
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.7);
   margin: 0;
   letter-spacing: 0.5px;
-  text-shadow: 0 0 10px rgba(65, 133, 247, 0.3);
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
 }
 
 .subtitle-highlight {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  color: var(--primary-color);
-  text-shadow: 0 0 15px rgba(65, 133, 247, 0.6);
+  font-size: 16px;
+  font-weight: 500;
+  color: #00d4ff;
+  text-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
 }
 
 /* 表单样式 */
@@ -567,111 +463,74 @@ export default {
 }
 
 .input-group {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 25px;
 }
 
 .input-wrapper {
   position: relative;
   background: rgba(255, 255, 255, 0.08);
-  border-radius: var(--input-border-radius);
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all var(--transition-base);
+  transition: all 0.3s ease;
   overflow: hidden;
 }
 
 .input-wrapper:hover {
   background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(65, 133, 247, 0.3);
+  border-color: rgba(0, 212, 255, 0.3);
 }
 
 .input-wrapper.focused {
   background: rgba(255, 255, 255, 0.15);
-  border-color: var(--primary-color);
-  box-shadow: 0 0 20px rgba(65, 133, 247, 0.3);
+  border-color: #00d4ff;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
 }
 
 .input-icon {
   position: absolute;
-  left: var(--spacing-base);
+  left: 15px;
   top: 50%;
   transform: translateY(-50%);
   color: rgba(255, 255, 255, 0.6);
-  font-size: var(--font-size-base);
-  transition: color var(--transition-base);
+  font-size: 16px;
+  transition: color 0.3s ease;
   z-index: 2;
 }
 
 .input-wrapper.focused .input-icon {
-  color: var(--primary-color);
+  color: #00d4ff;
 }
 
-.tech-input, .tech-select {
+.tech-input {
   width: 100%;
-  height: var(--button-height-md);
+  height: 55px;
   padding: 0 50px 0 45px;
   background: transparent;
   border: none;
   outline: none;
   color: #ffffff;
-  font-size: var(--font-size-base);
-  font-family: var(--font-family-base);
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+  font-size: 16px;
+  font-family: inherit;
 }
 
 .tech-input::placeholder {
   color: rgba(255, 255, 255, 0.5);
 }
 
-.tech-select {
-  cursor: pointer;
-  padding-right: 45px;
-}
-
-.tech-select option {
-  background-color: #1a1a2e;
-  color: #ffffff;
-  padding: 10px;
-}
-
-.tech-select option:hover {
-  background-color: rgba(0, 212, 255, 0.2);
-}
-
-
-
-.select-arrow {
-  position: absolute;
-  right: var(--spacing-base);
-  top: 50%;
-  transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.6);
-  font-size: var(--font-size-sm);
-  pointer-events: none;
-  transition: color var(--transition-base), transform var(--transition-base);
-  z-index: 2;
-}
-
-.input-wrapper.focused .select-arrow {
-  color: var(--primary-color);
-  transform: translateY(-50%) rotate(180deg);
-}
-
 .password-toggle {
   position: absolute;
-  right: var(--spacing-base);
+  right: 15px;
   top: 50%;
   transform: translateY(-50%);
   color: rgba(255, 255, 255, 0.6);
-  font-size: var(--font-size-base);
+  font-size: 16px;
   cursor: pointer;
-  transition: color var(--transition-base);
+  transition: color 0.3s ease;
   z-index: 2;
 }
 
 .password-toggle:hover {
-  color: var(--primary-color);
+  color: #00d4ff;
 }
 
 .input-border {
@@ -680,8 +539,8 @@ export default {
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--primary-color), var(--primary-color-hover));
-  transition: width var(--transition-base);
+  background: linear-gradient(90deg, #00d4ff, #b721ff);
+  transition: width 0.3s ease;
 }
 
 .input-wrapper.focused .input-border {
@@ -690,28 +549,28 @@ export default {
 
 /* 登录按钮 */
 .login-btn-container {
-  margin-top: var(--spacing-xl);
+  margin-top: 35px;
 }
 
 .tech-login-btn {
   position: relative;
   width: 100%;
-  height: var(--button-height-lg);
-  background: linear-gradient(45deg, var(--primary-color), var(--primary-color-hover));
+  height: 55px;
+  background: linear-gradient(45deg, #00d4ff, #b721ff);
   border: none;
-  border-radius: var(--button-border-radius);
+  border-radius: 12px;
   color: #ffffff;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+  font-size: 18px;
+  font-weight: 600;
   cursor: pointer;
   overflow: hidden;
-  transition: all var(--transition-base);
-  box-shadow: 0 10px 30px rgba(65, 133, 247, 0.3);
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
 }
 
 .tech-login-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 40px rgba(65, 133, 247, 0.4);
+  box-shadow: 0 15px 40px rgba(0, 212, 255, 0.4);
 }
 
 .tech-login-btn:active {
@@ -730,7 +589,7 @@ export default {
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left var(--transition-slow);
+  transition: left 0.5s ease;
 }
 
 .tech-login-btn:hover .btn-glow {
@@ -754,13 +613,13 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-xs);
+  gap: 8px;
   color: rgba(255, 255, 255, 0.6);
-  font-size: var(--font-size-sm);
+  font-size: 14px;
 }
 
 .security-info i {
-  color: var(--primary-color);
+  color: #00d4ff;
 }
 
 /* 响应式设计 */
@@ -788,9 +647,9 @@ export default {
   .brand-name {
     flex-direction: row;
     border-right: none;
-    border-bottom: 3px solid rgba(65, 133, 247, 0.4);
+    border-bottom: 3px solid rgba(0, 212, 255, 0.4);
     padding-right: 0;
-    padding-bottom: var(--spacing-xs);
+    padding-bottom: 8px;
     height: auto;
     width: 100%;
     justify-content: center;

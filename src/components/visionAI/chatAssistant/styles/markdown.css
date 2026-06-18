@@ -1,0 +1,150 @@
+/* 助手回答 Markdown 正文样式（v-html 内容，需全局类） */
+
+.th-md {
+  font-size: 15px;
+  line-height: 1.75;
+  color: #0d0d0d;
+  word-break: break-word;
+}
+
+.th-md > :first-child { margin-top: 0; }
+.th-md > :last-child { margin-bottom: 0; }
+
+.th-md p {
+  margin: 0 0 12px;
+}
+
+.th-md h1,
+.th-md h2,
+.th-md h3,
+.th-md h4,
+.th-md h5,
+.th-md h6 {
+  margin: 20px 0 10px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #0d0d0d;
+}
+
+.th-md h1 { font-size: 1.45em; }
+.th-md h2 { font-size: 1.3em; }
+.th-md h3 { font-size: 1.15em; }
+.th-md h4 { font-size: 1.05em; }
+
+.th-md ul,
+.th-md ol {
+  margin: 0 0 12px;
+  padding-left: 24px;
+}
+
+.th-md li {
+  margin: 4px 0;
+}
+
+.th-md li > p {
+  margin: 0;
+}
+
+.th-md a {
+  color: #2964aa;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.th-md blockquote {
+  margin: 12px 0;
+  padding: 4px 0 4px 14px;
+  border-left: 3px solid #e3e3e3;
+  color: #5d5d5d;
+}
+
+.th-md hr {
+  margin: 16px 0;
+  border: none;
+  border-top: 1px solid #ececec;
+}
+
+.th-md code {
+  padding: 2px 6px;
+  background: #f4f4f4;
+  border-radius: 5px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+  font-size: 0.875em;
+  color: #0d0d0d;
+}
+
+.th-md img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+/* 代码块（marked 自定义 renderer 输出） */
+.th-code-block {
+  margin: 12px 0;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f9f9f9;
+}
+
+.th-code-block pre {
+  margin: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+}
+
+.th-code-block pre code {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+.th-code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #ececec;
+  font-size: 12px;
+  color: #8f8f8f;
+}
+
+.th-code-lang {
+  text-transform: lowercase;
+}
+
+.th-code-copy {
+  cursor: pointer;
+  user-select: none;
+  color: #5d5d5d;
+}
+
+.th-code-copy:hover {
+  color: #0d0d0d;
+}
+
+/* 表格 */
+.th-md table {
+  margin: 12px 0;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+  display: block;
+  overflow-x: auto;
+}
+
+.th-md th,
+.th-md td {
+  padding: 8px 12px;
+  border: 1px solid #e3e3e3;
+  text-align: left;
+}
+
+.th-md th {
+  background: #f7f7f8;
+  font-weight: 600;
+}

@@ -6,8 +6,8 @@
         <div class="left-operations">
           <el-button type="primary" icon="el-icon-plus" size="small" @click="handleImport">导入模型</el-button>
           <el-button type="danger" icon="el-icon-delete" size="small" :disabled="!multipleSelection.length"
-            @click="handleBatchDelete">批量删除 ({{ multipleSelection.length }})</el-button>
-          <el-button type="primary" icon="el-icon-refresh-right" size="small" @click="handleRefresh"
+            @click="handleBatchDelete">批量删除</el-button>
+          <el-button type="success" icon="el-icon-refresh-right" size="small" @click="handleRefresh"
             :loading="refreshLoading">刷新列表</el-button>
         </div>
 
@@ -147,6 +147,25 @@
         <el-form-item label="描述" prop="description">
           <el-input v-model="editForm.description" placeholder="请输入模型描述" style="width: 100%;" />
         </el-form-item>
+        <el-form-item label="检测类别">
+          <div class="mc-editor" v-loading="classesLoading">
+            <div class="mc-head">
+              <span class="mc-tip">模型可识别的类别，技能图"视觉模型"节点的"模型标签"即来源于此。</span>
+              <el-button type="text" icon="el-icon-plus" @click="addModelClass">添加类别</el-button>
+            </div>
+            <div v-if="editForm.classes && editForm.classes.length" class="mc-cols">
+              <span class="mc-c1">类别名（英文/原始，与检测结果对应）</span>
+              <span class="mc-c2">中文展示名</span>
+              <span class="mc-c3"></span>
+            </div>
+            <div v-for="(c, i) in editForm.classes" :key="i" class="mc-row">
+              <el-input v-model="c.name" size="small" placeholder="如 trash_can_normal" class="mc-c1" />
+              <el-input v-model="c.name_zh" size="small" placeholder="如 垃圾桶正常" class="mc-c2" />
+              <i class="el-icon-remove-outline mc-del mc-c3" title="删除" @click="removeModelClass(i)"></i>
+            </div>
+            <div v-if="!(editForm.classes && editForm.classes.length)" class="mc-empty">暂无类别，点击"添加类别"维护</div>
+          </div>
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancelEdit">取消</el-button>
@@ -154,16 +173,10 @@
       </div>
     </el-dialog>
 
-    <!-- 模型列表卡片 -->
-    <el-card class="table-card management-table-card" shadow="never">
-      <div slot="header" class="card-header">
-        <div class="header-left-group">
-          <span class="card-title">模型列表</span>
-        </div>
-      </div>
-      <div class="table-container">
+    <!-- 模型列表 -->
+    <div class="table-container">
       <el-table v-loading="loading" :data="currentPageData" @selection-change="handleSelectionChange" class="tech-table"
-          height="100%"
+        height="calc(100vh - 280px)"
         :header-cell-style="{ background: '#f5f7fa', color: '#303133', fontWeight: '500', textAlign: 'center' }"
         :cell-style="{ textAlign: 'center', backgroundColor: '#ffffff' }" :row-style="{ backgroundColor: '#ffffff' }">
         <el-table-column type="selection" width="55" align="center" />
@@ -189,6 +202,18 @@
               <i class="el-icon-odometer version-icon"></i>
               <span class="version-text">V{{ formatVersion(row.version) }}</span>
             </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="检测类别" min-width="200" align="center" header-align="center">
+          <template slot-scope="{ row }">
+            <template v-if="row.classes && row.classes.length">
+              <el-tag v-for="(c, i) in row.classes.slice(0, 3)" :key="i" size="mini" class="mc-list-tag">
+                {{ c.name_zh || c.name }}
+              </el-tag>
+              <span v-if="row.classes.length > 3" class="mc-more">+{{ row.classes.length - 3 }}</span>
+            </template>
+            <el-button v-else type="text" size="small" class="mc-goto" icon="el-icon-edit-outline"
+              @click="handleEdit(row)">去维护</el-button>
           </template>
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="200" align="center" header-align="center" />
@@ -285,6 +310,23 @@
           </div>
         </el-card>
 
+        <!-- 检测类别 -->
+        <el-card class="detail-card classes-card" shadow="never" :body-style="{ padding: '0' }">
+          <div slot="header" class="card-header">
+            <span>检测类别</span>
+            <el-tag type="primary" size="small" class="tech-status-tag">{{ (detailForm.classes || []).length }}</el-tag>
+          </div>
+          <div v-if="!detailForm.classes || !detailForm.classes.length" class="no-skills">
+            <i class="el-icon-warning-outline"></i> 暂无检测类别，请在编辑中维护
+          </div>
+          <div v-else class="mc-detail-list">
+            <div v-for="(c, i) in detailForm.classes" :key="i" class="mc-detail-item">
+              <span class="mc-detail-zh">{{ c.name_zh || c.name }}</span>
+              <span class="mc-detail-en">{{ c.name }}</span>
+            </div>
+          </div>
+        </el-card>
+
         <!-- 技能实例信息 -->
         <div class="related-skills-section">
           <el-card class="detail-card skills-card" shadow="never" :body-style="{ padding: '0' }">
@@ -323,12 +365,11 @@
     </el-dialog>
 
     <!-- 分页控件 -->
-    <div class="pagination-custom">
+    <div class="pagination">
       <el-pagination :current-page.sync="pagination.currentPage" :page-size.sync="pagination.pageSize"
         :page-sizes="[10, 20, 50]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
         @size-change="handleSizeChange" @current-change="handlePageChange" />
     </div>
-    </el-card>
   </div>
 </template>
 
@@ -417,8 +458,11 @@ export default {
         version: '1.0',
         description: '',
         usage_status: '',
-        model_status: ''
+        model_status: '',
+        classes: []
       },
+      // 检测类别加载状态
+      classesLoading: false,
 
       // 详情模型对话框
       detailDialogVisible: false,
@@ -430,7 +474,8 @@ export default {
         model_status: '',
         description: '',
         created_at: '',
-        updated_at: ''
+        updated_at: '',
+        classes: []
       },
       // 相关技能列表
       relatedSkills: [],
@@ -802,9 +847,12 @@ export default {
         version: this.formatVersion(row.version), // 确保版本格式统一
         description: row.description || '', // 处理null或undefined的情况
         usage_status: row.usage_status,
-        model_status: row.model_status
+        model_status: row.model_status,
+        classes: []
       }
       this.editDialogVisible = true
+      // 加载该模型已维护的检测类别
+      this.loadEditClasses(row.id)
 
       // 使用nextTick等待DOM更新后再获取表单引用
       this.$nextTick(() => {
@@ -812,6 +860,28 @@ export default {
           this.$refs.editForm.clearValidate()
         }
       })
+    },
+
+    // 加载模型的检测类别（编辑弹窗用）
+    loadEditClasses(modelId) {
+      this.classesLoading = true
+      modelAPI.getModelClasses(modelId).then(res => {
+        const list = (res.data && res.data.classes) || []
+        this.$set(this.editForm, 'classes', list.map(c => ({ name: c.name, name_zh: c.name_zh || '' })))
+      }).catch(() => {
+        this.$set(this.editForm, 'classes', [])
+      }).finally(() => {
+        this.classesLoading = false
+      })
+    },
+
+    addModelClass() {
+      if (!this.editForm.classes) this.$set(this.editForm, 'classes', [])
+      this.editForm.classes.push({ name: '', name_zh: '' })
+    },
+
+    removeModelClass(i) {
+      this.editForm.classes.splice(i, 1)
     },
 
     // 取消编辑
@@ -844,24 +914,31 @@ export default {
           updateData.version = this.editForm.version.toString()
         }
 
+        // 整理检测类别（过滤空类别名，name_zh 缺省回退 name）
+        const classes = (this.editForm.classes || [])
+          .map(c => ({ name: (c.name || '').trim(), name_zh: (c.name_zh || '').trim() }))
+          .filter(c => c.name)
+
         // 发送更新请求
         modelAPI.updateModel(this.editForm.id, updateData).then((res) => {
           if (res.data && res.data.code === 0) {
-            // 更新成功后重新获取列表
-            this.fetchModelList()
-
-            // 关闭对话框
-            this.editDialogVisible = false
-
-            // 显示成功消息
-            this.$message({
-              message: '模型编辑成功',
-              type: 'success'
+            // 同步保存检测类别（全量覆盖）
+            modelAPI.updateModelClasses(this.editForm.id, classes).then(() => {
+              this.fetchModelList()
+              this.editDialogVisible = false
+              this.$message({ message: '模型编辑成功', type: 'success' })
+            }).catch((err) => {
+              console.error('保存检测类别失败', err)
+              this.fetchModelList()
+              this.editDialogVisible = false
+              this.$message.warning('模型已更新，但检测类别保存失败')
+            }).finally(() => {
+              this.loading = false
             })
           } else {
             this.$message.error(res.data.msg || '编辑失败')
+            this.loading = false
           }
-          this.loading = false
         }).catch((error) => {
           console.error('编辑模型失败', error)
           this.$message.error('编辑失败: ' + (error.message || '未知错误'))
@@ -904,6 +981,7 @@ export default {
             usage_status: res.data.data.usage_status,
             model_status: res.data.data.model_status,
             description: res.data.data.description || '',
+            classes: res.data.data.classes || [],
             created_at: res.data.data.created_at,
             updated_at: res.data.data.updated_at
           }
@@ -1045,44 +1123,14 @@ export default {
 }
 </script>
 
-<style scoped>
-@import "../deviceManagement/managementPages/common-style.css";
-
+<style>
 .model-list {
-  padding: 20px 20px 24px 20px;
+  padding: 20px;
   background-color: #f5f5f5;
-  height: 100%; /* 固定整体高度 */
+  height: calc(100vh - 100px); /* 固定整体高度 */
   display: flex;
   flex-direction: column;
   overflow: hidden; /* 防止整体页面出现滚动条 */
-  box-sizing: border-box;
-}
-
-.management-table-card {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.management-table-card >>> .el-card__body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 20px 0 20px !important;
-  overflow: hidden;
-}
-
-.table-container {
-  flex: 1;
-  overflow: hidden;
-}
-
-.pagination {
-  padding: 24px 0 !important;
-  background: white;
-  display: flex;
-  justify-content: center;
 }
 
 /* ==================== 导入模型对话框样式 ==================== */
@@ -1181,9 +1229,9 @@ export default {
 
 /* 科技感蓝色主题的过滤区域 */
 .filter-section {
-  background: #fff;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   padding: 12px 24px;
-  border-radius: 8px;
+  border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   margin-bottom: 20px;
   border: 1px solid rgba(59, 130, 246, 0.1);
@@ -1219,7 +1267,7 @@ export default {
   margin-right: 0;
 }
 
-/* .left-operations .el-button--primary {
+.left-operations .el-button--primary {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
   border: none;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
@@ -1316,7 +1364,7 @@ export default {
   color: #c0c4cc !important;
   box-shadow: none !important;
   transform: none !important;
-} */
+}
 
 .right-operations {
   display: flex;
@@ -1333,9 +1381,9 @@ export default {
 
 .filter-label {
   font-size: 14px;
-  color: #333333 !important;
+  color: #1e40af;
   white-space: nowrap;
-  font-weight: 600;
+  font-weight: 500;
   margin-right: 0;
 }
 
@@ -1389,23 +1437,23 @@ export default {
 }
 
 .refresh-btn:hover {
-  background: rgba(26, 109, 255, 0.1) !important;
-  border-color: #1A6DFF !important;
-  color: #1A6DFF !important;
-  box-shadow: 0 2px 4px rgba(26, 109, 255, 0.2) !important;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #3b82f6;
+  color: #1e40af;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
 /* 表格容器样式 */
 .table-container {
   background: white;
-  /* border-radius: 16px; */
+  border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  /* margin-bottom: 20px; */
+  margin-bottom: 20px;
   border: 1px solid rgba(59, 130, 246, 0.1);
   overflow: hidden;
   flex: 1; /* 占据剩余空间 */
   min-height: 0; /* 确保flex子元素可以收缩 */
-  height: 100%; /* 增加表格容器高度，与卡片高度保持一致 */
+  height: calc(100vh - 250px); /* 增加表格容器高度，与卡片高度保持一致 */
   padding: 0; /* 移除内边距让表格贴合容器边缘 */
 }
 
@@ -1437,6 +1485,7 @@ export default {
 
 /* 科技感表格样式 */
 .tech-table {
+  border-radius: 16px;
   overflow: hidden; /* 确保圆角效果 */
   height: 100%; /* 表格占满容器高度 */
   border: none; /* 移除默认边框 */
@@ -1444,14 +1493,26 @@ export default {
 
 .tech-table>>>.el-table__header-wrapper {
   background: #f5f7fa;
+  border-radius: 16px 16px 0 0; /* 表头顶部圆角 */
 }
 
-
+.tech-table>>>.el-table__body-wrapper {
+  border-radius: 0 0 16px 16px; /* 表体底部圆角 */
+}
 
 /* 确保表格边框圆角 */
 .tech-table>>>.el-table {
+  border-radius: 16px;
   overflow: hidden;
   border: none;
+}
+
+.tech-table>>>.el-table__header {
+  border-radius: 16px 16px 0 0;
+}
+
+.tech-table>>>.el-table__body {
+  border-radius: 0 0 16px 16px;
 }
 
 .tech-table>>>.el-table th {
@@ -1464,10 +1525,23 @@ export default {
   border-top: none !important;
 }
 
+/* 第一列和最后一列的圆角处理 */
+.tech-table>>>.el-table th:first-child {
+  border-top-left-radius: 16px !important;
+}
 
+.tech-table>>>.el-table th:last-child {
+  border-top-right-radius: 16px !important;
+}
 
+/* 表格最后一行的圆角处理 */
+.tech-table>>>.el-table__body tr:last-child td:first-child {
+  border-bottom-left-radius: 16px !important;
+}
 
-
+.tech-table>>>.el-table__body tr:last-child td:last-child {
+  border-bottom-right-radius: 16px !important;
+}
 
 .tech-table>>>.el-table--enable-row-hover .el-table__body tr:hover>td {
   background-color: rgba(59, 130, 246, 0.05) !important;
@@ -1530,85 +1604,26 @@ export default {
   font-weight: 500 !important;
 }
 
-/* 分页样式已在 common-style.css 中统一处理 */
-.pagination-custom {
-  padding: 20px 0 24px 0 !important;
-  background: white;
+/* 分页样式 */
+.pagination {
   display: flex;
   justify-content: center;
-  align-items: center;
-}
-
-.pagination-custom >>> .el-pagination {
-  margin: 0 !important;
-  padding: 0 !important;
-  display: flex;
-  align-items: center;
-}
-
-.pagination-custom >>> .el-pagination__total {
-  padding-top: 3px;
-}
-
-.pagination-custom >>> .el-pagination .el-pager li {
-  background-color: white;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  color: #333333;
-  margin: 0 2px;
-  font-weight: 600 !important;
-}
-
-.pagination-custom >>> .el-pagination .el-pager li:hover {
-  color: #1A6DFF;
-  border-color: #1A6DFF;
-}
-
-.pagination-custom >>> .el-pagination .el-pager li.active {
-  background: #1A6DFF !important;
-  border-color: #1A6DFF !important;
-  color: white !important;
-  font-weight: 600 !important;
-}
-
-.pagination-custom >>> .el-pagination button {
-  background-color: white;
-  border: 1px solid #dcdfe6;
-  color: #333333;
-}
-
-.pagination-custom >>> .el-pagination button:hover {
-  color: #1A6DFF;
-  border-color: #1A6DFF;
-}
-
-/* 确保总条数和前往页码文字为黑色并加粗 */
-.pagination-custom >>> .el-pagination__total,
-.pagination-custom >>> .el-pagination__jump {
-  color: #333333 !important;
-  font-weight: 600 !important;
-}
-
-.pagination-custom >>> .el-input__inner {
-  color: #333333 !important;
-  font-weight: 600 !important;
-}
-
-.pagination-custom >>> .el-pagination .btn-prev,
-.pagination-custom >>> .el-pagination .btn-next {
-  background-color: white !important;
-  border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
+  margin-top: 20px;
+  padding: 20px 0;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0; /* 防止收缩 */
 }
 
 /* 深度选择器 - 使用多种语法确保兼容性 */
-/* .pagination /deep/ .el-pagination,
+.pagination /deep/ .el-pagination,
 .pagination ::v-deep .el-pagination,
 .pagination >>> .el-pagination {
   justify-content: center;
-} */
+}
 
-/* .pagination /deep/ .el-pagination .el-pager li,
+.pagination /deep/ .el-pagination .el-pager li,
 .pagination ::v-deep .el-pagination .el-pager li,
 .pagination >>> .el-pagination .el-pager li {
   background: white !important;
@@ -1617,18 +1632,18 @@ export default {
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
   margin: 0 2px !important;
-} */
+}
 
-/* .pagination /deep/ .el-pagination .el-pager li:hover,
+.pagination /deep/ .el-pagination .el-pager li:hover,
 .pagination ::v-deep .el-pagination .el-pager li:hover,
 .pagination >>> .el-pagination .el-pager li:hover {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15) !important;
-} */
+}
 
-/* .pagination /deep/ .el-pagination .el-pager li.active,
+.pagination /deep/ .el-pagination .el-pager li.active,
 .pagination ::v-deep .el-pagination .el-pager li.active,
 .pagination >>> .el-pagination .el-pager li.active {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
@@ -1636,9 +1651,9 @@ export default {
   color: white !important;
   font-weight: 600 !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
-} */
+}
 
-/* .pagination /deep/ .el-pagination button,
+.pagination /deep/ .el-pagination button,
 .pagination ::v-deep .el-pagination button,
 .pagination >>> .el-pagination button {
   background: white !important;
@@ -1656,7 +1671,7 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15) !important;
-} */
+}
 
 /* 表单布局相关样式 */
 .form-row {
@@ -1771,25 +1786,16 @@ export default {
   border-bottom: none;
 }
 
-.el-card__header {
-  padding: 0 0!important;
-}
-
-.el-card__body {
-  padding: 0 0!important;
-}
-
 .card-header {
   display: flex;
   align-items: center;
   color: #1f2937;
   font-weight: 600;
   font-size: 16px;
-  /* padding: 12px 15px; */
+  padding: 12px 15px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 8px 8px 0 0;
   border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-  margin-bottom: 0!important;
 }
 
 .card-header .el-tag {
@@ -2379,7 +2385,32 @@ export default {
 }
 
 /* 科技感对话框样式 - 与deviceSkills.vue保持一致 */
-/* .tech-dialog>>>.el-dialog {
+.mc-editor { width: 100%; }
+.mc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.mc-tip { font-size: 12px; color: #909399; line-height: 1.4; }
+.mc-cols { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #909399; margin-bottom: 4px; }
+.mc-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.mc-c1 { flex: 1 1 0; min-width: 0; }
+.mc-c2 { flex: 1 1 0; min-width: 0; }
+.mc-c3 { flex: none; width: 20px; text-align: center; }
+.mc-del { cursor: pointer; color: #b4bbc7; font-size: 18px; }
+.mc-del:hover { color: #f56c6c; }
+.mc-empty { font-size: 13px; color: #b4bbc7; text-align: center; padding: 12px 0; background: #f7f8fc;
+  border: 1px dashed #e3e6ee; border-radius: 6px; }
+/* 列表内类别标签 */
+.mc-list-tag { margin: 2px 3px; }
+.mc-more { font-size: 12px; color: #909399; margin-left: 2px; }
+.mc-none { font-size: 12px; color: #b4bbc7; }
+.mc-goto { color: #e6a23c; padding: 0; }
+.mc-goto:hover { color: #cf8b1e; }
+/* 详情内类别列表 */
+.mc-detail-list { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 16px; }
+.mc-detail-item { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; min-width: 120px;
+  background: #f7f8fc; border: 1px solid #eef0f5; border-radius: 8px; }
+.mc-detail-zh { font-size: 13px; font-weight: 600; color: #1f2329; }
+.mc-detail-en { font-size: 12px; color: #909399; }
+
+.tech-dialog>>>.el-dialog {
   background: #ffffff !important;
   border-radius: 12px !important;
   overflow: hidden !important;
@@ -2411,10 +2442,10 @@ export default {
 .tech-dialog>>>.el-dialog__body {
   background: #ffffff !important;
   padding: 20px !important;
-} */
+}
 
 /* 科技感表单样式 */
-/* .tech-form>>>.el-form-item__label {
+.tech-form>>>.el-form-item__label {
   color: #1F2329 !important;
   font-weight: 600 !important;
 }
@@ -2447,10 +2478,10 @@ export default {
 .tech-form>>>.el-textarea__inner:focus {
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
-} */
+}
 
 /* 对话框按钮样式 - 与deviceSkills.vue保持一致 */
-/* .tech-dialog>>>.el-button--primary {
+.tech-dialog>>>.el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -2479,7 +2510,7 @@ export default {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-} */
+}
 
 /* 上传组件样式 */
 .tech-dialog>>>.el-upload-dragger {
@@ -2557,8 +2588,8 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
   background-color: #fff !important;
   overflow: hidden !important;
-  /* margin-bottom: 16px !important;
-  margin-top: 0 !important; */
+  margin-bottom: 16px !important;
+  margin-top: 0 !important;
 }
 
 .model-detail-dialog.el-dialog .detail-card .el-card__header {
@@ -2767,7 +2798,7 @@ body .el-dialog__wrapper .model-detail-dialog {
 }
 
 /* 对话框按钮样式 */
-/* .tech-dialog.el-dialog .el-button--primary {
+.tech-dialog.el-dialog .el-button--primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
   border: none !important;
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3) !important;
@@ -2781,7 +2812,7 @@ body .el-dialog__wrapper .model-detail-dialog {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%) !important;
   box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
   transform: translateY(-1px) !important;
-} */
+}
 
 .tech-dialog.el-dialog .el-button--default {
   background: white !important;
@@ -2933,7 +2964,7 @@ body .el-dialog__wrapper .model-detail-dialog {
   border-radius: 0 0 16px 16px !important;
 }
 
-/* .tech-confirm-dialog.el-message-box .el-button {
+.tech-confirm-dialog.el-message-box .el-button {
   border-radius: 8px !important;
   font-weight: 500 !important;
   padding: 8px 20px !important;
@@ -2966,7 +2997,7 @@ body .el-dialog__wrapper .model-detail-dialog {
   background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
   box-shadow: 0 6px 16px rgba(220, 38, 38, 0.5) !important;
   transform: translateY(-2px) !important;
-} */
+}
 
 /* 确认对话框动画效果 */
 .tech-confirm-dialog.el-message-box {
@@ -2992,7 +3023,7 @@ body .el-dialog__wrapper .model-detail-dialog {
 }
 
 /* 全局分页栏样式覆盖 - 使用更高优先级确保样式生效 */
-/* body .model-list .pagination .el-pagination {
+body .model-list .pagination .el-pagination {
   justify-content: center !important;
 }
 
@@ -3034,10 +3065,10 @@ body .model-list .pagination .el-pagination button:hover {
   border-color: #3b82f6 !important;
   color: #1e40af !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15) !important;
-} */
+}
 
 /* 确保分页栏输入框和选择器也有科技感样式 */
-/* body .model-list .pagination .el-pagination .el-pagination__sizes .el-select .el-input__inner {
+body .model-list .pagination .el-pagination .el-pagination__sizes .el-select .el-input__inner {
   border: 1px solid #dcdfe6 !important;
   border-radius: 6px !important;
   transition: all 0.3s ease !important;
@@ -3055,7 +3086,7 @@ body .model-list .pagination .el-pagination .el-pagination__jump .el-input__inne
 
 body .model-list .pagination .el-pagination .el-pagination__jump .el-input__inner:hover {
   border-color: #3b82f6 !important;
-} */
+}
 
 /* ========================================
    状态标签样式优化 - 参照camera.vue使用浅色
