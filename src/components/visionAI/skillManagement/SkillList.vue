@@ -1605,9 +1605,10 @@ export default {
 .sc-badge.badge-graph { background: rgba(103, 194, 58, 0.92); }
 
 .sc-body {
-  flex: 1;
+  /* flex-basis 用 auto（而非 flex:1 的 0%），并取消 min-height:0，
+     让 body 的真实内容高度计入卡片高度，卡片随内容增高而不再裁切底部 */
+  flex: 1 0 auto;
   min-width: 0;
-  min-height: 0;
   padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
