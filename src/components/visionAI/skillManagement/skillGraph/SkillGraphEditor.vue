@@ -4041,9 +4041,17 @@ export default {
         const nt = n.properties && n.properties.nodeType
         if (nt === 'end') return
         if (!isBindableSourceNode(selfType, portType, nt)) return
-        let outs = this.nodeTypedOutputs(n).filter(o =>
-          o.type === portType || (portType === 'Detection' && o.type === 'TrackDetection')
-        )
+        const portTypeLc = String(portType).toLowerCase()
+        let outs = this.nodeTypedOutputs(n).filter(o => {
+          if (o.type === portType) return true
+          if (portType === 'Detection' && o.type === 'TrackDetection') return true
+          // ROI / 绊线端口可接受 Array<ROI> / Array<Tripwire> 来源：
+          // 电子围栏（绊线）本就支持多个区域，单个/数组在运行时注入的是同一份围栏数据。
+          if ((portType === 'ROI' || portType === 'Tripwire')
+            && o.type === 'Array'
+            && String(o.item_type || '').toLowerCase() === portTypeLc) return true
+          return false
+        })
         outs = filterOutputsForBinding(selfType, portType, outs)
         if (!outs.length) return
         const nodeName = (n.text && (n.text.value != null ? n.text.value : n.text)) ||
@@ -4071,6 +4079,7 @@ export default {
           out.push({
             port: pp.name,
             type: pp.type || 'String',
+            item_type: pp.item_type || '',
             label: (pp.display_name && String(pp.display_name).trim()) || PORT_LABELS[pp.name] || pp.name
           })
         })

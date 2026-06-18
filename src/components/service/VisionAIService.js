@@ -1534,6 +1534,7 @@ export const cameraAPI = {
               camera_type: camera.camera_type || '-',
               skill_names: camera.skill_names || [],
               llm_skill_names: camera.llm_skill_names || [],
+              graph_skill_names: camera.graph_skill_names || [],
             };
           });
           transformedData.total = originalData.total || transformedData.data.length;
@@ -1556,6 +1557,7 @@ export const cameraAPI = {
               camera_type: camera.camera_type || '-',
               skill_names: camera.skill_names || [],
               llm_skill_names: camera.llm_skill_names || [],
+              graph_skill_names: camera.graph_skill_names || [],
             };
           });
           transformedData.total = originalData.data.total || transformedData.data.length;

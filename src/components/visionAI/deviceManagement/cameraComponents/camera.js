@@ -79,6 +79,7 @@ export default {
               location: camera.location || '-',
               skill: Array.isArray(camera.skill_names) ? camera.skill_names.join(', ') : '-',
               llm_skill_names: Array.isArray(camera.llm_skill_names) ? camera.llm_skill_names : [],
+              graph_skill_names: Array.isArray(camera.graph_skill_names) ? camera.graph_skill_names : [],
               camera_type: camera.camera_type
             }));
 
@@ -190,6 +191,30 @@ export default {
     getCameraTypeText(type) {
       const typeMap = { 1: '国标设备', 2: '推流设备', 3: '代理拉流' };
       return typeMap[type] || `未知类型(${type})`;
+    },
+
+    /**
+     * 判断单个技能属于哪一类，用于展示不同的标识：
+     *   'llm'    大模型技能
+     *   'graph'  技能编排（已发布技能图）
+     *   'visual' 视觉技能文件（默认）
+     */
+    getSkillKind(row, skillName) {
+      const name = (skillName || '').trim();
+      if (row && Array.isArray(row.llm_skill_names) && row.llm_skill_names.includes(name)) {
+        return 'llm';
+      }
+      if (row && Array.isArray(row.graph_skill_names) && row.graph_skill_names.includes(name)) {
+        return 'graph';
+      }
+      return 'visual';
+    },
+
+    getDetailSkillTagType(skillName) {
+      const kind = this.getSkillKind(this.deviceDetailData, skillName);
+      if (kind === 'llm') return 'warning';
+      if (kind === 'graph') return 'info';
+      return 'success';
     },
 
     formatPropertyLabel(key) {

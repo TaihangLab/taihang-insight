@@ -1490,6 +1490,9 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
+  /* 让每张卡片按自身内容高度撑开，而不是被同行最高卡强行等高拉伸；
+     否则内容偏高的卡片会被压缩 + overflow:hidden 裁掉底部按钮/标题 */
+  align-items: start;
 }
 .skill-card {
   position: relative;
@@ -1651,6 +1654,8 @@ export default {
   padding-top: 10px;
   margin-top: auto;
   min-width: 0;
+  /* 底部状态/按钮区不参与纵向收缩，避免被压缩裁掉 */
+  flex-shrink: 0;
 }
 .sc-footer > .el-tag {
   align-self: flex-start;
