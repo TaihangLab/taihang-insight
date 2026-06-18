@@ -1612,6 +1612,10 @@ export default {
 .sc-name {
   font-size: 15px; font-weight: 600; color: #303133; margin-bottom: 6px;
   min-width: 0;
+  /* 不参与纵向收缩，避免卡片等高拉伸 + overflow:hidden 时标题被压成 0 高度而消失 */
+  flex-shrink: 0;
+  line-height: 1.4;
+  min-height: 21px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .sc-desc {

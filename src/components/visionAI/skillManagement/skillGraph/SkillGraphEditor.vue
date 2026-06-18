@@ -2477,6 +2477,9 @@ function boundInputPorts(m) {
     }
     if (tp) bound.add(tp)
   })
+  // 隐式参数引用（config._input_refs）：虽不画线，但视为"已配置"
+  const refs = (m && m.properties && m.properties.config && m.properties.config._input_refs) || {}
+  Object.keys(refs).forEach(tp => { if (tp) bound.add(tp) })
   return bound
 }
 function chipHtml(name, type, text, empty) {
@@ -4182,8 +4185,10 @@ export default {
       sel.popOpen = false
       if (!this.selectedNode) return
       const nid = this.selectedNode.id
+      // 清除隐式参数引用
+      if (this.getImplicitRefs(nid)[sel.port]) this.setImplicitRef(nid, sel.port, '')
       const g = this.lf.getGraphData()
-      // 仅清除参数绑定，保留画布上的结构连线
+      // 参数连线：仅清除参数绑定，保留画布上的结构连线
       ;(g.edges || []).forEach(x => {
         if (x.targetNodeId !== nid) return
         const xtp = (x.properties && x.properties.targetPort) || this.parsePort(x.targetAnchorId, 'in')
@@ -4202,6 +4207,9 @@ export default {
         const tp = (e.properties && e.properties.targetPort) || this.parsePort(e.targetAnchorId, 'in')
         if (tp && !map[tp]) map[tp] = `${e.sourceNodeId}::${sp}`
       })
+      // 合并隐式参数引用（不在画布上画线，仅记录在 config._input_refs）
+      const refs = this.getImplicitRefs(nodeId)
+      Object.keys(refs).forEach(tp => { if (tp && !map[tp]) map[tp] = refs[tp] })
       return map
     },
     // 为当前选中节点的每个输入端口构建一个"树形选择器"
@@ -4256,44 +4264,130 @@ export default {
         m.setProperties({ _inRev: ((m.properties._inRev || 0) + 1) })
       }
     },
-    // 把某输入端口绑定到选中的上游参数：清掉该端口旧边并按真实 sourcePort/targetPort 建新边
+    // 读取节点的隐式参数引用表 config._input_refs
+    getImplicitRefs(nid) {
+      const m = this.lf && this.lf.getNodeModelById && this.lf.getNodeModelById(nid)
+      return (m && m.properties && m.properties.config && m.properties.config._input_refs) || {}
+    },
+    // 写入/清除某端口的隐式参数引用（val 为空则清除该端口）
+    setImplicitRef(nid, port, val) {
+      const m = this.lf && this.lf.getNodeModelById && this.lf.getNodeModelById(nid)
+      if (!m) return
+      const props = m.properties || {}
+      const cfg = { ...(props.config || {}) }
+      const refs = { ...(cfg._input_refs || {}) }
+      if (val) refs[port] = val
+      else delete refs[port]
+      if (Object.keys(refs).length) cfg._input_refs = refs
+      else delete cfg._input_refs
+      this.lf.setProperties(nid, { ...props, config: cfg })
+    },
+    // 小图批处理的侧链连线（target_matting → small_image_batch）必须保留为真实连线
+    isSideBatchBinding(srcPort, tgtPort) {
+      return srcPort === 'small_images' || tgtPort === 'small_images'
+    },
+    // 排除某条边后，srcId 是否仍是 nid 的上游祖先（用于判断连线是否冗余）
+    isUpstreamExcludingEdge(selfId, srcId, excludeEdgeId) {
+      const g = (this.lf && this.lf.getGraphData && this.lf.getGraphData()) || { edges: [] }
+      const seen = new Set([selfId])
+      let frontier = [selfId]
+      while (frontier.length) {
+        const next = []
+        frontier.forEach(nid => {
+          ;(g.edges || []).forEach(e => {
+            if (e.id === excludeEdgeId) return
+            if (e.targetNodeId !== nid) return
+            if (this.isSideBatchLayoutEdge(e)) return
+            const s = e.sourceNodeId
+            if (seen.has(s)) return
+            seen.add(s)
+            next.push(s)
+          })
+        })
+        frontier = next
+      }
+      return seen.has(srcId)
+    },
+    // 归一化：把"来源已能从其它连线追溯到"的参数连线转成隐式引用（删线、记 _input_refs），
+    // 只保留把节点接入数据流所必需的那条线。与连线先后顺序无关，多次执行结果稳定。
+    normalizeParamRefs(nid) {
+      if (!nid) return
+      let guard = 0
+      while (guard++ < 50) {
+        const g = (this.lf && this.lf.getGraphData && this.lf.getGraphData()) || { edges: [] }
+        const paramEdges = (g.edges || []).filter(e =>
+          e.targetNodeId === nid && e.properties && e.properties.paramBound)
+        let converted = false
+        for (let i = 0; i < paramEdges.length; i++) {
+          const e = paramEdges[i]
+          const sp = (e.properties && e.properties.sourcePort) || this.parsePort(e.sourceAnchorId, 'out') || ''
+          const tp = (e.properties && e.properties.targetPort) || this.parsePort(e.targetAnchorId, 'in')
+          if (!tp || this.isSideBatchBinding(sp, tp)) continue
+          // 来源在删掉本条线后仍能追溯到 → 这条线是冗余的，转成引用
+          if (this.isUpstreamExcludingEdge(nid, e.sourceNodeId, e.id)) {
+            this.lf.deleteEdge(e.id)
+            this.setImplicitRef(nid, tp, `${e.sourceNodeId}::${sp}`)
+            converted = true
+            break
+          }
+        }
+        if (!converted) break
+      }
+    },
+    // 把某输入端口绑定到选中的上游参数。
+    // 原则（对齐结束/判断节点"读取上游"的思路）：来源已是上游祖先时只记录参数引用、不画冗余连线；
+    // 仅当这次绑定才首次把来源接入数据流时，才画一条连线。
     bindInput(targetPort, val) {
       if (!this.selectedNode) return
       const nid = this.selectedNode.id
-      const upstream = this.upstreamNodeIds(nid)
-      if (!upstream.size) return
+      if (!this.upstreamNodeIds(nid).size) return
       const myType = this.selectedType
       const g = this.lf.getGraphData()
+      // 清掉该端口已有的"参数连线"（保留结构连线）与已有的参数引用
       ;(g.edges || []).forEach(x => {
         if (x.targetNodeId !== nid) return
+        if (!(x.properties && x.properties.paramBound)) return
         const xtp = (x.properties && x.properties.targetPort) || this.parsePort(x.targetAnchorId, 'in')
         if (xtp === targetPort) this.lf.deleteEdge(x.id)
       })
+      this.setImplicitRef(nid, targetPort, '')
       if (val) {
         const idx = val.indexOf('::')
         const srcId = idx >= 0 ? val.substring(0, idx) : val
-        if (!upstream.has(srcId)) return
         const port = idx >= 0 ? val.substring(idx + 2) : ''
         const srcNode = (g.nodes || []).find(n => n.id === srcId)
         const srcType = (srcNode && srcNode.properties && srcNode.properties.nodeType) || ''
-        let sourceAnchorId = `${srcId}__out__${this.singleOutPort(srcType)}`
-        let targetAnchorId = `${nid}__in__${this.singleInPort(myType)}`
-        if (srcType === 'target_matting' && port === 'small_images') {
-          sourceAnchorId = `${srcId}__side_out__small_images`
+        const isSide = this.isSideBatchBinding(port, targetPort)
+          || (srcType === 'target_matting' && port === 'small_images')
+          || myType === 'small_image_batch'
+        // 删掉本端口旧参数线后，来源是否仍能从其它连线追溯到
+        const reachable = this.upstreamNodeIds(nid).has(srcId)
+        // 来源已可追溯（经其它连线）且非侧链 → 记为引用，不画线；否则画线建立连接
+        if (!isSide && reachable) {
+          this.setImplicitRef(nid, targetPort, val)
+        } else {
+          let sourceAnchorId = `${srcId}__out__${this.singleOutPort(srcType)}`
+          let targetAnchorId = `${nid}__in__${this.singleInPort(myType)}`
+          if (srcType === 'target_matting' && port === 'small_images') {
+            sourceAnchorId = `${srcId}__side_out__small_images`
+          }
+          if (myType === 'small_image_batch') {
+            targetAnchorId = `${nid}__side_in__small_images`
+          }
+          this.lf.addEdge({
+            type: this.edgeMode || 'bezier',
+            sourceAnchorId,
+            targetAnchorId,
+            sourceNodeId: srcId,
+            targetNodeId: nid,
+            properties: { sourcePort: port, targetPort, paramBound: true }
+          })
         }
-        if (myType === 'small_image_batch') {
-          targetAnchorId = `${nid}__side_in__small_images`
-        }
-        this.lf.addEdge({
-          type: this.edgeMode || 'bezier',
-          sourceAnchorId,
-          targetAnchorId,
-          sourceNodeId: srcId,
-          targetNodeId: nid,
-          properties: { sourcePort: port, targetPort, paramBound: true }
-        })
       }
-      this.$nextTick(() => this.refreshInputBindings(nid))
+      this.$nextTick(() => {
+        this.normalizeParamRefs(nid)
+        this.refreshInputBindings(nid)
+      })
     },
     // 视觉模型：加载某模型的检测类别（模型标签），带缓存
     async loadModelClasses(modelId) {
@@ -5867,6 +5961,9 @@ export default {
         cfg.companion_id = companionId
         props.companion_id = companionId
       }
+      // 保留隐式参数引用（如区域过滤的"尺寸参照图片"）：applyConfig 会重建 cfg，需带回
+      const prevRefs = props.config && props.config._input_refs
+      if (prevRefs && Object.keys(prevRefs).length) cfg._input_refs = { ...prevRefs }
       props.config = cfg
       // 先更新文本，再 setProperties 触发 HTML 节点重渲染，使标题改名即时生效
       if (this.form._name) {
