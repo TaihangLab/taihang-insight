@@ -1181,7 +1181,7 @@
               localStorage.removeItem('editSkillInfo')
               
               // 返回技能列表
-              this.$router.push('/skillManage/multimodalLlmSkills')
+              this.$router.push('/skillManage/skillList')
             } else {
               throw new Error('更新响应格式异常')
             }
@@ -1214,7 +1214,7 @@
               localStorage.removeItem('tempSkillInfo')
               
               // 返回技能列表
-              this.$router.push('/skillManage/multimodalLlmSkills')
+              this.$router.push('/skillManage/skillList')
             } else {
               throw new Error('创建响应格式异常')
             }
@@ -1298,7 +1298,7 @@
           localStorage.removeItem('tempSkillInfo')
           
           // 返回技能列表
-          this.$router.push('/skillManage/multimodalLlmSkills')
+          this.$router.push('/skillManage/skillList')
           
         } catch (error) {
           console.error('创建并发布技能失败:', error)

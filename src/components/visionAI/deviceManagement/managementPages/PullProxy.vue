@@ -1,7 +1,27 @@
 <template>
   <div class="pull-proxy-wrapper">
     <div class="pull-proxy-container management-page-container" v-if="!streamProxy">
-
+    <!-- 页面头部 -->
+    <div class="page-header management-page-header">
+      <div class="header-left">
+        <h2 class="page-title">
+          <i class="el-icon-download"></i>
+          拉流代理管理
+        </h2>
+        <p class="page-subtitle">管理和监控所有拉流代理连接</p>
+      </div>
+      <div class="header-right">
+        <el-button type="primary" icon="el-icon-plus" @click="handleAdd">
+          添加代理
+        </el-button>
+        <el-button type="info" icon="el-icon-search" @click="handleSearchOnvif" v-if="false">
+          搜索ONVIF
+        </el-button>
+        <el-button type="success" icon="el-icon-refresh" @click="handleRefresh" :loading="getStreamProxyListLoading">
+          刷新列表
+        </el-button>
+      </div>
+    </div>
 
     <!-- 搜索筛选区域 -->
     <el-card class="search-card management-search-card" shadow="never">
@@ -114,27 +134,12 @@
     <!-- 代理列表 -->
     <el-card class="table-card management-table-card" shadow="never">
       <div slot="header" class="card-header">
-        <div class="header-left-group">
-          <span class="card-title">拉流代理列表</span>
-        </div>
+        <span class="card-title">拉流代理列表</span>
         <div class="card-actions">
-          <el-button type="primary" size="mini" icon="el-icon-plus" @click="handleAdd">添加代理</el-button>
-          <el-button type="success" size="mini" icon="el-icon-refresh" @click="handleRefresh" :loading="getStreamProxyListLoading">刷新</el-button>
-          
-          <el-divider direction="vertical"></el-divider>
-          
           <el-button-group>
-            <el-button size="mini" :type="viewMode === 'table' ? 'primary' : ''" icon="el-icon-menu" @click="viewMode = 'table'">列表</el-button>
-            <el-button size="mini" :type="viewMode === 'card' ? 'primary' : ''" icon="el-icon-s-grid" @click="viewMode = 'card'">卡片</el-button>
+            <el-button :type="viewMode === 'table' ? 'primary' : ''" icon="el-icon-menu" @click="viewMode = 'table'">列表</el-button>
+            <el-button :type="viewMode === 'card' ? 'primary' : ''" icon="el-icon-s-grid" @click="viewMode = 'card'">卡片</el-button>
           </el-button-group>
-          <el-button
-            icon="el-icon-delete"
-            size="mini"
-            :disabled="multipleSelection.length === 0"
-            type="danger"
-            @click="batchDel">
-            批量删除 ({{multipleSelection.length}})
-          </el-button>
         </div>
       </div>
 
@@ -148,10 +153,10 @@
           element-loading-background="rgba(0, 0, 0, 0.8)"
           empty-text="暂无代理数据"
           style="width: 100%"
+          :height="tableHeight"
           stripe
-          border
-          @selection-change="handleSelectionChange">
-          <el-table-column type="selection" width="55" align="center"></el-table-column>
+          border>
+          
           <el-table-column type="index" label="序号" width="60" align="center"></el-table-column>
           
           <el-table-column prop="app" label="流应用名" min-width="120" align="center" show-overflow-tooltip></el-table-column>
@@ -201,7 +206,7 @@
           
           <el-table-column prop="createTime" label="创建时间" min-width="150" align="center" show-overflow-tooltip></el-table-column>
           
-          <el-table-column label="操作" width="420" fixed="right" align="center">
+          <el-table-column label="操作" width="350" fixed="right" align="center">
             <template slot-scope="{ row }">
               <div class="operation-buttons">
                 <el-button size="mini" :loading="row.playLoading" icon="el-icon-video-play" type="primary" @click="play(row)">播放</el-button>
@@ -260,7 +265,6 @@
       <!-- 分页 -->
       <div class="pagination-container">
         <el-pagination
-          background
           @size-change="handleSizeChange"
           @current-change="currentChange"
           :current-page="currentPage"
@@ -285,7 +289,6 @@
 </template>
 
 <script>
-import { deleteStreamProxyById, startStreamProxyById, stopStreamProxyById } from '@/api/stream'
 import StreamProxyEdit from './dialogs/StreamProxyEdit.vue'
 import onvifEdit from './dialogs/onvifEdit.vue'
 import devicePlayer from './dialogs/devicePlayer.vue'
@@ -316,7 +319,6 @@ export default {
       viewMode: 'table',
       tableHeight: 500,
       streamProxy: null,
-      multipleSelection: [],
       proxyStats: {
         active: 0,
         inactive: 0,
@@ -344,14 +346,11 @@ export default {
     window.removeEventListener('resize', this.calculateTableHeight);
   },
   methods: {
-    handleSelectionChange(val) {
-      this.multipleSelection = val;
-    },
     initData() {
       this.getStreamProxyList(true);
       this.mediaServerObj.getOnlineMediaServerList((data) => {
-        this.mediaServerList = data;
-      })
+        this.mediaServerList = data.data;
+      });
     },
     
     startUpdateList() {
@@ -385,29 +384,16 @@ export default {
           mediaServerId: this.mediaServerId,
         }
       }).then((res) => {
-        if (res.data.code === 0 && res.data.data) {
-          this.total = res.data.data.total || 0;
-          const list = res.data.data.list || [];
-          for (let i = 0; i < list.length; i++) {
-            list[i]["playLoading"] = false;
+        if (res.data.code === 0) {
+          this.total = res.data.data.total;
+          for (let i = 0; i < res.data.data.list.length; i++) {
+            res.data.data.list[i]["playLoading"] = false;
           }
-          this.streamProxyList = list;
-          this.updateProxyStats();
-        } else if (res.data.code === 0 && Array.isArray(res.data.data)) {
-          // 兼容非分页返回
-          this.streamProxyList = res.data.data;
-          this.total = res.data.data.length;
-          this.updateProxyStats();
-        } else {
-          this.streamProxyList = [];
-          this.total = 0;
+          this.streamProxyList = res.data.data.list;
           this.updateProxyStats();
         }
       }).catch((error) => {
-        console.error(error);
-        this.streamProxyList = [];
-        this.total = 0;
-        this.updateProxyStats();
+        console.log(error);
       }).finally(() => {
         if (showLoading) {
           this.loading = false;
@@ -417,11 +403,10 @@ export default {
     },
     
     updateProxyStats() {
-      const list = this.streamProxyList || [];
-      this.proxyStats.total = this.total || list.length;
-      this.proxyStats.active = list.filter(item => item.pulling).length;
-      this.proxyStats.inactive = Math.max(0, this.proxyStats.total - this.proxyStats.active);
-      this.proxyStats.enabled = list.filter(item => item.enable).length;
+      this.proxyStats.total = this.streamProxyList.length;
+      this.proxyStats.active = this.streamProxyList.filter(item => item.pulling).length;
+      this.proxyStats.inactive = this.proxyStats.total - this.proxyStats.active;
+      this.proxyStats.enabled = this.streamProxyList.filter(item => item.enable).length;
     },
     
     handleAdd() {
@@ -469,7 +454,13 @@ export default {
     
     play(row) {
       row.playLoading = true;
-      startStreamProxyById(row.id, this.mediaServerId).then((res) => {
+      this.$axios({
+        method: 'get',
+        url: `/api/proxy/start`,
+        params: {
+          id: row.id,
+        }
+      }).then((res) => {
         if (res.data.code === 0) {
           this.$refs.devicePlayer.openDialog("streamPlay", null, null, {
             streamInfo: res.data.data,
@@ -490,7 +481,13 @@ export default {
     },
     
     stopPlay(row) {
-      stopStreamProxyById(row.id, this.mediaServerId).then((res) => {
+      this.$axios({
+        method: 'get',
+        url: `/api/proxy/stop`,
+        params: {
+          id: row.id,
+        }
+      }).then((res) => {
         if (res.data.code === 0) {
           this.$message.success('停止成功');
         } else {
@@ -511,7 +508,13 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        deleteStreamProxyById(row.id, this.mediaServerId).then((res) => {
+        this.$axios({
+          method: "delete",
+          url: "/api/proxy/delete",
+          params: {
+            id: row.id,
+          }
+        }).then((res) => {
           this.$message.success({
             showClose: true,
             message: "删除成功"
@@ -561,56 +564,165 @@ export default {
 </script>
 
 <style scoped>
-.pull-proxy-container {
-  height: auto;
-  min-height: auto;
-  padding: 0;
-  background-color: transparent;
-  display: flex;
-  flex-direction: column;
+/* 引入通用管理页面样式 */
+@import './common-style.css';
+
+.pull-proxy-wrapper {
+  min-height: 100vh;
 }
 
-/* 搜索卡片 */
+.pull-proxy-container {
+  padding: 20px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+/* 页面头部样式 */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.header-left .page-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+}
+
+.header-left .page-title i {
+  margin-right: 12px;
+  font-size: 32px;
+}
+
+.header-left .page-subtitle {
+  font-size: 16px;
+  opacity: 0.9;
+  margin: 0;
+  font-weight: 400;
+}
+
+.header-right .el-button {
+  margin-left: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-weight: 600;
+}
+
+.header-right .el-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* 搜索卡片样式 */
 .search-card {
-  flex-shrink: 0;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   border-radius: 12px;
   border: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .search-form .search-row {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .search-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  white-space: nowrap;
 }
 
 .search-item label {
   font-weight: 600;
+  color: #606266;
+  white-space: nowrap;
 }
 
 .search-actions {
   margin-left: auto;
+}
+
+/* 统计卡片样式 */
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  border-radius: 12px;
+  border: none;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.stat-content {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
 }
 
-/* 列表卡片布局优化 */
-.management-table-card {
-  flex: none;
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  font-size: 24px;
+  color: white;
 }
 
-.management-table-card >>> .el-card__body {
-  padding: 20px !important;
-  overflow: visible !important;
+.stat-icon.active {
+  background: linear-gradient(135deg, #67C23A, #85ce61);
+}
+
+.stat-icon.inactive {
+  background: linear-gradient(135deg, #F56C6C, #f78989);
+}
+
+.stat-icon.total {
+  background: linear-gradient(135deg, #409EFF, #66b1ff);
+}
+
+.stat-icon.enabled {
+  background: linear-gradient(135deg, #E6A23C, #ebb563);
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: #303133;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #909399;
+  margin-top: 4px;
 }
 
 /* 表格卡片样式 */
@@ -620,7 +732,18 @@ export default {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* 头部样式由 common-style.css 统一处理 */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
 
 /* 表格样式 */
 .el-table {
@@ -631,62 +754,205 @@ export default {
 .el-table th {
   background-color: #f8f9fa !important;
   color: #606266;
+  font-weight: 600;
+  border-bottom: 2px solid #e9ecef;
 }
 
-/* 卡片视图区域优化 */
+.stream-url {
+  display: flex;
+  align-items: center;
+}
+
+.url-tag {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy-btn {
+  cursor: pointer;
+  margin-right: 8px;
+  color: #409EFF;
+}
+
+.copy-btn:hover {
+  color: #66B1FF;
+}
+
+.operation-buttons {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.operation-buttons .el-button--mini {
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+/* 卡片视图样式 */
 .proxy-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 20px;
-  margin-bottom: 20px;
+  max-height: calc(100vh - 400px);
+  overflow-y: auto;
+  padding-right: 10px;
 }
 
-.proxy-card-item {
-  margin-bottom: 0;
+/* 滚动条样式 */
+.proxy-cards::-webkit-scrollbar {
+  width: 6px;
+}
+
+.proxy-cards::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.proxy-cards::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.proxy-cards::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .proxy-card {
-  height: 100%;
   border-radius: 12px;
-  border: 1px solid #ebeef5;
+  border: none;
   transition: all 0.3s ease;
 }
 
 .proxy-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .proxy-card-header {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.proxy-title h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.proxy-title p {
+  margin: 0;
+  font-size: 13px;
+  color: #909399;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proxy-status-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 .proxy-card-content {
-  padding: 16px 0;
+  margin-bottom: 16px;
 }
 
 .proxy-info-row {
   display: flex;
-  margin-bottom: 10px;
-  font-size: 13px;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.info-label {
+  color: #606266;
+  font-weight: 500;
+}
+
+.info-value {
+  color: #303133;
+  font-weight: 600;
+  text-align: right;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .proxy-card-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
+  gap: 4px;
 }
 
-/* 分页容器 */
-.pagination-container {
-  margin-top: 24px;
-  display: flex;
-  justify-content: flex-end;
+.proxy-card-actions .el-button {
+  flex: 1;
+  font-size: 10px;
+  padding: 4px 6px;
+  height: 24px;
+  line-height: 1;
+  border-radius: 4px;
+  min-width: 60px;
 }
-</style>
+
+/* 分页样式 */
+.pagination-container {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.el-pagination {
+  font-weight: 600;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .pull-proxy-container {
+    padding: 10px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+  
+  .search-form .search-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .search-actions {
+    margin-left: 0;
+    margin-top: 16px;
+  }
+  
+  .stats-cards {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  
+  .operation-buttons {
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .proxy-cards {
+    grid-template-columns: 1fr;
+  }
+}
+</style> 

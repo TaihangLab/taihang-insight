@@ -297,7 +297,7 @@
 
 <script>
 import * as echarts from 'echarts';
-import { alertAPI, cameraAPI } from '../../service/VisionAIService.js';
+import { alertAPI, cameraAPI, systemMonitorAPI } from '../../service/VisionAIService.js';
 
 // 预警等级映射
 const LEVEL_MAP = { 1: 'urgent', 2: 'high', 3: 'medium', 4: 'low' };
@@ -670,12 +670,20 @@ export default {
 
     async fetchCameraCount() {
       try {
-        const res = await cameraAPI.getCameraList({ limit: 1 });
-        const data = res.data;
+        const [cameraRes, resourceRes] = await Promise.all([
+          cameraAPI.getCameraList({ limit: 1 }),
+          systemMonitorAPI.getSystemResources(),
+        ]);
+        const data = cameraRes && cameraRes.data;
         const total = (data && (data.total || (data.data && data.data.length) || 0)) || 0;
         this.totalDevices = total;
-        // deviceCount = 有任务在跑的摄像头，暂用总数作近似
-        this.deviceCount = total;
+
+        const rd = resourceRes && resourceRes.data;
+        if (rd && Array.isArray(rd.analyzing_camera_ids)) {
+          this.deviceCount = rd.analyzing_camera_ids.length;
+        } else {
+          this.deviceCount = 0;
+        }
       } catch (e) {
         console.error('获取摄像头数量失败:', e);
       }

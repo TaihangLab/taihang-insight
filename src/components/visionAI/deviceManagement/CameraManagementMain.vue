@@ -192,9 +192,9 @@ export default {
     }
   },
   methods: {
-    // 返回设备列表
+    // 返回摄像头列表
     goBack() {
-      this.$router.go(-1);
+      this.$router.push({ name: 'camera' });
     },
 
     // 处理菜单选择
@@ -282,10 +282,11 @@ export default {
 .camera-management-main {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
   padding: 16px;
-  box-sizing: border-box; /* 确保 padding 不会增加总宽度 */
+  box-sizing: border-box;
 }
 
 /* 页面头部 - 科技感卡片样式 */

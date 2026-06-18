@@ -5,7 +5,7 @@
         class="flow-tree"
         ref="veTree"
         node-key="treeId"
-        :height="treeHeight?treeHeight:'78vh'"
+        :height="effectiveTreeHeight"
         :indent="16"
         lazy
         style="padding: 0 0 2rem 16px"
@@ -13,8 +13,7 @@
         :data="treeData"
         :props="props"
         :default-expanded-keys="['']"
-        @node-click="nodeClickHandler"
-      >
+        @node-click="nodeClickHandler">
         <template class="custom-tree-node" v-slot:default="{ node, data }">
         <span class="custom-tree-node" >
           <i
@@ -24,7 +23,6 @@
             @click.stop="toggleNode(node)"
           ></i>
           <span v-else class="tree-arrow-space"></span>
-          <!-- 移除了摄像头的 iconfont 标签，仅保留文字 -->
           <span v-if="node.data.deviceId !=='' && showCode" :title="node.data.deviceId">{{ node.label }}（编号：{{ node.data.deviceId }}）</span>
           <span v-if="node.data.deviceId ==='' || !showCode" :title="node.data.deviceId">{{ node.label }}</span>
         </span>
@@ -40,9 +38,8 @@ import { realtimeMonitorAPI } from '../../../service/VisionAIService.js';
 
 export default {
   name: 'MonitorRegionTree',
-  components: {
-    VueEasyTree
-  },
+  components: { VueEasyTree },
+  props: ['clickEvent', 'hasChannel', 'treeHeight'],
   data() {
     return {
       props: {
@@ -52,9 +49,14 @@ export default {
       showCode: false,
       chooseId: "",
       treeData: [],
+    };
+  },
+  computed: {
+    effectiveTreeHeight() {
+      if (this.treeHeight === 'auto') return undefined;
+      return this.treeHeight || '78vh';
     }
   },
-  props: ['clickEvent', 'hasChannel', 'treeHeight'],
   methods: {
     loadNode: async function (node, resolve) {
       try {
@@ -66,22 +68,16 @@ export default {
             leaf: false,
             type: 0
           }]);
-        } else if (node.data.deviceId.length <= 8) {
+        } else if (String(node.data.deviceId != null ? node.data.deviceId : '').length <= 8) {
           if (node.data.leaf) {
             resolve([]);
             return;
           }
-          
-          // 使用专用的实时监控API
-          // 注意：RegionController没有query参数
           const response = await realtimeMonitorAPI.getRegionTree({
             parent: node.data.id,
             hasChannel: this.hasChannel
           });
-          
-          // 解包后端响应: response.data = {code: 0, msg: "成功", data: [...]}
-          const treeData = (response.data && response.data.data) || [];
-          resolve(treeData);
+          resolve((response.data && response.data.data) || []);
         } else {
           resolve([]);
         }
@@ -91,21 +87,21 @@ export default {
         resolve([]);
       }
     },
-    reset: function () {
+    reset() {
       this.$forceUpdate();
     },
-    refreshNode: function (node) {
+    refreshNode(node) {
       node.loaded = false;
       node.expand();
     },
-    refresh: function (id) {
-      let node = this.$refs.veTree.getNode(id);
+    refresh(id) {
+      const node = this.$refs.veTree.getNode(id);
       if (node) {
         node.loaded = false;
         node.expand();
       }
     },
-    nodeClickHandler: function (data, node, tree) {
+    nodeClickHandler(data) {
       this.chooseId = data.deviceId;
       if (this.clickEvent) {
         this.clickEvent(data);
@@ -122,7 +118,7 @@ export default {
       }
     }
   },
-}
+};
 </script>
 
 <style scoped>
@@ -156,4 +152,3 @@ export default {
   padding-left: 4px !important;
 }
 </style>
-

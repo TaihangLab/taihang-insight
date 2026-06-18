@@ -12,31 +12,31 @@
 
       <!-- 主内容区 -->
       <el-main class="layout-content">
-        <router-view></router-view>
+        <router-view :key="$route.fullPath"></router-view>
       </el-main>
     </div>
-    <!-- 太行智能助手 -->
-    <intelligent-assistant />
+    <!-- 太行·问道助手 -->
+    <taihang-assistant />
   </div>
 </template>
 
 <script>
 import SideMenu from "./SideMenu.vue";
 import uiHeader from "./UiHeader.vue";
-import IntelligentAssistant from "../components/visionAI/chatAssistant/IntelligentAssistant.vue";
+import TaihangAssistant from "../components/visionAI/chatAssistant/TaihangAssistant.vue";
 
 export default {
   name: "index",
   components: {
     SideMenu,
     uiHeader,
-    IntelligentAssistant,
+    TaihangAssistant
   },
   created() {},
   data() {
     return {
-      fixedHeader: true, // 固定 Header : boolean
-      fixSiderbar: true, // 固定左侧菜单栏 ： boolean
+      fixedHeader: true,
+      fixSiderbar: true,
     };
   },
   methods: {
@@ -47,7 +47,6 @@ export default {
 };
 </script>
 <style scoped>
-/* 布局容器 */
 .layout-container {
   display: flex;
   height: 100vh;
@@ -56,7 +55,6 @@ export default {
   background-color: var(--bg-secondary);
 }
 
-/* 右侧主内容区 */
 .layout-main {
   flex: 1;
   display: flex;
@@ -71,7 +69,6 @@ export default {
   margin-left: 0;
 }
 
-/* 顶部导航栏 */
 .layout-header {
   height: var(--header-height);
   background-color: var(--bg-primary);
@@ -81,16 +78,13 @@ export default {
   align-items: center;
 }
 
-/* 主内容区 */
 .layout-content {
   flex: 1;
   background-color: var(--bg-secondary);
-  /* padding: var(--spacing-lg); */
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-/* 内容区滚动条样式 */
 .layout-content::-webkit-scrollbar {
   width: 8px;
 }
@@ -109,7 +103,6 @@ export default {
   background: var(--text-tertiary);
 }
 
-/* 页面标题栏通用样式 */
 .layout-content >>> .page-header {
   background-color: var(--bg-primary);
   margin-bottom: var(--spacing-base);
@@ -132,7 +125,6 @@ export default {
   gap: var(--spacing-sm);
 }
 
-/* 动画效果 */
 .fade-enter {
   visibility: hidden;
   opacity: 0;

@@ -74,6 +74,9 @@
         <el-menu-item index="/modelManage/modelList">
           <span slot="title">模型列表</span>
         </el-menu-item>
+        <el-menu-item index="/modelManage/modelFactory">
+          <span slot="title">模型工厂</span>
+        </el-menu-item>
       </el-submenu>
 
       <!-- 技能管理 -->
@@ -82,19 +85,19 @@
           <i class="el-icon-magic-stick menu-icon"></i>
           <span slot="title">技能管理</span>
         </template>
-        <el-menu-item index="/skillManage/deviceSkills">
-          <span slot="title">视觉模型技能</span>
-        </el-menu-item>
-        <el-menu-item index="/skillManage/multimodalLlmSkills">
-          <span slot="title">多模态大模型技能</span>
+        <el-menu-item index="/skillManage/skillList">
+          <span slot="title">技能列表</span>
         </el-menu-item>
         <el-menu-item index="/skillManage/multimodalReview">
           <span slot="title">多模态大模型复判</span>
         </el-menu-item>
+        <el-menu-item index="/skillManage/runPlan">
+          <span slot="title">技能运行计划</span>
+        </el-menu-item>
       </el-submenu>
 
       <!-- 模型工厂 -->
-      <el-menu-item index="/mlPipeline">
+      <el-menu-item index="/modelManage/modelFactory">
         <i class="el-icon-monitor menu-icon"></i>
         <span slot="title">模型工厂</span>
       </el-menu-item>
