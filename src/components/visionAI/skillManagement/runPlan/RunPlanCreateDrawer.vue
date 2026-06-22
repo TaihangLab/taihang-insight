@@ -894,8 +894,12 @@ export default {
         const payload = res.data || {};
         const detail = payload.data !== undefined ? payload.data : payload;
         const params = (detail.default_config && detail.default_config.params) || {};
+        // 画布上绘制的输入（电子围栏 ROI / Array<ROI> / 绊线 Tripwire）由"区域绘制"提供，
+        // 不应出现在"技能参数"填写表里。
+        const drawnKeys = this.collectDrawnParamKeys(detail);
         const fields = [];
         Object.keys(params).forEach(key => {
+          if (drawnKeys.has(key)) return;
           const val = params[key];
           fields.push({
             key,
@@ -939,6 +943,22 @@ export default {
       const params = this.startNodeInputParams(detail);
       if (params === null) return null;
       return params.map(p => String((p && p.type) || '').toLowerCase());
+    },
+    // 收集"在画布上绘制"的入参名（电子围栏 ROI / Array<ROI> / 绊线 Tripwire），
+    // 这些由"区域绘制"提供，需从"技能参数"填写表里剔除。
+    collectDrawnParamKeys(detail) {
+      const keys = new Set();
+      const params = this.startNodeInputParams(detail);
+      if (!params) return keys;
+      params.forEach(p => {
+        if (!p || !p.name) return;
+        const type = String(p.type || '').toLowerCase();
+        const itemType = String(p.item_type || '').toLowerCase();
+        const isRoi = type === 'roi' || (type === 'array' && itemType === 'roi');
+        const isTripwire = type === 'tripwire' || (type === 'array' && itemType === 'tripwire');
+        if (isRoi || isTripwire) keys.add(String(p.name));
+      });
+      return keys;
     },
     // 计算技能对电子围栏的需求：是否需要绘制、是否允许多个（Array<ROI>）。
     // - 单个 ROI（type=ROI）：需要围栏，仅允许 1 个
