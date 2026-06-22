@@ -134,7 +134,7 @@
           <el-form label-position="top" size="small">
 
             <!-- 通用：输入来源选择（除视觉模型/开始/结束外，其余有输入的节点统一在这里选） -->
-            <template v-if="hasInputSelector && selectedType !== 'detection_model' && selectedType !== 'vlm_model' && selectedType !== 'custom_code' && selectedType !== 'video_slice' && selectedType !== 'size_filter' && selectedType !== 'intersection' && selectedType !== 'intersect' && selectedType !== 'displacement' && selectedType !== 'distance' && selectedType !== 'tripwire_tracking' && selectedType !== 'region_filter' && selectedType !== 'count' && selectedType !== 'small_image_batch' && selectedType !== 'target_matting'">
+            <template v-if="hasInputSelector && selectedType !== 'detection_model' && selectedType !== 'vlm_model' && selectedType !== 'custom_code' && selectedType !== 'video_slice' && selectedType !== 'size_filter' && selectedType !== 'intersection' && selectedType !== 'intersect' && selectedType !== 'displacement' && selectedType !== 'distance' && selectedType !== 'tripwire_tracking' && selectedType !== 'region_filter' && selectedType !== 'count' && selectedType !== 'small_image_batch' && selectedType !== 'target_matting' && selectedType !== 'sequence' && selectedType !== 'judge'">
               <div class="sg-sec-title">输入</div>
               <el-form-item v-for="sel in inputSelectors" :key="sel.port" :label="sel.label" :required="!sel.optional">
                 <el-popover v-model="sel.popOpen" placement="bottom-start" trigger="click"
@@ -1620,17 +1620,24 @@
                 </div>
               </div>
 
+              <!-- 相同目标判断：属于「判断条件」的一部分，紧跟条件之下 -->
               <div class="sg-judge-same-target">
                 <span class="sg-judge-same-target-lbl">
                   相同目标判断
-                  <el-tooltip content="开启后引用的参数来自于同一个目标则条件组成立" placement="top">
+                  <el-tooltip content="开启后，多个条件必须命中同一个被跟踪目标（track_id 相同）才成立，避免“A 满足条件1、B 满足条件2”被误判为同一目标" placement="top">
                     <i class="el-icon-question sg-field-help"></i>
                   </el-tooltip>
                 </span>
                 <el-switch v-model="form.same_target" @change="applyConfig" />
               </div>
+              <div v-if="form.same_target" class="sg-tip sg-judge-same-target-tip">
+                需引用「带追踪」的检测参数（视觉模型开启目标跟踪、并使用带追踪输出端口），否则没有 track_id，此开关不生效。
+              </div>
 
               <div v-if="judgeConfigInvalid" class="sg-judge-global-err">请检查条件分支配置</div>
+
+              <!-- 分隔线：以下「持续时间/缓冲时间」与判断条件无关 -->
+              <div class="sg-judge-time-divider"></div>
 
               <el-form-item v-for="nf in judgeDurationFields" :key="nf.port" :required="nf.required">
                 <span slot="label">
@@ -1656,6 +1663,146 @@
                 </div>
                 <div class="sg-io-item">
                   <span class="sg-io-dot" style="--c:#f5566c"></span>假
+                  <i class="el-icon-error sg-io-type-ic" style="color:#f5566c"></i>
+                </div>
+              </div>
+            </template>
+
+            <!-- 时序判断 -->
+            <template v-else-if="selectedType === 'sequence'">
+              <el-alert type="warning" :closable="false" show-icon title="编排建议"
+                        description="按从上到下的顺序，各阶段依次「连续满足设定的持续时间」后推进，全部按序完成才触发。阶段之间的间隔不能超过「最大间隔时间」，否则整条序列重置回第一步。各阶段需先把上游节点连到本节点，再选择对应参数。" />
+              <div class="sg-sec-title">输入</div>
+              <div v-if="seqInputDisplay.length" class="sg-io-list">
+                <div v-for="inp in seqInputDisplay" :key="inp.field" class="sg-io-item">
+                  <span class="sg-io-dot" :style="{ '--c': inp.color }"></span>{{ inp.label }}
+                  <i :class="inp.icon" class="sg-io-type-ic" :style="{ color: inp.color }"></i>
+                </div>
+              </div>
+              <div v-else class="sg-tip">请在下方阶段配置中选择参数，所选参数将显示在此处。</div>
+              <div class="sg-sec-title">
+                <span>配置</span>
+              </div>
+              <div class="sg-judge-cond-head">
+                <span class="sg-judge-cond-title">阶段顺序 <i class="sg-req-star">*</i></span>
+                <el-tooltip content="最多添加10个阶段" placement="top">
+                  <el-button icon="el-icon-plus" size="mini" circle
+                             :disabled="(form.stages || []).length >= 10"
+                             @click="addSeqStage" />
+                </el-tooltip>
+              </div>
+
+              <div class="sg-judge-groups-outer">
+                <div class="sg-judge-groups-list">
+                  <div v-for="(s, si) in form.stages" :key="si" class="sg-cond-group sg-judge-group">
+                    <div class="sg-cond-group-head">
+                      <span>阶段{{ si + 1 }} <i class="sg-req-star">*</i></span>
+                      <span class="sg-seq-stage-ops">
+                        <i class="el-icon-top sg-seq-move" :class="{ 'is-disabled': si === 0 }"
+                           title="上移" @click="moveSeqStage(si, -1)"></i>
+                        <i class="el-icon-bottom sg-seq-move" :class="{ 'is-disabled': si === form.stages.length - 1 }"
+                           title="下移" @click="moveSeqStage(si, 1)"></i>
+                        <i class="el-icon-delete sg-judge-group-del" title="删除阶段"
+                           @click="removeSeqStage(si)"></i>
+                      </span>
+                    </div>
+                    <div class="sg-judge-group-body">
+                      <div class="sg-judge-conds-wrap">
+                        <div class="sg-judge-cond-item">
+                          <div class="sg-judge-cond-row">
+                            <div class="sg-judge-param-wrap">
+                              <el-popover v-model="s._paramPop" placement="bottom-start" trigger="click"
+                                          :width="300" popper-class="sg-param-pop">
+                                <el-tree v-if="seqParamTree.length" :data="seqParamTree" node-key="id"
+                                         default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                                         :current-node-key="s.param_ref"
+                                         @node-click="onSeqParamPick(si, $event)">
+                                  <span slot-scope="{ data }" class="sg-tree-node">
+                                    <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                                    <span>{{ data.label }}</span>
+                                  </span>
+                                </el-tree>
+                                <div v-else class="sg-tree-empty">暂无数据</div>
+                                <div slot="reference" class="sg-vlm-bind sg-judge-param-ref"
+                                     :class="{ 'is-empty': !s.param_ref, 'is-invalid': judgeConfigTouched && !s.param_ref }">
+                                  <i :class="judgeParamTypeIcon(s.param_type)"></i>
+                                  <span class="sg-vlm-bind-txt">{{ judgeParamLabel(s.param_ref) || '请选择参数' }}</span>
+                                  <i v-if="s.param_ref" class="el-icon-circle-close sg-vlm-bind-clear"
+                                     @click.stop="clearSeqParam(si)"></i>
+                                  <i v-else class="el-icon-arrow-down sg-judge-param-arrow"></i>
+                                </div>
+                              </el-popover>
+                            </div>
+                            <div class="sg-judge-cond-fields">
+                              <el-select v-model="s.operator" size="mini" placeholder="条件"
+                                         :disabled="!s.param_type"
+                                         :class="{ 'is-invalid-select': judgeConfigTouched && !s.operator }"
+                                         @change="onSeqOperatorChange(si)">
+                                <el-option v-for="op in judgeOperatorsForType(s.param_type)" :key="op.v"
+                                           :label="op.l" :value="op.v" />
+                              </el-select>
+                              <el-input v-model="s.value" size="mini" placeholder="条件值"
+                                        :disabled="!s.operator || !judgeCondNeedsValue(s.operator)"
+                                        :class="{ 'is-invalid-input': judgeConfigTouched && judgeCondValueMissing(s) }"
+                                        @input="applyConfig" />
+                            </div>
+                          </div>
+                          <div class="sg-seq-stage-dur">
+                            <span class="sg-seq-dur-lbl">持续</span>
+                            <el-input-number v-model="s.duration" :min="0" :max="3600" :step="0.1" :precision="4"
+                                             size="mini" controls-position="right" @change="applyConfig" />
+                            <span class="sg-seq-dur-unit">秒</span>
+                            <el-tooltip content="本阶段动作需连续满足多久才算完成、进入下一阶段。0=出现即视为完成。" placement="top">
+                              <i class="el-icon-question sg-field-help"></i>
+                            </el-tooltip>
+                          </div>
+                          <div v-if="judgeConfigTouched && !judgeCondComplete(s)" class="sg-judge-cond-err">
+                            参数、条件、条件值不可为空
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="seqConfigInvalid" class="sg-judge-global-err">请检查时序判断配置（至少 2 个阶段，且每阶段参数/条件完整）</div>
+
+              <div class="sg-judge-time-divider"></div>
+
+              <el-form-item required>
+                <span slot="label">
+                  最大间隔时间 (s)
+                  <el-tooltip content="相邻阶段之间允许的最大间隔：从上一阶段完成（或本阶段最近一次满足）起，超过这个时间还没有进展，整条序列就回到第一步。设为 0 表示不限制间隔。" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <div class="sg-vs-num-row">
+                  <span class="sg-type-prefix">dou.</span>
+                  <el-input-number v-model="form.max_gap" :min="0" :max="3600" :step="1" :precision="4"
+                                   controls-position="right" style="flex:1" @change="applyConfig" />
+                </div>
+                <div class="sg-tip">阶段之间间隔超过此秒数则整条序列重置；0=不限制间隔。</div>
+              </el-form-item>
+
+              <el-form-item>
+                <span slot="label">
+                  完成后自动重置
+                  <el-tooltip content="走完整条序列触发后自动回到第一步，便于下一轮再次检测触发；关闭则触发一次后停在末态。" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-switch v-model="form.reset_on_complete" @change="applyConfig" />
+              </el-form-item>
+
+              <div class="sg-sec-title">输出</div>
+              <div class="sg-io-list">
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#16b777"></span>按序完成
+                  <i class="el-icon-success sg-io-type-ic" style="color:#16b777"></i>
+                </div>
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#f5566c"></span>未完成
                   <i class="el-icon-error sg-io-type-ic" style="color:#f5566c"></i>
                 </div>
               </div>
@@ -2011,6 +2158,7 @@ const CAT_META = {
   model: { color: '#7c5cff', icon: 'el-icon-picture-outline' },
   process: { color: '#2f7bff', icon: 'el-icon-set-up' },
   judge: { color: '#fa8c16', icon: 'el-icon-share' },
+  sequence: { color: '#13c2c2', icon: 'el-icon-sort' },
   end: { color: '#f5566c', icon: 'el-icon-finished' },
   other: { color: '#909399', icon: 'el-icon-cpu' }
 }
@@ -2030,6 +2178,7 @@ const TYPE_ICON = {
   count: 'el-icon-data-line',
   video_slice: 'el-icon-video-camera',
   judge: 'el-icon-share',
+  sequence: 'el-icon-sort',
   custom_code: 'el-icon-edit-outline',
   target_matting: 'el-icon-crop',
   small_image_batch: 'el-icon-cpu'
@@ -2419,14 +2568,14 @@ const JUDGE_DURATION_FIELDS = [
   {
     port: 'duration', label: '持续时间 (s)', placeholder: '0.0', required: true,
     min: 0, max: 3600, step: 0.1, precision: 4,
-    tip: '条件需连续满足的时长，单位秒',
-    hint: '仅支持输入数字，取值范围[0, 3600]，最多保留4位小数'
+    tip: '条件需“连续满足”多久才真正触发，用来过滤瞬时误报。例：设为 5，表示连续满足 5 秒才告警；设为 0 表示满足即触发。',
+    hint: '设为 0=满足即触发；>0=需连续满足这么久才触发。取值[0, 3600] 秒，最多 4 位小数。'
   },
   {
     port: 'buffer', label: '缓冲时间 (s)', placeholder: '0.0', required: false,
     min: 0, max: 3600, step: 0.1, precision: 4,
-    tip: '计时过程中允许条件短暂不满足而不打断计时',
-    hint: '仅支持输入数字，取值范围[0, 3600]，最多保留4位小数'
+    tip: '计时过程中允许条件“短暂不满足”而不清零计时（抗漏检/抖动）。例：缓冲 1 秒，期间断开 ≤1 秒仍接着累计，超过 1 秒才重置。必须小于持续时间。',
+    hint: '仅在持续时间>0 时生效，且必须小于持续时间。取值[0, 3600] 秒，最多 4 位小数。'
   }
 ]
 
@@ -2598,6 +2747,13 @@ function estimateNodeLayoutSize(nodeType, config = {}, extra = {}) {
   }
   if (nodeType === 'judge') {
     return { width, height: judgeCanvasPreviewHeight(cfg.conditions) }
+  }
+  if (nodeType === 'sequence') {
+    const inCount = sequenceUniqueStageInputs(cfg).length || 1
+    return {
+      width,
+      height: 18 + 40 + (12 + Math.ceil(inCount / 2) * 26) + (12 + 26)
+    }
   }
   if (nodeType === 'target_matting') {
     return { width, height: 18 + 40 + (12 + 26) + (12 + 26) }
@@ -2804,6 +2960,37 @@ function judgeCanvasPreviewHeight(conditions) {
   groups.forEach(g => { rows += Math.max(1, ((g && g.conditions) || []).length) })
   return 18 + 40 + 10 + Math.max(52, rows * 30 + groups.length * 6) + 28
 }
+/** 时序判断：按 field 去重后的阶段输入列表 */
+function sequenceUniqueStageInputs(cfg) {
+  const seen = new Set()
+  const list = []
+  ;((cfg && cfg.stages) || []).forEach(s => {
+    if (!s || !s.field || seen.has(s.field)) return
+    seen.add(s.field)
+    list.push(s)
+  })
+  return list
+}
+function sequenceInputPortsFromConfig(cfg) {
+  const pt = {}
+  const ports = []
+  sequenceUniqueStageInputs(cfg).forEach(s => {
+    ports.push(s.field)
+    pt[s.field] = s.param_type || 'Any'
+  })
+  return { inputPorts: ports, portTypes: pt }
+}
+function sequenceStageInputChips(cfg, nodesById) {
+  const stages = sequenceUniqueStageInputs(cfg)
+  if (!stages.length) {
+    return ['<span class="sgx-chip sgx-chip-dyn" style="--c:#909399"><span class="sgx-chip-dot"></span>动态输入</span>']
+  }
+  return stages.map(s => {
+    const label = s.param_label || judgeCondParamDisplayLabel(s, nodesById)
+    const type = s.param_type || 'Any'
+    return chipHtml(s.field, type, label, false)
+  })
+}
 function vlmOutputPortType(type) {
   if (!type) return 'String'
   if (String(type).startsWith('Array<')) return 'Array'
@@ -2894,6 +3081,13 @@ class SGNodeModel extends HtmlNodeModel {
       this.height = judgeCanvasPreviewHeight(p.config && p.config.conditions)
       return
     }
+    if (p.nodeType === 'sequence') {
+      const inCount = sequenceUniqueStageInputs(p.config).length || 1
+      this.height = 18 + 40
+        + (12 + Math.ceil(inCount / 2) * 26)
+        + (12 + 26)
+      return
+    }
     const inCount = (p.inputPorts || []).length + (p.dynamic ? 1 : 0)
     const outCount = (p.outputPorts || []).length
     const inLines = inCount ? Math.ceil(inCount / 2) : 0
@@ -2976,11 +3170,21 @@ class SGNodeModel extends HtmlNodeModel {
   }
 }
 
+/** LogicFlow HtmlNode 首次 setHtml 时 view 上 properties 可能未就绪，需从 graphModel 取最新节点模型 */
+function resolveSgNodeModel(view) {
+  let m = (view && view.props && view.props.model) || view
+  if (m && m.id && m.graphModel && typeof m.graphModel.getNodeModelById === 'function') {
+    const live = m.graphModel.getNodeModelById(m.id)
+    if (live) m = live
+  }
+  return m
+}
+
 class SGNode extends HtmlNode {
   // 隐藏默认的 SVG 文本（标题改在 HTML 卡片里渲染，避免重影）
   getText() { return '' }
   setHtml(rootEl) {
-    const m = this.props ? this.props.model : this
+    const m = resolveSgNodeModel(this)
     const p = (m && m.properties) || {}
     const cat = p.category || 'other'
     const meta = catMeta(cat)
@@ -3218,6 +3422,24 @@ class SGNode extends HtmlNode {
         + `<span class="sgx-judge-out-lbl true">TRUE</span>`
         + `<span class="sgx-judge-out-lbl false">FALSE</span>`
         + `</div>`
+    } else if (p.nodeType === 'sequence') {
+      const nodesById = {}
+      const gm = m && m.graphModel
+      if (gm && gm.nodes) {
+        gm.nodes.forEach(nd => {
+          nodesById[nd.id] = {
+            id: nd.id,
+            properties: nd.properties,
+            text: nd.text
+          }
+        })
+      }
+      const ins = sequenceStageInputChips(cfg, nodesById)
+      const outs = [
+        chipHtml('passed', 'Boolean', '按序完成'),
+        chipHtml('false', 'Boolean', '未完成')
+      ]
+      body = row('输入', ins) + row('输出', outs)
     } else {
       const genBoundIn = boundInputPorts(m)
       const ins = (p.inputPorts || []).map(n => chipHtml(n, types[n], null, !genBoundIn.has(n)))
@@ -3263,6 +3485,7 @@ export default {
       hasUnpublishedChanges: false,
       dirty: false,
       _loadingGraph: false,
+      _refreshingVlmCard: false,
       selectedNode: null,
       selectedType: '',
       zoomPct: 100,
@@ -3438,7 +3661,7 @@ export default {
       }
       // 面板分组顺序：模型节点 → 处理节点 → 判断节点
       const ordered = {}
-      ;['model', 'process', 'judge'].forEach(cat => {
+      ;['model', 'process', 'judge', 'sequence'].forEach(cat => {
         if (g[cat]) ordered[cat] = g[cat]
       })
       Object.keys(g).forEach(cat => {
@@ -3670,6 +3893,35 @@ export default {
       if (this.selectedType !== 'judge' || !this.selectedNode) return []
       return this.groupsToTree(this.judgeAllSourceGroups())
     },
+    seqParamTree() {
+      if (this.selectedType !== 'sequence' || !this.selectedNode) return []
+      return this.groupsToTree(this.judgeAllSourceGroups())
+    },
+    seqConfigInvalid() {
+      if (this.selectedType !== 'sequence' || !this.judgeConfigTouched) return false
+      const stages = (this.form && this.form.stages) || []
+      if (stages.length < 2) return true
+      return stages.some(s => !this.judgeCondComplete(s))
+    },
+    seqInputDisplay() {
+      if (this.selectedType !== 'sequence') return []
+      const seen = new Set()
+      const list = []
+      ;((this.form && this.form.stages) || []).forEach(s => {
+        if (!s || !s.field || seen.has(s.field)) return
+        seen.add(s.field)
+        const type = s.param_type || 'String'
+        const meta = PARAM_TYPE_META[type] || PARAM_TYPE_META.String
+        list.push({
+          field: s.field,
+          label: s.param_label || this.judgeParamLabel(s.param_ref) || s.field,
+          type,
+          color: meta.color,
+          icon: this.judgeParamTypeIcon(type)
+        })
+      })
+      return list
+    },
     judgeConfigInvalid() {
       if (this.selectedType !== 'judge' || !this.judgeConfigTouched) return false
       const groups = (this.form && this.form.groups) || []
@@ -3713,9 +3965,11 @@ export default {
     }
     this.$nextTick(() => {
       this.fitView()
-      // 渲染完成后再解除抑制并清掉初始"脏"状态
-      this._loadingGraph = false
-      this.dirty = false
+      requestAnimationFrame(() => {
+        this.refreshAllVlmNodeCards()
+        this._loadingGraph = false
+        this.dirty = false
+      })
     })
     window.addEventListener('keydown', this.onKeydown)
     // 浏览器关闭 / 刷新前，若有未保存改动则弹原生确认
@@ -3748,7 +4002,7 @@ export default {
   methods: {
     // 标记画布有"未保存改动"（加载/渲染阶段不计入，避免误报）
     markDirty() {
-      if (this._loadingGraph) return
+      if (this._loadingGraph || this._refreshingVlmCard) return
       this.dirty = true
     },
     onBeforeUnload(e) {
@@ -3757,7 +4011,7 @@ export default {
       e.returnValue = ''  // 触发浏览器原生的"离开此网站?"确认
     },
     categoryName(cat) {
-      return { start: '开始', model: '模型节点', process: '处理节点', judge: '条件分支', end: '结束' }[cat] || cat
+      return { start: '开始', model: '模型节点', process: '处理节点', judge: '条件分支', sequence: '时序判断', end: '结束' }[cat] || cat
     },
     palIconClass(nt) {
       return typeIcon(nt.type, nt.category)
@@ -3833,6 +4087,49 @@ export default {
           ...this.vlmModelOptions
         ]
       }
+    },
+    // setProperties 触发 HtmlNode 重绘，使卡片展示与 config.model_name 同步
+    applyVlmNodeCard(nodeId, modelName) {
+      if (!nodeId || !this.lf || !modelName) return
+      let model
+      try {
+        model = this.lf.getNodeModelById(nodeId)
+      } catch (e) { /* ignore */ }
+      if (!model) return
+      const props = { ...(model.properties || {}) }
+      props.config = { ...(props.config || {}), model_name: modelName }
+      props._vlmRev = (props._vlmRev || 0) + 1
+      this._refreshingVlmCard = true
+      try {
+        this.lf.setProperties(nodeId, props)
+      } finally {
+        this._refreshingVlmCard = false
+      }
+      this.refreshNodeLayout(nodeId)
+    },
+    syncVlmModelFromForm(nodeId) {
+      if (!nodeId || !this.lf) return
+      const t = this.selectedType
+      if (t !== 'vlm_model' && !(t === 'small_image_batch' && this.form.model_mode === 'vlm_model')) return
+      const formName = (this.form.model_name || '').trim()
+      if (!formName) return
+      this.applyVlmNodeCard(nodeId, formName)
+    },
+    refreshAllVlmNodeCards() {
+      if (!this.lf) return
+      const g = this.lf.getGraphData()
+      ;(g.nodes || []).forEach(n => {
+        const props = n.properties || {}
+        const cfg = props.config || {}
+        const nt = props.nodeType
+        const isVlm = nt === 'vlm_model'
+          || (nt === 'small_image_batch' && cfg.model_mode === 'vlm_model')
+        if (!isVlm) return
+        let modelName = (cfg.model_name || '').trim()
+        if (!modelName && this.vlmModelDefault) modelName = this.vlmModelDefault.trim()
+        if (!modelName) return
+        this.applyVlmNodeCard(n.id, modelName)
+      })
     },
     onVlmModelSelectVisible(visible) {
       if (visible && !this.vlmModelOptions.length) this.loadVlmModels()
@@ -4134,6 +4431,7 @@ export default {
       if (type === 'detection_model') return 'detections'
       if (type === 'target_matting') return 'target'
       if (type === 'judge') return 'passed'
+      if (type === 'sequence') return 'passed'
       const pm = PORT_MAP[type] || {}
       return (pm.outputs && pm.outputs[0]) || 'out'
     },
@@ -4442,12 +4740,19 @@ export default {
         config: newCfg,
         classLabels
       }
+      // track_classes 缺省（旧数据）= 全部跟踪；否则仅勾选的标签生成「追踪」输出端口
+      const trackSet = Array.isArray(newCfg.track_classes) ? newCfg.track_classes : classes
       const pt = { image: 'Image', roi: 'ROI', ...(props.portTypes || {}) }
+      // 重新生成端口前，清掉历史的「追踪」端口，避免关闭跟踪后仍残留
+      classes.forEach(c => { delete pt[c + TRACKED_SUFFIX] })
       const outPorts = []
       classes.forEach(c => {
         pt[c] = 'Detection'
-        pt[c + TRACKED_SUFFIX] = 'TrackDetection'
-        outPorts.push(c, c + TRACKED_SUFFIX)
+        outPorts.push(c)
+        if (trackSet.indexOf(c) >= 0) {
+          pt[c + TRACKED_SUFFIX] = 'TrackDetection'
+          outPorts.push(c + TRACKED_SUFFIX)
+        }
       })
       newProps.portTypes = pt
       newProps.outputPorts = outPorts
@@ -4847,6 +5152,14 @@ export default {
           duration: 0,
           buffer: 0
         },
+        sequence: {
+          stages: [
+            { field: '', operator: '', value: '', param_type: '', duration: 0, buffer: 0 },
+            { field: '', operator: '', value: '', param_type: '', duration: 0, buffer: 0 }
+          ],
+          max_gap: 30,
+          reset_on_complete: true
+        },
         custom_code: {
           input_params: [{ name: 'input', type: 'String' }],
           output_parameters: [{ name: 'output', type: 'String' }],
@@ -5063,6 +5376,28 @@ export default {
         f.same_target = !!conds.same_target
         f.duration = cfg.duration != null ? cfg.duration : 0
         f.buffer = cfg.buffer != null ? cfg.buffer : 0
+      } else if (this.selectedType === 'sequence') {
+        this.judgeConfigTouched = false
+        const stages = (cfg.stages || []).map(s => {
+          const field = s.field || ''
+          const paramRef = s.param_ref || this.judgeFieldToParamRef(field)
+          let paramType = s.param_type || ''
+          if (paramRef && !paramType) paramType = this.judgeParamTypeFromRef(paramRef)
+          return {
+            field,
+            operator: s.operator || '',
+            value: s.value != null ? s.value : '',
+            param_type: paramType,
+            param_ref: paramRef,
+            param_label: s.param_label || (paramRef ? this.judgeParamLabel(paramRef) : ''),
+            duration: s.duration != null ? s.duration : 0,
+            buffer: s.buffer != null ? s.buffer : 0,
+            _paramPop: false
+          }
+        })
+        f.stages = stages.length ? stages : [this.emptySeqStage(), this.emptySeqStage()]
+        f.max_gap = cfg.max_gap != null ? cfg.max_gap : 30
+        f.reset_on_complete = cfg.reset_on_complete !== false
       } else if (this.selectedType === 'end') {
         f.message = cfg.message || ''
         f.out_params = (cfg.output_params || []).map(op => ({
@@ -5125,6 +5460,7 @@ export default {
         }
       }
       this.form = f
+      this.syncVlmModelFromForm(nodeData.id)
       // 通用：为任意"有输入端口"的节点构建输入来源选择器（树形）
       this.refreshInputBindings(nodeData.id)
       if (this.selectedType === 'custom_code') {
@@ -5664,6 +6000,75 @@ export default {
       this.judgeConfigTouched = true
       this.applyConfig()
     },
+    // ---- 时序判断（sequence）阶段编辑 ----
+    emptySeqStage() {
+      return { field: '', operator: '', value: '', param_type: '', param_ref: '', param_label: '', duration: 0, buffer: 0, _paramPop: false }
+    },
+    addSeqStage() {
+      if (!this.form.stages) this.$set(this.form, 'stages', [])
+      if (this.form.stages.length >= 10) {
+        this.$message.warning('最多添加10个阶段')
+        return
+      }
+      this.form.stages.push(this.emptySeqStage())
+      this.judgeConfigTouched = true
+      this.applyConfig()
+    },
+    removeSeqStage(i) {
+      this.form.stages.splice(i, 1)
+      while (this.form.stages.length < 2) this.form.stages.push(this.emptySeqStage())
+      this.judgeConfigTouched = true
+      this.applyConfig()
+    },
+    moveSeqStage(i, dir) {
+      const j = i + dir
+      const list = this.form.stages
+      if (j < 0 || j >= list.length) return
+      const tmp = list[i]
+      this.$set(list, i, list[j])
+      this.$set(list, j, tmp)
+      this.judgeConfigTouched = true
+      this.applyConfig()
+    },
+    onSeqParamPick(i, data) {
+      if (!data || !data.leaf) return
+      const s = this.form.stages[i]
+      const idx = data.id.indexOf('::')
+      const srcId = idx >= 0 ? data.id.substring(0, idx) : data.id
+      const port = idx >= 0 ? data.id.substring(idx + 2) : ''
+      const field = port ? `${srcId}__${port}` : srcId
+      if (s.param_ref === data.id && s.field === field) {
+        s._paramPop = false
+        return
+      }
+      s.param_ref = data.id
+      s.field = field
+      s.param_type = this.judgeParamTypeFromRef(data.id)
+      s.param_label = this.judgeParamLabel(data.id)
+      s._paramPop = false
+      const ops = this.judgeOperatorsForType(s.param_type)
+      if (!ops.some(o => o.v === s.operator)) s.operator = ''
+      this.judgeConfigTouched = true
+      this.applyConfig()
+    },
+    clearSeqParam(i) {
+      const s = this.form.stages[i]
+      s.param_ref = ''
+      s.field = ''
+      s.param_type = ''
+      s.param_label = ''
+      s.operator = ''
+      s.value = ''
+      s._paramPop = false
+      this.judgeConfigTouched = true
+      this.applyConfig()
+    },
+    onSeqOperatorChange(i) {
+      const s = this.form.stages[i]
+      if (!this.judgeCondNeedsValue(s.operator)) s.value = ''
+      this.judgeConfigTouched = true
+      this.applyConfig()
+    },
     applyConfig() {
       if (!this.selectedNode) return
       this.markDirty()
@@ -5815,6 +6220,30 @@ export default {
         }
         cfg.duration = clamp3600(this.form.duration)
         cfg.buffer = clamp3600(this.form.buffer)
+      } else if (t === 'sequence') {
+        const clamp3600 = v => {
+          const n = Number(v)
+          if (Number.isNaN(n)) return 0
+          return Math.max(0, Math.min(3600, Math.round(n * 10000) / 10000))
+        }
+        cfg.stages = (this.form.stages || []).map(s => ({
+          field: s.field || '',
+          operator: s.operator || '',
+          value: s.value,
+          param_type: s.param_type || '',
+          param_label: s.param_label || '',
+          duration: clamp3600(s.duration),
+          buffer: clamp3600(s.buffer)
+        }))
+        cfg.max_gap = clamp3600(this.form.max_gap)
+        cfg.reset_on_complete = this.form.reset_on_complete !== false
+        const seqRefs = {}
+        ;(this.form.stages || []).forEach(s => {
+          const field = s.field || ''
+          const ref = s.param_ref || this.judgeFieldToParamRef(field)
+          if (field && ref) seqRefs[field] = ref
+        })
+        if (Object.keys(seqRefs).length) cfg._input_refs = seqRefs
       } else if (t === 'custom_code') {
         cfg.input_params = (this.form.input_params || []).map(ip => {
           const o = { name: (ip.name || '').trim(), type: ip.type || 'String' }
@@ -5970,9 +6399,16 @@ export default {
         cfg.companion_id = companionId
         props.companion_id = companionId
       }
+      if (t === 'sequence') {
+        const { inputPorts, portTypes } = sequenceInputPortsFromConfig(cfg)
+        props.inputPorts = inputPorts
+        props.portTypes = portTypes
+        props.outputPorts = ['passed', 'false', 'stage']
+        props.dynamic = true
+      }
       // 保留隐式参数引用（如区域过滤的"尺寸参照图片"）：applyConfig 会重建 cfg，需带回
       const prevRefs = props.config && props.config._input_refs
-      if (prevRefs && Object.keys(prevRefs).length) cfg._input_refs = { ...prevRefs }
+      if (prevRefs && Object.keys(prevRefs).length && t !== 'sequence') cfg._input_refs = { ...prevRefs }
       props.config = cfg
       // 先更新文本，再 setProperties 触发 HTML 节点重渲染，使标题改名即时生效
       if (this.form._name) {
@@ -6291,12 +6727,17 @@ export default {
         if (n.type === 'detection_model') {
           const cfg = n.config || {}
           const classes = (cfg.target_classes || []).slice()
+          // track_classes 缺省（旧数据）= 全部跟踪；否则仅勾选的标签恢复「追踪」输出端口
+          const trackSet = Array.isArray(cfg.track_classes) ? cfg.track_classes : classes
           const pt = { image: 'Image', roi: 'ROI' }
           const outPorts = []
           classes.forEach(c => {
             pt[c] = 'Detection'
-            pt[c + TRACKED_SUFFIX] = 'TrackDetection'
-            outPorts.push(c, c + TRACKED_SUFFIX)
+            outPorts.push(c)
+            if (trackSet.indexOf(c) >= 0) {
+              pt[c + TRACKED_SUFFIX] = 'TrackDetection'
+              outPorts.push(c + TRACKED_SUFFIX)
+            }
           })
           props.inputPorts = ['image', 'roi']
           props.outputPorts = outPorts.length ? outPorts : classes
@@ -6329,6 +6770,14 @@ export default {
           outputs.forEach(p => { pt[p.name] = customPortType(p.type) })
           if (!outputs.length) pt.output = 'String'
           props.portTypes = pt
+          props.dynamic = true
+        }
+        if (n.type === 'sequence') {
+          const cfg = n.config || {}
+          const { inputPorts, portTypes } = sequenceInputPortsFromConfig(cfg)
+          props.inputPorts = inputPorts
+          props.portTypes = portTypes
+          props.outputPorts = ['passed', 'false', 'stage']
           props.dynamic = true
         }
         if (n.type === 'target_matting') {
@@ -7324,9 +7773,19 @@ export default {
 .sg-judge-add-cond { padding-left: 0; font-size: 12px; margin-bottom: 4px; }
 .sg-judge-same-target {
   display: flex; align-items: center; justify-content: space-between;
-  margin-top: 12px; padding-top: 12px; border-top: 1px solid #eef0f5;
+  margin-top: 10px;
 }
 .sg-judge-same-target-lbl { font-size: 12px; color: #606266; display: inline-flex; align-items: center; gap: 2px; }
+.sg-judge-same-target-tip { margin-top: 6px; }
+.sg-judge-time-divider { margin: 14px 0; border-top: 1px solid #eef0f5; }
+.sg-seq-stage-ops { display: inline-flex; align-items: center; gap: 8px; }
+.sg-seq-move { cursor: pointer; color: #b4bbc7; font-size: 15px; }
+.sg-seq-move:hover { color: #13c2c2; }
+.sg-seq-move.is-disabled { color: #e3e6ec; cursor: not-allowed; }
+.sg-seq-stage-dur { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.sg-seq-dur-lbl { font-size: 12px; color: #6b7280; flex: none; }
+.sg-seq-dur-unit { font-size: 12px; color: #6b7280; flex: none; }
+.sg-seq-stage-dur .el-input-number { width: 130px; }
 .is-invalid-select >>> .el-input__inner { border-color: #f5566c; }
 .is-invalid-input >>> .el-input__inner { border-color: #f5566c; }
 .sg-tip { font-size: 12px; color: #9aa3b2; margin-top: 8px; line-height: 1.5; }

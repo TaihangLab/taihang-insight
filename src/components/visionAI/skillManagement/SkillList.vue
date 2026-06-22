@@ -567,6 +567,39 @@ const SKILL_SORT_OPTIONS = [
   { label: '名称 · 正序', value: 'name:asc' }
 ]
 
+/** 技能编排 graph_json 中常见端口的中文名 */
+const GRAPH_PORT_LABELS = {
+  count: '数量',
+  message: '输出信息',
+  image: '图片',
+  roi: '电子围栏',
+  trigger: '触发',
+  passed: '判定结果',
+  output: '输出',
+  text: '文本',
+  crossed: '跨线目标',
+  risk_desc: '风险描述'
+}
+
+/** 节点 type 默认中文名（graph_json 无 name 时回退） */
+const GRAPH_NODE_TYPE_NAMES = {
+  start: '开始',
+  end: '结束',
+  detection_model: '视觉模型',
+  vlm_model: '多模态大模型',
+  count: '计数节点',
+  judge: '条件分支',
+  region_filter: '区域过滤',
+  intersect: '相交判断',
+  intersection: '相交',
+  tripwire_tracking: '绊线跟踪',
+  displacement: '位移判断',
+  distance: '距离判断',
+  target_matting: '目标抠图',
+  small_image_batch: '小图批处理',
+  custom_code: '自定义代码'
+}
+
 function readSortValue() {
   const saved = localStorage.getItem('skillListSort')
   if (saved && SKILL_SORT_OPTIONS.some(o => o.value === saved)) return saved
@@ -715,7 +748,11 @@ export default {
       const extra = cfg.output_params || cfg.output_parameters || []
       extra.forEach(o => {
         if (o && o.name && o.name !== 'message') {
-          outs.push({ name: o.name, type: o.type || 'String', description: o.ref ? ('引用 ' + o.ref) : '' })
+          outs.push({
+            name: o.name,
+            type: o.type || 'String',
+            description: this.formatGraphOutputDescription(o)
+          })
         }
       })
       return outs
@@ -999,6 +1036,49 @@ export default {
       if (!row) return '-'
       if (row.type === 'Array') return 'Array<' + (row.item_type || 'Any') + '>'
       return row.type || '-'
+    },
+    graphNodeDisplayName(node) {
+      if (!node) return ''
+      const name = (node.name || '').trim()
+      if (name) return name
+      const type = node.type || (node.properties && node.properties.nodeType) || ''
+      return GRAPH_NODE_TYPE_NAMES[type] || node.id || ''
+    },
+    graphPortDisplayLabel(node, port) {
+      if (!port) return ''
+      if (GRAPH_PORT_LABELS[port]) return GRAPH_PORT_LABELS[port]
+      const type = node && (node.type || (node.properties && node.properties.nodeType))
+      const cfg = (node && (node.config || (node.properties && node.properties.config))) || {}
+      if (type === 'detection_model') {
+        const labels = cfg.class_labels || {}
+        if (labels[port]) return labels[port]
+      }
+      if (type === 'vlm_model' || (type === 'small_image_batch' && cfg.model_mode === 'vlm_model')) {
+        const op = (cfg.output_parameters || []).find(x => x && x.name === port)
+        if (op) {
+          if (op.description) return op.description
+          if (op.display_name) return op.display_name
+        }
+      }
+      if (type === 'count' && port === 'count') return '数量'
+      if (type === 'count' && port === 'count_target') return '计数目标'
+      return port
+    },
+    graphRefLabel(ref) {
+      if (!ref) return ''
+      const idx = ref.indexOf('::')
+      if (idx < 0) return ref
+      const nid = ref.substring(0, idx)
+      const port = ref.substring(idx + 2)
+      const node = this.graphNodes.find(n => n.id === nid)
+      const nodeName = this.graphNodeDisplayName(node) || nid
+      const portLabel = this.graphPortDisplayLabel(node, port) || port
+      return `${nodeName} / ${portLabel}`
+    },
+    formatGraphOutputDescription(o) {
+      if (!o) return '-'
+      if (o.ref) return this.graphRefLabel(o.ref)
+      return (o.description || '').trim() || '-'
     },
     taskStatusText(status) {
       return (status === 1 || status === true || status === 'running' || status === 'enabled') ? '运行中' : '已停止'
