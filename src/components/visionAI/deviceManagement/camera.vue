@@ -96,7 +96,15 @@
             <el-table-column prop="skill" label="视频技能" min-width="220" align="center">
               <template slot-scope="{ row }">
                 <div v-if="row.skill && row.skill !== '-'" class="skill-tags-container">
-                  <div v-for="(skillName, idx) in row.skill.split(',')" :key="idx" class="skill-tag-item">
+                  <div
+                    v-for="(skillName, idx) in row.skill.split(',')"
+                    :key="idx"
+                    class="skill-tag-item"
+                    :class="isSkillRunning(row, skillName) ? 'skill-running' : 'skill-stopped'">
+                    <span
+                      class="skill-run-dot"
+                      :class="isSkillRunning(row, skillName) ? 'is-running' : 'is-stopped'"
+                      :title="isSkillRunning(row, skillName) ? '运行中' : '已停止'"></span>
                     <template v-if="getSkillKind(row, skillName) === 'llm'">
                       <i class="el-icon-magic-stick" style="color: #E6A23C; margin-right: 4px; font-size: 13px;" title="大模型技能"></i>
                     </template>
@@ -229,6 +237,10 @@
               effect="plain"
               :type="getDetailSkillTagType(skill)"
               class="skill-tag">
+              <span
+                class="skill-run-dot"
+                :class="isSkillRunning(deviceDetailData, skill) ? 'is-running' : 'is-stopped'"
+                :title="isSkillRunning(deviceDetailData, skill) ? '运行中' : '已停止'"></span>
               <template v-if="getSkillKind(deviceDetailData, skill) === 'llm'">
                 <i class="el-icon-magic-stick" style="margin-right: 4px;" title="大模型技能"></i>
               </template>
@@ -239,6 +251,9 @@
                 <span class="skill-type-badge skill-type-ai" style="margin-right: 4px;" title="视觉技能文件">AI</span>
               </template>
               {{ skill }}
+              <span class="skill-run-text" :class="isSkillRunning(deviceDetailData, skill) ? 'is-running' : 'is-stopped'">
+                {{ isSkillRunning(deviceDetailData, skill) ? '运行中' : '已停止' }}
+              </span>
             </el-tag>
           </div>
           <el-empty v-else description="暂无关联技能"></el-empty>

@@ -80,6 +80,7 @@ export default {
               skill: Array.isArray(camera.skill_names) ? camera.skill_names.join(', ') : '-',
               llm_skill_names: Array.isArray(camera.llm_skill_names) ? camera.llm_skill_names : [],
               graph_skill_names: Array.isArray(camera.graph_skill_names) ? camera.graph_skill_names : [],
+              running_skill_names: Array.isArray(camera.running_skill_names) ? camera.running_skill_names : [],
               camera_type: camera.camera_type
             }));
 
@@ -210,6 +211,15 @@ export default {
       return 'visual';
     },
 
+    /**
+     * 判断某个技能在该摄像头上是否处于运行中（存在已启用的任务）。
+     * 后端返回 running_skill_names 为"运行中"的技能名称列表。
+     */
+    isSkillRunning(row, skillName) {
+      const name = (skillName || '').trim();
+      return !!(row && Array.isArray(row.running_skill_names) && row.running_skill_names.includes(name));
+    },
+
     getDetailSkillTagType(skillName) {
       const kind = this.getSkillKind(this.deviceDetailData, skillName);
       if (kind === 'llm') return 'warning';
@@ -280,7 +290,8 @@ export default {
       if (!deviceData) return {};
       const excludeProps = [
         'id', 'name', 'status', 'location', 'camera_type',
-        'skill_names', 'llm_skill_names', 'createTime', 'updateTime'
+        'skill_names', 'llm_skill_names', 'graph_skill_names',
+        'running_skill_names', 'createTime', 'updateTime'
       ];
       const result = {};
       Object.keys(deviceData).forEach(key => {
