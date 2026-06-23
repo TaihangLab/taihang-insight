@@ -4813,10 +4813,13 @@ export default {
       if (!this.upstreamNodeIds(nid).size) return
       const myType = this.selectedType
       const g = this.lf.getGraphData()
-      // 清掉该端口已有的"参数连线"（保留结构连线）与已有的参数引用
+      // 清掉该端口已有的"参数连线"(paramBound=true)与视觉模型"占位待选连线"(paramBound=false)，
+      // 以及已有的参数引用。普通结构连线(无 paramBound 字段)保留。
+      // 占位线若不删，会让来源被误判为"已可追溯"，导致重选标签时只记引用而不改这条 detections 占位线。
       ;(g.edges || []).forEach(x => {
         if (x.targetNodeId !== nid) return
-        if (!(x.properties && x.properties.paramBound)) return
+        const pb = x.properties && x.properties.paramBound
+        if (pb !== true && pb !== false) return
         const xtp = (x.properties && x.properties.targetPort) || this.parsePort(x.targetAnchorId, 'in')
         if (xtp === targetPort) this.lf.deleteEdge(x.id)
       })
@@ -4903,8 +4906,8 @@ export default {
         config: newCfg,
         classLabels
       }
-      // track_classes 缺省（旧数据）= 全部跟踪；否则仅勾选的标签生成「追踪」输出端口
-      const trackSet = Array.isArray(newCfg.track_classes) ? newCfg.track_classes : classes
+      // track_classes 缺省（未配置）= 不跟踪；仅勾选的标签生成「追踪」输出端口
+      const trackSet = Array.isArray(newCfg.track_classes) ? newCfg.track_classes : []
       const pt = { image: 'Image', roi: 'ROI', ...(props.portTypes || {}) }
       // 重新生成端口前，清掉历史的「追踪」端口，避免关闭跟踪后仍残留
       classes.forEach(c => { delete pt[c + TRACKED_SUFFIX] })
@@ -5005,11 +5008,9 @@ export default {
       selected.forEach(c => { if (th[c] == null) this.$set(th, c, 0.5) })
       // 移除已取消的标签阈值
       Object.keys(th).forEach(c => { if (selected.indexOf(c) < 0) this.$delete(th, c) })
-      // 跟踪标签：新增标签默认开启跟踪，移除标签同步剔除
+      // 跟踪标签：默认不跟踪，新增标签不自动开启跟踪；仅同步剔除已移除的标签
       if (!Array.isArray(this.form.track_classes)) this.$set(this.form, 'track_classes', [])
-      const tc = this.form.track_classes
-      selected.forEach(c => { if (tc.indexOf(c) < 0) tc.push(c) })
-      this.form.track_classes = tc.filter(c => selected.indexOf(c) >= 0)
+      this.form.track_classes = this.form.track_classes.filter(c => selected.indexOf(c) >= 0)
       this.applyConfig()
     },
     isTrackedClass(cls) {
@@ -5383,10 +5384,10 @@ export default {
         f.class_thresholds = { ...(cfg.class_thresholds || {}) }
         f._classLabels = { ...(cfg.class_labels || {}) }
         f.target_classes.forEach(c => { if (f.class_thresholds[c] == null) f.class_thresholds[c] = 0.5 })
-        // track_classes 缺省（旧数据无此字段）= 对全部已选标签跟踪，保持向后兼容
+        // track_classes 缺省（未配置）= 不跟踪；仅按已配置的列表恢复跟踪标签
         f.track_classes = Array.isArray(cfg.track_classes)
           ? cfg.track_classes.filter(c => f.target_classes.indexOf(c) >= 0)
-          : f.target_classes.slice()
+          : []
         f.tracker_type = cfg.tracker_type || 'bytetrack'
         f.track_buffer = cfg.track_buffer != null ? cfg.track_buffer : 30
         f.match_thresh = cfg.match_thresh != null ? cfg.match_thresh : 0.8
@@ -6516,8 +6517,8 @@ export default {
       // 视觉模型：输出端口随选中的标签动态生成（每个标签一个 Detection 输出）
       if (t === 'detection_model') {
         const classes = (cfg.target_classes || []).slice()
-        // track_classes 缺省（旧数据）= 全部跟踪；否则仅勾选的标签生成「追踪」输出锚点
-        const trackSet = Array.isArray(cfg.track_classes) ? cfg.track_classes : classes
+        // track_classes 缺省（未配置）= 不跟踪；仅勾选的标签生成「追踪」输出锚点
+        const trackSet = Array.isArray(cfg.track_classes) ? cfg.track_classes : []
         const pt = { image: 'Image', roi: 'ROI' }
         const outPorts = []
         classes.forEach(c => {
@@ -6811,13 +6812,42 @@ export default {
         config: (n.properties && n.properties.config) || {},
         position: { x: n.x, y: n.y }
       }))
-      const edges = (g.edges || []).map(e => ({
-        id: e.id,
-        source: e.sourceNodeId,
-        source_port: (e.properties && e.properties.sourcePort) || this.parsePort(e.sourceAnchorId, 'out') || 'image',
-        target: e.targetNodeId,
-        target_port: (e.properties && e.properties.targetPort) || this.parsePort(e.targetAnchorId, 'in') || 'image'
-      }))
+      const edges = []
+      ;(g.edges || []).forEach(e => {
+        const props = e.properties || {}
+        let sp = props.sourcePort || this.parsePort(e.sourceAnchorId, 'out') || 'image'
+        const tp = props.targetPort || this.parsePort(e.targetAnchorId, 'in') || 'image'
+        // 视觉模型"占位待选连线"(paramBound===false，sourcePort 仍是占位的 detections)：
+        // 按下游节点的隐式参数引用(_input_refs)把它转正成真实标签端口(如 no_helmet)；
+        // 找不到对应引用说明这条线没选过标签，直接丢弃，避免把占位端口提交给后端导致校验失败。
+        if (props.paramBound === false) {
+          const tgtNode = (g.nodes || []).find(n => n.id === e.targetNodeId)
+          const refs = (tgtNode && tgtNode.properties && tgtNode.properties.config
+            && tgtNode.properties.config._input_refs) || {}
+          const prefix = `${e.sourceNodeId}::`
+          const refForPort = refs[tp]
+          let realPort = null
+          if (typeof refForPort === 'string' && refForPort.indexOf(prefix) === 0) {
+            realPort = refForPort.substring(prefix.length)
+          } else {
+            Object.keys(refs).forEach(k => {
+              const v = refs[k]
+              if (realPort == null && typeof v === 'string' && v.indexOf(prefix) === 0) {
+                realPort = v.substring(prefix.length)
+              }
+            })
+          }
+          if (!realPort) return
+          sp = realPort
+        }
+        edges.push({
+          id: e.id,
+          source: e.sourceNodeId,
+          source_port: sp,
+          target: e.targetNodeId,
+          target_port: tp
+        })
+      })
       const def = {
         skill_id: this.skillId || 'draft',
         skill_name: this.skillName || '未命名技能',
@@ -6927,8 +6957,8 @@ export default {
         if (n.type === 'detection_model') {
           const cfg = n.config || {}
           const classes = (cfg.target_classes || []).slice()
-          // track_classes 缺省（旧数据）= 全部跟踪；否则仅勾选的标签恢复「追踪」输出端口
-          const trackSet = Array.isArray(cfg.track_classes) ? cfg.track_classes : classes
+          // track_classes 缺省（未配置）= 不跟踪；仅勾选的标签恢复「追踪」输出端口
+          const trackSet = Array.isArray(cfg.track_classes) ? cfg.track_classes : []
           const pt = { image: 'Image', roi: 'ROI' }
           const outPorts = []
           classes.forEach(c => {

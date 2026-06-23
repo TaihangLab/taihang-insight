@@ -12,7 +12,9 @@
 
       <!-- 主内容区 -->
       <el-main class="layout-content">
-        <router-view :key="$route.fullPath"></router-view>
+        <div class="layout-main-inner">
+          <router-view :key="$route.fullPath"></router-view>
+        </div>
       </el-main>
     </div>
     <!-- 太行·问道助手 -->
@@ -63,6 +65,7 @@ export default {
   transition: margin-left var(--transition-base);
   height: 100vh;
   overflow: hidden;
+  min-height: 0;
 }
 
 .layout-collapsed {
@@ -76,30 +79,42 @@ export default {
   padding: 0;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .layout-content {
-  flex: 1;
+  flex: 1 1 0;
+  min-height: 0;
   background-color: var(--bg-secondary);
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden !important;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.layout-content::-webkit-scrollbar {
+.layout-main-inner {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.layout-main-inner::-webkit-scrollbar {
   width: 8px;
 }
 
-.layout-content::-webkit-scrollbar-track {
+.layout-main-inner::-webkit-scrollbar-track {
   background: var(--bg-tertiary);
   border-radius: 4px;
 }
 
-.layout-content::-webkit-scrollbar-thumb {
+.layout-main-inner::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 4px;
 }
 
-.layout-content::-webkit-scrollbar-thumb:hover {
+.layout-main-inner::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
 
@@ -123,6 +138,14 @@ export default {
 .layout-content >>> .page-header-btn {
   display: flex;
   gap: var(--spacing-sm);
+}
+</style>
+<style>
+/* 子页面根节点：由 layout-main-inner 统一滚动，避免多次进入后高度异常导致底部被裁切 */
+.layout-main-inner > * {
+  min-height: 100%;
+  height: auto;
+  overflow: visible !important;
 }
 
 .fade-enter {

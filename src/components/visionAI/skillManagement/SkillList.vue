@@ -1522,15 +1522,12 @@ export default {
 
 <style scoped>
 .skill-list-page {
-  padding: 16px;
-  height: 100%;
-  /* 覆盖布局组件 .layout-main-inner > * 的 overflow:hidden!important，恢复本页纵向滚动 */
-  overflow-y: auto !important;
-  overflow-x: hidden;
+  padding: 16px 16px 24px;
+  min-height: 100%;
   box-sizing: border-box;
 }
 
-.filter-card { margin-bottom: 12px; border-radius: 8px; }
+.filter-card { margin-bottom: 12px; border-radius: 8px; flex-shrink: 0; }
 .filter-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
 .filter-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .filter-right { display: flex; align-items: center; gap: 8px; }
@@ -1570,15 +1567,17 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
-  /* 让每张卡片按自身内容高度撑开，而不是被同行最高卡强行等高拉伸；
-     否则内容偏高的卡片会被压缩 + overflow:hidden 裁掉底部按钮/标题 */
+  grid-auto-rows: auto;
   align-items: start;
 }
 .skill-card {
   position: relative;
   display: flex;
   flex-direction: column;
+  align-self: start;
+  width: 100%;
   min-width: 0;
+  height: auto;
   min-height: 320px;
   background: #fff;
   border: 1px solid #ebeef5;
@@ -1612,7 +1611,6 @@ export default {
   width: 100%;
   height: 150px;
   min-height: 150px;
-  aspect-ratio: 16 / 9;
   background: #f2f3f5;
   overflow: hidden;
 }
@@ -1685,9 +1683,7 @@ export default {
 .sc-badge.badge-graph { background: rgba(103, 194, 58, 0.92); }
 
 .sc-body {
-  /* flex-basis 用 auto（而非 flex:1 的 0%），并取消 min-height:0，
-     让 body 的真实内容高度计入卡片高度，卡片随内容增高而不再裁切底部 */
-  flex: 1 0 auto;
+  flex: 1 1 auto;
   min-width: 0;
   padding: 12px 14px 14px;
   display: flex;
@@ -1735,8 +1731,8 @@ export default {
   padding-top: 10px;
   margin-top: auto;
   min-width: 0;
-  /* 底部状态/按钮区不参与纵向收缩，避免被压缩裁掉 */
   flex-shrink: 0;
+  padding-bottom: 2px;
 }
 .sc-footer > .el-tag {
   align-self: flex-start;
