@@ -84,22 +84,33 @@ body{
 .layout-main-inner {
   flex: 1 1 0;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 </style>
 <style>
-/* 非 scoped：子页面根节点填满内容区，强制不滚动（标题与内容一体，整块都不动） */
-.layout-main-inner > * {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: hidden !important;
+/* 内容区滚动条 */
+.layout-main-inner::-webkit-scrollbar {
+  width: 8px;
 }
-/* 禁止内容区出现滚动条，覆盖子页面自带的 overflow:auto */
-.layout-main-inner,
-.layout-main {
-  overflow: hidden !important;
+.layout-main-inner::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+.layout-main-inner::-webkit-scrollbar-thumb {
+  background: #c8c8c8;
+  border-radius: 4px;
+}
+.layout-main-inner::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 子页面根节点：由 layout-main-inner 统一滚动，避免多次进入后高度异常导致底部被裁切 */
+.layout-main-inner > * {
+  min-height: 100%;
+  height: auto;
+  overflow: visible !important;
 }
 
 .fade-enter {
