@@ -134,7 +134,7 @@
           <el-form label-position="top" size="small">
 
             <!-- 通用：输入来源选择（除视觉模型/开始/结束外，其余有输入的节点统一在这里选） -->
-            <template v-if="hasInputSelector && selectedType !== 'detection_model' && selectedType !== 'vlm_model' && selectedType !== 'custom_code' && selectedType !== 'video_slice' && selectedType !== 'size_filter' && selectedType !== 'intersection' && selectedType !== 'intersect' && selectedType !== 'displacement' && selectedType !== 'distance' && selectedType !== 'tripwire_tracking' && selectedType !== 'region_filter' && selectedType !== 'count' && selectedType !== 'small_image_batch' && selectedType !== 'target_matting' && selectedType !== 'sequence' && selectedType !== 'judge'">
+            <template v-if="hasInputSelector && selectedType !== 'detection_model' && selectedType !== 'vlm_model' && selectedType !== 'custom_code' && selectedType !== 'video_slice' && selectedType !== 'size_filter' && selectedType !== 'intersection' && selectedType !== 'intersect' && selectedType !== 'displacement' && selectedType !== 'distance' && selectedType !== 'tripwire_tracking' && selectedType !== 'region_filter' && selectedType !== 'count' && selectedType !== 'small_image_batch' && selectedType !== 'target_matting' && selectedType !== 'sequence' && selectedType !== 'sop_compliance' && selectedType !== 'judge'">
               <div class="sg-sec-title">输入</div>
               <el-form-item v-for="sel in inputSelectors" :key="sel.port" :label="sel.label" :required="!sel.optional">
                 <el-popover v-model="sel.popOpen" placement="bottom-start" trigger="click"
@@ -1808,6 +1808,149 @@
               </div>
             </template>
 
+            <!-- 作业流程合规（sop_compliance）：多步按序执行，关键动作发生时前置缺步/乱序则违规 -->
+            <template v-else-if="selectedType === 'sop_compliance'">
+              <el-alert type="warning" :closable="false" show-icon title="编排建议"
+                        description="按从上到下的顺序配置作业步骤，最后一个步骤为「关键动作」。当关键动作发生时，若前面的步骤未按序全部完成，则判为违规；全部按序完成则合规。判完自动归零，迎接下一轮作业，适合连续监测的多轮作业。各步骤需先把上游节点连到本节点，再选择对应参数。" />
+              <div class="sg-sec-title">输入</div>
+              <div v-if="seqInputDisplay.length" class="sg-io-list">
+                <div v-for="inp in seqInputDisplay" :key="inp.field" class="sg-io-item">
+                  <span class="sg-io-dot" :style="{ '--c': inp.color }"></span>{{ inp.label }}
+                  <i :class="inp.icon" class="sg-io-type-ic" :style="{ color: inp.color }"></i>
+                </div>
+              </div>
+              <div v-else class="sg-tip">请在下方步骤配置中选择参数，所选参数将显示在此处。</div>
+              <div class="sg-sec-title">
+                <span>配置</span>
+              </div>
+              <div class="sg-judge-cond-head">
+                <span class="sg-judge-cond-title">作业步骤顺序 <i class="sg-req-star">*</i></span>
+                <el-tooltip content="最多添加10个步骤；最后一个为关键动作" placement="top">
+                  <el-button icon="el-icon-plus" size="mini" circle
+                             :disabled="(form.stages || []).length >= 10"
+                             @click="addSeqStage" />
+                </el-tooltip>
+              </div>
+
+              <div class="sg-judge-groups-outer">
+                <div class="sg-judge-groups-list">
+                  <div v-for="(s, si) in form.stages" :key="si" class="sg-cond-group sg-judge-group">
+                    <div class="sg-cond-group-head">
+                      <span>
+                        步骤{{ si + 1 }}
+                        <span v-if="si === form.stages.length - 1" class="sg-sop-term">关键动作</span>
+                        <i class="sg-req-star">*</i>
+                      </span>
+                      <span class="sg-seq-stage-ops">
+                        <i class="el-icon-top sg-seq-move" :class="{ 'is-disabled': si === 0 }"
+                           title="上移" @click="moveSeqStage(si, -1)"></i>
+                        <i class="el-icon-bottom sg-seq-move" :class="{ 'is-disabled': si === form.stages.length - 1 }"
+                           title="下移" @click="moveSeqStage(si, 1)"></i>
+                        <i class="el-icon-delete sg-judge-group-del" title="删除步骤"
+                           @click="removeSeqStage(si)"></i>
+                      </span>
+                    </div>
+                    <div class="sg-judge-group-body">
+                      <div class="sg-judge-conds-wrap">
+                        <div class="sg-judge-cond-item">
+                          <div class="sg-judge-cond-row">
+                            <div class="sg-judge-param-wrap">
+                              <el-popover v-model="s._paramPop" placement="bottom-start" trigger="click"
+                                          :width="300" popper-class="sg-param-pop">
+                                <el-tree v-if="seqParamTree.length" :data="seqParamTree" node-key="id"
+                                         default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                                         :current-node-key="s.param_ref"
+                                         @node-click="onSeqParamPick(si, $event)">
+                                  <span slot-scope="{ data }" class="sg-tree-node">
+                                    <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                                    <span>{{ data.label }}</span>
+                                  </span>
+                                </el-tree>
+                                <div v-else class="sg-tree-empty">暂无数据</div>
+                                <div slot="reference" class="sg-vlm-bind sg-judge-param-ref"
+                                     :class="{ 'is-empty': !s.param_ref, 'is-invalid': judgeConfigTouched && !s.param_ref }">
+                                  <i :class="judgeParamTypeIcon(s.param_type)"></i>
+                                  <span class="sg-vlm-bind-txt">{{ judgeParamLabel(s.param_ref) || '请选择参数' }}</span>
+                                  <i v-if="s.param_ref" class="el-icon-circle-close sg-vlm-bind-clear"
+                                     @click.stop="clearSeqParam(si)"></i>
+                                  <i v-else class="el-icon-arrow-down sg-judge-param-arrow"></i>
+                                </div>
+                              </el-popover>
+                            </div>
+                            <div class="sg-judge-cond-fields">
+                              <el-select v-model="s.operator" size="mini" placeholder="条件"
+                                         :disabled="!s.param_type"
+                                         :class="{ 'is-invalid-select': judgeConfigTouched && !s.operator }"
+                                         @change="onSeqOperatorChange(si)">
+                                <el-option v-for="op in judgeOperatorsForType(s.param_type)" :key="op.v"
+                                           :label="op.l" :value="op.v" />
+                              </el-select>
+                              <el-input v-model="s.value" size="mini" placeholder="条件值"
+                                        :disabled="!s.operator || !judgeCondNeedsValue(s.operator)"
+                                        :class="{ 'is-invalid-input': judgeConfigTouched && judgeCondValueMissing(s) }"
+                                        @input="applyConfig" />
+                            </div>
+                          </div>
+                          <div class="sg-seq-stage-dur">
+                            <span class="sg-seq-dur-lbl">持续</span>
+                            <el-input-number v-model="s.duration" :min="0" :max="3600" :step="0.1" :precision="4"
+                                             size="mini" controls-position="right" @change="applyConfig" />
+                            <span class="sg-seq-dur-unit">秒</span>
+                            <el-tooltip content="本步骤动作需连续满足多久才算完成、进入下一步。0=出现即视为完成。" placement="top">
+                              <i class="el-icon-question sg-field-help"></i>
+                            </el-tooltip>
+                          </div>
+                          <div class="sg-seq-stage-dur">
+                            <span class="sg-seq-dur-lbl">缓冲</span>
+                            <el-input-number v-model="s.buffer" :min="0" :max="3600" :step="0.1" :precision="4"
+                                             size="mini" controls-position="right" @change="applyConfig" />
+                            <span class="sg-seq-dur-unit">秒</span>
+                            <el-tooltip content="计时过程中允许该步骤短暂不满足而不打断计时（抗抖动/遮挡），需小于持续时间。" placement="top">
+                              <i class="el-icon-question sg-field-help"></i>
+                            </el-tooltip>
+                          </div>
+                          <div v-if="judgeConfigTouched && !judgeCondComplete(s)" class="sg-judge-cond-err">
+                            参数、条件、条件值不可为空
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="seqConfigInvalid" class="sg-judge-global-err">请检查作业流程合规配置（至少 2 个步骤，且每步参数/条件完整）</div>
+
+              <div class="sg-judge-time-divider"></div>
+
+              <el-form-item required>
+                <span slot="label">
+                  最大间隔时间 (s)
+                  <el-tooltip content="一轮作业里相邻步骤之间允许的最大间隔：超过这个时间还没有进展，本轮作业作废、归零回到第一步（用于把连续视频流切成一轮轮作业）。设为 0 表示不限制间隔。" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <div class="sg-vs-num-row">
+                  <span class="sg-type-prefix">dou.</span>
+                  <el-input-number v-model="form.max_gap" :min="0" :max="3600" :step="1" :precision="4"
+                                   controls-position="right" style="flex:1" @change="applyConfig" />
+                </div>
+                <div class="sg-tip">建议设为「一轮作业的合理最长时长」；0=不限制间隔。</div>
+              </el-form-item>
+
+              <div class="sg-sec-title">输出</div>
+              <div class="sg-io-list">
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#f5566c"></span>违规（缺步/乱序）
+                  <i class="el-icon-warning sg-io-type-ic" style="color:#f5566c"></i>
+                </div>
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#16b777"></span>合规（按序完成）
+                  <i class="el-icon-success sg-io-type-ic" style="color:#16b777"></i>
+                </div>
+              </div>
+            </template>
+
             <!-- 结束节点 -->
             <template v-else-if="selectedType === 'end'">
               <div class="sg-params">
@@ -2179,6 +2322,7 @@ const TYPE_ICON = {
   video_slice: 'el-icon-video-camera',
   judge: 'el-icon-share',
   sequence: 'el-icon-sort',
+  sop_compliance: 'el-icon-finished',
   custom_code: 'el-icon-edit-outline',
   target_matting: 'el-icon-crop',
   small_image_batch: 'el-icon-cpu'
@@ -2748,7 +2892,7 @@ function estimateNodeLayoutSize(nodeType, config = {}, extra = {}) {
   if (nodeType === 'judge') {
     return { width, height: judgeCanvasPreviewHeight(cfg.conditions) }
   }
-  if (nodeType === 'sequence') {
+  if (nodeType === 'sequence' || nodeType === 'sop_compliance') {
     const inCount = sequenceUniqueStageInputs(cfg).length || 1
     return {
       width,
@@ -2964,7 +3108,7 @@ function judgeCanvasPreviewHeight(conditions) {
 function sequenceUniqueStageInputs(cfg) {
   const seen = new Set()
   const list = []
-  ;((cfg && cfg.stages) || []).forEach(s => {
+  ;((cfg && (cfg.stages || cfg.steps)) || []).forEach(s => {
     if (!s || !s.field || seen.has(s.field)) return
     seen.add(s.field)
     list.push(s)
@@ -3081,7 +3225,7 @@ class SGNodeModel extends HtmlNodeModel {
       this.height = judgeCanvasPreviewHeight(p.config && p.config.conditions)
       return
     }
-    if (p.nodeType === 'sequence') {
+    if (p.nodeType === 'sequence' || p.nodeType === 'sop_compliance') {
       const inCount = sequenceUniqueStageInputs(p.config).length || 1
       this.height = 18 + 40
         + (12 + Math.ceil(inCount / 2) * 26)
@@ -3438,6 +3582,24 @@ class SGNode extends HtmlNode {
       const outs = [
         chipHtml('passed', 'Boolean', '按序完成'),
         chipHtml('false', 'Boolean', '未完成')
+      ]
+      body = row('输入', ins) + row('输出', outs)
+    } else if (p.nodeType === 'sop_compliance') {
+      const nodesById = {}
+      const gm = m && m.graphModel
+      if (gm && gm.nodes) {
+        gm.nodes.forEach(nd => {
+          nodesById[nd.id] = {
+            id: nd.id,
+            properties: nd.properties,
+            text: nd.text
+          }
+        })
+      }
+      const ins = sequenceStageInputChips(cfg, nodesById)
+      const outs = [
+        chipHtml('violation', 'Boolean', '违规'),
+        chipHtml('compliant', 'Boolean', '合规')
       ]
       body = row('输入', ins) + row('输出', outs)
     } else {
@@ -3894,17 +4056,17 @@ export default {
       return this.groupsToTree(this.judgeAllSourceGroups())
     },
     seqParamTree() {
-      if (this.selectedType !== 'sequence' || !this.selectedNode) return []
+      if ((this.selectedType !== 'sequence' && this.selectedType !== 'sop_compliance') || !this.selectedNode) return []
       return this.groupsToTree(this.judgeAllSourceGroups())
     },
     seqConfigInvalid() {
-      if (this.selectedType !== 'sequence' || !this.judgeConfigTouched) return false
+      if ((this.selectedType !== 'sequence' && this.selectedType !== 'sop_compliance') || !this.judgeConfigTouched) return false
       const stages = (this.form && this.form.stages) || []
       if (stages.length < 2) return true
       return stages.some(s => !this.judgeCondComplete(s))
     },
     seqInputDisplay() {
-      if (this.selectedType !== 'sequence') return []
+      if (this.selectedType !== 'sequence' && this.selectedType !== 'sop_compliance') return []
       const seen = new Set()
       const list = []
       ;((this.form && this.form.stages) || []).forEach(s => {
@@ -4432,6 +4594,7 @@ export default {
       if (type === 'target_matting') return 'target'
       if (type === 'judge') return 'passed'
       if (type === 'sequence') return 'passed'
+      if (type === 'sop_compliance') return 'violation'
       const pm = PORT_MAP[type] || {}
       return (pm.outputs && pm.outputs[0]) || 'out'
     },
@@ -5160,6 +5323,13 @@ export default {
           max_gap: 30,
           reset_on_complete: true
         },
+        sop_compliance: {
+          steps: [
+            { field: '', operator: '', value: '', param_type: '', duration: 0, buffer: 0 },
+            { field: '', operator: '', value: '', param_type: '', duration: 0, buffer: 0 }
+          ],
+          max_gap: 30
+        },
         custom_code: {
           input_params: [{ name: 'input', type: 'String' }],
           output_parameters: [{ name: 'output', type: 'String' }],
@@ -5376,9 +5546,9 @@ export default {
         f.same_target = !!conds.same_target
         f.duration = cfg.duration != null ? cfg.duration : 0
         f.buffer = cfg.buffer != null ? cfg.buffer : 0
-      } else if (this.selectedType === 'sequence') {
+      } else if (this.selectedType === 'sequence' || this.selectedType === 'sop_compliance') {
         this.judgeConfigTouched = false
-        const stages = (cfg.stages || []).map(s => {
+        const stages = ((cfg.stages || cfg.steps) || []).map(s => {
           const field = s.field || ''
           const paramRef = s.param_ref || this.judgeFieldToParamRef(field)
           let paramType = s.param_type || ''
@@ -6244,6 +6414,29 @@ export default {
           if (field && ref) seqRefs[field] = ref
         })
         if (Object.keys(seqRefs).length) cfg._input_refs = seqRefs
+      } else if (t === 'sop_compliance') {
+        const clamp3600 = v => {
+          const n = Number(v)
+          if (Number.isNaN(n)) return 0
+          return Math.max(0, Math.min(3600, Math.round(n * 10000) / 10000))
+        }
+        cfg.steps = (this.form.stages || []).map(s => ({
+          field: s.field || '',
+          operator: s.operator || '',
+          value: s.value,
+          param_type: s.param_type || '',
+          param_label: s.param_label || '',
+          duration: clamp3600(s.duration),
+          buffer: clamp3600(s.buffer)
+        }))
+        cfg.max_gap = clamp3600(this.form.max_gap)
+        const sopRefs = {}
+        ;(this.form.stages || []).forEach(s => {
+          const field = s.field || ''
+          const ref = s.param_ref || this.judgeFieldToParamRef(field)
+          if (field && ref) sopRefs[field] = ref
+        })
+        if (Object.keys(sopRefs).length) cfg._input_refs = sopRefs
       } else if (t === 'custom_code') {
         cfg.input_params = (this.form.input_params || []).map(ip => {
           const o = { name: (ip.name || '').trim(), type: ip.type || 'String' }
@@ -6406,9 +6599,16 @@ export default {
         props.outputPorts = ['passed', 'false', 'stage']
         props.dynamic = true
       }
+      if (t === 'sop_compliance') {
+        const { inputPorts, portTypes } = sequenceInputPortsFromConfig(cfg)
+        props.inputPorts = inputPorts
+        props.portTypes = portTypes
+        props.outputPorts = ['violation', 'compliant', 'passed', 'stage']
+        props.dynamic = true
+      }
       // 保留隐式参数引用（如区域过滤的"尺寸参照图片"）：applyConfig 会重建 cfg，需带回
       const prevRefs = props.config && props.config._input_refs
-      if (prevRefs && Object.keys(prevRefs).length && t !== 'sequence') cfg._input_refs = { ...prevRefs }
+      if (prevRefs && Object.keys(prevRefs).length && t !== 'sequence' && t !== 'sop_compliance') cfg._input_refs = { ...prevRefs }
       props.config = cfg
       // 先更新文本，再 setProperties 触发 HTML 节点重渲染，使标题改名即时生效
       if (this.form._name) {
@@ -6780,6 +6980,14 @@ export default {
           props.outputPorts = ['passed', 'false', 'stage']
           props.dynamic = true
         }
+        if (n.type === 'sop_compliance') {
+          const cfg = n.config || {}
+          const { inputPorts, portTypes } = sequenceInputPortsFromConfig(cfg)
+          props.inputPorts = inputPorts
+          props.portTypes = portTypes
+          props.outputPorts = ['violation', 'compliant', 'passed', 'stage']
+          props.dynamic = true
+        }
         if (n.type === 'target_matting') {
           props.companion_id = (n.config || {}).companion_id || ''
         }
@@ -6847,7 +7055,7 @@ export default {
     },
     async doValidate() {
       this.clearErrors()
-      if (this.selectedType === 'judge') this.judgeConfigTouched = true
+      if (this.selectedType === 'judge' || this.selectedType === 'sequence' || this.selectedType === 'sop_compliance') this.judgeConfigTouched = true
       try {
         const res = await skillGraphAPI.validateGraph(this.toGraphDef())
         const r = res.data
@@ -7646,6 +7854,7 @@ export default {
 .sg-params-add:hover { background: #f3f0ff; }
 .sg-params-cols { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #9aa3b2; margin-bottom: 6px; }
 .sg-req-star { color: #f56c6c; font-style: normal; }
+.sg-sop-term { display: inline-block; margin-left: 4px; padding: 0 6px; font-size: 11px; line-height: 16px; color: #fff; background: #f5566c; border-radius: 8px; vertical-align: middle; }
 .sg-out-label { font-size: 13px; color: #1f2329; margin-bottom: 8px; }
 .sg-token-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
 .sg-token-tip { font-size: 12px; color: #9aa3b2; }
