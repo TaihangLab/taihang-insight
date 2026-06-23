@@ -513,6 +513,7 @@
       :camera-id="currentFenceCam ? currentFenceCam.camera_id : null"
       :allow-polygon="skillNeedsFence"
       :allow-tripwire="skillNeedsTripwire"
+      :max-regions="fenceMaxRegions"
       @confirm="onFenceConfirm">
     </fence-drawer>
   </el-drawer>
@@ -593,6 +594,8 @@ export default {
       skillParamsLoading: false,
       skillNeedsFence: true,
       skillNeedsTripwire: false,
+      // 技能输入声明为 Array<ROI> 时允许绘制多个电子围栏；单个 ROI 仅允许 1 个
+      fenceMultipleRoi: true,
       currentFenceCam: null,
       fenceVisible: false,
       fenceEditing: null,
@@ -660,6 +663,10 @@ export default {
       if (this.isEdit) return '编辑运行计划';
       return '创建运行计划';
     },
+    fenceMaxRegions() {
+      // 0 表示不限制（Array<ROI>）；单个 ROI 限制为 1
+      return this.fenceMultipleRoi ? 0 : 1;
+    },
     rtspStreamingEnabled: {
       get() {
         this.ensureRtspStreamingConfig();
@@ -714,6 +721,8 @@ export default {
       this.step = 0;
       this.alertNameTouched = false;
       this.mergeAdvancedOpen = false;
+      // 每次打开抽屉都重新拉取技能选项，避免会话期内技能改名后仍显示旧名字
+      await this.loadSkills();
       await this.loadAlertDefaults();
       const baseAlertConfig = this.alertConfigDefaults || defaultAlertConfig();
       if (this.isEdit || this.isView) {
@@ -749,6 +758,9 @@ export default {
         this.form.alert_config = alertConfig;
         this.skillParamFields = [];
         this.skillParamsLoading = false;
+        this.skillNeedsFence = true;
+        this.skillNeedsTripwire = false;
+        this.fenceMultipleRoi = true;
       }
       this.ensureRtspStreamingConfig();
       this.currentFenceCam = this.form.cameras[0] || null;
@@ -826,6 +838,7 @@ export default {
         this.form.skill_name = '';
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
+        this.fenceMultipleRoi = true;
         if (!this.alertNameTouched) this.form.alert_name = '';
         return;
       }
@@ -842,6 +855,7 @@ export default {
         this.skillParamsLoading = false;
         this.skillNeedsFence = false;
         this.skillNeedsTripwire = false;
+        this.fenceMultipleRoi = true;
       } else {
         this.form.skill_class_id = s.skill_class_id;
         this.form.llm_skill_id = '';
@@ -880,8 +894,12 @@ export default {
         const payload = res.data || {};
         const detail = payload.data !== undefined ? payload.data : payload;
         const params = (detail.default_config && detail.default_config.params) || {};
+        // 画布上绘制的输入（电子围栏 ROI / Array<ROI> / 绊线 Tripwire）由"区域绘制"提供，
+        // 不应出现在"技能参数"填写表里。
+        const drawnKeys = this.collectDrawnParamKeys(detail);
         const fields = [];
         Object.keys(params).forEach(key => {
+          if (drawnKeys.has(key)) return;
           const val = params[key];
           fields.push({
             key,
@@ -893,20 +911,23 @@ export default {
           }
         });
         this.skillParamFields = fields;
-        this.skillNeedsFence = this.computeSkillNeedsFence(detail);
+        const roiInfo = this.computeRoiInfo(detail);
+        this.skillNeedsFence = roiInfo.needsFence;
+        this.fenceMultipleRoi = roiInfo.multiple;
         this.skillNeedsTripwire = this.computeSkillNeedsTripwire(detail);
       } catch (e) {
         console.warn('加载技能参数失败', e);
         this.skillParamFields = [];
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
+        this.fenceMultipleRoi = true;
       } finally {
         this.skillParamsLoading = false;
       }
     },
     // 技能输入声明了什么就绘制什么：开始节点声明 ROI → 多边形围栏；声明 Tripwire → 绊线。
     // 非技能图（传统视觉技能）无法判断，保持显示围栏配置（仅多边形）。
-    startNodeInputTypes(detail) {
+    startNodeInputParams(detail) {
       const dc = (detail && detail.default_config) || {};
       const gj = dc.graph_json || dc.graphJson;
       if (!gj || !Array.isArray(gj.nodes)) return null;
@@ -916,15 +937,52 @@ export default {
       });
       if (!startNode) return null;
       const cfg = startNode.config || (startNode.properties && startNode.properties.config) || {};
-      return (cfg.input_params || []).map(p => String((p && p.type) || '').toLowerCase());
+      return cfg.input_params || [];
     },
-    computeSkillNeedsFence(detail) {
+    startNodeInputTypes(detail) {
+      const params = this.startNodeInputParams(detail);
+      if (params === null) return null;
+      return params.map(p => String((p && p.type) || '').toLowerCase());
+    },
+    // 收集"在画布上绘制"的入参名（电子围栏 ROI / Array<ROI> / 绊线 Tripwire），
+    // 这些由"区域绘制"提供，需从"技能参数"填写表里剔除。
+    collectDrawnParamKeys(detail) {
+      const keys = new Set();
+      const params = this.startNodeInputParams(detail);
+      if (!params) return keys;
+      params.forEach(p => {
+        if (!p || !p.name) return;
+        const type = String(p.type || '').toLowerCase();
+        const itemType = String(p.item_type || '').toLowerCase();
+        const isRoi = type === 'roi' || (type === 'array' && itemType === 'roi');
+        const isTripwire = type === 'tripwire' || (type === 'array' && itemType === 'tripwire');
+        if (isRoi || isTripwire) keys.add(String(p.name));
+      });
+      return keys;
+    },
+    // 计算技能对电子围栏的需求：是否需要绘制、是否允许多个（Array<ROI>）。
+    // - 单个 ROI（type=ROI）：需要围栏，仅允许 1 个
+    // - Array<ROI>（type=Array, item_type=ROI）：需要围栏，允许多个
+    // - 非技能图（无法判断）：保持显示围栏且不限制数量
+    computeRoiInfo(detail) {
       try {
-        const types = this.startNodeInputTypes(detail);
-        if (types === null) return true;
-        return types.includes('roi');
+        const params = this.startNodeInputParams(detail);
+        if (params === null) return { needsFence: true, multiple: true };
+        let needsFence = false;
+        let multiple = false;
+        params.forEach(p => {
+          const type = String((p && p.type) || '').toLowerCase();
+          const itemType = String((p && p.item_type) || '').toLowerCase();
+          if (type === 'roi') {
+            needsFence = true;
+          } else if (type === 'array' && itemType === 'roi') {
+            needsFence = true;
+            multiple = true;
+          }
+        });
+        return { needsFence, multiple };
       } catch (e) {
-        return true;
+        return { needsFence: true, multiple: true };
       }
     },
     computeSkillNeedsTripwire(detail) {
