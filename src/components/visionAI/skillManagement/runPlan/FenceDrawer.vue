@@ -284,7 +284,9 @@ export default {
     cameraId: { type: [Number, String], default: null },
     // 技能声明的输入决定可绘制内容：声明 ROI → 多边形围栏；声明 Tripwire → 绊线
     allowPolygon: { type: Boolean, default: true },
-    allowTripwire: { type: Boolean, default: false }
+    allowTripwire: { type: Boolean, default: false },
+    // 多边形电子围栏数量上限：0 表示不限制（如 Array<ROI>）；技能输入声明为单个 ROI 时为 1
+    maxRegions: { type: Number, default: 0 }
   },
   data() {
     return {
@@ -666,6 +668,12 @@ export default {
         return;
       }
 
+      // 即将开始绘制一个新围栏：受技能输入类型约束，单个 ROI 仅允许 1 个
+      if (!this.drawing && this.reachedRegionLimit()) {
+        this.notifyRegionLimit();
+        return;
+      }
+
       const norm = this.toNormalized(coords.px, coords.py);
 
       if (this.drawing && this.currentPoints.length >= 3) {
@@ -793,6 +801,15 @@ export default {
     },
     onInvertChange(index) {
       this.redraw();
+    },
+    reachedRegionLimit() {
+      return this.maxRegions > 0 && this.regions.length >= this.maxRegions;
+    },
+    notifyRegionLimit() {
+      this.$message({
+        type: 'warning',
+        message: `绘制失败！当前类型最多添加${this.maxRegions}个电子围栏，当前已达到上限；请删除后再进行绘制`
+      });
     },
     removeRegion(i) {
       this.regions.splice(i, 1);

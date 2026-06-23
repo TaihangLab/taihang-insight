@@ -176,9 +176,59 @@
   color: #fff;
 }
 
+.skill-type-graph {
+  padding: 0 4px;
+  background-color: #722ed1;
+  color: #fff;
+}
+
 .skill-name {
   font-size: 12px;
   color: #303133;
+}
+
+/* ---------- 技能运行状态标识 ---------- */
+.skill-run-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.skill-run-dot.is-running {
+  background-color: #67c23a;
+  box-shadow: 0 0 0 2px rgba(103, 194, 58, 0.25);
+}
+
+.skill-run-dot.is-stopped {
+  background-color: #c0c4cc;
+}
+
+/* 列表中：运行中的技能整体更醒目，已停止的略微淡化 */
+.skill-tag-item.skill-running {
+  background-color: #f0f9eb;
+  border-color: #e1f3d8;
+}
+
+.skill-tag-item.skill-stopped {
+  opacity: 0.75;
+}
+
+/* 详情中：技能标签后的运行状态文字 */
+.skill-run-text {
+  margin-left: 6px;
+  font-size: 11px;
+}
+
+.skill-run-text.is-running {
+  color: #67c23a;
+}
+
+.skill-run-text.is-stopped {
+  color: #909399;
 }
 
 /* ---------- 操作列按钮 ---------- */
