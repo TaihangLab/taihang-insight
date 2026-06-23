@@ -92,33 +92,33 @@ export default {
   background-color: var(--bg-secondary);
   overflow: hidden !important;
   padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .layout-main-inner {
   flex: 1 1 0;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  height: 100%;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* 内容区滚动条样式 */
-.layout-content::-webkit-scrollbar {
+.layout-main-inner::-webkit-scrollbar {
   width: 8px;
 }
 
-.layout-content::-webkit-scrollbar-track {
+.layout-main-inner::-webkit-scrollbar-track {
   background: var(--bg-tertiary);
   border-radius: 4px;
 }
 
-.layout-content::-webkit-scrollbar-thumb {
+.layout-main-inner::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 4px;
 }
 
-.layout-content::-webkit-scrollbar-thumb:hover {
+.layout-main-inner::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
 
@@ -146,11 +146,11 @@ export default {
 }
 </style>
 <style>
-/* 子页面根节点填满内容区 */
+/* 子页面根节点：由 layout-main-inner 统一滚动，避免多次进入后高度异常导致底部被裁切 */
 .layout-main-inner > * {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: hidden !important;
+  min-height: 100%;
+  height: auto;
+  overflow: visible !important;
 }
 
 .fade-enter {
