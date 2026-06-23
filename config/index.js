@@ -1,6 +1,3 @@
-/*
- * @Descripttion: 
- */
 'use strict'
 // Template version: 1.3.1
 // see http://vuejs-templates.github.io/webpack for documentation.
@@ -8,25 +5,13 @@
 const path = require('path')
 
 // 后端API基础地址配置
-const API_BASE_URL = 'http://192.168.26.42:8000';//本地测试地址
-// const API_BASE_URL = 'http://172.16.201.80/prod-api/smart-engine';//综治平台地址
+const API_BASE_URL = 'http://127.0.0.1:8000'
 
 module.exports = {
   // 导出API配置供前端使用
   API_BASE_URL: API_BASE_URL,
   dev: {
     // Paths
-    watchOptions: {
-      ignored: [
-        /node_modules/,
-        /\.git/,
-        /\.history/,
-        /dist/,
-        /static/
-      ],
-      aggregateTimeout: 500,
-      poll: false // 先 false，不行再设 1000
-    },
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
     proxyTable: {},  // 不再使用代理，前端直接通过 baseURL 访问
@@ -58,12 +43,12 @@ module.exports = {
 
   build: {
     // Template for index.html
-    index: path.resolve(__dirname, '../dist/index.html'),
+    index: path.resolve(__dirname, '../../src/main/resources/static/index.html'),
 
     // Paths
-    assetsRoot: path.resolve(__dirname, '../dist'),
-    assetsSubDirectory: 'static',
-    assetsPublicPath: './',
+    assetsRoot: path.resolve(__dirname, '../../src/main/resources/static/'),
+    assetsSubDirectory: './static',
+    assetsPublicPath: '/',
 
     /**
      * Source Maps
