@@ -133,9 +133,11 @@
                 <span v-if="s.kind === 'graph'" class="sc-info-node">{{ s.node_count }} 节点</span>
               </div>
               <div class="sc-footer" @click.stop>
-                <el-tag :type="s.status ? 'success' : 'info'" size="mini">{{ s.status_text }}</el-tag>
-                <el-tag v-if="s.has_unpublished_changes" type="warning" size="mini" effect="plain" style="margin-left:4px"
-                        title="该技能有已保存但未发布的改动，线上仍是上次发布的版本">待发布</el-tag>
+                <div class="sc-status-tags">
+                  <el-tag :type="s.status ? 'success' : 'info'" size="mini">{{ s.status_text }}</el-tag>
+                  <el-tag v-if="s.has_unpublished_changes" type="warning" size="mini" effect="plain"
+                          title="该技能有已保存但未发布的改动，线上仍是上次发布的版本">待发布</el-tag>
+                </div>
                 <div class="sc-actions">
                   <el-button v-if="s.kind === 'graph'" type="text" size="mini" @click="exportGraph(s, $event)">导出</el-button>
                   <el-button type="text" size="mini" @click="viewDetail(s)">详情</el-button>
@@ -1811,8 +1813,14 @@ export default {
   flex-shrink: 0;
   padding-bottom: 2px;
 }
-.sc-footer > .el-tag {
-  align-self: flex-start;
+.sc-status-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.sc-status-tags .el-tag {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;

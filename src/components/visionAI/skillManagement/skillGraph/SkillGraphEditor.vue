@@ -1569,7 +1569,7 @@
                                           :width="300" popper-class="sg-param-pop">
                                 <el-tree v-if="judgeParamTree.length" :data="judgeParamTree" node-key="id"
                                          default-expand-all :expand-on-click-node="false" :highlight-current="true"
-                                         :current-node-key="c.param_ref"
+                                         :current-node-key="judgeCondParamRef(c)"
                                          @node-click="onJudgeParamPick(gi, ci, $event)">
                                   <span slot-scope="{ data }" class="sg-tree-node">
                                     <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
@@ -1578,10 +1578,10 @@
                                 </el-tree>
                                 <div v-else class="sg-tree-empty">暂无数据</div>
                                 <div slot="reference" class="sg-vlm-bind sg-judge-param-ref"
-                                     :class="{ 'is-empty': !c.param_ref, 'is-invalid': judgeCondShowErr(c) && !c.param_ref }">
+                                     :class="{ 'is-empty': !judgeCondHasParam(c), 'is-invalid': judgeCondShowErr(c) && !judgeCondHasParam(c) }">
                                   <i :class="judgeParamTypeIcon(c.param_type)"></i>
-                                  <span class="sg-vlm-bind-txt">{{ judgeParamLabel(c.param_ref) || '请选择参数' }}</span>
-                                  <i v-if="c.param_ref" class="el-icon-circle-close sg-vlm-bind-clear"
+                                  <span class="sg-vlm-bind-txt">{{ judgeCondParamLabel(c) || '请选择参数' }}</span>
+                                  <i v-if="judgeCondHasParam(c)" class="el-icon-circle-close sg-vlm-bind-clear"
                                      @click.stop="clearJudgeParam(gi, ci)"></i>
                                   <i v-else class="el-icon-arrow-down sg-judge-param-arrow"></i>
                                 </div>
@@ -1715,7 +1715,7 @@
                                           :width="300" popper-class="sg-param-pop">
                                 <el-tree v-if="seqParamTree.length" :data="seqParamTree" node-key="id"
                                          default-expand-all :expand-on-click-node="false" :highlight-current="true"
-                                         :current-node-key="s.param_ref"
+                                         :current-node-key="judgeCondParamRef(s)"
                                          @node-click="onSeqParamPick(si, $event)">
                                   <span slot-scope="{ data }" class="sg-tree-node">
                                     <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
@@ -1724,10 +1724,10 @@
                                 </el-tree>
                                 <div v-else class="sg-tree-empty">暂无数据</div>
                                 <div slot="reference" class="sg-vlm-bind sg-judge-param-ref"
-                                     :class="{ 'is-empty': !s.param_ref, 'is-invalid': judgeConfigTouched && !s.param_ref }">
+                                     :class="{ 'is-empty': !judgeCondHasParam(s), 'is-invalid': judgeConfigTouched && !judgeCondHasParam(s) }">
                                   <i :class="judgeParamTypeIcon(s.param_type)"></i>
-                                  <span class="sg-vlm-bind-txt">{{ judgeParamLabel(s.param_ref) || '请选择参数' }}</span>
-                                  <i v-if="s.param_ref" class="el-icon-circle-close sg-vlm-bind-clear"
+                                  <span class="sg-vlm-bind-txt">{{ judgeCondParamLabel(s) || '请选择参数' }}</span>
+                                  <i v-if="judgeCondHasParam(s)" class="el-icon-circle-close sg-vlm-bind-clear"
                                      @click.stop="clearSeqParam(si)"></i>
                                   <i v-else class="el-icon-arrow-down sg-judge-param-arrow"></i>
                                 </div>
@@ -1859,7 +1859,7 @@
                                           :width="300" popper-class="sg-param-pop">
                                 <el-tree v-if="seqParamTree.length" :data="seqParamTree" node-key="id"
                                          default-expand-all :expand-on-click-node="false" :highlight-current="true"
-                                         :current-node-key="s.param_ref"
+                                         :current-node-key="judgeCondParamRef(s)"
                                          @node-click="onSeqParamPick(si, $event)">
                                   <span slot-scope="{ data }" class="sg-tree-node">
                                     <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
@@ -1868,10 +1868,10 @@
                                 </el-tree>
                                 <div v-else class="sg-tree-empty">暂无数据</div>
                                 <div slot="reference" class="sg-vlm-bind sg-judge-param-ref"
-                                     :class="{ 'is-empty': !s.param_ref, 'is-invalid': judgeConfigTouched && !s.param_ref }">
+                                     :class="{ 'is-empty': !judgeCondHasParam(s), 'is-invalid': judgeConfigTouched && !judgeCondHasParam(s) }">
                                   <i :class="judgeParamTypeIcon(s.param_type)"></i>
-                                  <span class="sg-vlm-bind-txt">{{ judgeParamLabel(s.param_ref) || '请选择参数' }}</span>
-                                  <i v-if="s.param_ref" class="el-icon-circle-close sg-vlm-bind-clear"
+                                  <span class="sg-vlm-bind-txt">{{ judgeCondParamLabel(s) || '请选择参数' }}</span>
+                                  <i v-if="judgeCondHasParam(s)" class="el-icon-circle-close sg-vlm-bind-clear"
                                      @click.stop="clearSeqParam(si)"></i>
                                   <i v-else class="el-icon-arrow-down sg-judge-param-arrow"></i>
                                 </div>
@@ -4076,7 +4076,7 @@ export default {
         const meta = PARAM_TYPE_META[type] || PARAM_TYPE_META.String
         list.push({
           field: s.field,
-          label: s.param_label || this.judgeParamLabel(s.param_ref) || s.field,
+          label: this.judgeCondParamLabel(s) || s.field,
           type,
           color: meta.color,
           icon: this.judgeParamTypeIcon(type)
@@ -5526,15 +5526,17 @@ export default {
             const paramRef = c.param_ref || this.judgeFieldToParamRef(field)
             let paramType = c.param_type || ''
             if (paramRef && !paramType) paramType = this.judgeParamTypeFromRef(paramRef)
-            return {
+            const cond = {
               field,
               operator: c.operator || '',
               value: c.value != null ? c.value : '',
               param_type: paramType,
               param_ref: paramRef,
-              param_label: c.param_label || (paramRef ? this.judgeParamLabel(paramRef) : ''),
+              param_label: c.param_label || '',
               _paramPop: false
             }
+            if (!cond.param_label) cond.param_label = this.judgeCondParamLabel(cond)
+            return cond
           })
         }))
         f.groups = groups.length
@@ -5554,17 +5556,19 @@ export default {
           const paramRef = s.param_ref || this.judgeFieldToParamRef(field)
           let paramType = s.param_type || ''
           if (paramRef && !paramType) paramType = this.judgeParamTypeFromRef(paramRef)
-          return {
+          const stage = {
             field,
             operator: s.operator || '',
             value: s.value != null ? s.value : '',
             param_type: paramType,
             param_ref: paramRef,
-            param_label: s.param_label || (paramRef ? this.judgeParamLabel(paramRef) : ''),
+            param_label: s.param_label || '',
             duration: s.duration != null ? s.duration : 0,
             buffer: s.buffer != null ? s.buffer : 0,
             _paramPop: false
           }
+          if (!stage.param_label) stage.param_label = this.judgeCondParamLabel(stage)
+          return stage
         })
         f.stages = stages.length ? stages : [this.emptySeqStage(), this.emptySeqStage()]
         f.max_gap = cfg.max_gap != null ? cfg.max_gap : 30
@@ -6104,6 +6108,30 @@ export default {
       if (!ref) return ''
       return this.refLabel(ref, this.judgeAllSourceGroups())
     },
+    judgeCondParamRef(c) {
+      if (!c) return ''
+      return c.param_ref || this.judgeFieldToParamRef(c.field || '')
+    },
+    judgeCondHasParam(c) {
+      if (!c) return false
+      return !!(c.param_ref || c.field || (c.param_label && String(c.param_label).trim()))
+    },
+    judgeCondParamLabel(c) {
+      if (!c) return ''
+      if (c.param_label && String(c.param_label).trim()) return c.param_label
+      const ref = this.judgeCondParamRef(c)
+      if (ref) {
+        const label = this.judgeParamLabel(ref)
+        if (label && label !== ref) return label
+        if (label) return label
+      }
+      if (c.field) {
+        const port = String(c.field).split('__').pop()
+        if (port === 'count') return '数量值'
+        return PORT_LABELS[port] || port
+      }
+      return ''
+    },
     judgeParamTypeIcon(type) {
       return this.paramTypeIcon(type || 'String')
     },
@@ -6118,7 +6146,7 @@ export default {
       return this.judgeCondNeedsValue(c.operator) && (c.value === '' || c.value == null)
     },
     judgeCondComplete(c) {
-      if (!c || !c.param_ref || !c.field || !c.operator) return false
+      if (!c || !this.judgeCondHasParam(c) || !c.field || !c.operator) return false
       if (this.judgeCondNeedsValue(c.operator) && (c.value === '' || c.value == null)) return false
       return true
     },
@@ -6126,7 +6154,7 @@ export default {
       return this.judgeConfigTouched && !this.judgeCondComplete(c)
     },
     judgeCondErrText(c) {
-      if (!c.param_ref || !c.field) return '参数、条件、条件值不可为空'
+      if (!this.judgeCondHasParam(c) || !c.field) return '参数、条件、条件值不可为空'
       if (!c.operator) return '条件、条件值不可为空'
       if (this.judgeCondValueMissing(c)) return '条件、条件值不可为空'
       return '参数、条件、条件值不可为空'
@@ -6382,7 +6410,8 @@ export default {
               operator: c.operator || '',
               value: c.value,
               param_type: c.param_type || '',
-              param_label: c.param_label || ''
+              param_ref: this.judgeCondParamRef(c),
+              param_label: c.param_label || this.judgeCondParamLabel(c) || ''
             })),
             relation: g.relation || 'all'
           })),
@@ -6402,7 +6431,8 @@ export default {
           operator: s.operator || '',
           value: s.value,
           param_type: s.param_type || '',
-          param_label: s.param_label || '',
+          param_ref: this.judgeCondParamRef(s),
+          param_label: s.param_label || this.judgeCondParamLabel(s) || '',
           duration: clamp3600(s.duration),
           buffer: clamp3600(s.buffer)
         }))
@@ -6426,7 +6456,8 @@ export default {
           operator: s.operator || '',
           value: s.value,
           param_type: s.param_type || '',
-          param_label: s.param_label || '',
+          param_ref: this.judgeCondParamRef(s),
+          param_label: s.param_label || this.judgeCondParamLabel(s) || '',
           duration: clamp3600(s.duration),
           buffer: clamp3600(s.buffer)
         }))
