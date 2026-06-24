@@ -3929,6 +3929,18 @@ export const skillGraphAPI = {
   importGraph(data) {
     return visionAIAxios.post('/api/v1/skill-graphs/import', data);
   },
+  // 批量（一键）导出技能编排：按所选技能ID列表导出为一个 zip（每个技能一个 json）
+  exportGraphsBatch(skillIds) {
+    return visionAIAxios.post('/api/v1/skill-graphs/export-batch', { skill_ids: skillIds || [] }, {
+      responseType: 'blob',
+      timeout: 60000
+    });
+  },
+  // 批量（一键）导入技能编排：传入多个 json 包，缺少模型的技能自动跳过
+  // data: { packages: [json, json, ...] }
+  importGraphsBatch(data) {
+    return visionAIAxios.post('/api/v1/skill-graphs/import-batch', data);
+  },
   // 详情
   getGraph(skillId) {
     return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}`);

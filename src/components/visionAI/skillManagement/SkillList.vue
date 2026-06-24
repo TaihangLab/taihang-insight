@@ -77,6 +77,16 @@
         <el-button size="small" icon="el-icon-check" @click="selectAllCurrentPage">
           {{ allCurrentPageSelected ? '取消本页' : '选择本页' }}
         </el-button>
+        <el-button
+          size="small"
+          type="primary"
+          plain
+          icon="el-icon-download"
+          :loading="batchExporting"
+          :disabled="!selectedGraphCount"
+          @click="handleBatchExportGraph">
+          导出技能编排{{ selectedGraphCount ? `（${selectedGraphCount}）` : '' }}
+        </el-button>
       </div>
 
       <!-- 卡片视图 -->
@@ -123,9 +133,11 @@
                 <span v-if="s.kind === 'graph'" class="sc-info-node">{{ s.node_count }} 节点</span>
               </div>
               <div class="sc-footer" @click.stop>
-                <el-tag :type="s.status ? 'success' : 'info'" size="mini">{{ s.status_text }}</el-tag>
-                <el-tag v-if="s.has_unpublished_changes" type="warning" size="mini" effect="plain" style="margin-left:4px"
-                        title="该技能有已保存但未发布的改动，线上仍是上次发布的版本">待发布</el-tag>
+                <div class="sc-status-tags">
+                  <el-tag :type="s.status ? 'success' : 'info'" size="mini">{{ s.status_text }}</el-tag>
+                  <el-tag v-if="s.has_unpublished_changes" type="warning" size="mini" effect="plain"
+                          title="该技能有已保存但未发布的改动，线上仍是上次发布的版本">待发布</el-tag>
+                </div>
                 <div class="sc-actions">
                   <el-button v-if="s.kind === 'graph'" type="text" size="mini" @click="exportGraph(s, $event)">导出</el-button>
                   <el-button type="text" size="mini" @click="viewDetail(s)">详情</el-button>
@@ -205,35 +217,27 @@
       </div>
     </el-card>
 
-    <!-- 导入技能编排弹窗 -->
+    <!-- 导入技能编排弹窗（支持多选 json 一键导入） -->
     <el-dialog title="导入技能编排" :visible.sync="graphImportVisible" width="560px" :close-on-click-modal="false">
-      <el-form :model="graphImportForm" label-width="90px">
-        <el-form-item label="编排文件" required>
-          <el-upload
-            action="#"
-            :auto-upload="false"
-            :limit="1"
-            :on-change="onGraphImportFileChange"
-            :on-remove="onGraphImportFileRemove"
-            accept=".json,application/json">
-            <el-button size="small" icon="el-icon-document">选择 .json 文件</el-button>
-            <div slot="tip" class="el-upload__tip">支持本系统导出的 .skill-graph.json 文件，大小不超过 10MB</div>
-          </el-upload>
-        </el-form-item>
-        <el-form-item label="技能名称" required>
-          <el-input v-model="graphImportForm.skill_name" placeholder="导入后的技能名称" maxlength="32" show-word-limit></el-input>
-        </el-form-item>
-        <el-form-item label="技能ID">
-          <el-input v-model="graphImportForm.skill_id" placeholder="留空则使用文件内 ID 或自动生成"></el-input>
-          <div class="el-upload__tip">若 ID 已存在，系统会自动追加后缀</div>
-        </el-form-item>
-        <el-form-item label="技能描述">
-          <el-input v-model="graphImportForm.description" type="textarea" :rows="3" placeholder="选填"></el-input>
-        </el-form-item>
-      </el-form>
+      <el-upload
+        action="#"
+        :auto-upload="false"
+        multiple
+        :file-list="graphImportFileList"
+        :on-change="onGraphImportFileChange"
+        :on-remove="onGraphImportFileRemove"
+        accept=".json,application/json">
+        <el-button size="small" icon="el-icon-document">选择 .json 文件（可多选）</el-button>
+        <div slot="tip" class="el-upload__tip">
+          支持本系统导出的 .skill-graph.json 文件，可一次选择多个；名称与描述以文件内容为准。<br>
+          导入时会校验所引用的视觉模型，本环境缺少模型的技能将自动跳过。
+        </div>
+      </el-upload>
       <span slot="footer">
         <el-button @click="graphImportVisible = false">取消</el-button>
-        <el-button type="primary" :loading="graphImporting" @click="confirmGraphImport">确定导入</el-button>
+        <el-button type="primary" :loading="graphImporting" :disabled="!graphImportFiles.length" @click="confirmGraphImport">
+          确定导入{{ graphImportFiles.length ? `（${graphImportFiles.length}）` : '' }}
+        </el-button>
       </span>
     </el-dialog>
 
@@ -642,11 +646,11 @@ export default {
       importing: false,
       mainFile: null,
       dependencyFiles: [],
-      // 技能编排导入
+      // 技能编排导入（支持多选 json）
       graphImportVisible: false,
       graphImporting: false,
-      graphImportFile: null,
-      graphImportForm: { skill_id: '', skill_name: '', description: '' },
+      graphImportFiles: [],
+      graphImportFileList: [],
       // 技能编排创建
       graphDialogVisible: false,
       graphCreating: false,
@@ -662,7 +666,9 @@ export default {
       // 批量选择与热加载
       selectedSkillKeys: [],
       cardHoverStates: {},
-      reloading: false
+      reloading: false,
+      // 批量导出技能编排
+      batchExporting: false
     }
   },
   mounted() {
@@ -672,6 +678,10 @@ export default {
     allCurrentPageSelected() {
       if (!this.skills.length) return false
       return this.skills.every(s => this.selectedSkillKeys.includes(this.skillRowKey(s)))
+    },
+    // 当前选中项中属于「技能编排」的数量（仅技能编排支持导出）
+    selectedGraphCount() {
+      return this.getSelectedRows().filter(s => s.kind === 'graph').length
     },
     alertGroups() {
       const ac = this.llmDetail && this.llmDetail.alert_conditions
@@ -1237,71 +1247,99 @@ export default {
 
     /* ============ 导入 / 导出技能编排 ============ */
     openGraphImportDialog() {
-      this.graphImportFile = null
-      this.graphImportForm = { skill_id: '', skill_name: '', description: '' }
+      this.graphImportFiles = []
+      this.graphImportFileList = []
       this.graphImportVisible = true
     },
-    onGraphImportFileChange(file) {
+    onGraphImportFileChange(file, fileList) {
       const raw = file && file.raw
-      if (!raw) return
-      if (raw.size > 10 * 1024 * 1024) {
-        this.$message.warning('文件大小不能超过 10MB')
-        this.graphImportFile = null
-        return
+      this.graphImportFileList = fileList || []
+      if (raw && raw.size > 20 * 1024 * 1024) {
+        this.$message.warning(`文件 ${raw.name} 超过 20MB，已忽略`)
+        this.graphImportFileList = (fileList || []).filter(f => f.uid !== file.uid)
       }
-      this.graphImportFile = raw
-      const reader = new FileReader()
-      reader.onload = () => {
-        try {
-          const pkg = JSON.parse(reader.result)
-          if (!this.graphImportForm.skill_name) {
-            this.graphImportForm.skill_name = pkg.skill_name || ''
-          }
-          if (!this.graphImportForm.skill_id) {
-            this.graphImportForm.skill_id = pkg.skill_id || ''
-          }
-          if (!this.graphImportForm.description) {
-            this.graphImportForm.description = pkg.description || ''
-          }
-        } catch (e) {
-          this.$message.warning('文件不是有效的 JSON 格式')
-          this.graphImportFile = null
-        }
-      }
-      reader.readAsText(raw, 'utf-8')
+      this.syncGraphImportFiles()
     },
-    onGraphImportFileRemove() {
-      this.graphImportFile = null
+    onGraphImportFileRemove(file, fileList) {
+      this.graphImportFileList = fileList || []
+      this.syncGraphImportFiles()
+    },
+    syncGraphImportFiles() {
+      this.graphImportFiles = (this.graphImportFileList || [])
+        .map(f => f.raw)
+        .filter(raw => raw && raw.size <= 20 * 1024 * 1024)
+    },
+    // 弹出导入结果摘要（成功数 + 被跳过的技能及原因）
+    showGraphImportResult(result) {
+      const imported = (result && result.imported) || []
+      const skipped = (result && result.skipped) || []
+      if (!skipped.length) {
+        this.$message.success(`成功导入 ${imported.length} 个技能编排`)
+        return Promise.resolve()
+      }
+      const reasonText = (s) => {
+        if (s.reason === 'missing_models') {
+          return `缺少模型：${(s.missing_models || []).join('、')}`
+        }
+        if (s.reason === 'invalid_graph') {
+          return '编排校验未通过'
+        }
+        if (s.reason === 'invalid_file') {
+          return '文件格式无法识别'
+        }
+        return '已跳过'
+      }
+      const lines = skipped
+        .map(s => `<li>${this.escapeHtml(s.skill_name || s.source_skill_id || '未命名')}：${this.escapeHtml(reasonText(s))}</li>`)
+        .join('')
+      const html = `<div style="line-height:1.7">成功导入 <b>${imported.length}</b> 个，跳过 <b>${skipped.length}</b> 个：`
+        + `<ul style="margin:6px 0 0;padding-left:18px;max-height:220px;overflow:auto">${lines}</ul></div>`
+      return this.$alert(html, '导入结果', {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: '知道了'
+      }).catch(() => {})
+    },
+    escapeHtml(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
     },
     async confirmGraphImport() {
-      if (!this.graphImportFile) {
+      if (!this.graphImportFiles.length) {
         this.$message.warning('请选择技能编排 JSON 文件')
-        return
-      }
-      const skillName = (this.graphImportForm.skill_name || '').trim()
-      if (!skillName) {
-        this.$message.warning('请输入技能名称')
         return
       }
       this.graphImporting = true
       try {
-        const text = await this.graphImportFile.text()
-        const pkg = JSON.parse(text)
-        const payload = {
-          package: pkg,
-          skill_name: skillName
+        const packages = []
+        const badFiles = []
+        for (const raw of this.graphImportFiles) {
+          try {
+            const text = await raw.text()
+            packages.push(JSON.parse(text))
+          } catch (e) {
+            badFiles.push(raw.name)
+          }
         }
-        const skillId = (this.graphImportForm.skill_id || '').trim()
-        if (skillId) payload.skill_id = skillId
-        if (this.graphImportForm.description) payload.description = this.graphImportForm.description
+        if (badFiles.length) {
+          this.$message.warning(`以下文件不是有效 JSON，已忽略：${badFiles.join('、')}`)
+        }
+        if (!packages.length) {
+          this.graphImporting = false
+          return
+        }
 
-        const res = await skillGraphAPI.importGraph(payload)
-        const data = res && res.data ? res.data : null
-        const newSkillId = data && data.skill_id
-        this.$message.success('导入成功')
+        const res = await skillGraphAPI.importGraphsBatch({ packages })
+        const result = res && res.data ? res.data : null
+        const imported = (result && result.imported) || []
+
         this.graphImportVisible = false
         await this.loadSkills()
-        if (newSkillId) {
+        await this.showGraphImportResult(result)
+
+        // 恰好导入 1 个时，引导进入编辑器
+        if (imported.length === 1) {
+          const newSkillId = imported[0].skill_id
           this.$confirm('是否立即进入编排编辑器查看？', '导入成功', {
             confirmButtonText: '进入编辑',
             cancelButtonText: '留在列表',
@@ -1341,6 +1379,47 @@ export default {
         this.$message.success('导出成功')
       } catch (err) {
         this.$message.error('导出失败：' + this.errMsg(err))
+      }
+    },
+    async handleBatchExportGraph() {
+      const rows = this.getSelectedRows().filter(s => s.kind === 'graph')
+      if (!rows.length) {
+        this.$message.warning('请先勾选要导出的技能编排')
+        return
+      }
+      const skillIds = rows.map(r => r.skill_id)
+      this.batchExporting = true
+      try {
+        const res = await skillGraphAPI.exportGraphsBatch(skillIds)
+        const blob = res && res.data ? res.data : null
+        if (!blob || !blob.size) {
+          this.$message.error('导出失败：未获取到编排数据')
+          return
+        }
+        // 优先用后端返回的文件名（Content-Disposition），否则本地生成
+        let filename = ''
+        const disp = res.headers && (res.headers['content-disposition'] || res.headers['Content-Disposition'])
+        if (disp) {
+          const m = /filename\*=UTF-8''([^;]+)/i.exec(disp) || /filename="?([^";]+)"?/i.exec(disp)
+          if (m && m[1]) filename = decodeURIComponent(m[1])
+        }
+        if (!filename) {
+          const ts = new Date()
+          const pad = n => String(n).padStart(2, '0')
+          const stamp = `${ts.getFullYear()}${pad(ts.getMonth() + 1)}${pad(ts.getDate())}${pad(ts.getHours())}${pad(ts.getMinutes())}`
+          filename = `skill-graphs_${skillIds.length}_${stamp}.zip`
+        }
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = filename
+        link.click()
+        URL.revokeObjectURL(url)
+        this.$message.success(`已导出 ${skillIds.length} 个技能编排`)
+      } catch (err) {
+        this.$message.error('导出失败：' + this.errMsg(err))
+      } finally {
+        this.batchExporting = false
       }
     },
 
@@ -1734,8 +1813,14 @@ export default {
   flex-shrink: 0;
   padding-bottom: 2px;
 }
-.sc-footer > .el-tag {
-  align-self: flex-start;
+.sc-status-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.sc-status-tags .el-tag {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
