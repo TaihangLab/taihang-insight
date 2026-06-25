@@ -96,12 +96,6 @@
         </el-menu-item>
       </el-submenu>
 
-      <!-- 模型工厂 -->
-      <el-menu-item index="/modelManage/modelFactory">
-        <i class="el-icon-monitor menu-icon"></i>
-        <span slot="title">模型工厂</span>
-      </el-menu-item>
-
       <!-- 可视中心 -->
       <el-submenu index="/visualAI">
         <template slot="title">
