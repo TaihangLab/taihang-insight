@@ -5,7 +5,8 @@
 const path = require('path')
 
 // 后端API基础地址配置
-const API_BASE_URL = 'http://127.0.0.1:8000'
+// const API_BASE_URL = 'http://127.0.0.1:8000'
+const API_BASE_URL = 'http://172.18.1.1:8000'
 
 module.exports = {
   // 导出API配置供前端使用
@@ -42,13 +43,13 @@ module.exports = {
   },
 
   build: {
-    // Template for index.html
-    index: path.resolve(__dirname, '../../src/main/resources/static/index.html'),
+    // 打包输出到 dist/，改 API 地址后必须 npm run build 再上传 dist 内全部文件
+    index: path.resolve(__dirname, '../dist/index.html'),
 
     // Paths
-    assetsRoot: path.resolve(__dirname, '../../src/main/resources/static/'),
-    assetsSubDirectory: './static',
-    assetsPublicPath: '/',
+    assetsRoot: path.resolve(__dirname, '../dist'),
+    assetsSubDirectory: 'static',
+    assetsPublicPath: process.env.PUBLIC_PATH || './',
 
     /**
      * Source Maps
