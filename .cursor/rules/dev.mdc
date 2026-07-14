@@ -1,0 +1,19 @@
+---
+description: 本仓库（前端）开发约定；后端/Docker 见 smart_engine
+alwaysApply: true
+---
+
+# taihang-insight 前端
+
+用中文回答。本仓库 **仅 Vue 2 前端**；后端、Docker、改代码后 restart 等全栈说明见 **`smart_engine/.cursor/rules/dev.mdc`**（不要在本文重复）。
+
+## 本仓库
+
+```bash
+npm install
+npm run dev    # http://localhost:8080
+```
+
+API 地址：`config/index.js` → `API_BASE_URL = 'http://127.0.0.1:8000'`（后端由 smart_engine compose 提供）
+
+改 `.vue` / `.js` 后 dev 服务器自动热重载，无需 restart。
