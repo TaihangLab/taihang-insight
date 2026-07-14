@@ -2,32 +2,16 @@
   <div class="channel-tree-panel">
     <div class="channel-tree-panel__header">
       <div class="header-title">
-        <i class="el-icon-video-camera"></i>
-        <span>通道列表</span>
-      </div>
-      <div class="header-switch">
-        <el-switch
-          v-model="showRegion"
-          active-color="#3b82f6"
-          inactive-color="#10b981"
-          active-text="行政区划"
-          inactive-text="业务分组">
-        </el-switch>
+        <i class="el-icon-office-building"></i>
+        <span>组织与点位</span>
       </div>
     </div>
     <div class="channel-tree-panel__body">
-      <RegionTree
-        v-if="showRegion"
+      <OrgPointTree
         :hasChannel="true"
         tree-height="auto"
-        :clickEvent="onTreeClick">
-      </RegionTree>
-      <GroupTree
-        v-else
-        :hasChannel="true"
-        tree-height="auto"
-        :clickEvent="onTreeClick">
-      </GroupTree>
+        :clickEvent="onTreeClick"
+      />
     </div>
 
     <div v-if="activeChannel" class="channel-preview">
@@ -86,18 +70,17 @@
 </template>
 
 <script>
-import RegionTree from '../../monitoringWarning/components/RegionTree.vue';
-import GroupTree from '../../monitoringWarning/components/GroupTree.vue';
+import OrgPointTree from '../../monitoringWarning/components/OrgPointTree.vue';
 import { runPlanAPI } from '@/components/service/VisionAIService.js';
 
 /** 从树节点解析运行计划使用的点位 ID */
 export function resolveTreeChannel(data) {
   if (!data) return null;
-  // type=1 为通道叶子；id 为 WVP 全局通道数字 ID（playChannel / 抓图均用此字段）
+  // type=1 为通道叶子；id 为 gowvp channel id（playChannel / 抓图均用此字段）
   // deviceId 是国标编码字符串，不能用于截图 API
   const isChannel = data.type === 1 || data.leaf || data.isLeaf;
   if (!isChannel) return null;
-  const cameraId = data.id != null && data.id !== '' ? data.id : data.gbId;
+  const cameraId = data.id;
   if (cameraId == null || cameraId === '') return null;
   return {
     camera_id: cameraId,
@@ -109,10 +92,9 @@ export function resolveTreeChannel(data) {
 
 export default {
   name: 'ChannelTreePanel',
-  components: { RegionTree, GroupTree },
+  components: { OrgPointTree },
   data() {
     return {
-      showRegion: true,
       activeChannel: null,
       snapshotVisible: false,
       snapshotLoading: false,
@@ -122,8 +104,7 @@ export default {
   },
   methods: {
     onTreeClick(data) {
-      // 第二个参数为当前树类型，供"点位聚合"对非叶子节点做下级点位筛选
-      this.$emit('node-click', data, this.showRegion ? 'region' : 'group');
+      this.$emit('node-click', data, 'org');
       const channel = resolveTreeChannel(data);
       if (channel) {
         this.activeChannel = channel;
@@ -135,7 +116,11 @@ export default {
       this.snapshotLoading = true;
       this.snapshotError = '';
       this.snapshotVisible = true;
-      this.snapshotUrl = runPlanAPI.getCameraSnapshotUrl(this.activeChannel.camera_id);
+      // 先清空再赋值，强制 <img> 重新发起请求
+      this.snapshotUrl = '';
+      this.$nextTick(() => {
+        this.snapshotUrl = runPlanAPI.getCameraSnapshotUrl(this.activeChannel.camera_id);
+      });
     },
     onSnapshotImgError() {
       this.snapshotLoading = false;
@@ -198,8 +183,7 @@ export default {
 }
 
 /* 小面板内关闭虚拟滚动，外层滚动展示全部通道 */
-.channel-tree-panel >>> #MonitorRegionTree,
-.channel-tree-panel >>> #MonitorGroupTree,
+.channel-tree-panel >>> #MonitorOrgPointTree,
 .channel-tree-panel >>> .flow-tree,
 .channel-tree-panel >>> .el-tree {
   height: auto !important;
