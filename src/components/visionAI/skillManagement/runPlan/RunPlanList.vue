@@ -933,14 +933,11 @@ export default {
     },
     async collectChannelsUnder(parentId, mode, recursive, depth, acc) {
       if (depth > 6) return;
-      // 与 RegionTree/GroupTree 的懒加载一致：根节点不传 parent
       const params = { hasChannel: true };
       if (parentId !== undefined && parentId !== null && parentId !== '') {
         params.parent = parentId;
       }
-      const res = mode === 'group'
-        ? await realtimeMonitorAPI.getGroupTree(params)
-        : await realtimeMonitorAPI.getRegionTree(params);
+      const res = await realtimeMonitorAPI.getRegionTree(params);
       const list = (res.data && res.data.data) || [];
       for (const item of list) {
         const ch = resolveTreeChannel(item);

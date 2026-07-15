@@ -1,5 +1,18 @@
 <template>
-  <div class="page-container">
+  <div class="asset-page camera-page">
+    <div class="asset-page-header camera-page-header">
+      <div class="asset-page-header__main">
+        <div class="asset-page-title-row">
+          <div class="asset-page-icon asset-page-icon--camera">
+            <i class="el-icon-video-camera" />
+          </div>
+          <h2 class="asset-page-title">AI 摄像头</h2>
+        </div>
+        <p class="asset-page-desc">
+          已建点位列表，展示关联 AI 技能运行状态；新设备请先在「设备接入」注册，再在「点位管理」建点
+        </p>
+      </div>
+    </div>
     <div class="camera-management">
       <!-- 左侧分类卡片 -->
       <div class="filter-card">
@@ -26,18 +39,25 @@
               <span>国标设备</span>
             </div>
             <div
-              class="filter-item push-device"
+              class="filter-item onvif-device"
               :class="{ active: currentCameraTypeFilter === 2 }"
               @click="filterByCameraType(2)">
               <i class="el-icon-check" v-if="currentCameraTypeFilter === 2"></i>
-              <span>推流设备</span>
+              <span>ONVIF</span>
             </div>
             <div
               class="filter-item pull-device"
               :class="{ active: currentCameraTypeFilter === 3 }"
               @click="filterByCameraType(3)">
               <i class="el-icon-check" v-if="currentCameraTypeFilter === 3"></i>
-              <span>拉流设备</span>
+              <span>RTSP 拉流</span>
+            </div>
+            <div
+              class="filter-item rtmp-device"
+              :class="{ active: currentCameraTypeFilter === 4 }"
+              @click="filterByCameraType(4)">
+              <i class="el-icon-check" v-if="currentCameraTypeFilter === 4"></i>
+              <span>RTMP 推流</span>
             </div>
           </div>
         </div>
@@ -48,11 +68,12 @@
         <!-- 操作栏卡片 -->
         <div class="operation-card">
           <div class="operation-left">
-            <el-button type="primary" icon="el-icon-refresh" @click="handleRefresh">刷新列表</el-button>
-            <el-button type="success" icon="el-icon-setting" @click="handleCameraManagement">摄像头管理</el-button>
+            <el-button size="small" type="primary" icon="el-icon-refresh" @click="handleRefresh">刷新列表</el-button>
+            <el-button size="small" type="success" icon="el-icon-setting" @click="handleCameraManagement">设备接入</el-button>
+            <el-button size="small" type="primary" plain icon="el-icon-location" @click="$router.push({ name: 'pointManage' })">点位管理</el-button>
           </div>
           <div class="operation-right">
-            <el-input v-model="searchKeyword" placeholder="请输入设备名称搜索" style="width: 250px" clearable>
+            <el-input v-model="searchKeyword" placeholder="请输入设备名称搜索" size="small" style="width: 250px" clearable>
               <i slot="prefix" class="el-icon-search"></i>
             </el-input>
           </div>
@@ -60,12 +81,24 @@
 
         <!-- 表格卡片 -->
         <div class="table-card">
+          <div ref="assetTableWrap" class="table-card-body">
           <el-table
             :data="deviceList"
             style="width: 100%"
+            stripe
             v-loading="loading"
             element-loading-text="加载中..."
-            empty-text="暂无摄像头数据">
+            :height="assetTableHeight">
+            <template slot="empty">
+              <asset-empty-state
+                icon="el-icon-video-camera"
+                title="暂无摄像头"
+                description="请先在「设备接入」注册设备，再在「点位管理」建点；建点后将在此展示"
+              >
+                <el-button type="primary" size="small" icon="el-icon-setting" @click="handleCameraManagement">设备接入</el-button>
+                <el-button size="small" icon="el-icon-location" @click="$router.push({ name: 'pointManage' })">点位管理</el-button>
+              </asset-empty-state>
+            </template>
             <el-table-column type="index" label="序号" width="70" align="center" />
             <el-table-column prop="id" label="ID" width="80" align="center" />
             <el-table-column prop="name" label="摄像头名称" width="150" align="center" />
@@ -76,23 +109,12 @@
             </el-table-column>
             <el-table-column prop="status" label="状态" width="100" align="center">
               <template slot-scope="{ row }">
-                <el-tag :type="row.status === true ? 'success' : 'danger'" size="mini">
-                  <template v-if="row.camera_type === 1">
-                    {{ row.status === true ? '在线' : '离线' }}
-                  </template>
-                  <template v-else-if="row.camera_type === 2">
-                    {{ row.status === true ? '推流中' : '已停止' }}
-                  </template>
-                  <template v-else-if="row.camera_type === 3">
-                    {{ row.status === true ? '正在拉流' : '尚未拉流' }}
-                  </template>
-                  <template v-else>{{ row.status }}
-                    {{ row.status === true ? '启用' : '禁用' }}
-                  </template>
+                <el-tag :type="getStatusTagType(row)" size="mini" :title="getStatusTitle(row)">
+                  {{ getStatusText(row) }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="location" label="设备来源" width="140" align="center" />
+            <el-table-column prop="location" label="所属组织" width="140" align="center" />
             <el-table-column prop="skill" label="视频技能" min-width="220" align="center">
               <template slot-scope="{ row }">
                 <div v-if="row.skill && row.skill !== '-'" class="skill-tags-container">
@@ -133,10 +155,11 @@
           </el-table>
 
           <!-- 分页区域 -->
-          <div class="pagination-wrapper">
+          <div v-if="total > 0" class="pagination-wrapper">
             <el-pagination :current-page.sync="currentPage" :page-size.sync="pageSize" :page-sizes="[10, 20, 30, 50]"
               layout="total, sizes, prev, pager, next, jumper" :total="total" @size-change="handleSizeChange"
               @current-change="handleCurrentChange" />
+          </div>
           </div>
         </div>
       </div>
@@ -156,14 +179,14 @@
             <el-button size="small" @click="retrySnapshot">重试</el-button>
           </div>
           <div v-else-if="snapshotUrl" class="snapshot-img-wrap">
-            <img :src="snapshotUrl" alt="摄像头截图" @load="snapshotLoading = false" @error="onSnapshotImgError" />
+            <img :src="snapshotUrl" alt="摄像头截图" @load="onSnapshotImgLoad" @error="onSnapshotImgError" />
           </div>
           <div v-else class="snapshot-empty">暂无截图</div>
         </div>
         <div v-if="snapshotCamera" slot="footer" class="snapshot-dialog-footer">
           <span class="snapshot-meta">
             {{ snapshotCamera.name }}
-            <el-tag size="mini" :type="snapshotCamera.status ? 'success' : 'danger'">
+            <el-tag size="mini" :type="getStatusTagType(snapshotCamera)">
               {{ getSnapshotStatusText(snapshotCamera) }}
             </el-tag>
           </span>
@@ -179,19 +202,8 @@
             <el-descriptions-item label="摄像头ID">{{ deviceDetailData.id }}</el-descriptions-item>
             <el-descriptions-item label="摄像头名称">{{ deviceDetailData.name }}</el-descriptions-item>
             <el-descriptions-item label="摄像头状态">
-              <el-tag :type="deviceDetailData.status ? 'success' : 'danger'">
-                <template v-if="deviceDetailData.camera_type === 1">
-                  {{ deviceDetailData.status ? '在线' : '离线' }}
-                </template>
-                <template v-else-if="deviceDetailData.camera_type === 2">
-                  {{ deviceDetailData.status ? '推流中' : '已停止' }}
-                </template>
-                <template v-else-if="deviceDetailData.camera_type === 3">
-                  {{ deviceDetailData.status ? '正在拉流' : '尚未拉流' }}
-                </template>
-                <template v-else>
-                  {{ deviceDetailData.status ? '启用' : '禁用' }}
-                </template>
+              <el-tag :type="getStatusTagType(deviceDetailData)">
+                {{ getStatusText(deviceDetailData) }}
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item label="设备来源">{{ deviceDetailData.location || '-' }}</el-descriptions-item>
@@ -268,6 +280,7 @@
 
 <script>
 import cameraComponent from './cameraComponents/camera.js'
+import './asset-page.css'
 
 export default {
   ...cameraComponent

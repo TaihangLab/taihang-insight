@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-极星算法推理平台是一个大屏可视化系统，用于实时监控和展示AI算法推理引擎的各项性能指标、设备连接状态、报警事件等信息。该平台采用现代化设计风格，以蓝色科技感为主题，提供直观的数据可视化展示。
+是一个大屏可视化系统，用于实时监控和展示AI算法推理引擎的各项性能指标、设备连接状态、报警事件等信息。该平台采用现代化设计风格，以蓝色科技感为主题，提供直观的数据可视化展示。
 
 ## 功能模块
 
@@ -34,6 +34,15 @@
 - 展示已部署的算法总数和运行状态
 - 使用气泡图展示不同类型的算法
 - 提供算法调用次数、推理速度、准确率等关键指标
+
+### 设备与视频（GoWVP）
+
+- **设备接入**（`/deviceManage/devices`）：添加 GB28181 / RTSP / ONVIF 设备，调用后端 `/api/v1/asset/devices`
+- **点位管理**（`/deviceManage/points`）：从 GoWVP 通道批量建点，AI 任务与监控均基于点位
+- **AI 摄像头**（`/deviceManage/camera`）：展示已建点位及关联技能
+- **实时监控**：组织树 + 点位播放，媒体流经 `/owl-media` 同源代理
+
+后端视频平台为 **GoWVP**（smart_engine docker compose 内置），已移除 Java WVP-Pro 及管理页。
 
 ### 设备监控
 - 统计接入设备总数及各类设备数量
@@ -119,17 +128,32 @@
 └── package.json            # 项目依赖
 ```
 
+## 推荐开发方式
+
+**默认（Docker 后端）**：`smart_engine` 全栈 compose 启动，本仓库宿主机 dev。
+
+| 步骤 | 仓库 | 说明 |
+|------|------|------|
+| 1 | `smart_engine` | `cp .env.docker .env` |
+| 2 | `smart_engine` | `docker compose up -d --build` |
+| 3 | `taihang-insight`（本仓库） | `npm install` → `npm run dev`（端口 8080） |
+
+**备选（本地 Python 后端）**：`cp .env.template .env` → 仅 `docker compose up -d mysql redis rabbitmq minio gowvp` → `conda activate smart_env` → `python -m app --reload`
+
+**后端地址**（`config/index.js`）：
+
+```javascript
+const API_BASE_URL = 'http://127.0.0.1:8000'
+```
+
+访问：前端 http://localhost:8080 · API http://localhost:8000/docs · GoWVP http://localhost:15123
+
 ## 安装与运行
 
 ```bash
-# 安装依赖
 npm install
-
-# 开发模式运行（热重载）
-npm run dev
-
-# 生产环境构建
-npm run build
+npm run dev      # 开发，http://localhost:8080
+npm run build    # 生产构建
 ```
 
 ## 界面设计
@@ -476,7 +500,7 @@ npm run build
 
 #### 1. SSE连接端点修复 ✅
 - **问题**：前端使用了错误的SSE连接URL和参数
-- **修复前**：`api/emit?browserId=${browserId}` （WVP传统报警端点，需要浏览器ID参数）  
+- **修复前**：`api/emit?browserId=${browserId}` （旧报警端点，已废弃）
 - **修复后**：`http://192.168.1.106:8000/api/v1/alerts/stream` （AI预警专用端点，无需参数）
 
 #### 2. 连接参数优化 ✅
@@ -589,6 +613,8 @@ AI任务执行器 → RabbitMQ → AlertService → SSE连接管理器 → 前�
 
 ## 开发环境
 
+> 推荐全栈流程见 [推荐开发方式](#推荐开发方式)。
+
 ### 技术栈
 - Vue.js 2.x
 - Element UI
@@ -613,21 +639,19 @@ npm run build
 
 ## 配置说明
 
-### API服务配置
-在 `src/components/service/VisionAIService.js` 中配置后端服务地址：
+后端 API 根地址在 **`config/index.js`**（全局 `API_BASE_URL`，Asset/监控等模块共用）：
+
 ```javascript
-const visionAIAxios = axios.create({
-  baseURL: 'http://192.168.1.106:8000',  // 后端服务地址
-  timeout: 15000,
-  withCredentials: false
-});
+const API_BASE_URL = 'http://127.0.0.1:8000'
 ```
+
+部分旧模块在各自 Service 文件中也有 axios 实例，联调时以 `config/index.js` 为准并保持一致。
 
 ### SSE连接配置
 实时预警SSE连接配置：
 ```javascript
 // AI预警专用SSE端点
-const sseUrl = `http://192.168.1.106:8000/api/v1/alerts/stream`;
+const sseUrl = `${API_BASE_URL}/api/v1/alerts/stream`;
 ```
 
 ## 故障排除

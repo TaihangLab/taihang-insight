@@ -6,7 +6,7 @@ const path = require('path')
 
 // 后端API基础地址配置
 // const API_BASE_URL = 'http://127.0.0.1:8000'
-const API_BASE_URL = 'http://172.18.1.1:8000'
+const API_BASE_URL = 'http://192.168.26.42:8000'
 
 module.exports = {
   // 导出API配置供前端使用
@@ -15,7 +15,7 @@ module.exports = {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {},  // 不再使用代理，前端直接通过 baseURL 访问
+    proxyTable: {},  // 不再使用代理，前端直接通过 baseURL 访问 API；播放地址由后端拼完整 URL
 
     // Various Dev Server settings
     host:"0.0.0.0",

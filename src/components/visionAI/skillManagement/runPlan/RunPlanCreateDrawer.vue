@@ -113,7 +113,7 @@
                   </div>
                   <i v-if="!isView" class="el-icon-close" @click="removeSelected(c)"></i>
                 </div>
-                <div v-if="!form.cameras.length" class="empty-tip-sm">请从左侧通道列表选择点位</div>
+                <div v-if="!form.cameras.length" class="empty-tip-sm">请从左侧组织树选择点位</div>
               </div>
             </div>
           </div>

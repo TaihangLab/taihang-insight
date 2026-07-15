@@ -23,12 +23,12 @@ export default {
   created() {
     // 🔓 已移除强制登录检查 - 允许访客访问所有页面
     // 用户可以选择在登录页面登录，登录后可以使用用户相关功能
-    console.log('系统启动 - 无需登录即可访问');
-    if (userService.getToken() != null) {
-      console.log('检测到已登录用户:', userService.getUser().username);
-    } else {
-      console.log('当前为访客模式');
-    }
+    // console.log('系统启动 - 无需登录即可访问');
+    // if (userService.getToken() != null) {
+    //   console.log('检测到已登录用户:', userService.getUser().username);
+    // } else {
+    //   console.log('当前为访客模式');
+    // }
   },
 
   mounted(){

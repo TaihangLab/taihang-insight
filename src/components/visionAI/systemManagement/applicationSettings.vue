@@ -483,7 +483,6 @@ export default {
 </script>
 
 <style scoped>
-@import "../deviceManagement/managementPages/common-style.css";
 
 /* 删除main-card相关样式 */
 .app-settings-container {

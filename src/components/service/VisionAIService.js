@@ -37,7 +37,7 @@ visionAIAxios.defaults.paramsSerializer = function (params) {
 visionAIAxios.interceptors.request.use(
   config => {
     // 这里可以添加token等通用请求头
-    const token = userService.getAdminToken()
+    const token = userService.getToken()
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token;
     }
@@ -258,6 +258,51 @@ export const modelAPI = {
   // 全量覆盖模型的检测类别（模型标签）
   updateModelClasses(modelId, classes) {
     return visionAIAxios.put(`/api/v1/models/${modelId}/classes`, { classes });
+  },
+
+  // 从单模型技能同步检测类别并写入数据库
+  syncModelClassesFromSkills(modelId, skipExisting = false) {
+    return visionAIAxios.post(`/api/v1/models/${modelId}/classes/sync-from-skills`, null, {
+      params: { skip_existing: skipExisting },
+    });
+  },
+
+  // 批量从单模型技能同步检测类别
+  // options: { modelIds, syncAll, skipExisting }
+  batchSyncModelClassesFromSkills(options = {}) {
+    const payload = {
+      model_ids: options.modelIds || [],
+      sync_all: !!options.syncAll,
+      skip_existing: options.skipExisting !== false,
+    };
+    return visionAIAxios.post('/api/v1/models/classes/sync-from-skills', payload);
+  },
+
+  // 导出模型检测类别 JSON
+  // options: { modelIds, template }  template=true 时只预填模型名，classes 留空
+  exportModelClassesJson(modelIds, options = {}) {
+    const params = {};
+    if (modelIds && modelIds.length) {
+      params.model_ids = modelIds.join(',');
+    }
+    if (options.template) {
+      params.template = true;
+    }
+    return visionAIAxios.get('/api/v1/models/classes/export', {
+      params,
+      responseType: 'blob',
+      timeout: 60000,
+    });
+  },
+
+  // 从 JSON 导入模型检测类别
+  importModelClassesJson(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return visionAIAxios.post('/api/v1/models/classes/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
+    });
   },
 
   // 删除模型
@@ -1534,10 +1579,15 @@ export const cameraAPI = {
               status: camera.status || false,
               tags: camera.tags || [],
               camera_type: camera.camera_type || '-',
+              running: camera.running,
               skill_names: camera.skill_names || [],
               llm_skill_names: camera.llm_skill_names || [],
               graph_skill_names: camera.graph_skill_names || [],
               running_skill_names: camera.running_skill_names || [],
+              sourceStatus: camera.sourceStatus || '',
+              sourceStatusText: camera.sourceStatusText || '',
+              sourceDetail: camera.sourceDetail || '',
+              sourceCheckedAt: camera.sourceCheckedAt || '',
             };
           });
           transformedData.total = originalData.total || transformedData.data.length;
@@ -1558,10 +1608,15 @@ export const cameraAPI = {
               status: camera.status || false,
               tags: camera.tags || [],
               camera_type: camera.camera_type || '-',
+              running: camera.running,
               skill_names: camera.skill_names || [],
               llm_skill_names: camera.llm_skill_names || [],
               graph_skill_names: camera.graph_skill_names || [],
               running_skill_names: camera.running_skill_names || [],
+              sourceStatus: camera.sourceStatus || '',
+              sourceStatusText: camera.sourceStatusText || '',
+              sourceDetail: camera.sourceDetail || '',
+              sourceCheckedAt: camera.sourceCheckedAt || '',
             };
           });
           transformedData.total = originalData.data.total || transformedData.data.length;
@@ -3527,163 +3582,29 @@ export const reviewRecordAPI = {
 };
 
 /**
- * 实时监控相关API
- * 提供实时监控页面的通道管理和视频播放功能
+ * 实时监控 API（组织点位树 + 播放）
  */
 export const realtimeMonitorAPI = {
   /**
-   * 获取实时监控通道列表
-   * @param {Object} params - 查询参数
-   * @param {number} params.page - 当前页，默认1
-   * @param {number} params.count - 每页数量，默认100
-   * @param {string} params.query - 查询关键词
-   * @param {boolean} params.online - 是否在线
-   * @param {boolean} params.has_record_plan - 是否有录制计划
-   * @param {number} params.channel_type - 通道类型：1=国标设备, 2=推流, 3=代理
-   * @param {string} params.civil_code - 行政区划
-   * @param {string} params.parent_device_id - 父节点编码
-   * @returns {Promise} 通道列表数据
-   */
-  getChannelList(params = {}) {
-    console.log('📤 获取实时监控通道列表 - 参数:', params);
-
-    return visionAIAxios.get('/api/v1/realtime-monitor/channels', { params })
-      .then(response => {
-        console.log('📥 获取实时监控通道列表成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('❌ 获取实时监控通道列表失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取通道详情
-   * @param {number} channelId - 通道ID
-   * @returns {Promise} 通道详情数据
-   */
-  getChannelDetail(channelId) {
-    console.log('📤 获取通道详情 - 通道ID:', channelId);
-
-    return visionAIAxios.get(`/api/v1/realtime-monitor/channels/${channelId}`)
-      .then(response => {
-        console.log('📥 获取通道详情成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('❌ 获取通道详情失败:', error);
-        throw error;
-      });
-  },
-
-  /**
    * 播放通道视频
-   * @param {number} channelId - 通道ID
-   * @returns {Promise} 播放流地址信息
+   * @param {string} channelId GoWVP 通道 ID
    */
   playChannel(channelId) {
-    console.log('📤 播放通道 - 通道ID:', channelId);
-
-    // 单独设置较短超时：通道离线/不存在时后端可能长时间挂起，
-    // 这里快速失败，避免前端长时间等待
-    return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`, { timeout: 8000 })
-      .then(response => {
-        console.log('📥 播放通道成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('❌ 播放通道失败:', error);
-        throw error;
-      });
+    return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`, { timeout: 8000 });
   },
 
   /**
    * 停止播放通道视频
-   * @param {number} channelId - 通道ID
-   * @returns {Promise} 停止播放结果
+   * @param {string} channelId GoWVP 通道 ID
    */
   stopChannel(channelId) {
-    console.log('📤 停止播放通道 - 通道ID:', channelId);
-
-    return visionAIAxios.get(`/api/v1/realtime-monitor/stop/${channelId}`)
-      .then(response => {
-        console.log('📥 停止播放成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('❌ 停止播放失败:', error);
-        throw error;
-      });
+    return visionAIAxios.get(`/api/v1/realtime-monitor/stop/${channelId}`);
   },
 
-  /**
-   * 获取通道树结构
-   * @param {Object} params - 查询参数
-   * @param {boolean} params.online - 是否在线
-   * @param {number} params.channel_type - 通道类型
-   * @returns {Promise} 通道树数据
-   */
-  getChannelTree(params = {}) {
-    console.log('📤 获取通道树 - 参数:', params);
-
-    return visionAIAxios.get('/api/v1/realtime-monitor/channels/tree', { params })
-      .then(response => {
-        console.log('📥 获取通道树成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('❌ 获取通道树失败:', error);
-        throw error;
-      });
-  },
-
-  /**
-   * 获取行政区划树
-   * @param {Object} params - 查询参数
-   * @param {number} params.parent - 父节点ID (Integer类型)
-   * @param {boolean} params.hasChannel - 是否包含通道
-   * @returns {Promise} 行政区划树数据
-   *
-   * 注意：RegionController没有query参数（与GroupController不同）
-   */
+  /** 获取组织点位树（lazy，type=0 组织 / type=1 点位） */
   getRegionTree(params = {}) {
-    console.log('📤 获取行政区划树 - 参数:', params);
-
-    return visionAIAxios.get('/api/v1/realtime-monitor/region/tree', { params })
-      .then(response => {
-        console.log('📥 获取行政区划树成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('❌ 获取行政区划树失败:', error);
-        throw error;
-      });
+    return visionAIAxios.get('/api/v1/realtime-monitor/region/tree', { params });
   },
-
-  /**
-   * 获取业务分组树
-   * @param {Object} params - 查询参数
-   * @param {string} params.query - 搜索关键词 (可选)
-   * @param {number} params.parent - 父节点ID (Integer类型, 可选)
-   * @param {boolean} params.hasChannel - 是否包含通道
-   * @returns {Promise} 业务分组树数据
-   *
-   * 注意：GroupController有query参数（与RegionController不同）
-   */
-  getGroupTree(params = {}) {
-    console.log('📤 获取业务分组树 - 参数:', params);
-
-    return visionAIAxios.get('/api/v1/realtime-monitor/group/tree', { params })
-      .then(response => {
-        console.log('📥 获取业务分组树成功:', response.data);
-        return response;
-      })
-      .catch(error => {
-        console.error('❌ 获取业务分组树失败:', error);
-        throw error;
-      });
-  }
 };
 
 /**

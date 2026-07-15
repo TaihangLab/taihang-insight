@@ -52,7 +52,7 @@
           
           <!-- 空状态 -->
           <div v-else-if="!loading && knowledgeBases.length === 0" class="empty-state">
-            <el-empty description="暂无知识库数据" image-size="120">
+            <el-empty description="暂无知识库数据" :image-size="120">
               <el-button type="primary" size="small" @click="createKnowledge">创建第一个知识库</el-button>
             </el-empty>
           </div>
@@ -632,7 +632,6 @@ export default {
 </script>
 
 <style scoped>
-@import "../deviceManagement/managementPages/common-style.css";
 
 .knowledge-base-wrapper {
   position: relative;

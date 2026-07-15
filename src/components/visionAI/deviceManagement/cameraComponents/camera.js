@@ -1,4 +1,6 @@
 import { cameraAPI } from '@/components/service/VisionAIService.js';
+import AssetEmptyState from '../AssetEmptyState.vue';
+import assetTableLayout from '../assetTableLayout.js';
 
 /**
  * 摄像头（点位）管理 —— 核心列表/详情逻辑
@@ -8,7 +10,9 @@ import { cameraAPI } from '@/components/service/VisionAIService.js';
  * 本页只保留点位的浏览、筛选、详情查看等基础设备管理能力。
  */
 export default {
-  name: 'CameraManagement',
+  name: 'CameraList',
+  components: { AssetEmptyState },
+  mixins: [assetTableLayout],
   data() {
     return {
       // 摄像头列表数据
@@ -30,14 +34,16 @@ export default {
       snapshotUrl: '',
       snapshotError: '',
       snapshotCamera: null,
+      snapshotTimer: null,
 
       // 摄像头类型筛选
       currentCameraTypeFilter: 0,
       cameraTypeMap: {
         0: '全部类型',
-        1: '国标设备',
-        2: '推流设备',
-        3: '拉流设备'
+        1: '国标 GB28181',
+        2: 'ONVIF',
+        3: 'RTSP 拉流',
+        4: 'RTMP 推流',
       }
     };
   },
@@ -81,7 +87,12 @@ export default {
               llm_skill_names: Array.isArray(camera.llm_skill_names) ? camera.llm_skill_names : [],
               graph_skill_names: Array.isArray(camera.graph_skill_names) ? camera.graph_skill_names : [],
               running_skill_names: Array.isArray(camera.running_skill_names) ? camera.running_skill_names : [],
-              camera_type: camera.camera_type
+              camera_type: camera.camera_type,
+              running: camera.running,
+              sourceStatus: camera.sourceStatus || '',
+              sourceStatusText: camera.sourceStatusText || '',
+              sourceDetail: camera.sourceDetail || '',
+              sourceCheckedAt: camera.sourceCheckedAt || '',
             }));
 
             this.$set(this, 'deviceList', newDeviceList);
@@ -104,6 +115,7 @@ export default {
         })
         .finally(() => {
           this.loading = false;
+          this.updateAssetTableHeight();
         });
     },
 
@@ -124,22 +136,71 @@ export default {
       this.currentPage = 1;
 
       const params = {};
-      if (currentCameraType === 1 || currentCameraType === 2 || currentCameraType === 3) {
+      if (currentCameraType === 1 || currentCameraType === 2 || currentCameraType === 3
+          || currentCameraType === 4 || currentCameraType === 5) {
         params.camera_type = currentCameraType;
       }
       this.fetchCameraList(params);
     },
 
     handleCameraManagement() {
-      this.$router.push({ name: 'CameraManagementMain' });
+      this.$router.push({ name: 'deviceManage' });
+    },
+
+    // 已知源不可用时直接提示，避免空等 ZLM 拉流超时（无流/不可达会转很久）
+    getSnapshotBlockedReason(row) {
+      if (!row) return '';
+      if (row.camera_type === 4 && row.running === false) {
+        return '该点位推流已停止，请先在点位管理中启动推流后再截图';
+      }
+      if (row.camera_type === 3 && !row.status) {
+        if (row.sourceStatus === 'unreachable') {
+          return `源地址不可达，无法截图${row.sourceDetail ? '（' + row.sourceDetail + '）' : ''}`;
+        }
+        if (row.sourceStatus === 'no_stream') {
+          return `源地址当前无流，无法截图${row.sourceDetail ? '（' + row.sourceDetail + '）' : ''}`;
+        }
+        if (row.sourceStatus === 'invalid') {
+          return '源地址无效，无法截图';
+        }
+      }
+      return '';
+    },
+
+    clearSnapshotTimer() {
+      if (this.snapshotTimer) {
+        clearTimeout(this.snapshotTimer);
+        this.snapshotTimer = null;
+      }
     },
 
     handleFetchSnapshot(row) {
+      this.clearSnapshotTimer();
       this.snapshotCamera = row;
+      this.snapshotVisible = true;
+      this.snapshotUrl = '';
+
+      const blocked = this.getSnapshotBlockedReason(row);
+      if (blocked) {
+        this.snapshotLoading = false;
+        this.snapshotError = blocked;
+        return;
+      }
+
       this.snapshotLoading = true;
       this.snapshotError = '';
-      this.snapshotVisible = true;
-      this.snapshotUrl = cameraAPI.getCameraSnapshotUrl(row.id);
+      // 最长等待 15 秒，防止无流/不可达时后端卡在 ZLM 拉流导致一直转圈
+      this.snapshotTimer = setTimeout(() => {
+        if (this.snapshotLoading) {
+          this.snapshotLoading = false;
+          this.snapshotError = '截图超时，请确认设备在线且源地址有流后重试';
+          this.snapshotUrl = '';
+        }
+      }, 15000);
+      // 先清空再赋值，强制 <img> 重新发起请求（避免同通道刷新时沿用旧画面）
+      this.$nextTick(() => {
+        this.snapshotUrl = cameraAPI.getCameraSnapshotUrl(row.id);
+      });
     },
 
     retrySnapshot() {
@@ -147,24 +208,29 @@ export default {
       this.handleFetchSnapshot(this.snapshotCamera);
     },
 
-    onSnapshotImgError() {
+    onSnapshotImgLoad() {
+      this.clearSnapshotTimer();
       this.snapshotLoading = false;
-      this.snapshotError = '获取截图失败，请确认设备在线且支持抓图后重试';
+    },
+
+    onSnapshotImgError() {
+      this.clearSnapshotTimer();
+      this.snapshotLoading = false;
+      this.snapshotError = this.getSnapshotBlockedReason(this.snapshotCamera)
+        || '获取截图失败，请确认设备在线且支持抓图后重试';
       this.snapshotUrl = '';
     },
 
     onSnapshotClosed() {
+      this.clearSnapshotTimer();
       this.snapshotUrl = '';
       this.snapshotError = '';
       this.snapshotCamera = null;
+      this.snapshotLoading = false;
     },
 
     getSnapshotStatusText(row) {
-      if (!row) return '-';
-      if (row.camera_type === 1) return row.status ? '在线' : '离线';
-      if (row.camera_type === 2) return row.status ? '推流中' : '已停止';
-      if (row.camera_type === 3) return row.status ? '正在拉流' : '尚未拉流';
-      return row.status ? '启用' : '禁用';
+      return this.getStatusText(row);
     },
 
     handleViewDetails(row) {
@@ -190,8 +256,72 @@ export default {
     },
 
     getCameraTypeText(type) {
-      const typeMap = { 1: '国标设备', 2: '推流设备', 3: '代理拉流' };
-      return typeMap[type] || `未知类型(${type})`;
+      const typeMap = {
+        1: '国标 GB28181',
+        2: 'ONVIF',
+        3: 'RTSP 拉流',
+        4: 'RTMP 推流',
+      };
+      return typeMap[type] || `其他(${type})`;
+    },
+
+    getStatusText(row) {
+      if (!row) return '-';
+      if (row.camera_type === 4) {
+        if (row.running != null && !row.running) {
+          return '已停止';
+        }
+        if (row.running && !row.status) {
+          return '推流离线';
+        }
+        if (row.running != null) {
+          return row.running ? '推流中' : '已停止';
+        }
+        return row.status ? '推流中' : '已停止';
+      }
+      if (row.camera_type === 3) {
+        // 拉流点位：离线时用源状态区分「没人用」和「真的坏了」（与点位管理一致）
+        if (row.status) return '拉流中';
+        if (row.sourceStatus === 'ok') return '未拉流·源可用';
+        if (row.sourceStatus === 'no_stream') return '无流';
+        if (row.sourceStatus === 'unreachable') return '不可达';
+        if (row.sourceStatus === 'invalid') return '地址无效';
+        return '未拉流';
+      }
+      return row.status ? '在线' : '离线';
+    },
+
+    getStatusTagType(row) {
+      if (!row) return 'info';
+      if (row.camera_type === 4) {
+        if (row.running != null && !row.running) {
+          return 'info';
+        }
+        if (row.running && !row.status) {
+          return 'warning';
+        }
+        if (row.running != null) {
+          return row.running ? 'success' : 'info';
+        }
+        return row.status ? 'success' : 'info';
+      }
+      if (row.camera_type === 3) {
+        if (row.status) return 'success';
+        if (row.sourceStatus === 'ok') return 'success';
+        if (row.sourceStatus === 'no_stream') return 'warning';
+        if (row.sourceStatus === 'unreachable' || row.sourceStatus === 'invalid') return 'danger';
+        return 'info';
+      }
+      return row.status ? 'success' : 'danger';
+    },
+
+    // 状态标签悬停提示：源检测详情 + 检测时间
+    getStatusTitle(row) {
+      if (!row || row.camera_type !== 3) return '';
+      const parts = [];
+      if (row.sourceDetail) parts.push(row.sourceDetail);
+      if (row.sourceCheckedAt) parts.push('检测于 ' + row.sourceCheckedAt);
+      return parts.join('；');
     },
 
     /**

@@ -980,7 +980,6 @@ export default {
 </script>
 
 <style scoped>
-@import "../deviceManagement/managementPages/common-style.css";
 
 .multimodal-create-wrapper {
   position: relative;

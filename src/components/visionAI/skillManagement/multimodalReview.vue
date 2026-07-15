@@ -65,7 +65,7 @@
         
         <!-- 空状态 -->
         <div v-else-if="!loading && skills.length === 0" class="empty-state">
-          <el-empty description="暂无技能数据" image-size="120">
+          <el-empty description="暂无技能数据" :image-size="120">
             <el-button type="primary" size="small" @click="createSkill">创建第一个技能</el-button>
           </el-empty>
         </div>
@@ -1057,7 +1057,6 @@ export default {
 </script>
 
 <style scoped>
-@import "../deviceManagement/managementPages/common-style.css";
 
 .multimodal-review-wrapper {
   position: relative;

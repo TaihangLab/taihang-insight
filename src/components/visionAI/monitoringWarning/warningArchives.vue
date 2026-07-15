@@ -1,6 +1,7 @@
 <script>
 // 导入API服务
 import VisionAIService from '../../service/VisionAIService.js'
+import userService from '../../service/UserService.js'
 
 // 解构获取archiveAPI和alertAPI（用于拉取预警详情）
 const { archiveAPI, alertAPI } = VisionAIService
@@ -190,7 +191,7 @@ export default {
     // 上传请求头
     uploadHeaders() {
       return {
-        'Authorization': 'Bearer ' + (localStorage.getItem('Admin-Token') || ''),
+        'Authorization': 'Bearer ' + (userService.getToken() || ''),
         'Accept': 'application/json'
       }
     }
