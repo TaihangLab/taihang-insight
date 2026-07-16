@@ -166,8 +166,8 @@
               <template slot-scope="{ row }">
                 <template v-if="showSourceStatus(row)">
                   <el-tooltip :content="sourceTooltip(row)" placement="top">
-                    <el-tag size="mini" :type="sourceTagType(row.sourceStatus)">
-                      {{ row.sourceStatusText || '未检测' }}
+                    <el-tag size="mini" :type="sourceTagType(displaySourceStatus(row))">
+                      {{ displaySourceStatusText(row) || '未检测' }}
                     </el-tag>
                   </el-tooltip>
                   <el-button

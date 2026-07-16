@@ -152,26 +152,6 @@
                 </span>
               </template>
             </el-table-column>
-            <el-table-column label="源状态" width="120" align="center">
-              <template slot-scope="{ row }">
-                <template v-if="showSourceStatus(row)">
-                  <el-tooltip :content="sourceTooltip(row)" placement="top">
-                    <el-tag size="mini" :type="sourceTagType(row.sourceStatus)">
-                      {{ row.sourceStatusText || '未检测' }}
-                    </el-tag>
-                  </el-tooltip>
-                  <el-button
-                    type="text"
-                    size="mini"
-                    icon="el-icon-refresh"
-                    :loading="!!rowProbing[row.id]"
-                    title="立即检测源地址"
-                    @click="handleProbeDevice(row)"
-                  />
-                </template>
-                <span v-else class="cell-muted" title="多通道设备请在点位管理查看每路源状态">-</span>
-              </template>
-            </el-table-column>
             <el-table-column prop="model" label="型号" width="120" show-overflow-tooltip>
               <template slot-scope="{ row }">{{ row.model || '-' }}</template>
             </el-table-column>
@@ -321,9 +301,6 @@ import {
   formatChannelSummary,
   isActiveStreamStatus,
   probeTone,
-  showSourceStatus,
-  sourceTagType,
-  sourceTooltip,
   streamStatusDotClass,
   streamStatusTextClass,
   summarizeDeviceStats,
@@ -353,7 +330,6 @@ export default {
       gbInfo: {},
       probing: false,
       probeResult: null,
-      rowProbing: {},
       form: {
         name: '',
         orgId: 'org-root',
@@ -386,9 +362,6 @@ export default {
     statusTextClass: streamStatusTextClass,
     statusDotClass: streamStatusDotClass,
     formatChannelSummary,
-    showSourceStatus,
-    sourceTagType,
-    sourceTooltip,
     probeTone,
     async handleProbeUrl() {
       if (!this.form.streamUrl) {
@@ -403,20 +376,6 @@ export default {
         this.$message.error(e.message || '检测失败');
       } finally {
         this.probing = false;
-      }
-    },
-    async handleProbeDevice(row) {
-      this.$set(this.rowProbing, row.id, true);
-      try {
-        const res = await assetAPI.probeDevice(row.id);
-        row.sourceStatus = res.status;
-        row.sourceStatusText = res.statusText;
-        row.sourceDetail = res.detail;
-        row.sourceCheckedAt = res.checkedAt;
-      } catch (e) {
-        this.$message.error(e.message || '检测失败');
-      } finally {
-        this.$set(this.rowProbing, row.id, false);
       }
     },
     applyPageSlice() {

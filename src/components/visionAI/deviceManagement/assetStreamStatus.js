@@ -27,7 +27,31 @@ export function probeTone(status) {
   return status === 'ok' || status === 'streaming' ? 'ok' : 'bad';
 }
 
+const BAD_SOURCE_STATUSES = ['no_stream', 'unreachable', 'invalid'];
+
+/**
+ * 展示用源状态：行已在拉流/在线时，探测失败结果必然是过期或误报
+ * （如摄像头连接数满导致 401），强制按「拉流中」展示，避免自相矛盾。
+ */
+export function displaySourceStatus(row) {
+  if (!row) return '';
+  if (BAD_SOURCE_STATUSES.includes(row.sourceStatus)
+      && isActiveStreamStatus(pullPointStatusText(row))) {
+    return 'streaming';
+  }
+  return row.sourceStatus;
+}
+
+export function displaySourceStatusText(row) {
+  if (!row) return '';
+  if (displaySourceStatus(row) !== row.sourceStatus) return '拉流中';
+  return row.sourceStatusText;
+}
+
 export function sourceTooltip(row) {
+  if (displaySourceStatus(row) !== row.sourceStatus) {
+    return '正在从该源拉流（此前的探测结果已过期）';
+  }
   const parts = [];
   if (row.sourceDetail) parts.push(row.sourceDetail);
   if (row.sourceCheckedAt) parts.push(`检测于 ${row.sourceCheckedAt}`);
@@ -98,7 +122,7 @@ export function summarizePointStats(points) {
     else if (cat === 'idle') idle += 1;
     else offline += 1;
     const isStreamPoint = (p.pointType === 'virtual' && p.virtualMode === 'stream') || p.camera_type === 3;
-    if (isStreamPoint && ['no_stream', 'unreachable', 'invalid'].includes(p.sourceStatus)) {
+    if (isStreamPoint && BAD_SOURCE_STATUSES.includes(displaySourceStatus(p))) {
       sourceBad += 1;
     }
   });
@@ -149,9 +173,9 @@ export function formatChannelSummary(row) {
   return String(total || 0);
 }
 
+/** 源状态只在点位管理 / AI 摄像头展示（设备接入页不展示，避免重复探测） */
 export function showSourceStatus(row) {
   if (!row) return false;
-  if (row.rawType === 'RTSP') return true;
   if (row.pointType === 'virtual' && row.virtualMode === 'stream') return true;
   if (row.camera_type === 3) return true;
   return false;

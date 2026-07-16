@@ -184,8 +184,8 @@
               <template slot-scope="{ row }">
                 <template v-if="row.pointType === 'virtual' && row.virtualMode === 'stream'">
                   <el-tooltip :content="sourceTooltip(row)" placement="top">
-                    <el-tag size="mini" :type="sourceTagType(row.sourceStatus)">
-                      {{ row.sourceStatusText || '未检测' }}
+                    <el-tag size="mini" :type="sourceTagType(displaySourceStatus(row))">
+                      {{ displaySourceStatusText(row) || '未检测' }}
                     </el-tag>
                   </el-tooltip>
                   <el-button
@@ -354,6 +354,8 @@ import { assetAPI, flattenOrgOptions } from '../../service/AssetService.js';
 import AssetEmptyState from './AssetEmptyState.vue';
 import assetTableLayout from './assetTableLayout.js';
 import {
+  displaySourceStatus,
+  displaySourceStatusText,
   isActiveStreamStatus,
   probeTone,
   sourceTagType,
@@ -563,6 +565,8 @@ export default {
     sourceTagType,
     probeTone,
     sourceTooltip,
+    displaySourceStatus,
+    displaySourceStatusText,
     async handleProbeUrl() {
       if (!this.streamForm.streamUrl) {
         this.$message.warning('请先填写流地址');

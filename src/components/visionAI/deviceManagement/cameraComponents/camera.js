@@ -3,6 +3,8 @@ import { assetAPI } from '@/components/service/AssetService.js';
 import AssetEmptyState from '../AssetEmptyState.vue';
 import assetTableLayout from '../assetTableLayout.js';
 import {
+  displaySourceStatus,
+  displaySourceStatusText,
   pullPointStatusTagType,
   pullPointStatusText,
   showSourceStatus,
@@ -184,12 +186,10 @@ export default {
       if (row.camera_type === 4 && row.running === false) {
         return '该点位推流已停止，请先在点位管理中启动推流后再截图';
       }
+      // no_stream 不再前置拦截：探测可能误报（如摄像头连接数满），交给后端实际尝试
       if (row.camera_type === 3 && !row.status) {
         if (row.sourceStatus === 'unreachable') {
           return `源地址不可达，无法截图${row.sourceDetail ? '（' + row.sourceDetail + '）' : ''}`;
-        }
-        if (row.sourceStatus === 'no_stream') {
-          return `源地址当前无流，无法截图${row.sourceDetail ? '（' + row.sourceDetail + '）' : ''}`;
         }
         if (row.sourceStatus === 'invalid') {
           return '源地址无效，无法截图';
@@ -307,6 +307,8 @@ export default {
     showSourceStatus,
     sourceTagType,
     sourceTooltip,
+    displaySourceStatus,
+    displaySourceStatusText,
 
     async handleProbeSource(row) {
       if (!row.pointId) return;

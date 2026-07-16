@@ -164,10 +164,6 @@ export const assetAPI = {
   probePoint(pointId) {
     return assetAxios.post(`/asset/points/${pointId}/probe`, {}, { timeout: 20000 }).then(unwrap);
   },
-  /** 立即探测 RTSP 拉流设备的源地址 */
-  probeDevice(deviceId) {
-    return assetAxios.post(`/asset/devices/${deviceId}/probe`, {}, { timeout: 20000 }).then(unwrap);
-  },
   startPointStream(pointId) {
     return assetAxios.post(`/asset/points/${pointId}/start`).then(unwrap);
   },
