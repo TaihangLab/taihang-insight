@@ -9,6 +9,11 @@
   margin-bottom: 16px;
 }
 
+.camera-stat-row {
+  flex-shrink: 0;
+  margin-bottom: 16px;
+}
+
 .page-head-desc {
   margin: 0;
   color: #909399;

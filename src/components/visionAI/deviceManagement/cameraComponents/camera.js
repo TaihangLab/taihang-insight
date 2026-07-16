@@ -1,6 +1,15 @@
 import { cameraAPI } from '@/components/service/VisionAIService.js';
+import { assetAPI } from '@/components/service/AssetService.js';
 import AssetEmptyState from '../AssetEmptyState.vue';
 import assetTableLayout from '../assetTableLayout.js';
+import {
+  pullPointStatusTagType,
+  pullPointStatusText,
+  showSourceStatus,
+  sourceTagType,
+  sourceTooltip,
+  summarizePointStats,
+} from '../assetStreamStatus.js';
 
 /**
  * 摄像头（点位）管理 —— 核心列表/详情逻辑
@@ -23,6 +32,8 @@ export default {
       pageSize: 10,
       total: 0,
       searchKeyword: '',
+      rowProbing: {},
+      statsList: [],
 
       // 设备详情
       deviceDetailDialogVisible: false,
@@ -48,6 +59,12 @@ export default {
     };
   },
 
+  computed: {
+    cameraStats() {
+      return summarizePointStats(this.statsList);
+    },
+  },
+
   created() {
     this.currentCameraTypeFilter = 0;
     this.fetchCameraList();
@@ -67,18 +84,21 @@ export default {
     fetchCameraList(params = {}) {
       this.loading = true;
       const queryParams = {
-        page: this.currentPage,
-        limit: this.pageSize,
-        ...params
+        page: 1,
+        limit: 2000,
+        ...params,
       };
+      if (this.currentCameraTypeFilter > 0) {
+        queryParams.camera_type = this.currentCameraTypeFilter;
+      }
 
       cameraAPI.getCameraList(queryParams)
         .then(response => {
           if (response.data && response.data.code === 0) {
             const camerasData = response.data.data || [];
-            this.total = response.data.total || camerasData.length;
+            const fullTotal = response.data.total != null ? response.data.total : camerasData.length;
 
-            const newDeviceList = camerasData.map(camera => ({
+            const mapCamera = (camera) => ({
               id: camera.id,
               name: camera.name,
               status: camera.status,
@@ -89,18 +109,21 @@ export default {
               running_skill_names: Array.isArray(camera.running_skill_names) ? camera.running_skill_names : [],
               camera_type: camera.camera_type,
               running: camera.running,
+              pointId: camera.pointId,
               sourceStatus: camera.sourceStatus || '',
               sourceStatusText: camera.sourceStatusText || '',
               sourceDetail: camera.sourceDetail || '',
               sourceCheckedAt: camera.sourceCheckedAt || '',
-            }));
+            });
 
-            this.$set(this, 'deviceList', newDeviceList);
-            this.originalDeviceList = [...this.deviceList];
+            const allRows = camerasData.map(mapCamera);
+            this.statsList = allRows;
+            this.total = fullTotal;
+            this.applyPageSlice();
 
             if (this.deviceList.length === 0 && this.currentPage > 1 && this.total > 0) {
               this.currentPage -= 1;
-              this.fetchCameraList();
+              this.applyPageSlice();
             }
           } else {
             this.$message.error('获取摄像头列表失败：' + (response.data && response.data.msg ? response.data.msg : '未知错误'));
@@ -111,6 +134,7 @@ export default {
           this.$message.error('获取摄像头列表失败：' + (error.message || '服务器错误'));
           this.$set(this, 'deviceList', []);
           this.originalDeviceList = [];
+          this.statsList = [];
           this.total = 0;
         })
         .finally(() => {
@@ -121,13 +145,20 @@ export default {
 
     handleCurrentChange(val) {
       this.currentPage = val;
-      this.fetchCameraList();
+      this.applyPageSlice();
     },
 
     handleSizeChange(val) {
       this.pageSize = val;
       this.currentPage = 1;
-      this.fetchCameraList();
+      this.applyPageSlice();
+    },
+
+    applyPageSlice() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      const pageRows = this.statsList.slice(start, start + this.pageSize);
+      this.$set(this, 'deviceList', pageRows);
+      this.originalDeviceList = [...pageRows];
     },
 
     handleRefresh() {
@@ -266,62 +297,31 @@ export default {
     },
 
     getStatusText(row) {
-      if (!row) return '-';
-      if (row.camera_type === 4) {
-        if (row.running != null && !row.running) {
-          return '已停止';
-        }
-        if (row.running && !row.status) {
-          return '推流离线';
-        }
-        if (row.running != null) {
-          return row.running ? '推流中' : '已停止';
-        }
-        return row.status ? '推流中' : '已停止';
-      }
-      if (row.camera_type === 3) {
-        // 拉流点位：离线时用源状态区分「没人用」和「真的坏了」（与点位管理一致）
-        if (row.status) return '拉流中';
-        if (row.sourceStatus === 'ok') return '未拉流·源可用';
-        if (row.sourceStatus === 'no_stream') return '无流';
-        if (row.sourceStatus === 'unreachable') return '不可达';
-        if (row.sourceStatus === 'invalid') return '地址无效';
-        return '未拉流';
-      }
-      return row.status ? '在线' : '离线';
+      return pullPointStatusText(row);
     },
 
     getStatusTagType(row) {
-      if (!row) return 'info';
-      if (row.camera_type === 4) {
-        if (row.running != null && !row.running) {
-          return 'info';
-        }
-        if (row.running && !row.status) {
-          return 'warning';
-        }
-        if (row.running != null) {
-          return row.running ? 'success' : 'info';
-        }
-        return row.status ? 'success' : 'info';
-      }
-      if (row.camera_type === 3) {
-        if (row.status) return 'success';
-        if (row.sourceStatus === 'ok') return 'success';
-        if (row.sourceStatus === 'no_stream') return 'warning';
-        if (row.sourceStatus === 'unreachable' || row.sourceStatus === 'invalid') return 'danger';
-        return 'info';
-      }
-      return row.status ? 'success' : 'danger';
+      return pullPointStatusTagType(row);
     },
 
-    // 状态标签悬停提示：源检测详情 + 检测时间
-    getStatusTitle(row) {
-      if (!row || row.camera_type !== 3) return '';
-      const parts = [];
-      if (row.sourceDetail) parts.push(row.sourceDetail);
-      if (row.sourceCheckedAt) parts.push('检测于 ' + row.sourceCheckedAt);
-      return parts.join('；');
+    showSourceStatus,
+    sourceTagType,
+    sourceTooltip,
+
+    async handleProbeSource(row) {
+      if (!row.pointId) return;
+      this.$set(this.rowProbing, row.id, true);
+      try {
+        const res = await assetAPI.probePoint(row.pointId);
+        row.sourceStatus = res.status;
+        row.sourceStatusText = res.statusText;
+        row.sourceDetail = res.detail;
+        row.sourceCheckedAt = res.checkedAt;
+      } catch (e) {
+        this.$message.error(e.message || '检测失败');
+      } finally {
+        this.$set(this.rowProbing, row.id, false);
+      }
     },
 
     /**
