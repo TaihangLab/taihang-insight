@@ -129,8 +129,16 @@
 
 .asset-stat-card__icon--total { background: #ecf5ff; color: #409eff; }
 .asset-stat-card__icon--online { background: #f0f9eb; color: #67c23a; }
-.asset-stat-card__icon--offline { background: #f4f4f5; color: #909399; }
+.asset-stat-card__icon--idle { background: #fdf6ec; color: #e6a23c; }
+.asset-stat-card__icon--offline { background: #fef0f0; color: #f56c6c; }
 .asset-stat-card__icon--stream { background: #fdf6ec; color: #e6a23c; }
+
+.asset-stat-card__sub {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #909399;
+  line-height: 1.4;
+}
 
 .asset-stat-card__value {
   font-size: 22px;

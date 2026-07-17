@@ -26,8 +26,11 @@
           <i class="el-icon-location" />
         </div>
         <div>
-          <div class="asset-stat-card__value">{{ total }}</div>
+          <div class="asset-stat-card__value">{{ pointStats.total }}</div>
           <div class="asset-stat-card__label">点位总数</div>
+          <div v-if="pointStats.virtual > 0" class="asset-stat-card__sub">
+            含虚拟点位 {{ pointStats.virtual }} 个
+          </div>
         </div>
       </div>
       <div class="asset-stat-card">
@@ -35,17 +38,34 @@
           <i class="el-icon-video-camera" />
         </div>
         <div>
-          <div class="asset-stat-card__value">{{ onlineCount }}</div>
-          <div class="asset-stat-card__label">在线</div>
+          <div class="asset-stat-card__value">{{ pointStats.active }}</div>
+          <div class="asset-stat-card__label">活跃</div>
+          <div class="asset-stat-card__sub">在线 / 拉流中 / 推流中</div>
         </div>
       </div>
       <div class="asset-stat-card">
-        <div class="asset-stat-card__icon asset-stat-card__icon--stream">
-          <i class="el-icon-upload2" />
+        <div class="asset-stat-card__icon asset-stat-card__icon--idle">
+          <i class="el-icon-video-pause" />
         </div>
         <div>
-          <div class="asset-stat-card__value">{{ virtualCount }}</div>
-          <div class="asset-stat-card__label">虚拟点位</div>
+          <div class="asset-stat-card__value">{{ pointStats.idle }}</div>
+          <div class="asset-stat-card__label">空闲</div>
+          <div class="asset-stat-card__sub">未拉流 / 已停止</div>
+        </div>
+      </div>
+      <div class="asset-stat-card">
+        <div class="asset-stat-card__icon asset-stat-card__icon--offline">
+          <i class="el-icon-warning-outline" />
+        </div>
+        <div>
+          <div class="asset-stat-card__value">{{ pointStats.sourceBad || pointStats.offline }}</div>
+          <div class="asset-stat-card__label">需关注</div>
+          <div class="asset-stat-card__sub">
+            <template v-if="pointStats.sourceBad">源异常 {{ pointStats.sourceBad }}</template>
+            <template v-if="pointStats.sourceBad && pointStats.offline"> · </template>
+            <template v-if="pointStats.offline">离线 {{ pointStats.offline }}</template>
+            <template v-if="!pointStats.sourceBad && !pointStats.offline">暂无</template>
+          </div>
         </div>
       </div>
     </div>
@@ -164,8 +184,8 @@
               <template slot-scope="{ row }">
                 <template v-if="row.pointType === 'virtual' && row.virtualMode === 'stream'">
                   <el-tooltip :content="sourceTooltip(row)" placement="top">
-                    <el-tag size="mini" :type="sourceTagType(row.sourceStatus)">
-                      {{ row.sourceStatusText || '未检测' }}
+                    <el-tag size="mini" :type="sourceTagType(displaySourceStatus(row))">
+                      {{ displaySourceStatusText(row) || '未检测' }}
                     </el-tag>
                   </el-tooltip>
                   <el-button
@@ -219,7 +239,7 @@
               :total="total"
               :page-size="pageSize"
               :current-page.sync="page"
-              @current-change="load"
+              @current-change="applyPageSlice"
             />
           </div>
         </div>
@@ -333,6 +353,17 @@ import './asset-page.css';
 import { assetAPI, flattenOrgOptions } from '../../service/AssetService.js';
 import AssetEmptyState from './AssetEmptyState.vue';
 import assetTableLayout from './assetTableLayout.js';
+import {
+  displaySourceStatus,
+  displaySourceStatusText,
+  isActiveStreamStatus,
+  probeTone,
+  sourceTagType,
+  sourceTooltip,
+  streamStatusDotClass,
+  streamStatusTextClass,
+  summarizePointStats,
+} from './assetStreamStatus.js';
 
 export default {
   name: 'PointManage',
@@ -344,6 +375,7 @@ export default {
       submitting: false,
       channelLoading: false,
       list: [],
+      statsList: [],
       total: 0,
       page: 1,
       pageSize: 10,
@@ -368,11 +400,8 @@ export default {
     };
   },
   computed: {
-    onlineCount() {
-      return this.list.filter((p) => this.isActiveStatus(p.status)).length;
-    },
-    virtualCount() {
-      return this.list.filter((p) => p.pointType === 'virtual').length;
+    pointStats() {
+      return summarizePointStats(this.statsList);
     },
   },
   mounted() {
@@ -414,19 +443,25 @@ export default {
       this.page = 1;
       this.load();
     },
+    applyPageSlice() {
+      const start = (this.page - 1) * this.pageSize;
+      this.list = this.statsList.slice(start, start + this.pageSize);
+    },
     async load() {
       this.loading = true;
       try {
         const data = await assetAPI.fetchPoints({
-          page: this.page,
-          pageSize: this.pageSize,
+          page: 1,
+          pageSize: 2000,
           key: this.searchKey.trim(),
           type: this.typeFilter || '',
           orgId: this.selectedOrgId || '',
           includeSub: this.includeSubOrg,
         });
-        this.list = data.list || [];
-        this.total = data.total || 0;
+        const rows = data.list || [];
+        this.statsList = rows;
+        this.total = data.total != null ? data.total : rows.length;
+        this.applyPageSlice();
       } catch (e) {
         this.$message.error(e.message || '加载失败');
       } finally {
@@ -523,35 +558,15 @@ export default {
       }
     },
     isActiveStatus(status) {
-      return status === '在线' || status === '拉流中' || status === '推流中';
+      return isActiveStreamStatus(status);
     },
-    // 拉流中/推流中/在线=绿；未拉流/已停止=灰（非故障）；离线=红
-    statusTextClass(status) {
-      if (this.isActiveStatus(status)) return 'is-online';
-      if (status === '未拉流' || status === '已停止') return 'is-idle';
-      return 'is-offline';
-    },
-    statusDotClass(status) {
-      if (this.isActiveStatus(status)) return 'asset-status-dot--online';
-      if (status === '未拉流' || status === '已停止') return 'asset-status-dot--idle';
-      return 'asset-status-dot--offline';
-    },
-    // 源状态标签颜色：可用/拉流中=绿，无流=黄，不可达/无效=红，未检测=灰
-    sourceTagType(status) {
-      if (status === 'ok' || status === 'streaming') return 'success';
-      if (status === 'no_stream') return 'warning';
-      if (status === 'unreachable' || status === 'invalid') return 'danger';
-      return 'info';
-    },
-    probeTone(status) {
-      return status === 'ok' || status === 'streaming' ? 'ok' : 'bad';
-    },
-    sourceTooltip(row) {
-      const parts = [];
-      if (row.sourceDetail) parts.push(row.sourceDetail);
-      if (row.sourceCheckedAt) parts.push(`检测于 ${row.sourceCheckedAt}`);
-      return parts.join('；') || '尚未检测，点击右侧按钮立即检测';
-    },
+    statusTextClass: streamStatusTextClass,
+    statusDotClass: streamStatusDotClass,
+    sourceTagType,
+    probeTone,
+    sourceTooltip,
+    displaySourceStatus,
+    displaySourceStatusText,
     async handleProbeUrl() {
       if (!this.streamForm.streamUrl) {
         this.$message.warning('请先填写流地址');
