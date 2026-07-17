@@ -11,8 +11,16 @@
             :loading="refreshLoading">刷新列表</el-button>
         </div>
 
-        <!-- 搜索区域移到右边 -->
+        <!-- 检测类别操作 + 搜索，放右侧 -->
         <div class="right-operations">
+          <el-button type="primary" plain icon="el-icon-upload2" size="small" @click="openClassImportDialog">导入类别</el-button>
+          <el-button type="success" plain icon="el-icon-download" size="small" @click="handleExportClasses"
+            :loading="classExportLoading">导出类别</el-button>
+          <el-button type="info" plain icon="el-icon-document" size="small" @click="handleExportClassTemplate"
+            :loading="classExportLoading">下载模板</el-button>
+          <el-button type="warning" plain icon="el-icon-refresh" size="small"
+            :loading="classSyncLoading" @click="openClassSyncDialog">从技能同步</el-button>
+
           <div class="filter-item">
             <el-select v-model="searchForm.status" placeholder="全部" class="status-select" @change="handleSearch"
               size="small" clearable>
@@ -150,17 +158,20 @@
         <el-form-item label="检测类别">
           <div class="mc-editor" v-loading="classesLoading">
             <div class="mc-head">
-              <span class="mc-tip">模型可识别的类别，技能图"视觉模型"节点的"模型标签"即来源于此。</span>
-              <el-button type="text" icon="el-icon-plus" @click="addModelClass">添加类别</el-button>
+              <span class="mc-tip">页面上可一行一个类别编辑。也可用 JSON 文件批量导入/导出</span>
+              <div class="mc-head-actions">
+                <el-button type="text" icon="el-icon-refresh" :loading="classesLoading" @click="syncClassesFromSkills">从技能同步</el-button>
+                <el-button type="text" icon="el-icon-plus" @click="addModelClass">添加类别</el-button>
+              </div>
             </div>
             <div v-if="editForm.classes && editForm.classes.length" class="mc-cols">
-              <span class="mc-c1">类别名（英文/原始，与检测结果对应）</span>
-              <span class="mc-c2">中文展示名</span>
+              <span class="mc-c1">类别名（英文，与模型输出一致）</span>
+              <span class="mc-c2">中文展示名（选填）</span>
               <span class="mc-c3"></span>
             </div>
             <div v-for="(c, i) in editForm.classes" :key="i" class="mc-row">
-              <el-input v-model="c.name" size="small" placeholder="如 trash_can_normal" class="mc-c1" />
-              <el-input v-model="c.name_zh" size="small" placeholder="如 垃圾桶正常" class="mc-c2" />
+              <el-input v-model="c.name" size="small" placeholder="如 helmet、no_helmet、person" class="mc-c1" />
+              <el-input v-model="c.name_zh" size="small" placeholder="如 已戴安全帽（可不填）" class="mc-c2" />
               <i class="el-icon-remove-outline mc-del mc-c3" title="删除" @click="removeModelClass(i)"></i>
             </div>
             <div v-if="!(editForm.classes && editForm.classes.length)" class="mc-empty">暂无类别，点击"添加类别"维护</div>
@@ -170,6 +181,55 @@
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancelEdit">取消</el-button>
         <el-button type="primary" @click="confirmEdit" :loading="loading">确认修改</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 导入检测类别 JSON -->
+    <el-dialog :visible.sync="classImportDialogVisible" title="导入检测类别" width="480px" :close-on-click-modal="false"
+      custom-class="tech-dialog">
+      <p class="class-import-tip">上传 JSON 按模型覆盖类别，可先点「下载模板」。</p>
+      <pre class="class-import-code">{"models":[{"model_name":"yolo11_helmet","classes":[{"name":"helmet","name_zh":"已戴安全帽"}]}]}</pre>
+      <el-upload
+        class="class-import-upload"
+        action="#"
+        :auto-upload="false"
+        :limit="1"
+        accept=".json,application/json"
+        :file-list="classImportFileList"
+        :on-change="onClassImportFileChange"
+        :on-remove="onClassImportFileRemove">
+        <el-button size="small" icon="el-icon-upload2">选择 JSON 文件</el-button>
+      </el-upload>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="classImportDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="classImportLoading" :disabled="!classImportFile" @click="confirmClassImport">确认导入</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 从技能同步 -->
+    <el-dialog :visible.sync="classSyncDialogVisible" title="从技能同步检测类别" width="520px" :close-on-click-modal="false"
+      custom-class="tech-dialog">
+      <el-form label-width="100px" class="tech-form">
+        <el-form-item label="同步范围">
+          <el-radio-group v-model="classSyncForm.scope">
+            <el-radio label="all">全部模型</el-radio>
+            <el-radio label="selected" :disabled="!multipleSelection.length">
+              仅勾选的模型{{ multipleSelection.length ? `（${multipleSelection.length}）` : '' }}
+            </el-radio>
+          </el-radio-group>
+          <div class="form-tip" v-if="!multipleSelection.length">未勾选时只能同步全部；勾选后可选「仅勾选的模型」</div>
+        </el-form-item>
+        <el-form-item label="已维护的">
+          <el-radio-group v-model="classSyncForm.skipExisting">
+            <el-radio :label="true">跳过（保留现有）</el-radio>
+            <el-radio :label="false">覆盖（用技能重新写入）</el-radio>
+          </el-radio-group>
+          <div class="form-tip">仅单模型技能能准确推导；双模型专用模型推不出时会跳过</div>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="classSyncDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="classSyncLoading" @click="confirmClassSync">开始同步</el-button>
       </div>
     </el-dialog>
 
@@ -463,6 +523,17 @@ export default {
       },
       // 检测类别加载状态
       classesLoading: false,
+      classExportLoading: false,
+      classSyncLoading: false,
+      classSyncDialogVisible: false,
+      classSyncForm: {
+        scope: 'all',
+        skipExisting: true
+      },
+      classImportDialogVisible: false,
+      classImportLoading: false,
+      classImportFile: null,
+      classImportFileList: [],
 
       // 详情模型对话框
       detailDialogVisible: false,
@@ -882,6 +953,154 @@ export default {
 
     removeModelClass(i) {
       this.editForm.classes.splice(i, 1)
+    },
+
+    syncClassesFromSkills() {
+      if (!this.editForm.id) return
+      this.classesLoading = true
+      modelAPI.syncModelClassesFromSkills(this.editForm.id).then(res => {
+        const data = res.data || {}
+        const list = data.classes || []
+        this.$set(this.editForm, 'classes', list.map(c => ({ name: c.name, name_zh: c.name_zh || '' })))
+        this.$message.success(data.message || '已从技能同步')
+      }).catch(err => {
+        const msg = (err.response && err.response.data && err.response.data.detail) || err.message || '同步失败'
+        this.$message.warning(msg)
+      }).finally(() => {
+        this.classesLoading = false
+      })
+    },
+
+    openClassSyncDialog() {
+      this.classSyncForm = {
+        scope: this.multipleSelection.length ? 'selected' : 'all',
+        skipExisting: true
+      }
+      this.classSyncDialogVisible = true
+    },
+
+    confirmClassSync() {
+      const syncAll = this.classSyncForm.scope === 'all'
+      if (!syncAll && !this.multipleSelection.length) {
+        this.$message.warning('请先勾选要同步的模型')
+        return
+      }
+      this.classSyncLoading = true
+      modelAPI.batchSyncModelClassesFromSkills({
+        syncAll,
+        modelIds: syncAll ? [] : this.multipleSelection.map(r => r.id),
+        skipExisting: this.classSyncForm.skipExisting
+      }).then(res => {
+        const data = res.data || {}
+        const parts = []
+        if (data.synced_count) parts.push(`同步 ${data.synced_count} 个`)
+        if (data.skipped_count) parts.push(`跳过 ${data.skipped_count} 个`)
+        if (data.empty_count) parts.push(`无法推导 ${data.empty_count} 个`)
+        if (parts.length) {
+          this.$message.success(parts.join('，'))
+          this.classSyncDialogVisible = false
+          this.fetchModelList()
+        } else {
+          this.$message.warning('没有可同步的类别')
+        }
+        const failed = (data.results || []).filter(r => r.status === 'failed' || r.status === 'empty')
+        if (failed.length && failed.length <= 5) {
+          this.$message.warning(failed.map(r => `${r.model_name || r.model_id}: ${r.message}`).join('；'))
+        }
+      }).catch(err => {
+        const msg = (err.response && err.response.data && err.response.data.detail) || err.message || '批量同步失败'
+        this.$message.error(msg)
+      }).finally(() => {
+        this.classSyncLoading = false
+      })
+    },
+
+    downloadBlobResponse(res, defaultName) {
+      const blob = new Blob([res.data], { type: 'application/json;charset=utf-8' })
+      const disposition = (res.headers && res.headers['content-disposition']) || ''
+      let filename = defaultName
+      const match = disposition.match(/filename="?([^"]+)"?/)
+      if (match) filename = decodeURIComponent(match[1])
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    },
+
+    handleExportClasses() {
+      const ids = this.multipleSelection.length ? this.multipleSelection.map(r => r.id) : []
+      this.classExportLoading = true
+      modelAPI.exportModelClassesJson(ids).then(res => {
+        this.downloadBlobResponse(res, 'model_classes.json')
+        this.$message.success(ids.length ? '已导出所选模型的检测类别' : '已导出全部模型的检测类别')
+      }).catch(err => {
+        const msg = (err.response && err.response.data && err.response.data.detail) || err.message || '导出失败'
+        this.$message.error(msg)
+      }).finally(() => {
+        this.classExportLoading = false
+      })
+    },
+
+    handleExportClassTemplate() {
+      // 模板：预填系统已有模型名称，类别列留空供填写
+      this.classExportLoading = true
+      modelAPI.exportModelClassesJson([], { template: true }).then(res => {
+        this.downloadBlobResponse(res, 'model_classes_template.json')
+        this.$message.success('已下载 JSON 模板')
+      }).catch(err => {
+        const msg = (err.response && err.response.data && err.response.data.detail) || err.message || '下载失败'
+        this.$message.error(msg)
+      }).finally(() => {
+        this.classExportLoading = false
+      })
+    },
+
+    openClassImportDialog() {
+      this.classImportFile = null
+      this.classImportFileList = []
+      this.classImportDialogVisible = true
+    },
+
+    onClassImportFileChange(file, fileList) {
+      this.classImportFileList = fileList.slice(-1)
+      this.classImportFile = fileList.length ? fileList[fileList.length - 1].raw : null
+    },
+
+    onClassImportFileRemove() {
+      this.classImportFile = null
+      this.classImportFileList = []
+    },
+
+    confirmClassImport() {
+      if (!this.classImportFile) {
+        this.$message.warning('请选择 JSON 文件')
+        return
+      }
+      this.classImportLoading = true
+      modelAPI.importModelClassesJson(this.classImportFile).then(res => {
+        const data = res.data || {}
+        const errors = data.errors || []
+        if (data.imported_models > 0) {
+          this.$message.success(`已导入 ${data.imported_models} 个模型、共 ${data.imported_classes} 个类别`)
+          this.classImportDialogVisible = false
+          this.fetchModelList()
+        }
+        if (errors.length) {
+          this.$message.warning(errors.slice(0, 5).join('；') + (errors.length > 5 ? '…' : ''))
+        }
+        if (!data.imported_models) {
+          this.$message.error('导入失败，请检查 JSON 内容')
+        }
+      }).catch(err => {
+        const msg = (err.response && err.response.data && err.response.data.detail) || err.message || '导入失败'
+        this.$message.error(msg)
+      }).finally(() => {
+        this.classImportLoading = false
+      })
     },
 
     // 取消编辑
@@ -2387,7 +2606,21 @@ export default {
 /* 科技感对话框样式 - 与deviceSkills.vue保持一致 */
 .mc-editor { width: 100%; }
 .mc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-.mc-tip { font-size: 12px; color: #909399; line-height: 1.4; }
+.mc-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.mc-tip { font-size: 12px; color: #909399; line-height: 1.5; }
+.mc-tip code {
+  padding: 0 4px;
+  margin: 0 2px;
+  font-size: 11px;
+  color: #409EFF;
+  background: #ecf5ff;
+  border-radius: 3px;
+}
 .mc-cols { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #909399; margin-bottom: 4px; }
 .mc-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .mc-c1 { flex: 1 1 0; min-width: 0; }
@@ -2397,6 +2630,26 @@ export default {
 .mc-del:hover { color: #f56c6c; }
 .mc-empty { font-size: 13px; color: #b4bbc7; text-align: center; padding: 12px 0; background: #f7f8fc;
   border: 1px dashed #e3e6ee; border-radius: 6px; }
+/* 导入检测类别 */
+.class-import-tip {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.5;
+}
+.class-import-code {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  font-family: Consolas, Monaco, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #606266;
+  background: #f5f7fa;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.class-import-upload { margin-bottom: 0; }
 /* 列表内类别标签 */
 .mc-list-tag { margin: 2px 3px; }
 .mc-more { font-size: 12px; color: #909399; margin-left: 2px; }
@@ -3193,4 +3446,5 @@ body .model-list .el-tag:hover {
   color: #991b1b !important;
   border: 1px solid #fca5a5 !important;
 }
+
 </style>

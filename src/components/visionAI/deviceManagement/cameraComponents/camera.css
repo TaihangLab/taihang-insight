@@ -3,21 +3,17 @@
    仅保留 camera.vue 当前模板实际使用到的选择器。
    ========================================================================== */
 
-/* ---------- 页面与整体布局 ---------- */
-.page-container {
-  padding: 16px;
-  box-sizing: border-box;
-  background-color: #f0f2f5;
-  height: 100%;
-  /* 覆盖布局 .layout-main-inner > * 的 overflow:hidden!important，恢复本页纵向滚动 */
-  overflow-y: auto !important;
-  overflow-x: hidden;
+/* ---------- 页面与整体布局（根节点 .asset-page 见 asset-page.css） ---------- */
+.camera-page-header {
+  flex-shrink: 0;
+  margin-bottom: 16px;
 }
 
-.camera-management {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
+.page-head-desc {
+  margin: 0;
+  color: #909399;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 /* ---------- 左侧分类卡片 ---------- */
@@ -28,6 +24,9 @@
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   overflow: hidden;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-header {
@@ -89,31 +88,36 @@
 
 /* 不同设备来源的左侧色条标识 */
 .filter-item.gb-device { border-left-color: #67c23a; }
-.filter-item.push-device { border-left-color: #e6a23c; }
+.filter-item.onvif-device { border-left-color: #13c2c2; }
 .filter-item.pull-device { border-left-color: #909399; }
+.filter-item.rtmp-device { border-left-color: #722ed1; }
 .filter-item.gb-device.active { border-left-color: #67c23a; }
-.filter-item.push-device.active { border-left-color: #e6a23c; }
+.filter-item.onvif-device.active { border-left-color: #13c2c2; }
 .filter-item.pull-device.active { border-left-color: #909399; }
+.filter-item.rtmp-device.active { border-left-color: #722ed1; }
 
 /* ---------- 右侧主内容 ---------- */
 .main-content {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
 .operation-card {
+  flex-shrink: 0;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  padding: 16px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
+  border-bottom: none;
 }
 
 .operation-left {
@@ -128,16 +132,45 @@
 }
 
 .table-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   padding: 16px;
+  overflow: hidden;
+}
+
+.table-card-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.table-card .el-table__empty-block {
+  width: 100% !important;
+}
+
+.table-card .el-table th {
+  background-color: #fafbfc !important;
+  color: #606266;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.table-card .el-table::before {
+  display: none;
 }
 
 .pagination-wrapper {
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 /* ---------- 视频技能标签 ---------- */

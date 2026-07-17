@@ -16,10 +16,9 @@ const warningManagement = () => import('../components/visionAI/monitoringWarning
 const reviewRecords = () => import('../components/visionAI/monitoringWarning/reviewRecords.vue')
 const intelligentReview = () => import('../components/visionAI/monitoringWarning/intelligentReview.vue')
 const camera = () => import('../components/visionAI/deviceManagement/camera.vue')
-const CameraManagementMain = () => import('../components/visionAI/deviceManagement/CameraManagementMain.vue')
-const localVideo = () => import('../components/visionAI/deviceManagement/localVideo.vue')
-const gbRecordDetail = () => import('../components/visionAI/deviceManagement/managementPages/GBRecordDetail.vue')
-const cloudRecordDetail = () => import('../components/visionAI/deviceManagement/managementPages/CloudRecordDetail.vue')
+const deviceManage = () => import('../components/visionAI/deviceManagement/deviceManage.vue')
+const pointManage = () => import('../components/visionAI/deviceManagement/pointManage.vue')
+const orgManage = () => import('../components/visionAI/deviceManagement/orgManage.vue')
 const modelList = () => import('../components/visionAI/modelManagement/modelList.vue')
 const skillList = () => import('../components/visionAI/skillManagement/SkillList.vue')
 const multimodalCreateDetail = () => import('../components/visionAI/skillManagement/LlmSkillCreateDialogDetail.vue')
@@ -109,9 +108,19 @@ export default new VueRouter({
           component: camera,
         },
         {
-          path: '/deviceManage/cameraManagement/:type?',
-          name: 'CameraManagementMain',
-          component: CameraManagementMain,
+          path: '/deviceManage/devices',
+          name: 'deviceManage',
+          component: deviceManage,
+        },
+        {
+          path: '/deviceManage/points',
+          name: 'pointManage',
+          component: pointManage,
+        },
+        {
+          path: '/deviceManage/organizations',
+          name: 'orgManage',
+          component: orgManage,
         },
         {
           path: '/device/camera',
@@ -119,8 +128,7 @@ export default new VueRouter({
         },
         {
           path: '/deviceManage/localVideo',
-          name: 'localVideo',
-          component: localVideo,
+          redirect: '/deviceManage/points',
         },
         {
           path: '/modelManage/modelList',
@@ -239,24 +247,6 @@ export default new VueRouter({
           path: '/systemManage/knowledgeBaseDetail',
           name: 'knowledgeBaseDetail',
           component: knowledgeBaseDetail,
-        },
-        {
-          path: '/gbRecordDetail/:deviceId/:channelId/',
-          name: 'gbRecordDetail',
-          component: gbRecordDetail,
-        },
-
-
-
-        {
-          path: '/cloudRecordDetail/:app/:stream',
-          name: 'cloudRecordDetail',
-          component: cloudRecordDetail,
-        },
-        {
-          path: '/cloudRecordDetail/:mediaServerId/:app/:stream',
-          name: 'cloudRecordDetail',
-          component: cloudRecordDetail,
         },
 
 

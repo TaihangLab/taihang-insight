@@ -47,12 +47,14 @@ Vue.use(VCharts);
 Vue.use(logViewer);
 Vue.use(dataV);
 
-// 设备管理模块使用的axios配置（走WVP代理）
-// 导入API配置
+// 全局 axios（部分遗留组件兼容）
 const config = require('../config/index.js');
-axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp';
-axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS错误
-
+axios.defaults.baseURL = config.API_BASE_URL + '/api/v1';
+axios.defaults.withCredentials = false;
+axios.interceptors.response.use((response) => response, (error) => {
+  console.log('API请求错误:', error);
+  return Promise.reject(error);
+});
 
 Vue.prototype.$axios = axios;
 Vue.prototype.$cookies.config(60 * 30);
@@ -68,24 +70,6 @@ Vue.prototype.$channelTypeList = {
 
 
 new Vue({
-  beforeCreate: function () {
-    // 获取本平台的服务ID
-    console.log("获取本平台的服务ID")
-    if (!this.$myServerId) {
-      axios({
-        method: 'get',
-        url: config.API_BASE_URL + `/api/v1/server/system/configInfo`,
-      }).then( (res)=> {
-        if (res.data.code === 0) {
-          console.log(res.data)
-          console.log("当前服务ID： " + res.data.data.addOn.serverId)
-          Vue.prototype.$myServerId = res.data.data.addOn.serverId;
-        }
-      }).catch( (error)=> {
-      });
-    }
-
-  },
   router: router,
   render: h => h(App),
 }).$mount('#app')

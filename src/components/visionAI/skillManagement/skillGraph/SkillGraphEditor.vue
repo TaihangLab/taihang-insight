@@ -204,9 +204,11 @@
                   <div class="sg-thr-row">
                     <el-input-number v-model="form.class_thresholds[cls]" :min="0" :max="1" :step="0.05" :precision="4"
                                      controls-position="right" style="flex:1;min-width:0" @change="applyConfig" />
+                    <el-color-picker :value="classColor(cls)" size="mini" title="检测框颜色（不选则用默认配色）"
+                                     @change="setClassColor(cls, $event)" />
                     <el-switch :value="isTrackedClass(cls)" active-text="跟踪" @change="setTrackClass(cls, $event)" />
                   </div>
-                  <div class="sg-tip">阈值取值[0，1]、最多4位小数；开「跟踪」为该标签补 track_id（多一路追踪输出）</div>
+                  <div class="sg-tip">阈值取值[0，1]、最多4位小数；色块设置该标签检测框颜色（如预警目标选红色）；开「跟踪」为该标签补 track_id（多一路追踪输出）</div>
                 </el-form-item>
               </template>
               <div v-else class="sg-io-empty">请先配置模型和标签</div>
@@ -4096,6 +4098,9 @@ export default {
     }
   },
   watch: {
+    dirty(val) {
+      this.syncBeforeUnloadGuard(val)
+    },
     codePreview() {
       this.renderCodePreview()
     },
@@ -4134,8 +4139,6 @@ export default {
       })
     })
     window.addEventListener('keydown', this.onKeydown)
-    // 浏览器关闭 / 刷新前，若有未保存改动则弹原生确认
-    window.addEventListener('beforeunload', this.onBeforeUnload)
   },
   // 路由离开前（点返回 / 切换页面），若有未保存改动则二次确认
   async beforeRouteLeave(to, from, next) {
@@ -4154,7 +4157,7 @@ export default {
   beforeDestroy() {
     this.clearMattingIntroTimer()
     window.removeEventListener('keydown', this.onKeydown)
-    window.removeEventListener('beforeunload', this.onBeforeUnload)
+    this.syncBeforeUnloadGuard(false)
     if (this._graphHtmlClick && this.$refs.canvas) {
       this.$refs.canvas.removeEventListener('click', this._graphHtmlClick)
     }
@@ -4166,6 +4169,18 @@ export default {
     markDirty() {
       if (this._loadingGraph || this._refreshingVlmCard) return
       this.dirty = true
+    },
+    // 仅在有未保存改动时注册 beforeunload，避免 Chrome 权限策略警告
+    syncBeforeUnloadGuard(shouldGuard) {
+      if (shouldGuard) {
+        if (!this._beforeUnloadBound) {
+          window.addEventListener('beforeunload', this.onBeforeUnload)
+          this._beforeUnloadBound = true
+        }
+      } else if (this._beforeUnloadBound) {
+        window.removeEventListener('beforeunload', this.onBeforeUnload)
+        this._beforeUnloadBound = false
+      }
     },
     onBeforeUnload(e) {
       if (!this.dirty) return
@@ -5008,6 +5023,12 @@ export default {
       selected.forEach(c => { if (th[c] == null) this.$set(th, c, 0.5) })
       // 移除已取消的标签阈值
       Object.keys(th).forEach(c => { if (selected.indexOf(c) < 0) this.$delete(th, c) })
+      // 移除已取消标签的检测框颜色
+      if (this.form.class_colors) {
+        Object.keys(this.form.class_colors).forEach(c => {
+          if (selected.indexOf(c) < 0) this.$delete(this.form.class_colors, c)
+        })
+      }
       // 跟踪标签：默认不跟踪，新增标签不自动开启跟踪；仅同步剔除已移除的标签
       if (!Array.isArray(this.form.track_classes)) this.$set(this.form, 'track_classes', [])
       this.form.track_classes = this.form.track_classes.filter(c => selected.indexOf(c) >= 0)
@@ -5015,6 +5036,15 @@ export default {
     },
     isTrackedClass(cls) {
       return Array.isArray(this.form.track_classes) && this.form.track_classes.indexOf(cls) >= 0
+    },
+    classColor(cls) {
+      return (this.form.class_colors && this.form.class_colors[cls]) || null
+    },
+    setClassColor(cls, color) {
+      if (!this.form.class_colors) this.$set(this.form, 'class_colors', {})
+      if (color) this.$set(this.form.class_colors, cls, color)
+      else this.$delete(this.form.class_colors, cls)
+      this.applyConfig()
     },
     setTrackClass(cls, on) {
       if (!Array.isArray(this.form.track_classes)) this.$set(this.form, 'track_classes', [])
@@ -5284,7 +5314,7 @@ export default {
     },
     defaultConfig(type) {
       const d = {
-        detection_model: { model_name: '', model_id: null, model_version: '', model_label: '', target_classes: [], class_thresholds: {}, confidence_threshold: 0.5, class_labels: {}, track_classes: [], tracker_type: 'bytetrack', track_buffer: 30, match_thresh: 0.8, gmc_method: 'sparseOptFlow' },
+        detection_model: { model_name: '', model_id: null, model_version: '', model_label: '', target_classes: [], class_thresholds: {}, class_colors: {}, confidence_threshold: 0.5, class_labels: {}, track_classes: [], tracker_type: 'bytetrack', track_buffer: 30, match_thresh: 0.8, gmc_method: 'sparseOptFlow' },
         vlm_model: {
           model_name: '',
           system_prompt: '',
@@ -5382,6 +5412,7 @@ export default {
         f._modelLabel = cfg.model_label || ''
         f.target_classes = (cfg.target_classes || []).slice()
         f.class_thresholds = { ...(cfg.class_thresholds || {}) }
+        f.class_colors = { ...(cfg.class_colors || {}) }
         f._classLabels = { ...(cfg.class_labels || {}) }
         f.target_classes.forEach(c => { if (f.class_thresholds[c] == null) f.class_thresholds[c] = 0.5 })
         // track_classes 缺省（未配置）= 不跟踪；仅按已配置的列表恢复跟踪标签
@@ -6293,6 +6324,13 @@ export default {
         cfg.model_label = this.form._modelLabel || ''
         cfg.target_classes = classes
         cfg.class_thresholds = th
+        // 检测框颜色：仅保留已选标签且已设置颜色的项
+        const clrs = {}
+        classes.forEach(c => {
+          const v = this.form.class_colors ? this.form.class_colors[c] : null
+          if (v) clrs[c] = v
+        })
+        cfg.class_colors = clrs
         cfg.confidence_threshold = classes.length ? Math.min.apply(null, Object.values(th)) : 0.5
         cfg.class_labels = classLabels
         cfg.track_classes = (this.form.track_classes || []).filter(c => classes.indexOf(c) >= 0)

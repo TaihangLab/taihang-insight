@@ -15,7 +15,7 @@ module.exports = {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {},  // 不再使用代理，前端直接通过 baseURL 访问
+    proxyTable: {},  // 不再使用代理，前端直接通过 baseURL 访问 API；播放地址由后端拼完整 URL
 
     // Various Dev Server settings
     host:"0.0.0.0",

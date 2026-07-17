@@ -764,7 +764,6 @@ export default {
 </script>
 
 <style scoped>
-@import "../deviceManagement/managementPages/common-style.css";
 
 /* 整体容器 */
 .knowledge-detail-container {

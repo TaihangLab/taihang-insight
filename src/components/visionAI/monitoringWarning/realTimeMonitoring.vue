@@ -5,26 +5,12 @@
       <el-aside width="250px" class="device-tree-aside">
         <div class="custom-tree-header">
           <div class="header-title">
-            <i class="el-icon-video-camera"></i>
-            <span>通道列表</span>
-          </div>
-          <div class="header-switch">
-            <el-switch
-              v-model="showRegion"
-              active-color="#3b82f6"
-              inactive-color="#10b981"
-              active-text="行政区划"
-              inactive-text="业务分组">
-            </el-switch>
+            <i class="el-icon-office-building"></i>
+            <span>组织与点位</span>
           </div>
         </div>
         <div class="custom-tree-container">
-          <div v-if="showRegion" style="height: 100%">
-            <RegionTree ref="regionTree" :edit="false" :showHeader="false" :hasChannel="true" :clickEvent="treeNodeClickEvent"></RegionTree>
-          </div>
-          <div v-if="!showRegion" style="height: 100%">
-            <GroupTree ref="groupTree" :edit="false" :showHeader="false" :hasChannel="true" :clickEvent="treeNodeClickEvent"></GroupTree>
-          </div>
+          <OrgPointTree ref="orgPointTree" :hasChannel="true" :clickEvent="treeNodeClickEvent" />
         </div>
       </el-aside>
 
@@ -503,20 +489,17 @@
 <script>
 import player from '../../common/jessibuca.vue'
 // 使用本地专用组件（改造后的实时监控专用API）
-import RegionTree from './components/RegionTree.vue'
-import GroupTree from './components/GroupTree.vue'
+import OrgPointTree from './components/OrgPointTree.vue'
 import WarningDetail from './warningDetail.vue'
 // 🆕 导入OSD检测框组件
 import DetectionOverlay from './components/DetectionOverlay.vue'
 import screenfull from "screenfull";
 import { alertAPI, realtimeMonitorAPI, realtimeDetectionAPI } from '../../service/VisionAIService.js';
-// 🆕 导入配置文件获取后端地址
-const config = require('../../../../config/index.js');
 
 export default {
   name: "RealTimeMonitoring",
   components: {
-    player, RegionTree, GroupTree, WarningDetail, DetectionOverlay
+    player, OrgPointTree, WarningDetail, DetectionOverlay
   },
   data() {
     return {
@@ -538,8 +521,6 @@ export default {
       playerIdx: 0,
       // 加载状态
       loading: false,
-      // 显示行政区划或业务分组
-      showRegion: true,
 
       // 预警列表数据 - 从API获取
       warningList: [],
@@ -951,11 +932,11 @@ export default {
           const streamData = response.data.data;
           let videoUrl;
           
-          // 根据协议选择合适的流地址
+          // HTTP-FLV 优先（jessibuca 拉 http flv 更稳）
           if (location.protocol === "https:") {
-            videoUrl = streamData.wss_flv || streamData.https_flv;
+            videoUrl = streamData.https_flv || streamData.wss_flv;
           } else {
-            videoUrl = streamData.ws_flv || streamData.http_flv;
+            videoUrl = streamData.http_flv || streamData.ws_flv;
           }
           
           if (videoUrl) {

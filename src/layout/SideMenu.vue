@@ -57,11 +57,17 @@
           <i class="el-icon-cpu menu-icon"></i>
           <span slot="title">设备配置</span>
         </template>
-        <el-menu-item index="/deviceManage/camera">
-          <span slot="title">摄像头</span>
+        <el-menu-item index="/deviceManage/organizations">
+          <span slot="title">组织管理</span>
         </el-menu-item>
-        <el-menu-item index="/deviceManage/localVideo">
-          <span slot="title">本地视频</span>
+        <el-menu-item index="/deviceManage/devices">
+          <span slot="title">设备接入</span>
+        </el-menu-item>
+        <el-menu-item index="/deviceManage/points">
+          <span slot="title">点位管理</span>
+        </el-menu-item>
+        <el-menu-item index="/deviceManage/camera">
+          <span slot="title">AI 摄像头</span>
         </el-menu-item>
       </el-submenu>
 
