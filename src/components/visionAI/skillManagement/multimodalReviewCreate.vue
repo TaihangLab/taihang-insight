@@ -874,14 +874,10 @@ export default {
           const testData = response.data.data || response.data
           const analysis = testData.analysis_result || {}
           
-          // is_real_alert: true → 真实预警, false → 误报
-          const isReal = testData.review_result === true
-          const resultLabel = isReal ? '真实预警（is_real_alert=true）' : '误报（is_real_alert=false）'
           const confidence = analysis.confidence != null ? analysis.confidence : '-'
           const reason = analysis.reason || testData.raw_response || '无分析理由'
           
-          let displayText = `复判结论: ${resultLabel}\n`
-          displayText += `置信度: ${confidence}\n`
+          let displayText = `置信度: ${confidence}\n`
           displayText += `分析理由: ${reason}`
           
           this.analysisResult = displayText
