@@ -9,7 +9,8 @@
           <h2 class="asset-page-title">设备接入</h2>
         </div>
         <p class="asset-page-desc">
-          通过 GoWVP 接入 GB28181 国标、RTSP/RTMP 拉流或 ONVIF 摄像机；接入后可自动建点，供 AI 任务与实时监控使用
+          通过 GoWVP 接入 GB28181 国标、RTSP/RTMP 拉流或 ONVIF 摄像机；接入后可自动建点，供 AI 任务与实时监控使用。
+          多通道设备显示通道在线汇总；RTSP 拉流可查看源状态（与点位管理一致）。
         </p>
       </div>
       <div class="asset-page-header__actions">
@@ -25,8 +26,11 @@
           <i class="el-icon-cpu" />
         </div>
         <div>
-          <div class="asset-stat-card__value">{{ total }}</div>
+          <div class="asset-stat-card__value">{{ deviceStats.total }}</div>
           <div class="asset-stat-card__label">设备总数</div>
+          <div v-if="deviceStats.hasMultiChannel" class="asset-stat-card__sub">
+            通道 {{ deviceStats.channelOnline }}/{{ deviceStats.channelTotal }} 在线
+          </div>
         </div>
       </div>
       <div class="asset-stat-card">
@@ -34,8 +38,19 @@
           <i class="el-icon-success" />
         </div>
         <div>
-          <div class="asset-stat-card__value">{{ onlineCount }}</div>
-          <div class="asset-stat-card__label">在线</div>
+          <div class="asset-stat-card__value">{{ deviceStats.active }}</div>
+          <div class="asset-stat-card__label">活跃</div>
+          <div class="asset-stat-card__sub">在线 / 拉流中 / 推流中</div>
+        </div>
+      </div>
+      <div class="asset-stat-card">
+        <div class="asset-stat-card__icon asset-stat-card__icon--idle">
+          <i class="el-icon-video-pause" />
+        </div>
+        <div>
+          <div class="asset-stat-card__value">{{ deviceStats.idle }}</div>
+          <div class="asset-stat-card__label">空闲</div>
+          <div class="asset-stat-card__sub">未拉流 / 已停止</div>
         </div>
       </div>
       <div class="asset-stat-card">
@@ -43,8 +58,9 @@
           <i class="el-icon-remove-outline" />
         </div>
         <div>
-          <div class="asset-stat-card__value">{{ offlineCount }}</div>
+          <div class="asset-stat-card__value">{{ deviceStats.offline }}</div>
           <div class="asset-stat-card__label">离线</div>
+          <div class="asset-stat-card__sub">设备或通道不可用</div>
         </div>
       </div>
     </div>
@@ -115,7 +131,13 @@
               </template>
             </el-table-column>
             <el-table-column prop="orgName" label="组织" width="130" show-overflow-tooltip />
-            <el-table-column prop="channelCount" label="通道" width="70" align="center" />
+            <el-table-column label="通道" width="100" align="center">
+              <template slot-scope="{ row }">
+                <span :title="row.channelCount > 1 ? '在线通道数 / 总通道数' : '通道数量'">
+                  {{ formatChannelSummary(row) }}
+                </span>
+              </template>
+            </el-table-column>
             <el-table-column prop="status" label="状态" width="100" align="center">
               <template slot-scope="{ row }">
                 <span
@@ -150,7 +172,7 @@
               :total="total"
               :page-size="pageSize"
               :current-page.sync="page"
-              @current-change="load"
+              @current-change="applyPageSlice"
             />
           </div>
         </div>
@@ -202,7 +224,13 @@
 
         <template v-if="form.accessType === 'stream'">
           <el-form-item label="流地址" required>
-            <el-input v-model="form.streamUrl" placeholder="rtsp:// 或 rtmp://" />
+            <el-input v-model="form.streamUrl" placeholder="rtsp:// 或 rtmp://" @input="probeResult = null">
+              <el-button slot="append" :loading="probing" @click="handleProbeUrl">测试连接</el-button>
+            </el-input>
+            <div v-if="probeResult" class="probe-result" :class="'probe-result--' + probeTone(probeResult.status)">
+              <i :class="probeTone(probeResult.status) === 'ok' ? 'el-icon-success' : 'el-icon-warning'" />
+              {{ probeResult.statusText }}<template v-if="probeResult.detail">：{{ probeResult.detail }}</template>
+            </div>
           </el-form-item>
           <el-form-item label="传输协议">
             <el-radio-group v-model="form.protocol">
@@ -269,6 +297,14 @@ import { assetAPI, flattenOrgOptions, collectOrgScopeIds } from '../../service/A
 import OnvifDiscover from './OnvifDiscover.vue';
 import AssetEmptyState from './AssetEmptyState.vue';
 import assetTableLayout from './assetTableLayout.js';
+import {
+  formatChannelSummary,
+  isActiveStreamStatus,
+  probeTone,
+  streamStatusDotClass,
+  streamStatusTextClass,
+  summarizeDeviceStats,
+} from './assetStreamStatus.js';
 
 export default {
   name: 'DeviceManage',
@@ -280,6 +316,7 @@ export default {
       submitting: false,
       gbInfoLoading: false,
       list: [],
+      statsList: [],
       total: 0,
       page: 1,
       pageSize: 10,
@@ -291,6 +328,8 @@ export default {
       selectedOrgId: '',
       includeSubOrg: true,
       gbInfo: {},
+      probing: false,
+      probeResult: null,
       form: {
         name: '',
         orgId: 'org-root',
@@ -308,11 +347,8 @@ export default {
     };
   },
   computed: {
-    onlineCount() {
-      return this.list.filter((d) => this.isActiveStatus(d.status)).length;
-    },
-    offlineCount() {
-      return this.list.filter((d) => !this.isActiveStatus(d.status)).length;
+    deviceStats() {
+      return summarizeDeviceStats(this.statsList);
     },
   },
   mounted() {
@@ -321,17 +357,30 @@ export default {
   },
   methods: {
     isActiveStatus(status) {
-      return status === '在线' || status === '拉流中' || status === '推流中';
+      return isActiveStreamStatus(status);
     },
-    statusTextClass(status) {
-      if (this.isActiveStatus(status)) return 'is-online';
-      if (status === '未拉流' || status === '已停止') return 'is-idle';
-      return 'is-offline';
+    statusTextClass: streamStatusTextClass,
+    statusDotClass: streamStatusDotClass,
+    formatChannelSummary,
+    probeTone,
+    async handleProbeUrl() {
+      if (!this.form.streamUrl) {
+        this.$message.warning('请先填写流地址');
+        return;
+      }
+      this.probing = true;
+      this.probeResult = null;
+      try {
+        this.probeResult = await assetAPI.probeStreamUrl(this.form.streamUrl);
+      } catch (e) {
+        this.$message.error(e.message || '检测失败');
+      } finally {
+        this.probing = false;
+      }
     },
-    statusDotClass(status) {
-      if (this.isActiveStatus(status)) return 'asset-status-dot--online';
-      if (status === '未拉流' || status === '已停止') return 'asset-status-dot--idle';
-      return 'asset-status-dot--offline';
+    applyPageSlice() {
+      const start = (this.page - 1) * this.pageSize;
+      this.list = this.statsList.slice(start, start + this.pageSize);
     },
     async loadOrgs() {
       try {
@@ -384,8 +433,8 @@ export default {
       this.loading = true;
       try {
         const data = await assetAPI.fetchDevices({
-          page: this.page,
-          pageSize: this.pageSize,
+          page: 1,
+          pageSize: 500,
           key: this.searchKey.trim(),
         });
         let rows = data.list || [];
@@ -393,8 +442,9 @@ export default {
           const scope = collectOrgScopeIds(this.orgTree, this.selectedOrgId, this.includeSubOrg);
           rows = rows.filter((r) => scope.includes(r.orgId));
         }
-        this.list = rows;
-        this.total = this.selectedOrgId ? rows.length : (data.total || 0);
+        this.statsList = rows;
+        this.total = rows.length;
+        this.applyPageSlice();
       } catch (e) {
         this.$message.error(e.message || '加载失败');
       } finally {
@@ -403,6 +453,7 @@ export default {
       }
     },
     resetForm() {
+      this.probeResult = null;
       this.form = {
         name: '',
         orgId: this.selectedOrgId || (this.orgOptions[0] && this.orgOptions[0].value) || 'org-root',
@@ -477,4 +528,14 @@ export default {
 .btn-danger-text {
   color: #f56c6c !important;
 }
+.cell-muted {
+  color: #c0c4cc;
+}
+.probe-result {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.probe-result--ok { color: #67c23a; }
+.probe-result--bad { color: #e6a23c; }
 </style>

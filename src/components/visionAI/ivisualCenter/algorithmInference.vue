@@ -802,8 +802,22 @@ export default {
         const d = cameraRes && cameraRes.data;
         const cameras = (d && Array.isArray(d.data)) ? d.data : [];
         const total = d.total || cameras.length;
-        const online = cameras.filter(c => c.status === true || c.status === 'online').length;
-        const offline = cameras.filter(c => c.status === false || c.status === 'offline').length;
+
+        // 在线/离线口径：拉流类点位以源可用性(sourceStatus)为准，
+        // 反映“源能否出流”的真实状态；国标/ONVIF/推流等无源探测结果的
+        // 点位回退到设备在线状态(status)。sourceStatus 为“检测中/未检测”
+        // (unknown) 时不计入在线也不计入离线。
+        const isDeviceOnline = c => c.status === true || c.status === 'online';
+        const online = cameras.filter(c => {
+          const ss = c.sourceStatus;
+          if (ss) return ss === 'ok' || ss === 'streaming';
+          return isDeviceOnline(c);
+        }).length;
+        const offline = cameras.filter(c => {
+          const ss = c.sourceStatus;
+          if (ss) return ss === 'no_stream' || ss === 'unreachable' || ss === 'invalid';
+          return !isDeviceOnline(c);
+        }).length;
 
         const analyzingSet = this._analyzingSet;
         const analyzing = analyzingSet

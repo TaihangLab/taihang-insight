@@ -13,6 +13,54 @@
         </p>
       </div>
     </div>
+
+    <div class="asset-stat-row camera-stat-row">
+      <div class="asset-stat-card">
+        <div class="asset-stat-card__icon asset-stat-card__icon--total">
+          <i class="el-icon-video-camera" />
+        </div>
+        <div>
+          <div class="asset-stat-card__value">{{ cameraStats.total }}</div>
+          <div class="asset-stat-card__label">摄像头总数</div>
+        </div>
+      </div>
+      <div class="asset-stat-card">
+        <div class="asset-stat-card__icon asset-stat-card__icon--online">
+          <i class="el-icon-success" />
+        </div>
+        <div>
+          <div class="asset-stat-card__value">{{ cameraStats.active }}</div>
+          <div class="asset-stat-card__label">活跃</div>
+          <div class="asset-stat-card__sub">在线 / 拉流中 / 推流中</div>
+        </div>
+      </div>
+      <div class="asset-stat-card">
+        <div class="asset-stat-card__icon asset-stat-card__icon--idle">
+          <i class="el-icon-video-pause" />
+        </div>
+        <div>
+          <div class="asset-stat-card__value">{{ cameraStats.idle }}</div>
+          <div class="asset-stat-card__label">空闲</div>
+          <div class="asset-stat-card__sub">未拉流 / 已停止</div>
+        </div>
+      </div>
+      <div class="asset-stat-card">
+        <div class="asset-stat-card__icon asset-stat-card__icon--offline">
+          <i class="el-icon-warning-outline" />
+        </div>
+        <div>
+          <div class="asset-stat-card__value">{{ cameraStats.sourceBad || cameraStats.offline }}</div>
+          <div class="asset-stat-card__label">需关注</div>
+          <div class="asset-stat-card__sub">
+            <template v-if="cameraStats.sourceBad">源异常 {{ cameraStats.sourceBad }}</template>
+            <template v-if="cameraStats.sourceBad && cameraStats.offline"> · </template>
+            <template v-if="cameraStats.offline">离线 {{ cameraStats.offline }}</template>
+            <template v-if="!cameraStats.sourceBad && !cameraStats.offline">暂无</template>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="camera-management">
       <!-- 左侧分类卡片 -->
       <div class="filter-card">
@@ -109,9 +157,30 @@
             </el-table-column>
             <el-table-column prop="status" label="状态" width="100" align="center">
               <template slot-scope="{ row }">
-                <el-tag :type="getStatusTagType(row)" size="mini" :title="getStatusTitle(row)">
+                <el-tag :type="getStatusTagType(row)" size="mini">
                   {{ getStatusText(row) }}
                 </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="源状态" width="120" align="center">
+              <template slot-scope="{ row }">
+                <template v-if="showSourceStatus(row)">
+                  <el-tooltip :content="sourceTooltip(row)" placement="top">
+                    <el-tag size="mini" :type="sourceTagType(displaySourceStatus(row))">
+                      {{ displaySourceStatusText(row) || '未检测' }}
+                    </el-tag>
+                  </el-tooltip>
+                  <el-button
+                    v-if="row.pointId"
+                    type="text"
+                    size="mini"
+                    icon="el-icon-refresh"
+                    :loading="!!rowProbing[row.id]"
+                    title="立即检测源地址"
+                    @click="handleProbeSource(row)"
+                  />
+                </template>
+                <span v-else class="cell-muted">-</span>
               </template>
             </el-table-column>
             <el-table-column prop="location" label="所属组织" width="140" align="center" />
@@ -289,6 +358,7 @@ export default {
 
 <style scoped>
 @import './cameraComponents/camera.css';
+.cell-muted { color: #c0c4cc; }
 </style>
 
 <style>
