@@ -453,7 +453,14 @@ export default {
       ];
     },
   },
-  watch: {},
+  watch: {
+    // 今日预警数增加时，大脑自动触发一次琥珀色神经风暴（"察觉到事件"）
+    todayAlertCount(newVal, oldVal) {
+      if (typeof oldVal === 'number' && newVal > oldVal) {
+        this.triggerNeuralStorm(true);
+      }
+    },
+  },
   mounted() {
     this.updateTime();
     this.timer = setInterval(this.updateTime, 1000);
@@ -940,7 +947,11 @@ export default {
         uMouseStrength: { value: 0 },
         uPulse: { value: 0 },
         uPulseTime: { value: 100 },
-        uPulsePos: { value: new THREE.Vector3(0, 0, 0) }
+        uPulsePos: { value: new THREE.Vector3(0, 0, 0) },
+        // 数据驱动：uLoad=算力负载(0~1)，uActivity=神经活跃度(0~1)，uPulseWarm=脉冲是否为预警(暖色)
+        uLoad: { value: 0 },
+        uActivity: { value: 0 },
+        uPulseWarm: { value: 0 }
       };
 
       // 径向渐变光晕贴图
@@ -1010,32 +1021,44 @@ export default {
           uniform float uPulse;
           uniform float uPulseTime;
           uniform vec3 uPulsePos;
+          uniform float uLoad;
+          uniform float uActivity;
           attribute float aSeed;
           varying float vGlow;
+          varying float vRing;
           void main() {
-            float tw = 0.5 + 0.5 * sin(uTime * 1.6 + aSeed * 9.0);
+            // 活跃度越高，神经元闪烁越快、整体越亮
+            float tw = 0.5 + 0.5 * sin(uTime * (1.6 + uActivity * 4.0) + aSeed * 9.0);
             float dM = distance(position, uMousePos);
             float hover = uMouseStrength * exp(-dM * dM * 0.18);
             float dP = distance(position, uPulsePos);
             float ring = uPulse * exp(-pow(dP - uPulseTime * 6.0, 2.0) * 0.6);
-            float scanY = -6.5 + fract(uTime * 0.09) * 14.0;
+            vRing = ring;
+            // 扫描速度随算力负载加快
+            float scanY = -6.5 + fract(uTime * (0.09 + uLoad * 0.16)) * 14.0;
             float scan = exp(-pow(position.y - scanY, 2.0) * 1.8);
-            vGlow = 0.3 + 0.35 * tw + hover * 1.5 + ring * 2.0 + scan * 0.55;
+            vGlow = 0.24 + 0.30 * tw + uActivity * 0.30 + hover * 1.5 + ring * 2.0 + scan * 0.55;
             vec3 p = position + normalize(position + vec3(0.0001)) * (hover * 0.5 + ring * 0.6);
             vec4 mv = modelViewMatrix * vec4(p, 1.0);
-            gl_PointSize = (34.0 + 22.0 * hover + 26.0 * ring + 10.0 * scan) * (0.75 + 0.25 * tw) / -mv.z;
+            gl_PointSize = (30.0 + 10.0 * uActivity + 22.0 * hover + 26.0 * ring + 10.0 * scan) * (0.75 + 0.25 * tw) / -mv.z;
             gl_Position = projectionMatrix * mv;
           }
         `,
         fragmentShader: `
+          uniform float uLoad;
+          uniform float uPulseWarm;
           varying float vGlow;
+          varying float vRing;
           void main() {
             float d = length(gl_PointCoord - vec2(0.5));
             if (d > 0.5) discard;
             float a = (1.0 - smoothstep(0.0, 0.5, d)) * vGlow;
             vec3 cyan = vec3(0.22, 0.84, 1.0);
             vec3 white = vec3(0.78, 0.96, 1.0);
+            vec3 warm = vec3(1.0, 0.58, 0.20);
             vec3 col = mix(cyan, white, clamp(vGlow - 0.8, 0.0, 1.0));
+            // 算力负载让整体色调偏暖；预警扩散波(vRing*uPulseWarm)染成琥珀色
+            col = mix(col, warm, clamp(uLoad * 0.5 + vRing * uPulseWarm * 1.2, 0.0, 1.0));
             gl_FragColor = vec4(col, clamp(a, 0.0, 1.0));
           }
         `,
@@ -1146,6 +1169,9 @@ export default {
       baseGlow.position.y = -7.1;
       brainGroup.add(baseGlow);
       this.jarvisBaseGlow = baseGlow;
+      // 底座辉光颜色：冷色(常态) ↔ 暖色(高负载/预警)
+      this._baseGlowCyan = new THREE.Color(CYAN);
+      this._baseGlowWarm = new THREE.Color(0xff8a3c);
 
       // 6. 底座 HUD 罗盘：基准圆 + 刻度 + 旋转弧段
       const dialGroup = new THREE.Group();
@@ -1272,6 +1298,7 @@ export default {
         if (this._fluidMouseTarget > 0 && this.brainClock) {
           this._fluidPulseStart = this.brainClock.getElapsedTime();
           this.jarvisUniforms.uPulsePos.value.copy(this.jarvisUniforms.uMousePos.value);
+          this.jarvisUniforms.uPulseWarm.value = 0; // 手动点击为冷色脉冲
         }
       };
       dom.addEventListener('pointermove', updatePointer);
@@ -1303,6 +1330,15 @@ export default {
       return pts[(Math.random() * n) | 0].clone();
     },
 
+    // 触发一次从大脑中心扩散的神经风暴。isAlert=true 时为琥珀色(预警)，否则为冷色
+    triggerNeuralStorm(isAlert) {
+      if (!this.jarvisUniforms || !this.brainClock) return;
+      this._fluidPulseStart = this.brainClock.getElapsedTime();
+      this.jarvisUniforms.uPulsePos.value.set(0, 0, 0);
+      this.jarvisUniforms.uPulseWarm.value = isAlert ? 1 : 0;
+      if (isAlert) this._alertFlash = 1;
+    },
+
     animateBrain() {
       this.brainAnimationId = requestAnimationFrame(this.animateBrain);
 
@@ -1313,23 +1349,42 @@ export default {
       // 鼠标高亮强度平滑过渡（进入/离开渐变）
       u.uMouseStrength.value += (this._fluidMouseTarget - u.uMouseStrength.value) * 0.08;
 
-      // 点击脉冲：亮波从点击处扩散并在约 2 秒内衰减
+      // 点击/预警脉冲：亮波从中心或点击处扩散并在约 2 秒内衰减
       const pt = elapsed - this._fluidPulseStart;
       u.uPulseTime.value = pt;
       u.uPulse.value = Math.max(0, 1 - pt / 2.0);
 
-      // 大脑缓慢自转
-      if (this.jarvisBrain) this.jarvisBrain.rotation.y = elapsed * 0.1;
+      // ===== 数据驱动：把真实指标平滑映射到大脑状态 =====
+      // 算力负载：取 GPU / CPU 中的较高者(0~1)
+      const loadTarget = Math.min(1, Math.max(this.gpuUsage || 0, this.cpuUsage || 0) / 100);
+      // 神经活跃度：分析中摄像头占比 与 运行任务数 取较大者(0~1)
+      const total = this.cameraStats && this.cameraStats.total ? this.cameraStats.total : 0;
+      const analyzing = this.cameraStats && this.cameraStats.analyzing ? this.cameraStats.analyzing : 0;
+      const ratio = total ? analyzing / total : 0;
+      const activityTarget = Math.min(1, Math.max(ratio, (this.runningTasks || 0) / 12));
+      u.uLoad.value += (loadTarget - u.uLoad.value) * 0.04;
+      u.uActivity.value += (activityTarget - u.uActivity.value) * 0.04;
+      const load = u.uLoad.value;
+      const activity = u.uActivity.value;
 
-      // 神经链路亮度呼吸
+      // 预警闪光衰减（新预警时被置为 1）
+      this._alertFlash = Math.max(0, (this._alertFlash || 0) - 0.012);
+
+      // 大脑自转：负载越高转得越快（一眼看出"在忙"）
+      if (this.jarvisBrain) this.jarvisBrain.rotation.y = (this._brainSpin = (this._brainSpin || 0) + (0.08 + load * 0.12) * 0.016);
+
+      // 神经链路呼吸：活跃度越高越亮、脉动越快
       if (this.jarvisLinks) {
-        this.jarvisLinks.material.opacity = 0.16 + 0.08 * Math.sin(elapsed * 1.3);
+        this.jarvisLinks.material.opacity = 0.12 + activity * 0.22 + 0.06 * Math.sin(elapsed * (1.3 + activity * 2.5));
       }
 
-      // 神经冲动：光点在节点间穿行
+      // 神经冲动：活跃度决定同时穿行的光点数量与速度
       if (this.jarvisPulses) {
-        this.jarvisPulses.forEach(p => {
-          p.progress += p.speed * 0.016;
+        const activeCount = Math.round(2 + activity * (this.jarvisPulses.length - 2));
+        const speedScale = 0.6 + activity * 1.2;
+        this.jarvisPulses.forEach((p, idx) => {
+          const on = idx < activeCount;
+          p.progress += p.speed * 0.016 * speedScale;
           if (p.progress >= 1) {
             p.progress = 0;
             p.origin = p.target;
@@ -1338,19 +1393,25 @@ export default {
           }
           p.spr.position.lerpVectors(p.origin, p.target, p.progress);
           const k = Math.sin(p.progress * Math.PI);
-          p.spr.material.opacity = 0.9 * k;
+          p.spr.material.opacity = on ? 0.9 * k : 0;
           p.spr.scale.setScalar(0.5 + 0.7 * k);
         });
       }
 
-      // 底座辉光呼吸 + HUD 罗盘旋转
+      // 底座辉光呼吸：负载抬高基线亮度；预警时闪为琥珀色
       if (this.jarvisBaseGlow) {
-        this.jarvisBaseGlow.material.opacity = 0.4 + 0.12 * Math.sin(elapsed * 1.8);
+        const mat = this.jarvisBaseGlow.material;
+        mat.opacity = 0.35 + load * 0.25 + this._alertFlash * 0.5 + 0.12 * Math.sin(elapsed * 1.8);
+        if (this._baseGlowCyan && this._baseGlowWarm) {
+          mat.color.copy(this._baseGlowCyan).lerp(this._baseGlowWarm, Math.min(1, load * 0.5 + this._alertFlash));
+        }
       }
-      if (this.jarvisDial) this.jarvisDial.rotation.y = elapsed * 0.04;
+      // HUD 罗盘/圆弧转速随活跃度提升
+      if (this.jarvisDial) this.jarvisDial.rotation.y = elapsed * (0.04 + activity * 0.06);
       if (this.jarvisArcs) {
+        const arcScale = 1 + activity * 1.5;
         this.jarvisArcs.forEach(a => {
-          a.pivot.rotation.y = elapsed * a.speed + a.phase;
+          a.pivot.rotation.y = elapsed * a.speed * arcScale + a.phase;
         });
       }
       if (this.jarvisDust) this.jarvisDust.rotation.y = elapsed * 0.02;
