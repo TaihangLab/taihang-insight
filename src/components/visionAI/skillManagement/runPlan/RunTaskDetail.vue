@@ -64,6 +64,15 @@
                 <span class="info-label">结束时间</span>
                 <span class="info-value">{{ task.end_time || '-' }}</span>
               </div>
+              <div class="info-item">
+                <span class="info-label">智能复判</span>
+                <span class="info-value">
+                  <el-tag :type="task.review_enabled ? 'success' : 'info'" size="mini" effect="plain">
+                    {{ task.review_enabled ? '已开启' : '未开启' }}
+                  </el-tag>
+                  <span v-if="task.review_enabled" class="review-skill-name">{{ task.review_skill_name || '-' }}</span>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -700,6 +709,7 @@ export default {
   font-family: 'SF Mono', 'Roboto Mono', Consolas, monospace;
 }
 .link-text:hover { text-decoration: underline; }
+.review-skill-name { margin-left: 8px; color: #606266; }
 
 .status-dot-inline {
   display: inline-block; width: 7px; height: 7px;

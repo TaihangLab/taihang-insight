@@ -432,6 +432,14 @@
               <el-switch v-model="row.enabled" @change="(v) => toggleEnabled(row, v)"></el-switch>
             </template>
           </el-table-column>
+          <el-table-column label="智能复判" width="120" align="center">
+            <template slot-scope="{ row }">
+              <el-tooltip v-if="row.review_enabled" :content="'复判技能：' + (row.review_skill_name || '-')" placement="top">
+                <el-tag size="mini" type="success" effect="plain">已开启</el-tag>
+              </el-tooltip>
+              <el-tag v-else size="mini" type="info" effect="plain">未开启</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="updated_at" label="更新时间" width="170" align="center"></el-table-column>
           <el-table-column label="操作" width="230" align="center" fixed="right">
             <template slot-scope="{ row }">
@@ -474,6 +482,14 @@
             <template slot-scope="{ row }">
               <span class="status-dot" :class="row.status ? 'is-running' : 'is-stopped'"></span>
               {{ row.status ? '运行中' : '已停止' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="智能复判" width="120" align="center">
+            <template slot-scope="{ row }">
+              <el-tooltip v-if="row.review_enabled" :content="'复判技能：' + (row.review_skill_name || '-')" placement="top">
+                <el-tag size="mini" type="success" effect="plain">已开启</el-tag>
+              </el-tooltip>
+              <el-tag v-else size="mini" type="info" effect="plain">未开启</el-tag>
             </template>
           </el-table-column>
           <el-table-column label="所属计划" min-width="140">

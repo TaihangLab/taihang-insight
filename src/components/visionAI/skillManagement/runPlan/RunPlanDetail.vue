@@ -159,6 +159,22 @@
             </div>
           </div>
 
+          <div class="sub-title">智能复判</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">启用复判</span>
+              <span class="info-value">
+                <el-tag :type="plan.review_enabled ? 'success' : 'info'" size="mini" effect="plain">
+                  {{ plan.review_enabled ? '已开启' : '未开启' }}
+                </el-tag>
+              </span>
+            </div>
+            <div v-if="plan.review_enabled" class="info-item">
+              <span class="info-label">复判技能</span>
+              <span class="info-value">{{ plan.review_skill_name || '-' }}</span>
+            </div>
+          </div>
+
           <template v-if="plan.skill_kind !== 'llm'">
             <div class="sub-title">预警视频信息</div>
             <div class="info-grid">
