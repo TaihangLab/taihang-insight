@@ -3379,6 +3379,19 @@ export const taskReviewAPI = {
   },
 
   /**
+   * 检测复判大模型是否可用
+   * @returns {Promise} 包含 { available, model, detail } 的Promise对象
+   */
+  checkReviewLlmHealth() {
+    return visionAIAxios.get('/api/v1/review-skills/llm-health')
+      .then(response => response)
+      .catch(error => {
+        console.error('检测复判大模型可用性失败:', error);
+        throw error;
+      });
+  },
+
+  /**
    * 获取启用复判的任务列表
    * @returns {Promise} 包含任务列表的Promise对象
    */

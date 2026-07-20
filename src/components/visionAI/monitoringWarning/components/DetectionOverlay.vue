@@ -41,21 +41,23 @@ export default {
       type: Number,
       default: 0
     },
-    // 检测框全亮保持时长(ms)
+    // 检测框全亮保持时长(ms)。调小可减少旧框"钉在原地"的时间；
+    // 若检测帧率很低(如1fps)出现闪烁，可适当调大。
     holdDuration: {
       type: Number,
-      default: 700
+      default: 300
     },
     // 检测框淡出时长(ms)
     fadeDuration: {
       type: Number,
-      default: 500
+      default: 200
     },
-    // 时间戳对齐偏移(ms)：将检测框延后显示以匹配视频播放延迟。
-    // 0 表示不延后；可按实际视频延迟(如 FLV 缓冲)调大。
+    // 时间戳对齐偏移(ms)：视频画面相对"最快到达的检测结果"的延迟估计。
+    // 检测框会按 (alignOffset - 本批次相对最快路径的额外延迟) 延后显示，
+    // 使框与它对应的画面帧尽量同时出现。框比人超前则调大，落后则调小。
     alignOffset: {
       type: Number,
-      default: 0
+      default: 300
     }
   },
   data() {
@@ -195,13 +197,27 @@ export default {
     },
     
     /**
-     * 入队一个新批次。startAt 加上 alignOffset 以延后显示、对齐视频延迟。
+     * 入队一个新批次。
+     *
+     * 对齐思路：画面此刻显示的是约 alignOffset 毫秒前采集的帧（视频链路延迟），
+     * 而本批检测结果对应 age = (now - frameTimestamp) 毫秒前采集的帧。
+     * 若 age < alignOffset（检测比画面先到），延后 alignOffset - age 再显示；
+     * 若 age >= alignOffset（检测本身已落后于画面，常见情况），立即显示，不再追加延迟。
+     * 依赖后端推送推理帧的真实采集时间戳，且前后端时钟大致同步。
      */
     pushBatch(detections) {
-      const startAt = (typeof performance !== 'undefined' ? performance.now() : Date.now()) + this.alignOffset
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
+      let delay = 0
+      if (this.alignOffset > 0 && this.frameTimestamp > 0) {
+        const age = Date.now() - this.frameTimestamp
+        // age 为负或过大说明时钟不同步/时间戳异常，放弃对齐直接显示
+        if (age >= 0 && age < 10000) {
+          delay = Math.max(0, this.alignOffset - age)
+        }
+      }
       this.batches.push({
         detections: detections ? detections.slice() : [],
-        startAt
+        startAt: now + delay
       })
       this.ensureRaf()
     },
@@ -344,65 +360,33 @@ export default {
       // 将BGR颜色转换为RGB (OpenCV使用BGR，Canvas使用RGB)
       const rgbColor = color ? `rgb(${color[2]}, ${color[1]}, ${color[0]})` : 'rgb(0, 255, 0)'
       
-      // 绘制检测框
+      // 后端在原始分辨率帧上用固定像素(线宽2/字体scale 0.5)画框再整帧缩放显示，
+      // 前端直接画在显示尺寸的canvas上，需按相同缩放比换算，才能与后端观感一致（否则又粗又大）。
+      const drawScale = (scaleX + scaleY) / 2
+      
+      // 绘制检测框：对应后端 cv2.rectangle thickness=2
       this.ctx.strokeStyle = rgbColor
-      this.ctx.lineWidth = 2
+      this.ctx.lineWidth = Math.max(1, 2 * drawScale)
       this.ctx.strokeRect(x1, y1, width, height)
       
-      // 绘制标签背景
-      const labelText = `${label || 'Object'} ${(confidence * 100).toFixed(1)}%`
-      this.ctx.font = 'bold 14px Arial'
+      // 标签文本与后端保持一致：`类别: 0.xx`
+      const labelText = `${label || 'Object'}: ${(confidence != null ? confidence : 0).toFixed(2)}`
+      // 后端字体 FONT_HERSHEY_SIMPLEX、scale 0.5，字高约11px；换算到显示尺寸再画
+      const fontPx = Math.max(9, Math.round(22 * 0.5 * drawScale))
+      this.ctx.font = `${fontPx}px Arial`
       const textMetrics = this.ctx.measureText(labelText)
       const textWidth = textMetrics.width
-      const textHeight = 20
+      const padX = Math.max(2, Math.round(2 * drawScale))
+      const textHeight = fontPx + padX
       
       // 标签背景
       this.ctx.fillStyle = rgbColor
-      this.ctx.fillRect(x1, y1 - textHeight - 5, textWidth + 10, textHeight + 5)
+      this.ctx.fillRect(x1, y1 - textHeight, textWidth + padX * 2, textHeight)
       
       // 标签文字
+      this.ctx.textBaseline = 'alphabetic'
       this.ctx.fillStyle = '#FFFFFF'
-      this.ctx.fillText(labelText, x1 + 5, y1 - 8)
-      
-      // 绘制角点装饰（科技感）
-      this.drawCornerDecorations(x1, y1, x2, y2, rgbColor)
-    },
-    
-    /**
-     * 绘制角点装饰
-     */
-    drawCornerDecorations(x1, y1, x2, y2, color) {
-      const cornerLength = 15
-      this.ctx.strokeStyle = color
-      this.ctx.lineWidth = 4
-      
-      // 左上角
-      this.ctx.beginPath()
-      this.ctx.moveTo(x1, y1 + cornerLength)
-      this.ctx.lineTo(x1, y1)
-      this.ctx.lineTo(x1 + cornerLength, y1)
-      this.ctx.stroke()
-      
-      // 右上角
-      this.ctx.beginPath()
-      this.ctx.moveTo(x2 - cornerLength, y1)
-      this.ctx.lineTo(x2, y1)
-      this.ctx.lineTo(x2, y1 + cornerLength)
-      this.ctx.stroke()
-      
-      // 左下角
-      this.ctx.beginPath()
-      this.ctx.moveTo(x1, y2 - cornerLength)
-      this.ctx.lineTo(x1, y2)
-      this.ctx.lineTo(x1 + cornerLength, y2)
-      this.ctx.stroke()
-      
-      // 右下角
-      this.ctx.beginPath()
-      this.ctx.moveTo(x2 - cornerLength, y2)
-      this.ctx.lineTo(x2, y2)
-      this.ctx.lineTo(x2, y2 - cornerLength)
-      this.ctx.stroke()
+      this.ctx.fillText(labelText, x1 + padX, y1 - padX)
     },
     
     /**

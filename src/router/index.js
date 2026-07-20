@@ -15,7 +15,6 @@ const statisticsAnalysis = () => import('../components/visionAI/monitoringWarnin
 const warningArchives = () => import('../components/visionAI/monitoringWarning/warningArchives.vue')
 const warningManagement = () => import('../components/visionAI/monitoringWarning/warningManagement.vue')
 const reviewRecords = () => import('../components/visionAI/monitoringWarning/reviewRecords.vue')
-const intelligentReview = () => import('../components/visionAI/monitoringWarning/intelligentReview.vue')
 const camera = () => import('../components/visionAI/deviceManagement/camera.vue')
 const deviceManage = () => import('../components/visionAI/deviceManagement/deviceManage.vue')
 const pointManage = () => import('../components/visionAI/deviceManagement/pointManage.vue')
@@ -98,11 +97,6 @@ export default new VueRouter({
           path: '/monitoring/reviewRecords',
           name: 'reviewRecords',
           component: reviewRecords,
-        },
-        {
-          path: '/monitoring/intelligentReview',
-          name: 'intelligentReview',
-          component: intelligentReview,
         },
         {
           path: '/deviceManage/camera',
