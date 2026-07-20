@@ -87,6 +87,9 @@ export const assetAPI = {
       createPoint: data.createPoint !== false,
     }).then(unwrap);
   },
+  updateDeviceOrg(deviceId, orgId) {
+    return assetAxios.put(`/asset/devices/${deviceId}/org`, { orgId }).then(unwrap);
+  },
   deleteDevice(id) {
     return assetAxios.delete(`/asset/devices/${id}`).then(unwrap);
   },
@@ -169,6 +172,9 @@ export const assetAPI = {
   },
   stopPointStream(pointId) {
     return assetAxios.post(`/asset/points/${pointId}/stop`).then(unwrap);
+  },
+  updatePointOrg(pointId, orgId) {
+    return assetAxios.put(`/asset/points/${pointId}/org`, { orgId }).then(unwrap);
   },
   deletePoint(id) {
     return assetAxios.delete(`/asset/points/${id}`).then(unwrap);
