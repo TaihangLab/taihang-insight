@@ -107,8 +107,8 @@
                       <i class="el-icon-video-camera"></i> {{ c.camera_name }}
                     </span>
                     <span class="selected-item__status">
-                      <span class="status-dot" :class="c.online ? 'is-online' : 'is-offline'"></span>
-                      {{ c.online ? '在线' : '离线' }}
+                      <span class="status-dot" :class="'is-' + cameraStatusInfo(c).cat"></span>
+                      {{ cameraStatusInfo(c).text }}
                     </span>
                   </div>
                   <i v-if="!isView" class="el-icon-close" @click="removeSelected(c)"></i>
@@ -495,6 +495,61 @@
             </el-form-item>
           </el-form>
         </div>
+
+        <!-- 智能复判 -->
+        <div class="form-section">
+          <div class="section-head"><i class="el-icon-cpu"></i> 智能复判</div>
+          <div class="point-tip">
+            <i class="el-icon-info"></i>
+            开启后，该计划下所有点位派生的任务产生预警时，会自动调用复判技能做二次研判，过滤误报
+          </div>
+          <el-form label-width="100px" size="small" :disabled="isView">
+            <el-form-item label="启用复判">
+              <el-switch
+                v-model="form.review_enabled"
+                active-text="开启"
+                inactive-text="关闭"
+                :disabled="reviewHealthChecking || (!reviewLlmHealth.available && reviewLlmHealth.checked && !form.review_enabled)"
+                @change="onReviewEnabledChange">
+              </el-switch>
+              <span v-if="reviewHealthChecking" class="review-health review-health--checking">
+                <i class="el-icon-loading"></i> 正在检测复判大模型可用性…
+              </span>
+              <span v-else-if="reviewLlmHealth.checked && !reviewLlmHealth.available" class="review-health review-health--error">
+                <i class="el-icon-warning"></i> 复判大模型当前不可用，无法开启
+                <el-button type="text" size="mini" @click="checkReviewLlmHealth(false)">重新检测</el-button>
+              </span>
+              <span v-else-if="reviewLlmHealth.checked && form.review_enabled" class="review-health review-health--ok">
+                <i class="el-icon-success"></i> 复判大模型可用
+              </span>
+              <div v-if="reviewLlmHealth.checked && !reviewLlmHealth.available && reviewLlmHealth.detail" class="hint review-health__detail">
+                {{ reviewLlmHealth.detail }}
+              </div>
+            </el-form-item>
+            <el-form-item v-if="form.review_enabled" label="复判技能" required>
+              <el-select
+                v-model="form.review_skill_class_id"
+                filterable
+                placeholder="请选择复判技能"
+                style="width: 100%; max-width: 420px;">
+                <el-option
+                  v-for="s in reviewSkills"
+                  :key="s.id"
+                  :label="s.skill_name"
+                  :value="s.id">
+                  <div class="skill-option">
+                    <span class="skill-option__name">{{ s.skill_name }}</span>
+                    <el-tag v-if="s.llm_model" size="mini" type="info" effect="plain">{{ s.llm_model }}</el-tag>
+                  </div>
+                </el-option>
+              </el-select>
+              <div v-if="!reviewSkills.length" class="hint">
+                暂无可用复判技能，请先在「技能管理 · 多模态复判」中创建并发布复判技能
+              </div>
+              <div v-else class="hint">复判技能会自动分析预警内容，判断是否为误报</div>
+            </el-form-item>
+          </el-form>
+        </div>
       </div>
     </div>
 
@@ -520,7 +575,9 @@
 </template>
 
 <script>
-import { runPlanAPI, skillAPI } from '@/components/service/VisionAIService.js';
+import { runPlanAPI, skillAPI, taskReviewAPI } from '@/components/service/VisionAIService.js';
+import { assetAPI } from '@/components/service/AssetService.js';
+import { pullPointStatusText, categorizeRowStatus } from '../../deviceManagement/assetStreamStatus.js';
 import FenceDrawer from './FenceDrawer.vue';
 import FencePreview from './FencePreview.vue';
 import ChannelTreePanel from './ChannelTreePanel.vue';
@@ -570,6 +627,8 @@ function defaultForm() {
     alert_name: '',
     alert_level: '',
     alert_config: defaultAlertConfig(),
+    review_enabled: false,
+    review_skill_class_id: null,
     cameras: []
   };
 }
@@ -612,7 +671,11 @@ export default {
       ],
       alertConfigDefaults: null,
       alertNameTouched: false,
-      mergeAdvancedOpen: false
+      mergeAdvancedOpen: false,
+      reviewSkills: [],
+      reviewHealthChecking: false,
+      reviewLlmHealth: { checked: false, available: true, detail: '' },
+      pointStatusMap: {}
     };
   },
   computed: {
@@ -724,6 +787,11 @@ export default {
       // 每次打开抽屉都重新拉取技能选项，避免会话期内技能改名后仍显示旧名字
       await this.loadSkills();
       await this.loadAlertDefaults();
+      this.loadReviewSkills();
+      this.loadPointStatuses();
+      this.reviewLlmHealth = { checked: false, available: true, detail: '' };
+      // 查看模式不需要探测大模型，仅创建/编辑时校验
+      if (!this.isView) this.checkReviewLlmHealth(false);
       const baseAlertConfig = this.alertConfigDefaults || defaultAlertConfig();
       if (this.isEdit || this.isView) {
         const p = this.editPlan;
@@ -747,6 +815,8 @@ export default {
           alert_name: p.alert_name || '',
           alert_level: p.alert_level || '',
           alert_config: alertConfig,
+          review_enabled: !!(p.review_enabled || alertConfig.review_enabled),
+          review_skill_class_id: p.review_skill_class_id || alertConfig.review_skill_class_id || null,
           cameras: JSON.parse(JSON.stringify(p.cameras || []))
         });
         this.alertNameTouched = true;
@@ -775,6 +845,73 @@ export default {
         console.warn('加载预警默认配置失败', e);
         this.alertConfigDefaults = defaultAlertConfig();
       }
+    },
+    async loadReviewSkills() {
+      try {
+        const res = await taskReviewAPI.getAvailableReviewSkills();
+        const payload = res.data || {};
+        this.reviewSkills = payload.skills || [];
+      } catch (e) {
+        console.warn('加载复判技能失败', e);
+        this.reviewSkills = [];
+      }
+    },
+    // 检测复判大模型是否可用；不可用时自动关闭已开启的复判。
+    // notify=true 时（用户手动开启触发）会弹提示，静默初始化时不弹。
+    async checkReviewLlmHealth(notify) {
+      if (this.reviewHealthChecking) return this.reviewLlmHealth.available;
+      this.reviewHealthChecking = true;
+      try {
+        const res = await taskReviewAPI.checkReviewLlmHealth();
+        const data = (res && res.data) || {};
+        const available = data.available !== false;
+        this.reviewLlmHealth = { checked: true, available, detail: data.detail || '' };
+        if (!available && this.form.review_enabled) {
+          this.form.review_enabled = false;
+          this.form.review_skill_class_id = null;
+          this.$message.warning('复判大模型当前不可用，已自动关闭智能复判');
+        } else if (!available && notify) {
+          this.$message.warning('复判大模型当前不可用，暂无法开启智能复判');
+        }
+        return available;
+      } catch (e) {
+        // 探测失败按“未知即放行”处理，不阻断配置
+        this.reviewLlmHealth = { checked: false, available: true, detail: '' };
+        return true;
+      } finally {
+        this.reviewHealthChecking = false;
+      }
+    },
+    async onReviewEnabledChange(val) {
+      if (!val) return;
+      const available = await this.checkReviewLlmHealth(true);
+      if (!available) this.form.review_enabled = false;
+    },
+    async loadPointStatuses() {
+      // 复用「点位管理」的真实点位状态（在线/拉流中/推流中/未拉流/离线），
+      // 替代组织树里不可靠的 GB28181 ON/OFF，避免已选点位误显示为“离线”。
+      try {
+        const data = await assetAPI.fetchPoints({ page: 1, pageSize: 2000 });
+        const rows = (data && data.list) || [];
+        const map = {};
+        rows.forEach(r => {
+          const cid = r.channelId || r.id;
+          if (cid != null) map[String(cid)] = r;
+        });
+        this.pointStatusMap = map;
+      } catch (e) {
+        console.warn('加载点位状态失败', e);
+        this.pointStatusMap = {};
+      }
+    },
+    /** 已选点位的真实状态：优先取点位管理数据，缺失时回退组织树在线态 */
+    cameraStatusInfo(c) {
+      const row = this.pointStatusMap[String(c.camera_id)];
+      if (row) {
+        const text = row.status || pullPointStatusText(row);
+        return { text, cat: categorizeRowStatus(row) };
+      }
+      return { text: c.online ? '在线' : '离线', cat: c.online ? 'active' : 'offline' };
     },
     onAlertNameInput() {
       this.alertNameTouched = true;
@@ -1033,6 +1170,12 @@ export default {
         camera_name: c.camera_name,
         fence: this.toBackendFence(c.fence)
       }));
+      // 智能复判配置随「预警规则」保存在 alert_config 中，创建时由后端下发到派生子任务
+      const reviewEnabled = !!this.form.review_enabled;
+      const alertConfig = Object.assign({}, this.form.alert_config, {
+        review_enabled: reviewEnabled,
+        review_skill_class_id: reviewEnabled ? (this.form.review_skill_class_id || null) : null
+      });
       const payload = {
         analysis_resource: this.form.analysis_resource,
         skill_kind: this.form.skill_kind,
@@ -1043,7 +1186,7 @@ export default {
         skill_params: this.form.skill_params,
         alert_name: this.form.alert_name,
         alert_level: this.form.alert_level === '' ? 0 : this.form.alert_level,
-        alert_config: this.form.alert_config,
+        alert_config: alertConfig,
         cameras
       };
       if (this.form.skill_kind === 'llm') {
@@ -1071,6 +1214,14 @@ export default {
       this.ensureAlertNameDefault();
       if (!this.form.alert_name) { this.$message.warning('请输入预警名称'); this.step = 2; return; }
       if (this.form.alert_level === '') { this.$message.warning('请选择预警等级'); this.step = 2; return; }
+      if (this.form.review_enabled && !this.form.review_skill_class_id) {
+        this.$message.warning('已启用智能复判，请选择复判技能'); this.step = 2; return;
+      }
+      if (this.form.review_enabled) {
+        // 提交前再确认一次大模型可用性；不可用时 checkReviewLlmHealth 会自动关闭并提示
+        const available = await this.checkReviewLlmHealth(false);
+        if (!available) { this.step = 2; return; }
+      }
       this.submitting = true;
       try {
         const payload = this.buildPayload();
@@ -1096,6 +1247,9 @@ export default {
       this.skillParamsLoading = false;
       this.alertNameTouched = false;
       this.mergeAdvancedOpen = false;
+      this.pointStatusMap = {};
+      this.reviewHealthChecking = false;
+      this.reviewLlmHealth = { checked: false, available: true, detail: '' };
     }
   }
 };
@@ -1245,6 +1399,13 @@ export default {
   white-space: nowrap;
 }
 
+.review-health { margin-left: 12px; font-size: 12px; }
+.review-health i { margin-right: 2px; }
+.review-health--checking { color: #909399; }
+.review-health--error { color: #f56c6c; }
+.review-health--ok { color: #67c23a; }
+.review-health__detail { color: #f56c6c; }
+
 .req { color: #f56c6c; margin-left: 2px; }
 
 .cycle-box { background: #fafbfc; border-radius: 8px; padding: 16px; margin-top: 8px; border: 1px solid #f0f2f5; }
@@ -1316,7 +1477,8 @@ export default {
   height: 6px;
   border-radius: 50%;
 }
-.selected-item .status-dot.is-online { background: #67c23a; }
+.selected-item .status-dot.is-active { background: #67c23a; }
+.selected-item .status-dot.is-idle { background: #e6a23c; }
 .selected-item .status-dot.is-offline { background: #c0c4cc; }
 .selected-item .el-icon-close { cursor: pointer; color: #c0c4cc; padding: 4px; flex-shrink: 0; margin-top: 2px; }
 .selected-item .el-icon-close:hover { color: #f56c6c; }

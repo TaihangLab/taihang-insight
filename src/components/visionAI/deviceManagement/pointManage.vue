@@ -225,8 +225,9 @@
                 <span v-else class="cell-muted">-</span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="80" fixed="right" align="center">
+            <el-table-column label="操作" width="140" fixed="right" align="center">
               <template slot-scope="{ row }">
+                <el-button type="text" @click="openChangeOrg(row)">变更组织</el-button>
                 <el-button type="text" class="btn-danger-text" @click="handleDelete(row)">删除</el-button>
               </template>
             </el-table-column>
@@ -345,6 +346,26 @@
         <el-button type="primary" :loading="submitting" @click="submitFile">创建并推流</el-button>
       </span>
     </el-dialog>
+
+    <el-dialog title="变更所属组织" :visible.sync="showChangeOrg" width="460px">
+      <el-form label-width="100px">
+        <el-form-item label="点位名称">
+          <span>{{ changeOrgForm.name }}</span>
+        </el-form-item>
+        <el-form-item label="当前组织">
+          <span>{{ changeOrgForm.currentOrgName }}</span>
+        </el-form-item>
+        <el-form-item label="目标组织" required>
+          <el-select v-model="changeOrgForm.orgId" placeholder="选择组织" style="width:100%">
+            <el-option v-for="o in orgOptions" :key="o.value" :label="o.label" :value="o.value" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="showChangeOrg = false">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="submitChangeOrg">确定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -384,6 +405,8 @@ export default {
       showBatch: false,
       showStream: false,
       showFile: false,
+      showChangeOrg: false,
+      changeOrgForm: { id: '', name: '', currentOrgName: '', orgId: '' },
       channels: [],
       selected: [],
       orgTree: [],
@@ -680,6 +703,32 @@ export default {
         this.load();
       } catch (e) {
         this.$message.error(e.message || '停止失败');
+      }
+    },
+    openChangeOrg(row) {
+      this.changeOrgForm = {
+        id: row.id,
+        name: row.name,
+        currentOrgName: row.orgName || '-',
+        orgId: row.orgId || '',
+      };
+      this.showChangeOrg = true;
+    },
+    async submitChangeOrg() {
+      if (!this.changeOrgForm.orgId) {
+        this.$message.warning('请选择目标组织');
+        return;
+      }
+      this.submitting = true;
+      try {
+        await assetAPI.updatePointOrg(this.changeOrgForm.id, this.changeOrgForm.orgId);
+        this.$message.success('组织已变更');
+        this.showChangeOrg = false;
+        this.load();
+      } catch (e) {
+        this.$message.error(e.message || '变更失败');
+      } finally {
+        this.submitting = false;
       }
     },
     handleDelete(row) {
