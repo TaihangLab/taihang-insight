@@ -9,7 +9,7 @@
           <h2 class="asset-page-title">点位管理</h2>
         </div>
         <p class="asset-page-desc">
-          AI 任务与实时监控均基于「点位」。从 GoWVP 通道批量建点，或通过 RTSP 拉流、RTMP 推流（含文件推流）创建虚拟点位。
+          AI 任务与实时监控均基于「点位」。从通道批量建点，或通过 RTSP 拉流、RTMP 推流（含文件推流）创建虚拟点位。
           拉流点位支持 CSV 批量导入/导出；国标录像机请先在设备接入后，再「从通道建点」
         </p>
       </div>
@@ -170,7 +170,7 @@
               <asset-empty-state
                 icon="el-icon-location-outline"
                 title="暂无点位"
-                description="请先从 GoWVP 通道批量建点，或通过 RTSP 拉流 / RTMP 推流创建虚拟点位"
+                description="请先从通道批量建点，或通过 RTSP 拉流 / RTMP 推流创建虚拟点位"
               >
                 <el-button type="primary" size="small" icon="el-icon-plus" @click="openBatch">从通道建点</el-button>
                 <el-button size="small" icon="el-icon-link" @click="showStream = true">拉流建点</el-button>

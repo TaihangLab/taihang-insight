@@ -152,6 +152,19 @@ export function summarizePointStats(points) {
   };
 }
 
+/**
+ * 设备三态分桶（与设备接入页顶部统计一致）：
+ * - active   活跃：在线 / 拉流中 / 推流中
+ * - offline  离线：设备或通道不可用
+ * - idle     空闲：其余（未拉流 / 已停止 / 未知）
+ */
+export function deviceStatusBucket(row) {
+  const status = row && row.status;
+  if (isActiveStreamStatus(status)) return 'active';
+  if (isOfflineDeviceStatus(status)) return 'offline';
+  return 'idle';
+}
+
 /** 设备接入页顶部统计（基于全量筛选结果，非仅当前页） */
 export function summarizeDeviceStats(devices) {
   const list = devices || [];
