@@ -14,7 +14,7 @@
           <div class="discover-head-icon"><i class="el-icon-connection" /></div>
           <div>
             <h3>ONVIF 设备发现</h3>
-            <p class="sub">通过 GoWVP 在局域网内 WS-Discovery 扫描摄像机，点击设备填写账号后添加</p>
+            <p class="sub"> 在局域网内 WS-Discovery 扫描摄像机，点击设备填写账号后添加</p>
           </div>
         </div>
 
