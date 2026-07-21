@@ -119,6 +119,18 @@
               <el-option label="国标平台点位" value="gb28181" />
               <el-option label="虚拟点位" value="virtual" />
             </el-select>
+            <el-select
+              v-model="statusFilter"
+              placeholder="状态"
+              clearable
+              size="small"
+              style="width: 110px"
+              @change="onStatusFilterChange"
+            >
+              <el-option label="活跃" value="active" />
+              <el-option label="空闲" value="idle" />
+              <el-option label="异常" value="abnormal" />
+            </el-select>
             <el-button size="small" type="primary" plain @click="onSearch">查询</el-button>
             <el-button size="small" @click="resetSearch">重置</el-button>
           </div>
@@ -378,6 +390,7 @@ import {
   displaySourceStatus,
   displaySourceStatusText,
   isActiveStreamStatus,
+  pointStatusBucket,
   probeTone,
   sourceTagType,
   sourceTooltip,
@@ -402,6 +415,7 @@ export default {
       pageSize: 10,
       searchKey: '',
       typeFilter: '',
+      statusFilter: '',
       showBatch: false,
       showStream: false,
       showFile: false,
@@ -459,16 +473,25 @@ export default {
       this.page = 1;
       this.load();
     },
+    onStatusFilterChange() {
+      this.page = 1;
+      this.applyPageSlice();
+    },
     resetSearch() {
       this.searchKey = '';
       this.typeFilter = '';
+      this.statusFilter = '';
       this.selectedOrgId = '';
       this.page = 1;
       this.load();
     },
     applyPageSlice() {
+      const filtered = this.statusFilter
+        ? this.statsList.filter((r) => pointStatusBucket(r) === this.statusFilter)
+        : this.statsList;
+      this.total = filtered.length;
       const start = (this.page - 1) * this.pageSize;
-      this.list = this.statsList.slice(start, start + this.pageSize);
+      this.list = filtered.slice(start, start + this.pageSize);
     },
     async load() {
       this.loading = true;

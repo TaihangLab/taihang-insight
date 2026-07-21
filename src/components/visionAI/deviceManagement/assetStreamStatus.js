@@ -107,6 +107,22 @@ export function categorizeRowStatus(row) {
   return 'idle';
 }
 
+/**
+ * 点位三态分桶（与顶部统计一致）：
+ * - active   活跃：在线 / 拉流中 / 推流中
+ * - abnormal 异常：离线 / 推流离线，或拉流点位源异常（无流 / 不可达 / 地址无效）
+ * - idle     空闲：其余（未拉流 / 已停止且源正常）
+ */
+export function pointStatusBucket(row) {
+  if (!row) return 'idle';
+  const cat = categorizeRowStatus(row);
+  if (cat === 'offline') return 'abnormal';
+  const isStreamPoint = (row.pointType === 'virtual' && row.virtualMode === 'stream') || row.camera_type === 3;
+  if (isStreamPoint && BAD_SOURCE_STATUSES.includes(displaySourceStatus(row))) return 'abnormal';
+  if (cat === 'active') return 'active';
+  return 'idle';
+}
+
 /** 点位管理 / AI 摄像头顶部统计 */
 export function summarizePointStats(points) {
   const list = points || [];
