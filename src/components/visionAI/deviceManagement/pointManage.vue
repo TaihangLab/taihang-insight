@@ -9,7 +9,7 @@
           <h2 class="asset-page-title">点位管理</h2>
         </div>
         <p class="asset-page-desc">
-          AI 任务与实时监控均基于「点位」。从 GoWVP 通道批量建点，或通过 RTSP 拉流、RTMP 推流（含文件推流）创建虚拟点位。
+          AI 任务与实时监控均基于「点位」。从通道批量建点，或通过 RTSP 拉流、RTMP 推流（含文件推流）创建虚拟点位。
           拉流点位支持 CSV 批量导入/导出；国标录像机请先在设备接入后，再「从通道建点」
         </p>
       </div>
@@ -119,6 +119,18 @@
               <el-option label="国标平台点位" value="gb28181" />
               <el-option label="虚拟点位" value="virtual" />
             </el-select>
+            <el-select
+              v-model="statusFilter"
+              placeholder="状态"
+              clearable
+              size="small"
+              style="width: 110px"
+              @change="onStatusFilterChange"
+            >
+              <el-option label="活跃" value="active" />
+              <el-option label="空闲" value="idle" />
+              <el-option label="异常" value="abnormal" />
+            </el-select>
             <el-button size="small" type="primary" plain @click="onSearch">查询</el-button>
             <el-button size="small" @click="resetSearch">重置</el-button>
           </div>
@@ -158,7 +170,7 @@
               <asset-empty-state
                 icon="el-icon-location-outline"
                 title="暂无点位"
-                description="请先从 GoWVP 通道批量建点，或通过 RTSP 拉流 / RTMP 推流创建虚拟点位"
+                description="请先从通道批量建点，或通过 RTSP 拉流 / RTMP 推流创建虚拟点位"
               >
                 <el-button type="primary" size="small" icon="el-icon-plus" @click="openBatch">从通道建点</el-button>
                 <el-button size="small" icon="el-icon-link" @click="showStream = true">拉流建点</el-button>
@@ -378,6 +390,7 @@ import {
   displaySourceStatus,
   displaySourceStatusText,
   isActiveStreamStatus,
+  pointStatusBucket,
   probeTone,
   sourceTagType,
   sourceTooltip,
@@ -402,6 +415,7 @@ export default {
       pageSize: 10,
       searchKey: '',
       typeFilter: '',
+      statusFilter: '',
       showBatch: false,
       showStream: false,
       showFile: false,
@@ -459,16 +473,25 @@ export default {
       this.page = 1;
       this.load();
     },
+    onStatusFilterChange() {
+      this.page = 1;
+      this.applyPageSlice();
+    },
     resetSearch() {
       this.searchKey = '';
       this.typeFilter = '';
+      this.statusFilter = '';
       this.selectedOrgId = '';
       this.page = 1;
       this.load();
     },
     applyPageSlice() {
+      const filtered = this.statusFilter
+        ? this.statsList.filter((r) => pointStatusBucket(r) === this.statusFilter)
+        : this.statsList;
+      this.total = filtered.length;
       const start = (this.page - 1) * this.pageSize;
-      this.list = this.statsList.slice(start, start + this.pageSize);
+      this.list = filtered.slice(start, start + this.pageSize);
     },
     async load() {
       this.loading = true;

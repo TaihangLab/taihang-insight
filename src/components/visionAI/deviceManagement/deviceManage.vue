@@ -9,7 +9,7 @@
           <h2 class="asset-page-title">设备接入</h2>
         </div>
         <p class="asset-page-desc">
-          通过 GoWVP 接入 GB28181 国标、RTSP/RTMP 拉流或 ONVIF 摄像机；接入后可自动建点，供 AI 任务与实时监控使用。
+           接入 GB28181 国标、RTSP/RTMP 拉流或 ONVIF 摄像机；接入后可自动建点，供 AI 任务与实时监控使用。
           多通道设备显示通道在线汇总；RTSP 拉流可查看源状态（与点位管理一致）。
         </p>
       </div>
@@ -102,6 +102,18 @@
             >
               <i slot="prefix" class="el-icon-search" />
             </el-input>
+            <el-select
+              v-model="statusFilter"
+              placeholder="状态"
+              clearable
+              size="small"
+              style="width: 110px"
+              @change="onStatusFilterChange"
+            >
+              <el-option label="活跃" value="active" />
+              <el-option label="空闲" value="idle" />
+              <el-option label="离线" value="offline" />
+            </el-select>
             <el-button size="small" type="primary" plain @click="onSearch">查询</el-button>
             <el-button size="small" @click="resetSearch">重置</el-button>
           </div>
@@ -320,6 +332,7 @@ import OnvifDiscover from './OnvifDiscover.vue';
 import AssetEmptyState from './AssetEmptyState.vue';
 import assetTableLayout from './assetTableLayout.js';
 import {
+  deviceStatusBucket,
   formatChannelSummary,
   isActiveStreamStatus,
   probeTone,
@@ -343,6 +356,7 @@ export default {
       page: 1,
       pageSize: 10,
       searchKey: '',
+      statusFilter: '',
       showAdd: false,
       showGbInfo: false,
       showChangeOrg: false,
@@ -403,8 +417,12 @@ export default {
       }
     },
     applyPageSlice() {
+      const filtered = this.statusFilter
+        ? this.statsList.filter((r) => deviceStatusBucket(r) === this.statusFilter)
+        : this.statsList;
+      this.total = filtered.length;
       const start = (this.page - 1) * this.pageSize;
-      this.list = this.statsList.slice(start, start + this.pageSize);
+      this.list = filtered.slice(start, start + this.pageSize);
     },
     async loadOrgs() {
       try {
@@ -432,8 +450,13 @@ export default {
       this.page = 1;
       this.load();
     },
+    onStatusFilterChange() {
+      this.page = 1;
+      this.applyPageSlice();
+    },
     resetSearch() {
       this.searchKey = '';
+      this.statusFilter = '';
       this.selectedOrgId = '';
       this.page = 1;
       this.load();
