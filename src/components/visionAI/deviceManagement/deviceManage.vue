@@ -9,7 +9,7 @@
           <h2 class="asset-page-title">设备接入</h2>
         </div>
         <p class="asset-page-desc">
-          通过 GoWVP 接入 GB28181 国标、RTSP/RTMP 拉流或 ONVIF 摄像机；接入后可自动建点，供 AI 任务与实时监控使用。
+           接入 GB28181 国标、RTSP/RTMP 拉流或 ONVIF 摄像机；接入后可自动建点，供 AI 任务与实时监控使用。
           多通道设备显示通道在线汇总；RTSP 拉流可查看源状态（与点位管理一致）。
         </p>
       </div>
