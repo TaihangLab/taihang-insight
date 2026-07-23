@@ -90,6 +90,29 @@ export const assetAPI = {
   updateDeviceOrg(deviceId, orgId) {
     return assetAxios.put(`/asset/devices/${deviceId}/org`, { orgId }).then(unwrap);
   },
+  /** 设备编辑回显（国标/ONVIF/RTSP） */
+  fetchDeviceDetail(deviceId) {
+    return assetAxios.get(`/asset/devices/${deviceId}`).then(unwrap);
+  },
+  /** 编辑国标/ONVIF 设备信息（password 为空表示不修改） */
+  updateDevice(deviceId, data) {
+    return assetAxios.put(`/asset/devices/${deviceId}`, {
+      name: data.name || '',
+      gbCode: data.gbCode,
+      username: data.username,
+      password: data.password,
+      ip: data.ip,
+      port: data.port,
+    }).then(unwrap);
+  },
+  /** 编辑 RTSP 拉流设备的视频流地址 */
+  updateDeviceStream(deviceId, data) {
+    return assetAxios.put(`/asset/devices/${deviceId}/stream`, {
+      name: data.name || '',
+      streamUrl: data.streamUrl,
+      protocol: data.protocol || 'TCP',
+    }).then(unwrap);
+  },
   deleteDevice(id) {
     return assetAxios.delete(`/asset/devices/${id}`).then(unwrap);
   },
@@ -175,6 +198,14 @@ export const assetAPI = {
   },
   updatePointOrg(pointId, orgId) {
     return assetAxios.put(`/asset/points/${pointId}/org`, { orgId }).then(unwrap);
+  },
+  /** 编辑拉流虚拟点位的视频流地址 */
+  updatePointStream(pointId, data) {
+    return assetAxios.put(`/asset/points/${pointId}/stream`, {
+      name: data.name || '',
+      streamUrl: data.streamUrl,
+      protocol: data.protocol || 'TCP',
+    }).then(unwrap);
   },
   deletePoint(id) {
     return assetAxios.delete(`/asset/points/${id}`).then(unwrap);

@@ -237,10 +237,17 @@
                 <span v-else class="cell-muted">-</span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="140" fixed="right" align="center">
+            <el-table-column label="操作" width="240" fixed="right" align="center">
               <template slot-scope="{ row }">
-                <el-button type="text" @click="openChangeOrg(row)">变更组织</el-button>
-                <el-button type="text" class="btn-danger-text" @click="handleDelete(row)">删除</el-button>
+                <div class="asset-op-cell">
+                  <el-button
+                    v-if="row.pointType === 'virtual' && row.virtualMode === 'stream'"
+                    type="text"
+                    @click="openEditStream(row)"
+                  >编辑流地址</el-button>
+                  <el-button type="text" @click="openChangeOrg(row)">变更组织</el-button>
+                  <el-button type="text" class="btn-danger-text" @click="handleDelete(row)">删除</el-button>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -359,6 +366,28 @@
       </span>
     </el-dialog>
 
+    <el-dialog title="编辑视频流地址" :visible.sync="showEditStream" width="520px" @closed="resetEditForm">
+      <el-form :model="editForm" label-width="100px">
+        <el-form-item label="点位名称" required>
+          <el-input v-model="editForm.name" placeholder="请输入点位名称" />
+        </el-form-item>
+        <el-form-item label="流地址" required>
+          <el-input v-model="editForm.streamUrl" placeholder="rtsp:// 或 rtmp://" @input="editProbeResult = null">
+            <el-button slot="append" :loading="editProbing" @click="handleProbeEditUrl">测试连接</el-button>
+          </el-input>
+          <div v-if="editProbeResult" class="probe-result" :class="'probe-result--' + probeTone(editProbeResult.status)">
+            <i :class="probeTone(editProbeResult.status) === 'ok' ? 'el-icon-success' : 'el-icon-warning'" />
+            {{ editProbeResult.statusText }}<template v-if="editProbeResult.detail">：{{ editProbeResult.detail }}</template>
+          </div>
+        </el-form-item>
+      </el-form>
+      <p class="asset-dialog-tip">通道 ID 保持不变，已绑定的 AI 任务不受影响；保存后会自动切换到新流地址。</p>
+      <span slot="footer">
+        <el-button @click="showEditStream = false">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="submitEditStream">确定</el-button>
+      </span>
+    </el-dialog>
+
     <el-dialog title="变更所属组织" :visible.sync="showChangeOrg" width="460px">
       <el-form label-width="100px">
         <el-form-item label="点位名称">
@@ -420,6 +449,10 @@ export default {
       showStream: false,
       showFile: false,
       showChangeOrg: false,
+      showEditStream: false,
+      editForm: { id: '', name: '', streamUrl: '' },
+      editProbing: false,
+      editProbeResult: null,
       changeOrgForm: { id: '', name: '', currentOrgName: '', orgId: '' },
       channels: [],
       selected: [],
@@ -728,6 +761,62 @@ export default {
         this.$message.error(e.message || '停止失败');
       }
     },
+    openEditStream(row) {
+      this.editForm = {
+        id: row.id,
+        name: row.name || '',
+        streamUrl: row.source && row.source !== '-' ? row.source : '',
+      };
+      this.editProbeResult = null;
+      this.showEditStream = true;
+    },
+    resetEditForm() {
+      this.editForm = { id: '', name: '', streamUrl: '' };
+      this.editProbeResult = null;
+    },
+    async handleProbeEditUrl() {
+      if (!this.editForm.streamUrl) {
+        this.$message.warning('请先填写流地址');
+        return;
+      }
+      this.editProbing = true;
+      this.editProbeResult = null;
+      try {
+        this.editProbeResult = await assetAPI.probeStreamUrl(this.editForm.streamUrl);
+      } catch (e) {
+        this.$message.error(e.message || '检测失败');
+      } finally {
+        this.editProbing = false;
+      }
+    },
+    async submitEditStream() {
+      if (!this.editForm.name || !this.editForm.streamUrl) {
+        this.$message.warning('请填写名称和流地址');
+        return;
+      }
+      this.submitting = true;
+      try {
+        const row = await assetAPI.updatePointStream(this.editForm.id, {
+          name: this.editForm.name,
+          streamUrl: this.editForm.streamUrl,
+        });
+        if (row && (row.sourceStatus === 'ok' || row.sourceStatus === 'streaming')) {
+          this.$message.success('已更新，源地址检测正常');
+        } else if (row && row.sourceStatus) {
+          this.$message.warning(
+            `已更新，但源地址检测异常（${row.sourceStatusText || ''}${row.sourceDetail ? '：' + row.sourceDetail : ''}），请检查流地址`
+          );
+        } else {
+          this.$message.success('已更新');
+        }
+        this.showEditStream = false;
+        this.load();
+      } catch (e) {
+        this.$message.error(e.message || '更新失败');
+      } finally {
+        this.submitting = false;
+      }
+    },
     openChangeOrg(row) {
       this.changeOrgForm = {
         id: row.id,
@@ -788,6 +877,20 @@ export default {
 .btn-danger-text { color: #f56c6c !important; }
 .btn-warn-text { color: #e6a23c !important; }
 .batch-form { margin-bottom: 12px; }
+.asset-op-cell {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.asset-op-cell .el-button + .el-button {
+  margin-left: 8px;
+}
+.asset-op-cell .el-button {
+  padding-left: 0;
+  padding-right: 0;
+}
 </style>
 
 <style>

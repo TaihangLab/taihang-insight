@@ -170,10 +170,17 @@
             <el-table-column prop="lastOnline" label="最近心跳" width="170" show-overflow-tooltip>
               <template slot-scope="{ row }">{{ row.lastOnline || '-' }}</template>
             </el-table-column>
-            <el-table-column label="操作" width="140" fixed="right" align="center">
+            <el-table-column label="操作" width="200" fixed="right" align="center">
               <template slot-scope="{ row }">
-                <el-button type="text" @click="openChangeOrg(row)">变更组织</el-button>
-                <el-button type="text" class="btn-danger-text" @click="handleDelete(row)">删除</el-button>
+                <div class="asset-op-cell">
+                  <el-button
+                    v-if="canEditDevice(row)"
+                    type="text"
+                    @click="openEdit(row)"
+                  >编辑</el-button>
+                  <el-button type="text" @click="openChangeOrg(row)">变更组织</el-button>
+                  <el-button type="text" class="btn-danger-text" @click="handleDelete(row)">删除</el-button>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -295,6 +302,93 @@
       </span>
     </el-dialog>
 
+    <el-dialog title="编辑设备" :visible.sync="showEditDevice" width="520px" @closed="resetDeviceEditForm">
+      <div v-loading="editLoading">
+        <el-form :model="deviceEditForm" label-width="100px">
+          <el-form-item label="设备名称" required>
+            <el-input v-model="deviceEditForm.name" placeholder="请输入设备名称" />
+          </el-form-item>
+          <template v-if="deviceEditForm.accessType === 'gb28181'">
+            <el-form-item label="国标编码" required>
+              <el-input v-model="deviceEditForm.gbCode" placeholder="20 位国标设备编码" maxlength="20" />
+            </el-form-item>
+            <el-form-item label="用户名">
+              <el-input v-model="deviceEditForm.username" placeholder="SIP 鉴权用户名（可选）" />
+            </el-form-item>
+            <el-form-item label="密码">
+              <el-input
+                v-model="deviceEditForm.password"
+                type="password"
+                show-password
+                :placeholder="deviceEditForm.hasPassword ? '留空则不修改密码' : '可选'"
+              />
+            </el-form-item>
+          </template>
+          <template v-else-if="deviceEditForm.accessType === 'onvif'">
+            <el-form-item label="IP" required>
+              <el-input v-model="deviceEditForm.ip" placeholder="设备 IP" />
+            </el-form-item>
+            <el-form-item label="端口" required>
+              <el-input-number v-model="deviceEditForm.port" :min="1" :max="65535" />
+            </el-form-item>
+            <el-form-item label="用户名" required>
+              <el-input v-model="deviceEditForm.username" />
+            </el-form-item>
+            <el-form-item label="密码">
+              <el-input
+                v-model="deviceEditForm.password"
+                type="password"
+                show-password
+                :placeholder="deviceEditForm.hasPassword ? '留空则不修改密码' : '请输入密码'"
+              />
+            </el-form-item>
+          </template>
+        </el-form>
+        <p class="asset-dialog-tip">
+          <template v-if="deviceEditForm.accessType === 'gb28181'">
+            国标编码需与摄像机侧配置一致，否则设备无法重新注册。
+          </template>
+          <template v-else>
+            修改 IP/端口/账号后需能重新连上设备；密码留空表示不修改。
+          </template>
+        </p>
+      </div>
+      <span slot="footer">
+        <el-button @click="showEditDevice = false">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="submitEditDevice">确定</el-button>
+      </span>
+    </el-dialog>
+
+    <el-dialog title="编辑视频流地址" :visible.sync="showEditStream" width="520px" @closed="resetEditForm">
+      <div v-loading="editLoading">
+        <el-form :model="editForm" label-width="100px">
+          <el-form-item label="设备名称" required>
+            <el-input v-model="editForm.name" placeholder="请输入设备名称" />
+          </el-form-item>
+          <el-form-item label="流地址" required>
+            <el-input v-model="editForm.streamUrl" placeholder="rtsp:// 或 rtmp://" @input="editProbeResult = null">
+              <el-button slot="append" :loading="editProbing" @click="handleProbeEditUrl">测试连接</el-button>
+            </el-input>
+            <div v-if="editProbeResult" class="probe-result" :class="'probe-result--' + probeTone(editProbeResult.status)">
+              <i :class="probeTone(editProbeResult.status) === 'ok' ? 'el-icon-success' : 'el-icon-warning'" />
+              {{ editProbeResult.statusText }}<template v-if="editProbeResult.detail">：{{ editProbeResult.detail }}</template>
+            </div>
+          </el-form-item>
+          <el-form-item label="传输协议">
+            <el-radio-group v-model="editForm.protocol">
+              <el-radio label="TCP">TCP</el-radio>
+              <el-radio label="UDP">UDP</el-radio>
+            </el-radio-group>
+          </el-form-item>
+        </el-form>
+        <p class="asset-dialog-tip">保存后设备会自动切换到新流地址，已关联点位与 AI 任务不受影响。</p>
+      </div>
+      <span slot="footer">
+        <el-button @click="showEditStream = false">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="submitEditStream">确定</el-button>
+      </span>
+    </el-dialog>
+
     <el-dialog title="变更所属组织" :visible.sync="showChangeOrg" width="460px">
       <el-form label-width="100px">
         <el-form-item label="设备名称">
@@ -360,6 +454,23 @@ export default {
       showAdd: false,
       showGbInfo: false,
       showChangeOrg: false,
+      showEditStream: false,
+      showEditDevice: false,
+      editLoading: false,
+      editForm: { id: '', name: '', streamUrl: '', protocol: 'TCP' },
+      editProbing: false,
+      editProbeResult: null,
+      deviceEditForm: {
+        id: '',
+        name: '',
+        accessType: '',
+        gbCode: '',
+        username: '',
+        password: '',
+        ip: '',
+        port: 80,
+        hasPassword: false,
+      },
       changeOrgForm: { id: '', name: '', currentOrgName: '', orgId: '' },
       orgTree: [],
       orgOptions: [],
@@ -549,6 +660,173 @@ export default {
         this.submitting = false;
       }
     },
+    canEditDevice(row) {
+      const t = (row && row.rawType) || '';
+      return t === 'RTSP' || t === 'GB28181' || t === 'ONVIF';
+    },
+    async openEdit(row) {
+      if (!this.canEditDevice(row)) return;
+      if (row.rawType === 'RTSP') {
+        await this.openEditStream(row);
+        return;
+      }
+      await this.openEditDevice(row);
+    },
+    async openEditDevice(row) {
+      this.resetDeviceEditForm();
+      this.deviceEditForm.id = row.id;
+      this.deviceEditForm.name = row.name || '';
+      this.deviceEditForm.accessType = row.rawType === 'ONVIF' ? 'onvif' : 'gb28181';
+      this.showEditDevice = true;
+      this.editLoading = true;
+      try {
+        const detail = await assetAPI.fetchDeviceDetail(row.id);
+        this.deviceEditForm = {
+          id: row.id,
+          name: (detail && detail.name) || row.name || '',
+          accessType: (detail && detail.accessType) || this.deviceEditForm.accessType,
+          gbCode: (detail && detail.gbCode) || '',
+          username: (detail && detail.username) || '',
+          password: '',
+          ip: (detail && detail.ip) || '',
+          port: (detail && detail.port) || 80,
+          hasPassword: !!(detail && detail.hasPassword),
+        };
+      } catch (e) {
+        this.$message.error(e.message || '加载设备信息失败');
+        this.showEditDevice = false;
+      } finally {
+        this.editLoading = false;
+      }
+    },
+    resetDeviceEditForm() {
+      this.deviceEditForm = {
+        id: '',
+        name: '',
+        accessType: '',
+        gbCode: '',
+        username: '',
+        password: '',
+        ip: '',
+        port: 80,
+        hasPassword: false,
+      };
+    },
+    async submitEditDevice() {
+      const f = this.deviceEditForm;
+      if (!f.name) {
+        this.$message.warning('请填写设备名称');
+        return;
+      }
+      if (f.accessType === 'gb28181' && !f.gbCode) {
+        this.$message.warning('请填写国标编码');
+        return;
+      }
+      if (f.accessType === 'onvif') {
+        if (!f.ip) {
+          this.$message.warning('请填写 ONVIF 设备 IP');
+          return;
+        }
+        if (!f.port) {
+          this.$message.warning('请填写端口');
+          return;
+        }
+        if (!f.username) {
+          this.$message.warning('请填写用户名');
+          return;
+        }
+        if (!f.hasPassword && !f.password) {
+          this.$message.warning('请填写密码');
+          return;
+        }
+      }
+      this.submitting = true;
+      try {
+        const payload = { name: f.name };
+        if (f.accessType === 'gb28181') {
+          payload.gbCode = f.gbCode;
+          payload.username = f.username || '';
+          payload.password = f.password || '';
+        } else if (f.accessType === 'onvif') {
+          payload.ip = f.ip;
+          payload.port = f.port;
+          payload.username = f.username;
+          payload.password = f.password || '';
+        }
+        await assetAPI.updateDevice(f.id, payload);
+        this.$message.success('已更新');
+        this.showEditDevice = false;
+        this.load();
+      } catch (e) {
+        this.$message.error(e.message || '更新失败');
+      } finally {
+        this.submitting = false;
+      }
+    },
+    async openEditStream(row) {
+      this.editForm = {
+        id: row.id,
+        name: row.name || '',
+        streamUrl: '',
+        protocol: 'TCP',
+      };
+      this.editProbeResult = null;
+      this.showEditStream = true;
+      this.editLoading = true;
+      try {
+        const detail = await assetAPI.fetchDeviceDetail(row.id);
+        this.editForm = {
+          id: row.id,
+          name: (detail && detail.name) || row.name || '',
+          streamUrl: (detail && detail.streamUrl) || '',
+          protocol: (detail && detail.protocol) || 'TCP',
+        };
+      } catch (e) {
+        // 回显失败仍允许手工填写
+      } finally {
+        this.editLoading = false;
+      }
+    },
+    resetEditForm() {
+      this.editForm = { id: '', name: '', streamUrl: '', protocol: 'TCP' };
+      this.editProbeResult = null;
+    },
+    async handleProbeEditUrl() {
+      if (!this.editForm.streamUrl) {
+        this.$message.warning('请先填写流地址');
+        return;
+      }
+      this.editProbing = true;
+      this.editProbeResult = null;
+      try {
+        this.editProbeResult = await assetAPI.probeStreamUrl(this.editForm.streamUrl);
+      } catch (e) {
+        this.$message.error(e.message || '检测失败');
+      } finally {
+        this.editProbing = false;
+      }
+    },
+    async submitEditStream() {
+      if (!this.editForm.name || !this.editForm.streamUrl) {
+        this.$message.warning('请填写名称和流地址');
+        return;
+      }
+      this.submitting = true;
+      try {
+        await assetAPI.updateDeviceStream(this.editForm.id, {
+          name: this.editForm.name,
+          streamUrl: this.editForm.streamUrl,
+          protocol: this.editForm.protocol,
+        });
+        this.$message.success('已更新');
+        this.showEditStream = false;
+        this.load();
+      } catch (e) {
+        this.$message.error(e.message || '更新失败');
+      } finally {
+        this.submitting = false;
+      }
+    },
     openChangeOrg(row) {
       this.changeOrgForm = {
         id: row.id,
@@ -612,4 +890,18 @@ export default {
 }
 .probe-result--ok { color: #67c23a; }
 .probe-result--bad { color: #e6a23c; }
+.asset-op-cell {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.asset-op-cell .el-button + .el-button {
+  margin-left: 8px;
+}
+.asset-op-cell .el-button {
+  padding-left: 0;
+  padding-right: 0;
+}
 </style>
