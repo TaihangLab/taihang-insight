@@ -2327,7 +2327,11 @@ const TYPE_ICON = {
   sop_compliance: 'el-icon-finished',
   custom_code: 'el-icon-edit-outline',
   target_matting: 'el-icon-crop',
-  small_image_batch: 'el-icon-cpu'
+  small_image_batch: 'el-icon-cpu',
+  merge_detections: 'el-icon-connection',
+  motion_state: 'el-icon-refresh',
+  object_event: 'el-icon-bell',
+  pose_keypoints: 'el-icon-user'
 }
 // 端口类型 -> 展示标签与颜色
 const PT_META = {
@@ -2345,26 +2349,32 @@ const PT_META = {
 }
 // 端口名 -> 友好中文（找不到则回退到端口类型标签 / 端口名）
 const PORT_LABELS = {
-  image: '图片', roi: '电子围栏', trigger: '触发',
+  image: '图片', roi: '电子围栏', trigger: '触发', gate: '条件执行门控',
   targets: '目标',
-  targets1: '相交目标1 (追踪)', targets2: '相交目标2 (追踪)',
-  result1: '相交目标1的结果', result2: '相交目标2的结果',
-  target1: '距离目标1的标签', target2: '距离目标2的标签',
-  targets: '跨线目标（追踪）', tripwire: '绊线', crossed: '跨线目标',
-  matched1: '满足相交的目标1(追踪)', matched2: '满足相交的目标2(追踪)',
+  targets1: '目标1', targets2: '目标2',
+  result1: '匹配目标1', result2: '匹配目标2',
+  unmatched1: '未匹配目标1', unmatched2: '未匹配目标2',
+  target1: '距离目标1', target2: '距离目标2',
+  tripwire: '绊线', crossed: '跨线目标',
+  matched1: '满足相交的目标1', matched2: '满足相交的目标2',
   period: '位移计算周期(s)',
-  h_min: '水平移动距离下限(px)', h_max: '水平移动距离上限(px)', h_direction: '目标水平移动方向',
-  v_min: '垂直移动距离下限(px)', v_max: '垂直移动距离上限(px)', v_direction: '目标垂直移动方向',
+  h_min: '水平距离/位移下限(px)', h_max: '水平距离/位移上限(px)', h_direction: '水平方向',
+  v_min: '垂直距离/位移下限(px)', v_max: '垂直距离/位移上限(px)', v_direction: '垂直方向',
   both_axes: '同时满足垂直和水平条件',
   iou_threshold: '交并比阈值下限', iou_method: '交并比计算方法', duration: '持续时间 (s)',
-  target: '目标', target1: '目标1', target2: '目标2',
-  count: '数量', passed: '判定', value: '值', result: '结果',
+  target: '目标', count: '数量', passed: '判定', false: '未通过', raw: '当帧条件',
+  value: '值', result: '结果',
   detections: '检测目标', filter_target: '过滤目标', filtered_targets: '过滤目标标签',
-  crossed: '越线目标', matched: '配对目标',
+  matched: '配对目标',
   output: '输出', filtered: '过滤结果',
   video: '原视频', start_time: '开始时间（秒）', end_time: '结束时间（秒）', buffer: '前后缓冲区间（秒）',
   video_clip: '视频片段', success: '成功状态', error_message: '错误信息',
-  small_images: '小图序列'
+  small_images: '小图序列',
+  running: '运行中', stopped: '已停止', magnitude: '运动量',
+  regions: '运动分析区域',
+  triggered: '事件触发', prev_count: '上一帧数量', curr_count: '当前数量',
+  person: '人员', a: '输入A', b: '输入B', c: '输入C', d: '输入D', e: '输入E',
+  f: '输入F', g: '输入G', h: '输入H', i: '输入I', j: '输入J',
 }
 
 const VIDEO_SLICE_NUMERIC_FIELDS = [
@@ -2648,7 +2658,8 @@ function makePortRef(nodeId, port) {
 const COUNT_BINDABLE_NODE_TYPES = new Set([
   'detection_model', 'region_filter', 'size_filter',
   'intersection', 'intersect', 'tripwire_tracking', 'distance', 'displacement',
-  'target_matting', 'small_image_batch', 'custom_code'
+  'target_matting', 'small_image_batch', 'custom_code',
+  'merge_detections', 'object_event', 'pose_keypoints'
 ])
 
 function isBindableSourceNode(consumerNodeType, portType, sourceNodeType) {
@@ -5333,11 +5344,21 @@ export default {
           duration: 0, buffer: 0
         },
         tripwire_tracking: {},
-        distance: { h_min: 0, h_max: 1000000, v_min: 0, v_max: 1000000, both_axes: true },
+        distance: {
+          h_min: 0, h_max: 1000000, h_direction: '双向',
+          v_min: 0, v_max: 1000000, v_direction: '双向', both_axes: true
+        },
+        merge_detections: {},
+        motion_state: { threshold: 0.1, consecutive_frames: 3, use_full_frame: false },
+        object_event: { event: 'disappear', min_prev_count: 1, stable_frames: 2, identity: 'count' },
+        pose_keypoints: {
+          model_name: 'yolo11_pose', confidence_threshold: 0.5,
+          waist_keypoint_indices: [11, 12], wrist_keypoint_indices: [9, 10]
+        },
         judge: {
           conditions: {
             condition_groups: [{
-              conditions: [{ field: '', operator: '', value: '', param_type: '' }],
+              conditions: [{ field: '', operator: '', value: '', compare_field: '', param_type: '' }],
               relation: 'all'
             }],
             global_relation: 'or',
