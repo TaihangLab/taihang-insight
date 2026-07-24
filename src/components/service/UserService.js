@@ -36,7 +36,7 @@ export default {
   },
 
   getAdminToken() {
-    return this.getToken();
+    return localStorage.getItem("Admin-Token");
   },
 
   clearToken() {

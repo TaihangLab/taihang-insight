@@ -19,7 +19,7 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    const token = userService.getToken()
+    const token = userService.getAdminToken();
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token
     }
