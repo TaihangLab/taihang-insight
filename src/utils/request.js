@@ -19,11 +19,11 @@ axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS�
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    const token = userService.getAdminToken()
+    // const token = userService.getAdminToken()
+    const token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOiJzeXNfdXNlcjoxOTgyNzE0MTA5NjgwNDk2NjQxIiwicm5TdHIiOiJ1bFFEYnl0QUQzdWxiWXJXeUg0dVNlWndDbWdITXQ4TCIsImNsaWVudGlkIjoiMDJiYjljZmU4ZDc4NDRlY2FlOGRiZTYyYjFiYTk3MWEiLCJ0ZW5hbnRJZCI6IjAwMDAwMCIsInVzZXJJZCI6MTk4MjcxNDEwOTY4MDQ5NjY0MSwidXNlck5hbWUiOiJ6dHNNYW5hZ2VyIiwiZGVwdElkIjoxOTgyNzEzNjYzNDE5MTMzOTUzLCJkZXB0TmFtZSI6IiIsImRlcHRDYXRlZ29yeSI6IiJ9.P3OUOaeTamTY7bYbvBHcIhoscMjyfqh0EVIslK-o-Uo'
     if (token) {
       config.headers['Authorization'] = 'Bearer ' + token;
     }
-    
     config.headers['clientid'] = '02bb9cfe8d7844ecae8dbe62b1ba971a';
     return config
   },
@@ -42,12 +42,12 @@ let requestsQueue = []
 service.interceptors.response.use(
   response => {
     const res = response.data
-    
+
     // 如果是Blob类型（如文件下载、图片），直接返回
     if (response.config.responseType === 'blob') {
       return response
     }
-    
+
     // 如果返回的状态码为200，说明接口请求成功，可以正常拿到数据
     // 否则的话抛出错误
     if (response.status === 200) {
@@ -90,7 +90,7 @@ service.interceptors.response.use(
   },
   error => {
     console.error('响应错误:', error)
-    
+
     let message = '请求失败'
     if (error.response) {
       switch (error.response.status) {
@@ -137,13 +137,13 @@ service.interceptors.response.use(
         message = '网络连接异常，请检查网络'
       }
     }
-    
+
     Message({
       message: message,
       type: 'error',
       duration: 3 * 1000
     })
-    
+
     return Promise.reject(error)
   }
 )
