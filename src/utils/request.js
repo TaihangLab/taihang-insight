@@ -1,29 +1,32 @@
-/**
- * 统一的axios请求封装
- * 参考若依框架设计
- */
 import axios from 'axios'
 import { Message, MessageBox } from 'element-ui'
 import router from '@/router'
 import userService from '@/components/service/UserService'
 
-const config = require('../../config/index.js')
-
 // 创建axios实例
 const service = axios.create({
-  baseURL: config.API_BASE_URL,
-  withCredentials: false,
-  timeout: 30000
+  baseURL: (process.env.NODE_ENV === 'development') ? process.env.BASE_API : (window.baseUrl ? window.baseUrl : ""),
+  withCredentials: false, // 关闭跨域凭据，项目使用Token认证
+  timeout: 30000 // 请求超时时间
 })
+
+// 设备管理模块使用的axios配置（走WVP代理）
+// 导入API配置
+const config = require('../../config/index.js');
+axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp';
+axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS错误
 
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    const token = userService.getAdminToken();
-    // const token ='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOiJzeXNfdXNlcjoxOTgyNzE0MTA5NjgwNDk2NjQxIiwicm5TdHIiOiJ1bFFEYnl0QUQzdWxiWXJXeUg0dVNlWndDbWdITXQ4TCIsImNsaWVudGlkIjoiMDJiYjljZmU4ZDc4NDRlY2FlOGRiZTYyYjFiYTk3MWEiLCJ0ZW5hbnRJZCI6IjAwMDAwMCIsInVzZXJJZCI6MTk4MjcxNDEwOTY4MDQ5NjY0MSwidXNlck5hbWUiOiJ6dHNNYW5hZ2VyIiwiZGVwdElkIjoxOTgyNzEzNjYzNDE5MTMzOTUzLCJkZXB0TmFtZSI6IiIsImRlcHRDYXRlZ29yeSI6IiJ9.P3OUOaeTamTY7bYbvBHcIhoscMjyfqh0EVIslK-o-Uo'
+    // const token = userService.getAdminToken()
+    const token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOiJzeXNfdXNlcjoxOTgyNzE0MTA5NjgwNDk2NjQxIiwicm5TdHIiOiJ1bFFEYnl0QUQzdWxiWXJXeUg0dVNlWndDbWdITXQ4TCIsImNsaWVudGlkIjoiMDJiYjljZmU4ZDc4NDRlY2FlOGRiZTYyYjFiYTk3MWEiLCJ0ZW5hbnRJZCI6IjAwMDAwMCIsInVzZXJJZCI6MTk4MjcxNDEwOTY4MDQ5NjY0MSwidXNlck5hbWUiOiJ6dHNNYW5hZ2VyIiwiZGVwdElkIjoxOTgyNzEzNjYzNDE5MTMzOTUzLCJkZXB0TmFtZSI6IiIsImRlcHRDYXRlZ29yeSI6IiJ9.P3OUOaeTamTY7bYbvBHcIhoscMjyfqh0EVIslK-o-Uo'
+
     if (token) {
-      config.headers['Authorization'] = 'Bearer ' + token
+      config.headers['Authorization'] = 'Bearer ' + token;
     }
+
+    config.headers['clientid'] = '02bb9cfe8d7844ecae8dbe62b1ba971a';
     return config
   },
   error => {
@@ -34,48 +37,58 @@ service.interceptors.request.use(
 
 // 是否正在刷新token的标志
 let isRefreshing = false
+// 存储待重试的请求队列
+let requestsQueue = []
 
 // 响应拦截器
 service.interceptors.response.use(
   response => {
     const res = response.data
 
+    // 如果是Blob类型（如文件下载、图片），直接返回
     if (response.config.responseType === 'blob') {
       return response
     }
 
+    // 如果返回的状态码为200，说明接口请求成功，可以正常拿到数据
+    // 否则的话抛出错误
     if (response.status === 200) {
-      if (res.code === 0 || res.code === 200 || res.code === undefined) {
+      // 根据后端返回的code判断
+      if (res.code === 0 || res.code === 200) {
         return response
-      }
-
-      if (res.code === 401) {
-        if (!isRefreshing) {
-          isRefreshing = true
-          MessageBox.confirm('登录状态已过期，请重新登录', '系统提示', {
-            confirmButtonText: '重新登录',
-            cancelButtonText: '取消',
-            type: 'warning'
-          }).then(() => {
-            userService.clearToken()
-            router.push('/login')
-          }).catch(() => {
-            // 用户取消
-          }).finally(() => {
-            isRefreshing = false
+      } else {
+        // 业务错误处理
+        if (res.code === 401) {
+          // 未授权，跳转登录页
+          if (!isRefreshing) {
+            isRefreshing = true
+            MessageBox.confirm('登录状态已过期，请重新登录', '系统提示', {
+              confirmButtonText: '重新登录',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(() => {
+              // 清除用户信息
+              userService.clearToken()
+              router.push('/login')
+            }).catch(() => {
+              // 用户取消
+            }).finally(() => {
+              isRefreshing = false
+            })
+          }
+        } else {
+          // 其他错误信息提示
+          Message({
+            message: res.msg || res.message || '请求失败',
+            type: 'error',
+            duration: 3 * 1000
           })
         }
-      } else {
-        Message({
-          message: res.msg || res.message || '请求失败',
-          type: 'error',
-          duration: 3 * 1000
-        })
+        return Promise.reject(new Error(res.msg || res.message || '请求失败'))
       }
-      return Promise.reject(new Error(res.msg || res.message || '请求失败'))
+    } else {
+      return response
     }
-
-    return response
   },
   error => {
     console.error('响应错误:', error)
@@ -88,6 +101,7 @@ service.interceptors.response.use(
           break
         case 401:
           message = '未授权，请重新登录'
+          // 避免重复弹窗
           if (!isRefreshing) {
             isRefreshing = true
             setTimeout(() => {
