@@ -136,7 +136,7 @@
             <!-- 通用：输入来源选择（除视觉模型/开始/结束外，其余有输入的节点统一在这里选） -->
             <template v-if="hasInputSelector && selectedType !== 'detection_model' && selectedType !== 'vlm_model' && selectedType !== 'custom_code' && selectedType !== 'video_slice' && selectedType !== 'size_filter' && selectedType !== 'intersection' && selectedType !== 'intersect' && selectedType !== 'displacement' && selectedType !== 'distance' && selectedType !== 'tripwire_tracking' && selectedType !== 'region_filter' && selectedType !== 'count' && selectedType !== 'small_image_batch' && selectedType !== 'target_matting' && selectedType !== 'sequence' && selectedType !== 'sop_compliance' && selectedType !== 'judge'">
               <div class="sg-sec-title">输入</div>
-              <el-form-item v-for="sel in inputSelectors" :key="sel.port" :label="sel.label" :required="!sel.optional">
+              <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port" :label="sel.label" :required="!sel.optional">
                 <el-popover v-model="sel.popOpen" placement="bottom-start" trigger="click"
                             :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
                   <el-tree v-if="sel.treeData.length" :data="sel.treeData" node-key="id"
@@ -178,7 +178,7 @@
               </el-form-item>
 
               <div class="sg-sec-title">输入</div>
-              <el-form-item v-for="sel in inputSelectors" :key="sel.port" :label="sel.label" :required="!sel.optional">
+              <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port" :label="sel.label" :required="!sel.optional">
                 <el-popover v-model="sel.popOpen" placement="bottom-start" trigger="click"
                             :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
                   <el-tree v-if="sel.treeData.length" :data="sel.treeData" node-key="id"
@@ -607,7 +607,7 @@
             <!-- 目标抠图推理 -->
             <template v-else-if="selectedType === 'target_matting'">
               <div class="sg-sec-title">输入</div>
-              <el-form-item v-for="sel in inputSelectors" :key="sel.port" :label="sel.label" required>
+              <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port" :label="sel.label" :required="!sel.optional">
                 <el-popover v-model="sel.popOpen" placement="bottom-start" trigger="click"
                             :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
                   <el-tree v-if="sel.treeData.length" :data="sel.treeData" node-key="id"
@@ -2126,6 +2126,37 @@
               <div class="sg-tip">开始节点定义技能运行所需的输入；其中 image 为当前帧图像。</div>
             </template>
 
+            <!-- 条件执行门控：可选进阶项，放主配置之后 -->
+            <template v-if="gateSelector">
+              <div class="sg-sec-title">条件执行</div>
+              <el-form-item>
+                <template slot="label">
+                  <span>条件执行门控</span>
+                  <el-tooltip placement="top" :content="GATE_HELP_TIP">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </template>
+                <el-popover v-model="gateSelector.popOpen" placement="bottom-start" trigger="click"
+                            :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
+                  <el-tree v-if="gateSelector.treeData.length" :data="gateSelector.treeData" node-key="id"
+                           default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                           :current-node-key="gateSelector.value" @node-click="onParamPick(gateSelector, $event)">
+                    <span slot-scope="{ data }" class="sg-tree-node">
+                      <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                      <span>{{ data.label }}</span>
+                    </span>
+                  </el-tree>
+                  <div v-else class="sg-tree-empty">暂无数据</div>
+                  <div slot="reference" class="sg-ref-box" :class="{ 'is-empty': !gateSelector.value }">
+                    <span class="sg-ref-txt">{{ selLabel(gateSelector) || '请选择布尔参数（可选）' }}</span>
+                    <i v-if="gateSelector.value" class="el-icon-circle-close sg-ref-clear" @click.stop="clearInput(gateSelector)"></i>
+                    <i v-else class="el-icon-arrow-down sg-ref-arrow"></i>
+                  </div>
+                </el-popover>
+                <div class="sg-tip">{{ GATE_HELP_TIP }}</div>
+              </el-form-item>
+            </template>
+
             <el-button v-if="selectedType !== 'start' && selectedType !== 'end'"
                        type="danger" size="mini" icon="el-icon-delete" style="margin-top:12px"
                        @click="deleteSelected">删除此节点</el-button>
@@ -2281,21 +2312,44 @@ const TRACKED_SUFFIX = '__tracked'
 // 已由后端 /node-types 注册的扩展节点（保留空数组，兼容旧逻辑）
 const EXTRA_NODE_TYPES = []
 
-const DEFAULT_CUSTOM_CODE = `def main(inputs):
+const DEFAULT_CUSTOM_CODE = `def main(inputs, state):
     """
-    inputs: 这是一个字典，包含了当前输入配置中映射的所有变量
+    自定义节点入口。
+
+    参数:
+      inputs: dict，键名为右侧「输入参数」里配置的名字，值为上游连线传入的数据
+      state:  dict，本节点跨帧持久化状态（按节点隔离）。同一路视频连续帧之间会复用；
+              改完后必须放进返回值的 "state" 键，否则不会写回。
+
+    预置库（无需 import，环境可用时自动注入）:
+      math   — 标准库，如 math.sqrt / math.hypot
+      np / numpy — 数组运算，如 np.array、np.mean
+      cv2    — OpenCV，如 cv2.cvtColor、cv2.resize（图像为 BGR numpy 数组）
+
+    返回:
+      dict。键名对应「输出参数」；另可带 "state" 写回跨帧状态。
     """
-    # 1. 获取输入
-    input_value = inputs.get("input", "")
+    # ---- 读输入（名字与「输入参数」一致）----
+    value = inputs.get("input", "")
 
-    # 2. 编写你的逻辑
-    result_value = input_value
+    # ---- 跨帧 state：累计调用次数示例 ----
+    # state 在多帧间保留；任务重置 / 评测换图时由引擎清空
+    state["call_count"] = int(state.get("call_count", 0) or 0) + 1
 
-    # 3. 返回结果
-    result = {
-        "output": result_value
+    # ---- 预置库用法示例（按需取消注释）----
+    # dist = math.hypot(3, 4)                    # -> 5.0
+    # arr = np.array([1.0, 2.0, 3.0])
+    # mean = float(np.mean(arr))
+    # image = inputs.get("image")                # Image 端口：numpy BGR
+    # if image is not None:
+    #     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    #     h, w = gray.shape[:2]
+
+    return {
+        "output": value,   # 键名与「输出参数」一致
+        "state": state,    # 务必带回，跨帧修改才会生效
     }
-    return result`
+`
 
 // 节点大类的主题色与图标
 const CAT_META = {
@@ -2376,6 +2430,7 @@ const PORT_LABELS = {
   person: '人员', a: '输入A', b: '输入B', c: '输入C', d: '输入D', e: '输入E',
   f: '输入F', g: '输入G', h: '输入H', i: '输入I', j: '输入J',
 }
+const GATE_HELP_TIP = '可选。不接则本节点每帧都会执行；接上游布尔值（如条件分支的「判定通过」）后，仅在为真时才执行。适合控制多模态大模型、姿态等耗时节点，避免无嫌疑时仍每帧调用。'
 
 const VIDEO_SLICE_NUMERIC_FIELDS = [
   { port: 'start_time', label: '开始时间（秒）', placeholder: '请输入开始时间（秒）', tip: '切片起始时间，单位秒' },
@@ -3617,7 +3672,10 @@ class SGNode extends HtmlNode {
       body = row('输入', ins) + row('输出', outs)
     } else {
       const genBoundIn = boundInputPorts(m)
-      const ins = (p.inputPorts || []).map(n => chipHtml(n, types[n], null, !genBoundIn.has(n)))
+      // gate 为可选门控：未绑定时不在卡片上显示，避免看起来像必填
+      const ins = (p.inputPorts || [])
+        .filter(n => n !== 'gate' || genBoundIn.has(n))
+        .map(n => chipHtml(n, types[n], null, !genBoundIn.has(n)))
       if (p.dynamic) ins.push('<span class="sgx-chip sgx-chip-dyn" style="--c:#909399"><span class="sgx-chip-dot"></span>动态输入</span>')
       const outs = (p.outputPorts || []).map(n => chipHtml(n, types[n]))
       body = row('输入', ins) + row('输出', outs)
@@ -3673,6 +3731,7 @@ export default {
       trackCfgOpen: false,
       modelClassesCache: {},
       inputSelectors: [],
+      GATE_HELP_TIP,
       graphEdgeRev: 0,
       _normalizingEdge: false,
       testDialogVisible: false,
@@ -3768,6 +3827,13 @@ export default {
     }
   },
   computed: {
+    // 条件执行门控：单独展示并附说明，不混在「输入」列表里
+    gateSelector() {
+      return (this.inputSelectors || []).find(s => s.port === 'gate') || null
+    },
+    inputSelectorsNoGate() {
+      return (this.inputSelectors || []).filter(s => s.port !== 'gate')
+    },
     // 视觉模型「输出」区展开成扁平行（每个标签一行检测 + 可选一行追踪），
     // 单层 v-for 渲染，避免 <template v-for> 上挂 key（Vue2 不支持）
     detectionOutputRows() {
@@ -4741,7 +4807,8 @@ export default {
             || (t === 'target_matting' && mattingLabels[p])
             || PORT_LABELS[p] || p,
           type,
-          optional: type === 'ROI',
+          // gate / ROI 均为可选：不接则按默认行为（gate=始终执行，ROI=不过滤）
+          optional: type === 'ROI' || p === 'gate',
           value,
           groups,
           treeData: this.groupsToTree(groups),
