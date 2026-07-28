@@ -3760,7 +3760,36 @@ export const mlPipelineAPI = {
   // ---- 模型下载 ----
   getModelDownloadUrl(taskId, type = 'export') {
     return `${config.API_BASE_URL}/api/v1/ml-pipeline/training/tasks/${taskId}/download?type=${type}`;
-  }
+  },
+
+  // ---- 自动采集 ----
+  listCollectionTemplates() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/collection/templates');
+  },
+  listCollectionTasks(datasetId) {
+    const params = datasetId != null ? { dataset_id: datasetId } : {};
+    return visionAIAxios.get('/api/v1/ml-pipeline/collection/tasks', { params });
+  },
+  createCollectionTask(data) {
+    return visionAIAxios.post('/api/v1/ml-pipeline/collection/tasks', data);
+  },
+  getCollectionTask(id) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/collection/tasks/${id}`);
+  },
+  deleteCollectionTask(id) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/collection/tasks/${id}`);
+  },
+  startCollectionTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/collection/tasks/${id}/start`);
+  },
+  stopCollectionTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/collection/tasks/${id}/stop`);
+  },
+  listCollectionRecentImages(taskId, limit = 20) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/collection/tasks/${taskId}/recent-images`, {
+      params: { limit },
+    });
+  },
 };
 
 /**
