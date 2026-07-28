@@ -64,7 +64,7 @@
     <!-- 技能列表（卡片 / 表格 两种视图） -->
     <el-card class="list-card" shadow="never" v-loading="loading">
       <div v-if="skills.length" class="list-toolbar">
-        <span v-if="selectedSkillKeys.length" class="selected-hint">已选 {{ selectedSkillKeys.length }} 项</span>
+        <span v-if="selectedSkillKeys.length" class="selected-hint">已选 {{ selectedSkillKeys.length }} 项（跨页保留）</span>
         <el-button
           size="small"
           type="danger"
@@ -76,6 +76,13 @@
         </el-button>
         <el-button size="small" icon="el-icon-check" @click="selectAllCurrentPage">
           {{ allCurrentPageSelected ? '取消本页' : '选择本页' }}
+        </el-button>
+        <el-button
+          size="small"
+          icon="el-icon-finished"
+          :loading="selectingAll"
+          @click="selectAllFiltered">
+          {{ allFilteredSelected ? '取消全选' : '全选全部' }}
         </el-button>
         <el-button
           size="small"
@@ -663,8 +670,11 @@ export default {
       graphEditVisible: false,
       graphEditSaving: false,
       graphEditForm: { skill_id: '', name_zh: '', description: '', imageUrl: '', coverFile: null },
-      // 批量选择与热加载
+      // 批量选择与热加载（跨页：keys + 行快照）
       selectedSkillKeys: [],
+      selectedSkillMap: {},
+      selectingAll: false,
+      _syncingTableSelection: false,
       cardHoverStates: {},
       reloading: false,
       // 批量导出技能编排
@@ -678,6 +688,9 @@ export default {
     allCurrentPageSelected() {
       if (!this.skills.length) return false
       return this.skills.every(s => this.selectedSkillKeys.includes(this.skillRowKey(s)))
+    },
+    allFilteredSelected() {
+      return this.total > 0 && this.selectedSkillKeys.length >= this.total
     },
     // 当前选中项中属于「技能编排」的数量（仅技能编排支持导出）
     selectedGraphCount() {
@@ -783,14 +796,11 @@ export default {
     async loadSkills() {
       this.loading = true
       try {
-        const params = { page: this.currentPage, limit: this.pageSize }
-        if (this.kindFilter && this.kindFilter !== 'all') params.kind = this.kindFilter
-        if (this.searchKeyword) params.query = this.searchKeyword
-        if (this.statusFilter === 'on') params.status = true
-        else if (this.statusFilter === 'off') params.status = false
-        const sortParts = (this.sortValue || 'updated_at:desc').split(':')
-        params.sort_by = sortParts[0] || 'updated_at'
-        params.sort_order = sortParts[1] || 'desc'
+        const params = {
+          ...this.buildListQueryParams(),
+          page: this.currentPage,
+          limit: this.pageSize
+        }
         const res = await skillAPI.getUnifiedSkills(params)
         if (res && res.code === 0) {
           this.skills = res.data || []
@@ -806,7 +816,10 @@ export default {
         this.total = 0
       } finally {
         this.loading = false
-        this.$nextTick(() => this.syncLoadedImages())
+        this.$nextTick(() => {
+          this.syncLoadedImages()
+          this.restoreTableSelection()
+        })
       }
     },
     handleSortChange() {
@@ -844,6 +857,25 @@ export default {
     skillRowKey(s) {
       return `${s.kind}-${s.skill_id}`
     },
+    pickSelectable(s) {
+      return {
+        kind: s.kind,
+        skill_id: s.skill_id,
+        id: s.id,
+        name_zh: s.name_zh || s.skill_name || s.skill_id
+      }
+    },
+    rememberSelected(s) {
+      const key = this.skillRowKey(s)
+      if (!this.selectedSkillKeys.includes(key)) {
+        this.selectedSkillKeys.push(key)
+      }
+      this.$set(this.selectedSkillMap, key, this.pickSelectable(s))
+    },
+    forgetSelected(key) {
+      this.selectedSkillKeys = this.selectedSkillKeys.filter(k => k !== key)
+      this.$delete(this.selectedSkillMap, key)
+    },
     setCardHover(s, visible) {
       this.$set(this.cardHoverStates, this.skillRowKey(s), visible)
     },
@@ -852,44 +884,77 @@ export default {
     },
     toggleSkillSelect(s, checked) {
       const key = this.skillRowKey(s)
-      if (checked) {
-        if (!this.selectedSkillKeys.includes(key)) {
-          this.selectedSkillKeys.push(key)
-        }
-      } else {
-        this.selectedSkillKeys = this.selectedSkillKeys.filter(k => k !== key)
-      }
+      if (checked) this.rememberSelected(s)
+      else this.forgetSelected(key)
     },
     onTableSelectionChange(rows) {
-      this.selectedSkillKeys = (rows || []).map(s => this.skillRowKey(s))
+      // 程序化回显勾选时忽略，避免清空其它页已选
+      if (this._syncingTableSelection) return
+      const pageKeys = this.skills.map(s => this.skillRowKey(s))
+      pageKeys.forEach(k => this.forgetSelected(k))
+      ;(rows || []).forEach(s => this.rememberSelected(s))
     },
     clearSkillSelection() {
       this.selectedSkillKeys = []
+      this.selectedSkillMap = {}
       if (this.$refs.skillTable) {
+        this._syncingTableSelection = true
         this.$refs.skillTable.clearSelection()
+        this.$nextTick(() => { this._syncingTableSelection = false })
       }
     },
+    restoreTableSelection() {
+      if (this.viewMode !== 'table' || !this.$refs.skillTable) return
+      this._syncingTableSelection = true
+      this.$refs.skillTable.clearSelection()
+      this.skills.forEach(row => {
+        if (this.isSkillSelected(row)) {
+          this.$refs.skillTable.toggleRowSelection(row, true)
+        }
+      })
+      this.$nextTick(() => { this._syncingTableSelection = false })
+    },
     getSelectedRows() {
-      return this.skills.filter(s => this.selectedSkillKeys.includes(this.skillRowKey(s)))
+      return this.selectedSkillKeys
+        .map(k => this.selectedSkillMap[k])
+        .filter(Boolean)
     },
     selectAllCurrentPage() {
       if (this.allCurrentPageSelected) {
-        const pageKeys = this.skills.map(s => this.skillRowKey(s))
-        this.selectedSkillKeys = this.selectedSkillKeys.filter(k => !pageKeys.includes(k))
+        this.skills.forEach(s => this.forgetSelected(this.skillRowKey(s)))
       } else {
-        const merged = [...this.selectedSkillKeys]
-        this.skills.forEach(s => {
-          const key = this.skillRowKey(s)
-          if (!merged.includes(key)) merged.push(key)
-        })
-        this.selectedSkillKeys = merged
+        this.skills.forEach(s => this.rememberSelected(s))
       }
-      if (this.viewMode === 'table' && this.$refs.skillTable) {
-        this.$nextTick(() => {
-          this.skills.forEach(row => {
-            this.$refs.skillTable.toggleRowSelection(row, this.isSkillSelected(row))
-          })
-        })
+      this.restoreTableSelection()
+    },
+    buildListQueryParams() {
+      const params = {}
+      if (this.kindFilter && this.kindFilter !== 'all') params.kind = this.kindFilter
+      if (this.searchKeyword) params.query = this.searchKeyword
+      if (this.statusFilter === 'on') params.status = true
+      else if (this.statusFilter === 'off') params.status = false
+      const sortParts = (this.sortValue || 'updated_at:desc').split(':')
+      params.sort_by = sortParts[0] || 'updated_at'
+      params.sort_order = sortParts[1] || 'desc'
+      return params
+    },
+    async selectAllFiltered() {
+      if (this.allFilteredSelected) {
+        this.clearSkillSelection()
+        return
+      }
+      this.selectingAll = true
+      try {
+        const all = await skillAPI.fetchAllUnifiedSkills(this.buildListQueryParams())
+        this.selectedSkillKeys = []
+        this.selectedSkillMap = {}
+        all.forEach(s => this.rememberSelected(s))
+        this.restoreTableSelection()
+        this.$message.success(`已全选 ${all.length} 项`)
+      } catch (e) {
+        this.$message.error('全选失败：' + this.errMsg(e))
+      } finally {
+        this.selectingAll = false
       }
     },
     async handleReloadSkillClasses() {

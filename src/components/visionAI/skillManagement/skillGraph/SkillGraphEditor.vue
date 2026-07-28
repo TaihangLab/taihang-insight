@@ -136,7 +136,7 @@
             <!-- 通用：输入来源选择（除视觉模型/开始/结束外，其余有输入的节点统一在这里选） -->
             <template v-if="hasInputSelector && selectedType !== 'detection_model' && selectedType !== 'vlm_model' && selectedType !== 'custom_code' && selectedType !== 'video_slice' && selectedType !== 'size_filter' && selectedType !== 'intersection' && selectedType !== 'intersect' && selectedType !== 'displacement' && selectedType !== 'distance' && selectedType !== 'tripwire_tracking' && selectedType !== 'region_filter' && selectedType !== 'count' && selectedType !== 'small_image_batch' && selectedType !== 'target_matting' && selectedType !== 'sequence' && selectedType !== 'sop_compliance' && selectedType !== 'judge'">
               <div class="sg-sec-title">输入</div>
-              <el-form-item v-for="sel in inputSelectors" :key="sel.port" :label="sel.label" :required="!sel.optional">
+              <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port" :label="sel.label" :required="!sel.optional">
                 <el-popover v-model="sel.popOpen" placement="bottom-start" trigger="click"
                             :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
                   <el-tree v-if="sel.treeData.length" :data="sel.treeData" node-key="id"
@@ -178,7 +178,7 @@
               </el-form-item>
 
               <div class="sg-sec-title">输入</div>
-              <el-form-item v-for="sel in inputSelectors" :key="sel.port" :label="sel.label" :required="!sel.optional">
+              <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port" :label="sel.label" :required="!sel.optional">
                 <el-popover v-model="sel.popOpen" placement="bottom-start" trigger="click"
                             :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
                   <el-tree v-if="sel.treeData.length" :data="sel.treeData" node-key="id"
@@ -607,7 +607,7 @@
             <!-- 目标抠图推理 -->
             <template v-else-if="selectedType === 'target_matting'">
               <div class="sg-sec-title">输入</div>
-              <el-form-item v-for="sel in inputSelectors" :key="sel.port" :label="sel.label" required>
+              <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port" :label="sel.label" :required="!sel.optional">
                 <el-popover v-model="sel.popOpen" placement="bottom-start" trigger="click"
                             :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
                   <el-tree v-if="sel.treeData.length" :data="sel.treeData" node-key="id"
@@ -2126,6 +2126,37 @@
               <div class="sg-tip">开始节点定义技能运行所需的输入；其中 image 为当前帧图像。</div>
             </template>
 
+            <!-- 条件执行门控：可选进阶项，放主配置之后 -->
+            <template v-if="gateSelector">
+              <div class="sg-sec-title">条件执行</div>
+              <el-form-item>
+                <template slot="label">
+                  <span>条件执行门控</span>
+                  <el-tooltip placement="top" :content="GATE_HELP_TIP">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </template>
+                <el-popover v-model="gateSelector.popOpen" placement="bottom-start" trigger="click"
+                            :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
+                  <el-tree v-if="gateSelector.treeData.length" :data="gateSelector.treeData" node-key="id"
+                           default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                           :current-node-key="gateSelector.value" @node-click="onParamPick(gateSelector, $event)">
+                    <span slot-scope="{ data }" class="sg-tree-node">
+                      <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                      <span>{{ data.label }}</span>
+                    </span>
+                  </el-tree>
+                  <div v-else class="sg-tree-empty">暂无数据</div>
+                  <div slot="reference" class="sg-ref-box" :class="{ 'is-empty': !gateSelector.value }">
+                    <span class="sg-ref-txt">{{ selLabel(gateSelector) || '请选择布尔参数（可选）' }}</span>
+                    <i v-if="gateSelector.value" class="el-icon-circle-close sg-ref-clear" @click.stop="clearInput(gateSelector)"></i>
+                    <i v-else class="el-icon-arrow-down sg-ref-arrow"></i>
+                  </div>
+                </el-popover>
+                <div class="sg-tip">{{ GATE_HELP_TIP }}</div>
+              </el-form-item>
+            </template>
+
             <el-button v-if="selectedType !== 'start' && selectedType !== 'end'"
                        type="danger" size="mini" icon="el-icon-delete" style="margin-top:12px"
                        @click="deleteSelected">删除此节点</el-button>
@@ -2281,21 +2312,44 @@ const TRACKED_SUFFIX = '__tracked'
 // 已由后端 /node-types 注册的扩展节点（保留空数组，兼容旧逻辑）
 const EXTRA_NODE_TYPES = []
 
-const DEFAULT_CUSTOM_CODE = `def main(inputs):
+const DEFAULT_CUSTOM_CODE = `def main(inputs, state):
     """
-    inputs: 这是一个字典，包含了当前输入配置中映射的所有变量
+    自定义节点入口。
+
+    参数:
+      inputs: dict，键名为右侧「输入参数」里配置的名字，值为上游连线传入的数据
+      state:  dict，本节点跨帧持久化状态（按节点隔离）。同一路视频连续帧之间会复用；
+              改完后必须放进返回值的 "state" 键，否则不会写回。
+
+    预置库（无需 import，环境可用时自动注入）:
+      math   — 标准库，如 math.sqrt / math.hypot
+      np / numpy — 数组运算，如 np.array、np.mean
+      cv2    — OpenCV，如 cv2.cvtColor、cv2.resize（图像为 BGR numpy 数组）
+
+    返回:
+      dict。键名对应「输出参数」；另可带 "state" 写回跨帧状态。
     """
-    # 1. 获取输入
-    input_value = inputs.get("input", "")
+    # ---- 读输入（名字与「输入参数」一致）----
+    value = inputs.get("input", "")
 
-    # 2. 编写你的逻辑
-    result_value = input_value
+    # ---- 跨帧 state：累计调用次数示例 ----
+    # state 在多帧间保留；任务重置 / 评测换图时由引擎清空
+    state["call_count"] = int(state.get("call_count", 0) or 0) + 1
 
-    # 3. 返回结果
-    result = {
-        "output": result_value
+    # ---- 预置库用法示例（按需取消注释）----
+    # dist = math.hypot(3, 4)                    # -> 5.0
+    # arr = np.array([1.0, 2.0, 3.0])
+    # mean = float(np.mean(arr))
+    # image = inputs.get("image")                # Image 端口：numpy BGR
+    # if image is not None:
+    #     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    #     h, w = gray.shape[:2]
+
+    return {
+        "output": value,   # 键名与「输出参数」一致
+        "state": state,    # 务必带回，跨帧修改才会生效
     }
-    return result`
+`
 
 // 节点大类的主题色与图标
 const CAT_META = {
@@ -2327,7 +2381,11 @@ const TYPE_ICON = {
   sop_compliance: 'el-icon-finished',
   custom_code: 'el-icon-edit-outline',
   target_matting: 'el-icon-crop',
-  small_image_batch: 'el-icon-cpu'
+  small_image_batch: 'el-icon-cpu',
+  merge_detections: 'el-icon-connection',
+  motion_state: 'el-icon-refresh',
+  object_event: 'el-icon-bell',
+  pose_keypoints: 'el-icon-user'
 }
 // 端口类型 -> 展示标签与颜色
 const PT_META = {
@@ -2345,27 +2403,34 @@ const PT_META = {
 }
 // 端口名 -> 友好中文（找不到则回退到端口类型标签 / 端口名）
 const PORT_LABELS = {
-  image: '图片', roi: '电子围栏', trigger: '触发',
+  image: '图片', roi: '电子围栏', trigger: '触发', gate: '条件执行门控',
   targets: '目标',
-  targets1: '相交目标1 (追踪)', targets2: '相交目标2 (追踪)',
-  result1: '相交目标1的结果', result2: '相交目标2的结果',
-  target1: '距离目标1的标签', target2: '距离目标2的标签',
-  targets: '跨线目标（追踪）', tripwire: '绊线', crossed: '跨线目标',
-  matched1: '满足相交的目标1(追踪)', matched2: '满足相交的目标2(追踪)',
+  targets1: '目标1', targets2: '目标2',
+  result1: '匹配目标1', result2: '匹配目标2',
+  unmatched1: '未匹配目标1', unmatched2: '未匹配目标2',
+  target1: '距离目标1', target2: '距离目标2',
+  tripwire: '绊线', crossed: '跨线目标',
+  matched1: '满足相交的目标1', matched2: '满足相交的目标2',
   period: '位移计算周期(s)',
-  h_min: '水平移动距离下限(px)', h_max: '水平移动距离上限(px)', h_direction: '目标水平移动方向',
-  v_min: '垂直移动距离下限(px)', v_max: '垂直移动距离上限(px)', v_direction: '目标垂直移动方向',
+  h_min: '水平距离/位移下限(px)', h_max: '水平距离/位移上限(px)', h_direction: '水平方向',
+  v_min: '垂直距离/位移下限(px)', v_max: '垂直距离/位移上限(px)', v_direction: '垂直方向',
   both_axes: '同时满足垂直和水平条件',
   iou_threshold: '交并比阈值下限', iou_method: '交并比计算方法', duration: '持续时间 (s)',
-  target: '目标', target1: '目标1', target2: '目标2',
-  count: '数量', passed: '判定', value: '值', result: '结果',
+  target: '目标', count: '数量', passed: '判定', false: '未通过', raw: '当帧条件',
+  value: '值', result: '结果',
   detections: '检测目标', filter_target: '过滤目标', filtered_targets: '过滤目标标签',
-  crossed: '越线目标', matched: '配对目标',
+  matched: '配对目标',
   output: '输出', filtered: '过滤结果',
   video: '原视频', start_time: '开始时间（秒）', end_time: '结束时间（秒）', buffer: '前后缓冲区间（秒）',
   video_clip: '视频片段', success: '成功状态', error_message: '错误信息',
-  small_images: '小图序列'
+  small_images: '小图序列',
+  running: '运行中', stopped: '已停止', magnitude: '运动量',
+  regions: '运动分析区域',
+  triggered: '事件触发', prev_count: '上一帧数量', curr_count: '当前数量',
+  person: '人员', a: '输入A', b: '输入B', c: '输入C', d: '输入D', e: '输入E',
+  f: '输入F', g: '输入G', h: '输入H', i: '输入I', j: '输入J',
 }
+const GATE_HELP_TIP = '可选。不接则本节点每帧都会执行；接上游布尔值（如条件分支的「判定通过」）后，仅在为真时才执行。适合控制多模态大模型、姿态等耗时节点，避免无嫌疑时仍每帧调用。'
 
 const VIDEO_SLICE_NUMERIC_FIELDS = [
   { port: 'start_time', label: '开始时间（秒）', placeholder: '请输入开始时间（秒）', tip: '切片起始时间，单位秒' },
@@ -2648,7 +2713,8 @@ function makePortRef(nodeId, port) {
 const COUNT_BINDABLE_NODE_TYPES = new Set([
   'detection_model', 'region_filter', 'size_filter',
   'intersection', 'intersect', 'tripwire_tracking', 'distance', 'displacement',
-  'target_matting', 'small_image_batch', 'custom_code'
+  'target_matting', 'small_image_batch', 'custom_code',
+  'merge_detections', 'object_event', 'pose_keypoints'
 ])
 
 function isBindableSourceNode(consumerNodeType, portType, sourceNodeType) {
@@ -3606,7 +3672,10 @@ class SGNode extends HtmlNode {
       body = row('输入', ins) + row('输出', outs)
     } else {
       const genBoundIn = boundInputPorts(m)
-      const ins = (p.inputPorts || []).map(n => chipHtml(n, types[n], null, !genBoundIn.has(n)))
+      // gate 为可选门控：未绑定时不在卡片上显示，避免看起来像必填
+      const ins = (p.inputPorts || [])
+        .filter(n => n !== 'gate' || genBoundIn.has(n))
+        .map(n => chipHtml(n, types[n], null, !genBoundIn.has(n)))
       if (p.dynamic) ins.push('<span class="sgx-chip sgx-chip-dyn" style="--c:#909399"><span class="sgx-chip-dot"></span>动态输入</span>')
       const outs = (p.outputPorts || []).map(n => chipHtml(n, types[n]))
       body = row('输入', ins) + row('输出', outs)
@@ -3662,6 +3731,7 @@ export default {
       trackCfgOpen: false,
       modelClassesCache: {},
       inputSelectors: [],
+      GATE_HELP_TIP,
       graphEdgeRev: 0,
       _normalizingEdge: false,
       testDialogVisible: false,
@@ -3757,6 +3827,13 @@ export default {
     }
   },
   computed: {
+    // 条件执行门控：单独展示并附说明，不混在「输入」列表里
+    gateSelector() {
+      return (this.inputSelectors || []).find(s => s.port === 'gate') || null
+    },
+    inputSelectorsNoGate() {
+      return (this.inputSelectors || []).filter(s => s.port !== 'gate')
+    },
     // 视觉模型「输出」区展开成扁平行（每个标签一行检测 + 可选一行追踪），
     // 单层 v-for 渲染，避免 <template v-for> 上挂 key（Vue2 不支持）
     detectionOutputRows() {
@@ -4730,7 +4807,8 @@ export default {
             || (t === 'target_matting' && mattingLabels[p])
             || PORT_LABELS[p] || p,
           type,
-          optional: type === 'ROI',
+          // gate / ROI 均为可选：不接则按默认行为（gate=始终执行，ROI=不过滤）
+          optional: type === 'ROI' || p === 'gate',
           value,
           groups,
           treeData: this.groupsToTree(groups),
@@ -5333,11 +5411,21 @@ export default {
           duration: 0, buffer: 0
         },
         tripwire_tracking: {},
-        distance: { h_min: 0, h_max: 1000000, v_min: 0, v_max: 1000000, both_axes: true },
+        distance: {
+          h_min: 0, h_max: 1000000, h_direction: '双向',
+          v_min: 0, v_max: 1000000, v_direction: '双向', both_axes: true
+        },
+        merge_detections: {},
+        motion_state: { threshold: 0.1, consecutive_frames: 3, use_full_frame: false },
+        object_event: { event: 'disappear', min_prev_count: 1, stable_frames: 2, identity: 'count' },
+        pose_keypoints: {
+          model_name: 'yolo11_pose', confidence_threshold: 0.5,
+          waist_keypoint_indices: [11, 12], wrist_keypoint_indices: [9, 10]
+        },
         judge: {
           conditions: {
             condition_groups: [{
-              conditions: [{ field: '', operator: '', value: '', param_type: '' }],
+              conditions: [{ field: '', operator: '', value: '', compare_field: '', param_type: '' }],
               relation: 'all'
             }],
             global_relation: 'or',

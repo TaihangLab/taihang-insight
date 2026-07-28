@@ -3897,6 +3897,374 @@ export const realtimeDetectionAPI = {
   }
 };
 
+/**
+ * ML Pipeline API - 标注-训练-推理-服务化
+ */
+export const mlPipelineAPI = {
+  // ---- Label Studio 状态 ----
+  getLabelStudioStatus() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/annotation/label-studio/status');
+  },
+  // ---- 数据集 ----
+  listDatasets() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/annotation/datasets');
+  },
+  createDataset(data) {
+    return visionAIAxios.post('/api/v1/ml-pipeline/annotation/datasets', data);
+  },
+  getDataset(id) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${id}`);
+  },
+  deleteDataset(id) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/annotation/datasets/${id}`);
+  },
+  addImages(datasetId, data) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images`, data);
+  },
+  uploadImages(datasetId, files) {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f.raw || f));
+    return visionAIAxios.post(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/upload`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 }
+    );
+  },
+  listImages(datasetId) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images`);
+  },
+  syncAnnotations(datasetId) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/sync`);
+  },
+  checkLsProject(datasetId) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/check-ls`);
+  },
+  exportDataset(datasetId, valRatio = 0.2) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/export?val_ratio=${valRatio}`);
+  },
+
+  // ---- 训练信息 ----
+  getSupportedModels() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/models');
+  },
+  getExportFormats() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/export-formats');
+  },
+  getGpuInfo() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/gpu-info');
+  },
+
+  // ---- TensorBoard ----
+  startTensorBoard(taskId) {
+    const params = taskId ? { task_id: taskId } : {};
+    return visionAIAxios.post('/api/v1/ml-pipeline/training/tensorboard/start', null, { params });
+  },
+  stopTensorBoard() {
+    return visionAIAxios.post('/api/v1/ml-pipeline/training/tensorboard/stop');
+  },
+  getTensorBoardStatus() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/tensorboard/status');
+  },
+
+  // ---- 训练任务 ----
+  listTrainingTasks() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/training/tasks');
+  },
+  createTrainingTask(data) {
+    return visionAIAxios.post('/api/v1/ml-pipeline/training/tasks', data);
+  },
+  getTrainingTask(id) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${id}`);
+  },
+  getTrainingTaskLog(id, tail = 200) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${id}/log`, { params: { tail } });
+  },
+  startTrainingTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/start`);
+  },
+  cancelTrainingTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/cancel`);
+  },
+  interruptTrainingTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${id}/interrupt`);
+  },
+  deleteTrainingTask(id) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/training/tasks/${id}`);
+  },
+
+  // ---- 模型导出 ----
+  exportModel(taskId, format) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/training/tasks/${taskId}/export`, { format });
+  },
+  getExportStatus(taskId) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/training/tasks/${taskId}/export-status`);
+  },
+
+  // ---- 模型下载 ----
+  getModelDownloadUrl(taskId, type = 'export') {
+    return `${config.API_BASE_URL}/api/v1/ml-pipeline/training/tasks/${taskId}/download?type=${type}`;
+  },
+
+  // ---- 自动采集 ----
+  listCollectionTemplates() {
+    return visionAIAxios.get('/api/v1/ml-pipeline/collection/templates');
+  },
+  listCollectionTasks(datasetId) {
+    const params = datasetId != null ? { dataset_id: datasetId } : {};
+    return visionAIAxios.get('/api/v1/ml-pipeline/collection/tasks', { params });
+  },
+  createCollectionTask(data) {
+    return visionAIAxios.post('/api/v1/ml-pipeline/collection/tasks', data);
+  },
+  getCollectionTask(id) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/collection/tasks/${id}`);
+  },
+  deleteCollectionTask(id) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/collection/tasks/${id}`);
+  },
+  startCollectionTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/collection/tasks/${id}/start`);
+  },
+  stopCollectionTask(id) {
+    return visionAIAxios.post(`/api/v1/ml-pipeline/collection/tasks/${id}/stop`);
+  },
+  listCollectionRecentImages(taskId, limit = 20) {
+    return visionAIAxios.get(`/api/v1/ml-pipeline/collection/tasks/${taskId}/recent-images`, {
+      params: { limit },
+    });
+  },
+};
+
+/**
+ * 系统监控 API - 推流诊断与健康检查
+ */
+export const systemMonitorAPI = {
+  /**
+   * 获取推流环境完整诊断信息
+   * 包括 FFmpeg 安装状态、NVENC 可用性、RTSP 服务器可达性等
+   */
+  getStreamingDiagnostics() {
+    return visionAIAxios.get('/api/v1/system/streaming-diagnostics');
+  },
+
+  /**
+   * 获取推流健康状态摘要（轻量级，适合轮询）
+   */
+  getStreamingHealth() {
+    return visionAIAxios.get('/api/v1/system/streaming-health');
+  },
+
+  /**
+   * 获取AI任务执行器状态（含推流健康）
+   */
+  getExecutorStatus() {
+    return visionAIAxios.get('/api/v1/ai/monitor/executor-status');
+  },
+
+  /**
+   * 获取指定任务的性能报告（含推流详情）
+   */
+  getTaskPerformance(taskId) {
+    return visionAIAxios.get(`/api/v1/ai/monitor/task-performance/${taskId}`);
+  },
+
+  /**
+   * 获取系统健康检查
+   */
+  getHealthCheck() {
+    return visionAIAxios.get('/api/v1/system/health');
+  },
+
+  /**
+   * 获取服务器系统资源（CPU/内存/磁盘/GPU/运行任务/已加载模型）
+   */
+  getSystemResources() {
+    return visionAIAxios.get('/api/v1/system/resources');
+  }
+};
+
+/**
+ * 技能图编排 API - 节点拖拽式创建技能
+ */
+export const skillGraphAPI = {
+  // 节点面板：列出所有可用节点类型
+  getNodeTypes() {
+    return visionAIAxios.get('/api/v1/skill-graphs/node-types');
+  },
+  // 多模态大模型节点：可选模型列表（来自后端系统配置）
+  getVlmModels() {
+    return visionAIAxios.get('/api/v1/skill-graphs/vlm-models');
+  },
+  // 上传技能编排封面图（与视觉技能封面上传方式一致：multipart 文件）
+  uploadCoverFile(skillId, imageFile) {
+    const formData = new FormData();
+    formData.append('skill_id', skillId);
+    formData.append('file', imageFile);
+    return visionAIAxios.post('/api/v1/skill-graphs/upload-cover', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(response => response.data);
+  },
+  // 校验技能图（不落库）
+  validateGraph(graphJson) {
+    return visionAIAxios.post('/api/v1/skill-graphs/validate', { graph_json: graphJson });
+  },
+  // 在线试跑（image_base64 可选）
+  testRun(graphJson, imageBase64, roi) {
+    return visionAIAxios.post('/api/v1/skill-graphs/test-run', {
+      graph_json: graphJson, image_base64: imageBase64, roi: roi
+    }, { timeout: LONG_RUNNING_TIMEOUT });
+  },
+  // 自定义节点：代码模拟测试
+  testCustomCode(code, inputs, timeoutMs) {
+    const ms = timeoutMs || 10000;
+    return visionAIAxios.post('/api/v1/skill-graphs/test-custom-code', {
+      code: code, inputs: inputs || {}, timeout_ms: ms
+    }, { timeout: Math.max(ms + 5000, 30000) });
+  },
+  // 列表
+  listGraphs(params) {
+    return visionAIAxios.get('/api/v1/skill-graphs', { params });
+  },
+  // 创建
+  createGraph(data) {
+    return visionAIAxios.post('/api/v1/skill-graphs', data);
+  },
+  // 导出技能编排（标准 JSON 包）
+  exportGraph(skillId) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}/export`);
+  },
+  // 导入技能编排
+  importGraph(data) {
+    return visionAIAxios.post('/api/v1/skill-graphs/import', data);
+  },
+  // 批量（一键）导出技能编排：按所选技能ID列表导出为一个 zip（每个技能一个 json）
+  exportGraphsBatch(skillIds) {
+    return visionAIAxios.post('/api/v1/skill-graphs/export-batch', { skill_ids: skillIds || [] }, {
+      responseType: 'blob',
+      timeout: 60000
+    });
+  },
+  // 批量（一键）导入技能编排：传入多个 json 包，缺少模型的技能自动跳过
+  // data: { packages: [json, json, ...] }
+  importGraphsBatch(data) {
+    return visionAIAxios.post('/api/v1/skill-graphs/import-batch', data);
+  },
+  // 详情
+  getGraph(skillId) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}`);
+  },
+  // 更新
+  updateGraph(skillId, data) {
+    return visionAIAxios.put(`/api/v1/skill-graphs/${skillId}`, data);
+  },
+  // 删除
+  deleteGraph(skillId) {
+    return visionAIAxios.delete(`/api/v1/skill-graphs/${skillId}`);
+  },
+  // 发布 / 下线
+  publishGraph(skillId) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/publish`);
+  },
+  unpublishGraph(skillId) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/unpublish`);
+  },
+  // 效果评测：用一批标注样本给技能图打分
+  evaluate(graphJson, samples) {
+    return visionAIAxios.post('/api/v1/skill-graphs/evaluate', {
+      graph_json: graphJson, samples: samples
+    }, { timeout: LONG_RUNNING_TIMEOUT });
+  },
+  // 历史版本列表
+  listVersions(skillId) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}/versions`);
+  },
+  // 回滚到指定版本
+  rollbackVersion(skillId, version) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/rollback`, { version: version });
+  },
+  // 调用监控统计
+  callStats(skillId, recent) {
+    return visionAIAxios.get(`/api/v1/skill-graphs/${skillId}/stats`, { params: { recent: recent || 20 } });
+  },
+  // 独立调用（传图分析，仅已发布）
+  invokeSkill(skillId, imageBase64, roi, source) {
+    return visionAIAxios.post(`/api/v1/skill-graphs/${skillId}/invoke`, {
+      image_base64: imageBase64, roi: roi, source: source
+    });
+  }
+};
+
+/**
+ * 技能运行计划 API
+ * 对接后端 /api/v1/skill-run-plans
+ */
+export const runPlanAPI = {
+  // 运行计划列表
+  listPlans(params) {
+    return visionAIAxios.get('/api/v1/skill-run-plans', { params });
+  },
+  // 创建运行计划（批量创建：1技能 × N点位）
+  createPlan(data) {
+    return visionAIAxios.post('/api/v1/skill-run-plans', data, { timeout: LONG_RUNNING_TIMEOUT });
+  },
+  // 运行计划详情
+  getPlan(planId) {
+    return visionAIAxios.get(`/api/v1/skill-run-plans/${planId}`);
+  },
+  // 更新运行计划
+  updatePlan(planId, data) {
+    return visionAIAxios.put(`/api/v1/skill-run-plans/${planId}`, data);
+  },
+  // 启停单条计划
+  setEnabled(planId, enabled) {
+    return visionAIAxios.patch(`/api/v1/skill-run-plans/${planId}/enabled`, { enabled });
+  },
+  // 删除单条计划
+  deletePlan(planId) {
+    return visionAIAxios.delete(`/api/v1/skill-run-plans/${planId}`);
+  },
+  // 批量启停
+  batchEnable(planIds, enabled) {
+    return visionAIAxios.post('/api/v1/skill-run-plans/batch-enable', { plan_ids: planIds, enabled });
+  },
+  // 批量删除
+  batchDelete(planIds) {
+    return visionAIAxios.post('/api/v1/skill-run-plans/batch-delete', { plan_ids: planIds });
+  },
+  // 运行任务（计划派生子任务）列表
+  listRunTasks(params) {
+    return visionAIAxios.get('/api/v1/skill-run-plans/run-tasks', { params });
+  },
+  // 运行任务详情
+  getRunTask(taskId) {
+    return visionAIAxios.get(`/api/v1/skill-run-plans/run-tasks/${taskId}`);
+  },
+  // 运行任务日志（状态时间轴 + 异常记录）
+  getRunTaskLogs(taskId) {
+    return visionAIAxios.get(`/api/v1/skill-run-plans/run-tasks/${taskId}/logs`);
+  },
+  // 删除单条运行任务
+  deleteRunTask(taskId) {
+    return visionAIAxios.delete(`/api/v1/skill-run-plans/run-tasks/${taskId}`);
+  },
+  // 批量删除运行任务
+  batchDeleteRunTasks(taskIds) {
+    return visionAIAxios.post('/api/v1/skill-run-plans/run-tasks/batch-delete', { task_ids: taskIds });
+  },
+  // 点位组织树（供"点位选择"）
+  getOrganizations() {
+    return visionAIAxios.get('/api/v1/skill-run-plans/organizations');
+  },
+  // 创建运行计划时的默认预警配置
+  getDefaults() {
+    return visionAIAxios.get('/api/v1/skill-run-plans/defaults');
+  },
+  // 点位实时画面快照URL（供电子围栏绘制底图）
+  getCameraSnapshotUrl(cameraId) {
+    return `${config.API_BASE_URL}/api/v1/cameras/${cameraId}/snapshot?t=${Date.now()}`;
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
