@@ -3688,6 +3688,14 @@ export const mlPipelineAPI = {
   listImages(datasetId) {
     return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images`);
   },
+  deleteImage(imageId) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/annotation/images/${imageId}`);
+  },
+  deleteImages(datasetId, imageIds) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images`, {
+      data: { image_ids: imageIds },
+    });
+  },
   syncAnnotations(datasetId) {
     return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/sync`);
   },
@@ -3770,6 +3778,9 @@ export const mlPipelineAPI = {
   },
   createCollectionTask(data) {
     return visionAIAxios.post('/api/v1/ml-pipeline/collection/tasks', data);
+  },
+  updateCollectionTask(id, data) {
+    return visionAIAxios.put(`/api/v1/ml-pipeline/collection/tasks/${id}`, data);
   },
   getCollectionTask(id) {
     return visionAIAxios.get(`/api/v1/ml-pipeline/collection/tasks/${id}`);

@@ -89,27 +89,25 @@
                         </el-select>
                       </div>
                       
-                      <!-- 🆕 调试信息显示区域 -->
-                      <div v-if="selectedAITasks[index-1]" class="detection-debug-info">
+                      <!-- 调试信息（紧凑，避免遮挡画面） -->
+                      <div v-if="selectedAITasks[index-1]" class="detection-debug-info" :title="getDetectionDebugTitle(index-1)">
                         <div class="debug-line">
-                          <span class="debug-label">WebSocket:</span>
+                          <span class="debug-label">WS</span>
                           <span :class="['debug-value', wsConnections[index-1] ? 'connected' : 'disconnected']">
                             {{ wsConnections[index-1] ? '已连接' : '未连接' }}
                           </span>
                         </div>
-                        <div class="debug-line" v-if="detectionResults[index-1]">
-                          <span class="debug-label">检测目标:</span>
-                          <span class="debug-value">{{ detectionResults[index-1].detections ? detectionResults[index-1].detections.length : 0 }} 个</span>
+                        <div class="debug-line">
+                          <span class="debug-label">目标</span>
+                          <span class="debug-value">{{ getDetectionCount(index-1) }}</span>
                         </div>
-                        <div class="debug-line" v-if="detectionResults[index-1] && detectionResults[index-1].detections && detectionResults[index-1].detections.length > 0">
-                          <span class="debug-label">目标列表:</span>
-                          <span class="debug-value">
-                            {{ detectionResults[index-1].detections.map(d => d.label || d.class_name).join(', ') }}
-                          </span>
+                        <div class="debug-line" v-if="getDetectionLabels(index-1)">
+                          <span class="debug-label">列表</span>
+                          <span class="debug-value debug-ellipsis">{{ getDetectionLabels(index-1) }}</span>
                         </div>
                         <div class="debug-line">
-                          <span class="debug-label">最后更新:</span>
-                          <span class="debug-value">{{ detectionUpdateTime[index-1] || '无数据' }}</span>
+                          <span class="debug-label">更新</span>
+                          <span class="debug-value debug-ellipsis">{{ detectionUpdateTime[index-1] || '无数据' }}</span>
                         </div>
                       </div>
                       
@@ -176,27 +174,25 @@
                         </el-select>
                       </div>
                       
-                      <!-- 🆕 调试信息显示区域（全屏模式） -->
-                      <div v-if="selectedAITasks[index-1]" class="detection-debug-info">
+                      <!-- 调试信息（全屏，紧凑） -->
+                      <div v-if="selectedAITasks[index-1]" class="detection-debug-info" :title="getDetectionDebugTitle(index-1)">
                         <div class="debug-line">
-                          <span class="debug-label">WebSocket:</span>
+                          <span class="debug-label">WS</span>
                           <span :class="['debug-value', wsConnections[index-1] ? 'connected' : 'disconnected']">
                             {{ wsConnections[index-1] ? '已连接' : '未连接' }}
                           </span>
                         </div>
-                        <div class="debug-line" v-if="detectionResults[index-1]">
-                          <span class="debug-label">检测目标:</span>
-                          <span class="debug-value">{{ detectionResults[index-1].detections ? detectionResults[index-1].detections.length : 0 }} 个</span>
+                        <div class="debug-line">
+                          <span class="debug-label">目标</span>
+                          <span class="debug-value">{{ getDetectionCount(index-1) }}</span>
                         </div>
-                        <div class="debug-line" v-if="detectionResults[index-1] && detectionResults[index-1].detections && detectionResults[index-1].detections.length > 0">
-                          <span class="debug-label">目标列表:</span>
-                          <span class="debug-value">
-                            {{ detectionResults[index-1].detections.map(d => d.label || d.class_name).join(', ') }}
-                          </span>
+                        <div class="debug-line" v-if="getDetectionLabels(index-1)">
+                          <span class="debug-label">列表</span>
+                          <span class="debug-value debug-ellipsis">{{ getDetectionLabels(index-1) }}</span>
                         </div>
                         <div class="debug-line">
-                          <span class="debug-label">最后更新:</span>
-                          <span class="debug-value">{{ detectionUpdateTime[index-1] || '无数据' }}</span>
+                          <span class="debug-label">更新</span>
+                          <span class="debug-value debug-ellipsis">{{ detectionUpdateTime[index-1] || '无数据' }}</span>
                         </div>
                       </div>
                       <!-- 🆕 检测框OSD叠加层（全屏模式） -->
@@ -2950,6 +2946,32 @@ export default {
 
     // 🆕 ========== OSD检测框叠加功能 ==========
     
+    getDetectionCount(index) {
+      const dets = this.detectionResults[index] && this.detectionResults[index].detections
+      return dets ? `${dets.length} 个` : '0 个'
+    },
+
+    getDetectionLabels(index) {
+      const dets = this.detectionResults[index] && this.detectionResults[index].detections
+      if (!dets || !dets.length) return ''
+      const labels = dets.map(d => d.label || d.class_name).filter(Boolean)
+      if (!labels.length) return ''
+      // 最多展示前 3 个标签，其余用数量概括，避免撑大浮层
+      if (labels.length <= 3) return labels.join(', ')
+      return `${labels.slice(0, 3).join(', ')} 等${labels.length}个`
+    },
+
+    getDetectionDebugTitle(index) {
+      const ws = this.wsConnections[index] ? '已连接' : '未连接'
+      const count = this.getDetectionCount(index)
+      const dets = this.detectionResults[index] && this.detectionResults[index].detections
+      const labels = dets && dets.length
+        ? dets.map(d => d.label || d.class_name).filter(Boolean).join(', ')
+        : ''
+      const updated = this.detectionUpdateTime[index] || '无数据'
+      return `WS: ${ws}\n目标: ${count}${labels ? `\n列表: ${labels}` : ''}\n更新: ${updated}`
+    },
+
     /**
      * 加载指定摄像头的可用AI任务列表
      */
@@ -4781,26 +4803,30 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
   height: 100%;
 }
 
-/* 🆕 调试信息显示区域 */
+/* 调试信息：紧凑展示，限制尺寸避免遮挡画面 */
 .detection-debug-info {
   position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background: rgba(0, 0, 0, 0.85);
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 12px;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.35;
   color: #fff;
   z-index: 20;
-  max-width: 300px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  max-width: min(160px, 36%);
+  max-height: 42%;
+  overflow: hidden;
+  pointer-events: none;
+  border: 1px solid rgba(59, 130, 246, 0.25);
 }
 
 .detection-debug-info .debug-line {
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .detection-debug-info .debug-line:last-child {
@@ -4809,13 +4835,21 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
 
 .detection-debug-info .debug-label {
   color: #8492a6;
-  margin-right: 8px;
-  min-width: 70px;
+  margin-right: 6px;
+  flex-shrink: 0;
+  min-width: 28px;
 }
 
 .detection-debug-info .debug-value {
   color: #fff;
   font-weight: 500;
+  min-width: 0;
+}
+
+.detection-debug-info .debug-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .detection-debug-info .debug-value.connected {
