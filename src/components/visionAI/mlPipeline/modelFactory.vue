@@ -1155,11 +1155,14 @@ export default {
       if (!task) return '';
       const p = task.template_params || {};
       if (task.template_id === 'frame_change') {
-        return `灵敏度 ${p.sensitivity ?? '-'} · 变化占比 ${p.min_changed_ratio ?? '-'}`;
+        const sensitivity = p.sensitivity != null ? p.sensitivity : '-';
+        const ratio = p.min_changed_ratio != null ? p.min_changed_ratio : '-';
+        return `灵敏度 ${sensitivity} · 变化占比 ${ratio}`;
       }
       if (task.template_id === 'small_model') {
         const classes = (p.target_classes || []).join('、') || '未选类别';
-        return `模型 ${p.model_name || '-'} · 类别 ${classes} · 置信度 ${p.confidence_threshold ?? '-'}`;
+        const confidence = p.confidence_threshold != null ? p.confidence_threshold : '-';
+        return `模型 ${p.model_name || '-'} · 类别 ${classes} · 置信度 ${confidence}`;
       }
       if (task.template_id === 'vlm') {
         const prompt = (p.prompt || '').replace(/\s+/g, ' ').trim();
