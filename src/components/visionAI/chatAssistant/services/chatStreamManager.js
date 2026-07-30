@@ -287,7 +287,6 @@ export function getSessionSnapshot(conversationId) {
 
 export function startStream({
   baseUrl,
-  token,
   message,
   conversationId,
   assistantMessageId,
@@ -315,7 +314,6 @@ export function startStream({
 
   const stream = streamChat({
     baseUrl,
-    token,
     message,
     conversationId,
     onConversationId: (id) => {

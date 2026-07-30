@@ -258,7 +258,6 @@ export default {
 
       startStream({
         baseUrl: chatApi.getBaseUrl(),
-        token: chatApi.getToken(),
         message: userText,
         conversationId: this.activeConversationId,
         assistantMessageId: this.assistantMessageId,

@@ -1,4 +1,6 @@
 import axios from 'axios';
+import userService from '@/components/service/UserService';
+import { attachAuthRequestInterceptor } from '@/utils/authHeaders';
 const config = require('../../../../../config/index.js');
 
 const chatAxios = axios.create({
@@ -6,11 +8,7 @@ const chatAxios = axios.create({
   timeout: 15000,
 });
 
-chatAxios.interceptors.request.use((cfg) => {
-  const token = localStorage.getItem('token');
-  if (token) cfg.headers['access-token'] = token;
-  return cfg;
-});
+attachAuthRequestInterceptor(chatAxios);
 
 export default {
   healthCheck() {
@@ -75,6 +73,6 @@ export default {
   },
 
   getToken() {
-    return localStorage.getItem('token') || '';
+    return userService.getAdminToken() || '';
   },
 };

@@ -1,4 +1,5 @@
 import { fetchEventSource } from '@microsoft/fetch-event-source';
+import { getAuthHeaders } from '@/utils/authHeaders';
 
 /**
  * 发起一次 SSE 聊天流（POST /api/v1/chat/chat）。
@@ -12,7 +13,6 @@ import { fetchEventSource } from '@microsoft/fetch-event-source';
  *
  * @param {object} opts
  * @param {string} opts.baseUrl
- * @param {string} opts.token
  * @param {string} opts.message
  * @param {string|null} opts.conversationId
  * @param {(id: string) => void} [opts.onConversationId]
@@ -22,7 +22,6 @@ import { fetchEventSource } from '@microsoft/fetch-event-source';
  */
 export function streamChat({
   baseUrl,
-  token,
   message,
   conversationId,
   onConversationId,
@@ -48,11 +47,10 @@ export function streamChat({
 
     fetchEventSource(`${baseUrl}/api/v1/chat/chat`, {
       method: 'POST',
-      headers: {
+      headers: getAuthHeaders({
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
-        ...(token ? { 'access-token': token } : {}),
-      },
+      }),
       body: JSON.stringify({
         message,
         conversation_id: conversationId || null,

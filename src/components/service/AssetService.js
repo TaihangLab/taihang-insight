@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { attachAuthRequestInterceptor } from '@/utils/authHeaders';
 const config = require('../../../config/index.js');
 
 const assetAxios = axios.create({
@@ -6,6 +7,8 @@ const assetAxios = axios.create({
   timeout: 30000,
   withCredentials: false,
 });
+
+attachAuthRequestInterceptor(assetAxios);
 
 function unwrap(res) {
   const body = res.data || {};

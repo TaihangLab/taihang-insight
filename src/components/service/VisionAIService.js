@@ -1,5 +1,5 @@
 import axios from 'axios';
-import userService from '@/components/service/UserService'
+import { attachAuthRequestInterceptor, getAuthHeaders } from '@/utils/authHeaders'
 
 const config = require('../../../config/index.js');
 // 创建专用于visionAI模块的axios实例
@@ -30,22 +30,7 @@ visionAIAxios.defaults.paramsSerializer = function (params) {
   return queryParams.join('&');
 };
 
-// 添加请求拦截器
-visionAIAxios.interceptors.request.use(
-  config => {
-    // 这里可以添加token等通用请求头
-    const token = userService.getAdminToken()
-    // const token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOiJzeXNfdXNlcjoxOTgyNzE0MTA5NjgwNDk2NjQxIiwicm5TdHIiOiJ1bFFEYnl0QUQzdWxiWXJXeUg0dVNlWndDbWdITXQ4TCIsImNsaWVudGlkIjoiMDJiYjljZmU4ZDc4NDRlY2FlOGRiZTYyYjFiYTk3MWEiLCJ0ZW5hbnRJZCI6IjAwMDAwMCIsInVzZXJJZCI6MTk4MjcxNDEwOTY4MDQ5NjY0MSwidXNlck5hbWUiOiJ6dHNNYW5hZ2VyIiwiZGVwdElkIjoxOTgyNzEzNjYzNDE5MTMzOTUzLCJkZXB0TmFtZSI6IiIsImRlcHRDYXRlZ29yeSI6IiJ9.P3OUOaeTamTY7bYbvBHcIhoscMjyfqh0EVIslK-o-Uo'
-    if (token) {
-      config.headers['Authorization'] = 'Bearer ' + token;
-    }
-    config.headers['clientid'] = '02bb9cfe8d7844ecae8dbe62b1ba971a';
-    return config;
-  },
-  error => {
-    return Promise.reject(error);
-  }
-);
+attachAuthRequestInterceptor(visionAIAxios);
 
 // 添加响应拦截器（只处理认证等通用错误）
 visionAIAxios.interceptors.response.use(
@@ -2422,14 +2407,10 @@ const chatAssistantAPI = {
       // 发起POST请求（使用完整的chat端点）
       const response = await fetch(`${visionAIAxios.defaults.baseURL}/api/v1/chat/chat`, {
         method: 'POST',
-        headers: {
+        headers: getAuthHeaders({
           'Content-Type': 'application/json',
           'Accept': 'text/plain',
-          // 添加认证头（如果有）
-          ...(localStorage.getItem('token') && {
-            'access-token': localStorage.getItem('token')
-          })
-        },
+        }),
         body: JSON.stringify(requestBody),
         signal: abortController.signal
       });

@@ -2,6 +2,7 @@ import axios from 'axios'
 import { Message, MessageBox } from 'element-ui'
 import router from '@/router'
 import userService from '@/components/service/UserService'
+import { attachAuthRequestInterceptor } from '@/utils/authHeaders'
 
 // 创建axios实例
 const service = axios.create({
@@ -16,24 +17,7 @@ const config = require('../../config/index.js');
 axios.defaults.baseURL = config.API_BASE_URL + '/api/v1/wvp';
 axios.defaults.withCredentials = false;  // 关闭withCredentials，避免CORS错误
 
-// 请求拦截器
-service.interceptors.request.use(
-  config => {
-    const token = userService.getAdminToken()
-    // const token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJsb2dpblR5cGUiOiJsb2dpbiIsImxvZ2luSWQiOiJzeXNfdXNlcjoxOTgyNzE0MTA5NjgwNDk2NjQxIiwicm5TdHIiOiJ1bFFEYnl0QUQzdWxiWXJXeUg0dVNlWndDbWdITXQ4TCIsImNsaWVudGlkIjoiMDJiYjljZmU4ZDc4NDRlY2FlOGRiZTYyYjFiYTk3MWEiLCJ0ZW5hbnRJZCI6IjAwMDAwMCIsInVzZXJJZCI6MTk4MjcxNDEwOTY4MDQ5NjY0MSwidXNlck5hbWUiOiJ6dHNNYW5hZ2VyIiwiZGVwdElkIjoxOTgyNzEzNjYzNDE5MTMzOTUzLCJkZXB0TmFtZSI6IiIsImRlcHRDYXRlZ29yeSI6IiJ9.P3OUOaeTamTY7bYbvBHcIhoscMjyfqh0EVIslK-o-Uo'
-
-    if (token) {
-      config.headers['Authorization'] = 'Bearer ' + token;
-    }
-
-    config.headers['clientid'] = '02bb9cfe8d7844ecae8dbe62b1ba971a';
-    return config
-  },
-  error => {
-    console.error('请求错误:', error)
-    return Promise.reject(error)
-  }
-)
+attachAuthRequestInterceptor(service)
 
 // 是否正在刷新token的标志
 let isRefreshing = false
