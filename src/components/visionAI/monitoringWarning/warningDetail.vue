@@ -127,6 +127,16 @@
                 <h4 class="media-title">
                   <i class="el-icon-picture"></i>
                   违规截图
+                  <el-radio-group
+                    v-if="hasRawFrame"
+                    v-model="imageViewMode"
+                    size="mini"
+                    class="image-mode-switch"
+                    @click.native.stop
+                  >
+                    <el-radio-button label="annotated">标注图</el-radio-button>
+                    <el-radio-button label="raw">原图</el-radio-button>
+                  </el-radio-group>
                   <!-- 合并预警查看按钮 -->
                   <el-button
                     v-if="detail.is_merged"
@@ -141,8 +151,8 @@
                   </el-button>
                 </h4>
                 <div class="image-container" @click="openImageViewer">
-                  <div v-if="detail.minio_frame_url" class="real-image">
-                    <img :src="detail.minio_frame_url" :alt="detail.alert_type" />
+                  <div v-if="currentFrameUrl" class="real-image">
+                    <img :src="currentFrameUrl" :alt="detail.alert_type" />
                     <div class="media-overlay">
                       <i class="el-icon-zoom-in"></i>
                       <span>点击放大查看</span>
@@ -512,8 +522,8 @@
       @click="closeImageViewer">
        <div class="simple-image-container" @click.stop>
          <img
-           v-if="detail && detail.minio_frame_url"
-           :src="detail.minio_frame_url"
+           v-if="currentFrameUrl"
+           :src="currentFrameUrl"
            :alt="detail.alert_type"
            class="simple-enlarged-image" />
        </div>
@@ -626,6 +636,7 @@ export default {
 
       // 图片查看器相关
       imageViewerVisible: false,
+      imageViewMode: 'annotated', // annotated | raw
 
       // 视频播放器相关
       videoViewerVisible: false,
@@ -683,6 +694,16 @@ export default {
         return this.detail.alert_type.startsWith('llm_')
       }
       return false
+    },
+    hasRawFrame() {
+      return !!(this.detail && this.detail.minio_raw_frame_url)
+    },
+    currentFrameUrl() {
+      if (!this.detail) return ''
+      if (this.imageViewMode === 'raw' && this.detail.minio_raw_frame_url) {
+        return this.detail.minio_raw_frame_url
+      }
+      return this.detail.minio_frame_url || this.detail.minio_raw_frame_url || ''
     }
   },
   methods: {
@@ -761,6 +782,7 @@ export default {
         const response = await alertAPI.getAlertDetail(this.alertId);
         if (response.data && response.data.alert_id) {
           this.detail = response.data;
+          this.imageViewMode = 'annotated';
           this.initArchivesList();
           this.initOperationHistory();
         } else {
@@ -1464,7 +1486,7 @@ export default {
 
     // 打开图片查看器
     openImageViewer() {
-      if (this.detail && this.detail.minio_frame_url) {
+      if (this.currentFrameUrl) {
         this.imageViewerVisible = true;
       } else {
         this.$message.warning('暂无违规截图');
@@ -3024,6 +3046,11 @@ export default {
 
 /* ==================== 合并预警相关样式 ==================== */
 .merge-view-btn {
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+.image-mode-switch {
   margin-left: 12px;
   vertical-align: middle;
 }
