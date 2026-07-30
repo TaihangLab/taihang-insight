@@ -114,6 +114,14 @@
                   全选
                 </el-checkbox>
                 <el-button
+                  size="small"
+                  icon="el-icon-download"
+                  :disabled="!images.length"
+                  :loading="downloadingImages"
+                  @click="handleDownloadImages">
+                  {{ selectedImageIds.length ? `下载选中 (${selectedImageIds.length})` : '下载全部原图' }}
+                </el-button>
+                <el-button
                   type="danger"
                   size="small"
                   icon="el-icon-delete"
@@ -166,7 +174,7 @@
             <el-tab-pane name="collection">
               <span slot="label"><i class="el-icon-video-camera"></i> 自动采集</span>
               <div class="collection-panel">
-                <p class="anno-hint">从摄像头按条件自动采图写入本数据集。可选「画面变化 / 小模型检测到 / 大模型判定」，无需手动画编排。</p>
+                <p class="anno-hint">从摄像头按条件自动采图写入本数据集。可选「画面变化 / 小模型检测到 / 大模型判定 / 技能编排」；后三种可再叠加「需画面变化」前置。</p>
                 <div class="tab-toolbar">
                   <el-button type="primary" size="small" icon="el-icon-plus" @click="showCreateCollectionDialog">新建采集</el-button>
                   <el-button size="small" icon="el-icon-refresh" @click="loadCollectionTasks" :loading="collectionLoading">刷新</el-button>
@@ -237,6 +245,15 @@
                         fit="cover"
                         class="collection-thumb">
                       </el-image>
+                      <div
+                        v-if="(task.collected_count || 0) > task.recentImages.length"
+                        class="collection-thumbs-more"
+                        @click="goImagesTab">
+                        还有 {{ (task.collected_count || 0) - task.recentImages.length }} 张，去图片管理查看
+                      </div>
+                    </div>
+                    <div v-else-if="task.collected_count > 0" class="collection-thumbs-more" @click="goImagesTab">
+                      去图片管理查看全部 {{ task.collected_count }} 张
                     </div>
                   </div>
                 </div>
@@ -538,6 +555,18 @@
                 <el-form-item label="置信度">
                   <el-slider v-model="collectionForm.template_params.confidence_threshold" :min="0.1" :max="0.99" :step="0.05" show-input style="max-width: 520px;" />
                 </el-form-item>
+                <el-form-item label="需画面变化">
+                  <el-switch v-model="collectionForm.template_params.require_frame_change" />
+                  <span class="form-tip" style="margin-left: 8px;">开启后静止画面不跑检测</span>
+                </el-form-item>
+                <template v-if="collectionForm.template_params.require_frame_change">
+                  <el-form-item label="灵敏度阈值">
+                    <el-slider v-model="collectionForm.template_params.sensitivity" :min="0.01" :max="0.5" :step="0.01" show-input style="max-width: 520px;" />
+                  </el-form-item>
+                  <el-form-item label="变化区域占比">
+                    <el-slider v-model="collectionForm.template_params.min_changed_ratio" :min="0.001" :max="0.3" :step="0.001" show-input style="max-width: 520px;" />
+                  </el-form-item>
+                </template>
               </template>
 
               <template v-if="collectionForm.template_id === 'vlm'">
@@ -561,6 +590,18 @@
                     <el-option v-for="k in ['YES', '是', '存在', '有']" :key="k" :label="k" :value="k" />
                   </el-select>
                 </el-form-item>
+                <el-form-item label="需画面变化">
+                  <el-switch v-model="collectionForm.template_params.require_frame_change" />
+                  <span class="form-tip" style="margin-left: 8px;">建议开启，画面无变化时不调用大模型</span>
+                </el-form-item>
+                <template v-if="collectionForm.template_params.require_frame_change">
+                  <el-form-item label="灵敏度阈值">
+                    <el-slider v-model="collectionForm.template_params.sensitivity" :min="0.01" :max="0.5" :step="0.01" show-input style="max-width: 520px;" />
+                  </el-form-item>
+                  <el-form-item label="变化区域占比">
+                    <el-slider v-model="collectionForm.template_params.min_changed_ratio" :min="0.001" :max="0.3" :step="0.001" show-input style="max-width: 520px;" />
+                  </el-form-item>
+                </template>
               </template>
 
               <template v-if="collectionForm.template_id === 'skill_graph'">
@@ -587,6 +628,18 @@
                     <el-button type="text" size="mini" @click="openSkillGraphEditor">去编排</el-button>
                   </div>
                 </el-form-item>
+                <el-form-item label="需画面变化">
+                  <el-switch v-model="collectionForm.template_params.require_frame_change" />
+                  <span class="form-tip" style="margin-left: 8px;">依赖滞留/计时的编排请保持关闭</span>
+                </el-form-item>
+                <template v-if="collectionForm.template_params.require_frame_change">
+                  <el-form-item label="灵敏度阈值">
+                    <el-slider v-model="collectionForm.template_params.sensitivity" :min="0.01" :max="0.5" :step="0.01" show-input style="max-width: 520px;" />
+                  </el-form-item>
+                  <el-form-item label="变化区域占比">
+                    <el-slider v-model="collectionForm.template_params.min_changed_ratio" :min="0.001" :max="0.3" :step="0.001" show-input style="max-width: 520px;" />
+                  </el-form-item>
+                </template>
               </template>
             </div>
           </div>
@@ -662,6 +715,14 @@
                   {{ collectionForm.template_params.model_name || '-' }}
                   / {{ (collectionForm.template_params.target_classes || []).join('、') || '未选类别' }}
                 </el-descriptions-item>
+                <el-descriptions-item
+                  v-if="['small_model', 'vlm', 'skill_graph'].includes(collectionForm.template_id)"
+                  label="画面变化前置">
+                  <template v-if="collectionForm.template_params.require_frame_change">
+                    已开启 · 灵敏度 {{ collectionForm.template_params.sensitivity }} · 占比 {{ collectionForm.template_params.min_changed_ratio }}
+                  </template>
+                  <template v-else>未开启</template>
+                </el-descriptions-item>
                 <el-descriptions-item label="点位">
                   {{ selectedCollectionCameras.length
                     ? selectedCollectionCameras.map(c => c.camera_name).join('、')
@@ -720,6 +781,13 @@
               {{ (collectionDetailParam('target_classes') || []).join('、') || '-' }}
             </el-descriptions-item>
             <el-descriptions-item label="置信度">{{ collectionDetailParam('confidence_threshold') }}</el-descriptions-item>
+            <el-descriptions-item label="需画面变化">
+              {{ collectionDetailParam('require_frame_change') ? '是' : '否' }}
+            </el-descriptions-item>
+            <template v-if="collectionDetailParam('require_frame_change')">
+              <el-descriptions-item label="灵敏度阈值">{{ collectionDetailParam('sensitivity') }}</el-descriptions-item>
+              <el-descriptions-item label="变化区域占比">{{ collectionDetailParam('min_changed_ratio') }}</el-descriptions-item>
+            </template>
           </template>
           <template v-else-if="collectionDetailTask.template_id === 'vlm'">
             <el-descriptions-item label="判定提示词">
@@ -728,6 +796,13 @@
             <el-descriptions-item label="肯定关键词">
               {{ (collectionDetailParam('positive_keywords') || []).join('、') || '-' }}
             </el-descriptions-item>
+            <el-descriptions-item label="需画面变化">
+              {{ collectionDetailParam('require_frame_change') ? '是' : '否' }}
+            </el-descriptions-item>
+            <template v-if="collectionDetailParam('require_frame_change')">
+              <el-descriptions-item label="灵敏度阈值">{{ collectionDetailParam('sensitivity') }}</el-descriptions-item>
+              <el-descriptions-item label="变化区域占比">{{ collectionDetailParam('min_changed_ratio') }}</el-descriptions-item>
+            </template>
           </template>
           <template v-else-if="collectionDetailTask.template_id === 'skill_graph'">
             <el-descriptions-item label="技能编排">
@@ -736,6 +811,13 @@
             <el-descriptions-item label="触发模式">
               {{ collectionDetailParam('trigger_mode') === 'alert' ? '告警触发时采图' : (collectionDetailParam('trigger_mode') || '-') }}
             </el-descriptions-item>
+            <el-descriptions-item label="需画面变化">
+              {{ collectionDetailParam('require_frame_change') ? '是' : '否' }}
+            </el-descriptions-item>
+            <template v-if="collectionDetailParam('require_frame_change')">
+              <el-descriptions-item label="灵敏度阈值">{{ collectionDetailParam('sensitivity') }}</el-descriptions-item>
+              <el-descriptions-item label="变化区域占比">{{ collectionDetailParam('min_changed_ratio') }}</el-descriptions-item>
+            </template>
           </template>
           <el-descriptions-item v-if="collectionDetailTask.last_trigger_reason" label="最近命中">
             {{ collectionDetailTask.last_trigger_reason }}
@@ -781,6 +863,39 @@
         <el-button size="small" @click="addImagesDialogVisible = false">取消</el-button>
         <el-button type="primary" size="small" :loading="addingImages" @click="confirmAddImages"
           :disabled="!uploadFileList.length">上传 ({{ uploadFileList.length }})</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- ===== 原图打包下载进度 ===== -->
+    <el-dialog
+      title="下载原图"
+      :visible.sync="downloadProgressVisible"
+      width="480px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="downloadProgressPhase === 'done' || downloadProgressPhase === 'error'"
+      :show-close="downloadProgressPhase === 'done' || downloadProgressPhase === 'error'"
+      append-to-body
+      @closed="onDownloadProgressClosed">
+      <div class="dl-progress-body">
+        <div class="dl-progress-phase">{{ downloadProgressTitle }}</div>
+        <el-progress
+          :percentage="downloadProgressPercent"
+          :status="downloadProgressStatus"
+          :stroke-width="16"
+          text-inside>
+        </el-progress>
+        <div class="dl-progress-meta">{{ downloadProgressMeta }}</div>
+        <div v-if="downloadProgressError" class="dl-progress-error">{{ downloadProgressError }}</div>
+      </div>
+      <div slot="footer">
+        <el-button
+          v-if="downloadProgressPhase === 'done' || downloadProgressPhase === 'error'"
+          size="small"
+          type="primary"
+          @click="downloadProgressVisible = false">
+          关闭
+        </el-button>
+        <span v-else class="form-tip">打包/传输过程中请勿关闭页面</span>
       </div>
     </el-dialog>
 
@@ -972,6 +1087,7 @@ export default {
         template_params: {
           sensitivity: 0.12,
           min_changed_ratio: 0.02,
+          require_frame_change: false,
           model_name: '',
           target_classes: [],
           confidence_threshold: 0.5,
@@ -999,6 +1115,16 @@ export default {
       imagesLoading: false,
       selectedImageIds: [],
       deletingImages: false,
+      downloadingImages: false,
+      downloadProgressVisible: false,
+      downloadProgressPhase: '', // packing | transferring | done | error
+      downloadProgressPercent: 0,
+      downloadProgressTitle: '',
+      downloadProgressMeta: '',
+      downloadProgressError: '',
+      downloadProgressStatus: undefined,
+      downloadJobId: null,
+      downloadPollTimer: null,
 
       // 同步
       syncing: false,
@@ -1120,6 +1246,7 @@ export default {
     if (this.pollTimer) clearInterval(this.pollTimer);
     if (this.logPollTimer) clearInterval(this.logPollTimer);
     if (this.exportPollTimer) clearInterval(this.exportPollTimer);
+    this.stopDownloadPoll();
   },
   methods: {
     imageProxyUrl(imageId) {
@@ -1154,6 +1281,9 @@ export default {
     collectionTaskParamsSummary(task) {
       if (!task) return '';
       const p = task.template_params || {};
+      const frameGate = p.require_frame_change
+        ? ` · 需画面变化(灵敏度 ${p.sensitivity != null ? p.sensitivity : '-'} / 占比 ${p.min_changed_ratio != null ? p.min_changed_ratio : '-'})`
+        : '';
       if (task.template_id === 'frame_change') {
         const sensitivity = p.sensitivity != null ? p.sensitivity : '-';
         const ratio = p.min_changed_ratio != null ? p.min_changed_ratio : '-';
@@ -1162,16 +1292,16 @@ export default {
       if (task.template_id === 'small_model') {
         const classes = (p.target_classes || []).join('、') || '未选类别';
         const confidence = p.confidence_threshold != null ? p.confidence_threshold : '-';
-        return `模型 ${p.model_name || '-'} · 类别 ${classes} · 置信度 ${confidence}`;
+        return `模型 ${p.model_name || '-'} · 类别 ${classes} · 置信度 ${confidence}${frameGate}`;
       }
       if (task.template_id === 'vlm') {
         const prompt = (p.prompt || '').replace(/\s+/g, ' ').trim();
         const short = prompt.length > 40 ? `${prompt.slice(0, 40)}…` : prompt;
         const keywords = (p.positive_keywords || []).join('/') || '-';
-        return `提示词 ${short || '-'} · 关键词 ${keywords}`;
+        return `提示词 ${short || '-'} · 关键词 ${keywords}${frameGate}`;
       }
       if (task.template_id === 'skill_graph') {
-        return `编排 ${p.skill_name || p.skill_id || '-'} · ${p.trigger_mode === 'alert' ? '告警触发' : (p.trigger_mode || '-')}`;
+        return `编排 ${p.skill_name || p.skill_id || '-'} · ${p.trigger_mode === 'alert' ? '告警触发' : (p.trigger_mode || '-')}${frameGate}`;
       }
       return '';
     },
@@ -1182,6 +1312,10 @@ export default {
     showCollectionDetail(task) {
       this.collectionDetailTask = task;
       this.collectionDetailVisible = true;
+    },
+    goImagesTab() {
+      this.activeTab = 'images';
+      this.loadImages();
     },
     // ---- Label Studio ----
     async checkLabelStudio() {
@@ -1256,10 +1390,10 @@ export default {
       try {
         const res = await mlPipelineAPI.listCollectionTasks(this.selectedDataset.id);
         const tasks = (res.data && res.data.data) || [];
-        // 并行拉取最近采到的缩略图
+        // 并行拉取采图缩略图（卡片预览最多 12 张；完整列表在「图片管理」）
         const withRecent = await Promise.all(tasks.map(async (t) => {
           try {
-            const r = await mlPipelineAPI.listCollectionRecentImages(t.id, 8);
+            const r = await mlPipelineAPI.listCollectionRecentImages(t.id, 12);
             return { ...t, recentImages: (r.data && r.data.data) || [] };
           } catch (_) {
             return { ...t, recentImages: [] };
@@ -1277,6 +1411,7 @@ export default {
       return {
         sensitivity: 0.12,
         min_changed_ratio: 0.02,
+        require_frame_change: false,
         model_name: '',
         target_classes: [],
         confidence_threshold: 0.5,
@@ -1693,6 +1828,7 @@ export default {
         this.applyDatasetImageCounts((res.data && res.data.data) || {});
         await this.loadImages();
         await this.loadDatasets();
+        await this.loadCollectionTasks(true);
       } catch (e) {
         this.$message.error('删除失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
       } finally {
@@ -1724,10 +1860,179 @@ export default {
         this.applyDatasetImageCounts(d);
         await this.loadImages();
         await this.loadDatasets();
+        await this.loadCollectionTasks(true);
       } catch (e) {
         this.$message.error('删除失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
       } finally {
         this.deletingImages = false;
+      }
+    },
+    stopDownloadPoll() {
+      if (this.downloadPollTimer) {
+        clearInterval(this.downloadPollTimer);
+        this.downloadPollTimer = null;
+      }
+    },
+    onDownloadProgressClosed() {
+      this.stopDownloadPoll();
+      this.downloadingImages = false;
+      this.downloadJobId = null;
+    },
+    async handleDownloadImages() {
+      if (!this.selectedDataset || !this.images.length || this.downloadingImages) return;
+      const ids = this.selectedImageIds.slice();
+      const count = ids.length || this.images.length;
+      if (!ids.length) {
+        try {
+          await this.$confirm(
+            `将打包下载本数据集全部 ${count} 张原图（不含标注）。数量较多时会先后台打包并显示进度，确认继续？`,
+            '下载原图',
+            { type: 'info' }
+          );
+        } catch (_) {
+          return;
+        }
+      }
+
+      this.downloadingImages = true;
+      this.downloadProgressVisible = true;
+      this.downloadProgressPhase = 'packing';
+      this.downloadProgressPercent = 0;
+      this.downloadProgressStatus = undefined;
+      this.downloadProgressTitle = '正在创建打包任务…';
+      this.downloadProgressMeta = `共 ${count} 张`;
+      this.downloadProgressError = '';
+      this.downloadJobId = null;
+      this.stopDownloadPoll();
+
+      try {
+        const res = await mlPipelineAPI.createDownloadImagesJob(
+          this.selectedDataset.id,
+          ids.length ? ids : null
+        );
+        const job = (res.data && res.data.data) || {};
+        if (!job.job_id) throw new Error('未返回任务 ID');
+        this.downloadJobId = job.job_id;
+        this.applyDownloadJobProgress(job);
+        this.downloadPollTimer = setInterval(() => this.pollDownloadJob(), 800);
+        await this.pollDownloadJob();
+      } catch (e) {
+        this.downloadProgressPhase = 'error';
+        this.downloadProgressStatus = 'exception';
+        this.downloadProgressTitle = '创建打包任务失败';
+        this.downloadProgressError = (e.response && e.response.data && e.response.data.detail) || e.message || '未知错误';
+        this.downloadingImages = false;
+      }
+    },
+    applyDownloadJobProgress(job) {
+      if (!job) return;
+      const total = job.total || 0;
+      const packed = job.packed || 0;
+      const failed = job.failed || 0;
+      this.downloadProgressPercent = Math.min(100, Number(job.percent) || 0);
+      this.downloadProgressTitle = job.message || '打包中…';
+      this.downloadProgressMeta = total
+        ? `已处理 ${packed + failed} / ${total}（成功 ${packed}${failed ? `，失败 ${failed}` : ''}）`
+        : '';
+    },
+    async pollDownloadJob() {
+      if (!this.selectedDataset || !this.downloadJobId) return;
+      try {
+        const res = await mlPipelineAPI.getDownloadImagesJob(this.selectedDataset.id, this.downloadJobId);
+        const job = (res.data && res.data.data) || {};
+        this.applyDownloadJobProgress(job);
+        if (job.status === 'done') {
+          this.stopDownloadPoll();
+          await this.fetchDownloadJobFile(job);
+        } else if (job.status === 'error') {
+          this.stopDownloadPoll();
+          this.downloadProgressPhase = 'error';
+          this.downloadProgressStatus = 'exception';
+          this.downloadProgressTitle = '打包失败';
+          this.downloadProgressError = job.error || job.message || '打包失败';
+          this.downloadingImages = false;
+        }
+      } catch (e) {
+        this.stopDownloadPoll();
+        this.downloadProgressPhase = 'error';
+        this.downloadProgressStatus = 'exception';
+        this.downloadProgressTitle = '查询进度失败';
+        this.downloadProgressError = (e.response && e.response.data && e.response.data.detail) || e.message || '未知错误';
+        this.downloadingImages = false;
+      }
+    },
+    async fetchDownloadJobFile(job) {
+      this.downloadProgressPhase = 'transferring';
+      this.downloadProgressStatus = undefined;
+      this.downloadProgressPercent = 0;
+      this.downloadProgressTitle = '打包完成，正在传输到本地…';
+      const sizeHint = job && job.file_size_mb != null ? `约 ${job.file_size_mb} MB` : '';
+      this.downloadProgressMeta = sizeHint;
+      try {
+        const res = await mlPipelineAPI.downloadImagesJobFile(
+          this.selectedDataset.id,
+          this.downloadJobId,
+          (evt) => {
+            if (!evt || !evt.total) return;
+            const pct = Math.min(99, Math.round((evt.loaded * 100) / evt.total));
+            this.downloadProgressPercent = pct;
+            const loadedMb = (evt.loaded / (1024 * 1024)).toFixed(1);
+            const totalMb = (evt.total / (1024 * 1024)).toFixed(1);
+            this.downloadProgressMeta = `已传输 ${loadedMb} / ${totalMb} MB`;
+          }
+        );
+        const blob = res && res.data;
+        if (!blob || !(blob instanceof Blob) || !blob.size) {
+          throw new Error('下载内容为空');
+        }
+        if (blob.type && blob.type.includes('application/json')) {
+          const text = await blob.text();
+          let detail = text;
+          try {
+            const j = JSON.parse(text);
+            detail = j.detail || j.message || text;
+          } catch (_) { /* ignore */ }
+          throw new Error(detail || '下载失败');
+        }
+        const filename = (job && job.filename) || `dataset_${this.selectedDataset.id}_images.zip`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        this.downloadProgressPhase = 'done';
+        this.downloadProgressPercent = 100;
+        this.downloadProgressStatus = 'success';
+        this.downloadProgressTitle = '下载完成';
+        const packed = (job && job.packed) || 0;
+        const failed = (job && job.failed) || 0;
+        this.downloadProgressMeta = failed
+          ? `成功 ${packed} 张，失败 ${failed} 张`
+          : `成功 ${packed} 张原图`;
+        if (failed) this.$message.warning(this.downloadProgressMeta);
+        else this.$message.success(this.downloadProgressMeta);
+      } catch (e) {
+        let msg = e.message || '下载失败';
+        const data = e.response && e.response.data;
+        if (data instanceof Blob) {
+          try {
+            const text = await data.text();
+            const j = JSON.parse(text);
+            msg = j.detail || j.message || msg;
+          } catch (_) { /* ignore */ }
+        } else if (e.response && e.response.data && e.response.data.detail) {
+          msg = e.response.data.detail;
+        }
+        this.downloadProgressPhase = 'error';
+        this.downloadProgressStatus = 'exception';
+        this.downloadProgressTitle = '传输失败';
+        this.downloadProgressError = msg;
+      } finally {
+        this.downloadingImages = false;
       }
     },
 
@@ -2283,6 +2588,12 @@ export default {
 /* ---- Tab 工具栏 ---- */
 .tab-toolbar { margin-bottom: 12px; display: flex; gap: 8px; }
 
+/* ---- 原图下载进度 ---- */
+.dl-progress-body { padding: 4px 0 8px; }
+.dl-progress-phase { font-size: 14px; color: #303133; margin-bottom: 14px; }
+.dl-progress-meta { margin-top: 12px; font-size: 13px; color: #606266; }
+.dl-progress-error { margin-top: 10px; font-size: 13px; color: #f56c6c; line-height: 1.5; word-break: break-all; }
+
 /* ---- 图片网格 ---- */
 .image-grid {
   display: flex;
@@ -2455,7 +2766,7 @@ export default {
 }
 .collection-reason { font-size: 12px; color: #67c23a; margin-bottom: 4px; }
 .collection-error { font-size: 12px; color: #f56c6c; margin-bottom: 4px; }
-.collection-thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.collection-thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
 .collection-thumb {
   width: 64px;
   height: 64px;
@@ -2463,6 +2774,14 @@ export default {
   border: 1px solid #e8e8e8;
   overflow: hidden;
 }
+.collection-thumbs-more {
+  font-size: 12px;
+  color: #409eff;
+  cursor: pointer;
+  line-height: 1.4;
+  padding: 4px 0;
+}
+.collection-thumbs-more:hover { color: #66b1ff; }
 .image-source {
   position: absolute;
   top: 0;

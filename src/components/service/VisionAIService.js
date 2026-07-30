@@ -3696,6 +3696,30 @@ export const mlPipelineAPI = {
       data: { image_ids: imageIds },
     });
   },
+  /** 创建异步原图打包任务；imageIds 为空则打包全部 */
+  createDownloadImagesJob(datasetId, imageIds) {
+    const body = imageIds && imageIds.length ? { image_ids: imageIds } : {};
+    return visionAIAxios.post(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images/download-jobs`,
+      body
+    );
+  },
+  getDownloadImagesJob(datasetId, jobId) {
+    return visionAIAxios.get(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images/download-jobs/${jobId}`
+    );
+  },
+  /** 拉取已打包 ZIP；onDownloadProgress(evt) 可选 */
+  downloadImagesJobFile(datasetId, jobId, onDownloadProgress) {
+    return visionAIAxios.get(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images/download-jobs/${jobId}/file`,
+      {
+        responseType: 'blob',
+        timeout: 600000,
+        onDownloadProgress,
+      }
+    );
+  },
   syncAnnotations(datasetId) {
     return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/sync`);
   },
