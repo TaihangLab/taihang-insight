@@ -125,30 +125,34 @@
             <div class="warning-media">
               <div class="warning-image">
                 <h4 class="media-title">
-                  <i class="el-icon-picture"></i>
-                  违规截图
-                  <el-radio-group
-                    v-if="hasRawFrame"
-                    v-model="imageViewMode"
-                    size="mini"
-                    class="image-mode-switch"
-                    @click.native.stop
-                  >
-                    <el-radio-button label="annotated">标注图</el-radio-button>
-                    <el-radio-button label="raw">原图</el-radio-button>
-                  </el-radio-group>
-                  <!-- 合并预警查看按钮 -->
-                  <el-button
-                    v-if="detail.is_merged"
-                    type="warning"
-                    size="mini"
-                    plain
-                    class="merge-view-btn"
-                    @click.stop="showMergedDialog = true"
-                  >
-                    <i class="el-icon-folder-opened"></i>
-                    查看合并 ({{ detail.alert_count }})
-                  </el-button>
+                  <span class="media-title-left">
+                    <i class="el-icon-picture"></i>
+                    违规截图
+                  </span>
+                  <span class="media-title-actions">
+                    <el-radio-group
+                      v-if="hasRawFrame"
+                      v-model="imageViewMode"
+                      size="mini"
+                      class="image-mode-switch"
+                      @click.native.stop
+                    >
+                      <el-radio-button label="annotated">标注</el-radio-button>
+                      <el-radio-button label="raw">原图</el-radio-button>
+                    </el-radio-group>
+                    <!-- 合并预警查看按钮 -->
+                    <el-button
+                      v-if="detail.is_merged"
+                      type="warning"
+                      size="mini"
+                      plain
+                      class="merge-view-btn"
+                      @click.stop="showMergedDialog = true"
+                    >
+                      <i class="el-icon-folder-opened"></i>
+                      合并 ({{ detail.alert_count }})
+                    </el-button>
+                  </span>
                 </h4>
                 <div class="image-container" @click="openImageViewer">
                   <div v-if="currentFrameUrl" class="real-image">
@@ -2002,9 +2006,31 @@ export default {
   font-weight: 600;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
 }
 
-.media-title i {
+.media-title-left {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.media-title-left i {
+  margin-right: 6px;
+  color: #409EFF;
+}
+
+.media-title-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.media-title > i {
   margin-right: 6px;
   color: #409EFF;
 }
@@ -3046,13 +3072,23 @@ export default {
 
 /* ==================== 合并预警相关样式 ==================== */
 .merge-view-btn {
-  margin-left: 12px;
-  vertical-align: middle;
+  margin-left: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  height: 22px;
+  line-height: 1;
 }
 
 .image-mode-switch {
-  margin-left: 12px;
-  vertical-align: middle;
+  margin-left: 0;
+  transform: scale(0.9);
+  transform-origin: right center;
+}
+
+.image-mode-switch >>> .el-radio-button__inner {
+  padding: 3px 8px;
+  font-size: 12px;
+  line-height: 1.2;
 }
 
 .merged-content {
