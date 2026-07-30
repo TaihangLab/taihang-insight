@@ -101,7 +101,7 @@
 
             <!-- ====== Tab 1: 图片管理 ====== -->
             <el-tab-pane name="images">
-              <span slot="label"><i class="el-icon-picture-outline"></i> 图片管理 ({{ selectedDataset.image_count || 0 }})</span>
+              <span slot="label"><i class="el-icon-picture-outline"></i> 图片管理 ({{ images.length || selectedDataset.image_count || 0 }})</span>
               <div class="tab-toolbar">
                 <el-button type="primary" size="small" icon="el-icon-plus" @click="showAddImagesDialog">添加图片</el-button>
                 <el-button size="small" icon="el-icon-refresh" @click="loadImages" :loading="imagesLoading">刷新</el-button>
@@ -1661,6 +1661,20 @@ export default {
     toggleSelectAllImages(checked) {
       this.selectedImageIds = checked ? this.images.map(i => i.id) : [];
     },
+    applyDatasetImageCounts(d) {
+      if (!this.selectedDataset || !d) return;
+      if (d.dataset_image_count != null) {
+        this.$set(this.selectedDataset, 'image_count', d.dataset_image_count);
+      }
+      if (d.dataset_labeled_count != null) {
+        this.$set(this.selectedDataset, 'labeled_count', d.dataset_labeled_count);
+      }
+      const ds = this.datasets.find(x => x.id === this.selectedDataset.id);
+      if (ds) {
+        if (d.dataset_image_count != null) this.$set(ds, 'image_count', d.dataset_image_count);
+        if (d.dataset_labeled_count != null) this.$set(ds, 'labeled_count', d.dataset_labeled_count);
+      }
+    },
     async handleDeleteImage(img) {
       try {
         await this.$confirm(
@@ -1673,11 +1687,12 @@ export default {
       }
       this.deletingImages = true;
       try {
-        await mlPipelineAPI.deleteImage(img.id);
+        const res = await mlPipelineAPI.deleteImage(img.id);
         this.$message.success('已删除');
         this.selectedImageIds = this.selectedImageIds.filter(id => id !== img.id);
-        await this.loadDatasets();
+        this.applyDatasetImageCounts((res.data && res.data.data) || {});
         await this.loadImages();
+        await this.loadDatasets();
       } catch (e) {
         this.$message.error('删除失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
       } finally {
@@ -1706,8 +1721,9 @@ export default {
           this.$message.success(msg);
         }
         this.selectedImageIds = [];
-        await this.loadDatasets();
+        this.applyDatasetImageCounts(d);
         await this.loadImages();
+        await this.loadDatasets();
       } catch (e) {
         this.$message.error('删除失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
       } finally {
