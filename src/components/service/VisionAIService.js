@@ -3568,12 +3568,40 @@ export const reviewRecordAPI = {
     return visionAIAxios.get('/api/v1/review-records/false-alarm-images/count', { params });
   },
 
+  /** 创建误报图片异步打包任务 */
+  createFalseAlarmDownloadJob(params = {}) {
+    return visionAIAxios.post('/api/v1/review-records/false-alarm-images/download-jobs', null, { params });
+  },
+
+  getFalseAlarmDownloadJob(jobId) {
+    return visionAIAxios.get(`/api/v1/review-records/false-alarm-images/download-jobs/${jobId}`);
+  },
+
+  downloadFalseAlarmDownloadJobFile(jobId, onDownloadProgress) {
+    return visionAIAxios.get(
+      `/api/v1/review-records/false-alarm-images/download-jobs/${jobId}/file`,
+      {
+        responseType: 'blob',
+        timeout: 600000,
+        onDownloadProgress,
+      }
+    );
+  },
+
+  /** @deprecated 同步分批下载，新前端请用 createFalseAlarmDownloadJob */
   downloadFalseAlarmImages(params = {}) {
     return visionAIAxios.get('/api/v1/review-records/false-alarm-images/download', {
       params,
       responseType: 'blob',
       timeout: 120000
     });
+  },
+
+  /**
+   * 复判记录中出现过的预警技能（筛选/下载下拉用）
+   */
+  getReviewAlertSkills() {
+    return visionAIAxios.get('/api/v1/review-records/alert-skills');
   },
 
   /**
@@ -3690,6 +3718,38 @@ export const mlPipelineAPI = {
   listImages(datasetId) {
     return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images`);
   },
+  deleteImage(imageId) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/annotation/images/${imageId}`);
+  },
+  deleteImages(datasetId, imageIds) {
+    return visionAIAxios.delete(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images`, {
+      data: { image_ids: imageIds },
+    });
+  },
+  /** 创建异步原图打包任务；imageIds 为空则打包全部 */
+  createDownloadImagesJob(datasetId, imageIds) {
+    const body = imageIds && imageIds.length ? { image_ids: imageIds } : {};
+    return visionAIAxios.post(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images/download-jobs`,
+      body
+    );
+  },
+  getDownloadImagesJob(datasetId, jobId) {
+    return visionAIAxios.get(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images/download-jobs/${jobId}`
+    );
+  },
+  /** 拉取已打包 ZIP；onDownloadProgress(evt) 可选 */
+  downloadImagesJobFile(datasetId, jobId, onDownloadProgress) {
+    return visionAIAxios.get(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images/download-jobs/${jobId}/file`,
+      {
+        responseType: 'blob',
+        timeout: 600000,
+        onDownloadProgress,
+      }
+    );
+  },
   syncAnnotations(datasetId) {
     return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/sync`);
   },
@@ -3772,6 +3832,9 @@ export const mlPipelineAPI = {
   },
   createCollectionTask(data) {
     return visionAIAxios.post('/api/v1/ml-pipeline/collection/tasks', data);
+  },
+  updateCollectionTask(id, data) {
+    return visionAIAxios.put(`/api/v1/ml-pipeline/collection/tasks/${id}`, data);
   },
   getCollectionTask(id) {
     return visionAIAxios.get(`/api/v1/ml-pipeline/collection/tasks/${id}`);
@@ -3960,17 +4023,21 @@ export const runPlanAPI = {
   listPlans(params) {
     return visionAIAxios.get('/api/v1/skill-run-plans', { params });
   },
-  // 创建运行计划（批量创建：1技能 × N点位）
+  // 创建运行计划（异步：立刻返回 job_id，再轮询 getSaveJob）
   createPlan(data) {
-    return visionAIAxios.post('/api/v1/skill-run-plans', data, { timeout: LONG_RUNNING_TIMEOUT });
+    return visionAIAxios.post('/api/v1/skill-run-plans', data);
   },
   // 运行计划详情
   getPlan(planId) {
     return visionAIAxios.get(`/api/v1/skill-run-plans/${planId}`);
   },
-  // 更新运行计划
+  // 更新运行计划（异步：立刻返回 job_id，再轮询 getSaveJob）
   updatePlan(planId, data) {
     return visionAIAxios.put(`/api/v1/skill-run-plans/${planId}`, data);
+  },
+  // 查询创建/更新计划的保存进度
+  getSaveJob(jobId) {
+    return visionAIAxios.get(`/api/v1/skill-run-plans/save-jobs/${jobId}`);
   },
   // 启停单条计划
   setEnabled(planId, enabled) {

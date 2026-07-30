@@ -1,6 +1,6 @@
 <script>
 import WarningDetail from './warningDetail.vue'
-import { reviewRecordAPI, skillAPI } from '../../service/VisionAIService.js'
+import { reviewRecordAPI } from '../../service/VisionAIService.js'
 
 const SKILL_SOURCE_VISION = 'vision'
 const SKILL_SOURCE_LLM = 'llm'
@@ -102,15 +102,23 @@ export default {
         { label: '需人工复核', value: 'need_review' }
       ],
       
-      // 预警技能选项（从后端动态加载）
-      warningSkillOptions: [
-        { label: '全部智能技能', value: '' }
-      ],
+      // 预警技能选项（从后端动态加载；空数组表示尚未加载或失败）
+      warningSkillOptions: [],
       
       warningDetailVisible: false,
       currentAlertId: null,
       currentReviewData: null,
-      zipDownloading: false
+      zipDownloading: false,
+      // 误报打包下载进度（对齐模型工厂）
+      downloadProgressVisible: false,
+      downloadProgressPhase: '', // packing | transferring | done | error
+      downloadProgressPercent: 0,
+      downloadProgressTitle: '',
+      downloadProgressMeta: '',
+      downloadProgressError: '',
+      downloadProgressStatus: undefined,
+      downloadJobId: null,
+      downloadPollTimer: null
     }
   },
   computed: {
@@ -129,47 +137,65 @@ export default {
   async mounted() {
     await Promise.all([
       this.getReviewList(),
-      this.fetchDashboardStats(),
-      this.loadSkillOptions()
+      this.fetchDashboardStats()
     ])
+    // 等列表回来后再拉技能，避免并行时兜底读到空列表；也避免 HMR 后未重新请求
+    await this.loadSkillOptions()
     this.applyTopFromListIfNeeded()
+  },
+  beforeDestroy() {
+    this.stopDownloadPoll()
   },
   methods: {
     async loadSkillOptions() {
-      const options = [{ label: '全部智能技能', value: '' }]
+      // 只展示复判记录里实际出现过的预警技能，避免选到下面没有的
+      const options = []
       try {
-        const [visionRes, llmRes] = await Promise.allSettled([
-          skillAPI.getSkillList({ page: 1, limit: 200 }),
-          skillAPI.getLlmSkillList({ page: 1, limit: 200 })
-        ])
-
-        if (visionRes.status === 'fulfilled') {
-          const skills = (visionRes.value && visionRes.value.data) || []
-          skills.forEach(s => {
-            options.push({
-              label: `[视觉] ${s.name_zh || s.name || '技能#' + s.id}`,
-              value: `${SKILL_SOURCE_VISION}:${s.id}`
-            })
+        const res = await reviewRecordAPI.getReviewAlertSkills()
+        const body = res && res.data
+        const list = (body && Array.isArray(body.data)) ? body.data
+          : (Array.isArray(body) ? body : [])
+        list.forEach(s => {
+          if (!s || s.skill_class_id == null) return
+          const source = s.skill_source === SKILL_SOURCE_LLM ? SKILL_SOURCE_LLM : SKILL_SOURCE_VISION
+          const tag = source === SKILL_SOURCE_LLM ? '[大模型]' : '[视觉]'
+          const name = s.skill_name_zh || ('技能#' + s.skill_class_id)
+          const count = s.review_count ? `（${s.review_count}）` : ''
+          options.push({
+            label: `${tag} ${name}${count}`,
+            value: `${source}:${s.skill_class_id}`
           })
-        }
-
-        if (llmRes.status === 'fulfilled') {
-          const raw = llmRes.value && llmRes.value.data
-          const llmSkills = Array.isArray(raw) ? raw
-            : (raw && Array.isArray(raw.data) ? raw.data
-              : (raw && Array.isArray(raw.skill_classes) ? raw.skill_classes : []))
-          llmSkills.forEach(s => {
-            options.push({
-              label: `[大模型] ${s.skill_name || s.name || '技能#' + s.id}`,
-              value: `${SKILL_SOURCE_LLM}:${s.id}`
-            })
-          })
-        }
+        })
       } catch (e) {
-        console.error('加载技能选项失败:', e)
+        console.error('加载复判技能选项失败:', e)
       }
+
+      // 接口失败时，用当前页列表兜底
+      if (!options.length && Array.isArray(this.reviewList)) {
+        const seen = {}
+        this.reviewList.forEach(item => {
+          if (!item.skillClassId) return
+          const source = item.skillSource || SKILL_SOURCE_VISION
+          const value = `${source}:${item.skillClassId}`
+          if (seen[value]) return
+          seen[value] = true
+          const tag = source === SKILL_SOURCE_LLM ? '[大模型]' : '[视觉]'
+          options.push({
+            label: `${tag} ${item.skillNameZh || ('技能#' + item.skillClassId)}`,
+            value
+          })
+        })
+      }
+
       this.warningSkillOptions = options
     },
+
+    onSkillSelectVisible(visible) {
+      if (visible && (!this.warningSkillOptions || !this.warningSkillOptions.length)) {
+        this.loadSkillOptions()
+      }
+    },
+
     truncateText(text, maxLength = 30) {
       if (!text) return ''
       if (text.length <= maxLength) return text
@@ -285,15 +311,11 @@ export default {
               id: record.review_id.toString(),
               title: record.alert_name || '未知预警',
               image: record.image_url || require('./images/5.jpg'),
+              rawImage: record.raw_image_url || '',
               cameraName: record.camera_name || '未知摄像头',
               location: record.location || '未知位置',
-              startTime: record.created_at ? new Date(record.created_at).toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-              }).replace(/\//g, '-') : '未知时间',
+              startTime: record.created_at || '',
+              startTimeRaw: record.created_at || '',
               duration: '2秒',
               reviewType: record.review_type,
               reviewResult: record.review_result || 'false_alarm',
@@ -421,7 +443,7 @@ export default {
       }
     },
     
-    // 批量下载预警图片
+    // 批量下载预警图片（标注图 + 原图，有则都下）
     async handleBatchDownloadImages() {
       if (this.selectedRecords.length === 0) {
         this.$message.warning('请先选择要下载图片的记录')
@@ -431,39 +453,45 @@ export default {
       const selectedItems = this.filteredData.filter(item =>
         this.selectedRecords.includes(item.id)
       )
-      const itemsWithImages = selectedItems.filter(item =>
-        item.image && !item._imageError && typeof item.image === 'string' && item.image.startsWith('http')
-      )
+      const downloadJobs = []
+      for (const item of selectedItems) {
+        const skillPart = item.skillNameZh ? `_${item.skillNameZh}` : ''
+        const baseName = `预警${item.alertId || item.id}${skillPart}_${item.title}`
+        if (item.image && !item._imageError && typeof item.image === 'string' && item.image.startsWith('http')) {
+          downloadJobs.push({ url: item.image, fileNamePrefix: `${baseName}_标注` })
+        }
+        if (item.rawImage && typeof item.rawImage === 'string' && item.rawImage.startsWith('http')) {
+          downloadJobs.push({ url: item.rawImage, fileNamePrefix: `${baseName}_原图` })
+        }
+      }
 
-      if (itemsWithImages.length === 0) {
+      if (downloadJobs.length === 0) {
         this.$message.warning('选中的记录中没有可下载的预警图片（仅支持远程图片）')
         return
       }
 
-      this.$message.info(`正在下载 ${itemsWithImages.length} 张预警图片...`)
+      this.$message.info(`正在下载 ${downloadJobs.length} 张图片（含标注图/原图）...`)
       this.loading = true
 
       let successCount = 0
       let failCount = 0
-      for (const item of itemsWithImages) {
+      for (const job of downloadJobs) {
         try {
-          const response = await fetch(item.image)
+          const response = await fetch(job.url)
           if (!response.ok) throw new Error(`HTTP ${response.status}`)
           const blob = await response.blob()
           const ext = this.guessImageExt(blob.type)
-          const skillPart = item.skillNameZh ? `_${item.skillNameZh}` : ''
-          const fileName = `预警${item.alertId || item.id}${skillPart}_${item.title}${ext}`
-          this.downloadFile(blob, fileName)
+          this.downloadFile(blob, `${job.fileNamePrefix}${ext}`)
           successCount++
         } catch (e) {
-          console.error(`下载图片失败: ${item.id}`, e)
+          console.error(`下载图片失败: ${job.fileNamePrefix}`, e)
           failCount++
         }
       }
 
       this.loading = false
       if (failCount === 0) {
-        this.$message.success(`成功下载 ${successCount} 张预警图片`)
+        this.$message.success(`成功下载 ${successCount} 张图片（标注图/原图）`)
       } else {
         this.$message.warning(`下载完成：成功 ${successCount} 张，失败 ${failCount} 张`)
       }
@@ -474,65 +502,193 @@ export default {
       return map[mimeType] || '.jpg'
     },
 
+    stopDownloadPoll() {
+      if (this.downloadPollTimer) {
+        clearInterval(this.downloadPollTimer)
+        this.downloadPollTimer = null
+      }
+    },
+
+    onDownloadProgressClosed() {
+      this.stopDownloadPoll()
+      this.zipDownloading = false
+      this.downloadJobId = null
+    },
+
     async handleDownloadFalseAlarmZip() {
       const params = {}
-      const skillVal = this.activeSearchForm.warningSkill
+      const skillVal = this.searchForm.warningSkill || this.activeSearchForm.warningSkill
+      let skillLabel = '全部技能'
       if (skillVal) {
         const [source, id] = skillVal.split(':')
         params.skill_class_id = Number(id)
         params.skill_source = source
+        const opt = this.warningSkillOptions.find(o => o.value === skillVal)
+        skillLabel = (opt && opt.label) || skillVal
       }
 
+      if (this.zipDownloading) return
       this.zipDownloading = true
       try {
         const countRes = await reviewRecordAPI.countFalseAlarmImages(params)
         const info = countRes.data
         if (!info || info.total === 0) {
-          this.$message.warning('该技能下没有误报预警图片')
+          this.$message.warning(skillVal ? '该技能下没有误报预警图片' : '没有可下载的误报预警图片')
+          this.zipDownloading = false
           return
         }
 
-        const { total, batch_limit, batches_needed } = info
-        const batchHint = batches_needed > 1
-          ? `，将分 ${batches_needed} 批下载（每批最多 ${batch_limit} 条）`
-          : ''
-        
+        const total = info.total
         await this.$confirm(
-          `该技能共有 ${total} 条误报预警${batchHint}。\n确定开始下载吗？`,
+          `「${skillLabel}」共有 ${total} 条误报预警。\n将后台打包（标注图 + 原图），完成后自动下载。\n数量较多时请耐心等待进度。`,
           '下载误报图片',
-          { confirmButtonText: '开始下载', cancelButtonText: '取消', type: 'info' }
+          { confirmButtonText: '开始打包', cancelButtonText: '取消', type: 'info' }
         )
 
-        for (let batch = 1; batch <= batches_needed; batch++) {
-          if (batches_needed > 1) {
-            this.$message.info(`正在下载第 ${batch}/${batches_needed} 批...`)
-          } else {
-            this.$message.info('正在打包下载...')
-          }
-          const response = await reviewRecordAPI.downloadFalseAlarmImages({ ...params, batch })
-          const blob = new Blob([response.data], { type: 'application/zip' })
-          const url = window.URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          const disp = response.headers['content-disposition'] || ''
-          const match = disp.match(/filename="?([^"]+)"?/)
-          a.download = match ? match[1] : `false_alarm_batch${batch}_${Date.now()}.zip`
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
-          window.URL.revokeObjectURL(url)
-        }
-        this.$message.success(batches_needed > 1
-          ? `全部 ${batches_needed} 批下载完成`
-          : '误报图片下载完成')
+        this.downloadProgressVisible = true
+        this.downloadProgressPhase = 'packing'
+        this.downloadProgressPercent = 0
+        this.downloadProgressStatus = undefined
+        this.downloadProgressTitle = '正在创建打包任务…'
+        this.downloadProgressMeta = `共 ${total} 条`
+        this.downloadProgressError = ''
+        this.downloadJobId = null
+        this.stopDownloadPoll()
+
+        const res = await reviewRecordAPI.createFalseAlarmDownloadJob(params)
+        const job = (res.data && res.data.data) || {}
+        if (!job.job_id) throw new Error('未返回任务 ID')
+        this.downloadJobId = job.job_id
+        this.applyDownloadJobProgress(job)
+        this.downloadPollTimer = setInterval(() => this.pollDownloadJob(), 800)
+        await this.pollDownloadJob()
       } catch (e) {
-        if (e === 'cancel') return
-        console.error('下载误报图片失败:', e)
-        if (e.response && e.response.status === 404) {
-          this.$message.warning('没有找到符合条件的误报图片')
-        } else {
-          this.$message.error('下载失败，请稍后重试')
+        if (e === 'cancel') {
+          this.zipDownloading = false
+          return
         }
+        console.error('下载误报图片失败:', e)
+        const detail = (e.response && e.response.data && e.response.data.detail) || e.message
+        if (this.downloadProgressVisible) {
+          this.downloadProgressPhase = 'error'
+          this.downloadProgressStatus = 'exception'
+          this.downloadProgressTitle = '创建打包任务失败'
+          this.downloadProgressError = detail || '未知错误'
+        } else {
+          this.$message.error(detail || '下载失败，请稍后重试')
+        }
+        this.zipDownloading = false
+      }
+    },
+
+    applyDownloadJobProgress(job) {
+      if (!job) return
+      const total = job.total || 0
+      const packed = job.packed || 0
+      const failed = job.failed || 0
+      this.downloadProgressPercent = Math.min(100, Number(job.percent) || 0)
+      this.downloadProgressTitle = job.message || '打包中…'
+      this.downloadProgressMeta = total
+        ? `已处理 ${packed + failed} / ${total}（成功 ${packed}${failed ? `，失败 ${failed}` : ''}）`
+        : ''
+    },
+
+    async pollDownloadJob() {
+      if (!this.downloadJobId) return
+      try {
+        const res = await reviewRecordAPI.getFalseAlarmDownloadJob(this.downloadJobId)
+        const job = (res.data && res.data.data) || {}
+        this.applyDownloadJobProgress(job)
+        if (job.status === 'done') {
+          this.stopDownloadPoll()
+          await this.fetchDownloadJobFile(job)
+        } else if (job.status === 'error') {
+          this.stopDownloadPoll()
+          this.downloadProgressPhase = 'error'
+          this.downloadProgressStatus = 'exception'
+          this.downloadProgressTitle = '打包失败'
+          this.downloadProgressError = job.error || job.message || '打包失败'
+          this.zipDownloading = false
+        }
+      } catch (e) {
+        this.stopDownloadPoll()
+        this.downloadProgressPhase = 'error'
+        this.downloadProgressStatus = 'exception'
+        this.downloadProgressTitle = '查询进度失败'
+        this.downloadProgressError = (e.response && e.response.data && e.response.data.detail) || e.message || '未知错误'
+        this.zipDownloading = false
+      }
+    },
+
+    async fetchDownloadJobFile(job) {
+      this.downloadProgressPhase = 'transferring'
+      this.downloadProgressStatus = undefined
+      this.downloadProgressPercent = 0
+      this.downloadProgressTitle = '打包完成，正在传输到本地…'
+      const sizeHint = job && job.file_size_mb != null ? `约 ${job.file_size_mb} MB` : ''
+      this.downloadProgressMeta = sizeHint
+      try {
+        const res = await reviewRecordAPI.downloadFalseAlarmDownloadJobFile(
+          this.downloadJobId,
+          (evt) => {
+            if (!evt || !evt.total) return
+            const pct = Math.min(99, Math.round((evt.loaded * 100) / evt.total))
+            this.downloadProgressPercent = pct
+            const loadedMb = (evt.loaded / (1024 * 1024)).toFixed(1)
+            const totalMb = (evt.total / (1024 * 1024)).toFixed(1)
+            this.downloadProgressMeta = `已传输 ${loadedMb} / ${totalMb} MB`
+          }
+        )
+        const blob = res && res.data
+        if (!blob || !(blob instanceof Blob) || !blob.size) {
+          throw new Error('下载内容为空')
+        }
+        if (blob.type && blob.type.includes('application/json')) {
+          const text = await blob.text()
+          let detail = text
+          try {
+            const j = JSON.parse(text)
+            detail = j.detail || j.message || text
+          } catch (_) { /* ignore */ }
+          throw new Error(detail || '下载失败')
+        }
+        const filename = (job && job.filename) || `false_alarm_${Date.now()}.zip`
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+
+        this.downloadProgressPhase = 'done'
+        this.downloadProgressPercent = 100
+        this.downloadProgressStatus = 'success'
+        this.downloadProgressTitle = '下载完成'
+        const packed = (job && job.packed) || 0
+        const failed = (job && job.failed) || 0
+        this.downloadProgressMeta = failed
+          ? `成功 ${packed} 条，失败 ${failed} 条`
+          : `成功 ${packed} 条误报图片`
+        if (failed) this.$message.warning(this.downloadProgressMeta)
+        else this.$message.success(this.downloadProgressMeta)
+      } catch (e) {
+        let msg = e.message || '下载失败'
+        const data = e.response && e.response.data
+        if (data instanceof Blob) {
+          try {
+            const text = await data.text()
+            const j = JSON.parse(text)
+            msg = j.detail || j.message || msg
+          } catch (_) { /* ignore */ }
+        } else if (e.response && e.response.data && e.response.data.detail) {
+          msg = e.response.data.detail
+        }
+        this.downloadProgressPhase = 'error'
+        this.downloadProgressStatus = 'exception'
+        this.downloadProgressTitle = '传输失败'
+        this.downloadProgressError = msg
       } finally {
         this.zipDownloading = false
       }
@@ -672,26 +828,26 @@ export default {
       this.warningDetailVisible = true
     },
     
+    // 解析服务端时间：utcnow 朴素时间可能不带 Z，按 UTC 处理后再转本地显示
+    parseServerDate(value) {
+      if (!value) return null
+      if (value instanceof Date) return isNaN(value.getTime()) ? null : value
+      let s = String(value).trim()
+      if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(s)) {
+        s = s.replace(' ', 'T') + 'Z'
+      }
+      const d = new Date(s)
+      return isNaN(d.getTime()) ? null : d
+    },
+
     // 格式化时间显示
     formatTimeDisplay(timeString) {
       try {
-        // 如果已经是格式化的字符串，直接返回
         if (typeof timeString === 'string' && timeString.includes('年') && timeString.includes('月') && timeString.includes('日')) {
           return timeString
         }
-        
-        let date
-        if (timeString instanceof Date) {
-          date = timeString
-        } else {
-          date = new Date(timeString)
-        }
-        
-        // 检查日期是否有效
-        if (isNaN(date.getTime())) {
-          console.warn('Invalid date:', timeString)
-          return timeString
-        }
+        const date = this.parseServerDate(timeString)
+        if (!date) return timeString || ''
         
         const year = date.getFullYear()
         const month = (date.getMonth() + 1).toString().padStart(2, '0')
@@ -997,8 +1153,7 @@ export default {
           </el-button>
           <el-divider direction="vertical"></el-divider>
           <el-tooltip
-            :disabled="!!activeSearchForm.warningSkill"
-            content="请先在搜索条件中选择一个预警技能"
+            content="按上方「预警技能」筛选后后台打包下载；清空则下载全部误报"
             placement="top"
           >
             <span>
@@ -1007,7 +1162,6 @@ export default {
                 type="warning"
                 icon="el-icon-folder-opened"
                 :loading="zipDownloading"
-                :disabled="!activeSearchForm.warningSkill"
                 @click="handleDownloadFalseAlarmZip"
               >
                 下载全部误报图片
@@ -1073,6 +1227,11 @@ export default {
               v-model="searchForm.warningSkill" 
               placeholder="全部智能技能" 
               size="small"
+              filterable
+              clearable
+              popper-append-to-body
+              style="width: 220px"
+              @visible-change="onSkillSelectVisible"
             >
               <el-option 
                 v-for="option in warningSkillOptions"
@@ -1261,6 +1420,39 @@ export default {
       @handle-false-alarm="handleFalseAlarmFromDetail"
       @restore-review="handleRestoreReview"
     />
+
+    <!-- 误报图片打包下载进度 -->
+    <el-dialog
+      title="下载误报图片"
+      :visible.sync="downloadProgressVisible"
+      width="480px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="downloadProgressPhase === 'done' || downloadProgressPhase === 'error'"
+      :show-close="downloadProgressPhase === 'done' || downloadProgressPhase === 'error'"
+      append-to-body
+      @closed="onDownloadProgressClosed">
+      <div class="dl-progress-body">
+        <div class="dl-progress-phase">{{ downloadProgressTitle }}</div>
+        <el-progress
+          :percentage="downloadProgressPercent"
+          :status="downloadProgressStatus"
+          :stroke-width="16"
+          text-inside>
+        </el-progress>
+        <div class="dl-progress-meta">{{ downloadProgressMeta }}</div>
+        <div v-if="downloadProgressError" class="dl-progress-error">{{ downloadProgressError }}</div>
+      </div>
+      <div slot="footer">
+        <el-button
+          v-if="downloadProgressPhase === 'done' || downloadProgressPhase === 'error'"
+          size="small"
+          type="primary"
+          @click="downloadProgressVisible = false">
+          关闭
+        </el-button>
+        <span v-else class="dl-progress-tip">打包/传输过程中请勿关闭页面</span>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -2417,4 +2609,10 @@ export default {
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
   transform: translateY(-1px) !important;
 }
+
+.dl-progress-body { padding: 4px 0 8px; }
+.dl-progress-phase { font-size: 14px; color: #303133; margin-bottom: 14px; }
+.dl-progress-meta { margin-top: 12px; font-size: 13px; color: #606266; }
+.dl-progress-error { margin-top: 10px; font-size: 13px; color: #f56c6c; line-height: 1.5; word-break: break-all; }
+.dl-progress-tip { font-size: 12px; color: #909399; }
 </style> 
