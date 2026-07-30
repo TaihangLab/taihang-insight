@@ -37,8 +37,8 @@ export default {
   created() {},
   data() {
     return {
-      fixedHeader: true,
-      fixSiderbar: true,
+      fixedHeader: false,
+      fixSiderbar: false,
     };
   },
   methods: {
