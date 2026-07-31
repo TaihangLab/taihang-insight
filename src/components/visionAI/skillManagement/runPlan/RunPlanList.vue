@@ -530,8 +530,65 @@
       :visible.sync="drawerVisible"
       :edit-plan="editingPlan"
       :mode="drawerMode"
-      @saved="onSaved">
+      @saved="onSaved"
+      @background-save="onBackgroundSave">
     </run-plan-create-drawer>
+
+    <!-- 后台保存进度：关掉抽屉后仍可查看 -->
+    <div
+      v-if="bgSaveJob && bgSaveJob.job_id && !bgSaveMinimized"
+      class="bg-save-panel"
+      @click="bgSaveDialogVisible = true">
+      <div class="bg-save-panel__head">
+        <i class="el-icon-loading" v-if="bgSaveRunning"></i>
+        <i class="el-icon-success" v-else-if="bgSaveJob.status === 'done'"></i>
+        <i class="el-icon-warning" v-else-if="bgSaveJob.status === 'failed'"></i>
+        <span>{{ bgSaveTitle }}</span>
+        <i class="el-icon-close bg-save-panel__close" @click.stop="dismissBgSave"></i>
+      </div>
+      <el-progress
+        :percentage="bgSaveJob.percent || 0"
+        :status="bgSaveProgressStatus"
+        :stroke-width="8"
+        :show-text="false">
+      </el-progress>
+      <div class="bg-save-panel__msg">{{ bgSaveJob.message || '处理中...' }}</div>
+      <div v-if="bgSaveJob.total > 0" class="bg-save-panel__count">
+        {{ bgSaveJob.current || 0 }}/{{ bgSaveJob.total }} · 点击查看详情
+      </div>
+    </div>
+    <div
+      v-else-if="bgSaveJob && bgSaveJob.job_id && bgSaveMinimized && bgSaveRunning"
+      class="bg-save-chip"
+      @click="expandBgSave">
+      <i class="el-icon-loading"></i>
+      <span>保存中 {{ bgSaveJob.percent || 0 }}%</span>
+    </div>
+
+    <el-dialog
+      :title="bgSaveTitle"
+      :visible.sync="bgSaveDialogVisible"
+      width="420px"
+      append-to-body
+      custom-class="run-plan-save-progress-dialog">
+      <div v-if="bgSaveJob" class="bg-save-dialog">
+        <el-progress
+          :percentage="bgSaveJob.percent || 0"
+          :status="bgSaveProgressStatus"
+          :stroke-width="14">
+        </el-progress>
+        <p class="bg-save-dialog__msg">{{ bgSaveJob.message || '处理中...' }}</p>
+        <p v-if="bgSaveJob.total > 0" class="bg-save-dialog__count">
+          {{ bgSaveJob.current || 0 }}/{{ bgSaveJob.total }}
+        </p>
+        <p v-if="bgSaveJob.error" class="bg-save-dialog__error">{{ bgSaveJob.error }}</p>
+        <p v-if="bgSaveRunning" class="bg-save-dialog__hint">任务在后台继续执行，可随时回来查看</p>
+      </div>
+      <span slot="footer">
+        <el-button v-if="bgSaveRunning" @click="bgSaveDialogVisible = false">继续后台运行</el-button>
+        <el-button type="primary" @click="dismissBgSave">{{ bgSaveRunning ? '隐藏' : '关闭' }}</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -540,6 +597,7 @@ import { runPlanAPI, skillAPI, realtimeMonitorAPI } from '@/components/service/V
 import RunPlanCreateDrawer from './RunPlanCreateDrawer.vue';
 import ChannelTreePanel, { resolveTreeChannel } from './ChannelTreePanel.vue';
 import { skillKindTagType } from './runPlanFormat.js';
+import { loadActiveSaveJob, saveActiveSaveJob, clearActiveSaveJob } from './runPlanSaveJob.js';
 
 const GUIDE_STORAGE_KEY = 'run_plan_guide_hidden';
 
@@ -599,6 +657,10 @@ export default {
       drawerVisible: false,
       drawerMode: 'create',
       editingPlan: null,
+      bgSaveJob: null,
+      bgSaveDialogVisible: false,
+      bgSaveMinimized: false,
+      bgSaveTimer: null,
       prepSteps: [
         { icon: 'el-icon-video-camera', title: '添加设备', desc: '接入摄像头或 GB 通道，作为 AI 分析的视频数据源', route: '/deviceManage/camera', linkText: '前往设备管理' },
         { icon: 'el-icon-cpu', title: '添加技能', desc: '创建视觉模型、技能编排或多模态大模型技能', route: '/skillManage/skillList', linkText: '前往技能管理' },
@@ -607,6 +669,22 @@ export default {
     };
   },
   computed: {
+    bgSaveRunning() {
+      const s = this.bgSaveJob && this.bgSaveJob.status;
+      return s === 'pending' || s === 'running';
+    },
+    bgSaveTitle() {
+      if (!this.bgSaveJob) return '保存进度';
+      if (this.bgSaveJob.status === 'failed') return '保存失败';
+      if (this.bgSaveJob.status === 'done') return '保存完成';
+      return this.bgSaveJob.op === 'update' ? '正在更新运行计划' : '正在创建运行计划';
+    },
+    bgSaveProgressStatus() {
+      if (!this.bgSaveJob) return undefined;
+      if (this.bgSaveJob.status === 'failed') return 'exception';
+      if (this.bgSaveJob.status === 'done') return 'success';
+      return undefined;
+    },
     skillAggList() {
       const map = {};
       this.applyPlanSkillFilters(this.allPlans).forEach(p => {
@@ -716,6 +794,10 @@ export default {
     this.loadSkillFilterOptions();
     this.loadOrganizations();
     this.loadData();
+    this.restoreBgSaveJob();
+  },
+  beforeDestroy() {
+    this.stopBgSavePoll();
   },
   methods: {
     skillKindTagType,
@@ -1171,7 +1253,109 @@ export default {
     },
     onSaved() {
       this.drawerVisible = false;
+      this.clearBgSave();
       this.loadData();
+    },
+    onBackgroundSave(job) {
+      this.drawerVisible = false;
+      this.trackBgSaveJob(job);
+    },
+    restoreBgSaveJob() {
+      const job = loadActiveSaveJob();
+      if (job && job.job_id) this.trackBgSaveJob(job);
+    },
+    trackBgSaveJob(job) {
+      if (!job || !job.job_id) return;
+      this.bgSaveMinimized = false;
+      this.bgSaveJob = {
+        job_id: job.job_id,
+        op: job.op || 'create',
+        plan_id: job.plan_id || null,
+        status: job.status || 'running',
+        phase: job.phase || '',
+        message: job.message || '后台保存中...',
+        current: job.current || 0,
+        total: job.total || 0,
+        percent: job.percent || 0,
+        error: job.error || null
+      };
+      saveActiveSaveJob(this.bgSaveJob);
+      this.stopBgSavePoll();
+      if (this.bgSaveRunning) this.pollBgSaveJob();
+    },
+    expandBgSave() {
+      this.bgSaveMinimized = false;
+      this.bgSaveDialogVisible = true;
+    },
+    stopBgSavePoll() {
+      if (this.bgSaveTimer) {
+        clearTimeout(this.bgSaveTimer);
+        this.bgSaveTimer = null;
+      }
+    },
+    async pollBgSaveJob() {
+      if (!this.bgSaveJob || !this.bgSaveJob.job_id) return;
+      try {
+        const res = await runPlanAPI.getSaveJob(this.bgSaveJob.job_id);
+        const payload = (res && res.data) || {};
+        const job = payload.data || payload;
+        this.bgSaveJob = {
+          job_id: job.job_id || this.bgSaveJob.job_id,
+          op: job.op || this.bgSaveJob.op,
+          plan_id: job.plan_id || this.bgSaveJob.plan_id,
+          status: job.status || '',
+          phase: job.phase || '',
+          message: job.message || '',
+          current: job.current || 0,
+          total: job.total || 0,
+          percent: Math.max(0, Math.min(100, Number(job.percent) || 0)),
+          error: job.error || null
+        };
+        if (this.bgSaveRunning) {
+          saveActiveSaveJob(this.bgSaveJob);
+          this.bgSaveTimer = setTimeout(() => this.pollBgSaveJob(), 500);
+          return;
+        }
+        if (this.bgSaveJob.status === 'done') {
+          this.bgSaveMinimized = false;
+          clearActiveSaveJob(this.bgSaveJob.job_id);
+          this.$message.success(this.bgSaveJob.op === 'update' ? '更新成功' : '创建成功');
+          this.loadData();
+        } else if (this.bgSaveJob.status === 'failed') {
+          this.bgSaveMinimized = false;
+          saveActiveSaveJob(this.bgSaveJob);
+          this.$message.error('保存失败：' + (this.bgSaveJob.error || this.bgSaveJob.message || '未知错误'));
+          this.bgSaveDialogVisible = true;
+        }
+      } catch (e) {
+        // job 过期或不存在：清掉本地状态，避免一直挂着
+        const status = e && e.response && e.response.status;
+        if (status === 404) {
+          this.clearBgSave();
+          return;
+        }
+        this.bgSaveTimer = setTimeout(() => this.pollBgSaveJob(), 1500);
+      }
+    },
+    dismissBgSave() {
+      this.bgSaveDialogVisible = false;
+      if (this.bgSaveRunning) {
+        // 收起到小胶囊，轮询不停；点胶囊可再展开
+        this.bgSaveMinimized = true;
+        return;
+      }
+      this.clearBgSave();
+    },
+    clearBgSave() {
+      this.stopBgSavePoll();
+      if (this.bgSaveJob && this.bgSaveJob.job_id) {
+        clearActiveSaveJob(this.bgSaveJob.job_id);
+      } else {
+        clearActiveSaveJob();
+      }
+      this.bgSaveJob = null;
+      this.bgSaveMinimized = false;
+      this.bgSaveDialogVisible = false;
     }
   }
 };
@@ -1460,4 +1644,78 @@ export default {
 /* 动画 */
 .slide-fade-enter-active, .slide-fade-leave-active { transition: all 0.25s ease; }
 .slide-fade-enter, .slide-fade-leave-to { opacity: 0; transform: translateY(-8px); }
+
+/* 后台保存进度浮层 */
+.bg-save-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 300px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e4e7ed;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 3000;
+  cursor: pointer;
+  text-align: left;
+}
+.bg-save-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+}
+.bg-save-panel__head i.el-icon-loading { color: #409eff; }
+.bg-save-panel__head i.el-icon-success { color: #67c23a; }
+.bg-save-panel__head i.el-icon-warning { color: #f56c6c; }
+.bg-save-panel__close {
+  margin-left: auto;
+  color: #909399;
+  font-weight: normal;
+  cursor: pointer;
+}
+.bg-save-panel__close:hover { color: #606266; }
+.bg-save-panel__msg {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #606266;
+  line-height: 1.4;
+}
+.bg-save-panel__count {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #909399;
+}
+.bg-save-chip {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #409eff;
+  color: #fff;
+  border-radius: 20px;
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.35);
+  z-index: 3000;
+  cursor: pointer;
+  font-size: 13px;
+}
+.bg-save-chip:hover { background: #66b1ff; }
+.bg-save-dialog { text-align: center; padding: 4px 0; }
+.bg-save-dialog__msg { margin: 16px 0 4px; font-size: 13px; color: #303133; }
+.bg-save-dialog__count { margin: 0; font-size: 12px; color: #909399; }
+.bg-save-dialog__error {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #f56c6c;
+  text-align: left;
+  word-break: break-all;
+}
+.bg-save-dialog__hint { margin: 10px 0 0; font-size: 12px; color: #909399; }
 </style>

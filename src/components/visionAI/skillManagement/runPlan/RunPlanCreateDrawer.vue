@@ -554,11 +554,13 @@
     </div>
 
     <div class="drawer-footer">
-      <el-button @click="innerVisible = false">{{ isView ? '关闭' : '取消' }}</el-button>
+      <el-button @click="onFooterClose">
+        {{ isView ? '关闭' : (saveJobRunning ? '后台运行并关闭' : '取消') }}
+      </el-button>
       <template v-if="!isView">
-        <el-button v-if="step > 0" @click="prevStep">上一步</el-button>
-        <el-button v-if="step < 2" type="primary" @click="nextStep">下一步</el-button>
-        <el-button v-else type="primary" :loading="submitting" @click="submit">确定</el-button>
+        <el-button v-if="step > 0" :disabled="submitting" @click="prevStep">上一步</el-button>
+        <el-button v-if="step < 2" type="primary" :disabled="submitting" @click="nextStep">下一步</el-button>
+        <el-button v-else type="primary" :loading="submitting" :disabled="submitting" @click="submit">确定</el-button>
       </template>
     </div>
 
@@ -571,6 +573,35 @@
       :max-regions="fenceMaxRegions"
       @confirm="onFenceConfirm">
     </fence-drawer>
+
+    <el-dialog
+      :title="saveProgressTitle"
+      :visible.sync="saveProgressVisible"
+      width="420px"
+      append-to-body
+      :close-on-click-modal="false"
+      :close-on-press-escape="true"
+      :show-close="true"
+      custom-class="run-plan-save-progress-dialog"
+      @close="onSaveProgressDialogClose">
+      <div class="save-progress">
+        <el-progress
+          :percentage="saveProgress.percent"
+          :status="saveProgressStatus"
+          :stroke-width="14">
+        </el-progress>
+        <p class="save-progress__msg">{{ saveProgress.message || '准备中...' }}</p>
+        <p v-if="saveProgress.total > 0" class="save-progress__count">
+          {{ saveProgress.current }}/{{ saveProgress.total }}
+        </p>
+        <p v-if="saveProgress.error" class="save-progress__error">{{ saveProgress.error }}</p>
+        <p v-if="saveJobRunning" class="save-progress__hint">关闭后任务会继续，可在列表页查看进度</p>
+      </div>
+      <span slot="footer">
+        <el-button v-if="saveJobRunning" type="primary" plain @click="backgroundSave">后台运行</el-button>
+        <el-button v-if="saveProgress.status === 'failed'" type="primary" @click="saveProgressVisible = false">关闭</el-button>
+      </span>
+    </el-dialog>
   </el-drawer>
 </template>
 
@@ -578,6 +609,7 @@
 import { runPlanAPI, skillAPI, taskReviewAPI } from '@/components/service/VisionAIService.js';
 import { assetAPI } from '@/components/service/AssetService.js';
 import { pullPointStatusText, categorizeRowStatus } from '../../deviceManagement/assetStreamStatus.js';
+import { saveActiveSaveJob } from './runPlanSaveJob.js';
 import FenceDrawer from './FenceDrawer.vue';
 import FencePreview from './FencePreview.vue';
 import ChannelTreePanel from './ChannelTreePanel.vue';
@@ -675,10 +707,43 @@ export default {
       reviewSkills: [],
       reviewHealthChecking: false,
       reviewLlmHealth: { checked: false, available: true, detail: '' },
-      pointStatusMap: {}
+      pointStatusMap: {},
+      saveProgressVisible: false,
+      saveProgressTimer: null,
+      saveWaitResolve: null,
+      saveBackgrounded: false,
+      saveProgress: {
+        job_id: '',
+        status: '',
+        phase: '',
+        message: '',
+        current: 0,
+        total: 0,
+        percent: 0,
+        error: null,
+        op: '',
+        plan_id: null
+      }
     };
   },
+  beforeDestroy() {
+    this.stopSaveProgressPoll();
+  },
   computed: {
+    saveJobRunning() {
+      const s = this.saveProgress.status;
+      return !!(this.saveProgress.job_id && (s === 'pending' || s === 'running' || this.submitting));
+    },
+    saveProgressTitle() {
+      if (this.saveProgress.status === 'failed') return '保存失败';
+      if (this.saveProgress.status === 'done') return '保存完成';
+      return this.isEdit ? '正在更新运行计划' : '正在创建运行计划';
+    },
+    saveProgressStatus() {
+      if (this.saveProgress.status === 'failed') return 'exception';
+      if (this.saveProgress.status === 'done') return 'success';
+      return undefined;
+    },
     defaultMergeWindowSeconds() {
       const cfg = this.alertConfigDefaults || defaultAlertConfig();
       return cfg.merge_window_seconds;
@@ -1210,6 +1275,124 @@ export default {
       if (tripwires.length) out.tripwires = tripwires;
       return out;
     },
+    formatSaveError(e) {
+      if (!e) return '请检查配置';
+      if (e.code === 'ECONNABORTED' || /timeout/i.test(e.message || '')) {
+        return '请求超时，请稍后重试';
+      }
+      if (!e.response) {
+        return e.message || '网络异常，请稍后重试';
+      }
+      const detail = e.response.data && e.response.data.detail;
+      if (typeof detail === 'string' && detail) return detail;
+      if (Array.isArray(detail) && detail.length) {
+        return detail.map(d => (d && d.msg) || JSON.stringify(d)).join('；');
+      }
+      if (e.response.data && e.response.data.message) return e.response.data.message;
+      return '请检查配置（HTTP ' + e.response.status + '）';
+    },
+    resetSaveProgress() {
+      this.saveBackgrounded = false;
+      this.saveProgress = {
+        job_id: '',
+        status: 'pending',
+        phase: 'pending',
+        message: '正在提交...',
+        current: 0,
+        total: this.form.cameras ? this.form.cameras.length : 0,
+        percent: 0,
+        error: null,
+        op: this.isEdit ? 'update' : 'create',
+        plan_id: this.isEdit && this.editPlan ? this.editPlan.plan_id : null
+      };
+    },
+    applySaveJob(job) {
+      if (!job) return;
+      this.saveProgress = {
+        job_id: job.job_id || this.saveProgress.job_id,
+        status: job.status || '',
+        phase: job.phase || '',
+        message: job.message || '',
+        current: job.current || 0,
+        total: job.total || 0,
+        percent: Math.max(0, Math.min(100, Number(job.percent) || 0)),
+        error: job.error || null,
+        op: job.op || this.saveProgress.op || (this.isEdit ? 'update' : 'create'),
+        plan_id: job.plan_id || this.saveProgress.plan_id || null
+      };
+      if (this.saveProgress.job_id && (this.saveProgress.status === 'pending' || this.saveProgress.status === 'running')) {
+        saveActiveSaveJob(this.saveProgress);
+      }
+    },
+    stopSaveProgressPoll() {
+      if (this.saveProgressTimer) {
+        clearTimeout(this.saveProgressTimer);
+        this.saveProgressTimer = null;
+      }
+    },
+    waitForSaveJob(jobId) {
+      return new Promise((resolve, reject) => {
+        this.saveWaitResolve = resolve;
+        this.saveWaitReject = reject;
+        const tick = async () => {
+          if (this.saveBackgrounded) return;
+          try {
+            const res = await runPlanAPI.getSaveJob(jobId);
+            const payload = (res && res.data) || {};
+            const job = payload.data || payload;
+            this.applySaveJob(job);
+            if (job.status === 'done') {
+              resolve(job);
+              return;
+            }
+            if (job.status === 'failed') {
+              reject(new Error(job.error || job.message || '保存失败'));
+              return;
+            }
+            this.saveProgressTimer = setTimeout(tick, 500);
+          } catch (e) {
+            if (!this.saveBackgrounded) reject(e);
+          }
+        };
+        tick();
+      });
+    },
+    backgroundSave() {
+      if (this.saveBackgrounded) return;
+      if (!this.saveProgress.job_id) {
+        this.saveProgressVisible = false;
+        this.innerVisible = false;
+        return;
+      }
+      this.saveBackgrounded = true;
+      this.stopSaveProgressPoll();
+      const snapshot = Object.assign({}, this.saveProgress);
+      saveActiveSaveJob(snapshot);
+      if (this.saveWaitResolve) {
+        this.saveWaitResolve({ backgrounded: true, ...snapshot });
+        this.saveWaitResolve = null;
+        this.saveWaitReject = null;
+      }
+      this.$emit('background-save', snapshot);
+      this.saveProgressVisible = false;
+      this.innerVisible = false;
+      this.submitting = false;
+      this.$message.success('已转为后台保存，可随时在列表页查看进度');
+    },
+    onFooterClose() {
+      if (this.saveJobRunning && this.saveProgress.job_id) {
+        this.backgroundSave();
+        return;
+      }
+      this.innerVisible = false;
+    },
+    onSaveProgressDialogClose() {
+      // 点 X / ESC：进行中则后台继续，失败则仅关闭
+      if (this.saveBackgrounded) return;
+      if (this.saveProgress.job_id && ['pending', 'running'].includes(this.saveProgress.status)) {
+        this.backgroundSave();
+      }
+    },
     async submit() {
       this.ensureAlertNameDefault();
       if (!this.form.alert_name) { this.$message.warning('请输入预警名称'); this.step = 2; return; }
@@ -1223,24 +1406,52 @@ export default {
         if (!available) { this.step = 2; return; }
       }
       this.submitting = true;
+      this.resetSaveProgress();
+      this.saveProgressVisible = true;
       try {
         const payload = this.buildPayload();
-        if (this.isEdit) {
-          await runPlanAPI.updatePlan(this.editPlan.plan_id, payload);
-          this.$message.success('更新成功');
-        } else {
-          await runPlanAPI.createPlan(payload);
-          this.$message.success('创建成功');
+        const startRes = this.isEdit
+          ? await runPlanAPI.updatePlan(this.editPlan.plan_id, payload)
+          : await runPlanAPI.createPlan(payload);
+        const startPayload = (startRes && startRes.data) || {};
+        const job = startPayload.data || startPayload;
+        const jobId = job && job.job_id;
+        if (!jobId) {
+          throw new Error('未返回保存任务 ID');
         }
+        this.applySaveJob(Object.assign({}, job, {
+          op: this.isEdit ? 'update' : 'create',
+          plan_id: this.isEdit && this.editPlan ? this.editPlan.plan_id : (job.plan_id || null)
+        }));
+        const finished = await this.waitForSaveJob(jobId);
+        if (finished && finished.backgrounded) {
+          return;
+        }
+        this.$message.success(this.isEdit ? '更新成功' : '创建成功');
         this.$emit('saved');
+        this.saveProgressVisible = false;
         this.innerVisible = false;
       } catch (e) {
-        this.$message.error('保存失败：' + (e.response && e.response.data && e.response.data.detail ? e.response.data.detail : '请检查配置'));
+        if (this.saveBackgrounded) return;
+        const msg = e && e.message && !e.response ? e.message : this.formatSaveError(e);
+        this.saveProgress.status = 'failed';
+        this.saveProgress.error = msg;
+        this.saveProgress.message = '保存失败';
+        this.$message.error('保存失败：' + msg);
       } finally {
-        this.submitting = false;
+        if (!this.saveBackgrounded) {
+          this.stopSaveProgressPoll();
+          this.submitting = false;
+        }
       }
     },
     onClosed() {
+      // 抽屉关闭时若保存仍在进行，交给列表页继续跟踪
+      if (!this.saveBackgrounded && this.saveProgress.job_id
+          && ['pending', 'running'].includes(this.saveProgress.status)) {
+        this.backgroundSave();
+      }
+      this.stopSaveProgressPoll();
       this.step = 0;
       this.form = defaultForm();
       this.skillParamFields = [];
@@ -1250,6 +1461,8 @@ export default {
       this.pointStatusMap = {};
       this.reviewHealthChecking = false;
       this.reviewLlmHealth = { checked: false, available: true, detail: '' };
+      this.saveProgressVisible = false;
+      this.resetSaveProgress();
     }
   }
 };
@@ -1662,4 +1875,31 @@ export default {
 .alert-level-select-dropdown .level-dot--2 { background: #e6a23c; }
 .alert-level-select-dropdown .level-dot--3 { background: #409eff; }
 .alert-level-select-dropdown .level-dot--4 { background: #909399; }
+
+.save-progress { padding: 8px 4px 4px; text-align: center; }
+.save-progress__msg {
+  margin: 16px 0 4px;
+  font-size: 13px;
+  color: #303133;
+  line-height: 1.5;
+}
+.save-progress__count {
+  margin: 0;
+  font-size: 12px;
+  color: #909399;
+}
+.save-progress__error {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #f56c6c;
+  line-height: 1.5;
+  text-align: left;
+  word-break: break-all;
+}
+.save-progress__hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.5;
+}
 </style>
