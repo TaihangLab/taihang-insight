@@ -38,12 +38,13 @@ export default {
   data() {
     return {
       fixedHeader: false,
-      fixSiderbar: false,
+      fixSiderbar: true,
     };
   },
   methods: {
     handleCollapseChange(collapsed) {
-      this.fixSiderbar = collapsed;
+      // 折叠仅影响 SideMenu 内部宽度，不隐藏整栏
+      this.fixSiderbar = true;
     },
   },
 };
