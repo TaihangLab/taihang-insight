@@ -1811,14 +1811,22 @@ export const alertAPI = {
 
   /**
    * 获取预警统计信息
-   * @param {number} [days=7] - 统计天数
-   * @returns {Promise} 包含统计信息的Promise对象
+   * @param {Object} [options]
+   * @param {string} [options.granularity='day'] - 粒度 day|month|year
+   * @param {string} [options.start_date] - 开始日期 YYYY-MM-DD
+   * @param {string} [options.end_date] - 结束日期 YYYY-MM-DD
+   * @param {number} [options.days=7] - 未传日期范围时统计最近天数
+   * @returns {Promise} 包含统计信息的 Promise 对象
    */
-  getAlertStatistics(days = 7) {
-    console.log('获取预警统计信息，天数:', days);
-    return visionAIAxios.get('/api/v1/alerts/statistics', {
-      params: { days }
-    });
+  getAlertStatistics({ granularity = 'day', start_date, end_date, days = 7 } = {}) {
+    const params = { granularity };
+    if (start_date && end_date) {
+      params.start_date = start_date;
+      params.end_date = end_date;
+    } else {
+      params.days = days;
+    }
+    return visionAIAxios.get('/api/v1/alerts/statistics', { params });
   },
 
   /**
