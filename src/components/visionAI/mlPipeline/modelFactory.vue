@@ -72,12 +72,12 @@
 
         <!-- 已选中 -->
         <div v-else class="detail-content">
-          <!-- LS 项目已删除警告 -->
+          <!-- LS 项目已删除 / 未关联警告 -->
           <el-alert
-            v-if="lsProjectWarning"
-            :title="lsProjectWarning"
+            v-if="lsProjectWarning || (selectedDataset && !selectedDataset.ls_project_id)"
+            :title="lsProjectWarning || '此数据集未关联 Label Studio 项目'"
             type="warning"
-            description="该数据集关联的 Label Studio 项目已不存在，上传图片时会自动重新创建项目。"
+            description="可点击「重建 Label Studio 项目」恢复关联，无需删除数据集。若原 LS 项目已删，旧图可能无法找回，需重新上传。"
             show-icon
             :closable="false"
             style="margin-bottom: 10px;"
@@ -90,6 +90,15 @@
               <span class="detail-desc" v-if="selectedDataset.description">{{ selectedDataset.description }}</span>
             </div>
             <div class="detail-header-right">
+              <el-button
+                v-if="!selectedDataset.ls_project_id"
+                type="warning"
+                size="mini"
+                icon="el-icon-refresh"
+                :loading="rebuildingLs"
+                @click="handleRebuildLsProject">
+                重建 LS 项目
+              </el-button>
               <el-popconfirm title="确定删除此数据集？关联的 Label Studio 项目也会被删除。" @confirm="handleDeleteDataset">
                 <el-button slot="reference" type="danger" size="mini" icon="el-icon-delete" plain>删除数据集</el-button>
               </el-popconfirm>
@@ -276,12 +285,21 @@
                     @click="openLabelStudio">
                     打开 Label Studio 标注项目
                   </el-button>
+                  <el-button
+                    v-else
+                    type="warning"
+                    size="medium"
+                    icon="el-icon-refresh"
+                    :loading="rebuildingLs"
+                    @click="handleRebuildLsProject">
+                    重建 Label Studio 项目
+                  </el-button>
                   <p v-if="selectedDataset.ls_project_id" class="anno-hint" style="margin-top: 6px;">
                     登录账号：<b>admin@admin.com</b> &nbsp; 密码：<b>admin123456</b>
                   </p>
                   <el-alert
                     v-else
-                    title="此数据集未关联 Label Studio 项目（可能创建时 LS 未连接），请删除重建或检查 LS 连接状态。"
+                    title="此数据集未关联 Label Studio 项目（可能创建时 LS 未连接，或项目已被手动删除）。点击上方按钮即可重建，无需删除数据集。"
                     type="warning"
                     :closable="false"
                     show-icon
@@ -1142,6 +1160,7 @@ export default {
 
       // LS 项目状态
       lsProjectWarning: '',
+      rebuildingLs: false,
 
       // 图片
       images: [],
@@ -1376,6 +1395,43 @@ export default {
       const projectPath = `/projects/${this.selectedDataset.ls_project_id}/`;
       const lsBase = this.lsUrl || this.selectedDataset.ls_project_url.replace(/\/projects\/\d+\/?$/, '');
       window.open(`${lsBase}${projectPath}`, '_blank');
+    },
+    async handleRebuildLsProject() {
+      if (!this.selectedDataset) return;
+      this.rebuildingLs = true;
+      try {
+        const res = await mlPipelineAPI.rebuildLsProject(this.selectedDataset.id);
+        const data = (res.data && res.data.data) || {};
+        if (data.dataset) {
+          this.selectedDataset = data.dataset;
+        } else {
+          await this.loadDatasets();
+        }
+        this.lsProjectWarning = '';
+        await this.loadDatasets();
+        if (data.already_exists) {
+          this.$message.success('Label Studio 项目已存在，无需重建');
+        } else {
+          const failed = data.failed || 0;
+          const reimported = data.reimported || 0;
+          if (failed > 0) {
+            this.$message.warning(
+              `LS 项目已重建。成功重新导入 ${reimported} 张，${failed} 张原图已随旧项目丢失，请重新上传。`
+            );
+          } else {
+            this.$message.success(
+              reimported > 0
+                ? `LS 项目已重建，并重新导入 ${reimported} 张图片`
+                : 'LS 项目已重建，可以继续上传图片并标注'
+            );
+          }
+        }
+      } catch (e) {
+        const msg = (e.response && e.response.data && e.response.data.detail) || e.message || '重建失败';
+        this.$message.error(typeof msg === 'string' ? msg : '重建 Label Studio 项目失败');
+      } finally {
+        this.rebuildingLs = false;
+      }
     },
 
     // ---- 数据集列表 ----

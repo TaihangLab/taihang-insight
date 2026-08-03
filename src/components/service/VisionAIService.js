@@ -3766,6 +3766,13 @@ export const mlPipelineAPI = {
   checkLsProject(datasetId) {
     return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/check-ls`);
   },
+  rebuildLsProject(datasetId) {
+    return visionAIAxios.post(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/rebuild-ls`,
+      null,
+      { timeout: 300000 }
+    );
+  },
   exportDataset(datasetId, valRatio = 0.2) {
     return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/export?val_ratio=${valRatio}`);
   },
