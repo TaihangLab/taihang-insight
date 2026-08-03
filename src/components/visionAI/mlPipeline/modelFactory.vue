@@ -899,6 +899,39 @@
       </div>
     </el-dialog>
 
+    <!-- ===== 删除图片进度（本地已删 + LS 清理） ===== -->
+    <el-dialog
+      title="删除图片"
+      :visible.sync="deleteProgressVisible"
+      width="480px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="deleteProgressPhase === 'done' || deleteProgressPhase === 'error'"
+      :show-close="deleteProgressPhase === 'done' || deleteProgressPhase === 'error'"
+      append-to-body
+      @closed="onDeleteProgressClosed">
+      <div class="dl-progress-body">
+        <div class="dl-progress-phase">{{ deleteProgressTitle }}</div>
+        <el-progress
+          :percentage="deleteProgressPercent"
+          :status="deleteProgressStatus"
+          :stroke-width="16"
+          text-inside>
+        </el-progress>
+        <div class="dl-progress-meta">{{ deleteProgressMeta }}</div>
+        <div v-if="deleteProgressError" class="dl-progress-error">{{ deleteProgressError }}</div>
+      </div>
+      <div slot="footer">
+        <el-button
+          v-if="deleteProgressPhase === 'done' || deleteProgressPhase === 'error'"
+          size="small"
+          type="primary"
+          @click="deleteProgressVisible = false">
+          关闭
+        </el-button>
+        <span v-else class="form-tip">列表已更新；正在后台清理 Label Studio</span>
+      </div>
+    </el-dialog>
+
     <!-- ===== 创建训练任务弹窗 ===== -->
     <el-dialog title="创建训练任务" :visible.sync="createTrainingDialogVisible" width="540px" :close-on-click-modal="false" append-to-body>
       <el-form :model="trainingForm" ref="trainingForm" label-width="90px" :rules="trainingRules" size="small">
@@ -1115,6 +1148,15 @@ export default {
       imagesLoading: false,
       selectedImageIds: [],
       deletingImages: false,
+      deleteProgressVisible: false,
+      deleteProgressPhase: '', // running | done | error
+      deleteProgressPercent: 0,
+      deleteProgressTitle: '',
+      deleteProgressMeta: '',
+      deleteProgressError: '',
+      deleteProgressStatus: undefined,
+      deleteJobId: null,
+      deletePollTimer: null,
       downloadingImages: false,
       downloadProgressVisible: false,
       downloadProgressPhase: '', // packing | transferring | done | error
@@ -1247,6 +1289,7 @@ export default {
     if (this.logPollTimer) clearInterval(this.logPollTimer);
     if (this.exportPollTimer) clearInterval(this.exportPollTimer);
     this.stopDownloadPoll();
+    this.stopDeletePoll();
   },
   methods: {
     imageProxyUrl(imageId) {
@@ -1810,6 +1853,113 @@ export default {
         if (d.dataset_labeled_count != null) this.$set(ds, 'labeled_count', d.dataset_labeled_count);
       }
     },
+    stopDeletePoll() {
+      if (this.deletePollTimer) {
+        clearInterval(this.deletePollTimer);
+        this.deletePollTimer = null;
+      }
+    },
+    onDeleteProgressClosed() {
+      this.stopDeletePoll();
+      this.deletingImages = false;
+      this.deleteJobId = null;
+    },
+    applyDeleteJobProgress(job) {
+      const total = Number(job.total) || 0;
+      const done = (Number(job.ls_deleted) || 0) + (Number(job.failed) || 0);
+      this.deleteProgressPercent = Math.min(100, Number(job.percent) || 0);
+      this.deleteProgressTitle = job.message || '正在清理 Label Studio…';
+      this.deleteProgressMeta = total
+        ? `本地已删 ${job.deleted || 0} 张；Label Studio ${done}/${total}`
+        : `本地已删 ${job.deleted || 0} 张`;
+    },
+    async pollDeleteJob() {
+      if (!this.selectedDataset || !this.deleteJobId) return;
+      try {
+        const res = await mlPipelineAPI.getDeleteImagesJob(this.selectedDataset.id, this.deleteJobId);
+        const job = (res.data && res.data.data) || {};
+        this.applyDeleteJobProgress(job);
+        if (job.status === 'done') {
+          this.stopDeletePoll();
+          this.deleteProgressPhase = 'done';
+          this.deleteProgressPercent = 100;
+          this.deleteProgressStatus = (Number(job.failed) || 0) > 0 ? 'exception' : 'success';
+          this.deleteProgressTitle = job.message || '删除完成';
+          this.deletingImages = false;
+          if ((Number(job.failed) || 0) > 0) {
+            this.$message.warning(this.deleteProgressTitle);
+          } else {
+            this.$message.success(this.deleteProgressTitle);
+          }
+        } else if (job.status === 'error') {
+          this.stopDeletePoll();
+          this.deleteProgressPhase = 'error';
+          this.deleteProgressStatus = 'exception';
+          this.deleteProgressTitle = 'Label Studio 清理失败';
+          this.deleteProgressError = job.error || job.message || '清理失败（本地图片已删除）';
+          this.deletingImages = false;
+          this.$message.warning(this.deleteProgressError);
+        }
+      } catch (e) {
+        this.stopDeletePoll();
+        this.deleteProgressPhase = 'error';
+        this.deleteProgressStatus = 'exception';
+        this.deleteProgressTitle = '查询删除进度失败';
+        this.deleteProgressError = (e.response && e.response.data && e.response.data.detail) || e.message || '未知错误';
+        this.deletingImages = false;
+      }
+    },
+    async runDeleteImagesJob(imageIds) {
+      if (!this.selectedDataset || !imageIds.length || this.deletingImages) return;
+      this.deletingImages = true;
+      this.stopDeletePoll();
+      this.deleteProgressVisible = true;
+      this.deleteProgressPhase = 'running';
+      this.deleteProgressPercent = 0;
+      this.deleteProgressStatus = undefined;
+      this.deleteProgressTitle = '正在删除本地记录…';
+      this.deleteProgressMeta = `共 ${imageIds.length} 张`;
+      this.deleteProgressError = '';
+      this.deleteJobId = null;
+      try {
+        const res = await mlPipelineAPI.createDeleteImagesJob(this.selectedDataset.id, imageIds);
+        const job = (res.data && res.data.data) || {};
+        this.deleteJobId = job.job_id;
+        this.applyDatasetImageCounts(job);
+        this.selectedImageIds = this.selectedImageIds.filter(id => !imageIds.includes(id));
+        // 本地已删：立刻刷新列表，LS 清理进度弹窗继续轮询
+        await this.loadImages();
+        await this.loadDatasets();
+        await this.loadCollectionTasks(true);
+        this.applyDeleteJobProgress(job);
+        if (job.status === 'done') {
+          this.deleteProgressPhase = 'done';
+          this.deleteProgressPercent = 100;
+          this.deleteProgressStatus = 'success';
+          this.deleteProgressTitle = job.message || '删除完成';
+          this.deletingImages = false;
+          this.$message.success(this.deleteProgressTitle);
+          return;
+        }
+        if (job.status === 'error') {
+          this.deleteProgressPhase = 'error';
+          this.deleteProgressStatus = 'exception';
+          this.deleteProgressTitle = '删除失败';
+          this.deleteProgressError = job.error || job.message || '删除失败';
+          this.deletingImages = false;
+          return;
+        }
+        this.deleteProgressTitle = job.message || '本地已删除，正在清理 Label Studio…';
+        this.deletePollTimer = setInterval(() => this.pollDeleteJob(), 800);
+      } catch (e) {
+        this.deleteProgressPhase = 'error';
+        this.deleteProgressStatus = 'exception';
+        this.deleteProgressTitle = '删除失败';
+        this.deleteProgressError = (e.response && e.response.data && e.response.data.detail) || e.message || '未知错误';
+        this.deletingImages = false;
+        this.$message.error('删除失败: ' + this.deleteProgressError);
+      }
+    },
     async handleDeleteImage(img) {
       try {
         await this.$confirm(
@@ -1820,20 +1970,7 @@ export default {
       } catch (_) {
         return;
       }
-      this.deletingImages = true;
-      try {
-        const res = await mlPipelineAPI.deleteImage(img.id);
-        this.$message.success('已删除');
-        this.selectedImageIds = this.selectedImageIds.filter(id => id !== img.id);
-        this.applyDatasetImageCounts((res.data && res.data.data) || {});
-        await this.loadImages();
-        await this.loadDatasets();
-        await this.loadCollectionTasks(true);
-      } catch (e) {
-        this.$message.error('删除失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
-      } finally {
-        this.deletingImages = false;
-      }
+      await this.runDeleteImagesJob([img.id]);
     },
     async handleBatchDeleteImages() {
       if (!this.selectedImageIds.length) return;
@@ -1846,26 +1983,7 @@ export default {
       } catch (_) {
         return;
       }
-      this.deletingImages = true;
-      try {
-        const res = await mlPipelineAPI.deleteImages(this.selectedDataset.id, this.selectedImageIds.slice());
-        const d = (res.data && res.data.data) || {};
-        const msg = `已删除 ${d.deleted || this.selectedImageIds.length} 张`;
-        if (d.errors && d.errors.length) {
-          this.$message.warning(msg + `（${d.errors.length} 项有警告）`);
-        } else {
-          this.$message.success(msg);
-        }
-        this.selectedImageIds = [];
-        this.applyDatasetImageCounts(d);
-        await this.loadImages();
-        await this.loadDatasets();
-        await this.loadCollectionTasks(true);
-      } catch (e) {
-        this.$message.error('删除失败: ' + ((e.response && e.response.data && e.response.data.detail) || e.message));
-      } finally {
-        this.deletingImages = false;
-      }
+      await this.runDeleteImagesJob(this.selectedImageIds.slice());
     },
     stopDownloadPoll() {
       if (this.downloadPollTimer) {
