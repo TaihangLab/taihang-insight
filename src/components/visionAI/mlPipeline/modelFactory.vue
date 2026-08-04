@@ -110,7 +110,7 @@
 
             <!-- ====== Tab 1: 图片管理 ====== -->
             <el-tab-pane name="images">
-              <span slot="label"><i class="el-icon-picture-outline"></i> 图片管理 ({{ images.length || selectedDataset.image_count || 0 }})</span>
+              <span slot="label"><i class="el-icon-picture-outline"></i> 图片管理 ({{ selectedDataset.image_count || images.length || 0 }})</span>
               <div class="tab-toolbar">
                 <el-button type="primary" size="small" icon="el-icon-plus" @click="showAddImagesDialog">添加图片</el-button>
                 <el-button size="small" icon="el-icon-refresh" @click="loadImages" :loading="imagesLoading">刷新</el-button>
@@ -1284,6 +1284,7 @@ export default {
 
       // 轮询
       pollTimer: null,
+      _collectionPolling: false,
     };
   },
   computed: {
@@ -1352,8 +1353,12 @@ export default {
       if (this.allTrainingTasks.some(t => t.status === 'running')) {
         this.silentLoadTrainingTasks();
       }
-      if (this.activeTab === 'collection' && this.collectionTasks.some(t => t.status === 'running')) {
-        this.loadCollectionTasks(true);
+      // 采集进行中：同步任务卡片 + 左侧数据集数量/状态（不依赖右上角手动刷新）
+      if (this.selectedDataset) {
+        const collecting = this.collectionTasks.some(t => t.status === 'running');
+        if (this.activeTab === 'collection' || collecting) {
+          this.pollCollectionProgress();
+        }
       }
     }, 5000);
   },
@@ -1489,8 +1494,8 @@ export default {
     },
 
     // ---- 数据集列表 ----
-    async loadDatasets() {
-      this.datasetsLoading = true;
+    async loadDatasets(silent = false) {
+      if (!silent) this.datasetsLoading = true;
       try {
         const res = await mlPipelineAPI.listDatasets();
         this.datasets = res.data.data || [];
@@ -1500,9 +1505,34 @@ export default {
           else this.selectedDataset = null;
         }
       } catch (e) {
-        this.$message.error('加载数据集失败');
+        if (!silent) this.$message.error('加载数据集失败');
       } finally {
-        this.datasetsLoading = false;
+        if (!silent) this.datasetsLoading = false;
+      }
+    },
+    async pollCollectionProgress() {
+      if (!this.selectedDataset || this._collectionPolling) return;
+      this._collectionPolling = true;
+      try {
+        const prevCollected = (this.collectionTasks || []).reduce(
+          (sum, t) => sum + (t.collected_count || 0),
+          0
+        );
+        await this.loadCollectionTasks(true);
+        const nextCollected = (this.collectionTasks || []).reduce(
+          (sum, t) => sum + (t.collected_count || 0),
+          0
+        );
+        const collecting = (this.collectionTasks || []).some(t => t.status === 'running');
+        // 数量变化或仍在采集：刷新左侧进度；图片页一并静默刷新列表
+        if (collecting || nextCollected !== prevCollected) {
+          await this.loadDatasets(true);
+          if (this.activeTab === 'images') {
+            await this.loadImages(true);
+          }
+        }
+      } finally {
+        this._collectionPolling = false;
       }
     },
     async selectDataset(ds) {
@@ -1926,19 +1956,21 @@ export default {
     },
 
     // ---- 图片 ----
-    async loadImages() {
+    async loadImages(silent = false) {
       if (!this.selectedDataset) return;
-      this.imagesLoading = true;
+      if (!silent) this.imagesLoading = true;
       try {
         const res = await mlPipelineAPI.listImages(this.selectedDataset.id);
         this.images = res.data.data || [];
         const remain = new Set(this.images.map(i => i.id));
         this.selectedImageIds = this.selectedImageIds.filter(id => remain.has(id));
       } catch (_) {
-        this.images = [];
-        this.selectedImageIds = [];
+        if (!silent) {
+          this.images = [];
+          this.selectedImageIds = [];
+        }
       } finally {
-        this.imagesLoading = false;
+        if (!silent) this.imagesLoading = false;
       }
     },
     toggleImageSelect(imageId, checked) {
