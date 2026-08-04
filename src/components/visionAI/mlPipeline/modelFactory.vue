@@ -135,10 +135,19 @@
                   size="small"
                   icon="el-icon-delete"
                   plain
-                  :disabled="!selectedImageIds.length"
+                  :disabled="!selectedImageIds.length || deletingImages"
                   :loading="deletingImages"
                   @click="handleBatchDeleteImages">
                   删除选中 ({{ selectedImageIds.length }})
+                </el-button>
+                <el-button
+                  v-if="deleteJobId && !deleteProgressVisible"
+                  size="small"
+                  type="info"
+                  plain
+                  icon="el-icon-view"
+                  @click="openDeleteProgress">
+                  {{ deleteStatusChipText }}
                 </el-button>
               </div>
               <div class="image-grid" v-loading="imagesLoading">
@@ -923,8 +932,8 @@
       :visible.sync="deleteProgressVisible"
       width="480px"
       :close-on-click-modal="false"
-      :close-on-press-escape="deleteProgressPhase === 'done' || deleteProgressPhase === 'error'"
-      :show-close="deleteProgressPhase === 'done' || deleteProgressPhase === 'error'"
+      :close-on-press-escape="true"
+      :show-close="true"
       append-to-body
       @closed="onDeleteProgressClosed">
       <div class="dl-progress-body">
@@ -940,15 +949,43 @@
       </div>
       <div slot="footer">
         <el-button
-          v-if="deleteProgressPhase === 'done' || deleteProgressPhase === 'error'"
+          v-if="deleteProgressPhase === 'running'"
+          size="small"
+          @click="minimizeDeleteProgress">
+          后台运行
+        </el-button>
+        <el-button
           size="small"
           type="primary"
-          @click="deleteProgressVisible = false">
-          关闭
+          @click="closeDeleteProgress">
+          {{ deleteProgressPhase === 'running' ? '关闭窗口' : '关闭' }}
         </el-button>
-        <span v-else class="form-tip">列表已更新；正在后台清理 Label Studio</span>
+        <span v-if="deleteProgressPhase === 'running'" class="form-tip" style="margin-left: 8px;">
+          关闭后仍在后台清理，可随时查看状态
+        </span>
       </div>
     </el-dialog>
+
+    <!-- 关闭弹窗后：右下角状态条，可点开查看详情 -->
+    <div
+      v-if="deleteJobId && !deleteProgressVisible"
+      class="delete-status-chip"
+      :class="{
+        'is-running': deleteProgressPhase === 'running',
+        'is-done': deleteProgressPhase === 'done',
+        'is-error': deleteProgressPhase === 'error',
+      }"
+      @click="openDeleteProgress">
+      <i :class="deleteStatusChipIcon"></i>
+      <span class="delete-status-chip-text">{{ deleteStatusChipText }}</span>
+      <span class="delete-status-chip-pct" v-if="deleteProgressPhase === 'running'">
+        {{ deleteProgressPercent }}%
+      </span>
+      <i
+        v-if="deleteProgressPhase === 'done' || deleteProgressPhase === 'error'"
+        class="el-icon-close delete-status-chip-close"
+        @click.stop="dismissDeleteStatusChip"></i>
+    </div>
 
     <!-- ===== 创建训练任务弹窗 ===== -->
     <el-dialog title="创建训练任务" :visible.sync="createTrainingDialogVisible" width="540px" :close-on-click-modal="false" append-to-body>
@@ -1175,7 +1212,9 @@ export default {
       deleteProgressError: '',
       deleteProgressStatus: undefined,
       deleteJobId: null,
+      deleteJobDatasetId: null,
       deletePollTimer: null,
+      deleteMinimized: false,
       downloadingImages: false,
       downloadProgressVisible: false,
       downloadProgressPhase: '', // packing | transferring | done | error
@@ -1283,6 +1322,21 @@ export default {
     },
     selectedCollectionTemplate() {
       return this.collectionTemplates.find(t => t.id === this.collectionForm.template_id) || null;
+    },
+    deleteStatusChipText() {
+      if (this.deleteProgressPhase === 'done') {
+        return this.deleteProgressTitle || '删除完成';
+      }
+      if (this.deleteProgressPhase === 'error') {
+        return this.deleteProgressTitle || '删除异常';
+      }
+      const pct = this.deleteProgressPercent || 0;
+      return `后台清理中 ${pct}%`;
+    },
+    deleteStatusChipIcon() {
+      if (this.deleteProgressPhase === 'done') return 'el-icon-success';
+      if (this.deleteProgressPhase === 'error') return 'el-icon-warning';
+      return 'el-icon-loading';
     },
   },
   mounted() {
@@ -1915,10 +1969,49 @@ export default {
         this.deletePollTimer = null;
       }
     },
-    onDeleteProgressClosed() {
+    resetDeleteJobState() {
       this.stopDeletePoll();
       this.deletingImages = false;
       this.deleteJobId = null;
+      this.deleteJobDatasetId = null;
+      this.deleteMinimized = false;
+      this.deleteProgressPhase = '';
+      this.deleteProgressPercent = 0;
+      this.deleteProgressTitle = '';
+      this.deleteProgressMeta = '';
+      this.deleteProgressError = '';
+      this.deleteProgressStatus = undefined;
+    },
+    minimizeDeleteProgress() {
+      this.deleteMinimized = true;
+      this.deleteProgressVisible = false;
+      this.$message.info('已转到后台清理，可在右下角查看进度');
+    },
+    closeDeleteProgress() {
+      this.deleteProgressVisible = false;
+      if (this.deleteProgressPhase === 'running') {
+        this.deleteMinimized = true;
+      } else {
+        this.resetDeleteJobState();
+      }
+    },
+    openDeleteProgress() {
+      this.deleteMinimized = false;
+      this.deleteProgressVisible = true;
+    },
+    dismissDeleteStatusChip() {
+      if (this.deleteProgressPhase === 'running') return;
+      this.resetDeleteJobState();
+    },
+    onDeleteProgressClosed() {
+      // 运行中关闭窗口：只隐藏弹窗，继续轮询；结束后才清状态
+      if (this.deleteProgressPhase === 'running' && this.deleteJobId) {
+        this.deleteMinimized = true;
+        return;
+      }
+      if (!this.deleteMinimized) {
+        this.resetDeleteJobState();
+      }
     },
     applyDeleteJobProgress(job) {
       const total = Number(job.total) || 0;
@@ -1930,9 +2023,9 @@ export default {
         : `本地已删 ${job.deleted || 0} 张`;
     },
     async pollDeleteJob() {
-      if (!this.selectedDataset || !this.deleteJobId) return;
+      if (!this.deleteJobId || !this.deleteJobDatasetId) return;
       try {
-        const res = await mlPipelineAPI.getDeleteImagesJob(this.selectedDataset.id, this.deleteJobId);
+        const res = await mlPipelineAPI.getDeleteImagesJob(this.deleteJobDatasetId, this.deleteJobId);
         const job = (res.data && res.data.data) || {};
         this.applyDeleteJobProgress(job);
         if (job.status === 'done') {
@@ -1969,6 +2062,7 @@ export default {
       if (!this.selectedDataset || !imageIds.length || this.deletingImages) return;
       this.deletingImages = true;
       this.stopDeletePoll();
+      this.deleteMinimized = false;
       this.deleteProgressVisible = true;
       this.deleteProgressPhase = 'running';
       this.deleteProgressPercent = 0;
@@ -1977,10 +2071,12 @@ export default {
       this.deleteProgressMeta = `共 ${imageIds.length} 张`;
       this.deleteProgressError = '';
       this.deleteJobId = null;
+      this.deleteJobDatasetId = this.selectedDataset.id;
       try {
         const res = await mlPipelineAPI.createDeleteImagesJob(this.selectedDataset.id, imageIds);
         const job = (res.data && res.data.data) || {};
         this.deleteJobId = job.job_id;
+        this.deleteJobDatasetId = job.dataset_id || this.selectedDataset.id;
         this.applyDatasetImageCounts(job);
         this.selectedImageIds = this.selectedImageIds.filter(id => !imageIds.includes(id));
         // 本地已删：立刻刷新列表，LS 清理进度弹窗继续轮询
@@ -2767,6 +2863,50 @@ export default {
 .dl-progress-phase { font-size: 14px; color: #303133; margin-bottom: 14px; }
 .dl-progress-meta { margin-top: 12px; font-size: 13px; color: #606266; }
 .dl-progress-error { margin-top: 10px; font-size: 13px; color: #f56c6c; line-height: 1.5; word-break: break-all; }
+
+/* 删除任务后台状态条 */
+.delete-status-chip {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 420px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e4e7ed;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  font-size: 13px;
+  color: #303133;
+  transition: box-shadow 0.2s;
+}
+.delete-status-chip:hover {
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+}
+.delete-status-chip.is-running { border-color: #409eff; }
+.delete-status-chip.is-done { border-color: #67c23a; }
+.delete-status-chip.is-error { border-color: #e6a23c; }
+.delete-status-chip-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.delete-status-chip-pct {
+  color: #409eff;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.delete-status-chip-close {
+  flex-shrink: 0;
+  color: #909399;
+  padding: 2px;
+}
+.delete-status-chip-close:hover { color: #606266; }
 
 /* ---- 图片网格 ---- */
 .image-grid {
