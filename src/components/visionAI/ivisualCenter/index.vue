@@ -17,18 +17,6 @@
       </el-radio-group>
       <div class="title"><span>太行视觉AI平台</span></div>
       <div class="right-controls">
-        <div class="location-info">
-          <div v-if="locationInfo.loading" class="loading-indicator">
-            <span>加载中...</span>
-          </div>
-          <template v-else>
-            <span class="location"><i class="el-icon-location"></i> {{ locationInfo.location }}</span>
-            <span class="weather-divider">|</span>
-            <span class="weather-info"><i class="el-icon-sunny"></i> {{ locationInfo.weather }}</span>
-            <span class="weather-divider">|</span>
-            <span class="air-quality">{{ locationInfo.airQuality }}</span>
-          </template>
-        </div>
         <div class="fullscreen-btn" @click="toggleFullscreen">
           <i class="el-icon-full-screen"></i>
         </div>
@@ -297,8 +285,6 @@
 <script>
 import * as echarts from 'echarts';
 import { alertAPI, cameraAPI, systemMonitorAPI } from '../../service/VisionAIService.js';
-import { fetchWeatherByLocation } from '../../../utils/weather.js';
-
 // 预警等级映射
 const LEVEL_MAP = { 1: 'urgent', 2: 'high', 3: 'medium', 4: 'low' };
 const LEVEL_TEXT_MAP = { 1: '一级', 2: '二级', 3: '三级', 4: '四级' };
@@ -350,8 +336,6 @@ export default {
       totalDevices: 0,
       currentDetailTime: initTime,
 
-      locationInfo: { location: '太行工业园区', weather: '-- --', airQuality: '', loading: false },
-
       isFullscreen: false,
       headerCellStyle: {
         background: 'linear-gradient(180deg, rgba(6, 30, 93, 0.9) 0%, rgba(4, 20, 63, 1) 100%)',
@@ -401,7 +385,6 @@ export default {
     this.$nextTick(() => {
       this.initEmptyCharts();
       this.fetchAll();
-      this.fetchWeather();
       document.addEventListener('keydown', this.handleKeyboardNavigation);
     });
 
@@ -687,22 +670,6 @@ export default {
         }
       } catch (e) {
         console.error('获取摄像头数量失败:', e);
-      }
-    },
-
-    // ── 天气与位置（wttr.in 免费 API，无需 key）────────────────────────────
-
-    async fetchWeather() {
-      this.locationInfo.loading = true;
-      try {
-        const weatherInfo = await fetchWeatherByLocation();
-        this.locationInfo.location = weatherInfo.location;
-        this.locationInfo.weather = weatherInfo.weather;
-        this.locationInfo.airQuality = weatherInfo.airQuality;
-      } catch (e) {
-        console.error('获取天气失败:', e);
-      } finally {
-        this.locationInfo.loading = false;
       }
     },
 
@@ -1199,33 +1166,6 @@ export default {
   justify-content: flex-end;
   gap: 12px;
   flex: 0 0 auto;
-}
-
-.location-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-}
-
-.location, .weather-info, .air-quality {
-  color: #7EAEE5;
-  font-size: 13px;
-}
-
-.location i, .weather-info i {
-  color: #00FFFF;
-  font-size: 14px;
-  margin-right: 2px;
-}
-
-.weather-divider {
-  color: rgba(126, 174, 229, 0.3);
-  font-size: 13px;
-}
-
-.air-quality {
-  color: #44FF9B;
 }
 
 .exit-fullscreen-tip {
