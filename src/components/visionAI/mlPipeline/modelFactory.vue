@@ -114,10 +114,27 @@
               <div class="tab-toolbar">
                 <el-button type="primary" size="small" icon="el-icon-plus" @click="showAddImagesDialog">添加图片</el-button>
                 <el-button size="small" icon="el-icon-refresh" @click="loadImages" :loading="imagesLoading">刷新</el-button>
+                <el-select
+                  v-model="imageCameraFilter"
+                  size="small"
+                  clearable
+                  filterable
+                  placeholder="按点位筛选"
+                  style="width: 180px; margin-left: 8px;">
+                  <el-option label="全部点位" value="" />
+                  <el-option
+                    v-for="opt in imageCameraOptions"
+                    :key="opt.value"
+                    :label="opt.label"
+                    :value="opt.value" />
+                </el-select>
+                <span v-if="imageCameraFilter" class="image-filter-hint">
+                  {{ filteredImages.length }}/{{ images.length }}
+                </span>
                 <el-checkbox
-                  v-if="images.length"
-                  :indeterminate="selectedImageIds.length > 0 && selectedImageIds.length < images.length"
-                  :value="images.length > 0 && selectedImageIds.length === images.length"
+                  v-if="filteredImages.length"
+                  :indeterminate="selectedVisibleImageCount > 0 && selectedVisibleImageCount < filteredImages.length"
+                  :value="filteredImages.length > 0 && selectedVisibleImageCount === filteredImages.length"
                   @change="toggleSelectAllImages"
                   style="margin-left: 8px;">
                   全选
@@ -125,10 +142,10 @@
                 <el-button
                   size="small"
                   icon="el-icon-download"
-                  :disabled="!images.length"
+                  :disabled="!filteredImages.length"
                   :loading="downloadingImages"
                   @click="handleDownloadImages">
-                  {{ selectedImageIds.length ? `下载选中 (${selectedImageIds.length})` : '下载全部原图' }}
+                  {{ selectedImageIds.length ? `下载选中 (${selectedImageIds.length})` : (imageCameraFilter ? `下载当前筛选 (${filteredImages.length})` : '下载全部原图') }}
                 </el-button>
                 <el-button
                   type="danger"
@@ -152,8 +169,9 @@
               </div>
               <div class="image-grid" v-loading="imagesLoading">
                 <div v-if="!images.length" class="empty-tip">暂无图片，点击「添加图片」开始</div>
+                <div v-else-if="!filteredImages.length" class="empty-tip">当前点位筛选下无图片</div>
                 <div
-                  v-for="img in images"
+                  v-for="img in filteredImages"
                   :key="img.id"
                   :class="['image-card', { selected: selectedImageIds.includes(img.id) }]">
                   <el-checkbox
@@ -173,6 +191,12 @@
                   </el-image>
                   <span v-if="img.source_type && img.source_type !== 'upload' && img.source_type !== 'label_studio'" class="image-source">
                     {{ sourceTypeLabel(img.source_type) }}
+                  </span>
+                  <span
+                    v-if="img.camera_name || img.camera_id"
+                    class="image-camera"
+                    :title="img.camera_id ? ('点位ID: ' + img.camera_id) : ''">
+                    {{ img.camera_name || img.camera_id }}
                   </span>
                   <button
                     class="image-delete-btn"
@@ -1203,6 +1227,7 @@ export default {
       images: [],
       imagesLoading: false,
       selectedImageIds: [],
+      imageCameraFilter: '',
       deletingImages: false,
       deleteProgressVisible: false,
       deleteProgressPhase: '', // running | done | error
@@ -1305,8 +1330,27 @@ export default {
       if (!ds || !ds.image_count) return 0;
       return Math.round((ds.labeled_count || 0) / ds.image_count * 100);
     },
+    imageCameraOptions() {
+      const map = {};
+      (this.images || []).forEach((img) => {
+        const id = img.camera_id;
+        if (!id || map[id]) return;
+        map[id] = img.camera_name || id;
+      });
+      return Object.keys(map)
+        .sort((a, b) => String(map[a]).localeCompare(String(map[b]), 'zh-CN'))
+        .map(id => ({ value: id, label: map[id] === id ? id : `${map[id]}（${id}）` }));
+    },
+    filteredImages() {
+      if (!this.imageCameraFilter) return this.images || [];
+      return (this.images || []).filter(img => img.camera_id === this.imageCameraFilter);
+    },
+    selectedVisibleImageCount() {
+      const visible = new Set((this.filteredImages || []).map(i => i.id));
+      return (this.selectedImageIds || []).filter(id => visible.has(id)).length;
+    },
     imagePreviewList() {
-      return this.images.map(i => this.imageProxyUrl(i.id));
+      return this.filteredImages.map(i => this.imageProxyUrl(i.id));
     },
     datasetTrainingTasks() {
       if (!this.selectedDataset) return [];
@@ -1338,6 +1382,13 @@ export default {
       if (this.deleteProgressPhase === 'done') return 'el-icon-success';
       if (this.deleteProgressPhase === 'error') return 'el-icon-warning';
       return 'el-icon-loading';
+    },
+  },
+  watch: {
+    imageCameraFilter() {
+      // 切换点位筛选时，去掉当前不可见项的选中，避免误删
+      const visible = new Set((this.filteredImages || []).map(i => i.id));
+      this.selectedImageIds = (this.selectedImageIds || []).filter(id => visible.has(id));
     },
   },
   mounted() {
@@ -1541,6 +1592,7 @@ export default {
       this.exportResult = null;
       this.lsProjectWarning = '';
       this.selectedImageIds = [];
+      this.imageCameraFilter = '';
       this.loadImages();
       this.loadCollectionTasks();
       if (ds.ls_project_id) {
@@ -1979,7 +2031,15 @@ export default {
       else if (!checked && idx >= 0) this.selectedImageIds.splice(idx, 1);
     },
     toggleSelectAllImages(checked) {
-      this.selectedImageIds = checked ? this.images.map(i => i.id) : [];
+      if (!checked) {
+        // 仅取消当前筛选可见项的选中
+        const visible = new Set((this.filteredImages || []).map(i => i.id));
+        this.selectedImageIds = this.selectedImageIds.filter(id => !visible.has(id));
+        return;
+      }
+      const merged = new Set(this.selectedImageIds);
+      (this.filteredImages || []).forEach(i => merged.add(i.id));
+      this.selectedImageIds = Array.from(merged);
     },
     applyDatasetImageCounts(d) {
       if (!this.selectedDataset || !d) return;
@@ -2181,16 +2241,19 @@ export default {
       this.downloadJobId = null;
     },
     async handleDownloadImages() {
-      if (!this.selectedDataset || !this.images.length || this.downloadingImages) return;
+      if (!this.selectedDataset || !this.filteredImages.length || this.downloadingImages) return;
       const ids = this.selectedImageIds.slice();
-      const count = ids.length || this.images.length;
+      const filterIds = this.imageCameraFilter
+        ? this.filteredImages.map(i => i.id)
+        : null;
+      const downloadIds = ids.length ? ids : filterIds;
+      const count = downloadIds ? downloadIds.length : this.images.length;
       if (!ids.length) {
         try {
-          await this.$confirm(
-            `将打包下载本数据集全部 ${count} 张原图（不含标注）。数量较多时会先后台打包并显示进度，确认继续？`,
-            '下载原图',
-            { type: 'info' }
-          );
+          const tip = this.imageCameraFilter
+            ? `将打包下载当前点位筛选下的 ${count} 张原图（不含标注）。确认继续？`
+            : `将打包下载本数据集全部 ${count} 张原图（不含标注）。数量较多时会先后台打包并显示进度，确认继续？`;
+          await this.$confirm(tip, '下载原图', { type: 'info' });
         } catch (_) {
           return;
         }
@@ -2210,7 +2273,7 @@ export default {
       try {
         const res = await mlPipelineAPI.createDownloadImagesJob(
           this.selectedDataset.id,
-          ids.length ? ids : null
+          downloadIds
         );
         const job = (res.data && res.data.data) || {};
         if (!job.job_id) throw new Error('未返回任务 ID');
@@ -3137,6 +3200,27 @@ export default {
   font-size: 10px;
   padding: 1px 4px;
   border-bottom-right-radius: 4px;
+}
+.image-camera {
+  position: absolute;
+  bottom: 18px;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.3;
+  padding: 1px 4px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.image-filter-hint {
+  margin-left: 6px;
+  font-size: 12px;
+  color: #909399;
 }
 
 /* ---- 采集抽屉 ---- */
