@@ -1832,22 +1832,20 @@ export const alertAPI = {
   /**
    * 标记预警为误报
    * @param {number} alertId - 预警ID
-   * @param {string} reviewNotes - 复判意见
-   * @param {string} reviewerName - 复判人员姓名
+   * @param {string} [reviewNotes] - 复判意见（可选）
    * @returns {Promise} 包含误报处理结果的Promise对象
    */
-  markAlertAsFalseAlarm(alertId, reviewNotes, reviewerName) {
-    if (!alertId || !reviewNotes || !reviewerName) {
-      console.error('标记误报失败: 缺少必要参数');
-      return Promise.reject(new Error('缺少必要参数：预警ID、复判意见和复判人员姓名必须提供'));
+  markAlertAsFalseAlarm(alertId, reviewNotes = '标记为误报') {
+    if (!alertId) {
+      console.error('标记误报失败: 缺少预警ID');
+      return Promise.reject(new Error('缺少必要参数：预警ID'));
     }
 
-    console.log('标记预警为误报:', { alertId, reviewNotes, reviewerName });
+    console.log('标记预警为误报:', { alertId, reviewNotes });
 
     return visionAIAxios.post(`/api/v1/alerts/${alertId}/false-alarm`, null, {
       params: {
-        review_notes: reviewNotes,
-        reviewer_name: reviewerName
+        review_notes: reviewNotes || '标记为误报'
       }
     })
       .then(response => {
@@ -1863,29 +1861,22 @@ export const alertAPI = {
   /**
    * 批量标记预警为误报
    * @param {Array} alertIds - 预警ID数组
-   * @param {string} reviewNotes - 复判意见
-   * @param {string} reviewerName - 复判人员姓名
+   * @param {string} [reviewNotes] - 复判意见（可选）
    * @returns {Promise} 包含批量误报处理结果的Promise对象
    */
-  batchMarkAlertsAsFalseAlarm(alertIds, reviewNotes, reviewerName) {
+  batchMarkAlertsAsFalseAlarm(alertIds, reviewNotes = '标记为误报') {
     if (!alertIds || !Array.isArray(alertIds) || alertIds.length === 0) {
       console.error('批量标记误报失败: 缺少预警ID数组');
       return Promise.reject(new Error('缺少预警ID数组'));
     }
 
-    if (!reviewNotes || !reviewerName) {
-      console.error('批量标记误报失败: 缺少复判意见或复判人员姓名');
-      return Promise.reject(new Error('缺少复判意见或复判人员姓名'));
-    }
-
-    console.log('批量标记预警为误报:', { alertIds, reviewNotes, reviewerName });
+    console.log('批量标记预警为误报:', { alertIds, reviewNotes });
 
     return visionAIAxios.post('/api/v1/alerts/batch-false-alarm', {
       alert_ids: alertIds
     }, {
       params: {
-        review_notes: reviewNotes,
-        reviewer_name: reviewerName
+        review_notes: reviewNotes || '标记为误报'
       }
     })
       .then(response => {

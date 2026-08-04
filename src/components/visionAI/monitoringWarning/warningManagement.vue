@@ -1173,11 +1173,6 @@ export default {
     // 处理误报事件
     async handleFalseAlarmArchive() {
       try {
-        if (!this.falseAlarmForm.reviewNotes.trim()) {
-          this.$message.warning('请输入复判意见')
-          return
-        }
-        
         // 获取当前预警信息
         const warningIndex = this.warningList.findIndex(item => item.id === this.archiveWarningId)
         if (warningIndex === -1) {
@@ -1186,28 +1181,29 @@ export default {
         }
         
         const warningInfo = this.warningList[warningIndex]
+        const currentStatus = warningInfo._apiData ? warningInfo._apiData.status : null
         
-        // 检查预警状态，只有待处理状态才能标记为误报
-        if (warningInfo._apiData && warningInfo._apiData.status !== 1) {
+        // 待处理和处理中状态均可标记为误报
+        if (currentStatus && ![1, 2].includes(currentStatus)) {
           const statusNames = {
-            2: '处理中',
             3: '已处理',
             4: '已归档',
             5: '误报'
           }
-          const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态'
-          this.$message.warning(`只有待处理状态的预警才能标记为误报，当前状态为：${currentStatusName}`)
+          const currentStatusName = statusNames[currentStatus] || '未知状态'
+          this.$message.warning(`只有待处理或处理中状态的预警才能标记为误报，当前状态为：${currentStatusName}`)
           this.falseAlarmDialogVisible = false
           this.falseAlarmForm.reviewNotes = ''
           return
         }
         
+        const reviewNotes = this.falseAlarmForm.reviewNotes.trim() || '标记为误报'
+        
         // 调用后端API标记误报
         const { alertAPI } = await import('../../service/VisionAIService.js')
         const response = await alertAPI.markAlertAsFalseAlarm(
           warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId),
-          this.falseAlarmForm.reviewNotes,
-          this.getCurrentUserName()
+          reviewNotes
         )
         
         if (response.data && response.data.code === 0) {
@@ -1221,7 +1217,7 @@ export default {
             status: 'completed',
             statusText: '误报处理',
             time: this.getCurrentTime(),
-            description: `预警被标记为误报：${this.falseAlarmForm.reviewNotes}`,
+            description: `预警被标记为误报：${reviewNotes}`,
             operationType: 'false_alarm',
             operator: this.getCurrentUserName()
           }
@@ -1316,95 +1312,23 @@ export default {
       return iconMap[level] || 'el-icon-warning';
     },
     
-    // 从预警列表处理预警 - 使用统一的处理逻辑（与realtime页面一致）
+    // 从预警列表处理预警 - 点击处理仅打开意见对话框，确认后才变更状态
     handleWarningFromList(warning) {
       console.log('🖱️ warningManagement点击处理按钮, 预警ID:', warning && warning.id, '预警数据:', warning);
-      
+
       if (warning && warning.id) {
-        // 🔧 检查当前是否已经在处理中（通过API状态判断）
-        const isProcessing = (warning._apiData && warning._apiData.status === 2) || warning.status === 'processing';
-        
-        if (isProcessing) {
-          console.log('📝 预警已在处理中，直接打开处理对话框');
-          // 如果已在处理中，直接弹出处理意见对话框
-          this.currentProcessingWarningId = warning.id;
-          this.remarkDialogVisible = true;
-        } else {
-          console.log('🆕 开始新的处理流程');
-          // 如果不在处理中，开始处理流程
-          this.startProcessingWarning(warning);
-        }
+        this.currentProcessingWarningId = warning.id;
+        this.remarkDialogVisible = true;
       } else {
         console.error('❌ 无效的预警数据:', warning);
         this.$message.error('预警数据无效，无法处理');
       }
     },
-    
-    // 开始处理预警 - 与realtime页面逻辑完全一致
-    async startProcessingWarning(warning) {
-      try {
-        this.loading = true;
-        
-        console.log('🔄 开始处理预警:', warning.id);
-        
-        // 1. 先调用后端API更新状态为"处理中"
-        const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(warning.id);
-        const updateData = {
-          status: 2, // 处理中状态
-          processing_notes: '开始处理预警',
-          processed_by: this.getCurrentUserName()
-        };
-        
-        // 发送真实的API请求
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
-        console.log('✅ 后端状态更新成功:', response);
-        
-        // 2. 后端更新成功后，更新本地状态
-        const index = this.warningList.findIndex(item => String(item.id) === String(warning.id));
-        if (index !== -1) {
-          // 🔧 关键修复：更新 _apiData.status 字段为处理中
-          if (this.warningList[index]._apiData) {
-            this.$set(this.warningList[index]._apiData, 'status', 2);
-          }
-          
-          // 🔧 同时更新前端使用的 status 字段
-          this.$set(this.warningList[index], 'status', 'processing');
-          
-          // 确保有操作历史数组
-          if (!this.warningList[index].operationHistory) {
-            this.$set(this.warningList[index], 'operationHistory', []);
-          }
-          
-          // 更新待处理记录为已完成状态
-          this.warningList[index].operationHistory = this.warningList[index].operationHistory.map(record => {
-            if (record.operationType === 'pending' && record.status === 'active') {
-              return {
-                ...record,
-                status: 'completed',
-                description: '预警已确认，开始处理'
-              };
-            }
-            return record;
-          });
-          
-          // 🔧 不再添加"处理中"记录到时间线，只更新状态
-          // 用户添加的处理意见会作为 processing-action 类型单独显示
-          
-          console.log('✅ 开始处理，本地状态已更新为处理中:', this.warningList[index]);
-        }
-        
-        // 3. 弹出处理意见对话框
-        this.currentProcessingWarningId = warning.id;
-        this.remarkDialogVisible = true;
-        
-        this.$message.success('预警已开始处理');
-        
-      } catch (error) {
-        console.error('❌ 开始处理预警失败:', error);
-        this.$message.error('开始处理失败: ' + (error.message || (error.response && error.response.data && error.response.data.message) || '未知错误'));
-      } finally {
-        this.loading = false;
-      }
+
+    // 打开处理意见对话框（不再立即变更后端状态）
+    startProcessingWarning(warning) {
+      this.currentProcessingWarningId = warning.id;
+      this.remarkDialogVisible = true;
     },
     
     // 初始化操作历史 - 与预警详情对话框保持一致
@@ -1622,25 +1546,16 @@ export default {
       return false
     },
     
-    // 检查误报按钮是否应该禁用（只有待处理状态才能标记为误报）
+    // 待处理和处理中状态均可标记为误报
     isFalseAlarmDisabled(warning) {
-      // 检查 _apiData 中的原始状态
       if (warning._apiData && warning._apiData.status !== undefined) {
-        // status === 1 表示待处理状态，只有待处理状态才能标记误报
-        const isDisabled = warning._apiData.status !== 1;
-        console.log('🚫 检查误报按钮状态:', warning.id, 'API status:', warning._apiData.status, 'disabled:', isDisabled);
-        return isDisabled;
+        return ![1, 2].includes(warning._apiData.status);
       }
       
-      // 检查字符串状态
       if (warning.status) {
-        const isDisabled = warning.status !== 'pending';
-        console.log('🚫 检查误报按钮状态:', warning.id, 'status:', warning.status, 'disabled:', isDisabled);
-        return isDisabled;
+        return !['pending', 'processing'].includes(warning.status);
       }
       
-      // 默认禁用（安全起见）
-      console.log('🚫 误报按钮默认禁用:', warning.id);
       return true;
     },
     
@@ -2441,7 +2356,7 @@ export default {
             v-model="falseAlarmForm.reviewNotes"
             type="textarea"
             :rows="4"
-            placeholder="请输入复判意见，说明为什么判定为误报"
+            placeholder="请输入复判意见，说明为什么判定为误报（可选）"
             maxlength="500"
             show-word-limit
           />

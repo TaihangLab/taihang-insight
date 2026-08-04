@@ -914,40 +914,8 @@ export default {
     },
 
     handleWarning() {
-      if (this.detail.status === 2) {
-        this.remarkDialogVisible = true;
-      } else {
-        this.startProcessing();
-      }
-    },
-
-    async startProcessing() {
-      try {
-        this.loading = true;
-        const updateData = {
-          status: 2,
-          processing_notes: '开始处理预警',
-          processed_by: this.getCurrentUserName()
-        };
-
-        await alertAPI.updateAlertStatus(this.detail.alert_id, updateData);
-
-        this.operationHistory = this.operationHistory.map(record => {
-          if (record.operationType === 'pending' && record.status === 'active') {
-            return { ...record, status: 'completed', description: '预警已确认，开始处理' };
-          }
-          return record;
-        });
-
-        this.detail.status = 2;
-        this.$message.success('预警已开始处理');
-        this.remarkDialogVisible = true;
-
-      } catch (error) {
-        this.$message.error('开始处理失败: ' + (error.message || '未知错误'));
-      } finally {
-        this.loading = false;
-      }
+      if (this.isProcessingDisabled()) return;
+      this.remarkDialogVisible = true;
     },
 
     async saveRemark() {
@@ -976,6 +944,7 @@ export default {
             operator: this.getCurrentUserName()
           });
 
+          this.detail.status = 2;
           this.$message.success('确认处理成功，状态已更新为处理中');
           this.$emit('handle-warning', {
             alert_id: this.detail.alert_id,
@@ -1060,12 +1029,8 @@ export default {
     async confirmFalseAlarm() {
       try {
         this.loading = true;
-        const updateData = {
-          status: 5,
-          processing_notes: this.falseAlarmReason || '标记为误报',
-          processed_by: this.getCurrentUserName()
-        };
-        const response = await alertAPI.updateAlertStatus(this.detail.alert_id, updateData);
+        const reviewNotes = this.falseAlarmReason || '标记为误报';
+        const response = await alertAPI.markAlertAsFalseAlarm(this.detail.alert_id, reviewNotes);
         if (response.data && response.data.code === 0) {
           this.addOperationRecord({
             status: 'completed',
@@ -1420,8 +1385,8 @@ export default {
 
     isFalseAlarmDisabled() {
       if (!this.detail) return true;
-      // 只有 status=1（待处理）时才能点击误报
-      return this.detail.status !== 1;
+      // 待处理和处理中状态均可标记误报
+      return ![1, 2].includes(this.detail.status);
     },
 
     isArchiveDisabled() {
