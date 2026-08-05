@@ -118,7 +118,7 @@
           <div class="operation-left">
             <el-button size="small" type="primary" icon="el-icon-refresh" @click="handleRefresh">刷新列表</el-button>
             <el-button size="small" type="success" icon="el-icon-setting" @click="handleCameraManagement">设备接入</el-button>
-            <el-button size="small" type="primary" plain icon="el-icon-location" @click="$router.push({ name: 'pointManage' })">点位管理</el-button>
+            <el-button size="small" type="primary" icon="el-icon-location" @click="$router.push({ name: 'pointManage' })">点位管理</el-button>
           </div>
           <div class="operation-right">
             <el-input v-model="searchKeyword" placeholder="请输入设备名称搜索" size="small" style="width: 250px" clearable>

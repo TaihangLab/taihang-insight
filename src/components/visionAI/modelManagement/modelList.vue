@@ -13,12 +13,12 @@
 
         <!-- 检测类别操作 + 搜索，放右侧 -->
         <div class="right-operations">
-          <el-button type="primary" plain icon="el-icon-upload2" size="small" @click="openClassImportDialog">导入类别</el-button>
-          <el-button type="success" plain icon="el-icon-download" size="small" @click="handleExportClasses"
+          <el-button type="primary" icon="el-icon-upload2" size="small" @click="openClassImportDialog">导入类别</el-button>
+          <el-button type="success" icon="el-icon-download" size="small" @click="handleExportClasses"
             :loading="classExportLoading">导出类别</el-button>
-          <el-button type="info" plain icon="el-icon-document" size="small" @click="handleExportClassTemplate"
+          <el-button type="primary" icon="el-icon-document" size="small" @click="handleExportClassTemplate"
             :loading="classExportLoading">下载模板</el-button>
-          <el-button type="warning" plain icon="el-icon-refresh" size="small"
+          <el-button type="warning" icon="el-icon-refresh" size="small"
             :loading="classSyncLoading" @click="openClassSyncDialog">从技能同步</el-button>
 
           <div class="filter-item">
@@ -1554,16 +1554,17 @@ export default {
 
 
 .left-operations .el-button--success {
-  background: #f5f7fa;
-  border-color: #e4e7ed;
-  color: #606266;
+  background: #67c23a;
+  border-color: #67c23a;
+  color: #fff;
 }
 
-.left-operations .el-button--success:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: #3b82f6;
-  color: #1e3a8a;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+.left-operations .el-button--success:hover,
+.left-operations .el-button--success:focus {
+  background: #85ce61;
+  border-color: #85ce61;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(103, 194, 58, 0.35);
   transform: translateY(-1px);
 }
 
@@ -1589,6 +1590,62 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.right-operations > .el-button {
+  height: 32px;
+  padding: 6px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  font-weight: 500;
+  color: #fff;
+  transition: all 0.3s ease;
+  margin-right: 0;
+}
+
+.right-operations > .el-button--primary {
+  background: #409eff;
+  border-color: #409eff;
+  color: #fff;
+}
+
+.right-operations > .el-button--primary:hover,
+.right-operations > .el-button--primary:focus {
+  background: #66b1ff;
+  border-color: #66b1ff;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.right-operations > .el-button--success {
+  background: #67c23a;
+  border-color: #67c23a;
+  color: #fff;
+}
+
+.right-operations > .el-button--success:hover,
+.right-operations > .el-button--success:focus {
+  background: #85ce61;
+  border-color: #85ce61;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(103, 194, 58, 0.35);
+  transform: translateY(-1px);
+}
+
+.right-operations > .el-button--warning {
+  background: #e6a23c;
+  border-color: #e6a23c;
+  color: #fff;
+}
+
+.right-operations > .el-button--warning:hover,
+.right-operations > .el-button--warning:focus {
+  background: #ebb563;
+  border-color: #ebb563;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(230, 162, 60, 0.35);
+  transform: translateY(-1px);
 }
 
 .filter-item {

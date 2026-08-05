@@ -131,7 +131,7 @@
               <el-option label="空闲" value="idle" />
               <el-option label="异常" value="abnormal" />
             </el-select>
-            <el-button size="small" type="primary" plain @click="onSearch">查询</el-button>
+            <el-button size="small" type="primary" @click="onSearch">查询</el-button>
             <el-button size="small" @click="resetSearch">重置</el-button>
           </div>
           <div class="asset-toolbar__right">
