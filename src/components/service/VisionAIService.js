@@ -9,6 +9,9 @@ const visionAIAxios = axios.create({
   withCredentials: false,  // 将withCredentials设置为false，避免CORS错误
 });
 
+// 技能试跑、评测、批量创建计划等后端计算耗时较长
+const LONG_RUNNING_TIMEOUT = 300000;
+
 // 自定义参数序列化函数
 visionAIAxios.defaults.paramsSerializer = function (params) {
   // 自定义参数序列化逻辑，确保数组以多个同名参数形式传递
@@ -131,6 +134,8 @@ export const modelAPI = {
               model_status: model.model_status ? 'loaded' : 'unloaded',
               // 转换usage_status布尔值为字符串
               usage_status: model.usage_status ? 'using' : 'unused',
+              // 检测类别（模型标签）
+              classes: model.classes || [],
               created_at: model.created_at,
               updated_at: model.updated_at
             };
@@ -194,7 +199,9 @@ export const modelAPI = {
             // 添加模型配置
             model_config: model.model_config,
             // 相关技能
-            skill_classes: model.skill_classes
+            skill_classes: model.skill_classes,
+            // 检测类别（模型标签）
+            classes: model.classes || []
           };
 
           // 如果包含success字段（更新模型接口）
@@ -227,6 +234,61 @@ export const modelAPI = {
         console.error('更新模型失败:', error);
         throw error;
       });
+  },
+
+  // 获取模型的检测类别（模型标签）
+  getModelClasses(modelId) {
+    return visionAIAxios.get(`/api/v1/models/${modelId}/classes`);
+  },
+
+  // 全量覆盖模型的检测类别（模型标签）
+  updateModelClasses(modelId, classes) {
+    return visionAIAxios.put(`/api/v1/models/${modelId}/classes`, { classes });
+  },
+
+  // 从单模型技能同步检测类别并写入数据库
+  syncModelClassesFromSkills(modelId, skipExisting = false) {
+    return visionAIAxios.post(`/api/v1/models/${modelId}/classes/sync-from-skills`, null, {
+      params: { skip_existing: skipExisting },
+    });
+  },
+
+  // 批量从单模型技能同步检测类别
+  // options: { modelIds, syncAll, skipExisting }
+  batchSyncModelClassesFromSkills(options = {}) {
+    const payload = {
+      model_ids: options.modelIds || [],
+      sync_all: !!options.syncAll,
+      skip_existing: options.skipExisting !== false,
+    };
+    return visionAIAxios.post('/api/v1/models/classes/sync-from-skills', payload);
+  },
+
+  // 导出模型检测类别 JSON
+  // options: { modelIds, template }  template=true 时只预填模型名，classes 留空
+  exportModelClassesJson(modelIds, options = {}) {
+    const params = {};
+    if (modelIds && modelIds.length) {
+      params.model_ids = modelIds.join(',');
+    }
+    if (options.template) {
+      params.template = true;
+    }
+    return visionAIAxios.get('/api/v1/models/classes/export', {
+      params,
+      responseType: 'blob',
+      timeout: 60000,
+    });
+  },
+
+  // 从 JSON 导入模型检测类别
+  importModelClassesJson(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return visionAIAxios.post('/api/v1/models/classes/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
+    });
   },
 
   // 删除模型
@@ -452,6 +514,132 @@ export const skillAPI = {
         console.error('获取技能列表失败:', error);
         throw error;
       });
+  },
+
+  // 获取统一技能列表（聚合 视觉模型技能 / 技能编排 / 多模态大模型 三类）
+  getUnifiedSkills(params = {}) {
+    return visionAIAxios.get('/api/v1/skills', { params })
+      .then(response => response.data)
+      .catch(error => {
+        console.error('获取统一技能列表失败:', error);
+        throw error;
+      });
+  },
+
+  async fetchAllUnifiedSkills(params = {}) {
+    const all = [];
+    let page = 1;
+    const limit = 100;
+    for (;;) {
+      const res = await this.getUnifiedSkills({ ...params, page, limit });
+      if (!res || res.code !== 0) break;
+      const batch = res.data || [];
+      all.push(...batch);
+      if (batch.length < limit || all.length >= (res.total || 0)) break;
+      page += 1;
+      if (page > 50) break;
+    }
+    return all;
+  },
+
+  /** 解析 getAITaskSkillClasses 返回的技能类数组 */
+  parseSkillClassList(scRes) {
+    if (!scRes || !scRes.data) return [];
+    const d = scRes.data;
+    return d.skill_classes || d.data || [];
+  },
+
+  /** 分页拉取全部技能类，构建 name -> id 映射（编排技能关联 skill_class_id 用） */
+  async fetchSkillClassMap(params = {}) {
+    const scMap = {};
+    let page = 1;
+    const limit = 100;
+    for (;;) {
+      const scRes = await this.getAITaskSkillClasses({ ...params, page, limit });
+      const scList = this.parseSkillClassList(scRes);
+      scList.forEach(sc => {
+        if (sc.name) scMap[sc.name] = sc.id;
+      });
+      if (scList.length < limit) break;
+      page += 1;
+      if (page > 50) break;
+    }
+    return scMap;
+  },
+
+  parseLlmSkillList(llmRes) {
+    const raw = llmRes && llmRes.data;
+    if (Array.isArray(raw)) return raw;
+    if (raw && Array.isArray(raw.data)) return raw.data;
+    return [];
+  },
+
+  /** 运行计划技能选项：视觉/编排(skill_classes) + 大模型，选项带类型标签 */
+  async fetchRunPlanSkillOptions() {
+    const options = [];
+    const graphNames = new Set();
+    try {
+      let page = 1;
+      const pageSize = 100;
+      for (;;) {
+        const res = await visionAIAxios.get('/api/v1/skill-graphs', {
+          params: { page, page_size: pageSize, status: true }
+        });
+        const d = res.data || {};
+        const list = d.data || [];
+        list.forEach(g => {
+          if (g.skill_id) graphNames.add(g.skill_id);
+        });
+        if (list.length < pageSize || page * pageSize >= (d.total || 0)) break;
+        page += 1;
+      }
+    } catch (e) { /* ignore */ }
+
+    let page = 1;
+    const limit = 100;
+    for (;;) {
+      const scRes = await this.getAITaskSkillClasses({ page, limit, status: true });
+      const scList = this.parseSkillClassList(scRes);
+      scList.forEach(sc => {
+        const isGraph = graphNames.has(sc.name);
+        options.push({
+          ref: 'sc:' + sc.id,
+          kind: isGraph ? 'graph' : 'visual',
+          kindLabel: isGraph ? '编排' : '视觉',
+          skill_class_id: sc.id,
+          llm_skill_id: '',
+          label: sc.name_zh || sc.name,
+          name: sc.name
+        });
+      });
+      if (scList.length < limit) break;
+      page += 1;
+      if (page > 50) break;
+    }
+
+    page = 1;
+    for (;;) {
+      const llmRes = await this.getLlmSkillList({ page, limit, status: true });
+      const llmList = this.parseLlmSkillList(llmRes);
+      llmList.forEach(s => {
+        if (!s.skill_id) return;
+        options.push({
+          ref: 'llm:' + s.skill_id,
+          kind: 'llm',
+          kindLabel: '大模型',
+          skill_class_id: '',
+          llm_skill_id: s.skill_id,
+          label: s.skill_name || s.skill_id,
+          name: s.skill_id
+        });
+      });
+      const total = (llmRes.data && llmRes.data.total) || 0;
+      if (llmList.length < limit || page * limit >= total) break;
+      page += 1;
+      if (page > 50) break;
+    }
+
+    return options;
   },
 
   // 热加载技能类
@@ -1376,7 +1564,15 @@ export const cameraAPI = {
               status: camera.status || false,
               tags: camera.tags || [],
               camera_type: camera.camera_type || '-',
+              running: camera.running,
               skill_names: camera.skill_names || [],
+              llm_skill_names: camera.llm_skill_names || [],
+              graph_skill_names: camera.graph_skill_names || [],
+              running_skill_names: camera.running_skill_names || [],
+              sourceStatus: camera.sourceStatus || '',
+              sourceStatusText: camera.sourceStatusText || '',
+              sourceDetail: camera.sourceDetail || '',
+              sourceCheckedAt: camera.sourceCheckedAt || '',
             };
           });
           transformedData.total = originalData.total || transformedData.data.length;
@@ -1397,7 +1593,15 @@ export const cameraAPI = {
               status: camera.status || false,
               tags: camera.tags || [],
               camera_type: camera.camera_type || '-',
+              running: camera.running,
               skill_names: camera.skill_names || [],
+              llm_skill_names: camera.llm_skill_names || [],
+              graph_skill_names: camera.graph_skill_names || [],
+              running_skill_names: camera.running_skill_names || [],
+              sourceStatus: camera.sourceStatus || '',
+              sourceStatusText: camera.sourceStatusText || '',
+              sourceDetail: camera.sourceDetail || '',
+              sourceCheckedAt: camera.sourceCheckedAt || '',
             };
           });
           transformedData.total = originalData.data.total || transformedData.data.length;
@@ -1470,6 +1674,14 @@ export const cameraAPI = {
     }
 
     return visionAIAxios.get(`/api/v1/ai-tasks/camera/id/${cameraId}`);
+  },
+
+  /**
+   * 点位实时画面快照 URL（供抓图预览）
+   * @param {string|number} cameraId 摄像头(点位)ID
+   */
+  getCameraSnapshotUrl(cameraId) {
+    return `${config.API_BASE_URL}/api/v1/cameras/${cameraId}/snapshot?t=${Date.now()}`;
   }
 };
 
@@ -1832,22 +2044,20 @@ export const alertAPI = {
   /**
    * 标记预警为误报
    * @param {number} alertId - 预警ID
-   * @param {string} reviewNotes - 复判意见
-   * @param {string} reviewerName - 复判人员姓名
+   * @param {string} [reviewNotes] - 复判意见（可选）
    * @returns {Promise} 包含误报处理结果的Promise对象
    */
-  markAlertAsFalseAlarm(alertId, reviewNotes, reviewerName) {
-    if (!alertId || !reviewNotes || !reviewerName) {
-      console.error('标记误报失败: 缺少必要参数');
-      return Promise.reject(new Error('缺少必要参数：预警ID、复判意见和复判人员姓名必须提供'));
+  markAlertAsFalseAlarm(alertId, reviewNotes = '标记为误报') {
+    if (!alertId) {
+      console.error('标记误报失败: 缺少预警ID');
+      return Promise.reject(new Error('缺少必要参数：预警ID'));
     }
 
-    console.log('标记预警为误报:', { alertId, reviewNotes, reviewerName });
+    console.log('标记预警为误报:', { alertId, reviewNotes });
 
     return visionAIAxios.post(`/api/v1/alerts/${alertId}/false-alarm`, null, {
       params: {
-        review_notes: reviewNotes,
-        reviewer_name: reviewerName
+        review_notes: reviewNotes || '标记为误报'
       }
     })
       .then(response => {
@@ -1863,29 +2073,22 @@ export const alertAPI = {
   /**
    * 批量标记预警为误报
    * @param {Array} alertIds - 预警ID数组
-   * @param {string} reviewNotes - 复判意见
-   * @param {string} reviewerName - 复判人员姓名
+   * @param {string} [reviewNotes] - 复判意见（可选）
    * @returns {Promise} 包含批量误报处理结果的Promise对象
    */
-  batchMarkAlertsAsFalseAlarm(alertIds, reviewNotes, reviewerName) {
+  batchMarkAlertsAsFalseAlarm(alertIds, reviewNotes = '标记为误报') {
     if (!alertIds || !Array.isArray(alertIds) || alertIds.length === 0) {
       console.error('批量标记误报失败: 缺少预警ID数组');
       return Promise.reject(new Error('缺少预警ID数组'));
     }
 
-    if (!reviewNotes || !reviewerName) {
-      console.error('批量标记误报失败: 缺少复判意见或复判人员姓名');
-      return Promise.reject(new Error('缺少复判意见或复判人员姓名'));
-    }
-
-    console.log('批量标记预警为误报:', { alertIds, reviewNotes, reviewerName });
+    console.log('批量标记预警为误报:', { alertIds, reviewNotes });
 
     return visionAIAxios.post('/api/v1/alerts/batch-false-alarm', {
       alert_ids: alertIds
     }, {
       params: {
-        review_notes: reviewNotes,
-        reviewer_name: reviewerName
+        review_notes: reviewNotes || '标记为误报'
       }
     })
       .then(response => {
@@ -4267,7 +4470,7 @@ export const runPlanAPI = {
   },
   // 创建运行计划（异步：立刻返回 job_id，再轮询 getSaveJob）
   createPlan(data) {
-    return visionAIAxios.post('/api/v1/skill-run-plans', data);
+    return visionAIAxios.post('/api/v1/skill-run-plans', data, { timeout: LONG_RUNNING_TIMEOUT });
   },
   // 运行计划详情
   getPlan(planId) {

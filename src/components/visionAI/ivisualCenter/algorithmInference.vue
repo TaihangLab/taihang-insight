@@ -18,20 +18,8 @@
       </el-radio-group>
       <div class="title"><span>太行AI智算中心</span></div>
       <div class="right-controls">
-        <div class="location-info">
-          <div v-if="locationInfo && locationInfo.loading" class="loading-indicator">
-            <span>加载中...</span>
-          </div>
-          <template v-else>
-            <span class="location"><i class="el-icon-location"></i> {{ locationInfo.location }}</span>
-            <span class="weather-divider">|</span>
-            <span class="weather-info"><i class="el-icon-sunny"></i> {{ locationInfo.weather }}</span>
-            <span class="weather-divider">|</span>
-            <span class="air-quality">{{ locationInfo.airQuality }}</span>
-            <div class="fullscreen-btn" @click="toggleFullScreen">
-              <i class="el-icon-full-screen"></i>
-            </div>
-          </template>
+        <div class="fullscreen-btn" @click="toggleFullScreen">
+          <i class="el-icon-full-screen"></i>
         </div>
       </div>
     </div>
@@ -350,8 +338,6 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import * as echarts from 'echarts';
 import { alertAPI, cameraAPI, skillAPI, systemMonitorAPI } from '@/components/service/VisionAIService.js';
-import { fetchWeatherByLocation } from '@/utils/weather.js';
-
 const LEVEL_MAP = { 1: 'urgent', 2: 'high', 3: 'medium', 4: 'low' };
 const LEVEL_TEXT_MAP = { 1: '一级预警', 2: '二级预警', 3: '三级预警', 4: '四级预警' };
 
@@ -397,12 +383,6 @@ export default {
       loadedModels: 0,
       runningTasks: 0,
       skillCount: 0,
-      locationInfo: {
-        location: '--',
-        weather: '-- --',
-        airQuality: '',
-        loading: false
-      },
       myAlgorithms: [],
       alarmDistChart: null,
       alarmDistEmpty: true,
@@ -467,8 +447,6 @@ export default {
     this.timer = setInterval(this.updateTime, 1000);
 
     document.addEventListener('fullscreenchange', this.handleFullscreenChange);
-
-    this.fetchWeather();
 
     this.$nextTick(() => {
       this.initBrainScene();
@@ -535,19 +513,6 @@ export default {
         if (timer) clearTimeout(timer);
         timer = setTimeout(() => fn.apply(this, args), delay);
       };
-    },
-    async fetchWeather() {
-      this.locationInfo.loading = true;
-      try {
-        const weatherInfo = await fetchWeatherByLocation();
-        this.locationInfo.location = weatherInfo.location;
-        this.locationInfo.weather = weatherInfo.weather;
-        this.locationInfo.airQuality = weatherInfo.airQuality;
-      } catch (e) {
-        console.error('获取天气失败:', e);
-      } finally {
-        this.locationInfo.loading = false;
-      }
     },
     formatDate(date, fmt) {
       if (!date) return '';
@@ -4258,33 +4223,6 @@ export default {
   left: calc(100% + 20px);
 }
 
-.location-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.location,
-.weather-info {
-  color: #7EAEE5;
-}
-
-.location i,
-.weather-info i {
-  color: #00FFFF;
-  font-size: 16px;
-  text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
-  margin-right: 4px;
-}
-
-.weather-divider {
-  color: rgba(126, 174, 229, 0.4);
-}
-
-.air-quality {
-  color: #44FF9B;
-}
-
 .fullscreen-btn {
   display: flex;
   align-items: center;
@@ -4308,11 +4246,6 @@ export default {
   border-color: rgba(0, 255, 255, 0.6);
   transform: scale(1.08);
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-}
-
-.loading-indicator {
-  color: #7EAEE5;
-  font-size: 14px;
 }
 
 .realtime-events .card-content {
