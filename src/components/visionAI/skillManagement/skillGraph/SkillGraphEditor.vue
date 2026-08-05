@@ -132,6 +132,10 @@
           </div>
           <div v-if="selectedNode" class="sg-config-body">
           <el-form label-position="top" size="small">
+            <el-form-item v-if="!isFixedNode" label="节点名称">
+              <el-input v-model="form._name" maxlength="30" show-word-limit
+                        placeholder="请输入节点名称" @input="applyConfig" />
+            </el-form-item>
 
             <!-- 通用：输入来源选择（除视觉模型/开始/结束外，其余有输入的节点统一在这里选） -->
             <template v-if="hasInputSelector && selectedType !== 'detection_model' && selectedType !== 'vlm_model' && selectedType !== 'custom_code' && selectedType !== 'video_slice' && selectedType !== 'size_filter' && selectedType !== 'intersection' && selectedType !== 'intersect' && selectedType !== 'displacement' && selectedType !== 'distance' && selectedType !== 'tripwire_tracking' && selectedType !== 'region_filter' && selectedType !== 'count' && selectedType !== 'small_image_batch' && selectedType !== 'target_matting' && selectedType !== 'sequence' && selectedType !== 'sop_compliance' && selectedType !== 'judge'">
@@ -4511,21 +4515,96 @@ export default {
       const ver = v == null || v === '' ? 'V1' : (String(v).toUpperCase().startsWith('V') ? v : 'V' + v)
       return `${m.name}/${ver}`
     },
+    // 画布上节点显示名去重：同名则追加 _1 / _2 ...
     uniqueNodeName(nodeType, base, excludeId) {
-      const g = (this.lf && this.lf.getGraphData && this.lf.getGraphData()) || {}
+      const root = String(base || nodeType || '节点')
       const used = new Set()
+      const g = (this.lf && this.lf.getGraphData && this.lf.getGraphData()) || {}
       ;(g.nodes || []).forEach((n) => {
         if (n.id === excludeId) return
-        const t = (n.properties && n.properties.nodeType) || n.type
-        if (t !== nodeType) return
         const nm = (n.text && (n.text.value != null ? n.text.value : n.text)) ||
           (n.properties && n.properties.name_zh) || ''
-        if (nm) used.add(nm)
+        if (nm) used.add(String(nm))
       })
-      if (!used.has(base)) return base
+      if (!used.has(root)) return root
       let i = 1
-      while (used.has(`${base}_${i}`)) i++
-      return `${base}_${i}`
+      while (used.has(`${root}_${i}`)) i++
+      return `${root}_${i}`
+    },
+    /** 是否仍为类型默认名（含 计数_1），用户自定义名则不再自动覆盖 */
+    isGenericNodeName(name, nodeType) {
+      const base = (PORT_MAP[nodeType] && PORT_MAP[nodeType].name_zh) || nodeType || ''
+      const nm = String(name || '').trim()
+      if (!nm || !base) return true
+      if (nm === base) return true
+      const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      return new RegExp(`^${esc}_\\d+$`).test(nm)
+    },
+    setNodeDisplayName(id, name) {
+      if (!this.lf || !id || !name) return
+      try { this.lf.updateText(id, name) } catch (e) { /* ignore */ }
+      const m = this.lf.getNodeModelById && this.lf.getNodeModelById(id)
+      if (m && m.setProperties) {
+        m.setProperties({ ...(m.properties || {}), name_zh: name })
+      }
+      if (this.selectedNode && this.selectedNode.id === id) {
+        this.$set(this.form, '_name', name)
+        if (this.selectedNode.properties) this.$set(this.selectedNode.properties, 'name_zh', name)
+        if (this.selectedNode.text && typeof this.selectedNode.text === 'object') {
+          this.$set(this.selectedNode.text, 'value', name)
+        } else {
+          this.$set(this.selectedNode, 'text', { value: name })
+        }
+      }
+    },
+    countNameFromSourcePort(sourcePort, classLabels) {
+      const p = String(sourcePort || '')
+      if (!p) return ''
+      const basePort = p.endsWith(TRACKED_SUFFIX) ? p.slice(0, -TRACKED_SUFFIX.length) : p
+      let label = classDisplayLabel(basePort, classLabels || {}, false)
+      label = String(label || basePort).replace(/\s*\([^)]*\)\s*/g, '').trim() || basePort
+      return `${label}计数`
+    },
+    /** 计数节点绑定目标后，若仍为默认名则改为「标签计数」 */
+    autoRenameCountNode(nodeId) {
+      if (!this.lf || !nodeId) return
+      const model = this.lf.getNodeModelById(nodeId)
+      if (!model || !model.properties || model.properties.nodeType !== 'count') return
+      const cur = (model.text && model.text.value) || model.properties.name_zh || ''
+      if (!this.isGenericNodeName(cur, 'count')) return
+      const bound = this.collectInputBindings(nodeId)
+      const ref = bound.count_target || ''
+      if (!ref) return
+      const idx = ref.indexOf('::')
+      const srcId = idx >= 0 ? ref.substring(0, idx) : ref
+      const port = idx >= 0 ? ref.substring(idx + 2) : ''
+      if (!port) return
+      const srcModel = this.lf.getNodeModelById(srcId)
+      const srcProps = (srcModel && srcModel.properties) || {}
+      const classLabels = srcProps.classLabels || (srcProps.config && srcProps.config.class_labels) || {}
+      const base = this.countNameFromSourcePort(port, classLabels)
+      if (!base) return
+      const name = this.uniqueNodeName('count', base, nodeId)
+      if (name && name !== cur) this.setNodeDisplayName(nodeId, name)
+    },
+    /** 加载图时对 LogicFlow 节点列表做显示名去重 */
+    dedupeLfNodeNames(nodes) {
+      const used = new Set()
+      ;(nodes || []).forEach((n) => {
+        const props = n.properties || {}
+        let base = (typeof n.text === 'string' ? n.text : '') || props.name_zh || props.nodeType || n.id
+        base = String(base || n.id)
+        let name = base
+        if (used.has(name)) {
+          let i = 1
+          while (used.has(`${base}_${i}`)) i++
+          name = `${base}_${i}`
+        }
+        used.add(name)
+        n.text = name
+        props.name_zh = name
+        n.properties = props
+      })
     },
     // 沿连边反向追溯，得到当前节点的所有前序节点（未连前序则为空）
     upstreamNodeIds(selfId) {
@@ -5207,17 +5286,14 @@ export default {
         if (!data || !data.id) return
         // 等拖放结算完成后再处理，避免打断 LogicFlow 拖拽状态
         this.$nextTick(() => {
-          // 同类型节点自动命名：第一个用原名，其后 _1 / _2 ...
+          // 同名节点自动命名：第一个用原名，其后 _1 / _2 ...（避免多个「计数」无法区分）
           const nodeType = (data.properties && data.properties.nodeType) || data.type
           const base = (data.properties && data.properties.name_zh) || nodeType
           const name = this.uniqueNodeName(nodeType, base, data.id)
-          if (name !== base) {
-            this.lf.updateText(data.id, name)
-            const m = this.lf.getNodeModelById && this.lf.getNodeModelById(data.id)
-            if (m && m.setProperties) m.setProperties({ name_zh: name })
-            if (data.text && typeof data.text === 'object') data.text.value = name
-            else data.text = { value: name }
-          }
+          this.setNodeDisplayName(data.id, name)
+          if (data.properties) data.properties.name_zh = name
+          if (data.text && typeof data.text === 'object') data.text.value = name
+          else data.text = { value: name }
           if (nodeType === 'target_matting') {
             this.attachSmallImageBatch(data)
           }
@@ -5371,6 +5447,10 @@ export default {
       const tgtNode = (model && model.targetNodeId) || edge.targetNodeId
       if (this.selectedNode && this.hasInputSelector && tgtNode === this.selectedNode.id) {
         this.$nextTick(() => this.refreshInputBindings(this.selectedNode.id))
+      }
+      // 计数节点连上目标后，默认名自动改为「标签计数」
+      if (tgtType === 'count' && tp === 'count_target' && edgeProps.paramBound !== false) {
+        this.$nextTick(() => this.autoRenameCountNode(tgtNode))
       }
     },
     // 该节点是否真实拥有某个输出端口（视觉模型按标签分端口，没有 detections 这种占位端口）
@@ -6114,6 +6194,9 @@ export default {
       const popKey = this.intersectPopKey()
       if (this.form[popKey]) this.$set(this.form[popKey], port, false)
       this.bindInput(port, data.id)
+      if (this.selectedType === 'count' && port === 'count_target' && this.selectedNode) {
+        this.$nextTick(() => this.autoRenameCountNode(this.selectedNode.id))
+      }
     },
     clearIntersectInput(port) {
       const sel = (this.inputSelectors || []).find(s => s.port === port)
@@ -7096,13 +7179,34 @@ export default {
     fromGraphDef(gd) {
       gd = this.autoLayoutGraphDef(gd || {})
       const typeById = {}
-      ;(gd.nodes || []).forEach(n => { typeById[n.id] = n.type })
+      const nodeById = {}
+      ;(gd.nodes || []).forEach(n => {
+        typeById[n.id] = n.type
+        nodeById[n.id] = n
+      })
+      // 计数节点：无自定义名时按上游 count_target 端口生成「标签计数」，避免多个「计数」重名
+      const countTargetById = {}
+      ;(gd.edges || []).forEach(e => {
+        if (e && e.target && e.target_port === 'count_target') countTargetById[e.target] = e
+      })
       const nodes = (gd.nodes || []).map(n => {
         const ports = PORT_MAP[n.type] || { inputs: [], outputs: [], dynamic: false }
         const pos = n.position || { x: 200, y: 120 }
+        let displayName = (n.name && String(n.name).trim()) || ''
+        // 计数节点仍为默认名时，按上游目标端口生成可区分名称（如 fire计数）
+        if (n.type === 'count' && this.isGenericNodeName(displayName, 'count')) {
+          const ce = countTargetById[n.id]
+          if (ce && ce.source_port) {
+            const src = nodeById[ce.source]
+            const labels = (src && src.config && src.config.class_labels) || {}
+            const suggested = this.countNameFromSourcePort(ce.source_port, labels)
+            if (suggested) displayName = suggested
+          }
+        }
+        if (!displayName) displayName = ports.name_zh || n.type
         const props = {
           nodeType: n.type,
-          name_zh: ports.name_zh || n.type,
+          name_zh: displayName,
           category: ports.category || n.type,
           inputPorts: ports.inputs,
           outputPorts: ports.outputs,
@@ -7200,8 +7304,9 @@ export default {
           props.inputPorts = ['small_images']
           props.portTypes = pt
         }
-        return { id: n.id, type: 'sg-node', x: pos.x, y: pos.y, text: n.name || (ports.name_zh || n.type), properties: props }
+        return { id: n.id, type: 'sg-node', x: pos.x, y: pos.y, text: displayName, properties: props }
       })
+      this.dedupeLfNodeNames(nodes)
       const edges = (gd.edges || []).map(e => {
         const srcType = typeById[e.source]
         const tgtType = typeById[e.target]
@@ -7716,16 +7821,17 @@ export default {
       } catch (e) { /* ignore */ }
       const ports = PORT_MAP.small_image_batch || { inputs: ['small_images'], outputs: ['output'], types: { small_images: 'Array', output: 'String' } }
       const batchId = `sib_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+      const batchName = this.uniqueNodeName('small_image_batch', ports.name_zh || '小图批处理', batchId)
       const cfg = { ...this.defaultConfig('small_image_batch'), parent_id: parentId }
       this.lf.addNode({
         id: batchId,
         type: 'sg-node',
         x: px + 320,
         y: py,
-        text: ports.name_zh || '小图批处理',
+        text: batchName,
         properties: {
           nodeType: 'small_image_batch',
-          name_zh: ports.name_zh || '小图批处理',
+          name_zh: batchName,
           category: ports.category || 'process',
           inputPorts: ports.inputs || ['small_images'],
           outputPorts: ports.outputs || ['output'],

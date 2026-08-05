@@ -3726,6 +3726,18 @@ export const mlPipelineAPI = {
       data: { image_ids: imageIds },
     });
   },
+  /** 创建异步删除任务：本地立即删除，Label Studio 后台清理可轮询 */
+  createDeleteImagesJob(datasetId, imageIds) {
+    return visionAIAxios.post(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images/delete-jobs`,
+      { image_ids: imageIds }
+    );
+  },
+  getDeleteImagesJob(datasetId, jobId) {
+    return visionAIAxios.get(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/images/delete-jobs/${jobId}`
+    );
+  },
   /** 创建异步原图打包任务；imageIds 为空则打包全部 */
   createDownloadImagesJob(datasetId, imageIds) {
     const body = imageIds && imageIds.length ? { image_ids: imageIds } : {};
@@ -3755,6 +3767,13 @@ export const mlPipelineAPI = {
   },
   checkLsProject(datasetId) {
     return visionAIAxios.get(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/check-ls`);
+  },
+  rebuildLsProject(datasetId) {
+    return visionAIAxios.post(
+      `/api/v1/ml-pipeline/annotation/datasets/${datasetId}/rebuild-ls`,
+      null,
+      { timeout: 300000 }
+    );
   },
   exportDataset(datasetId, valRatio = 0.2) {
     return visionAIAxios.post(`/api/v1/ml-pipeline/annotation/datasets/${datasetId}/export?val_ratio=${valRatio}`);
