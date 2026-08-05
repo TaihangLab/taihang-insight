@@ -68,7 +68,6 @@
         <el-button
           size="small"
           type="danger"
-          plain
           icon="el-icon-delete"
           :disabled="!selectedSkillKeys.length"
           @click="handleBatchDelete">
@@ -87,7 +86,6 @@
         <el-button
           size="small"
           type="primary"
-          plain
           icon="el-icon-download"
           :loading="batchExporting"
           :disabled="!selectedGraphCount"
@@ -1901,6 +1899,12 @@ export default {
   padding: 0 4px;
   margin: 0;
   white-space: nowrap;
+  color: #337ecc;
+  font-weight: 500;
+}
+
+.sc-actions .el-button:hover {
+  color: #409eff;
 }
 
 .name-cell { display: flex; flex-direction: column; }
@@ -1909,7 +1913,50 @@ export default {
   font-size: 12px; color: #909399; margin-top: 2px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 380px;
 }
-.danger-text { color: #f56c6c; }
+.danger-text { color: #e64545 !important; font-weight: 500; }
+.danger-text:hover { color: #f56c6c !important; }
+
+.list-toolbar > .el-button--danger {
+  color: #fff;
+  background-color: #f56c6c;
+  border-color: #f56c6c;
+}
+
+.list-toolbar > .el-button--danger:hover,
+.list-toolbar > .el-button--danger:focus {
+  color: #fff;
+  background-color: #f78989;
+  border-color: #f78989;
+}
+
+.list-toolbar > .el-button--danger.is-disabled,
+.list-toolbar > .el-button--danger.is-disabled:hover {
+  color: #fff;
+  background-color: #f9a7a7;
+  border-color: #f9a7a7;
+  opacity: 1;
+}
+
+.list-toolbar > .el-button--primary {
+  color: #fff;
+  background-color: #409eff;
+  border-color: #409eff;
+}
+
+.list-toolbar > .el-button--primary:hover,
+.list-toolbar > .el-button--primary:focus {
+  color: #fff;
+  background-color: #66b1ff;
+  border-color: #66b1ff;
+}
+
+.list-toolbar > .el-button--primary.is-disabled,
+.list-toolbar > .el-button--primary.is-disabled:hover {
+  color: #fff;
+  background-color: #a0cfff;
+  border-color: #a0cfff;
+  opacity: 1;
+}
 .pagination-wrapper { margin-top: 16px; text-align: right; }
 
 /* ---------- 技能详情弹窗 ---------- */

@@ -19,7 +19,6 @@
           type="danger"
           icon="el-icon-delete"
           size="small"
-          plain
           :disabled="!selectedOrgId || selectedOrgId === 'org-root'"
           @click="handleDelete"
         >
@@ -240,6 +239,47 @@ export default {
 .refresh-btn {
   padding: 0;
   font-size: 16px;
+}
+
+.asset-page-header__actions .el-button--default {
+  color: #303133;
+  border-color: #dcdfe6;
+}
+
+.asset-page-header__actions .el-button--default:hover,
+.asset-page-header__actions .el-button--default:focus {
+  color: #409eff;
+  border-color: #c6e2ff;
+  background-color: #ecf5ff;
+}
+
+.asset-page-header__actions .el-button--default.is-disabled,
+.asset-page-header__actions .el-button--default.is-disabled:hover {
+  color: #606266;
+  border-color: #e4e7ed;
+  background-color: #fff;
+  opacity: 1;
+}
+
+.asset-page-header__actions .el-button--danger {
+  color: #fff;
+  background-color: #f56c6c;
+  border-color: #f56c6c;
+}
+
+.asset-page-header__actions .el-button--danger:hover,
+.asset-page-header__actions .el-button--danger:focus {
+  color: #fff;
+  background-color: #f78989;
+  border-color: #f78989;
+}
+
+.asset-page-header__actions .el-button--danger.is-disabled,
+.asset-page-header__actions .el-button--danger.is-disabled:hover {
+  color: #fff;
+  background-color: #f9a7a7;
+  border-color: #f9a7a7;
+  opacity: 1;
 }
 
 .detail-card-head {
