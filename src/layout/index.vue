@@ -38,7 +38,7 @@ export default {
   data() {
     return {
       fixedHeader: false,
-      fixSiderbar: true,
+      fixSiderbar:false,
     };
   },
   methods: {
