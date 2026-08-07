@@ -270,8 +270,8 @@
                     </div>
                     <div class="collection-meta">
                       <span>摄像头：{{ (task.camera_names && task.camera_names.length) ? task.camera_names.join('、') : (task.camera_ids || []).join('、') }}</span>
-                      <span>已采 {{ task.collected_count || 0 }} 张</span>
-                      <span>冷却 {{ task.cooldown_sec }}s · 每小时≤{{ task.max_per_hour }} · 轮询 {{ task.poll_interval_sec }}s</span>
+                      <span>已采 {{ task.collected_count || 0 }}{{ task.max_collect_count ? '/' + task.max_collect_count : '' }} 张</span>
+                      <span>冷却 {{ task.cooldown_sec }}s · 每小时≤{{ task.max_per_hour }} · 最多{{ task.max_collect_count || '-' }}张 · 轮询 {{ task.poll_interval_sec }}s</span>
                     </div>
                     <div v-if="collectionTaskParamsSummary(task)" class="collection-params">
                       触发参数：{{ collectionTaskParamsSummary(task) }}
@@ -746,6 +746,10 @@
                 <el-input-number v-model="collectionForm.cooldown_sec" :min="0" :max="600" :step="1" />
                 <span class="form-tip" style="margin-left: 8px;">同一点位两次入库最短间隔</span>
               </el-form-item>
+              <el-form-item label="最多采集(张)" prop="max_collect_count">
+                <el-input-number v-model="collectionForm.max_collect_count" :min="1" :max="100000" :step="50" />
+                <span class="form-tip" style="margin-left: 8px;">达到后自动停止采集</span>
+              </el-form-item>
               <el-form-item label="每小时上限">
                 <el-input-number v-model="collectionForm.max_per_hour" :min="1" :max="5000" :step="10" />
               </el-form-item>
@@ -780,7 +784,7 @@
                     : '未选择' }}
                 </el-descriptions-item>
                 <el-descriptions-item label="控量">
-                  冷却 {{ collectionForm.cooldown_sec }}s · 每小时≤{{ collectionForm.max_per_hour }} · 轮询 {{ collectionForm.poll_interval_sec }}s
+                  冷却 {{ collectionForm.cooldown_sec }}s · 最多{{ collectionForm.max_collect_count }}张 · 每小时≤{{ collectionForm.max_per_hour }} · 轮询 {{ collectionForm.poll_interval_sec }}s
                 </el-descriptions-item>
               </el-descriptions>
             </div>
@@ -819,9 +823,11 @@
               : (collectionDetailTask.camera_ids || []).join('、') || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="控量">
-            冷却 {{ collectionDetailTask.cooldown_sec }}s · 每小时≤{{ collectionDetailTask.max_per_hour }} · 轮询 {{ collectionDetailTask.poll_interval_sec }}s
+            冷却 {{ collectionDetailTask.cooldown_sec }}s · 最多{{ collectionDetailTask.max_collect_count || '-' }}张 · 每小时≤{{ collectionDetailTask.max_per_hour }} · 轮询 {{ collectionDetailTask.poll_interval_sec }}s
           </el-descriptions-item>
-          <el-descriptions-item label="已采集">{{ collectionDetailTask.collected_count || 0 }} 张</el-descriptions-item>
+          <el-descriptions-item label="已采集">
+            {{ collectionDetailTask.collected_count || 0 }} / {{ collectionDetailTask.max_collect_count || '-' }} 张
+          </el-descriptions-item>
           <template v-if="collectionDetailTask.template_id === 'frame_change'">
             <el-descriptions-item label="灵敏度阈值">{{ collectionDetailParam('sensitivity') }}</el-descriptions-item>
             <el-descriptions-item label="变化区域占比">{{ collectionDetailParam('min_changed_ratio') }}</el-descriptions-item>
@@ -1210,13 +1216,15 @@ export default {
           trigger_mode: 'alert',
         },
         cooldown_sec: 5,
-        max_per_hour: 200,
+        max_collect_count: 500,
+        max_per_hour: 100,
         poll_interval_sec: 3,
       },
       collectionRules: {
         name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
         camera_ids: [{ type: 'array', required: true, min: 1, message: '请从组织树选择点位', trigger: 'change' }],
         template_id: [{ required: true, message: '请选择模板', trigger: 'change' }],
+        max_collect_count: [{ required: true, type: 'number', min: 1, message: '请设置最多采集张数', trigger: 'change' }],
       },
 
       // LS 项目状态
@@ -1668,7 +1676,8 @@ export default {
         template_id: 'frame_change',
         template_params: this.defaultCollectionTemplateParams(),
         cooldown_sec: 5,
-        max_per_hour: 200,
+        max_collect_count: 500,
+        max_per_hour: 100,
         poll_interval_sec: 2,
       };
       this.createCollectionVisible = true;
@@ -1703,7 +1712,8 @@ export default {
         template_id: task.template_id || 'frame_change',
         template_params: params,
         cooldown_sec: task.cooldown_sec != null ? Number(task.cooldown_sec) : 5,
-        max_per_hour: task.max_per_hour != null ? Number(task.max_per_hour) : 200,
+        max_collect_count: task.max_collect_count != null ? Number(task.max_collect_count) : 500,
+        max_per_hour: task.max_per_hour != null ? Number(task.max_per_hour) : 100,
         poll_interval_sec: task.poll_interval_sec != null ? Number(task.poll_interval_sec) : 2,
       };
       this.createCollectionVisible = true;
@@ -1803,6 +1813,16 @@ export default {
           resolve(true);
           return;
         }
+        if (step === 2) {
+          const maxCount = Number(this.collectionForm.max_collect_count);
+          if (!maxCount || maxCount < 1) {
+            this.$message.warning('请设置最多采集张数（至少 1 张）');
+            resolve(false);
+            return;
+          }
+          resolve(true);
+          return;
+        }
         resolve(true);
       });
     },
@@ -1844,6 +1864,9 @@ export default {
       if (!tmpl) return;
       this.collectionForm.cooldown_sec = tmpl.default_cooldown_sec;
       this.collectionForm.max_per_hour = tmpl.default_max_per_hour;
+      this.collectionForm.max_collect_count = tmpl.default_max_collect_count != null
+        ? tmpl.default_max_collect_count
+        : 500;
       this.collectionForm.poll_interval_sec = tmpl.default_poll_interval_sec;
       const defaults = tmpl.default_params || {};
       this.collectionForm.template_params = {
@@ -1935,6 +1958,11 @@ export default {
         this.collectionStep = 1;
         return;
       }
+      const step2Ok = await this.validateCollectionStep(2);
+      if (!step2Ok) {
+        this.collectionStep = 2;
+        return;
+      }
       this.creatingCollection = true;
       try {
         const payload = {
@@ -1944,6 +1972,7 @@ export default {
           template_id: this.collectionForm.template_id,
           template_params: this.collectionForm.template_params,
           cooldown_sec: this.collectionForm.cooldown_sec,
+          max_collect_count: this.collectionForm.max_collect_count,
           max_per_hour: this.collectionForm.max_per_hour,
           poll_interval_sec: this.collectionForm.poll_interval_sec,
         };
