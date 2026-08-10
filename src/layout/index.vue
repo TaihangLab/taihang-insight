@@ -9,20 +9,16 @@
         <router-view :key="$route.fullPath"></router-view>
       </div>
     </el-main>
-    <!-- 太行智能助手 -->
-    <intelligent-assistant />
   </el-container>
 </template>
 
 <script>
 import uiHeader from "./UiHeader.vue";
-import IntelligentAssistant from "../components/visionAI/chatAssistant/IntelligentAssistant.vue";
 
 export default {
   name: "index",
   components: {
-    uiHeader,
-    IntelligentAssistant
+    uiHeader
   },
 }
 </script>
