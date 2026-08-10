@@ -97,6 +97,12 @@
               @click="refreshCaptcha"
               title="点击刷新"
             >
+            <div
+              v-else
+              class="captcha-image captcha-placeholder"
+              @click="refreshCaptcha"
+              title="点击刷新"
+            >{{ captchaLoading ? '加载中…' : '加载失败，点击刷新' }}</div>
           </div>
 
           <!-- 登录按钮 -->
@@ -155,6 +161,7 @@ export default {
       captchaCode: '',
       captchaUuid: '',
       captchaImg: '',
+      captchaLoading: false,
       redirect: '/'
     }
   },
@@ -182,8 +189,18 @@ export default {
     initLoginPage () {
       const cached = readLoginBootstrapCache()
       if (cached) this.applyBootstrap(cached)
+      this.captchaLoading = true
       prefetchLoginBootstrap().then((data) => {
-        if (data) this.applyBootstrap(data)
+        if (data) {
+          this.applyBootstrap(data)
+        } else if (!this.captchaImg) {
+          // 预取失败（超时等），稍后自动重试一次，避免用户面对空白验证码
+          setTimeout(() => {
+            if (!this.captchaImg) this.refreshCaptcha()
+          }, 1000)
+        }
+      }).finally(() => {
+        this.captchaLoading = false
       })
     },
 
@@ -195,10 +212,15 @@ export default {
     },
 
     refreshCaptcha () {
+      if (this.captchaLoading) return
+      this.captchaLoading = true
       refreshLoginBootstrap().then((data) => {
         if (data) this.applyBootstrap(data)
       }).catch(() => {
-        this.captchaEnabled = false
+        // 保持验证码启用：后端仍会校验验证码，禁用只会导致登录必然失败；
+        // 占位符提供手动重试入口
+      }).finally(() => {
+        this.captchaLoading = false
       })
     },
 
@@ -702,6 +724,19 @@ export default {
   background: #fff;
   object-fit: contain;
   border: 1px solid rgba(0, 212, 255, 0.3);
+}
+.captcha-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px dashed rgba(0, 212, 255, 0.4);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.4;
+  padding: 0 6px;
+  user-select: none;
 }
 
 /* 注册入口 */
