@@ -524,7 +524,7 @@ export default {
       </div>
 
       <div class="page-title">
-        <span>太行视觉AI预警统计分析</span>
+        <span>AI算法平台预警统计分析</span>
       </div>
 
       <div class="action-buttons">
@@ -735,7 +735,9 @@ export default {
 }
 
 .page-title {
-  flex: 1;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   text-align: center;
   display: flex;
   justify-content: center;
@@ -1284,6 +1286,8 @@ export default {
   }
 
   .page-title {
+    position: static;
+    transform: none;
     order: -1;
     margin-bottom: 10px;
   }

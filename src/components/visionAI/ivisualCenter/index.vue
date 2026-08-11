@@ -15,7 +15,7 @@
         <el-radio-button label="year">年</el-radio-button>
         <el-radio-button label="custom">自定义</el-radio-button>
       </el-radio-group>
-      <div class="title"><span>太行视觉AI平台</span></div>
+      <div class="title"><span>AI算法平台</span></div>
       <div class="right-controls">
         <div class="fullscreen-btn" @click="toggleFullscreen">
           <i class="el-icon-full-screen"></i>
@@ -1128,7 +1128,9 @@ export default {
 }
 
 .top-bar .title {
-  flex: 1;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   text-align: center;
   display: flex;
   justify-content: center;
@@ -1166,6 +1168,7 @@ export default {
   justify-content: flex-end;
   gap: 12px;
   flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .exit-fullscreen-tip {
