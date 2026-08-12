@@ -271,7 +271,12 @@
                     <div class="collection-meta">
                       <span>摄像头：{{ (task.camera_names && task.camera_names.length) ? task.camera_names.join('、') : (task.camera_ids || []).join('、') }}</span>
                       <span>已采 {{ task.collected_count || 0 }}{{ task.max_collect_count ? '/' + task.max_collect_count : '' }} 张</span>
-                      <span>冷却 {{ task.cooldown_sec }}s · 每小时≤{{ task.max_per_hour }} · 最多{{ task.max_collect_count || '-' }}张 · 轮询 {{ task.poll_interval_sec }}s</span>
+                      <span v-if="task.template_id === 'interval_snapshot'">
+                        间隔 {{ (task.template_params && task.template_params.interval_sec) || task.cooldown_sec || '-' }}s · 每小时≤{{ task.max_per_hour }} · 最多{{ task.max_collect_count || '-' }}张
+                      </span>
+                      <span v-else>
+                        冷却 {{ task.cooldown_sec }}s · 每小时≤{{ task.max_per_hour }} · 最多{{ task.max_collect_count || '-' }}张 · 轮询 {{ task.poll_interval_sec }}s
+                      </span>
                     </div>
                     <div v-if="collectionTaskParamsSummary(task)" class="collection-params">
                       触发参数：{{ collectionTaskParamsSummary(task) }}
@@ -577,6 +582,20 @@
                 </el-form-item>
               </template>
 
+              <template v-if="collectionForm.template_id === 'interval_snapshot'">
+                <el-form-item label="抓拍间隔">
+                  <el-input-number
+                    v-model="collectionForm.template_params.interval_sec"
+                    :min="10"
+                    :max="86400"
+                    :step="10"
+                    @change="syncIntervalSnapshotControls" />
+                  <span class="form-tip" style="margin-left: 8px;">
+                    秒 · {{ formatCollectionInterval(collectionForm.template_params.interval_sec) }}
+                  </span>
+                </el-form-item>
+              </template>
+
               <template v-if="collectionForm.template_id === 'small_model'">
                 <el-form-item label="检测模型" required>
                   <el-select
@@ -742,7 +761,7 @@
           <div v-show="collectionStep === 2" class="coll-step-pane">
             <div class="coll-form-section">
               <div class="coll-section-head"><i class="el-icon-setting"></i> 控量设置</div>
-              <el-form-item label="冷却(秒)">
+              <el-form-item v-if="collectionForm.template_id !== 'interval_snapshot'" label="冷却(秒)">
                 <el-input-number v-model="collectionForm.cooldown_sec" :min="0" :max="600" :step="1" />
                 <span class="form-tip" style="margin-left: 8px;">同一点位两次入库最短间隔</span>
               </el-form-item>
@@ -753,7 +772,7 @@
               <el-form-item label="每小时上限">
                 <el-input-number v-model="collectionForm.max_per_hour" :min="1" :max="5000" :step="10" />
               </el-form-item>
-              <el-form-item label="轮询间隔(秒)">
+              <el-form-item v-if="collectionForm.template_id !== 'interval_snapshot'" label="轮询间隔(秒)">
                 <el-input-number v-model="collectionForm.poll_interval_sec" :min="1" :max="120" :step="1" />
               </el-form-item>
             </div>
@@ -762,6 +781,10 @@
               <el-descriptions :column="1" border size="small" class="coll-summary">
                 <el-descriptions-item label="任务名称">{{ collectionForm.name || '-' }}</el-descriptions-item>
                 <el-descriptions-item label="触发方式">{{ selectedCollectionTemplate ? selectedCollectionTemplate.name : '-' }}</el-descriptions-item>
+                <el-descriptions-item v-if="collectionForm.template_id === 'interval_snapshot'" label="抓拍间隔">
+                  {{ formatCollectionInterval(collectionForm.template_params.interval_sec) }}
+                  （{{ collectionForm.template_params.interval_sec || '-' }} 秒）
+                </el-descriptions-item>
                 <el-descriptions-item v-if="collectionForm.template_id === 'skill_graph'" label="技能编排">
                   {{ collectionForm.template_params.skill_name || collectionForm.template_params.skill_id || '-' }}
                   · 告警触发时采图
@@ -784,7 +807,12 @@
                     : '未选择' }}
                 </el-descriptions-item>
                 <el-descriptions-item label="控量">
-                  冷却 {{ collectionForm.cooldown_sec }}s · 最多{{ collectionForm.max_collect_count }}张 · 每小时≤{{ collectionForm.max_per_hour }} · 轮询 {{ collectionForm.poll_interval_sec }}s
+                  <template v-if="collectionForm.template_id === 'interval_snapshot'">
+                    间隔 {{ collectionForm.template_params.interval_sec }}s · 最多{{ collectionForm.max_collect_count }}张 · 每小时≤{{ collectionForm.max_per_hour }}
+                  </template>
+                  <template v-else>
+                    冷却 {{ collectionForm.cooldown_sec }}s · 最多{{ collectionForm.max_collect_count }}张 · 每小时≤{{ collectionForm.max_per_hour }} · 轮询 {{ collectionForm.poll_interval_sec }}s
+                  </template>
                 </el-descriptions-item>
               </el-descriptions>
             </div>
@@ -823,7 +851,12 @@
               : (collectionDetailTask.camera_ids || []).join('、') || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="控量">
-            冷却 {{ collectionDetailTask.cooldown_sec }}s · 最多{{ collectionDetailTask.max_collect_count || '-' }}张 · 每小时≤{{ collectionDetailTask.max_per_hour }} · 轮询 {{ collectionDetailTask.poll_interval_sec }}s
+            <template v-if="collectionDetailTask.template_id === 'interval_snapshot'">
+              间隔 {{ collectionDetailParam('interval_sec') || collectionDetailTask.cooldown_sec || '-' }}s · 最多{{ collectionDetailTask.max_collect_count || '-' }}张 · 每小时≤{{ collectionDetailTask.max_per_hour }}
+            </template>
+            <template v-else>
+              冷却 {{ collectionDetailTask.cooldown_sec }}s · 最多{{ collectionDetailTask.max_collect_count || '-' }}张 · 每小时≤{{ collectionDetailTask.max_per_hour }} · 轮询 {{ collectionDetailTask.poll_interval_sec }}s
+            </template>
           </el-descriptions-item>
           <el-descriptions-item label="已采集">
             {{ collectionDetailTask.collected_count || 0 }} / {{ collectionDetailTask.max_collect_count || '-' }} 张
@@ -831,6 +864,12 @@
           <template v-if="collectionDetailTask.template_id === 'frame_change'">
             <el-descriptions-item label="灵敏度阈值">{{ collectionDetailParam('sensitivity') }}</el-descriptions-item>
             <el-descriptions-item label="变化区域占比">{{ collectionDetailParam('min_changed_ratio') }}</el-descriptions-item>
+          </template>
+          <template v-else-if="collectionDetailTask.template_id === 'interval_snapshot'">
+            <el-descriptions-item label="抓拍间隔">
+              {{ formatCollectionInterval(collectionDetailParam('interval_sec')) }}
+              （{{ collectionDetailParam('interval_sec') || '-' }} 秒）
+            </el-descriptions-item>
           </template>
           <template v-else-if="collectionDetailTask.template_id === 'small_model'">
             <el-descriptions-item label="检测模型">{{ collectionDetailParam('model_name') || '-' }}</el-descriptions-item>
@@ -1206,6 +1245,7 @@ export default {
           sensitivity: 0.12,
           min_changed_ratio: 0.02,
           require_frame_change: false,
+          interval_sec: 300,
           model_name: '',
           target_classes: [],
           confidence_threshold: 0.5,
@@ -1436,6 +1476,7 @@ export default {
       return {
         camera: '摄像头',
         camera_change: '画面变化',
+        camera_interval: '定点抓拍',
         camera_model: '小模型',
         camera_vlm: '大模型',
         camera_skill: '技能编排',
@@ -1458,6 +1499,25 @@ export default {
       }
       return task.template_name || task.template_id;
     },
+    formatCollectionInterval(sec) {
+      const n = Number(sec);
+      if (!Number.isFinite(n) || n <= 0) return '-';
+      if (n < 60) return `每 ${n} 秒`;
+      if (n % 3600 === 0) return `每 ${n / 3600} 小时`;
+      if (n % 60 === 0) return `每 ${n / 60} 分钟`;
+      const m = Math.floor(n / 60);
+      const s = Math.round(n % 60);
+      return s ? `每 ${m} 分 ${s} 秒` : `每 ${m} 分钟`;
+    },
+    syncIntervalSnapshotControls() {
+      if (this.collectionForm.template_id !== 'interval_snapshot') return;
+      let interval = Number(this.collectionForm.template_params.interval_sec);
+      if (!Number.isFinite(interval) || interval < 10) interval = 10;
+      if (interval > 86400) interval = 86400;
+      this.collectionForm.template_params.interval_sec = interval;
+      this.collectionForm.cooldown_sec = interval;
+      this.collectionForm.poll_interval_sec = interval;
+    },
     collectionTaskParamsSummary(task) {
       if (!task) return '';
       const p = task.template_params || {};
@@ -1468,6 +1528,10 @@ export default {
         const sensitivity = p.sensitivity != null ? p.sensitivity : '-';
         const ratio = p.min_changed_ratio != null ? p.min_changed_ratio : '-';
         return `灵敏度 ${sensitivity} · 变化占比 ${ratio}`;
+      }
+      if (task.template_id === 'interval_snapshot') {
+        const interval = p.interval_sec != null ? p.interval_sec : (task.cooldown_sec != null ? task.cooldown_sec : '-');
+        return `定点抓拍 · ${this.formatCollectionInterval(interval)}`;
       }
       if (task.template_id === 'small_model') {
         const classes = (p.target_classes || []).join('、') || '未选类别';
@@ -1655,6 +1719,7 @@ export default {
         sensitivity: 0.12,
         min_changed_ratio: 0.02,
         require_frame_change: false,
+        interval_sec: 300,
         model_name: '',
         target_classes: [],
         confidence_threshold: 0.5,
@@ -1716,6 +1781,12 @@ export default {
         max_per_hour: task.max_per_hour != null ? Number(task.max_per_hour) : 100,
         poll_interval_sec: task.poll_interval_sec != null ? Number(task.poll_interval_sec) : 2,
       };
+      if (this.collectionForm.template_id === 'interval_snapshot') {
+        if (params.interval_sec == null && task.cooldown_sec != null) {
+          this.collectionForm.template_params.interval_sec = Number(task.cooldown_sec);
+        }
+        this.syncIntervalSnapshotControls();
+      }
       this.createCollectionVisible = true;
       this.loadDetectModels();
       this.loadSkillGraphOptions();
@@ -1873,6 +1944,9 @@ export default {
         ...this.collectionForm.template_params,
         ...defaults,
       };
+      if (templateId === 'interval_snapshot') {
+        this.syncIntervalSnapshotControls();
+      }
       if (templateId === 'skill_graph') {
         this.loadSkillGraphOptions();
       }
@@ -1965,6 +2039,9 @@ export default {
       }
       this.creatingCollection = true;
       try {
+        if (this.collectionForm.template_id === 'interval_snapshot') {
+          this.syncIntervalSnapshotControls();
+        }
         const payload = {
           name: this.collectionForm.name,
           camera_ids: this.selectedCollectionCameras.map(c => String(c.camera_id)),
