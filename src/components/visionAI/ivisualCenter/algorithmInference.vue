@@ -141,9 +141,9 @@
             </div>
           </div>
           <div class="brain-stats">
-            <div class="brain-stat-item">
+            <div class="brain-stat-item" title="此刻真正在执行推理的任务线程数">
               <div class="stat-value">{{ runningTasks }}</div>
-              <div class="stat-label">运行任务</div>
+              <div class="stat-label">正在执行</div>
             </div>
             <div class="brain-stat-item">
               <div class="stat-value">{{ loadedModels }}</div>
@@ -303,14 +303,14 @@
         </div>
       </div>
 
-      <!-- 任务与复判概览（任务总数含离线；在线=已开启任务；复判技能=已发布；已启用复判=配置表开启数） -->
+      <!-- 任务与复判概览：任务总数含已关闭；已开启=status=True；中间「正在执行」才是执行器线程数 -->
       <div class="dashboard-card alarm-forwarding">
         <div class="card-header">
           <div class="title">任务与复判概览</div>
         </div>
         <div class="card-content review-overview-content">
           <div class="review-kpi-grid">
-            <div class="review-kpi" v-for="item in reviewKpiItems" :key="item.key">
+            <div class="review-kpi" v-for="item in reviewKpiItems" :key="item.key" :title="item.tip">
               <div class="review-kpi-value">{{ item.value }}</div>
               <div class="review-kpi-label">{{ item.label }}</div>
             </div>
@@ -427,10 +427,10 @@ export default {
     reviewKpiItems() {
       const s = this.reviewStats;
       return [
-        { key: 'total', label: '任务总数', value: s.total },
-        { key: 'online', label: '在线任务数', value: s.online },
-        { key: 'reviewSkills', label: '可用复判技能', value: s.reviewSkills },
-        { key: 'reviewEnabled', label: '已启用复判', value: s.reviewEnabled },
+        { key: 'total', label: '任务总数', value: s.total, tip: '库中全部 AI 任务（含已关闭）' },
+        { key: 'online', label: '已开启任务', value: s.online, tip: '开关已打开的任务；不等于此刻正在执行' },
+        { key: 'reviewSkills', label: '可用复判技能', value: s.reviewSkills, tip: '已发布的复判技能数' },
+        { key: 'reviewEnabled', label: '已启用复判', value: s.reviewEnabled, tip: '已配置并开启复判的任务数' },
       ];
     },
   },
