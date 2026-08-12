@@ -11,10 +11,9 @@ export default {
     return {
       // 定义搜索条件
       searchForm: {
-        deviceName: '',
         startDate: '',
         endDate: '',
-        warningType: '',
+        warningType: '', // 预警类型（如：安全生产预警）
         warningLevel: '',
         warningSkill: '', // 预警技能
         warningName: '', // 预警名称
@@ -31,6 +30,8 @@ export default {
       
       // 选中的预警项
       selectedWarnings: [],
+      // 筛选了预警技能后可「全选」当前筛选结果
+      selectAllFiltered: false,
       
       // 预警等级配置
       warningLevelConfig: {
@@ -48,10 +49,21 @@ export default {
       // 目录搜索
       searchDirectory: '',
       
-      // 导出数据相关
+      // 导出图片相关
       exportDialogVisible: false,
-      exportFormat: 'csv',
+      exportImageType: 'annotated', // annotated | raw
       exportLoading: false,
+      // 打包下载进度
+      downloadProgressVisible: false,
+      downloadProgressPhase: '',
+      downloadProgressPercent: 0,
+      downloadProgressStatus: undefined,
+      downloadProgressTitle: '',
+      downloadProgressMeta: '',
+      downloadProgressError: '',
+      downloadJobId: null,
+      downloadPollTimer: null,
+      zipDownloading: false,
       
       // 添加备注对话框
       remarkDialogVisible: false,
@@ -96,17 +108,9 @@ export default {
       // 卡片悬停状态管理
       cardHoverStates: {},
       
-      // 预警技能选项
-      warningSkillOptions: [
-        { label: '安全帽检测', value: 'safety_helmet_detection' },
-        { label: '工作服检测', value: 'work_clothes_detection' },
-        { label: '反光背心检测', value: 'reflective_vest_detection' },
-        { label: '安全带检测', value: 'safety_belt_detection' },
-        { label: '烟火检测', value: 'smoke_fire_detection' },
-        { label: '人员入侵检测', value: 'personnel_intrusion_detection' },
-        { label: '高空作业检测', value: 'high_altitude_work_detection' },
-        { label: '区域入侵检测', value: 'area_intrusion_detection' }
-      ],
+      // 筛选下拉（从后端动态加载，与列表实际数据一致）
+      warningSkillOptions: [],
+      warningTypeOptions: [],
       
       // 分页相关
       currentPage: 1,
@@ -115,23 +119,141 @@ export default {
     }
   },
   computed: {
+    // 筛选了预警技能后才允许全选
+    canSelectAll() {
+      return !!this.searchForm.warningSkill
+    },
+    exportSelectedCount() {
+      if (this.selectAllFiltered) {
+        return this.totalCount
+      }
+      return this.selectedWarnings.length
+    }
   },
   watch: {
     dateRange(newVal) {
-      if (newVal) {
+      if (newVal && newVal.length === 2) {
         this.searchForm.startDate = newVal[0]
         this.searchForm.endDate = newVal[1]
+      } else {
+        this.searchForm.startDate = ''
+        this.searchForm.endDate = ''
+      }
+    },
+    'searchForm.warningSkill'(val) {
+      if (!val) {
+        this.selectAllFiltered = false
       }
     }
   },
   mounted() {
+    this.loadFilterOptions()
     this.getWarningList()
   },
+  beforeDestroy() {
+    this.stopDownloadPoll()
+  },
   methods: {
+    async loadFilterOptions() {
+      // 只展示预警列表里实际出现过的类型/技能，避免筛选项与下方数据不一致
+      const skillOptions = []
+      const typeOptions = []
+      try {
+        const res = await alertAPI.getAlertSkills()
+        const body = res && res.data
+        const payload = body && body.data
+        const skills = Array.isArray(payload)
+          ? payload
+          : ((payload && payload.skills) || [])
+        const types = (!Array.isArray(payload) && payload && payload.alert_types) || []
+
+        skills.forEach(s => {
+          if (!s || s.skill_class_id == null) return
+          const source = s.skill_source === 'llm' ? 'llm' : 'vision'
+          const name = s.skill_name_zh || ('技能#' + s.skill_class_id)
+          const count = s.alert_count ? `（${s.alert_count}）` : ''
+          skillOptions.push({
+            label: `${name}${count}`,
+            value: `${source}:${s.skill_class_id}`,
+            skillClassId: s.skill_class_id,
+            skillNameZh: name
+          })
+        })
+
+        types.forEach(t => {
+          if (!t || !t.alert_type) return
+          const count = t.alert_count ? `（${t.alert_count}）` : ''
+          typeOptions.push({
+            label: `${t.alert_type}${count}`,
+            value: t.alert_type
+          })
+        })
+      } catch (e) {
+        console.error('加载预警筛选选项失败:', e)
+      }
+
+      // 接口失败时，用当前页列表兜底
+      if (Array.isArray(this.warningList) && this.warningList.length) {
+        if (!skillOptions.length) {
+          const seen = {}
+          this.warningList.forEach(item => {
+            const api = item._apiData || {}
+            const sid = api.skill_class_id
+            if (sid == null) return
+            const source = (api.alert_type && String(api.alert_type).startsWith('llm_')) ? 'llm' : 'vision'
+            const value = `${source}:${sid}`
+            if (seen[value]) return
+            seen[value] = true
+            skillOptions.push({
+              label: api.skill_name_zh || ('技能#' + sid),
+              value,
+              skillClassId: sid,
+              skillNameZh: api.skill_name_zh || ('技能#' + sid)
+            })
+          })
+        }
+        if (!typeOptions.length) {
+          const seen = {}
+          this.warningList.forEach(item => {
+            const t = (item._apiData && item._apiData.alert_type) || item.type
+            if (!t || seen[t]) return
+            seen[t] = true
+            typeOptions.push({ label: t, value: t })
+          })
+        }
+      }
+
+      this.warningSkillOptions = skillOptions
+      this.warningTypeOptions = typeOptions
+    },
+
+    onSkillSelectVisible(visible) {
+      if (visible && (!this.warningSkillOptions || !this.warningSkillOptions.length)) {
+        this.loadFilterOptions()
+      }
+    },
+
+    onTypeSelectVisible(visible) {
+      if (visible && (!this.warningTypeOptions || !this.warningTypeOptions.length)) {
+        this.loadFilterOptions()
+      }
+    },
+
+    parseSelectedSkillClassId() {
+      const skillVal = this.searchForm.warningSkill
+      if (!skillVal) return null
+      const str = String(skillVal)
+      if (str.includes(':')) {
+        const sid = parseInt(str.split(':')[1], 10)
+        return isNaN(sid) ? null : sid
+      }
+      if (/^\d+$/.test(str)) return parseInt(str, 10)
+      return null
+    },
+
     // 搜索重置
     resetSearch() {
       this.searchForm = {
-        deviceName: '',
         startDate: '',
         endDate: '',
         warningType: '',
@@ -154,7 +276,8 @@ export default {
     },
     
     // 获取预警列表
-    async getWarningList() {
+    async getWarningList(options = {}) {
+      const clearSelection = options.clearSelection !== false
       this.loading = true
       try {
         // 构建API请求参数
@@ -200,6 +323,9 @@ export default {
           }
           
           console.log('预警列表转换完成:', this.warningList.length, '条数据，总数:', this.totalCount)
+          if (!this.warningSkillOptions.length || !this.warningTypeOptions.length) {
+            this.loadFilterOptions()
+          }
         } else {
           console.error('获取预警列表失败:', response.data)
           this.$message.error('获取预警列表失败')
@@ -207,9 +333,12 @@ export default {
           this.totalCount = 0
         }
         
-        // 刷新后清空选择和悬停状态
-        this.selectedWarnings = []
+        // 刷新后按需清空选择；翻页且已筛选技能时保留（支持全选/跨页勾选）
         this.cardHoverStates = {}
+        if (clearSelection) {
+          this.selectedWarnings = []
+          this.selectAllFiltered = false
+        }
       } catch (error) {
         console.error('获取预警列表异常:', error)
         this.$message.error('获取预警列表失败：' + (error.message || '网络错误'))
@@ -219,6 +348,10 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    isWarningSelected(id) {
+      return this.selectAllFiltered || this.selectedWarnings.includes(id)
     },
 
     // 转换API数据为页面数据格式
@@ -643,29 +776,59 @@ export default {
     
     // 选择当前页
     handleSelectPage() {
-      // 获取当前页的所有预警ID
+      this.selectAllFiltered = false
       const currentPageIds = this.warningList.map(item => item.id)
-      
-      // 检查当前页是否全部已选
-      const isCurrentPageFullySelected = currentPageIds.every(id => 
+      if (currentPageIds.length === 0) {
+        this.$message.warning('当前页没有可选择的预警')
+        return
+      }
+
+      const isCurrentPageFullySelected = currentPageIds.every(id =>
         this.selectedWarnings.includes(id)
       )
-      
+
       if (isCurrentPageFullySelected) {
-        // 如果当前页已全选，则取消选择当前页
-        this.selectedWarnings = this.selectedWarnings.filter(id => 
-          !currentPageIds.includes(id)
-        )
+        // 未筛选技能时只允许本页选择：取消即清空
+        if (!this.canSelectAll) {
+          this.selectedWarnings = []
+        } else {
+          this.selectedWarnings = this.selectedWarnings.filter(id =>
+            !currentPageIds.includes(id)
+          )
+        }
         this.$message.info('已取消选择本页')
+      } else if (!this.canSelectAll) {
+        // 未筛选技能：只选本页
+        this.selectedWarnings = [...currentPageIds]
+        this.$message.success(`已选择本页 ${currentPageIds.length} 项预警`)
       } else {
-        // 选择当前页所有项，同时保留其他已选项
-        const otherSelectedIds = this.selectedWarnings.filter(id => 
+        const otherSelectedIds = this.selectedWarnings.filter(id =>
           !currentPageIds.includes(id)
         )
-        
         this.selectedWarnings = [...otherSelectedIds, ...currentPageIds]
         this.$message.success(`已选择本页 ${currentPageIds.length} 项预警`)
       }
+    },
+
+    // 全选当前筛选结果（需先筛选预警技能）
+    handleSelectAll() {
+      if (!this.canSelectAll) {
+        this.$message.warning('请先筛选预警技能后再全选')
+        return
+      }
+      if (this.totalCount === 0) {
+        this.$message.warning('当前没有可选择的预警')
+        return
+      }
+      if (this.selectAllFiltered) {
+        this.selectAllFiltered = false
+        this.selectedWarnings = []
+        this.$message.info('已取消全选')
+        return
+      }
+      this.selectAllFiltered = true
+      this.selectedWarnings = this.warningList.map(item => item.id)
+      this.$message.success(`已全选当前筛选结果共 ${this.totalCount} 项预警`)
     },
     
     // 批量处理
@@ -775,23 +938,31 @@ export default {
     
     // 导出数据
     exportData() {
+      if (!this.selectAllFiltered && this.selectedWarnings.length === 0) {
+        this.$message.warning(this.canSelectAll
+          ? '请先选择本页或全选后再导出'
+          : '请先选择本页预警后再导出')
+        return
+      }
+      this.exportImageType = 'annotated'
       this.exportDialogVisible = true
     },
     
     // 获取导出选择文本
     getExportSelectionText() {
+      if (this.selectAllFiltered) {
+        return `将导出当前筛选条件下全部 ${this.totalCount} 条预警的图片`
+      }
       const count = this.selectedWarnings.length
       if (count > 0) {
-        return `您已选择 ${count} 条记录进行导出`
-      } else {
-        return '您将导出当前筛选条件下的所有记录'
+        return `您已选择 ${count} 条预警，将打包导出图片`
       }
+      return '请先选择要导出的预警'
     },
 
     // 检查是否有激活的筛选条件
     hasActiveFilters() {
       return !!(
-        this.searchForm.deviceName ||
         this.searchForm.warningType ||
         this.searchForm.warningLevel ||
         this.searchForm.warningSkill ||
@@ -803,71 +974,226 @@ export default {
         this.searchForm.endDate
       );
     },
-    
-    // 确认导出
-    async confirmExport() {
+
+    buildAlertImageExportBody() {
+      const statusMap = {
+        pending: '待处理',
+        processing: '处理中',
+        completed: '已处理',
+        archived: '已归档',
+        false_alarm: '误报'
+      }
+      const body = {
+        image_type: this.exportImageType
+      }
+
+      if (this.selectAllFiltered) {
+        const skillClassId = this.parseSelectedSkillClassId()
+        if (skillClassId != null) {
+          body.skill_class_id = skillClassId
+        } else if (this.searchForm.warningSkill) {
+          body.alert_type = this.searchForm.warningSkill
+        }
+        if (this.searchForm.warningLevel) {
+          const levelMap = { level1: 1, level2: 2, level3: 3, level4: 4 }
+          body.alert_level = levelMap[this.searchForm.warningLevel]
+        }
+        if (this.searchForm.warningName) body.alert_name = this.searchForm.warningName
+        if (this.searchForm.warningId) body.alert_id = parseInt(this.searchForm.warningId, 10)
+        if (this.searchForm.location) body.location = this.searchForm.location
+        if (this.searchForm.status) body.status = statusMap[this.searchForm.status] || this.searchForm.status
+        if (this.searchForm.startDate) body.start_date = this.searchForm.startDate
+        if (this.searchForm.endDate) body.end_date = this.searchForm.endDate
+        if (this.searchForm.warningType) body.alert_type = this.searchForm.warningType
+      } else {
+        const apiAlertIds = this.selectedWarnings.map(id => {
+          const warning = this.warningList.find(item => item.id === id)
+          return warning && warning._apiData ? warning._apiData.alert_id : parseInt(id, 10)
+        }).filter(id => !isNaN(id))
+        body.alert_ids = apiAlertIds
+      }
+      return body
+    },
+
+    stopDownloadPoll() {
+      if (this.downloadPollTimer) {
+        clearInterval(this.downloadPollTimer)
+        this.downloadPollTimer = null
+      }
+    },
+
+    onDownloadProgressClosed() {
+      this.stopDownloadPoll()
+      this.zipDownloading = false
+      this.downloadJobId = null
+    },
+
+    applyDownloadJobProgress(job) {
+      if (!job) return
+      const total = job.total || 0
+      const packed = job.packed || 0
+      const failed = job.failed || 0
+      this.downloadProgressPercent = Math.min(100, Number(job.percent) || 0)
+      this.downloadProgressTitle = job.message || '打包中…'
+      this.downloadProgressMeta = total
+        ? `已处理 ${packed + failed} / ${total}（成功 ${packed}${failed ? `，失败 ${failed}` : ''}）`
+        : ''
+    },
+
+    async pollDownloadJob() {
+      if (!this.downloadJobId) return
       try {
-        // 显示加载状态
-        this.exportLoading = true
-        
-        // 准备导出参数
-        const exportParams = {
-          ...this.searchForm,  // 包含所有筛选条件
-          format: this.exportFormat
-        };
-        
-        // 如果有选中的预警，添加指定的预警ID列表
-        if (this.selectedWarnings.length > 0) {
-          // 转换为API格式的ID
-          const apiAlertIds = this.selectedWarnings.map(id => {
-            const warning = this.warningList.find(item => item.id === id)
-            return warning && warning._apiData ? warning._apiData.alert_id : parseInt(id)
-          }).filter(id => !isNaN(id));
-          
-          if (apiAlertIds.length > 0) {
-            exportParams.alert_ids = apiAlertIds;
+        const res = await alertAPI.getAlertImageDownloadJob(this.downloadJobId)
+        const job = (res.data && res.data.data) || {}
+        this.applyDownloadJobProgress(job)
+        if (job.status === 'done') {
+          this.stopDownloadPoll()
+          await this.fetchDownloadJobFile(job)
+        } else if (job.status === 'error') {
+          this.stopDownloadPoll()
+          this.downloadProgressPhase = 'error'
+          this.downloadProgressStatus = 'exception'
+          this.downloadProgressTitle = '打包失败'
+          this.downloadProgressError = job.error || job.message || '打包失败'
+          this.zipDownloading = false
+        }
+      } catch (e) {
+        this.stopDownloadPoll()
+        this.downloadProgressPhase = 'error'
+        this.downloadProgressStatus = 'exception'
+        this.downloadProgressTitle = '查询进度失败'
+        this.downloadProgressError = (e.response && e.response.data && e.response.data.detail) || e.message || '未知错误'
+        this.zipDownloading = false
+      }
+    },
+
+    async fetchDownloadJobFile(job) {
+      this.downloadProgressPhase = 'transferring'
+      this.downloadProgressStatus = undefined
+      this.downloadProgressPercent = 0
+      this.downloadProgressTitle = '打包完成，正在传输到本地…'
+      const sizeHint = job && job.file_size_mb != null ? `约 ${job.file_size_mb} MB` : ''
+      this.downloadProgressMeta = sizeHint
+      try {
+        const res = await alertAPI.downloadAlertImageDownloadJobFile(
+          this.downloadJobId,
+          (evt) => {
+            if (!evt || !evt.total) return
+            const pct = Math.min(99, Math.round((evt.loaded * 100) / evt.total))
+            this.downloadProgressPercent = pct
+            const loadedMb = (evt.loaded / (1024 * 1024)).toFixed(1)
+            const totalMb = (evt.total / (1024 * 1024)).toFixed(1)
+            this.downloadProgressMeta = `已传输 ${loadedMb} / ${totalMb} MB`
           }
+        )
+        const blob = res && res.data
+        if (!blob || !(blob instanceof Blob) || !blob.size) {
+          throw new Error('下载内容为空')
         }
-        
-        console.log('📤 导出预警数据，参数:', exportParams);
-        
-        // 调用后端导出接口
-        const response = await alertAPI.exportAlerts(exportParams);
-        
-        if (response && response.data) {
-          // 创建下载链接
-          const blob = new Blob([response.data], { 
-            type: this.exportFormat === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv;charset=utf-8;' 
-          });
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          
-          // 生成文件名
-          const now = new Date();
-          const timestamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '');
-          const extension = this.exportFormat === 'excel' ? 'xlsx' : 'csv';
-          const selectedInfo = this.selectedWarnings.length > 0 ? `_已选择${this.selectedWarnings.length}项` : '';
-          link.download = `预警数据导出_${timestamp}${selectedInfo}.${extension}`;
-          
-          // 触发下载
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-          
-          this.$message.success(`${this.exportFormat.toUpperCase()}文件导出成功`);
-        } else {
-          throw new Error('导出数据为空');
+        if (blob.type && blob.type.includes('application/json')) {
+          const text = await blob.text()
+          let detail = text
+          try {
+            const j = JSON.parse(text)
+            detail = j.detail || j.message || text
+          } catch (_) { /* ignore */ }
+          throw new Error(detail || '下载失败')
         }
-        
-      } catch (error) {
-        console.error('❌ 导出失败:', error);
-        const errorMsg = (error.response && error.response.data && error.response.data.message) || error.message || '导出失败，请稍后重试';
-        this.$message.error(`导出失败: ${errorMsg}`);
+        const typeLabel = this.exportImageType === 'raw' ? '原图' : '标注图'
+        const filename = (job && job.filename) || `预警${typeLabel}_${Date.now()}.zip`
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+
+        this.downloadProgressPhase = 'done'
+        this.downloadProgressPercent = 100
+        this.downloadProgressStatus = 'success'
+        this.downloadProgressTitle = '下载完成'
+        const packed = (job && job.packed) || 0
+        const failed = (job && job.failed) || 0
+        this.downloadProgressMeta = failed
+          ? `成功 ${packed} 张，失败 ${failed} 张`
+          : `成功导出 ${packed} 张${typeLabel}`
+        if (failed) this.$message.warning(this.downloadProgressMeta)
+        else this.$message.success(this.downloadProgressMeta)
+      } catch (e) {
+        let msg = e.message || '下载失败'
+        const data = e.response && e.response.data
+        if (data instanceof Blob) {
+          try {
+            const text = await data.text()
+            const j = JSON.parse(text)
+            msg = j.detail || j.message || msg
+          } catch (_) { /* ignore */ }
+        } else if (e.response && e.response.data && e.response.data.detail) {
+          msg = e.response.data.detail
+        }
+        this.downloadProgressPhase = 'error'
+        this.downloadProgressStatus = 'exception'
+        this.downloadProgressTitle = '传输失败'
+        this.downloadProgressError = msg
       } finally {
-        this.exportLoading = false;
-        this.exportDialogVisible = false;
+        this.zipDownloading = false
+      }
+    },
+    
+    // 确认导出图片压缩包
+    async confirmExport() {
+      if (!this.selectAllFiltered && this.selectedWarnings.length === 0) {
+        this.$message.warning('请先选择要导出的预警')
+        return
+      }
+      if (this.zipDownloading) return
+
+      const typeLabel = this.exportImageType === 'raw' ? '原图' : '标注图'
+      const count = this.exportSelectedCount
+      try {
+        this.exportLoading = true
+        const body = this.buildAlertImageExportBody()
+        if (!this.selectAllFiltered && (!body.alert_ids || body.alert_ids.length === 0)) {
+          throw new Error('未解析到有效的预警ID')
+        }
+
+        this.exportDialogVisible = false
+        this.zipDownloading = true
+        this.downloadProgressVisible = true
+        this.downloadProgressPhase = 'packing'
+        this.downloadProgressPercent = 0
+        this.downloadProgressStatus = undefined
+        this.downloadProgressTitle = '正在创建打包任务…'
+        this.downloadProgressMeta = `共 ${count} 条，导出${typeLabel}`
+        this.downloadProgressError = ''
+        this.downloadJobId = null
+        this.stopDownloadPoll()
+
+        const res = await alertAPI.createAlertImageDownloadJob(body)
+        const job = (res.data && res.data.data) || {}
+        if (!job.job_id) throw new Error('未返回任务 ID')
+        this.downloadJobId = job.job_id
+        this.applyDownloadJobProgress(job)
+        this.downloadPollTimer = setInterval(() => this.pollDownloadJob(), 800)
+        await this.pollDownloadJob()
+      } catch (error) {
+        console.error('❌ 导出失败:', error)
+        const errorMsg = (error.response && error.response.data && error.response.data.detail)
+          || error.message
+          || '导出失败，请稍后重试'
+        if (this.downloadProgressVisible) {
+          this.downloadProgressPhase = 'error'
+          this.downloadProgressStatus = 'exception'
+          this.downloadProgressTitle = '创建打包任务失败'
+          this.downloadProgressError = errorMsg
+        } else {
+          this.$message.error(`导出失败: ${errorMsg}`)
+        }
+        this.zipDownloading = false
+      } finally {
+        this.exportLoading = false
       }
     },
     
@@ -919,6 +1245,27 @@ export default {
     
     // 选择预警项
     toggleSelect(id) {
+      if (this.selectAllFiltered) {
+        // 退出全选，改为仅勾选本页其余项
+        this.selectAllFiltered = false
+        this.selectedWarnings = this.warningList
+          .map(item => item.id)
+          .filter(itemId => itemId !== id)
+        return
+      }
+      // 未筛选技能时不允许跨页累积勾选：只在本页内切换
+      if (!this.canSelectAll) {
+        const currentPageIds = this.warningList.map(item => item.id)
+        if (!currentPageIds.includes(id)) return
+        const index = this.selectedWarnings.indexOf(id)
+        if (index === -1) {
+          const pageSelected = this.selectedWarnings.filter(sid => currentPageIds.includes(sid))
+          this.selectedWarnings = [...pageSelected, id]
+        } else {
+          this.selectedWarnings = this.selectedWarnings.filter(sid => sid !== id && currentPageIds.includes(sid))
+        }
+        return
+      }
       const index = this.selectedWarnings.indexOf(id)
       if (index === -1) {
         this.selectedWarnings.push(id)
@@ -1850,12 +2197,13 @@ export default {
     handleSizeChange(val) {
       this.pageSize = val
       this.currentPage = 1
-      this.getWarningList() // 重新获取数据
+      // 未筛选技能仅本页可选，翻页清空；筛选技能后保留全选/已选
+      this.getWarningList({ clearSelection: !this.canSelectAll })
     },
     
     handleCurrentChange(val) {
       this.currentPage = val
-      this.getWarningList() // 重新获取数据
+      this.getWarningList({ clearSelection: !this.canSelectAll })
     }
   }
 }
@@ -1903,14 +2251,16 @@ export default {
               placeholder="预警类型" 
               size="small"
               clearable
+              filterable
+              @visible-change="onTypeSelectVisible"
               @change="handleSearch"
             >
-              <el-option label="安全帽违规" value="safety_helmet" />
-              <el-option label="安全带违规" value="safety_belt" />
-              <el-option label="防护服违规" value="protective_clothing" />
-              <el-option label="无关人员" value="unauthorized_personnel" />
-              <el-option label="吸烟违规" value="smoking" />
-              <el-option label="高空作业违规" value="high_altitude" />
+              <el-option 
+                v-for="t in warningTypeOptions"
+                :key="t.value"
+                :label="t.label" 
+                :value="t.value" 
+              />
             </el-select>
           </div>
           
@@ -1920,6 +2270,8 @@ export default {
               placeholder="预警技能" 
               size="small"
               clearable
+              filterable
+              @visible-change="onSkillSelectVisible"
               @change="handleSearch"
             >
               <el-option 
@@ -1993,15 +2345,25 @@ export default {
               size="small" 
               @click="handleSelectPage"
             >选择本页</el-button>
+            <el-button
+              v-if="canSelectAll"
+              size="small"
+              type="primary"
+              plain
+              @click="handleSelectAll"
+            >{{ selectAllFiltered ? '取消全选' : '全选' }}</el-button>
+            <span v-if="exportSelectedCount > 0" class="selection-count-tip">
+              已选 {{ exportSelectedCount }} 项
+            </span>
             <el-button 
               size="small" 
-              :disabled="selectedWarnings.length === 0"
+              :disabled="selectAllFiltered || selectedWarnings.length === 0"
               @click="handleBatchProcess"
             >批量处理</el-button>
             <el-button 
               size="small" 
               icon="el-icon-delete"
-              :disabled="selectedWarnings.length === 0"
+              :disabled="selectAllFiltered || selectedWarnings.length === 0"
               @click="showDeleteDialog"
             >删除</el-button>
           </div>
@@ -2039,7 +2401,7 @@ export default {
           >
             <div 
               class="warning-card" 
-              :class="{ 'selected': selectedWarnings.includes(item.id) }"
+              :class="{ 'selected': isWarningSelected(item.id) }"
               @click="showWarningDetail(item)"
               @mouseenter="showCardCheckbox(item.id)"
               @mouseleave="hideCardCheckbox(item.id)"
@@ -2058,12 +2420,12 @@ export default {
             
               <!-- 右上角选择框 -->
               <div 
-                v-show="cardHoverStates[item.id] || selectedWarnings.includes(item.id)" 
+                v-show="cardHoverStates[item.id] || isWarningSelected(item.id)" 
                 class="select-checkbox" 
                 @click.stop="toggleSelect(item.id)"
               >
                 <el-checkbox 
-                  :value="selectedWarnings.includes(item.id)"
+                  :value="isWarningSelected(item.id)"
                   @change="toggleSelect(item.id)"
                   size="mini"
                 >
@@ -2170,11 +2532,11 @@ export default {
       </div>
     </div>
     
-    <!-- 导出数据对话框 -->
+    <!-- 导出图片对话框 -->
     <el-dialog
-      title="导出数据"
+      title="导出预警图片"
       :visible.sync="exportDialogVisible"
-      width="35%"
+      width="420px"
       center
       :close-on-click-modal="false"
       :close-on-press-escape="false"
@@ -2183,7 +2545,7 @@ export default {
         <div class="export-info-section">
           <div class="export-data-info">
             <i class="el-icon-download" style="color: #409EFF; font-size: 20px; margin-right: 8px;"></i>
-            <span style="font-size: 16px; font-weight: 500;">数据导出</span>
+            <span style="font-size: 16px; font-weight: 500;">打包下载为 ZIP</span>
           </div>
           <p class="export-selection-info">
             {{ getExportSelectionText() }}
@@ -2191,18 +2553,16 @@ export default {
         </div>
         
         <div class="export-format-section">
-          <el-form :model="{ exportFormat }" label-width="80px">
-            <el-form-item label="导出格式:">
-              <el-radio-group v-model="exportFormat">
-                <el-radio label="csv">
-                  <i class="el-icon-document"></i>
-                  CSV格式
-                  <span class="format-desc">（逗号分隔值，适合Excel打开）</span>
+          <el-form label-width="90px">
+            <el-form-item label="导出图片:">
+              <el-radio-group v-model="exportImageType">
+                <el-radio label="annotated">
+                  标注图
+                  <span class="format-desc">（带检测框）</span>
                 </el-radio>
-                <el-radio label="excel">
-                  <i class="el-icon-s-grid"></i>
-                  Excel格式
-                  <span class="format-desc">（XLSX文件，包含格式化）</span>
+                <el-radio label="raw">
+                  原图
+                  <span class="format-desc">（未标注画面）</span>
                 </el-radio>
               </el-radio-group>
             </el-form-item>
@@ -2212,42 +2572,27 @@ export default {
         <div class="export-filter-info">
           <div class="filter-info-title">
             <i class="el-icon-info" style="color: #909399; margin-right: 4px;"></i>
-            <span>当前筛选条件：</span>
+            <span>提示：打包过程中可查看进度，完成后自动下载压缩包</span>
           </div>
-          <div class="filter-summary">
-            <template v-if="hasActiveFilters()">
-              <el-tag 
-                v-if="searchForm.deviceName" 
-                size="mini" 
-                type="info" 
-                style="margin: 2px;"
-              >设备: {{ searchForm.deviceName }}</el-tag>
-              <el-tag 
-                v-if="searchForm.warningType" 
-                size="mini" 
-                type="info" 
-                style="margin: 2px;"
-              >类型: {{ searchForm.warningType }}</el-tag>
-              <el-tag 
-                v-if="searchForm.warningLevel" 
-                size="mini" 
-                type="info" 
-                style="margin: 2px;"
-              >等级: {{ searchForm.warningLevel }}</el-tag>
-              <el-tag 
-                v-if="searchForm.status" 
-                size="mini" 
-                type="info" 
-                style="margin: 2px;"
-              >状态: {{ searchForm.status }}</el-tag>
-              <el-tag 
-                v-if="searchForm.startDate || searchForm.endDate" 
-                size="mini" 
-                type="info" 
-                style="margin: 2px;"
-              >时间范围</el-tag>
-            </template>
-            <span v-else style="color: #909399; font-size: 12px;">无筛选条件，将导出所有数据</span>
+          <div class="filter-summary" v-if="searchForm.warningSkill || hasActiveFilters()">
+            <el-tag
+              v-if="searchForm.warningSkill"
+              size="mini"
+              type="info"
+              style="margin: 2px;"
+            >技能: {{ (warningSkillOptions.find(s => s.value === searchForm.warningSkill) || {}).label || searchForm.warningSkill }}</el-tag>
+            <el-tag 
+              v-if="searchForm.warningLevel" 
+              size="mini" 
+              type="info" 
+              style="margin: 2px;"
+            >等级: {{ searchForm.warningLevel }}</el-tag>
+            <el-tag 
+              v-if="searchForm.status" 
+              size="mini" 
+              type="info" 
+              style="margin: 2px;"
+            >状态: {{ searchForm.status }}</el-tag>
           </div>
         </div>
       </div>
@@ -2255,9 +2600,42 @@ export default {
         <el-button @click="exportDialogVisible = false" :disabled="exportLoading">取 消</el-button>
         <el-button type="primary" @click="confirmExport" :loading="exportLoading">
           <i class="el-icon-download"></i>
-          确认导出
+          开始打包
         </el-button>
       </span>
+    </el-dialog>
+
+    <!-- 预警图片打包下载进度 -->
+    <el-dialog
+      title="导出预警图片"
+      :visible.sync="downloadProgressVisible"
+      width="480px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="downloadProgressPhase === 'done' || downloadProgressPhase === 'error'"
+      :show-close="downloadProgressPhase === 'done' || downloadProgressPhase === 'error'"
+      append-to-body
+      @closed="onDownloadProgressClosed">
+      <div class="dl-progress-body">
+        <div class="dl-progress-phase">{{ downloadProgressTitle }}</div>
+        <el-progress
+          :percentage="downloadProgressPercent"
+          :status="downloadProgressStatus"
+          :stroke-width="16"
+          text-inside>
+        </el-progress>
+        <div class="dl-progress-meta">{{ downloadProgressMeta }}</div>
+        <div v-if="downloadProgressError" class="dl-progress-error">{{ downloadProgressError }}</div>
+      </div>
+      <div slot="footer">
+        <el-button
+          v-if="downloadProgressPhase === 'done' || downloadProgressPhase === 'error'"
+          size="small"
+          type="primary"
+          @click="downloadProgressVisible = false">
+          关闭
+        </el-button>
+        <span v-else class="dl-progress-tip">打包/传输过程中请勿关闭页面</span>
+      </div>
     </el-dialog>
     
     <!-- 添加备注对话框 -->
@@ -2995,6 +3373,19 @@ export default {
 .level-4-text {
   color: #67c23a;
 }
+
+.selection-count-tip {
+  margin: 0 8px;
+  font-size: 12px;
+  color: #409EFF;
+  white-space: nowrap;
+}
+
+.dl-progress-body { padding: 4px 0 8px; }
+.dl-progress-phase { font-size: 14px; color: #303133; margin-bottom: 14px; }
+.dl-progress-meta { margin-top: 12px; font-size: 13px; color: #606266; }
+.dl-progress-error { margin-top: 10px; font-size: 13px; color: #f56c6c; line-height: 1.5; word-break: break-all; }
+.dl-progress-tip { font-size: 12px; color: #909399; }
 
 /* 导出对话框样式 */
 .export-dialog-content {
