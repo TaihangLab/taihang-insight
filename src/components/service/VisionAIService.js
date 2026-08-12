@@ -1755,23 +1755,27 @@ export const alertAPI = {
       delete apiParams.warningLevel;
     }
 
-    // 处理预警类型映射
+    // 预警类型：直接传真实 alert_type（如「安全生产预警」）
     if (apiParams.warningType) {
-      const typeMap = {
-        'safety_helmet': 'safety_helmet_detection',
-        'safety_belt': 'safety_belt_detection',
-        'protective_clothing': 'protective_clothing_detection',
-        'unauthorized_personnel': 'personnel_intrusion_detection',
-        'smoking': 'smoke_fire_detection',
-        'high_altitude': 'high_altitude_work_detection'
-      };
-      apiParams.alert_type = typeMap[apiParams.warningType];
+      apiParams.alert_type = apiParams.warningType;
       delete apiParams.warningType;
     }
 
-    // 处理技能类型映射
+    // 处理技能类型映射：支持 skill_class_id 或 vision:id / llm:id
     if (apiParams.warningSkill) {
-      apiParams.alert_type = apiParams.warningSkill;
+      const skillVal = String(apiParams.warningSkill);
+      if (skillVal.includes(':')) {
+        const parts = skillVal.split(':');
+        const sid = parseInt(parts[1], 10);
+        if (!isNaN(sid)) {
+          apiParams.skill_class_id = sid;
+        }
+      } else if (/^\d+$/.test(skillVal)) {
+        apiParams.skill_class_id = parseInt(skillVal, 10);
+      } else {
+        // 兼容旧英文 alert_type
+        apiParams.alert_type = apiParams.warningSkill;
+      }
       delete apiParams.warningSkill;
     }
 
@@ -2175,6 +2179,41 @@ export const alertAPI = {
         console.error('导出预警数据失败:', error);
         throw error;
       });
+  },
+
+  /**
+   * 预警管理中出现过的预警技能（筛选下拉用）
+   */
+  getAlertSkills() {
+    return visionAIAxios.get('/api/v1/alerts/skills');
+  },
+
+  /**
+   * 创建预警图片异步打包任务（原图 / 标注图 → ZIP）
+   * @param {Object} body
+   * @param {'annotated'|'raw'} body.image_type
+   * @param {number[]} [body.alert_ids]
+   * @param {number} [body.skill_class_id] - 预警技能（全选时必填）
+   */
+  createAlertImageDownloadJob(body = {}) {
+    return visionAIAxios.post('/api/v1/alerts/images/download-jobs', body, {
+      timeout: 60000
+    });
+  },
+
+  getAlertImageDownloadJob(jobId) {
+    return visionAIAxios.get(`/api/v1/alerts/images/download-jobs/${jobId}`);
+  },
+
+  downloadAlertImageDownloadJobFile(jobId, onDownloadProgress) {
+    return visionAIAxios.get(
+      `/api/v1/alerts/images/download-jobs/${jobId}/file`,
+      {
+        responseType: 'blob',
+        timeout: 600000,
+        onDownloadProgress,
+      }
+    );
   }
 };
 
