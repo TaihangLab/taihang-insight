@@ -112,7 +112,7 @@
                   <span v-if="r.invert" class="invert-tag">（反选）</span>
                 </div>
               </div>
-              <div class="fence-field fence-field--row">
+              <div v-if="showRatio" class="fence-field fence-field--row">
                 <label class="fence-field__label">
                   <span class="req">*</span> 占比：
                   <span
@@ -286,7 +286,10 @@ export default {
     allowPolygon: { type: Boolean, default: true },
     allowTripwire: { type: Boolean, default: false },
     // 多边形电子围栏数量上限：0 表示不限制（如 Array<ROI>）；技能输入声明为单个 ROI 时为 1
-    maxRegions: { type: Number, default: 0 }
+    maxRegions: { type: Number, default: 0 },
+    // 「占比」是检测框与区域的重叠阈值，仅对目标检测类场景有意义；
+    // 按像素统计的场景（如采集的画面变化）用不到，可隐藏以免误导
+    showRatio: { type: Boolean, default: true }
   },
   data() {
     return {
