@@ -909,6 +909,11 @@ export default {
     // 向设备发送推流请求
     async sendDevicePush(channelId) {
       let idxTmp = this.playerIdx;
+      // 切摄像头时关掉该格子上旧的检测 WS / 已选任务，避免「视频已换、WS 还在」
+      const prevCameraId = this.cameraIdMapping[idxTmp]
+      if (prevCameraId != null && String(prevCameraId) !== String(channelId)) {
+        this.cleanupOSDResources(idxTmp)
+      }
       this.setPlayUrl("", idxTmp);
       this.$set(this.videoTip, idxTmp, "正在拉流...");
       
@@ -2916,10 +2921,11 @@ export default {
      */
     onTaskSelectionChange(index) {
       const taskId = this.selectedAITasks[index]
-      
-      // 断开旧连接
+      const { closeWebSocket } = require('./utils/detectionWebSocket')
+
+      // 断开旧连接（含 CONNECTING，避免泄漏）
+      closeWebSocket(this.wsConnections[index])
       if (this.wsConnections[index]) {
-        this.wsConnections[index].close()
         delete this.wsConnections[index]
       }
       
@@ -2936,14 +2942,14 @@ export default {
      * 连接检测结果WebSocket
      */
     connectDetectionWebSocket(index, taskId) {
-      const { createDetectionWebSocket } = require('./utils/detectionWebSocket')
-      this.$set(this.wsConnections, index, null)
+      const { createDetectionWebSocket, closeWebSocket } = require('./utils/detectionWebSocket')
+      // 先关掉该格子上可能残留的连接
+      closeWebSocket(this.wsConnections[index])
 
-      createDetectionWebSocket(taskId, {
-        onOpen: (ws) => {
-          this.$set(this.wsConnections, index, ws)
-        },
+      // 立刻挂上引用（不要等 onOpen），否则切摄像头时 cleanup 关不到 CONNECTING 的 socket
+      const ws = createDetectionWebSocket(taskId, {
         onMessage: (parsed) => {
+          if (this.wsConnections[index] !== ws) return
           this.$set(this.detectionResults, index, {
             detections: parsed.detections,
             frame_size: parsed.frameSize,
@@ -2957,12 +2963,13 @@ export default {
             height: parsed.frameSize.height
           })
         },
-        onClose: (ws) => {
-          if (this.wsConnections[index] === ws) {
+        onClose: (closedWs) => {
+          if (this.wsConnections[index] === closedWs) {
             delete this.wsConnections[index]
           }
         }
       })
+      this.$set(this.wsConnections, index, ws)
     },
     
     /**
@@ -3017,9 +3024,9 @@ export default {
      * 清理指定索引的OSD资源
      */
     cleanupOSDResources(index) {
-      // 关闭WebSocket连接
+      const { closeWebSocket } = require('./utils/detectionWebSocket')
+      closeWebSocket(this.wsConnections[index])
       if (this.wsConnections[index]) {
-        this.wsConnections[index].close()
         delete this.wsConnections[index]
       }
       
@@ -3027,18 +3034,15 @@ export default {
       this.$set(this.selectedAITasks, index, null)
       this.$set(this.detectionResults, index, null)
       this.$set(this.videoResolutions, index, null)
+      this.$set(this.detectionUpdateTime, index, null)
     },
     
     /**
      * 清理所有OSD资源
      */
     cleanupAllOSDResources() {
-      // 关闭所有WebSocket连接
-      Object.values(this.wsConnections).forEach(ws => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.close()
-        }
-      })
+      const { closeWebSocket } = require('./utils/detectionWebSocket')
+      Object.values(this.wsConnections).forEach(ws => closeWebSocket(ws))
       
       // 清空所有数据
       this.wsConnections = {}
@@ -3048,6 +3052,7 @@ export default {
       this.cameraIdMapping = {}
       this.cameraNames = {}
       this.videoResolutions = {}
+      this.detectionUpdateTime = {}
     }
     // 🆕 ========== OSD检测框叠加功能结束 ==========
 

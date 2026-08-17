@@ -3859,7 +3859,7 @@ export default {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-/* 分页样式 - 参照multimodalLlmSkills.vue */
+/* 分页样式 */
 .pagination-section {
   display: flex;
   justify-content: center;
