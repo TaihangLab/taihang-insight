@@ -216,6 +216,7 @@
                 <div class="tab-toolbar">
                   <el-button type="primary" size="small" icon="el-icon-plus" @click="showCreateCollectionDialog">新建采集</el-button>
                   <el-button size="small" icon="el-icon-refresh" @click="loadCollectionTasks" :loading="collectionLoading">刷新</el-button>
+                  <span class="form-tip" style="margin-left: 8px;">采集中的任务会在重启后端后自动继续，点「停止」才会关掉</span>
                 </div>
                 <div v-loading="collectionLoading">
                   <div v-if="!collectionTasks.length" class="empty-tip">暂无采集任务，点击「新建采集」开始</div>
@@ -266,12 +267,12 @@
                     </div>
                     <div class="collection-meta">
                       <span>摄像头：{{ (task.camera_names && task.camera_names.length) ? task.camera_names.join('、') : (task.camera_ids || []).join('、') }}</span>
-                      <span>已采 {{ task.collected_count || 0 }}{{ task.max_collect_count ? '/' + task.max_collect_count : '' }} 张</span>
+                      <span>{{ collectionCollectedLabel(task) }}</span>
                       <span v-if="task.template_id === 'interval_snapshot'">
-                        间隔 {{ (task.template_params && task.template_params.interval_sec) || task.cooldown_sec || '-' }}s · 每小时≤{{ task.max_per_hour }} · 最多{{ task.max_collect_count || '-' }}张
+                        间隔 {{ (task.template_params && task.template_params.interval_sec) || task.cooldown_sec || '-' }}s · {{ collectionQuotaShort(task) }}
                       </span>
                       <span v-else>
-                        冷却 {{ task.cooldown_sec }}s · 每小时≤{{ task.max_per_hour }} · 最多{{ task.max_collect_count || '-' }}张 · 轮询 {{ task.poll_interval_sec }}s
+                        冷却 {{ task.cooldown_sec }}s · {{ collectionQuotaShort(task) }} · 轮询 {{ task.poll_interval_sec }}s
                       </span>
                     </div>
                     <div v-if="collectionTaskParamsSummary(task)" class="collection-params">
@@ -751,6 +752,69 @@
                 </div>
               </el-form-item>
             </div>
+
+            <div v-if="collectionNeedsChangeRoi" class="coll-form-section">
+              <div class="coll-section-head"><i class="el-icon-crop"></i> 检测区域（选填）</div>
+              <div class="point-tip">
+                <i class="el-icon-info"></i>
+                可为每个点位单独框出只关注的画面范围；未绘制的点位按整幅画面判定。
+                绘制时把区域设为「反选」则表示屏蔽该处，适合排除马路、树木等常年晃动的干扰。
+              </div>
+              <div class="region-draw">
+                <div class="region-list">
+                  <div
+                    v-for="c in selectedCollectionCameras"
+                    :key="c.camera_id"
+                    class="region-cam"
+                    :class="{ active: changeRoiCam && String(changeRoiCam.camera_id) === String(c.camera_id) }"
+                    @click="changeRoiCam = c">
+                    <i class="el-icon-video-camera"></i>
+                    <span class="region-cam__name">{{ c.camera_name }}</span>
+                    <span class="region-cam__badge" :class="changeRoiDrawn(c) ? 'drawn' : ''">
+                      {{ changeRoiDrawn(c) ? `已框 ${changeRoiRegionCount(c)} 处` : '整幅画面' }}
+                    </span>
+                  </div>
+                  <div v-if="!selectedCollectionCameras.length" class="empty-tip-sm">请先选择点位</div>
+                </div>
+                <div v-if="changeRoiCam" class="region-canvas">
+                  <div class="region-toolbar">
+                    <span class="region-status__label">{{ changeRoiCam.camera_name }}</span>
+                    <span>
+                      <el-button
+                        v-if="changeRoiDrawn(changeRoiCam)"
+                        size="mini"
+                        plain
+                        icon="el-icon-delete"
+                        @click="clearChangeRoi(changeRoiCam)">
+                        清除区域
+                      </el-button>
+                      <el-button
+                        type="primary"
+                        size="mini"
+                        plain
+                        icon="el-icon-edit-outline"
+                        @click="openChangeRoi(changeRoiCam)">
+                        {{ changeRoiDrawn(changeRoiCam) ? '重新绘制' : '开始绘制' }}
+                      </el-button>
+                    </span>
+                  </div>
+                  <div class="region-preview">
+                    <fence-preview
+                      :key="changeRoiCam.camera_id"
+                      :src="collectionSnapshotUrl(changeRoiCam.camera_id)"
+                      :fence="changeRoiOf(changeRoiCam)">
+                    </fence-preview>
+                    <div class="region-preview__ph">
+                      <i class="el-icon-picture-outline"></i>
+                      <span>点位画面预览</span>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="region-canvas region-canvas--empty">
+                  <div class="empty-tip-sm"><i class="el-icon-video-camera"></i><br>请选择上方点位</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- 步骤3：控量与确认 -->
@@ -761,12 +825,24 @@
                 <el-input-number v-model="collectionForm.cooldown_sec" :min="0" :max="600" :step="1" />
                 <span class="form-tip" style="margin-left: 8px;">同一点位两次入库最短间隔</span>
               </el-form-item>
+              <el-form-item label="配额方式">
+                <el-radio-group v-model="collectionForm.quota_scope">
+                  <el-radio label="per_camera">每个点位各一份</el-radio>
+                  <el-radio label="shared">全部点位共用</el-radio>
+                </el-radio-group>
+                <div class="form-tip">{{ collectionQuotaHint }}</div>
+              </el-form-item>
               <el-form-item label="最多采集(张)" prop="max_collect_count">
                 <el-input-number v-model="collectionForm.max_collect_count" :min="1" :max="100000" :step="50" />
-                <span class="form-tip" style="margin-left: 8px;">达到后自动停止采集</span>
+                <span class="form-tip" style="margin-left: 8px;">
+                  {{ collectionForm.quota_scope === 'per_camera' ? '每个点位各自达到后只停该点位' : '全部点位合计达到后停止任务' }}
+                </span>
               </el-form-item>
               <el-form-item label="每小时上限">
                 <el-input-number v-model="collectionForm.max_per_hour" :min="1" :max="5000" :step="10" />
+                <span class="form-tip" style="margin-left: 8px;">
+                  {{ collectionForm.quota_scope === 'per_camera' ? '每个点位各自的近1小时上限' : '全部点位合计的近1小时上限' }}
+                </span>
               </el-form-item>
               <el-form-item v-if="collectionForm.template_id !== 'interval_snapshot'" label="轮询间隔(秒)">
                 <el-input-number v-model="collectionForm.poll_interval_sec" :min="1" :max="120" :step="1" />
@@ -802,12 +878,18 @@
                     ? selectedCollectionCameras.map(c => c.camera_name).join('、')
                     : '未选择' }}
                 </el-descriptions-item>
+                <el-descriptions-item v-if="collectionNeedsChangeRoi" label="检测区域">
+                  <template v-if="changeRoiDrawnCount">
+                    {{ changeRoiDrawnCount }}/{{ selectedCollectionCameras.length }} 个点位已框定范围，其余按整幅画面
+                  </template>
+                  <template v-else>全部点位按整幅画面检测</template>
+                </el-descriptions-item>
                 <el-descriptions-item label="控量">
                   <template v-if="collectionForm.template_id === 'interval_snapshot'">
-                    间隔 {{ collectionForm.template_params.interval_sec }}s · 最多{{ collectionForm.max_collect_count }}张 · 每小时≤{{ collectionForm.max_per_hour }}
+                    间隔 {{ collectionForm.template_params.interval_sec }}s · {{ collectionFormQuotaShort }}
                   </template>
                   <template v-else>
-                    冷却 {{ collectionForm.cooldown_sec }}s · 最多{{ collectionForm.max_collect_count }}张 · 每小时≤{{ collectionForm.max_per_hour }} · 轮询 {{ collectionForm.poll_interval_sec }}s
+                    冷却 {{ collectionForm.cooldown_sec }}s · {{ collectionFormQuotaShort }} · 轮询 {{ collectionForm.poll_interval_sec }}s
                   </template>
                 </el-descriptions-item>
               </el-descriptions>
@@ -824,6 +906,16 @@
           {{ editingCollectionId ? '保存修改' : '创建并启动' }}
         </el-button>
       </div>
+
+      <fence-drawer
+        :visible.sync="changeRoiVisible"
+        :init-fence="changeRoiEditing"
+        :camera-id="changeRoiCam ? changeRoiCam.camera_id : null"
+        :allow-polygon="true"
+        :allow-tripwire="false"
+        :show-ratio="false"
+        @confirm="onChangeRoiConfirm">
+      </fence-drawer>
     </el-drawer>
 
     <!-- ===== 采集任务详情 ===== -->
@@ -848,14 +940,14 @@
           </el-descriptions-item>
           <el-descriptions-item label="控量">
             <template v-if="collectionDetailTask.template_id === 'interval_snapshot'">
-              间隔 {{ collectionDetailParam('interval_sec') || collectionDetailTask.cooldown_sec || '-' }}s · 最多{{ collectionDetailTask.max_collect_count || '-' }}张 · 每小时≤{{ collectionDetailTask.max_per_hour }}
+              间隔 {{ collectionDetailParam('interval_sec') || collectionDetailTask.cooldown_sec || '-' }}s · {{ collectionQuotaShort(collectionDetailTask) }}
             </template>
             <template v-else>
-              冷却 {{ collectionDetailTask.cooldown_sec }}s · 最多{{ collectionDetailTask.max_collect_count || '-' }}张 · 每小时≤{{ collectionDetailTask.max_per_hour }} · 轮询 {{ collectionDetailTask.poll_interval_sec }}s
+              冷却 {{ collectionDetailTask.cooldown_sec }}s · {{ collectionQuotaShort(collectionDetailTask) }} · 轮询 {{ collectionDetailTask.poll_interval_sec }}s
             </template>
           </el-descriptions-item>
           <el-descriptions-item label="已采集">
-            {{ collectionDetailTask.collected_count || 0 }} / {{ collectionDetailTask.max_collect_count || '-' }} 张
+            {{ collectionCollectedLabel(collectionDetailTask) }}
           </el-descriptions-item>
           <template v-if="collectionDetailTask.template_id === 'frame_change'">
             <el-descriptions-item label="灵敏度阈值">{{ collectionDetailParam('sensitivity') }}</el-descriptions-item>
@@ -911,6 +1003,9 @@
               <el-descriptions-item label="变化区域占比">{{ collectionDetailParam('min_changed_ratio') }}</el-descriptions-item>
             </template>
           </template>
+          <el-descriptions-item v-if="collectionDetailChangeRoiText" label="检测区域">
+            {{ collectionDetailChangeRoiText }}
+          </el-descriptions-item>
           <el-descriptions-item v-if="collectionDetailTask.last_trigger_reason" label="最近命中">
             {{ collectionDetailTask.last_trigger_reason }}
           </el-descriptions-item>
@@ -1195,13 +1290,15 @@
 </template>
 
 <script>
-import { mlPipelineAPI, modelAPI, skillGraphAPI } from '../../service/VisionAIService.js';
+import { mlPipelineAPI, modelAPI, skillGraphAPI, runPlanAPI } from '../../service/VisionAIService.js';
 import ChannelTreePanel from '../skillManagement/runPlan/ChannelTreePanel.vue';
+import FenceDrawer from '../skillManagement/runPlan/FenceDrawer.vue';
+import FencePreview from '../skillManagement/runPlan/FencePreview.vue';
 const config = require('../../../../config/index.js');
 
 export default {
   name: 'ModelFactory',
-  components: { ChannelTreePanel },
+  components: { ChannelTreePanel, FenceDrawer, FencePreview },
   data() {
     return {
       // Label Studio 状态
@@ -1250,12 +1347,18 @@ export default {
           skill_id: '',
           skill_name: '',
           trigger_mode: 'alert',
+          change_roi_by_camera: {},
         },
         cooldown_sec: 5,
         max_collect_count: 500,
         max_per_hour: 100,
         poll_interval_sec: 3,
+        quota_scope: 'per_camera',
       },
+      // 画面变化检测区域：按点位绘制电子围栏，未绘制的点位按整帧判定
+      changeRoiCam: null,
+      changeRoiVisible: false,
+      changeRoiEditing: null,
       collectionRules: {
         name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
         camera_ids: [{ type: 'array', required: true, min: 1, message: '请从组织树选择点位', trigger: 'change' }],
@@ -1412,6 +1515,51 @@ export default {
     selectedCollectionTemplate() {
       return this.collectionTemplates.find(t => t.id === this.collectionForm.template_id) || null;
     },
+    // 只有真正会跑画面变化判定的配置才需要框区域：
+    // 「画面变化」模板本身，以及其余模板开启了「需画面变化」前置时
+    collectionNeedsChangeRoi() {
+      const tid = this.collectionForm.template_id;
+      if (tid === 'frame_change') return true;
+      if (['small_model', 'vlm', 'skill_graph'].includes(tid)) {
+        return !!(this.collectionForm.template_params || {}).require_frame_change;
+      }
+      return false;
+    },
+    changeRoiDrawnCount() {
+      const map = (this.collectionForm.template_params || {}).change_roi_by_camera || {};
+      return this.selectedCollectionCameras.filter(
+        c => ((map[String(c.camera_id)] || {}).regions || []).length > 0
+      ).length;
+    },
+    collectionQuotaHint() {
+      const n = this.selectedCollectionCameras.length || 0;
+      const max = this.collectionForm.max_collect_count || 0;
+      const hour = this.collectionForm.max_per_hour || 0;
+      if (this.collectionForm.quota_scope === 'per_camera') {
+        const extra = n > 1 ? `当前 ${n} 个点位合计最多 ${n * max} 张。` : '';
+        return `每个点位各自最多 ${max} 张、每小时各不超过 ${hour} 张。某个点位采满只停它自己，其余继续。${extra}`;
+      }
+      return `所有点位一起吃这份额度（最多 ${max} 张、每小时 ${hour} 张）。热闹的点位可能先把额度占完。`;
+    },
+    collectionFormQuotaShort() {
+      return this.collectionQuotaShort(this.collectionForm);
+    },
+    collectionDetailChangeRoiText() {
+      const task = this.collectionDetailTask;
+      if (!task) return '';
+      const usesChange = task.template_id === 'frame_change'
+        || !!this.collectionDetailParam('require_frame_change');
+      if (!usesChange) return '';
+      const map = this.collectionDetailParam('change_roi_by_camera') || {};
+      const ids = (task.camera_ids || []).map(String);
+      const names = task.camera_names || [];
+      const drawn = ids
+        .map((id, i) => ({ id, name: names[i] || id }))
+        .filter(c => ((map[c.id] || {}).regions || []).length > 0);
+      if (!drawn.length) return '全部点位按整幅画面检测';
+      return `${drawn.map(c => c.name).join('、')} 已框定范围`
+        + (drawn.length < ids.length ? `，其余 ${ids.length - drawn.length} 个点位按整幅画面` : '');
+    },
     deleteStatusChipText() {
       if (this.deleteProgressPhase === 'done') {
         return this.deleteProgressTitle || '删除完成';
@@ -1433,6 +1581,12 @@ export default {
       // 切换点位筛选时，去掉当前不可见项的选中，避免误删
       const visible = new Set((this.filteredImages || []).map(i => i.id));
       this.selectedImageIds = (this.selectedImageIds || []).filter(id => visible.has(id));
+    },
+    // 增删点位后同步区域预览所选点位，避免残留已移除摄像头的画面
+    selectedCollectionCameras(cams) {
+      const cur = this.changeRoiCam;
+      const match = cur && cams.find(c => String(c.camera_id) === String(cur.camera_id));
+      this.changeRoiCam = match || cams[0] || null;
     },
   },
   mounted() {
@@ -1494,6 +1648,27 @@ export default {
         return name ? `编排·${name}` : (task.template_name || '技能编排');
       }
       return task.template_name || task.template_id;
+    },
+    collectionQuotaIsPerCamera(task) {
+      return !!(task && task.quota_scope === 'per_camera');
+    },
+    collectionQuotaShort(task) {
+      if (!task) return '';
+      const max = task.max_collect_count != null ? task.max_collect_count : '-';
+      const hour = task.max_per_hour != null ? task.max_per_hour : '-';
+      if (this.collectionQuotaIsPerCamera(task)) {
+        return `每点位最多${max}张 · 每小时≤${hour}/点位`;
+      }
+      return `最多${max}张 · 每小时≤${hour}`;
+    },
+    collectionCollectedLabel(task) {
+      if (!task) return '';
+      const got = task.collected_count || 0;
+      const max = task.max_collect_count;
+      if (this.collectionQuotaIsPerCamera(task)) {
+        return max ? `已采 ${got} 张 · 每点位最多 ${max} 张` : `已采 ${got} 张`;
+      }
+      return max ? `已采 ${got}/${max} 张` : `已采 ${got} 张`;
     },
     formatCollectionInterval(sec) {
       const n = Number(sec);
@@ -1724,6 +1899,7 @@ export default {
         skill_id: '',
         skill_name: '',
         trigger_mode: 'alert',
+        change_roi_by_camera: {},
       };
     },
     async showCreateCollectionDialog() {
@@ -1731,6 +1907,7 @@ export default {
       this.editingCollectionId = null;
       this.collectionStep = 0;
       this.selectedCollectionCameras = [];
+      this.changeRoiCam = null;
       this.collectionForm = {
         name: `${this.selectedDataset.name}-采集`,
         camera_ids: [],
@@ -1740,6 +1917,7 @@ export default {
         max_collect_count: 500,
         max_per_hour: 100,
         poll_interval_sec: 2,
+        quota_scope: 'per_camera',
       };
       this.createCollectionVisible = true;
       this.onCollectionTemplateChange('frame_change');
@@ -1760,6 +1938,9 @@ export default {
       const params = { ...this.defaultCollectionTemplateParams(), ...(task.template_params || {}) };
       if (!Array.isArray(params.target_classes)) params.target_classes = [];
       if (!Array.isArray(params.positive_keywords)) params.positive_keywords = [];
+      if (!params.change_roi_by_camera || typeof params.change_roi_by_camera !== 'object') {
+        params.change_roi_by_camera = {};
+      }
       const cameraIds = (task.camera_ids || []).map(String);
       const cameraNames = task.camera_names || [];
       this.selectedCollectionCameras = cameraIds.map((id, idx) => ({
@@ -1767,6 +1948,7 @@ export default {
         camera_name: cameraNames[idx] || id,
         online: true,
       }));
+      this.changeRoiCam = this.selectedCollectionCameras[0] || null;
       this.collectionForm = {
         name: task.name || '',
         camera_ids: cameraIds.slice(),
@@ -1776,6 +1958,7 @@ export default {
         max_collect_count: task.max_collect_count != null ? Number(task.max_collect_count) : 500,
         max_per_hour: task.max_per_hour != null ? Number(task.max_per_hour) : 100,
         poll_interval_sec: task.poll_interval_sec != null ? Number(task.poll_interval_sec) : 2,
+        quota_scope: task.quota_scope === 'per_camera' ? 'per_camera' : 'shared',
       };
       if (this.collectionForm.template_id === 'interval_snapshot') {
         if (params.interval_sec == null && task.cooldown_sec != null) {
@@ -1920,11 +2103,64 @@ export default {
         c => String(c.camera_id) === String(pt.camera_id)
       );
       if (i >= 0) this.selectedCollectionCameras.splice(i, 1);
+      this.dropChangeRoi(pt.camera_id);
       this.syncCollectionCameraIds();
     },
     clearCollectionCameras() {
       this.selectedCollectionCameras = [];
+      this.$set(this.collectionForm.template_params, 'change_roi_by_camera', {});
+      this.changeRoiCam = null;
       this.syncCollectionCameraIds();
+    },
+    // 渲染期只读，避免在模板求值中改动响应式数据
+    changeRoiMap() {
+      return (this.collectionForm.template_params || {}).change_roi_by_camera || {};
+    },
+    // 写入前才确保容器存在
+    ensureChangeRoiMap() {
+      const params = this.collectionForm.template_params;
+      if (!params.change_roi_by_camera || typeof params.change_roi_by_camera !== 'object') {
+        this.$set(params, 'change_roi_by_camera', {});
+      }
+      return params.change_roi_by_camera;
+    },
+    changeRoiOf(cam) {
+      if (!cam) return null;
+      return this.changeRoiMap()[String(cam.camera_id)] || null;
+    },
+    changeRoiRegionCount(cam) {
+      return ((this.changeRoiOf(cam) || {}).regions || []).length;
+    },
+    changeRoiDrawn(cam) {
+      return this.changeRoiRegionCount(cam) > 0;
+    },
+    collectionSnapshotUrl(cameraId) {
+      return runPlanAPI.getCameraSnapshotUrl(cameraId);
+    },
+    openChangeRoi(cam) {
+      if (!cam) return;
+      this.changeRoiCam = cam;
+      const existing = this.changeRoiOf(cam);
+      this.changeRoiEditing = existing ? JSON.parse(JSON.stringify(existing)) : null;
+      this.changeRoiVisible = true;
+    },
+    onChangeRoiConfirm(fence) {
+      if (!this.changeRoiCam) return;
+      const regions = (fence && fence.regions) || [];
+      if (!regions.length) {
+        this.dropChangeRoi(this.changeRoiCam.camera_id);
+        return;
+      }
+      // 采集只用多边形区域，绊线对画面变化判定无意义，不落库
+      this.$set(this.ensureChangeRoiMap(), String(this.changeRoiCam.camera_id), { regions });
+    },
+    clearChangeRoi(cam) {
+      if (!cam) return;
+      this.dropChangeRoi(cam.camera_id);
+      this.$message.success('已恢复为整幅画面检测');
+    },
+    dropChangeRoi(cameraId) {
+      this.$delete(this.ensureChangeRoiMap(), String(cameraId));
     },
     onCollectionTemplateChange(templateId) {
       const tmpl = this.collectionTemplates.find(t => t.id === templateId);
@@ -1935,7 +2171,9 @@ export default {
         ? tmpl.default_max_collect_count
         : 500;
       this.collectionForm.poll_interval_sec = tmpl.default_poll_interval_sec;
-      const defaults = tmpl.default_params || {};
+      const defaults = { ...(tmpl.default_params || {}) };
+      // 点位与其区域在切模板时保持不变，避免用户已画好的框被模板默认值清空
+      delete defaults.change_roi_by_camera;
       this.collectionForm.template_params = {
         ...this.collectionForm.template_params,
         ...defaults,
@@ -2048,6 +2286,7 @@ export default {
           max_collect_count: this.collectionForm.max_collect_count,
           max_per_hour: this.collectionForm.max_per_hour,
           poll_interval_sec: this.collectionForm.poll_interval_sec,
+          quota_scope: this.collectionForm.quota_scope === 'per_camera' ? 'per_camera' : 'shared',
         };
         if (this.editingCollectionId) {
           await mlPipelineAPI.updateCollectionTask(this.editingCollectionId, payload);
@@ -3651,6 +3890,71 @@ export default {
   font-size: 12px;
   padding: 24px 8px;
 }
+
+/* 画面变化检测区域绘制（与技能运行计划的围栏绘制保持一致的视觉） */
+.region-draw {
+  display: flex;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  min-height: 300px;
+  overflow: hidden;
+}
+.region-list {
+  width: 220px;
+  border-right: 1px solid #ebeef5;
+  padding: 10px;
+  background: #fafbfc;
+  overflow-y: auto;
+}
+.region-cam {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  font-size: 13px;
+  color: #606266;
+  cursor: pointer;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  transition: background 0.15s;
+}
+.region-cam:hover { background: #ecf5ff; }
+.region-cam.active { background: #ecf5ff; color: #409eff; }
+.region-cam__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.region-cam__badge {
+  font-size: 11px;
+  color: #909399;
+  background: #f0f2f5;
+  padding: 1px 6px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.region-cam__badge.drawn { color: #67c23a; background: #f0f9eb; }
+.region-canvas { flex: 1; padding: 14px; display: flex; flex-direction: column; }
+.region-canvas--empty { align-items: center; justify-content: center; }
+.region-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.region-status__label { font-size: 13px; font-weight: 600; color: #303133; }
+.region-preview {
+  position: relative;
+  background: #1d2129;
+  border-radius: 8px;
+  flex: 1;
+  min-height: 220px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.region-preview__ph {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #909399;
+  font-size: 12px;
+}
+.region-preview__ph i { font-size: 36px; margin-bottom: 8px; }
 </style>
 
 <style>
