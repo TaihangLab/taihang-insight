@@ -26,7 +26,7 @@
         <div class="login-header">
           <div class="title-container">
             <div class="brand-name">
-              <img src="/static/logo.png" alt="太行logo" class="brand-logo">
+              <img :src="logoSrc" alt="太行logo" class="brand-logo">
               <span class="brand-group">太行</span>
               <span class="brand-dot">·</span>
               <span class="brand-group">慧眼</span>
@@ -118,7 +118,8 @@ export default {
       showPassword: false,
       loginLoading: false,
       username: '',
-      password: ''
+      password: '',
+      logoSrc: require('@/../static/logo.png')
     }
   },
   created(){

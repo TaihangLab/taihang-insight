@@ -26,7 +26,7 @@
         <div class="header-info">
           <div class="skill-basic-info">
             <div class="skill-icon">
-              <img :src="skillInfo.iconUrl || '/static/logo.png'" alt="技能图标" />
+              <img :src="skillInfo.iconUrl || defaultCover" alt="技能图标" />
             </div>
             <div class="skill-details">
               <h2 class="skill-name">
@@ -493,6 +493,7 @@
     name: 'LlmSkillCreateDialogDetail',
     data() {
       return {
+        defaultCover: require('@/../static/logo.png'),
         saving: false,
         savingAndPublishing: false, // 保存并发布状态
         validating: false,

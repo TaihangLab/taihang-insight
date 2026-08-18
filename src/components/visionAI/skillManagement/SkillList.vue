@@ -637,7 +637,7 @@ export default {
       searchKeyword: '',
       sortValue: readSortValue(),
       viewMode: localStorage.getItem('skillListViewMode') || 'card',
-      defaultCover: '/static/logo.png',
+      defaultCover: require('@/../static/logo.png'),
       // 技能详情抽屉
       detailVisible: false,
       detailSkill: null,
@@ -1539,7 +1539,7 @@ export default {
             scenario: d.application_scenario === 'video_analysis' ? 'vision' : 'image',
             tags: (d.skill_tags || []).join(', ') || '',
             description: d.skill_description || '',
-            iconUrl: d.skill_icon_url || '/static/logo.png',
+            iconUrl: d.skill_icon_url || this.defaultCover,
             skillIcon: d.skill_icon || null,
             promptTemplate: d.prompt_template || '',
             outputParameters: d.output_parameters || [],
