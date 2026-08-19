@@ -6,6 +6,7 @@ const path = require('path')
 
 // 后端API基础地址配置
 const API_BASE_URL = 'http://28.168.96.112:18010'
+// const API_BASE_URL = ''
 // const API_BASE_URL = 'http://127.0.0.1:18010'
 
 module.exports = {
