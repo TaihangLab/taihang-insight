@@ -1000,6 +1000,72 @@
               <div class="sg-tip">看哪块画面在转：优先用「运动分析区域」（检测框，可选）；不接则用本节点的电子围栏。围栏在运行计划里画，并用「用于节点」指定给本节点。</div>
             </template>
 
+            <!-- 目标事件 -->
+            <template v-else-if="selectedType === 'object_event'">
+              <div class="sg-sec-title">配置</div>
+              <el-form-item label="事件类型">
+                <el-select v-model="form.event" style="width:100%" @change="applyConfig">
+                  <el-option label="消失（数量减少）" value="disappear" />
+                  <el-option label="出现（数量增加）" value="appear" />
+                  <el-option label="数量减少" value="count_decrease" />
+                  <el-option label="数量增加" value="count_increase" />
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <span slot="label">
+                  身份判定
+                  <el-tooltip content="按数量只看有几个；按追踪 ID 可区分是哪个目标消失/出现（上游需带 track_id）。" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-select v-model="form.identity" style="width:100%" @change="applyConfig">
+                  <el-option label="按数量" value="count" />
+                  <el-option label="按追踪 ID" value="track_id" />
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <span slot="label">
+                  变化前最少数量
+                  <el-tooltip content="消失/数量减少时，确认前的数量至少要有这么多才触发，避免从 0 变成 0。" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-input-number v-model="form.min_prev_count" :min="0" :max="99" :step="1"
+                                 controls-position="right" style="width:100%" @change="applyConfig" />
+              </el-form-item>
+              <el-form-item>
+                <span slot="label">
+                  允许连续漏检帧数
+                  <el-tooltip content="连续少检这么多帧又回来，不当作消失/减少。0=当帧变化就确认；1=漏 1 帧不算；2=连续漏 2 帧不算。真变少了会再多稳 1 帧才报。" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-input-number v-model="form.max_miss_frames" :min="0" :max="29" :step="1"
+                                 controls-position="right" style="width:100%" @change="applyConfig" />
+              </el-form-item>
+              <div class="sg-tip">漏检连续不超过上面填的帧数又回到原数量，不当事件。确认后「事件触发」只亮一帧，后面的条件分支持续时间请用 0。</div>
+
+              <div class="sg-sec-title">输出</div>
+              <div class="sg-io-list">
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#13c2c2"></span>事件触发
+                  <span class="sg-io-tag">bool.</span>
+                </div>
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#7c5cff"></span>目标
+                  <span class="sg-io-tag">det.</span>
+                </div>
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#13c2c2"></span>确认前数量
+                  <span class="sg-io-tag">int.</span>
+                </div>
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#13c2c2"></span>当前数量
+                  <span class="sg-io-tag">int.</span>
+                </div>
+              </div>
+            </template>
+
             <!-- 尺寸过滤 -->
             <template v-else-if="selectedType === 'size_filter'">
               <div class="sg-sec-title">输入</div>
@@ -2501,7 +2567,7 @@ const PORT_LABELS = {
   small_images: '小图序列',
   running: '运行中', stopped: '已停止', magnitude: '运动量',
   regions: '运动分析区域',
-  triggered: '事件触发', prev_count: '上一帧数量', curr_count: '当前数量',
+  triggered: '事件触发', prev_count: '确认前数量', curr_count: '当前数量',
   person: '人员', a: '输入A', b: '输入B', c: '输入C', d: '输入D', e: '输入E',
   f: '输入F', g: '输入G', h: '输入H', i: '输入I', j: '输入J',
 }
@@ -5572,7 +5638,7 @@ export default {
         },
         merge_detections: {},
         motion_state: { threshold: 0.1, consecutive_frames: 3, use_full_frame: false },
-        object_event: { event: 'disappear', min_prev_count: 1, stable_frames: 2, identity: 'count' },
+        object_event: { event: 'disappear', min_prev_count: 1, max_miss_frames: 1, stable_frames: 2, identity: 'count' },
         pose_keypoints: {
           model_name: 'yolo11_pose', confidence_threshold: 0.5,
           waist_keypoint_indices: [11, 12], wrist_keypoint_indices: [9, 10]
@@ -5734,6 +5800,16 @@ export default {
         f.threshold = cfg.threshold != null ? cfg.threshold : 0.1
         f.consecutive_frames = cfg.consecutive_frames != null ? cfg.consecutive_frames : 3
         f.use_full_frame = !!cfg.use_full_frame
+      } else if (this.selectedType === 'object_event') {
+        f.event = cfg.event || 'disappear'
+        f.identity = cfg.identity || 'count'
+        f.min_prev_count = cfg.min_prev_count != null ? cfg.min_prev_count : 1
+        if (cfg.max_miss_frames != null && cfg.max_miss_frames !== '') {
+          f.max_miss_frames = Math.max(0, parseInt(cfg.max_miss_frames, 10) || 0)
+        } else {
+          const sf = cfg.stable_frames != null ? parseInt(cfg.stable_frames, 10) : 2
+          f.max_miss_frames = Math.max(0, (sf || 2) - 1)
+        }
       } else if (this.selectedType === 'count') {
         f._countPop = { count_target: false }
       } else if (this.selectedType === 'video_slice') {
@@ -6626,6 +6702,14 @@ export default {
         cfg.threshold = this.form.threshold != null ? Number(this.form.threshold) : 0.1
         cfg.consecutive_frames = parseInt(this.form.consecutive_frames, 10) || 3
         cfg.use_full_frame = !!this.form.use_full_frame
+      } else if (t === 'object_event') {
+        const ev = String(this.form.event || 'disappear')
+        cfg.event = ['appear', 'disappear', 'count_increase', 'count_decrease'].indexOf(ev) >= 0 ? ev : 'disappear'
+        cfg.identity = this.form.identity === 'track_id' ? 'track_id' : 'count'
+        cfg.min_prev_count = Math.max(0, parseInt(this.form.min_prev_count, 10) || 0)
+        const miss = Math.max(0, Math.min(29, parseInt(this.form.max_miss_frames, 10) || 0))
+        cfg.max_miss_frames = miss
+        cfg.stable_frames = miss + 1
       } else if (t === 'video_slice') {
         const clamp = v => {
           const n = Number(v)
