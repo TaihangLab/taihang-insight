@@ -143,7 +143,7 @@
               <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port"
                             :class="{ 'sg-roi-item': showFenceRatioBeside(sel.port) }"
                             :required="!sel.optional">
-                <span slot="label" class="sg-io-label">
+                <span slot="label" :class="{ 'sg-io-label': showFenceRatioBeside(sel.port) }">
                   <span>{{ sel.label }}</span>
                   <span v-if="showFenceRatioBeside(sel.port)" class="sg-fence-ratio-side" @click.stop>
                     <span class="sg-fence-ratio-lbl">
@@ -204,7 +204,7 @@
               <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port"
                             :class="{ 'sg-roi-item': showFenceRatioBeside(sel.port) }"
                             :required="!sel.optional">
-                <span slot="label" class="sg-io-label">
+                <span slot="label" :class="{ 'sg-io-label': showFenceRatioBeside(sel.port) }">
                   <span>{{ sel.label }}</span>
                   <span v-if="showFenceRatioBeside(sel.port)" class="sg-fence-ratio-side" @click.stop>
                     <span class="sg-fence-ratio-lbl">
@@ -924,7 +924,7 @@
               <el-form-item v-for="tf in regionFilterFields" :key="tf.port"
                             :class="{ 'sg-roi-item': showFenceRatioBeside(tf.port) }"
                             required>
-                <span slot="label" class="sg-io-label">
+                <span slot="label" :class="{ 'sg-io-label': showFenceRatioBeside(tf.port) }">
                   <span>
                     {{ tf.label }}
                     <el-tooltip :content="tf.tip" placement="top">
@@ -8419,7 +8419,7 @@ export default {
   border: 1px dashed #e3e6ee; border-radius: 8px; }
 .sg-opt { display: inline-flex; align-items: center; gap: 6px; }
 .sg-opt-ic { color: #7c5cff; font-size: 14px; }
-.sg-roi-item >>> .el-form-item__label { width: 100%; padding-right: 0; overflow: visible; line-height: 28px; }
+.sg-roi-item >>> .el-form-item__label { width: 100%; padding-right: 0; overflow: visible; }
 .sg-io-label { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; }
 .sg-fence-ratio-side { display: inline-flex; align-items: center; gap: 4px; flex: none; }
 .sg-fence-ratio-lbl { font-size: 12px; color: #606266; white-space: nowrap; display: inline-flex; align-items: center; font-weight: 400; }
