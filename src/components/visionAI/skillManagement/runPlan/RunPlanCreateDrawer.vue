@@ -198,7 +198,18 @@
         </div>
 
         <div class="form-section" v-if="skillNeedsFence || skillNeedsTripwire">
-          <div class="section-head"><i class="el-icon-crop"></i> 区域绘制</div>
+          <div class="section-head section-head--with-action">
+            <span><i class="el-icon-crop"></i> 区域绘制</span>
+            <span v-if="skillNeedsFence" class="section-osd">
+              <span class="section-osd__label">
+                围栏外也画框
+                <el-tooltip placement="top" content="默认打开：画面上围栏外的目标也会画虚线框，方便核对。关掉后前端只能看到围栏内的检测框。无论开还是关，告警都只数围栏里的。">
+                  <i class="el-icon-question section-osd__help"></i>
+                </el-tooltip>
+              </span>
+              <el-switch v-model="form.show_outside_fence" :disabled="isView"></el-switch>
+            </span>
+          </div>
           <div class="region-draw">
             <div class="region-list">
               <div
@@ -665,7 +676,8 @@ function defaultForm() {
     alert_config: defaultAlertConfig(),
     review_enabled: false,
     review_skill_class_id: null,
-    cameras: []
+    cameras: [],
+    show_outside_fence: true
   };
 }
 
@@ -893,7 +905,8 @@ export default {
           alert_config: alertConfig,
           review_enabled: !!(p.review_enabled || alertConfig.review_enabled),
           review_skill_class_id: p.review_skill_class_id || alertConfig.review_skill_class_id || null,
-          cameras: JSON.parse(JSON.stringify(p.cameras || []))
+          cameras: JSON.parse(JSON.stringify(p.cameras || [])),
+          show_outside_fence: !(p.cameras || []).some(c => c.fence && c.fence.show_outside_fence === false)
         });
         this.alertNameTouched = true;
         if (kind !== 'llm' && p.skill_class_id) this.loadSkillParams(p.skill_class_id, true);
@@ -1357,7 +1370,8 @@ export default {
       const out = {
         enabled: true,
         regions,
-        points: regions.length ? (regions[0].points || []) : []
+        points: regions.length ? (regions[0].points || []) : [],
+        show_outside_fence: this.form.show_outside_fence !== false
       };
       if (tripwires.length) out.tripwires = tripwires;
       return out;
@@ -1605,6 +1619,32 @@ export default {
   text-align: left;
 }
 .section-head i { margin-right: 6px; color: #409eff; }
+.section-head--with-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.section-osd {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+.section-osd__label {
+  font-size: 13px;
+  color: #4e5969;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.section-osd__help {
+  margin-right: 0 !important;
+  color: #a8abb2 !important;
+  cursor: help;
+  font-size: 14px;
+}
+.section-osd__help:hover { color: #409eff !important; }
 
 .form-section >>> .el-form-item__label {
   text-align: left;
