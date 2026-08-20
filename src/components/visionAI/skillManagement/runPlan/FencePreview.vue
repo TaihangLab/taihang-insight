@@ -116,8 +116,10 @@ export default {
     },
     drawRegion(ctx, r, points, W, H, k, index) {
       const invert = !!r.invert;
-      const stroke = invert ? '#e6a23c' : '#ff4d4f';
-      const fill = invert ? 'rgba(250,140,22,0.24)' : 'rgba(255,77,79,0.22)';
+      const bound = !!(r.bind_node || r.bind_node_name);
+      const stroke = invert ? '#e6a23c' : (bound ? '#3370ff' : '#ff4d4f');
+      const fill = invert ? 'rgba(250,140,22,0.24)' : (bound ? 'rgba(51,112,255,0.22)' : 'rgba(255,77,79,0.22)');
+      const tag = invert ? '#fa8c16' : (bound ? '#3370ff' : '#ff4d4f');
 
       ctx.beginPath();
       points.forEach((p, i) => {
@@ -148,7 +150,11 @@ export default {
 
       // 名称标签：跟随最低顶点
       const name = (r.name || '').trim();
-      const text = name ? (invert ? `${name}（反选）` : name) : '';
+      const bits = [];
+      if (name) bits.push(name);
+      if (r.bind_node_name) bits.push(r.bind_node_name);
+      if (invert) bits.push('反选');
+      const text = bits.length > 1 && name ? `${name}（${bits.slice(1).join('·')}）` : (bits[0] || '');
       if (!text) return;
       let anchor = points[0];
       points.forEach(p => { if (p.y > anchor.y) anchor = p; });
@@ -159,7 +165,7 @@ export default {
       const y = anchor.y * H - 6 * k;
       ctx.font = `${fontSize}px sans-serif`;
       const tw = ctx.measureText(text).width;
-      ctx.fillStyle = invert ? '#fa8c16' : '#ff4d4f';
+      ctx.fillStyle = tag;
       ctx.fillRect(x - padX, y - fontSize - padY, tw + padX * 2, fontSize + 3 * k + padY * 2);
       ctx.fillStyle = '#fff';
       ctx.fillText(text, x, y);

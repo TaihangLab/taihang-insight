@@ -54,7 +54,8 @@
             :video-width="videoWidth"
             :video-height="videoHeight"
             :frame-timestamp="frameTimestamp"
-            :detections="detections">
+            :detections="detections"
+            :status-tags="statusTags">
           </detection-overlay>
         </div>
       </div>
@@ -117,6 +118,7 @@ export default {
       selectedTaskId: null,
       wsConnection: null,
       detections: [],
+      statusTags: [],
       frameTimestamp: 0,
       videoWidth: 1920,
       videoHeight: 1080,
@@ -162,6 +164,7 @@ export default {
       
       // 清空检测结果
       this.detections = []
+      this.statusTags = []
       this.frameTimestamp = 0
       
       // 如果选择了任务，建立新连接
@@ -178,6 +181,7 @@ export default {
       this.wsConnection = createDetectionWebSocket(taskId, {
         onMessage: (parsed) => {
           this.detections = parsed.detections
+          this.statusTags = parsed.statusTags || []
           this.frameTimestamp = parsed.frameTimestamp
           this.videoWidth = parsed.frameSize.width
           this.videoHeight = parsed.frameSize.height
@@ -225,6 +229,7 @@ export default {
     cleanup() {
       this.disconnectWebSocket()
       this.detections = []
+      this.statusTags = []
       this.frameTimestamp = 0
       this.selectedTaskId = null
     }

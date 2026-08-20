@@ -919,6 +919,7 @@
                   <el-option label="围栏外" value="outside" />
                 </el-select>
               </el-form-item>
+              <div class="sg-tip">电子围栏在运行计划里画，并用「用于节点」指定给本节点。</div>
 
               <div class="sg-sec-title">输出</div>
               <div class="sg-io-list">
@@ -927,6 +928,20 @@
                   <span class="sg-io-tag">det.</span>
                 </div>
               </div>
+            </template>
+
+            <!-- 运动状态 -->
+            <template v-else-if="selectedType === 'motion_state'">
+              <div class="sg-sec-title">配置</div>
+              <el-form-item label="光流阈值">
+                <el-input-number v-model="form.threshold" :min="0" :max="10" :step="0.05" :precision="4"
+                                 controls-position="right" style="width:100%" @change="applyConfig" />
+              </el-form-item>
+              <el-form-item label="连续帧数">
+                <el-input-number v-model="form.consecutive_frames" :min="1" :max="60" :step="1"
+                                 controls-position="right" style="width:100%" @change="applyConfig" />
+              </el-form-item>
+              <div class="sg-tip">看哪块画面在转：优先用「运动分析区域」（检测框，可选）；不接则用本节点的电子围栏。围栏在运行计划里画，并用「用于节点」指定给本节点。</div>
             </template>
 
             <!-- 尺寸过滤 -->
@@ -3676,9 +3691,10 @@ class SGNode extends HtmlNode {
       body = row('输入', ins) + row('输出', outs)
     } else {
       const genBoundIn = boundInputPorts(m)
-      // gate 为可选门控：未绑定时不在卡片上显示，避免看起来像必填
+      // 可选口未绑定时不在卡片上显示，避免看起来像必填
+      const hideIfUnbound = new Set(['gate', 'regions'])
       const ins = (p.inputPorts || [])
-        .filter(n => n !== 'gate' || genBoundIn.has(n))
+        .filter(n => !hideIfUnbound.has(n) || genBoundIn.has(n))
         .map(n => chipHtml(n, types[n], null, !genBoundIn.has(n)))
       if (p.dynamic) ins.push('<span class="sgx-chip sgx-chip-dyn" style="--c:#909399"><span class="sgx-chip-dot"></span>动态输入</span>')
       const outs = (p.outputPorts || []).map(n => chipHtml(n, types[n]))
@@ -4886,8 +4902,9 @@ export default {
             || (t === 'target_matting' && mattingLabels[p])
             || PORT_LABELS[p] || p,
           type,
-          // gate / ROI 均为可选：不接则按默认行为（gate=始终执行，ROI=不过滤）
-          optional: type === 'ROI' || p === 'gate',
+          // 可选口：不接按默认行为（gate=始终执行，ROI=不过滤，
+          // regions=运动节点改用电子围栏做光流）
+          optional: type === 'ROI' || p === 'gate' || p === 'regions',
           value,
           groups,
           treeData: this.groupsToTree(groups),
@@ -5655,6 +5672,10 @@ export default {
       } else if (this.selectedType === 'region_filter') {
         f.trigger_mode = cfg.trigger_mode || 'inside'
         f._rfPop = { image: false, filter_target: false, roi: false }
+      } else if (this.selectedType === 'motion_state') {
+        f.threshold = cfg.threshold != null ? cfg.threshold : 0.1
+        f.consecutive_frames = cfg.consecutive_frames != null ? cfg.consecutive_frames : 3
+        f.use_full_frame = !!cfg.use_full_frame
       } else if (this.selectedType === 'count') {
         f._countPop = { count_target: false }
       } else if (this.selectedType === 'video_slice') {
@@ -6529,6 +6550,10 @@ export default {
         })).filter(op => op.name)
       } else if (t === 'region_filter') {
         cfg.trigger_mode = this.form.trigger_mode || 'inside'
+      } else if (t === 'motion_state') {
+        cfg.threshold = this.form.threshold != null ? Number(this.form.threshold) : 0.1
+        cfg.consecutive_frames = parseInt(this.form.consecutive_frames, 10) || 3
+        cfg.use_full_frame = !!this.form.use_full_frame
       } else if (t === 'video_slice') {
         const clamp = v => {
           const n = Number(v)
@@ -6848,7 +6873,13 @@ export default {
         props.dynamic = true
       }
       // 保留隐式参数引用（如区域过滤的"尺寸参照图片"）：applyConfig 会重建 cfg，需带回
-      const prevRefs = props.config && props.config._input_refs
+      const prevCfg = props.config && typeof props.config === 'object' ? props.config : {}
+      Object.keys(prevCfg).forEach(k => {
+        if (k === '_input_refs' || k === 'roi_role') return
+        if (cfg[k] === undefined) cfg[k] = prevCfg[k]
+      })
+      delete cfg.roi_role
+      const prevRefs = prevCfg._input_refs
       if (prevRefs && Object.keys(prevRefs).length && t !== 'sequence' && t !== 'sop_compliance') cfg._input_refs = { ...prevRefs }
       props.config = cfg
       // 先更新文本，再 setProperties 触发 HTML 节点重渲染，使标题改名即时生效

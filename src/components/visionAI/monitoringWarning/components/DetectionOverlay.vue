@@ -1,5 +1,17 @@
 <template>
   <div class="detection-overlay-container">
+    <div v-if="currentStatusTags.length" class="status-tags">
+      <div
+        v-for="tag in currentStatusTags"
+        :key="tag.id || tag.label"
+        class="status-tag"
+        :class="{ active: tag.active }"
+      >
+        <span class="status-tag-dot"></span>
+        <span class="status-tag-label">{{ tag.label }}</span>
+        <span class="status-tag-text">{{ tag.text }}</span>
+      </div>
+    </div>
     <!-- Canvas层用于绘制检测框（尺寸/位置由 syncToVideoElement 贴合真实 video 元素） -->
     <canvas
       ref="overlayCanvas"
@@ -21,6 +33,11 @@ export default {
       default: 480
     },
     detections: {
+      type: Array,
+      default: () => []
+    },
+    // 光流「运动状态」节点下发的运行/停止徽标；没配光流则为空
+    statusTags: {
       type: Array,
       default: () => []
     },
@@ -56,6 +73,7 @@ export default {
       ctx: null,
       rafId: null,
       currentDetections: [],
+      currentStatusTags: [],
       // 本批开始显示的时间（performance.now）
       shownAt: 0,
       lastFrameTimestamp: 0,
@@ -67,6 +85,12 @@ export default {
       this.onNewData()
     },
     detections: {
+      handler() {
+        this.onNewData()
+      },
+      deep: true
+    },
+    statusTags: {
       handler() {
         this.onNewData()
       },
@@ -150,7 +174,7 @@ export default {
           this.lastFrameTimestamp = ft
         }
       } else {
-        const sig = this.computeSignature(this.detections)
+        const sig = this.computeSignature(this.detections, this.statusTags)
         if (sig !== this.lastSignature) {
           isNew = true
           this.lastSignature = sig
@@ -158,6 +182,7 @@ export default {
       }
       if (!isNew) return
 
+      this.currentStatusTags = this.statusTags ? this.statusTags.slice() : []
       this.currentDetections = this.detections ? this.detections.slice() : []
       if (!this.currentDetections.length) {
         this.shownAt = 0
@@ -171,11 +196,16 @@ export default {
       this.ensureRaf()
     },
 
-    computeSignature(dets) {
-      if (!dets || !dets.length) return 'empty'
-      return dets
-        .map(d => (d.bbox || []).map(v => Math.round(v)).join(',') + ':' + (d.label || d.class_name || ''))
-        .join('|')
+    computeSignature(dets, tags) {
+      const dPart = (!dets || !dets.length)
+        ? 'empty'
+        : dets
+          .map(d => (d.bbox || []).map(v => Math.round(v)).join(',') + ':' + (d.label || d.class_name || ''))
+          .join('|')
+      const tPart = (!tags || !tags.length)
+        ? ''
+        : tags.map(t => `${t.id || ''}:${t.active ? 1 : 0}:${t.text || ''}`).join('|')
+      return dPart + '#' + tPart
     },
 
     ensureRaf() {
@@ -281,12 +311,23 @@ export default {
 
       const rgbColor = color ? `rgb(${color[2]}, ${color[1]}, ${color[0]})` : 'rgb(0, 255, 0)'
       const drawScale = (scaleX + scaleY) / 2
+      const inFence = detection.in_fence !== false
+      const prevAlpha = this.ctx.globalAlpha
+
+      if (!inFence) {
+        this.ctx.globalAlpha = prevAlpha * 0.55
+        this.ctx.setLineDash([Math.max(4, 7 * drawScale), Math.max(3, 5 * drawScale)])
+      } else {
+        this.ctx.setLineDash([])
+      }
 
       this.ctx.strokeStyle = rgbColor
       this.ctx.lineWidth = Math.max(1, 2 * drawScale)
       this.ctx.strokeRect(x1, y1, width, height)
+      this.ctx.setLineDash([])
 
-      const labelText = `${label || 'Object'}: ${(confidence != null ? confidence : 0).toFixed(2)}`
+      const suffix = inFence ? '' : ' 栏外'
+      const labelText = `${label || 'Object'}${suffix}: ${(confidence != null ? confidence : 0).toFixed(2)}`
       const fontPx = Math.max(9, Math.round(22 * 0.5 * drawScale))
       this.ctx.font = `${fontPx}px Arial`
       const textMetrics = this.ctx.measureText(labelText)
@@ -300,10 +341,12 @@ export default {
       this.ctx.textBaseline = 'alphabetic'
       this.ctx.fillStyle = '#FFFFFF'
       this.ctx.fillText(labelText, x1 + padX, y1 - padX)
+      this.ctx.globalAlpha = prevAlpha
     },
 
     clear() {
       this.currentDetections = []
+      this.currentStatusTags = []
       this.shownAt = 0
       this.stopRaf()
       this.clearCanvas()
@@ -333,5 +376,54 @@ export default {
   transform: translateZ(0);
   will-change: transform;
   backface-visibility: hidden;
+}
+
+.status-tags {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.2;
+  color: #fff;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.status-tag.active {
+  background: rgba(6, 95, 70, 0.78);
+  border-color: rgba(52, 211, 153, 0.65);
+}
+
+.status-tag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+.status-tag.active .status-tag-dot {
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+}
+
+.status-tag-label {
+  opacity: 0.9;
+}
+
+.status-tag-text {
+  font-weight: 600;
 }
 </style>

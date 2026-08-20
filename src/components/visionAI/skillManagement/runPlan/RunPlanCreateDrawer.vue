@@ -571,6 +571,8 @@
       :allow-polygon="skillNeedsFence"
       :allow-tripwire="skillNeedsTripwire"
       :max-regions="fenceMaxRegions"
+      :extra-hint="fenceExtraHint"
+      :bindable-nodes="fenceBindableNodes"
       @confirm="onFenceConfirm">
     </fence-drawer>
 
@@ -687,6 +689,7 @@ export default {
       skillNeedsTripwire: false,
       // 技能输入声明为 Array<ROI> 时允许绘制多个电子围栏；单个 ROI 仅允许 1 个
       fenceMultipleRoi: true,
+      fenceBindableNodes: [],
       currentFenceCam: null,
       fenceVisible: false,
       fenceEditing: null,
@@ -795,6 +798,10 @@ export default {
       // 0 表示不限制（Array<ROI>）；单个 ROI 限制为 1
       return this.fenceMultipleRoi ? 0 : 1;
     },
+    fenceExtraHint() {
+      if ((this.fenceBindableNodes || []).length < 2) return '';
+      return '本技能有多个节点用到电子围栏。请给各块围栏选择「用于节点」；不选则所有节点都会用这块，和原来一样。';
+    },
     rtspStreamingEnabled: {
       get() {
         this.ensureRtspStreamingConfig();
@@ -896,6 +903,7 @@ export default {
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
         this.fenceMultipleRoi = true;
+        this.fenceBindableNodes = [];
       }
       this.ensureRtspStreamingConfig();
       this.currentFenceCam = this.form.cameras[0] || null;
@@ -1041,6 +1049,7 @@ export default {
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
         this.fenceMultipleRoi = true;
+        this.fenceBindableNodes = [];
         if (!this.alertNameTouched) this.form.alert_name = '';
         return;
       }
@@ -1058,6 +1067,7 @@ export default {
         this.skillNeedsFence = false;
         this.skillNeedsTripwire = false;
         this.fenceMultipleRoi = true;
+        this.fenceBindableNodes = [];
       } else {
         this.form.skill_class_id = s.skill_class_id;
         this.form.llm_skill_id = '';
@@ -1116,6 +1126,19 @@ export default {
         const roiInfo = this.computeRoiInfo(detail);
         this.skillNeedsFence = roiInfo.needsFence;
         this.fenceMultipleRoi = roiInfo.multiple;
+        this.fenceBindableNodes = this.extractRoiBindableNodes(detail);
+        if (!this.fenceBindableNodes.length) {
+          const opt = (this.skillOptions || []).find(o => o.ref === this.form.skill_ref);
+          if (opt && opt.kind === 'graph' && opt.name) {
+            try {
+              const gres = await skillAPI.getGraph(opt.name);
+              const gp = gres.data || {};
+              const gdetail = gp.data !== undefined ? gp.data : gp;
+              this.fenceBindableNodes = this.extractRoiBindableNodes(gdetail);
+            } catch (ge) { /* ignore */ }
+          }
+        }
+        if (this.fenceBindableNodes.length >= 2) this.fenceMultipleRoi = true;
         this.skillNeedsTripwire = this.computeSkillNeedsTripwire(detail);
       } catch (e) {
         console.warn('加载技能参数失败', e);
@@ -1123,6 +1146,7 @@ export default {
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
         this.fenceMultipleRoi = true;
+        this.fenceBindableNodes = [];
       } finally {
         this.skillParamsLoading = false;
       }
@@ -1186,6 +1210,35 @@ export default {
       } catch (e) {
         return { needsFence: true, multiple: true };
       }
+    },
+    graphJsonOf(detail) {
+      const dc = (detail && detail.default_config) || {};
+      return dc.graph_json || dc.graphJson || (detail && detail.graph_json) || null;
+    },
+    extractRoiBindableNodes(detail) {
+      const TYPE_ZH = {
+        motion_state: '运动状态',
+        region_filter: '区域过滤',
+        detection_model: '视觉模型',
+        pose_keypoints: '姿态关键点',
+        vlm_model: '多模态大模型'
+      };
+      const gj = this.graphJsonOf(detail);
+      if (!gj || !Array.isArray(gj.nodes)) return [];
+      const ids = {};
+      (gj.nodes || []).forEach(n => {
+        const refs = (n && n.config && n.config._input_refs) || {};
+        if (refs.roi) ids[n.id] = true;
+      });
+      (gj.edges || []).forEach(e => {
+        const tp = (e && (e.target_port || e.targetPort)) || '';
+        if (tp === 'roi') ids[e.target || e.targetNodeId] = true;
+      });
+      return (gj.nodes || []).filter(n => n && ids[n.id]).map(n => ({
+        id: n.id,
+        type: n.type,
+        name: n.name || (n.config && n.config.name_zh) || TYPE_ZH[n.type] || n.id
+      }));
     },
     computeSkillNeedsTripwire(detail) {
       try {
