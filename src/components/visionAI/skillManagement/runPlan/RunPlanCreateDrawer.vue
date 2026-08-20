@@ -573,6 +573,8 @@
       :max-regions="fenceMaxRegions"
       :extra-hint="fenceExtraHint"
       :bindable-nodes="fenceBindableNodes"
+      :default-ratio="fenceDefaultRatio"
+      :node-default-ratios="fenceNodeDefaultRatios"
       @confirm="onFenceConfirm">
     </fence-drawer>
 
@@ -690,6 +692,8 @@ export default {
       // 技能输入声明为 Array<ROI> 时允许绘制多个电子围栏；单个 ROI 仅允许 1 个
       fenceMultipleRoi: true,
       fenceBindableNodes: [],
+      fenceDefaultRatio: null,
+      fenceNodeDefaultRatios: {},
       currentFenceCam: null,
       fenceVisible: false,
       fenceEditing: null,
@@ -800,7 +804,7 @@ export default {
     },
     fenceExtraHint() {
       if ((this.fenceBindableNodes || []).length < 2) return '';
-      return '本技能有多个节点用到电子围栏。请给各块围栏选择「用于节点」；不选则所有节点都会用这块，和原来一样。';
+      return '本技能有多个节点接到了电子围栏。要么都不选「用于节点」（大家共用），要么每个接到的节点都指定一块；只指定其中一个时，其他接到的节点会拿不到围栏。';
     },
     rtspStreamingEnabled: {
       get() {
@@ -904,6 +908,8 @@ export default {
         this.skillNeedsTripwire = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
+        this.fenceDefaultRatio = null;
+        this.fenceNodeDefaultRatios = {};
       }
       this.ensureRtspStreamingConfig();
       this.currentFenceCam = this.form.cameras[0] || null;
@@ -1050,6 +1056,8 @@ export default {
         this.skillNeedsTripwire = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
+        this.fenceDefaultRatio = null;
+        this.fenceNodeDefaultRatios = {};
         if (!this.alertNameTouched) this.form.alert_name = '';
         return;
       }
@@ -1068,6 +1076,8 @@ export default {
         this.skillNeedsTripwire = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
+        this.fenceDefaultRatio = null;
+        this.fenceNodeDefaultRatios = {};
       } else {
         this.form.skill_class_id = s.skill_class_id;
         this.form.llm_skill_id = '';
@@ -1127,6 +1137,8 @@ export default {
         this.skillNeedsFence = roiInfo.needsFence;
         this.fenceMultipleRoi = roiInfo.multiple;
         this.fenceBindableNodes = this.extractRoiBindableNodes(detail);
+        this.fenceDefaultRatio = null;
+        this.fenceNodeDefaultRatios = this.extractFenceNodeDefaultRatios(detail);
         if (!this.fenceBindableNodes.length) {
           const opt = (this.skillOptions || []).find(o => o.ref === this.form.skill_ref);
           if (opt && opt.kind === 'graph' && opt.name) {
@@ -1135,6 +1147,9 @@ export default {
               const gp = gres.data || {};
               const gdetail = gp.data !== undefined ? gp.data : gp;
               this.fenceBindableNodes = this.extractRoiBindableNodes(gdetail);
+              if (!Object.keys(this.fenceNodeDefaultRatios || {}).length) {
+                this.fenceNodeDefaultRatios = this.extractFenceNodeDefaultRatios(gdetail);
+              }
             } catch (ge) { /* ignore */ }
           }
         }
@@ -1147,6 +1162,8 @@ export default {
         this.skillNeedsTripwire = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
+        this.fenceDefaultRatio = null;
+        this.fenceNodeDefaultRatios = {};
       } finally {
         this.skillParamsLoading = false;
       }
@@ -1214,6 +1231,23 @@ export default {
     graphJsonOf(detail) {
       const dc = (detail && detail.default_config) || {};
       return dc.graph_json || dc.graphJson || (detail && detail.graph_json) || null;
+    },
+    clampFenceRatio(v) {
+      const n = Number(v);
+      if (Number.isNaN(n)) return null;
+      return Math.max(0, Math.min(1, n));
+    },
+    extractFenceNodeDefaultRatios(detail) {
+      const out = {};
+      const gj = this.graphJsonOf(detail);
+      (gj && gj.nodes || []).forEach(n => {
+        if (!n || n.type === 'start' || !n.id) return;
+        const cfg = n.config || {};
+        if (cfg.fence_default_ratio == null || cfg.fence_default_ratio === '') return;
+        const v = this.clampFenceRatio(cfg.fence_default_ratio);
+        if (v != null) out[n.id] = v;
+      });
+      return out;
     },
     extractRoiBindableNodes(detail) {
       const TYPE_ZH = {

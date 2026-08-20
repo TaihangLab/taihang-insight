@@ -81,6 +81,9 @@
         <div class="fence-list__desc">
           {{ extraHint || '说明：绘制的电子围栏区域为识别区域，技能使用后作为预置信息生效' }}
         </div>
+        <div v-if="unboundFenceNodeNames.length" class="fence-list__warn">
+          已指定「用于节点」，但这些接到围栏的节点还没有对应围栏：{{ unboundFenceNodeNames.join('、') }}。它们会拿不到围栏。
+        </div>
 
         <div v-if="regions.length" class="fence-items">
           <div
@@ -285,6 +288,7 @@
 <script>
 import { runPlanAPI } from '@/components/service/VisionAIService.js';
 
+const GLOBAL_RATIO_DEFAULT = 1.0
 const RATIO_TIP_TEXT = '目标占比：指目标在电子围栏中的部分占目标总体的比例，当目标进入电子围栏占比超过所设置占比值时，系统即产生报警，反之将不产生报警。填写时，支持输入 0.00-1.00 的数字。注意：若技能自定义了判定关键点（如以人脚部位置判定是否入栏），则按关键点是否在围栏内判定，该占比设置不生效。';
 
 const ICON_POLYGON = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2l8 6v8l-8 6-8-6V8l8-6z" fill-opacity="0.15" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>';
@@ -309,6 +313,10 @@ export default {
     maxRegions: { type: Number, default: 0 },
     extraHint: { type: String, default: '' },
     bindableNodes: { type: Array, default: () => [] },
+    // 技能配置的默认占比；不传则用系统默认 1.0
+    defaultRatio: { type: Number, default: null },
+    // 各节点自己的默认占比 { nodeId: number }
+    nodeDefaultRatios: { type: Object, default: () => ({}) },
     // 「占比」是检测框与区域的重叠阈值，仅对目标检测类场景有意义；
     // 按像素统计的场景（如采集的画面变化）用不到，可隐藏以免误导
     showRatio: { type: Boolean, default: true }
@@ -396,6 +404,22 @@ export default {
     },
     showNodeBind() {
       return (this.bindableNodes || []).length > 0;
+    },
+    unboundFenceNodeNames() {
+      const bound = {};
+      (this.regions || []).forEach(r => {
+        if (r && r.bind_node) bound[r.bind_node] = true;
+      });
+      if (!Object.keys(bound).length) return [];
+      return (this.bindableNodes || [])
+        .filter(n => n && n.id && !bound[n.id])
+        .map(n => n.name || n.id);
+    },
+    resolvedDefaultRatio() {
+      const v = this.defaultRatio
+      if (v == null || v === '' || Number.isNaN(Number(v))) return GLOBAL_RATIO_DEFAULT
+      const n = Number(v)
+      return Math.max(0, Math.min(1, n))
     }
   },
   watch: {
@@ -508,7 +532,7 @@ export default {
       if (this.initFence && this.initFence.regions) {
         this.regions = JSON.parse(JSON.stringify(this.initFence.regions)).map((r, idx) => ({
           name: this.normalizeRegionName(r.name, idx),
-          ratio: r.ratio != null ? r.ratio : 1.0,
+          ratio: r.ratio != null ? r.ratio : this.resolvedDefaultRatio,
           invert: !!r.invert,
           bind_node: r.bind_node || '',
           bind_node_name: r.bind_node_name || '',
@@ -777,7 +801,7 @@ export default {
       const idx = this.regions.length;
       this.regions.push({
         name: this.nextName(),
-        ratio: 1.0,
+        ratio: this.resolvedDefaultRatio,
         invert: false,
         bind_node: '',
         bind_node_name: '',
@@ -850,7 +874,17 @@ export default {
       const r = this.regions[index];
       if (r && !r.bind_node) r.bind_node = '';
       this.syncBindNodeName(index);
+      if (r) r.ratio = this.ratioForBind(r.bind_node);
       this.redraw();
+    },
+    ratioForBind(bindNode) {
+      const nid = bindNode || '';
+      const map = this.nodeDefaultRatios || {};
+      if (nid && map[nid] != null && map[nid] !== '') {
+        const n = Number(map[nid]);
+        if (!Number.isNaN(n)) return Math.max(0, Math.min(1, n));
+      }
+      return this.resolvedDefaultRatio;
     },
     regionStyle(r, selected) {
       if (r && r.invert) {
@@ -1349,6 +1383,16 @@ export default {
   margin-bottom: 10px;
   padding-bottom: 10px;
   border-bottom: 1px solid #f0f1f3;
+}
+.fence-list__warn {
+  font-size: 11px;
+  color: #d46b08;
+  background: #fff7e6;
+  border: 1px solid #ffd591;
+  border-radius: 4px;
+  line-height: 1.6;
+  padding: 6px 8px;
+  margin: -4px 0 10px;
 }
 
 .fence-items {
