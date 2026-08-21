@@ -140,7 +140,7 @@
                   <span class="req">*</span> 占比：
                   <span
                     class="field-help-wrap"
-                    @mouseenter="showFloatingTip($event, ratioTipText)"
+                    @mouseenter="showFloatingTip($event, ratioTipFor(r))"
                     @mouseleave="hideFloatingTip"
                     @click.stop>
                     <i class="el-icon-question field-help"></i>
@@ -152,9 +152,11 @@
                   size="mini"
                   controls-position="right"
                   class="fence-field__ratio"
+                  :disabled="isMotionFence(r)"
                   @click.native.stop>
                 </el-input-number>
               </div>
+              <div v-if="showRatio && isMotionFence(r)" class="fence-field__hint">光流只看围栏范围，占比无效</div>
               <div class="fence-field fence-field--row">
                 <label class="fence-field__label">区域反选：</label>
                 <el-checkbox
@@ -290,6 +292,7 @@ import { runPlanAPI } from '@/components/service/VisionAIService.js';
 
 const GLOBAL_RATIO_DEFAULT = 1.0
 const RATIO_TIP_TEXT = '目标占比：指目标在电子围栏中的部分占目标总体的比例，当目标进入电子围栏占比超过所设置占比值时，系统即产生报警，反之将不产生报警。填写时，支持输入 0.00-1.00 的数字。注意：若技能自定义了判定关键点（如以人脚部位置判定是否入栏），则按关键点是否在围栏内判定，该占比设置不生效。';
+const MOTION_RATIO_TIP_TEXT = '光流只看围栏画在哪一块，按区域内像素算运动；不看检测框占比。绑给运动状态时填多少都不影响是否判定在转。';
 
 const ICON_POLYGON = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2l8 6v8l-8 6-8-6V8l8-6z" fill-opacity="0.15" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>';
 const ICON_TRIPWIRE = '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="5" cy="19" r="2" fill="currentColor"/><circle cx="19" cy="5" r="2" fill="currentColor"/><line x1="6.5" y1="17.5" x2="17.5" y2="6.5" stroke="currentColor" stroke-width="1.8"/></svg>';
@@ -309,7 +312,7 @@ export default {
     // 技能声明的输入决定可绘制内容：声明 ROI → 多边形围栏；声明 Tripwire → 绊线
     allowPolygon: { type: Boolean, default: true },
     allowTripwire: { type: Boolean, default: false },
-    // 多边形电子围栏数量上限：0 表示不限制（如 Array<ROI>）；技能输入声明为单个 ROI 时为 1
+    // 多边形电子围栏数量上限：0 不限制（仅 Array<ROI>）；单个 ROI 为 1
     maxRegions: { type: Number, default: 0 },
     extraHint: { type: String, default: '' },
     bindableNodes: { type: Array, default: () => [] },
@@ -860,9 +863,20 @@ export default {
       if (r.invert) bits.push('反选');
       return bits.length > 1 ? `${bits[0]}（${bits.slice(1).join('·')}）` : bits[0];
     },
+    bindNodeOf(r) {
+      if (!r || !r.bind_node) return null;
+      return (this.bindableNodes || []).find(x => x.id === r.bind_node) || null;
+    },
+    isMotionFence(r) {
+      const n = this.bindNodeOf(r);
+      return !!(n && n.type === 'motion_state');
+    },
+    ratioTipFor(r) {
+      return this.isMotionFence(r) ? MOTION_RATIO_TIP_TEXT : this.ratioTipText;
+    },
     bindNodeLabel(r) {
       if (!r || !r.bind_node) return '';
-      const n = (this.bindableNodes || []).find(x => x.id === r.bind_node);
+      const n = this.bindNodeOf(r);
       return (n && n.name) || r.bind_node_name || '';
     },
     syncBindNodeName(index) {
@@ -1497,6 +1511,13 @@ export default {
   padding-left: 8px;
   padding-right: 32px;
   font-size: 12px;
+}
+.fence-field__hint {
+  margin: -2px 0 8px 0;
+  padding-left: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #909399;
 }
 .fence-field__invert >>> .el-checkbox__label {
   font-size: 12px;

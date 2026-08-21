@@ -1898,19 +1898,23 @@ export const alertAPI = {
 
   /**
    * 批量删除预警
-   * @param {Array} alertIds - 预警ID数组
+   * @param {Array|Object} alertIdsOrBody - 预警ID数组，或 { alert_ids } / { skill_class_id, ...filters }
    * @returns {Promise} 包含批量删除结果的Promise对象
    */
-  batchDeleteAlerts(alertIds) {
-    if (!alertIds || alertIds.length === 0) {
-      console.error('批量删除预警失败: 缺少预警ID');
-      return Promise.reject(new Error('缺少预警ID'));
+  batchDeleteAlerts(alertIdsOrBody) {
+    const body = Array.isArray(alertIdsOrBody)
+      ? { alert_ids: alertIdsOrBody }
+      : (alertIdsOrBody || {})
+    const hasIds = Array.isArray(body.alert_ids) && body.alert_ids.length > 0
+    if (!hasIds && body.skill_class_id == null && !body.alert_type) {
+      console.error('批量删除预警失败: 缺少预警ID或筛选条件');
+      return Promise.reject(new Error('缺少预警ID或筛选条件'));
     }
 
-    console.log('批量删除预警:', alertIds);
+    console.log('批量删除预警:', body);
 
-    return visionAIAxios.post('/api/v1/alerts/batch-delete', {
-      alert_ids: alertIds
+    return visionAIAxios.post('/api/v1/alerts/batch-delete', body, {
+      timeout: 120000
     });
   },
 
@@ -3985,6 +3989,16 @@ export const reviewRecordAPI = {
    */
   getReviewRecordStatistics(params = {}) {
     return visionAIAxios.get('/api/v1/review-records/statistics/overview', { params });
+  },
+
+  /**
+   * 复判人员排行（按复判次数）
+   * @param {number} limit - 返回条数，默认 10
+   */
+  getReviewerStatistics(limit = 10) {
+    return visionAIAxios.get('/api/v1/review-records/statistics/reviewers', {
+      params: { limit },
+    });
   }
 };
 
