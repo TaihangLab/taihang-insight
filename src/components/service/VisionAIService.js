@@ -396,19 +396,19 @@ export const modelAPI = {
     }).then(response => {
       // 处理导入模型接口的响应
       const originalData = response.data;
-      
+
       // 如果已经是期望的格式，直接返回
       if (originalData && originalData.code !== undefined) {
         return response;
       }
-      
+
       // 转换为前端期望的格式
       const transformedData = {
         code: originalData.success ? 0 : -1,
         msg: originalData.message || (originalData.success ? '导入成功' : '导入失败'),
         data: originalData.data || originalData
       };
-      
+
       response.data = transformedData;
       console.log('导入模型响应:', response.data);
       return response;
@@ -423,19 +423,19 @@ export const modelAPI = {
     return visionAIAxios.get('/api/v1/models/platforms')
       .then(response => {
         const originalData = response.data;
-        
+
         // 如果已经是期望的格式，直接返回
         if (originalData && originalData.code !== undefined) {
           return response;
         }
-        
+
         // 转换为前端期望的格式
         const transformedData = {
           code: 0,
           msg: 'success',
           data: originalData.data || originalData
         };
-        
+
         response.data = transformedData;
         return response;
       })
@@ -882,7 +882,7 @@ export const skillAPI = {
     // 创建FormData对象
     const formData = new FormData();
     formData.append('main_file', mainFile);
-    
+
     // 添加依赖文件
     if (dependencyFiles && dependencyFiles.length > 0) {
       dependencyFiles.forEach(file => {
@@ -3593,6 +3593,20 @@ export const reviewRecordAPI = {
   },
 
   /**
+   * 还原误报复判结果，并将关联预警恢复为待处理
+   * @param {number|string} reviewId - 复判记录ID
+   * @returns {Promise} 包含还原结果的Promise对象
+   */
+  restoreReviewRecord(reviewId) {
+    if (!reviewId) {
+      console.error('还原复判失败: 缺少复判记录ID');
+      return Promise.reject(new Error('缺少复判记录ID'));
+    }
+
+    return visionAIAxios.post(`/api/v1/review-records/${reviewId}/restore`);
+  },
+
+  /**
    * 删除复判记录
    * @param {number} reviewId - 复判记录ID
    * @returns {Promise} 包含删除结果的Promise对象
@@ -3656,7 +3670,7 @@ export const reviewRecordAPI = {
     return visionAIAxios.get('/api/v1/review-records/statistics/reviewers', {
       params: { limit },
     });
-  },
+  }
 };
 
 /**
