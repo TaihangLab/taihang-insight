@@ -696,19 +696,16 @@ export default {
 
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(this.archiveWarningId)
 
-        await alertAPI.updateAlertStatus(apiAlertId, {
-          status: 4,
-          processing_notes: `预警已归档到：${archiveName}`,
-          processed_by: this.getCurrentUserName()
-        })
-
+        // 后端在同一事务中建立档案关联并更新预警状态。
         const response = await archiveAPI.linkAlertsToArchive(
           targetArchiveId,
           [apiAlertId],
           `预警管理归档 - 预警类型: ${warning.type || warning.alert_type}`
         )
 
-        if (response.data && response.data.code === 0) {
+        const archiveResult = response.data && response.data.data
+        if (response.data && response.data.code === 0 &&
+            archiveResult && archiveResult.failed_count === 0) {
           if (this.warningList[index]._apiData) {
             this.$set(this.warningList[index]._apiData, 'status', 4)
           }
@@ -724,7 +721,7 @@ export default {
             time: this.getCurrentTime(),
             description: `预警已归档到：${archiveName}，可在预警档案中查看`,
             operationType: 'archive',
-            operator: this.getCurrentUserName(),
+            operator: archiveResult.linked_by || this.getCurrentUserName(),
             archiveInfo: { archiveId: targetArchiveId, archiveName }
           })
 
@@ -741,7 +738,9 @@ export default {
         }
       } catch (error) {
         console.error('预警归档异常:', error)
-        this.$message.error('归档失败: ' + (error.message || '未知错误'))
+        const serverMessage = error.response && error.response.data &&
+          (error.response.data.detail || error.response.data.message)
+        this.$message.error('归档失败: ' + (serverMessage || error.message || '未知错误'))
       } finally {
         this.loading = false
       }
@@ -1478,9 +1477,11 @@ export default {
       }
     },
     
-    handleArchiveFromDetail(eventData) {
+    async handleArchiveFromDetail(eventData) {
       if (eventData && eventData.alert_id) {
-        this.handleWarning(eventData.alert_id, 'archive')
+        // 详情组件已经完成原子归档，这里只关闭详情并刷新列表。
+        this.warningDetailVisible = false
+        await this.getWarningList()
       }
     },
     
