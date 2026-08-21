@@ -3970,7 +3970,7 @@ export const reviewRecordAPI = {
    * 获取复判记录统计概览（与后端 GET /review-records/statistics/overview 一致）
    */
   getReviewRecordStatistics(params = {}) {
-    return visionAIAxios.get('/api/v1/review-records/statistics', { params });
+    return visionAIAxios.get('/api/v1/review-records/statistics/overview', { params });
   }
 };
 
