@@ -1020,7 +1020,7 @@
                 <el-input-number v-model="form.consecutive_frames" :min="1" :max="60" :step="1"
                                  controls-position="right" style="width:100%" @change="applyConfig" />
               </el-form-item>
-              <div class="sg-tip">看哪块画面在转：优先用「运动分析区域」（检测框，可选）；不接则用本节点的电子围栏。围栏在运行计划里画，并用「用于节点」指定给本节点。</div>
+              <div class="sg-tip">看哪块画面在转：优先用「运动分析区域」（检测框，可选）；不接则用本节点的电子围栏。围栏在运行计划里画，并用「用于节点」指定给本节点。光流只看围栏范围，占比无效。</div>
             </template>
 
             <!-- 目标事件 -->
@@ -6175,7 +6175,8 @@ export default {
       return ['String', 'TemplateString', 'Integer', 'Double', 'Boolean', 'Time', 'Image', 'Video'].includes(type)
     },
     nodeSupportsFenceDefaultType(type) {
-      return ['detection_model', 'motion_state', 'region_filter', 'pose_keypoints'].indexOf(type) >= 0
+      // 光流只看围栏像素范围，不看检测框占比，运动状态不要预填占比
+      return ['detection_model', 'region_filter', 'pose_keypoints'].indexOf(type) >= 0
     },
     nodeSupportsFenceDefault() {
       return this.nodeSupportsFenceDefaultType(this.selectedType)
