@@ -46,9 +46,6 @@
         <el-menu-item index="/monitoring/warningManage">
           <span slot="title">预警管理</span>
         </el-menu-item>
-        <el-menu-item index="/monitoring/reviewRecords">
-          <span slot="title">智能复判</span>
-        </el-menu-item>
       </el-submenu>
 
       <!-- 设备配置 -->
