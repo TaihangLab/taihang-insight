@@ -211,7 +211,7 @@
 </template>
 
 <script>
-import { runPlanAPI } from '@/components/service/VisionAIService.js';
+import { runPlanAPI, formatApiError } from '@/components/service/VisionAIService.js';
 import RunPlanCreateDrawer from './RunPlanCreateDrawer.vue';
 import FencePreview from './FencePreview.vue';
 import {
@@ -334,7 +334,7 @@ export default {
         this.$message.success(val ? '已启用' : '已停用');
       } catch (e) {
         this.plan.enabled = !val;
-        this.$message.error('操作失败');
+        this.$message.error(formatApiError(e, '操作失败'));
       }
     },
     async deletePlan() {
@@ -344,7 +344,7 @@ export default {
         this.$message.success('删除成功');
         this.goBack();
       } catch (e) {
-        if (e !== 'cancel') this.$message.error('删除失败');
+        if (e !== 'cancel') this.$message.error(formatApiError(e, '删除失败'));
       }
     }
   }

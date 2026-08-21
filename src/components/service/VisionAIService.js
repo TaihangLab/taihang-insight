@@ -10,6 +10,27 @@ const visionAIAxios = axios.create({
 
 // 技能试跑、评测、批量创建计划等后端计算耗时较长
 const LONG_RUNNING_TIMEOUT = 300000;
+const PLAN_MUTATION_TIMEOUT = 60000;
+
+export function formatApiError(e, fallback) {
+  fallback = fallback || '操作失败';
+  if (!e || e === 'cancel') return e === 'cancel' ? null : fallback;
+  if (e.code === 'ECONNABORTED' || /timeout/i.test(e.message || '')) {
+    return '请求超时，请稍后重试';
+  }
+  if (!e.response) {
+    return e.message || '网络异常，请稍后重试';
+  }
+  const data = e.response.data || {};
+  const detail = data.detail;
+  if (typeof detail === 'string' && detail) return detail;
+  if (Array.isArray(detail) && detail.length) {
+    return detail.map(d => (d && d.msg) || JSON.stringify(d)).join('；');
+  }
+  if (data.message) return data.message;
+  if (e.message && !/^Request failed with status code/i.test(e.message)) return e.message;
+  return fallback + '（HTTP ' + e.response.status + '）';
+}
 
 // 自定义参数序列化函数
 visionAIAxios.defaults.paramsSerializer = function (params) {
@@ -4099,7 +4120,7 @@ export const runPlanAPI = {
   },
   // 创建运行计划（异步：立刻返回 job_id，再轮询 getSaveJob）
   createPlan(data) {
-    return visionAIAxios.post('/api/v1/skill-run-plans', data);
+    return visionAIAxios.post('/api/v1/skill-run-plans', data, { timeout: PLAN_MUTATION_TIMEOUT });
   },
   // 运行计划详情
   getPlan(planId) {
@@ -4107,27 +4128,27 @@ export const runPlanAPI = {
   },
   // 更新运行计划（异步：立刻返回 job_id，再轮询 getSaveJob）
   updatePlan(planId, data) {
-    return visionAIAxios.put(`/api/v1/skill-run-plans/${planId}`, data);
+    return visionAIAxios.put(`/api/v1/skill-run-plans/${planId}`, data, { timeout: PLAN_MUTATION_TIMEOUT });
   },
   // 查询创建/更新计划的保存进度
   getSaveJob(jobId) {
-    return visionAIAxios.get(`/api/v1/skill-run-plans/save-jobs/${jobId}`);
+    return visionAIAxios.get(`/api/v1/skill-run-plans/save-jobs/${jobId}`, { timeout: 20000 });
   },
   // 启停单条计划
   setEnabled(planId, enabled) {
-    return visionAIAxios.patch(`/api/v1/skill-run-plans/${planId}/enabled`, { enabled });
+    return visionAIAxios.patch(`/api/v1/skill-run-plans/${planId}/enabled`, { enabled }, { timeout: PLAN_MUTATION_TIMEOUT });
   },
   // 删除单条计划
   deletePlan(planId) {
-    return visionAIAxios.delete(`/api/v1/skill-run-plans/${planId}`);
+    return visionAIAxios.delete(`/api/v1/skill-run-plans/${planId}`, { timeout: PLAN_MUTATION_TIMEOUT });
   },
   // 批量启停
   batchEnable(planIds, enabled) {
-    return visionAIAxios.post('/api/v1/skill-run-plans/batch-enable', { plan_ids: planIds, enabled });
+    return visionAIAxios.post('/api/v1/skill-run-plans/batch-enable', { plan_ids: planIds, enabled }, { timeout: PLAN_MUTATION_TIMEOUT });
   },
   // 批量删除
   batchDelete(planIds) {
-    return visionAIAxios.post('/api/v1/skill-run-plans/batch-delete', { plan_ids: planIds });
+    return visionAIAxios.post('/api/v1/skill-run-plans/batch-delete', { plan_ids: planIds }, { timeout: LONG_RUNNING_TIMEOUT });
   },
   // 运行任务（计划派生子任务）列表
   listRunTasks(params) {
@@ -4143,11 +4164,11 @@ export const runPlanAPI = {
   },
   // 删除单条运行任务
   deleteRunTask(taskId) {
-    return visionAIAxios.delete(`/api/v1/skill-run-plans/run-tasks/${taskId}`);
+    return visionAIAxios.delete(`/api/v1/skill-run-plans/run-tasks/${taskId}`, { timeout: PLAN_MUTATION_TIMEOUT });
   },
   // 批量删除运行任务
   batchDeleteRunTasks(taskIds) {
-    return visionAIAxios.post('/api/v1/skill-run-plans/run-tasks/batch-delete', { task_ids: taskIds });
+    return visionAIAxios.post('/api/v1/skill-run-plans/run-tasks/batch-delete', { task_ids: taskIds }, { timeout: LONG_RUNNING_TIMEOUT });
   },
   // 点位组织树（供"点位选择"）
   getOrganizations() {
