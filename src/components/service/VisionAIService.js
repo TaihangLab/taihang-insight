@@ -3918,6 +3918,20 @@ export const reviewRecordAPI = {
   },
 
   /**
+   * 还原误报复判结果，并将关联预警恢复为待处理
+   * @param {number|string} reviewId - 复判记录ID
+   * @returns {Promise} 包含还原结果的Promise对象
+   */
+  restoreReviewRecord(reviewId) {
+    if (!reviewId) {
+      console.error('还原复判失败: 缺少复判记录ID');
+      return Promise.reject(new Error('缺少复判记录ID'));
+    }
+
+    return visionAIAxios.post(`/api/v1/review-records/${reviewId}/restore`);
+  },
+
+  /**
    * 删除复判记录
    * @param {number} reviewId - 复判记录ID
    * @returns {Promise} 包含删除结果的Promise对象
