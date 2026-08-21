@@ -398,19 +398,19 @@ export const modelAPI = {
     }).then(response => {
       // 处理导入模型接口的响应
       const originalData = response.data;
-      
+
       // 如果已经是期望的格式，直接返回
       if (originalData && originalData.code !== undefined) {
         return response;
       }
-      
+
       // 转换为前端期望的格式
       const transformedData = {
         code: originalData.success ? 0 : -1,
         msg: originalData.message || (originalData.success ? '导入成功' : '导入失败'),
         data: originalData.data || originalData
       };
-      
+
       response.data = transformedData;
       console.log('导入模型响应:', response.data);
       return response;
@@ -425,19 +425,19 @@ export const modelAPI = {
     return visionAIAxios.get('/api/v1/models/platforms')
       .then(response => {
         const originalData = response.data;
-        
+
         // 如果已经是期望的格式，直接返回
         if (originalData && originalData.code !== undefined) {
           return response;
         }
-        
+
         // 转换为前端期望的格式
         const transformedData = {
           code: 0,
           msg: 'success',
           data: originalData.data || originalData
         };
-        
+
         response.data = transformedData;
         return response;
       })
@@ -884,7 +884,7 @@ export const skillAPI = {
     // 创建FormData对象
     const formData = new FormData();
     formData.append('main_file', mainFile);
-    
+
     // 添加依赖文件
     if (dependencyFiles && dependencyFiles.length > 0) {
       dependencyFiles.forEach(file => {
@@ -1913,19 +1913,23 @@ export const alertAPI = {
 
   /**
    * 批量删除预警
-   * @param {Array} alertIds - 预警ID数组
+   * @param {Array|Object} alertIdsOrBody - 预警ID数组，或 { alert_ids } / { skill_class_id, ...filters }
    * @returns {Promise} 包含批量删除结果的Promise对象
    */
-  batchDeleteAlerts(alertIds) {
-    if (!alertIds || alertIds.length === 0) {
-      console.error('批量删除预警失败: 缺少预警ID');
-      return Promise.reject(new Error('缺少预警ID'));
+  batchDeleteAlerts(alertIdsOrBody) {
+    const body = Array.isArray(alertIdsOrBody)
+      ? { alert_ids: alertIdsOrBody }
+      : (alertIdsOrBody || {})
+    const hasIds = Array.isArray(body.alert_ids) && body.alert_ids.length > 0
+    if (!hasIds && body.skill_class_id == null && !body.alert_type) {
+      console.error('批量删除预警失败: 缺少预警ID或筛选条件');
+      return Promise.reject(new Error('缺少预警ID或筛选条件'));
     }
 
-    console.log('批量删除预警:', alertIds);
+    console.log('批量删除预警:', body);
 
-    return visionAIAxios.post('/api/v1/alerts/batch-delete', {
-      alert_ids: alertIds
+    return visionAIAxios.post('/api/v1/alerts/batch-delete', body, {
+      timeout: 120000
     });
   },
 
@@ -3595,6 +3599,20 @@ export const reviewRecordAPI = {
   },
 
   /**
+   * 还原误报复判结果，并将关联预警恢复为待处理
+   * @param {number|string} reviewId - 复判记录ID
+   * @returns {Promise} 包含还原结果的Promise对象
+   */
+  restoreReviewRecord(reviewId) {
+    if (!reviewId) {
+      console.error('还原复判失败: 缺少复判记录ID');
+      return Promise.reject(new Error('缺少复判记录ID'));
+    }
+
+    return visionAIAxios.post(`/api/v1/review-records/${reviewId}/restore`);
+  },
+
+  /**
    * 删除复判记录
    * @param {number} reviewId - 复判记录ID
    * @returns {Promise} 包含删除结果的Promise对象
@@ -3658,7 +3676,7 @@ export const reviewRecordAPI = {
     return visionAIAxios.get('/api/v1/review-records/statistics/reviewers', {
       params: { limit },
     });
-  },
+  }
 };
 
 /**

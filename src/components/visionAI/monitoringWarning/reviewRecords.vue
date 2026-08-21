@@ -36,6 +36,8 @@ export default {
       searchForm: {
         startDate: '',
         endDate: '',
+        reviewStartDate: '',
+        reviewEndDate: '',
         reviewType: '',
         reviewResult: 'false_alarm',
         warningSkill: '',
@@ -48,6 +50,8 @@ export default {
       activeSearchForm: {
         startDate: '',
         endDate: '',
+        reviewStartDate: '',
+        reviewEndDate: '',
         reviewType: '',
         reviewResult: 'false_alarm',
         warningSkill: '',
@@ -294,6 +298,8 @@ export default {
           review_result: this.activeSearchForm.reviewResult || undefined,
           start_date: this.activeSearchForm.startDate || undefined,
           end_date: this.activeSearchForm.endDate || undefined,
+          review_start_date: this.activeSearchForm.reviewStartDate || undefined,
+          review_end_date: this.activeSearchForm.reviewEndDate || undefined,
           alert_name: this.activeSearchForm.warningName || undefined,
           camera_name: this.activeSearchForm.warningLocation || undefined
         }
@@ -314,8 +320,8 @@ export default {
               rawImage: record.raw_image_url || '',
               cameraName: record.camera_name || '未知摄像头',
               location: record.location || '未知位置',
-              startTime: record.created_at || '',
-              startTimeRaw: record.created_at || '',
+              alertTime: record.alert_time || '',
+              reviewTime: record.created_at || '',
               duration: '2秒',
               reviewType: record.review_type,
               reviewResult: record.review_result || 'false_alarm',
@@ -370,7 +376,7 @@ export default {
     },
     
     async resetSearch() {
-      const empty = { startDate: '', endDate: '', reviewType: '', reviewResult: this.activeResultTab, warningSkill: '', warningLocation: '', warningName: '', warningId: '' }
+      const empty = { startDate: '', endDate: '', reviewStartDate: '', reviewEndDate: '', reviewType: '', reviewResult: this.activeResultTab, warningSkill: '', warningLocation: '', warningName: '', warningId: '' }
       this.searchForm = { ...empty }
       this.activeSearchForm = { ...empty }
       this.pagination.currentPage = 1
@@ -428,7 +434,8 @@ export default {
             AI技能: item.skillNameZh || '-',
             违规位置: item.cameraName,
             预警位置: item.location,
-            开始时间: item.startTime,
+            预警时间: item.alertTime,
+            复判时间: item.reviewTime,
             复判类型: this.getReviewTypeText(item.reviewType),
             复判结论: item.reviewResultDisplay,
             复判意见: item.reviewNotes || '-'
@@ -817,6 +824,7 @@ export default {
       }
       this.currentAlertId = item.alertId
       this.currentReviewData = {
+        reviewId: item.id,
         reviewType: item.reviewType,
         reviewTypeText: this.getReviewTypeText(item.reviewType),
         reviewResult: item.reviewResult,
@@ -889,44 +897,21 @@ export default {
     
     // 处理还原复判事件
     async handleRestoreReview(restoredWarning) {
-      try {
-        console.log('还原复判的预警数据:', restoredWarning)
-        
-        // 这里应该调用API将预警数据存入预警管理页面
-        // 实际项目中需要调用后端API
-        // await this.$http.post('/api/warnings/restore', restoredWarning)
-        
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
-        // 从复判记录列表中移除该项（因为已经还原了）
-        this.reviewList = this.reviewList.filter(item => item.id !== restoredWarning.id)
-        
-        // 如果当前页没有数据了，回到上一页
-        if (this.currentPageData.length === 0 && this.pagination.currentPage > 1) {
-          this.pagination.currentPage--
-        }
-        
-        // 清除选中状态
-        this.selectedRecords = this.selectedRecords.filter(id => id !== restoredWarning.id)
-        
-        this.$message.success(`预警"${restoredWarning.type}"已成功还原到预警管理页面`)
-        
-        // 可以通过事件总线或者其他方式通知预警管理页面更新数据
-        // 这里使用localStorage来模拟跨页面通信
-        const restoredWarnings = JSON.parse(localStorage.getItem('restoredWarnings') || '[]')
-        restoredWarnings.push({
-          ...restoredWarning,
-          restoredAt: new Date().toISOString(),
-          restoredFrom: 'reviewRecords'
-        })
-        localStorage.setItem('restoredWarnings', JSON.stringify(restoredWarnings))
-        
-        
-      } catch (error) {
-        console.error('还原复判失败:', error)
-        this.$message.error('还原复判失败，请稍后重试')
+      const reviewId = restoredWarning && String(restoredWarning.review_id)
+      if (!reviewId) return
+
+      this.reviewList = this.reviewList.filter(item => item.id !== reviewId)
+      this.selectedRecords = this.selectedRecords.filter(id => id !== reviewId)
+      this.pagination.total = Math.max(0, this.pagination.total - 1)
+
+      if (this.currentPageData.length === 0 && this.pagination.currentPage > 1) {
+        this.pagination.currentPage--
       }
+
+      await Promise.all([
+        this.getReviewList(),
+        this.fetchDashboardStats()
+      ])
     },
     
     // 获取复判类型文本
@@ -1255,6 +1240,25 @@ export default {
         
         <div class="search-row">
           <div class="search-item">
+            <label>复判日期：</label>
+            <el-date-picker
+              v-model="searchForm.reviewStartDate"
+              type="date"
+              placeholder="开始日期"
+              size="small"
+              value-format="yyyy-MM-dd"
+            />
+            <span class="date-separator">-</span>
+            <el-date-picker
+              v-model="searchForm.reviewEndDate"
+              type="date"
+              placeholder="结束日期"
+              size="small"
+              value-format="yyyy-MM-dd"
+            />
+          </div>
+
+          <div class="search-item">
             <label>预警名称：</label>
             <el-input
               v-model="searchForm.warningName"
@@ -1373,8 +1377,15 @@ export default {
                   <span class="label">复判意见：</span>
                   <span class="value notes-text">{{ truncateText(item.reviewNotes, 30) }}</span>
                 </div>
-                <div class="info-item time-item">
-                  <span class="time">{{ formatTimeDisplay(item.startTime) }}</span>
+                <div class="time-section">
+                  <div class="info-item time-item">
+                    <span class="label">预警时间：</span>
+                    <span class="time">{{ item.alertTime ? formatTimeDisplay(item.alertTime) : '-' }}</span>
+                  </div>
+                  <div class="info-item time-item">
+                    <span class="label">复判时间：</span>
+                    <span class="time">{{ formatTimeDisplay(item.reviewTime) }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2033,10 +2044,13 @@ export default {
   text-align: left;
 }
 
-.time-item {
+.time-section {
   margin-top: 6px;
   padding-top: 8px;
   border-top: 1px solid #f2f3f5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .time-item .time {
@@ -2044,6 +2058,7 @@ export default {
   color: #909399;
   font-weight: 400;
   line-height: 1.4;
+  flex: 1;
 }
 
 /* 分页区域 */
@@ -2615,4 +2630,4 @@ export default {
 .dl-progress-meta { margin-top: 12px; font-size: 13px; color: #606266; }
 .dl-progress-error { margin-top: 10px; font-size: 13px; color: #f56c6c; line-height: 1.5; word-break: break-all; }
 .dl-progress-tip { font-size: 12px; color: #909399; }
-</style> 
+</style>

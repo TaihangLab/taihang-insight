@@ -169,7 +169,7 @@
           </div>
           <div v-else-if="!skillParamFields.length" class="skill-params-hint">该技能暂无可配置参数</div>
           <el-form v-else label-width="240px" size="small" :disabled="isView" class="skill-params-form">
-            <el-form-item v-for="p in skillParamFields" :key="p.key" :label="p.key" class="skill-param-row">
+            <el-form-item v-for="p in skillParamFields" :key="p.key" :label="p.label || p.key" class="skill-param-row">
               <template v-if="p.type === 'number'">
                 <el-input-number
                   v-model="form.skill_params[p.key]"
@@ -210,6 +210,7 @@
               <el-switch v-model="form.show_outside_fence" :disabled="isView"></el-switch>
             </span>
           </div>
+          <div v-if="fenceRequired" class="region-required-hint">该技能把电子围栏设为必填：未绘制的点位不会启动任务。</div>
           <div class="region-draw">
             <div class="region-list">
               <div
@@ -220,8 +221,8 @@
                 @click="currentFenceCam = c">
                 <i class="el-icon-video-camera"></i>
                 <span class="region-cam__name">{{ c.camera_name }}</span>
-                <span class="region-cam__badge" :class="fenceDrawn(c) ? 'drawn' : ''">
-                  {{ fenceDrawn(c) ? '已绘制' : '未绘制' }}
+                <span class="region-cam__badge" :class="fenceDrawn(c) ? 'drawn' : (fenceRequired ? 'skip' : '')">
+                  {{ fenceDrawn(c) ? '已绘制' : (fenceRequired ? '未绘制·不启动' : '未绘制') }}
                 </span>
               </div>
               <div v-if="!form.cameras.length" class="empty-tip-sm">请先选择点位</div>
@@ -701,7 +702,8 @@ export default {
       skillParamsLoading: false,
       skillNeedsFence: true,
       skillNeedsTripwire: false,
-      // 技能输入声明为 Array<ROI> 时允许绘制多个电子围栏；单个 ROI 仅允许 1 个
+      fenceRequired: false,
+      // 仅 Array<ROI> 允许多块围栏；单个 ROI 固定 1 块，不因「用于节点」数量放开
       fenceMultipleRoi: true,
       fenceBindableNodes: [],
       fenceDefaultRatio: null,
@@ -811,7 +813,7 @@ export default {
       return '创建运行计划';
     },
     fenceMaxRegions() {
-      // 0 表示不限制（Array<ROI>）；单个 ROI 限制为 1
+      // 0 不限制（仅 Array<ROI>）；单个 ROI 固定 1
       return this.fenceMultipleRoi ? 0 : 1;
     },
     fenceExtraHint() {
@@ -919,6 +921,7 @@ export default {
         this.skillParamsLoading = false;
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
+        this.fenceRequired = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
         this.fenceDefaultRatio = null;
@@ -1067,6 +1070,7 @@ export default {
         this.form.skill_name = '';
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
+        this.fenceRequired = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
         this.fenceDefaultRatio = null;
@@ -1087,6 +1091,7 @@ export default {
         this.skillParamsLoading = false;
         this.skillNeedsFence = false;
         this.skillNeedsTripwire = false;
+        this.fenceRequired = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
         this.fenceDefaultRatio = null;
@@ -1132,14 +1137,21 @@ export default {
         // 画布上绘制的输入（电子围栏 ROI / Array<ROI> / 绊线 Tripwire）由"区域绘制"提供，
         // 不应出现在"技能参数"填写表里。
         const drawnKeys = this.collectDrawnParamKeys(detail);
+        const startParams = this.startNodeInputParams(detail) || [];
+        const metaByName = {};
+        startParams.forEach(p => {
+          if (p && p.name) metaByName[p.name] = p;
+        });
         const fields = [];
         Object.keys(params).forEach(key => {
           if (drawnKeys.has(key)) return;
           const val = params[key];
+          const meta = metaByName[key] || {};
           fields.push({
             key,
             default: val,
-            type: this.getSkillParamType(val)
+            type: this.getSkillParamType(val),
+            label: meta.display_name || key
           });
           if (!keepValues || this.form.skill_params[key] === undefined) {
             this.$set(this.form.skill_params, key, JSON.parse(JSON.stringify(val)));
@@ -1149,6 +1161,7 @@ export default {
         const roiInfo = this.computeRoiInfo(detail);
         this.skillNeedsFence = roiInfo.needsFence;
         this.fenceMultipleRoi = roiInfo.multiple;
+        this.fenceRequired = this.computeFenceRequired(detail);
         this.fenceBindableNodes = this.extractRoiBindableNodes(detail);
         this.fenceDefaultRatio = null;
         this.fenceNodeDefaultRatios = this.extractFenceNodeDefaultRatios(detail);
@@ -1166,13 +1179,13 @@ export default {
             } catch (ge) { /* ignore */ }
           }
         }
-        if (this.fenceBindableNodes.length >= 2) this.fenceMultipleRoi = true;
         this.skillNeedsTripwire = this.computeSkillNeedsTripwire(detail);
       } catch (e) {
         console.warn('加载技能参数失败', e);
         this.skillParamFields = [];
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
+        this.fenceRequired = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
         this.fenceDefaultRatio = null;
@@ -1216,9 +1229,10 @@ export default {
       });
       return keys;
     },
-    // 计算技能对电子围栏的需求：是否需要绘制、是否允许多个（Array<ROI>）。
-    // - 单个 ROI（type=ROI）：需要围栏，仅允许 1 个
-    // - Array<ROI>（type=Array, item_type=ROI）：需要围栏，允许多个
+    // 计算技能对电子围栏的需求：是否需要绘制、是否允许多个。
+    // - 单个 ROI（type=ROI）：需要围栏，固定 1 块
+    // - Array<ROI>（type=Array, item_type=ROI）：需要围栏，允许多块
+    // - 接到围栏的节点数不再放开数量（要多块请把开始节点改成 Array<ROI>）
     // - 非技能图（无法判断）：保持显示围栏且不限制数量
     computeRoiInfo(detail) {
       try {
@@ -1239,6 +1253,21 @@ export default {
         return { needsFence, multiple };
       } catch (e) {
         return { needsFence: true, multiple: true };
+      }
+    },
+    computeFenceRequired(detail) {
+      try {
+        const params = this.startNodeInputParams(detail);
+        if (params === null) return false;
+        return params.some(p => {
+          if (!p || !p.required) return false;
+          const type = String(p.type || '').toLowerCase();
+          const itemType = String(p.item_type || '').toLowerCase();
+          return type === 'roi' || type === 'tripwire'
+            || (type === 'array' && (itemType === 'roi' || itemType === 'tripwire'));
+        });
+      } catch (e) {
+        return false;
       }
     },
     graphJsonOf(detail) {
@@ -1841,6 +1870,13 @@ export default {
 .region-cam__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .region-cam__badge { font-size: 11px; color: #909399; background: #f0f2f5; padding: 1px 6px; border-radius: 8px; }
 .region-cam__badge.drawn { color: #67c23a; background: #f0f9eb; }
+.region-cam__badge.skip { color: #e6a23c; background: #fdf6ec; }
+.region-required-hint {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e6a23c;
+}
 .region-canvas { flex: 1; padding: 14px; display: flex; flex-direction: column; }
 .region-canvas--empty { align-items: center; justify-content: center; }
 .region-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }

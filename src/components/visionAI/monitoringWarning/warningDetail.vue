@@ -590,7 +590,7 @@
 </template>
 
 <script>
-import { alertAPI } from '@/components/service/VisionAIService.js'
+import { alertAPI, reviewRecordAPI } from '@/components/service/VisionAIService.js'
 
 export default {
   name: "WarningDetail",
@@ -855,6 +855,11 @@ export default {
         this.$message.error('预警信息不完整');
         return;
       }
+      const reviewId = this.reviewData && this.reviewData.reviewId;
+      if (!reviewId) {
+        this.$message.error('复判记录信息不完整');
+        return;
+      }
 
       try {
         await this.$confirm(
@@ -868,16 +873,20 @@ export default {
         );
 
         this.loading = true;
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await reviewRecordAPI.restoreReviewRecord(reviewId);
 
-        this.$emit('restore-review', { alert_id: this.detail.alert_id });
+        this.$emit('restore-review', {
+          review_id: reviewId,
+          alert_id: this.detail.alert_id
+        });
         this.$message.success('预警已成功还原到预警管理页面');
         this.closeDialog();
 
       } catch (error) {
         if (error !== 'cancel') {
           console.error('还原复判失败:', error);
-          this.$message.error('还原复判失败，请稍后重试');
+          const detail = error && error.response && error.response.data && error.response.data.detail;
+          this.$message.error(detail || '还原复判失败，请稍后重试');
         }
       } finally {
         this.loading = false;
@@ -1159,26 +1168,35 @@ export default {
           `预警详情页面归档 - 预警类型: ${this.detail.alert_type}`
         );
 
-        if (response.data && response.data.code === 0) {
+        const archiveResult = response.data && response.data.data;
+        if (response.data && response.data.code === 0 &&
+            archiveResult && archiveResult.failed_count === 0) {
           this.addOperationRecord({
             status: 'completed',
             statusText: '预警归档',
             time: this.getCurrentTime(),
             description: `预警已归档到：${archiveName}（${archiveLocation}），可在预警档案中查看`,
             operationType: 'archive',
-            operator: this.getCurrentUserName(),
+            operator: archiveResult.linked_by || this.getCurrentUserName(),
             archiveInfo: { archiveId: targetArchiveId, archiveName, location: archiveLocation }
           });
 
           this.detail.status = 4;
           this.$message.success('预警已成功归档');
-          this.$emit('handle-archive', { alert_id: this.detail.alert_id });
+          this.$emit('handle-archive', {
+            alert_id: this.detail.alert_id,
+            archive_id: targetArchiveId,
+            archive_name: archiveName,
+            action: 'archived'
+          });
           this.closeArchiveDialog();
         } else {
           this.$message.error((response.data && response.data.message) || '归档失败');
         }
       } catch (error) {
-        this.$message.error('归档失败: ' + (error.message || '未知错误'));
+        const serverMessage = error.response && error.response.data &&
+          (error.response.data.detail || error.response.data.message);
+        this.$message.error('归档失败: ' + (serverMessage || error.message || '未知错误'));
       } finally {
         this.loading = false;
       }
