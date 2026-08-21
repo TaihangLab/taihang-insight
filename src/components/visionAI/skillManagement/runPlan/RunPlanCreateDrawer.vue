@@ -169,7 +169,7 @@
           </div>
           <div v-else-if="!skillParamFields.length" class="skill-params-hint">该技能暂无可配置参数</div>
           <el-form v-else label-width="240px" size="small" :disabled="isView" class="skill-params-form">
-            <el-form-item v-for="p in skillParamFields" :key="p.key" :label="p.key" class="skill-param-row">
+            <el-form-item v-for="p in skillParamFields" :key="p.key" :label="p.label || p.key" class="skill-param-row">
               <template v-if="p.type === 'number'">
                 <el-input-number
                   v-model="form.skill_params[p.key]"
@@ -701,7 +701,7 @@ export default {
       skillParamsLoading: false,
       skillNeedsFence: true,
       skillNeedsTripwire: false,
-      // 技能输入声明为 Array<ROI> 时允许绘制多个电子围栏；单个 ROI 仅允许 1 个
+      // 仅 Array<ROI> 允许多块围栏；单个 ROI 固定 1 块，不因「用于节点」数量放开
       fenceMultipleRoi: true,
       fenceBindableNodes: [],
       fenceDefaultRatio: null,
@@ -811,7 +811,7 @@ export default {
       return '创建运行计划';
     },
     fenceMaxRegions() {
-      // 0 表示不限制（Array<ROI>）；单个 ROI 限制为 1
+      // 0 不限制（仅 Array<ROI>）；单个 ROI 固定 1
       return this.fenceMultipleRoi ? 0 : 1;
     },
     fenceExtraHint() {
@@ -1132,14 +1132,21 @@ export default {
         // 画布上绘制的输入（电子围栏 ROI / Array<ROI> / 绊线 Tripwire）由"区域绘制"提供，
         // 不应出现在"技能参数"填写表里。
         const drawnKeys = this.collectDrawnParamKeys(detail);
+        const startParams = this.startNodeInputParams(detail) || [];
+        const metaByName = {};
+        startParams.forEach(p => {
+          if (p && p.name) metaByName[p.name] = p;
+        });
         const fields = [];
         Object.keys(params).forEach(key => {
           if (drawnKeys.has(key)) return;
           const val = params[key];
+          const meta = metaByName[key] || {};
           fields.push({
             key,
             default: val,
-            type: this.getSkillParamType(val)
+            type: this.getSkillParamType(val),
+            label: meta.display_name || key
           });
           if (!keepValues || this.form.skill_params[key] === undefined) {
             this.$set(this.form.skill_params, key, JSON.parse(JSON.stringify(val)));
@@ -1166,7 +1173,6 @@ export default {
             } catch (ge) { /* ignore */ }
           }
         }
-        if (this.fenceBindableNodes.length >= 2) this.fenceMultipleRoi = true;
         this.skillNeedsTripwire = this.computeSkillNeedsTripwire(detail);
       } catch (e) {
         console.warn('加载技能参数失败', e);
@@ -1216,9 +1222,10 @@ export default {
       });
       return keys;
     },
-    // 计算技能对电子围栏的需求：是否需要绘制、是否允许多个（Array<ROI>）。
-    // - 单个 ROI（type=ROI）：需要围栏，仅允许 1 个
-    // - Array<ROI>（type=Array, item_type=ROI）：需要围栏，允许多个
+    // 计算技能对电子围栏的需求：是否需要绘制、是否允许多个。
+    // - 单个 ROI（type=ROI）：需要围栏，固定 1 块
+    // - Array<ROI>（type=Array, item_type=ROI）：需要围栏，允许多块
+    // - 接到围栏的节点数不再放开数量（要多块请把开始节点改成 Array<ROI>）
     // - 非技能图（无法判断）：保持显示围栏且不限制数量
     computeRoiInfo(detail) {
       try {

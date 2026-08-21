@@ -309,7 +309,7 @@ export default {
     // 技能声明的输入决定可绘制内容：声明 ROI → 多边形围栏；声明 Tripwire → 绊线
     allowPolygon: { type: Boolean, default: true },
     allowTripwire: { type: Boolean, default: false },
-    // 多边形电子围栏数量上限：0 表示不限制（如 Array<ROI>）；技能输入声明为单个 ROI 时为 1
+    // 多边形电子围栏数量上限：0 不限制（仅 Array<ROI>）；单个 ROI 为 1
     maxRegions: { type: Number, default: 0 },
     extraHint: { type: String, default: '' },
     bindableNodes: { type: Array, default: () => [] },

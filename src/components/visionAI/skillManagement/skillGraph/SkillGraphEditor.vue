@@ -139,7 +139,11 @@
 
             <!-- 通用：输入来源选择（除视觉模型/开始/结束外，其余有输入的节点统一在这里选） -->
             <template v-if="hasInputSelector && selectedType !== 'detection_model' && selectedType !== 'vlm_model' && selectedType !== 'custom_code' && selectedType !== 'video_slice' && selectedType !== 'size_filter' && selectedType !== 'intersection' && selectedType !== 'intersect' && selectedType !== 'displacement' && selectedType !== 'distance' && selectedType !== 'tripwire_tracking' && selectedType !== 'region_filter' && selectedType !== 'count' && selectedType !== 'small_image_batch' && selectedType !== 'target_matting' && selectedType !== 'sequence' && selectedType !== 'sop_compliance' && selectedType !== 'judge'">
-              <div class="sg-sec-title">输入</div>
+              <div class="sg-sec-title" style="display:flex;align-items:center;justify-content:space-between">
+                <span>输入</span>
+                <i v-if="selectedType === 'merge_detections' && canAddMergeInput"
+                   class="el-icon-plus sg-params-add" title="添加输入" @click="addMergeInput"></i>
+              </div>
               <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port"
                             :class="{ 'sg-roi-item': showFenceRatioBeside(sel.port) }"
                             :required="!sel.optional">
@@ -178,6 +182,25 @@
                       </div>
                     </el-popover>
               </el-form-item>
+              <div v-if="selectedType === 'merge_detections'" class="sg-tip">未接线的端口会忽略。默认两路，需要更多点右上角加号。</div>
+              <template v-if="selectedType === 'merge_detections'">
+                <div class="sg-sec-title">输出</div>
+                <div class="sg-io-list">
+                  <div class="sg-io-item">
+                    <span class="sg-io-dot" style="--c:#7c5cff"></span>检测目标
+                    <span class="sg-io-tag">det.</span>
+                  </div>
+                  <div class="sg-io-item">
+                    <span class="sg-io-dot" style="--c:#9254de"></span>检测目标(追踪)
+                    <span class="sg-io-tag">trk.</span>
+                  </div>
+                  <div class="sg-io-item">
+                    <span class="sg-io-dot" style="--c:#13c2c2"></span>数量值
+                    <span class="sg-io-tag">int.</span>
+                  </div>
+                </div>
+                <div class="sg-tip">合并后的目标列表。有 track_id 的会多一路追踪；数量和下接「计数」节点一样，一般不用这个口。</div>
+              </template>
             </template>
 
             <!-- 视觉模型 -->
@@ -1738,10 +1761,35 @@
                                 <el-option v-for="op in judgeOperatorsForType(c.param_type)" :key="op.v"
                                            :label="op.l" :value="op.v" />
                               </el-select>
-                              <el-input v-model="c.value" size="mini" placeholder="条件值"
-                                        :disabled="!c.operator || !judgeCondNeedsValue(c.operator)"
-                                        :class="{ 'is-invalid-input': judgeCondShowErr(c) && judgeCondValueMissing(c) }"
-                                        @input="applyConfig" />
+                              <div class="sg-vs-num-row sg-judge-value-row">
+                                <template v-if="judgeCondNeedsValue(c.operator)">
+                                  <div v-if="c.compare_field" class="sg-vlm-bind sg-judge-param-ref"
+                                       :class="{ 'is-invalid': judgeCondShowErr(c) && judgeCondValueMissing(c) }">
+                                    <i :class="judgeParamTypeIcon(c.param_type)"></i>
+                                    <span class="sg-vlm-bind-txt">{{ judgeCompareLabel(c) || '已引用参数' }}</span>
+                                    <i class="el-icon-circle-close sg-vlm-bind-clear"
+                                       @click.stop="clearJudgeCompare(gi, ci)"></i>
+                                  </div>
+                                  <el-input v-else v-model="c.value" size="mini" placeholder="条件值"
+                                            :class="{ 'is-invalid-input': judgeCondShowErr(c) && judgeCondValueMissing(c) }"
+                                            @input="onJudgeValueInput(gi, ci)" />
+                                  <el-popover v-model="c._comparePop" placement="bottom-start" trigger="click"
+                                              :width="300" popper-class="sg-param-pop">
+                                    <el-tree v-if="judgeParamTree.length" :data="judgeParamTree" node-key="id"
+                                             default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                                             :current-node-key="judgeCompareRef(c)"
+                                             @node-click="onJudgeComparePick(gi, ci, $event)">
+                                      <span slot-scope="{ data }" class="sg-tree-node">
+                                        <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                                        <span>{{ data.label }}</span>
+                                      </span>
+                                    </el-tree>
+                                    <div v-else class="sg-tree-empty">暂无数据</div>
+                                    <i slot="reference" class="el-icon-link sg-vs-link" title="引用上游参数"></i>
+                                  </el-popover>
+                                </template>
+                                <el-input v-else size="mini" placeholder="条件值" disabled />
+                              </div>
                               <el-button icon="el-icon-minus" size="mini" circle class="sg-judge-cond-del"
                                          @click="removeCond(gi, ci)" />
                             </div>
@@ -2533,6 +2581,7 @@ const PT_META = {
   Image: { label: '图片', color: '#2f7bff' },
   Video: { label: '视频', color: '#2f7bff' },
   Detection: { label: '目标', color: '#7c5cff' },
+  TrackDetection: { label: '追踪目标', color: '#9254de' },
   ROI: { label: '电子围栏', color: '#16b777' },
   Tripwire: { label: '绊线', color: '#fa8c16' },
   Number: { label: '数值', color: '#13c2c2' },
@@ -2559,7 +2608,8 @@ const PORT_LABELS = {
   iou_threshold: '交并比阈值下限', iou_method: '交并比计算方法', duration: '持续时间 (s)',
   target: '目标', count: '数量', passed: '判定', false: '未通过', raw: '当帧条件',
   value: '值', result: '结果',
-  detections: '检测目标', filter_target: '过滤目标', filtered_targets: '过滤目标标签',
+  detections: '检测目标', detections__tracked: '检测目标(追踪)',
+  filter_target: '过滤目标', filtered_targets: '过滤目标标签',
   matched: '配对目标',
   output: '输出', filtered: '过滤结果',
   video: '原视频', start_time: '开始时间（秒）', end_time: '结束时间（秒）', buffer: '前后缓冲区间（秒）',
@@ -2570,6 +2620,29 @@ const PORT_LABELS = {
   triggered: '事件触发', prev_count: '确认前数量', curr_count: '当前数量',
   person: '人员', a: '输入A', b: '输入B', c: '输入C', d: '输入D', e: '输入E',
   f: '输入F', g: '输入G', h: '输入H', i: '输入I', j: '输入J',
+}
+// 目标合并：后端预留 a~j，未接线忽略。界面默认只露出 A/B，其余可选、未接不展示。
+const MERGE_INPUT_PORTS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+const MERGE_DEFAULT_INPUT_PORTS = ['a', 'b']
+const MERGE_EXTRA_INPUT_PORTS = MERGE_INPUT_PORTS.filter(p => MERGE_DEFAULT_INPUT_PORTS.indexOf(p) < 0)
+
+function mergeShownExtraPorts(props) {
+  const shown = (props && props.config && props.config._shown_merge_ports) || []
+  return MERGE_EXTRA_INPUT_PORTS.filter(p => shown.indexOf(p) >= 0)
+}
+
+function mergeVisibleOutputCount(m) {
+  const bound = boundOutputPorts(m)
+  let n = 1
+  if (bound.has('detections__tracked')) n++
+  if (bound.has('count')) n++
+  return n
+}
+
+function mergeVisibleInputCount(props, boundSet) {
+  const bound = boundSet || new Set()
+  const extras = MERGE_EXTRA_INPUT_PORTS.filter(p => bound.has(p) || mergeShownExtraPorts(props).indexOf(p) >= 0)
+  return MERGE_DEFAULT_INPUT_PORTS.length + extras.length + (bound.has('gate') ? 1 : 0)
 }
 const GATE_HELP_TIP = '可选。不接则本节点每帧都会执行；接上游布尔值（如条件分支的「判定通过」）后，仅在为真时才执行。适合控制多模态大模型、姿态等耗时节点，避免无嫌疑时仍每帧调用。'
 const FENCE_RATIO_NODE_TIP = '指定给本节点的新围栏会预填这个占比：目标有多少面积落在围栏里才算进去。0=碰到就算，1=整框都要进去。每块围栏仍可再改。不填则用系统默认 1.0。'
@@ -2985,6 +3058,23 @@ function boundInputPorts(m) {
   Object.keys(refs).forEach(tp => { if (tp) bound.add(tp) })
   return bound
 }
+function boundOutputPorts(m) {
+  const bound = new Set()
+  const gm = m && m.graphModel
+  const nid = m && m.id
+  if (!gm || !gm.edges || !nid) return bound
+  gm.edges.forEach(e => {
+    if (e.sourceNodeId !== nid) return
+    if (e.properties && e.properties.paramBound === false) return
+    let sp = (e.properties && e.properties.sourcePort) || ''
+    if (!sp && e.sourceAnchorId) {
+      const idx = String(e.sourceAnchorId).indexOf('__out__')
+      if (idx >= 0) sp = String(e.sourceAnchorId).substring(idx + '__out__'.length)
+    }
+    if (sp) bound.add(sp)
+  })
+  return bound
+}
 function chipHtml(name, type, text, empty) {
   const meta = PT_META[type] || PT_META.Any
   const label = text != null ? text : portLabel(name, type)
@@ -3260,6 +3350,9 @@ function judgeCanvasCondText(cond, part, nodesById) {
   }
   // part === 'val'
   if (!c.field || !c.operator) return '未填写'
+  if (c.compare_field) {
+    return c.compare_label || String(c.compare_field).split('__').pop() || '已引用'
+  }
   if (c.value === '' || c.value == null) return '未填写'
   return String(c.value)
 }
@@ -3440,6 +3533,16 @@ class SGNodeModel extends HtmlNodeModel {
       this.height = 18 + 40
         + (12 + Math.ceil(inCount / 2) * 26)
         + (12 + 26)
+      return
+    }
+    if (p.nodeType === 'merge_detections') {
+      const inCount = mergeVisibleInputCount(p, boundInputPorts(this))
+      const outCount = mergeVisibleOutputCount(this)
+      const inLines = inCount ? Math.ceil(inCount / 2) : 0
+      const outLines = outCount ? Math.ceil(outCount / 2) : 0
+      this.height = 18 + 40
+        + (inCount ? (12 + inLines * 26) : 0)
+        + (outCount ? (12 + outLines * 26) : 0)
       return
     }
     const inCount = (p.inputPorts || []).length + (p.dynamic ? 1 : 0)
@@ -3816,11 +3919,25 @@ class SGNode extends HtmlNode {
       const genBoundIn = boundInputPorts(m)
       // 可选口未绑定时不在卡片上显示，避免看起来像必填
       const hideIfUnbound = new Set(['gate', 'regions'])
+      MERGE_EXTRA_INPUT_PORTS.forEach(n => hideIfUnbound.add(n))
+      const mergeShown = new Set(mergeShownExtraPorts(p))
       const ins = (p.inputPorts || [])
-        .filter(n => !hideIfUnbound.has(n) || genBoundIn.has(n))
+        .filter(n => !hideIfUnbound.has(n) || genBoundIn.has(n) || mergeShown.has(n))
         .map(n => chipHtml(n, types[n], null, !genBoundIn.has(n)))
       if (p.dynamic) ins.push('<span class="sgx-chip sgx-chip-dyn" style="--c:#909399"><span class="sgx-chip-dot"></span>动态输入</span>')
-      const outs = (p.outputPorts || []).map(n => chipHtml(n, types[n]))
+      let outs
+      if (p.nodeType === 'merge_detections') {
+        const boundOut = boundOutputPorts(m)
+        outs = [chipHtml('detections', 'Detection', '检测目标')]
+        if (boundOut.has('detections__tracked')) {
+          outs.push(chipHtml('detections__tracked', 'TrackDetection', '检测目标(追踪)'))
+        }
+        if (boundOut.has('count')) {
+          outs.push(chipHtml('count', 'Number', '数量值'))
+        }
+      } else {
+        outs = (p.outputPorts || []).map(n => chipHtml(n, types[n]))
+      }
       body = row('输入', ins) + row('输出', outs)
     }
 
@@ -3977,6 +4094,13 @@ export default {
     },
     inputSelectorsNoGate() {
       return (this.inputSelectors || []).filter(s => s.port !== 'gate')
+    },
+    canAddMergeInput() {
+      if (this.selectedType !== 'merge_detections') return false
+      const used = new Set(MERGE_DEFAULT_INPUT_PORTS)
+      ;(this.form._shown_merge_ports || []).forEach(p => used.add(p))
+      ;(this.inputSelectorsNoGate || []).forEach(s => used.add(s.port))
+      return MERGE_INPUT_PORTS.some(p => !used.has(p))
     },
     // 视觉模型「输出」区展开成扁平行（每个标签一行检测 + 可选一行追踪），
     // 单层 v-for 渲染，避免 <template v-for> 上挂 key（Vue2 不支持）
@@ -5010,6 +5134,12 @@ export default {
       const sizeFilterLabels = { detections: '过滤目标' }
       this.inputSelectors = (props.inputPorts || []).filter(p => {
         if (t === 'small_image_batch' && p === 'small_images') return false
+        if (t === 'merge_detections' && MERGE_EXTRA_INPUT_PORTS.indexOf(p) >= 0) {
+          if (bound[p]) return true
+          const shown = (this.form && this.form._shown_merge_ports)
+            || (props.config && props.config._shown_merge_ports) || []
+          return shown.indexOf(p) >= 0
+        }
         return true
       }).map(p => {
         const type = types[p] || ''
@@ -5027,14 +5157,32 @@ export default {
             || PORT_LABELS[p] || p,
           type,
           // 可选口：不接按默认行为（gate=始终执行，ROI=不过滤，
-          // regions=运动节点改用电子围栏做光流）
-          optional: type === 'ROI' || p === 'gate' || p === 'regions',
+          // regions=运动节点改用电子围栏做光流；目标合并 C~J 未接忽略）
+          optional: type === 'ROI' || p === 'gate' || p === 'regions'
+            || (t === 'merge_detections' && MERGE_EXTRA_INPUT_PORTS.indexOf(p) >= 0),
           value,
           groups,
           treeData: this.groupsToTree(groups),
           popOpen: false
         }
       })
+    },
+    addMergeInput() {
+      if (this.selectedType !== 'merge_detections' || !this.selectedNode) return
+      const used = new Set(MERGE_DEFAULT_INPUT_PORTS)
+      ;(this.form._shown_merge_ports || []).forEach(p => used.add(p))
+      ;(this.inputSelectorsNoGate || []).forEach(s => used.add(s.port))
+      const next = MERGE_INPUT_PORTS.find(p => !used.has(p))
+      if (!next) {
+        this.$message.info('最多合并 10 路')
+        return
+      }
+      const shown = (this.form._shown_merge_ports || []).slice()
+      shown.push(next)
+      this.$set(this.form, '_shown_merge_ports', shown)
+      this.applyConfig()
+      this.refreshInputBindings(this.selectedNode.id)
+      this.refreshNodeInputChips(this.selectedNode.id)
     },
     // 连线增删后强制目标节点重渲染：使输入芯片的"已配置/未配置"灰色态即时生效
     refreshNodeInputChips(nodeId) {
@@ -5887,9 +6035,19 @@ export default {
               param_type: paramType,
               param_ref: paramRef,
               param_label: c.param_label || '',
-              _paramPop: false
+              compare_field: c.compare_field || '',
+              compare_label: c.compare_label || '',
+              compare_ref: c.compare_ref || '',
+              _paramPop: false,
+              _comparePop: false
             }
             if (!cond.param_label) cond.param_label = this.judgeCondParamLabel(cond)
+            if (cond.compare_field && !cond.compare_ref) {
+              cond.compare_ref = this.judgeFieldToParamRef(cond.compare_field)
+            }
+            if (cond.compare_field && !cond.compare_label) {
+              cond.compare_label = this.judgeParamLabel(cond.compare_ref) || cond.compare_field
+            }
             return cond
           })
         }))
@@ -5987,6 +6145,8 @@ export default {
             })
           }
         }
+      } else if (this.selectedType === 'merge_detections') {
+        f._shown_merge_ports = Array.isArray(cfg._shown_merge_ports) ? cfg._shown_merge_ports.slice() : []
       }
       if (this.nodeSupportsFenceDefaultType(this.selectedType)) {
         f.fence_default_ratio = (cfg.fence_default_ratio != null && cfg.fence_default_ratio !== '')
@@ -6416,7 +6576,11 @@ export default {
       this.applyConfig()
     },
     emptyJudgeCond() {
-      return { field: '', operator: '', value: '', param_type: '', param_ref: '', param_label: '', _paramPop: false }
+      return {
+        field: '', operator: '', value: '', param_type: '', param_ref: '', param_label: '',
+        compare_field: '', compare_label: '', compare_ref: '',
+        _paramPop: false, _comparePop: false
+      }
     },
     judgeAllSourceGroups() {
       if (!this.selectedNode) return []
@@ -6514,11 +6678,12 @@ export default {
       return operator && operator !== 'is_empty' && operator !== 'is_not_empty'
     },
     judgeCondValueMissing(c) {
+      if (c && c.compare_field) return false
       return this.judgeCondNeedsValue(c.operator) && (c.value === '' || c.value == null)
     },
     judgeCondComplete(c) {
       if (!c || !this.judgeCondHasParam(c) || !c.field || !c.operator) return false
-      if (this.judgeCondNeedsValue(c.operator) && (c.value === '' || c.value == null)) return false
+      if (this.judgeCondNeedsValue(c.operator) && this.judgeCondValueMissing(c)) return false
       return true
     },
     judgeCondShowErr(c) {
@@ -6560,13 +6725,74 @@ export default {
       c.param_label = ''
       c.operator = ''
       c.value = ''
+      c.compare_field = ''
+      c.compare_label = ''
+      c.compare_ref = ''
       c._paramPop = false
+      c._comparePop = false
+      this.judgeConfigTouched = true
+      this.applyConfig()
+    },
+    judgeCompareRef(c) {
+      if (!c) return ''
+      return c.compare_ref || this.judgeFieldToParamRef(c.compare_field || '')
+    },
+    judgeCompareLabel(c) {
+      if (!c) return ''
+      if (c.compare_label && String(c.compare_label).trim()) return c.compare_label
+      const ref = this.judgeCompareRef(c)
+      if (ref) {
+        const label = this.judgeParamLabel(ref)
+        if (label) return label
+      }
+      if (c.compare_field) {
+        const port = String(c.compare_field).split('__').pop()
+        if (port === 'count') return '数量值'
+        return PORT_LABELS[port] || port
+      }
+      return ''
+    },
+    onJudgeComparePick(gi, ci, data) {
+      if (!data || !data.leaf) return
+      const c = this.form.groups[gi].conditions[ci]
+      const idx = data.id.indexOf('::')
+      const srcId = idx >= 0 ? data.id.substring(0, idx) : data.id
+      const port = idx >= 0 ? data.id.substring(idx + 2) : ''
+      c.compare_ref = data.id
+      c.compare_field = port ? `${srcId}__${port}` : srcId
+      c.compare_label = this.judgeParamLabel(data.id)
+      c.value = ''
+      c._comparePop = false
+      this.judgeConfigTouched = true
+      this.applyConfig()
+    },
+    clearJudgeCompare(gi, ci) {
+      const c = this.form.groups[gi].conditions[ci]
+      c.compare_field = ''
+      c.compare_label = ''
+      c.compare_ref = ''
+      c._comparePop = false
+      this.judgeConfigTouched = true
+      this.applyConfig()
+    },
+    onJudgeValueInput(gi, ci) {
+      const c = this.form.groups[gi].conditions[ci]
+      if (c.compare_field) {
+        c.compare_field = ''
+        c.compare_label = ''
+        c.compare_ref = ''
+      }
       this.judgeConfigTouched = true
       this.applyConfig()
     },
     onJudgeOperatorChange(gi, ci) {
       const c = this.form.groups[gi].conditions[ci]
-      if (!this.judgeCondNeedsValue(c.operator)) c.value = ''
+      if (!this.judgeCondNeedsValue(c.operator)) {
+        c.value = ''
+        c.compare_field = ''
+        c.compare_label = ''
+        c.compare_ref = ''
+      }
       this.judgeConfigTouched = true
       this.applyConfig()
     },
@@ -6795,14 +7021,21 @@ export default {
         }
         cfg.conditions = {
           condition_groups: (this.form.groups || []).map(g => ({
-            conditions: (g.conditions || []).map(c => ({
-              field: c.field || '',
-              operator: c.operator || '',
-              value: c.value,
-              param_type: c.param_type || '',
-              param_ref: this.judgeCondParamRef(c),
-              param_label: c.param_label || this.judgeCondParamLabel(c) || ''
-            })),
+            conditions: (g.conditions || []).map(c => {
+              const item = {
+                field: c.field || '',
+                operator: c.operator || '',
+                value: c.value,
+                param_type: c.param_type || '',
+                param_ref: this.judgeCondParamRef(c),
+                param_label: c.param_label || this.judgeCondParamLabel(c) || ''
+              }
+              if (c.compare_field) {
+                item.compare_field = c.compare_field
+                if (c.compare_label) item.compare_label = c.compare_label
+              }
+              return item
+            }),
             relation: g.relation || 'all'
           })),
           global_relation: this.form.global_relation || 'or',
@@ -6933,6 +7166,9 @@ export default {
           cfg.confidence_threshold = classes.length ? Math.min.apply(null, Object.values(th)) : 0.5
           cfg.class_labels = classLabels
         }
+      } else if (t === 'merge_detections') {
+        const shown = (this.form._shown_merge_ports || []).filter(p => MERGE_EXTRA_INPUT_PORTS.indexOf(p) >= 0)
+        if (shown.length) cfg._shown_merge_ports = shown
       }
       const props = this.selectedNode.properties || {}
       // 视觉模型：输出端口随选中的标签动态生成（每个标签一个 Detection 输出）
@@ -7031,7 +7267,7 @@ export default {
       // 保留隐式参数引用（如区域过滤的"尺寸参照图片"）：applyConfig 会重建 cfg，需带回
       const prevCfg = props.config && typeof props.config === 'object' ? props.config : {}
       Object.keys(prevCfg).forEach(k => {
-        if (k === '_input_refs' || k === 'fence_default_ratio') return
+        if (k === '_input_refs' || k === 'fence_default_ratio' || k === '_shown_merge_ports') return
         if (cfg[k] === undefined) cfg[k] = prevCfg[k]
       })
       if (this.nodeSupportsFenceDefaultType(t)) {
@@ -8464,6 +8700,9 @@ export default {
   gap: 6px; align-items: center;
 }
 .sg-judge-cond-fields >>> .el-input__inner { font-size: 12px; }
+.sg-judge-value-row { min-width: 0; }
+.sg-judge-value-row .sg-vlm-bind,
+.sg-judge-value-row .el-input { flex: 1; min-width: 0; }
 .sg-judge-cond-del { padding: 5px; flex: none; }
 .sg-judge-cond-err { color: #f5566c; font-size: 12px; line-height: 1.4; margin-top: 2px; padding-left: 2px; }
 .sg-judge-global-err { color: #f5566c; font-size: 12px; margin: 8px 0; }
