@@ -974,7 +974,14 @@ export default {
       );
     },
 
-    buildAlertImageExportBody() {
+    selectedAlertIds() {
+      return this.selectedWarnings.map(id => {
+        const warning = this.warningList.find(item => item.id === id)
+        return warning && warning._apiData ? warning._apiData.alert_id : parseInt(id, 10)
+      }).filter(id => !isNaN(id))
+    },
+
+    buildCurrentFilterBody() {
       const statusMap = {
         pending: '待处理',
         processing: '处理中',
@@ -982,34 +989,35 @@ export default {
         archived: '已归档',
         false_alarm: '误报'
       }
+      const body = {}
+      const skillClassId = this.parseSelectedSkillClassId()
+      if (skillClassId != null) {
+        body.skill_class_id = skillClassId
+      } else if (this.searchForm.warningSkill) {
+        body.alert_type = this.searchForm.warningSkill
+      }
+      if (this.searchForm.warningLevel) {
+        const levelMap = { level1: 1, level2: 2, level3: 3, level4: 4 }
+        body.alert_level = levelMap[this.searchForm.warningLevel]
+      }
+      if (this.searchForm.warningName) body.alert_name = this.searchForm.warningName
+      if (this.searchForm.warningId) body.alert_id = parseInt(this.searchForm.warningId, 10)
+      if (this.searchForm.location) body.location = this.searchForm.location
+      if (this.searchForm.status) body.status = statusMap[this.searchForm.status] || this.searchForm.status
+      if (this.searchForm.startDate) body.start_date = this.searchForm.startDate
+      if (this.searchForm.endDate) body.end_date = this.searchForm.endDate
+      if (this.searchForm.warningType) body.alert_type = this.searchForm.warningType
+      return body
+    },
+
+    buildAlertImageExportBody() {
       const body = {
         image_type: this.exportImageType
       }
-
       if (this.selectAllFiltered) {
-        const skillClassId = this.parseSelectedSkillClassId()
-        if (skillClassId != null) {
-          body.skill_class_id = skillClassId
-        } else if (this.searchForm.warningSkill) {
-          body.alert_type = this.searchForm.warningSkill
-        }
-        if (this.searchForm.warningLevel) {
-          const levelMap = { level1: 1, level2: 2, level3: 3, level4: 4 }
-          body.alert_level = levelMap[this.searchForm.warningLevel]
-        }
-        if (this.searchForm.warningName) body.alert_name = this.searchForm.warningName
-        if (this.searchForm.warningId) body.alert_id = parseInt(this.searchForm.warningId, 10)
-        if (this.searchForm.location) body.location = this.searchForm.location
-        if (this.searchForm.status) body.status = statusMap[this.searchForm.status] || this.searchForm.status
-        if (this.searchForm.startDate) body.start_date = this.searchForm.startDate
-        if (this.searchForm.endDate) body.end_date = this.searchForm.endDate
-        if (this.searchForm.warningType) body.alert_type = this.searchForm.warningType
+        Object.assign(body, this.buildCurrentFilterBody())
       } else {
-        const apiAlertIds = this.selectedWarnings.map(id => {
-          const warning = this.warningList.find(item => item.id === id)
-          return warning && warning._apiData ? warning._apiData.alert_id : parseInt(id, 10)
-        }).filter(id => !isNaN(id))
-        body.alert_ids = apiAlertIds
+        body.alert_ids = this.selectedAlertIds()
       }
       return body
     },
@@ -2111,7 +2119,7 @@ export default {
     
     // 显示删除确认对话框
     showDeleteDialog() {
-      if (this.selectedWarnings.length === 0) {
+      if (!this.selectAllFiltered && this.selectedWarnings.length === 0) {
         this.$message.warning('请先选择要删除的预警项')
         return
       }
@@ -2120,43 +2128,51 @@ export default {
     
     // 确认删除选中的预警
     async confirmDelete() {
-      if (this.selectedWarnings.length === 0) {
+      if (!this.selectAllFiltered && this.selectedWarnings.length === 0) {
         this.$message.warning('请先选择要删除的预警项')
         return
       }
-      
+
+      let body
+      if (this.selectAllFiltered) {
+        body = this.buildCurrentFilterBody()
+        if (body.skill_class_id == null && !body.alert_type) {
+          this.$message.warning('请先筛选预警技能后再全选删除')
+          return
+        }
+      } else {
+        const apiAlertIds = this.selectedAlertIds()
+        if (!apiAlertIds.length) {
+          this.$message.warning('未解析到有效的预警ID')
+          return
+        }
+        body = { alert_ids: apiAlertIds }
+      }
+
       try {
         this.deleteLoading = true
-        
-        // 将页面ID转换为数字类型的API ID
-        const apiAlertIds = this.selectedWarnings.map(id => {
-          const warning = this.warningList.find(item => item.id === id)
-          return warning && warning._apiData ? warning._apiData.alert_id : parseInt(id)
-        }).filter(id => !isNaN(id))
+        console.log('批量删除预警:', body)
 
-        console.log('批量删除预警:', apiAlertIds)
+        const response = await alertAPI.batchDeleteAlerts(body)
 
-        // 调用API进行批量删除
-        const response = await alertAPI.batchDeleteAlerts(apiAlertIds)
-        
         if (response.data && response.data.code === 0) {
-          // API调用成功，从预警列表中移除选中的项
-          this.warningList = this.warningList.filter(item => 
-            !this.selectedWarnings.includes(item.id)
-          )
-          
-          this.$message.success(`已成功删除 ${this.selectedWarnings.length} 项预警`)
+          const deleted = (response.data.data && response.data.data.deleted_count)
+            || this.exportSelectedCount
+          this.$message.success(`已成功删除 ${deleted} 项预警`)
+          this.selectedWarnings = []
+          this.selectAllFiltered = false
+          this.closeDeleteDialog()
+          this.currentPage = 1
+          await this.getWarningList()
+          this.loadFilterOptions()
         } else {
           console.error('删除预警API失败:', response.data)
           this.$message.error('删除失败：' + (response.data && response.data.msg || '服务器错误'))
         }
-        
-        // 清空选择
-        this.selectedWarnings = []
-        this.closeDeleteDialog()
       } catch (error) {
         console.error('删除失败:', error)
-        this.$message.error('删除失败：' + (error.message || '网络错误'))
+        const detail = error.response && error.response.data && error.response.data.detail
+        this.$message.error('删除失败：' + (detail || error.message || '网络错误'))
       } finally {
         this.deleteLoading = false
       }
@@ -2364,7 +2380,7 @@ export default {
             <el-button 
               size="small" 
               icon="el-icon-delete"
-              :disabled="selectAllFiltered || selectedWarnings.length === 0"
+              :disabled="exportSelectedCount === 0"
               @click="showDeleteDialog"
             >删除</el-button>
           </div>
@@ -2850,8 +2866,8 @@ export default {
           <i class="el-icon-warning-outline" style="color: #f56c6c; font-size: 36px;"></i>
         </div>
         <div class="delete-text">
-          <p class="delete-title">确定要删除选中的预警吗？</p>
-          <p class="delete-desc">您已选择 <strong>{{ selectedWarnings.length }}</strong> 项预警，删除后将无法恢复</p>
+          <p class="delete-title">{{ selectAllFiltered ? '确定要删除当前筛选结果中的全部预警吗？' : '确定要删除选中的预警吗？' }}</p>
+          <p class="delete-desc">您已选择 <strong>{{ exportSelectedCount }}</strong> 项预警，删除后将无法恢复</p>
           <div class="delete-tip">
             <i class="el-icon-info" style="color: #e6a23c; margin-right: 4px;"></i>
             <span style="color: #e6a23c; font-size: 13px;">此操作不可逆，请谨慎操作</span>
@@ -2951,6 +2967,15 @@ export default {
   font-weight: 500;
   transition: all 0.3s ease;
   border-radius: 6px;
+}
+
+.filter-buttons .el-button.is-disabled,
+.filter-buttons .el-button.is-disabled:hover {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f7fa;
+  border-color: #e4e7ed;
+  color: #c0c4cc;
 }
 
 .filter-buttons .el-button:hover {
