@@ -396,19 +396,19 @@ export const modelAPI = {
     }).then(response => {
       // 处理导入模型接口的响应
       const originalData = response.data;
-      
+
       // 如果已经是期望的格式，直接返回
       if (originalData && originalData.code !== undefined) {
         return response;
       }
-      
+
       // 转换为前端期望的格式
       const transformedData = {
         code: originalData.success ? 0 : -1,
         msg: originalData.message || (originalData.success ? '导入成功' : '导入失败'),
         data: originalData.data || originalData
       };
-      
+
       response.data = transformedData;
       console.log('导入模型响应:', response.data);
       return response;
@@ -423,19 +423,19 @@ export const modelAPI = {
     return visionAIAxios.get('/api/v1/models/platforms')
       .then(response => {
         const originalData = response.data;
-        
+
         // 如果已经是期望的格式，直接返回
         if (originalData && originalData.code !== undefined) {
           return response;
         }
-        
+
         // 转换为前端期望的格式
         const transformedData = {
           code: 0,
           msg: 'success',
           data: originalData.data || originalData
         };
-        
+
         response.data = transformedData;
         return response;
       })
@@ -882,7 +882,7 @@ export const skillAPI = {
     // 创建FormData对象
     const formData = new FormData();
     formData.append('main_file', mainFile);
-    
+
     // 添加依赖文件
     if (dependencyFiles && dependencyFiles.length > 0) {
       dependencyFiles.forEach(file => {
@@ -3656,7 +3656,7 @@ export const reviewRecordAPI = {
     return visionAIAxios.get('/api/v1/review-records/statistics/reviewers', {
       params: { limit },
     });
-  },
+  }
 };
 
 /**
