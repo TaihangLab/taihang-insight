@@ -592,7 +592,7 @@
 </template>
 
 <script>
-import { alertAPI } from '@/components/service/VisionAIService.js'
+import { alertAPI, reviewRecordAPI } from '@/components/service/VisionAIService.js'
 
 export default {
   name: "WarningDetail",
@@ -857,6 +857,11 @@ export default {
         this.$message.error('预警信息不完整');
         return;
       }
+      const reviewId = this.reviewData && this.reviewData.reviewId;
+      if (!reviewId) {
+        this.$message.error('复判记录信息不完整');
+        return;
+      }
 
       try {
         await this.$confirm(
@@ -870,16 +875,20 @@ export default {
         );
 
         this.loading = true;
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await reviewRecordAPI.restoreReviewRecord(reviewId);
 
-        this.$emit('restore-review', { alert_id: this.detail.alert_id });
+        this.$emit('restore-review', {
+          review_id: reviewId,
+          alert_id: this.detail.alert_id
+        });
         this.$message.success('预警已成功还原到预警管理页面');
         this.closeDialog();
 
       } catch (error) {
         if (error !== 'cancel') {
           console.error('还原复判失败:', error);
-          this.$message.error('还原复判失败，请稍后重试');
+          const detail = error && error.response && error.response.data && error.response.data.detail;
+          this.$message.error(detail || '还原复判失败，请稍后重试');
         }
       } finally {
         this.loading = false;

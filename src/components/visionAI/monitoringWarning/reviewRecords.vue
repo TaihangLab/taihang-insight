@@ -817,6 +817,7 @@ export default {
       }
       this.currentAlertId = item.alertId
       this.currentReviewData = {
+        reviewId: item.id,
         reviewType: item.reviewType,
         reviewTypeText: this.getReviewTypeText(item.reviewType),
         reviewResult: item.reviewResult,
@@ -889,44 +890,21 @@ export default {
     
     // 处理还原复判事件
     async handleRestoreReview(restoredWarning) {
-      try {
-        console.log('还原复判的预警数据:', restoredWarning)
-        
-        // 这里应该调用API将预警数据存入预警管理页面
-        // 实际项目中需要调用后端API
-        // await this.$http.post('/api/warnings/restore', restoredWarning)
-        
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
-        // 从复判记录列表中移除该项（因为已经还原了）
-        this.reviewList = this.reviewList.filter(item => item.id !== restoredWarning.id)
-        
-        // 如果当前页没有数据了，回到上一页
-        if (this.currentPageData.length === 0 && this.pagination.currentPage > 1) {
-          this.pagination.currentPage--
-        }
-        
-        // 清除选中状态
-        this.selectedRecords = this.selectedRecords.filter(id => id !== restoredWarning.id)
-        
-        this.$message.success(`预警"${restoredWarning.type}"已成功还原到预警管理页面`)
-        
-        // 可以通过事件总线或者其他方式通知预警管理页面更新数据
-        // 这里使用localStorage来模拟跨页面通信
-        const restoredWarnings = JSON.parse(localStorage.getItem('restoredWarnings') || '[]')
-        restoredWarnings.push({
-          ...restoredWarning,
-          restoredAt: new Date().toISOString(),
-          restoredFrom: 'reviewRecords'
-        })
-        localStorage.setItem('restoredWarnings', JSON.stringify(restoredWarnings))
-        
-        
-      } catch (error) {
-        console.error('还原复判失败:', error)
-        this.$message.error('还原复判失败，请稍后重试')
+      const reviewId = restoredWarning && String(restoredWarning.review_id)
+      if (!reviewId) return
+
+      this.reviewList = this.reviewList.filter(item => item.id !== reviewId)
+      this.selectedRecords = this.selectedRecords.filter(id => id !== reviewId)
+      this.pagination.total = Math.max(0, this.pagination.total - 1)
+
+      if (this.currentPageData.length === 0 && this.pagination.currentPage > 1) {
+        this.pagination.currentPage--
       }
+
+      await Promise.all([
+        this.getReviewList(),
+        this.fetchDashboardStats()
+      ])
     },
     
     // 获取复判类型文本
@@ -2568,4 +2546,4 @@ export default {
 .dl-progress-meta { margin-top: 12px; font-size: 13px; color: #606266; }
 .dl-progress-error { margin-top: 10px; font-size: 13px; color: #f56c6c; line-height: 1.5; word-break: break-all; }
 .dl-progress-tip { font-size: 12px; color: #909399; }
-</style> 
+</style>
