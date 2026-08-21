@@ -36,6 +36,8 @@ export default {
       searchForm: {
         startDate: '',
         endDate: '',
+        reviewStartDate: '',
+        reviewEndDate: '',
         reviewType: '',
         reviewResult: 'false_alarm',
         warningSkill: '',
@@ -48,6 +50,8 @@ export default {
       activeSearchForm: {
         startDate: '',
         endDate: '',
+        reviewStartDate: '',
+        reviewEndDate: '',
         reviewType: '',
         reviewResult: 'false_alarm',
         warningSkill: '',
@@ -294,6 +298,8 @@ export default {
           review_result: this.activeSearchForm.reviewResult || undefined,
           start_date: this.activeSearchForm.startDate || undefined,
           end_date: this.activeSearchForm.endDate || undefined,
+          review_start_date: this.activeSearchForm.reviewStartDate || undefined,
+          review_end_date: this.activeSearchForm.reviewEndDate || undefined,
           alert_name: this.activeSearchForm.warningName || undefined,
           camera_name: this.activeSearchForm.warningLocation || undefined
         }
@@ -314,8 +320,8 @@ export default {
               rawImage: record.raw_image_url || '',
               cameraName: record.camera_name || '未知摄像头',
               location: record.location || '未知位置',
-              startTime: record.created_at || '',
-              startTimeRaw: record.created_at || '',
+              alertTime: record.alert_time || '',
+              reviewTime: record.created_at || '',
               duration: '2秒',
               reviewType: record.review_type,
               reviewResult: record.review_result || 'false_alarm',
@@ -370,7 +376,7 @@ export default {
     },
     
     async resetSearch() {
-      const empty = { startDate: '', endDate: '', reviewType: '', reviewResult: this.activeResultTab, warningSkill: '', warningLocation: '', warningName: '', warningId: '' }
+      const empty = { startDate: '', endDate: '', reviewStartDate: '', reviewEndDate: '', reviewType: '', reviewResult: this.activeResultTab, warningSkill: '', warningLocation: '', warningName: '', warningId: '' }
       this.searchForm = { ...empty }
       this.activeSearchForm = { ...empty }
       this.pagination.currentPage = 1
@@ -428,7 +434,8 @@ export default {
             AI技能: item.skillNameZh || '-',
             违规位置: item.cameraName,
             预警位置: item.location,
-            开始时间: item.startTime,
+            预警时间: item.alertTime,
+            复判时间: item.reviewTime,
             复判类型: this.getReviewTypeText(item.reviewType),
             复判结论: item.reviewResultDisplay,
             复判意见: item.reviewNotes || '-'
@@ -1233,6 +1240,25 @@ export default {
         
         <div class="search-row">
           <div class="search-item">
+            <label>复判日期：</label>
+            <el-date-picker
+              v-model="searchForm.reviewStartDate"
+              type="date"
+              placeholder="开始日期"
+              size="small"
+              value-format="yyyy-MM-dd"
+            />
+            <span class="date-separator">-</span>
+            <el-date-picker
+              v-model="searchForm.reviewEndDate"
+              type="date"
+              placeholder="结束日期"
+              size="small"
+              value-format="yyyy-MM-dd"
+            />
+          </div>
+
+          <div class="search-item">
             <label>预警名称：</label>
             <el-input
               v-model="searchForm.warningName"
@@ -1351,8 +1377,15 @@ export default {
                   <span class="label">复判意见：</span>
                   <span class="value notes-text">{{ truncateText(item.reviewNotes, 30) }}</span>
                 </div>
-                <div class="info-item time-item">
-                  <span class="time">{{ formatTimeDisplay(item.startTime) }}</span>
+                <div class="time-section">
+                  <div class="info-item time-item">
+                    <span class="label">预警时间：</span>
+                    <span class="time">{{ item.alertTime ? formatTimeDisplay(item.alertTime) : '-' }}</span>
+                  </div>
+                  <div class="info-item time-item">
+                    <span class="label">复判时间：</span>
+                    <span class="time">{{ formatTimeDisplay(item.reviewTime) }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2001,10 +2034,13 @@ export default {
   text-align: left;
 }
 
-.time-item {
+.time-section {
   margin-top: 6px;
   padding-top: 8px;
   border-top: 1px solid #f2f3f5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .time-item .time {
@@ -2012,6 +2048,7 @@ export default {
   color: #909399;
   font-weight: 400;
   line-height: 1.4;
+  flex: 1;
 }
 
 /* 分页区域 */
