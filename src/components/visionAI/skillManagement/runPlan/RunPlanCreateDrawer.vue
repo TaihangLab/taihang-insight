@@ -210,6 +210,7 @@
               <el-switch v-model="form.show_outside_fence" :disabled="isView"></el-switch>
             </span>
           </div>
+          <div v-if="fenceRequired" class="region-required-hint">该技能把电子围栏设为必填：未绘制的点位不会启动任务。</div>
           <div class="region-draw">
             <div class="region-list">
               <div
@@ -220,8 +221,8 @@
                 @click="currentFenceCam = c">
                 <i class="el-icon-video-camera"></i>
                 <span class="region-cam__name">{{ c.camera_name }}</span>
-                <span class="region-cam__badge" :class="fenceDrawn(c) ? 'drawn' : ''">
-                  {{ fenceDrawn(c) ? '已绘制' : '未绘制' }}
+                <span class="region-cam__badge" :class="fenceDrawn(c) ? 'drawn' : (fenceRequired ? 'skip' : '')">
+                  {{ fenceDrawn(c) ? '已绘制' : (fenceRequired ? '未绘制·不启动' : '未绘制') }}
                 </span>
               </div>
               <div v-if="!form.cameras.length" class="empty-tip-sm">请先选择点位</div>
@@ -701,6 +702,7 @@ export default {
       skillParamsLoading: false,
       skillNeedsFence: true,
       skillNeedsTripwire: false,
+      fenceRequired: false,
       // 仅 Array<ROI> 允许多块围栏；单个 ROI 固定 1 块，不因「用于节点」数量放开
       fenceMultipleRoi: true,
       fenceBindableNodes: [],
@@ -919,6 +921,7 @@ export default {
         this.skillParamsLoading = false;
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
+        this.fenceRequired = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
         this.fenceDefaultRatio = null;
@@ -1067,6 +1070,7 @@ export default {
         this.form.skill_name = '';
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
+        this.fenceRequired = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
         this.fenceDefaultRatio = null;
@@ -1087,6 +1091,7 @@ export default {
         this.skillParamsLoading = false;
         this.skillNeedsFence = false;
         this.skillNeedsTripwire = false;
+        this.fenceRequired = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
         this.fenceDefaultRatio = null;
@@ -1156,6 +1161,7 @@ export default {
         const roiInfo = this.computeRoiInfo(detail);
         this.skillNeedsFence = roiInfo.needsFence;
         this.fenceMultipleRoi = roiInfo.multiple;
+        this.fenceRequired = this.computeFenceRequired(detail);
         this.fenceBindableNodes = this.extractRoiBindableNodes(detail);
         this.fenceDefaultRatio = null;
         this.fenceNodeDefaultRatios = this.extractFenceNodeDefaultRatios(detail);
@@ -1179,6 +1185,7 @@ export default {
         this.skillParamFields = [];
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
+        this.fenceRequired = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
         this.fenceDefaultRatio = null;
@@ -1246,6 +1253,21 @@ export default {
         return { needsFence, multiple };
       } catch (e) {
         return { needsFence: true, multiple: true };
+      }
+    },
+    computeFenceRequired(detail) {
+      try {
+        const params = this.startNodeInputParams(detail);
+        if (params === null) return false;
+        return params.some(p => {
+          if (!p || !p.required) return false;
+          const type = String(p.type || '').toLowerCase();
+          const itemType = String(p.item_type || '').toLowerCase();
+          return type === 'roi' || type === 'tripwire'
+            || (type === 'array' && (itemType === 'roi' || itemType === 'tripwire'));
+        });
+      } catch (e) {
+        return false;
       }
     },
     graphJsonOf(detail) {
@@ -1848,6 +1870,13 @@ export default {
 .region-cam__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .region-cam__badge { font-size: 11px; color: #909399; background: #f0f2f5; padding: 1px 6px; border-radius: 8px; }
 .region-cam__badge.drawn { color: #67c23a; background: #f0f9eb; }
+.region-cam__badge.skip { color: #e6a23c; background: #fdf6ec; }
+.region-required-hint {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e6a23c;
+}
 .region-canvas { flex: 1; padding: 14px; display: flex; flex-direction: column; }
 .region-canvas--empty { align-items: center; justify-content: center; }
 .region-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
