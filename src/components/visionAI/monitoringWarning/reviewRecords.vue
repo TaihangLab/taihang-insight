@@ -314,8 +314,8 @@ export default {
               rawImage: record.raw_image_url || '',
               cameraName: record.camera_name || '未知摄像头',
               location: record.location || '未知位置',
-              startTime: record.created_at || '',
-              startTimeRaw: record.created_at || '',
+              alertTime: record.alert_time || '',
+              reviewTime: record.created_at || '',
               duration: '2秒',
               reviewType: record.review_type,
               reviewResult: record.review_result || 'false_alarm',
@@ -428,7 +428,8 @@ export default {
             AI技能: item.skillNameZh || '-',
             违规位置: item.cameraName,
             预警位置: item.location,
-            开始时间: item.startTime,
+            预警时间: item.alertTime,
+            复判时间: item.reviewTime,
             复判类型: this.getReviewTypeText(item.reviewType),
             复判结论: item.reviewResultDisplay,
             复判意见: item.reviewNotes || '-'
@@ -1351,8 +1352,15 @@ export default {
                   <span class="label">复判意见：</span>
                   <span class="value notes-text">{{ truncateText(item.reviewNotes, 30) }}</span>
                 </div>
-                <div class="info-item time-item">
-                  <span class="time">{{ formatTimeDisplay(item.startTime) }}</span>
+                <div class="time-section">
+                  <div class="info-item time-item">
+                    <span class="label">预警时间：</span>
+                    <span class="time">{{ item.alertTime ? formatTimeDisplay(item.alertTime) : '-' }}</span>
+                  </div>
+                  <div class="info-item time-item">
+                    <span class="label">复判时间：</span>
+                    <span class="time">{{ formatTimeDisplay(item.reviewTime) }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2001,10 +2009,13 @@ export default {
   text-align: left;
 }
 
-.time-item {
+.time-section {
   margin-top: 6px;
   padding-top: 8px;
   border-top: 1px solid #f2f3f5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .time-item .time {
@@ -2012,6 +2023,7 @@ export default {
   color: #909399;
   font-weight: 400;
   line-height: 1.4;
+  flex: 1;
 }
 
 /* 分页区域 */
