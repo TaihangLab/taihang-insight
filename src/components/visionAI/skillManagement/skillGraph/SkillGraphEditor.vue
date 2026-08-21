@@ -140,24 +140,43 @@
             <!-- 通用：输入来源选择（除视觉模型/开始/结束外，其余有输入的节点统一在这里选） -->
             <template v-if="hasInputSelector && selectedType !== 'detection_model' && selectedType !== 'vlm_model' && selectedType !== 'custom_code' && selectedType !== 'video_slice' && selectedType !== 'size_filter' && selectedType !== 'intersection' && selectedType !== 'intersect' && selectedType !== 'displacement' && selectedType !== 'distance' && selectedType !== 'tripwire_tracking' && selectedType !== 'region_filter' && selectedType !== 'count' && selectedType !== 'small_image_batch' && selectedType !== 'target_matting' && selectedType !== 'sequence' && selectedType !== 'sop_compliance' && selectedType !== 'judge'">
               <div class="sg-sec-title">输入</div>
-              <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port" :label="sel.label" :required="!sel.optional">
+              <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port"
+                            :class="{ 'sg-roi-item': showFenceRatioBeside(sel.port) }"
+                            :required="!sel.optional">
+                <span slot="label" :class="{ 'sg-io-label': showFenceRatioBeside(sel.port) }">
+                  <span>{{ sel.label }}</span>
+                  <span v-if="showFenceRatioBeside(sel.port)" class="sg-fence-ratio-side" @click.stop>
+                    <span class="sg-fence-ratio-lbl">
+                      占比
+                      <el-tooltip placement="top" :content="FENCE_RATIO_NODE_TIP">
+                        <i class="el-icon-question sg-field-help"></i>
+                      </el-tooltip>
+                    </span>
+                    <el-input-number
+                      v-model="form.fence_default_ratio"
+                      class="sg-fence-ratio"
+                      :min="0" :max="1" :step="0.1" :precision="2"
+                      size="mini" controls-position="right"
+                      @change="applyConfig" />
+                  </span>
+                </span>
                 <el-popover v-model="sel.popOpen" placement="bottom-start" trigger="click"
                             :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
-                  <el-tree v-if="sel.treeData.length" :data="sel.treeData" node-key="id"
-                           default-expand-all :expand-on-click-node="false" :highlight-current="true"
-                           :current-node-key="sel.value" @node-click="onParamPick(sel, $event)">
-                    <span slot-scope="{ data }" class="sg-tree-node">
-                      <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
-                      <span>{{ data.label }}</span>
-                    </span>
-                  </el-tree>
-                  <div v-else class="sg-tree-empty">暂无数据</div>
-                  <div slot="reference" class="sg-ref-box" :class="{ 'is-empty': !sel.value }">
-                    <span class="sg-ref-txt">{{ selLabel(sel) || ('请选择参数（' + sel.type + (sel.optional ? '，可选' : '') + '）') }}</span>
-                    <i v-if="sel.value" class="el-icon-circle-close sg-ref-clear" @click.stop="clearInput(sel)"></i>
-                    <i v-else class="el-icon-arrow-down sg-ref-arrow"></i>
-                  </div>
-                </el-popover>
+                      <el-tree v-if="sel.treeData.length" :data="sel.treeData" node-key="id"
+                               default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                               :current-node-key="sel.value" @node-click="onParamPick(sel, $event)">
+                        <span slot-scope="{ data }" class="sg-tree-node">
+                          <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                          <span>{{ data.label }}</span>
+                        </span>
+                      </el-tree>
+                      <div v-else class="sg-tree-empty">暂无数据</div>
+                      <div slot="reference" class="sg-ref-box" :class="{ 'is-empty': !sel.value }">
+                        <span class="sg-ref-txt">{{ selLabel(sel) || ('请选择参数（' + sel.type + (sel.optional ? '，可选' : '') + '）') }}</span>
+                        <i v-if="sel.value" class="el-icon-circle-close sg-ref-clear" @click.stop="clearInput(sel)"></i>
+                        <i v-else class="el-icon-arrow-down sg-ref-arrow"></i>
+                      </div>
+                    </el-popover>
               </el-form-item>
             </template>
 
@@ -182,24 +201,43 @@
               </el-form-item>
 
               <div class="sg-sec-title">输入</div>
-              <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port" :label="sel.label" :required="!sel.optional">
+              <el-form-item v-for="sel in inputSelectorsNoGate" :key="sel.port"
+                            :class="{ 'sg-roi-item': showFenceRatioBeside(sel.port) }"
+                            :required="!sel.optional">
+                <span slot="label" :class="{ 'sg-io-label': showFenceRatioBeside(sel.port) }">
+                  <span>{{ sel.label }}</span>
+                  <span v-if="showFenceRatioBeside(sel.port)" class="sg-fence-ratio-side" @click.stop>
+                    <span class="sg-fence-ratio-lbl">
+                      占比
+                      <el-tooltip placement="top" :content="FENCE_RATIO_NODE_TIP">
+                        <i class="el-icon-question sg-field-help"></i>
+                      </el-tooltip>
+                    </span>
+                    <el-input-number
+                      v-model="form.fence_default_ratio"
+                      class="sg-fence-ratio"
+                      :min="0" :max="1" :step="0.1" :precision="2"
+                      size="mini" controls-position="right"
+                      @change="applyConfig" />
+                  </span>
+                </span>
                 <el-popover v-model="sel.popOpen" placement="bottom-start" trigger="click"
                             :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
-                  <el-tree v-if="sel.treeData.length" :data="sel.treeData" node-key="id"
-                           default-expand-all :expand-on-click-node="false" :highlight-current="true"
-                           :current-node-key="sel.value" @node-click="onParamPick(sel, $event)">
-                    <span slot-scope="{ data }" class="sg-tree-node">
-                      <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
-                      <span>{{ data.label }}</span>
-                    </span>
-                  </el-tree>
-                  <div v-else class="sg-tree-empty">暂无数据</div>
-                  <div slot="reference" class="sg-ref-box" :class="{ 'is-empty': !sel.value }">
-                    <span class="sg-ref-txt">{{ selLabel(sel) || ('请选择参数（' + sel.type + (sel.optional ? '，可选' : '') + '）') }}</span>
-                    <i v-if="sel.value" class="el-icon-circle-close sg-ref-clear" @click.stop="clearInput(sel)"></i>
-                    <i v-else class="el-icon-arrow-down sg-ref-arrow"></i>
-                  </div>
-                </el-popover>
+                      <el-tree v-if="sel.treeData.length" :data="sel.treeData" node-key="id"
+                               default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                               :current-node-key="sel.value" @node-click="onParamPick(sel, $event)">
+                        <span slot-scope="{ data }" class="sg-tree-node">
+                          <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                          <span>{{ data.label }}</span>
+                        </span>
+                      </el-tree>
+                      <div v-else class="sg-tree-empty">暂无数据</div>
+                      <div slot="reference" class="sg-ref-box" :class="{ 'is-empty': !sel.value }">
+                        <span class="sg-ref-txt">{{ selLabel(sel) || ('请选择参数（' + sel.type + (sel.optional ? '，可选' : '') + '）') }}</span>
+                        <i v-if="sel.value" class="el-icon-circle-close sg-ref-clear" @click.stop="clearInput(sel)"></i>
+                        <i v-else class="el-icon-arrow-down sg-ref-arrow"></i>
+                      </div>
+                    </el-popover>
               </el-form-item>
 
               <div class="sg-sec-title">配置</div>
@@ -883,32 +921,50 @@
             <!-- 区域过滤 -->
             <template v-else-if="selectedType === 'region_filter'">
               <div class="sg-sec-title">输入</div>
-              <el-form-item v-for="tf in regionFilterFields" :key="tf.port" required>
-                <span slot="label">
-                  {{ tf.label }}
-                  <el-tooltip :content="tf.tip" placement="top">
-                    <i class="el-icon-question sg-field-help"></i>
-                  </el-tooltip>
+              <el-form-item v-for="tf in regionFilterFields" :key="tf.port"
+                            :class="{ 'sg-roi-item': showFenceRatioBeside(tf.port) }"
+                            required>
+                <span slot="label" :class="{ 'sg-io-label': showFenceRatioBeside(tf.port) }">
+                  <span>
+                    {{ tf.label }}
+                    <el-tooltip :content="tf.tip" placement="top">
+                      <i class="el-icon-question sg-field-help"></i>
+                    </el-tooltip>
+                  </span>
+                  <span v-if="showFenceRatioBeside(tf.port)" class="sg-fence-ratio-side" @click.stop>
+                    <span class="sg-fence-ratio-lbl">
+                      占比
+                      <el-tooltip placement="top" :content="FENCE_RATIO_NODE_TIP">
+                        <i class="el-icon-question sg-field-help"></i>
+                      </el-tooltip>
+                    </span>
+                    <el-input-number
+                      v-model="form.fence_default_ratio"
+                      class="sg-fence-ratio"
+                      :min="0" :max="1" :step="0.1" :precision="2"
+                      size="mini" controls-position="right"
+                      @change="applyConfig" />
+                  </span>
                 </span>
                 <el-popover v-model="form._rfPop[tf.port]" placement="bottom-start" trigger="click"
                             :width="300" popper-class="sg-param-pop" style="display:block;width:100%">
-                  <el-tree v-if="intersectBindTree(tf.bindType).length" :data="intersectBindTree(tf.bindType)" node-key="id"
-                           default-expand-all :expand-on-click-node="false" :highlight-current="true"
-                           :current-node-key="intersectBindingValue(tf.port)"
-                           @node-click="onIntersectPick(tf.port, $event)">
-                    <span slot-scope="{ data }" class="sg-tree-node">
-                      <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
-                      <span>{{ data.label }}</span>
-                    </span>
-                  </el-tree>
-                  <div v-else class="sg-tree-empty">暂无数据</div>
-                  <div slot="reference" class="sg-vlm-bind" :class="{ 'is-empty': !intersectBindingValue(tf.port) }">
-                    <i :class="paramTypeIcon(tf.bindType)"></i>
-                    <span class="sg-vlm-bind-txt">{{ intersectBindLabel(tf.port) || '请选择参数' }}</span>
-                    <i v-if="intersectBindingValue(tf.port)" class="el-icon-circle-close sg-vlm-bind-clear"
-                       @click.stop="clearIntersectInput(tf.port)"></i>
-                    <i v-else class="el-icon-link sg-vlm-bind-link"></i>
-                  </div>
+                      <el-tree v-if="intersectBindTree(tf.bindType).length" :data="intersectBindTree(tf.bindType)" node-key="id"
+                               default-expand-all :expand-on-click-node="false" :highlight-current="true"
+                               :current-node-key="intersectBindingValue(tf.port)"
+                               @node-click="onIntersectPick(tf.port, $event)">
+                        <span slot-scope="{ data }" class="sg-tree-node">
+                          <i :class="[data.icon, data.isNode ? 'sg-tree-nodeic' : 'sg-opt-ic']"></i>
+                          <span>{{ data.label }}</span>
+                        </span>
+                      </el-tree>
+                      <div v-else class="sg-tree-empty">暂无数据</div>
+                      <div slot="reference" class="sg-vlm-bind" :class="{ 'is-empty': !intersectBindingValue(tf.port) }">
+                        <i :class="paramTypeIcon(tf.bindType)"></i>
+                        <span class="sg-vlm-bind-txt">{{ intersectBindLabel(tf.port) || '请选择参数' }}</span>
+                        <i v-if="intersectBindingValue(tf.port)" class="el-icon-circle-close sg-vlm-bind-clear"
+                           @click.stop="clearIntersectInput(tf.port)"></i>
+                        <i v-else class="el-icon-link sg-vlm-bind-link"></i>
+                      </div>
                 </el-popover>
               </el-form-item>
 
@@ -919,12 +975,93 @@
                   <el-option label="围栏外" value="outside" />
                 </el-select>
               </el-form-item>
+              <div class="sg-tip">电子围栏在运行计划里画，并用「用于节点」指定给本节点。</div>
 
               <div class="sg-sec-title">输出</div>
               <div class="sg-io-list">
                 <div class="sg-io-item">
                   <span class="sg-io-dot" style="--c:#7c5cff"></span>过滤目标标签
                   <span class="sg-io-tag">det.</span>
+                </div>
+              </div>
+            </template>
+
+            <!-- 运动状态 -->
+            <template v-else-if="selectedType === 'motion_state'">
+              <div class="sg-sec-title">配置</div>
+              <el-form-item label="光流阈值">
+                <el-input-number v-model="form.threshold" :min="0" :max="10" :step="0.05" :precision="4"
+                                 controls-position="right" style="width:100%" @change="applyConfig" />
+              </el-form-item>
+              <el-form-item label="连续帧数">
+                <el-input-number v-model="form.consecutive_frames" :min="1" :max="60" :step="1"
+                                 controls-position="right" style="width:100%" @change="applyConfig" />
+              </el-form-item>
+              <div class="sg-tip">看哪块画面在转：优先用「运动分析区域」（检测框，可选）；不接则用本节点的电子围栏。围栏在运行计划里画，并用「用于节点」指定给本节点。</div>
+            </template>
+
+            <!-- 目标事件 -->
+            <template v-else-if="selectedType === 'object_event'">
+              <div class="sg-sec-title">配置</div>
+              <el-form-item label="事件类型">
+                <el-select v-model="form.event" style="width:100%" @change="applyConfig">
+                  <el-option label="消失（数量减少）" value="disappear" />
+                  <el-option label="出现（数量增加）" value="appear" />
+                  <el-option label="数量减少" value="count_decrease" />
+                  <el-option label="数量增加" value="count_increase" />
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <span slot="label">
+                  身份判定
+                  <el-tooltip content="按数量只看有几个；按追踪 ID 可区分是哪个目标消失/出现（上游需带 track_id）。" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-select v-model="form.identity" style="width:100%" @change="applyConfig">
+                  <el-option label="按数量" value="count" />
+                  <el-option label="按追踪 ID" value="track_id" />
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <span slot="label">
+                  变化前最少数量
+                  <el-tooltip content="消失/数量减少时，确认前的数量至少要有这么多才触发，避免从 0 变成 0。" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-input-number v-model="form.min_prev_count" :min="0" :max="99" :step="1"
+                                 controls-position="right" style="width:100%" @change="applyConfig" />
+              </el-form-item>
+              <el-form-item>
+                <span slot="label">
+                  允许连续漏检帧数
+                  <el-tooltip content="连续少检这么多帧又回来，不当作消失/减少。0=当帧变化就确认；1=漏 1 帧不算；2=连续漏 2 帧不算。真变少了会再多稳 1 帧才报。" placement="top">
+                    <i class="el-icon-question sg-field-help"></i>
+                  </el-tooltip>
+                </span>
+                <el-input-number v-model="form.max_miss_frames" :min="0" :max="29" :step="1"
+                                 controls-position="right" style="width:100%" @change="applyConfig" />
+              </el-form-item>
+              <div class="sg-tip">漏检连续不超过上面填的帧数又回到原数量，不当事件。确认后「事件触发」只亮一帧，后面的条件分支持续时间请用 0。</div>
+
+              <div class="sg-sec-title">输出</div>
+              <div class="sg-io-list">
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#13c2c2"></span>事件触发
+                  <span class="sg-io-tag">bool.</span>
+                </div>
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#7c5cff"></span>目标
+                  <span class="sg-io-tag">det.</span>
+                </div>
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#13c2c2"></span>确认前数量
+                  <span class="sg-io-tag">int.</span>
+                </div>
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#13c2c2"></span>当前数量
+                  <span class="sg-io-tag">int.</span>
                 </div>
               </div>
             </template>
@@ -2430,11 +2567,12 @@ const PORT_LABELS = {
   small_images: '小图序列',
   running: '运行中', stopped: '已停止', magnitude: '运动量',
   regions: '运动分析区域',
-  triggered: '事件触发', prev_count: '上一帧数量', curr_count: '当前数量',
+  triggered: '事件触发', prev_count: '确认前数量', curr_count: '当前数量',
   person: '人员', a: '输入A', b: '输入B', c: '输入C', d: '输入D', e: '输入E',
   f: '输入F', g: '输入G', h: '输入H', i: '输入I', j: '输入J',
 }
 const GATE_HELP_TIP = '可选。不接则本节点每帧都会执行；接上游布尔值（如条件分支的「判定通过」）后，仅在为真时才执行。适合控制多模态大模型、姿态等耗时节点，避免无嫌疑时仍每帧调用。'
+const FENCE_RATIO_NODE_TIP = '指定给本节点的新围栏会预填这个占比：目标有多少面积落在围栏里才算进去。0=碰到就算，1=整框都要进去。每块围栏仍可再改。不填则用系统默认 1.0。'
 
 const VIDEO_SLICE_NUMERIC_FIELDS = [
   { port: 'start_time', label: '开始时间（秒）', placeholder: '请输入开始时间（秒）', tip: '切片起始时间，单位秒' },
@@ -3676,9 +3814,10 @@ class SGNode extends HtmlNode {
       body = row('输入', ins) + row('输出', outs)
     } else {
       const genBoundIn = boundInputPorts(m)
-      // gate 为可选门控：未绑定时不在卡片上显示，避免看起来像必填
+      // 可选口未绑定时不在卡片上显示，避免看起来像必填
+      const hideIfUnbound = new Set(['gate', 'regions'])
       const ins = (p.inputPorts || [])
-        .filter(n => n !== 'gate' || genBoundIn.has(n))
+        .filter(n => !hideIfUnbound.has(n) || genBoundIn.has(n))
         .map(n => chipHtml(n, types[n], null, !genBoundIn.has(n)))
       if (p.dynamic) ins.push('<span class="sgx-chip sgx-chip-dyn" style="--c:#909399"><span class="sgx-chip-dot"></span>动态输入</span>')
       const outs = (p.outputPorts || []).map(n => chipHtml(n, types[n]))
@@ -3736,6 +3875,7 @@ export default {
       modelClassesCache: {},
       inputSelectors: [],
       GATE_HELP_TIP,
+      FENCE_RATIO_NODE_TIP,
       graphEdgeRev: 0,
       _normalizingEdge: false,
       testDialogVisible: false,
@@ -4886,8 +5026,9 @@ export default {
             || (t === 'target_matting' && mattingLabels[p])
             || PORT_LABELS[p] || p,
           type,
-          // gate / ROI 均为可选：不接则按默认行为（gate=始终执行，ROI=不过滤）
-          optional: type === 'ROI' || p === 'gate',
+          // 可选口：不接按默认行为（gate=始终执行，ROI=不过滤，
+          // regions=运动节点改用电子围栏做光流）
+          optional: type === 'ROI' || p === 'gate' || p === 'regions',
           value,
           groups,
           treeData: this.groupsToTree(groups),
@@ -5497,7 +5638,7 @@ export default {
         },
         merge_detections: {},
         motion_state: { threshold: 0.1, consecutive_frames: 3, use_full_frame: false },
-        object_event: { event: 'disappear', min_prev_count: 1, stable_frames: 2, identity: 'count' },
+        object_event: { event: 'disappear', min_prev_count: 1, max_miss_frames: 1, stable_frames: 2, identity: 'count' },
         pose_keypoints: {
           model_name: 'yolo11_pose', confidence_threshold: 0.5,
           waist_keypoint_indices: [11, 12], wrist_keypoint_indices: [9, 10]
@@ -5655,6 +5796,20 @@ export default {
       } else if (this.selectedType === 'region_filter') {
         f.trigger_mode = cfg.trigger_mode || 'inside'
         f._rfPop = { image: false, filter_target: false, roi: false }
+      } else if (this.selectedType === 'motion_state') {
+        f.threshold = cfg.threshold != null ? cfg.threshold : 0.1
+        f.consecutive_frames = cfg.consecutive_frames != null ? cfg.consecutive_frames : 3
+        f.use_full_frame = !!cfg.use_full_frame
+      } else if (this.selectedType === 'object_event') {
+        f.event = cfg.event || 'disappear'
+        f.identity = cfg.identity || 'count'
+        f.min_prev_count = cfg.min_prev_count != null ? cfg.min_prev_count : 1
+        if (cfg.max_miss_frames != null && cfg.max_miss_frames !== '') {
+          f.max_miss_frames = Math.max(0, parseInt(cfg.max_miss_frames, 10) || 0)
+        } else {
+          const sf = cfg.stable_frames != null ? parseInt(cfg.stable_frames, 10) : 2
+          f.max_miss_frames = Math.max(0, (sf || 2) - 1)
+        }
       } else if (this.selectedType === 'count') {
         f._countPop = { count_target: false }
       } else if (this.selectedType === 'video_slice') {
@@ -5833,6 +5988,11 @@ export default {
           }
         }
       }
+      if (this.nodeSupportsFenceDefaultType(this.selectedType)) {
+        f.fence_default_ratio = (cfg.fence_default_ratio != null && cfg.fence_default_ratio !== '')
+          ? Number(cfg.fence_default_ratio)
+          : undefined
+      }
       this.form = f
       this.syncVlmModelFromForm(nodeData.id)
       // 通用：为任意"有输入端口"的节点构建输入来源选择器（树形）
@@ -5853,6 +6013,15 @@ export default {
     // 是否需要"默认值"输入（仅基础数据类型支持默认值）
     paramHasDefault(type) {
       return ['String', 'TemplateString', 'Integer', 'Double', 'Boolean', 'Time', 'Image', 'Video'].includes(type)
+    },
+    nodeSupportsFenceDefaultType(type) {
+      return ['detection_model', 'motion_state', 'region_filter', 'pose_keypoints'].indexOf(type) >= 0
+    },
+    nodeSupportsFenceDefault() {
+      return this.nodeSupportsFenceDefaultType(this.selectedType)
+    },
+    showFenceRatioBeside(port) {
+      return port === 'roi' && this.nodeSupportsFenceDefault()
     },
     toggleParamExpand(pp) {
       this.$set(pp, '_expand', !pp._expand)
@@ -6529,6 +6698,18 @@ export default {
         })).filter(op => op.name)
       } else if (t === 'region_filter') {
         cfg.trigger_mode = this.form.trigger_mode || 'inside'
+      } else if (t === 'motion_state') {
+        cfg.threshold = this.form.threshold != null ? Number(this.form.threshold) : 0.1
+        cfg.consecutive_frames = parseInt(this.form.consecutive_frames, 10) || 3
+        cfg.use_full_frame = !!this.form.use_full_frame
+      } else if (t === 'object_event') {
+        const ev = String(this.form.event || 'disappear')
+        cfg.event = ['appear', 'disappear', 'count_increase', 'count_decrease'].indexOf(ev) >= 0 ? ev : 'disappear'
+        cfg.identity = this.form.identity === 'track_id' ? 'track_id' : 'count'
+        cfg.min_prev_count = Math.max(0, parseInt(this.form.min_prev_count, 10) || 0)
+        const miss = Math.max(0, Math.min(29, parseInt(this.form.max_miss_frames, 10) || 0))
+        cfg.max_miss_frames = miss
+        cfg.stable_frames = miss + 1
       } else if (t === 'video_slice') {
         const clamp = v => {
           const n = Number(v)
@@ -6848,7 +7029,21 @@ export default {
         props.dynamic = true
       }
       // 保留隐式参数引用（如区域过滤的"尺寸参照图片"）：applyConfig 会重建 cfg，需带回
-      const prevRefs = props.config && props.config._input_refs
+      const prevCfg = props.config && typeof props.config === 'object' ? props.config : {}
+      Object.keys(prevCfg).forEach(k => {
+        if (k === '_input_refs' || k === 'fence_default_ratio') return
+        if (cfg[k] === undefined) cfg[k] = prevCfg[k]
+      })
+      if (this.nodeSupportsFenceDefaultType(t)) {
+        if (this.form.fence_default_ratio != null && this.form.fence_default_ratio !== '') {
+          const n = Number(this.form.fence_default_ratio)
+          if (!Number.isNaN(n)) cfg.fence_default_ratio = Math.max(0, Math.min(1, n))
+          else delete cfg.fence_default_ratio
+        } else {
+          delete cfg.fence_default_ratio
+        }
+      }
+      const prevRefs = prevCfg._input_refs
       if (prevRefs && Object.keys(prevRefs).length && t !== 'sequence' && t !== 'sop_compliance') cfg._input_refs = { ...prevRefs }
       props.config = cfg
       // 先更新文本，再 setProperties 触发 HTML 节点重渲染，使标题改名即时生效
@@ -8308,6 +8503,13 @@ export default {
   border: 1px dashed #e3e6ee; border-radius: 8px; }
 .sg-opt { display: inline-flex; align-items: center; gap: 6px; }
 .sg-opt-ic { color: #7c5cff; font-size: 14px; }
+.sg-roi-item >>> .el-form-item__label { width: 100%; padding-right: 0; overflow: visible; }
+.sg-io-label { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; }
+.sg-fence-ratio-side { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+.sg-fence-ratio-lbl { font-size: 12px; color: #606266; white-space: nowrap; display: inline-flex; align-items: center; font-weight: 400; }
+.sg-fence-ratio { width: 118px; flex: none; }
+.sg-fence-ratio.el-input-number { width: 118px; }
+.sg-fence-ratio >>> .el-input__inner { padding-right: 40px; }
 .sg-ref-box { display: flex; align-items: center; width: 100%; box-sizing: border-box; height: 32px;
   padding: 0 10px; cursor: pointer; border: 1px solid #dcdfe6; border-radius: 4px; background: #fff; transition: border-color .15s; }
 .sg-ref-box:hover { border-color: #c0c4cc; }

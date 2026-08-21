@@ -79,7 +79,10 @@
           电子围栏列表 ({{ visibleRegionCount }}/{{ totalItemCount }})
         </div>
         <div class="fence-list__desc">
-          说明：绘制的电子围栏区域为识别区域，技能使用后作为预置信息生效
+          {{ extraHint || '说明：绘制的电子围栏区域为识别区域，技能使用后作为预置信息生效' }}
+        </div>
+        <div v-if="unboundFenceNodeNames.length" class="fence-list__warn">
+          已指定「用于节点」，但这些接到围栏的节点还没有对应围栏：{{ unboundFenceNodeNames.join('、') }}。它们会拿不到围栏。
         </div>
 
         <div v-if="regions.length" class="fence-items">
@@ -110,6 +113,26 @@
                     @click.native.stop>
                   </el-input>
                   <span v-if="r.invert" class="invert-tag">（反选）</span>
+                </div>
+              </div>
+              <div class="fence-field fence-field--row" v-if="showNodeBind">
+                <label class="fence-field__label">用于节点：</label>
+                <div class="fence-field__control">
+                  <el-select
+                    v-model="r.bind_node"
+                    size="mini"
+                    placeholder="不指定（全部节点）"
+                    clearable
+                    @change="onBindNodeChange(i)"
+                    @click.native.stop>
+                    <el-option label="不指定（全部节点）" value=""></el-option>
+                    <el-option
+                      v-for="n in bindableNodes"
+                      :key="n.id"
+                      :label="n.name"
+                      :value="n.id">
+                    </el-option>
+                  </el-select>
                 </div>
               </div>
               <div v-if="showRatio" class="fence-field fence-field--row">
@@ -265,6 +288,7 @@
 <script>
 import { runPlanAPI } from '@/components/service/VisionAIService.js';
 
+const GLOBAL_RATIO_DEFAULT = 1.0
 const RATIO_TIP_TEXT = '目标占比：指目标在电子围栏中的部分占目标总体的比例，当目标进入电子围栏占比超过所设置占比值时，系统即产生报警，反之将不产生报警。填写时，支持输入 0.00-1.00 的数字。注意：若技能自定义了判定关键点（如以人脚部位置判定是否入栏），则按关键点是否在围栏内判定，该占比设置不生效。';
 
 const ICON_POLYGON = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2l8 6v8l-8 6-8-6V8l8-6z" fill-opacity="0.15" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>';
@@ -287,6 +311,12 @@ export default {
     allowTripwire: { type: Boolean, default: false },
     // 多边形电子围栏数量上限：0 表示不限制（如 Array<ROI>）；技能输入声明为单个 ROI 时为 1
     maxRegions: { type: Number, default: 0 },
+    extraHint: { type: String, default: '' },
+    bindableNodes: { type: Array, default: () => [] },
+    // 技能配置的默认占比；不传则用系统默认 1.0
+    defaultRatio: { type: Number, default: null },
+    // 各节点自己的默认占比 { nodeId: number }
+    nodeDefaultRatios: { type: Object, default: () => ({}) },
     // 「占比」是检测框与区域的重叠阈值，仅对目标检测类场景有意义；
     // 按像素统计的场景（如采集的画面变化）用不到，可隐藏以免误导
     showRatio: { type: Boolean, default: true }
@@ -371,6 +401,25 @@ export default {
     },
     currentGuideExample() {
       return this.guideExamples[this.guideExampleIndex] || this.guideExamples[0];
+    },
+    showNodeBind() {
+      return (this.bindableNodes || []).length > 0;
+    },
+    unboundFenceNodeNames() {
+      const bound = {};
+      (this.regions || []).forEach(r => {
+        if (r && r.bind_node) bound[r.bind_node] = true;
+      });
+      if (!Object.keys(bound).length) return [];
+      return (this.bindableNodes || [])
+        .filter(n => n && n.id && !bound[n.id])
+        .map(n => n.name || n.id);
+    },
+    resolvedDefaultRatio() {
+      const v = this.defaultRatio
+      if (v == null || v === '' || Number.isNaN(Number(v))) return GLOBAL_RATIO_DEFAULT
+      const n = Number(v)
+      return Math.max(0, Math.min(1, n))
     }
   },
   watch: {
@@ -483,11 +532,14 @@ export default {
       if (this.initFence && this.initFence.regions) {
         this.regions = JSON.parse(JSON.stringify(this.initFence.regions)).map((r, idx) => ({
           name: this.normalizeRegionName(r.name, idx),
-          ratio: r.ratio != null ? r.ratio : 1.0,
+          ratio: r.ratio != null ? r.ratio : this.resolvedDefaultRatio,
           invert: !!r.invert,
+          bind_node: r.bind_node || '',
+          bind_node_name: r.bind_node_name || '',
           visible: r.visible !== false,
           points: r.points || []
         }));
+        this.regions.forEach((r, i) => { this.syncBindNodeName(i); });
       } else {
         this.regions = [];
       }
@@ -749,8 +801,10 @@ export default {
       const idx = this.regions.length;
       this.regions.push({
         name: this.nextName(),
-        ratio: 1.0,
+        ratio: this.resolvedDefaultRatio,
         invert: false,
+        bind_node: '',
+        bind_node_name: '',
         visible: true,
         points: this.currentPoints.slice()
       });
@@ -800,7 +854,67 @@ export default {
     },
     displayRegionName(r, index) {
       const base = this.regionBaseName(r, index);
-      return r.invert ? `${base}（反选）` : base;
+      const bits = [base];
+      const nodeName = this.bindNodeLabel(r);
+      if (nodeName) bits.push(nodeName);
+      if (r.invert) bits.push('反选');
+      return bits.length > 1 ? `${bits[0]}（${bits.slice(1).join('·')}）` : bits[0];
+    },
+    bindNodeLabel(r) {
+      if (!r || !r.bind_node) return '';
+      const n = (this.bindableNodes || []).find(x => x.id === r.bind_node);
+      return (n && n.name) || r.bind_node_name || '';
+    },
+    syncBindNodeName(index) {
+      const r = this.regions[index];
+      if (!r) return;
+      r.bind_node_name = this.bindNodeLabel(r);
+    },
+    onBindNodeChange(index) {
+      const r = this.regions[index];
+      if (r && !r.bind_node) r.bind_node = '';
+      this.syncBindNodeName(index);
+      if (r) r.ratio = this.ratioForBind(r.bind_node);
+      this.redraw();
+    },
+    ratioForBind(bindNode) {
+      const nid = bindNode || '';
+      const map = this.nodeDefaultRatios || {};
+      if (nid && map[nid] != null && map[nid] !== '') {
+        const n = Number(map[nid]);
+        if (!Number.isNaN(n)) return Math.max(0, Math.min(1, n));
+      }
+      return this.resolvedDefaultRatio;
+    },
+    regionStyle(r, selected) {
+      if (r && r.invert) {
+        return {
+          stroke: selected ? '#fa8c16' : '#e6a23c',
+          fill: 'rgba(250,140,22,0.24)',
+          tag: '#fa8c16'
+        };
+      }
+      const nodes = this.bindableNodes || [];
+      const idx = r && r.bind_node ? nodes.findIndex(n => n.id === r.bind_node) : -1;
+      const palette = [
+        { stroke: '#3370ff', fill: 'rgba(51,112,255,0.22)', tag: '#3370ff' },
+        { stroke: '#ff4d4f', fill: 'rgba(255,77,79,0.22)', tag: '#ff4d4f' },
+        { stroke: '#67c23a', fill: 'rgba(103,194,58,0.22)', tag: '#67c23a' },
+        { stroke: '#9b59b6', fill: 'rgba(155,89,182,0.22)', tag: '#9b59b6' }
+      ];
+      if (idx >= 0) {
+        const c = palette[idx % palette.length];
+        return {
+          stroke: selected ? c.tag : c.stroke,
+          fill: c.fill,
+          tag: c.tag
+        };
+      }
+      return {
+        stroke: '#ff4d4f',
+        fill: 'rgba(255,77,79,0.22)',
+        tag: '#ff4d4f'
+      };
     },
     onInvertChange(index) {
       this.redraw();
@@ -860,14 +974,10 @@ export default {
       this.regions.forEach((r, i) => {
         if (!r.visible) return;
         const selected = i === this.selectedIndex;
-        const invert = !!r.invert;
-        const stroke = invert
-          ? (selected ? '#fa8c16' : '#e6a23c')
-          : (selected ? '#ff4d4f' : '#ff4d4f');
-        const fill = invert ? 'rgba(250,140,22,0.24)' : 'rgba(255,77,79,0.22)';
-        this.drawPolygon(ctx, r.points, fill, stroke, true, invert);
-        this.drawVertexHandles(ctx, r.points, selected, invert ? '#fa8c16' : undefined);
-        this.drawRegionLabel(ctx, r.points, this.displayRegionName(r, i), invert);
+        const style = this.regionStyle(r, selected);
+        this.drawPolygon(ctx, r.points, style.fill, style.stroke, true, !!r.invert);
+        this.drawVertexHandles(ctx, r.points, selected, style.stroke);
+        this.drawRegionLabel(ctx, r.points, this.displayRegionName(r, i), style.tag);
       });
 
       this.tripwires.forEach((t, i) => {
@@ -1009,7 +1119,7 @@ export default {
         ctx.stroke();
       });
     },
-    drawRegionLabel(ctx, points, text, invert) {
+    drawRegionLabel(ctx, points, text, tagColor) {
       if (!points || !points.length || !text) return;
       const W = this.canvasW;
       const H = this.canvasH;
@@ -1028,7 +1138,7 @@ export default {
       const fontSize = 11 / this.viewScale;
       ctx.font = `${fontSize}px sans-serif`;
       const tw = ctx.measureText(text).width;
-      ctx.fillStyle = invert ? '#fa8c16' : '#ff4d4f';
+      ctx.fillStyle = tagColor || '#ff4d4f';
       ctx.fillRect(x - padX, y - fontSize - padY, tw + padX * 2, fontSize + 3 / this.viewScale + padY * 2);
       ctx.fillStyle = '#fff';
       ctx.fillText(text, x, y);
@@ -1041,6 +1151,8 @@ export default {
           name: this.regionBaseName(r, i),
           ratio: r.ratio,
           invert: r.invert,
+          bind_node: r.bind_node || '',
+          bind_node_name: r.bind_node_name || this.bindNodeLabel(r),
           visible: r.visible,
           points: r.points
         }))
@@ -1271,6 +1383,16 @@ export default {
   margin-bottom: 10px;
   padding-bottom: 10px;
   border-bottom: 1px solid #f0f1f3;
+}
+.fence-list__warn {
+  font-size: 11px;
+  color: #d46b08;
+  background: #fff7e6;
+  border: 1px solid #ffd591;
+  border-radius: 4px;
+  line-height: 1.6;
+  padding: 6px 8px;
+  margin: -4px 0 10px;
 }
 
 .fence-items {
