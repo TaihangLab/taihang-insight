@@ -1372,7 +1372,15 @@ export default {
 
     handleArchiveFromDialog(eventData) {
       if (eventData && eventData.alert_id) {
-        this.handleWarning(eventData.alert_id, 'archive');
+        // 详情组件已经完成原子归档，这里只同步列表，避免再次发起归档请求。
+        const index = this.warningList.findIndex(item => {
+          const alertId = item._apiData ? item._apiData.alert_id : item.id;
+          return String(alertId) === String(eventData.alert_id);
+        });
+        if (index !== -1) {
+          this.warningList.splice(index, 1);
+        }
+        this.warningDetailVisible = false;
       }
     },
 
@@ -1481,56 +1489,7 @@ export default {
 
         console.log('📍 选中的档案信息:', { selectedArchive, archiveName, archiveLocation });
 
-        // 1. 先调用updateAlertStatus更新预警状态为已归档
-        const updateData = {
-          status: 4, // 已归档状态
-          processing_notes: `预警已归档到：${archiveName}（${archiveLocation}）`,
-          processed_by: this.getCurrentUserName()
-        };
-
-        console.log('📤 更新预警状态为已归档:', alertId, updateData);
-        const updateResponse = await alertAPI.updateAlertStatus(alertId, updateData);
-        console.log('✅ 预警状态更新成功:', updateResponse);
-
-        // 🔧 从后端响应中获取实际的操作人名字
-        const operatorName = (updateResponse.data && updateResponse.data.data && updateResponse.data.data.updated_alert && updateResponse.data.data.updated_alert.processed_by) || 
-                            (updateResponse.data && updateResponse.data.data && updateResponse.data.data.processing_record && updateResponse.data.data.processing_record.operator) || 
-                            this.getCurrentUserName();
-
-        // 2. 更新本地的_apiData.status字段
-        if (this.warningList[index]._apiData) {
-          this.$set(this.warningList[index]._apiData, 'status', 4);
-        }
-        this.$set(this.warningList[index], 'status', 'archived');
-        this.$set(this.warningList[index], 'archiveId', this.selectedArchiveId);
-        this.$set(this.warningList[index], 'archiveTime', new Date().toLocaleString());
-
-        // 添加归档记录到操作历史
-        if (!this.warningList[index].operationHistory) {
-          this.$set(this.warningList[index], 'operationHistory', []);
-        }
-
-        // 🔧 修复：在归档记录中包含位置信息，使用后端返回的操作人名字
-        const archiveRecord = {
-          id: Date.now() + Math.random(),
-          status: 'completed',
-          statusText: '预警归档',
-          time: this.getCurrentTime(),
-          description: `预警已归档到：${archiveName}（${archiveLocation}），可在预警档案中查看`,
-          operationType: 'archive',
-          operator: operatorName,
-          archiveInfo: {
-            archiveId: this.selectedArchiveId,
-            archiveName: archiveName,
-            location: archiveLocation // 🔧 添加位置信息
-          }
-        };
-
-        this.warningList[index].operationHistory.push(archiveRecord);
-
-        console.log('✅ 本地状态已更新为已归档');
-
-        // 3. 调用归档API关联预警到档案
+        // 后端在同一事务中建立档案关联并更新预警状态。
         const { archiveAPI } = await import('../../service/VisionAIService.js');
         const response = await archiveAPI.linkAlertsToArchive(
           this.selectedArchiveId,
@@ -1540,10 +1499,42 @@ export default {
 
         console.log('📤 归档API响应:', response.data);
 
-        if (response.data && response.data.code === 0) {
-          // 4. 延迟移除记录，让用户能看到状态变化
+        const archiveResult = response.data && response.data.data;
+        if (response.data && response.data.code === 0 &&
+            archiveResult && archiveResult.failed_count === 0) {
+          const operatorName = archiveResult.linked_by || this.getCurrentUserName();
+
+          // 只有后端事务提交成功后，才更新本地状态和操作历史。
+          if (this.warningList[index]._apiData) {
+            this.$set(this.warningList[index]._apiData, 'status', 4);
+          }
+          this.$set(this.warningList[index], 'status', 'archived');
+          this.$set(this.warningList[index], 'archiveId', this.selectedArchiveId);
+          this.$set(this.warningList[index], 'archiveTime', new Date().toLocaleString());
+
+          if (!this.warningList[index].operationHistory) {
+            this.$set(this.warningList[index], 'operationHistory', []);
+          }
+          this.warningList[index].operationHistory.push({
+            id: Date.now() + Math.random(),
+            status: 'completed',
+            statusText: '预警归档',
+            time: this.getCurrentTime(),
+            description: `预警已归档到：${archiveName}（${archiveLocation}），可在预警档案中查看`,
+            operationType: 'archive',
+            operator: operatorName,
+            archiveInfo: {
+              archiveId: this.selectedArchiveId,
+              archiveName: archiveName,
+              location: archiveLocation
+            }
+          });
+
           setTimeout(() => {
-            const currentIndex = this.warningList.findIndex(item => item.id === this.archiveWarningId);
+            const currentIndex = this.warningList.findIndex(item => {
+              const itemAlertId = item._apiData ? item._apiData.alert_id : item.id;
+              return String(itemAlertId) === String(alertId);
+            });
             if (currentIndex !== -1) {
               // 从实时预警列表中移除已归档的预警
               this.warningList.splice(currentIndex, 1);
@@ -1562,7 +1553,9 @@ export default {
         }
       } catch (error) {
         console.error('❌ 实时监控 - 预警归档异常:', error);
-        this.$message.error('归档失败: ' + (error.message || '未知错误'));
+        const serverMessage = error.response && error.response.data &&
+          (error.response.data.detail || error.response.data.message);
+        this.$message.error('归档失败: ' + (serverMessage || error.message || '未知错误'));
       } finally {
         this.loading = false;
       }

@@ -1170,26 +1170,35 @@ export default {
           `预警详情页面归档 - 预警类型: ${this.detail.alert_type}`
         );
 
-        if (response.data && response.data.code === 0) {
+        const archiveResult = response.data && response.data.data;
+        if (response.data && response.data.code === 0 &&
+            archiveResult && archiveResult.failed_count === 0) {
           this.addOperationRecord({
             status: 'completed',
             statusText: '预警归档',
             time: this.getCurrentTime(),
             description: `预警已归档到：${archiveName}（${archiveLocation}），可在预警档案中查看`,
             operationType: 'archive',
-            operator: this.getCurrentUserName(),
+            operator: archiveResult.linked_by || this.getCurrentUserName(),
             archiveInfo: { archiveId: targetArchiveId, archiveName, location: archiveLocation }
           });
 
           this.detail.status = 4;
           this.$message.success('预警已成功归档');
-          this.$emit('handle-archive', { alert_id: this.detail.alert_id });
+          this.$emit('handle-archive', {
+            alert_id: this.detail.alert_id,
+            archive_id: targetArchiveId,
+            archive_name: archiveName,
+            action: 'archived'
+          });
           this.closeArchiveDialog();
         } else {
           this.$message.error((response.data && response.data.message) || '归档失败');
         }
       } catch (error) {
-        this.$message.error('归档失败: ' + (error.message || '未知错误'));
+        const serverMessage = error.response && error.response.data &&
+          (error.response.data.detail || error.response.data.message);
+        this.$message.error('归档失败: ' + (serverMessage || error.message || '未知错误'));
       } finally {
         this.loading = false;
       }
