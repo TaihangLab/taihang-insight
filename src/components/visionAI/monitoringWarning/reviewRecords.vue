@@ -36,6 +36,8 @@ export default {
       searchForm: {
         startDate: '',
         endDate: '',
+        reviewStartDate: '',
+        reviewEndDate: '',
         reviewType: '',
         reviewResult: 'false_alarm',
         warningSkill: '',
@@ -48,6 +50,8 @@ export default {
       activeSearchForm: {
         startDate: '',
         endDate: '',
+        reviewStartDate: '',
+        reviewEndDate: '',
         reviewType: '',
         reviewResult: 'false_alarm',
         warningSkill: '',
@@ -294,6 +298,8 @@ export default {
           review_result: this.activeSearchForm.reviewResult || undefined,
           start_date: this.activeSearchForm.startDate || undefined,
           end_date: this.activeSearchForm.endDate || undefined,
+          review_start_date: this.activeSearchForm.reviewStartDate || undefined,
+          review_end_date: this.activeSearchForm.reviewEndDate || undefined,
           alert_name: this.activeSearchForm.warningName || undefined,
           camera_name: this.activeSearchForm.warningLocation || undefined
         }
@@ -370,7 +376,7 @@ export default {
     },
     
     async resetSearch() {
-      const empty = { startDate: '', endDate: '', reviewType: '', reviewResult: this.activeResultTab, warningSkill: '', warningLocation: '', warningName: '', warningId: '' }
+      const empty = { startDate: '', endDate: '', reviewStartDate: '', reviewEndDate: '', reviewType: '', reviewResult: this.activeResultTab, warningSkill: '', warningLocation: '', warningName: '', warningId: '' }
       this.searchForm = { ...empty }
       this.activeSearchForm = { ...empty }
       this.pagination.currentPage = 1
@@ -1233,6 +1239,25 @@ export default {
         </div>
         
         <div class="search-row">
+          <div class="search-item">
+            <label>复判日期：</label>
+            <el-date-picker
+              v-model="searchForm.reviewStartDate"
+              type="date"
+              placeholder="开始日期"
+              size="small"
+              value-format="yyyy-MM-dd"
+            />
+            <span class="date-separator">-</span>
+            <el-date-picker
+              v-model="searchForm.reviewEndDate"
+              type="date"
+              placeholder="结束日期"
+              size="small"
+              value-format="yyyy-MM-dd"
+            />
+          </div>
+
           <div class="search-item">
             <label>预警名称：</label>
             <el-input
