@@ -198,7 +198,18 @@
         </div>
 
         <div class="form-section" v-if="skillNeedsFence || skillNeedsTripwire">
-          <div class="section-head"><i class="el-icon-crop"></i> 区域绘制</div>
+          <div class="section-head section-head--with-action">
+            <span><i class="el-icon-crop"></i> 区域绘制</span>
+            <span v-if="skillNeedsFence" class="section-osd">
+              <span class="section-osd__label">
+                围栏外也画框
+                <el-tooltip placement="top" content="默认打开：画面上围栏外的目标也会画虚线框，方便核对。关掉后前端只能看到围栏内的检测框。无论开还是关，告警都只数围栏里的。">
+                  <i class="el-icon-question section-osd__help"></i>
+                </el-tooltip>
+              </span>
+              <el-switch v-model="form.show_outside_fence" :disabled="isView"></el-switch>
+            </span>
+          </div>
           <div class="region-draw">
             <div class="region-list">
               <div
@@ -571,6 +582,10 @@
       :allow-polygon="skillNeedsFence"
       :allow-tripwire="skillNeedsTripwire"
       :max-regions="fenceMaxRegions"
+      :extra-hint="fenceExtraHint"
+      :bindable-nodes="fenceBindableNodes"
+      :default-ratio="fenceDefaultRatio"
+      :node-default-ratios="fenceNodeDefaultRatios"
       @confirm="onFenceConfirm">
     </fence-drawer>
 
@@ -661,7 +676,8 @@ function defaultForm() {
     alert_config: defaultAlertConfig(),
     review_enabled: false,
     review_skill_class_id: null,
-    cameras: []
+    cameras: [],
+    show_outside_fence: true
   };
 }
 
@@ -687,6 +703,9 @@ export default {
       skillNeedsTripwire: false,
       // 技能输入声明为 Array<ROI> 时允许绘制多个电子围栏；单个 ROI 仅允许 1 个
       fenceMultipleRoi: true,
+      fenceBindableNodes: [],
+      fenceDefaultRatio: null,
+      fenceNodeDefaultRatios: {},
       currentFenceCam: null,
       fenceVisible: false,
       fenceEditing: null,
@@ -795,6 +814,10 @@ export default {
       // 0 表示不限制（Array<ROI>）；单个 ROI 限制为 1
       return this.fenceMultipleRoi ? 0 : 1;
     },
+    fenceExtraHint() {
+      if ((this.fenceBindableNodes || []).length < 2) return '';
+      return '本技能有多个节点接到了电子围栏。要么都不选「用于节点」（大家共用），要么每个接到的节点都指定一块；只指定其中一个时，其他接到的节点会拿不到围栏。';
+    },
     rtspStreamingEnabled: {
       get() {
         this.ensureRtspStreamingConfig();
@@ -882,7 +905,8 @@ export default {
           alert_config: alertConfig,
           review_enabled: !!(p.review_enabled || alertConfig.review_enabled),
           review_skill_class_id: p.review_skill_class_id || alertConfig.review_skill_class_id || null,
-          cameras: JSON.parse(JSON.stringify(p.cameras || []))
+          cameras: JSON.parse(JSON.stringify(p.cameras || [])),
+          show_outside_fence: !(p.cameras || []).some(c => c.fence && c.fence.show_outside_fence === false)
         });
         this.alertNameTouched = true;
         if (kind !== 'llm' && p.skill_class_id) this.loadSkillParams(p.skill_class_id, true);
@@ -896,6 +920,9 @@ export default {
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
         this.fenceMultipleRoi = true;
+        this.fenceBindableNodes = [];
+        this.fenceDefaultRatio = null;
+        this.fenceNodeDefaultRatios = {};
       }
       this.ensureRtspStreamingConfig();
       this.currentFenceCam = this.form.cameras[0] || null;
@@ -1041,6 +1068,9 @@ export default {
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
         this.fenceMultipleRoi = true;
+        this.fenceBindableNodes = [];
+        this.fenceDefaultRatio = null;
+        this.fenceNodeDefaultRatios = {};
         if (!this.alertNameTouched) this.form.alert_name = '';
         return;
       }
@@ -1058,6 +1088,9 @@ export default {
         this.skillNeedsFence = false;
         this.skillNeedsTripwire = false;
         this.fenceMultipleRoi = true;
+        this.fenceBindableNodes = [];
+        this.fenceDefaultRatio = null;
+        this.fenceNodeDefaultRatios = {};
       } else {
         this.form.skill_class_id = s.skill_class_id;
         this.form.llm_skill_id = '';
@@ -1116,6 +1149,24 @@ export default {
         const roiInfo = this.computeRoiInfo(detail);
         this.skillNeedsFence = roiInfo.needsFence;
         this.fenceMultipleRoi = roiInfo.multiple;
+        this.fenceBindableNodes = this.extractRoiBindableNodes(detail);
+        this.fenceDefaultRatio = null;
+        this.fenceNodeDefaultRatios = this.extractFenceNodeDefaultRatios(detail);
+        if (!this.fenceBindableNodes.length) {
+          const opt = (this.skillOptions || []).find(o => o.ref === this.form.skill_ref);
+          if (opt && opt.kind === 'graph' && opt.name) {
+            try {
+              const gres = await skillAPI.getGraph(opt.name);
+              const gp = gres.data || {};
+              const gdetail = gp.data !== undefined ? gp.data : gp;
+              this.fenceBindableNodes = this.extractRoiBindableNodes(gdetail);
+              if (!Object.keys(this.fenceNodeDefaultRatios || {}).length) {
+                this.fenceNodeDefaultRatios = this.extractFenceNodeDefaultRatios(gdetail);
+              }
+            } catch (ge) { /* ignore */ }
+          }
+        }
+        if (this.fenceBindableNodes.length >= 2) this.fenceMultipleRoi = true;
         this.skillNeedsTripwire = this.computeSkillNeedsTripwire(detail);
       } catch (e) {
         console.warn('加载技能参数失败', e);
@@ -1123,6 +1174,9 @@ export default {
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
         this.fenceMultipleRoi = true;
+        this.fenceBindableNodes = [];
+        this.fenceDefaultRatio = null;
+        this.fenceNodeDefaultRatios = {};
       } finally {
         this.skillParamsLoading = false;
       }
@@ -1186,6 +1240,52 @@ export default {
       } catch (e) {
         return { needsFence: true, multiple: true };
       }
+    },
+    graphJsonOf(detail) {
+      const dc = (detail && detail.default_config) || {};
+      return dc.graph_json || dc.graphJson || (detail && detail.graph_json) || null;
+    },
+    clampFenceRatio(v) {
+      const n = Number(v);
+      if (Number.isNaN(n)) return null;
+      return Math.max(0, Math.min(1, n));
+    },
+    extractFenceNodeDefaultRatios(detail) {
+      const out = {};
+      const gj = this.graphJsonOf(detail);
+      (gj && gj.nodes || []).forEach(n => {
+        if (!n || n.type === 'start' || !n.id) return;
+        const cfg = n.config || {};
+        if (cfg.fence_default_ratio == null || cfg.fence_default_ratio === '') return;
+        const v = this.clampFenceRatio(cfg.fence_default_ratio);
+        if (v != null) out[n.id] = v;
+      });
+      return out;
+    },
+    extractRoiBindableNodes(detail) {
+      const TYPE_ZH = {
+        motion_state: '运动状态',
+        region_filter: '区域过滤',
+        detection_model: '视觉模型',
+        pose_keypoints: '姿态关键点',
+        vlm_model: '多模态大模型'
+      };
+      const gj = this.graphJsonOf(detail);
+      if (!gj || !Array.isArray(gj.nodes)) return [];
+      const ids = {};
+      (gj.nodes || []).forEach(n => {
+        const refs = (n && n.config && n.config._input_refs) || {};
+        if (refs.roi) ids[n.id] = true;
+      });
+      (gj.edges || []).forEach(e => {
+        const tp = (e && (e.target_port || e.targetPort)) || '';
+        if (tp === 'roi') ids[e.target || e.targetNodeId] = true;
+      });
+      return (gj.nodes || []).filter(n => n && ids[n.id]).map(n => ({
+        id: n.id,
+        type: n.type,
+        name: n.name || (n.config && n.config.name_zh) || TYPE_ZH[n.type] || n.id
+      }));
     },
     computeSkillNeedsTripwire(detail) {
       try {
@@ -1270,7 +1370,8 @@ export default {
       const out = {
         enabled: true,
         regions,
-        points: regions.length ? (regions[0].points || []) : []
+        points: regions.length ? (regions[0].points || []) : [],
+        show_outside_fence: this.form.show_outside_fence !== false
       };
       if (tripwires.length) out.tripwires = tripwires;
       return out;
@@ -1518,6 +1619,32 @@ export default {
   text-align: left;
 }
 .section-head i { margin-right: 6px; color: #409eff; }
+.section-head--with-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.section-osd {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+.section-osd__label {
+  font-size: 13px;
+  color: #4e5969;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.section-osd__help {
+  margin-right: 0 !important;
+  color: #a8abb2 !important;
+  cursor: help;
+  font-size: 14px;
+}
+.section-osd__help:hover { color: #409eff !important; }
 
 .form-section >>> .el-form-item__label {
   text-align: left;
