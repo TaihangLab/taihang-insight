@@ -593,7 +593,7 @@
 </template>
 
 <script>
-import { runPlanAPI, skillAPI, realtimeMonitorAPI } from '@/components/service/VisionAIService.js';
+import { runPlanAPI, skillAPI, realtimeMonitorAPI, formatApiError } from '@/components/service/VisionAIService.js';
 import RunPlanCreateDrawer from './RunPlanCreateDrawer.vue';
 import ChannelTreePanel, { resolveTreeChannel } from './ChannelTreePanel.vue';
 import { skillKindTagType } from './runPlanFormat.js';
@@ -1164,7 +1164,7 @@ export default {
         this.loadAllTasks();
       } catch (e) {
         row.enabled = !val;
-        this.$message.error('操作失败');
+        this.$message.error(formatApiError(e, '操作失败'));
       }
     },
     /** 聚合行启停：批量启停该行关联的所有计划 */
@@ -1180,7 +1180,7 @@ export default {
         this.$message.success('操作成功');
         this.loadData();
       } catch (e) {
-        if (e !== 'cancel') this.$message.error('操作失败');
+        if (e !== 'cancel') this.$message.error(formatApiError(e, '操作失败'));
       }
     },
     async deleteAggPlans(row, label) {
@@ -1192,7 +1192,7 @@ export default {
         this.$message.success('删除成功');
         this.loadData();
       } catch (e) {
-        if (e !== 'cancel') this.$message.error('删除失败');
+        if (e !== 'cancel') this.$message.error(formatApiError(e, '删除失败'));
       }
     },
     async deletePlan(row) {
@@ -1202,7 +1202,7 @@ export default {
         this.$message.success('删除成功');
         this.loadData();
       } catch (e) {
-        if (e !== 'cancel') this.$message.error('删除失败');
+        if (e !== 'cancel') this.$message.error(formatApiError(e, '删除失败'));
       }
     },
     async batchEnable(enabled) {
@@ -1213,7 +1213,7 @@ export default {
         this.$message.success('操作成功');
         this.loadData();
       } catch (e) {
-        this.$message.error('操作失败');
+        this.$message.error(formatApiError(e, '操作失败'));
       }
     },
     async batchDelete() {
@@ -1225,7 +1225,7 @@ export default {
         this.$message.success('删除成功');
         this.loadData();
       } catch (e) {
-        if (e !== 'cancel') this.$message.error('删除失败');
+        if (e !== 'cancel') this.$message.error(formatApiError(e, '删除失败'));
       }
     },
     // ---------- 任务操作 ----------
@@ -1236,7 +1236,7 @@ export default {
         this.$message.success('删除成功');
         this.loadData();
       } catch (e) {
-        if (e !== 'cancel') this.$message.error('删除失败');
+        if (e !== 'cancel') this.$message.error(formatApiError(e, '删除失败'));
       }
     },
     async batchDeleteTasks() {
@@ -1248,7 +1248,7 @@ export default {
         this.$message.success('删除成功');
         this.loadData();
       } catch (e) {
-        if (e !== 'cancel') this.$message.error('删除失败');
+        if (e !== 'cancel') this.$message.error(formatApiError(e, '删除失败'));
       }
     },
     onSaved() {
