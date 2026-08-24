@@ -169,11 +169,12 @@ export default {
 
         skills.forEach(s => {
           if (!s || s.skill_class_id == null) return
-          const source = s.skill_source === 'llm' ? 'llm' : 'vision'
+          const source = (s.skill_source === 'llm' || s.skill_source === 'graph') ? s.skill_source : 'vision'
           const name = s.skill_name_zh || ('技能#' + s.skill_class_id)
           const count = s.alert_count ? `（${s.alert_count}）` : ''
+          const tag = source === 'llm' ? '[大模型]' : (source === 'graph' ? '[编排]' : '[视觉]')
           skillOptions.push({
-            label: `${name}${count}`,
+            label: `${tag} ${name}${count}`,
             value: `${source}:${s.skill_class_id}`,
             skillClassId: s.skill_class_id,
             skillNameZh: name
@@ -200,7 +201,9 @@ export default {
             const api = item._apiData || {}
             const sid = api.skill_class_id
             if (sid == null) return
-            const source = (api.alert_type && String(api.alert_type).startsWith('llm_')) ? 'llm' : 'vision'
+            const source = (api.alert_type && String(api.alert_type).startsWith('llm_'))
+              ? 'llm'
+              : (api.skill_source === 'graph' ? 'graph' : 'vision')
             const value = `${source}:${sid}`
             if (seen[value]) return
             seen[value] = true

@@ -66,3 +66,18 @@ export function skillKindTagType(kind) {
   // 视觉技能用 Element 默认蓝色标签（''），注意空串是 falsy，不能用 || 'info' 兜底
   return { visual: '', graph: 'success', llm: 'warning' }[kind] || '';
 }
+
+/** 预警接口 skill_source: vision / graph / llm */
+export function normalizeAlertSkillSource(source, alertType) {
+  if (source === 'llm' || source === 'graph' || source === 'vision') return source;
+  if (alertType && String(alertType).startsWith('llm_')) return 'llm';
+  return 'vision';
+}
+
+export function skillSourceLabel(source) {
+  return { vision: '视觉', graph: '编排', llm: '大模型' }[source] || '视觉';
+}
+
+export function skillSourceTagType(source) {
+  return { vision: 'primary', graph: 'success', llm: 'warning' }[source] || 'primary';
+}
