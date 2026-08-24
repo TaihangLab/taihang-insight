@@ -593,6 +593,7 @@
 
 <script>
 import { alertAPI, reviewRecordAPI } from '@/components/service/VisionAIService.js'
+import userService from '@/components/service/UserService.js'
 
 export default {
   name: "WarningDetail",
@@ -976,23 +977,33 @@ export default {
         this.loading = true;
         const updateData = {
           status: 3,
-          processing_notes: this.remarkForm.remark ? `${this.remarkForm.remark}\n处理已完成` : '处理已完成',
+          processing_notes: this.remarkForm.remark.trim() || null,
           processed_by: this.getCurrentUserName()
         };
 
         const response = await alertAPI.updateAlertStatus(this.detail.alert_id, updateData);
 
         if (response.data && response.data.code === 0) {
+          const result = response.data.data || {};
+          const updatedAlert = result.updated_alert || {};
+          const processingRecord = result.processing_record || {};
+          const processingNotes = updatedAlert.processing_notes != null
+            ? updatedAlert.processing_notes
+            : updateData.processing_notes;
+          const operatorName = processingRecord.operator || updatedAlert.processed_by || '未知操作人';
+
           this.addOperationRecord({
             status: 'completed',
             statusText: '已处理',
-            time: this.getCurrentTime(),
-            description: '预警处理已完成，可以进行后续操作',
+            time: processingRecord.created_at ? this.formatTime(processingRecord.created_at) : this.getCurrentTime(),
+            description: processingNotes || '未填写处理意见',
             operationType: 'completed',
-            operator: this.getCurrentUserName()
+            operator: operatorName
           });
 
           this.detail.status = 3;
+          this.detail.processing_notes = processingNotes;
+          this.detail.processed_by = operatorName;
           this.$message.success('处理已完成，现在可以进行归档等操作');
           this.$emit('handle-warning', {
             alert_id: this.detail.alert_id,
@@ -1244,19 +1255,8 @@ export default {
 
     // 获取当前用户昵称
     getCurrentUserName() {
-      // 实际项目中应该从用户登录信息或Vuex store中获取
-      // 这里模拟一些用户昵称
-      const userNames = ['张工程师', '李主管', '王安全员', '赵技术员', '陈操作员'];
-      const savedUserName = localStorage.getItem('currentUserName');
-
-      if (savedUserName) {
-        return savedUserName;
-      } else {
-        // 如果没有保存的用户名，随机选择一个并保存
-        const randomName = userNames[Math.floor(Math.random() * userNames.length)];
-        localStorage.setItem('currentUserName', randomName);
-        return randomName;
-      }
+      const user = userService.getUser();
+      return user.userName || user.username || user.nickName || user.nickname || '系统用户';
     },
 
     addSecondsToTime(timeString, seconds) {

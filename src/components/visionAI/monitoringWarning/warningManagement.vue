@@ -1,6 +1,7 @@
 <script>
 import WarningDetail from './warningDetail.vue'
 import { alertAPI, archiveAPI } from '@/components/service/VisionAIService.js'
+import userService from '@/components/service/UserService.js'
 
 export default {
   name: "WarningManagement",
@@ -385,7 +386,8 @@ export default {
           item.status,
           this.formatApiTime(item.alert_time),
           item.processed_by,
-          this.formatApiTime(item.processed_at)
+          this.formatApiTime(item.processed_at),
+          item.processing_notes
         );
 
         return {
@@ -456,7 +458,7 @@ export default {
 
     // 🔧 转换处理历史 - 与realTimeMonitoring保持一致
     // alertTime: 预警产生时间, processedAt: 处理时间
-    convertProcessHistory(processData, apiStatus, alertTime, processedBy, processedAt) {
+    convertProcessHistory(processData, apiStatus, alertTime, processedBy, processedAt, processingNotes) {
       try {
         const operationHistory = []
         // 使用后端返回的操作人名字，如果没有则使用默认值
@@ -467,13 +469,15 @@ export default {
         // 处理API返回的步骤（如果存在）
         if (processData && processData.steps && Array.isArray(processData.steps)) {
           processData.steps.forEach((step, index) => {
+            const stepName = step.step || ''
+            const isCompletedStep = ['已处理', '完成预警处理'].includes(stepName)
             operationHistory.push({
               id: step.id || (Date.now() + index + 100),
               status: 'completed',
               statusText: step.step || '处理中',
               time: this.formatApiTime(step.time),
               description: step.desc || step.description || '',
-              operationType: step.step === '预警产生' ? 'pending' : 'processing',
+              operationType: stepName === '预警产生' ? 'pending' : (isCompletedStep ? 'completed' : 'processing'),
               operator: step.operator || '系统'
             })
           })
@@ -497,16 +501,19 @@ export default {
           // 🔧 处理中状态 - 不在时间线中显示，通过预警状态标签体现
           // 用户添加的处理意见会作为 processing-action 类型单独显示
         } else if (apiStatus === 3) {
-          // 已处理状态 - 使用处理时间
-          operationHistory.push({
-            id: Date.now() + Math.random(),
-            status: 'completed',
-            statusText: '已处理',
-            time: processTime,
-            description: '预警处理已完成',
-            operationType: 'completed',
-            operator: defaultOperator
-          })
+          // process.steps 没有完成记录时，使用预警表中的真实处理信息补充
+          const hasCompletedRecord = operationHistory.some(record => record.operationType === 'completed')
+          if (!hasCompletedRecord) {
+            operationHistory.push({
+              id: Date.now() + Math.random(),
+              status: 'completed',
+              statusText: '已处理',
+              time: processTime,
+              description: processingNotes || '未填写处理意见',
+              operationType: 'completed',
+              operator: defaultOperator
+            })
+          }
         } else if (apiStatus === 4) {
           // 已归档状态 - 使用处理时间
           operationHistory.push({
@@ -761,15 +768,8 @@ export default {
     
     // 获取当前用户昵称
     getCurrentUserName() {
-      // 从用户登录信息或Vuex store中获取，或从本地存储获取
-      const savedUserName = localStorage.getItem('currentUserName')
-      
-      if (savedUserName) {
-        return savedUserName
-      } else {
-        // 如果没有保存的用户名，返回默认值
-        return '系统用户'
-      }
+      const user = userService.getUser()
+      return user.userName || user.username || user.nickName || user.nickname || '系统用户'
     },
     
     
@@ -1748,7 +1748,7 @@ export default {
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(warningId)
         const updateData = {
           status: 3, // 已处理状态
-          processing_notes: this.remarkForm.remark ? `${this.remarkForm.remark}\n处理已完成` : '处理已完成',
+          processing_notes: this.remarkForm.remark.trim() || null,
           processed_by: this.getCurrentUserName()
         }
 
@@ -1758,12 +1758,22 @@ export default {
         const response = await alertAPI.updateAlertStatus(apiAlertId, updateData)
         
         if (response.data && response.data.code === 0) {
+          const result = response.data.data || {}
+          const updatedAlert = result.updated_alert || {}
+          const processingRecord = result.processing_record || {}
+          const processingNotes = updatedAlert.processing_notes != null
+            ? updatedAlert.processing_notes
+            : updateData.processing_notes
+          const operatorName = processingRecord.operator || updatedAlert.processed_by || '未知操作人'
+
           // API调用成功，更新本地数据状态
           const index = this.warningList.findIndex(item => String(item.id) === String(warningId))
           if (index !== -1) {
             // 🔧 关键修复：更新 _apiData.status 字段为已处理
             if (this.warningList[index]._apiData) {
               this.$set(this.warningList[index]._apiData, 'status', 3)
+              this.$set(this.warningList[index]._apiData, 'processing_notes', processingNotes)
+              this.$set(this.warningList[index]._apiData, 'processed_by', operatorName)
             }
             
             // 更新字符串状态为已处理
@@ -1779,10 +1789,10 @@ export default {
               id: Date.now() + Math.random(),
               status: 'completed',
               statusText: '已处理',
-              time: this.getCurrentTime(),
-              description: '预警处理已完成，可以进行后续操作',
+              time: processingRecord.created_at ? this.formatApiTime(processingRecord.created_at) : this.getCurrentTime(),
+              description: processingNotes || '未填写处理意见',
               operationType: 'completed',
-              operator: this.getCurrentUserName()
+              operator: operatorName
             }
             
             this.warningList[index].operationHistory.push(newRecord)
