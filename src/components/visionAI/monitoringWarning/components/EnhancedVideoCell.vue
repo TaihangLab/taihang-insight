@@ -23,10 +23,10 @@
           <el-option
             v-for="task in availableTasks"
             :key="task.task_id"
-            :label="`${task.task_name}`"
+            :label="aiTaskOptionLabel(task)"
             :value="task.task_id">
-            <span style="float: left">{{ task.task_name }}</span>
-            <span style="float: right; color: #8492a6; font-size: 12px">{{ task.skill_name }}</span>
+            <span style="float: left">{{ aiTaskOptionLabel(task) }}</span>
+            <span v-if="aiTaskOptionHint(task)" style="float: right; color: #8492a6; font-size: 12px">{{ aiTaskOptionHint(task) }}</span>
           </el-option>
         </el-select>
       </div>
@@ -155,6 +155,17 @@ export default {
     }
   },
   methods: {
+    aiTaskOptionLabel(task) {
+      return (task && (task.skill_name || task.task_name)) || ''
+    },
+    aiTaskOptionHint(task) {
+      if (!task) return ''
+      const skill = String(task.skill_name || '').trim()
+      const alert = String(task.alert_name || '').trim()
+      if (alert && alert !== skill) return alert
+      return ''
+    },
+
     /**
      * 任务选择变化
      */
