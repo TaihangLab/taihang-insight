@@ -263,6 +263,16 @@
             误报
           </el-button>
           <el-button
+            v-if="detail && detail.status === 3"
+            plain
+            type="warning"
+            @click="handleReopen"
+            class="action-btn reopen-btn">
+            <i class="el-icon-refresh-right"></i>
+            重新处理
+          </el-button>
+          <el-button
+            v-else
             plain
             :disabled="isProcessingDisabled()"
             @click="handleWarning"
@@ -390,6 +400,39 @@
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="saveRemark">确认处理</el-button>
         <el-button type="success" @click="finishProcessing">结束处理</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 重新处理对话框 -->
+    <el-dialog
+      title="重新处理预警"
+      :visible.sync="reopenDialogVisible"
+      width="30%"
+      center
+      append-to-body
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      @close="closeReopenDialog"
+    >
+      <el-form label-width="110px">
+        <el-form-item label="重新处理原因" required>
+          <el-input
+            v-model="reopenReason"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入重新打开该预警的原因"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <div class="process-tip">
+        <i class="el-icon-info" style="color: #909399; margin-right: 4px;"></i>
+        <span style="color: #909399; font-size: 13px;">确认后状态将由“已处理”变为“处理中”，系统会保留完成时间并记录重新打开时间</span>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="closeReopenDialog">取 消</el-button>
+        <el-button type="warning" :loading="loading" @click="confirmReopen">确认重新处理</el-button>
       </span>
     </el-dialog>
 
@@ -631,6 +674,10 @@ export default {
       remarkForm: {
         remark: ''
       },
+
+      // 重新处理对话框
+      reopenDialogVisible: false,
+      reopenReason: '',
 
       // 误报对话框
       falseAlarmDialogVisible: false,
@@ -1027,6 +1074,68 @@ export default {
       this.remarkForm = {
         remark: ''
       };
+    },
+
+    handleReopen() {
+      if (!this.detail || this.detail.status !== 3) {
+        this.$message.warning('仅已处理状态的预警可以重新处理');
+        return;
+      }
+      this.reopenReason = '';
+      this.reopenDialogVisible = true;
+    },
+
+    async confirmReopen() {
+      const reason = this.reopenReason.trim();
+      if (!reason) {
+        this.$message.warning('请输入重新处理原因');
+        return;
+      }
+
+      try {
+        this.loading = true;
+        const response = await alertAPI.reopenAlert(this.detail.alert_id, reason);
+        if (!response.data || response.data.code !== 0) {
+          throw new Error((response.data && response.data.msg) || '重新处理失败');
+        }
+
+        const result = response.data.data || {};
+        const processingRecord = result.processing_record || {};
+        const updatedAlert = result.updated_alert || {};
+        const operatorName = processingRecord.operator || updatedAlert.processed_by || '未知操作人';
+        const reopenedAt = processingRecord.reopened_at || processingRecord.created_at;
+
+        this.addOperationRecord({
+          id: processingRecord.record_id || (Date.now() + Math.random()),
+          status: 'active',
+          statusText: '重新处理',
+          time: reopenedAt ? this.formatTime(reopenedAt) : this.getCurrentTime(),
+          description: reason,
+          operationType: 'processing',
+          operator: operatorName
+        });
+        this.detail.status = 2;
+        this.detail.processing_notes = reason;
+        this.detail.processed_by = operatorName;
+
+        this.$message.success('预警已重新打开，状态已更新为处理中');
+        this.$emit('handle-warning', {
+          alert_id: this.detail.alert_id,
+          action: 'reopened',
+          apiResponse: result
+        });
+        this.closeReopenDialog();
+      } catch (error) {
+        const serverMessage = error.response && error.response.data && error.response.data.detail;
+        this.$message.error('重新处理失败：' + (serverMessage || error.message || '网络错误'));
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    closeReopenDialog() {
+      this.reopenDialogVisible = false;
+      this.reopenReason = '';
     },
 
     // 上报处理

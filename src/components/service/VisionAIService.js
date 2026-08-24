@@ -1882,6 +1882,27 @@ export const alertAPI = {
   },
 
   /**
+   * 将已处理预警重新打开为处理中
+   * @param {number} alertId - 预警ID
+   * @param {string} reason - 重新处理原因（必填）
+   * @returns {Promise} 包含状态变更及完成/重新打开时间的Promise对象
+   */
+  reopenAlert(alertId, reason) {
+    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
+    if (!alertId) {
+      return Promise.reject(new Error('缺少预警ID'));
+    }
+    if (!normalizedReason) {
+      return Promise.reject(new Error('请输入重新处理原因'));
+    }
+
+    return this.updateAlertStatus(alertId, {
+      status: 2,
+      processing_notes: normalizedReason
+    });
+  },
+
+  /**
    * 批量更新预警状态
    * @param {Array} alertIds - 预警ID数组
    * @param {Object} updateData - 更新数据

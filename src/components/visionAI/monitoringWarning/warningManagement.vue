@@ -73,6 +73,13 @@ export default {
       remarkForm: {
         remark: ''
       },
+
+      // 重新处理对话框
+      reopenDialogVisible: false,
+      reopenWarningId: '',
+      reopenForm: {
+        reason: ''
+      },
       
       // 上报确认对话框
       reportDialogVisible: false,
@@ -590,6 +597,11 @@ export default {
             this.archiveWarningId = id
             this.falseAlarmDialogVisible = true
             return // 不关闭loading，等用户输入完成后再关闭
+          } else if (action === 'reopen') {
+            this.reopenWarningId = id
+            this.reopenForm.reason = ''
+            this.reopenDialogVisible = true
+            return
           }
         }
         
@@ -1400,6 +1412,66 @@ export default {
         remark: ''
       }
     },
+
+    async confirmReopen() {
+      const reason = this.reopenForm.reason.trim()
+      if (!reason) {
+        this.$message.warning('请输入重新处理原因')
+        return
+      }
+
+      const warning = this.warningList.find(item => String(item.id) === String(this.reopenWarningId))
+      if (!warning || !warning._apiData || warning._apiData.status !== 3) {
+        this.$message.error('仅已处理状态的预警可以重新处理，请刷新页面后重试')
+        return
+      }
+
+      try {
+        this.loading = true
+        const response = await alertAPI.reopenAlert(warning._apiData.alert_id, reason)
+        if (!response.data || response.data.code !== 0) {
+          throw new Error((response.data && response.data.msg) || '重新处理失败')
+        }
+
+        const result = response.data.data || {}
+        const processingRecord = result.processing_record || {}
+        const updatedAlert = result.updated_alert || {}
+        const operatorName = processingRecord.operator || updatedAlert.processed_by || '未知操作人'
+        const reopenedAt = processingRecord.reopened_at || processingRecord.created_at
+
+        this.$set(warning, 'status', 'processing')
+        this.$set(warning._apiData, 'status', 2)
+        this.$set(warning._apiData, 'processing_notes', reason)
+        this.$set(warning._apiData, 'processed_by', operatorName)
+        if (!warning.operationHistory) {
+          this.$set(warning, 'operationHistory', [])
+        }
+        warning.operationHistory.push({
+          id: processingRecord.record_id || (Date.now() + Math.random()),
+          status: 'active',
+          statusText: '重新处理',
+          time: reopenedAt ? this.formatApiTime(reopenedAt) : this.getCurrentTime(),
+          description: reason,
+          operationType: 'processing',
+          operator: operatorName
+        })
+
+        this.$message.success('预警已重新打开，状态已更新为处理中')
+        this.closeReopenDialog()
+        await this.getWarningList()
+      } catch (error) {
+        const serverMessage = error.response && error.response.data && error.response.data.detail
+        this.$message.error('重新处理失败：' + (serverMessage || error.message || '网络错误'))
+      } finally {
+        this.loading = false
+      }
+    },
+
+    closeReopenDialog() {
+      this.reopenDialogVisible = false
+      this.reopenWarningId = ''
+      this.reopenForm.reason = ''
+    },
     
     // 确认上报
     async confirmReport() {
@@ -1474,7 +1546,7 @@ export default {
     async handleWarningFromDetail(eventData) {
       if (!eventData || !eventData.alert_id) return;
       
-      if (eventData.action === 'record-added' || eventData.action === 'finished') {
+      if (['record-added', 'finished', 'reopened'].includes(eventData.action)) {
         await this.getWarningList()
       }
     },
@@ -1854,6 +1926,15 @@ export default {
       
       console.log('🔓 按钮可用');
       return false;
+    },
+
+    isResolvedWarning(warning) {
+      return Boolean(
+        warning && (
+          (warning._apiData && warning._apiData.status === 3) ||
+          warning.status === 'completed'
+        )
+      )
     },
 
     // 检查归档按钮是否应该禁用（只有已处理状态才能归档）
@@ -2432,7 +2513,19 @@ export default {
                       误报
                     </el-button>
                     
-                    <el-button 
+                    <el-button
+                      v-if="isResolvedWarning(item)"
+                      size="mini"
+                      type="warning"
+                      plain
+                      class="action-btn reopen-btn"
+                      @click.stop="handleWarning(item.id, 'reopen')"
+                    >
+                      重新处理
+                    </el-button>
+
+                    <el-button
+                      v-else
                       size="mini" 
                       class="action-btn process-btn"
                       @click.stop="handleWarning(item.id, 'markProcessed')"
@@ -2607,6 +2700,38 @@ export default {
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="saveRemark">确认处理</el-button>
         <el-button type="success" @click="finishProcessing">结束处理</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 重新处理对话框 -->
+    <el-dialog
+      title="重新处理预警"
+      :visible.sync="reopenDialogVisible"
+      width="30%"
+      center
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      @close="closeReopenDialog"
+    >
+      <el-form :model="reopenForm" label-width="110px">
+        <el-form-item label="重新处理原因" required>
+          <el-input
+            v-model="reopenForm.reason"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入重新打开该预警的原因"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <div class="process-tip">
+        <i class="el-icon-info" style="color: #909399; margin-right: 4px;"></i>
+        <span style="color: #909399; font-size: 13px;">确认后状态将由“已处理”变为“处理中”，系统会保留完成时间并记录重新打开时间</span>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="closeReopenDialog">取 消</el-button>
+        <el-button type="warning" :loading="loading" @click="confirmReopen">确认重新处理</el-button>
       </span>
     </el-dialog>
     
