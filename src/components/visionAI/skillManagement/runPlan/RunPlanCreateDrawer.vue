@@ -622,7 +622,7 @@
 </template>
 
 <script>
-import { runPlanAPI, skillAPI, taskReviewAPI } from '@/components/service/VisionAIService.js';
+import { runPlanAPI, skillAPI, taskReviewAPI, formatApiError } from '@/components/service/VisionAIService.js';
 import { assetAPI } from '@/components/service/AssetService.js';
 import { pullPointStatusText, categorizeRowStatus } from '../../deviceManagement/assetStreamStatus.js';
 import { saveActiveSaveJob } from './runPlanSaveJob.js';
@@ -1406,20 +1406,7 @@ export default {
       return out;
     },
     formatSaveError(e) {
-      if (!e) return '请检查配置';
-      if (e.code === 'ECONNABORTED' || /timeout/i.test(e.message || '')) {
-        return '请求超时，请稍后重试';
-      }
-      if (!e.response) {
-        return e.message || '网络异常，请稍后重试';
-      }
-      const detail = e.response.data && e.response.data.detail;
-      if (typeof detail === 'string' && detail) return detail;
-      if (Array.isArray(detail) && detail.length) {
-        return detail.map(d => (d && d.msg) || JSON.stringify(d)).join('；');
-      }
-      if (e.response.data && e.response.data.message) return e.response.data.message;
-      return '请检查配置（HTTP ' + e.response.status + '）';
+      return formatApiError(e, '请检查配置');
     },
     resetSaveProgress() {
       this.saveBackgrounded = false;
@@ -1464,10 +1451,18 @@ export default {
       return new Promise((resolve, reject) => {
         this.saveWaitResolve = resolve;
         this.saveWaitReject = reject;
+        const startedAt = Date.now();
+        const maxMs = 15 * 60 * 1000;
+        let consecutiveErrors = 0;
         const tick = async () => {
           if (this.saveBackgrounded) return;
+          if (Date.now() - startedAt > maxMs) {
+            reject(new Error('保存时间过长，请关闭后在列表页查看进度'));
+            return;
+          }
           try {
             const res = await runPlanAPI.getSaveJob(jobId);
+            consecutiveErrors = 0;
             const payload = (res && res.data) || {};
             const job = payload.data || payload;
             this.applySaveJob(job);
@@ -1481,7 +1476,19 @@ export default {
             }
             this.saveProgressTimer = setTimeout(tick, 500);
           } catch (e) {
-            if (!this.saveBackgrounded) reject(e);
+            if (this.saveBackgrounded) return;
+            consecutiveErrors += 1;
+            const status = e && e.response && e.response.status;
+            // 瞬时超时/网络抖动：继续轮询，不要把正在跑的保存判失败
+            if (status === 404 && consecutiveErrors >= 8) {
+              reject(new Error('保存进度已失效，请刷新列表确认是否已保存成功'));
+              return;
+            }
+            if (consecutiveErrors >= 25) {
+              reject(e);
+              return;
+            }
+            this.saveProgressTimer = setTimeout(tick, status === 404 ? 400 : 1200);
           }
         };
         tick();
