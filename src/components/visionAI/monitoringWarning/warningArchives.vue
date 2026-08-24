@@ -94,6 +94,9 @@ export default {
       availableAlerts: [],
       selectedAlerts: [],
       availableAlertsLoading: false,
+      alertFilterOptionsLoading: false,
+      warningSkillOptions: [],
+      warningTypeOptions: [],
       availableAlertsPagination: {
         currentPage: 1,
         pageSize: 20,
@@ -107,7 +110,7 @@ export default {
         status: 3, // 默认只显示已处理状态的预警
         start_time: '',
         end_time: '',
-        skill_name: '',
+        skill_class_id: '',
         location: '',
         alert_id: ''
       },
@@ -1155,6 +1158,7 @@ export default {
       this.selectAlertDialogVisible = true;
       this.selectedAlerts = [];
       this.resetAlertFilters();
+      this.loadAlertFilterOptions();
       this.loadAvailableAlerts();
     },
      // 提交新预警 - 调用真实API
@@ -1250,6 +1254,58 @@ export default {
 
       // ======================== 已发生预警选择相关方法 ========================
 
+      // 加载与预警管理一致的预警类型、预警技能筛选选项
+      async loadAlertFilterOptions() {
+        if (this.alertFilterOptionsLoading) return;
+
+        this.alertFilterOptionsLoading = true;
+        try {
+          const response = await alertAPI.getAlertSkills();
+          const body = response && response.data;
+          const payload = body && body.data;
+          const skills = Array.isArray(payload)
+            ? payload
+            : ((payload && payload.skills) || []);
+          const types = (!Array.isArray(payload) && payload && payload.alert_types) || [];
+
+          this.warningSkillOptions = skills
+            .filter(skill => skill && skill.skill_class_id != null)
+            .map(skill => {
+              const source = skill.skill_source === 'llm' ? 'llm' : 'vision';
+              const name = skill.skill_name_zh || `技能#${skill.skill_class_id}`;
+              const count = skill.alert_count ? `（${skill.alert_count}）` : '';
+              return {
+                label: `${name}${count}`,
+                value: `${source}:${skill.skill_class_id}`,
+                skillClassId: skill.skill_class_id
+              };
+            });
+
+          this.warningTypeOptions = types
+            .filter(type => type && type.alert_type)
+            .map(type => ({
+              label: `${type.alert_type}${type.alert_count ? `（${type.alert_count}）` : ''}`,
+              value: type.alert_type
+            }));
+        } catch (error) {
+          console.error('加载预警档案筛选选项失败:', error);
+        } finally {
+          this.alertFilterOptionsLoading = false;
+        }
+      },
+
+      onAlertSkillSelectVisible(visible) {
+        if (visible && this.warningSkillOptions.length === 0) {
+          this.loadAlertFilterOptions();
+        }
+      },
+
+      onAlertTypeSelectVisible(visible) {
+        if (visible && this.warningTypeOptions.length === 0) {
+          this.loadAlertFilterOptions();
+        }
+      },
+
       // 加载可用的预警列表
       async loadAvailableAlerts() {
         try {
@@ -1261,6 +1317,17 @@ export default {
             exclude_archived: true,
             ...this.alertFilters
           };
+
+          // 预警技能下拉值与预警管理保持一致（vision:id / llm:id），接口按技能ID精确筛选
+          if (params.skill_class_id !== '' && params.skill_class_id != null) {
+            const skillValue = String(params.skill_class_id);
+            const skillId = parseInt(skillValue.includes(':') ? skillValue.split(':')[1] : skillValue, 10);
+            if (isNaN(skillId)) {
+              delete params.skill_class_id;
+            } else {
+              params.skill_class_id = skillId;
+            }
+          }
 
           // 过滤空值
           Object.keys(params).forEach(key => {
@@ -1298,7 +1365,7 @@ export default {
           status: 3, // 重置时也默认为已处理状态
           start_time: '',
           end_time: '',
-          skill_name: '',
+          skill_class_id: '',
           location: '',
           alert_id: ''
         };
@@ -2079,7 +2146,21 @@ export default {
             </el-select>
           </el-form-item>
           <el-form-item label="预警类型">
-            <el-input v-model="alertFilters.alert_type" placeholder="预警类型" clearable style="width: 150px"></el-input>
+            <el-select
+              v-model="alertFilters.alert_type"
+              placeholder="全部类型"
+              clearable
+              filterable
+              :loading="alertFilterOptionsLoading"
+              @visible-change="onAlertTypeSelectVisible"
+              style="width: 150px">
+              <el-option
+                v-for="type in warningTypeOptions"
+                :key="type.value"
+                :label="type.label"
+                :value="type.value">
+              </el-option>
+            </el-select>
           </el-form-item>
           <el-form-item label="摄像头名称">
             <el-input v-model="alertFilters.camera_name" placeholder="摄像头名称" clearable style="width: 150px"></el-input>
@@ -2093,14 +2174,35 @@ export default {
               <el-option label="误报" :value="5"></el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="技能名称">
-            <el-input v-model="alertFilters.skill_name" placeholder="技能名称" clearable style="width: 120px"></el-input>
+          <el-form-item label="预警技能">
+            <el-select
+              v-model="alertFilters.skill_class_id"
+              placeholder="全部技能"
+              clearable
+              filterable
+              :loading="alertFilterOptionsLoading"
+              @visible-change="onAlertSkillSelectVisible"
+              style="width: 150px">
+              <el-option
+                v-for="skill in warningSkillOptions"
+                :key="skill.value"
+                :label="skill.label"
+                :value="skill.value">
+              </el-option>
+            </el-select>
           </el-form-item>
           <el-form-item label="位置">
             <el-input v-model="alertFilters.location" placeholder="位置" clearable style="width: 120px"></el-input>
           </el-form-item>
           <el-form-item label="预警ID">
-            <el-input v-model="alertFilters.alert_id" placeholder="输入预警ID" clearable style="width: 150px" type="number"></el-input>
+            <el-input
+              v-model="alertFilters.alert_id"
+              class="alert-id-filter"
+              placeholder="输入预警ID"
+              clearable
+              style="width: 150px"
+              type="number">
+            </el-input>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="applyAlertFilters" icon="el-icon-search">筛选</el-button>
@@ -3772,6 +3874,18 @@ body .el-time-picker.el-popper {
   font-weight: 500;
   color: #374151;
   font-size: 14px;
+}
+
+/* 保留数字输入校验，但隐藏预警ID输入框的上下增减按钮 */
+.alert-id-filter input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.alert-id-filter input[type="number"]::-webkit-inner-spin-button,
+.alert-id-filter input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
 }
 
 .time-filter {
