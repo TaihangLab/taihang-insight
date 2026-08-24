@@ -3197,7 +3197,8 @@ export const archiveAPI = {
    * @param {string} [params.camera_name] - 摄像头名称
    * @param {number} [params.status] - 处理状态
    * @param {boolean} [params.exclude_archived=true] - 排除已归档的预警
-   * @param {string} [params.skill_name] - 技能名称
+   * @param {number} [params.skill_class_id] - 技能类别ID（精确筛选）
+   * @param {string} [params.skill_name] - 技能名称（兼容模糊筛选）
    * @param {string} [params.location] - 位置
    * @returns {Promise} 包含可用预警列表的Promise对象
    */
