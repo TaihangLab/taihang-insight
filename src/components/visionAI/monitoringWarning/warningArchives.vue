@@ -139,7 +139,7 @@ export default {
       // 对话框控制
       editDialogVisible: false,
       addDialogVisible: false,
-      // 删除相关
+      // 移出档案相关
       deleteConfirmVisible: false,
       deleteConfirmMessage: '',
       deleteType: '', // 'single' 或 'batch' 或 'archive'
@@ -936,28 +936,28 @@ export default {
     handleWarningFromDetail(eventData) {
       this.warningDetailVisible = false;
     },
-    // 处理单条删除
+    // 处理单条移出档案
     handleDelete(id) {
-      console.log('单条删除被触发，ID:', id, '当前档案ID:', this.currentArchiveId);
+      console.log('单条移出档案被触发，ID:', id, '当前档案ID:', this.currentArchiveId);
 
       if (!id) {
-        this.$message.error('删除失败：缺少记录ID');
+        this.$message.error('移出档案失败：缺少记录ID');
         return;
       }
 
       if (!this.currentArchiveId) {
-        this.$message.error('删除失败：未选择档案');
+        this.$message.error('移出档案失败：未选择档案');
         return;
       }
 
       this.deleteType = 'single';
       this.deleteId = id;
-      this.deleteConfirmMessage = '确定要删除该预警记录吗？';
+      this.deleteConfirmMessage = '确定要将该预警移出当前档案吗？';
       this.deleteConfirmVisible = true;
     },
-    // 处理批量删除
+    // 处理批量移出
     handleBatchDelete() {
-      console.log('批量删除被触发，选中行数:', this.selectedRows.length);
+      console.log('批量移出被触发，选中行数:', this.selectedRows.length);
       console.log('选中的行数据:', this.selectedRows);
 
       if (this.selectedRows.length === 0) {
@@ -966,19 +966,19 @@ export default {
       }
 
       if (!this.currentArchiveId) {
-        this.$message.error('删除失败：未选择档案');
+        this.$message.error('批量移出失败：未选择档案');
         return;
       }
 
       this.deleteType = 'batch';
-      this.deleteConfirmMessage = `确定要删除选中的 ${this.selectedRows.length} 条记录吗？`;
+      this.deleteConfirmMessage = `确定要将选中的 ${this.selectedRows.length} 条预警批量移出当前档案吗？`;
       this.deleteConfirmVisible = true;
     },
-    // 确认删除 - 调用后端API
+    // 确认移出档案 - 调用后端API
     async confirmDelete() {
       try {
         if (this.deleteType === 'single') {
-          // 单条删除 - 从档案中移除预警关联
+          // 单条移出档案 - 解除档案与预警的关联
           console.log('🗑️ 移除预警关联:', {
             archiveId: this.currentArchiveId,
             alertId: this.deleteId
@@ -989,19 +989,19 @@ export default {
           // 适配API响应格式
           if (response.data.code !== undefined) {
             if (response.data.code === 0) {
-              this.$message.success('已从档案中移除该预警');
+              this.$message.success('该预警已移出档案');
             } else {
-              throw new Error(response.data.msg || '移除失败');
+              throw new Error(response.data.msg || '移出档案失败');
             }
           } else {
-            this.$message.success('已从档案中移除该预警');
+            this.$message.success('该预警已移出档案');
           }
         } else {
-          // 批量删除 - 提取ID数组并逐个解除关联
+          // 批量移出 - 提取ID数组并逐个解除关联
           const recordIds = this.selectedRows.map(row => row.id);
 
           console.log('选中的行对象:', this.selectedRows);
-          console.log('提取的批量删除IDs:', recordIds);
+          console.log('提取的批量移出IDs:', recordIds);
 
           // 验证ID是否有效
           if (recordIds.some(id => id === null || id === undefined)) {
@@ -1034,9 +1034,9 @@ export default {
           }
 
           if (failCount > 0) {
-            this.$message.warning(`已成功移除 ${successCount} 条，失败 ${failCount} 条`);
+            this.$message.warning(`已成功移出 ${successCount} 条，失败 ${failCount} 条`);
           } else {
-            this.$message.success(`已成功从档案中移除 ${successCount} 条预警`);
+            this.$message.success(`已成功将 ${successCount} 条预警移出档案`);
           }
 
           this.selectedRows = [];
@@ -1045,8 +1045,8 @@ export default {
         await this.fetchAndApplyArchiveAlerts(this.currentArchiveId);
         this.deleteConfirmVisible = false;
       } catch (error) {
-        console.error('删除操作失败:', error);
-        this.$message.error('删除失败: ' + error.message);
+        console.error('移出档案操作失败:', error);
+        this.$message.error('移出档案失败: ' + error.message);
       }
     },
     // 编辑档案
@@ -1979,7 +1979,7 @@ export default {
           <div class="table-title">预警列表 - {{ archiveInfo.name }}</div>
           <div class="table-actions">
             <el-button type="danger" size="small" class="batch-delete-btn" @click="handleBatchDelete" :disabled="selectedRows.length === 0">
-              批量删除
+              批量移出
             </el-button>
             <el-button type="primary" size="small" class="add-btn" @click="addWarning">
               <i class="el-icon-plus"></i> 添加预警
@@ -2039,7 +2039,7 @@ export default {
               <template slot-scope="scope">
                 <div class="operation-buttons">
                   <el-button type="text" size="mini" @click="showDetail(scope.row)" class="operation-btn detail-btn">详情</el-button>
-                  <el-button type="text" size="mini" @click="handleDelete(scope.row.id)" class="operation-btn delete-btn">删除</el-button>
+                  <el-button type="text" size="mini" @click="handleDelete(scope.row.id)" class="operation-btn delete-btn">移出档案</el-button>
                 </div>
               </template>
             </el-table-column>
@@ -2314,8 +2314,8 @@ export default {
       </div>
     </el-dialog>
 
-    <!-- 删除确认对话框 -->
-    <el-dialog title="删除确认" :visible.sync="deleteConfirmVisible" width="25%" custom-class="delete-confirm-dialog"
+    <!-- 移出档案确认对话框 -->
+    <el-dialog title="移出档案确认" :visible.sync="deleteConfirmVisible" width="25%" custom-class="delete-confirm-dialog"
       center>
       <div class="confirm-content">
         <p>{{ deleteConfirmMessage }}</p>
@@ -3301,7 +3301,7 @@ export default {
   min-height: 80px;
 }
 
-/* 删除确认弹窗 */
+/* 操作确认弹窗 */
 ::v-deep .delete-confirm-dialog .el-dialog {
   border-radius: 4px;
   overflow: hidden;
@@ -3585,7 +3585,7 @@ export default {
 
 
 
-/* 批量删除按钮改为刷新按钮样式 */
+/* 批量移出按钮使用刷新按钮样式 */
 .page-container >>> .batch-delete-btn {
   padding: 7px 10px !important;
   margin-left: 0 !important;
