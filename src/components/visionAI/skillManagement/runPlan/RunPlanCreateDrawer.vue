@@ -699,6 +699,7 @@ export default {
       form: defaultForm(),
       skillOptions: [],
       skillParamFields: [],
+      skillParamsReady: false,
       skillParamsLoading: false,
       skillNeedsFence: true,
       skillNeedsTripwire: false,
@@ -918,6 +919,7 @@ export default {
         alertConfig.merge_immediate_levels = normalizeImmediateLevels(alertConfig.merge_immediate_levels);
         this.form.alert_config = alertConfig;
         this.skillParamFields = [];
+        this.skillParamsReady = false;
         this.skillParamsLoading = false;
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
@@ -1088,6 +1090,7 @@ export default {
         this.form.skill_class_id = '';
         this.form.skill_params = {};
         this.skillParamFields = [];
+        this.skillParamsReady = true;
         this.skillParamsLoading = false;
         this.skillNeedsFence = false;
         this.skillNeedsTripwire = false;
@@ -1158,6 +1161,8 @@ export default {
           }
         });
         this.skillParamFields = fields;
+        this.skillParamsReady = true;
+        this.pruneSkillParamsToCurrentFields();
         const roiInfo = this.computeRoiInfo(detail);
         this.skillNeedsFence = roiInfo.needsFence;
         this.fenceMultipleRoi = roiInfo.multiple;
@@ -1183,6 +1188,7 @@ export default {
       } catch (e) {
         console.warn('加载技能参数失败', e);
         this.skillParamFields = [];
+        this.skillParamsReady = false;
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
         this.fenceRequired = false;
@@ -1193,6 +1199,30 @@ export default {
       } finally {
         this.skillParamsLoading = false;
       }
+    },
+    pruneSkillParamsToCurrentFields() {
+      const keep = {};
+      (this.skillParamFields || []).forEach(p => {
+        if (!p || !p.key) return;
+        if (Object.prototype.hasOwnProperty.call(this.form.skill_params || {}, p.key)) {
+          keep[p.key] = this.form.skill_params[p.key];
+        }
+      });
+      this.form.skill_params = keep;
+    },
+    pickCurrentSkillParams() {
+      if (!this.skillParamsReady) {
+        return Object.assign({}, this.form.skill_params || {});
+      }
+      const src = this.form.skill_params || {};
+      const out = {};
+      (this.skillParamFields || []).forEach(p => {
+        if (!p || !p.key) return;
+        if (Object.prototype.hasOwnProperty.call(src, p.key)) {
+          out[p.key] = src[p.key];
+        }
+      });
+      return out;
     },
     // 技能输入声明了什么就绘制什么：开始节点声明 ROI → 多边形围栏；声明 Tripwire → 绊线。
     // 非技能图（传统视觉技能）无法判断，保持显示围栏配置（仅多边形）。
@@ -1377,7 +1407,7 @@ export default {
         enabled: this.form.enabled,
         run_cycle: this.form.run_cycle,
         frame_extraction: this.form.frame_extraction,
-        skill_params: this.form.skill_params,
+        skill_params: this.pickCurrentSkillParams(),
         alert_name: this.form.alert_name,
         alert_level: this.form.alert_level === '' ? 0 : this.form.alert_level,
         alert_config: alertConfig,
@@ -1592,6 +1622,7 @@ export default {
       this.step = 0;
       this.form = defaultForm();
       this.skillParamFields = [];
+      this.skillParamsReady = false;
       this.skillParamsLoading = false;
       this.alertNameTouched = false;
       this.mergeAdvancedOpen = false;
