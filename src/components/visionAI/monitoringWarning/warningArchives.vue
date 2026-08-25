@@ -49,6 +49,8 @@ export default {
         pageSize: 20,
         total: 0
       },
+      archiveSearchKeyword: '',
+      recordSearchKeyword: '',
       // 档案基本信息
       archiveInfo: {
         name: '',
@@ -346,6 +348,7 @@ export default {
       const queryParams = {
         page: this.archivesPagination.currentPage,
         limit: this.archivesPagination.pageSize,
+        keyword: this.archiveSearchKeyword.trim() || undefined,
         ...params
       };
       const response = await archiveAPI.getArchiveList(queryParams);
@@ -438,7 +441,12 @@ export default {
       if (!archiveId) return;
 
       const limit = Math.min(this.pagination.pageSize, 100);
-      const queryParams = { page: this.pagination.currentPage, limit, ...params };
+      const queryParams = {
+        page: this.pagination.currentPage,
+        limit,
+        keyword: this.recordSearchKeyword.trim() || undefined,
+        ...params
+      };
 
       const response = await archiveAPI.getArchiveLinkedAlerts(archiveId, queryParams);
       const { alertRecords, totalCount } = this.parseArchiveAlertsResponse(response);
@@ -629,6 +637,18 @@ export default {
       this.archivesPagination.pageSize = size;
       this.archivesPagination.currentPage = 1;
       await this.reloadArchivesList();
+    },
+    async handleArchivesSearch() {
+      this.archiveSearchKeyword = this.archiveSearchKeyword.trim();
+      this.archivesPagination.currentPage = 1;
+      await this.reloadArchivesList();
+    },
+    async handleRecordSearch() {
+      this.recordSearchKeyword = this.recordSearchKeyword.trim();
+      this.pagination.currentPage = 1;
+      if (this.currentArchiveId) {
+        await this.fetchAndApplyArchiveAlerts(this.currentArchiveId);
+      }
     },
     // 表格选择事件
     handleSelectionChange(selection) {
@@ -1893,6 +1913,20 @@ export default {
           </div>
         </div>
 
+        <div class="archive-search">
+          <el-input
+            v-model="archiveSearchKeyword"
+            size="small"
+            clearable
+            placeholder="搜索档案编号、名称、位置或描述"
+            aria-label="搜索档案"
+            @keyup.enter.native="handleArchivesSearch"
+            @clear="handleArchivesSearch"
+          >
+            <el-button slot="append" icon="el-icon-search" aria-label="搜索" @click="handleArchivesSearch" />
+          </el-input>
+        </div>
+
         <!-- 档案列表 -->
         <div class="archives-list">
           <div
@@ -1919,6 +1953,9 @@ export default {
                 <i class="el-icon-delete"></i>
               </el-button>
             </div>
+          </div>
+          <div v-if="archivesList.length === 0" class="archive-empty">
+            {{ archiveSearchKeyword ? '未找到匹配的档案' : '暂无档案' }}
           </div>
         </div>
 
@@ -1978,6 +2015,18 @@ export default {
         <div class="table-header">
           <div class="table-title">预警列表 - {{ archiveInfo.name }}</div>
           <div class="table-actions">
+            <el-input
+              v-model="recordSearchKeyword"
+              class="record-search"
+              size="small"
+              clearable
+              placeholder="搜索预警编号、名称、设备等"
+              aria-label="搜索档案内预警记录"
+              @keyup.enter.native="handleRecordSearch"
+              @clear="handleRecordSearch"
+            >
+              <el-button slot="append" icon="el-icon-search" aria-label="搜索" @click="handleRecordSearch" />
+            </el-input>
             <el-button type="danger" size="small" class="batch-delete-btn" @click="handleBatchDelete" :disabled="selectedRows.length === 0">
               批量移出
             </el-button>
@@ -1989,7 +2038,12 @@ export default {
 
         <!-- 表格卡片 -->
         <div class="table-section">
-          <el-table :data="archiveList" @selection-change="handleSelectionChange" style="width: 100%">
+          <el-table
+            :data="archiveList"
+            :empty-text="recordSearchKeyword ? '未找到匹配的预警记录' : '暂无预警记录'"
+            @selection-change="handleSelectionChange"
+            style="width: 100%"
+          >
             <el-table-column type="selection" width="55" align="center"></el-table-column>
             <el-table-column label="序号" prop="id" width="80" align="center"></el-table-column>
             <el-table-column label="预警名称" prop="name" min-width="120" align="center"></el-table-column>
@@ -2438,7 +2492,12 @@ export default {
 
 .table-actions {
   display: flex;
+  align-items: center;
   gap: 10px;
+}
+
+.record-search {
+  width: 260px;
 }
 
 /* 表格区域 */
@@ -2724,11 +2783,27 @@ export default {
 }
 
 /* 档案列表样式 */
+.archive-search {
+  padding: 10px 10px 2px;
+}
+
+.archive-search >>> .el-input-group__append,
+.record-search >>> .el-input-group__append {
+  padding: 0 14px;
+}
+
 .archives-list {
   flex: 1;
   overflow-y: auto;
   padding: 0 10px;
   min-height: 0;
+}
+
+.archive-empty {
+  padding: 28px 12px;
+  color: #909399;
+  font-size: 14px;
+  text-align: center;
 }
 
 /* 档案分页样式 */
@@ -2740,7 +2815,31 @@ export default {
 
 .archives-pagination >>> .el-pagination {
   display: flex;
+  align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
+  row-gap: 8px;
+  padding: 0;
+  white-space: normal;
+}
+
+.archives-pagination >>> .el-pagination__jump {
+  flex: 0 0 auto;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.archives-pagination >>> .el-pagination__editor.el-input,
+.pagination >>> .el-pagination__editor.el-input {
+  width: 52px;
+}
+
+.archives-pagination >>> .el-pagination__editor .el-input__inner,
+.pagination >>> .el-pagination__editor .el-input__inner {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 6px;
+  text-align: center;
 }
 
 .archives-pagination >>> .el-pagination .el-pager li {
@@ -3138,7 +3237,17 @@ export default {
 }
 
 .pagination >>> .el-pagination {
+  display: flex;
+  align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
+  row-gap: 8px;
+  white-space: normal;
+}
+
+.pagination >>> .el-pagination__jump {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .pagination >>> .el-pagination .el-pager li {

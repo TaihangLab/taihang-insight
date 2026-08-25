@@ -3049,6 +3049,7 @@ export const archiveAPI = {
    * @param {Object} params - 查询参数
    * @param {number} [params.page=1] - 当前页码，从1开始
    * @param {number} [params.limit=20] - 每页记录数
+   * @param {string} [params.keyword] - 档案关键词（编号、名称、位置或描述）
    * @param {string} [params.name] - 档案名称过滤（模糊匹配）
    * @param {string} [params.location] - 位置过滤（模糊匹配）
    * @param {number} [params.status] - 档案状态过滤（1=正常，2=归档，3=删除）
@@ -3666,6 +3667,7 @@ export const archiveAPI = {
    * @param {Object} params - 查询参数
    * @param {number} [params.page=1] - 页码
    * @param {number} [params.limit=20] - 每页条数
+   * @param {string} [params.keyword] - 预警记录关键词
    * @param {number} [params.alert_level] - 预警等级筛选
    * @param {string} [params.alert_type] - 预警类型筛选
    * @param {number} [params.status] - 处理状态筛选
