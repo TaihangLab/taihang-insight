@@ -2251,7 +2251,7 @@ export default {
           minio_video_url: this.getWarningVideoUrl(apiWarning) || null,
           minio_frame_url: this.getWarningImageUrl(apiWarning) || null,
           description: apiWarning.alert_description || '无描述信息',
-          operationHistory: this.convertProcessHistory(apiWarning.process, apiWarning.status, this.formatAPITime(apiWarning.alert_time), apiWarning.processed_by, this.formatAPITime(apiWarning.processed_at), apiWarning.processing_notes) || [],
+          operationHistory: this.convertProcessHistory(apiWarning.process, apiWarning.status, this.formatAPITime(apiWarning.alert_time), apiWarning.processed_by, this.formatAPITime(apiWarning.resolved_at || apiWarning.processed_at), apiWarning.processing_notes) || [],
           // 添加额外的API数据字段
           taskId: apiWarning.task_id || null,
           task_id: apiWarning.task_id || null,  // 合并图片URL拼接需要

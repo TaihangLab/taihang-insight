@@ -396,7 +396,7 @@ export default {
           item.status,
           this.formatApiTime(item.alert_time),
           item.processed_by,
-          this.formatApiTime(item.processed_at),
+          this.formatApiTime(item.resolved_at || item.processed_at),
           item.processing_notes
         );
 

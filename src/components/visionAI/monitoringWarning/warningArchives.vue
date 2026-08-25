@@ -752,7 +752,7 @@ export default {
           id: Date.now() + 2,
           status: 'completed',
           statusText: '已处理',
-          time: this.formatApiTime(apiData.processed_at || apiData.updated_at),
+          time: this.formatApiTime(apiData.resolved_at || apiData.processed_at || apiData.updated_at),
           description: `预警处理已完成${apiData.processing_notes ? '，处理意见：' + apiData.processing_notes : ''}`,
           operationType: 'completed',
           operator: apiData.processed_by || '处理人员'
@@ -774,7 +774,7 @@ export default {
           id: Date.now() + 2,
           status: 'completed',
           statusText: '误报',
-          time: this.formatApiTime(apiData.processed_at || apiData.updated_at),
+          time: this.formatApiTime(apiData.updated_at),
           description: '预警已标记为误报',
           operationType: 'false_alarm',
           operator: apiData.processed_by || '管理员'
@@ -1553,7 +1553,7 @@ export default {
           history.push({
             type: 'process',
             title: '预警处理',
-            time: alert.processed_at || alert.alert_time,
+            time: alert.resolved_at || alert.processed_at || alert.alert_time,
             content: '预警已处理完成',
             operator: alert.processed_by || '系统',
             icon: 'success',
