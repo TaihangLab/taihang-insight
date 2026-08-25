@@ -25,6 +25,7 @@ export function formatApiError(e, fallback) {
   const data = e.response.data || {};
   const detail = data.detail;
   if (typeof detail === 'string' && detail) return detail;
+  if (detail && typeof detail === 'object' && detail.message) return detail.message;
   if (Array.isArray(detail) && detail.length) {
     return detail.map(d => (d && d.msg) || JSON.stringify(d)).join('；');
   }
@@ -67,6 +68,10 @@ visionAIAxios.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // 处理认证失败
       console.log('认证失败，请重新登录');
+    }
+    if (error.response && error.response.status === 409) {
+      // 将后端结构化并发冲突信息透传给页面提示。
+      error.message = formatApiError(error, '预警状态已变化，请刷新后重试');
     }
     return Promise.reject(error);
   }
@@ -1866,6 +1871,7 @@ export const alertAPI = {
    * @param {number} alertId - 预警ID
    * @param {Object} updateData - 更新数据
    * @param {number} [updateData.status] - 状态（1-待处理, 2-处理中, 3-已处理）
+   * @param {number} updateData.expected_status - 页面读取到的当前状态（并发控制）
    * @param {string} [updateData.processing_notes] - 处理备注
    * @param {string} [updateData.processed_by] - 处理人
    * @returns {Promise} 包含更新结果的Promise对象
@@ -1874,6 +1880,10 @@ export const alertAPI = {
     if (!alertId) {
       console.error('更新预警状态失败: 缺少预警ID');
       return Promise.reject(new Error('缺少预警ID'));
+    }
+    if (!updateData || updateData.expected_status == null) {
+      console.error('更新预警状态失败: 缺少 expected_status');
+      return Promise.reject(new Error('缺少预警期望状态，请刷新页面后重试'));
     }
 
     console.log('更新预警状态:', alertId, updateData);
@@ -1904,7 +1914,7 @@ export const alertAPI = {
    * @param {string} reason - 重新处理原因（必填）
    * @returns {Promise} 包含状态变更及完成/重新打开时间的Promise对象
    */
-  reopenAlert(alertId, reason) {
+  reopenAlert(alertId, reason, expectedStatus = 3) {
     const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
     if (!alertId) {
       return Promise.reject(new Error('缺少预警ID'));
@@ -1915,6 +1925,7 @@ export const alertAPI = {
 
     return this.updateAlertStatus(alertId, {
       status: 2,
+      expected_status: expectedStatus,
       processing_notes: normalizedReason
     });
   },
@@ -1929,6 +1940,10 @@ export const alertAPI = {
     if (!alertIds || alertIds.length === 0) {
       console.error('批量更新预警状态失败: 缺少预警ID');
       return Promise.reject(new Error('缺少预警ID'));
+    }
+    if (!updateData || (updateData.expected_status == null && !updateData.expected_statuses)) {
+      console.error('批量更新预警状态失败: 缺少 expected_status');
+      return Promise.reject(new Error('缺少预警期望状态，请刷新页面后重试'));
     }
 
     console.log('批量更新预警状态:', alertIds, updateData);

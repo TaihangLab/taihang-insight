@@ -876,11 +876,38 @@ export default {
           processed_by: this.getCurrentUserName()
         }
 
-        // 将页面ID转换为数字类型的API ID
+        // 将页面ID转换为API ID，同时携带每条预警在页面中读取到的状态。
+        // 后端会在行锁内逐条校验，避免其他操作人已更新后继续覆盖。
+        const expectedStatuses = {}
+        const pageStatusMap = {
+          pending: 1,
+          processing: 2,
+          completed: 3,
+          archived: 4,
+          false_alarm: 5
+        }
         const apiAlertIds = this.selectedWarnings.map(id => {
           const warning = this.warningList.find(item => item.id === id)
-          return warning && warning._apiData ? warning._apiData.alert_id : parseInt(id)
+          const apiAlertId = warning && warning._apiData
+            ? Number(warning._apiData.alert_id)
+            : parseInt(id)
+          const expectedStatus = warning && warning._apiData
+            ? Number(warning._apiData.status)
+            : pageStatusMap[warning && warning.status]
+          if (!isNaN(apiAlertId) && expectedStatus) {
+            expectedStatuses[String(apiAlertId)] = expectedStatus
+          }
+          return apiAlertId
         }).filter(id => !isNaN(id))
+
+        const missingExpectedStatus = apiAlertIds.some(
+          alertId => expectedStatuses[String(alertId)] == null
+        )
+        if (missingExpectedStatus) {
+          this.$message.error('部分预警缺少当前状态，请刷新页面后重试')
+          return
+        }
+        updateData.expected_statuses = expectedStatuses
 
         console.log('批量处理预警:', apiAlertIds, updateData)
 
@@ -939,7 +966,21 @@ export default {
         this.closeBatchProcessDialog()
       } catch (error) {
         console.error('批量处理失败:', error)
-        this.$message.error('批量处理失败：' + (error.message || '网络错误'))
+        if (error.response && error.response.status === 409) {
+          const detail = error.response.data && error.response.data.detail
+          const resultData = detail && detail.data
+          const successCount = resultData ? resultData.success_count : 0
+          const conflictCount = resultData ? resultData.conflict_count : 0
+          this.$message.warning(
+            `${error.message}（${successCount} 项成功，${conflictCount} 项冲突）`
+          )
+          // 批量接口允许部分成功，冲突后必须刷新以同步已提交的项目。
+          await this.getWarningList()
+          this.selectedWarnings = []
+          this.closeBatchProcessDialog()
+        } else {
+          this.$message.error('批量处理失败：' + (error.message || '网络错误'))
+        }
       } finally {
         this.loading = false
       }
@@ -1347,8 +1388,16 @@ export default {
 
         // 准备API更新数据
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(warningId)
+        const expectedStatus = warning._apiData
+          ? Number(warning._apiData.status)
+          : ({ pending: 1, processing: 2, completed: 3, archived: 4, false_alarm: 5 })[warning.status]
+        if (!expectedStatus) {
+          this.$message.error('无法确定预警当前状态，请刷新页面后重试')
+          return
+        }
         const updateData = {
           status: 2, // 处理中状态
+          expected_status: expectedStatus,
           processing_notes: this.remarkForm.remark,
           processed_by: this.getCurrentUserName()
         }
@@ -1434,7 +1483,11 @@ export default {
 
       try {
         this.loading = true
-        const response = await alertAPI.reopenAlert(warning._apiData.alert_id, reason)
+        const response = await alertAPI.reopenAlert(
+          warning._apiData.alert_id,
+          reason,
+          Number(warning._apiData.status)
+        )
         if (!response.data || response.data.code !== 0) {
           throw new Error((response.data && response.data.msg) || '重新处理失败')
         }
@@ -1840,8 +1893,16 @@ export default {
 
         // 准备API更新数据
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(warningId)
+        const expectedStatus = warning._apiData
+          ? Number(warning._apiData.status)
+          : ({ pending: 1, processing: 2, completed: 3, archived: 4, false_alarm: 5 })[warning.status]
+        if (!expectedStatus) {
+          this.$message.error('无法确定预警当前状态，请刷新页面后重试')
+          return
+        }
         const updateData = {
           status: 3, // 已处理状态
+          expected_status: expectedStatus,
           processing_notes: this.remarkForm.remark.trim() || null,
           processed_by: this.getCurrentUserName()
         }

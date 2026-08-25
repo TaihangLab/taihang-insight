@@ -1003,6 +1003,7 @@ export default {
         this.loading = true;
         const updateData = {
           status: 2,
+          expected_status: Number(this.detail.status),
           processing_notes: this.remarkForm.remark,
           processed_by: this.getCurrentUserName()
         };
@@ -1042,6 +1043,7 @@ export default {
         this.loading = true;
         const updateData = {
           status: 3,
+          expected_status: Number(this.detail.status),
           processing_notes: this.remarkForm.remark.trim() || null,
           processed_by: this.getCurrentUserName()
         };
@@ -1112,7 +1114,11 @@ export default {
 
       try {
         this.loading = true;
-        const response = await alertAPI.reopenAlert(this.detail.alert_id, reason);
+        const response = await alertAPI.reopenAlert(
+          this.detail.alert_id,
+          reason,
+          Number(this.detail.status)
+        );
         if (!response.data || response.data.code !== 0) {
           throw new Error((response.data && response.data.msg) || '重新处理失败');
         }

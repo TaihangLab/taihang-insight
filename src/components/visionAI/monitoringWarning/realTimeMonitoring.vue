@@ -1103,15 +1103,28 @@ export default {
 
         console.log('📝 保存处理意见:', this.currentProcessingWarningId, this.remarkForm.remark);
 
+        const currentWarning = this.warningList.find(item =>
+          String(item.id) === String(this.currentProcessingWarningId)
+        );
+        const expectedStatus = currentWarning && currentWarning._apiData
+          ? Number(currentWarning._apiData.status)
+          : null;
+        if (!expectedStatus) {
+          this.$message.error('无法确定预警当前状态，请刷新页面后重试');
+          return;
+        }
+        const apiAlertId = currentWarning._apiData.alert_id || currentWarning.id;
+
         // 真实的API调用 - 添加处理记录
         const updateData = {
           status: 2, // 保持处理中状态
+          expected_status: expectedStatus,
           processing_notes: this.remarkForm.remark,
           processed_by: this.getCurrentUserName(),
           operation_type: 'add_processing_note'
         };
 
-        const response = await alertAPI.updateAlertStatus(this.currentProcessingWarningId, updateData);
+        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
         console.log('✅ 处理意见保存成功:', response);
 
         // 🔧 从后端响应中获取实际的操作人名字
@@ -1157,15 +1170,28 @@ export default {
 
         console.log('🏁 结束处理预警:', this.currentProcessingWarningId);
 
+        const currentWarning = this.warningList.find(item =>
+          String(item.id) === String(this.currentProcessingWarningId)
+        );
+        const expectedStatus = currentWarning && currentWarning._apiData
+          ? Number(currentWarning._apiData.status)
+          : null;
+        if (!expectedStatus) {
+          this.$message.error('无法确定预警当前状态，请刷新页面后重试');
+          return;
+        }
+        const apiAlertId = currentWarning._apiData.alert_id || currentWarning.id;
+
         // 真实的API调用 - 完成处理
         const updateData = {
           status: 3, // 已处理状态
+          expected_status: expectedStatus,
           processing_notes: this.remarkForm.remark.trim() || null,
           processed_by: this.getCurrentUserName(),
           operation_type: 'complete_processing'
         };
 
-        const response = await alertAPI.updateAlertStatus(this.currentProcessingWarningId, updateData);
+        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
         console.log('✅ 处理完成状态更新成功:', response);
 
         const result = (response.data && response.data.data) || {};
