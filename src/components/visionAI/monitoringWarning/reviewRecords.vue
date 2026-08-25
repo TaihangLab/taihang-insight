@@ -879,8 +879,8 @@ export default {
     
     // 处理预警详情对话框中的上报事件
     handleReportFromDetail(warning) {
-      // 复判记录页面不需要处理上报操作
-      console.log('复判记录页面：上报操作', warning)
+      // 上报已由详情组件持久化；主状态不变，复判列表无需重载。
+      console.log('复判记录页面：预警已上报', warning)
     },
     
     // 处理预警详情对话框中的归档事件

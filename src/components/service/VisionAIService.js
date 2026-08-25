@@ -1882,6 +1882,23 @@ export const alertAPI = {
   },
 
   /**
+   * 上报预警。上报是独立动作，不改变预警主状态，状态1-5均可调用。
+   * @param {number|string} alertId - 预警ID
+   * @param {Object} reportData - 上报信息
+   * @param {string} [reportData.report_notes] - 上报说明
+   * @returns {Promise} 包含上报处理记录的Promise对象
+   */
+  reportAlert(alertId, reportData = {}) {
+    if (!alertId) {
+      return Promise.reject(new Error('缺少预警ID'));
+    }
+
+    return visionAIAxios.post(`/api/v1/alerts/${alertId}/report`, {
+      report_notes: reportData.report_notes ? String(reportData.report_notes).trim() : null
+    });
+  },
+
+  /**
    * 将已处理预警重新打开为处理中
    * @param {number} alertId - 预警ID
    * @param {string} reason - 重新处理原因（必填）

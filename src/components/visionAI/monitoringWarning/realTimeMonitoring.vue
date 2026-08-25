@@ -540,7 +540,6 @@ export default {
       videoResolutions: {},  // 视频分辨率 {index: {width, height}}
       detectionUpdateTime: {},  // 检测结果更新时间 {index: time_string}
       archiveWarningId: '',
-      reportWarningId: '',
 
       // 处理意见对话框
       remarkDialogVisible: false,
@@ -1271,11 +1270,6 @@ export default {
             // 标记为已处理
             this.warningList[index].status = 'completed';
             this.$message.success('已标记为已处理');
-          } else if (action === 'report') {
-            // 上报
-            this.reportWarningId = id;
-            this.warningList[index].status = 'reported';
-            this.$message.success('预警已成功上报');
           } else if (action === 'archive') {
             // 归档 - 需要选择档案
             this.archiveWarningId = id;
@@ -1298,9 +1292,10 @@ export default {
       }
     },
 
-    handleReportFromDialog(eventData) {
-      if (eventData && eventData.alert_id) {
-        this.handleWarning(eventData.alert_id, 'report');
+    async handleReportFromDialog(eventData) {
+      if (eventData && eventData.alert_id && eventData.action === 'reported') {
+        // 详情组件已完成上报持久化；重新加载以同步处理时间线。
+        await this.loadWarningData();
       }
     },
 

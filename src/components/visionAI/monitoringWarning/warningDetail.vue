@@ -235,6 +235,15 @@
       </div>
 
       <span slot="footer" class="dialog-footer">
+        <el-button
+          v-if="detail"
+          plain
+          :disabled="isReportDisabled()"
+          @click="handleReport"
+          class="action-btn report-btn">
+          <i :class="isReportDisabled() ? 'el-icon-check' : 'el-icon-upload'"></i>
+          {{ isReportDisabled() ? '已上报' : '上报' }}
+        </el-button>
         <template v-if="detail && detail.status === 5">
           <span class="false-alarm-status-text">
             <i class="el-icon-warning-outline"></i>
@@ -242,10 +251,6 @@
           </span>
         </template>
         <template v-else>
-          <el-button plain @click="handleReport" class="action-btn report-btn">
-            <i class="el-icon-upload"></i>
-            上报
-          </el-button>
           <el-button
             plain
             :disabled="isArchiveDisabled()"
@@ -293,11 +298,23 @@
       append-to-body>
       <div class="confirm-content">
         <p>确定要上报此预警吗？</p>
-        <p style="color: #909399; font-size: 12px;">上报后预警将提交给上级部门处理</p>
+        <p style="color: #909399; font-size: 12px;">状态保持不变，并记录一条可审计的上报记录</p>
+        <el-form :model="reportForm" label-width="84px" style="margin-top: 16px; text-align: left;">
+          <el-form-item label="上报说明">
+            <el-input
+              v-model="reportForm.notes"
+              type="textarea"
+              :rows="3"
+              maxlength="2000"
+              show-word-limit
+              placeholder="请输入上报说明（可选）"
+            />
+          </el-form-item>
+        </el-form>
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeReportDialog">取 消</el-button>
-        <el-button type="warning" @click="confirmReport">确定上报</el-button>
+        <el-button type="warning" :loading="loading" @click="confirmReport">确定上报</el-button>
       </span>
     </el-dialog>
 
@@ -667,7 +684,9 @@ export default {
       currentCameraId: '',
       // 上报相关
       reportDialogVisible: false,
-      reportWarningId: '',
+      reportForm: {
+        notes: ''
+      },
 
       // 处理意见对话框
       remarkDialogVisible: false,
@@ -954,7 +973,6 @@ export default {
         await new Promise(resolve => setTimeout(resolve, 500));
 
         if (action === 'report') {
-          this.reportWarningId = this.detail.alert_id;
           this.reportDialogVisible = true;
           return;
         } else if (action === 'archive') {
@@ -1140,6 +1158,10 @@ export default {
 
     // 上报处理
     handleReport() {
+      if (this.isReportDisabled()) {
+        this.$message.warning('该预警已上报，不能重复上报');
+        return;
+      }
       this.handleWarningAction('report');
     },
     handleArchive() {
@@ -1200,21 +1222,47 @@ export default {
 
     async confirmReport() {
       try {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        if (this.isReportDisabled()) {
+          this.$message.warning('该预警已上报，不能重复上报');
+          this.closeReportDialog();
+          return;
+        }
+
+        this.loading = true;
+        const response = await alertAPI.reportAlert(this.detail.alert_id, {
+          report_notes: this.reportForm.notes
+        });
+        if (!response.data || response.data.code !== 0) {
+          throw new Error((response.data && response.data.msg) || '上报失败');
+        }
+
+        const reportRecord = response.data.data && response.data.data.processing_record;
 
         this.addOperationRecord({
+          id: (reportRecord && reportRecord.record_id) || (Date.now() + Math.random()),
           status: 'completed',
           statusText: '预警上报',
-          time: this.getCurrentTime(),
-          description: '预警已上报给上级部门处理，等待上级部门响应',
+          time: reportRecord && reportRecord.reported_at
+            ? this.formatTime(reportRecord.reported_at)
+            : this.getCurrentTime(),
+          description: this.reportForm.notes
+            ? `预警已上报：${this.reportForm.notes}`
+            : '预警已上报',
           operationType: 'report',
-          operator: this.getCurrentUserName()
+          operator: (reportRecord && reportRecord.operator) || this.getCurrentUserName()
         });
 
-        this.$emit('handle-report', { alert_id: this.detail.alert_id });
+        this.$message.success('预警已成功上报');
+        this.$emit('handle-report', {
+          alert_id: this.detail.alert_id,
+          action: 'reported',
+          report: reportRecord
+        });
         this.closeReportDialog();
       } catch (error) {
-        this.$message.error('上报失败');
+        const serverMessage = error.response && error.response.data &&
+          (error.response.data.detail || error.response.data.message);
+        this.$message.error('上报失败：' + (serverMessage || error.message || '网络错误'));
       } finally {
         this.loading = false;
       }
@@ -1223,7 +1271,7 @@ export default {
     // 关闭上报对话框
     closeReportDialog() {
       this.reportDialogVisible = false;
-      this.reportWarningId = '';
+      this.reportForm.notes = '';
     },
 
     async confirmArchive() {
@@ -1439,13 +1487,16 @@ export default {
 
       if (processData.steps && Array.isArray(processData.steps)) {
         processData.steps.forEach(step => {
+          const stepName = step.step || '';
           allRecords.push({
             id: Date.now() + Math.random(),
             status: 'completed',
-            statusText: step.step || '处理步骤',
+            statusText: stepName || '处理步骤',
             time: this.formatTime(step.time),
             description: step.desc || '处理描述',
-            operationType: step.step === '预警产生' ? 'create' : 'process',
+            operationType: ['上报预警', '预警上报'].includes(stepName)
+              ? 'report'
+              : (stepName === '预警产生' ? 'create' : 'process'),
             operator: step.operator || '系统'
           });
         });
@@ -1508,6 +1559,19 @@ export default {
       if (!this.detail) return false;
       // status: 3=已处理, 4=已归档, 5=误报 → 禁用
       return [3, 4, 5].includes(this.detail.status);
+    },
+
+    isReportDisabled() {
+      if (!this.detail) return true;
+
+      if (this.operationHistory && this.operationHistory.some(record => record.operationType === 'report')) {
+        return true;
+      }
+
+      const steps = this.detail.process && Array.isArray(this.detail.process.steps)
+        ? this.detail.process.steps
+        : [];
+      return steps.some(step => ['上报预警', '预警上报'].includes(step.step));
     },
 
     isFalseAlarmDisabled() {

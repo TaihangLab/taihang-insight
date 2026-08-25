@@ -84,6 +84,9 @@ export default {
       // 上报确认对话框
       reportDialogVisible: false,
       reportWarningId: '',
+      reportForm: {
+        notes: ''
+      },
       
       // 归档确认对话框
       archiveDialogVisible: false,
@@ -478,13 +481,16 @@ export default {
           processData.steps.forEach((step, index) => {
             const stepName = step.step || ''
             const isCompletedStep = ['已处理', '完成预警处理'].includes(stepName)
+            const operationType = ['上报预警', '预警上报'].includes(stepName)
+              ? 'report'
+              : (stepName === '预警产生' ? 'pending' : (isCompletedStep ? 'completed' : 'processing'))
             operationHistory.push({
               id: step.id || (Date.now() + index + 100),
               status: 'completed',
               statusText: step.step || '处理中',
               time: this.formatApiTime(step.time),
               description: step.desc || step.description || '',
-              operationType: stepName === '预警产生' ? 'pending' : (isCompletedStep ? 'completed' : 'processing'),
+              operationType,
               operator: step.operator || '系统'
             })
           })
@@ -585,6 +591,11 @@ export default {
             return // 等处理意见填写完成后再继续
           } else if (action === 'report') {
             // 上报
+            if (this.isReportDisabled(this.warningList[index])) {
+              this.$message.warning('该预警已上报，不能重复上报')
+              this.loading = false
+              return
+            }
             this.reportWarningId = id
             this.reportDialogVisible = true
             return // 不关闭loading，等确认后再关闭
@@ -1476,17 +1487,26 @@ export default {
     // 确认上报
     async confirmReport() {
       try {
-        // 真实的API调用 - 上报预警
         const warning = this.warningList.find(item => item.id === this.reportWarningId);
+        if (!warning) {
+          throw new Error('未找到待上报的预警')
+        }
+        if (this.isReportDisabled(warning)) {
+          this.$message.warning('该预警已上报，不能重复上报')
+          this.closeReportDialog()
+          return
+        }
+
+        this.loading = true
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(this.reportWarningId);
-        const updateData = {
-          status: 2, // 保持处理中状态，但添加上报标记
-          processing_notes: '预警已上报给上级部门',
-          processed_by: this.getCurrentUserName()
-        };
-        
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
-        console.log('✅ 上报API调用成功:', response);
+        const response = await alertAPI.reportAlert(apiAlertId, {
+          report_notes: this.reportForm.notes
+        });
+        if (!response.data || response.data.code !== 0) {
+          throw new Error((response.data && response.data.msg) || '上报失败')
+        }
+
+        const reportRecord = response.data.data && response.data.data.processing_record
         
         // 获取当前预警
         const index = this.warningList.findIndex(item => item.id === this.reportWarningId)
@@ -1497,13 +1517,17 @@ export default {
           }
           
           const newRecord = {
-            id: Date.now() + Math.random(),
+            id: (reportRecord && reportRecord.record_id) || (Date.now() + Math.random()),
             status: 'completed',
             statusText: '预警上报',
-            time: this.getCurrentTime(),
-            description: '预警已上报给上级部门处理，等待上级部门响应',
+            time: reportRecord && reportRecord.reported_at
+              ? this.formatApiTime(reportRecord.reported_at)
+              : this.getCurrentTime(),
+            description: this.reportForm.notes
+              ? `预警已上报：${this.reportForm.notes}`
+              : '预警已上报',
             operationType: 'report',
-            operator: this.getCurrentUserName()
+            operator: (reportRecord && reportRecord.operator) || this.getCurrentUserName()
           }
           
           this.warningList[index].operationHistory.push(newRecord)
@@ -1517,7 +1541,9 @@ export default {
         // 不改变预警状态，保持预警可继续处理
       } catch (error) {
         console.error('上报失败:', error)
-        this.$message.error('上报失败')
+        const serverMessage = error.response && error.response.data &&
+          (error.response.data.detail || error.response.data.message)
+        this.$message.error('上报失败：' + (serverMessage || error.message || '网络错误'))
       } finally {
         this.loading = false
       }
@@ -1527,6 +1553,7 @@ export default {
     closeReportDialog() {
       this.reportDialogVisible = false
       this.reportWarningId = ''
+      this.reportForm.notes = ''
     },
     
     closeArchiveDialog() {
@@ -1551,9 +1578,9 @@ export default {
       }
     },
     
-    handleReportFromDetail(eventData) {
-      if (eventData && eventData.alert_id) {
-        this.handleWarning(eventData.alert_id, 'report')
+    async handleReportFromDetail(eventData) {
+      if (eventData && eventData.alert_id && eventData.action === 'reported') {
+        await this.getWarningList()
       }
     },
     
@@ -1892,40 +1919,32 @@ export default {
     
     // 检查处理按钮是否应该禁用
     isProcessingDisabled(warning) {
-      if (!warning.operationHistory || warning.operationHistory.length === 0) {
-        return false // 没有历史记录，可以处理
+      if (!warning) {
+        return true
       }
-      
-      console.log('🔒 检查处理按钮状态:', warning.id, 'status:', warning.status);
-      
-      // 优先检查API状态
-      if (warning.status === 'archived' || warning.status === 'false_alarm' || warning.status === 'completed') {
-        console.log('✅ 按API状态禁用按钮:', warning.status);
-        return true;
+
+      // 当前后端状态是处理按钮的权威依据，历史上的“已处理”记录不能覆盖重新处理后的状态。
+      if (warning._apiData && typeof warning._apiData.status !== 'undefined') {
+        return [3, 4, 5].includes(Number(warning._apiData.status))
       }
-      
-      // 如果已归档，禁用处理按钮
-      const hasArchived = warning.operationHistory.some(record => 
-        record.operationType === 'archive' || record.operationType === 'false_alarm'
-      );
-      
-      if (hasArchived) {
-        console.log('✅ 按操作历史禁用按钮: 已归档');
-        return true;
+
+      // 向后兼容没有原始API数据的列表项。
+      if (warning.status) {
+        return ['completed', 'archived', 'false_alarm'].includes(warning.status)
       }
-      
-      // 如果已完成处理，禁用处理按钮
-      const hasCompletedProcessing = warning.operationHistory.some(record => 
-        record.operationType === 'completed'
-      );
-      
-      if (hasCompletedProcessing) {
-        console.log('✅ 按操作历史禁用按钮: 已完成处理');
-        return true;
+
+      const operationHistory = Array.isArray(warning.operationHistory)
+        ? warning.operationHistory
+        : []
+      const latestStatusRecord = [...operationHistory].reverse().find(record =>
+        ['pending', 'processing', 'completed', 'archive', 'false_alarm'].includes(record.operationType)
+      )
+
+      if (!latestStatusRecord) {
+        return false
       }
-      
-      console.log('🔓 按钮可用');
-      return false;
+
+      return ['completed', 'archive', 'false_alarm'].includes(latestStatusRecord.operationType)
     },
 
     isResolvedWarning(warning) {
@@ -2004,6 +2023,19 @@ export default {
       }
       
       return true;
+    },
+
+    isReportDisabled(warning) {
+      if (!warning) return true;
+
+      const operationHistory = Array.isArray(warning.operationHistory) ? warning.operationHistory : [];
+      if (operationHistory.some(record => record.operationType === 'report')) {
+        return true;
+      }
+
+      const process = warning._apiData && warning._apiData.process;
+      const steps = process && Array.isArray(process.steps) ? process.steps : [];
+      return steps.some(step => ['上报预警', '预警上报'].includes(step.step));
     },
     
     // 获取当前预警状态
@@ -2490,9 +2522,9 @@ export default {
                       size="mini" 
                       class="action-btn report-btn"
                       @click.stop="handleWarning(item.id, 'report')"
-                      :disabled="isProcessingDisabled(item)"
+                      :disabled="isReportDisabled(item)"
                     >
-                      上报
+                      {{ isReportDisabled(item) ? '已上报' : '上报' }}
                     </el-button>
                     
                     <el-button 
@@ -2746,11 +2778,23 @@ export default {
     >
       <div class="confirm-content">
         <p>确定要上报此预警吗？</p>
-        <p style="color: #909399; font-size: 12px;">上报后预警将提交给上级部门处理</p>
+        <p style="color: #909399; font-size: 12px;">状态保持不变，并记录一条可审计的上报记录</p>
+        <el-form :model="reportForm" label-width="84px" style="margin-top: 16px; text-align: left;">
+          <el-form-item label="上报说明">
+            <el-input
+              v-model="reportForm.notes"
+              type="textarea"
+              :rows="3"
+              maxlength="2000"
+              show-word-limit
+              placeholder="请输入上报说明（可选）"
+            />
+          </el-form-item>
+        </el-form>
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeReportDialog">取 消</el-button>
-        <el-button type="warning" @click="confirmReport">确定上报</el-button>
+        <el-button type="warning" :loading="loading" @click="confirmReport">确定上报</el-button>
       </span>
     </el-dialog>
     
