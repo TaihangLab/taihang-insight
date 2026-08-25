@@ -551,13 +551,8 @@ export default {
           })
         }
 
-        // 统一按时间排序（最新的在最下面，时间正序）
-        operationHistory.sort((a, b) => {
-          const timeA = new Date(a.time).getTime()
-          const timeB = new Date(b.time).getTime()
-          if (isNaN(timeA) || isNaN(timeB)) return 0
-          return timeA - timeB
-        })
+        // process.steps 已由后端按权威记录顺序返回，不再按时间二次排序。
+        // 历史上还原复判曾以 UTC 写入，按时间排序会把最新操作移到前面。
 
         return operationHistory
       } catch (error) {

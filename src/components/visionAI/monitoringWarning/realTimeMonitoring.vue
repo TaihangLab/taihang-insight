@@ -2785,16 +2785,9 @@ export default {
           });
         }
 
-        // 🔧 统一按时间排序（最新的在最下面，时间正序）
-        operationHistory.sort((a, b) => {
-          const timeA = new Date(a.time).getTime();
-          const timeB = new Date(b.time).getTime();
-          // 如果时间无效，保持原有顺序
-          if (isNaN(timeA) || isNaN(timeB)) return 0;
-          return timeA - timeB; // 升序排列，最新的在最下面
-        });
-
-        console.log('📋 最终操作历史(已排序):', operationHistory);
+        // process.steps 已由后端按权威记录顺序返回，保持该顺序。
+        // 避免旧的 UTC 还原复判时间将最新操作错排到前面。
+        console.log('📋 最终操作历史:', operationHistory);
         return operationHistory;
 
       } catch (error) {
