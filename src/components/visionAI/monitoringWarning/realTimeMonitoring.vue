@@ -1692,18 +1692,22 @@ export default {
 
         const warningInfo = this.warningList[warningIndex];
 
-        // 检查预警状态，只有待处理状态才能标记为误报
-        if (warningInfo._apiData && warningInfo._apiData.status !== 1) {
+        // 待处理、处理中均可标记误报（与后端一致）
+        if (warningInfo._apiData) {
+          const s = Number(warningInfo._apiData.status);
+          if (s !== 1 && s !== 2) {
           const statusNames = {
+            1: '待处理',
             2: '处理中',
             3: '已处理',
             4: '已归档',
             5: '误报'
           };
           const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态';
-          this.$message.warning(`只有待处理状态的预警才能标记为误报，当前状态为：${currentStatusName}`);
+          this.$message.warning(`只有待处理或处理中状态的预警才能标记为误报，当前状态为：${currentStatusName}`);
           this.closeFalseAlarmDialog();
           return;
+          }
         }
 
         // 调用后端API标记误报

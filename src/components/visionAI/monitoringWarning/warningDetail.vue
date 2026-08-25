@@ -1446,8 +1446,8 @@ export default {
 
     isFalseAlarmDisabled() {
       if (!this.detail) return true;
-      // 只有 status=1（待处理）时才能点击误报
-      return this.detail.status !== 1;
+      const s = Number(this.detail.status);
+      return s !== 1 && s !== 2;
     },
 
     isArchiveDisabled() {

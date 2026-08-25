@@ -1546,16 +1546,17 @@ export default {
         
         const warningInfo = this.warningList[warningIndex]
         
-        // 检查预警状态，只有待处理状态才能标记为误报
-        if (warningInfo._apiData && warningInfo._apiData.status !== 1) {
+        // 检查预警状态：待处理、处理中均可标记误报（与后端 _can_mark_false_alarm 一致）
+        if (warningInfo._apiData && !this.canMarkFalseAlarm(warningInfo._apiData.status)) {
           const statusNames = {
+            1: '待处理',
             2: '处理中',
             3: '已处理',
             4: '已归档',
             5: '误报'
           }
           const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态'
-          this.$message.warning(`只有待处理状态的预警才能标记为误报，当前状态为：${currentStatusName}`)
+          this.$message.warning(`只有待处理或处理中状态的预警才能标记为误报，当前状态为：${currentStatusName}`)
           this.falseAlarmDialogVisible = false
           this.falseAlarmForm.reviewNotes = ''
           return
@@ -1981,26 +1982,21 @@ export default {
       return false
     },
     
-    // 检查误报按钮是否应该禁用（只有待处理状态才能标记为误报）
+    // 与后端 _can_mark_false_alarm 一致：待处理(1)、处理中(2) 可标记误报
+    canMarkFalseAlarm(status) {
+      const s = Number(status)
+      return s === 1 || s === 2
+    },
+
+    // 检查误报按钮是否应该禁用
     isFalseAlarmDisabled(warning) {
-      // 检查 _apiData 中的原始状态
       if (warning._apiData && warning._apiData.status !== undefined) {
-        // status === 1 表示待处理状态，只有待处理状态才能标记误报
-        const isDisabled = warning._apiData.status !== 1;
-        console.log('🚫 检查误报按钮状态:', warning.id, 'API status:', warning._apiData.status, 'disabled:', isDisabled);
-        return isDisabled;
+        return !this.canMarkFalseAlarm(warning._apiData.status)
       }
-      
-      // 检查字符串状态
       if (warning.status) {
-        const isDisabled = warning.status !== 'pending';
-        console.log('🚫 检查误报按钮状态:', warning.id, 'status:', warning.status, 'disabled:', isDisabled);
-        return isDisabled;
+        return warning.status !== 'pending' && warning.status !== 'processing'
       }
-      
-      // 默认禁用（安全起见）
-      console.log('🚫 误报按钮默认禁用:', warning.id);
-      return true;
+      return true
     },
     
     // 获取当前预警状态
@@ -2501,14 +2497,21 @@ export default {
                       归档
                     </el-button>
                     
-                    <el-button 
-                      size="mini" 
-                      class="action-btn false-alarm-btn"
-                      @click.stop="handleWarning(item.id, 'false_alarm')"
-                      :disabled="isFalseAlarmDisabled(item)"
-                    >
-                      误报
-                    </el-button>
+                    <el-tooltip
+                      :disabled="!isFalseAlarmDisabled(item)"
+                      content="已处理、已归档或已标记误报的预警不能再点误报"
+                      placement="top">
+                      <span class="false-alarm-btn-wrap" @click.stop>
+                        <el-button
+                          size="mini"
+                          class="action-btn false-alarm-btn"
+                          @click.stop="handleWarning(item.id, 'false_alarm')"
+                          :disabled="isFalseAlarmDisabled(item)"
+                        >
+                          误报
+                        </el-button>
+                      </span>
+                    </el-tooltip>
                     
                     <el-button 
                       size="mini" 
@@ -3310,6 +3313,10 @@ export default {
   padding: 4px 10px;
   font-size: 12px;
   min-width: auto;
+}
+
+.false-alarm-btn-wrap {
+  display: inline-block;
 }
 
 /* 底部按钮样式 - 统一样式 */
