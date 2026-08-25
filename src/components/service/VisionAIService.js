@@ -1726,6 +1726,7 @@ export const alertAPI = {
    * @param {number} [params.task_id] - 任务ID过滤
    * @param {string} [params.location] - 位置过滤（模糊匹配）
    * @param {number} [params.status] - 状态过滤（1-待处理, 2-处理中, 3-已处理）
+   * @param {boolean} [params.active_only=false] - 仅返回待处理和处理中预警
    * @param {string} [params.start_date] - 开始日期（YYYY-MM-DD）
    * @param {string} [params.end_date] - 结束日期（YYYY-MM-DD）
    * @param {string} [params.start_time] - 开始时间（HH:MM:SS）

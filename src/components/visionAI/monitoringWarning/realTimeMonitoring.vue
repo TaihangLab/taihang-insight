@@ -2194,7 +2194,8 @@ export default {
         const params = {
           page: this.currentPage,
           limit: this.pageSize,
-          // 默认只获取最近的预警，按时间倒序
+          // 后端先限定待处理/处理中，再按时间倒序分页。
+          active_only: true,
         };
 
         const response = await alertAPI.getRealTimeAlerts(params);
@@ -2215,7 +2216,7 @@ export default {
 
           const convertedWarnings = apiWarnings.map(warning =>
             this.convertAPIWarningToFrontend(warning)
-          ).filter(warning => warning !== null && !this.isProcessedStatus(warning.status));
+          ).filter(warning => warning !== null);
 
           // 更新预警列表
           this.warningList = convertedWarnings;
@@ -2437,6 +2438,7 @@ export default {
         const params = {
           page: this.currentPage,
           limit: this.pageSize,
+          active_only: true,
         };
 
         const response = await alertAPI.getRealTimeAlerts(params);
