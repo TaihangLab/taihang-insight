@@ -511,6 +511,7 @@ export default {
       currentDateTime: '',
       // 定时更新器
       timer: null,
+      aiTaskPollTimer: null,
       // 视频URL数组
       videoUrl: [],
       // 视频提示信息
@@ -631,6 +632,7 @@ export default {
     // 启动时间更新定时器
     this.updateDateTime();
     this.timer = setInterval(this.updateDateTime, 1000);
+    this.aiTaskPollTimer = setInterval(this.refreshPlayingCameraAITasks, 5000);
 
     // 添加键盘事件监听器，用于ESC键退出全屏
     document.addEventListener('keydown', this.handleKeyDown);
@@ -668,6 +670,10 @@ export default {
     this.exitFullscreen();
     document.body.classList.remove('camera-fullscreen-mode');
     clearInterval(this.timer);
+    if (this.aiTaskPollTimer) {
+      clearInterval(this.aiTaskPollTimer);
+      this.aiTaskPollTimer = null;
+    }
 
     this.cleanupSSEConnection();
 
@@ -2995,6 +3001,14 @@ export default {
       } catch (error) {
         console.error(`❌ 获取摄像头AI任务列表失败:`, error)
       }
+    },
+
+    refreshPlayingCameraAITasks() {
+      const ids = Object.values(this.cameraIdMapping || {}).filter(
+        id => id != null && id !== ''
+      )
+      const unique = [...new Set(ids.map(id => String(id)))]
+      unique.forEach(id => this.loadAvailableAITasks(id))
     },
     
     /**
