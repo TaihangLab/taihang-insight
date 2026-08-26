@@ -2089,7 +2089,7 @@ export default {
                 </span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="120" align="center">
+            <el-table-column label="操作" width="140" align="center">
               <template slot-scope="scope">
                 <div class="operation-buttons">
                   <el-button type="text" size="mini" @click="showDetail(scope.row)" class="operation-btn detail-btn">详情</el-button>
@@ -3194,6 +3194,9 @@ export default {
 }
 
 .operation-btn {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  white-space: nowrap;
   padding: 4px 8px !important;
   font-size: 12px !important;
   line-height: 1.2 !important;
@@ -3215,6 +3218,7 @@ export default {
 }
 
 .operation-btn.delete-btn {
+  min-width: 66px !important;
   color: #dc2626 !important;
   border: 1px solid #dc2626 !important;
   background: transparent !important;

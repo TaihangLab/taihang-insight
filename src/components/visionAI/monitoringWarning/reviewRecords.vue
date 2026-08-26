@@ -67,7 +67,7 @@ export default {
       pagination: {
         currentPage: 1,
         pageSize: 12,
-        total: 325
+        total: 0
       },
       
       // 加载状态
@@ -337,18 +337,31 @@ export default {
             }
           })
           
-          if (response.data.pagination) {
-            this.pagination.total = response.data.pagination.total
-          }
+          const total = response.data.pagination
+            ? Number(response.data.pagination.total)
+            : this.reviewList.length
+          this.pagination.total = Number.isFinite(total) && total >= 0 ? total : 0
+          this.cardHoverStates = {}
+          return true
         } else {
           console.error('获取复判记录失败:', response.data && response.data.msg)
+          this.reviewList = []
+          this.pagination.total = 0
+          this.pagination.currentPage = 1
+          this.selectedRecords = []
+          this.cardHoverStates = {}
           this.$message.error('获取复判记录失败: ' + ((response.data && response.data.msg) || '未知错误'))
+          return false
         }
-        
-        this.cardHoverStates = {}
       } catch (error) {
         console.error('获取复判记录异常:', error)
+        this.reviewList = []
+        this.pagination.total = 0
+        this.pagination.currentPage = 1
+        this.selectedRecords = []
+        this.cardHoverStates = {}
         this.$message.error('获取复判记录失败: ' + (error.message || '网络错误'))
+        return false
       } finally {
         this.loading = false
       }
@@ -360,8 +373,10 @@ export default {
       this.pagination.currentPage = 1
       this.selectedRecords = []
       
-      await this.getReviewList()
-      this.$message.success(`找到 ${this.pagination.total} 条记录`)
+      const success = await this.getReviewList()
+      if (success) {
+        this.$message.success(`找到 ${this.pagination.total} 条记录`)
+      }
     },
 
     switchResultTab(value) {
