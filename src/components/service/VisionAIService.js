@@ -2167,11 +2167,15 @@ export const alertAPI = {
       return Promise.reject(new Error('缺少预警状态快照'));
     }
 
-    console.log('标记预警为误报:', { alertId, expectedStatus, reviewNotes });
+    const notes = (reviewNotes || '').trim() || '标记为误报';
+    console.log('标记预警为误报:', { alertId, expectedStatus, reviewNotes: notes });
 
+    // review_notes 需同时走 query：当前运行中的 API 从查询参数读取，body 会被忽略
     return visionAIAxios.post(`/api/v1/alerts/${alertId}/false-alarm`, {
       expected_status: Number(expectedStatus),
-      review_notes: reviewNotes || '标记为误报'
+      review_notes: notes
+    }, {
+      params: { review_notes: notes }
     })
       .then(response => {
         console.log('标记误报成功:', response.data);
@@ -2200,12 +2204,15 @@ export const alertAPI = {
       return Promise.reject(new Error('部分预警缺少状态快照'));
     }
 
-    console.log('批量标记预警为误报:', { alertIds, expectedStatuses, reviewNotes });
+    const notes = (reviewNotes || '').trim() || '标记为误报';
+    console.log('批量标记预警为误报:', { alertIds, expectedStatuses, reviewNotes: notes });
 
     return visionAIAxios.post('/api/v1/alerts/batch-false-alarm', {
       alert_ids: alertIds,
       expected_statuses: expectedStatuses,
-      review_notes: reviewNotes || '标记为误报'
+      review_notes: notes
+    }, {
+      params: { review_notes: notes }
     })
       .then(response => {
         console.log('批量标记误报成功:', response.data);

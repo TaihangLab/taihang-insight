@@ -488,6 +488,21 @@ export default {
       }
     },
 
+    resolveFalseAlarmDescription(stepDesc, processingNotes) {
+      const desc = (stepDesc || '').trim()
+      const genericTexts = ['预警已标记为误报', '误报', '标记为误报']
+      if (desc && !genericTexts.includes(desc)) {
+        return desc
+      }
+
+      const notes = (processingNotes || '').trim()
+      if (notes) {
+        return notes
+      }
+
+      return desc || '预警已标记为误报'
+    },
+
     // 🔧 转换处理历史 - 与realTimeMonitoring保持一致
     // alertTime: 预警产生时间, processedAt: 处理时间
     convertProcessHistory(processData, apiStatus, alertTime, processedBy, processedAt, processingNotes) {
@@ -502,16 +517,19 @@ export default {
         if (processData && processData.steps && Array.isArray(processData.steps)) {
           processData.steps.forEach((step, index) => {
             const stepName = step.step || ''
+            const isFalseAlarmStep = stepName === '误报'
             const isCompletedStep = ['已处理', '完成预警处理'].includes(stepName)
             const operationType = ['上报预警', '预警上报'].includes(stepName)
               ? 'report'
-              : (stepName === '预警产生' ? 'pending' : (isCompletedStep ? 'completed' : 'processing'))
+              : (stepName === '预警产生' ? 'pending' : (isFalseAlarmStep ? 'false_alarm' : (isCompletedStep ? 'completed' : 'processing')))
             operationHistory.push({
               id: step.id || (Date.now() + index + 100),
               status: 'completed',
               statusText: step.step || '处理中',
               time: this.formatApiTime(step.time),
-              description: step.desc || step.description || '',
+              description: isFalseAlarmStep
+                ? this.resolveFalseAlarmDescription(step.desc || step.description, processingNotes)
+                : (step.desc || step.description || ''),
               operationType,
               operator: step.operator || '系统'
             })
@@ -561,16 +579,20 @@ export default {
             operator: defaultOperator
           })
         } else if (apiStatus === 5) {
-          // 误报状态 - 使用处理时间
-          operationHistory.push({
-            id: Date.now() + Math.random(),
-            status: 'completed',
-            statusText: '误报',
-            time: processTime,
-            description: '预警已标记为误报',
-            operationType: 'false_alarm',
-            operator: defaultOperator
-          })
+          const hasFalseAlarmRecord = operationHistory.some(record =>
+            record.operationType === 'false_alarm' || record.statusText === '误报'
+          )
+          if (!hasFalseAlarmRecord) {
+            operationHistory.push({
+              id: Date.now() + Math.random(),
+              status: 'completed',
+              statusText: '误报',
+              time: processTime,
+              description: this.resolveFalseAlarmDescription('', processingNotes),
+              operationType: 'false_alarm',
+              operator: defaultOperator
+            })
+          }
         }
 
         // process.steps 已由后端按权威记录顺序返回，不再按时间二次排序。
@@ -1636,6 +1658,10 @@ export default {
     
     handleFalseAlarmFromDetail(eventData) {
       if (eventData && eventData.alert_id) {
+        if (eventData.completed) {
+          this.getWarningList()
+          return
+        }
         this.handleWarning(eventData.alert_id, 'false_alarm')
       }
     },

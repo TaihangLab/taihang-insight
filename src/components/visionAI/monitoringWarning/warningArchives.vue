@@ -690,6 +690,8 @@ export default {
       // 处理steps数组
       if (processData.steps && Array.isArray(processData.steps)) {
         processData.steps.forEach(step => {
+          const stepName = step.step || '';
+          const isFalseAlarmStep = stepName === '误报';
           // 根据步骤状态确定显示状态
           let recordStatus = 'completed';
           if (step.status === 'active' || step.status === 'processing' || step.status === 'in_progress') {
@@ -703,8 +705,10 @@ export default {
             status: recordStatus,
             statusText: step.step || step.title || '处理步骤',
             time: this.formatApiTime(step.time || step.timestamp),
-            description: step.desc || step.description || '处理描述',
-            operationType: step.step === '预警产生' ? 'create' : 'process',
+            description: isFalseAlarmStep
+              ? ((step.desc || step.description || '').trim() || (apiData.processing_notes || '').trim() || '预警已标记为误报')
+              : (step.desc || step.description || '处理描述'),
+            operationType: step.step === '预警产生' ? 'create' : (isFalseAlarmStep ? 'false_alarm' : 'process'),
             operator: step.operator || step.handler || '系统'
           };
           allRecords.push(record);
@@ -789,13 +793,12 @@ export default {
           operator: apiData.archived_by || '管理员'
         });
       } else if (apiData.status === 5) {
-        // 误报状态
         history.push({
           id: Date.now() + 2,
           status: 'completed',
           statusText: '误报',
           time: this.formatApiTime(apiData.updated_at),
-          description: '预警已标记为误报',
+          description: (apiData.processing_notes || '').trim() || '预警已标记为误报',
           operationType: 'false_alarm',
           operator: apiData.processed_by || '管理员'
         });

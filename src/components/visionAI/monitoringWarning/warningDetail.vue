@@ -1193,17 +1193,13 @@ export default {
           reviewNotes
         );
         if (response.data && response.data.code === 0) {
-          this.addOperationRecord({
-            status: 'completed',
-            statusText: '标记误报',
-            time: this.getCurrentTime(),
-            description: `已标记为误报。${this.falseAlarmReason ? '原因：' + this.falseAlarmReason : ''}`,
-            operationType: 'false_alarm',
-            operator: this.getCurrentUserName()
-          });
           this.detail.status = 5;
+          if (reviewNotes && reviewNotes !== '标记为误报') {
+            this.detail.processing_notes = `标记为误报：${reviewNotes}`;
+          }
+          await this.loadDetail();
           this.$message.success('已标记为误报');
-          this.$emit('handle-false-alarm', { alert_id: this.detail.alert_id });
+          this.$emit('handle-false-alarm', { alert_id: this.detail.alert_id, completed: true });
           this.closeFalseAlarmDialog();
         } else {
           throw new Error(response.data ? response.data.msg : '操作失败');
@@ -1498,6 +1494,26 @@ export default {
       });
     },
 
+    resolveFalseAlarmDescription(stepDesc) {
+      const desc = (stepDesc || '').trim();
+      const genericTexts = ['预警已标记为误报', '误报', '标记为误报'];
+      if (desc && !genericTexts.includes(desc)) {
+        return desc;
+      }
+
+      const processingNotes = (this.detail && this.detail.processing_notes || '').trim();
+      if (processingNotes) {
+        return processingNotes;
+      }
+
+      const reviewNotes = (this.reviewData && this.reviewData.reviewNotes || '').trim();
+      if (reviewNotes) {
+        return `标记为误报：${reviewNotes}`;
+      }
+
+      return desc || '预警已标记为误报';
+    },
+
     processApiOperationHistory() {
       const processData = this.detail.process;
       const allRecords = [];
@@ -1505,17 +1521,33 @@ export default {
       if (processData.steps && Array.isArray(processData.steps)) {
         processData.steps.forEach(step => {
           const stepName = step.step || '';
+          const isFalseAlarmStep = stepName === '误报';
           allRecords.push({
             id: Date.now() + Math.random(),
             status: 'completed',
             statusText: stepName || '处理步骤',
             time: this.formatTime(step.time),
-            description: step.desc || '处理描述',
+            description: isFalseAlarmStep
+              ? this.resolveFalseAlarmDescription(step.desc || step.description)
+              : (step.desc || step.description || '处理描述'),
             operationType: ['上报预警', '预警上报'].includes(stepName)
               ? 'report'
-              : (stepName === '预警产生' ? 'create' : 'process'),
+              : (stepName === '预警产生' ? 'create' : (isFalseAlarmStep ? 'false_alarm' : 'process')),
             operator: step.operator || '系统'
           });
+        });
+      }
+
+      const hasFalseAlarmRecord = allRecords.some(record => record.operationType === 'false_alarm');
+      if (this.detail.status === 5 && !hasFalseAlarmRecord) {
+        allRecords.push({
+          id: Date.now() + Math.random(),
+          status: 'completed',
+          statusText: '误报',
+          time: this.formatTime(this.detail.updated_at) || this.getCurrentTime(),
+          description: this.resolveFalseAlarmDescription(),
+          operationType: 'false_alarm',
+          operator: this.detail.processed_by || '系统'
         });
       }
 
