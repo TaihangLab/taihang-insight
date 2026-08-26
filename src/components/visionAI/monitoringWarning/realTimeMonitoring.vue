@@ -1657,6 +1657,7 @@ export default {
         const alertId = warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId);
         const response = await alertAPI.markAlertAsFalseAlarm(
           alertId,
+          currentStatus,
           reviewNotes
         );
 
@@ -1726,7 +1727,14 @@ export default {
 
       } catch (error) {
         console.error('标记误报失败:', error);
-        this.$message.error('标记误报失败: ' + (error.message || '未知错误'));
+        if (error.response && error.response.status === 409) {
+          const detail = error.response.data && error.response.data.detail;
+          this.$message.warning((detail && detail.message) || '预警状态已更新，请刷新后重试');
+          await this.getWarningList();
+          this.closeFalseAlarmDialog();
+        } else {
+          this.$message.error('标记误报失败: ' + (error.message || '未知错误'));
+        }
       } finally {
         this.loading = false;
       }

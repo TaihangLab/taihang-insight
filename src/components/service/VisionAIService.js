@@ -2147,21 +2147,25 @@ export const alertAPI = {
   /**
    * 标记预警为误报
    * @param {number} alertId - 预警ID
+   * @param {number} expectedStatus - 调用方读取到的预警状态
    * @param {string} [reviewNotes] - 复判意见（可选）
    * @returns {Promise} 包含误报处理结果的Promise对象
    */
-  markAlertAsFalseAlarm(alertId, reviewNotes = '标记为误报') {
+  markAlertAsFalseAlarm(alertId, expectedStatus, reviewNotes = '标记为误报') {
     if (!alertId) {
       console.error('标记误报失败: 缺少预警ID');
       return Promise.reject(new Error('缺少必要参数：预警ID'));
     }
+    if (expectedStatus == null) {
+      console.error('标记误报失败: 缺少预警状态快照');
+      return Promise.reject(new Error('缺少预警状态快照'));
+    }
 
-    console.log('标记预警为误报:', { alertId, reviewNotes });
+    console.log('标记预警为误报:', { alertId, expectedStatus, reviewNotes });
 
-    return visionAIAxios.post(`/api/v1/alerts/${alertId}/false-alarm`, null, {
-      params: {
-        review_notes: reviewNotes || '标记为误报'
-      }
+    return visionAIAxios.post(`/api/v1/alerts/${alertId}/false-alarm`, {
+      expected_status: Number(expectedStatus),
+      review_notes: reviewNotes || '标记为误报'
     })
       .then(response => {
         console.log('标记误报成功:', response.data);
@@ -2176,23 +2180,26 @@ export const alertAPI = {
   /**
    * 批量标记预警为误报
    * @param {Array} alertIds - 预警ID数组
+   * @param {Object} expectedStatuses - 以预警ID为键的状态快照
    * @param {string} [reviewNotes] - 复判意见（可选）
    * @returns {Promise} 包含批量误报处理结果的Promise对象
    */
-  batchMarkAlertsAsFalseAlarm(alertIds, reviewNotes = '标记为误报') {
+  batchMarkAlertsAsFalseAlarm(alertIds, expectedStatuses, reviewNotes = '标记为误报') {
     if (!alertIds || !Array.isArray(alertIds) || alertIds.length === 0) {
       console.error('批量标记误报失败: 缺少预警ID数组');
       return Promise.reject(new Error('缺少预警ID数组'));
     }
+    if (!expectedStatuses || alertIds.some(id => expectedStatuses[String(id)] == null)) {
+      console.error('批量标记误报失败: 缺少预警状态快照');
+      return Promise.reject(new Error('部分预警缺少状态快照'));
+    }
 
-    console.log('批量标记预警为误报:', { alertIds, reviewNotes });
+    console.log('批量标记预警为误报:', { alertIds, expectedStatuses, reviewNotes });
 
     return visionAIAxios.post('/api/v1/alerts/batch-false-alarm', {
-      alert_ids: alertIds
-    }, {
-      params: {
-        review_notes: reviewNotes || '标记为误报'
-      }
+      alert_ids: alertIds,
+      expected_statuses: expectedStatuses,
+      review_notes: reviewNotes || '标记为误报'
     })
       .then(response => {
         console.log('批量标记误报成功:', response.data);
