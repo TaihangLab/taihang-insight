@@ -2422,7 +2422,7 @@ export default {
           <i class="el-icon-warning" style="color: #f56c6c; font-size: 24px;"></i>
         </div>
         <p>确定要删除档案 "<strong>{{ deleteArchiveName }}</strong>" 吗？</p>
-        <p style="color: #909399; font-size: 12px; margin-top: 8px;">删除后该档案及其关联的所有预警记录都将被删除，此操作不可恢复！</p>
+        <p style="color: #909399; font-size: 12px; margin-top: 8px;">删除后该档案将从档案列表中移除，档案内的预警将解除关联并恢复为“已处理”状态，预警记录不会被删除。是否继续？</p>
       </div>
       <div slot="footer" class="dialog-footer">
         <el-button size="small" @click="deleteArchiveConfirmVisible = false" class="cancel-btn">取 消</el-button>
