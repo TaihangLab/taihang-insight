@@ -40,7 +40,7 @@ export default {
     window.addEventListener("resize", this.handleResize);
     this.$nextTick(() => {
       this.initEmptyCharts();
-      this.fetchStatistics();
+      this.fetchStatistics().catch(() => {});
     });
   },
   beforeDestroy() {
@@ -97,15 +97,25 @@ export default {
 
     // ──────────────────────────── 数据获取 ──────────────────────────────────
 
-    async fetchStatistics() {
-      const params = this.getTimeParams();
-      if (!params) return;
-
+    async fetchStatistics(options = {}) {
+      const { showError = true } = options;
       this.loading = true;
       try {
+        const params = this.getTimeParams();
+        if (!params) {
+          throw new Error("统计时间范围无效");
+        }
+
         const res = await alertAPI.getAlertStatistics(params);
         const stats = res.data && res.data.statistics ? res.data.statistics : null;
-        if (!stats) return;
+        if (
+          !stats ||
+          typeof stats !== "object" ||
+          Array.isArray(stats) ||
+          Object.keys(stats).length === 0
+        ) {
+          throw new Error("统计接口返回空数据");
+        }
 
         // 更新顶部卡片
         const s = stats.summary || {};
@@ -128,12 +138,37 @@ export default {
           count: c.count,
           percent: c.percent,
         }));
+        return stats;
       } catch (e) {
+        this.resetStatisticsData();
         console.error("获取统计数据失败:", e);
-        this.$message.error("获取统计数据失败，请稍后重试");
+        if (showError) {
+          this.$message.error("获取统计数据失败，请稍后重试");
+        }
+        throw e;
       } finally {
         this.loading = false;
       }
+    },
+
+    resetStatisticsData() {
+      this.statisticsData = {
+        totalCount: 0,
+        successRate: 0,
+        processedCount: 0,
+        pendingCount: 0,
+      };
+      this.deviceWarnings = [];
+      this.statusChartEmpty = true;
+      this.levelChartEmpty = true;
+      this.typeChartEmpty = true;
+
+      ["warningStatusChart", "warningLevelChart", "topWarningTypeChart"].forEach((key) => {
+        if (this.charts[key]) {
+          this.charts[key].clear();
+        }
+      });
+      this.initTrendChart([], []);
     },
 
     // ──────────────────────────── 图表初始化（空壳）────────────────────────
@@ -301,9 +336,12 @@ export default {
           value: cnt,
           count: cnt,
           itemStyle: { color: colorMap[name] || "#999" },
-        }));
+      }));
       this.statusChartEmpty = pieData.length === 0 || pieData.every((d) => d.count === 0);
-      if (this.statusChartEmpty) return;
+      if (this.statusChartEmpty) {
+        if (this.charts.warningStatusChart) this.charts.warningStatusChart.clear();
+        return;
+      }
       this.$nextTick(() => this.initWarningStatusChart(pieData));
     },
 
@@ -361,7 +399,10 @@ export default {
         itemStyle: { color: colorMap[name] || "#999" },
       }));
       this.levelChartEmpty = pieData.length === 0 || pieData.every((d) => d.count === 0);
-      if (this.levelChartEmpty) return;
+      if (this.levelChartEmpty) {
+        if (this.charts.warningLevelChart) this.charts.warningLevelChart.clear();
+        return;
+      }
       this.$nextTick(() => this.initWarningLevelChart(pieData));
     },
 
@@ -423,7 +464,10 @@ export default {
       const categories = byType.map((t) => t.name);
       const counts = byType.map((t) => t.count);
       this.typeChartEmpty = counts.length === 0 || counts.every((v) => v === 0);
-      if (this.typeChartEmpty) return;
+      if (this.typeChartEmpty) {
+        if (this.charts.topWarningTypeChart) this.charts.topWarningTypeChart.clear();
+        return;
+      }
       this.$nextTick(() => this.initTopWarningTypeChart(categories, counts));
     },
 
@@ -434,7 +478,7 @@ export default {
       if (value === "custom") {
         this.datePickerDialogVisible = true;
       } else {
-        this.fetchStatistics();
+        this.fetchStatistics().catch(() => {});
       }
     },
 
@@ -447,7 +491,7 @@ export default {
     handleCustomDateChange() {
       if (this.customDateRange && this.customDateRange.length === 2) {
         this.datePickerDialogVisible = false;
-        this.fetchStatistics();
+        this.fetchStatistics().catch(() => {});
       }
     },
 
@@ -468,12 +512,23 @@ export default {
         background: "rgba(0,0,0,0.7)",
       });
       try {
-        await this.fetchStatistics();
+        await this.fetchStatistics({ showError: false });
         this.$message.success("数据刷新成功");
+      } catch (e) {
+        this.$message.error("数据刷新失败，请稍后重试");
       } finally {
         loadingInstance.close();
         this.refreshing = false;
       }
+    },
+
+    escapeCsvField(value) {
+      const isText = typeof value === "string";
+      let text = value === null || value === undefined ? "" : String(value);
+      if (isText && /^[\u0000-\u0020]*[=+\-@]/.test(text)) {
+        text = `'${text}`;
+      }
+      return `"${text.replace(/"/g, '""')}"`;
     },
 
     exportData() {
@@ -482,20 +537,35 @@ export default {
         return;
       }
       this.exportLoading = true;
-      const headers = ["设备名称", "预警数量", "占比(%)"];
-      const rows = this.deviceWarnings.map((d) => [d.name, d.count, d.percent]);
-      let csv = headers.join(",") + "\n";
-      rows.forEach((r) => { csv += r.join(",") + "\n"; });
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.setAttribute("href", URL.createObjectURL(blob));
-      link.setAttribute("download", `预警统计数据_${Date.now()}.csv`);
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      this.exportLoading = false;
-      this.$message.success(`数据已导出`);
+      let link = null;
+      let objectUrl = null;
+      try {
+        const headers = ["设备名称", "预警数量", "占比(%)"];
+        const rows = this.deviceWarnings.map((d) => [d.name, d.count, d.percent]);
+        const csv = [headers, ...rows]
+          .map((row) => row.map((value) => this.escapeCsvField(value)).join(","))
+          .join("\r\n");
+        const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+        objectUrl = URL.createObjectURL(blob);
+        link = document.createElement("a");
+        link.setAttribute("href", objectUrl);
+        link.setAttribute("download", `预警统计数据_${Date.now()}.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        this.$message.success("数据已导出");
+      } catch (e) {
+        console.error("导出统计数据失败:", e);
+        this.$message.error("数据导出失败，请稍后重试");
+      } finally {
+        if (link && link.parentNode) {
+          link.parentNode.removeChild(link);
+        }
+        if (objectUrl) {
+          URL.revokeObjectURL(objectUrl);
+        }
+        this.exportLoading = false;
+      }
     },
 
     getTotalWarnings() {
