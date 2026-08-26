@@ -31,8 +31,12 @@ export default {
       
       // 选中的预警项
       selectedWarnings: [],
+      // 显式勾选模式下保存每条预警的状态快照，支持跨页并发校验
+      selectedWarningExpectedStatuses: {},
       // 筛选了预警技能后可「全选」当前筛选结果
       selectAllFiltered: false,
+      // 点击全选时固化筛选条件，避免确认前编辑表单导致选择范围漂移
+      selectAllFilters: null,
       
       // 预警等级配置
       warningLevelConfig: {
@@ -153,7 +157,7 @@ export default {
     },
     'searchForm.warningSkill'(val) {
       if (!val) {
-        this.selectAllFiltered = false
+        this.clearWarningSelection()
       }
     }
   },
@@ -347,8 +351,7 @@ export default {
         // 刷新后按需清空选择；翻页且已筛选技能时保留（支持全选/跨页勾选）
         this.cardHoverStates = {}
         if (clearSelection) {
-          this.selectedWarnings = []
-          this.selectAllFiltered = false
+          this.clearWarningSelection()
         }
       } catch (error) {
         console.error('获取预警列表异常:', error)
@@ -363,6 +366,25 @@ export default {
 
     isWarningSelected(id) {
       return this.selectAllFiltered || this.selectedWarnings.includes(id)
+    },
+
+    clearWarningSelection() {
+      this.selectedWarnings = []
+      this.selectedWarningExpectedStatuses = {}
+      this.selectAllFiltered = false
+      this.selectAllFilters = null
+    },
+
+    rememberWarningExpectedStatus(warning) {
+      if (!warning) return
+      const apiStatus = warning._apiData && Number(warning._apiData.status)
+      if (apiStatus) {
+        this.$set(this.selectedWarningExpectedStatuses, String(warning.id), apiStatus)
+      }
+    },
+
+    forgetWarningExpectedStatus(id) {
+      this.$delete(this.selectedWarningExpectedStatuses, String(id))
     },
 
     // 转换API数据为页面数据格式
@@ -794,6 +816,7 @@ export default {
     // 选择当前页
     handleSelectPage() {
       this.selectAllFiltered = false
+      this.selectAllFilters = null
       const currentPageIds = this.warningList.map(item => item.id)
       if (currentPageIds.length === 0) {
         this.$message.warning('当前页没有可选择的预警')
@@ -805,24 +828,22 @@ export default {
       )
 
       if (isCurrentPageFullySelected) {
-        // 未筛选技能时只允许本页选择：取消即清空
-        if (!this.canSelectAll) {
-          this.selectedWarnings = []
-        } else {
-          this.selectedWarnings = this.selectedWarnings.filter(id =>
-            !currentPageIds.includes(id)
-          )
-        }
+        this.selectedWarnings = this.selectedWarnings.filter(id =>
+          !currentPageIds.includes(id)
+        )
+        currentPageIds.forEach(id => this.forgetWarningExpectedStatus(id))
         this.$message.info('已取消选择本页')
       } else if (!this.canSelectAll) {
         // 未筛选技能：只选本页
         this.selectedWarnings = [...currentPageIds]
+        this.selectedWarningExpectedStatuses = {}
+        this.warningList.forEach(item => this.rememberWarningExpectedStatus(item))
         this.$message.success(`已选择本页 ${currentPageIds.length} 项预警`)
       } else {
-        const otherSelectedIds = this.selectedWarnings.filter(id =>
-          !currentPageIds.includes(id)
-        )
-        this.selectedWarnings = [...otherSelectedIds, ...currentPageIds]
+        currentPageIds.forEach(id => {
+          if (!this.selectedWarnings.includes(id)) this.selectedWarnings.push(id)
+        })
+        this.warningList.forEach(item => this.rememberWarningExpectedStatus(item))
         this.$message.success(`已选择本页 ${currentPageIds.length} 项预警`)
       }
     },
@@ -838,19 +859,20 @@ export default {
         return
       }
       if (this.selectAllFiltered) {
-        this.selectAllFiltered = false
-        this.selectedWarnings = []
+        this.clearWarningSelection()
         this.$message.info('已取消全选')
         return
       }
       this.selectAllFiltered = true
-      this.selectedWarnings = this.warningList.map(item => item.id)
+      this.selectedWarnings = []
+      this.selectedWarningExpectedStatuses = {}
+      this.selectAllFilters = { ...this.buildCurrentFilterBody() }
       this.$message.success(`已全选当前筛选结果共 ${this.totalCount} 项预警`)
     },
     
     // 批量处理
     async handleBatchProcess() {
-      if (this.selectedWarnings.length === 0) {
+      if (!this.selectAllFiltered && this.selectedWarnings.length === 0) {
         this.$message.warning('请先选择预警项')
         return
       }
@@ -876,94 +898,57 @@ export default {
           processed_by: this.getCurrentUserName()
         }
 
-        // 将页面ID转换为API ID，同时携带每条预警在页面中读取到的状态。
-        // 后端会在行锁内逐条校验，避免其他操作人已更新后继续覆盖。
-        const expectedStatuses = {}
-        const pageStatusMap = {
-          pending: 1,
-          processing: 2,
-          completed: 3,
-          archived: 4,
-          false_alarm: 5
-        }
-        const apiAlertIds = this.selectedWarnings.map(id => {
-          const warning = this.warningList.find(item => item.id === id)
-          const apiAlertId = warning && warning._apiData
-            ? Number(warning._apiData.alert_id)
-            : parseInt(id)
-          const expectedStatus = warning && warning._apiData
-            ? Number(warning._apiData.status)
-            : pageStatusMap[warning && warning.status]
-          if (!isNaN(apiAlertId) && expectedStatus) {
-            expectedStatuses[String(apiAlertId)] = expectedStatus
+        const requestedCount = this.exportSelectedCount
+        let response
+        if (this.selectAllFiltered) {
+          const filters = { ...(this.selectAllFilters || this.buildCurrentFilterBody()) }
+          if (filters.skill_class_id == null && !filters.alert_type) {
+            this.$message.warning('请先筛选预警技能后再全选处理')
+            return
           }
-          return apiAlertId
-        }).filter(id => !isNaN(id))
+          response = await alertAPI.batchUpdateAlertStatusByFilter(filters, updateData)
+        } else {
+          const expectedStatuses = {}
+          const apiAlertIds = this.selectedWarnings
+            .map(id => parseInt(id, 10))
+            .filter(id => !isNaN(id))
 
-        const missingExpectedStatus = apiAlertIds.some(
-          alertId => expectedStatuses[String(alertId)] == null
-        )
-        if (missingExpectedStatus) {
-          this.$message.error('部分预警缺少当前状态，请刷新页面后重试')
-          return
+          apiAlertIds.forEach(alertId => {
+            const expectedStatus = this.selectedWarningExpectedStatuses[String(alertId)]
+            if (expectedStatus != null) {
+              expectedStatuses[String(alertId)] = expectedStatus
+            }
+          })
+
+          const missingExpectedStatus = apiAlertIds.some(
+            alertId => expectedStatuses[String(alertId)] == null
+          )
+          if (missingExpectedStatus) {
+            this.$message.error('部分预警缺少状态快照，请重新选择后重试')
+            return
+          }
+          updateData.expected_statuses = expectedStatuses
+          response = await alertAPI.batchUpdateAlertStatus(apiAlertIds, updateData)
         }
-        updateData.expected_statuses = expectedStatuses
-
-        console.log('批量处理预警:', apiAlertIds, updateData)
-
-        const response = await alertAPI.batchUpdateAlertStatus(apiAlertIds, updateData)
         
         if (response.data && response.data.code === 0) {
-          // API调用成功，更新本地数据（与单个处理逻辑一致）
-          for (const id of this.selectedWarnings) {
-            const index = this.warningList.findIndex(item => item.id === id)
-            if (index !== -1) {
-              // 确保有操作历史数组
-              if (!this.warningList[index].operationHistory) {
-                this.$set(this.warningList[index], 'operationHistory', [])
-              }
-              
-              // 更新待处理记录为已完成状态
-              this.warningList[index].operationHistory = this.warningList[index].operationHistory.map(record => {
-                if (record.operationType === 'pending' && record.status === 'active') {
-                  return {
-                    ...record,
-                    status: 'completed',
-                    description: '预警已确认，开始处理'
-                  };
-                }
-                return record;
-              });
-              
-              // 🔧 添加处理意见记录（使用 processing-action 类型）
-              const processingRecord = {
-                id: Date.now() + Math.random(),
-                status: 'completed',
-                statusText: '处理记录',
-                time: this.getCurrentTime(),
-                description: `批量处理：${this.batchRemarkForm.remark}`,
-                operationType: 'processing-action',
-                operator: this.getCurrentUserName()
-              }
-              
-              this.warningList[index].operationHistory.push(processingRecord)
-              
-              // 更新状态为处理中
-              this.warningList[index].status = 'processing'
-            }
-          }
-          
-          this.$message.success(`已为 ${this.selectedWarnings.length} 项预警添加处理记录`)
-          
-          // 刷新列表以获取最新数据
+          const resultData = response.data.data || {}
+          const successCount = resultData.success_count != null
+            ? resultData.success_count
+            : requestedCount
+          this.$message.success(`已为 ${successCount} 项预警添加处理记录`)
+          this.clearWarningSelection()
+          this.closeBatchProcessDialog()
           await this.getWarningList()
         } else {
-          console.error('批量处理API失败:', response.data)
-          this.$message.error('批量处理失败：' + (response.data && response.data.msg || '服务器错误'))
+          const resultData = (response.data && response.data.data) || {}
+          this.$message.warning(
+            `批量处理完成：成功 ${resultData.success_count || 0} 项，失败 ${resultData.failure_count || 0} 项`
+          )
+          this.clearWarningSelection()
+          this.closeBatchProcessDialog()
+          await this.getWarningList()
         }
-        
-        this.selectedWarnings = []
-        this.closeBatchProcessDialog()
       } catch (error) {
         console.error('批量处理失败:', error)
         if (error.response && error.response.status === 409) {
@@ -976,7 +961,7 @@ export default {
           )
           // 批量接口允许部分成功，冲突后必须刷新以同步已提交的项目。
           await this.getWarningList()
-          this.selectedWarnings = []
+          this.clearWarningSelection()
           this.closeBatchProcessDialog()
         } else {
           this.$message.error('批量处理失败：' + (error.message || '网络错误'))
@@ -1074,7 +1059,7 @@ export default {
         image_type: this.exportImageType
       }
       if (this.selectAllFiltered) {
-        Object.assign(body, this.buildCurrentFilterBody())
+        Object.assign(body, this.selectAllFilters || this.buildCurrentFilterBody())
       } else {
         body.alert_ids = this.selectedAlertIds()
       }
@@ -1314,9 +1299,14 @@ export default {
       if (this.selectAllFiltered) {
         // 退出全选，改为仅勾选本页其余项
         this.selectAllFiltered = false
+        this.selectAllFilters = null
         this.selectedWarnings = this.warningList
           .map(item => item.id)
           .filter(itemId => itemId !== id)
+        this.selectedWarningExpectedStatuses = {}
+        this.warningList
+          .filter(item => item.id !== id)
+          .forEach(item => this.rememberWarningExpectedStatus(item))
         return
       }
       // 未筛选技能时不允许跨页累积勾选：只在本页内切换
@@ -1327,16 +1317,20 @@ export default {
         if (index === -1) {
           const pageSelected = this.selectedWarnings.filter(sid => currentPageIds.includes(sid))
           this.selectedWarnings = [...pageSelected, id]
+          this.rememberWarningExpectedStatus(this.warningList.find(item => item.id === id))
         } else {
           this.selectedWarnings = this.selectedWarnings.filter(sid => sid !== id && currentPageIds.includes(sid))
+          this.forgetWarningExpectedStatus(id)
         }
         return
       }
       const index = this.selectedWarnings.indexOf(id)
       if (index === -1) {
         this.selectedWarnings.push(id)
+        this.rememberWarningExpectedStatus(this.warningList.find(item => item.id === id))
       } else {
         this.selectedWarnings.splice(index, 1)
+        this.forgetWarningExpectedStatus(id)
       }
     },
     
@@ -2229,7 +2223,7 @@ export default {
 
       let body
       if (this.selectAllFiltered) {
-        body = this.buildCurrentFilterBody()
+        body = { ...(this.selectAllFilters || this.buildCurrentFilterBody()) }
         if (body.skill_class_id == null && !body.alert_type) {
           this.$message.warning('请先筛选预警技能后再全选删除')
           return
@@ -2253,8 +2247,7 @@ export default {
           const deleted = (response.data.data && response.data.data.deleted_count)
             || this.exportSelectedCount
           this.$message.success(`已成功删除 ${deleted} 项预警`)
-          this.selectedWarnings = []
-          this.selectAllFiltered = false
+          this.clearWarningSelection()
           this.closeDeleteDialog()
           this.currentPage = 1
           await this.getWarningList()
@@ -2468,7 +2461,7 @@ export default {
             </span>
             <el-button 
               size="small" 
-              :disabled="selectAllFiltered || selectedWarnings.length === 0"
+              :disabled="exportSelectedCount === 0"
               @click="handleBatchProcess"
             >批量处理</el-button>
             <el-button 
@@ -2934,7 +2927,7 @@ export default {
     >
       <div class="batch-process-info">
         <i class="el-icon-warning-outline" style="color: #E6A23C; font-size: 24px; margin-right: 8px;"></i>
-        <span style="font-size: 16px; font-weight: 500;">您将要批量处理 {{ selectedWarnings.length }} 项预警</span>
+        <span style="font-size: 16px; font-weight: 500;">您将要批量处理 {{ exportSelectedCount }} 项预警</span>
       </div>
       
       <el-form :model="batchRemarkForm" label-width="80px" style="margin-top: 20px;">

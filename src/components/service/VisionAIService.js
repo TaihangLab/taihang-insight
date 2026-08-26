@@ -1956,6 +1956,26 @@ export const alertAPI = {
   },
 
   /**
+   * 按当前筛选条件批量更新全部匹配预警。
+   * @param {Object} filters - 与预警列表一致的筛选条件
+   * @param {Object} updateData - 目标状态和处理意见
+   */
+  batchUpdateAlertStatusByFilter(filters, updateData) {
+    if (!filters || (filters.skill_class_id == null && !filters.alert_type)) {
+      return Promise.reject(new Error('按筛选条件批量处理前必须筛选预警技能'));
+    }
+    if (!updateData || updateData.status == null) {
+      return Promise.reject(new Error('缺少目标状态'));
+    }
+
+    console.log('按筛选条件批量更新预警状态:', filters, updateData);
+    return visionAIAxios.put('/api/v1/alerts/batch-update', {
+      filters,
+      ...updateData
+    });
+  },
+
+  /**
    * 删除预警
    * @param {number} alertId - 预警ID
    * @returns {Promise} 包含删除结果的Promise对象
