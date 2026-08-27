@@ -86,6 +86,7 @@ export default {
         '/systemManage/knowledgeBase': { menu: '系统管理', page: '知识库' },
         '/mlPipeline': { menu: '模型工厂', page: '' },
         '/visualCenter': { menu: '可视中心', page: '可视中心首页' },
+        '/visualBigScreen': { menu: '可视中心', page: '大屏' },
         '/algorithmInference': { menu: '可视中心', page: 'AI智算中心' }
       };
 

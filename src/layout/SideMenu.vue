@@ -108,6 +108,9 @@
         <el-menu-item index="/visualCenter">
           <span slot="title">可视中心首页</span>
         </el-menu-item>
+        <el-menu-item index="/visualBigScreen">
+          <span slot="title">大屏</span>
+        </el-menu-item>
         <el-menu-item index="/algorithmInference">
           <span slot="title">算法推理平台</span>
         </el-menu-item>

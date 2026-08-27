@@ -8,6 +8,7 @@ import rtcPlayer from '../components/dialog/rtcPlayer.vue'
 
 // visionAI 业务页面全部懒加载，按路由按需加载以减小首包体积
 const visualCenter = () => import('../components/visionAI/ivisualCenter/index.vue')
+const visualBigScreen = () => import('../components/visionAI/ivisualCenter/bigScreen.vue')
 const algorithmInference = () => import('../components/visionAI/ivisualCenter/algorithmInference.vue')
 const realTimeMonitoring = () => import('../components/visionAI/monitoringWarning/realTimeMonitoring.vue')
 const statisticsAnalysis = () => import('../components/visionAI/monitoringWarning/statisticsAnalysis.vue')
@@ -66,6 +67,11 @@ export default new VueRouter({
         {
           path: '/visualCenter',
           component: visualCenter,
+        },
+        {
+          path: '/visualBigScreen',
+          name: 'visualBigScreen',
+          component: visualBigScreen,
         },
         {
           path: '/algorithmInference',
