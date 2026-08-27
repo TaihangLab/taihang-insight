@@ -514,6 +514,7 @@ export default {
       currentDateTime: '',
       // 定时更新器
       timer: null,
+      aiTaskPollTimer: null,
       // 视频URL数组
       videoUrl: [],
       // 视频提示信息
@@ -634,6 +635,7 @@ export default {
     // 启动时间更新定时器
     this.updateDateTime();
     this.timer = setInterval(this.updateDateTime, 1000);
+    this.aiTaskPollTimer = setInterval(this.refreshPlayingCameraAITasks, 5000);
 
     // 添加键盘事件监听器，用于ESC键退出全屏
     document.addEventListener('keydown', this.handleKeyDown);
@@ -671,6 +673,10 @@ export default {
     this.exitFullscreen();
     document.body.classList.remove('camera-fullscreen-mode');
     clearInterval(this.timer);
+    if (this.aiTaskPollTimer) {
+      clearInterval(this.aiTaskPollTimer);
+      this.aiTaskPollTimer = null;
+    }
 
     this.cleanupSSEConnection();
 
@@ -1689,18 +1695,22 @@ export default {
 
         const warningInfo = this.warningList[warningIndex];
 
-        // 检查预警状态，只有待处理状态才能标记为误报
-        if (warningInfo._apiData && warningInfo._apiData.status !== 1) {
+        // 待处理、处理中均可标记误报（与后端一致）
+        if (warningInfo._apiData) {
+          const s = Number(warningInfo._apiData.status);
+          if (s !== 1 && s !== 2) {
           const statusNames = {
+            1: '待处理',
             2: '处理中',
             3: '已处理',
             4: '已归档',
             5: '误报'
           };
           const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态';
-          this.$message.warning(`只有待处理状态的预警才能标记为误报，当前状态为：${currentStatusName}`);
+          this.$message.warning(`只有待处理或处理中状态的预警才能标记为误报，当前状态为：${currentStatusName}`);
           this.closeFalseAlarmDialog();
           return;
+          }
         }
 
         // 调用后端API标记误报
@@ -2998,6 +3008,14 @@ export default {
       } catch (error) {
         console.error(`❌ 获取摄像头AI任务列表失败:`, error)
       }
+    },
+
+    refreshPlayingCameraAITasks() {
+      const ids = Object.values(this.cameraIdMapping || {}).filter(
+        id => id != null && id !== ''
+      )
+      const unique = [...new Set(ids.map(id => String(id)))]
+      unique.forEach(id => this.loadAvailableAITasks(id))
     },
     
     /**

@@ -61,7 +61,7 @@
                     <div class="info-cell" v-if="detail.skill_name_zh">
                       <span class="label">AI技能</span>
                       <span class="value">
-                        <el-tag size="mini" :type="isLLMSkill ? 'warning' : 'primary'" effect="plain" style="margin-right:4px">{{ isLLMSkill ? '大模型' : '视觉' }}</el-tag>
+                        <el-tag size="mini" :type="skillSourceTagType" effect="plain" style="margin-right:4px">{{ skillSourceLabel }}</el-tag>
                         {{ detail.skill_name_zh }}
                       </span>
                     </div>
@@ -591,6 +591,11 @@
 
 <script>
 import { alertAPI, reviewRecordAPI } from '@/components/service/VisionAIService.js'
+import {
+  normalizeAlertSkillSource,
+  skillSourceLabel as formatSkillSourceLabel,
+  skillSourceTagType as formatSkillSourceTagType
+} from '@/components/visionAI/skillManagement/runPlan/runPlanFormat.js'
 
 export default {
   name: "WarningDetail",
@@ -690,12 +695,15 @@ export default {
     defaultArchive() {
       return this.availableArchives.find(archive => archive.isDefault);
     },
-    isLLMSkill() {
-      if (!this.detail) return false
-      if (this.detail.skill_name_zh && this.detail.alert_type) {
-        return this.detail.alert_type.startsWith('llm_')
-      }
-      return false
+    skillSource() {
+      if (!this.detail) return 'vision'
+      return normalizeAlertSkillSource(this.detail.skill_source, this.detail.alert_type)
+    },
+    skillSourceLabel() {
+      return formatSkillSourceLabel(this.skillSource)
+    },
+    skillSourceTagType() {
+      return formatSkillSourceTagType(this.skillSource)
     },
     hasRawFrame() {
       return !!(this.detail && this.detail.minio_raw_frame_url)
@@ -1436,8 +1444,8 @@ export default {
 
     isFalseAlarmDisabled() {
       if (!this.detail) return true;
-      // 只有 status=1（待处理）时才能点击误报
-      return this.detail.status !== 1;
+      const s = Number(this.detail.status);
+      return s !== 1 && s !== 2;
     },
 
     isArchiveDisabled() {
