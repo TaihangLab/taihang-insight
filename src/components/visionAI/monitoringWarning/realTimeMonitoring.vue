@@ -2135,25 +2135,32 @@ export default {
 
     // 检查处理按钮是否应该禁用
     isProcessingDisabled(warning) {
-      if (!warning.operationHistory || warning.operationHistory.length === 0) {
-        return false; // 没有历史记录，可以处理
-      }
-
-      // 如果已归档或误报，禁用处理按钮
-      const hasArchived = warning.operationHistory.some(record =>
-        record.operationType === 'archive' || record.operationType === 'false_alarm'
-      ) || warning.status === 'archived' || warning.status === 'false_alarm';
-
-      if (hasArchived) {
+      if (!warning) {
         return true;
       }
 
-      // 如果已完成处理，禁用处理按钮
-      const hasCompletedProcessing = warning.operationHistory.some(record =>
-        record.operationType === 'completed'
+      // 当前后端状态是处理按钮的权威依据，历史完成记录不能覆盖重新处理后的状态。
+      if (warning._apiData && typeof warning._apiData.status !== 'undefined') {
+        return [3, 4, 5].includes(Number(warning._apiData.status));
+      }
+
+      // 向后兼容没有原始API数据的列表项。
+      if (warning.status) {
+        return ['completed', 'archived', 'false_alarm'].includes(warning.status);
+      }
+
+      const operationHistory = Array.isArray(warning.operationHistory)
+        ? warning.operationHistory
+        : [];
+      const latestStatusRecord = [...operationHistory].reverse().find(record =>
+        ['pending', 'processing', 'completed', 'archive', 'false_alarm'].includes(record.operationType)
       );
 
-      return hasCompletedProcessing;
+      if (!latestStatusRecord) {
+        return false;
+      }
+
+      return ['completed', 'archive', 'false_alarm'].includes(latestStatusRecord.operationType);
     },
 
     // 格式化时间显示
