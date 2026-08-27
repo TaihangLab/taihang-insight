@@ -25,6 +25,7 @@ export function formatApiError(e, fallback) {
   const data = e.response.data || {};
   const detail = data.detail;
   if (typeof detail === 'string' && detail) return detail;
+  if (detail && typeof detail === 'object' && detail.message) return detail.message;
   if (Array.isArray(detail) && detail.length) {
     return detail.map(d => (d && d.msg) || JSON.stringify(d)).join('；');
   }
@@ -67,6 +68,10 @@ visionAIAxios.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // 处理认证失败
       console.log('认证失败，请重新登录');
+    }
+    if (error.response && error.response.status === 409) {
+      // 将后端结构化并发冲突信息透传给页面提示。
+      error.message = formatApiError(error, '预警状态已变化，请刷新后重试');
     }
     return Promise.reject(error);
   }
@@ -1721,6 +1726,7 @@ export const alertAPI = {
    * @param {number} [params.task_id] - 任务ID过滤
    * @param {string} [params.location] - 位置过滤（模糊匹配）
    * @param {number} [params.status] - 状态过滤（1-待处理, 2-处理中, 3-已处理）
+   * @param {boolean} [params.active_only=false] - 仅返回待处理和处理中预警
    * @param {string} [params.start_date] - 开始日期（YYYY-MM-DD）
    * @param {string} [params.end_date] - 结束日期（YYYY-MM-DD）
    * @param {string} [params.start_time] - 开始时间（HH:MM:SS）
@@ -1866,6 +1872,7 @@ export const alertAPI = {
    * @param {number} alertId - 预警ID
    * @param {Object} updateData - 更新数据
    * @param {number} [updateData.status] - 状态（1-待处理, 2-处理中, 3-已处理）
+   * @param {number} updateData.expected_status - 页面读取到的当前状态（并发控制）
    * @param {string} [updateData.processing_notes] - 处理备注
    * @param {string} [updateData.processed_by] - 处理人
    * @returns {Promise} 包含更新结果的Promise对象
@@ -1875,10 +1882,53 @@ export const alertAPI = {
       console.error('更新预警状态失败: 缺少预警ID');
       return Promise.reject(new Error('缺少预警ID'));
     }
+    if (!updateData || updateData.expected_status == null) {
+      console.error('更新预警状态失败: 缺少 expected_status');
+      return Promise.reject(new Error('缺少预警期望状态，请刷新页面后重试'));
+    }
 
     console.log('更新预警状态:', alertId, updateData);
 
     return visionAIAxios.put(`/api/v1/alerts/${alertId}/status`, updateData);
+  },
+
+  /**
+   * 上报预警。上报是独立动作，不改变预警主状态，状态1-5均可调用。
+   * @param {number|string} alertId - 预警ID
+   * @param {Object} reportData - 上报信息
+   * @param {string} [reportData.report_notes] - 上报说明
+   * @returns {Promise} 包含上报处理记录的Promise对象
+   */
+  reportAlert(alertId, reportData = {}) {
+    if (!alertId) {
+      return Promise.reject(new Error('缺少预警ID'));
+    }
+
+    return visionAIAxios.post(`/api/v1/alerts/${alertId}/report`, {
+      report_notes: reportData.report_notes ? String(reportData.report_notes).trim() : null
+    });
+  },
+
+  /**
+   * 将已处理预警重新打开为处理中
+   * @param {number} alertId - 预警ID
+   * @param {string} reason - 重新处理原因（必填）
+   * @returns {Promise} 包含状态变更及完成/重新打开时间的Promise对象
+   */
+  reopenAlert(alertId, reason, expectedStatus = 3) {
+    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
+    if (!alertId) {
+      return Promise.reject(new Error('缺少预警ID'));
+    }
+    if (!normalizedReason) {
+      return Promise.reject(new Error('请输入重新处理原因'));
+    }
+
+    return this.updateAlertStatus(alertId, {
+      status: 2,
+      expected_status: expectedStatus,
+      processing_notes: normalizedReason
+    });
   },
 
   /**
@@ -1892,11 +1942,35 @@ export const alertAPI = {
       console.error('批量更新预警状态失败: 缺少预警ID');
       return Promise.reject(new Error('缺少预警ID'));
     }
+    if (!updateData || (updateData.expected_status == null && !updateData.expected_statuses)) {
+      console.error('批量更新预警状态失败: 缺少 expected_status');
+      return Promise.reject(new Error('缺少预警期望状态，请刷新页面后重试'));
+    }
 
     console.log('批量更新预警状态:', alertIds, updateData);
 
     return visionAIAxios.put('/api/v1/alerts/batch-update', {
       alert_ids: alertIds,
+      ...updateData
+    });
+  },
+
+  /**
+   * 按当前筛选条件批量更新全部匹配预警。
+   * @param {Object} filters - 与预警列表一致的筛选条件
+   * @param {Object} updateData - 目标状态和处理意见
+   */
+  batchUpdateAlertStatusByFilter(filters, updateData) {
+    if (!filters || (filters.skill_class_id == null && !filters.alert_type)) {
+      return Promise.reject(new Error('按筛选条件批量处理前必须筛选预警技能'));
+    }
+    if (!updateData || updateData.status == null) {
+      return Promise.reject(new Error('缺少目标状态'));
+    }
+
+    console.log('按筛选条件批量更新预警状态:', filters, updateData);
+    return visionAIAxios.put('/api/v1/alerts/batch-update', {
+      filters,
       ...updateData
     });
   },
@@ -2053,13 +2127,16 @@ export const alertAPI = {
   /**
    * 获取预警统计信息
    * @param {Object} [options]
-   * @param {string} [options.granularity='day'] - 粒度 day|month|year
+   * @param {string} [options.granularity='day'] - 粒度 hour|day|month
    * @param {string} [options.start_date] - 开始日期 YYYY-MM-DD
    * @param {string} [options.end_date] - 结束日期 YYYY-MM-DD
    * @param {number} [options.days=7] - 未传日期范围时统计最近天数
    * @returns {Promise} 包含统计信息的 Promise 对象
    */
-  getAlertStatistics({ granularity = 'day', start_date, end_date, days = 7 } = {}) {
+  getAlertStatistics(
+    { granularity = 'day', start_date, end_date, days = 7 } = {},
+    requestConfig = {}
+  ) {
     const params = { granularity };
     if (start_date && end_date) {
       params.start_date = start_date;
@@ -2067,27 +2144,38 @@ export const alertAPI = {
     } else {
       params.days = days;
     }
-    return visionAIAxios.get('/api/v1/alerts/statistics', { params });
+    return visionAIAxios.get('/api/v1/alerts/statistics', {
+      ...requestConfig,
+      params,
+    });
   },
 
   /**
    * 标记预警为误报
    * @param {number} alertId - 预警ID
+   * @param {number} expectedStatus - 调用方读取到的预警状态
    * @param {string} [reviewNotes] - 复判意见（可选）
    * @returns {Promise} 包含误报处理结果的Promise对象
    */
-  markAlertAsFalseAlarm(alertId, reviewNotes = '标记为误报') {
+  markAlertAsFalseAlarm(alertId, expectedStatus, reviewNotes = '标记为误报') {
     if (!alertId) {
       console.error('标记误报失败: 缺少预警ID');
       return Promise.reject(new Error('缺少必要参数：预警ID'));
     }
+    if (expectedStatus == null) {
+      console.error('标记误报失败: 缺少预警状态快照');
+      return Promise.reject(new Error('缺少预警状态快照'));
+    }
 
-    console.log('标记预警为误报:', { alertId, reviewNotes });
+    const notes = (reviewNotes || '').trim() || '标记为误报';
+    console.log('标记预警为误报:', { alertId, expectedStatus, reviewNotes: notes });
 
-    return visionAIAxios.post(`/api/v1/alerts/${alertId}/false-alarm`, null, {
-      params: {
-        review_notes: reviewNotes || '标记为误报'
-      }
+    // review_notes 需同时走 query：当前运行中的 API 从查询参数读取，body 会被忽略
+    return visionAIAxios.post(`/api/v1/alerts/${alertId}/false-alarm`, {
+      expected_status: Number(expectedStatus),
+      review_notes: notes
+    }, {
+      params: { review_notes: notes }
     })
       .then(response => {
         console.log('标记误报成功:', response.data);
@@ -2102,23 +2190,29 @@ export const alertAPI = {
   /**
    * 批量标记预警为误报
    * @param {Array} alertIds - 预警ID数组
+   * @param {Object} expectedStatuses - 以预警ID为键的状态快照
    * @param {string} [reviewNotes] - 复判意见（可选）
    * @returns {Promise} 包含批量误报处理结果的Promise对象
    */
-  batchMarkAlertsAsFalseAlarm(alertIds, reviewNotes = '标记为误报') {
+  batchMarkAlertsAsFalseAlarm(alertIds, expectedStatuses, reviewNotes = '标记为误报') {
     if (!alertIds || !Array.isArray(alertIds) || alertIds.length === 0) {
       console.error('批量标记误报失败: 缺少预警ID数组');
       return Promise.reject(new Error('缺少预警ID数组'));
     }
+    if (!expectedStatuses || alertIds.some(id => expectedStatuses[String(id)] == null)) {
+      console.error('批量标记误报失败: 缺少预警状态快照');
+      return Promise.reject(new Error('部分预警缺少状态快照'));
+    }
 
-    console.log('批量标记预警为误报:', { alertIds, reviewNotes });
+    const notes = (reviewNotes || '').trim() || '标记为误报';
+    console.log('批量标记预警为误报:', { alertIds, expectedStatuses, reviewNotes: notes });
 
     return visionAIAxios.post('/api/v1/alerts/batch-false-alarm', {
-      alert_ids: alertIds
+      alert_ids: alertIds,
+      expected_statuses: expectedStatuses,
+      review_notes: notes
     }, {
-      params: {
-        review_notes: reviewNotes || '标记为误报'
-      }
+      params: { review_notes: notes }
     })
       .then(response => {
         console.log('批量标记误报成功:', response.data);
@@ -2996,6 +3090,7 @@ export const archiveAPI = {
    * @param {Object} params - 查询参数
    * @param {number} [params.page=1] - 当前页码，从1开始
    * @param {number} [params.limit=20] - 每页记录数
+   * @param {string} [params.keyword] - 档案关键词（编号、名称、位置或描述）
    * @param {string} [params.name] - 档案名称过滤（模糊匹配）
    * @param {string} [params.location] - 位置过滤（模糊匹配）
    * @param {number} [params.status] - 档案状态过滤（1=正常，2=归档，3=删除）
@@ -3613,6 +3708,7 @@ export const archiveAPI = {
    * @param {Object} params - 查询参数
    * @param {number} [params.page=1] - 页码
    * @param {number} [params.limit=20] - 每页条数
+   * @param {string} [params.keyword] - 预警记录关键词
    * @param {number} [params.alert_level] - 预警等级筛选
    * @param {string} [params.alert_type] - 预警类型筛选
    * @param {number} [params.status] - 处理状态筛选

@@ -493,6 +493,7 @@ import WarningDetail from './warningDetail.vue'
 import DetectionOverlay from './components/DetectionOverlay.vue'
 import screenfull from "screenfull";
 import { alertAPI, realtimeMonitorAPI, realtimeDetectionAPI } from '../../service/VisionAIService.js';
+import userService from '../../service/UserService.js';
 
 export default {
   name: "RealTimeMonitoring",
@@ -539,7 +540,6 @@ export default {
       videoResolutions: {},  // 视频分辨率 {index: {width, height}}
       detectionUpdateTime: {},  // 检测结果更新时间 {index: time_string}
       archiveWarningId: '',
-      reportWarningId: '',
 
       // 处理意见对话框
       remarkDialogVisible: false,
@@ -1103,15 +1103,28 @@ export default {
 
         console.log('📝 保存处理意见:', this.currentProcessingWarningId, this.remarkForm.remark);
 
+        const currentWarning = this.warningList.find(item =>
+          String(item.id) === String(this.currentProcessingWarningId)
+        );
+        const expectedStatus = currentWarning && currentWarning._apiData
+          ? Number(currentWarning._apiData.status)
+          : null;
+        if (!expectedStatus) {
+          this.$message.error('无法确定预警当前状态，请刷新页面后重试');
+          return;
+        }
+        const apiAlertId = currentWarning._apiData.alert_id || currentWarning.id;
+
         // 真实的API调用 - 添加处理记录
         const updateData = {
           status: 2, // 保持处理中状态
+          expected_status: expectedStatus,
           processing_notes: this.remarkForm.remark,
           processed_by: this.getCurrentUserName(),
           operation_type: 'add_processing_note'
         };
 
-        const response = await alertAPI.updateAlertStatus(this.currentProcessingWarningId, updateData);
+        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
         console.log('✅ 处理意见保存成功:', response);
 
         // 🔧 从后端响应中获取实际的操作人名字
@@ -1157,21 +1170,37 @@ export default {
 
         console.log('🏁 结束处理预警:', this.currentProcessingWarningId);
 
+        const currentWarning = this.warningList.find(item =>
+          String(item.id) === String(this.currentProcessingWarningId)
+        );
+        const expectedStatus = currentWarning && currentWarning._apiData
+          ? Number(currentWarning._apiData.status)
+          : null;
+        if (!expectedStatus) {
+          this.$message.error('无法确定预警当前状态，请刷新页面后重试');
+          return;
+        }
+        const apiAlertId = currentWarning._apiData.alert_id || currentWarning.id;
+
         // 真实的API调用 - 完成处理
         const updateData = {
           status: 3, // 已处理状态
-          processing_notes: this.remarkForm.remark || '预警处理已完成',
+          expected_status: expectedStatus,
+          processing_notes: this.remarkForm.remark.trim() || null,
           processed_by: this.getCurrentUserName(),
           operation_type: 'complete_processing'
         };
 
-        const response = await alertAPI.updateAlertStatus(this.currentProcessingWarningId, updateData);
+        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
         console.log('✅ 处理完成状态更新成功:', response);
 
-        // 🔧 从后端响应中获取实际的操作人名字
-        const operatorName = (response.data && response.data.data && response.data.data.updated_alert && response.data.data.updated_alert.processed_by) || 
-                            (response.data && response.data.data && response.data.data.processing_record && response.data.data.processing_record.operator) || 
-                            this.getCurrentUserName();
+        const result = (response.data && response.data.data) || {};
+        const updatedAlert = result.updated_alert || {};
+        const processingRecord = result.processing_record || {};
+        const processingNotes = updatedAlert.processing_notes != null
+          ? updatedAlert.processing_notes
+          : updateData.processing_notes;
+        const operatorName = processingRecord.operator || updatedAlert.processed_by || '未知操作人';
 
         // 更新本地数据状态
         const index = this.warningList.findIndex(item => item.id === this.currentProcessingWarningId);
@@ -1185,8 +1214,8 @@ export default {
             id: Date.now() + Math.random(),
             status: 'completed',
             statusText: '已处理',
-            time: this.getCurrentTime(),
-            description: this.remarkForm.remark ? `处理完成：${this.remarkForm.remark}` : '预警处理已完成',
+            time: processingRecord.created_at ? this.formatAPITime(processingRecord.created_at) : this.getCurrentTime(),
+            description: processingNotes || '未填写处理意见',
             operationType: 'completed',
             operator: operatorName
           };
@@ -1198,6 +1227,7 @@ export default {
             this.warningList[index]._apiData.status = 3; // 已处理状态
             this.warningList[index]._apiData.processed_at = new Date().toISOString();
             this.warningList[index]._apiData.processed_by = operatorName;
+            this.warningList[index]._apiData.processing_notes = processingNotes;
           }
 
           // 🔧 同时更新前端使用的 status 字段
@@ -1266,11 +1296,6 @@ export default {
             // 标记为已处理
             this.warningList[index].status = 'completed';
             this.$message.success('已标记为已处理');
-          } else if (action === 'report') {
-            // 上报
-            this.reportWarningId = id;
-            this.warningList[index].status = 'reported';
-            this.$message.success('预警已成功上报');
           } else if (action === 'archive') {
             // 归档 - 需要选择档案
             this.archiveWarningId = id;
@@ -1293,9 +1318,10 @@ export default {
       }
     },
 
-    handleReportFromDialog(eventData) {
-      if (eventData && eventData.alert_id) {
-        this.handleWarning(eventData.alert_id, 'report');
+    async handleReportFromDialog(eventData) {
+      if (eventData && eventData.alert_id && eventData.action === 'reported') {
+        // 详情组件已完成上报持久化；重新加载以同步处理时间线。
+        await this.loadWarningData();
       }
     },
 
@@ -1315,6 +1341,9 @@ export default {
 
     handleFalseAlarmFromDialog(eventData) {
       if (eventData && eventData.alert_id) {
+        if (eventData.completed) {
+          return;
+        }
         this.handleWarning(eventData.alert_id, 'false_alarm');
       }
     },
@@ -1631,6 +1660,7 @@ export default {
         const alertId = warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId);
         const response = await alertAPI.markAlertAsFalseAlarm(
           alertId,
+          currentStatus,
           reviewNotes
         );
 
@@ -1700,7 +1730,14 @@ export default {
 
       } catch (error) {
         console.error('标记误报失败:', error);
-        this.$message.error('标记误报失败: ' + (error.message || '未知错误'));
+        if (error.response && error.response.status === 409) {
+          const detail = error.response.data && error.response.data.detail;
+          this.$message.warning((detail && detail.message) || '预警状态已更新，请刷新后重试');
+          await this.getWarningList();
+          this.closeFalseAlarmDialog();
+        } else {
+          this.$message.error('标记误报失败: ' + (error.message || '未知错误'));
+        }
       } finally {
         this.loading = false;
       }
@@ -1997,19 +2034,8 @@ export default {
 
     // 获取当前用户昵称
     getCurrentUserName() {
-      // 实际项目中应该从用户登录信息或Vuex store中获取
-      // 这里模拟一些用户昵称
-      const userNames = ['张工程师', '李主管', '王安全员', '赵技术员', '陈操作员'];
-      const savedUserName = localStorage.getItem('currentUserName');
-
-      if (savedUserName) {
-        return savedUserName;
-      } else {
-        // 如果没有保存的用户名，随机选择一个并保存
-        const randomName = userNames[Math.floor(Math.random() * userNames.length)];
-        localStorage.setItem('currentUserName', randomName);
-        return randomName;
-      }
+      const user = userService.getUser();
+      return user.userName || user.username || user.nickName || user.nickname || '系统用户';
     },
     // 跳转到更多预警页面
     goToMoreWarnings() {
@@ -2109,25 +2135,32 @@ export default {
 
     // 检查处理按钮是否应该禁用
     isProcessingDisabled(warning) {
-      if (!warning.operationHistory || warning.operationHistory.length === 0) {
-        return false; // 没有历史记录，可以处理
-      }
-
-      // 如果已归档或误报，禁用处理按钮
-      const hasArchived = warning.operationHistory.some(record =>
-        record.operationType === 'archive' || record.operationType === 'false_alarm'
-      ) || warning.status === 'archived' || warning.status === 'false_alarm';
-
-      if (hasArchived) {
+      if (!warning) {
         return true;
       }
 
-      // 如果已完成处理，禁用处理按钮
-      const hasCompletedProcessing = warning.operationHistory.some(record =>
-        record.operationType === 'completed'
+      // 当前后端状态是处理按钮的权威依据，历史完成记录不能覆盖重新处理后的状态。
+      if (warning._apiData && typeof warning._apiData.status !== 'undefined') {
+        return [3, 4, 5].includes(Number(warning._apiData.status));
+      }
+
+      // 向后兼容没有原始API数据的列表项。
+      if (warning.status) {
+        return ['completed', 'archived', 'false_alarm'].includes(warning.status);
+      }
+
+      const operationHistory = Array.isArray(warning.operationHistory)
+        ? warning.operationHistory
+        : [];
+      const latestStatusRecord = [...operationHistory].reverse().find(record =>
+        ['pending', 'processing', 'completed', 'archive', 'false_alarm'].includes(record.operationType)
       );
 
-      return hasCompletedProcessing;
+      if (!latestStatusRecord) {
+        return false;
+      }
+
+      return ['completed', 'archive', 'false_alarm'].includes(latestStatusRecord.operationType);
     },
 
     // 格式化时间显示
@@ -2179,7 +2212,8 @@ export default {
         const params = {
           page: this.currentPage,
           limit: this.pageSize,
-          // 默认只获取最近的预警，按时间倒序
+          // 后端先限定待处理/处理中，再按时间倒序分页。
+          active_only: true,
         };
 
         const response = await alertAPI.getRealTimeAlerts(params);
@@ -2200,7 +2234,7 @@ export default {
 
           const convertedWarnings = apiWarnings.map(warning =>
             this.convertAPIWarningToFrontend(warning)
-          ).filter(warning => warning !== null && !this.isProcessedStatus(warning.status));
+          ).filter(warning => warning !== null);
 
           // 更新预警列表
           this.warningList = convertedWarnings;
@@ -2236,7 +2270,7 @@ export default {
           minio_video_url: this.getWarningVideoUrl(apiWarning) || null,
           minio_frame_url: this.getWarningImageUrl(apiWarning) || null,
           description: apiWarning.alert_description || '无描述信息',
-          operationHistory: this.convertProcessHistory(apiWarning.process, apiWarning.status, this.formatAPITime(apiWarning.alert_time), apiWarning.processed_by, this.formatAPITime(apiWarning.processed_at)) || [],
+          operationHistory: this.convertProcessHistory(apiWarning.process, apiWarning.status, this.formatAPITime(apiWarning.alert_time), apiWarning.processed_by, this.formatAPITime(apiWarning.resolved_at || apiWarning.processed_at), apiWarning.processing_notes) || [],
           // 添加额外的API数据字段
           taskId: apiWarning.task_id || null,
           task_id: apiWarning.task_id || null,  // 合并图片URL拼接需要
@@ -2422,6 +2456,7 @@ export default {
         const params = {
           page: this.currentPage,
           limit: this.pageSize,
+          active_only: true,
         };
 
         const response = await alertAPI.getRealTimeAlerts(params);
@@ -2712,9 +2747,24 @@ export default {
       return 'pending';
     },
 
+    resolveFalseAlarmDescription(stepDesc, processingNotes) {
+      const desc = (stepDesc || '').trim();
+      const genericTexts = ['预警已标记为误报', '误报', '标记为误报'];
+      if (desc && !genericTexts.includes(desc)) {
+        return desc;
+      }
+
+      const notes = (processingNotes || '').trim();
+      if (notes) {
+        return notes;
+      }
+
+      return desc || '预警已标记为误报';
+    },
+
     // 转换处理历史 - 确保与状态判断逻辑一致
     // alertTime: 预警产生时间, processedAt: 处理时间
-    convertProcessHistory(processData, apiStatus, alertTime, processedBy, processedAt) {
+    convertProcessHistory(processData, apiStatus, alertTime, processedBy, processedAt, processingNotes) {
       try {
         const operationHistory = []
         // 🔧 使用后端返回的操作人名字，如果没有则使用默认值
@@ -2727,13 +2777,20 @@ export default {
         // 处理API返回的步骤（如果存在）
         if (processData && processData.steps && Array.isArray(processData.steps)) {
           processData.steps.forEach((step, index) => {
+            const stepName = step.step || '';
+            const isFalseAlarmStep = stepName === '误报';
+            const isCompletedStep = ['已处理', '完成预警处理'].includes(stepName);
             operationHistory.push({
               id: step.id || (Date.now() + index + 100),
               status: 'completed',
               statusText: step.step || '处理中',
               time: this.formatAPITime(step.time),
-              description: step.desc || step.description || '',
-              operationType: step.step === '预警产生' ? 'pending' : 'processing', // 预警产生直接标记为pending状态
+              description: isFalseAlarmStep
+                ? this.resolveFalseAlarmDescription(step.desc || step.description, processingNotes)
+                : (step.desc || step.description || ''),
+              operationType: stepName === '预警产生'
+                ? 'pending'
+                : (isFalseAlarmStep ? 'false_alarm' : (isCompletedStep ? 'completed' : 'processing')),
               operator: step.operator || '系统'
             })
           })
@@ -2757,17 +2814,19 @@ export default {
           // 🔧 处理中状态 - 不在时间线中显示，通过预警状态标签体现
           // 用户添加的处理意见会作为 processing-action 类型单独显示
         } else if (apiStatus === 3) {
-          // 已处理状态 - 添加已完成记录，使用处理时间
-          operationHistory.push({
-            id: Date.now() + Math.random(),
-            status: 'completed',
-            statusText: '已处理',
-            time: processTime, // 🔧 使用处理时间
-            description: '预警处理已完成',
-            operationType: 'completed', // 这是按钮状态判断的关键
-            operator: defaultOperator
-          });
-          console.log('✅ 已添加已处理状态记录');
+          // process.steps 没有完成记录时，使用预警表中的真实处理信息补充
+          const hasCompletedRecord = operationHistory.some(record => record.operationType === 'completed');
+          if (!hasCompletedRecord) {
+            operationHistory.push({
+              id: Date.now() + Math.random(),
+              status: 'completed',
+              statusText: '已处理',
+              time: processTime,
+              description: processingNotes || '未填写处理意见',
+              operationType: 'completed',
+              operator: defaultOperator
+            });
+          }
         } else if (apiStatus === 4) {
           // 已归档状态 - 添加归档记录，使用处理时间
           operationHistory.push({
@@ -2780,28 +2839,25 @@ export default {
             operator: defaultOperator
           });
         } else if (apiStatus === 5) {
-          // 误报状态 - 添加误报记录，使用处理时间
-          operationHistory.push({
-            id: Date.now() + Math.random(),
-            status: 'completed',
-            statusText: '误报',
-            time: processTime, // 🔧 使用处理时间
-            description: '预警已标记为误报',
-            operationType: 'false_alarm',
-            operator: defaultOperator
-          });
+          const hasFalseAlarmRecord = operationHistory.some(record =>
+            record.operationType === 'false_alarm' || record.statusText === '误报'
+          );
+          if (!hasFalseAlarmRecord) {
+            operationHistory.push({
+              id: Date.now() + Math.random(),
+              status: 'completed',
+              statusText: '误报',
+              time: processTime,
+              description: this.resolveFalseAlarmDescription('', processingNotes),
+              operationType: 'false_alarm',
+              operator: defaultOperator
+            });
+          }
         }
 
-        // 🔧 统一按时间排序（最新的在最下面，时间正序）
-        operationHistory.sort((a, b) => {
-          const timeA = new Date(a.time).getTime();
-          const timeB = new Date(b.time).getTime();
-          // 如果时间无效，保持原有顺序
-          if (isNaN(timeA) || isNaN(timeB)) return 0;
-          return timeA - timeB; // 升序排列，最新的在最下面
-        });
-
-        console.log('📋 最终操作历史(已排序):', operationHistory);
+        // process.steps 已由后端按权威记录顺序返回，保持该顺序。
+        // 避免旧的 UTC 还原复判时间将最新操作错排到前面。
+        console.log('📋 最终操作历史:', operationHistory);
         return operationHistory;
 
       } catch (error) {

@@ -235,6 +235,15 @@
       </div>
 
       <span slot="footer" class="dialog-footer">
+        <el-button
+          v-if="detail"
+          plain
+          :disabled="isReportDisabled()"
+          @click="handleReport"
+          class="action-btn report-btn">
+          <i :class="isReportDisabled() ? 'el-icon-check' : 'el-icon-upload'"></i>
+          {{ isReportDisabled() ? '已上报' : '上报' }}
+        </el-button>
         <template v-if="detail && detail.status === 5">
           <span class="false-alarm-status-text">
             <i class="el-icon-warning-outline"></i>
@@ -242,10 +251,6 @@
           </span>
         </template>
         <template v-else>
-          <el-button plain @click="handleReport" class="action-btn report-btn">
-            <i class="el-icon-upload"></i>
-            上报
-          </el-button>
           <el-button
             plain
             :disabled="isArchiveDisabled()"
@@ -263,6 +268,16 @@
             误报
           </el-button>
           <el-button
+            v-if="detail && detail.status === 3"
+            plain
+            type="warning"
+            @click="handleReopen"
+            class="action-btn reopen-btn">
+            <i class="el-icon-refresh-right"></i>
+            重新处理
+          </el-button>
+          <el-button
+            v-else
             plain
             :disabled="isProcessingDisabled()"
             @click="handleWarning"
@@ -283,11 +298,23 @@
       append-to-body>
       <div class="confirm-content">
         <p>确定要上报此预警吗？</p>
-        <p style="color: #909399; font-size: 12px;">上报后预警将提交给上级部门处理</p>
+        <p style="color: #909399; font-size: 12px;">状态保持不变，并记录一条可审计的上报记录</p>
+        <el-form :model="reportForm" label-width="84px" style="margin-top: 16px; text-align: left;">
+          <el-form-item label="上报说明">
+            <el-input
+              v-model="reportForm.notes"
+              type="textarea"
+              :rows="3"
+              maxlength="2000"
+              show-word-limit
+              placeholder="请输入上报说明（可选）"
+            />
+          </el-form-item>
+        </el-form>
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeReportDialog">取 消</el-button>
-        <el-button type="warning" @click="confirmReport">确定上报</el-button>
+        <el-button type="warning" :loading="loading" @click="confirmReport">确定上报</el-button>
       </span>
     </el-dialog>
 
@@ -390,6 +417,39 @@
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="saveRemark">确认处理</el-button>
         <el-button type="success" @click="finishProcessing">结束处理</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 重新处理对话框 -->
+    <el-dialog
+      title="重新处理预警"
+      :visible.sync="reopenDialogVisible"
+      width="30%"
+      center
+      append-to-body
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      @close="closeReopenDialog"
+    >
+      <el-form label-width="110px">
+        <el-form-item label="重新处理原因" required>
+          <el-input
+            v-model="reopenReason"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入重新打开该预警的原因"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <div class="process-tip">
+        <i class="el-icon-info" style="color: #909399; margin-right: 4px;"></i>
+        <span style="color: #909399; font-size: 13px;">确认后状态将由“已处理”变为“处理中”，系统会保留完成时间并记录重新打开时间</span>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="closeReopenDialog">取 消</el-button>
+        <el-button type="warning" :loading="loading" @click="confirmReopen">确认重新处理</el-button>
       </span>
     </el-dialog>
 
@@ -593,6 +653,7 @@
 
 <script>
 import { alertAPI, reviewRecordAPI } from '@/components/service/VisionAIService.js'
+import userService from '@/components/service/UserService.js'
 
 export default {
   name: "WarningDetail",
@@ -623,13 +684,19 @@ export default {
       currentCameraId: '',
       // 上报相关
       reportDialogVisible: false,
-      reportWarningId: '',
+      reportForm: {
+        notes: ''
+      },
 
       // 处理意见对话框
       remarkDialogVisible: false,
       remarkForm: {
         remark: ''
       },
+
+      // 重新处理对话框
+      reopenDialogVisible: false,
+      reopenReason: '',
 
       // 误报对话框
       falseAlarmDialogVisible: false,
@@ -906,7 +973,6 @@ export default {
         await new Promise(resolve => setTimeout(resolve, 500));
 
         if (action === 'report') {
-          this.reportWarningId = this.detail.alert_id;
           this.reportDialogVisible = true;
           return;
         } else if (action === 'archive') {
@@ -937,6 +1003,7 @@ export default {
         this.loading = true;
         const updateData = {
           status: 2,
+          expected_status: Number(this.detail.status),
           processing_notes: this.remarkForm.remark,
           processed_by: this.getCurrentUserName()
         };
@@ -976,23 +1043,34 @@ export default {
         this.loading = true;
         const updateData = {
           status: 3,
-          processing_notes: this.remarkForm.remark ? `${this.remarkForm.remark}\n处理已完成` : '处理已完成',
+          expected_status: Number(this.detail.status),
+          processing_notes: this.remarkForm.remark.trim() || null,
           processed_by: this.getCurrentUserName()
         };
 
         const response = await alertAPI.updateAlertStatus(this.detail.alert_id, updateData);
 
         if (response.data && response.data.code === 0) {
+          const result = response.data.data || {};
+          const updatedAlert = result.updated_alert || {};
+          const processingRecord = result.processing_record || {};
+          const processingNotes = updatedAlert.processing_notes != null
+            ? updatedAlert.processing_notes
+            : updateData.processing_notes;
+          const operatorName = processingRecord.operator || updatedAlert.processed_by || '未知操作人';
+
           this.addOperationRecord({
             status: 'completed',
             statusText: '已处理',
-            time: this.getCurrentTime(),
-            description: '预警处理已完成，可以进行后续操作',
+            time: processingRecord.created_at ? this.formatTime(processingRecord.created_at) : this.getCurrentTime(),
+            description: processingNotes || '未填写处理意见',
             operationType: 'completed',
-            operator: this.getCurrentUserName()
+            operator: operatorName
           });
 
           this.detail.status = 3;
+          this.detail.processing_notes = processingNotes;
+          this.detail.processed_by = operatorName;
           this.$message.success('处理已完成，现在可以进行归档等操作');
           this.$emit('handle-warning', {
             alert_id: this.detail.alert_id,
@@ -1018,8 +1096,78 @@ export default {
       };
     },
 
+    handleReopen() {
+      if (!this.detail || this.detail.status !== 3) {
+        this.$message.warning('仅已处理状态的预警可以重新处理');
+        return;
+      }
+      this.reopenReason = '';
+      this.reopenDialogVisible = true;
+    },
+
+    async confirmReopen() {
+      const reason = this.reopenReason.trim();
+      if (!reason) {
+        this.$message.warning('请输入重新处理原因');
+        return;
+      }
+
+      try {
+        this.loading = true;
+        const response = await alertAPI.reopenAlert(
+          this.detail.alert_id,
+          reason,
+          Number(this.detail.status)
+        );
+        if (!response.data || response.data.code !== 0) {
+          throw new Error((response.data && response.data.msg) || '重新处理失败');
+        }
+
+        const result = response.data.data || {};
+        const processingRecord = result.processing_record || {};
+        const updatedAlert = result.updated_alert || {};
+        const operatorName = processingRecord.operator || updatedAlert.processed_by || '未知操作人';
+        const reopenedAt = processingRecord.reopened_at || processingRecord.created_at;
+
+        this.addOperationRecord({
+          id: processingRecord.record_id || (Date.now() + Math.random()),
+          status: 'active',
+          statusText: '重新处理',
+          time: reopenedAt ? this.formatTime(reopenedAt) : this.getCurrentTime(),
+          description: reason,
+          operationType: 'processing',
+          operator: operatorName
+        });
+        this.detail.status = 2;
+        this.detail.processing_notes = reason;
+        this.detail.processed_by = operatorName;
+
+        this.$message.success('预警已重新打开，状态已更新为处理中');
+        this.$emit('handle-warning', {
+          alert_id: this.detail.alert_id,
+          action: 'reopened',
+          apiResponse: result
+        });
+        this.closeReopenDialog();
+      } catch (error) {
+        const serverMessage = error.response && error.response.data && error.response.data.detail;
+        this.$message.error('重新处理失败：' + (serverMessage || error.message || '网络错误'));
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    closeReopenDialog() {
+      this.reopenDialogVisible = false;
+      this.reopenReason = '';
+    },
+
     // 上报处理
     handleReport() {
+      if (this.isReportDisabled()) {
+        this.$message.warning('该预警已上报，不能重复上报');
+        return;
+      }
       this.handleWarningAction('report');
     },
     handleArchive() {
@@ -1039,25 +1187,32 @@ export default {
       try {
         this.loading = true;
         const reviewNotes = this.falseAlarmReason || '标记为误报';
-        const response = await alertAPI.markAlertAsFalseAlarm(this.detail.alert_id, reviewNotes);
+        const response = await alertAPI.markAlertAsFalseAlarm(
+          this.detail.alert_id,
+          this.detail.status,
+          reviewNotes
+        );
         if (response.data && response.data.code === 0) {
-          this.addOperationRecord({
-            status: 'completed',
-            statusText: '标记误报',
-            time: this.getCurrentTime(),
-            description: `已标记为误报。${this.falseAlarmReason ? '原因：' + this.falseAlarmReason : ''}`,
-            operationType: 'false_alarm',
-            operator: this.getCurrentUserName()
-          });
           this.detail.status = 5;
+          if (reviewNotes && reviewNotes !== '标记为误报') {
+            this.detail.processing_notes = `标记为误报：${reviewNotes}`;
+          }
+          await this.loadDetail();
           this.$message.success('已标记为误报');
-          this.$emit('handle-false-alarm', { alert_id: this.detail.alert_id });
+          this.$emit('handle-false-alarm', { alert_id: this.detail.alert_id, completed: true });
           this.closeFalseAlarmDialog();
         } else {
           throw new Error(response.data ? response.data.msg : '操作失败');
         }
       } catch (error) {
-        this.$message.error('标记误报失败: ' + (error.message || '未知错误'));
+        if (error.response && error.response.status === 409) {
+          const detail = error.response.data && error.response.data.detail;
+          this.$message.warning((detail && detail.message) || '预警状态已更新，请刷新后重试');
+          await this.loadDetail();
+          this.closeFalseAlarmDialog();
+        } else {
+          this.$message.error('标记误报失败: ' + (error.message || '未知错误'));
+        }
       } finally {
         this.loading = false;
       }
@@ -1080,21 +1235,47 @@ export default {
 
     async confirmReport() {
       try {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        if (this.isReportDisabled()) {
+          this.$message.warning('该预警已上报，不能重复上报');
+          this.closeReportDialog();
+          return;
+        }
+
+        this.loading = true;
+        const response = await alertAPI.reportAlert(this.detail.alert_id, {
+          report_notes: this.reportForm.notes
+        });
+        if (!response.data || response.data.code !== 0) {
+          throw new Error((response.data && response.data.msg) || '上报失败');
+        }
+
+        const reportRecord = response.data.data && response.data.data.processing_record;
 
         this.addOperationRecord({
+          id: (reportRecord && reportRecord.record_id) || (Date.now() + Math.random()),
           status: 'completed',
           statusText: '预警上报',
-          time: this.getCurrentTime(),
-          description: '预警已上报给上级部门处理，等待上级部门响应',
+          time: reportRecord && reportRecord.reported_at
+            ? this.formatTime(reportRecord.reported_at)
+            : this.getCurrentTime(),
+          description: this.reportForm.notes
+            ? `预警已上报：${this.reportForm.notes}`
+            : '预警已上报',
           operationType: 'report',
-          operator: this.getCurrentUserName()
+          operator: (reportRecord && reportRecord.operator) || this.getCurrentUserName()
         });
 
-        this.$emit('handle-report', { alert_id: this.detail.alert_id });
+        this.$message.success('预警已成功上报');
+        this.$emit('handle-report', {
+          alert_id: this.detail.alert_id,
+          action: 'reported',
+          report: reportRecord
+        });
         this.closeReportDialog();
       } catch (error) {
-        this.$message.error('上报失败');
+        const serverMessage = error.response && error.response.data &&
+          (error.response.data.detail || error.response.data.message);
+        this.$message.error('上报失败：' + (serverMessage || error.message || '网络错误'));
       } finally {
         this.loading = false;
       }
@@ -1103,7 +1284,7 @@ export default {
     // 关闭上报对话框
     closeReportDialog() {
       this.reportDialogVisible = false;
-      this.reportWarningId = '';
+      this.reportForm.notes = '';
     },
 
     async confirmArchive() {
@@ -1244,19 +1425,8 @@ export default {
 
     // 获取当前用户昵称
     getCurrentUserName() {
-      // 实际项目中应该从用户登录信息或Vuex store中获取
-      // 这里模拟一些用户昵称
-      const userNames = ['张工程师', '李主管', '王安全员', '赵技术员', '陈操作员'];
-      const savedUserName = localStorage.getItem('currentUserName');
-
-      if (savedUserName) {
-        return savedUserName;
-      } else {
-        // 如果没有保存的用户名，随机选择一个并保存
-        const randomName = userNames[Math.floor(Math.random() * userNames.length)];
-        localStorage.setItem('currentUserName', randomName);
-        return randomName;
-      }
+      const user = userService.getUser();
+      return user.userName || user.username || user.nickName || user.nickname || '系统用户';
     },
 
     addSecondsToTime(timeString, seconds) {
@@ -1324,21 +1494,60 @@ export default {
       });
     },
 
+    resolveFalseAlarmDescription(stepDesc) {
+      const desc = (stepDesc || '').trim();
+      const genericTexts = ['预警已标记为误报', '误报', '标记为误报'];
+      if (desc && !genericTexts.includes(desc)) {
+        return desc;
+      }
+
+      const processingNotes = (this.detail && this.detail.processing_notes || '').trim();
+      if (processingNotes) {
+        return processingNotes;
+      }
+
+      const reviewNotes = (this.reviewData && this.reviewData.reviewNotes || '').trim();
+      if (reviewNotes) {
+        return `标记为误报：${reviewNotes}`;
+      }
+
+      return desc || '预警已标记为误报';
+    },
+
     processApiOperationHistory() {
       const processData = this.detail.process;
       const allRecords = [];
 
       if (processData.steps && Array.isArray(processData.steps)) {
         processData.steps.forEach(step => {
+          const stepName = step.step || '';
+          const isFalseAlarmStep = stepName === '误报';
           allRecords.push({
             id: Date.now() + Math.random(),
             status: 'completed',
-            statusText: step.step || '处理步骤',
+            statusText: stepName || '处理步骤',
             time: this.formatTime(step.time),
-            description: step.desc || '处理描述',
-            operationType: step.step === '预警产生' ? 'create' : 'process',
+            description: isFalseAlarmStep
+              ? this.resolveFalseAlarmDescription(step.desc || step.description)
+              : (step.desc || step.description || '处理描述'),
+            operationType: ['上报预警', '预警上报'].includes(stepName)
+              ? 'report'
+              : (stepName === '预警产生' ? 'create' : (isFalseAlarmStep ? 'false_alarm' : 'process')),
             operator: step.operator || '系统'
           });
+        });
+      }
+
+      const hasFalseAlarmRecord = allRecords.some(record => record.operationType === 'false_alarm');
+      if (this.detail.status === 5 && !hasFalseAlarmRecord) {
+        allRecords.push({
+          id: Date.now() + Math.random(),
+          status: 'completed',
+          statusText: '误报',
+          time: this.formatTime(this.detail.updated_at) || this.getCurrentTime(),
+          description: this.resolveFalseAlarmDescription(),
+          operationType: 'false_alarm',
+          operator: this.detail.processed_by || '系统'
         });
       }
 
@@ -1399,6 +1608,19 @@ export default {
       if (!this.detail) return false;
       // status: 3=已处理, 4=已归档, 5=误报 → 禁用
       return [3, 4, 5].includes(this.detail.status);
+    },
+
+    isReportDisabled() {
+      if (!this.detail) return true;
+
+      if (this.operationHistory && this.operationHistory.some(record => record.operationType === 'report')) {
+        return true;
+      }
+
+      const steps = this.detail.process && Array.isArray(this.detail.process.steps)
+        ? this.detail.process.steps
+        : [];
+      return steps.some(step => ['上报预警', '预警上报'].includes(step.step));
     },
 
     isFalseAlarmDisabled() {

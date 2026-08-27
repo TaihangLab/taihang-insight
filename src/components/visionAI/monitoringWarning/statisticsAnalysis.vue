@@ -27,6 +27,9 @@ export default {
       },
 
       deviceWarnings: [],
+      latestStatistics: null,
+      statisticsRequestId: 0,
+      statisticsRequestController: null,
       refreshing: false,
       loading: false,
 
@@ -40,45 +43,79 @@ export default {
     window.addEventListener("resize", this.handleResize);
     this.$nextTick(() => {
       this.initEmptyCharts();
-      this.fetchStatistics();
+      this.fetchStatistics().catch(() => {});
     });
   },
   beforeDestroy() {
+    this.statisticsRequestId += 1;
+    if (this.statisticsRequestController) {
+      this.statisticsRequestController.abort();
+      this.statisticsRequestController = null;
+    }
     window.removeEventListener("resize", this.handleResize);
     this.disposeCharts();
   },
   watch: {},
+  computed: {
+    datePickerOptions() {
+      const shanghaiToday = this.getShanghaiDateString();
+      return {
+        disabledDate(time) {
+          const pad = (value) => String(value).padStart(2, "0");
+          const candidate = `${time.getFullYear()}-${pad(time.getMonth() + 1)}-${pad(time.getDate())}`;
+          return candidate > shanghaiToday;
+        },
+      };
+    },
+  },
   methods: {
     // ──────────────────────────── 时间范围计算 ──────────────────────────────
 
     /**
      * 根据当前 timeRange 计算 start_date, end_date, granularity
      */
+    getShanghaiDateString(value = new Date()) {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Shanghai",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).formatToParts(value);
+      const values = parts.reduce((result, part) => {
+        if (part.type !== "literal") result[part.type] = part.value;
+        return result;
+      }, {});
+      return `${values.year}-${values.month}-${values.day}`;
+    },
+
+    addCalendarDays(dateString, amount) {
+      const date = new Date(`${dateString}T00:00:00Z`);
+      date.setUTCDate(date.getUTCDate() + amount);
+      const pad = (value) => String(value).padStart(2, "0");
+      return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
+    },
+
     getTimeParams() {
-      const now = new Date();
-      const pad = (n) => String(n).padStart(2, "0");
-      const fmt = (d) =>
-        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const today = this.getShanghaiDateString();
+      const year = today.slice(0, 4);
+      const month = today.slice(0, 7);
 
       switch (this.timeRange) {
         case "today":
-          return { start_date: fmt(now), end_date: fmt(now), granularity: "hour" };
+          return { start_date: today, end_date: today, granularity: "hour" };
 
-        case "week": {
-          const start = new Date(now);
-          start.setDate(now.getDate() - 6);
-          return { start_date: fmt(start), end_date: fmt(now), granularity: "day" };
-        }
+        case "week":
+          return {
+            start_date: this.addCalendarDays(today, -6),
+            end_date: today,
+            granularity: "day",
+          };
 
-        case "month": {
-          const start = new Date(now.getFullYear(), now.getMonth(), 1);
-          return { start_date: fmt(start), end_date: fmt(now), granularity: "day" };
-        }
+        case "month":
+          return { start_date: `${month}-01`, end_date: today, granularity: "day" };
 
-        case "year": {
-          const start = new Date(now.getFullYear(), 0, 1);
-          return { start_date: fmt(start), end_date: fmt(now), granularity: "month" };
-        }
+        case "year":
+          return { start_date: `${year}-01-01`, end_date: today, granularity: "month" };
 
         case "custom":
           if (this.customDateRange && this.customDateRange.length === 2) {
@@ -97,15 +134,37 @@ export default {
 
     // ──────────────────────────── 数据获取 ──────────────────────────────────
 
-    async fetchStatistics() {
-      const params = this.getTimeParams();
-      if (!params) return;
-
+    async fetchStatistics(options = {}) {
+      const { showError = true } = options;
+      if (this.statisticsRequestController) {
+        this.statisticsRequestController.abort();
+      }
+      const requestId = ++this.statisticsRequestId;
+      const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+      this.statisticsRequestController = controller;
       this.loading = true;
       try {
-        const res = await alertAPI.getAlertStatistics(params);
+        const params = this.getTimeParams();
+        if (!params) {
+          throw new Error("统计时间范围无效");
+        }
+
+        const res = await alertAPI.getAlertStatistics(
+          params,
+          controller ? { signal: controller.signal } : {}
+        );
+        if (requestId !== this.statisticsRequestId) return null;
+
         const stats = res.data && res.data.statistics ? res.data.statistics : null;
-        if (!stats) return;
+        if (
+          !stats ||
+          typeof stats !== "object" ||
+          Array.isArray(stats) ||
+          Object.keys(stats).length === 0
+        ) {
+          throw new Error("统计接口返回空数据");
+        }
+        this.latestStatistics = stats;
 
         // 更新顶部卡片
         const s = stats.summary || {};
@@ -128,12 +187,48 @@ export default {
           count: c.count,
           percent: c.percent,
         }));
+        return stats;
       } catch (e) {
+        const canceled =
+          requestId !== this.statisticsRequestId ||
+          (controller && controller.signal.aborted) ||
+          e.code === "ERR_CANCELED" ||
+          e.__CANCEL__ === true;
+        if (canceled) return null;
+
+        this.resetStatisticsData();
         console.error("获取统计数据失败:", e);
-        this.$message.error("获取统计数据失败，请稍后重试");
+        if (showError) {
+          this.$message.error("获取统计数据失败，请稍后重试");
+        }
+        throw e;
       } finally {
-        this.loading = false;
+        if (requestId === this.statisticsRequestId) {
+          this.loading = false;
+          this.statisticsRequestController = null;
+        }
       }
+    },
+
+    resetStatisticsData() {
+      this.statisticsData = {
+        totalCount: 0,
+        successRate: 0,
+        processedCount: 0,
+        pendingCount: 0,
+      };
+      this.deviceWarnings = [];
+      this.latestStatistics = null;
+      this.statusChartEmpty = true;
+      this.levelChartEmpty = true;
+      this.typeChartEmpty = true;
+
+      ["warningStatusChart", "warningLevelChart", "topWarningTypeChart"].forEach((key) => {
+        if (this.charts[key]) {
+          this.charts[key].clear();
+        }
+      });
+      this.initTrendChart([], []);
     },
 
     // ──────────────────────────── 图表初始化（空壳）────────────────────────
@@ -301,9 +396,12 @@ export default {
           value: cnt,
           count: cnt,
           itemStyle: { color: colorMap[name] || "#999" },
-        }));
+      }));
       this.statusChartEmpty = pieData.length === 0 || pieData.every((d) => d.count === 0);
-      if (this.statusChartEmpty) return;
+      if (this.statusChartEmpty) {
+        if (this.charts.warningStatusChart) this.charts.warningStatusChart.clear();
+        return;
+      }
       this.$nextTick(() => this.initWarningStatusChart(pieData));
     },
 
@@ -361,7 +459,10 @@ export default {
         itemStyle: { color: colorMap[name] || "#999" },
       }));
       this.levelChartEmpty = pieData.length === 0 || pieData.every((d) => d.count === 0);
-      if (this.levelChartEmpty) return;
+      if (this.levelChartEmpty) {
+        if (this.charts.warningLevelChart) this.charts.warningLevelChart.clear();
+        return;
+      }
       this.$nextTick(() => this.initWarningLevelChart(pieData));
     },
 
@@ -423,7 +524,10 @@ export default {
       const categories = byType.map((t) => t.name);
       const counts = byType.map((t) => t.count);
       this.typeChartEmpty = counts.length === 0 || counts.every((v) => v === 0);
-      if (this.typeChartEmpty) return;
+      if (this.typeChartEmpty) {
+        if (this.charts.topWarningTypeChart) this.charts.topWarningTypeChart.clear();
+        return;
+      }
       this.$nextTick(() => this.initTopWarningTypeChart(categories, counts));
     },
 
@@ -434,7 +538,7 @@ export default {
       if (value === "custom") {
         this.datePickerDialogVisible = true;
       } else {
-        this.fetchStatistics();
+        this.fetchStatistics().catch(() => {});
       }
     },
 
@@ -447,7 +551,7 @@ export default {
     handleCustomDateChange() {
       if (this.customDateRange && this.customDateRange.length === 2) {
         this.datePickerDialogVisible = false;
-        this.fetchStatistics();
+        this.fetchStatistics().catch(() => {});
       }
     },
 
@@ -468,34 +572,120 @@ export default {
         background: "rgba(0,0,0,0.7)",
       });
       try {
-        await this.fetchStatistics();
-        this.$message.success("数据刷新成功");
+        const stats = await this.fetchStatistics({ showError: false });
+        if (stats) this.$message.success("数据刷新成功");
+      } catch (e) {
+        this.$message.error("数据刷新失败，请稍后重试");
       } finally {
         loadingInstance.close();
         this.refreshing = false;
       }
     },
 
+    escapeCsvField(value) {
+      const isText = typeof value === "string";
+      let text = value === null || value === undefined ? "" : String(value);
+      if (isText && /^[\u0000-\u0020]*[=+\-@]/.test(text)) {
+        text = `'${text}`;
+      }
+      return `"${text.replace(/"/g, '""')}"`;
+    },
+
+    buildStatisticsExportRows(stats) {
+      const rows = [];
+      const addSection = (title, headers, dataRows) => {
+        if (rows.length) rows.push([]);
+        rows.push([title]);
+        rows.push(headers);
+        rows.push(...dataRows);
+      };
+      const summary = stats.summary || {};
+      const range = stats.time_range || {};
+
+      addSection("统计范围", ["项目", "值"], [
+        ["开始时间", range.start_date || ""],
+        ["结束时间", range.end_date || ""],
+        ["统计粒度", range.granularity || ""],
+        ["时区", range.timezone || "Asia/Shanghai"],
+      ]);
+      addSection("汇总指标", ["指标", "值"], [
+        ["预警总数", summary.total_alerts || 0],
+        ["已处理预警数", summary.processed_count || 0],
+        ["未处理预警数", summary.pending_count || 0],
+        ["误报数", summary.false_alarm_count || 0],
+        ["处理率(%)", summary.processed_rate || 0],
+      ]);
+      addSection(
+        "预警趋势",
+        ["周期", "预警数量"],
+        (stats.trend || []).map((item) => [item.label, item.count])
+      );
+      addSection(
+        "状态分布",
+        ["状态", "预警数量"],
+        Object.entries(stats.by_status || {}).map(([name, count]) => [name, count])
+      );
+      addSection(
+        "等级分布",
+        ["等级", "预警数量"],
+        Object.entries(stats.by_level || {}).map(([name, count]) => [name, count])
+      );
+      addSection(
+        "预警类型TOP5",
+        ["预警类型", "预警数量"],
+        (stats.by_type || []).map((item) => [item.name, item.count])
+      );
+      addSection(
+        "设备预警TOP10",
+        ["设备名称", "预警数量", "相对占比(%)"],
+        (stats.top_cameras || []).map((item) => [item.name, item.count, item.percent])
+      );
+      addSection(
+        "点位预警TOP5",
+        ["点位", "预警数量", "相对占比(%)"],
+        (stats.by_location || []).map((item) => [item.name, item.count, item.percent])
+      );
+      return rows;
+    },
+
     exportData() {
-      if (!this.deviceWarnings.length) {
-        this.$message.warning("暂无设备数据可导出");
+      if (!this.latestStatistics) {
+        this.$message.warning("暂无统计数据可导出");
         return;
       }
       this.exportLoading = true;
-      const headers = ["设备名称", "预警数量", "占比(%)"];
-      const rows = this.deviceWarnings.map((d) => [d.name, d.count, d.percent]);
-      let csv = headers.join(",") + "\n";
-      rows.forEach((r) => { csv += r.join(",") + "\n"; });
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.setAttribute("href", URL.createObjectURL(blob));
-      link.setAttribute("download", `预警统计数据_${Date.now()}.csv`);
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      this.exportLoading = false;
-      this.$message.success(`数据已导出`);
+      let link = null;
+      let objectUrl = null;
+      try {
+        const rows = this.buildStatisticsExportRows(this.latestStatistics);
+        const csv = rows
+          .map((row) => row.map((value) => this.escapeCsvField(value)).join(","))
+          .join("\r\n");
+        const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+        objectUrl = URL.createObjectURL(blob);
+        link = document.createElement("a");
+        link.setAttribute("href", objectUrl);
+        const range = this.getTimeParams() || {};
+        const rangeText = range.start_date && range.end_date
+          ? `${range.start_date}_${range.end_date}`
+          : Date.now();
+        link.setAttribute("download", `预警统计数据_${rangeText}.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        this.$message.success("数据已导出");
+      } catch (e) {
+        console.error("导出统计数据失败:", e);
+        this.$message.error("数据导出失败，请稍后重试");
+      } finally {
+        if (link && link.parentNode) {
+          link.parentNode.removeChild(link);
+        }
+        if (objectUrl) {
+          URL.revokeObjectURL(objectUrl);
+        }
+        this.exportLoading = false;
+      }
     },
 
     getTotalWarnings() {
@@ -560,11 +750,7 @@ export default {
         end-placeholder="结束日期"
         :append-to-body="false"
         style="width: 100%"
-        :picker-options="{
-          disabledDate(time) {
-            return time.getTime() > Date.now();
-          },
-        }"
+        :picker-options="datePickerOptions"
         popper-class="date-picker-dropdown"
       >
       </el-date-picker>

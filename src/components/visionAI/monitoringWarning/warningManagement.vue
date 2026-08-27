@@ -1,6 +1,7 @@
 <script>
 import WarningDetail from './warningDetail.vue'
 import { alertAPI, archiveAPI } from '@/components/service/VisionAIService.js'
+import userService from '@/components/service/UserService.js'
 
 export default {
   name: "WarningManagement",
@@ -30,8 +31,12 @@ export default {
       
       // 选中的预警项
       selectedWarnings: [],
+      // 显式勾选模式下保存每条预警的状态快照，支持跨页并发校验
+      selectedWarningExpectedStatuses: {},
       // 筛选了预警技能后可「全选」当前筛选结果
       selectAllFiltered: false,
+      // 点击全选时固化筛选条件，避免确认前编辑表单导致选择范围漂移
+      selectAllFilters: null,
       
       // 预警等级配置
       warningLevelConfig: {
@@ -72,10 +77,20 @@ export default {
       remarkForm: {
         remark: ''
       },
+
+      // 重新处理对话框
+      reopenDialogVisible: false,
+      reopenWarningId: '',
+      reopenForm: {
+        reason: ''
+      },
       
       // 上报确认对话框
       reportDialogVisible: false,
       reportWarningId: '',
+      reportForm: {
+        notes: ''
+      },
       
       // 归档确认对话框
       archiveDialogVisible: false,
@@ -142,7 +157,7 @@ export default {
     },
     'searchForm.warningSkill'(val) {
       if (!val) {
-        this.selectAllFiltered = false
+        this.clearWarningSelection()
       }
     }
   },
@@ -336,8 +351,7 @@ export default {
         // 刷新后按需清空选择；翻页且已筛选技能时保留（支持全选/跨页勾选）
         this.cardHoverStates = {}
         if (clearSelection) {
-          this.selectedWarnings = []
-          this.selectAllFiltered = false
+          this.clearWarningSelection()
         }
       } catch (error) {
         console.error('获取预警列表异常:', error)
@@ -352,6 +366,25 @@ export default {
 
     isWarningSelected(id) {
       return this.selectAllFiltered || this.selectedWarnings.includes(id)
+    },
+
+    clearWarningSelection() {
+      this.selectedWarnings = []
+      this.selectedWarningExpectedStatuses = {}
+      this.selectAllFiltered = false
+      this.selectAllFilters = null
+    },
+
+    rememberWarningExpectedStatus(warning) {
+      if (!warning) return
+      const apiStatus = warning._apiData && Number(warning._apiData.status)
+      if (apiStatus) {
+        this.$set(this.selectedWarningExpectedStatuses, String(warning.id), apiStatus)
+      }
+    },
+
+    forgetWarningExpectedStatus(id) {
+      this.$delete(this.selectedWarningExpectedStatuses, String(id))
     },
 
     // 转换API数据为页面数据格式
@@ -385,7 +418,8 @@ export default {
           item.status,
           this.formatApiTime(item.alert_time),
           item.processed_by,
-          this.formatApiTime(item.processed_at)
+          this.formatApiTime(item.resolved_at || item.processed_at),
+          item.processing_notes
         );
 
         return {
@@ -454,9 +488,24 @@ export default {
       }
     },
 
+    resolveFalseAlarmDescription(stepDesc, processingNotes) {
+      const desc = (stepDesc || '').trim()
+      const genericTexts = ['预警已标记为误报', '误报', '标记为误报']
+      if (desc && !genericTexts.includes(desc)) {
+        return desc
+      }
+
+      const notes = (processingNotes || '').trim()
+      if (notes) {
+        return notes
+      }
+
+      return desc || '预警已标记为误报'
+    },
+
     // 🔧 转换处理历史 - 与realTimeMonitoring保持一致
     // alertTime: 预警产生时间, processedAt: 处理时间
-    convertProcessHistory(processData, apiStatus, alertTime, processedBy, processedAt) {
+    convertProcessHistory(processData, apiStatus, alertTime, processedBy, processedAt, processingNotes) {
       try {
         const operationHistory = []
         // 使用后端返回的操作人名字，如果没有则使用默认值
@@ -467,13 +516,21 @@ export default {
         // 处理API返回的步骤（如果存在）
         if (processData && processData.steps && Array.isArray(processData.steps)) {
           processData.steps.forEach((step, index) => {
+            const stepName = step.step || ''
+            const isFalseAlarmStep = stepName === '误报'
+            const isCompletedStep = ['已处理', '完成预警处理'].includes(stepName)
+            const operationType = ['上报预警', '预警上报'].includes(stepName)
+              ? 'report'
+              : (stepName === '预警产生' ? 'pending' : (isFalseAlarmStep ? 'false_alarm' : (isCompletedStep ? 'completed' : 'processing')))
             operationHistory.push({
               id: step.id || (Date.now() + index + 100),
               status: 'completed',
               statusText: step.step || '处理中',
               time: this.formatApiTime(step.time),
-              description: step.desc || step.description || '',
-              operationType: step.step === '预警产生' ? 'pending' : 'processing',
+              description: isFalseAlarmStep
+                ? this.resolveFalseAlarmDescription(step.desc || step.description, processingNotes)
+                : (step.desc || step.description || ''),
+              operationType,
               operator: step.operator || '系统'
             })
           })
@@ -497,16 +554,19 @@ export default {
           // 🔧 处理中状态 - 不在时间线中显示，通过预警状态标签体现
           // 用户添加的处理意见会作为 processing-action 类型单独显示
         } else if (apiStatus === 3) {
-          // 已处理状态 - 使用处理时间
-          operationHistory.push({
-            id: Date.now() + Math.random(),
-            status: 'completed',
-            statusText: '已处理',
-            time: processTime,
-            description: '预警处理已完成',
-            operationType: 'completed',
-            operator: defaultOperator
-          })
+          // process.steps 没有完成记录时，使用预警表中的真实处理信息补充
+          const hasCompletedRecord = operationHistory.some(record => record.operationType === 'completed')
+          if (!hasCompletedRecord) {
+            operationHistory.push({
+              id: Date.now() + Math.random(),
+              status: 'completed',
+              statusText: '已处理',
+              time: processTime,
+              description: processingNotes || '未填写处理意见',
+              operationType: 'completed',
+              operator: defaultOperator
+            })
+          }
         } else if (apiStatus === 4) {
           // 已归档状态 - 使用处理时间
           operationHistory.push({
@@ -519,25 +579,24 @@ export default {
             operator: defaultOperator
           })
         } else if (apiStatus === 5) {
-          // 误报状态 - 使用处理时间
-          operationHistory.push({
-            id: Date.now() + Math.random(),
-            status: 'completed',
-            statusText: '误报',
-            time: processTime,
-            description: '预警已标记为误报',
-            operationType: 'false_alarm',
-            operator: defaultOperator
-          })
+          const hasFalseAlarmRecord = operationHistory.some(record =>
+            record.operationType === 'false_alarm' || record.statusText === '误报'
+          )
+          if (!hasFalseAlarmRecord) {
+            operationHistory.push({
+              id: Date.now() + Math.random(),
+              status: 'completed',
+              statusText: '误报',
+              time: processTime,
+              description: this.resolveFalseAlarmDescription('', processingNotes),
+              operationType: 'false_alarm',
+              operator: defaultOperator
+            })
+          }
         }
 
-        // 统一按时间排序（最新的在最下面，时间正序）
-        operationHistory.sort((a, b) => {
-          const timeA = new Date(a.time).getTime()
-          const timeB = new Date(b.time).getTime()
-          if (isNaN(timeA) || isNaN(timeB)) return 0
-          return timeA - timeB
-        })
+        // process.steps 已由后端按权威记录顺序返回，不再按时间二次排序。
+        // 历史上还原复判曾以 UTC 写入，按时间排序会把最新操作移到前面。
 
         return operationHistory
       } catch (error) {
@@ -571,6 +630,11 @@ export default {
             return // 等处理意见填写完成后再继续
           } else if (action === 'report') {
             // 上报
+            if (this.isReportDisabled(this.warningList[index])) {
+              this.$message.warning('该预警已上报，不能重复上报')
+              this.loading = false
+              return
+            }
             this.reportWarningId = id
             this.reportDialogVisible = true
             return // 不关闭loading，等确认后再关闭
@@ -583,6 +647,11 @@ export default {
             this.archiveWarningId = id
             this.falseAlarmDialogVisible = true
             return // 不关闭loading，等用户输入完成后再关闭
+          } else if (action === 'reopen') {
+            this.reopenWarningId = id
+            this.reopenForm.reason = ''
+            this.reopenDialogVisible = true
+            return
           }
         }
         
@@ -761,21 +830,15 @@ export default {
     
     // 获取当前用户昵称
     getCurrentUserName() {
-      // 从用户登录信息或Vuex store中获取，或从本地存储获取
-      const savedUserName = localStorage.getItem('currentUserName')
-      
-      if (savedUserName) {
-        return savedUserName
-      } else {
-        // 如果没有保存的用户名，返回默认值
-        return '系统用户'
-      }
+      const user = userService.getUser()
+      return user.userName || user.username || user.nickName || user.nickname || '系统用户'
     },
     
     
     // 选择当前页
     handleSelectPage() {
       this.selectAllFiltered = false
+      this.selectAllFilters = null
       const currentPageIds = this.warningList.map(item => item.id)
       if (currentPageIds.length === 0) {
         this.$message.warning('当前页没有可选择的预警')
@@ -787,24 +850,22 @@ export default {
       )
 
       if (isCurrentPageFullySelected) {
-        // 未筛选技能时只允许本页选择：取消即清空
-        if (!this.canSelectAll) {
-          this.selectedWarnings = []
-        } else {
-          this.selectedWarnings = this.selectedWarnings.filter(id =>
-            !currentPageIds.includes(id)
-          )
-        }
+        this.selectedWarnings = this.selectedWarnings.filter(id =>
+          !currentPageIds.includes(id)
+        )
+        currentPageIds.forEach(id => this.forgetWarningExpectedStatus(id))
         this.$message.info('已取消选择本页')
       } else if (!this.canSelectAll) {
         // 未筛选技能：只选本页
         this.selectedWarnings = [...currentPageIds]
+        this.selectedWarningExpectedStatuses = {}
+        this.warningList.forEach(item => this.rememberWarningExpectedStatus(item))
         this.$message.success(`已选择本页 ${currentPageIds.length} 项预警`)
       } else {
-        const otherSelectedIds = this.selectedWarnings.filter(id =>
-          !currentPageIds.includes(id)
-        )
-        this.selectedWarnings = [...otherSelectedIds, ...currentPageIds]
+        currentPageIds.forEach(id => {
+          if (!this.selectedWarnings.includes(id)) this.selectedWarnings.push(id)
+        })
+        this.warningList.forEach(item => this.rememberWarningExpectedStatus(item))
         this.$message.success(`已选择本页 ${currentPageIds.length} 项预警`)
       }
     },
@@ -820,19 +881,20 @@ export default {
         return
       }
       if (this.selectAllFiltered) {
-        this.selectAllFiltered = false
-        this.selectedWarnings = []
+        this.clearWarningSelection()
         this.$message.info('已取消全选')
         return
       }
       this.selectAllFiltered = true
-      this.selectedWarnings = this.warningList.map(item => item.id)
+      this.selectedWarnings = []
+      this.selectedWarningExpectedStatuses = {}
+      this.selectAllFilters = { ...this.buildCurrentFilterBody() }
       this.$message.success(`已全选当前筛选结果共 ${this.totalCount} 项预警`)
     },
     
     // 批量处理
     async handleBatchProcess() {
-      if (this.selectedWarnings.length === 0) {
+      if (!this.selectAllFiltered && this.selectedWarnings.length === 0) {
         this.$message.warning('请先选择预警项')
         return
       }
@@ -858,70 +920,74 @@ export default {
           processed_by: this.getCurrentUserName()
         }
 
-        // 将页面ID转换为数字类型的API ID
-        const apiAlertIds = this.selectedWarnings.map(id => {
-          const warning = this.warningList.find(item => item.id === id)
-          return warning && warning._apiData ? warning._apiData.alert_id : parseInt(id)
-        }).filter(id => !isNaN(id))
-
-        console.log('批量处理预警:', apiAlertIds, updateData)
-
-        const response = await alertAPI.batchUpdateAlertStatus(apiAlertIds, updateData)
-        
-        if (response.data && response.data.code === 0) {
-          // API调用成功，更新本地数据（与单个处理逻辑一致）
-          for (const id of this.selectedWarnings) {
-            const index = this.warningList.findIndex(item => item.id === id)
-            if (index !== -1) {
-              // 确保有操作历史数组
-              if (!this.warningList[index].operationHistory) {
-                this.$set(this.warningList[index], 'operationHistory', [])
-              }
-              
-              // 更新待处理记录为已完成状态
-              this.warningList[index].operationHistory = this.warningList[index].operationHistory.map(record => {
-                if (record.operationType === 'pending' && record.status === 'active') {
-                  return {
-                    ...record,
-                    status: 'completed',
-                    description: '预警已确认，开始处理'
-                  };
-                }
-                return record;
-              });
-              
-              // 🔧 添加处理意见记录（使用 processing-action 类型）
-              const processingRecord = {
-                id: Date.now() + Math.random(),
-                status: 'completed',
-                statusText: '处理记录',
-                time: this.getCurrentTime(),
-                description: `批量处理：${this.batchRemarkForm.remark}`,
-                operationType: 'processing-action',
-                operator: this.getCurrentUserName()
-              }
-              
-              this.warningList[index].operationHistory.push(processingRecord)
-              
-              // 更新状态为处理中
-              this.warningList[index].status = 'processing'
-            }
+        const requestedCount = this.exportSelectedCount
+        let response
+        if (this.selectAllFiltered) {
+          const filters = { ...(this.selectAllFilters || this.buildCurrentFilterBody()) }
+          if (filters.skill_class_id == null && !filters.alert_type) {
+            this.$message.warning('请先筛选预警技能后再全选处理')
+            return
           }
-          
-          this.$message.success(`已为 ${this.selectedWarnings.length} 项预警添加处理记录`)
-          
-          // 刷新列表以获取最新数据
-          await this.getWarningList()
+          response = await alertAPI.batchUpdateAlertStatusByFilter(filters, updateData)
         } else {
-          console.error('批量处理API失败:', response.data)
-          this.$message.error('批量处理失败：' + (response.data && response.data.msg || '服务器错误'))
+          const expectedStatuses = {}
+          const apiAlertIds = this.selectedWarnings
+            .map(id => parseInt(id, 10))
+            .filter(id => !isNaN(id))
+
+          apiAlertIds.forEach(alertId => {
+            const expectedStatus = this.selectedWarningExpectedStatuses[String(alertId)]
+            if (expectedStatus != null) {
+              expectedStatuses[String(alertId)] = expectedStatus
+            }
+          })
+
+          const missingExpectedStatus = apiAlertIds.some(
+            alertId => expectedStatuses[String(alertId)] == null
+          )
+          if (missingExpectedStatus) {
+            this.$message.error('部分预警缺少状态快照，请重新选择后重试')
+            return
+          }
+          updateData.expected_statuses = expectedStatuses
+          response = await alertAPI.batchUpdateAlertStatus(apiAlertIds, updateData)
         }
         
-        this.selectedWarnings = []
-        this.closeBatchProcessDialog()
+        if (response.data && response.data.code === 0) {
+          const resultData = response.data.data || {}
+          const successCount = resultData.success_count != null
+            ? resultData.success_count
+            : requestedCount
+          this.$message.success(`已为 ${successCount} 项预警添加处理记录`)
+          this.clearWarningSelection()
+          this.closeBatchProcessDialog()
+          await this.getWarningList()
+        } else {
+          const resultData = (response.data && response.data.data) || {}
+          this.$message.warning(
+            `批量处理完成：成功 ${resultData.success_count || 0} 项，失败 ${resultData.failure_count || 0} 项`
+          )
+          this.clearWarningSelection()
+          this.closeBatchProcessDialog()
+          await this.getWarningList()
+        }
       } catch (error) {
         console.error('批量处理失败:', error)
-        this.$message.error('批量处理失败：' + (error.message || '网络错误'))
+        if (error.response && error.response.status === 409) {
+          const detail = error.response.data && error.response.data.detail
+          const resultData = detail && detail.data
+          const successCount = resultData ? resultData.success_count : 0
+          const conflictCount = resultData ? resultData.conflict_count : 0
+          this.$message.warning(
+            `${error.message}（${successCount} 项成功，${conflictCount} 项冲突）`
+          )
+          // 批量接口允许部分成功，冲突后必须刷新以同步已提交的项目。
+          await this.getWarningList()
+          this.clearWarningSelection()
+          this.closeBatchProcessDialog()
+        } else {
+          this.$message.error('批量处理失败：' + (error.message || '网络错误'))
+        }
       } finally {
         this.loading = false
       }
@@ -1015,7 +1081,7 @@ export default {
         image_type: this.exportImageType
       }
       if (this.selectAllFiltered) {
-        Object.assign(body, this.buildCurrentFilterBody())
+        Object.assign(body, this.selectAllFilters || this.buildCurrentFilterBody())
       } else {
         body.alert_ids = this.selectedAlertIds()
       }
@@ -1255,9 +1321,14 @@ export default {
       if (this.selectAllFiltered) {
         // 退出全选，改为仅勾选本页其余项
         this.selectAllFiltered = false
+        this.selectAllFilters = null
         this.selectedWarnings = this.warningList
           .map(item => item.id)
           .filter(itemId => itemId !== id)
+        this.selectedWarningExpectedStatuses = {}
+        this.warningList
+          .filter(item => item.id !== id)
+          .forEach(item => this.rememberWarningExpectedStatus(item))
         return
       }
       // 未筛选技能时不允许跨页累积勾选：只在本页内切换
@@ -1268,16 +1339,20 @@ export default {
         if (index === -1) {
           const pageSelected = this.selectedWarnings.filter(sid => currentPageIds.includes(sid))
           this.selectedWarnings = [...pageSelected, id]
+          this.rememberWarningExpectedStatus(this.warningList.find(item => item.id === id))
         } else {
           this.selectedWarnings = this.selectedWarnings.filter(sid => sid !== id && currentPageIds.includes(sid))
+          this.forgetWarningExpectedStatus(id)
         }
         return
       }
       const index = this.selectedWarnings.indexOf(id)
       if (index === -1) {
         this.selectedWarnings.push(id)
+        this.rememberWarningExpectedStatus(this.warningList.find(item => item.id === id))
       } else {
         this.selectedWarnings.splice(index, 1)
+        this.forgetWarningExpectedStatus(id)
       }
     },
     
@@ -1329,8 +1404,16 @@ export default {
 
         // 准备API更新数据
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(warningId)
+        const expectedStatus = warning._apiData
+          ? Number(warning._apiData.status)
+          : ({ pending: 1, processing: 2, completed: 3, archived: 4, false_alarm: 5 })[warning.status]
+        if (!expectedStatus) {
+          this.$message.error('无法确定预警当前状态，请刷新页面后重试')
+          return
+        }
         const updateData = {
           status: 2, // 处理中状态
+          expected_status: expectedStatus,
           processing_notes: this.remarkForm.remark,
           processed_by: this.getCurrentUserName()
         }
@@ -1400,21 +1483,94 @@ export default {
         remark: ''
       }
     },
+
+    async confirmReopen() {
+      const reason = this.reopenForm.reason.trim()
+      if (!reason) {
+        this.$message.warning('请输入重新处理原因')
+        return
+      }
+
+      const warning = this.warningList.find(item => String(item.id) === String(this.reopenWarningId))
+      if (!warning || !warning._apiData || warning._apiData.status !== 3) {
+        this.$message.error('仅已处理状态的预警可以重新处理，请刷新页面后重试')
+        return
+      }
+
+      try {
+        this.loading = true
+        const response = await alertAPI.reopenAlert(
+          warning._apiData.alert_id,
+          reason,
+          Number(warning._apiData.status)
+        )
+        if (!response.data || response.data.code !== 0) {
+          throw new Error((response.data && response.data.msg) || '重新处理失败')
+        }
+
+        const result = response.data.data || {}
+        const processingRecord = result.processing_record || {}
+        const updatedAlert = result.updated_alert || {}
+        const operatorName = processingRecord.operator || updatedAlert.processed_by || '未知操作人'
+        const reopenedAt = processingRecord.reopened_at || processingRecord.created_at
+
+        this.$set(warning, 'status', 'processing')
+        this.$set(warning._apiData, 'status', 2)
+        this.$set(warning._apiData, 'processing_notes', reason)
+        this.$set(warning._apiData, 'processed_by', operatorName)
+        if (!warning.operationHistory) {
+          this.$set(warning, 'operationHistory', [])
+        }
+        warning.operationHistory.push({
+          id: processingRecord.record_id || (Date.now() + Math.random()),
+          status: 'active',
+          statusText: '重新处理',
+          time: reopenedAt ? this.formatApiTime(reopenedAt) : this.getCurrentTime(),
+          description: reason,
+          operationType: 'processing',
+          operator: operatorName
+        })
+
+        this.$message.success('预警已重新打开，状态已更新为处理中')
+        this.closeReopenDialog()
+        await this.getWarningList()
+      } catch (error) {
+        const serverMessage = error.response && error.response.data && error.response.data.detail
+        this.$message.error('重新处理失败：' + (serverMessage || error.message || '网络错误'))
+      } finally {
+        this.loading = false
+      }
+    },
+
+    closeReopenDialog() {
+      this.reopenDialogVisible = false
+      this.reopenWarningId = ''
+      this.reopenForm.reason = ''
+    },
     
     // 确认上报
     async confirmReport() {
       try {
-        // 真实的API调用 - 上报预警
         const warning = this.warningList.find(item => item.id === this.reportWarningId);
+        if (!warning) {
+          throw new Error('未找到待上报的预警')
+        }
+        if (this.isReportDisabled(warning)) {
+          this.$message.warning('该预警已上报，不能重复上报')
+          this.closeReportDialog()
+          return
+        }
+
+        this.loading = true
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(this.reportWarningId);
-        const updateData = {
-          status: 2, // 保持处理中状态，但添加上报标记
-          processing_notes: '预警已上报给上级部门',
-          processed_by: this.getCurrentUserName()
-        };
-        
-        const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
-        console.log('✅ 上报API调用成功:', response);
+        const response = await alertAPI.reportAlert(apiAlertId, {
+          report_notes: this.reportForm.notes
+        });
+        if (!response.data || response.data.code !== 0) {
+          throw new Error((response.data && response.data.msg) || '上报失败')
+        }
+
+        const reportRecord = response.data.data && response.data.data.processing_record
         
         // 获取当前预警
         const index = this.warningList.findIndex(item => item.id === this.reportWarningId)
@@ -1425,13 +1581,17 @@ export default {
           }
           
           const newRecord = {
-            id: Date.now() + Math.random(),
+            id: (reportRecord && reportRecord.record_id) || (Date.now() + Math.random()),
             status: 'completed',
             statusText: '预警上报',
-            time: this.getCurrentTime(),
-            description: '预警已上报给上级部门处理，等待上级部门响应',
+            time: reportRecord && reportRecord.reported_at
+              ? this.formatApiTime(reportRecord.reported_at)
+              : this.getCurrentTime(),
+            description: this.reportForm.notes
+              ? `预警已上报：${this.reportForm.notes}`
+              : '预警已上报',
             operationType: 'report',
-            operator: this.getCurrentUserName()
+            operator: (reportRecord && reportRecord.operator) || this.getCurrentUserName()
           }
           
           this.warningList[index].operationHistory.push(newRecord)
@@ -1445,7 +1605,9 @@ export default {
         // 不改变预警状态，保持预警可继续处理
       } catch (error) {
         console.error('上报失败:', error)
-        this.$message.error('上报失败')
+        const serverMessage = error.response && error.response.data &&
+          (error.response.data.detail || error.response.data.message)
+        this.$message.error('上报失败：' + (serverMessage || error.message || '网络错误'))
       } finally {
         this.loading = false
       }
@@ -1455,6 +1617,7 @@ export default {
     closeReportDialog() {
       this.reportDialogVisible = false
       this.reportWarningId = ''
+      this.reportForm.notes = ''
     },
     
     closeArchiveDialog() {
@@ -1474,14 +1637,14 @@ export default {
     async handleWarningFromDetail(eventData) {
       if (!eventData || !eventData.alert_id) return;
       
-      if (eventData.action === 'record-added' || eventData.action === 'finished') {
+      if (['record-added', 'finished', 'reopened'].includes(eventData.action)) {
         await this.getWarningList()
       }
     },
     
-    handleReportFromDetail(eventData) {
-      if (eventData && eventData.alert_id) {
-        this.handleWarning(eventData.alert_id, 'report')
+    async handleReportFromDetail(eventData) {
+      if (eventData && eventData.alert_id && eventData.action === 'reported') {
+        await this.getWarningList()
       }
     },
     
@@ -1495,6 +1658,10 @@ export default {
     
     handleFalseAlarmFromDetail(eventData) {
       if (eventData && eventData.alert_id) {
+        if (eventData.completed) {
+          this.getWarningList()
+          return
+        }
         this.handleWarning(eventData.alert_id, 'false_alarm')
       }
     },
@@ -1559,6 +1726,7 @@ export default {
         const { alertAPI } = await import('../../service/VisionAIService.js')
         const response = await alertAPI.markAlertAsFalseAlarm(
           warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId),
+          currentStatus,
           reviewNotes
         )
         
@@ -1604,7 +1772,16 @@ export default {
         
       } catch (error) {
         console.error('标记误报失败:', error)
-        this.$message.error('标记误报失败: ' + (error.message || '未知错误'))
+        if (error.response && error.response.status === 409) {
+          const detail = error.response.data && error.response.data.detail
+          this.$message.warning((detail && detail.message) || '预警状态已更新，请刷新后重试')
+          await this.getWarningList()
+          this.falseAlarmDialogVisible = false
+          this.falseAlarmForm.reviewNotes = ''
+          this.archiveWarningId = ''
+        } else {
+          this.$message.error('标记误报失败: ' + (error.message || '未知错误'))
+        }
       } finally {
         this.loading = false
       }
@@ -1746,9 +1923,17 @@ export default {
 
         // 准备API更新数据
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(warningId)
+        const expectedStatus = warning._apiData
+          ? Number(warning._apiData.status)
+          : ({ pending: 1, processing: 2, completed: 3, archived: 4, false_alarm: 5 })[warning.status]
+        if (!expectedStatus) {
+          this.$message.error('无法确定预警当前状态，请刷新页面后重试')
+          return
+        }
         const updateData = {
           status: 3, // 已处理状态
-          processing_notes: this.remarkForm.remark ? `${this.remarkForm.remark}\n处理已完成` : '处理已完成',
+          expected_status: expectedStatus,
+          processing_notes: this.remarkForm.remark.trim() || null,
           processed_by: this.getCurrentUserName()
         }
 
@@ -1758,12 +1943,22 @@ export default {
         const response = await alertAPI.updateAlertStatus(apiAlertId, updateData)
         
         if (response.data && response.data.code === 0) {
+          const result = response.data.data || {}
+          const updatedAlert = result.updated_alert || {}
+          const processingRecord = result.processing_record || {}
+          const processingNotes = updatedAlert.processing_notes != null
+            ? updatedAlert.processing_notes
+            : updateData.processing_notes
+          const operatorName = processingRecord.operator || updatedAlert.processed_by || '未知操作人'
+
           // API调用成功，更新本地数据状态
           const index = this.warningList.findIndex(item => String(item.id) === String(warningId))
           if (index !== -1) {
             // 🔧 关键修复：更新 _apiData.status 字段为已处理
             if (this.warningList[index]._apiData) {
               this.$set(this.warningList[index]._apiData, 'status', 3)
+              this.$set(this.warningList[index]._apiData, 'processing_notes', processingNotes)
+              this.$set(this.warningList[index]._apiData, 'processed_by', operatorName)
             }
             
             // 更新字符串状态为已处理
@@ -1779,10 +1974,10 @@ export default {
               id: Date.now() + Math.random(),
               status: 'completed',
               statusText: '已处理',
-              time: this.getCurrentTime(),
-              description: '预警处理已完成，可以进行后续操作',
+              time: processingRecord.created_at ? this.formatApiTime(processingRecord.created_at) : this.getCurrentTime(),
+              description: processingNotes || '未填写处理意见',
               operationType: 'completed',
-              operator: this.getCurrentUserName()
+              operator: operatorName
             }
             
             this.warningList[index].operationHistory.push(newRecord)
@@ -1810,40 +2005,41 @@ export default {
     
     // 检查处理按钮是否应该禁用
     isProcessingDisabled(warning) {
-      if (!warning.operationHistory || warning.operationHistory.length === 0) {
-        return false // 没有历史记录，可以处理
+      if (!warning) {
+        return true
       }
-      
-      console.log('🔒 检查处理按钮状态:', warning.id, 'status:', warning.status);
-      
-      // 优先检查API状态
-      if (warning.status === 'archived' || warning.status === 'false_alarm' || warning.status === 'completed') {
-        console.log('✅ 按API状态禁用按钮:', warning.status);
-        return true;
+
+      // 当前后端状态是处理按钮的权威依据，历史上的“已处理”记录不能覆盖重新处理后的状态。
+      if (warning._apiData && typeof warning._apiData.status !== 'undefined') {
+        return [3, 4, 5].includes(Number(warning._apiData.status))
       }
-      
-      // 如果已归档，禁用处理按钮
-      const hasArchived = warning.operationHistory.some(record => 
-        record.operationType === 'archive' || record.operationType === 'false_alarm'
-      );
-      
-      if (hasArchived) {
-        console.log('✅ 按操作历史禁用按钮: 已归档');
-        return true;
+
+      // 向后兼容没有原始API数据的列表项。
+      if (warning.status) {
+        return ['completed', 'archived', 'false_alarm'].includes(warning.status)
       }
-      
-      // 如果已完成处理，禁用处理按钮
-      const hasCompletedProcessing = warning.operationHistory.some(record => 
-        record.operationType === 'completed'
-      );
-      
-      if (hasCompletedProcessing) {
-        console.log('✅ 按操作历史禁用按钮: 已完成处理');
-        return true;
+
+      const operationHistory = Array.isArray(warning.operationHistory)
+        ? warning.operationHistory
+        : []
+      const latestStatusRecord = [...operationHistory].reverse().find(record =>
+        ['pending', 'processing', 'completed', 'archive', 'false_alarm'].includes(record.operationType)
+      )
+
+      if (!latestStatusRecord) {
+        return false
       }
-      
-      console.log('🔓 按钮可用');
-      return false;
+
+      return ['completed', 'archive', 'false_alarm'].includes(latestStatusRecord.operationType)
+    },
+
+    isResolvedWarning(warning) {
+      return Boolean(
+        warning && (
+          (warning._apiData && warning._apiData.status === 3) ||
+          warning.status === 'completed'
+        )
+      )
     },
 
     // 检查归档按钮是否应该禁用（只有已处理状态才能归档）
@@ -1913,6 +2109,19 @@ export default {
       }
       
       return true;
+    },
+
+    isReportDisabled(warning) {
+      if (!warning) return true;
+
+      const operationHistory = Array.isArray(warning.operationHistory) ? warning.operationHistory : [];
+      if (operationHistory.some(record => record.operationType === 'report')) {
+        return true;
+      }
+
+      const process = warning._apiData && warning._apiData.process;
+      const steps = process && Array.isArray(process.steps) ? process.steps : [];
+      return steps.some(step => ['上报预警', '预警上报'].includes(step.step));
     },
     
     // 获取当前预警状态
@@ -2050,7 +2259,7 @@ export default {
 
       let body
       if (this.selectAllFiltered) {
-        body = this.buildCurrentFilterBody()
+        body = { ...(this.selectAllFilters || this.buildCurrentFilterBody()) }
         if (body.skill_class_id == null && !body.alert_type) {
           this.$message.warning('请先筛选预警技能后再全选删除')
           return
@@ -2074,8 +2283,7 @@ export default {
           const deleted = (response.data.data && response.data.data.deleted_count)
             || this.exportSelectedCount
           this.$message.success(`已成功删除 ${deleted} 项预警`)
-          this.selectedWarnings = []
-          this.selectAllFiltered = false
+          this.clearWarningSelection()
           this.closeDeleteDialog()
           this.currentPage = 1
           await this.getWarningList()
@@ -2289,7 +2497,7 @@ export default {
             </span>
             <el-button 
               size="small" 
-              :disabled="selectAllFiltered || selectedWarnings.length === 0"
+              :disabled="exportSelectedCount === 0"
               @click="handleBatchProcess"
             >批量处理</el-button>
             <el-button 
@@ -2399,9 +2607,9 @@ export default {
                       size="mini" 
                       class="action-btn report-btn"
                       @click.stop="handleWarning(item.id, 'report')"
-                      :disabled="isProcessingDisabled(item)"
+                      :disabled="isReportDisabled(item)"
                     >
-                      上报
+                      {{ isReportDisabled(item) ? '已上报' : '上报' }}
                     </el-button>
                     
                     <el-button 
@@ -2422,7 +2630,19 @@ export default {
                       误报
                     </el-button>
                     
-                    <el-button 
+                    <el-button
+                      v-if="isResolvedWarning(item)"
+                      size="mini"
+                      type="warning"
+                      plain
+                      class="action-btn reopen-btn"
+                      @click.stop="handleWarning(item.id, 'reopen')"
+                    >
+                      重新处理
+                    </el-button>
+
+                    <el-button
+                      v-else
                       size="mini" 
                       class="action-btn process-btn"
                       @click.stop="handleWarning(item.id, 'markProcessed')"
@@ -2599,6 +2819,38 @@ export default {
         <el-button type="success" @click="finishProcessing">结束处理</el-button>
       </span>
     </el-dialog>
+
+    <!-- 重新处理对话框 -->
+    <el-dialog
+      title="重新处理预警"
+      :visible.sync="reopenDialogVisible"
+      width="30%"
+      center
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      @close="closeReopenDialog"
+    >
+      <el-form :model="reopenForm" label-width="110px">
+        <el-form-item label="重新处理原因" required>
+          <el-input
+            v-model="reopenForm.reason"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入重新打开该预警的原因"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <div class="process-tip">
+        <i class="el-icon-info" style="color: #909399; margin-right: 4px;"></i>
+        <span style="color: #909399; font-size: 13px;">确认后状态将由“已处理”变为“处理中”，系统会保留完成时间并记录重新打开时间</span>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="closeReopenDialog">取 消</el-button>
+        <el-button type="warning" :loading="loading" @click="confirmReopen">确认重新处理</el-button>
+      </span>
+    </el-dialog>
     
     <!-- 上报确认对话框 -->
     <el-dialog
@@ -2611,11 +2863,23 @@ export default {
     >
       <div class="confirm-content">
         <p>确定要上报此预警吗？</p>
-        <p style="color: #909399; font-size: 12px;">上报后预警将提交给上级部门处理</p>
+        <p style="color: #909399; font-size: 12px;">状态保持不变，并记录一条可审计的上报记录</p>
+        <el-form :model="reportForm" label-width="84px" style="margin-top: 16px; text-align: left;">
+          <el-form-item label="上报说明">
+            <el-input
+              v-model="reportForm.notes"
+              type="textarea"
+              :rows="3"
+              maxlength="2000"
+              show-word-limit
+              placeholder="请输入上报说明（可选）"
+            />
+          </el-form-item>
+        </el-form>
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeReportDialog">取 消</el-button>
-        <el-button type="warning" @click="confirmReport">确定上报</el-button>
+        <el-button type="warning" :loading="loading" @click="confirmReport">确定上报</el-button>
       </span>
     </el-dialog>
     
@@ -2699,7 +2963,7 @@ export default {
     >
       <div class="batch-process-info">
         <i class="el-icon-warning-outline" style="color: #E6A23C; font-size: 24px; margin-right: 8px;"></i>
-        <span style="font-size: 16px; font-weight: 500;">您将要批量处理 {{ selectedWarnings.length }} 项预警</span>
+        <span style="font-size: 16px; font-weight: 500;">您将要批量处理 {{ exportSelectedCount }} 项预警</span>
       </div>
       
       <el-form :model="batchRemarkForm" label-width="80px" style="margin-top: 20px;">
