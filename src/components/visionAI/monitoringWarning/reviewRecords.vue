@@ -1,9 +1,7 @@
 <script>
 import WarningDetail from './warningDetail.vue'
 import { reviewRecordAPI } from '../../service/VisionAIService.js'
-
-const SKILL_SOURCE_VISION = 'vision'
-const SKILL_SOURCE_LLM = 'llm'
+import { normalizeAlertSkillSource, skillSourceLabel, skillSourceTagType } from '../skillManagement/runPlan/runPlanFormat.js'
 
 export default {
   name: "ReviewRecords",
@@ -152,6 +150,8 @@ export default {
     this.stopDownloadPoll()
   },
   methods: {
+    skillSourceLabel,
+    skillSourceTagType,
     async loadSkillOptions() {
       // 只展示复判记录里实际出现过的预警技能，避免选到下面没有的
       const options = []
@@ -162,8 +162,8 @@ export default {
           : (Array.isArray(body) ? body : [])
         list.forEach(s => {
           if (!s || s.skill_class_id == null) return
-          const source = s.skill_source === SKILL_SOURCE_LLM ? SKILL_SOURCE_LLM : SKILL_SOURCE_VISION
-          const tag = source === SKILL_SOURCE_LLM ? '[大模型]' : '[视觉]'
+          const source = normalizeAlertSkillSource(s.skill_source)
+          const tag = `[${skillSourceLabel(source)}]`
           const name = s.skill_name_zh || ('技能#' + s.skill_class_id)
           const count = s.review_count ? `（${s.review_count}）` : ''
           options.push({
@@ -180,11 +180,11 @@ export default {
         const seen = {}
         this.reviewList.forEach(item => {
           if (!item.skillClassId) return
-          const source = item.skillSource || SKILL_SOURCE_VISION
+          const source = normalizeAlertSkillSource(item.skillSource)
           const value = `${source}:${item.skillClassId}`
           if (seen[value]) return
           seen[value] = true
-          const tag = source === SKILL_SOURCE_LLM ? '[大模型]' : '[视觉]'
+          const tag = `[${skillSourceLabel(source)}]`
           options.push({
             label: `${tag} ${item.skillNameZh || ('技能#' + item.skillClassId)}`,
             value
@@ -313,7 +313,7 @@ export default {
         
         if (response.data && response.data.code === 0) {
           this.reviewList = response.data.data.map(record => {
-            const isLlm = record.alert_type && record.alert_type.startsWith('llm_')
+            const skillSource = normalizeAlertSkillSource(record.skill_source, record.alert_type)
             return {
               id: record.review_id.toString(),
               title: record.alert_name || '未知预警',
@@ -333,7 +333,7 @@ export default {
               alertType: record.alert_type || '',
               skillClassId: record.skill_class_id || null,
               skillNameZh: record.skill_name_zh || '',
-              skillSource: isLlm ? SKILL_SOURCE_LLM : SKILL_SOURCE_VISION,
+              skillSource,
               reviewSkillName: record.review_skill_name || ''
             }
           })
@@ -1416,10 +1416,10 @@ export default {
                   <span class="value">
                     <el-tag
                       size="mini"
-                      :type="item.skillSource === 'llm' ? 'warning' : 'primary'"
+                      :type="skillSourceTagType(item.skillSource)"
                       effect="plain"
                       class="skill-tag"
-                    >{{ item.skillSource === 'llm' ? '大模型' : '视觉' }}</el-tag>
+                    >{{ skillSourceLabel(item.skillSource) }}</el-tag>
                     <span class="skill-name-text">{{ item.skillNameZh }}</span>
                   </span>
                 </div>

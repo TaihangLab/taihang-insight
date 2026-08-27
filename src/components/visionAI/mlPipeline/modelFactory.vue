@@ -171,7 +171,7 @@
                 <div v-if="!images.length" class="empty-tip">暂无图片，点击「添加图片」开始</div>
                 <div v-else-if="!filteredImages.length" class="empty-tip">当前点位筛选下无图片</div>
                 <div
-                  v-for="img in filteredImages"
+                  v-for="img in pagedImages"
                   :key="img.id"
                   :class="['image-card', { selected: selectedImageIds.includes(img.id) }]">
                   <el-checkbox
@@ -181,9 +181,10 @@
                     @click.native.stop>
                   </el-checkbox>
                   <el-image
-                    :src="imageProxyUrl(img.id)"
-                    :preview-src-list="imagePreviewList"
+                    :src="imageThumbUrl(img.id)"
+                    :preview-src-list="previewListFor(img)"
                     fit="cover"
+                    lazy
                     class="image-thumb">
                     <div slot="error" class="image-error">
                       <i class="el-icon-picture-outline"></i>
@@ -209,6 +210,15 @@
                     {{ img.is_labeled ? '已标注' : '未标注' }}
                   </span>
                 </div>
+              </div>
+              <div v-if="filteredImages.length > imagePageSize" class="image-pagination">
+                <el-pagination
+                  background
+                  layout="total, prev, pager, next, jumper"
+                  :page-size="imagePageSize"
+                  :current-page.sync="imagePage"
+                  :total="filteredImages.length">
+                </el-pagination>
               </div>
             </el-tab-pane>
 
@@ -288,9 +298,10 @@
                       <el-image
                         v-for="img in task.recentImages"
                         :key="img.id"
-                        :src="imageProxyUrl(img.id)"
-                        :preview-src-list="task.recentImages.map(i => imageProxyUrl(i.id))"
+                        :src="imageThumbUrl(img.id)"
+                        :preview-src-list="[imageProxyUrl(img.id)]"
                         fit="cover"
+                        lazy
                         class="collection-thumb">
                       </el-image>
                       <div
@@ -1379,6 +1390,8 @@ export default {
       imagesLoading: false,
       selectedImageIds: [],
       imageCameraFilter: '',
+      imagePage: 1,
+      imagePageSize: 48,
       deletingImages: false,
       deleteProgressVisible: false,
       deleteProgressPhase: '', // running | done | error
@@ -1496,12 +1509,17 @@ export default {
       if (!this.imageCameraFilter) return this.images || [];
       return (this.images || []).filter(img => img.camera_id === this.imageCameraFilter);
     },
+    pagedImages() {
+      const list = this.filteredImages || [];
+      const size = this.imagePageSize || 48;
+      const maxPage = Math.max(1, Math.ceil(list.length / size) || 1);
+      const page = Math.min(Math.max(1, this.imagePage || 1), maxPage);
+      const start = (page - 1) * size;
+      return list.slice(start, start + size);
+    },
     selectedVisibleImageCount() {
       const visible = new Set((this.filteredImages || []).map(i => i.id));
       return (this.selectedImageIds || []).filter(id => visible.has(id)).length;
-    },
-    imagePreviewList() {
-      return this.filteredImages.map(i => this.imageProxyUrl(i.id));
     },
     datasetTrainingTasks() {
       if (!this.selectedDataset) return [];
@@ -1582,6 +1600,7 @@ export default {
   },
   watch: {
     imageCameraFilter() {
+      this.imagePage = 1;
       // 切换点位筛选时，去掉当前不可见项的选中，避免误删
       const visible = new Set((this.filteredImages || []).map(i => i.id));
       this.selectedImageIds = (this.selectedImageIds || []).filter(id => visible.has(id));
@@ -1623,8 +1642,18 @@ export default {
     this.stopDeletePoll();
   },
   methods: {
-    imageProxyUrl(imageId) {
-      return `${config.API_BASE_URL}/api/v1/ml-pipeline/annotation/images/${imageId}/proxy`;
+    imageProxyUrl(imageId, thumb = false) {
+      const base = `${config.API_BASE_URL}/api/v1/ml-pipeline/annotation/images/${imageId}/proxy`;
+      return thumb ? `${base}?thumb=1` : base;
+    },
+    imageThumbUrl(imageId) {
+      return this.imageProxyUrl(imageId, true);
+    },
+    previewListFor(img) {
+      const page = this.pagedImages || [];
+      const idx = page.findIndex(i => i.id === img.id);
+      if (idx < 0) return [this.imageProxyUrl(img.id)];
+      return page.slice(idx).concat(page.slice(0, idx)).map(i => this.imageProxyUrl(i.id));
     },
     sourceTypeLabel(type) {
       return {
@@ -1840,6 +1869,7 @@ export default {
       this.lsProjectWarning = '';
       this.selectedImageIds = [];
       this.imageCameraFilter = '';
+      this.imagePage = 1;
       this.loadImages();
       this.loadCollectionTasks();
       if (ds.ls_project_id) {
@@ -2361,6 +2391,8 @@ export default {
         this.images = res.data.data || [];
         const remain = new Set(this.images.map(i => i.id));
         this.selectedImageIds = this.selectedImageIds.filter(id => remain.has(id));
+        const maxPage = Math.max(1, Math.ceil((this.filteredImages || []).length / (this.imagePageSize || 48)) || 1);
+        if (this.imagePage > maxPage) this.imagePage = maxPage;
       } catch (_) {
         if (!silent) {
           this.images = [];
@@ -3354,6 +3386,11 @@ export default {
   flex-wrap: wrap;
   gap: 10px;
   min-height: 100px;
+}
+.image-pagination {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
 }
 .image-card {
   position: relative;

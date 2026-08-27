@@ -1292,11 +1292,14 @@ export default {
           this.warningSkillOptions = skills
             .filter(skill => skill && skill.skill_class_id != null)
             .map(skill => {
-              const source = skill.skill_source === 'llm' ? 'llm' : 'vision';
+              const source = (skill.skill_source === 'llm' || skill.skill_source === 'graph')
+                ? skill.skill_source
+                : 'vision';
               const name = skill.skill_name_zh || `技能#${skill.skill_class_id}`;
               const count = skill.alert_count ? `（${skill.alert_count}）` : '';
+              const tag = source === 'llm' ? '[大模型]' : (source === 'graph' ? '[编排]' : '[视觉]');
               return {
-                label: `${name}${count}`,
+                label: `${tag} ${name}${count}`,
                 value: `${source}:${skill.skill_class_id}`,
                 skillClassId: skill.skill_class_id
               };

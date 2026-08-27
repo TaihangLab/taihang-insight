@@ -184,11 +184,12 @@ export default {
 
         skills.forEach(s => {
           if (!s || s.skill_class_id == null) return
-          const source = s.skill_source === 'llm' ? 'llm' : 'vision'
+          const source = (s.skill_source === 'llm' || s.skill_source === 'graph') ? s.skill_source : 'vision'
           const name = s.skill_name_zh || ('技能#' + s.skill_class_id)
           const count = s.alert_count ? `（${s.alert_count}）` : ''
+          const tag = source === 'llm' ? '[大模型]' : (source === 'graph' ? '[编排]' : '[视觉]')
           skillOptions.push({
-            label: `${name}${count}`,
+            label: `${tag} ${name}${count}`,
             value: `${source}:${s.skill_class_id}`,
             skillClassId: s.skill_class_id,
             skillNameZh: name
@@ -215,7 +216,9 @@ export default {
             const api = item._apiData || {}
             const sid = api.skill_class_id
             if (sid == null) return
-            const source = (api.alert_type && String(api.alert_type).startsWith('llm_')) ? 'llm' : 'vision'
+            const source = (api.alert_type && String(api.alert_type).startsWith('llm_'))
+              ? 'llm'
+              : (api.skill_source === 'graph' ? 'graph' : 'vision')
             const value = `${source}:${sid}`
             if (seen[value]) return
             seen[value] = true
@@ -1706,14 +1709,16 @@ export default {
         const warningInfo = this.warningList[warningIndex]
         const currentStatus = warningInfo._apiData ? warningInfo._apiData.status : null
         
-        // 待处理和处理中状态均可标记为误报
-        if (currentStatus && ![1, 2].includes(currentStatus)) {
+        // 检查预警状态：待处理、处理中均可标记误报（与后端 _can_mark_false_alarm 一致）
+        if (warningInfo._apiData && !this.canMarkFalseAlarm(warningInfo._apiData.status)) {
           const statusNames = {
+            1: '待处理',
+            2: '处理中',
             3: '已处理',
             4: '已归档',
             5: '误报'
           }
-          const currentStatusName = statusNames[currentStatus] || '未知状态'
+          const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态'
           this.$message.warning(`只有待处理或处理中状态的预警才能标记为误报，当前状态为：${currentStatusName}`)
           this.falseAlarmDialogVisible = false
           this.falseAlarmForm.reviewNotes = ''
@@ -2098,17 +2103,21 @@ export default {
       return false
     },
     
-    // 待处理和处理中状态均可标记为误报
+    // 与后端 _can_mark_false_alarm 一致：待处理(1)、处理中(2) 可标记误报
+    canMarkFalseAlarm(status) {
+      const s = Number(status)
+      return s === 1 || s === 2
+    },
+
+    // 检查误报按钮是否应该禁用
     isFalseAlarmDisabled(warning) {
       if (warning._apiData && warning._apiData.status !== undefined) {
-        return ![1, 2].includes(warning._apiData.status);
+        return !this.canMarkFalseAlarm(warning._apiData.status)
       }
-      
       if (warning.status) {
-        return !['pending', 'processing'].includes(warning.status);
+        return warning.status !== 'pending' && warning.status !== 'processing'
       }
-      
-      return true;
+      return true
     },
 
     isReportDisabled(warning) {
@@ -2621,14 +2630,21 @@ export default {
                       归档
                     </el-button>
                     
-                    <el-button 
-                      size="mini" 
-                      class="action-btn false-alarm-btn"
-                      @click.stop="handleWarning(item.id, 'false_alarm')"
-                      :disabled="isFalseAlarmDisabled(item)"
-                    >
-                      误报
-                    </el-button>
+                    <el-tooltip
+                      :disabled="!isFalseAlarmDisabled(item)"
+                      content="已处理、已归档或已标记误报的预警不能再点误报"
+                      placement="top">
+                      <span class="false-alarm-btn-wrap" @click.stop>
+                        <el-button
+                          size="mini"
+                          class="action-btn false-alarm-btn"
+                          @click.stop="handleWarning(item.id, 'false_alarm')"
+                          :disabled="isFalseAlarmDisabled(item)"
+                        >
+                          误报
+                        </el-button>
+                      </span>
+                    </el-tooltip>
                     
                     <el-button
                       v-if="isResolvedWarning(item)"
@@ -3486,6 +3502,10 @@ export default {
   padding: 4px 10px;
   font-size: 12px;
   min-width: auto;
+}
+
+.false-alarm-btn-wrap {
+  display: inline-block;
 }
 
 /* 底部按钮样式 - 统一样式 */
