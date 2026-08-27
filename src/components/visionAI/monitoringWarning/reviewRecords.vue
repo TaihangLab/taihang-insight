@@ -72,6 +72,7 @@ export default {
       
       // 加载状态
       loading: false,
+      batchDeleting: false,
       
       // 选中的记录
       selectedRecords: [],
@@ -718,14 +719,18 @@ export default {
 
     // 批量删除
     async handleBatchDelete() {
-      if (this.selectedRecords.length === 0) {
+      if (this.selectedRecords.length === 0 || this.batchDeleting) {
+        if (this.batchDeleting) return
         this.$message.warning('请先选择要删除的记录')
         return
       }
-      
+
+      // 操作期间使用快照，避免用户选择变化导致删除对象和提示数量不一致。
+      const selectedIds = [...new Set(this.selectedRecords.map(id => String(id)))]
+
       try {
         await this.$confirm(
-          `确定要删除选中的 ${this.selectedRecords.length} 项记录吗？删除后将无法恢复。`,
+          `确定要删除选中的 ${selectedIds.length} 项记录吗？删除后将无法恢复。`,
           '删除确认',
           {
             confirmButtonText: '确定删除',
@@ -733,30 +738,73 @@ export default {
             type: 'warning'
           }
         )
-        
+
+        this.batchDeleting = true
         this.loading = true
-        
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 800))
-        
-        // 从列表中移除选中项
-        this.reviewList = this.reviewList.filter(item => 
-          !this.selectedRecords.includes(item.id)
+
+        const results = await Promise.all(selectedIds.map(reviewId =>
+          reviewRecordAPI.deleteReviewRecord(reviewId)
+            .then(() => ({ reviewId, success: true, alreadyDeleted: false }))
+            .catch(error => {
+              const status = error && error.response && error.response.status
+              // 并发操作时记录可能已被其他用户删除；目标状态已经达成，按幂等成功处理。
+              if (status === 404) {
+                return { reviewId, success: true, alreadyDeleted: true }
+              }
+              return { reviewId, success: false, error }
+            })
+        ))
+
+        const succeeded = results.filter(result => result.success)
+        const failed = results.filter(result => !result.success)
+        const failedIds = failed.map(result => result.reviewId)
+
+        if (succeeded.length > 0) {
+          const remainingTotal = Math.max(0, this.pagination.total - succeeded.length)
+          const maxPage = Math.max(1, Math.ceil(remainingTotal / this.pagination.pageSize))
+          if (this.pagination.currentPage > maxPage) {
+            this.pagination.currentPage = maxPage
+          }
+
+          // 删除结果以服务端为准；重新拉取列表，避免本地状态与数据库再次产生偏差。
+          await Promise.all([
+            this.getReviewList(),
+            this.fetchDashboardStats()
+          ])
+          this.applyTopFromListIfNeeded()
+        }
+
+        // 只保留仍失败且还在当前页面中的选中项，方便用户再次操作。
+        this.selectedRecords = failedIds.filter(reviewId =>
+          this.reviewList.some(item => item.id === reviewId)
         )
-        
-        this.$message.success(`已成功删除 ${this.selectedRecords.length} 项记录`)
-        this.selectedRecords = []
-        
-        // 如果当前页没有数据了，回到上一页
-        if (this.currentPageData.length === 0 && this.pagination.currentPage > 1) {
-          this.pagination.currentPage--
+
+        if (failed.length === 0) {
+          this.$message.success(`已成功删除 ${succeeded.length} 项记录`)
+        } else {
+          const firstError = failed[0].error
+          const responseData = firstError && firstError.response && firstError.response.data
+          const errorDetail = (responseData && (responseData.detail || responseData.message)) ||
+            (firstError && firstError.message) || '服务异常'
+
+          if (succeeded.length > 0) {
+            this.$message.warning(
+              `删除完成：成功 ${succeeded.length} 项，失败 ${failed.length} 项（${errorDetail}）`
+            )
+          } else {
+            this.$message.error(`删除失败：${errorDetail}`)
+          }
         }
       } catch (error) {
-        if (error !== 'cancel') {
+        if (error !== 'cancel' && error !== 'close') {
           console.error('删除失败:', error)
-          this.$message.error('删除失败，请稍后重试')
+          const responseData = error && error.response && error.response.data
+          const errorDetail = (responseData && (responseData.detail || responseData.message)) ||
+            (error && error.message) || '请稍后重试'
+          this.$message.error(`删除失败：${errorDetail}`)
         }
       } finally {
+        this.batchDeleting = false
         this.loading = false
       }
     },
@@ -1146,7 +1194,8 @@ export default {
           </el-button>
           <el-button 
             size="small"
-            :disabled="selectedRecords.length === 0"
+            :disabled="selectedRecords.length === 0 || batchDeleting"
+            :loading="batchDeleting"
             @click="handleBatchDelete"
           >
             删除
