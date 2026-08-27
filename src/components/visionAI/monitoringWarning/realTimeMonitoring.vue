@@ -1156,6 +1156,7 @@ export default {
           };
 
           this.warningList[index].operationHistory.push(newRecord);
+          this.syncWarningStatus(this.warningList[index], 2);
         }
 
         this.$message.success('处理记录已添加');
@@ -1228,22 +1229,21 @@ export default {
 
           this.warningList[index].operationHistory.push(completedRecord);
 
-          // 🔧 关键修复：更新 _apiData.status 字段，使用后端返回的操作人名字
+          this.syncWarningStatus(this.warningList[index], 3);
+
+          // 🔧 关键修复：更新处理信息，使用后端返回的操作人名字
           if (this.warningList[index]._apiData) {
-            this.warningList[index]._apiData.status = 3; // 已处理状态
             this.warningList[index]._apiData.processed_at = new Date().toISOString();
             this.warningList[index]._apiData.processed_by = operatorName;
             this.warningList[index]._apiData.processing_notes = processingNotes;
           }
-
-          // 🔧 同时更新前端使用的 status 字段
-          this.$set(this.warningList[index], 'status', 'completed');
 
           console.log('✅ 本地状态已更新为已处理:', this.warningList[index]);
         }
 
         this.$message.success('处理已完成，现在可以进行归档等操作');
         this.closeRemarkDialog();
+        await this.removeWarningAndReload(apiAlertId);
 
       } catch (error) {
         console.error('❌ 结束处理失败:', error);
@@ -1263,27 +1263,25 @@ export default {
     },
 
     // 从对话框处理预警 - 也使用处理意见流程
-    handleWarningFromDialog(eventData) {
+    async handleWarningFromDialog(eventData) {
       if (!eventData || !eventData.alert_id) return;
       
       const alertId = eventData.alert_id;
       const index = this.warningList.findIndex(item => 
-        item.id === alertId || (item._apiData && item._apiData.alert_id === alertId)
+        String(item.id) === String(alertId) ||
+        (item._apiData && String(item._apiData.alert_id) === String(alertId))
       );
 
-      if (eventData.action === 'finished' && index !== -1) {
-        if (this.warningList[index]._apiData) {
-          this.warningList[index]._apiData.status = 3;
+      if (eventData.action === 'finished') {
+        if (index !== -1) {
+          this.syncWarningStatus(this.warningList[index], 3);
         }
-        this.$set(this.warningList[index], 'status', 'completed');
+        await this.removeWarningAndReload(alertId);
         return;
       }
 
-      if (eventData.action === 'record-added' && index !== -1) {
-        if (this.warningList[index]._apiData) {
-          this.warningList[index]._apiData.status = 2;
-          this.$set(this.warningList[index], 'status', 'processing');
-        }
+      if (['record-added', 'reopened'].includes(eventData.action) && index !== -1) {
+        this.syncWarningStatus(this.warningList[index], 2);
         return;
       }
     },
@@ -1300,7 +1298,7 @@ export default {
         if (index !== -1) {
           if (action === 'markProcessed') {
             // 标记为已处理
-            this.warningList[index].status = 'completed';
+            this.syncWarningStatus(this.warningList[index], 3);
             this.$message.success('已标记为已处理');
           } else if (action === 'archive') {
             // 归档 - 需要选择档案
@@ -1345,9 +1343,11 @@ export default {
       }
     },
 
-    handleFalseAlarmFromDialog(eventData) {
+    async handleFalseAlarmFromDialog(eventData) {
       if (eventData && eventData.alert_id) {
         if (eventData.completed) {
+          this.warningDetailVisible = false;
+          await this.removeWarningAndReload(eventData.alert_id);
           return;
         }
         this.handleWarning(eventData.alert_id, 'false_alarm');
@@ -1469,10 +1469,7 @@ export default {
           const operatorName = archiveResult.linked_by || this.getCurrentUserName();
 
           // 只有后端事务提交成功后，才更新本地状态和操作历史。
-          if (this.warningList[index]._apiData) {
-            this.$set(this.warningList[index]._apiData, 'status', 4);
-          }
-          this.$set(this.warningList[index], 'status', 'archived');
+          this.syncWarningStatus(this.warningList[index], 4);
           this.$set(this.warningList[index], 'archiveId', this.selectedArchiveId);
           this.$set(this.warningList[index], 'archiveTime', new Date().toLocaleString());
 
@@ -1697,9 +1694,12 @@ export default {
           };
 
           this.warningList[warningIndex].operationHistory.push(newRecord);
-          this.warningList[warningIndex].status = 'false_alarm';
+          this.syncWarningStatus(this.warningList[warningIndex], 5);
           this.warningList[warningIndex].isFalseAlarm = true;
           this.warningList[warningIndex].archiveTime = new Date().toLocaleString();
+
+          // 状态提交成功后立即移出实时列表，再从后端重新拉取活动预警。
+          await this.removeWarningAndReload(alertId);
 
           // 保存到智能复判记录
           await this.saveToReviewRecords(warningInfo);
@@ -1730,8 +1730,6 @@ export default {
             this.$message.success('预警已标记为误报，复判记录已保存');
           }
 
-          // 从实时预警列表中移除误报预警
-          this.warningList.splice(warningIndex, 1);
         } else {
           this.$message.error((response.data && response.data.msg) || '标记误报失败');
         }
@@ -1744,7 +1742,7 @@ export default {
         if (error.response && error.response.status === 409) {
           const detail = error.response.data && error.response.data.detail;
           this.$message.warning((detail && detail.message) || '预警状态已更新，请刷新后重试');
-          await this.getWarningList();
+          await this.loadWarningData();
           this.closeFalseAlarmDialog();
         } else {
           this.$message.error('标记误报失败: ' + (error.message || '未知错误'));
@@ -2066,6 +2064,30 @@ export default {
       return iconMap[level] || 'el-icon-warning';
     },
 
+    // 同步预警的数字状态、显示状态和状态文案，避免不同入口更新不一致。
+    syncWarningStatus(warning, apiStatus) {
+      if (!warning) return false;
+
+      const normalizedStatus = Number(apiStatus);
+      const statusMap = {
+        1: { value: 'pending', display: '待处理' },
+        2: { value: 'processing', display: '处理中' },
+        3: { value: 'completed', display: '已处理' },
+        4: { value: 'archived', display: '已归档' },
+        5: { value: 'false_alarm', display: '误报' }
+      };
+      const nextStatus = statusMap[normalizedStatus];
+      if (!nextStatus) return false;
+
+      this.$set(warning, 'status', nextStatus.value);
+      if (warning._apiData) {
+        this.$set(warning._apiData, 'status', normalizedStatus);
+        this.$set(warning._apiData, 'status_display', nextStatus.display);
+      }
+
+      return true;
+    },
+
     // 获取当前预警状态 - 优先使用API返回的status字段
     getCurrentWarningStatus(warning) {
       // 优先使用API返回的status字段（与后端alerts表的status字段对应）
@@ -2213,6 +2235,20 @@ export default {
     },
 
     // =================== API数据加载相关方法 ===================
+
+    // 已处理或误报后先立即移出本地列表，再重新拉取活动预警。
+    async removeWarningAndReload(alertId) {
+      const index = this.warningList.findIndex(item => {
+        const itemAlertId = item._apiData ? item._apiData.alert_id : item.id;
+        return String(itemAlertId) === String(alertId);
+      });
+
+      if (index !== -1) {
+        this.warningList.splice(index, 1);
+      }
+
+      await this.loadWarningData();
+    },
 
     // 加载预警数据
     async loadWarningData() {
@@ -2680,11 +2716,13 @@ export default {
     },
 
     // 处理预警更新
-    handleAlertUpdate(alertData) {
+    async handleAlertUpdate(alertData) {
       try {
+        const alertId = alertData.alert_id || alertData.id;
         // 查找现有预警并更新
         const index = this.warningList.findIndex(warning =>
-          warning.id === alertData.alert_id || warning.id === alertData.id
+          String(warning.id) === String(alertId) ||
+          (warning._apiData && String(warning._apiData.alert_id) === String(alertId))
         );
 
         if (index !== -1) {
@@ -2697,7 +2735,7 @@ export default {
 
           // 如果预警已处理，从列表中移除
           if (this.isProcessedStatus(updatedWarning.status)) {
-            this.warningList.splice(index, 1);
+            await this.removeWarningAndReload(alertId);
             return;
           }
 
