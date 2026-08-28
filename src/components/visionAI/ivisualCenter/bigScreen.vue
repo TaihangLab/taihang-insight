@@ -12,7 +12,7 @@
           >{{ item.label }}</span>
         </div>
         <div class="top-bar-title">
-          <img class="top-bar-logo" src="/static/logo.png" alt="logo" />
+          <img class="top-bar-logo" :src="platformLogo" alt="logo" />
           <span>铜矿峪矿AI算法平台</span>
         </div>
         <div class="top-bar-nav top-bar-nav-right">
@@ -355,6 +355,7 @@ export default {
     const pad = n => String(n).padStart(2, '0');
     const initTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     return {
+      platformLogo: require('@/../static/logo.png'),
       todayWarnings: 0,
       deviceCount: 0,
       totalDevices: 0,
@@ -998,7 +999,7 @@ export default {
   width: 100%;
   height: 56px;
   flex-shrink: 0;
-  background: url('/static/tabbar.png') no-repeat center top;
+  background: url('~@static/tabbar.png') no-repeat center top;
   background-size: 100% 100%;
 }
 
@@ -2097,7 +2098,7 @@ export default {
 .visual-center:-moz-full-screen .top-bar-inner,
 .visual-center:-ms-fullscreen .top-bar-inner {
   height: 56px;
-  background: url('/static/tabbar.png') no-repeat center top;
+  background: url('~@static/tabbar.png') no-repeat center top;
   background-size: 100% 100%;
 }
 
