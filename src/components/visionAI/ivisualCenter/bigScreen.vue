@@ -378,29 +378,18 @@ export default {
       timeRange: 'day',
       customDateRange: [],
       datePickerDialogVisible: false,
-      activeHeaderNav: '',
+      activeHeaderNav: 'cockpit',
       headerNavLeft: [
         {
-          key: 'monitoring',
-          label: '监控预警',
-          url: 'http://172.17.44.123:81/low/iframe/%E5%AE%9E%E6%97%B6%E7%9B%91%E6%8E%A7?title=%E5%AE%9E%E6%97%B6%E7%9B%91%E6%8E%A7&v=aHR0cCUzQSUyRiUyRjE3Mi4xNy40NC4xMjMlM0E4MSUyRmFpLWVuZ2luZSUyRiUyMyUyRm1vbml0b3JpbmclMkZyZWFsdGltZQ==&menuId=2083027394409844737',
-        },
-        {
-          key: 'device',
-          label: '设备配置',
-          url: 'http://172.17.44.123:81/low/iframe/%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86?title=%E7%BB%84%E7%BB%87%E7%AE%A1%E7%90%86&v=aHR0cCUzQSUyRiUyRjE3Mi4xNy40NC4xMjMlM0E4MSUyRmFpLWVuZ2luZSUyRiUyMyUyRmRldmljZU1hbmFnZSUyRm9yZ2FuaXphdGlvbnM=&menuId=2083029364608651265',
+          key: 'cockpit',
+          label: '驾驶舱',
         },
       ],
       headerNavRight: [
         {
-          key: 'skill',
-          label: '技能管理',
-          url: 'http://172.17.44.123:81/low/iframe/%E6%8A%80%E8%83%BD%E5%88%97%E8%A1%A8?title=%E6%8A%80%E8%83%BD%E5%88%97%E8%A1%A8&v=aHR0cCUzQSUyRiUyRjE3Mi4xNy40NC4xMjMlM0E4MSUyRmFpLWVuZ2luZSUyRiUyMyUyRnNraWxsTWFuYWdlJTJGc2tpbGxMaXN0&menuId=2083031328658608130',
-        },
-        {
-          key: 'model',
-          label: 'AI模型管理',
-          url: 'http://172.17.44.123:81/low/iframe/%E6%A8%A1%E5%9E%8B%E5%88%97%E8%A1%A8?title=%E6%A8%A1%E5%9E%8B%E5%88%97%E8%A1%A8&v=aHR0cCUzQSUyRiUyRjE3Mi4xNy40NC4xMjMlM0E4MSUyRmFpLWVuZ2luZSUyRiUyMyUyRm1vZGVsTWFuYWdlJTJGbW9kZWxMaXN0&menuId=2083031857304489985',
+          key: 'admin',
+          label: '后台管理',
+          url: 'http://172.17.44.123:81/172/17/44/123/81/ai-engine?dataId=1996088958217023490&mode=filtered',
         },
       ],
       tableHeight: 280,
@@ -473,9 +462,11 @@ export default {
     },
 
     handleHeaderNavClick(item) {
-      if (!item || !item.url) return;
+      if (!item) return;
       this.activeHeaderNav = item.key;
-      window.location.href = item.url;
+      if (item.url) {
+        window.location.href = item.url;
+      }
     },
 
     /** 根据时间范围标识返回 {start_date, end_date} */
@@ -1032,7 +1023,7 @@ export default {
 
 .top-bar-nav {
   position: absolute;
-  top: 42px;
+  top: calc(50% + 25px);
   display: flex;
   align-items: center;
   gap: 28px;
@@ -1040,11 +1031,13 @@ export default {
 }
 
 .top-bar-nav-left {
-  left: 16%;
+  left: 22%;
+  transform: translate(-50%, -50%);
 }
 
 .top-bar-nav-right {
-  right: 16%;
+  right: 22%;
+  transform: translate(50%, -50%);
 }
 
 .nav-item {
@@ -1071,9 +1064,9 @@ export default {
 .top-bar-title {
   position: absolute;
   left: 50%;
-  top: auto;
-  bottom: 10px;
-  transform: translateX(-50%);
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   height: 36px;
