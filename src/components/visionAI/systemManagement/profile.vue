@@ -144,12 +144,7 @@ export default {
   },
   methods: {
     loadUserInfo() {
-      // 从userService获取用户信息
-      const user = userService.getUser();
-      if (user) {
-        this.userInfo.username = user.username;
-        // 其他信息可以通过API获取
-      }
+      this.userInfo.username = userService.getUserDisplayName(this.userInfo.username);
     },
     saveProfile() {
       // 保存用户信息的逻辑
@@ -489,4 +484,4 @@ export default {
     margin-bottom: 10px;
   }
 }
-</style> 
+</style>

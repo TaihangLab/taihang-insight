@@ -833,8 +833,7 @@ export default {
     
     // 获取当前用户昵称
     getCurrentUserName() {
-      const user = userService.getUser()
-      return user.userName || user.username || user.nickName || user.nickname || '系统用户'
+      return userService.getUserDisplayName()
     },
     
     
