@@ -496,7 +496,6 @@
       class="merged-dialog"
       append-to-body
       :modal-append-to-body="true"
-      :z-index="3000"
     >
       <div v-if="detail && detail.is_merged" class="merged-content">
         <!-- 合并统计信息 -->
