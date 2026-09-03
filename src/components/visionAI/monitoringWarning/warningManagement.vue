@@ -19,7 +19,7 @@ export default {
         warningName: '', // 预警名称
         warningId: '', // 预警ID
         status: '', // 处理状态
-        location: '' // 违规位置
+        cameraId: '' // 点位（摄像头 ID）
       },
       
       // 预警列表数据
@@ -111,6 +111,7 @@ export default {
       // 筛选下拉（从后端动态加载，与列表实际数据一致）
       warningSkillOptions: [],
       warningTypeOptions: [],
+      cameraOptions: [],
       
       // 分页相关
       currentPage: 1,
@@ -154,18 +155,83 @@ export default {
     this.stopDownloadPoll()
   },
   methods: {
+    mapCameraOptions(cameras) {
+      const cameraOptions = []
+      ;(cameras || []).forEach(c => {
+        if (!c || !c.camera_id) return
+        const name = c.camera_name || ('点位' + c.camera_id)
+        const count = c.alert_count ? `（${c.alert_count}）` : ''
+        cameraOptions.push({
+          label: `${name}${count}`,
+          value: String(c.camera_id),
+          cameraName: name
+        })
+      })
+      return cameraOptions
+    },
+
+    fallbackCameraOptionsFromList() {
+      const seen = {}
+      const cameraOptions = []
+      ;(this.warningList || []).forEach(item => {
+        const api = item._apiData || {}
+        const cid = api.camera_id != null ? String(api.camera_id) : (item.cameraId || '')
+        if (!cid || seen[cid]) return
+        seen[cid] = true
+        const name = api.camera_name || item.device || ('点位' + cid)
+        cameraOptions.push({ label: name, value: cid, cameraName: name })
+      })
+      return cameraOptions
+    },
+
+    syncCameraSelection() {
+      if (!this.searchForm.cameraId) return
+      const stillValid = this.cameraOptions.some(c => c.value === this.searchForm.cameraId)
+      if (!stillValid) {
+        this.searchForm.cameraId = ''
+      }
+    },
+
+    async loadCameraOptions() {
+      const cameraParams = {}
+      const skillClassId = this.parseSelectedSkillClassId()
+      if (skillClassId != null) {
+        cameraParams.skill_class_id = skillClassId
+      }
+      let cameraOptions = []
+      try {
+        const res = await alertAPI.getAlertSkills(cameraParams)
+        const payload = res && res.data && res.data.data
+        cameraOptions = this.mapCameraOptions((payload && payload.cameras) || [])
+      } catch (e) {
+        console.error('加载点位筛选项失败:', e)
+      }
+      if (!cameraOptions.length) {
+        cameraOptions = this.fallbackCameraOptionsFromList()
+      }
+      this.cameraOptions = cameraOptions
+      this.syncCameraSelection()
+    },
+
     async loadFilterOptions() {
-      // 只展示预警列表里实际出现过的类型/技能，避免筛选项与下方数据不一致
+      // 只展示预警列表里实际出现过的类型/技能/点位，避免筛选项与下方数据不一致
       const skillOptions = []
       const typeOptions = []
+      let cameraOptions = []
+      const cameraParams = {}
+      const skillClassId = this.parseSelectedSkillClassId()
+      if (skillClassId != null) {
+        cameraParams.skill_class_id = skillClassId
+      }
       try {
-        const res = await alertAPI.getAlertSkills()
+        const res = await alertAPI.getAlertSkills(cameraParams)
         const body = res && res.data
         const payload = body && body.data
         const skills = Array.isArray(payload)
           ? payload
           : ((payload && payload.skills) || [])
         const types = (!Array.isArray(payload) && payload && payload.alert_types) || []
+        const cameras = (!Array.isArray(payload) && payload && payload.cameras) || []
 
         skills.forEach(s => {
           if (!s || s.skill_class_id == null) return
@@ -189,6 +255,8 @@ export default {
             value: t.alert_type
           })
         })
+
+        cameraOptions = this.mapCameraOptions(cameras)
       } catch (e) {
         console.error('加载预警筛选选项失败:', e)
       }
@@ -224,10 +292,15 @@ export default {
             typeOptions.push({ label: t, value: t })
           })
         }
+        if (!cameraOptions.length) {
+          cameraOptions = this.fallbackCameraOptionsFromList()
+        }
       }
 
       this.warningSkillOptions = skillOptions
       this.warningTypeOptions = typeOptions
+      this.cameraOptions = cameraOptions
+      this.syncCameraSelection()
     },
 
     onSkillSelectVisible(visible) {
@@ -240,6 +313,18 @@ export default {
       if (visible && (!this.warningTypeOptions || !this.warningTypeOptions.length)) {
         this.loadFilterOptions()
       }
+    },
+
+    onCameraSelectVisible(visible) {
+      if (visible && (!this.cameraOptions || !this.cameraOptions.length)) {
+        this.loadCameraOptions()
+      }
+    },
+
+    async handleSkillChange() {
+      this.selectAllFiltered = false
+      await this.loadCameraOptions()
+      this.handleSearch()
     },
 
     parseSelectedSkillClassId() {
@@ -265,10 +350,11 @@ export default {
         warningName: '',
         warningId: '',
         status: '',
-        location: ''
+        cameraId: ''
       }
       this.dateRange = null
       this.currentPage = 1
+      this.loadCameraOptions()
       this.getWarningList()
     },
     
@@ -295,7 +381,7 @@ export default {
           warningSkill: this.searchForm.warningSkill,
           warningName: this.searchForm.warningName,
           warningId: this.searchForm.warningId,
-          location: this.searchForm.location,
+          camera_id: this.searchForm.cameraId,
           statusFilter: this.searchForm.status
         }
 
@@ -326,7 +412,7 @@ export default {
           }
           
           console.log('预警列表转换完成:', this.warningList.length, '条数据，总数:', this.totalCount)
-          if (!this.warningSkillOptions.length || !this.warningTypeOptions.length) {
+          if (!this.warningSkillOptions.length || !this.warningTypeOptions.length || !this.cameraOptions.length) {
             this.loadFilterOptions()
           }
         } else {
@@ -641,9 +727,12 @@ export default {
 
         const warningInfo = this.warningList[index]
 
-        if (warningInfo._apiData && warningInfo._apiData.status !== 3) {
+        const currentStatus = warningInfo._apiData
+          ? Number(warningInfo._apiData.status)
+          : null
+        if (currentStatus != null && currentStatus !== 3) {
           const statusNames = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' }
-          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[warningInfo._apiData.status] || '未知'}`)
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[currentStatus] || '未知'}。请先点「处理」并结束处理后再归档。`)
           this.loading = false
           return
         }
@@ -690,9 +779,10 @@ export default {
 
         const warning = this.warningList[index]
 
-        if (warning._apiData && warning._apiData.status !== 3) {
+        const currentStatus = warning._apiData ? Number(warning._apiData.status) : null
+        if (currentStatus != null && currentStatus !== 3) {
           const statusNames = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' }
-          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[warning._apiData.status] || '未知'}`)
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[currentStatus] || '未知'}。请先点「处理」并结束处理后再归档。`)
           this.closeArchiveDialog()
           return
         }
@@ -971,7 +1061,7 @@ export default {
         this.searchForm.warningName ||
         this.searchForm.warningId ||
         this.searchForm.status ||
-        this.searchForm.location ||
+        this.searchForm.cameraId ||
         this.searchForm.startDate ||
         this.searchForm.endDate
       );
@@ -1005,7 +1095,7 @@ export default {
       }
       if (this.searchForm.warningName) body.alert_name = this.searchForm.warningName
       if (this.searchForm.warningId) body.alert_id = parseInt(this.searchForm.warningId, 10)
-      if (this.searchForm.location) body.location = this.searchForm.location
+      if (this.searchForm.cameraId) body.camera_id = this.searchForm.cameraId
       if (this.searchForm.status) body.status = statusMap[this.searchForm.status] || this.searchForm.status
       if (this.searchForm.startDate) body.start_date = this.searchForm.startDate
       if (this.searchForm.endDate) body.end_date = this.searchForm.endDate
@@ -1926,60 +2016,30 @@ export default {
       return false;
     },
 
-    // 检查归档按钮是否应该禁用（只有已处理状态才能归档）
+    // 归档按钮：已归档/误报禁用；未处理完仍可点，由 handleArchiveProcess 弹出提示
     isArchiveDisabled(warning) {
-      console.log('📁 检查归档按钮状态:', warning.id, 'API status:', warning._apiData && warning._apiData.status);
-      
-      // 优先检查 _apiData 中的原始状态（与后端数据库一致）
       if (warning._apiData && typeof warning._apiData.status !== 'undefined') {
-        // 只有状态为3（已处理）时才能归档
-        // 状态定义：1-待处理 2-处理中 3-已处理 4-已归档 5-误报
-        const isDisabled = warning._apiData.status !== 3
-        console.log('📁 归档按钮状态检查 - API status:', warning._apiData.status, 
-                    '是否禁用:', isDisabled, 
-                    '(只有status=3已处理时启用)')
-        return isDisabled
+        const status = Number(warning._apiData.status)
+        // 1待处理 2处理中 3已处理 4已归档 5误报
+        return status === 4 || status === 5
       }
-      
-      // 如果没有API数据，检查字符串状态（向后兼容）
-      if (warning.status === 'archived') {
-        console.log('📁 归档按钮禁用: 已归档状态')
+      if (warning.status === 'archived' || warning.status === 'false_alarm') {
         return true
       }
-      
-      if (warning.status === 'false_alarm') {
-        console.log('📁 归档按钮禁用: 误报状态')
-        return true
-      }
-      
-      // 检查操作历史
-      if (!warning.operationHistory || warning.operationHistory.length === 0) {
-        console.log('📁 归档按钮禁用: 无操作历史')
-        return true
-      }
-      
-      // 检查是否已归档
-      const hasArchived = warning.operationHistory.some(record => 
+      if (warning.operationHistory && warning.operationHistory.some(record =>
         record.operationType === 'archive' || record.operationType === 'false_alarm'
-      )
-      
-      if (hasArchived) {
-        console.log('📁 归档按钮禁用: 操作历史显示已归档')
+      )) {
         return true
       }
-      
-      // 检查是否已完成处理
-      const hasCompletedProcessing = warning.operationHistory.some(record => 
-        record.operationType === 'completed'
-      )
-      
-      if (!hasCompletedProcessing) {
-        console.log('📁 归档按钮禁用: 未完成处理')
-        return true
-      }
-      
-      console.log('📁 归档按钮启用')
       return false
+    },
+
+    getArchiveDisabledTip(warning) {
+      if (!warning) return '当前预警不能归档'
+      const status = warning._apiData ? Number(warning._apiData.status) : null
+      if (status === 4 || warning.status === 'archived') return '该预警已归档'
+      if (status === 5 || warning.status === 'false_alarm') return '误报预警不能归档'
+      return '当前预警不能归档'
     },
     
     // 与后端 _can_mark_false_alarm 一致：待处理(1)、处理中(2) 可标记误报
@@ -2288,7 +2348,7 @@ export default {
               clearable
               filterable
               @visible-change="onSkillSelectVisible"
-              @change="handleSearch"
+              @change="handleSkillChange"
             >
               <el-option 
                 v-for="skill in warningSkillOptions"
@@ -2335,15 +2395,23 @@ export default {
             />
           </div>
           
-          <div class="input-wrapper">
-            <el-input
-              v-model="searchForm.location"
-              placeholder="违规位置"
+          <div class="select-wrapper">
+            <el-select
+              v-model="searchForm.cameraId"
+              placeholder="点位"
               size="small"
               clearable
+              filterable
+              @visible-change="onCameraSelectVisible"
               @change="handleSearch"
-              @clear="handleSearch"
-            />
+            >
+              <el-option
+                v-for="cam in cameraOptions"
+                :key="cam.value"
+                :label="cam.label"
+                :value="cam.value"
+              />
+            </el-select>
           </div>
           
           <div class="reset-button">
@@ -2489,14 +2557,21 @@ export default {
                       上报
                     </el-button>
                     
-                    <el-button 
-                      size="mini" 
-                      class="action-btn archive-btn"
-                      @click.stop="handleWarning(item.id, 'archive')"
-                      :disabled="isArchiveDisabled(item)"
-                    >
-                      归档
-                    </el-button>
+                    <el-tooltip
+                      :disabled="!isArchiveDisabled(item)"
+                      :content="getArchiveDisabledTip(item)"
+                      placement="top">
+                      <span class="archive-btn-wrap" @click.stop>
+                        <el-button
+                          size="mini"
+                          class="action-btn archive-btn"
+                          @click.stop="handleWarning(item.id, 'archive')"
+                          :disabled="isArchiveDisabled(item)"
+                        >
+                          归档
+                        </el-button>
+                      </span>
+                    </el-tooltip>
                     
                     <el-tooltip
                       :disabled="!isFalseAlarmDisabled(item)"
@@ -2616,6 +2691,12 @@ export default {
               type="info" 
               style="margin: 2px;"
             >状态: {{ searchForm.status }}</el-tag>
+            <el-tag
+              v-if="searchForm.cameraId"
+              size="mini"
+              type="success"
+              style="margin: 2px;"
+            >点位: {{ (cameraOptions.find(c => c.value === searchForm.cameraId) || {}).cameraName || searchForm.cameraId }}</el-tag>
           </div>
         </div>
       </div>
@@ -3350,7 +3431,8 @@ export default {
   min-width: auto;
 }
 
-.false-alarm-btn-wrap {
+.false-alarm-btn-wrap,
+.archive-btn-wrap {
   display: inline-block;
 }
 
