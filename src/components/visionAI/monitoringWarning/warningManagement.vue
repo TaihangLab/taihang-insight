@@ -633,11 +633,6 @@ export default {
             return // 等处理意见填写完成后再继续
           } else if (action === 'report') {
             // 上报
-            if (this.isReportDisabled(this.warningList[index])) {
-              this.$message.warning('该预警已上报，不能重复上报')
-              this.loading = false
-              return
-            }
             this.reportWarningId = id
             this.reportDialogVisible = true
             return // 不关闭loading，等确认后再关闭
@@ -1557,12 +1552,6 @@ export default {
         if (!warning) {
           throw new Error('未找到待上报的预警')
         }
-        if (this.isReportDisabled(warning)) {
-          this.$message.warning('该预警已上报，不能重复上报')
-          this.closeReportDialog()
-          return
-        }
-
         this.loading = true
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(this.reportWarningId);
         const response = await alertAPI.reportAlert(apiAlertId, {
@@ -2119,19 +2108,6 @@ export default {
       return true
     },
 
-    isReportDisabled(warning) {
-      if (!warning) return true;
-
-      const operationHistory = Array.isArray(warning.operationHistory) ? warning.operationHistory : [];
-      if (operationHistory.some(record => record.operationType === 'report')) {
-        return true;
-      }
-
-      const process = warning._apiData && warning._apiData.process;
-      const steps = process && Array.isArray(process.steps) ? process.steps : [];
-      return steps.some(step => ['上报预警', '预警上报'].includes(step.step));
-    },
-    
     // 获取当前预警状态
     getCurrentWarningStatus(warning) {
       console.log('🔍 检查预警状态:', warning.id, 'status:', warning.status, 'operationHistory:', warning.operationHistory);
@@ -2615,9 +2591,8 @@ export default {
                       size="mini" 
                       class="action-btn report-btn"
                       @click.stop="handleWarning(item.id, 'report')"
-                      :disabled="isReportDisabled(item)"
                     >
-                      {{ isReportDisabled(item) ? '已上报' : '上报' }}
+                      上报
                     </el-button>
                     
                     <el-button 

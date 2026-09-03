@@ -238,11 +238,10 @@
         <el-button
           v-if="detail"
           plain
-          :disabled="isReportDisabled()"
           @click="handleReport"
           class="action-btn report-btn">
-          <i :class="isReportDisabled() ? 'el-icon-check' : 'el-icon-upload'"></i>
-          {{ isReportDisabled() ? '已上报' : '上报' }}
+          <i class="el-icon-upload"></i>
+          上报
         </el-button>
         <template v-if="detail && detail.status === 5">
           <span class="false-alarm-status-text">
@@ -1171,10 +1170,6 @@ export default {
 
     // 上报处理
     handleReport() {
-      if (this.isReportDisabled()) {
-        this.$message.warning('该预警已上报，不能重复上报');
-        return;
-      }
       this.handleWarningAction('report');
     },
     handleArchive() {
@@ -1242,12 +1237,6 @@ export default {
 
     async confirmReport() {
       try {
-        if (this.isReportDisabled()) {
-          this.$message.warning('该预警已上报，不能重复上报');
-          this.closeReportDialog();
-          return;
-        }
-
         this.loading = true;
         const response = await alertAPI.reportAlert(this.detail.alert_id, {
           report_notes: this.reportForm.notes
@@ -1614,19 +1603,6 @@ export default {
       if (!this.detail) return false;
       // status: 3=已处理, 4=已归档, 5=误报 → 禁用
       return [3, 4, 5].includes(this.detail.status);
-    },
-
-    isReportDisabled() {
-      if (!this.detail) return true;
-
-      if (this.operationHistory && this.operationHistory.some(record => record.operationType === 'report')) {
-        return true;
-      }
-
-      const steps = this.detail.process && Array.isArray(this.detail.process.steps)
-        ? this.detail.process.steps
-        : [];
-      return steps.some(step => ['上报预警', '预警上报'].includes(step.step));
     },
 
     isFalseAlarmDisabled() {

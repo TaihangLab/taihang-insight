@@ -1893,7 +1893,7 @@ export const alertAPI = {
   },
 
   /**
-   * 上报预警。上报是独立动作，不改变预警主状态，状态1-5均可调用。
+   * 上报预警。允许重复调用，每次上报独立留痕且不改变预警主状态，状态1-5均可调用。
    * @param {number|string} alertId - 预警ID
    * @param {Object} reportData - 上报信息
    * @param {string} [reportData.report_notes] - 上报说明
