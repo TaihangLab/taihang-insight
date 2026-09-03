@@ -2279,10 +2279,13 @@ export const alertAPI = {
   },
 
   /**
-   * 预警管理中出现过的预警技能（筛选下拉用）
+   * 预警管理筛选下拉选项（技能 / 类型 / 点位）
+   * data: { skills, alert_types, cameras }
+   * @param {Object} [params]
+   * @param {number} [params.skill_class_id] - 已选技能时，cameras 只返回该技能相关点位
    */
-  getAlertSkills() {
-    return visionAIAxios.get('/api/v1/alerts/skills');
+  getAlertSkills(params = {}) {
+    return visionAIAxios.get('/api/v1/alerts/skills', { params });
   },
 
   /**
