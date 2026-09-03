@@ -1409,7 +1409,10 @@ export default {
         const warningInfo = this.warningList[index];
 
         // 检查预警状态，只有已处理状态（status=3）才能归档
-        if (warningInfo._apiData && warningInfo._apiData.status !== 3) {
+        const currentStatus = warningInfo._apiData
+          ? Number(warningInfo._apiData.status)
+          : null;
+        if (currentStatus != null && currentStatus !== 3) {
           const statusNames = {
             1: '待处理',
             2: '处理中',
@@ -1417,8 +1420,8 @@ export default {
             4: '已归档',
             5: '误报'
           };
-          const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态';
-          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${currentStatusName}`);
+          const currentStatusName = statusNames[currentStatus] || '未知状态';
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${currentStatusName}。请先点「处理」并结束处理后再归档。`);
           this.loading = false;
           return;
         }
@@ -1472,7 +1475,10 @@ export default {
         const warningInfo = this.warningList[index];
 
         // 再次检查预警状态，只有已处理状态（status=3）才能归档
-        if (warningInfo._apiData && warningInfo._apiData.status !== 3) {
+        const currentStatus = warningInfo._apiData
+          ? Number(warningInfo._apiData.status)
+          : null;
+        if (currentStatus != null && currentStatus !== 3) {
           const statusNames = {
             1: '待处理',
             2: '处理中',
@@ -1480,8 +1486,8 @@ export default {
             4: '已归档',
             5: '误报'
           };
-          const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态';
-          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${currentStatusName}`);
+          const currentStatusName = statusNames[currentStatus] || '未知状态';
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${currentStatusName}。请先点「处理」并结束处理后再归档。`);
           this.closeArchiveDialog();
           return;
         }
