@@ -101,3 +101,36 @@ export function getAlertStatusName(status, fallback = '未知状态') {
   if (ALERT_STATUS_KEY_BY_NAME[status]) return status
   return ALERT_STATUS_NAME_BY_CODE[Number(status)] || ALERT_STATUS_NAME_BY_KEY[status] || fallback
 }
+
+export function getCurrentAlertTime(now = new Date()) {
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  const seconds = String(now.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
+export function formatAlertDateTime(timeString, fallback = getCurrentAlertTime()) {
+  if (!timeString) return fallback
+
+  try {
+    if (typeof timeString === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(timeString)) {
+      return timeString
+    }
+    const date = timeString instanceof Date ? timeString : new Date(timeString)
+    return isNaN(date.getTime()) ? String(timeString) : getCurrentAlertTime(date)
+  } catch (error) {
+    return String(timeString || fallback)
+  }
+}
+
+export function normalizeAlertTimeString(timeString) {
+  if (!timeString) return ''
+  return String(timeString)
+    .replace('T', ' ')
+    .replace(/\.\d+Z?$/, '')
+    .replace(/Z$/, '')
+    .trim()
+}

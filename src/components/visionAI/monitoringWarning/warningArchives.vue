@@ -2,8 +2,11 @@
 // 导入API服务
 import VisionAIService from '../../service/VisionAIService.js'
 import {
+  formatAlertDateTime,
   getAlertLevelName,
   getAlertStatusName,
+  getCurrentAlertTime,
+  normalizeAlertTimeString,
   toAlertLevelKey,
   toAlertStatusKey
 } from './utils/alertFormatting'
@@ -691,49 +694,12 @@ export default {
 
     // 格式化API时间，与warningManagement页面保持一致
     formatApiTime(timeString) {
-      if (!timeString) return this.getCurrentTime();
-
-      try {
-        let date;
-        if (timeString.includes('T')) {
-          // ISO格式: "2025-06-30T17:05:35"
-          date = new Date(timeString);
-        } else if (timeString.includes(' ')) {
-          // 标准格式 YYYY-MM-DD HH:mm:ss
-          date = new Date(timeString);
-        } else {
-          // 其他格式
-          date = new Date(timeString);
-        }
-
-        if (isNaN(date.getTime())) {
-          return timeString; // 如果解析失败，返回原字符串
-        }
-
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-      } catch (error) {
-        return timeString || this.getCurrentTime();
-      }
+      return formatAlertDateTime(timeString);
     },
 
     // 获取当前时间
     getCurrentTime() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      return getCurrentAlertTime();
     },
 
     // 给时间添加指定秒数
@@ -1398,8 +1364,7 @@ export default {
     // 格式化时间
     // 将后端返回的各种时间格式统一为 "YYYY-MM-DD HH:mm:ss"
     normalizeTimeStr(t) {
-      if (!t) return '';
-      return t.replace('T', ' ').replace(/\.\d+Z?$/, '').replace(/Z$/, '').trim();
+      return normalizeAlertTimeString(t);
     },
 
     formatTime(timeString) {

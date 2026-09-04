@@ -5,11 +5,14 @@ import userService from '@/components/service/UserService.js'
 import {
   ALERT_LEVEL_CODE_BY_KEY,
   ALERT_STATUS_NAME_BY_KEY,
+  formatAlertDateTime,
   getAlertLevelName,
   getAlertLevelShortName,
   getAlertStatusName,
+  getCurrentAlertTime,
   toAlertStatusKey
 } from './utils/alertFormatting'
+import { buildAlertProcessHistory } from './utils/alertProcessHistory'
 
 export default {
   name: "WarningManagement",
@@ -543,154 +546,22 @@ export default {
 
     // 格式化API时间格式
     formatApiTime(timeString) {
-      if (!timeString) return new Date().toLocaleString()
-      
-      try {
-        // 处理ISO格式时间 (2025-06-27T15:15:52)
-        if (timeString.includes('T')) {
-          const date = new Date(timeString)
-          if (!isNaN(date.getTime())) {
-            const year = date.getFullYear()
-            const month = String(date.getMonth() + 1).padStart(2, '0')
-            const day = String(date.getDate()).padStart(2, '0')
-            const hours = String(date.getHours()).padStart(2, '0')
-            const minutes = String(date.getMinutes()).padStart(2, '0')
-            const seconds = String(date.getSeconds()).padStart(2, '0')
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-          }
-        }
-        
-        // 如果已经是标准格式，直接返回
-        return timeString
-      } catch (error) {
-        console.warn('时间格式转换失败:', timeString, error)
-        return timeString || new Date().toLocaleString()
-      }
-    },
-
-    resolveFalseAlarmDescription(stepDesc, processingNotes) {
-      const desc = (stepDesc || '').trim()
-      const genericTexts = ['预警已标记为误报', '误报', '标记为误报']
-      if (desc && !genericTexts.includes(desc)) {
-        return desc
-      }
-
-      const notes = (processingNotes || '').trim()
-      if (notes) {
-        return notes
-      }
-
-      return desc || '预警已标记为误报'
+      return formatAlertDateTime(timeString)
     },
 
     // 🔧 转换处理历史 - 与realTimeMonitoring保持一致
     // alertTime: 预警产生时间, processedAt: 处理时间
     convertProcessHistory(processData, apiStatus, alertTime, processedBy, processedAt, processingNotes) {
-      try {
-        const operationHistory = []
-        // 使用后端返回的操作人名字，如果没有则使用默认值
-        const defaultOperator = processedBy || '系统'
-        // 处理时间：优先使用后端返回的处理时间，没有则使用当前时间
-        const processTime = processedAt || this.getCurrentTime()
-
-        // 处理API返回的步骤（如果存在）
-        if (processData && processData.steps && Array.isArray(processData.steps)) {
-          processData.steps.forEach((step, index) => {
-            const stepName = step.step || ''
-            const isFalseAlarmStep = stepName === '误报'
-            const isCompletedStep = ['已处理', '完成预警处理'].includes(stepName)
-            const operationType = ['上报预警', '预警上报'].includes(stepName)
-              ? 'report'
-              : (stepName === '预警产生' ? 'pending' : (isFalseAlarmStep ? 'false_alarm' : (isCompletedStep ? 'completed' : 'processing')))
-            operationHistory.push({
-              id: step.id || (Date.now() + index + 100),
-              status: 'completed',
-              statusText: step.step || '处理中',
-              time: this.formatApiTime(step.time),
-              description: isFalseAlarmStep
-                ? this.resolveFalseAlarmDescription(step.desc || step.description, processingNotes)
-                : (step.desc || step.description || ''),
-              operationType,
-              operator: step.operator || '系统'
-            })
-          })
-        }
-
-        // 根据API状态添加相应的操作记录
-        if (apiStatus === 1 || apiStatus === undefined || apiStatus === null) {
-          // 待处理状态 - 添加待处理记录
-          if (operationHistory.length === 0) {
-            operationHistory.push({
-              id: Date.now() + Math.random(),
-              status: 'active',
-              statusText: '待处理',
-              time: alertTime || this.getCurrentTime(),
-              description: '系统检测到异常情况，等待处理人员确认并开始处理',
-              operationType: 'pending',
-              operator: '系统'
-            })
-          }
-        } else if (apiStatus === 2) {
-          // 🔧 处理中状态 - 不在时间线中显示，通过预警状态标签体现
-          // 用户添加的处理意见会作为 processing-action 类型单独显示
-        } else if (apiStatus === 3) {
-          // process.steps 没有完成记录时，使用预警表中的真实处理信息补充
-          const hasCompletedRecord = operationHistory.some(record => record.operationType === 'completed')
-          if (!hasCompletedRecord) {
-            operationHistory.push({
-              id: Date.now() + Math.random(),
-              status: 'completed',
-              statusText: '已处理',
-              time: processTime,
-              description: processingNotes || '未填写处理意见',
-              operationType: 'completed',
-              operator: defaultOperator
-            })
-          }
-        } else if (apiStatus === 4) {
-          // 已归档状态 - 使用处理时间
-          operationHistory.push({
-            id: Date.now() + Math.random(),
-            status: 'completed',
-            statusText: '已归档',
-            time: processTime,
-            description: '预警已归档',
-            operationType: 'archive',
-            operator: defaultOperator
-          })
-        } else if (apiStatus === 5) {
-          const hasFalseAlarmRecord = operationHistory.some(record =>
-            record.operationType === 'false_alarm' || record.statusText === '误报'
-          )
-          if (!hasFalseAlarmRecord) {
-            operationHistory.push({
-              id: Date.now() + Math.random(),
-              status: 'completed',
-              statusText: '误报',
-              time: processTime,
-              description: this.resolveFalseAlarmDescription('', processingNotes),
-              operationType: 'false_alarm',
-              operator: defaultOperator
-            })
-          }
-        }
-
-        // process.steps 已由后端按权威记录顺序返回，不再按时间二次排序。
-        // 历史上还原复判曾以 UTC 写入，按时间排序会把最新操作移到前面。
-
-        return operationHistory
-      } catch (error) {
-        console.error('❌ 转换处理历史出错:', error)
-        return [{
-          id: Date.now() + Math.random(),
-          status: 'active',
-          statusText: '待处理',
-          time: alertTime || this.getCurrentTime(),
-          description: '系统检测到异常情况，等待处理人员确认并开始处理',
-          operationType: 'pending',
-          operator: '系统'
-        }]
-      }
+      return buildAlertProcessHistory({
+        processData,
+        apiStatus,
+        alertTime,
+        processedBy,
+        processedAt,
+        processingNotes,
+        formatTime: value => this.formatApiTime(value),
+        currentTime: () => this.getCurrentTime()
+      })
     },
     
     // 处理预警事件
@@ -894,15 +765,7 @@ export default {
     
     // 获取当前时间
     getCurrentTime() {
-      const now = new Date()
-      const year = now.getFullYear()
-      const month = String(now.getMonth() + 1).padStart(2, '0')
-      const day = String(now.getDate()).padStart(2, '0')
-      const hours = String(now.getHours()).padStart(2, '0')
-      const minutes = String(now.getMinutes()).padStart(2, '0')
-      const seconds = String(now.getSeconds()).padStart(2, '0')
-      
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+      return getCurrentAlertTime()
     },
     
     // 获取当前用户昵称
