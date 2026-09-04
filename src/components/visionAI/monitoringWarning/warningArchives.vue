@@ -1,7 +1,12 @@
 <script>
 // 导入API服务
 import VisionAIService from '../../service/VisionAIService.js'
-import { getAuthHeaders } from '@/utils/authHeaders'
+import {
+  getAlertLevelName,
+  getAlertStatusName,
+  toAlertLevelKey,
+  toAlertStatusKey
+} from './utils/alertFormatting'
 
 // 解构获取archiveAPI和alertAPI（用于拉取预警详情）
 const { archiveAPI, alertAPI } = VisionAIService
@@ -13,30 +18,6 @@ export default {
   },
   data() {
     return {
-      // 接口定义
-      WarningArchive: {
-        id: 0,
-        name: '',
-        image: '',
-        deviceName: '',
-        warningTime: '',
-        warningLevel: ''
-      },
-      ArchiveInfo: {
-        name: '',
-        location: '',
-        timeRange: '',
-        createTime: '',
-        description: '',
-        image: ''
-      },
-      // 预警等级枚举
-      WARNING_LEVELS: {
-        Red: { label: '一级预警', value: 'red', color: '#ff4d4f' },
-        Orange: { label: '二级预警', value: 'orange', color: '#faad14' },
-        Yellow: { label: '三级预警', value: 'yellow', color: '#faad14' },
-        Blue: { label: '四级预警', value: 'blue', color: '#52c41a' }
-      },
       // 分页配置（用于预警记录）
       pagination: {
         currentPage: 1,
@@ -79,19 +60,11 @@ export default {
       // 图片预览
       imagePreviewVisible: false,
       currentPreviewImage: null,
-       // 文件上传相关
-       currentRecordId: null, // 当前操作的记录ID
       // 编辑相关
       isEditing: false,
       editingArchive: null,
       // 添加预警对话框
       showAddDialog: false,
-      newArchive: {
-        name: '',
-        deviceName: '',
-        warningLevel: '',
-        description: ''
-      },
       // 已发生预警选择对话框
       selectAlertDialogVisible: false,
       availableAlerts: [],
@@ -126,21 +99,8 @@ export default {
         description: '',
         image: ''
       },
-      // 添加预警表单
-      addForm: {
-        name: '',
-        deviceName: '',
-        warningLevel: '',
-        warningType: '',
-        location: '',
-        description: '',
-        warningTime: '',
-        violationImage: '',
-        violationVideo: ''
-      },
       // 对话框控制
       editDialogVisible: false,
-      addDialogVisible: false,
       // 移出档案相关
       deleteConfirmVisible: false,
       deleteConfirmMessage: '',
@@ -157,59 +117,18 @@ export default {
         name: '',
         location: '',
         timeRange: [],
-        description: '',
-        image: ''
+        description: ''
       },
       warningDetailVisible: false,
       currentAlertId: null
     }
   },
-  computed: {
-    // 动态上传地址配置
-    uploadAction() {
-      // 根据当前上传的类型和ID返回对应的上传地址
-      const baseUrl = window.baseUrl ? window.baseUrl : ''
-
-      if (this.addDialogVisible && this.currentRecordId) {
-        // 添加预警记录时的图片上传
-        return `${baseUrl}/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/image`
-      } else if (this.addArchiveDialogVisible && this.currentArchiveId) {
-        // 添加档案时的图片上传
-        return `${baseUrl}/api/v1/alert-archives/${this.currentArchiveId}/upload/image`
-      } else {
-        // 临时上传地址（新建时还没有ID）
-        return `${baseUrl}/api/v1/alert-archives/upload/temp`
-      }
-    },
-
-    // 视频上传地址
-    videoUploadAction() {
-      const baseUrl = window.baseUrl ? window.baseUrl : ''
-
-      if (this.currentRecordId) {
-        return `${baseUrl}/api/v1/alert-archives/alerts/${this.currentRecordId}/upload/video`
-      } else {
-        return `${baseUrl}/api/v1/alert-archives/upload/temp-video`
-      }
-    },
-
-    // 上传请求头
-    uploadHeaders() {
-      return getAuthHeaders({ Accept: 'application/json' })
-    }
-  },
-
   mounted() {
     this.initData();
   },
   methods: {
     normalizeId(id) {
       return (id === null || id === undefined || id === '') ? null : String(id);
-    },
-    // 获取预览图片URL
-    getPreviewImage() {
-      // 这里返回一个实际的图片URL，可以是本地资源或远程URL
-      return 'https://via.placeholder.com/300x200/ecf5ff/409eff?text=预览图片';
     },
     // 显示图片预览
     showImagePreview(row) {
@@ -472,116 +391,9 @@ export default {
       this.pagination.total = totalCount;
     },
 
-     // 转换预警等级格式（从后端的1-4转换为前端的level1-level4）
-     convertAlertLevel(backendLevel) {
-       const levelMap = {
-         1: 'level1',
-         2: 'level2',
-         3: 'level3',
-         4: 'level4'
-       };
-       return levelMap[backendLevel] || 'level1';
-     },
-    // 生成特定档案的模拟数据
-    generateMockDataForArchive(archive) {
-      const data = [];
-      const devices = [
-        'EF两区特检测区10社',
-        '降盐水泵废水站',
-        '东15风机',
-        '齐心爱A20储产',
-        'EF两区特检测区10社'
-      ];
-
-      const warningNames = [
-        '安全帽识别',
-        '工服识别',
-        '安全帽识别',
-        '玻璃运输车打卡',
-        '烟火检测',
-        '安全帽识别',
-        '工服识别',
-        '安全帽识别',
-        '玻璃运输车打卡'
-      ];
-
-      const warningTypes = [
-        '安全违规',
-        '安全违规',
-        '安全违规',
-        '车辆违规',
-        '消防违规',
-        '安全违规',
-        '安全违规',
-        '安全违规',
-        '车辆违规'
-      ];
-
-      const locations = [
-        '厂区A10车间东区',
-        '废水处理站入口',
-        '东15风机房',
-        '储产区域A20',
-        'EF两区特检测区'
-      ];
-
-      const remarks = [
-        '已现场提醒，工人已佩戴安全帽',
-        '已督促整改，现已规范穿着',
-        '已加强现场监督管理',
-        '车辆已完成打卡登记',
-        '已清理现场，加强禁烟宣传',
-        '',
-        '现场已整改完毕',
-        '',
-        ''
-      ];
-
-      // 根据档案ID决定生成多少条数据
-      const count = archive.id === 1 ? 9 : (archive.id === 2 ? 6 : (archive.id === 3 ? 8 : 5));
-
-      for (let i = 1; i <= count; i++) {
-        const randomLevel = Math.floor(Math.random() * 4);
-        const level = ['level1', 'level2', 'level3', 'level4'][randomLevel];
-        let deviceName;
-
-        // 根据档案类型选择对应的设备名
-        if (archive.id === 1) {
-          deviceName = i % 3 === 0 ? '厂区A10车间' : '厂区A10车间区域' + (i % 5 + 1);
-        } else if (archive.id === 2) {
-          deviceName = '东15风机';
-        } else if (archive.id === 3) {
-          deviceName = 'EF两区特检测区10社';
-        } else {
-          deviceName = '降盐水泵废水站';
-        }
-
-        // 生成时间
-        const currentYear = 2024;
-        const randomMonth = Math.floor(Math.random() * 6) + 7; // 7-12月，更接近现在
-        const randomDay = Math.floor(Math.random() * 28) + 1;
-        const randomHour = Math.floor(Math.random() * 24);
-        const randomMinute = Math.floor(Math.random() * 60);
-        const randomSecond = Math.floor(Math.random() * 60);
-
-        const warningTime = `${currentYear}-${randomMonth.toString().padStart(2, '0')}-${randomDay.toString().padStart(2, '0')} ${randomHour.toString().padStart(2, '0')}:${randomMinute.toString().padStart(2, '0')}:${randomSecond.toString().padStart(2, '0')}`;
-
-        data.push({
-          id: i,
-          name: warningNames[(i - 1) % warningNames.length] || `预警${i}`,
-          image: this.getPreviewImage(),
-          deviceName: deviceName,
-          warningTime: warningTime,
-          warningLevel: i % 4 === 0 ? 'level1' : (i % 4 === 1 ? 'level2' : (i % 4 === 2 ? 'level3' : 'level4')),
-          warningType: warningTypes[(i - 1) % warningTypes.length] || '其他违规',
-          location: locations[(i - 1) % locations.length] || archive.location,
-          remark: remarks[(i - 1) % remarks.length] || '',
-          description: this.getDescriptionByType(warningNames[(i - 1) % warningNames.length]),
-          violationImage: this.getPreviewImage(),
-          violationVideo: ''
-        });
-      }
-      return data;
+    // 转换预警等级格式（从后端的1-4转换为前端的level1-level4）
+    convertAlertLevel(backendLevel) {
+      return toAlertLevelKey(backendLevel);
     },
     // 根据预警类型生成默认描述
     getDescriptionByType(type) {
@@ -1092,10 +904,6 @@ export default {
         this.editForm.timeRange = [];
       }
 
-      // 确保编辑时显示原有图片
-      if (!this.editForm.image) {
-        this.editForm.image = this.getPreviewImage();
-      }
       this.editDialogVisible = true;
     },
     // 保存编辑 - 调用后端API
@@ -1182,97 +990,6 @@ export default {
       this.loadAlertFilterOptions();
       this.loadAvailableAlerts();
     },
-     // 提交新预警 - 调用真实API
-     async submitNewWarning() {
-       try {
-         // 表单验证
-         if (!this.addForm.name || !this.addForm.deviceName || !this.addForm.warningLevel ||
-             !this.addForm.warningTime || !this.addForm.warningType || !this.addForm.location) {
-           this.$message.warning('请填写必要的信息（预警名称、设备名称、预警等级、预警时间、预警类型、违规位置）');
-           return;
-         }
-
-         // 检查是否选择了档案
-         if (!this.currentArchiveId) {
-           this.$message.warning('请先选择一个档案再添加预警记录');
-           return;
-         }
-
-         // 转换预警等级格式（从前端的level1-level4转换为后端的1-4）
-         const convertToBackendLevel = (frontendLevel) => {
-           const levelMap = {
-             'level1': 1,
-             'level2': 2,
-             'level3': 3,
-             'level4': 4
-           };
-           return levelMap[frontendLevel] || 1;
-         };
-
-         // 构造后端API需要的数据格式
-         const recordData = {
-           archive_id: this.currentArchiveId,
-           name: this.addForm.name,
-           device_name: this.addForm.deviceName,
-           alert_time: this.addForm.warningTime,
-           alert_level: convertToBackendLevel(this.addForm.warningLevel),
-           alert_type: this.addForm.warningType || '',
-           location: this.addForm.location || '',
-           description: this.addForm.description || '',
-           remark: '', // 新建时备注为空
-           violation_image_url: this.addForm.violationImage || '',
-           violation_video_url: this.addForm.violationVideo || '',
-           created_by: '当前用户' // 这里应该从用户信息中获取
-         };
-
-         console.log('添加预警记录数据:', recordData);
-
-        // 调用后端API添加预警记录
-        const response = await archiveAPI.addAlertRecord(recordData);
-
-        // 适配新的API响应格式
-        let newRecord;
-        if (response.data.code !== undefined) {
-          // 包装格式 {code, msg, data}
-          if (response.data.code === 0) {
-            newRecord = response.data.data;
-          } else {
-            throw new Error(response.data.msg || '添加预警记录失败');
-          }
-        } else {
-          // 直接数据格式
-          newRecord = response.data;
-        }
-
-        this.$message.success('预警记录添加成功');
-        await this.fetchAndApplyArchiveAlerts(this.currentArchiveId);
-
-        // 关闭对话框并重置表单
-        this.addDialogVisible = false;
-        this.resetAddForm();
-
-        console.log('预警记录添加成功:', newRecord);
-       } catch (error) {
-         console.error('添加预警记录失败:', error);
-         this.$message.error('添加预警记录失败: ' + error.message);
-       }
-     },
-
-      // 重置添加预警表单
-      resetAddForm() {
-        this.addForm = {
-          name: '',
-          deviceName: '',
-          warningLevel: '',
-          warningType: '',
-          location: '',
-          description: '',
-          warningTime: '',
-          violationImage: '',
-          violationVideo: ''
-        };
-      },
-
       // ======================== 已发生预警选择相关方法 ========================
 
       // 加载与预警管理一致的预警类型、预警技能筛选选项
@@ -1492,25 +1209,12 @@ export default {
 
       // 转换预警等级显示
       convertAlertLevelDisplay(level) {
-        const levelMap = {
-          1: '一级预警',
-          2: '二级预警',
-          3: '三级预警',
-          4: '四级预警'
-        };
-        return levelMap[level] || '未知等级';
+        return getAlertLevelName(level);
       },
 
       // 转换处理状态显示
       convertStatusDisplay(status) {
-        const statusMap = {
-          1: '待处理',
-          2: '处理中',
-          3: '已处理',
-          4: '已归档',
-          5: '误报'
-        };
-        return statusMap[status] || '未知状态';
+        return getAlertStatusName(status);
       },
 
       // 获取状态样式类
@@ -1549,14 +1253,7 @@ export default {
 
       // 将状态码转换为文本状态
       convertStatusToText(status) {
-        const statusMap = {
-          1: 'pending',      // 待处理
-          2: 'processing',   // 处理中
-          3: 'completed',    // 已处理
-          4: 'archived',     // 已归档
-          5: 'false_alarm'   // 误报
-        };
-        return statusMap[status] || 'pending';
+        return toAlertStatusKey(status);
       },
 
       // 为 availableAlerts 构建基础操作历史
@@ -1630,7 +1327,6 @@ export default {
            description: this.newArchiveForm.description || '',
            start_time: startTime,
            end_time: endTime,
-           image_url: this.newArchiveForm.image || '',
            created_by: '当前用户' // 这里应该从用户信息中获取
          };
 
@@ -1686,88 +1382,9 @@ export default {
          name: '',
          location: '',
          timeRange: [],
-         description: '',
-         image: ''
+         description: ''
        };
      },
-    // 处理上传成功后的逻辑
-    handleUploadSuccess(response, file) {
-      // 实际项目中应从服务器响应中获取图片URL
-      // 这里使用本地文件预览URL作为演示
-      const imageUrl = URL.createObjectURL(file.raw);
-
-      // 根据上下文设置不同表单的图片
-      if (this.editDialogVisible) {
-        this.editForm.image = imageUrl;
-      } else if (this.addArchiveDialogVisible) {
-        this.newArchiveForm.image = imageUrl;
-      }
-
-      this.$message.success('图片上传成功');
-    },
-    // 处理上传前的图片校验
-    beforeUpload(file) {
-      // 检查文件类型
-      const isImage = file.type.indexOf('image/') === 0;
-      if (!isImage) {
-        this.$message.error('只能上传图片文件!');
-        return false;
-      }
-
-      // 检查文件大小，限制为2MB
-      const isLt2M = file.size / 1024 / 1024 < 2;
-      if (!isLt2M) {
-        this.$message.error('图片不能超过2MB!');
-        return false;
-      }
-
-      return true;
-    },
-    // 处理上传错误
-    handleUploadError(error) {
-      console.error('上传错误', error);
-      this.$message.error('图片上传失败，请重试');
-    },
-    // 处理移除图片
-    handleRemove() {
-      if (this.editDialogVisible) {
-        this.editForm.image = '';
-      } else if (this.addArchiveDialogVisible) {
-        this.newArchiveForm.image = '';
-      }
-    },
-    // 处理违规截图上传
-    beforeImageUpload(file) {
-      // 检查文件类型
-      const isImage = file.type.indexOf('image/') === 0;
-      if (!isImage) {
-        this.$message.error('只能上传图片文件!');
-        return false;
-      }
-
-      // 检查文件大小，限制为2MB
-      const isLt2M = file.size / 1024 / 1024 < 2;
-      if (!isLt2M) {
-        this.$message.error('图片不能超过2MB!');
-        return false;
-      }
-
-      return true;
-    },
-    // 处理违规截图上传成功
-    handleImageUploadSuccess(response, file) {
-      // 实际项目中应从服务器响应中获取图片URL
-      // 这里使用本地文件预览URL作为演示
-      const imageUrl = URL.createObjectURL(file.raw);
-
-      this.addForm.violationImage = imageUrl;
-
-      this.$message.success('违规截图上传成功');
-    },
-    // 处理违规截图移除
-    removeImage() {
-      this.addForm.violationImage = '';
-    },
     // 预览图片
     previewImage(imageUrl) {
       const normalizedImageUrl = this.normalizeMediaUrl(imageUrl);
@@ -1777,38 +1394,6 @@ export default {
       }
       this.currentPreviewImage = normalizedImageUrl;
       this.imagePreviewVisible = true;
-    },
-    // 处理视频片段上传
-    beforeVideoUpload(file) {
-      // 检查文件类型
-      const isVideo = file.type.indexOf('video/') === 0;
-      if (!isVideo) {
-        this.$message.error('只能上传视频文件!');
-        return false;
-      }
-
-      // 检查文件大小，限制为10MB
-      const isLt10M = file.size / 1024 / 1024 < 10;
-      if (!isLt10M) {
-        this.$message.error('视频不能超过10MB!');
-        return false;
-      }
-
-      return true;
-    },
-    // 处理视频片段上传成功
-    handleVideoUploadSuccess(response, file) {
-      // 实际项目中应从服务器响应中获取视频URL
-      // 这里使用本地文件预览URL作为演示
-      const videoUrl = URL.createObjectURL(file.raw);
-
-      this.addForm.violationVideo = videoUrl;
-
-      this.$message.success('视频片段上传成功');
-    },
-    // 处理视频片段移除
-    removeVideo() {
-      this.addForm.violationVideo = '';
     },
     // 格式化时间
     // 将后端返回的各种时间格式统一为 "YYYY-MM-DD HH:mm:ss"
@@ -3120,31 +2705,6 @@ export default {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
-/* 上传组件样式优化 */
-.page-container >>> .el-upload-dragger {
-  border: 2px dashed #d1d5db !important;
-  border-radius: 8px !important;
-  transition: all 0.3s ease !important;
-}
-
-.page-container >>> .el-upload-dragger:hover {
-  border-color: #3b82f6 !important;
-  background-color: rgba(59, 130, 246, 0.05) !important;
-}
-
-.page-container >>> .el-upload-dragger .el-icon-upload {
-  color: #3b82f6 !important;
-}
-
-.page-container >>> .el-upload__text {
-  color: #6b7280 !important;
-}
-
-.page-container >>> .el-upload__text em {
-  color: #3b82f6 !important;
-  font-weight: 500 !important;
-}
-
 /* 表格样式优化 - 保持黑色字体 */
 .page-container >>> .el-table th {
   background: #f5f7fa !important;
@@ -3454,147 +3014,6 @@ export default {
 .confirm-content strong {
   color: #1f2937;
   font-weight: 600;
-}
-
-
-/* 上传组件样式 */
-.upload-container {
-  width: 100%;
-}
-
-.violation-image-uploader,
-.violation-video-uploader {
-  width: 100%;
-}
-
-.violation-image-uploader .el-upload,
-.violation-video-uploader .el-upload {
-  width: 100%;
-  height: 180px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.upload-dragger {
-  width: 100%;
-  height: 180px;
-  border: 2px dashed #dcdfe6;
-  border-radius: 8px;
-  background-color: #fafafa;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  transition: all 0.3s ease;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.upload-dragger:hover {
-  border-color: #409eff;
-  background-color: #f0f9ff;
-}
-
-.upload-icon {
-  margin-bottom: 12px;
-}
-
-.upload-icon i {
-  font-size: 48px;
-  color: #c0c4cc;
-  transition: color 0.3s ease;
-}
-
-.upload-dragger:hover .upload-icon i {
-  color: #409eff;
-}
-
-.upload-title {
-  font-size: 16px;
-  color: #606266;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.upload-tip {
-  font-size: 12px;
-  color: #909399;
-  text-align: center;
-  line-height: 1.4;
-}
-
-.image-preview-container,
-.video-preview-container {
-  width: 100%;
-  height: 180px;
-  position: relative;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: #000;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-}
-
-.uploaded-image,
-.uploaded-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.image-overlay,
-.video-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to bottom,
-    transparent 0%,
-    transparent 60%,
-    rgba(0, 0, 0, 0.3) 80%,
-    rgba(0, 0, 0, 0.6) 100%);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 16px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.image-preview-container:hover .image-overlay,
-.video-preview-container:hover .video-overlay {
-  opacity: 1;
-}
-
-.overlay-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.overlay-actions .el-button {
-  background-color: rgba(255, 255, 255, 0.9);
-  border: none;
-  border-radius: 6px;
-  color: #606266;
-  padding: 8px 12px;
-  font-size: 12px;
-  backdrop-filter: blur(4px);
-  transition: all 0.2s ease;
-}
-
-.overlay-actions .el-button:hover {
-  background-color: #409eff;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(64, 158, 255, 0.3);
-}
-
-.overlay-actions .el-button i {
-  margin-right: 4px;
 }
 
 

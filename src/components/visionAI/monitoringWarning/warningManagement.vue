@@ -2,6 +2,14 @@
 import WarningDetail from './warningDetail.vue'
 import { alertAPI, archiveAPI } from '@/components/service/VisionAIService.js'
 import userService from '@/components/service/UserService.js'
+import {
+  ALERT_LEVEL_CODE_BY_KEY,
+  ALERT_STATUS_NAME_BY_KEY,
+  getAlertLevelName,
+  getAlertLevelShortName,
+  getAlertStatusName,
+  toAlertStatusKey
+} from './utils/alertFormatting'
 
 export default {
   name: "WarningManagement",
@@ -484,23 +492,6 @@ export default {
       }
 
       return apiData.map(item => {
-        // 预警等级映射
-        const levelMap = {
-          1: '一级预警',
-          2: '二级预警', 
-          3: '三级预警',
-          4: '四级预警'
-        }
-
-        // 状态映射
-        const statusMap = {
-          1: 'pending',    // 待处理
-          2: 'processing', // 处理中
-          3: 'completed',  // 已处理
-          4: 'archived',   // 已归档
-          5: 'false_alarm'  // 误报
-        }
-
         // 🔧 统一处理操作历史（与realTimeMonitoring保持一致）
         const operationHistory = this.convertProcessHistory(
           item.process,
@@ -518,9 +509,9 @@ export default {
           imageUrl: item.minio_frame_url || null,
           value: 1,
           unit: '件',
-          level: levelMap[item.alert_level] || '未知等级',
+          level: getAlertLevelName(item.alert_level),
           time: this.formatApiTime(item.alert_time || item.created_at),
-          status: statusMap[item.status] || 'pending',
+          status: toAlertStatusKey(item.status),
           
           // 摄像头信息
           cameraId: String(item.camera_id || 'unknown'),
@@ -795,8 +786,7 @@ export default {
           ? Number(warningInfo._apiData.status)
           : null
         if (currentStatus != null && currentStatus !== 3) {
-          const statusNames = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' }
-          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[currentStatus] || '未知'}。请先点「处理」并结束处理后再归档。`)
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${getAlertStatusName(currentStatus)}。请先点「处理」并结束处理后再归档。`)
           this.loading = false
           return
         }
@@ -845,8 +835,7 @@ export default {
 
         const currentStatus = warning._apiData ? Number(warning._apiData.status) : null
         if (currentStatus != null && currentStatus !== 3) {
-          const statusNames = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' }
-          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[currentStatus] || '未知'}。请先点「处理」并结束处理后再归档。`)
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${getAlertStatusName(currentStatus)}。请先点「处理」并结束处理后再归档。`)
           this.closeArchiveDialog()
           return
         }
@@ -1135,13 +1124,6 @@ export default {
     },
 
     buildCurrentFilterBody() {
-      const statusMap = {
-        pending: '待处理',
-        processing: '处理中',
-        completed: '已处理',
-        archived: '已归档',
-        false_alarm: '误报'
-      }
       const body = {}
       const skillClassId = this.parseSelectedSkillClassId()
       if (skillClassId != null) {
@@ -1150,13 +1132,14 @@ export default {
         body.alert_type = this.searchForm.warningSkill
       }
       if (this.searchForm.warningLevel) {
-        const levelMap = { level1: 1, level2: 2, level3: 3, level4: 4 }
-        body.alert_level = levelMap[this.searchForm.warningLevel]
+        body.alert_level = ALERT_LEVEL_CODE_BY_KEY[this.searchForm.warningLevel]
       }
       if (this.searchForm.warningName) body.alert_name = this.searchForm.warningName
       if (this.searchForm.warningId) body.alert_id = parseInt(this.searchForm.warningId, 10)
       if (this.searchForm.cameraId) body.camera_id = this.searchForm.cameraId
-      if (this.searchForm.status) body.status = statusMap[this.searchForm.status] || this.searchForm.status
+      if (this.searchForm.status) {
+        body.status = ALERT_STATUS_NAME_BY_KEY[this.searchForm.status] || this.searchForm.status
+      }
       if (this.searchForm.startDate) body.start_date = this.searchForm.startDate
       if (this.searchForm.endDate) body.end_date = this.searchForm.endDate
       if (this.searchForm.warningType) body.alert_type = this.searchForm.warningType
@@ -1765,13 +1748,7 @@ export default {
     
     // 获取预警等级标签文本
     getLevelBadgeText(level) {
-      const levelMap = {
-        '一级预警': '一级',
-        '二级预警': '二级',
-        '三级预警': '三级',
-        '四级预警': '四级'
-      }
-      return levelMap[level] || '未知'
+      return getAlertLevelShortName(level)
     },
     
     // 处理误报事件
@@ -1789,14 +1766,7 @@ export default {
         
         // 检查预警状态：待处理、处理中均可标记误报（与后端 _can_mark_false_alarm 一致）
         if (warningInfo._apiData && !this.canMarkFalseAlarm(warningInfo._apiData.status)) {
-          const statusNames = {
-            1: '待处理',
-            2: '处理中',
-            3: '已处理',
-            4: '已归档',
-            5: '误报'
-          }
-          const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态'
+          const currentStatusName = getAlertStatusName(warningInfo._apiData.status)
           this.$message.warning(`只有待处理或处理中状态的预警才能标记为误报，当前状态为：${currentStatusName}`)
           this.falseAlarmDialogVisible = false
           this.falseAlarmForm.reviewNotes = ''

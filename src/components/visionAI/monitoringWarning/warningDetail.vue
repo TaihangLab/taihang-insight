@@ -657,6 +657,7 @@ import {
   skillSourceLabel as formatSkillSourceLabel,
   skillSourceTagType as formatSkillSourceTagType
 } from '@/components/visionAI/skillManagement/runPlan/runPlanFormat.js'
+import { getAlertLevelShortName } from './utils/alertFormatting'
 
 export default {
   name: "WarningDetail",
@@ -1456,8 +1457,7 @@ export default {
 
 
     getWarningLevelText(level) {
-      const levelMap = { 1: '一级', 2: '二级', 3: '三级', 4: '四级' };
-      return levelMap[level] || '未知';
+      return getAlertLevelShortName(level);
     },
     getWarningIcon(level) {
       return level === 1 ? 'el-icon-warning' : 'el-icon-warning-outline';
