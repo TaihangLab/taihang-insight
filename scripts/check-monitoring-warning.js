@@ -68,11 +68,19 @@ assert.strictEqual(formatting.getAlertLevelShortName('一级预警'), '一级')
 assert.strictEqual(formatting.toAlertStatusKey('处理中'), 'processing')
 assert.strictEqual(formatting.getAlertStatusName('false_alarm'), '误报')
 assert.strictEqual(
-  formatting.getCurrentAlertTime(new Date(2026, 0, 2, 3, 4, 5)),
+  formatting.getCurrentAlertTime(new Date('2026-01-01T19:04:05Z')),
   '2026-01-02 03:04:05'
 )
 assert.strictEqual(
   formatting.normalizeAlertTimeString('2026-01-02T03:04:05.123Z'),
+  '2026-01-02 11:04:05'
+)
+assert.strictEqual(
+  formatting.formatAlertDateTime('2026-01-01T19:04:05Z'),
+  '2026-01-02 03:04:05'
+)
+assert.strictEqual(
+  formatting.formatAlertDateTime('2026-01-02T03:04:05+08:00'),
   '2026-01-02 03:04:05'
 )
 assert.strictEqual(
@@ -117,4 +125,4 @@ const falseAlarmHistory = processHistory.buildAlertProcessHistory({
 })
 assert.strictEqual(falseAlarmHistory[0].description, '现场确认为误报')
 
-console.log(`monitoring-warning checks passed: ${vueFiles.length} Vue files, 15 utility assertions`)
+console.log(`monitoring-warning checks passed: ${vueFiles.length} Vue files, 17 utility assertions`)

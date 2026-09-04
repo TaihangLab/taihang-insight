@@ -102,25 +102,40 @@ export function getAlertStatusName(status, fallback = '未知状态') {
   return ALERT_STATUS_NAME_BY_CODE[Number(status)] || ALERT_STATUS_NAME_BY_KEY[status] || fallback
 }
 
-export function getCurrentAlertTime(now = new Date()) {
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  const seconds = String(now.getSeconds()).padStart(2, '0')
+const SHANGHAI_OFFSET_MILLISECONDS = 8 * 60 * 60 * 1000
+const NAIVE_DATE_TIME_PATTERN = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}:\d{2})(?:\.\d+)?$/
+const EXPLICIT_TIMEZONE_PATTERN = /(Z|[+-]\d{2}:?\d{2})$/i
+
+function formatInstantInShanghai(date) {
+  const shanghaiTime = new Date(date.getTime() + SHANGHAI_OFFSET_MILLISECONDS)
+  const year = shanghaiTime.getUTCFullYear()
+  const month = String(shanghaiTime.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(shanghaiTime.getUTCDate()).padStart(2, '0')
+  const hours = String(shanghaiTime.getUTCHours()).padStart(2, '0')
+  const minutes = String(shanghaiTime.getUTCMinutes()).padStart(2, '0')
+  const seconds = String(shanghaiTime.getUTCSeconds()).padStart(2, '0')
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
+export function getCurrentAlertTime(now = new Date()) {
+  return formatInstantInShanghai(now)
 }
 
 export function formatAlertDateTime(timeString, fallback = getCurrentAlertTime()) {
   if (!timeString) return fallback
 
   try {
-    if (typeof timeString === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(timeString)) {
-      return timeString
+    if (typeof timeString === 'string') {
+      const value = timeString.trim()
+      const naiveMatch = value.match(NAIVE_DATE_TIME_PATTERN)
+      // Existing naive API values are Shanghai wall time. Do not let the
+      // browser reinterpret them using the workstation's timezone.
+      if (naiveMatch && !EXPLICIT_TIMEZONE_PATTERN.test(value)) {
+        return `${naiveMatch[1]} ${naiveMatch[2]}`
+      }
     }
     const date = timeString instanceof Date ? timeString : new Date(timeString)
-    return isNaN(date.getTime()) ? String(timeString) : getCurrentAlertTime(date)
+    return isNaN(date.getTime()) ? String(timeString) : formatInstantInShanghai(date)
   } catch (error) {
     return String(timeString || fallback)
   }
@@ -128,9 +143,5 @@ export function formatAlertDateTime(timeString, fallback = getCurrentAlertTime()
 
 export function normalizeAlertTimeString(timeString) {
   if (!timeString) return ''
-  return String(timeString)
-    .replace('T', ' ')
-    .replace(/\.\d+Z?$/, '')
-    .replace(/Z$/, '')
-    .trim()
+  return formatAlertDateTime(timeString, '')
 }
