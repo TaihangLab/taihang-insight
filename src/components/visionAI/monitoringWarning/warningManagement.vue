@@ -2,6 +2,17 @@
 import WarningDetail from './warningDetail.vue'
 import { alertAPI, archiveAPI } from '@/components/service/VisionAIService.js'
 import userService from '@/components/service/UserService.js'
+import {
+  ALERT_LEVEL_CODE_BY_KEY,
+  ALERT_STATUS_NAME_BY_KEY,
+  formatAlertDateTime,
+  getAlertLevelName,
+  getAlertLevelShortName,
+  getAlertStatusName,
+  getCurrentAlertTime,
+  toAlertStatusKey
+} from './utils/alertFormatting'
+import { buildAlertProcessHistory } from './utils/alertProcessHistory'
 
 export default {
   name: "WarningManagement",
@@ -484,23 +495,6 @@ export default {
       }
 
       return apiData.map(item => {
-        // 预警等级映射
-        const levelMap = {
-          1: '一级预警',
-          2: '二级预警', 
-          3: '三级预警',
-          4: '四级预警'
-        }
-
-        // 状态映射
-        const statusMap = {
-          1: 'pending',    // 待处理
-          2: 'processing', // 处理中
-          3: 'completed',  // 已处理
-          4: 'archived',   // 已归档
-          5: 'false_alarm'  // 误报
-        }
-
         // 🔧 统一处理操作历史（与realTimeMonitoring保持一致）
         const operationHistory = this.convertProcessHistory(
           item.process,
@@ -518,9 +512,9 @@ export default {
           imageUrl: item.minio_frame_url || null,
           value: 1,
           unit: '件',
-          level: levelMap[item.alert_level] || '未知等级',
+          level: getAlertLevelName(item.alert_level),
           time: this.formatApiTime(item.alert_time || item.created_at),
-          status: statusMap[item.status] || 'pending',
+          status: toAlertStatusKey(item.status),
           
           // 摄像头信息
           cameraId: String(item.camera_id || 'unknown'),
@@ -552,154 +546,22 @@ export default {
 
     // 格式化API时间格式
     formatApiTime(timeString) {
-      if (!timeString) return new Date().toLocaleString()
-      
-      try {
-        // 处理ISO格式时间 (2025-06-27T15:15:52)
-        if (timeString.includes('T')) {
-          const date = new Date(timeString)
-          if (!isNaN(date.getTime())) {
-            const year = date.getFullYear()
-            const month = String(date.getMonth() + 1).padStart(2, '0')
-            const day = String(date.getDate()).padStart(2, '0')
-            const hours = String(date.getHours()).padStart(2, '0')
-            const minutes = String(date.getMinutes()).padStart(2, '0')
-            const seconds = String(date.getSeconds()).padStart(2, '0')
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-          }
-        }
-        
-        // 如果已经是标准格式，直接返回
-        return timeString
-      } catch (error) {
-        console.warn('时间格式转换失败:', timeString, error)
-        return timeString || new Date().toLocaleString()
-      }
-    },
-
-    resolveFalseAlarmDescription(stepDesc, processingNotes) {
-      const desc = (stepDesc || '').trim()
-      const genericTexts = ['预警已标记为误报', '误报', '标记为误报']
-      if (desc && !genericTexts.includes(desc)) {
-        return desc
-      }
-
-      const notes = (processingNotes || '').trim()
-      if (notes) {
-        return notes
-      }
-
-      return desc || '预警已标记为误报'
+      return formatAlertDateTime(timeString)
     },
 
     // 🔧 转换处理历史 - 与realTimeMonitoring保持一致
     // alertTime: 预警产生时间, processedAt: 处理时间
     convertProcessHistory(processData, apiStatus, alertTime, processedBy, processedAt, processingNotes) {
-      try {
-        const operationHistory = []
-        // 使用后端返回的操作人名字，如果没有则使用默认值
-        const defaultOperator = processedBy || '系统'
-        // 处理时间：优先使用后端返回的处理时间，没有则使用当前时间
-        const processTime = processedAt || this.getCurrentTime()
-
-        // 处理API返回的步骤（如果存在）
-        if (processData && processData.steps && Array.isArray(processData.steps)) {
-          processData.steps.forEach((step, index) => {
-            const stepName = step.step || ''
-            const isFalseAlarmStep = stepName === '误报'
-            const isCompletedStep = ['已处理', '完成预警处理'].includes(stepName)
-            const operationType = ['上报预警', '预警上报'].includes(stepName)
-              ? 'report'
-              : (stepName === '预警产生' ? 'pending' : (isFalseAlarmStep ? 'false_alarm' : (isCompletedStep ? 'completed' : 'processing')))
-            operationHistory.push({
-              id: step.id || (Date.now() + index + 100),
-              status: 'completed',
-              statusText: step.step || '处理中',
-              time: this.formatApiTime(step.time),
-              description: isFalseAlarmStep
-                ? this.resolveFalseAlarmDescription(step.desc || step.description, processingNotes)
-                : (step.desc || step.description || ''),
-              operationType,
-              operator: step.operator || '系统'
-            })
-          })
-        }
-
-        // 根据API状态添加相应的操作记录
-        if (apiStatus === 1 || apiStatus === undefined || apiStatus === null) {
-          // 待处理状态 - 添加待处理记录
-          if (operationHistory.length === 0) {
-            operationHistory.push({
-              id: Date.now() + Math.random(),
-              status: 'active',
-              statusText: '待处理',
-              time: alertTime || this.getCurrentTime(),
-              description: '系统检测到异常情况，等待处理人员确认并开始处理',
-              operationType: 'pending',
-              operator: '系统'
-            })
-          }
-        } else if (apiStatus === 2) {
-          // 🔧 处理中状态 - 不在时间线中显示，通过预警状态标签体现
-          // 用户添加的处理意见会作为 processing-action 类型单独显示
-        } else if (apiStatus === 3) {
-          // process.steps 没有完成记录时，使用预警表中的真实处理信息补充
-          const hasCompletedRecord = operationHistory.some(record => record.operationType === 'completed')
-          if (!hasCompletedRecord) {
-            operationHistory.push({
-              id: Date.now() + Math.random(),
-              status: 'completed',
-              statusText: '已处理',
-              time: processTime,
-              description: processingNotes || '未填写处理意见',
-              operationType: 'completed',
-              operator: defaultOperator
-            })
-          }
-        } else if (apiStatus === 4) {
-          // 已归档状态 - 使用处理时间
-          operationHistory.push({
-            id: Date.now() + Math.random(),
-            status: 'completed',
-            statusText: '已归档',
-            time: processTime,
-            description: '预警已归档',
-            operationType: 'archive',
-            operator: defaultOperator
-          })
-        } else if (apiStatus === 5) {
-          const hasFalseAlarmRecord = operationHistory.some(record =>
-            record.operationType === 'false_alarm' || record.statusText === '误报'
-          )
-          if (!hasFalseAlarmRecord) {
-            operationHistory.push({
-              id: Date.now() + Math.random(),
-              status: 'completed',
-              statusText: '误报',
-              time: processTime,
-              description: this.resolveFalseAlarmDescription('', processingNotes),
-              operationType: 'false_alarm',
-              operator: defaultOperator
-            })
-          }
-        }
-
-        // process.steps 已由后端按权威记录顺序返回，不再按时间二次排序。
-        // 历史上还原复判曾以 UTC 写入，按时间排序会把最新操作移到前面。
-
-        return operationHistory
-      } catch (error) {
-        console.error('❌ 转换处理历史出错:', error)
-        return [{
-          id: Date.now() + Math.random(),
-          status: 'active',
-          statusText: '待处理',
-          time: alertTime || this.getCurrentTime(),
-          description: '系统检测到异常情况，等待处理人员确认并开始处理',
-          operationType: 'pending',
-          operator: '系统'
-        }]
-      }
+      return buildAlertProcessHistory({
+        processData,
+        apiStatus,
+        alertTime,
+        processedBy,
+        processedAt,
+        processingNotes,
+        formatTime: value => this.formatApiTime(value),
+        currentTime: () => this.getCurrentTime()
+      })
     },
     
     // 处理预警事件
@@ -795,8 +657,7 @@ export default {
           ? Number(warningInfo._apiData.status)
           : null
         if (currentStatus != null && currentStatus !== 3) {
-          const statusNames = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' }
-          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[currentStatus] || '未知'}。请先点「处理」并结束处理后再归档。`)
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${getAlertStatusName(currentStatus)}。请先点「处理」并结束处理后再归档。`)
           this.loading = false
           return
         }
@@ -845,8 +706,7 @@ export default {
 
         const currentStatus = warning._apiData ? Number(warning._apiData.status) : null
         if (currentStatus != null && currentStatus !== 3) {
-          const statusNames = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' }
-          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[currentStatus] || '未知'}。请先点「处理」并结束处理后再归档。`)
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${getAlertStatusName(currentStatus)}。请先点「处理」并结束处理后再归档。`)
           this.closeArchiveDialog()
           return
         }
@@ -905,15 +765,7 @@ export default {
     
     // 获取当前时间
     getCurrentTime() {
-      const now = new Date()
-      const year = now.getFullYear()
-      const month = String(now.getMonth() + 1).padStart(2, '0')
-      const day = String(now.getDate()).padStart(2, '0')
-      const hours = String(now.getHours()).padStart(2, '0')
-      const minutes = String(now.getMinutes()).padStart(2, '0')
-      const seconds = String(now.getSeconds()).padStart(2, '0')
-      
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+      return getCurrentAlertTime()
     },
     
     // 获取当前用户昵称
@@ -1135,13 +987,6 @@ export default {
     },
 
     buildCurrentFilterBody() {
-      const statusMap = {
-        pending: '待处理',
-        processing: '处理中',
-        completed: '已处理',
-        archived: '已归档',
-        false_alarm: '误报'
-      }
       const body = {}
       const skillClassId = this.parseSelectedSkillClassId()
       if (skillClassId != null) {
@@ -1150,13 +995,14 @@ export default {
         body.alert_type = this.searchForm.warningSkill
       }
       if (this.searchForm.warningLevel) {
-        const levelMap = { level1: 1, level2: 2, level3: 3, level4: 4 }
-        body.alert_level = levelMap[this.searchForm.warningLevel]
+        body.alert_level = ALERT_LEVEL_CODE_BY_KEY[this.searchForm.warningLevel]
       }
       if (this.searchForm.warningName) body.alert_name = this.searchForm.warningName
       if (this.searchForm.warningId) body.alert_id = parseInt(this.searchForm.warningId, 10)
       if (this.searchForm.cameraId) body.camera_id = this.searchForm.cameraId
-      if (this.searchForm.status) body.status = statusMap[this.searchForm.status] || this.searchForm.status
+      if (this.searchForm.status) {
+        body.status = ALERT_STATUS_NAME_BY_KEY[this.searchForm.status] || this.searchForm.status
+      }
       if (this.searchForm.startDate) body.start_date = this.searchForm.startDate
       if (this.searchForm.endDate) body.end_date = this.searchForm.endDate
       if (this.searchForm.warningType) body.alert_type = this.searchForm.warningType
@@ -1765,13 +1611,7 @@ export default {
     
     // 获取预警等级标签文本
     getLevelBadgeText(level) {
-      const levelMap = {
-        '一级预警': '一级',
-        '二级预警': '二级',
-        '三级预警': '三级',
-        '四级预警': '四级'
-      }
-      return levelMap[level] || '未知'
+      return getAlertLevelShortName(level)
     },
     
     // 处理误报事件
@@ -1789,14 +1629,7 @@ export default {
         
         // 检查预警状态：待处理、处理中均可标记误报（与后端 _can_mark_false_alarm 一致）
         if (warningInfo._apiData && !this.canMarkFalseAlarm(warningInfo._apiData.status)) {
-          const statusNames = {
-            1: '待处理',
-            2: '处理中',
-            3: '已处理',
-            4: '已归档',
-            5: '误报'
-          }
-          const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态'
+          const currentStatusName = getAlertStatusName(warningInfo._apiData.status)
           this.$message.warning(`只有待处理或处理中状态的预警才能标记为误报，当前状态为：${currentStatusName}`)
           this.falseAlarmDialogVisible = false
           this.falseAlarmForm.reviewNotes = ''

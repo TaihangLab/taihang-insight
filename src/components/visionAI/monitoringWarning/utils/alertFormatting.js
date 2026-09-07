@@ -98,7 +98,7 @@ export function toAlertStatusKey(status, statusDisplay, fallback = 'pending') {
 }
 
 export function getAlertStatusName(status, fallback = '未知状态') {
-  if (ALERT_STATUS_NAME_BY_KEY[status]) return status
+  if (ALERT_STATUS_KEY_BY_NAME[status]) return status
   return ALERT_STATUS_NAME_BY_CODE[Number(status)] || ALERT_STATUS_NAME_BY_KEY[status] || fallback
 }
 

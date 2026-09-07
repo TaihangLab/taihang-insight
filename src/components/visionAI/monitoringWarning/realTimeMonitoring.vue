@@ -494,6 +494,15 @@ import DetectionOverlay from './components/DetectionOverlay.vue'
 import screenfull from "screenfull";
 import { alertAPI, realtimeMonitorAPI, realtimeDetectionAPI } from '../../service/VisionAIService.js';
 import userService from '../../service/UserService.js';
+import {
+  formatAlertDateTime,
+  getAlertLevelShortName,
+  getAlertStatusName,
+  getCurrentAlertTime,
+  toAlertLevelKey,
+  toAlertStatusKey
+} from './utils/alertFormatting';
+import { buildAlertProcessHistory } from './utils/alertProcessHistory';
 
 export default {
   name: "RealTimeMonitoring",
@@ -527,10 +536,6 @@ export default {
       warningDetailVisible: false,
       currentAlertId: null,
 
-      // 添加预警管理相关的数据属性
-      // archivesList: [],  // 已废弃，使用 availableArchivesList
-      currentCameraId: '',
-      
       // 🆕 OSD检测框叠加相关
       selectedAITasks: {},  // 每个视频窗口的AI任务选择 {index: task_id}
       availableAITasks: {},  // 每个摄像头的可用AI任务列表 {camera_id: []}
@@ -577,56 +582,6 @@ export default {
       totalWarnings: 0,
       currentPage: 1,
       pageSize: 10, // 只显示最新的10条预警数据
-    }
-  },
-  computed: {
-    // 过滤后的设备分组
-    filteredDeviceGroups() {
-      return this.deviceGroups
-        .map(group => {
-          // 创建一个新的组对象，避免修改原始数据
-          const newGroup = { ...group };
-
-          // 根据行政区划过滤
-          if (this.selectedRegion && group.region !== this.selectedRegion) {
-            return null;
-          }
-
-          // 过滤设备
-          newGroup.devices = group.devices.filter(device => {
-            // 按业务分组过滤
-            if (this.selectedIndustry && device.industry !== this.selectedIndustry) {
-              return false;
-            }
-
-            // 按关键词搜索过滤
-            if (this.searchKeyword && !device.name.toLowerCase().includes(this.searchKeyword.toLowerCase())) {
-              return false;
-            }
-
-            return true;
-          });
-
-          // 如果组内没有设备，则不显示该组
-          if (newGroup.devices.length === 0) {
-            return null;
-          }
-
-          return newGroup;
-        })
-        .filter(group => group !== null);
-    },
-
-    // 可用档案列表
-    availableArchives() {
-      return this.archivesList.filter(archive =>
-        archive.cameraId === this.currentCameraId || archive.isDefault
-      );
-    },
-
-    // 默认档案
-    defaultArchive() {
-      return this.availableArchives.find(archive => archive.isDefault);
     }
   },
   mounted() {
@@ -689,11 +644,6 @@ export default {
     this.cleanupAllOSDResources();
   },
   methods: {
-    // 切换分组展开/折叠
-    toggleGroup(groupIndex) {
-      this.$set(this.deviceGroups[groupIndex], 'expanded', !this.deviceGroups[groupIndex].expanded);
-    },
-
     // 选择设备
     selectDevice(groupIndex, deviceIndex, device) {
       const deviceKey = 'device-' + groupIndex + '-' + deviceIndex;
@@ -1056,13 +1006,7 @@ export default {
     },
     // 获取预警等级文字
     getWarningLevelText(level) {
-      const levelMap = {
-        'level1': '一级',
-        'level2': '二级',
-        'level3': '三级',
-        'level4': '四级'
-      };
-      return levelMap[level] || '未知';
+      return getAlertLevelShortName(level);
     },
     // 查看预警详情
     viewWarningDetail(warning) {
@@ -1304,14 +1248,11 @@ export default {
           } else if (action === 'archive') {
             // 归档 - 需要选择档案
             this.archiveWarningId = id;
-            // 获取当前预警的摄像头信息（实际项目中从预警数据获取）
-            this.currentCameraId = this.warningList[index].cameraId || 'camera_1';
             await this.handleArchiveProcess();
             return; // 不关闭loading，等归档完成后再关闭
           } else if (action === 'false_alarm') {
             // 误报 - 显示输入对话框
             this.archiveWarningId = id;
-            this.currentCameraId = this.warningList[index].cameraId || 'camera_1';
             this.falseAlarmDialogVisible = true;
             return; // 不关闭loading，等用户输入完成后再关闭
           }
@@ -1654,14 +1595,7 @@ export default {
         if (warningInfo._apiData) {
           const s = Number(warningInfo._apiData.status);
           if (s !== 1 && s !== 2) {
-            const statusNames = {
-              1: '待处理',
-              2: '处理中',
-              3: '已处理',
-              4: '已归档',
-              5: '误报'
-            };
-            const currentStatusName = statusNames[warningInfo._apiData.status] || '未知状态';
+            const currentStatusName = getAlertStatusName(warningInfo._apiData.status);
             this.$message.warning(`只有待处理或处理中状态的预警才能标记为误报，当前状态为：${currentStatusName}`);
             this.closeFalseAlarmDialog();
             return;
@@ -1803,30 +1737,6 @@ export default {
       } catch (error) {
         console.error('保存到智能复判记录失败:', error);
         throw error;
-      }
-    },
-
-    // 自动创建默认档案
-    async createDefaultArchive() {
-      try {
-        // 模拟API调用创建默认档案
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        const newArchive = {
-          id: `archive_${Date.now()}`,
-          name: `${this.getCurrentCameraName()}默认档案`,
-          cameraId: this.currentCameraId,
-          cameraName: this.getCurrentCameraName(),
-          isDefault: true,
-          createTime: new Date().toLocaleString()
-        };
-
-        this.archivesList.push(newArchive);
-
-        return newArchive.id;
-      } catch (error) {
-        this.$message.error('创建默认档案失败');
-        return null;
       }
     },
 
@@ -1993,28 +1903,9 @@ export default {
       this.archiveWarningId = '';
     },
 
-    // 获取当前摄像头名称
-    getCurrentCameraName() {
-      // 实际项目中应该从摄像头数据中获取
-      const cameraNames = {
-        'camera_1': '可燃气体监控点',
-        'camera_2': '储罐区监控点',
-        'camera_3': '管道接口监控点'
-      };
-      return cameraNames[this.currentCameraId] || '监控点';
-    },
-
     // 获取当前时间
     getCurrentTime() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      return getCurrentAlertTime();
     },
 
     // 给时间添加指定秒数
@@ -2383,40 +2274,7 @@ export default {
 
     // 格式化API时间
     formatAPITime(timeString) {
-      try {
-        if (!timeString) {
-          return new Date().toLocaleString();
-        }
-
-        // 处理不同的时间格式
-        let date;
-        if (timeString.includes('T')) {
-          // ISO格式: "2025-06-30T17:05:35"
-          date = new Date(timeString);
-        } else if (timeString.includes(' ')) {
-          // 标准格式 YYYY-MM-DD HH:mm:ss
-          date = new Date(timeString);
-        } else {
-          // 其他格式
-          date = new Date(timeString);
-        }
-
-        if (isNaN(date.getTime())) {
-          return timeString; // 如果解析失败，返回原字符串
-        }
-
-        const formattedTime = date.toLocaleString('zh-CN', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        });
-        return formattedTime;
-      } catch (error) {
-        return timeString || new Date().toLocaleString();
-      }
+      return formatAlertDateTime(timeString);
     },
 
     // 获取预警图片URL
@@ -2766,171 +2624,27 @@ export default {
 
     // 转换预警等级
     convertAlertLevel(backendLevel) {
-      const levelMap = {
-        1: 'level1',
-        2: 'level2',
-        3: 'level3',
-        4: 'level4'
-      };
-      return levelMap[backendLevel] || 'level4';
+      return toAlertLevelKey(backendLevel, 'level4');
     },
 
     // 转换预警状态
     convertAlertStatus(statusNumber, statusDisplay) {
-      // 如果有显示文本，优先使用显示文本进行映射
-      if (statusDisplay) {
-        const statusMap = {
-          '待处理': 'pending',
-          '处理中': 'processing',
-          '已处理': 'completed',
-          '已归档': 'archived',
-          '误报': 'false_alarm'
-        };
-        return statusMap[statusDisplay] || 'pending';
-      }
-
-      // 如果没有显示文本，根据数字状态映射
-      if (statusNumber !== undefined && statusNumber !== null) {
-        const numberStatusMap = {
-          1: 'pending',      // 待处理
-          2: 'processing',   // 处理中
-          3: 'completed',    // 已处理
-          4: 'archived',     // 已归档
-          5: 'false_alarm'   // 误报
-        };
-        return numberStatusMap[statusNumber] || 'pending';
-      }
-
-      // 对于新的API数据，如果没有状态信息，默认为待处理
-      return 'pending';
-    },
-
-    resolveFalseAlarmDescription(stepDesc, processingNotes) {
-      const desc = (stepDesc || '').trim();
-      const genericTexts = ['预警已标记为误报', '误报', '标记为误报'];
-      if (desc && !genericTexts.includes(desc)) {
-        return desc;
-      }
-
-      const notes = (processingNotes || '').trim();
-      if (notes) {
-        return notes;
-      }
-
-      return desc || '预警已标记为误报';
+      return toAlertStatusKey(statusNumber, statusDisplay);
     },
 
     // 转换处理历史 - 确保与状态判断逻辑一致
     // alertTime: 预警产生时间, processedAt: 处理时间
     convertProcessHistory(processData, apiStatus, alertTime, processedBy, processedAt, processingNotes) {
-      try {
-        const operationHistory = []
-        // 🔧 使用后端返回的操作人名字，如果没有则使用默认值
-        const defaultOperator = processedBy || '系统';
-        // 🔧 处理时间：优先使用后端返回的处理时间，没有则使用当前时间
-        const processTime = processedAt || this.getCurrentTime();
-
-        console.log('🔄 转换处理历史, API状态:', apiStatus, '处理数据:', processData, '操作人:', processedBy);
-
-        // 处理API返回的步骤（如果存在）
-        if (processData && processData.steps && Array.isArray(processData.steps)) {
-          processData.steps.forEach((step, index) => {
-            const stepName = step.step || '';
-            const isFalseAlarmStep = stepName === '误报';
-            const isCompletedStep = ['已处理', '完成预警处理'].includes(stepName);
-            operationHistory.push({
-              id: step.id || (Date.now() + index + 100),
-              status: 'completed',
-              statusText: step.step || '处理中',
-              time: this.formatAPITime(step.time),
-              description: isFalseAlarmStep
-                ? this.resolveFalseAlarmDescription(step.desc || step.description, processingNotes)
-                : (step.desc || step.description || ''),
-              operationType: stepName === '预警产生'
-                ? 'pending'
-                : (isFalseAlarmStep ? 'false_alarm' : (isCompletedStep ? 'completed' : 'processing')),
-              operator: step.operator || '系统'
-            })
-          })
-        }
-
-        // 根据API状态添加相应的操作记录
-        if (apiStatus === 1 || apiStatus === undefined || apiStatus === null) {
-          // 待处理状态 - 添加待处理记录
-          if (operationHistory.length === 0) {
-            operationHistory.push({
-              id: Date.now() + Math.random(),
-              status: 'active',
-              statusText: '待处理',
-              time: alertTime || this.getCurrentTime(),
-              description: '系统检测到异常情况，等待处理人员确认并开始处理',
-              operationType: 'pending',
-              operator: '系统'
-            });
-          }
-        } else if (apiStatus === 2) {
-          // 🔧 处理中状态 - 不在时间线中显示，通过预警状态标签体现
-          // 用户添加的处理意见会作为 processing-action 类型单独显示
-        } else if (apiStatus === 3) {
-          // process.steps 没有完成记录时，使用预警表中的真实处理信息补充
-          const hasCompletedRecord = operationHistory.some(record => record.operationType === 'completed');
-          if (!hasCompletedRecord) {
-            operationHistory.push({
-              id: Date.now() + Math.random(),
-              status: 'completed',
-              statusText: '已处理',
-              time: processTime,
-              description: processingNotes || '未填写处理意见',
-              operationType: 'completed',
-              operator: defaultOperator
-            });
-          }
-        } else if (apiStatus === 4) {
-          // 已归档状态 - 添加归档记录，使用处理时间
-          operationHistory.push({
-            id: Date.now() + Math.random(),
-            status: 'completed',
-            statusText: '已归档',
-            time: processTime, // 🔧 使用处理时间
-            description: '预警已归档',
-            operationType: 'archive',
-            operator: defaultOperator
-          });
-        } else if (apiStatus === 5) {
-          const hasFalseAlarmRecord = operationHistory.some(record =>
-            record.operationType === 'false_alarm' || record.statusText === '误报'
-          );
-          if (!hasFalseAlarmRecord) {
-            operationHistory.push({
-              id: Date.now() + Math.random(),
-              status: 'completed',
-              statusText: '误报',
-              time: processTime,
-              description: this.resolveFalseAlarmDescription('', processingNotes),
-              operationType: 'false_alarm',
-              operator: defaultOperator
-            });
-          }
-        }
-
-        // process.steps 已由后端按权威记录顺序返回，保持该顺序。
-        // 避免旧的 UTC 还原复判时间将最新操作错排到前面。
-        console.log('📋 最终操作历史:', operationHistory);
-        return operationHistory;
-
-      } catch (error) {
-        console.error('❌ 转换处理历史出错:', error);
-        // 即使出错也要返回基本的历史记录
-        return [{
-          id: Date.now() + Math.random(),
-          status: 'active',
-          statusText: '待处理',
-          time: alertTime || this.getCurrentTime(),
-          description: '系统检测到异常情况，等待处理人员确认并开始处理',
-          operationType: 'pending',
-          operator: '系统'
-        }];
-      }
+      return buildAlertProcessHistory({
+        processData,
+        apiStatus,
+        alertTime,
+        processedBy,
+        processedAt,
+        processingNotes,
+        formatTime: value => this.formatAPITime(value),
+        currentTime: () => this.getCurrentTime()
+      });
     },
 
     // 处理SSE连接建立/重连成功

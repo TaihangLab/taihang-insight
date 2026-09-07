@@ -340,26 +340,28 @@
                 v-model="selectedArchiveId"
                 placeholder="请选择档案"
                 style="width: 100%"
-                :disabled="availableArchives.length === 0"
+                :disabled="archiveListLoading || availableArchives.length === 0"
+                :loading="archiveListLoading"
+                popper-append-to-body
               >
                 <el-option
                   v-for="archive in availableArchives"
-                  :key="archive.id"
-                  :label="archive.name + (archive.isDefault ? ' (默认)' : '')"
-                  :value="archive.id"
+                  :key="archive.archive_id || archive.id"
+                  :label="archive.name"
+                  :value="archive.archive_id || archive.id"
                 >
                   <span style="float: left">{{ archive.name }}</span>
                   <span style="float: right; color: #8492a6; font-size: 13px">
-                    {{ archive.isDefault ? '默认档案' : '自定义档案' }}
+                    {{ archive.location || '' }}
                   </span>
                 </el-option>
               </el-select>
             </el-form-item>
 
-            <el-form-item v-if="availableArchives.length === 0">
+            <el-form-item v-if="!archiveListLoading && availableArchives.length === 0">
               <el-alert
-                title="当前摄像头位置没有可用档案"
-                description="系统将自动创建默认档案进行归档"
+                title="当前没有可用档案"
+                description="请先在预警档案页面创建档案后再进行归档操作"
                 type="info"
                 :closable="false"
                 show-icon
@@ -383,7 +385,7 @@
 
       <span slot="footer" class="dialog-footer">
         <el-button @click="closeArchiveDialog">取 消</el-button>
-        <el-button type="danger" @click="confirmArchive">确认归档</el-button>
+        <el-button type="danger" :loading="loading" :disabled="!selectedArchiveId" @click="confirmArchive">确认归档</el-button>
       </span>
     </el-dialog>
 
@@ -657,6 +659,7 @@ import {
   skillSourceLabel as formatSkillSourceLabel,
   skillSourceTagType as formatSkillSourceTagType
 } from '@/components/visionAI/skillManagement/runPlan/runPlanFormat.js'
+import { getAlertLevelShortName, getAlertStatusName, getCurrentAlertTime } from './utils/alertFormatting'
 
 export default {
   name: "WarningDetail",
@@ -682,9 +685,8 @@ export default {
       // 归档相关
       archiveDialogVisible: false,
       selectedArchiveId: '',
-      archivesList: [],
-      archivesListLoading: false,
-      currentCameraId: '',
+      availableArchives: [],
+      archiveListLoading: false,
       // 上报相关
       reportDialogVisible: false,
       reportForm: {
@@ -741,7 +743,6 @@ export default {
     }
   },
   mounted() {
-    this.initArchivesList();
     // 添加键盘事件监听
     document.addEventListener('keydown', this.handleKeydown);
   },
@@ -754,14 +755,6 @@ export default {
     document.removeEventListener('mouseup', this.endDrag);
   },
   computed: {
-    availableArchives() {
-      return this.archivesList.filter(archive =>
-        archive.cameraId === this.currentCameraId || archive.isDefault
-      );
-    },
-    defaultArchive() {
-      return this.availableArchives.find(archive => archive.isDefault);
-    },
     skillSource() {
       if (!this.detail) return 'vision'
       return normalizeAlertSkillSource(this.detail.skill_source, this.detail.alert_type)
@@ -860,7 +853,6 @@ export default {
         if (response.data && response.data.alert_id) {
           this.detail = response.data;
           this.imageViewMode = 'annotated';
-          this.initArchivesList();
           this.initOperationHistory();
         } else {
           this.$message.error('获取预警详情失败');
@@ -874,39 +866,33 @@ export default {
       }
     },
 
-    // 初始化档案列表 - 调用真实API
-    async initArchivesList() {
-      if (this.archivesListLoading) return;
-      this.archivesListLoading = true;
+    async loadAvailableArchives() {
+      this.archiveListLoading = true;
       try {
         const { archiveAPI } = await import('../../service/VisionAIService.js');
 
         const response = await archiveAPI.getArchiveList({
           page: 1,
           limit: 100,
+          status: 1
         });
 
-        console.log('📥 获取档案列表响应:', response.data);
-
-        if (response.data && response.data.data) {
-          this.archivesList = response.data.data.map(archive => ({
-            id: archive.archive_id,
-            name: archive.name,
-            cameraId: archive.camera_id || 'unknown',
-            cameraName: archive.location || '未知位置',
-            isDefault: false,
-            createTime: archive.created_at
-          }));
-          console.log('✅ 加载档案列表成功:', this.archivesList.length, '个档案');
+        const resData = response.data;
+        if (resData && resData.code === 0 && Array.isArray(resData.data)) {
+          this.availableArchives = resData.data;
+        } else if (resData && Array.isArray(resData.archives)) {
+          this.availableArchives = resData.archives;
+        } else if (Array.isArray(resData)) {
+          this.availableArchives = resData;
         } else {
-          console.warn('⚠️ 获取档案列表格式异常:', response.data);
-          this.archivesList = [];
+          this.availableArchives = [];
         }
       } catch (error) {
-        console.error('❌ 加载档案列表失败:', error);
-        this.archivesList = [];
+        console.error('加载档案列表失败:', error);
+        this.availableArchives = [];
+        this.$message.warning('加载档案列表失败，请检查网络连接');
       } finally {
-        this.archivesListLoading = false;
+        this.archiveListLoading = false;
       }
     },
 
@@ -982,9 +968,7 @@ export default {
           this.reportDialogVisible = true;
           return;
         } else if (action === 'archive') {
-          this.currentCameraId = this.detail.camera_id || '';
-          this.initArchiveSelection();
-          this.archiveDialogVisible = true;
+          await this.openArchiveDialog();
           return;
         }
       } catch (error) {
@@ -1172,15 +1156,8 @@ export default {
     handleReport() {
       this.handleWarningAction('report');
     },
-    handleArchive() {
-      if (this.detail.status !== 3) {
-        const statusNames = { 1: '待处理', 2: '处理中', 3: '已处理', 4: '已归档', 5: '误报' };
-        this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${statusNames[this.detail.status] || '未知状态'}`);
-        return;
-      }
-      this.currentCameraId = this.detail.camera_id || '';
-      this.initArchiveSelection();
-      this.archiveDialogVisible = true;
+    async handleArchive() {
+      await this.openArchiveDialog();
     },
     handleFalseAlarm() {
       this.falseAlarmDialogVisible = true;
@@ -1224,15 +1201,23 @@ export default {
       this.falseAlarmReason = '';
     },
 
-    // 初始化归档选择
-    initArchiveSelection() {
-      // 自动选择默认档案（如果存在）
-      if (this.defaultArchive) {
-        this.selectedArchiveId = this.defaultArchive.id;
-      } else {
-        // 如果没有默认档案，则准备创建
-        this.selectedArchiveId = '';
+    async openArchiveDialog() {
+      const currentStatus = this.detail ? Number(this.detail.status) : null;
+      if (currentStatus !== 3) {
+        this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${getAlertStatusName(currentStatus)}。请先点「处理」并结束处理后再归档。`);
+        return;
       }
+
+      this.selectedArchiveId = null;
+      this.availableArchives = [];
+      await this.loadAvailableArchives();
+
+      this.$nextTick(() => {
+        this.archiveDialogVisible = true;
+        if (this.availableArchives.length === 0) {
+          this.$message.warning('当前没有可用档案，请先创建档案');
+        }
+      });
     },
 
     async confirmReport() {
@@ -1284,24 +1269,23 @@ export default {
     },
 
     async confirmArchive() {
+      if (!this.selectedArchiveId) {
+        this.$message.warning('请选择要归档到的档案');
+        return;
+      }
+
       try {
         this.loading = true;
-        let targetArchiveId = this.selectedArchiveId;
-        let archiveName = '';
-        let archiveLocation = '';
+        const targetArchiveId = this.selectedArchiveId;
+        const selectedArchive = this.availableArchives.find(archive =>
+          (archive.archive_id || archive.id) === targetArchiveId
+        );
+        const archiveName = selectedArchive ? selectedArchive.name : '未知档案';
 
-        if (!targetArchiveId) {
-          targetArchiveId = await this.createDefaultArchive();
-          archiveName = '默认档案';
-          archiveLocation = this.getCurrentCameraName();
-        } else {
-          const selectedArchive = this.availableArchives.find(archive => archive.id === targetArchiveId);
-          archiveName = selectedArchive ? selectedArchive.name : '未知档案';
-          archiveLocation = selectedArchive ? selectedArchive.cameraName : '未知位置';
-        }
-
-        if (!targetArchiveId) {
-          this.$message.error('无法创建默认档案');
+        const currentStatus = this.detail ? Number(this.detail.status) : null;
+        if (currentStatus !== 3) {
+          this.$message.warning(`只有已处理状态的预警才能归档，当前状态为：${getAlertStatusName(currentStatus)}。请先点「处理」并结束处理后再归档。`);
+          this.closeArchiveDialog();
           return;
         }
 
@@ -1319,10 +1303,10 @@ export default {
             status: 'completed',
             statusText: '预警归档',
             time: this.getCurrentTime(),
-            description: `预警已归档到：${archiveName}（${archiveLocation}），可在预警档案中查看`,
+            description: `预警已归档到：${archiveName}，可在预警档案中查看`,
             operationType: 'archive',
             operator: archiveResult.linked_by || this.getCurrentUserName(),
-            archiveInfo: { archiveId: targetArchiveId, archiveName, location: archiveLocation }
+            archiveInfo: { archiveId: targetArchiveId, archiveName }
           });
 
           this.detail.status = 4;
@@ -1350,73 +1334,13 @@ export default {
     closeArchiveDialog() {
       this.archiveDialogVisible = false;
       this.selectedArchiveId = '';
-    },
-
-    // 自动创建默认档案
-    async createDefaultArchive() {
-      try {
-        const { archiveAPI } = await import('../../service/VisionAIService.js');
-        const now = new Date();
-        const startTime = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-        const endTime = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
-
-        const archiveName = `${this.getCurrentCameraName() || '未知设备'}默认档案`;
-
-        const response = await archiveAPI.createArchive({
-          name: archiveName,
-          location: this.getCurrentCameraName() || '未知位置',
-          description: '系统自动创建的默认档案',
-          start_time: startTime,
-          end_time: endTime,
-          created_by: this.getCurrentUserName()
-        });
-
-        if (response.data && (response.data.archive_id || response.data.id)) {
-          const newArchive = {
-            id: response.data.archive_id || response.data.id,
-            name: archiveName,
-            cameraId: this.currentCameraId,
-            cameraName: this.getCurrentCameraName(),
-            isDefault: true,
-            createTime: new Date().toLocaleString()
-          };
-          this.archivesList.push(newArchive);
-          console.log('✅ 自动创建默认档案成功:', newArchive);
-          return newArchive.id;
-        } else {
-          console.error('❌ 创建默认档案失败:', response.data);
-          this.$message.error('创建默认档案失败');
-          return null;
-        }
-      } catch (error) {
-        console.error('❌ 创建默认档案异常:', error);
-        this.$message.error('创建默认档案失败: ' + (error.message || '未知错误'));
-        return null;
-      }
-    },
-
-    // 获取当前摄像头名称
-    getCurrentCameraName() {
-      // 实际项目中应该从摄像头数据中获取
-      const cameraNames = {
-        'camera_1': '可燃气体监控点',
-        'camera_2': '储罐区监控点',
-        'camera_3': '管道接口监控点'
-      };
-      return cameraNames[this.currentCameraId] || '监控点';
+      this.availableArchives = [];
+      this.archiveListLoading = false;
     },
 
     // 获取当前时间
     getCurrentTime() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      return getCurrentAlertTime();
     },
 
     // 获取当前用户昵称
@@ -1456,8 +1380,7 @@ export default {
 
 
     getWarningLevelText(level) {
-      const levelMap = { 1: '一级', 2: '二级', 3: '三级', 4: '四级' };
-      return levelMap[level] || '未知';
+      return getAlertLevelShortName(level);
     },
     getWarningIcon(level) {
       return level === 1 ? 'el-icon-warning' : 'el-icon-warning-outline';
@@ -1613,8 +1536,8 @@ export default {
 
     isArchiveDisabled() {
       if (!this.detail) return true;
-      // 只有 status=3（已处理）时才能归档
-      return this.detail.status !== 3;
+      // 与预警管理列表一致：已归档/误报禁用，未处理完点击后给出明确提示。
+      return [4, 5].includes(Number(this.detail.status));
     },
 
     // 格式化时间
