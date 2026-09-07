@@ -6,9 +6,6 @@ import { formatAlertDateTime } from './utils/alertFormatting.js'
 // 解构获取archiveAPI和alertAPI（用于拉取预警详情）
 const { archiveAPI, alertAPI } = VisionAIService
 
-// 解构获取archiveAPI和alertAPI（用于拉取预警详情）
-const { archiveAPI, alertAPI } = VisionAIService
-
 export default {
   name: "WarningArchives",
   components: {
