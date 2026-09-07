@@ -1,6 +1,10 @@
 <script>
 // 导入API服务
 import VisionAIService from '../../service/VisionAIService.js'
+import { formatAlertDateTime } from './utils/alertFormatting.js'
+
+// 解构获取archiveAPI和alertAPI（用于拉取预警详情）
+const { archiveAPI, alertAPI } = VisionAIService
 
 // 解构获取archiveAPI和alertAPI（用于拉取预警详情）
 const { archiveAPI, alertAPI } = VisionAIService
@@ -1098,6 +1102,11 @@ export default {
           endTime = `${currentYear}-12-31 23:59:59`;
         }
 
+        if (new Date(endTime).getTime() <= new Date(startTime).getTime()) {
+          this.$message.warning('结束时间必须大于开始时间');
+          return;
+        }
+
         // 构造后端API需要的数据格式
         const updateData = {
           name: this.editForm.name,
@@ -1602,6 +1611,11 @@ export default {
            endTime = `${currentYear}-12-31 23:59:59`;
          }
 
+         if (new Date(endTime).getTime() <= new Date(startTime).getTime()) {
+           this.$message.warning('结束时间必须大于开始时间');
+           return;
+         }
+
          // 构造后端API需要的数据格式
          const archiveData = {
            name: this.newArchiveForm.name,
@@ -1793,7 +1807,7 @@ export default {
     // 将后端返回的各种时间格式统一为 "YYYY-MM-DD HH:mm:ss"
     normalizeTimeStr(t) {
       if (!t) return '';
-      return t.replace('T', ' ').replace(/\.\d+Z?$/, '').replace(/Z$/, '').trim();
+      return formatAlertDateTime(t, '');
     },
 
     formatTime(timeString) {
