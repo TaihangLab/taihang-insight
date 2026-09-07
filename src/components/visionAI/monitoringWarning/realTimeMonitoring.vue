@@ -568,7 +568,8 @@ export default {
             // SSE连接相关
       sseConnection: null,
       sseStatus: {
-        connected: false
+        connected: false,
+        reconnecting: false
       },
 
       // API数据加载相关
@@ -2569,6 +2570,9 @@ export default {
 
     // 处理SSE消息
     handleSSEMessage(messageData) {
+      if (!messageData || messageData.event === 'heartbeat' || messageData.event === 'connected') {
+        return;
+      }
       // 如果是AI预警消息
       if (messageData.alert_id || messageData.id) {
         this.handleNewAlert(messageData);
@@ -2914,18 +2918,26 @@ export default {
     handleSSEOpen() {
       console.log('SSE连接已建立（含重连成功），更新状态为已连接');
       this.sseStatus.connected = true;
+      this.sseStatus.reconnecting = false;
     },
 
     // 处理SSE错误（EventSource断线后会自动重连，此时readyState为CONNECTING）
-    handleSSEError(error) {
-      console.log('SSE连接错误，等待自动重连...');
+    handleSSEError() {
+      const es = this.sseConnection;
+      if (es && es.readyState === EventSource.CONNECTING) {
+        this.sseStatus.connected = false;
+        this.sseStatus.reconnecting = true;
+        return;
+      }
       this.sseStatus.connected = false;
+      this.sseStatus.reconnecting = false;
     },
 
     // 处理SSE连接关闭
     handleSSEClose() {
       console.log('SSE连接已关闭');
       this.sseStatus.connected = false;
+      this.sseStatus.reconnecting = false;
     },
 
     // 清理SSE连接
@@ -2938,6 +2950,7 @@ export default {
       }
 
       this.sseStatus.connected = false;
+      this.sseStatus.reconnecting = false;
     },
 
     // 手动重连SSE
@@ -2952,12 +2965,16 @@ export default {
 
     // 获取SSE状态样式类
     getSSEStatusClass() {
-      return this.sseStatus.connected ? 'status-connected' : 'status-disconnected';
+      if (this.sseStatus.connected) return 'status-connected';
+      if (this.sseStatus.reconnecting) return 'status-reconnecting';
+      return 'status-disconnected';
     },
 
     // 获取SSE状态文本
     getSSEStatusText() {
-      return this.sseStatus.connected ? '已连接' : '未连接';
+      if (this.sseStatus.connected) return '已连接';
+      if (this.sseStatus.reconnecting) return '重连中';
+      return '未连接';
     },
 
     // 🆕 ========== OSD检测框叠加功能 ==========
@@ -3009,6 +3026,7 @@ export default {
           this.$set(this.availableAITasks, cameraId, response.data.data || [])
         }
       } catch (error) {
+        // Worker 重启/503 时保留上次列表，避免下拉框被空数据冲掉
         console.error(`❌ 获取摄像头AI任务列表失败:`, error)
       }
     },
@@ -3072,6 +3090,14 @@ export default {
         onClose: (closedWs) => {
           if (this.wsConnections[index] === closedWs) {
             delete this.wsConnections[index]
+            const keepTaskId = this.selectedAITasks[index]
+            if (keepTaskId) {
+              setTimeout(() => {
+                if (this.selectedAITasks[index] === keepTaskId && !this.wsConnections[index]) {
+                  this.connectDetectionWebSocket(index, keepTaskId)
+                }
+              }, 1500)
+            }
           }
         }
       })
