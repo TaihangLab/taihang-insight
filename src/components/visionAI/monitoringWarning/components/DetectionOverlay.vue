@@ -50,20 +50,29 @@ export default {
       type: Number,
       default: 1080
     },
-    // 采集帧时间戳（仅用于去重）
+    // 采集帧时间戳(epoch ms)。后端按~30fps重复推同一结果，用它去重，
+    // 仅当时间戳变化时才视为“新的一帧检测”，从而正确触发短保持+淡出。
     frameTimestamp: {
       type: Number,
       default: 0
     },
-    // 收到结果后全亮停留时长(ms)；期间若有新结果会重置
+    // 检测框全亮保持时长(ms)。调小可减少旧框"钉在原地"的时间；
+    // 若检测帧率很低(如1fps)出现闪烁，可适当调大。
     holdDuration: {
+      type: Number,
+      default: 300
+    },
+    // 检测框淡出时长(ms)
+    fadeDuration: {
       type: Number,
       default: 200
     },
-    // 停留结束后淡出时长(ms)
-    fadeDuration: {
+    // 时间戳对齐偏移(ms)：视频画面相对"最快到达的检测结果"的延迟估计。
+    // 检测框会按 (alignOffset - 本批次相对最快路径的额外延迟) 延后显示，
+    // 使框与它对应的画面帧尽量同时出现。框比人超前则调大，落后则调小。
+    alignOffset: {
       type: Number,
-      default: 120
+      default: 300
     }
   },
   data() {
@@ -72,10 +81,9 @@ export default {
       canvasHeight: 480,
       ctx: null,
       rafId: null,
-      currentDetections: [],
       currentStatusTags: [],
-      // 本批开始显示的时间（performance.now）
-      shownAt: 0,
+      // 待显示/正在淡出的检测批次队列：{ detections, startAt }
+      batches: [],
       lastFrameTimestamp: 0,
       lastSignature: ''
     }
@@ -163,9 +171,12 @@ export default {
     },
 
     /**
-     * 收到新数据：去重后立即显示，并重置停留计时。
+     * 收到新数据：去重后决定是否作为“新的一帧检测”入队。
+     * 后端按~30fps重复推送同一结果，必须去重，否则批次被反复重置、永不淡出。
      */
     onNewData() {
+      this.currentStatusTags = this.statusTags ? this.statusTags.slice() : []
+
       const ft = this.frameTimestamp || 0
       let isNew = false
       if (ft > 0) {
@@ -180,19 +191,32 @@ export default {
           this.lastSignature = sig
         }
       }
-      if (!isNew) return
-
-      this.currentStatusTags = this.statusTags ? this.statusTags.slice() : []
-      this.currentDetections = this.detections ? this.detections.slice() : []
-      if (!this.currentDetections.length) {
-        this.shownAt = 0
-        this.clearCanvas()
-        this.stopRaf()
-        return
+      if (isNew && this.detections && this.detections.length) {
+        this.pushBatch(this.detections)
       }
+    },
 
+    /**
+     * 入队一个新批次。
+     *
+     * 对齐思路：画面此刻显示的是约 alignOffset 毫秒前采集的帧（视频链路延迟），
+     * 而本批检测结果对应 age = (now - frameTimestamp) 毫秒前采集的帧。
+     * 若 age < alignOffset（检测比画面先到），延后 alignOffset - age 再显示；
+     * 若 age >= alignOffset（检测本身已落后于画面，常见情况），立即显示，不再追加延迟。
+     */
+    pushBatch(detections) {
       const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
-      this.shownAt = now
+      let delay = 0
+      if (this.alignOffset > 0 && this.frameTimestamp > 0) {
+        const age = Date.now() - this.frameTimestamp
+        if (age >= 0 && age < 10000) {
+          delay = Math.max(0, this.alignOffset - age)
+        }
+      }
+      this.batches.push({
+        detections: detections ? detections.slice() : [],
+        startAt: now + delay
+      })
       this.ensureRaf()
     },
 
@@ -228,8 +252,7 @@ export default {
     },
 
     /**
-     * 渲染：全亮 holdDuration → 淡出 fadeDuration → 自动清空。
-     * 期间若有新结果，onNewData 会重置 shownAt。
+     * 渲染主循环：短保持 + 淡出，由 requestAnimationFrame 驱动。
      */
     renderLoop() {
       this.rafId = requestAnimationFrame(this.renderLoop)
@@ -242,29 +265,47 @@ export default {
         return
       }
 
-      if (!this.currentDetections.length || !this.shownAt) {
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
+
+      // 若已有更新的批次到达其显示时刻，丢弃被取代的旧批次（保证不出现空窗）
+      while (this.batches.length > 1 && this.batches[1].startAt <= now) {
+        this.batches.shift()
+      }
+
+      let current = null
+      if (this.batches.length && this.batches[0].startAt <= now) {
+        current = this.batches[0]
+      }
+
+      if (!current) {
         this.clearCanvas()
-        this.stopRaf()
+        if (!this.batches.length) {
+          this.stopRaf()
+        }
         return
       }
 
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
-      const elapsed = now - this.shownAt
+      const elapsed = now - current.startAt
       const total = this.holdDuration + this.fadeDuration
-
-      let alpha = 1
-      if (elapsed > this.holdDuration) {
-        if (elapsed >= total) {
-          this.currentDetections = []
-          this.shownAt = 0
-          this.clearCanvas()
-          this.stopRaf()
-          return
-        }
+      let alpha
+      if (elapsed <= this.holdDuration) {
+        alpha = 1
+      } else if (elapsed <= total) {
         alpha = 1 - (elapsed - this.holdDuration) / this.fadeDuration
+      } else {
+        alpha = 0
       }
 
-      this.renderBatch(this.currentDetections, alpha)
+      if (alpha <= 0) {
+        this.clearCanvas()
+        this.batches.shift()
+        if (!this.batches.length) {
+          this.stopRaf()
+        }
+        return
+      }
+
+      this.renderBatch(current.detections, alpha)
     },
 
     renderBatch(detections, alpha) {
@@ -345,9 +386,8 @@ export default {
     },
 
     clear() {
-      this.currentDetections = []
+      this.batches = []
       this.currentStatusTags = []
-      this.shownAt = 0
       this.stopRaf()
       this.clearCanvas()
     }
