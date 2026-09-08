@@ -67,7 +67,7 @@
                     </div>
                     <div v-else class="video-player-wrapper">
                       <player :ref="'player'+(index-1)" :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
-                              @destroy="destroy"/>
+                              @destroy="destroy(index - 1)"/>
                       
                       <!-- 🆕 AI任务选择下拉框 - 移到video-player-wrapper内部 -->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
@@ -153,7 +153,7 @@
                     </div>
                     <div v-else class="video-player-wrapper">
                       <player :ref="'player'+(index-1)" :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
-                              @destroy="destroy"/>
+                              @destroy="destroy(index - 1)"/>
                       
                       <!-- 🆕 AI任务选择下拉框（全屏模式） -->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
@@ -526,6 +526,11 @@ export default {
       videoUrl: [],
       // 视频提示信息
       videoTip: [],
+      // 每个播放格子的后端观看租约及心跳
+      playbackLeases: {},
+      playbackLeaseTimers: {},
+      playbackRequestVersions: {},
+      playbackDisposing: false,
       // 播放器索引
       playerIdx: 0,
       // 加载状态
@@ -623,6 +628,9 @@ export default {
     });
   },
   beforeDestroy() {
+    this.playbackDisposing = true;
+    this.invalidatePlaybackRequests();
+    this.releaseAllPlaybackLeases();
     this.exitFullscreen();
     document.body.classList.remove('camera-fullscreen-mode');
     clearInterval(this.timer);
@@ -687,6 +695,15 @@ export default {
     // 切换视图模式
     switchViewMode(mode) {
       this.viewMode = mode
+      const visibleCount = mode === 'single' ? 1 : (mode === 'four' ? 4 : 9)
+      for (let index = visibleCount; index < 9; index += 1) {
+        if (this.videoUrl[index] || this.playbackLeases[index] || this.cameraIdMapping[index] != null) {
+          this.clear(index)
+        }
+      }
+      if (this.playerIdx >= visibleCount) {
+        this.playerIdx = 0
+      }
       if (this.isFullscreen) {
         this.exitFullscreen(); // 切换视图模式时退出全屏
       }
@@ -840,16 +857,106 @@ export default {
     },
     // 销毁播放器
     destroy(idx) {
-      this.clear(idx.substring(idx.length - 1));
+      this.clear(idx, { silent: false });
     },
     // 清除播放数据
-    clear(idx) {
-      this.$set(this.videoUrl, idx - 1, '');
-      this.$set(this.videoTip, idx - 1, '');
+    clear(idx, options) {
+      const silent = !options || options.silent !== false;
+      this.bumpPlaybackRequestVersion(idx);
+      this.cleanupOSDResources(idx);
+      this.releasePlaybackLease(idx, { silent: silent });
+      this.$delete(this.cameraIdMapping, idx);
+      this.$delete(this.cameraNames, idx);
+      this.$set(this.videoUrl, idx, '');
+      this.$set(this.videoTip, idx, '');
     },
     // 设置播放URL
     setPlayUrl(url, idx) {
       this.$set(this.videoUrl, idx, url);
+    },
+    bumpPlaybackRequestVersion(index) {
+      const nextVersion = (this.playbackRequestVersions[index] || 0) + 1;
+      this.$set(this.playbackRequestVersions, index, nextVersion);
+      return nextVersion;
+    },
+    invalidatePlaybackRequests() {
+      for (let index = 0; index < 9; index += 1) {
+        this.bumpPlaybackRequestVersion(index);
+      }
+    },
+    clearPlaybackLeaseHeartbeat(index) {
+      const timer = this.playbackLeaseTimers[index];
+      if (timer) {
+        clearInterval(timer);
+        this.$delete(this.playbackLeaseTimers, index);
+      }
+    },
+    startPlaybackLeaseHeartbeat(index) {
+      this.clearPlaybackLeaseHeartbeat(index);
+      const lease = this.playbackLeases[index];
+      if (!lease) return;
+      const intervalSeconds = Number(lease.heartbeatIntervalSeconds) || 30;
+      const timer = setInterval(
+        () => this.renewPlaybackLease(index),
+        Math.max(intervalSeconds * 1000, 1000)
+      );
+      this.$set(this.playbackLeaseTimers, index, timer);
+    },
+    async renewPlaybackLease(index) {
+      const lease = this.playbackLeases[index];
+      if (!lease || this.playbackDisposing) return;
+      try {
+        const response = await realtimeMonitorAPI.renewPlaybackLease(lease.leaseId);
+        const current = this.playbackLeases[index];
+        if (!current || current.leaseId !== lease.leaseId) return;
+        const renewed = response.data && response.data.data;
+        if (renewed) {
+          this.$set(this.playbackLeases, index, Object.assign({}, current, {
+            heartbeatIntervalSeconds: renewed.heartbeat_interval_seconds,
+            expiresAt: renewed.expires_at
+          }));
+        }
+      } catch (error) {
+        const status = error.response && error.response.status;
+        const current = this.playbackLeases[index];
+        if (!current || current.leaseId !== lease.leaseId) return;
+        if (status === 404 || status === 410) {
+          this.clearPlaybackLeaseHeartbeat(index);
+          this.$delete(this.playbackLeases, index);
+          if (!this.playbackDisposing && String(this.cameraIdMapping[index]) === String(lease.channelId)) {
+            this.setPlayUrl('', index);
+            this.$set(this.videoTip, index, '播放租约已过期，正在重新连接...');
+            this.sendDevicePush(lease.channelId);
+          }
+        } else {
+          console.warn('⚠️ 播放租约续期暂时失败，将继续重试:', error);
+        }
+      }
+    },
+    async releasePlaybackLease(index, options) {
+      const silent = options && options.silent;
+      const lease = this.playbackLeases[index];
+      this.clearPlaybackLeaseHeartbeat(index);
+      if (!lease) return;
+
+      // 先移除本地引用，避免并发的重复 DELETE；服务端 DELETE 本身也是幂等的。
+      this.$delete(this.playbackLeases, index);
+      try {
+        await realtimeMonitorAPI.stopChannel(lease.channelId, lease.leaseId);
+      } catch (error) {
+        console.error('❌ 释放播放租约失败，将由服务端超时机制继续回收:', error);
+        if (!silent && this.$message) {
+          this.$message.warning('播放器已关闭，但服务端停流失败，系统将自动重试回收');
+        }
+      }
+    },
+    releaseAllPlaybackLeases() {
+      Object.keys(this.playbackLeases).forEach(index => {
+        this.releasePlaybackLease(Number(index), { silent: true });
+      });
+      Object.keys(this.playbackLeaseTimers).forEach(index => {
+        this.clearPlaybackLeaseHeartbeat(Number(index));
+      });
     },
     // 设备树点击事件
     treeNodeClickEvent(data) {
@@ -867,12 +974,15 @@ export default {
     },
     // 向设备发送推流请求
     async sendDevicePush(channelId) {
-      let idxTmp = this.playerIdx;
+      const idxTmp = this.playerIdx;
+      const requestVersion = this.bumpPlaybackRequestVersion(idxTmp);
       // 切摄像头时关掉该格子上旧的检测 WS / 已选任务，避免「视频已换、WS 还在」
       const prevCameraId = this.cameraIdMapping[idxTmp]
       if (prevCameraId != null && String(prevCameraId) !== String(channelId)) {
         this.cleanupOSDResources(idxTmp)
       }
+      // 先在本地摘除旧租约；DELETE 与新 POST 可并发，后端引用计数会处理先后顺序。
+      this.releasePlaybackLease(idxTmp, { silent: true })
       this.setPlayUrl("", idxTmp);
       this.$set(this.videoTip, idxTmp, "正在拉流...");
       
@@ -890,6 +1000,28 @@ export default {
         
         if (response.data && response.data.code === 0 && response.data.data) {
           const streamData = response.data.data;
+          const lease = streamData.viewer_lease;
+          if (!lease || !lease.lease_id) {
+            throw new Error('服务端未返回播放租约');
+          }
+
+          // 用户可能已切换到另一通道；把迟到响应携带的租约立即归还。
+          if (this.playbackDisposing || this.playbackRequestVersions[idxTmp] !== requestVersion) {
+            try {
+              await realtimeMonitorAPI.stopChannel(channelId, lease.lease_id);
+            } catch (releaseError) {
+              console.warn('⚠️ 释放迟到的播放租约失败，将由服务端超时回收:', releaseError);
+            }
+            return;
+          }
+
+          this.$set(this.playbackLeases, idxTmp, {
+            leaseId: lease.lease_id,
+            channelId: channelId,
+            heartbeatIntervalSeconds: lease.heartbeat_interval_seconds,
+            expiresAt: lease.expires_at
+          });
+          this.startPlaybackLeaseHeartbeat(idxTmp);
           let videoUrl;
           
           // HTTP-FLV 优先（jessibuca 拉 http flv 更稳）
@@ -914,6 +1046,7 @@ export default {
             }, 200);
           } else {
             console.warn('⚠️ 未找到可用的流地址');
+            this.releasePlaybackLease(idxTmp, { silent: true });
             this.$set(this.videoTip, idxTmp, "播放失败: 未找到可用的流地址");
           }
         } else {
@@ -923,9 +1056,16 @@ export default {
         }
       } catch (error) {
         console.error('❌ 播放通道异常:', error);
+        if (this.playbackRequestVersions[idxTmp] !== requestVersion || this.playbackDisposing) {
+          return;
+        }
+        if (this.playbackLeases[idxTmp]) {
+          this.releasePlaybackLease(idxTmp, { silent: true });
+        }
         // axios 超时(ECONNABORTED)时给出更友好的提示
         const isTimeout = error.code === 'ECONNABORTED' || /timeout/i.test(error.message || '');
-        const errorMsg = isTimeout ? '拉流超时，通道可能已离线或不存在' : (error.message || '网络错误');
+        const responseDetail = error.response && error.response.data && error.response.data.detail;
+        const errorMsg = isTimeout ? '拉流超时，通道可能已离线或不存在' : (responseDetail || error.message || '网络错误');
         this.$set(this.videoTip, idxTmp, "播放失败: " + errorMsg);
       }
     },

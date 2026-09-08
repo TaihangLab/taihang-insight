@@ -6,7 +6,7 @@
       <div class="buttons-box-left">
         <i v-if="!playing" class="iconfont icon-play jessibuca-btn" @click="playBtnClick"></i>
         <i v-if="playing" class="iconfont icon-pause jessibuca-btn" @click="pause"></i>
-        <i class="iconfont icon-stop jessibuca-btn" @click="destroy"></i>
+        <i class="iconfont icon-stop jessibuca-btn" @click="stop"></i>
         <i v-if="isNotMute" class="iconfont icon-audio-high jessibuca-btn" @click="mute()"></i>
         <i v-if="!isNotMute" class="iconfont icon-audio-mute jessibuca-btn" @click="cancelMute()"></i>
       </div>
@@ -252,6 +252,10 @@ export default {
       this.err = "";
       this.performance = "";
 
+    },
+    stop: function () {
+      this.destroy();
+      this.$emit('destroy');
     },
     fullscreenSwich: function () {
       let isFull = this.isFullscreen()

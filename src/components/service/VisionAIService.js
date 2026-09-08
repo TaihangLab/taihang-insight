@@ -3792,7 +3792,7 @@ export const realtimeMonitorAPI = {
   playChannel(channelId) {
     console.log('📤 播放通道 - 通道ID:', channelId);
 
-    return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`)
+    return visionAIAxios.post(`/api/v1/realtime-monitor/play/${channelId}`)
       .then(response => {
         console.log('📥 播放通道成功:', response.data);
         return response;
@@ -3806,18 +3806,35 @@ export const realtimeMonitorAPI = {
   /**
    * 停止播放通道视频
    * @param {number} channelId - 通道ID
+   * @param {string} leaseId - 播放接口返回的观看租约ID
    * @returns {Promise} 停止播放结果
    */
-  stopChannel(channelId) {
-    console.log('📤 停止播放通道 - 通道ID:', channelId);
+  stopChannel(channelId, leaseId) {
+    console.log('📤 停止播放通道 - 通道ID:', channelId, '租约ID:', leaseId);
 
-    return visionAIAxios.get(`/api/v1/realtime-monitor/stop/${channelId}`)
+    return visionAIAxios.delete(`/api/v1/realtime-monitor/stop/${channelId}`, {
+      params: { lease_id: leaseId }
+    })
       .then(response => {
         console.log('📥 停止播放成功:', response.data);
         return response;
       })
       .catch(error => {
         console.error('❌ 停止播放失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 续期播放租约，防止仍在观看的页面被服务端空闲回收
+   * @param {string} leaseId - 播放接口返回的观看租约ID
+   * @returns {Promise} 最新租约信息
+   */
+  renewPlaybackLease(leaseId) {
+    return visionAIAxios.patch(`/api/v1/realtime-monitor/leases/${leaseId}`)
+      .then(response => response)
+      .catch(error => {
+        console.error('❌ 播放租约续期失败:', error);
         throw error;
       });
   },
