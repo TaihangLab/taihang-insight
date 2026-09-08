@@ -101,6 +101,7 @@ export default {
       }
     },
     create() {
+      const isFirefox = typeof navigator !== 'undefined' && /firefox/i.test(navigator.userAgent)
       let options = {
         container: this.$refs.container,
         autoWasm: true,
@@ -137,7 +138,7 @@ export default {
         showBandwidth: false,
         supportDblclickFullscreen: false,
         timeout: 10,
-        useMSE: true,
+        useMSE: !isFirefox,
         useWCS: false,
         useWebFullScreen: true,
         videoBuffer: 0.1,
