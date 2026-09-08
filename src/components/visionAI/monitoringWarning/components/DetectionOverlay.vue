@@ -128,6 +128,32 @@ export default {
     },
 
     /**
+     * 视频在元素内可能有 contain/cover 黑边，框要贴实际画面而不是整个 video 标签。
+     */
+    visibleMediaBox(mediaEl, vRect) {
+      const empty = { left: 0, top: 0, width: vRect.width, height: vRect.height }
+      const iw = mediaEl.videoWidth || mediaEl.naturalWidth || 0
+      const ih = mediaEl.videoHeight || mediaEl.naturalHeight || 0
+      if (!iw || !ih) return empty
+      let fit = 'fill'
+      try {
+        fit = (window.getComputedStyle(mediaEl).objectFit || 'fill').toLowerCase()
+      } catch (e) {}
+      if (fit === 'fill' || fit === 'none') return empty
+      const scaleX = vRect.width / iw
+      const scaleY = vRect.height / ih
+      const scale = fit === 'cover' ? Math.max(scaleX, scaleY) : Math.min(scaleX, scaleY)
+      const width = iw * scale
+      const height = ih * scale
+      return {
+        left: (vRect.width - width) / 2,
+        top: (vRect.height - height) / 2,
+        width,
+        height
+      }
+    },
+
+    /**
      * 将叠加 canvas 精确贴合到播放器真实的视频元素上。
      */
     syncToVideoElement() {
@@ -147,13 +173,14 @@ export default {
 
       const vRect = videoEl.getBoundingClientRect()
       const cRect = this.$el.getBoundingClientRect()
-      const w = Math.round(vRect.width)
-      const h = Math.round(vRect.height)
+      const box = this.visibleMediaBox(videoEl, vRect)
+      const w = Math.round(box.width)
+      const h = Math.round(box.height)
       if (w <= 0 || h <= 0) return false
 
       canvas.style.position = 'absolute'
-      canvas.style.left = Math.round(vRect.left - cRect.left) + 'px'
-      canvas.style.top = Math.round(vRect.top - cRect.top) + 'px'
+      canvas.style.left = Math.round(vRect.left - cRect.left + box.left) + 'px'
+      canvas.style.top = Math.round(vRect.top - cRect.top + box.top) + 'px'
       canvas.style.width = w + 'px'
       canvas.style.height = h + 'px'
 
