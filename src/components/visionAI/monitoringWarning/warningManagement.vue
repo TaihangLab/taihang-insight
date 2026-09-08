@@ -39,6 +39,8 @@ export default {
       
       // 表格加载状态
       loading: false,
+      warningListRequestId: 0,
+      warningListRequestController: null,
       
       // 选中的预警项
       selectedWarnings: [],
@@ -178,6 +180,11 @@ export default {
     this.getWarningList()
   },
   beforeDestroy() {
+    this.warningListRequestId += 1
+    if (this.warningListRequestController) {
+      this.warningListRequestController.abort()
+      this.warningListRequestController = null
+    }
     this.stopDownloadPoll()
   },
   methods: {
@@ -393,6 +400,14 @@ export default {
     // 获取预警列表
     async getWarningList(options = {}) {
       const clearSelection = options.clearSelection !== false
+      if (this.warningListRequestController) {
+        this.warningListRequestController.abort()
+      }
+      const requestId = ++this.warningListRequestId
+      const controller = typeof AbortController !== 'undefined'
+        ? new AbortController()
+        : null
+      this.warningListRequestController = controller
       this.loading = true
       try {
         // 构建API请求参数
@@ -421,7 +436,11 @@ export default {
         console.log('获取预警列表 - 请求参数:', apiParams)
 
         // 调用API获取数据
-        const response = await alertAPI.getRealTimeAlerts(apiParams)
+        const response = await alertAPI.getRealTimeAlerts(
+          apiParams,
+          controller ? { signal: controller.signal } : {}
+        )
+        if (requestId !== this.warningListRequestId) return
         console.log('获取预警列表 - API响应:', response.data)
 
         if (response.data && response.data.code === 0) {
@@ -454,13 +473,22 @@ export default {
           this.clearWarningSelection()
         }
       } catch (error) {
+        const canceled = requestId !== this.warningListRequestId ||
+          (controller && controller.signal.aborted) ||
+          error.code === 'ERR_CANCELED' ||
+          error.__CANCEL__ === true
+        if (canceled) return
+
         console.error('获取预警列表异常:', error)
         this.$message.error('获取预警列表失败：' + (error.message || '网络错误'))
         // 发生错误时清空数据
         this.warningList = []
         this.totalCount = 0
       } finally {
-        this.loading = false
+        if (requestId === this.warningListRequestId) {
+          this.loading = false
+          this.warningListRequestController = null
+        }
       }
     },
 

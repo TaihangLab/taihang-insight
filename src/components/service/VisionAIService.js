@@ -1731,9 +1731,10 @@ export const alertAPI = {
    * @param {string} [params.end_date] - 结束日期（YYYY-MM-DD）
    * @param {string} [params.start_time] - 开始时间（HH:MM:SS）
    * @param {string} [params.end_time] - 结束时间（HH:MM:SS）
+   * @param {Object} [requestConfig] - Axios 请求配置（如 AbortController signal）
    * @returns {Promise} 包含预警列表的Promise对象
    */
-  getRealTimeAlerts(params = {}) {
+  getRealTimeAlerts(params = {}, requestConfig = {}) {
     // 处理查询和分页参数
     const apiParams = { ...params };
 
@@ -1820,7 +1821,10 @@ export const alertAPI = {
 
     console.log('获取实时预警列表 - API调用参数:', apiParams);
 
-    return visionAIAxios.get('/api/v1/alerts/real-time', { params: apiParams })
+    return visionAIAxios.get('/api/v1/alerts/real-time', {
+      ...requestConfig,
+      params: apiParams
+    })
       .then(response => {
         // 单独处理实时预警接口的响应数据转换
         const originalData = response.data;
@@ -3128,9 +3132,10 @@ export const archiveAPI = {
   /**
    * 获取预警档案详情
    * @param {number} archiveId - 档案ID
+   * @param {Object} [requestConfig] - Axios 请求配置（如 AbortController signal）
    * @returns {Promise} 包含档案详情的Promise对象
    */
-  getArchiveDetail(archiveId) {
+  getArchiveDetail(archiveId, requestConfig = {}) {
     if (!archiveId) {
       console.error('获取档案详情失败: 缺少档案ID');
       return Promise.reject(new Error('缺少档案ID'));
@@ -3138,7 +3143,7 @@ export const archiveAPI = {
 
     console.log('获取预警档案详情:', archiveId);
 
-    return visionAIAxios.get(`/api/v1/alert-archives/${archiveId}`)
+    return visionAIAxios.get(`/api/v1/alert-archives/${archiveId}`, requestConfig)
       .then(response => {
         console.log('获取预警档案详情成功:', response.data);
         return response;
@@ -3325,9 +3330,10 @@ export const archiveAPI = {
    * @param {number} [params.status] - 处理状态筛选
    * @param {string} [params.start_time] - 开始时间筛选
    * @param {string} [params.end_time] - 结束时间筛选
+   * @param {Object} [requestConfig] - Axios 请求配置（如 AbortController signal）
    * @returns {Promise} 包含档案预警列表的Promise对象
    */
-  getArchiveLinkedAlerts(archiveId, params = {}) {
+  getArchiveLinkedAlerts(archiveId, params = {}, requestConfig = {}) {
     const apiParams = {
       page: 1,
       limit: 20,
@@ -3336,7 +3342,10 @@ export const archiveAPI = {
 
     console.log('获取档案关联预警列表 - API调用参数:', { archiveId, ...apiParams });
 
-    return visionAIAxios.get(`/api/v1/alert-archives/linked-alerts/${archiveId}`, { params: apiParams })
+    return visionAIAxios.get(`/api/v1/alert-archives/linked-alerts/${archiveId}`, {
+      ...requestConfig,
+      params: apiParams
+    })
       .then(response => {
         console.log('获取档案关联预警列表成功:', response.data);
         return response;
