@@ -62,12 +62,23 @@
               
               <div class="video-placeholder" :data-timestamp="currentDateTime" :data-camera="formatCameraName(index)">
                     <div v-if="!videoUrl[index-1]" class="no-signal">
-                      <i class="el-icon-video-camera-solid"></i>
+                      <i :class="videoTip[index-1] ? 'el-icon-loading' : 'el-icon-video-camera-solid'"></i>
                       <div>{{ videoTip[index-1] ? videoTip[index-1] : "无信号" }}</div>
                     </div>
                     <div v-else class="video-player-wrapper">
-                      <player :ref="'player'+(index-1)" :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
-                              @destroy="destroy(index - 1)"/>
+                      <zlm-rtc-player
+                        v-if="playProtocol[index-1] === 'webrtc'"
+                        :ref="'player'+(index-1)"
+                        :videoUrl="videoUrl[index-1]"
+                        @error="onRtcError(index-1)"
+                        @screenshot="shot"/>
+                      <player
+                        v-else
+                        :ref="'player'+(index-1)"
+                        :videoUrl="videoUrl[index-1]"
+                        fluent autoplay
+                        @screenshot="shot"
+                        @destroy="destroy(index - 1)"/>
                       
                       <!-- 🆕 AI任务选择下拉框 - 移到video-player-wrapper内部 -->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
@@ -148,12 +159,23 @@
               
               <div class="video-placeholder" :data-timestamp="currentDateTime" :data-camera="formatCameraName(index)">
                     <div v-if="!videoUrl[index-1]" class="no-signal">
-                      <i class="el-icon-video-camera-solid"></i>
+                      <i :class="videoTip[index-1] ? 'el-icon-loading' : 'el-icon-video-camera-solid'"></i>
                       <div>{{ videoTip[index-1] ? videoTip[index-1] : "无信号" }}</div>
                     </div>
                     <div v-else class="video-player-wrapper">
-                      <player :ref="'player'+(index-1)" :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
-                              @destroy="destroy(index - 1)"/>
+                      <zlm-rtc-player
+                        v-if="playProtocol[index-1] === 'webrtc'"
+                        :ref="'player'+(index-1)"
+                        :videoUrl="videoUrl[index-1]"
+                        @error="onRtcError(index-1)"
+                        @screenshot="shot"/>
+                      <player
+                        v-else
+                        :ref="'player'+(index-1)"
+                        :videoUrl="videoUrl[index-1]"
+                        fluent autoplay
+                        @screenshot="shot"
+                        @destroy="destroy(index - 1)"/>
                       
                       <!-- 🆕 AI任务选择下拉框（全屏模式） -->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
@@ -486,6 +508,7 @@
 
 <script>
 import player from '../../common/jessibuca.vue'
+import zlmRtcPlayer from '../../common/zlmRtcPlayer.vue'
 // 使用本地专用组件（改造后的实时监控专用API）
 import OrgPointTree from './components/OrgPointTree.vue'
 import WarningDetail from './warningDetail.vue'
@@ -507,7 +530,7 @@ import { buildAlertProcessHistory } from './utils/alertProcessHistory';
 export default {
   name: "RealTimeMonitoring",
   components: {
-    player, OrgPointTree, WarningDetail, DetectionOverlay
+    player, zlmRtcPlayer, OrgPointTree, WarningDetail, DetectionOverlay
   },
   data() {
     return {
@@ -526,6 +549,9 @@ export default {
       aiTaskPollRequestId: 0,
       // 视频URL数组
       videoUrl: [],
+      playProtocol: {},
+      flvFallbackUrl: {},
+      rtcFailed: {},
       // 视频提示信息
       videoTip: [],
       // 每个播放格子的后端观看租约及心跳
@@ -888,8 +914,23 @@ export default {
       this.$delete(this.cameraNames, idx);
       this.$set(this.videoUrl, idx, '');
       this.$set(this.videoTip, idx, '');
+      this.$set(this.playProtocol, idx, '');
+      this.$set(this.flvFallbackUrl, idx, '');
+      this.$set(this.rtcFailed, idx, false);
     },
-    // 设置播放URL
+    onRtcError(idx) {
+      if (this.rtcFailed[idx] || this.playProtocol[idx] !== 'webrtc') return
+      const flv = this.flvFallbackUrl[idx]
+      this.$set(this.rtcFailed, idx, true)
+      if (!flv) {
+        this.$set(this.videoTip, idx, "播放失败: WebRTC 不可用")
+        this.setPlayUrl("", idx)
+        return
+      }
+      console.warn('WebRTC 播放失败，回退 HTTP-FLV', idx)
+      this.$set(this.playProtocol, idx, 'flv')
+      this.setPlayUrl(flv, idx)
+    },
     setPlayUrl(url, idx) {
       this.$set(this.videoUrl, idx, url);
     },
@@ -1003,6 +1044,9 @@ export default {
       // 先在本地摘除旧租约；DELETE 与新 POST 可并发，后端引用计数会处理先后顺序。
       this.releasePlaybackLease(idxTmp, { silent: true })
       this.setPlayUrl("", idxTmp);
+      this.$set(this.playProtocol, idxTmp, '');
+      this.$set(this.flvFallbackUrl, idxTmp, '');
+      this.$set(this.rtcFailed, idxTmp, false);
       this.$set(this.videoTip, idxTmp, "正在拉流...");
       
       // 🆕 保存摄像头ID映射
@@ -1041,17 +1085,21 @@ export default {
             expiresAt: lease.expires_at
           });
           this.startPlaybackLeaseHeartbeat(idxTmp);
-          let videoUrl;
-          
-          // HTTP-FLV 优先（jessibuca 拉 http flv 更稳）
-          if (location.protocol === "https:") {
-            videoUrl = streamData.https_flv || streamData.wss_flv;
-          } else {
-            videoUrl = streamData.http_flv || streamData.ws_flv;
+
+          const flvUrl = location.protocol === "https:"
+            ? (streamData.https_flv || streamData.wss_flv)
+            : (streamData.http_flv || streamData.ws_flv);
+          const config = require('../../../../config/index.js')
+          let rtcUrl = streamData.webrtc || ''
+          if (rtcUrl.startsWith('/')) {
+            rtcUrl = String(config.API_BASE_URL || '').replace(/\/$/, '') + rtcUrl
           }
-          
+          const videoUrl = rtcUrl || flvUrl;
+
           if (videoUrl) {
-            console.log('✅ 获取播放地址成功:', videoUrl);
+            this.$set(this.playProtocol, idxTmp, rtcUrl ? 'webrtc' : 'flv');
+            this.$set(this.flvFallbackUrl, idxTmp, flvUrl || '');
+            console.log('✅ 获取播放地址成功:', rtcUrl ? 'webrtc' : 'flv', videoUrl);
             this.setPlayUrl(videoUrl, idxTmp);
 
             // 🆕 加载该摄像头的AI任务列表
