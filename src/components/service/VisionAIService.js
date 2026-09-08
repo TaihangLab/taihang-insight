@@ -1731,9 +1731,10 @@ export const alertAPI = {
    * @param {string} [params.end_date] - 结束日期（YYYY-MM-DD）
    * @param {string} [params.start_time] - 开始时间（HH:MM:SS）
    * @param {string} [params.end_time] - 结束时间（HH:MM:SS）
+   * @param {Object} [requestConfig] - Axios 请求配置（如 AbortController signal）
    * @returns {Promise} 包含预警列表的Promise对象
    */
-  getRealTimeAlerts(params = {}) {
+  getRealTimeAlerts(params = {}, requestConfig = {}) {
     // 处理查询和分页参数
     const apiParams = { ...params };
 
@@ -1820,7 +1821,10 @@ export const alertAPI = {
 
     console.log('获取实时预警列表 - API调用参数:', apiParams);
 
-    return visionAIAxios.get('/api/v1/alerts/real-time', { params: apiParams })
+    return visionAIAxios.get('/api/v1/alerts/real-time', {
+      ...requestConfig,
+      params: apiParams
+    })
       .then(response => {
         // 单独处理实时预警接口的响应数据转换
         const originalData = response.data;
@@ -2035,10 +2039,15 @@ export const alertAPI = {
    * @param {Function} onError - 发生错误时的回调函数
    * @param {Function} onClose - 连接关闭时的回调函数
    * @param {Function} onOpen - 连接建立/重连成功时的回调函数
+   * @param {Object} options - 连接选项（手动重连时可传lastEventId）
    * @returns {EventSource} SSE连接对象
    */
-  createAlertSSEConnection(onMessage, onError, onClose, onOpen) {
-    const sseUrl = `${visionAIAxios.defaults.baseURL}/api/v1/alerts/stream`;
+  createAlertSSEConnection(onMessage, onError, onClose, onOpen, options = {}) {
+    const lastEventId = options.lastEventId ? String(options.lastEventId) : '';
+    const replayQuery = lastEventId
+      ? `?last_event_id=${encodeURIComponent(lastEventId)}`
+      : '';
+    const sseUrl = `${visionAIAxios.defaults.baseURL}/api/v1/alerts/stream${replayQuery}`;
     console.log('创建SSE连接:', sseUrl);
 
     const eventSource = new EventSource(sseUrl);
@@ -2058,21 +2067,14 @@ export const alertAPI = {
       }
 
       try {
-        let jsonData = event.data;
-
-        // 如果消息包含 "data: " 前缀，去掉它
-        if (jsonData.startsWith('data: ')) {
-          jsonData = jsonData.substring(6);
-        }
-
-        const data = JSON.parse(jsonData);
+        const data = JSON.parse(event.data);
         if (onMessage) {
-          onMessage(data);
+          onMessage(data, event);
         }
       } catch (error) {
         console.error('解析SSE消息失败:', error);
         if (onMessage) {
-          onMessage({ raw: event.data });
+          onMessage({ raw: event.data }, event);
         }
       }
     };
@@ -3130,9 +3132,10 @@ export const archiveAPI = {
   /**
    * 获取预警档案详情
    * @param {number} archiveId - 档案ID
+   * @param {Object} [requestConfig] - Axios 请求配置（如 AbortController signal）
    * @returns {Promise} 包含档案详情的Promise对象
    */
-  getArchiveDetail(archiveId) {
+  getArchiveDetail(archiveId, requestConfig = {}) {
     if (!archiveId) {
       console.error('获取档案详情失败: 缺少档案ID');
       return Promise.reject(new Error('缺少档案ID'));
@@ -3140,7 +3143,7 @@ export const archiveAPI = {
 
     console.log('获取预警档案详情:', archiveId);
 
-    return visionAIAxios.get(`/api/v1/alert-archives/${archiveId}`)
+    return visionAIAxios.get(`/api/v1/alert-archives/${archiveId}`, requestConfig)
       .then(response => {
         console.log('获取预警档案详情成功:', response.data);
         return response;
@@ -3327,9 +3330,10 @@ export const archiveAPI = {
    * @param {number} [params.status] - 处理状态筛选
    * @param {string} [params.start_time] - 开始时间筛选
    * @param {string} [params.end_time] - 结束时间筛选
+   * @param {Object} [requestConfig] - Axios 请求配置（如 AbortController signal）
    * @returns {Promise} 包含档案预警列表的Promise对象
    */
-  getArchiveLinkedAlerts(archiveId, params = {}) {
+  getArchiveLinkedAlerts(archiveId, params = {}, requestConfig = {}) {
     const apiParams = {
       page: 1,
       limit: 20,
@@ -3338,7 +3342,10 @@ export const archiveAPI = {
 
     console.log('获取档案关联预警列表 - API调用参数:', { archiveId, ...apiParams });
 
-    return visionAIAxios.get(`/api/v1/alert-archives/linked-alerts/${archiveId}`, { params: apiParams })
+    return visionAIAxios.get(`/api/v1/alert-archives/linked-alerts/${archiveId}`, {
+      ...requestConfig,
+      params: apiParams
+    })
       .then(response => {
         console.log('获取档案关联预警列表成功:', response.data);
         return response;
@@ -3792,7 +3799,7 @@ export const realtimeMonitorAPI = {
   playChannel(channelId) {
     console.log('📤 播放通道 - 通道ID:', channelId);
 
-    return visionAIAxios.get(`/api/v1/realtime-monitor/play/${channelId}`)
+    return visionAIAxios.post(`/api/v1/realtime-monitor/play/${channelId}`)
       .then(response => {
         console.log('📥 播放通道成功:', response.data);
         return response;
@@ -3806,18 +3813,35 @@ export const realtimeMonitorAPI = {
   /**
    * 停止播放通道视频
    * @param {number} channelId - 通道ID
+   * @param {string} leaseId - 播放接口返回的观看租约ID
    * @returns {Promise} 停止播放结果
    */
-  stopChannel(channelId) {
-    console.log('📤 停止播放通道 - 通道ID:', channelId);
+  stopChannel(channelId, leaseId) {
+    console.log('📤 停止播放通道 - 通道ID:', channelId, '租约ID:', leaseId);
 
-    return visionAIAxios.get(`/api/v1/realtime-monitor/stop/${channelId}`)
+    return visionAIAxios.delete(`/api/v1/realtime-monitor/stop/${channelId}`, {
+      params: { lease_id: leaseId }
+    })
       .then(response => {
         console.log('📥 停止播放成功:', response.data);
         return response;
       })
       .catch(error => {
         console.error('❌ 停止播放失败:', error);
+        throw error;
+      });
+  },
+
+  /**
+   * 续期播放租约，防止仍在观看的页面被服务端空闲回收
+   * @param {string} leaseId - 播放接口返回的观看租约ID
+   * @returns {Promise} 最新租约信息
+   */
+  renewPlaybackLease(leaseId) {
+    return visionAIAxios.patch(`/api/v1/realtime-monitor/leases/${leaseId}`)
+      .then(response => response)
+      .catch(error => {
+        console.error('❌ 播放租约续期失败:', error);
         throw error;
       });
   },
@@ -3895,6 +3919,27 @@ export const realtimeMonitorAPI = {
  * 实时检测API - OSD检测框叠加
  */
 export const realtimeDetectionAPI = {
+  /**
+   * 批量获取多个摄像头的运行中AI任务列表
+   * @param {Array<string|number>} cameraIds - 摄像头ID列表
+   * @returns {Promise} 以摄像头ID为键的任务列表
+   */
+  getTasksByCameras(cameraIds) {
+    const normalizedIds = [...new Set((cameraIds || [])
+      .map(id => String(id).trim())
+      .filter(Boolean))];
+    if (!normalizedIds.length) {
+      return Promise.reject(new Error('缺少摄像头ID'));
+    }
+
+    return visionAIAxios.get('/api/v1/realtime-detection/detection/tasks/by-cameras', {
+      params: { camera_ids: normalizedIds }
+    }).catch(error => {
+      console.error('❌ 批量获取AI任务列表失败:', error);
+      throw error;
+    });
+  },
+
   /**
    * 获取指定摄像头的运行中AI任务列表
    * @param {number} cameraId - 摄像头ID

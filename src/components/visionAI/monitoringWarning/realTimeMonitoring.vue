@@ -67,7 +67,7 @@
                     </div>
                     <div v-else class="video-player-wrapper">
                       <player :ref="'player'+(index-1)" :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
-                              @destroy="destroy"/>
+                              @destroy="destroy(index - 1)"/>
                       
                       <!-- 🆕 AI任务选择下拉框 - 移到video-player-wrapper内部 -->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
@@ -153,7 +153,7 @@
                     </div>
                     <div v-else class="video-player-wrapper">
                       <player :ref="'player'+(index-1)" :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
-                              @destroy="destroy"/>
+                              @destroy="destroy(index - 1)"/>
                       
                       <!-- 🆕 AI任务选择下拉框（全屏模式） -->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
@@ -522,10 +522,17 @@ export default {
       // 定时更新器
       timer: null,
       aiTaskPollTimer: null,
+      aiTaskPollInFlight: false,
+      aiTaskPollRequestId: 0,
       // 视频URL数组
       videoUrl: [],
       // 视频提示信息
       videoTip: [],
+      // 每个播放格子的后端观看租约及心跳
+      playbackLeases: {},
+      playbackLeaseTimers: {},
+      playbackRequestVersions: {},
+      playbackDisposing: false,
       // 播放器索引
       playerIdx: 0,
       // 加载状态
@@ -570,8 +577,15 @@ export default {
       archiveDialogVisible: false,
       selectedArchiveId: null,
 
-            // SSE连接相关
+      // SSE连接相关
       sseConnection: null,
+      sseLastEventId: '',
+      sseSeenEventIds: new Set(),
+      sseSeenEventOrder: [],
+      sseMessageSequence: 0,
+      sseReplayRemaining: 0,
+      sseReconnectTimer: null,
+      componentDestroyed: false,
       sseStatus: {
         connected: false,
         reconnecting: false
@@ -579,6 +593,7 @@ export default {
 
       // API数据加载相关
       apiDataLoading: false,
+      warningRequestId: 0,
       totalWarnings: 0,
       currentPage: 1,
       pageSize: 10, // 只显示最新的10条预警数据
@@ -589,6 +604,7 @@ export default {
     this.updateDateTime();
     this.timer = setInterval(this.updateDateTime, 1000);
     this.aiTaskPollTimer = setInterval(this.refreshPlayingCameraAITasks, 5000);
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
 
     // 添加键盘事件监听器，用于ESC键退出全屏
     document.addEventListener('keydown', this.handleKeyDown);
@@ -623,6 +639,11 @@ export default {
     });
   },
   beforeDestroy() {
+    this.componentDestroyed = true;
+    this.warningRequestId++;
+    this.playbackDisposing = true;
+    this.invalidatePlaybackRequests();
+    this.releaseAllPlaybackLeases();
     this.exitFullscreen();
     document.body.classList.remove('camera-fullscreen-mode');
     clearInterval(this.timer);
@@ -630,7 +651,13 @@ export default {
       clearInterval(this.aiTaskPollTimer);
       this.aiTaskPollTimer = null;
     }
+    this.aiTaskPollRequestId++;
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
 
+    if (this.sseReconnectTimer) {
+      clearTimeout(this.sseReconnectTimer);
+      this.sseReconnectTimer = null;
+    }
     this.cleanupSSEConnection();
 
     document.removeEventListener('keydown', this.handleKeyDown);
@@ -687,6 +714,15 @@ export default {
     // 切换视图模式
     switchViewMode(mode) {
       this.viewMode = mode
+      const visibleCount = mode === 'single' ? 1 : (mode === 'four' ? 4 : 9)
+      for (let index = visibleCount; index < 9; index += 1) {
+        if (this.videoUrl[index] || this.playbackLeases[index] || this.cameraIdMapping[index] != null) {
+          this.clear(index)
+        }
+      }
+      if (this.playerIdx >= visibleCount) {
+        this.playerIdx = 0
+      }
       if (this.isFullscreen) {
         this.exitFullscreen(); // 切换视图模式时退出全屏
       }
@@ -840,16 +876,106 @@ export default {
     },
     // 销毁播放器
     destroy(idx) {
-      this.clear(idx.substring(idx.length - 1));
+      this.clear(idx, { silent: false });
     },
     // 清除播放数据
-    clear(idx) {
-      this.$set(this.videoUrl, idx - 1, '');
-      this.$set(this.videoTip, idx - 1, '');
+    clear(idx, options) {
+      const silent = !options || options.silent !== false;
+      this.bumpPlaybackRequestVersion(idx);
+      this.cleanupOSDResources(idx);
+      this.releasePlaybackLease(idx, { silent: silent });
+      this.$delete(this.cameraIdMapping, idx);
+      this.$delete(this.cameraNames, idx);
+      this.$set(this.videoUrl, idx, '');
+      this.$set(this.videoTip, idx, '');
     },
     // 设置播放URL
     setPlayUrl(url, idx) {
       this.$set(this.videoUrl, idx, url);
+    },
+    bumpPlaybackRequestVersion(index) {
+      const nextVersion = (this.playbackRequestVersions[index] || 0) + 1;
+      this.$set(this.playbackRequestVersions, index, nextVersion);
+      return nextVersion;
+    },
+    invalidatePlaybackRequests() {
+      for (let index = 0; index < 9; index += 1) {
+        this.bumpPlaybackRequestVersion(index);
+      }
+    },
+    clearPlaybackLeaseHeartbeat(index) {
+      const timer = this.playbackLeaseTimers[index];
+      if (timer) {
+        clearInterval(timer);
+        this.$delete(this.playbackLeaseTimers, index);
+      }
+    },
+    startPlaybackLeaseHeartbeat(index) {
+      this.clearPlaybackLeaseHeartbeat(index);
+      const lease = this.playbackLeases[index];
+      if (!lease) return;
+      const intervalSeconds = Number(lease.heartbeatIntervalSeconds) || 30;
+      const timer = setInterval(
+        () => this.renewPlaybackLease(index),
+        Math.max(intervalSeconds * 1000, 1000)
+      );
+      this.$set(this.playbackLeaseTimers, index, timer);
+    },
+    async renewPlaybackLease(index) {
+      const lease = this.playbackLeases[index];
+      if (!lease || this.playbackDisposing) return;
+      try {
+        const response = await realtimeMonitorAPI.renewPlaybackLease(lease.leaseId);
+        const current = this.playbackLeases[index];
+        if (!current || current.leaseId !== lease.leaseId) return;
+        const renewed = response.data && response.data.data;
+        if (renewed) {
+          this.$set(this.playbackLeases, index, Object.assign({}, current, {
+            heartbeatIntervalSeconds: renewed.heartbeat_interval_seconds,
+            expiresAt: renewed.expires_at
+          }));
+        }
+      } catch (error) {
+        const status = error.response && error.response.status;
+        const current = this.playbackLeases[index];
+        if (!current || current.leaseId !== lease.leaseId) return;
+        if (status === 404 || status === 410) {
+          this.clearPlaybackLeaseHeartbeat(index);
+          this.$delete(this.playbackLeases, index);
+          if (!this.playbackDisposing && String(this.cameraIdMapping[index]) === String(lease.channelId)) {
+            this.setPlayUrl('', index);
+            this.$set(this.videoTip, index, '播放租约已过期，正在重新连接...');
+            this.sendDevicePush(lease.channelId);
+          }
+        } else {
+          console.warn('⚠️ 播放租约续期暂时失败，将继续重试:', error);
+        }
+      }
+    },
+    async releasePlaybackLease(index, options) {
+      const silent = options && options.silent;
+      const lease = this.playbackLeases[index];
+      this.clearPlaybackLeaseHeartbeat(index);
+      if (!lease) return;
+
+      // 先移除本地引用，避免并发的重复 DELETE；服务端 DELETE 本身也是幂等的。
+      this.$delete(this.playbackLeases, index);
+      try {
+        await realtimeMonitorAPI.stopChannel(lease.channelId, lease.leaseId);
+      } catch (error) {
+        console.error('❌ 释放播放租约失败，将由服务端超时机制继续回收:', error);
+        if (!silent && this.$message) {
+          this.$message.warning('播放器已关闭，但服务端停流失败，系统将自动重试回收');
+        }
+      }
+    },
+    releaseAllPlaybackLeases() {
+      Object.keys(this.playbackLeases).forEach(index => {
+        this.releasePlaybackLease(Number(index), { silent: true });
+      });
+      Object.keys(this.playbackLeaseTimers).forEach(index => {
+        this.clearPlaybackLeaseHeartbeat(Number(index));
+      });
     },
     // 设备树点击事件
     treeNodeClickEvent(data) {
@@ -867,12 +993,15 @@ export default {
     },
     // 向设备发送推流请求
     async sendDevicePush(channelId) {
-      let idxTmp = this.playerIdx;
+      const idxTmp = this.playerIdx;
+      const requestVersion = this.bumpPlaybackRequestVersion(idxTmp);
       // 切摄像头时关掉该格子上旧的检测 WS / 已选任务，避免「视频已换、WS 还在」
       const prevCameraId = this.cameraIdMapping[idxTmp]
       if (prevCameraId != null && String(prevCameraId) !== String(channelId)) {
         this.cleanupOSDResources(idxTmp)
       }
+      // 先在本地摘除旧租约；DELETE 与新 POST 可并发，后端引用计数会处理先后顺序。
+      this.releasePlaybackLease(idxTmp, { silent: true })
       this.setPlayUrl("", idxTmp);
       this.$set(this.videoTip, idxTmp, "正在拉流...");
       
@@ -890,6 +1019,28 @@ export default {
         
         if (response.data && response.data.code === 0 && response.data.data) {
           const streamData = response.data.data;
+          const lease = streamData.viewer_lease;
+          if (!lease || !lease.lease_id) {
+            throw new Error('服务端未返回播放租约');
+          }
+
+          // 用户可能已切换到另一通道；把迟到响应携带的租约立即归还。
+          if (this.playbackDisposing || this.playbackRequestVersions[idxTmp] !== requestVersion) {
+            try {
+              await realtimeMonitorAPI.stopChannel(channelId, lease.lease_id);
+            } catch (releaseError) {
+              console.warn('⚠️ 释放迟到的播放租约失败，将由服务端超时回收:', releaseError);
+            }
+            return;
+          }
+
+          this.$set(this.playbackLeases, idxTmp, {
+            leaseId: lease.lease_id,
+            channelId: channelId,
+            heartbeatIntervalSeconds: lease.heartbeat_interval_seconds,
+            expiresAt: lease.expires_at
+          });
+          this.startPlaybackLeaseHeartbeat(idxTmp);
           let videoUrl;
           
           // HTTP-FLV 优先（jessibuca 拉 http flv 更稳）
@@ -914,6 +1065,7 @@ export default {
             }, 200);
           } else {
             console.warn('⚠️ 未找到可用的流地址');
+            this.releasePlaybackLease(idxTmp, { silent: true });
             this.$set(this.videoTip, idxTmp, "播放失败: 未找到可用的流地址");
           }
         } else {
@@ -923,9 +1075,16 @@ export default {
         }
       } catch (error) {
         console.error('❌ 播放通道异常:', error);
+        if (this.playbackRequestVersions[idxTmp] !== requestVersion || this.playbackDisposing) {
+          return;
+        }
+        if (this.playbackLeases[idxTmp]) {
+          this.releasePlaybackLease(idxTmp, { silent: true });
+        }
         // axios 超时(ECONNABORTED)时给出更友好的提示
         const isTimeout = error.code === 'ECONNABORTED' || /timeout/i.test(error.message || '');
-        const errorMsg = isTimeout ? '拉流超时，通道可能已离线或不存在' : (error.message || '网络错误');
+        const responseDetail = error.response && error.response.data && error.response.data.detail;
+        const errorMsg = isTimeout ? '拉流超时，通道可能已离线或不存在' : (responseDetail || error.message || '网络错误');
         this.$set(this.videoTip, idxTmp, "播放失败: " + errorMsg);
       }
     },
@@ -2147,20 +2306,53 @@ export default {
       await this.loadWarningData();
     },
 
-    // 加载预警数据
-    async loadWarningData() {
+    getWarningIdentity(warning) {
+      if (!warning) return '';
+      const apiData = warning._apiData || {};
+      const alertId = apiData.alert_id;
+      if (alertId !== undefined && alertId !== null && String(alertId).trim()) {
+        return `alert:${String(alertId)}`;
+      }
+      const messageId = apiData.message_id || warning.messageId;
+      if (messageId) return `message:${String(messageId)}`;
+      return warning.id !== undefined && warning.id !== null
+        ? `local:${String(warning.id)}`
+        : '';
+    },
+
+    mergeWarningLists(...warningLists) {
+      const identities = new Set();
+      const merged = [];
+      warningLists.forEach(list => {
+        (list || []).forEach(warning => {
+          if (!warning || this.isProcessedStatus(warning.status)) return;
+          const identity = this.getWarningIdentity(warning);
+          if (identity && identities.has(identity)) return;
+          if (identity) identities.add(identity);
+          merged.push(warning);
+        });
+      });
+      return merged;
+    },
+
+    // 加载预警数据。请求期间到达的SSE事件优先，避免旧快照覆盖实时消息。
+    async loadWarningData(options = {}) {
+      const requestId = ++this.warningRequestId;
+      const sseSequenceAtStart = this.sseMessageSequence;
       try {
         this.apiDataLoading = true;
+        this.currentPage = 1;
 
         // 调用API获取预警列表
         const params = {
-          page: this.currentPage,
+          page: 1,
           limit: this.pageSize,
           // 后端先限定待处理/处理中，再按时间倒序分页。
           active_only: true,
         };
 
         const response = await alertAPI.getRealTimeAlerts(params);
+        if (requestId !== this.warningRequestId || this.componentDestroyed) return;
 
         if (response.data && response.data.code === 0) {
           // 修正数据结构 - 数据直接在data字段中（是一个数组）
@@ -2180,18 +2372,40 @@ export default {
             this.convertAPIWarningToFrontend(warning)
           ).filter(warning => warning !== null);
 
-          // 更新预警列表
-          this.warningList = convertedWarnings;
-          this.totalWarnings = response.data.total || apiWarnings.length;
+          const realtimeArrivals = this.warningList.filter(warning =>
+            Number(warning._sseSequence || 0) > sseSequenceAtStart
+          );
+          this.warningList = this.mergeWarningLists(
+            realtimeArrivals,
+            convertedWarnings
+          ).slice(0, this.pageSize);
+
+          const snapshotIdentities = new Set(
+            convertedWarnings.map(warning => this.getWarningIdentity(warning))
+          );
+          const extraRealtimeCount = realtimeArrivals.filter(warning =>
+            !snapshotIdentities.has(this.getWarningIdentity(warning))
+          ).length;
+          const snapshotTotal = typeof response.data.total === 'number'
+            ? response.data.total
+            : apiWarnings.length;
+          this.totalWarnings = Math.max(
+            snapshotTotal + extraRealtimeCount,
+            this.warningList.length
+          );
         } else {
-          this.$message.warning('获取预警数据失败，将显示空列表');
-          this.warningList = [];
+          if (options.showError !== false) {
+            this.$message.warning('获取预警数据失败，保留当前实时列表');
+          }
         }
       } catch (error) {
-        this.$message.error('加载预警数据失败，请检查网络连接');
-        this.warningList = [];
+        if (requestId === this.warningRequestId && !this.componentDestroyed && options.showError !== false) {
+          this.$message.error('加载预警数据失败，请检查网络连接');
+        }
       } finally {
-        this.apiDataLoading = false;
+        if (requestId === this.warningRequestId && !this.componentDestroyed) {
+          this.apiDataLoading = false;
+        }
       }
     },
 
@@ -2216,6 +2430,7 @@ export default {
           description: apiWarning.alert_description || '无描述信息',
           operationHistory: this.convertProcessHistory(apiWarning.process, apiWarning.status, this.formatAPITime(apiWarning.alert_time), apiWarning.processed_by, this.formatAPITime(apiWarning.resolved_at || apiWarning.processed_at), apiWarning.processing_notes) || [],
           // 添加额外的API数据字段
+          messageId: apiWarning.message_id || null,
           taskId: apiWarning.task_id || null,
           task_id: apiWarning.task_id || null,  // 合并图片URL拼接需要
           electronicFence: apiWarning.electronic_fence || null,
@@ -2230,6 +2445,7 @@ export default {
           // 保存原始API数据，用于状态判断和其他功能
           _apiData: {
             alert_id: apiWarning.alert_id,
+            message_id: apiWarning.message_id,
             status: apiWarning.status,  // 保存原始status数字（1-5）
             status_display: apiWarning.status_display,
             alert_time: apiWarning.alert_time,
@@ -2390,8 +2606,8 @@ export default {
             this.convertAPIWarningToFrontend(warning)
           ).filter(warning => warning !== null);
 
-          // 追加到现有列表
-          this.warningList.push(...convertedWarnings);
+          // 追加分页数据时仍按alert_id/message_id幂等合并。
+          this.warningList = this.mergeWarningLists(this.warningList, convertedWarnings);
         }
       } catch (error) {
         this.currentPage--; // 回退页码
@@ -2405,7 +2621,7 @@ export default {
 
     // 初始化SSE连接
     initSSEConnection() {
-      // 初始化SSE连接
+      if (this.componentDestroyed) return;
 
       // 如果已有连接，先关闭
       if (this.sseConnection) {
@@ -2418,19 +2634,58 @@ export default {
         this.handleSSEMessage.bind(this),   // 消息处理
         this.handleSSEError.bind(this),     // 错误处理
         this.handleSSEClose.bind(this),     // 连接关闭处理
-        this.handleSSEOpen.bind(this)       // 连接建立/重连成功处理
+        this.handleSSEOpen.bind(this),      // 连接建立/重连成功处理
+        { lastEventId: this.sseLastEventId }
       );
     },
 
     // 处理SSE消息
-    handleSSEMessage(messageData) {
-      if (!messageData || messageData.event === 'heartbeat' || messageData.event === 'connected') {
+    handleSSEMessage(messageData, event) {
+      if (event && event.lastEventId) {
+        this.sseLastEventId = String(event.lastEventId);
+      }
+      if (!messageData || messageData.event === 'heartbeat') {
+        return;
+      }
+      if (messageData.event === 'connected') {
+        const replayed = Number(messageData.replayed || 0);
+        this.sseReplayRemaining = Number.isFinite(replayed) && replayed > 0
+          ? replayed
+          : 0;
+        if (this.sseReplayRemaining === 0) {
+          this.loadWarningData({ showError: false });
+        }
+        return;
+      }
+      if (messageData.event === 'resync_required') {
+        this.sseReplayRemaining = 0;
+        this.loadWarningData({ showError: false });
         return;
       }
       // 如果是AI预警消息
       if (messageData.alert_id || messageData.id) {
-        this.handleNewAlert(messageData);
+        this.handleNewAlert(messageData, event && event.lastEventId);
+        if (this.sseReplayRemaining > 0) {
+          this.sseReplayRemaining--;
+          if (this.sseReplayRemaining === 0) {
+            this.loadWarningData({ showError: false });
+          }
+        }
       }
+    },
+
+    rememberSSEEvent(eventId) {
+      const normalizedId = eventId ? String(eventId).trim() : '';
+      if (!normalizedId) return true;
+      if (this.sseSeenEventIds.has(normalizedId)) return false;
+
+      this.sseSeenEventIds.add(normalizedId);
+      this.sseSeenEventOrder.push(normalizedId);
+      while (this.sseSeenEventOrder.length > 1000) {
+        const expiredId = this.sseSeenEventOrder.shift();
+        this.sseSeenEventIds.delete(expiredId);
+      }
+      return true;
     },
 
     // 判断是否是传统报警消息格式
@@ -2559,8 +2814,13 @@ export default {
     },
 
     // 处理新预警
-    handleNewAlert(alertData) {
+    handleNewAlert(alertData, eventId = '') {
       try {
+        const stableEventId = eventId || alertData.message_id || '';
+        if (stableEventId && this.sseSeenEventIds.has(String(stableEventId).trim())) {
+          return;
+        }
+
         // 将后端预警数据转换为前端格式 - 统一使用API转换方法
         const newWarning = this.convertAPIWarningToFrontend(alertData);
 
@@ -2568,13 +2828,25 @@ export default {
           return;
         }
 
-        // 添加到预警列表顶部
+        if (!this.rememberSSEEvent(stableEventId)) return;
+
+        const warningIdentity = this.getWarningIdentity(newWarning);
+        const existingIndex = this.warningList.findIndex(warning =>
+          this.getWarningIdentity(warning) === warningIdentity
+        );
+        const replacesExisting = existingIndex !== -1;
+        if (replacesExisting) {
+          this.warningList.splice(existingIndex, 1);
+        }
+
+        newWarning._sseSequence = ++this.sseMessageSequence;
         this.warningList.unshift(newWarning);
 
-        // 限制列表长度，只保留最新的10条预警
-        if (this.warningList.length > 10) {
-          this.warningList = this.warningList.slice(0, 10);
+        // 限制列表长度，只保留最新一页预警
+        if (this.warningList.length > this.pageSize) {
+          this.warningList = this.warningList.slice(0, this.pageSize);
         }
+        if (!replacesExisting) this.totalWarnings++;
 
         // 新预警已添加到列表
       } catch (error) {
@@ -2649,6 +2921,7 @@ export default {
 
     // 处理SSE连接建立/重连成功
     handleSSEOpen() {
+      if (this.componentDestroyed) return;
       console.log('SSE连接已建立（含重连成功），更新状态为已连接');
       this.sseStatus.connected = true;
       this.sseStatus.reconnecting = false;
@@ -2682,6 +2955,7 @@ export default {
         this.sseConnection = null;
       }
 
+      this.sseReplayRemaining = 0;
       this.sseStatus.connected = false;
       this.sseStatus.reconnecting = false;
     },
@@ -2689,10 +2963,16 @@ export default {
     // 手动重连SSE
     reconnectSSE() {
       console.log('手动重连SSE');
+      if (this.sseReconnectTimer) {
+        clearTimeout(this.sseReconnectTimer);
+        this.sseReconnectTimer = null;
+      }
       this.cleanupSSEConnection();
+      this.sseStatus.reconnecting = true;
 
-      setTimeout(() => {
-        this.initSSEConnection();
+      this.sseReconnectTimer = setTimeout(() => {
+        this.sseReconnectTimer = null;
+        if (!this.componentDestroyed) this.initSSEConnection();
       }, 1000);
     },
 
@@ -2764,12 +3044,43 @@ export default {
       }
     },
 
-    refreshPlayingCameraAITasks() {
+    handleVisibilityChange() {
+      if (!document.hidden) {
+        this.refreshPlayingCameraAITasks()
+      }
+    },
+
+    async refreshPlayingCameraAITasks() {
+      if (this.componentDestroyed || document.hidden || this.aiTaskPollInFlight) {
+        return
+      }
+
       const ids = Object.values(this.cameraIdMapping || {}).filter(
         id => id != null && id !== ''
       )
       const unique = [...new Set(ids.map(id => String(id)))]
-      unique.forEach(id => this.loadAvailableAITasks(id))
+      if (!unique.length) return
+
+      const requestId = ++this.aiTaskPollRequestId
+      this.aiTaskPollInFlight = true
+      try {
+        const response = await realtimeDetectionAPI.getTasksByCameras(unique)
+        if (this.componentDestroyed || requestId !== this.aiTaskPollRequestId) return
+
+        if (response.data && response.data.code === 0) {
+          const tasksByCamera = response.data.data || {}
+          unique.forEach(cameraId => {
+            this.$set(this.availableAITasks, cameraId, tasksByCamera[cameraId] || [])
+          })
+        }
+      } catch (error) {
+        // Worker 重启/503 时保留上次列表，避免下拉框被空数据冲掉
+        console.error('❌ 批量刷新摄像头AI任务列表失败:', error)
+      } finally {
+        if (requestId === this.aiTaskPollRequestId) {
+          this.aiTaskPollInFlight = false
+        }
+      }
     },
     
     /**

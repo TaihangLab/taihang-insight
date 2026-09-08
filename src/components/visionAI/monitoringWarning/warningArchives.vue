@@ -51,8 +51,13 @@ export default {
       currentArchiveId: null,
       // 页面数据是否就绪（首屏加载完成前隐藏内容，防止闪烁）
       pageReady: false,
-      // 档案切换中（防重入）
+      // 档案切换中（只由最后一次切换请求收尾）
       archiveSwitching: false,
+      archiveSwitchRequestId: 0,
+      archiveDetailRequestId: 0,
+      archiveDetailRequestController: null,
+      archiveAlertsRequestId: 0,
+      archiveAlertsRequestController: null,
       // 列表相关
       allArchiveList: [],
       archiveList: [],
@@ -129,6 +134,19 @@ export default {
   },
   mounted() {
     this.initData();
+  },
+  beforeDestroy() {
+    this.archiveSwitchRequestId += 1;
+    this.archiveDetailRequestId += 1;
+    this.archiveAlertsRequestId += 1;
+    if (this.archiveDetailRequestController) {
+      this.archiveDetailRequestController.abort();
+      this.archiveDetailRequestController = null;
+    }
+    if (this.archiveAlertsRequestController) {
+      this.archiveAlertsRequestController.abort();
+      this.archiveAlertsRequestController = null;
+    }
   },
   methods: {
     normalizeId(id) {
@@ -315,21 +333,50 @@ export default {
 
     async fetchAndApplyArchiveDetail(archiveId) {
       if (!archiveId) return;
-      const response = await archiveAPI.getArchiveDetail(archiveId);
-      const d = this.parseArchiveDetailResponse(response);
+      if (this.archiveDetailRequestController) {
+        this.archiveDetailRequestController.abort();
+      }
+      const requestId = ++this.archiveDetailRequestId;
+      const controller = typeof AbortController !== 'undefined'
+        ? new AbortController()
+        : null;
+      const normalizedArchiveId = this.normalizeId(archiveId);
+      this.archiveDetailRequestController = controller;
 
-      if (this.currentArchiveId !== this.normalizeId(archiveId)) return;
+      try {
+        const response = await archiveAPI.getArchiveDetail(
+          archiveId,
+          controller ? { signal: controller.signal } : {}
+        );
+        const d = this.parseArchiveDetailResponse(response);
 
-      this.archiveInfo = {
-        id: this.normalizeId(d.archive_id || d.id),
-        archive_id: this.normalizeId(d.archive_id || d.id),
-        name: d.name,
-        location: d.location,
-        timeRange: `${this.normalizeTimeStr(d.start_time)}-${this.normalizeTimeStr(d.end_time)}`,
-        createTime: this.normalizeTimeStr(d.created_at),
-        description: d.description || '-',
-        image: d.image_url || ''
-      };
+        if (
+          requestId !== this.archiveDetailRequestId ||
+          this.currentArchiveId !== normalizedArchiveId
+        ) return;
+
+        this.archiveInfo = {
+          id: this.normalizeId(d.archive_id || d.id),
+          archive_id: this.normalizeId(d.archive_id || d.id),
+          name: d.name,
+          location: d.location,
+          timeRange: `${this.normalizeTimeStr(d.start_time)}-${this.normalizeTimeStr(d.end_time)}`,
+          createTime: this.normalizeTimeStr(d.created_at),
+          description: d.description || '-',
+          image: d.image_url || ''
+        };
+      } catch (error) {
+        const canceled = requestId !== this.archiveDetailRequestId ||
+          (controller && controller.signal.aborted) ||
+          error.code === 'ERR_CANCELED' ||
+          error.__CANCEL__ === true;
+        if (canceled) return;
+        throw error;
+      } finally {
+        if (requestId === this.archiveDetailRequestId) {
+          this.archiveDetailRequestController = null;
+        }
+      }
     },
 
     // ---- 预警记录 ----
@@ -362,6 +409,15 @@ export default {
 
     async fetchAndApplyArchiveAlerts(archiveId, params = {}) {
       if (!archiveId) return;
+      if (this.archiveAlertsRequestController) {
+        this.archiveAlertsRequestController.abort();
+      }
+      const requestId = ++this.archiveAlertsRequestId;
+      const controller = typeof AbortController !== 'undefined'
+        ? new AbortController()
+        : null;
+      const normalizedArchiveId = this.normalizeId(archiveId);
+      this.archiveAlertsRequestController = controller;
 
       const limit = Math.min(this.pagination.pageSize, 100);
       const queryParams = {
@@ -371,28 +427,48 @@ export default {
         ...params
       };
 
-      const response = await archiveAPI.getArchiveLinkedAlerts(archiveId, queryParams);
-      const { alertRecords, totalCount } = this.parseArchiveAlertsResponse(response);
+      try {
+        const response = await archiveAPI.getArchiveLinkedAlerts(
+          archiveId,
+          queryParams,
+          controller ? { signal: controller.signal } : {}
+        );
+        const { alertRecords, totalCount } = this.parseArchiveAlertsResponse(response);
 
-      if (this.currentArchiveId !== this.normalizeId(archiveId)) return;
+        if (
+          requestId !== this.archiveAlertsRequestId ||
+          this.currentArchiveId !== normalizedArchiveId
+        ) return;
 
-      this.archiveList = alertRecords.map(record => ({
-        id: record.alert_id,
-        name: record.alert_name,
-        deviceName: record.camera_name,
-        warningTime: this.normalizeTimeStr(record.alert_time),
-        warningLevel: this.convertAlertLevel(record.alert_level),
-        warningType: record.alert_type || '',
-        location: record.location || '',
-        description: record.alert_description || '',
-        remark: record.processing_notes || '',
-        violationImage: record.minio_frame_url || '',
-        violationVideo: record.minio_video_url || '',
-        status: record.status || 1,
-        createTime: this.normalizeTimeStr(record.created_at),
-        _apiData: record
-      }));
-      this.pagination.total = totalCount;
+        this.archiveList = alertRecords.map(record => ({
+          id: record.alert_id,
+          name: record.alert_name,
+          deviceName: record.camera_name,
+          warningTime: this.normalizeTimeStr(record.alert_time),
+          warningLevel: this.convertAlertLevel(record.alert_level),
+          warningType: record.alert_type || '',
+          location: record.location || '',
+          description: record.alert_description || '',
+          remark: record.processing_notes || '',
+          violationImage: record.minio_frame_url || '',
+          violationVideo: record.minio_video_url || '',
+          status: record.status || 1,
+          createTime: this.normalizeTimeStr(record.created_at),
+          _apiData: record
+        }));
+        this.pagination.total = totalCount;
+      } catch (error) {
+        const canceled = requestId !== this.archiveAlertsRequestId ||
+          (controller && controller.signal.aborted) ||
+          error.code === 'ERR_CANCELED' ||
+          error.__CANCEL__ === true;
+        if (canceled) return;
+        throw error;
+      } finally {
+        if (requestId === this.archiveAlertsRequestId) {
+          this.archiveAlertsRequestController = null;
+        }
+      }
     },
 
     // 转换预警等级格式（从后端的1-4转换为前端的level1-level4）
@@ -411,8 +487,9 @@ export default {
     },
     async switchToArchive(archiveId) {
       const nid = this.normalizeId(archiveId);
-      if (!nid || this.currentArchiveId === nid || this.archiveSwitching) return;
+      if (!nid || this.currentArchiveId === nid) return;
 
+      const switchRequestId = ++this.archiveSwitchRequestId;
       this.archiveSwitching = true;
       try {
         this.currentArchiveId = nid;
@@ -422,10 +499,13 @@ export default {
           this.fetchAndApplyArchiveAlerts(nid)
         ]);
       } catch (error) {
+        if (switchRequestId !== this.archiveSwitchRequestId) return;
         console.error('切换档案失败:', error);
         this.$message.error('切换档案失败: ' + (error.message || '未知错误'));
       } finally {
-        this.archiveSwitching = false;
+        if (switchRequestId === this.archiveSwitchRequestId) {
+          this.archiveSwitching = false;
+        }
       }
     },
 
