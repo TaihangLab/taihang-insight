@@ -2035,10 +2035,15 @@ export const alertAPI = {
    * @param {Function} onError - 发生错误时的回调函数
    * @param {Function} onClose - 连接关闭时的回调函数
    * @param {Function} onOpen - 连接建立/重连成功时的回调函数
+   * @param {Object} options - 连接选项（手动重连时可传lastEventId）
    * @returns {EventSource} SSE连接对象
    */
-  createAlertSSEConnection(onMessage, onError, onClose, onOpen) {
-    const sseUrl = `${visionAIAxios.defaults.baseURL}/api/v1/alerts/stream`;
+  createAlertSSEConnection(onMessage, onError, onClose, onOpen, options = {}) {
+    const lastEventId = options.lastEventId ? String(options.lastEventId) : '';
+    const replayQuery = lastEventId
+      ? `?last_event_id=${encodeURIComponent(lastEventId)}`
+      : '';
+    const sseUrl = `${visionAIAxios.defaults.baseURL}/api/v1/alerts/stream${replayQuery}`;
     console.log('创建SSE连接:', sseUrl);
 
     const eventSource = new EventSource(sseUrl);
@@ -2058,21 +2063,14 @@ export const alertAPI = {
       }
 
       try {
-        let jsonData = event.data;
-
-        // 如果消息包含 "data: " 前缀，去掉它
-        if (jsonData.startsWith('data: ')) {
-          jsonData = jsonData.substring(6);
-        }
-
-        const data = JSON.parse(jsonData);
+        const data = JSON.parse(event.data);
         if (onMessage) {
-          onMessage(data);
+          onMessage(data, event);
         }
       } catch (error) {
         console.error('解析SSE消息失败:', error);
         if (onMessage) {
-          onMessage({ raw: event.data });
+          onMessage({ raw: event.data }, event);
         }
       }
     };

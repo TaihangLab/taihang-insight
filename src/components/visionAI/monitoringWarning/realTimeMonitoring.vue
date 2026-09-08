@@ -575,8 +575,15 @@ export default {
       archiveDialogVisible: false,
       selectedArchiveId: null,
 
-            // SSE连接相关
+      // SSE连接相关
       sseConnection: null,
+      sseLastEventId: '',
+      sseSeenEventIds: new Set(),
+      sseSeenEventOrder: [],
+      sseMessageSequence: 0,
+      sseReplayRemaining: 0,
+      sseReconnectTimer: null,
+      componentDestroyed: false,
       sseStatus: {
         connected: false,
         reconnecting: false
@@ -584,6 +591,7 @@ export default {
 
       // API数据加载相关
       apiDataLoading: false,
+      warningRequestId: 0,
       totalWarnings: 0,
       currentPage: 1,
       pageSize: 10, // 只显示最新的10条预警数据
@@ -628,6 +636,8 @@ export default {
     });
   },
   beforeDestroy() {
+    this.componentDestroyed = true;
+    this.warningRequestId++;
     this.playbackDisposing = true;
     this.invalidatePlaybackRequests();
     this.releaseAllPlaybackLeases();
@@ -639,6 +649,10 @@ export default {
       this.aiTaskPollTimer = null;
     }
 
+    if (this.sseReconnectTimer) {
+      clearTimeout(this.sseReconnectTimer);
+      this.sseReconnectTimer = null;
+    }
     this.cleanupSSEConnection();
 
     document.removeEventListener('keydown', this.handleKeyDown);
@@ -2287,20 +2301,53 @@ export default {
       await this.loadWarningData();
     },
 
-    // 加载预警数据
-    async loadWarningData() {
+    getWarningIdentity(warning) {
+      if (!warning) return '';
+      const apiData = warning._apiData || {};
+      const alertId = apiData.alert_id;
+      if (alertId !== undefined && alertId !== null && String(alertId).trim()) {
+        return `alert:${String(alertId)}`;
+      }
+      const messageId = apiData.message_id || warning.messageId;
+      if (messageId) return `message:${String(messageId)}`;
+      return warning.id !== undefined && warning.id !== null
+        ? `local:${String(warning.id)}`
+        : '';
+    },
+
+    mergeWarningLists(...warningLists) {
+      const identities = new Set();
+      const merged = [];
+      warningLists.forEach(list => {
+        (list || []).forEach(warning => {
+          if (!warning || this.isProcessedStatus(warning.status)) return;
+          const identity = this.getWarningIdentity(warning);
+          if (identity && identities.has(identity)) return;
+          if (identity) identities.add(identity);
+          merged.push(warning);
+        });
+      });
+      return merged;
+    },
+
+    // 加载预警数据。请求期间到达的SSE事件优先，避免旧快照覆盖实时消息。
+    async loadWarningData(options = {}) {
+      const requestId = ++this.warningRequestId;
+      const sseSequenceAtStart = this.sseMessageSequence;
       try {
         this.apiDataLoading = true;
+        this.currentPage = 1;
 
         // 调用API获取预警列表
         const params = {
-          page: this.currentPage,
+          page: 1,
           limit: this.pageSize,
           // 后端先限定待处理/处理中，再按时间倒序分页。
           active_only: true,
         };
 
         const response = await alertAPI.getRealTimeAlerts(params);
+        if (requestId !== this.warningRequestId || this.componentDestroyed) return;
 
         if (response.data && response.data.code === 0) {
           // 修正数据结构 - 数据直接在data字段中（是一个数组）
@@ -2320,18 +2367,40 @@ export default {
             this.convertAPIWarningToFrontend(warning)
           ).filter(warning => warning !== null);
 
-          // 更新预警列表
-          this.warningList = convertedWarnings;
-          this.totalWarnings = response.data.total || apiWarnings.length;
+          const realtimeArrivals = this.warningList.filter(warning =>
+            Number(warning._sseSequence || 0) > sseSequenceAtStart
+          );
+          this.warningList = this.mergeWarningLists(
+            realtimeArrivals,
+            convertedWarnings
+          ).slice(0, this.pageSize);
+
+          const snapshotIdentities = new Set(
+            convertedWarnings.map(warning => this.getWarningIdentity(warning))
+          );
+          const extraRealtimeCount = realtimeArrivals.filter(warning =>
+            !snapshotIdentities.has(this.getWarningIdentity(warning))
+          ).length;
+          const snapshotTotal = typeof response.data.total === 'number'
+            ? response.data.total
+            : apiWarnings.length;
+          this.totalWarnings = Math.max(
+            snapshotTotal + extraRealtimeCount,
+            this.warningList.length
+          );
         } else {
-          this.$message.warning('获取预警数据失败，将显示空列表');
-          this.warningList = [];
+          if (options.showError !== false) {
+            this.$message.warning('获取预警数据失败，保留当前实时列表');
+          }
         }
       } catch (error) {
-        this.$message.error('加载预警数据失败，请检查网络连接');
-        this.warningList = [];
+        if (requestId === this.warningRequestId && !this.componentDestroyed && options.showError !== false) {
+          this.$message.error('加载预警数据失败，请检查网络连接');
+        }
       } finally {
-        this.apiDataLoading = false;
+        if (requestId === this.warningRequestId && !this.componentDestroyed) {
+          this.apiDataLoading = false;
+        }
       }
     },
 
@@ -2356,6 +2425,7 @@ export default {
           description: apiWarning.alert_description || '无描述信息',
           operationHistory: this.convertProcessHistory(apiWarning.process, apiWarning.status, this.formatAPITime(apiWarning.alert_time), apiWarning.processed_by, this.formatAPITime(apiWarning.resolved_at || apiWarning.processed_at), apiWarning.processing_notes) || [],
           // 添加额外的API数据字段
+          messageId: apiWarning.message_id || null,
           taskId: apiWarning.task_id || null,
           task_id: apiWarning.task_id || null,  // 合并图片URL拼接需要
           electronicFence: apiWarning.electronic_fence || null,
@@ -2370,6 +2440,7 @@ export default {
           // 保存原始API数据，用于状态判断和其他功能
           _apiData: {
             alert_id: apiWarning.alert_id,
+            message_id: apiWarning.message_id,
             status: apiWarning.status,  // 保存原始status数字（1-5）
             status_display: apiWarning.status_display,
             alert_time: apiWarning.alert_time,
@@ -2530,8 +2601,8 @@ export default {
             this.convertAPIWarningToFrontend(warning)
           ).filter(warning => warning !== null);
 
-          // 追加到现有列表
-          this.warningList.push(...convertedWarnings);
+          // 追加分页数据时仍按alert_id/message_id幂等合并。
+          this.warningList = this.mergeWarningLists(this.warningList, convertedWarnings);
         }
       } catch (error) {
         this.currentPage--; // 回退页码
@@ -2545,7 +2616,7 @@ export default {
 
     // 初始化SSE连接
     initSSEConnection() {
-      // 初始化SSE连接
+      if (this.componentDestroyed) return;
 
       // 如果已有连接，先关闭
       if (this.sseConnection) {
@@ -2558,19 +2629,58 @@ export default {
         this.handleSSEMessage.bind(this),   // 消息处理
         this.handleSSEError.bind(this),     // 错误处理
         this.handleSSEClose.bind(this),     // 连接关闭处理
-        this.handleSSEOpen.bind(this)       // 连接建立/重连成功处理
+        this.handleSSEOpen.bind(this),      // 连接建立/重连成功处理
+        { lastEventId: this.sseLastEventId }
       );
     },
 
     // 处理SSE消息
-    handleSSEMessage(messageData) {
-      if (!messageData || messageData.event === 'heartbeat' || messageData.event === 'connected') {
+    handleSSEMessage(messageData, event) {
+      if (event && event.lastEventId) {
+        this.sseLastEventId = String(event.lastEventId);
+      }
+      if (!messageData || messageData.event === 'heartbeat') {
+        return;
+      }
+      if (messageData.event === 'connected') {
+        const replayed = Number(messageData.replayed || 0);
+        this.sseReplayRemaining = Number.isFinite(replayed) && replayed > 0
+          ? replayed
+          : 0;
+        if (this.sseReplayRemaining === 0) {
+          this.loadWarningData({ showError: false });
+        }
+        return;
+      }
+      if (messageData.event === 'resync_required') {
+        this.sseReplayRemaining = 0;
+        this.loadWarningData({ showError: false });
         return;
       }
       // 如果是AI预警消息
       if (messageData.alert_id || messageData.id) {
-        this.handleNewAlert(messageData);
+        this.handleNewAlert(messageData, event && event.lastEventId);
+        if (this.sseReplayRemaining > 0) {
+          this.sseReplayRemaining--;
+          if (this.sseReplayRemaining === 0) {
+            this.loadWarningData({ showError: false });
+          }
+        }
       }
+    },
+
+    rememberSSEEvent(eventId) {
+      const normalizedId = eventId ? String(eventId).trim() : '';
+      if (!normalizedId) return true;
+      if (this.sseSeenEventIds.has(normalizedId)) return false;
+
+      this.sseSeenEventIds.add(normalizedId);
+      this.sseSeenEventOrder.push(normalizedId);
+      while (this.sseSeenEventOrder.length > 1000) {
+        const expiredId = this.sseSeenEventOrder.shift();
+        this.sseSeenEventIds.delete(expiredId);
+      }
+      return true;
     },
 
     // 判断是否是传统报警消息格式
@@ -2699,8 +2809,13 @@ export default {
     },
 
     // 处理新预警
-    handleNewAlert(alertData) {
+    handleNewAlert(alertData, eventId = '') {
       try {
+        const stableEventId = eventId || alertData.message_id || '';
+        if (stableEventId && this.sseSeenEventIds.has(String(stableEventId).trim())) {
+          return;
+        }
+
         // 将后端预警数据转换为前端格式 - 统一使用API转换方法
         const newWarning = this.convertAPIWarningToFrontend(alertData);
 
@@ -2708,13 +2823,25 @@ export default {
           return;
         }
 
-        // 添加到预警列表顶部
+        if (!this.rememberSSEEvent(stableEventId)) return;
+
+        const warningIdentity = this.getWarningIdentity(newWarning);
+        const existingIndex = this.warningList.findIndex(warning =>
+          this.getWarningIdentity(warning) === warningIdentity
+        );
+        const replacesExisting = existingIndex !== -1;
+        if (replacesExisting) {
+          this.warningList.splice(existingIndex, 1);
+        }
+
+        newWarning._sseSequence = ++this.sseMessageSequence;
         this.warningList.unshift(newWarning);
 
-        // 限制列表长度，只保留最新的10条预警
-        if (this.warningList.length > 10) {
-          this.warningList = this.warningList.slice(0, 10);
+        // 限制列表长度，只保留最新一页预警
+        if (this.warningList.length > this.pageSize) {
+          this.warningList = this.warningList.slice(0, this.pageSize);
         }
+        if (!replacesExisting) this.totalWarnings++;
 
         // 新预警已添加到列表
       } catch (error) {
@@ -2789,6 +2916,7 @@ export default {
 
     // 处理SSE连接建立/重连成功
     handleSSEOpen() {
+      if (this.componentDestroyed) return;
       console.log('SSE连接已建立（含重连成功），更新状态为已连接');
       this.sseStatus.connected = true;
       this.sseStatus.reconnecting = false;
@@ -2822,6 +2950,7 @@ export default {
         this.sseConnection = null;
       }
 
+      this.sseReplayRemaining = 0;
       this.sseStatus.connected = false;
       this.sseStatus.reconnecting = false;
     },
@@ -2829,10 +2958,16 @@ export default {
     // 手动重连SSE
     reconnectSSE() {
       console.log('手动重连SSE');
+      if (this.sseReconnectTimer) {
+        clearTimeout(this.sseReconnectTimer);
+        this.sseReconnectTimer = null;
+      }
       this.cleanupSSEConnection();
+      this.sseStatus.reconnecting = true;
 
-      setTimeout(() => {
-        this.initSSEConnection();
+      this.sseReconnectTimer = setTimeout(() => {
+        this.sseReconnectTimer = null;
+        if (!this.componentDestroyed) this.initSSEConnection();
       }, 1000);
     },
 
