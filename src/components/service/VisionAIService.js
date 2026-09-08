@@ -3920,6 +3920,27 @@ export const realtimeMonitorAPI = {
  */
 export const realtimeDetectionAPI = {
   /**
+   * 批量获取多个摄像头的运行中AI任务列表
+   * @param {Array<string|number>} cameraIds - 摄像头ID列表
+   * @returns {Promise} 以摄像头ID为键的任务列表
+   */
+  getTasksByCameras(cameraIds) {
+    const normalizedIds = [...new Set((cameraIds || [])
+      .map(id => String(id).trim())
+      .filter(Boolean))];
+    if (!normalizedIds.length) {
+      return Promise.reject(new Error('缺少摄像头ID'));
+    }
+
+    return visionAIAxios.get('/api/v1/realtime-detection/detection/tasks/by-cameras', {
+      params: { camera_ids: normalizedIds }
+    }).catch(error => {
+      console.error('❌ 批量获取AI任务列表失败:', error);
+      throw error;
+    });
+  },
+
+  /**
    * 获取指定摄像头的运行中AI任务列表
    * @param {number} cameraId - 摄像头ID
    * @returns {Promise} AI任务列表

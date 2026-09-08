@@ -522,6 +522,8 @@ export default {
       // 定时更新器
       timer: null,
       aiTaskPollTimer: null,
+      aiTaskPollInFlight: false,
+      aiTaskPollRequestId: 0,
       // 视频URL数组
       videoUrl: [],
       // 视频提示信息
@@ -602,6 +604,7 @@ export default {
     this.updateDateTime();
     this.timer = setInterval(this.updateDateTime, 1000);
     this.aiTaskPollTimer = setInterval(this.refreshPlayingCameraAITasks, 5000);
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
 
     // 添加键盘事件监听器，用于ESC键退出全屏
     document.addEventListener('keydown', this.handleKeyDown);
@@ -648,6 +651,8 @@ export default {
       clearInterval(this.aiTaskPollTimer);
       this.aiTaskPollTimer = null;
     }
+    this.aiTaskPollRequestId++;
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
 
     if (this.sseReconnectTimer) {
       clearTimeout(this.sseReconnectTimer);
@@ -3039,12 +3044,43 @@ export default {
       }
     },
 
-    refreshPlayingCameraAITasks() {
+    handleVisibilityChange() {
+      if (!document.hidden) {
+        this.refreshPlayingCameraAITasks()
+      }
+    },
+
+    async refreshPlayingCameraAITasks() {
+      if (this.componentDestroyed || document.hidden || this.aiTaskPollInFlight) {
+        return
+      }
+
       const ids = Object.values(this.cameraIdMapping || {}).filter(
         id => id != null && id !== ''
       )
       const unique = [...new Set(ids.map(id => String(id)))]
-      unique.forEach(id => this.loadAvailableAITasks(id))
+      if (!unique.length) return
+
+      const requestId = ++this.aiTaskPollRequestId
+      this.aiTaskPollInFlight = true
+      try {
+        const response = await realtimeDetectionAPI.getTasksByCameras(unique)
+        if (this.componentDestroyed || requestId !== this.aiTaskPollRequestId) return
+
+        if (response.data && response.data.code === 0) {
+          const tasksByCamera = response.data.data || {}
+          unique.forEach(cameraId => {
+            this.$set(this.availableAITasks, cameraId, tasksByCamera[cameraId] || [])
+          })
+        }
+      } catch (error) {
+        // Worker 重启/503 时保留上次列表，避免下拉框被空数据冲掉
+        console.error('❌ 批量刷新摄像头AI任务列表失败:', error)
+      } finally {
+        if (requestId === this.aiTaskPollRequestId) {
+          this.aiTaskPollInFlight = false
+        }
+      }
     },
     
     /**
