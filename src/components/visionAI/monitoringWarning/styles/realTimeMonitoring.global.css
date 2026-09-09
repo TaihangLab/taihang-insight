@@ -1,0 +1,161 @@
+/* 归档对话框层级控制 - 确保始终在最上层 */
+/* 方案1: 直接设置对话框类的 z-index */
+.realtime-archive-dialog {
+  z-index: 3000 !important;
+}
+
+/* 方案2: 设置对话框包裹层的 z-index（Element UI 的实际结构） */
+.el-dialog__wrapper .realtime-archive-dialog {
+  z-index: 3001 !important;
+}
+
+/* 方案3: 针对归档对话框的包裹层（使用属性选择器作为备用） */
+div[aria-label="归档预警"] {
+  z-index: 3001 !important;
+}
+
+/* 方案4: 使用 :has 选择器（现代浏览器支持） */
+.el-dialog__wrapper:has(.realtime-archive-dialog) {
+  z-index: 3001 !important;
+}
+
+/* 归档对话框对应的遮罩层 */
+.v-modal[style*="z-index: 3000"] {
+  z-index: 3000 !important;
+}
+
+/* 归档对话框中的 select 下拉框层级控制 */
+.archive-select-dropdown {
+  z-index: 3002 !important;
+}
+
+/* 确保 select 下拉框在对话框之上 */
+.el-select-dropdown.archive-select-dropdown {
+  z-index: 3002 !important;
+}
+
+/* 全屏状态下的页面容器 */
+body.camera-fullscreen-mode #realTimeMonitoring {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 9999 !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: linear-gradient(135deg, #0a1526, #1e3a70) !important;
+}
+
+/* 全屏状态下隐藏设备列表和预警列表 */
+body.camera-fullscreen-mode .el-aside {
+  display: none !important;
+}
+
+/* 全屏状态下调整监控容器样式 */
+body.camera-fullscreen-mode .el-container {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: 16px !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+}
+
+/* 全屏状态下视频网格占满屏幕 */
+body.camera-fullscreen-mode .video-grid {
+  height: calc(100vh - 70px) !important;
+  max-height: 100vh !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 全屏状态下工具栏样式调整 */
+body.camera-fullscreen-mode .el-header {
+  background: rgba(0, 0, 0, 0.7) !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  margin-bottom: 16px !important;
+  position: absolute !important;
+  top: 16px !important;
+  right: 16px !important;
+  z-index: 10 !important;
+  width: auto !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(5px) !important;
+}
+
+/* 全屏状态下时间显示，移除背景 */
+body.camera-fullscreen-mode .current-time {
+  color: #ffffff !important;
+}
+
+body.camera-fullscreen-mode .current-time i {
+  color: #ffffff !important;
+}
+
+body.camera-fullscreen-mode .header-label {
+  color: #ffffff !important;
+}
+
+/* 全屏状态下按钮样式调整 */
+body.camera-fullscreen-mode .btn {
+  color: white !important;
+}
+
+body.camera-fullscreen-mode .btn:hover {
+  color: #409EFF !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.camera-fullscreen-mode .btn.active {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 确保全屏模式下没有滚动条 */
+body.camera-fullscreen-mode {
+  overflow: hidden !important;
+}
+
+/* 全屏模式下视频单元格样式 */
+body.camera-fullscreen-mode .video-cell {
+  border-width: 0 !important;
+  border-radius: 8px !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+body.camera-fullscreen-mode .video-cell .video-overlay {
+  padding: 16px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0) 100%);
+}
+
+body.camera-fullscreen-mode .video-cell .video-overlay .camera-name {
+  font-size: 16px;
+}
+
+/* 默认滚动条样式 - 黑色主题 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* 添加截图按钮的数据方法 */

@@ -1,0 +1,1731 @@
+/* 实时监控容器 - 科技感蓝色风格 */
+.realtime-monitoring-container {
+  height: calc(100vh - 60px);
+  max-height: calc(100vh - 60px);
+  background: #f5f5f5;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* 主容器 - 科技感设计 */
+.main-container {
+  height: calc(100vh - 60px);
+  max-height: calc(100vh - 60px);
+  background: #f5f5f5;
+  position: relative;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 移除蓝色渐变背景 */
+
+/* 移除z-index设置 */
+
+/* 设备树容器 - 科技感设计 */
+.device-tree-aside {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-right: 1px solid rgba(59, 130, 246, 0.1);
+  height: 100%;
+  overflow: hidden;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  margin-right: 16px;
+  z-index: 10;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+
+
+.device-tree-aside > * {
+  position: relative;
+  z-index: 2;
+}
+
+.custom-tree-header {
+  padding: 20px 16px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1e40af;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+  min-height: 80px;
+  flex-shrink: 0;
+  border-radius: 16px 16px 0 0;
+  position: relative;
+  overflow: hidden;
+  text-shadow: none;
+}
+
+
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* 添加header-switch样式 */
+.header-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.header-title i {
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+.header-title span {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.header-switch {
+  margin-top: 6px;
+}
+
+.header-switch /deep/ .el-switch__label {
+  color: #1e40af !important;
+  font-weight: 600 !important;
+  text-shadow: none !important;
+}
+
+.header-switch /deep/ .el-switch__label.is-active {
+  color: #1e40af !important;
+}
+
+.custom-tree-container {
+  flex: 1;
+  overflow: auto;
+  height: calc(100% - 80px);
+  padding: 16px;
+  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
+}
+
+/* 覆盖树组件样式 */
+.device-tree-aside /deep/ #DeviceTree {
+  height: 100% !important;
+}
+
+.device-tree-aside /deep/ .el-container {
+  height: 100% !important;
+}
+
+.device-tree-aside /deep/ .el-header {
+  display: none !important; /* 隐藏原组件头部 */
+}
+
+.device-tree-aside /deep/ .el-main {
+  padding: 0 !important;
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 100%;
+}
+
+/* 简单修复树节点样式 */
+.device-tree-aside /deep/ .el-tree-node__content {
+  height: auto !important;
+  min-height: 34px !important;
+  transition: all 0.2s ease !important;
+  border-radius: 0 !important;
+  margin: 2px 0 !important;
+  padding: 0 8px !important;
+}
+
+/* 修正文字显示不全问题 */
+.device-tree-aside /deep/ .custom-tree-node {
+  font-size: 14px !important;
+  line-height: 20px !important;
+  transition: all 0.3s ease !important;
+  font-weight: 500 !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+}
+
+.device-tree-aside /deep/ .flow-tree {
+  padding: 0 !important;
+}
+
+/* 视频主容器 - 科技感设计 */
+.video-main-container {
+  flex: 1;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  position: relative;
+  margin: 0 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+
+
+.video-main-container > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* 视频工具栏 - 科技感设计 */
+.video-toolbar {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.view-mode-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* 预警列表侧边栏 - 科技感设计，固定高度避免滚动条 */
+.warning-aside {
+  width: 270px;
+  flex: none;
+  height: calc(100vh - 120px);
+  max-height: calc(100vh - 120px);
+  position: relative;
+  overflow: hidden;
+}
+
+.warning-list {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  position: relative;
+}
+
+
+
+.warning-list > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* 修复视频网格 */
+.el-main {
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background-color: #2c3e50 !important;
+  width: 100% !important;
+  height: calc(100% - 5vh) !important;
+}
+
+/* 调整四分屏布局 */
+.video-grid.four {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-content: flex-start !important;
+  justify-content: space-between !important;
+  gap: 4px !important;
+  padding: 4px !important;
+}
+
+.video-grid.four .video-cell {
+  width: calc(50% - 4px) !important;
+  height: calc(50% - 4px) !important;
+  margin: 0 !important;
+}
+
+.header-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.current-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 500;
+  padding: 8px 16px;
+  background: rgba(59, 130, 246, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.current-time i {
+  color: #3b82f6;
+  font-size: 16px;
+}
+
+/* 按钮样式 - 科技感设计 */
+.btn {
+  margin: 0 6px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  color: #4b5563;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  backdrop-filter: blur(4px);
+}
+
+.btn:hover {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #3b82f6;
+  color: #1e40af;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  color: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.fullscreen-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.fullscreen-btn:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+}
+
+
+
+.btn.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  color: #c0c4cc;
+}
+
+/* 视频主区域 - 科技感设计 */
+.video-main {
+  padding: 16px;
+  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
+  overflow: hidden;
+}
+
+/* 视频网格 - 科技感设计 */
+.video-grid {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  padding: 16px;
+  position: relative;
+  display: grid;
+  gap: 16px;
+}
+
+
+
+.video-grid > * {
+  position: relative;
+  z-index: 2;
+}
+
+.video-grid.single {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+.video-grid.four {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 2px;
+  background-color: #2c3e50;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.video-grid.nine {
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 4px; /* 九分屏保留间隙 */
+  padding: 4px 8px 4px 4px; /* 右侧增加padding */
+}
+
+/* 视频单元格 - 科技感设计 */
+.video-cell {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #f3f4f6;
+  position: relative;
+  animation: fadeIn 0.4s ease-out;
+}
+
+
+
+.video-cell > * {
+  position: relative;
+  z-index: 2;
+}
+
+.video-cell.selected {
+  border: 1px solid #3b82f6;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+  transform: translateY(-2px);
+  z-index: 5;
+}
+
+.video-cell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 3;
+}
+
+/* 视频标题栏 - 科技感设计 */
+.video-slim-header {
+  height: 36px;
+  padding: 0 16px;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+
+
+@keyframes headerShimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.video-slim-header .camera-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.video-slim-header .video-status {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  margin-left: 8px;
+  backdrop-filter: blur(4px);
+}
+
+.video-slim-header .video-status .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.video-slim-header .video-status.online {
+  color: #95ffa5;
+}
+
+.video-slim-header .video-status.online .status-dot {
+  background-color: #67c23a;
+  box-shadow: 0 0 4px #67c23a;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.video-slim-header .video-status.offline {
+  color: #ffbbbb;
+}
+
+.video-slim-header .video-status.offline .status-dot {
+  background-color: #f56c6c;
+}
+
+.video-cell .video-content {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: 0;
+  height: calc(100% - 36px);
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 确保视频占满容器 */
+.video-cell .video-content > div {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* 视频占位符 - 科技感设计 */
+.video-cell .video-content .video-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, #0a1526, #1e3c72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+
+
+@keyframes patternMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 20px 20px; }
+}
+
+.video-cell .video-content .no-signal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.8);
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  position: relative;
+}
+
+.video-cell .video-content .no-signal i {
+  font-size: 36px;
+  margin-bottom: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  opacity: 0.8;
+}
+
+.video-cell .video-content .no-signal div {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 预警列表头部 - 科技感设计，调整高度 */
+.warning-list .list-header {
+  padding: 16px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1e40af;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  text-shadow: none;
+  flex-shrink: 0;
+}
+
+.warning-list .list-header .header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+/* SSE连接状态指示器 */
+.sse-status-indicator {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.sse-status-indicator .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 4px;
+  display: inline-block;
+}
+
+/* 已连接状态 - 绿色 */
+.sse-status-indicator.status-connected {
+  background: rgba(16, 185, 129, 0.1);
+  color: #065f46;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.sse-status-indicator.status-connected .status-dot {
+  background-color: #10b981;
+  box-shadow: 0 0 4px #10b981;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* 重连中状态 - 橙色 */
+.sse-status-indicator.status-reconnecting {
+  background: rgba(245, 158, 11, 0.1);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.sse-status-indicator.status-reconnecting .status-dot {
+  background-color: #f59e0b;
+  animation: pulse 1s infinite ease-in-out;
+}
+
+/* 未连接状态 - 红色 */
+.sse-status-indicator.status-disconnected {
+  background: rgba(239, 68, 68, 0.1);
+  color: #991b1b;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.sse-status-indicator.status-disconnected .status-dot {
+  background-color: #ef4444;
+}
+
+
+
+.warning-list .list-header .more-btn {
+  color: #1e40af;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
+}
+
+.warning-list .list-header .more-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  color: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.warning-list .list-content {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
+  height: calc(100% - 60px);
+}
+
+/* 加载状态样式 */
+.warning-list .list-content .loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #909399;
+  font-size: 14px;
+}
+
+.warning-list .list-content .loading-state i {
+  font-size: 32px;
+  margin-bottom: 12px;
+  color: #3b82f6;
+  animation: spin 1s linear infinite;
+}
+
+.warning-list .list-content .loading-state span {
+  font-weight: 500;
+}
+
+/* 空状态样式 */
+.warning-list .list-content .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #909399;
+  font-size: 14px;
+}
+
+.warning-list .list-content .empty-state i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  color: #c0c4cc;
+}
+
+.warning-list .list-content .empty-state span {
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.warning-list .list-content .empty-state .el-button {
+  color: #3b82f6;
+  font-size: 13px;
+}
+
+.warning-list .list-content .empty-state .el-button:hover {
+  color: #1e40af;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+/* 旋转动画 */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 预警项目 - 科技感设计，调整尺寸减少滚动条 */
+.warning-list .list-content .warning-item {
+  padding: 8px;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f3f4f6;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  animation: slideIn 0.5s ease-out;
+}
+
+
+
+.warning-list .list-content .warning-item > * {
+  position: relative;
+  z-index: 2;
+}
+
+.warning-list .list-content .warning-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.warning-list .list-content .warning-item .warning-status-container {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+/* 预警等级标签 - 科技感样式（参考摄像头页面状态标签） */
+.warning-list .list-content .warning-item .warning-level-badge {
+  display: inline-block;
+  padding: 0 8px !important;
+  height: 24px !important;
+  line-height: 22px !important;
+  font-size: 12px !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  border: 1px solid !important;
+}
+
+.warning-list .list-content .warning-item .warning-level-badge:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 一级预警 - 危险红色渐变 */
+.warning-list .list-content .warning-item .warning-level-badge.level1 {
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%) !important;
+  color: #991b1b !important;
+  border-color: #fca5a5 !important;
+}
+
+/* 二级预警 - 警告橙色渐变 */
+.warning-list .list-content .warning-item .warning-level-badge.level2 {
+  background: linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%) !important;
+  color: #92400e !important;
+  border-color: #fbbf24 !important;
+}
+
+/* 三级预警 - 信息蓝色渐变 */
+.warning-list .list-content .warning-item .warning-level-badge.level3 {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+  color: #1e40af !important;
+  border-color: #93c5fd !important;
+}
+
+/* 四级预警 - 成功绿色渐变 */
+.warning-list .list-content .warning-item .warning-level-badge.level4 {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  color: #065f46 !important;
+  border-color: #a7f3d0 !important;
+}
+
+/* 预警状态标签 - 科技感样式 */
+.warning-list .list-content .warning-item .warning-status-badge {
+  display: inline-block;
+  padding: 0 8px !important;
+  height: 24px !important;
+  line-height: 22px !important;
+  font-size: 12px !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  border: 1px solid !important;
+}
+
+.warning-list .list-content .warning-item .warning-status-badge:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 待处理状态 - 灰色渐变 */
+.warning-list .list-content .warning-item .warning-status-badge.status-pending {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%) !important;
+  color: #4b5563 !important;
+  border-color: #d1d5db !important;
+}
+
+/* 处理中状态 - 蓝色渐变 */
+.warning-list .list-content .warning-item .warning-status-badge.status-processing {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+  color: #1e40af !important;
+  border-color: #93c5fd !important;
+}
+
+/* 已完成状态 - 绿色渐变 */
+.warning-list .list-content .warning-item .warning-status-badge.status-completed {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  color: #065f46 !important;
+  border-color: #a7f3d0 !important;
+}
+
+/* 已归档状态 - 深灰色渐变 */
+.warning-list .list-content .warning-item .warning-status-badge.status-archived {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%) !important;
+  color: #374151 !important;
+  border-color: #9ca3af !important;
+}
+
+/* 误报状态 - 橙色渐变 */
+.warning-list .list-content .warning-item .warning-status-badge.status-false-alarm {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%) !important;
+  color: #9a3412 !important;
+  border-color: #fdba74 !important;
+}
+
+
+
+.warning-list .list-content .warning-item .warning-info {
+  padding: 2px 0;
+}
+
+.warning-list .list-content .warning-item .warning-info .warning-time-location {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.warning-list .list-content .warning-item .warning-info .warning-time {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.warning-list .list-content .warning-item .warning-info .warning-time:before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23909399"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>');
+  background-size: contain;
+}
+
+.warning-list .list-content .warning-item .warning-info .warning-location {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.warning-list .list-content .warning-item .warning-info .warning-location:before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23909399"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>');
+  background-size: contain;
+}
+
+.warning-list .list-content .warning-item .warning-info .warning-detail {
+  font-size: 13px;
+  color: #303133;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.warning-list .list-content .warning-item .warning-info .warning-detail .device-type-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.warning-list .list-content .warning-item .warning-info .warning-detail .device-name {
+  font-weight: 500;
+  color: #303133;
+}
+
+.warning-list .list-content .warning-item .warning-info .warning-detail .violation-type {
+  color: #909399;
+  font-weight: 500;
+  background: rgba(144, 147, 153, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* 预警操作按钮 - 与详情弹框颜色保持一致 */
+.warning-list .list-content .warning-item .warning-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  gap: 6px;
+}
+
+.warning-list .list-content .warning-item .warning-actions .el-button {
+  flex: 1;
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+/* 预警操作按钮基础样式 - 与预警详情页面保持一致 */
+.warning-list .list-content .warning-item .warning-actions .el-button {
+  padding: 6px 12px;
+  font-size: 11px;
+  border-radius: 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  background-color: transparent;
+  border-color: #d1d5db;
+  color: #4b5563;
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* 所有按钮的悬浮效果 - 淡蓝色交互效果 */
+.warning-list .list-content .warning-item .warning-actions .el-button:hover {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #3b82f6;
+  color: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+/* 禁用状态样式 */
+.warning-list .list-content .warning-item .warning-actions .el-button.is-disabled,
+.warning-list .list-content .warning-item .warning-actions .el-button:disabled {
+  background-color: transparent;
+  border-color: #e4e7ed;
+  color: #c0c4cc;
+  transform: none;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.warning-list .list-content .warning-item .warning-actions .el-button.is-disabled:hover,
+.warning-list .list-content .warning-item .warning-actions .el-button:disabled:hover {
+  background-color: transparent;
+  border-color: #e4e7ed;
+  color: #c0c4cc;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 原有的plain样式已移除，统一使用新的科技感蓝色交互效果 */
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 单分屏时调整视频比例 */
+.video-grid.single .video-cell {
+  border-radius: 0; /* 移除单分屏模式下的圆角 */
+  box-shadow: none; /* 移除单分屏模式下的阴影 */
+  border: none; /* 移除单分屏模式下的边框 */
+  height: 100%;
+  width: 100%;
+}
+
+.video-grid.single .video-cell.selected {
+  border: none; /* 移除选中状态下的边框 */
+  box-shadow: none; /* 移除选中状态下的阴影 */
+  transform: none; /* 移除选中状态下的变换 */
+}
+
+/* 调整单分屏模式下的标题栏 */
+.video-grid.single .video-cell .video-slim-header {
+  border-radius: 0; /* 移除标题栏的圆角 */
+}
+
+/* 四分屏时调整每个单元格比例 */
+.video-grid.four .video-cell {
+  width: calc(50% - 4px);
+  height: calc(50% - 4px);
+  margin: 2px;
+  box-sizing: border-box;
+  flex-grow: 0;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 九分屏时保持较小的单元格 */
+.video-cell {
+  background: #1e2430;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+  position: relative;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.video-cell .video-slim-header {
+  height: 26px;
+  padding: 0 10px;
+  background: rgba(28, 58, 112, 0.8);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+}
+
+.video-cell .video-slim-header .camera-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.video-cell .video-slim-header .video-status {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  margin-left: 8px;
+}
+
+.video-cell .video-slim-header .video-status .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.video-cell .video-slim-header .video-status.online {
+  color: #95ffa5;
+}
+
+.video-cell .video-slim-header .video-status.online .status-dot {
+  background-color: #67c23a;
+  box-shadow: 0 0 4px #67c23a;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.video-cell .video-slim-header .video-status.offline {
+  color: #ffbbbb;
+}
+
+.video-cell .video-slim-header .video-status.offline .status-dot {
+  background-color: #f56c6c;
+}
+
+/* 全屏模式下的样式调整 */
+body.camera-fullscreen-mode .video-cell .video-slim-header {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  background: rgba(20, 40, 80, 0.7);
+  backdrop-filter: blur(5px);
+}
+
+/* 调整el-main的填充，使视频网格居中 */
+#realTimeMonitoring .el-main {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  background-color: #2c3e50;
+  width: 100%;
+  height: calc(100% - 5vh);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 确保视频网格容器完全填充主区域 */
+.el-main .video-grid {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  position: relative;
+}
+
+/* 全屏状态下的必要样式 */
+body.camera-fullscreen-mode .video-cell .video-content {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
+  background: linear-gradient(135deg, #102948, #1e3c72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+  font-size: 18px !important;
+}
+
+
+
+/* 调整el-main在单分屏模式下的样式 */
+.single-screen-mode .el-main {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+.single-screen-mode .video-grid {
+  width: 100%;
+  height: 100%;
+  background-color: #1e2430;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.single-screen-mode .video-grid .video-cell {
+  background-color: #1e2430;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.single-screen-mode .video-grid .video-cell .video-content {
+  background-color: #1e2430;
+}
+
+.single-screen-mode .video-grid .video-cell .video-content .video-placeholder {
+  background: linear-gradient(45deg, #0a1526, #1e3c72);
+}
+
+/* 修复文本只显示一半的问题 */
+.device-tree-aside /deep/ .custom-tree-node {
+  font-size: 14px !important;
+  line-height: 20px !important;
+  transition: all 0.3s ease !important;
+  font-weight: 500 !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+}
+
+/* 调整树节点高度，确保文本显示完整 */
+.device-tree-aside /deep/ .el-tree-node__content {
+  height: auto !important;
+  min-height: 34px !important;
+  transition: all 0.2s ease !important;
+  border-radius: 0 !important;
+  margin: 2px 0 !important;
+  padding: 0 8px !important;
+}
+
+/* 修改树节点悬浮效果，使其更加轻微 */
+.device-tree-aside /deep/ .el-tree-node__content:hover {
+  background-color: rgba(64, 158, 255, 0.1) !important;
+  transform: translateX(2px) !important;
+}
+
+/* 在自定义树容器中添加底部内边距，确保最后一项完全显示 */
+.custom-tree-container {
+  flex: 1;
+  overflow: auto;
+  height: calc(100% - 80px);
+  padding-bottom: 20px !important; /* 添加底部内边距 */
+}
+
+/* 添加树节点选中样式以区分悬浮状态 */
+.device-tree-aside /deep/ .is-current>.el-tree-node__content {
+  background-color: rgba(64, 158, 255, 0.15) !important;
+  color: #409EFF !important;
+  font-weight: bold !important;
+  transform: none !important;
+}
+
+/* 修复图标显示 */
+.device-tree-aside /deep/ .iconfont {
+  transition: all 0.2s ease !important;
+  margin-right: 6px !important;
+  font-size: 16px !important;
+  min-width: 16px !important;
+  text-align: center !important;
+  display: inline-block !important;
+  flex-shrink: 0 !important;
+}
+
+/* 确保文本容器有足够的空间 */
+.device-tree-aside /deep/ .custom-tree-node span {
+  line-height: 1.5 !important;
+  display: inline-block !important;
+  padding-bottom: 2px !important; /* 底部添加小间距 */
+  vertical-align: middle !important;
+}
+
+.warning-list .list-content .warning-item .warning-video {
+  width: 100%;
+  height: 100px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.warning-list .list-content .warning-item .warning-image {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.warning-list .list-content .warning-item .warning-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.3s ease;
+}
+
+.warning-list .list-content .warning-item:hover .warning-image img {
+  transform: scale(1.05);
+}
+
+.warning-list .list-content .warning-item .warning-video .video-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, #0a1526, #1e3c72);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border-radius: 0;
+  position: relative;
+}
+
+.warning-list .list-content .warning-item .warning-video .video-placeholder i {
+  font-size: 36px;
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.warning-list .list-content .warning-item .warning-video .video-placeholder span {
+  font-size: 13px;
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.warning-list .list-content .warning-item.level1 .warning-video .video-placeholder i {
+  color: #f56c6c;
+  animation: pulse 1.5s infinite;
+}
+
+.warning-list .list-content .warning-item.level2 .warning-video .video-placeholder i {
+  color: #e6a23c;
+}
+
+.warning-list .list-content .warning-item.level3 .warning-video .video-placeholder i {
+  color: #409EFF;
+}
+
+.warning-list .list-content .warning-item.level4 .warning-video .video-placeholder i {
+  color: #67c23a;
+}
+
+.warning-media .placeholder-image,
+.warning-media .placeholder-video {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(45deg, #1e3c72, #2a5298);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+}
+
+.warning-media .placeholder-image i,
+.warning-media .placeholder-video i {
+  opacity: 0.8;
+  margin-bottom: 10px;
+}
+
+.warning-media .placeholder-image i.el-icon-warning {
+  color: #f56c6c;
+  animation: pulse 1.5s infinite;
+}
+
+.warning-media .placeholder-video i.el-icon-video-camera {
+  color: #409EFF;
+}
+
+body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-icon-warning {
+  color: #f56c6c;
+  animation: pulse 1.5s infinite;
+}
+
+.process-tip {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  border-left: 3px solid #909399;
+}
+
+/* 归档对话框样式 */
+.archive-dialog-content {
+  padding: 10px 0;
+}
+
+.archive-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #333;
+}
+
+.archive-selection {
+  margin-bottom: 20px;
+}
+
+.archive-tip {
+  margin-top: 20px;
+}
+
+/* 对话框样式优化 - 科技感设计 */
+.realtime-monitoring-container >>> .el-dialog {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.realtime-monitoring-container >>> .el-dialog__header {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+  padding: 16px 20px;
+}
+
+.realtime-monitoring-container >>> .el-dialog__title {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.realtime-monitoring-container >>> .el-dialog__close {
+  color: #6b7280;
+  transition: color 0.3s ease;
+}
+
+.realtime-monitoring-container >>> .el-dialog__close:hover {
+  color: #3b82f6;
+}
+
+.realtime-monitoring-container >>> .el-dialog__body {
+  padding: 20px;
+  background: #ffffff;
+}
+
+.realtime-monitoring-container >>> .el-button--primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  border: none;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  color: white;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+}
+
+.realtime-monitoring-container >>> .el-button--primary:hover {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.realtime-monitoring-container >>> .el-button--success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  color: white;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+}
+
+.realtime-monitoring-container >>> .el-button--success:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
+}
+
+.realtime-monitoring-container >>> .el-button--default {
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #4b5563;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+}
+
+.realtime-monitoring-container >>> .el-button--default:hover {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #3b82f6;
+  color: #1e40af;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+/* 输入框和选择框样式优化 */
+.realtime-monitoring-container >>> .el-input__inner {
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.realtime-monitoring-container >>> .el-input__inner:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.realtime-monitoring-container >>> .el-textarea__inner {
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.realtime-monitoring-container >>> .el-textarea__inner:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* 通道列表区域隐藏滚动条 */
+.custom-tree-container::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.custom-tree-container {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE和Edge */
+}
+
+/* 实时预警列表滚动条 - 黑色样式 */
+.warning-list .list-content::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.warning-list .list-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.warning-list .list-content::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.warning-list .list-content::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* 其他区域保持默认滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* Loading动画 - 科技感效果 */
+.realtime-monitoring-container >>> .el-loading-mask {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(4px);
+}
+
+.realtime-monitoring-container >>> .el-loading-spinner {
+  color: #3b82f6 !important;
+}
+
+.realtime-monitoring-container >>> .el-loading-text {
+  color: #1f2937 !important;
+  font-weight: 500 !important;
+}
+
+/* Pulse动画 */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 淡入动画 */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 🆕 OSD检测框叠加相关样式 */
+/* AI任务选择器 */
+.ai-task-selector {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 6px;
+  border-radius: 6px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.ai-task-selector >>> .el-select {
+  width: 200px;
+}
+
+.ai-task-selector >>> .el-input__inner {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #fff;
+  font-size: 12px;
+}
+
+.ai-task-selector >>> .el-input__inner::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 视频播放器包装器 */
+.video-player-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 调试信息：紧凑展示，限制尺寸避免遮挡画面 */
+.detection-debug-info {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #fff;
+  z-index: 20;
+  max-width: min(160px, 36%);
+  max-height: 42%;
+  overflow: hidden;
+  pointer-events: none;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.detection-debug-info .debug-line {
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.detection-debug-info .debug-line:last-child {
+  margin-bottom: 0;
+}
+
+.detection-debug-info .debug-label {
+  color: #8492a6;
+  margin-right: 6px;
+  flex-shrink: 0;
+  min-width: 28px;
+}
+
+.detection-debug-info .debug-value {
+  color: #fff;
+  font-weight: 500;
+  min-width: 0;
+}
+
+.detection-debug-info .debug-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detection-debug-info .debug-value.connected {
+  color: #10b981;
+}
+
+.detection-debug-info .debug-value.disconnected {
+  color: #f56c6c;
+}
+
+/* 🆕 OSD样式结束 */
+
