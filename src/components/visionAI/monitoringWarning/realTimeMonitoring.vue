@@ -610,7 +610,6 @@ export default {
       sseSeenEventOrder: [],
       sseMessageSequence: 0,
       sseReplayRemaining: 0,
-      sseReconnectTimer: null,
       componentDestroyed: false,
       sseStatus: {
         connected: false,
@@ -620,7 +619,6 @@ export default {
       // API数据加载相关
       apiDataLoading: false,
       warningRequestId: 0,
-      totalWarnings: 0,
       currentPage: 1,
       pageSize: 10, // 只显示最新的10条预警数据
     }
@@ -648,7 +646,6 @@ export default {
     this.initVideoArrays();
 
     // 加载真实档案列表（页面加载时预加载，提升用户体验）
-    console.log('🚀 实时监控页面 - 开始预加载档案列表');
     this.loadAvailableArchives();
 
     // 加载真实预警数据
@@ -680,10 +677,6 @@ export default {
     this.aiTaskPollRequestId++;
     document.removeEventListener('visibilitychange', this.handleVisibilityChange);
 
-    if (this.sseReconnectTimer) {
-      clearTimeout(this.sseReconnectTimer);
-      this.sseReconnectTimer = null;
-    }
     this.cleanupSSEConnection();
 
     document.removeEventListener('keydown', this.handleKeyDown);
@@ -697,17 +690,6 @@ export default {
     this.cleanupAllOSDResources();
   },
   methods: {
-    // 选择设备
-    selectDevice(groupIndex, deviceIndex, device) {
-      const deviceKey = 'device-' + groupIndex + '-' + deviceIndex;
-      this.selectedDevice = this.selectedDevice === deviceKey ? null : deviceKey;
-
-      if (this.selectedDevice) {
-        // 发送设备推流请求
-        this.sendDevicePush(device.channelId);
-      }
-    },
-
     // 初始化视频数组
     initVideoArrays() {
       // 初始化9个空位置用于视频URL和提示信息
@@ -724,18 +706,6 @@ export default {
       if (this.viewMode === 'single') return [1]
       if (this.viewMode === 'four') return [1, 2, 3, 4]
       return [1, 2, 3, 4, 5, 6, 7, 8, 9]
-    },
-    // 获取网格列模板
-    getGridColumns() {
-      if (this.viewMode === 'single') return "minmax(0, 1fr)"
-      if (this.viewMode === 'four') return "minmax(0, 1fr) minmax(0, 1fr)"
-      return "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)"
-    },
-    // 获取网格行模板
-    getGridRows() {
-      if (this.viewMode === 'single') return "minmax(0, 1fr)"
-      if (this.viewMode === 'four') return "minmax(0, 1fr) minmax(0, 1fr)"
-      return "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)"
     },
     // 切换视图模式
     switchViewMode(mode) {
@@ -1028,10 +998,6 @@ export default {
         this.sendDevicePush(data.id);
       }
     },
-    // 设备树上下文菜单事件
-    contextMenuEvent(device, event, data, isCatalog) {
-      // 上下文菜单处理
-    },
     // 向设备发送推流请求
     async sendDevicePush(channelId) {
       const idxTmp = this.playerIdx;
@@ -1056,7 +1022,6 @@ export default {
       // 不再使用整页 v-loading 遮罩，避免通道离线/不存在时整页转圈卡死
 
       try {
-        console.log('🎬 开始播放通道 - 通道ID:', channelId, '播放器索引:', idxTmp);
 
         // 使用新的专用API播放通道
         const response = await realtimeMonitorAPI.playChannel(channelId);
@@ -1099,7 +1064,6 @@ export default {
           if (videoUrl) {
             this.$set(this.playProtocol, idxTmp, rtcUrl ? 'webrtc' : 'flv');
             this.$set(this.flvFallbackUrl, idxTmp, flvUrl || '');
-            console.log('✅ 获取播放地址成功:', rtcUrl ? 'webrtc' : 'flv', videoUrl);
             this.setPlayUrl(videoUrl, idxTmp);
 
             // 🆕 加载该摄像头的AI任务列表
@@ -1145,10 +1109,6 @@ export default {
     getVideoStatusText(index) {
       if (!this.videoUrl[index]) return '离线';
       return '在线';
-    },
-    // 是否可以截图 - 当前选中视频且有视频URL
-    mainClass() {
-      return this.viewMode === 'single' ? 'single-screen-mode' : '';
     },
     // 处理窗口大小变化
     handleResize() {
@@ -1221,18 +1181,8 @@ export default {
       this.currentAlertId = alertId
       this.warningDetailVisible = true
     },
-    // 处理预警（原有方法，保持兼容性）
-    handleWarningOld(warning) {
-      this.$message({
-        message: `正在处理 ${warning.device} 的 ${warning.type} 预警`,
-        type: 'success'
-      });
-      // 这里可以添加处理预警的逻辑
-    },
-
     // 从预警列表处理预警 - 点击处理仅打开意见对话框，确认后才变更状态
     handleWarningFromList(warning) {
-      console.log('🖱️ 点击处理按钮, 预警ID:', warning && warning.id, '预警数据:', warning);
 
       if (warning && warning.id) {
         this.currentProcessingWarningId = warning.id;
@@ -1241,12 +1191,6 @@ export default {
         console.error('❌ 无效的预警数据:', warning);
         this.$message.error('预警数据无效，无法处理');
       }
-    },
-
-    // 打开处理意见对话框（不再立即变更后端状态）
-    startProcessingWarning(warning) {
-      this.currentProcessingWarningId = warning.id;
-      this.remarkDialogVisible = true;
     },
 
     // 保存处理意见（添加处理中记录）
@@ -1259,7 +1203,6 @@ export default {
       try {
         this.loading = true;
 
-        console.log('📝 保存处理意见:', this.currentProcessingWarningId, this.remarkForm.remark);
 
         const currentWarning = this.warningList.find(item =>
           String(item.id) === String(this.currentProcessingWarningId)
@@ -1283,7 +1226,6 @@ export default {
         };
 
         const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
-        console.log('✅ 处理意见保存成功:', response);
 
         // 🔧 从后端响应中获取实际的操作人名字
         const operatorName = (response.data && response.data.data && response.data.data.updated_alert && response.data.data.updated_alert.processed_by) ||
@@ -1301,7 +1243,7 @@ export default {
             id: Date.now() + Math.random(),
             status: 'completed',
             statusText: '处理中',
-            time: this.getCurrentTime(),
+            time: getCurrentAlertTime(),
             description: `处理意见：${this.remarkForm.remark}`,
             operationType: 'processing-action',
             operator: operatorName
@@ -1327,7 +1269,6 @@ export default {
       try {
         this.loading = true;
 
-        console.log('🏁 结束处理预警:', this.currentProcessingWarningId);
 
         const currentWarning = this.warningList.find(item =>
           String(item.id) === String(this.currentProcessingWarningId)
@@ -1351,7 +1292,6 @@ export default {
         };
 
         const response = await alertAPI.updateAlertStatus(apiAlertId, updateData);
-        console.log('✅ 处理完成状态更新成功:', response);
 
         const result = (response.data && response.data.data) || {};
         const updatedAlert = result.updated_alert || {};
@@ -1373,7 +1313,7 @@ export default {
             id: Date.now() + Math.random(),
             status: 'completed',
             statusText: '已处理',
-            time: processingRecord.created_at ? this.formatAPITime(processingRecord.created_at) : this.getCurrentTime(),
+            time: processingRecord.created_at ? formatAlertDateTime(processingRecord.created_at) : getCurrentAlertTime(),
             description: processingNotes || '未填写处理意见',
             operationType: 'completed',
             operator: operatorName
@@ -1390,7 +1330,6 @@ export default {
             this.warningList[index]._apiData.processing_notes = processingNotes;
           }
 
-          console.log('✅ 本地状态已更新为已处理:', this.warningList[index]);
         }
 
         this.$message.success('处理已完成，现在可以进行归档等操作');
@@ -1533,13 +1472,10 @@ export default {
           return;
         }
 
-        console.log('📁 开始归档流程，当前档案列表长度:', this.availableArchivesList.length);
 
         // 刷新档案列表
         await this.loadAvailableArchives();
 
-        console.log('📁 刷新后档案列表长度:', this.availableArchivesList.length);
-        console.log('📁 档案列表数据:', JSON.stringify(this.availableArchivesList, null, 2));
 
         // 显示档案选择对话框（即使没有档案也显示，让用户可以创建）
         this.archiveDialogVisible = true;
@@ -1550,7 +1486,6 @@ export default {
           this.ensureArchiveDialogOnTop();
         });
 
-        console.log('📁 显示档案选择对话框，可用档案数:', this.availableArchivesList.length);
 
         // 如果没有档案，提示用户但不阻止对话框显示
         if (this.availableArchivesList.length === 0) {
@@ -1606,7 +1541,6 @@ export default {
         const archiveName = selectedArchive ? selectedArchive.name : '未知档案';
         const archiveLocation = selectedArchive ? selectedArchive.location : '未知位置';
 
-        console.log('📍 选中的档案信息:', { selectedArchive, archiveName, archiveLocation });
 
         // 后端在同一事务中建立档案关联并更新预警状态。
         const { archiveAPI } = await import('../../service/VisionAIService.js');
@@ -1616,7 +1550,6 @@ export default {
           `实时监控归档 - 预警类型: ${warningInfo.type}`
         );
 
-        console.log('📤 归档API响应:', response.data);
 
         const archiveResult = response.data && response.data.data;
         if (response.data && response.data.code === 0 &&
@@ -1635,7 +1568,7 @@ export default {
             id: Date.now() + Math.random(),
             status: 'completed',
             statusText: '预警归档',
-            time: this.getCurrentTime(),
+            time: getCurrentAlertTime(),
             description: `预警已归档到：${archiveName}（${archiveLocation}），可在预警档案中查看`,
             operationType: 'archive',
             operator: operatorName,
@@ -1658,7 +1591,6 @@ export default {
           }, 500);
 
           this.$message.success('预警已成功归档');
-          console.log('✅ 实时监控 - 预警归档成功:', alertId, '档案ID:', this.selectedArchiveId);
 
           // 关闭对话框
           this.closeArchiveDialog();
@@ -1716,13 +1648,11 @@ export default {
           if (archiveDialog) {
             // 设置对话框包裹层的 z-index
             wrapper.style.zIndex = targetZIndex.toString();
-            console.log('✅ 归档对话框 z-index 已设置为:', targetZIndex);
 
             // 查找对应的遮罩层（紧邻在对话框前面的 v-modal）
             const previousSibling = wrapper.previousElementSibling;
             if (previousSibling && previousSibling.classList.contains('v-modal')) {
               previousSibling.style.zIndex = (targetZIndex - 1).toString();
-              console.log('✅ 遮罩层 z-index 已设置为:', targetZIndex - 1);
             }
           }
         });
@@ -1731,7 +1661,6 @@ export default {
         const archiveSelectDropdown = document.querySelector('.archive-select-dropdown');
         if (archiveSelectDropdown) {
           archiveSelectDropdown.style.zIndex = (targetZIndex + 1).toString();
-          console.log('✅ Select 下拉框 z-index 已设置为:', targetZIndex + 1);
         }
       } catch (error) {
         console.warn('⚠️ 设置归档对话框层级失败:', error);
@@ -1835,7 +1764,7 @@ export default {
             id: Date.now() + Math.random(),
             status: 'completed',
             statusText: '误报处理',
-            time: this.getCurrentTime(),
+            time: getCurrentAlertTime(),
             description: `预警被标记为误报：${reviewNotes}`,
             operationType: 'false_alarm',
             operator: operatorName
@@ -1859,7 +1788,6 @@ export default {
               );
 
               if (archiveResponse.data && archiveResponse.data.code === 0) {
-                console.log('✅ 误报记录已成功归档到档案');
                 this.$message.success('预警已标记为误报，复判记录已保存并归档');
               } else {
                 console.warn('⚠️ 误报记录归档失败:', archiveResponse.data);
@@ -1908,20 +1836,16 @@ export default {
           status: 1 // 只获取正常状态的档案
         });
 
-        console.log('📥 实时监控 - 获取档案列表响应:', response.data);
 
         // 后端返回格式：{ code: 0, msg: "获取成功", data: [...], pagination: {...} }
         if (response.data && response.data.code === 0 && response.data.data) {
           this.availableArchivesList = response.data.data;
-          console.log('✅ 实时监控 - 加载档案列表成功:', this.availableArchivesList.length, '个档案', this.availableArchivesList);
         } else if (response.data && response.data.archives) {
           // 兼容其他可能的返回格式
           this.availableArchivesList = response.data.archives;
-          console.log('✅ 实时监控 - 加载档案列表成功(archives):', this.availableArchivesList.length, '个档案');
         } else if (response.data && Array.isArray(response.data)) {
           // 兼容直接返回数组的格式
           this.availableArchivesList = response.data;
-          console.log('✅ 实时监控 - 加载档案列表成功(数组):', this.availableArchivesList.length, '个档案');
         } else {
           console.warn('⚠️ 实时监控 - 获取档案列表格式异常:', response.data);
           this.availableArchivesList = [];
@@ -1965,7 +1889,6 @@ export default {
             created_by: this.getCurrentUserName()
           });
 
-          console.log('📤 实时监控 - 为误报创建档案响应:', response.data);
 
           // 后端直接返回档案对象
           if (response.data && response.data.archive_id) {
@@ -1980,7 +1903,6 @@ export default {
             this.availableArchivesList.push(newArchive);
             this.falseAlarmForm.archiveId = newArchive.archive_id;
             this.$message.success('档案创建成功');
-            console.log('✅ 实时监控 - 误报档案已创建:', newArchive);
           } else {
             console.error('❌ 实时监控 - 创建误报档案响应格式异常:', response.data);
             this.$message.error('创建档案失败：响应格式异常');
@@ -2019,7 +1941,6 @@ export default {
             created_by: this.getCurrentUserName()
           });
 
-          console.log('📤 实时监控 - 创建档案响应:', response.data);
 
           // 后端直接返回档案对象，不是包装格式
           if (response.data && response.data.archive_id) {
@@ -2034,7 +1955,6 @@ export default {
             this.availableArchivesList.push(newArchive);
             this.selectedArchiveId = newArchive.archive_id;
             this.$message.success('档案创建成功，已自动选择');
-            console.log('✅ 实时监控 - 新档案已创建并选中:', newArchive);
           } else {
             console.error('❌ 实时监控 - 创建档案响应格式异常:', response.data);
             this.$message.error('创建档案失败：响应格式异常');
@@ -2057,42 +1977,6 @@ export default {
       this.falseAlarmForm.needArchive = false;
       this.falseAlarmForm.archiveId = null;
       this.archiveWarningId = '';
-    },
-
-    // 获取当前时间
-    getCurrentTime() {
-      return getCurrentAlertTime();
-    },
-
-    // 给时间添加指定秒数
-    addSecondsToTime(timeString, seconds) {
-      try {
-        let date;
-        if (timeString.includes('T')) {
-          date = new Date(timeString);
-        } else if (timeString.includes(' ')) {
-          date = new Date(timeString);
-        } else {
-          date = new Date();
-        }
-
-        if (isNaN(date.getTime())) {
-          return timeString;
-        }
-
-        date.setSeconds(date.getSeconds() + seconds);
-
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const secs = String(date.getSeconds()).padStart(2, '0');
-
-        return `${year}-${month}-${day} ${hours}:${minutes}:${secs}`;
-      } catch (error) {
-        return timeString;
-      }
     },
 
     // 获取当前用户昵称
@@ -2153,7 +2037,6 @@ export default {
           5: { text: '误报', class: 'status-false-alarm' }     // FALSE_ALARM
         };
         const result = statusMap[warning._apiData.status] || { text: '未知', class: 'status-pending' };
-        // console.log('📊 预警状态显示 - API status:', warning._apiData.status, '显示:', result);
         return result;
       }
 
@@ -2377,19 +2260,6 @@ export default {
             convertedWarnings
           ).slice(0, this.pageSize);
 
-          const snapshotIdentities = new Set(
-            convertedWarnings.map(warning => this.getWarningIdentity(warning))
-          );
-          const extraRealtimeCount = realtimeArrivals.filter(warning =>
-            !snapshotIdentities.has(this.getWarningIdentity(warning))
-          ).length;
-          const snapshotTotal = typeof response.data.total === 'number'
-            ? response.data.total
-            : apiWarnings.length;
-          this.totalWarnings = Math.max(
-            snapshotTotal + extraRealtimeCount,
-            this.warningList.length
-          );
         } else {
           if (options.showError !== false) {
             this.$message.warning('获取预警数据失败，保留当前实时列表');
@@ -2412,20 +2282,20 @@ export default {
         // 根据你提供的API数据格式进行准确映射，确保所有字段都有默认值
         const convertedWarning = {
           id: apiWarning.alert_id || `temp_${Date.now()}`,
-          time: this.formatAPITime(apiWarning.alert_time) || '时间未知',
+          time: formatAlertDateTime(apiWarning.alert_time) || '时间未知',
           device: apiWarning.camera_name || `摄像头${apiWarning.camera_id || '未知'}`,
           alertName: apiWarning.alert_name || '未知预警',  // 预警名称（如：未佩戴安全带）
           type: apiWarning.alert_type || '未知类型',        // 预警类型（如：安全生产预警）
-          level: this.convertAlertLevel(apiWarning.alert_level) || 'level4',
+          level: toAlertLevelKey(apiWarning.alert_level) || 'level4',
           location: apiWarning.location || '未知位置',
-          status: this.convertAlertStatus(apiWarning.status, apiWarning.status_display) || 'pending',
+          status: toAlertStatusKey(apiWarning.status, apiWarning.status_display) || 'pending',
           imageUrl: this.getWarningImageUrl(apiWarning) || null,
           // 🔧 修复：添加视频URL字段，用于预警详情页播放视频
           videoUrl: this.getWarningVideoUrl(apiWarning) || null,
           minio_video_url: this.getWarningVideoUrl(apiWarning) || null,
           minio_frame_url: this.getWarningImageUrl(apiWarning) || null,
           description: apiWarning.alert_description || '无描述信息',
-          operationHistory: this.convertProcessHistory(apiWarning.process, apiWarning.status, this.formatAPITime(apiWarning.alert_time), apiWarning.processed_by, this.formatAPITime(apiWarning.resolved_at || apiWarning.processed_at), apiWarning.processing_notes) || [],
+          operationHistory: this.convertProcessHistory(apiWarning.process, apiWarning.status, formatAlertDateTime(apiWarning.alert_time), apiWarning.processed_by, formatAlertDateTime(apiWarning.resolved_at || apiWarning.processed_at), apiWarning.processing_notes) || [],
           // 添加额外的API数据字段
           messageId: apiWarning.message_id || null,
           taskId: apiWarning.task_id || null,
@@ -2457,37 +2327,12 @@ export default {
           }
         };
 
-        console.log('🔄 转换API预警数据 - alert_id:', apiWarning.alert_id, '合并:', apiWarning.is_merged ? `是(${apiWarning.alert_count}次)` : '否', '视频:', apiWarning.minio_video_url ? '有' : '无');
 
         return convertedWarning;
       } catch (error) {
         console.error('❌ 转换API预警数据失败:', error);
         return null;
       }
-    },
-
-    // 转换预警类型到显示名称
-    convertAlertTypeToDisplayName(alertType) {
-      const typeMap = {
-        'product_area_detection': '商品区域检测报警',
-        'safety_helmet_detection': '未戴安全帽',
-        'safety_belt_detection': '未系安全带',
-        'protective_clothing_detection': '未穿工作服',
-        'personnel_intrusion_detection': '闲杂人员入侵',
-        'smoke_fire_detection': '吸烟检测',
-        'high_altitude_work_detection': '高空作业检测',
-        'fall_detection': '跌倒检测',
-        'crowd_gathering_detection': '人群聚集检测',
-        'vehicle_detection': '车辆检测',
-        'abnormal_behavior_detection': '异常行为检测'
-      };
-
-      return typeMap[alertType] || alertType || '未知预警类型';
-    },
-
-    // 格式化API时间
-    formatAPITime(timeString) {
-      return formatAlertDateTime(timeString);
     },
 
     // 获取预警图片URL
@@ -2571,49 +2416,6 @@ export default {
       }
     },
 
-    // 加载更多预警数据（分页）
-    async loadMoreWarnings() {
-      try {
-        this.apiDataLoading = true;
-        this.currentPage++;
-
-        const params = {
-          page: this.currentPage,
-          limit: this.pageSize,
-          active_only: true,
-        };
-
-        const response = await alertAPI.getRealTimeAlerts(params);
-
-        if (response.data && response.data.code === 0) {
-          // 修正数据结构 - 数据直接在data字段中（是一个数组）
-          let apiWarnings = [];
-          if (Array.isArray(response.data.data)) {
-            // 数据直接是数组
-            apiWarnings = response.data.data;
-          } else if (response.data.data && Array.isArray(response.data.data.alerts)) {
-            // 数据在data.alerts中
-            apiWarnings = response.data.data.alerts;
-          } else if (Array.isArray(response.data.alerts)) {
-            // 数据在alerts字段中
-            apiWarnings = response.data.alerts;
-          }
-
-          const convertedWarnings = apiWarnings.map(warning =>
-            this.convertAPIWarningToFrontend(warning)
-          ).filter(warning => warning !== null);
-
-          // 追加分页数据时仍按alert_id/message_id幂等合并。
-          this.warningList = this.mergeWarningLists(this.warningList, convertedWarnings);
-        }
-      } catch (error) {
-        this.currentPage--; // 回退页码
-        this.$message.error('加载更多预警失败');
-      } finally {
-        this.apiDataLoading = false;
-      }
-    },
-
     // =================== SSE连接相关方法 ===================
 
     // 初始化SSE连接
@@ -2685,131 +2487,6 @@ export default {
       return true;
     },
 
-    // 判断是否是传统报警消息格式
-    isTraditionalAlarmMessage(messageData) {
-      return messageData.deviceName && messageData.deviceId && messageData.alarmTime;
-    },
-
-    // 处理传统报警消息（参考UiHeader.vue的处理方式）
-    handleTraditionalAlarm(alarmData) {
-      try {
-        // 将传统报警数据转换为预警列表格式
-        const newWarning = this.convertTraditionalAlarmToWarning(alarmData);
-
-        if (!newWarning) {
-          return;
-        }
-
-        // 添加到预警列表顶部
-        this.warningList.unshift(newWarning);
-
-        // 限制列表长度，只保留最新的10条预警
-        if (this.warningList.length > 10) {
-          this.warningList = this.warningList.slice(0, 10);
-        }
-
-        // 显示新预警提示
-        this.$message({
-          message: `收到新报警：${newWarning.type} - ${newWarning.device}`,
-          type: 'warning',
-          duration: 3000
-        });
-      } catch (error) {
-        // 静默处理错误
-      }
-    },
-
-    // 将传统报警数据转换为前端预警格式
-    convertTraditionalAlarmToWarning(alarmData) {
-      try {
-        // 生成唯一ID
-        const id = `alarm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-        // 根据报警级别映射预警等级
-        const level = this.mapAlarmPriorityToLevel(alarmData.alarmPriorityDescription);
-
-        return {
-          id: id,
-          time: this.formatAlarmTime(alarmData.alarmTime),
-          device: alarmData.deviceName || `设备${alarmData.deviceId}`,
-          type: alarmData.alarmTypeDescription || '报警',
-          level: level,
-          location: `通道${alarmData.channelId}`,
-          status: 'pending',
-          imageUrl: null, // 传统报警可能没有图片
-          description: `${alarmData.alarmMethodDescription || ''}报警 - ${alarmData.alarmTypeDescription || ''}`,
-          operationHistory: [{
-            id: Date.now(),
-            operationType: 'pending',
-            status: 'active',
-            statusText: '待处理',
-            time: this.formatAlarmTime(alarmData.alarmTime),
-            description: `系统检测到${alarmData.alarmTypeDescription || '异常情况'}，等待处理人员确认`,
-            operator: '系统'
-          }]
-        };
-      } catch (error) {
-        return null;
-      }
-    },
-
-    // 映射报警级别到预警等级
-    mapAlarmPriorityToLevel(priorityDescription) {
-      const priorityMap = {
-        '一级': 'level1',
-        '紧急': 'level1',
-        '高': 'level1',
-        '二级': 'level2',
-        '重要': 'level2',
-        '中高': 'level2',
-        '三级': 'level3',
-        '中等': 'level3',
-        '中': 'level3',
-        '四级': 'level4',
-        '低': 'level4',
-        '一般': 'level4'
-      };
-
-      // 查找匹配的级别
-      for (const [key, value] of Object.entries(priorityMap)) {
-        if (priorityDescription && priorityDescription.includes(key)) {
-          return value;
-        }
-      }
-
-      // 默认返回四级
-      return 'level4';
-    },
-
-    // 格式化报警时间
-    formatAlarmTime(alarmTime) {
-      try {
-        if (!alarmTime) return this.getCurrentTime();
-
-        // 如果已经是标准格式，直接返回
-        if (alarmTime.includes('-') && alarmTime.includes(':')) {
-          return alarmTime;
-        }
-
-        // 处理其他格式
-        const date = new Date(alarmTime);
-        if (isNaN(date.getTime())) {
-          return alarmTime; // 如果解析失败，返回原字符串
-        }
-
-        return date.toLocaleString('zh-CN', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        });
-      } catch (error) {
-        return alarmTime || this.getCurrentTime();
-      }
-    },
-
     // 处理新预警
     handleNewAlert(alertData, eventId = '') {
       try {
@@ -2843,62 +2520,16 @@ export default {
         if (this.warningList.length > this.pageSize) {
           this.warningList = this.warningList.slice(0, this.pageSize);
         }
-        if (!replacesExisting) this.totalWarnings++;
-
         // 新预警已添加到列表
       } catch (error) {
         // 静默处理错误
       }
     },
 
-    // 处理预警更新
-    async handleAlertUpdate(alertData) {
-      try {
-        const alertId = alertData.alert_id || alertData.id;
-        // 查找现有预警并更新
-        const index = this.warningList.findIndex(warning =>
-          String(warning.id) === String(alertId) ||
-          (warning._apiData && String(warning._apiData.alert_id) === String(alertId))
-        );
-
-        if (index !== -1) {
-          // 更新现有预警 - 统一使用API转换方法
-          const updatedWarning = this.convertAPIWarningToFrontend(alertData);
-
-          if (!updatedWarning) {
-            return;
-          }
-
-          // 如果预警已处理，从列表中移除
-          if (this.isProcessedStatus(updatedWarning.status)) {
-            await this.removeWarningAndReload(alertId);
-            return;
-          }
-
-          this.$set(this.warningList, index, updatedWarning);
-        }
-      } catch (error) {
-        // 静默处理错误
-      }
-    },
-
-
-
-
     // 判断预警状态是否为已处理（已处理/已归档/误报等不需要在实时预警中展示的状态）
     isProcessedStatus(status) {
       const processedStatuses = ['completed', 'archived', 'false_alarm'];
       return processedStatuses.includes(status);
-    },
-
-    // 转换预警等级
-    convertAlertLevel(backendLevel) {
-      return toAlertLevelKey(backendLevel, 'level4');
-    },
-
-    // 转换预警状态
-    convertAlertStatus(statusNumber, statusDisplay) {
-      return toAlertStatusKey(statusNumber, statusDisplay);
     },
 
     // 转换处理历史 - 确保与状态判断逻辑一致
@@ -2911,15 +2542,14 @@ export default {
         processedBy,
         processedAt,
         processingNotes,
-        formatTime: value => this.formatAPITime(value),
-        currentTime: () => this.getCurrentTime()
+        formatTime: value => formatAlertDateTime(value),
+        currentTime: () => getCurrentAlertTime()
       });
     },
 
     // 处理SSE连接建立/重连成功
     handleSSEOpen() {
       if (this.componentDestroyed) return;
-      console.log('SSE连接已建立（含重连成功），更新状态为已连接');
       this.sseStatus.connected = true;
       this.sseStatus.reconnecting = false;
     },
@@ -2938,14 +2568,12 @@ export default {
 
     // 处理SSE连接关闭
     handleSSEClose() {
-      console.log('SSE连接已关闭');
       this.sseStatus.connected = false;
       this.sseStatus.reconnecting = false;
     },
 
     // 清理SSE连接
     cleanupSSEConnection() {
-      console.log('清理SSE连接');
 
       if (this.sseConnection) {
         this.sseConnection.close();
@@ -2955,22 +2583,6 @@ export default {
       this.sseReplayRemaining = 0;
       this.sseStatus.connected = false;
       this.sseStatus.reconnecting = false;
-    },
-
-    // 手动重连SSE
-    reconnectSSE() {
-      console.log('手动重连SSE');
-      if (this.sseReconnectTimer) {
-        clearTimeout(this.sseReconnectTimer);
-        this.sseReconnectTimer = null;
-      }
-      this.cleanupSSEConnection();
-      this.sseStatus.reconnecting = true;
-
-      this.sseReconnectTimer = setTimeout(() => {
-        this.sseReconnectTimer = null;
-        if (!this.componentDestroyed) this.initSSEConnection();
-      }, 1000);
     },
 
     // 获取SSE状态样式类
@@ -3233,1901 +2845,7 @@ export default {
 }
 </script>
 
-<style scoped>
-/* 实时监控容器 - 科技感蓝色风格 */
-.realtime-monitoring-container {
-  height: calc(100vh - 60px);
-  max-height: calc(100vh - 60px);
-  background: #f5f5f5;
-  padding: 0;
-  overflow: hidden;
-}
-
-/* 主容器 - 科技感设计 */
-.main-container {
-  height: calc(100vh - 60px);
-  max-height: calc(100vh - 60px);
-  background: #f5f5f5;
-  position: relative;
-  padding: 16px;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-/* 移除蓝色渐变背景 */
-
-/* 移除z-index设置 */
-
-/* 设备树容器 - 科技感设计 */
-.device-tree-aside {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-right: 1px solid rgba(59, 130, 246, 0.1);
-  height: 100%;
-  overflow: hidden;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
-  border-radius: 16px;
-  margin-right: 16px;
-  z-index: 10;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(59, 130, 246, 0.1);
-}
-
-
-
-.device-tree-aside > * {
-  position: relative;
-  z-index: 2;
-}
-
-.custom-tree-header {
-  padding: 20px 16px;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  color: #1e40af;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
-  min-height: 80px;
-  flex-shrink: 0;
-  border-radius: 16px 16px 0 0;
-  position: relative;
-  overflow: hidden;
-  text-shadow: none;
-}
-
-
-
-@keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-/* 添加header-switch样式 */
-.header-title {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.header-title i {
-  font-size: 18px;
-  margin-right: 8px;
-}
-
-.header-title span {
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.header-switch {
-  margin-top: 6px;
-}
-
-.header-switch /deep/ .el-switch__label {
-  color: #1e40af !important;
-  font-weight: 600 !important;
-  text-shadow: none !important;
-}
-
-.header-switch /deep/ .el-switch__label.is-active {
-  color: #1e40af !important;
-}
-
-.custom-tree-container {
-  flex: 1;
-  overflow: auto;
-  height: calc(100% - 80px);
-  padding: 16px;
-  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-}
-
-/* 覆盖树组件样式 */
-.device-tree-aside /deep/ #DeviceTree {
-  height: 100% !important;
-}
-
-.device-tree-aside /deep/ .el-container {
-  height: 100% !important;
-}
-
-.device-tree-aside /deep/ .el-header {
-  display: none !important; /* 隐藏原组件头部 */
-}
-
-.device-tree-aside /deep/ .el-main {
-  padding: 0 !important;
-  overflow: visible !important;
-  height: auto !important;
-  min-height: 100%;
-}
-
-/* 简单修复树节点样式 */
-.device-tree-aside /deep/ .el-tree-node__content {
-  height: auto !important;
-  min-height: 34px !important;
-  transition: all 0.2s ease !important;
-  border-radius: 0 !important;
-  margin: 2px 0 !important;
-  padding: 0 8px !important;
-}
-
-/* 修正文字显示不全问题 */
-.device-tree-aside /deep/ .custom-tree-node {
-  font-size: 14px !important;
-  line-height: 20px !important;
-  transition: all 0.3s ease !important;
-  font-weight: 500 !important;
-  width: 100% !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  display: flex !important;
-  align-items: center !important;
-  padding: 0 !important;
-}
-
-.device-tree-aside /deep/ .flow-tree {
-  padding: 0 !important;
-}
-
-/* 视频主容器 - 科技感设计 */
-.video-main-container {
-  flex: 1;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  position: relative;
-  margin: 0 16px;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-}
-
-
-
-.video-main-container > * {
-  position: relative;
-  z-index: 2;
-}
-
-/* 视频工具栏 - 科技感设计 */
-.video-toolbar {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  position: relative;
-  overflow: hidden;
-}
-
-
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.view-mode-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-/* 预警列表侧边栏 - 科技感设计，固定高度避免滚动条 */
-.warning-aside {
-  width: 270px;
-  flex: none;
-  height: calc(100vh - 120px);
-  max-height: calc(100vh - 120px);
-  position: relative;
-  overflow: hidden;
-}
-
-.warning-list {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  position: relative;
-}
-
-
-
-.warning-list > * {
-  position: relative;
-  z-index: 2;
-}
-
-/* 修复视频网格 */
-.el-main {
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-  background-color: #2c3e50 !important;
-  width: 100% !important;
-  height: calc(100% - 5vh) !important;
-}
-
-/* 调整四分屏布局 */
-.video-grid.four {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  align-content: flex-start !important;
-  justify-content: space-between !important;
-  gap: 4px !important;
-  padding: 4px !important;
-}
-
-.video-grid.four .video-cell {
-  width: calc(50% - 4px) !important;
-  height: calc(50% - 4px) !important;
-  margin: 0 !important;
-}
-
-.header-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.current-time {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  color: #1f2937;
-  font-weight: 500;
-  padding: 8px 16px;
-  background: rgba(59, 130, 246, 0.05);
-  border-radius: 8px;
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.current-time i {
-  color: #3b82f6;
-  font-size: 16px;
-}
-
-/* 按钮样式 - 科技感设计 */
-.btn {
-  margin: 0 6px;
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  font-size: 16px;
-  color: #4b5563;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  backdrop-filter: blur(4px);
-}
-
-.btn:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: #3b82f6;
-  color: #1e40af;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
-  transform: translateY(-1px);
-}
-
-.btn.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  color: #fff;
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.fullscreen-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.fullscreen-btn:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-  transform: translateY(-2px);
-}
-
-
-
-.btn.disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-  color: #c0c4cc;
-}
-
-/* 视频主区域 - 科技感设计 */
-.video-main {
-  padding: 16px;
-  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  overflow: hidden;
-}
-
-/* 视频网格 - 科技感设计 */
-.video-grid {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  padding: 16px;
-  position: relative;
-  display: grid;
-  gap: 16px;
-}
-
-
-
-.video-grid > * {
-  position: relative;
-  z-index: 2;
-}
-
-.video-grid.single {
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
-}
-
-.video-grid.four {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-  padding: 2px;
-  background-color: #2c3e50;
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-}
-
-.video-grid.nine {
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
-  gap: 4px; /* 九分屏保留间隙 */
-  padding: 4px 8px 4px 4px; /* 右侧增加padding */
-}
-
-/* 视频单元格 - 科技感设计 */
-.video-cell {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid #f3f4f6;
-  position: relative;
-  animation: fadeIn 0.4s ease-out;
-}
-
-
-
-.video-cell > * {
-  position: relative;
-  z-index: 2;
-}
-
-.video-cell.selected {
-  border: 1px solid #3b82f6;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
-  transform: translateY(-2px);
-  z-index: 5;
-}
-
-.video-cell:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  z-index: 3;
-}
-
-/* 视频标题栏 - 科技感设计 */
-.video-slim-header {
-  height: 36px;
-  padding: 0 16px;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: white;
-  font-size: 13px;
-  font-weight: 500;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-
-
-@keyframes headerShimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-.video-slim-header .camera-name {
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.video-slim-header .video-status {
-  display: flex;
-  align-items: center;
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
-  margin-left: 8px;
-  backdrop-filter: blur(4px);
-}
-
-.video-slim-header .video-status .status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-right: 4px;
-}
-
-.video-slim-header .video-status.online {
-  color: #95ffa5;
-}
-
-.video-slim-header .video-status.online .status-dot {
-  background-color: #67c23a;
-  box-shadow: 0 0 4px #67c23a;
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-.video-slim-header .video-status.offline {
-  color: #ffbbbb;
-}
-
-.video-slim-header .video-status.offline .status-dot {
-  background-color: #f56c6c;
-}
-
-.video-cell .video-content {
-  flex: 1;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  min-height: 0;
-  height: calc(100% - 36px);
-  width: 100%;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-/* 确保视频占满容器 */
-.video-cell .video-content > div {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-/* 视频占位符 - 科技感设计 */
-.video-cell .video-content .video-placeholder {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, #0a1526, #1e3c72);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  box-sizing: border-box;
-  position: relative;
-}
-
-
-
-@keyframes patternMove {
-  0% { background-position: 0 0; }
-  100% { background-position: 20px 20px; }
-}
-
-.video-cell .video-content .no-signal {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.8);
-  width: 100%;
-  height: 100%;
-  z-index: 2;
-  position: relative;
-}
-
-.video-cell .video-content .no-signal i {
-  font-size: 36px;
-  margin-bottom: 12px;
-  color: rgba(255, 255, 255, 0.7);
-  opacity: 0.8;
-}
-
-.video-cell .video-content .no-signal div {
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* 预警列表头部 - 科技感设计，调整高度 */
-.warning-list .list-header {
-  padding: 16px 20px;
-  font-size: 16px;
-  font-weight: 600;
-  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  color: #1e40af;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: relative;
-  overflow: hidden;
-  text-shadow: none;
-  flex-shrink: 0;
-}
-
-.warning-list .list-header .header-left {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-/* SSE连接状态指示器 */
-.sse-status-indicator {
-  display: flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.sse-status-indicator .status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-right: 4px;
-  display: inline-block;
-}
-
-/* 已连接状态 - 绿色 */
-.sse-status-indicator.status-connected {
-  background: rgba(16, 185, 129, 0.1);
-  color: #065f46;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.sse-status-indicator.status-connected .status-dot {
-  background-color: #10b981;
-  box-shadow: 0 0 4px #10b981;
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-/* 重连中状态 - 橙色 */
-.sse-status-indicator.status-reconnecting {
-  background: rgba(245, 158, 11, 0.1);
-  color: #92400e;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.sse-status-indicator.status-reconnecting .status-dot {
-  background-color: #f59e0b;
-  animation: pulse 1s infinite ease-in-out;
-}
-
-/* 未连接状态 - 红色 */
-.sse-status-indicator.status-disconnected {
-  background: rgba(239, 68, 68, 0.1);
-  color: #991b1b;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.sse-status-indicator.status-disconnected .status-dot {
-  background-color: #ef4444;
-}
-
-
-
-.warning-list .list-header .more-btn {
-  color: #1e40af;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  background: rgba(59, 130, 246, 0.1);
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(4px);
-}
-
-.warning-list .list-header .more-btn:hover {
-  background: rgba(59, 130, 246, 0.2);
-  color: #1e40af;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
-}
-
-.warning-list .list-content {
-  flex: 1;
-  padding: 12px;
-  overflow-y: auto;
-  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  height: calc(100% - 60px);
-}
-
-/* 加载状态样式 */
-.warning-list .list-content .loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  color: #909399;
-  font-size: 14px;
-}
-
-.warning-list .list-content .loading-state i {
-  font-size: 32px;
-  margin-bottom: 12px;
-  color: #3b82f6;
-  animation: spin 1s linear infinite;
-}
-
-.warning-list .list-content .loading-state span {
-  font-weight: 500;
-}
-
-/* 空状态样式 */
-.warning-list .list-content .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  color: #909399;
-  font-size: 14px;
-}
-
-.warning-list .list-content .empty-state i {
-  font-size: 48px;
-  margin-bottom: 12px;
-  color: #c0c4cc;
-}
-
-.warning-list .list-content .empty-state span {
-  margin-bottom: 12px;
-  font-weight: 500;
-}
-
-.warning-list .list-content .empty-state .el-button {
-  color: #3b82f6;
-  font-size: 13px;
-}
-
-.warning-list .list-content .empty-state .el-button:hover {
-  color: #1e40af;
-  background: rgba(59, 130, 246, 0.1);
-}
-
-/* 旋转动画 */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* 预警项目 - 科技感设计，调整尺寸减少滚动条 */
-.warning-list .list-content .warning-item {
-  padding: 8px;
-  background: white;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  font-size: 13px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #f3f4f6;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  animation: slideIn 0.5s ease-out;
-}
-
-
-
-.warning-list .list-content .warning-item > * {
-  position: relative;
-  z-index: 2;
-}
-
-.warning-list .list-content .warning-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.warning-list .list-content .warning-item .warning-status-container {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  display: flex;
-  gap: 6px;
-  z-index: 2;
-}
-
-/* 预警等级标签 - 科技感样式（参考摄像头页面状态标签） */
-.warning-list .list-content .warning-item .warning-level-badge {
-  display: inline-block;
-  padding: 0 8px !important;
-  height: 24px !important;
-  line-height: 22px !important;
-  font-size: 12px !important;
-  border-radius: 6px !important;
-  font-weight: 500 !important;
-  transition: all 0.3s ease !important;
-  border: 1px solid !important;
-}
-
-.warning-list .list-content .warning-item .warning-level-badge:hover {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* 一级预警 - 危险红色渐变 */
-.warning-list .list-content .warning-item .warning-level-badge.level1 {
-  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%) !important;
-  color: #991b1b !important;
-  border-color: #fca5a5 !important;
-}
-
-/* 二级预警 - 警告橙色渐变 */
-.warning-list .list-content .warning-item .warning-level-badge.level2 {
-  background: linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%) !important;
-  color: #92400e !important;
-  border-color: #fbbf24 !important;
-}
-
-/* 三级预警 - 信息蓝色渐变 */
-.warning-list .list-content .warning-item .warning-level-badge.level3 {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  color: #1e40af !important;
-  border-color: #93c5fd !important;
-}
-
-/* 四级预警 - 成功绿色渐变 */
-.warning-list .list-content .warning-item .warning-level-badge.level4 {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
-  color: #065f46 !important;
-  border-color: #a7f3d0 !important;
-}
-
-/* 预警状态标签 - 科技感样式 */
-.warning-list .list-content .warning-item .warning-status-badge {
-  display: inline-block;
-  padding: 0 8px !important;
-  height: 24px !important;
-  line-height: 22px !important;
-  font-size: 12px !important;
-  border-radius: 6px !important;
-  font-weight: 500 !important;
-  transition: all 0.3s ease !important;
-  border: 1px solid !important;
-}
-
-.warning-list .list-content .warning-item .warning-status-badge:hover {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* 待处理状态 - 灰色渐变 */
-.warning-list .list-content .warning-item .warning-status-badge.status-pending {
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%) !important;
-  color: #4b5563 !important;
-  border-color: #d1d5db !important;
-}
-
-/* 处理中状态 - 蓝色渐变 */
-.warning-list .list-content .warning-item .warning-status-badge.status-processing {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  color: #1e40af !important;
-  border-color: #93c5fd !important;
-}
-
-/* 已完成状态 - 绿色渐变 */
-.warning-list .list-content .warning-item .warning-status-badge.status-completed {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
-  color: #065f46 !important;
-  border-color: #a7f3d0 !important;
-}
-
-/* 已归档状态 - 深灰色渐变 */
-.warning-list .list-content .warning-item .warning-status-badge.status-archived {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%) !important;
-  color: #374151 !important;
-  border-color: #9ca3af !important;
-}
-
-/* 误报状态 - 橙色渐变 */
-.warning-list .list-content .warning-item .warning-status-badge.status-false-alarm {
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%) !important;
-  color: #9a3412 !important;
-  border-color: #fdba74 !important;
-}
-
-
-
-.warning-list .list-content .warning-item .warning-info {
-  padding: 2px 0;
-}
-
-.warning-list .list-content .warning-item .warning-info .warning-time-location {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.warning-list .list-content .warning-item .warning-info .warning-time {
-  font-size: 12px;
-  color: #909399;
-  margin-bottom: 0;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  flex: 1;
-}
-
-.warning-list .list-content .warning-item .warning-info .warning-time:before {
-  content: '';
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 6px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23909399"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>');
-  background-size: contain;
-}
-
-.warning-list .list-content .warning-item .warning-info .warning-location {
-  font-size: 12px;
-  color: #909399;
-  margin-bottom: 0;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  flex: 1;
-  justify-content: flex-end;
-}
-
-.warning-list .list-content .warning-item .warning-info .warning-location:before {
-  content: '';
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 6px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23909399"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>');
-  background-size: contain;
-}
-
-.warning-list .list-content .warning-item .warning-info .warning-detail {
-  font-size: 13px;
-  color: #303133;
-  font-weight: 500;
-  line-height: 1.6;
-}
-
-.warning-list .list-content .warning-item .warning-info .warning-detail .device-type-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.warning-list .list-content .warning-item .warning-info .warning-detail .device-name {
-  font-weight: 500;
-  color: #303133;
-}
-
-.warning-list .list-content .warning-item .warning-info .warning-detail .violation-type {
-  color: #909399;
-  font-weight: 500;
-  background: rgba(144, 147, 153, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-/* 预警操作按钮 - 与详情弹框颜色保持一致 */
-.warning-list .list-content .warning-item .warning-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
-  gap: 6px;
-}
-
-.warning-list .list-content .warning-item .warning-actions .el-button {
-  flex: 1;
-  margin: 0;
-  padding: 6px 8px;
-  font-size: 11px;
-  border-radius: 6px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-/* 预警操作按钮基础样式 - 与预警详情页面保持一致 */
-.warning-list .list-content .warning-item .warning-actions .el-button {
-  padding: 6px 12px;
-  font-size: 11px;
-  border-radius: 16px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  background-color: transparent;
-  border-color: #d1d5db;
-  color: #4b5563;
-  border-width: 1px;
-  border-style: solid;
-}
-
-/* 所有按钮的悬浮效果 - 淡蓝色交互效果 */
-.warning-list .list-content .warning-item .warning-actions .el-button:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: #3b82f6;
-  color: #1e40af;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
-}
-
-/* 禁用状态样式 */
-.warning-list .list-content .warning-item .warning-actions .el-button.is-disabled,
-.warning-list .list-content .warning-item .warning-actions .el-button:disabled {
-  background-color: transparent;
-  border-color: #e4e7ed;
-  color: #c0c4cc;
-  transform: none;
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-.warning-list .list-content .warning-item .warning-actions .el-button.is-disabled:hover,
-.warning-list .list-content .warning-item .warning-actions .el-button:disabled:hover {
-  background-color: transparent;
-  border-color: #e4e7ed;
-  color: #c0c4cc;
-  transform: none;
-  box-shadow: none;
-}
-
-/* 原有的plain样式已移除，统一使用新的科技感蓝色交互效果 */
-
-@keyframes pulse {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.2);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* 单分屏时调整视频比例 */
-.video-grid.single .video-cell {
-  border-radius: 0; /* 移除单分屏模式下的圆角 */
-  box-shadow: none; /* 移除单分屏模式下的阴影 */
-  border: none; /* 移除单分屏模式下的边框 */
-  height: 100%;
-  width: 100%;
-}
-
-.video-grid.single .video-cell.selected {
-  border: none; /* 移除选中状态下的边框 */
-  box-shadow: none; /* 移除选中状态下的阴影 */
-  transform: none; /* 移除选中状态下的变换 */
-}
-
-/* 调整单分屏模式下的标题栏 */
-.video-grid.single .video-cell .video-slim-header {
-  border-radius: 0; /* 移除标题栏的圆角 */
-}
-
-/* 四分屏时调整每个单元格比例 */
-.video-grid.four .video-cell {
-  width: calc(50% - 4px);
-  height: calc(50% - 4px);
-  margin: 2px;
-  box-sizing: border-box;
-  flex-grow: 0;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-}
-
-/* 九分屏时保持较小的单元格 */
-.video-cell {
-  background: #1e2430;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  transition: all 0.3s;
-  border: 2px solid transparent;
-  position: relative;
-  animation: fadeIn 0.4s ease-out;
-}
-
-.video-cell .video-slim-header {
-  height: 26px;
-  padding: 0 10px;
-  background: rgba(28, 58, 112, 0.8);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: white;
-  font-size: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  z-index: 5;
-}
-
-.video-cell .video-slim-header .camera-name {
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.video-cell .video-slim-header .video-status {
-  display: flex;
-  align-items: center;
-  font-size: 11px;
-  padding: 1px 6px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.3);
-  margin-left: 8px;
-}
-
-.video-cell .video-slim-header .video-status .status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-right: 4px;
-}
-
-.video-cell .video-slim-header .video-status.online {
-  color: #95ffa5;
-}
-
-.video-cell .video-slim-header .video-status.online .status-dot {
-  background-color: #67c23a;
-  box-shadow: 0 0 4px #67c23a;
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-.video-cell .video-slim-header .video-status.offline {
-  color: #ffbbbb;
-}
-
-.video-cell .video-slim-header .video-status.offline .status-dot {
-  background-color: #f56c6c;
-}
-
-/* 全屏模式下的样式调整 */
-body.camera-fullscreen-mode .video-cell .video-slim-header {
-  height: 36px;
-  padding: 0 16px;
-  font-size: 14px;
-  background: rgba(20, 40, 80, 0.7);
-  backdrop-filter: blur(5px);
-}
-
-/* 调整el-main的填充，使视频网格居中 */
-#realTimeMonitoring .el-main {
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
-  background-color: #2c3e50;
-  width: 100%;
-  height: calc(100% - 5vh);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 确保视频网格容器完全填充主区域 */
-.el-main .video-grid {
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  margin: 0;
-  position: relative;
-}
-
-/* 全屏状态下的必要样式 */
-body.camera-fullscreen-mode .video-cell .video-content {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  height: 100% !important;
-  width: 100% !important;
-}
-
-body.camera-fullscreen-mode .video-cell .video-content .video-placeholder {
-  background: linear-gradient(135deg, #102948, #1e3c72) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
-  font-size: 18px !important;
-}
-
-
-
-/* 调整el-main在单分屏模式下的样式 */
-.single-screen-mode .el-main {
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
-}
-
-.single-screen-mode .video-grid {
-  width: 100%;
-  height: 100%;
-  background-color: #1e2430;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.single-screen-mode .video-grid .video-cell {
-  background-color: #1e2430;
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-}
-
-.single-screen-mode .video-grid .video-cell .video-content {
-  background-color: #1e2430;
-}
-
-.single-screen-mode .video-grid .video-cell .video-content .video-placeholder {
-  background: linear-gradient(45deg, #0a1526, #1e3c72);
-}
-
-/* 修复文本只显示一半的问题 */
-.device-tree-aside /deep/ .custom-tree-node {
-  font-size: 14px !important;
-  line-height: 20px !important;
-  transition: all 0.3s ease !important;
-  font-weight: 500 !important;
-  width: 100% !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  display: flex !important;
-  align-items: center !important;
-  padding: 0 !important;
-}
-
-/* 调整树节点高度，确保文本显示完整 */
-.device-tree-aside /deep/ .el-tree-node__content {
-  height: auto !important;
-  min-height: 34px !important;
-  transition: all 0.2s ease !important;
-  border-radius: 0 !important;
-  margin: 2px 0 !important;
-  padding: 0 8px !important;
-}
-
-/* 修改树节点悬浮效果，使其更加轻微 */
-.device-tree-aside /deep/ .el-tree-node__content:hover {
-  background-color: rgba(64, 158, 255, 0.1) !important;
-  transform: translateX(2px) !important;
-}
-
-/* 在自定义树容器中添加底部内边距，确保最后一项完全显示 */
-.custom-tree-container {
-  flex: 1;
-  overflow: auto;
-  height: calc(100% - 80px);
-  padding-bottom: 20px !important; /* 添加底部内边距 */
-}
-
-/* 添加树节点选中样式以区分悬浮状态 */
-.device-tree-aside /deep/ .is-current>.el-tree-node__content {
-  background-color: rgba(64, 158, 255, 0.15) !important;
-  color: #409EFF !important;
-  font-weight: bold !important;
-  transform: none !important;
-}
-
-/* 修复图标显示 */
-.device-tree-aside /deep/ .iconfont {
-  transition: all 0.2s ease !important;
-  margin-right: 6px !important;
-  font-size: 16px !important;
-  min-width: 16px !important;
-  text-align: center !important;
-  display: inline-block !important;
-  flex-shrink: 0 !important;
-}
-
-/* 确保文本容器有足够的空间 */
-.device-tree-aside /deep/ .custom-tree-node span {
-  line-height: 1.5 !important;
-  display: inline-block !important;
-  padding-bottom: 2px !important; /* 底部添加小间距 */
-  vertical-align: middle !important;
-}
-
-.warning-list .list-content .warning-item .warning-video {
-  width: 100%;
-  height: 100px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-  overflow: hidden;
-  padding: 0;
-  position: relative;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-}
-
-.warning-list .list-content .warning-item .warning-image {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-  border-radius: 6px;
-}
-
-.warning-list .list-content .warning-item .warning-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  transition: transform 0.3s ease;
-}
-
-.warning-list .list-content .warning-item:hover .warning-image img {
-  transform: scale(1.05);
-}
-
-.warning-list .list-content .warning-item .warning-video .video-placeholder {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, #0a1526, #1e3c72);
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  border-radius: 0;
-  position: relative;
-}
-
-.warning-list .list-content .warning-item .warning-video .video-placeholder i {
-  font-size: 36px;
-  margin-bottom: 12px;
-  opacity: 0.8;
-}
-
-.warning-list .list-content .warning-item .warning-video .video-placeholder span {
-  font-size: 13px;
-  opacity: 0.9;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.warning-list .list-content .warning-item.level1 .warning-video .video-placeholder i {
-  color: #f56c6c;
-  animation: pulse 1.5s infinite;
-}
-
-.warning-list .list-content .warning-item.level2 .warning-video .video-placeholder i {
-  color: #e6a23c;
-}
-
-.warning-list .list-content .warning-item.level3 .warning-video .video-placeholder i {
-  color: #409EFF;
-}
-
-.warning-list .list-content .warning-item.level4 .warning-video .video-placeholder i {
-  color: #67c23a;
-}
-
-.warning-media .placeholder-image,
-.warning-media .placeholder-video {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(45deg, #1e3c72, #2a5298);
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-}
-
-.warning-media .placeholder-image i,
-.warning-media .placeholder-video i {
-  opacity: 0.8;
-  margin-bottom: 10px;
-}
-
-.warning-media .placeholder-image i.el-icon-warning {
-  color: #f56c6c;
-  animation: pulse 1.5s infinite;
-}
-
-.warning-media .placeholder-video i.el-icon-video-camera {
-  color: #409EFF;
-}
-
-body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-icon-warning {
-  color: #f56c6c;
-  animation: pulse 1.5s infinite;
-}
-
-.process-tip {
-  margin-top: 10px;
-  padding: 8px 12px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  border-left: 3px solid #909399;
-}
-
-/* 归档对话框样式 */
-.archive-dialog-content {
-  padding: 10px 0;
-}
-
-.archive-info {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-  font-size: 14px;
-  color: #333;
-}
-
-.archive-selection {
-  margin-bottom: 20px;
-}
-
-.archive-tip {
-  margin-top: 20px;
-}
-
-/* 对话框样式优化 - 科技感设计 */
-.realtime-monitoring-container >>> .el-dialog {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-
-.realtime-monitoring-container >>> .el-dialog__header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-  padding: 16px 20px;
-}
-
-.realtime-monitoring-container >>> .el-dialog__title {
-  color: #1f2937;
-  font-weight: 600;
-}
-
-.realtime-monitoring-container >>> .el-dialog__close {
-  color: #6b7280;
-  transition: color 0.3s ease;
-}
-
-.realtime-monitoring-container >>> .el-dialog__close:hover {
-  color: #3b82f6;
-}
-
-.realtime-monitoring-container >>> .el-dialog__body {
-  padding: 20px;
-  background: #ffffff;
-}
-
-.realtime-monitoring-container >>> .el-button--primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border: none;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-  color: white;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-radius: 6px;
-}
-
-.realtime-monitoring-container >>> .el-button--primary:hover {
-  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
-  transform: translateY(-1px);
-}
-
-.realtime-monitoring-container >>> .el-button--success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: none;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
-  color: white;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-radius: 6px;
-}
-
-.realtime-monitoring-container >>> .el-button--success:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
-  transform: translateY(-1px);
-}
-
-.realtime-monitoring-container >>> .el-button--default {
-  background: white;
-  border: 1px solid #d1d5db;
-  color: #4b5563;
-  transition: all 0.3s ease;
-  border-radius: 6px;
-}
-
-.realtime-monitoring-container >>> .el-button--default:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: #3b82f6;
-  color: #1e40af;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-}
-
-/* 输入框和选择框样式优化 */
-.realtime-monitoring-container >>> .el-input__inner {
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-}
-
-.realtime-monitoring-container >>> .el-input__inner:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.realtime-monitoring-container >>> .el-textarea__inner {
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-}
-
-.realtime-monitoring-container >>> .el-textarea__inner:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-/* 通道列表区域隐藏滚动条 */
-.custom-tree-container::-webkit-scrollbar {
-  width: 0px;
-  background: transparent;
-}
-
-.custom-tree-container {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE和Edge */
-}
-
-/* 实时预警列表滚动条 - 黑色样式 */
-.warning-list .list-content::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.warning-list .list-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.warning-list .list-content::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 3px;
-}
-
-.warning-list .list-content::-webkit-scrollbar-thumb:hover {
-  background: #aaa;
-}
-
-/* 其他区域保持默认滚动条样式 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #aaa;
-}
-
-/* Loading动画 - 科技感效果 */
-.realtime-monitoring-container >>> .el-loading-mask {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(4px);
-}
-
-.realtime-monitoring-container >>> .el-loading-spinner {
-  color: #3b82f6 !important;
-}
-
-.realtime-monitoring-container >>> .el-loading-text {
-  color: #1f2937 !important;
-  font-weight: 500 !important;
-}
-
-/* Pulse动画 */
-@keyframes pulse {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.2);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* 淡入动画 */
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 🆕 OSD检测框叠加相关样式 */
-/* AI任务选择器 */
-.ai-task-selector {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 20;
-  background: rgba(0, 0, 0, 0.75);
-  padding: 6px;
-  border-radius: 6px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.ai-task-selector >>> .el-select {
-  width: 200px;
-}
-
-.ai-task-selector >>> .el-input__inner {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(59, 130, 246, 0.5);
-  color: #fff;
-  font-size: 12px;
-}
-
-.ai-task-selector >>> .el-input__inner::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-/* 视频播放器包装器 */
-.video-player-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-/* 调试信息：紧凑展示，限制尺寸避免遮挡画面 */
-.detection-debug-info {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  background: rgba(0, 0, 0, 0.72);
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  line-height: 1.35;
-  color: #fff;
-  z-index: 20;
-  max-width: min(160px, 36%);
-  max-height: 42%;
-  overflow: hidden;
-  pointer-events: none;
-  border: 1px solid rgba(59, 130, 246, 0.25);
-}
-
-.detection-debug-info .debug-line {
-  margin-bottom: 2px;
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.detection-debug-info .debug-line:last-child {
-  margin-bottom: 0;
-}
-
-.detection-debug-info .debug-label {
-  color: #8492a6;
-  margin-right: 6px;
-  flex-shrink: 0;
-  min-width: 28px;
-}
-
-.detection-debug-info .debug-value {
-  color: #fff;
-  font-weight: 500;
-  min-width: 0;
-}
-
-.detection-debug-info .debug-ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.detection-debug-info .debug-value.connected {
-  color: #10b981;
-}
-
-.detection-debug-info .debug-value.disconnected {
-  color: #f56c6c;
-}
-
-/* 🆕 OSD样式结束 */
-
-</style>
+<style scoped src="./styles/realTimeMonitoring.scoped.css"></style>
 
 <!-- 全局样式，处理全屏模式 -->
-<style>
-/* 归档对话框层级控制 - 确保始终在最上层 */
-/* 方案1: 直接设置对话框类的 z-index */
-.realtime-archive-dialog {
-  z-index: 3000 !important;
-}
-
-/* 方案2: 设置对话框包裹层的 z-index（Element UI 的实际结构） */
-.el-dialog__wrapper .realtime-archive-dialog {
-  z-index: 3001 !important;
-}
-
-/* 方案3: 针对归档对话框的包裹层（使用属性选择器作为备用） */
-div[aria-label="归档预警"] {
-  z-index: 3001 !important;
-}
-
-/* 方案4: 使用 :has 选择器（现代浏览器支持） */
-.el-dialog__wrapper:has(.realtime-archive-dialog) {
-  z-index: 3001 !important;
-}
-
-/* 归档对话框对应的遮罩层 */
-.v-modal[style*="z-index: 3000"] {
-  z-index: 3000 !important;
-}
-
-/* 归档对话框中的 select 下拉框层级控制 */
-.archive-select-dropdown {
-  z-index: 3002 !important;
-}
-
-/* 确保 select 下拉框在对话框之上 */
-.el-select-dropdown.archive-select-dropdown {
-  z-index: 3002 !important;
-}
-
-/* 全屏状态下的页面容器 */
-body.camera-fullscreen-mode #realTimeMonitoring {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  z-index: 9999 !important;
-  height: 100vh !important;
-  width: 100vw !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: linear-gradient(135deg, #0a1526, #1e3a70) !important;
-}
-
-/* 全屏状态下隐藏设备列表和预警列表 */
-body.camera-fullscreen-mode .el-aside {
-  display: none !important;
-}
-
-/* 全屏状态下调整监控容器样式 */
-body.camera-fullscreen-mode .el-container {
-  max-width: 100% !important;
-  width: 100% !important;
-  padding: 16px !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
-}
-
-/* 全屏状态下视频网格占满屏幕 */
-body.camera-fullscreen-mode .video-grid {
-  height: calc(100vh - 70px) !important;
-  max-height: 100vh !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-}
-
-/* 全屏状态下工具栏样式调整 */
-body.camera-fullscreen-mode .el-header {
-  background: rgba(0, 0, 0, 0.7) !important;
-  padding: 8px 16px !important;
-  border-radius: 8px !important;
-  margin-bottom: 16px !important;
-  position: absolute !important;
-  top: 16px !important;
-  right: 16px !important;
-  z-index: 10 !important;
-  width: auto !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-  backdrop-filter: blur(5px) !important;
-}
-
-/* 全屏状态下时间显示，移除背景 */
-body.camera-fullscreen-mode .current-time {
-  color: #ffffff !important;
-}
-
-body.camera-fullscreen-mode .current-time i {
-  color: #ffffff !important;
-}
-
-body.camera-fullscreen-mode .header-label {
-  color: #ffffff !important;
-}
-
-/* 全屏状态下按钮样式调整 */
-body.camera-fullscreen-mode .btn {
-  color: white !important;
-}
-
-body.camera-fullscreen-mode .btn:hover {
-  color: #409EFF !important;
-  background-color: rgba(255, 255, 255, 0.15) !important;
-}
-
-body.camera-fullscreen-mode .btn.active {
-  background-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-/* 确保全屏模式下没有滚动条 */
-body.camera-fullscreen-mode {
-  overflow: hidden !important;
-}
-
-/* 全屏模式下视频单元格样式 */
-body.camera-fullscreen-mode .video-cell {
-  border-width: 0 !important;
-  border-radius: 8px !important;
-  background: rgba(0, 0, 0, 0.2) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
-  width: 100% !important;
-  height: 100% !important;
-  overflow: hidden !important;
-}
-
-body.camera-fullscreen-mode .video-cell .video-overlay {
-  padding: 16px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0) 100%);
-}
-
-body.camera-fullscreen-mode .video-cell .video-overlay .camera-name {
-  font-size: 16px;
-}
-
-/* 默认滚动条样式 - 黑色主题 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #aaa;
-}
-
-/* 添加截图按钮的数据方法 */
-</style>
+<style src="./styles/realTimeMonitoring.global.css"></style>

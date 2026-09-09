@@ -51,21 +51,8 @@ export default {
       // 点击全选时固化筛选条件，避免确认前编辑表单导致选择范围漂移
       selectAllFilters: null,
       
-      // 预警等级配置
-      warningLevelConfig: {
-        '一级预警': { color: '#F56C6C', bg: '#FEF0F0' },
-        '二级预警': { color: '#E6A23C', bg: '#FDF6EC' },
-        '三级预警': { color: '#409EFF', bg: '#ECF5FF' },
-        '四级预警': { color: '#67C23A', bg: '#F0F9FF' }
-      },
-      
-
-      
       // 日期范围
       dateRange: null,
-      
-      // 目录搜索
-      searchDirectory: '',
       
       // 导出图片相关
       exportDialogVisible: false,
@@ -433,7 +420,6 @@ export default {
           }
         })
 
-        console.log('获取预警列表 - 请求参数:', apiParams)
 
         // 调用API获取数据
         const response = await alertAPI.getRealTimeAlerts(
@@ -441,7 +427,6 @@ export default {
           controller ? { signal: controller.signal } : {}
         )
         if (requestId !== this.warningListRequestId) return
-        console.log('获取预警列表 - API响应:', response.data)
 
         if (response.data && response.data.code === 0) {
           // 转换API数据为页面数据格式
@@ -456,7 +441,6 @@ export default {
             this.totalCount = response.data.total || 0
           }
           
-          console.log('预警列表转换完成:', this.warningList.length, '条数据，总数:', this.totalCount)
           if (!this.warningSkillOptions.length || !this.warningTypeOptions.length || !this.cameraOptions.length) {
             this.loadFilterOptions()
           }
@@ -527,9 +511,9 @@ export default {
         const operationHistory = this.convertProcessHistory(
           item.process,
           item.status,
-          this.formatApiTime(item.alert_time),
+          formatAlertDateTime(item.alert_time),
           item.processed_by,
-          this.formatApiTime(item.resolved_at || item.processed_at),
+          formatAlertDateTime(item.resolved_at || item.processed_at),
           item.processing_notes
         );
 
@@ -541,7 +525,7 @@ export default {
           value: 1,
           unit: '件',
           level: getAlertLevelName(item.alert_level),
-          time: this.formatApiTime(item.alert_time || item.created_at),
+          time: formatAlertDateTime(item.alert_time || item.created_at),
           status: toAlertStatusKey(item.status),
           
           // 摄像头信息
@@ -572,11 +556,6 @@ export default {
       })
     },
 
-    // 格式化API时间格式
-    formatApiTime(timeString) {
-      return formatAlertDateTime(timeString)
-    },
-
     // 🔧 转换处理历史 - 与realTimeMonitoring保持一致
     // alertTime: 预警产生时间, processedAt: 处理时间
     convertProcessHistory(processData, apiStatus, alertTime, processedBy, processedAt, processingNotes) {
@@ -587,8 +566,8 @@ export default {
         processedBy,
         processedAt,
         processingNotes,
-        formatTime: value => this.formatApiTime(value),
-        currentTime: () => this.getCurrentTime()
+        formatTime: value => formatAlertDateTime(value),
+        currentTime: () => getCurrentAlertTime()
       })
     },
     
@@ -597,7 +576,6 @@ export default {
       try {
         this.loading = true
         
-        console.log('🎯 warningManagement处理预警:', id, action);
         
         // 更新本地数据状态
         const index = this.warningList.findIndex(item => item.id === id)
@@ -763,7 +741,7 @@ export default {
             id: Date.now() + Math.random(),
             status: 'completed',
             statusText: '预警归档',
-            time: this.getCurrentTime(),
+            time: getCurrentAlertTime(),
             description: `预警已归档到：${archiveName}，可在预警档案中查看`,
             operationType: 'archive',
             operator: archiveResult.linked_by || this.getCurrentUserName(),
@@ -789,11 +767,6 @@ export default {
       } finally {
         this.loading = false
       }
-    },
-    
-    // 获取当前时间
-    getCurrentTime() {
-      return getCurrentAlertTime()
     },
     
     // 获取当前用户昵称
@@ -1231,52 +1204,6 @@ export default {
       }
     },
     
-    // 导出为CSV
-    exportToCSV(data) {
-      // CSV 表头
-      const headers = Object.keys(data[0])
-      
-      // 转换数据为CSV行
-      const csvRows = [
-        headers.join(','), // 表头行
-        ...data.map(row => 
-          headers.map(header => {
-            // 处理包含逗号的字段，用引号包裹
-            const field = String(row[header] || '')
-            return field.includes(',') ? `"${field}"` : field
-          }).join(',')
-        )
-      ]
-      
-      // 合并为CSV内容
-      const csvContent = csvRows.join('\n')
-      
-      // 创建Blob
-      const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' })
-      
-      // 创建下载链接
-      const fileName = `预警数据_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`
-      this.downloadFile(blob, fileName)
-    },
-    
-    // 下载文件通用方法
-    downloadFile(blob, fileName) {
-      // 创建下载链接
-      const link = document.createElement('a')
-      link.href = URL.createObjectURL(blob)
-      link.download = fileName
-      
-      // 模拟点击下载
-      document.body.appendChild(link)
-      link.click()
-      
-      // 清理
-      setTimeout(() => {
-        document.body.removeChild(link)
-        URL.revokeObjectURL(link.href)
-      }, 100)
-    },
-    
     // 选择预警项
     toggleSelect(id) {
       if (this.selectAllFiltered) {
@@ -1328,15 +1255,6 @@ export default {
     
 
     
-    // 获取文字颜色类名
-    getLevelTextClass(level) {
-      if (level === '一级预警') return 'level-1-text'
-      if (level === '二级预警') return 'level-2-text'
-      if (level === '三级预警') return 'level-3-text'
-      if (level === '四级预警') return 'level-4-text'
-      return ''
-    },
-    
     // 保存备注
     async saveRemark() {
       if (!this.remarkForm.remark.trim()) {
@@ -1349,9 +1267,6 @@ export default {
         
         // 获取当前预警信息（优先使用新的统一变量名）
         const warningId = this.currentProcessingWarningId || this.currentWarningId;
-        console.log('🔍 saveRemark - 查找预警ID:', warningId, '类型:', typeof warningId)
-        console.log('🔍 saveRemark - warningList长度:', this.warningList.length)
-        console.log('🔍 saveRemark - warningList IDs:', this.warningList.map(item => ({ id: item.id, type: typeof item.id })))
         
         // 确保ID类型一致（都转为字符串比较）
         const warning = this.warningList.find(item => String(item.id) === String(warningId))
@@ -1361,7 +1276,6 @@ export default {
           return
         }
         
-        console.log('✅ 找到预警信息:', warning.id)
 
         // 准备API更新数据
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(warningId)
@@ -1379,7 +1293,6 @@ export default {
           processed_by: this.getCurrentUserName()
         }
 
-        console.log('更新预警状态:', apiAlertId, updateData)
 
         // 调用API更新预警状态
         const response = await alertAPI.updateAlertStatus(apiAlertId, updateData)
@@ -1406,7 +1319,7 @@ export default {
               id: Date.now() + Math.random(),
               status: 'completed',
               statusText: '处理记录',
-              time: this.getCurrentTime(),
+              time: getCurrentAlertTime(),
               description: `处理意见：${this.remarkForm.remark}`,
               operationType: 'processing-action',
               operator: this.getCurrentUserName()
@@ -1414,7 +1327,6 @@ export default {
             
             this.warningList[index].operationHistory.push(newRecord)
             
-            console.log('✅ saveRemark - 本地状态已更新为处理中，_apiData.status:', this.warningList[index]._apiData.status)
           }
           
           this.$message.success('处理记录已添加')
@@ -1486,7 +1398,7 @@ export default {
           id: processingRecord.record_id || (Date.now() + Math.random()),
           status: 'active',
           statusText: '重新处理',
-          time: reopenedAt ? this.formatApiTime(reopenedAt) : this.getCurrentTime(),
+          time: reopenedAt ? formatAlertDateTime(reopenedAt) : getCurrentAlertTime(),
           description: reason,
           operationType: 'processing',
           operator: operatorName
@@ -1540,8 +1452,8 @@ export default {
             status: 'completed',
             statusText: '预警上报',
             time: reportRecord && reportRecord.reported_at
-              ? this.formatApiTime(reportRecord.reported_at)
-              : this.getCurrentTime(),
+              ? formatAlertDateTime(reportRecord.reported_at)
+              : getCurrentAlertTime(),
             description: this.reportForm.notes
               ? `预警已上报：${this.reportForm.notes}`
               : '预警已上报',
@@ -1621,22 +1533,6 @@ export default {
       }
     },
     
-    // 获取预警类型文本
-    getWarningTypeText(type) {
-      const typeMap = {
-        '未戴安全帽': '安全防护违规',
-        '未穿工作服': '安全防护违规',
-        '闲杂人员': '人员管理违规',
-        '违规吸烟': '消防安全违规',
-        '高空作业未系安全带': '高空作业违规',
-        '未穿反光背心': '安全防护违规',
-        '安全帽识别': '安全防护违规',
-        '工服识别': '安全防护违规',
-        '烟火检测': '消防安全违规'
-      };
-      return typeMap[type] || '其他安全违规';
-    },
-    
     // 获取预警等级标签文本
     getLevelBadgeText(level) {
       return getAlertLevelShortName(level)
@@ -1684,7 +1580,7 @@ export default {
             id: Date.now() + Math.random(),
             status: 'completed',
             statusText: '误报处理',
-            time: this.getCurrentTime(),
+            time: getCurrentAlertTime(),
             description: `预警被标记为误报：${reviewNotes}`,
             operationType: 'false_alarm',
             operator: this.getCurrentUserName()
@@ -1731,53 +1627,6 @@ export default {
       }
     },
     
-    // 保存到智能复判记录
-    async saveToReviewRecords(warningInfo) {
-      try {
-        // 创建复判记录数据
-        const reviewRecord = {
-          id: `review_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          originalWarningId: warningInfo.id,
-          warningType: warningInfo.type || warningInfo.deviceName,
-          deviceName: warningInfo.device || (warningInfo.deviceInfo && warningInfo.deviceInfo.name),
-          location: warningInfo.location || (warningInfo.deviceInfo && warningInfo.deviceInfo.position),
-          originalTime: warningInfo.time,
-          imageUrl: warningInfo.imageUrl,
-          level: warningInfo.level,
-          description: warningInfo.description,
-          reviewResult: 'false_alarm', // 复判结果：误报
-          reviewTime: this.getCurrentTime(),
-          reviewer: this.getCurrentUserName(),
-          reviewReason: '人工标记为误报',
-          confidence: 100, // 人工复判置信度100%
-          aiReviewResult: null, // AI复判结果（如果有的话）
-          aiConfidence: null,
-          status: 'completed',
-          createTime: this.getCurrentTime()
-        }
-        
-        // 保存到本地存储（实际项目中应该调用API保存到数据库）
-        let reviewRecords = JSON.parse(localStorage.getItem('intelligentReviewRecords') || '[]')
-        reviewRecords.unshift(reviewRecord)
-        
-        // 限制记录数量，避免本地存储过大
-        if (reviewRecords.length > 1000) {
-          reviewRecords = reviewRecords.slice(0, 1000)
-        }
-        
-        localStorage.setItem('intelligentReviewRecords', JSON.stringify(reviewRecords))
-        
-        // 这里是本地存储操作，不需要额外的API调用
-        console.log('📝 智能复判记录已保存到本地存储');
-        
-        console.log('误报记录已保存到智能复判:', reviewRecord)
-        
-      } catch (error) {
-        console.error('保存到智能复判记录失败:', error)
-        throw error
-      }
-    },
-    
     // 获取预警图标
     getWarningIcon(level) {
       const iconMap = {
@@ -1791,7 +1640,6 @@ export default {
     
     // 从预警列表处理预警 - 点击处理仅打开意见对话框，确认后才变更状态
     handleWarningFromList(warning) {
-      console.log('🖱️ warningManagement点击处理按钮, 预警ID:', warning && warning.id, '预警数据:', warning);
 
       if (warning && warning.id) {
         this.currentProcessingWarningId = warning.id;
@@ -1802,50 +1650,6 @@ export default {
       }
     },
 
-    // 打开处理意见对话框（不再立即变更后端状态）
-    startProcessingWarning(warning) {
-      this.currentProcessingWarningId = warning.id;
-      this.remarkDialogVisible = true;
-    },
-    
-    // 初始化操作历史 - 与预警详情对话框保持一致
-    initOperationHistory(warning) {
-      if (!warning) return
-      
-      // 如果预警有保存的操作历史，则直接返回
-      if (warning.operationHistory && Array.isArray(warning.operationHistory) && warning.operationHistory.length > 0) {
-        return
-      }
-      
-      // 如果没有操作历史，则创建默认的初始记录
-      const operationHistory = []
-      
-      // 添加预警产生记录（始终存在的初始记录）
-      operationHistory.push({
-        id: Date.now() + Math.random(),
-        status: 'completed',
-        statusText: '预警产生',
-        time: warning.time || this.getCurrentTime(),
-        description: `${warning.type || '系统检测'}：${warning.description || '检测到异常情况，请及时处理'}`,
-        operationType: 'create',
-        operator: '系统'
-      })
-      
-      // 添加待处理记录（始终显示）
-      operationHistory.push({
-        id: Date.now() + Math.random() + 1,
-        status: 'active',
-        statusText: '待处理',
-        time: warning.createTime || this.getCurrentTime(),
-        description: '预警已产生，等待处理人员确认并开始处理',
-        operationType: 'pending',
-        operator: ''
-      })
-      
-      // 设置操作历史
-      this.$set(warning, 'operationHistory', operationHistory)
-    },
-    
     // 结束处理 - 与预警详情对话框保持一致
     async finishProcessing() {
       try {
@@ -1853,7 +1657,6 @@ export default {
         
         // 获取当前预警信息（使用currentProcessingWarningId或currentWarningId）
         const warningId = this.currentProcessingWarningId || this.currentWarningId
-        console.log('🔍 finishProcessing - 查找预警ID:', warningId)
         
         // 确保ID类型一致（都转为字符串比较）
         const warning = this.warningList.find(item => String(item.id) === String(warningId))
@@ -1863,7 +1666,6 @@ export default {
           return
         }
         
-        console.log('✅ finishProcessing - 找到预警信息:', warning.id)
 
         // 准备API更新数据
         const apiAlertId = warning._apiData ? warning._apiData.alert_id : parseInt(warningId)
@@ -1881,7 +1683,6 @@ export default {
           processed_by: this.getCurrentUserName()
         }
 
-        console.log('结束处理预警:', apiAlertId, updateData)
 
         // 调用API更新预警状态
         const response = await alertAPI.updateAlertStatus(apiAlertId, updateData)
@@ -1918,7 +1719,7 @@ export default {
               id: Date.now() + Math.random(),
               status: 'completed',
               statusText: '已处理',
-              time: processingRecord.created_at ? this.formatApiTime(processingRecord.created_at) : this.getCurrentTime(),
+              time: processingRecord.created_at ? formatAlertDateTime(processingRecord.created_at) : getCurrentAlertTime(),
               description: processingNotes || '未填写处理意见',
               operationType: 'completed',
               operator: operatorName
@@ -1926,7 +1727,6 @@ export default {
             
             this.warningList[index].operationHistory.push(newRecord)
             
-            console.log('✅ finishProcessing - 本地状态已更新为已处理，_apiData.status:', this.warningList[index]._apiData.status)
           }
           
           this.$message.success('处理已完成，现在可以进行归档等操作')
@@ -2031,7 +1831,6 @@ export default {
 
     // 获取当前预警状态
     getCurrentWarningStatus(warning) {
-      console.log('🔍 检查预警状态:', warning.id, 'status:', warning.status, 'operationHistory:', warning.operationHistory);
       
       // 优先使用API返回的status字段（与后端alerts表的status字段对应）
       if (warning._apiData && typeof warning._apiData.status !== 'undefined') {
@@ -2043,7 +1842,6 @@ export default {
           5: { text: '误报', class: 'status-false-alarm' }     // FALSE_ALARM
         };
         const result = statusMap[warning._apiData.status] || { text: '未知', class: 'status-pending' };
-        console.log('📊 预警状态显示 - API status:', warning._apiData.status, '显示:', result);
         return result;
       }
       
@@ -2180,7 +1978,6 @@ export default {
 
       try {
         this.deleteLoading = true
-        console.log('批量删除预警:', body)
 
         const response = await alertAPI.batchDeleteAlerts(body)
 
@@ -2993,1224 +2790,4 @@ export default {
   </div>
 </template>
 
-<style scoped>
-.warning-management-container {
-  height: calc(100vh - 80px); /* 减去顶部导航栏高度，增加缓冲空间 */
-  background: #f5f5f5;
-  padding: 0;
-  overflow: hidden; /* 防止出现外部滚动条 */
-}
-
-/* 内容区样式 - 科技感蓝色背景 */
-.content-area {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 16px 16px 8px 16px; /* 减少底部内边距 */
-  overflow: hidden; /* 防止内容区域产生滚动条 */
-  box-sizing: border-box;
-}
-
-/* 搜索和筛选区域 - 科技感样式 */
-.search-filter-area {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0; /* 不允许收缩 */
-  min-height: 100px; /* 减少最小高度 */
-}
-
-
-
-.search-row {
-  display: flex;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-  position: relative;
-  z-index: 2;
-}
-
-.date-picker-wrapper,
-.select-wrapper,
-.input-wrapper {
-  margin-right: 12px;
-  margin-bottom: 8px;
-}
-
-.date-picker-wrapper {
-  width: 340px;
-}
-
-.select-wrapper {
-  width: 140px;
-}
-
-.input-wrapper {
-  width: 140px;
-}
-
-.filter-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid rgba(59, 130, 246, 0.1);
-  position: relative;
-  z-index: 2;
-}
-
-.filter-buttons {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.filter-buttons .el-button {
-  margin-right: 8px;
-  margin-bottom: 8px;
-  border-color: #e4e7ed;
-  background: #f5f7fa;
-  color: #606266;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-radius: 6px;
-}
-
-.filter-buttons .el-button.is-disabled,
-.filter-buttons .el-button.is-disabled:hover {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: #f5f7fa;
-  border-color: #e4e7ed;
-  color: #c0c4cc;
-}
-
-.filter-buttons .el-button:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: #3b82f6;
-  color: #1e3a8a;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
-  transform: translateY(-1px);
-}
-
-.filter-buttons .el-button.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  color: #fff;
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-.action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.action-buttons .el-button {
-  margin-left: 8px;
-  margin-bottom: 8px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-radius: 6px;
-}
-
-.action-buttons .el-button--primary {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
-  border: none;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(30, 64, 175, 0.3);
-  position: relative;
-  overflow: hidden;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
-.action-buttons .el-button--primary::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.6s ease;
-}
-
-.action-buttons .el-button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0891b2 100%);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5), 0 4px 8px rgba(30, 64, 175, 0.4);
-  transform: translateY(-2px);
-}
-
-.action-buttons .el-button--primary:hover::before {
-  left: 100%;
-}
-
-/* 预警卡片样式 - 科技感设计 */
-.warning-cards-container {
-  flex: 1;
-  height: calc(100vh - 200px); /* 进一步减少预留空间，让分页栏紧贴底部 */
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 20px;
-  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
-  border-radius: 16px;
-  margin: 1px;
-  /* 自定义滚动条样式 - 灰色主题 */
-  scrollbar-width: thin;
-  scrollbar-color: #c1c1c1 transparent;
-  box-sizing: border-box;
-}
-
-/* 自定义滚动条样式 - WebKit 灰色主题 */
-.warning-cards-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.warning-cards-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 3px;
-}
-
-.warning-cards-container::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-  transition: background 0.3s ease;
-}
-
-.warning-cards-container::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-.warning-cards-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 16px;
-  margin: 0;
-  padding-bottom: 20px; /* 底部预留空间，避免最后一行卡片贴底 */
-  min-height: 100%; /* 确保网格填满容器 */
-  align-content: flex-start; /* 卡片从顶部开始排列 */
-}
-
-.warning-col {
-  width: calc(16.66% - 13.33px);
-  margin: 0;
-}
-
-.warning-card {
-  height: 370px;
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 0;
-  position: relative;
-  transition: all 0.3s ease;
-  width: 100%;
-  border: 1px solid #f3f4f6;
-}
-
-
-
-.warning-card > * {
-  position: relative;
-  z-index: 2;
-}
-
-.warning-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.warning-card.selected {
-  border: 1px solid #3b82f6;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
-}
-
-.warning-card.selected .selection-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(59, 130, 246, 0.05);
-  z-index: 1;
-}
-
-/* 等级和状态标签容器 - 科技感样式 */
-.warning-badges-container {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  display: flex;
-  gap: 6px;
-  z-index: 10;
-}
-
-/* 预警等级标签 - 科技感样式（参考摄像头页面状态标签） */
-.warning-level-badge {
-  display: inline-block;
-  padding: 0 8px !important;
-  height: 24px !important;
-  line-height: 22px !important;
-  font-size: 12px !important;
-  border-radius: 6px !important;
-  font-weight: 500 !important;
-  transition: all 0.3s ease !important;
-  border: 1px solid !important;
-}
-
-.warning-level-badge:hover {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* 一级预警 - 危险红色渐变 */
-.warning-level-badge.level-1-bg {
-  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%) !important;
-  color: #991b1b !important;
-  border-color: #fca5a5 !important;
-}
-
-/* 二级预警 - 警告橙色渐变 */
-.warning-level-badge.level-2-bg {
-  background: linear-gradient(135deg, #fffbeb 0%, #fed7aa 100%) !important;
-  color: #92400e !important;
-  border-color: #fbbf24 !important;
-}
-
-/* 三级预警 - 信息蓝色渐变 */
-.warning-level-badge.level-3-bg {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  color: #1e40af !important;
-  border-color: #93c5fd !important;
-}
-
-/* 四级预警 - 成功绿色渐变 */
-.warning-level-badge.level-4-bg {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
-  color: #065f46 !important;
-  border-color: #a7f3d0 !important;
-}
-
-.warning-image {
-  height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  border-radius: 6px;
-  background: linear-gradient(45deg, #0a1526, #1e3c72);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-}
-
-.warning-real-image,
-.warning-video-preview {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 14px;
-  position: relative;
-}
-
-.warning-real-image {
-  padding: 0;
-  overflow: hidden;
-}
-
-.warning-real-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  border-radius: 6px;
-  transition: transform 0.3s ease;
-}
-
-.warning-real-image:hover img {
-  transform: scale(1.05);
-}
-
-.warning-video-preview i {
-  font-size: 36px;
-  margin-bottom: 12px;
-  opacity: 0.8;
-  color: #409EFF;
-}
-
-.warning-video-preview span {
-  font-size: 13px;
-  opacity: 0.9;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.warning-content {
-  padding: 12px;
-}
-
-.warning-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #303133;
-  margin: 0 0 10px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-}
-
-.info-list {
-  margin-bottom: 10px;
-}
-
-.info-item {
-  display: flex;
-  margin-bottom: 8px;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.info-item .label {
-  color: #909399;
-  flex-shrink: 0;
-}
-
-.info-item .value {
-  color: #606266;
-}
-
-.warning-level {
-  font-weight: 500;
-}
-
-.time-item {
-  margin-top: 8px;
-}
-
-.time-item .time {
-  font-size: 12px;
-  color: #909399;
-}
-
-.warning-footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  border-top: 1px solid #ebeef5;
-  padding-top: 8px;
-  margin-top: 20px;
-}
-
-.warning-footer .el-button {
-  margin: 0;
-  padding: 4px 10px;
-  font-size: 12px;
-  min-width: auto;
-}
-
-.false-alarm-btn-wrap,
-.archive-btn-wrap {
-  display: inline-block;
-}
-
-/* 底部按钮样式 - 统一样式 */
-.action-btn {
-  padding: 6px 16px;
-  font-size: 12px;
-  border-radius: 16px;
-  transition: all 0.3s ease;
-  margin: 0 2px;
-  font-weight: 500;
-  border: 1px solid #dcdfe6;
-  background: #ffffff;
-  color: #606266;
-}
-
-.action-btn:hover {
-  background: #ecf5ff;
-  border-color: #409eff;
-  color: #409eff;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
-}
-
-
-
-/* 等级样式 - 移除边框相关样式 */
-.level-1-bg {
-  background-color: #fff0f0;
-}
-
-.level-2-bg {
-  background-color: #fffbf0;
-}
-
-.level-3-bg {
-  background-color: #ecf5ff;
-}
-
-.level-4-bg {
-  background-color: #f0f9ff;
-}
-
-.level-1-text {
-  color: #f56c6c;
-}
-
-.level-2-text {
-  color: #e6a23c;
-}
-
-.level-3-text {
-  color: #409eff;
-}
-
-.level-4-text {
-  color: #67c23a;
-}
-
-.selection-count-tip {
-  margin: 0 8px;
-  font-size: 12px;
-  color: #409EFF;
-  white-space: nowrap;
-}
-
-.dl-progress-body { padding: 4px 0 8px; }
-.dl-progress-phase { font-size: 14px; color: #303133; margin-bottom: 14px; }
-.dl-progress-meta { margin-top: 12px; font-size: 13px; color: #606266; }
-.dl-progress-error { margin-top: 10px; font-size: 13px; color: #f56c6c; line-height: 1.5; word-break: break-all; }
-.dl-progress-tip { font-size: 12px; color: #909399; }
-
-/* 导出对话框样式 */
-.export-dialog-content {
-  padding: 15px 20px;
-}
-
-.export-info-section {
-  margin-bottom: 20px;
-}
-
-.export-data-info {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.export-selection-info {
-  margin: 10px 0;
-  padding: 10px;
-  background-color: #f0f9ff;
-  border: 1px solid #b3d8ff;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #606266;
-  font-weight: 500;
-}
-
-.export-format-section {
-  margin-bottom: 20px;
-  padding: 15px;
-  background-color: #fafafa;
-  border-radius: 6px;
-  border: 1px solid #e4e7ed;
-}
-
-.export-format-section .el-radio {
-  display: block;
-  margin-bottom: 10px;
-  padding: 8px 0;
-}
-
-.format-desc {
-  color: #909399;
-  font-size: 12px;
-  margin-left: 8px;
-}
-
-.export-filter-info {
-  padding: 15px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
-}
-
-.filter-info-title {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #606266;
-}
-
-.filter-summary {
-  min-height: 30px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-/* 响应式调整 */
-@media (max-width: 1600px) {
-  .warning-col {
-    width: calc(20% - 12.8px);
-  }
-}
-
-@media (max-width: 1280px) {
-  .warning-col {
-    width: calc(25% - 12px);
-  }
-  
-  .date-picker-wrapper {
-    width: 100%;
-    margin-right: 0;
-  }
-  
-  .select-wrapper,
-  .input-wrapper {
-    width: calc(33.33% - 8px);
-    min-width: 120px;
-  }
-  
-  .filter-actions {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .filter-buttons {
-    margin-bottom: 8px;
-    width: 100%;
-  }
-  
-  .action-buttons {
-    width: 100%;
-    justify-content: flex-end;
-  }
-  
-  /* 调整卡片容器高度以适应更大的搜索区域 */
-  .warning-cards-container {
-    height: calc(100vh - 250px) !important;
-  }
-  
-  .search-filter-area {
-    min-height: 130px !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .select-wrapper,
-  .input-wrapper {
-    width: 100%;
-    margin-right: 0;
-  }
-  
-  .warning-col {
-    width: calc(50% - 8px);
-  }
-  
-  .warning-management-container {
-    height: calc(100vh - 80px) !important;
-  }
-  
-  /* 移动端调整卡片容器高度 */
-  .warning-cards-container {
-    height: calc(100vh - 300px) !important;
-  }
-  
-  .search-filter-area {
-    min-height: 160px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .warning-col {
-    width: calc(50% - 8px);
-  }
-  
-  .warning-cards-grid {
-    gap: 12px;
-  }
-}
-
-/* 添加重置按钮样式 */
-.reset-button {
-  margin-left: 8px;
-}
-
-.select-checkbox {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 10;
-  transition: all 0.2s ease;
-}
-
-.select-checkbox >>> .el-checkbox {
-  margin: 0;
-}
-
-.select-checkbox >>> .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: #3b82f6 !important;
-  border-color: #3b82f6 !important;
-}
-
-.select-checkbox >>> .el-checkbox__inner:hover {
-  border-color: #3b82f6 !important;
-}
-
-.select-checkbox >>> .el-checkbox__inner {
-  width: 18px !important;
-  height: 18px !important;
-  border: 2px solid #dcdfe6 !important;
-  border-radius: 3px !important;
-  background: rgba(255, 255, 255, 0.9) !important;
-}
-
-.select-checkbox >>> .el-checkbox__inner::after {
-  height: 8px !important;
-  left: 5px !important;
-  top: 1px !important;
-  width: 3px !important;
-  border: 2px solid #fff !important;
-  border-left: 0 !important;
-  border-top: 0 !important;
-}
-
-/* 没有数据时的提示样式 */
-.no-data {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%; /* 填满整个容器高度 */
-  padding: 40px 20px;
-  color: #909399;
-  text-align: center;
-  box-sizing: border-box;
-}
-
-.no-data i {
-  font-size: 64px;
-  margin-bottom: 20px;
-  color: #dcdfe6;
-  opacity: 0.6;
-}
-
-.no-data p {
-  font-size: 16px;
-  margin: 0 0 8px 0;
-  color: #606266;
-  font-weight: 500;
-}
-
-.no-data-tip {
-  font-size: 13px;
-  color: #909399;
-  opacity: 0.8;
-}
-
-/* 对话框内容样式 */
-.dialog-content {
-  display: flex;
-  align-items: center;
-  padding: 10px 0;
-}
-
-.confirm-content {
-  text-align: center;
-  padding: 20px 0;
-}
-
-.confirm-content p {
-  margin: 8px 0;
-  font-size: 14px;
-  color: #606266;
-}
-
-.process-tip {
-  margin-top: 10px;
-  padding: 8px 12px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  border-left: 3px solid #909399;
-}
-
-/* 归档对话框样式 */
-.archive-dialog-content {
-  padding: 10px 0;
-}
-
-.archive-info {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.archive-selection {
-  margin-bottom: 20px;
-}
-
-.archive-tip {
-  margin-top: 10px;
-}
-
-.batch-process-info {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  background-color: #fef7e0;
-  border: 1px solid #faecd8;
-  border-radius: 6px;
-  margin-bottom: 16px;
-}
-
-.batch-process-tip {
-  margin-top: 10px;
-  padding: 8px 12px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  border-left: 3px solid #909399;
-}
-
-/* 动画效果 */
-@keyframes pulse {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.2);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-
-
-/* 预警状态标签 - 科技感样式（参考摄像头页面状态标签） */
-.warning-status-badge {
-  display: inline-block;
-  padding: 0 8px !important;
-  height: 24px !important;
-  line-height: 22px !important;
-  font-size: 12px !important;
-  border-radius: 6px !important;
-  font-weight: 500 !important;
-  transition: all 0.3s ease !important;
-  border: 1px solid !important;
-}
-
-.warning-status-badge:hover {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* 待处理状态 - 灰色渐变 */
-.warning-status-badge.status-pending {
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%) !important;
-  color: #4b5563 !important;
-  border-color: #d1d5db !important;
-}
-
-/* 处理中状态 - 蓝色渐变 */
-.warning-status-badge.status-processing {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  color: #1e40af !important;
-  border-color: #93c5fd !important;
-}
-
-/* 已完成状态 - 绿色渐变 */
-.warning-status-badge.status-completed {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
-  color: #065f46 !important;
-  border-color: #a7f3d0 !important;
-}
-
-/* 已归档状态 - 深灰色渐变 */
-.warning-status-badge.status-archived {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%) !important;
-  color: #374151 !important;
-  border-color: #9ca3af !important;
-}
-
-/* 删除对话框样式 */
-.delete-dialog-content {
-  display: flex;
-  align-items: flex-start;
-  padding: 10px 0;
-}
-
-.delete-warning-icon {
-  margin-right: 16px;
-  flex-shrink: 0;
-}
-
-.delete-text {
-  flex: 1;
-}
-
-.delete-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #303133;
-  margin: 0 0 8px 0;
-}
-
-.delete-desc {
-  font-size: 14px;
-  color: #606266;
-  margin: 0 0 12px 0;
-}
-
-.delete-tip {
-  padding: 8px 12px;
-  background-color: #fef7e0;
-  border: 1px solid #faecd8;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-}
-
-/* 科技感导出数据按钮样式 */
-.export-data-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  color: white;
-  font-weight: 500;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.export-data-btn:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-  transform: translateY(-2px);
-  color: white;
-}
-
-.export-data-btn:focus {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-  color: white;
-}
-
-.export-data-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4);
-}
-
-.export-data-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.export-data-btn:hover::before {
-  left: 100%;
-}
-
-/* 对话框样式优化 - 科技感设计 */
-.warning-management-container >>> .el-dialog {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-
-.warning-management-container >>> .el-dialog__header {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-  padding: 16px 20px;
-}
-
-.warning-management-container >>> .el-dialog__title {
-  color: #1f2937;
-  font-weight: 600;
-}
-
-.warning-management-container >>> .el-dialog__close {
-  color: #6b7280;
-  transition: color 0.3s ease;
-}
-
-.warning-management-container >>> .el-dialog__close:hover {
-  color: #3b82f6;
-}
-
-.warning-management-container >>> .el-dialog__body {
-  padding: 20px;
-  background: #ffffff;
-}
-
-.warning-management-container >>> .el-button--primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border: none;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-  color: white;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-radius: 6px;
-}
-
-.warning-management-container >>> .el-button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
-  transform: translateY(-1px);
-}
-
-.warning-management-container >>> .el-button--success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: none;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
-  color: white;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-radius: 6px;
-}
-
-.warning-management-container >>> .el-button--success:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
-  transform: translateY(-1px);
-}
-
-.warning-management-container >>> .el-button--default {
-  background: white;
-  border: 1px solid #d1d5db;
-  color: #4b5563;
-  transition: all 0.3s ease;
-  border-radius: 6px;
-}
-
-.warning-management-container >>> .el-button--default:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-color: #3b82f6;
-  color: #1e40af;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-}
-
-.warning-management-container >>> .el-button--danger {
-  background: linear-gradient(135deg, #f56c6c 0%, #dc2626 100%);
-  border: none;
-  box-shadow: 0 2px 6px rgba(245, 108, 108, 0.3);
-  color: white;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-radius: 6px;
-}
-
-.warning-management-container >>> .el-button--danger:hover {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  box-shadow: 0 4px 10px rgba(245, 108, 108, 0.4);
-  transform: translateY(-1px);
-}
-
-.warning-management-container >>> .el-button--warning {
-  background: linear-gradient(135deg, #e6a23c 0%, #f59e0b 100%);
-  border: none;
-  box-shadow: 0 2px 6px rgba(230, 162, 60, 0.3);
-  color: white;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-radius: 6px;
-}
-
-.warning-management-container >>> .el-button--warning:hover {
-  background: linear-gradient(135deg, #d97706 0%, #dc2626 100%);
-  box-shadow: 0 4px 10px rgba(230, 162, 60, 0.4);
-  transform: translateY(-1px);
-}
-
-/* 输入框和选择框样式优化 */
-.warning-management-container >>> .el-input__inner {
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-}
-
-.warning-management-container >>> .el-input__inner:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.warning-management-container >>> .el-select .el-input__inner {
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
-}
-
-.warning-management-container >>> .el-select .el-input__inner:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.warning-management-container >>> .el-date-editor.el-input {
-  border-radius: 6px;
-}
-
-.warning-management-container >>> .el-date-editor .el-input__inner {
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
-}
-
-.warning-management-container >>> .el-date-editor .el-input__inner:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-/* 分页样式 */
-.pagination-section {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  background: white;
-  padding: 8px 24px; /* 减少上下内边距 */
-  margin-top: 8px; /* 减少上边距 */
-  margin-bottom: 0; /* 取消底边距 */
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-  flex-shrink: 0; /* 不允许收缩 */
-  height: 60px; /* 减少固定高度 */
-  box-sizing: border-box;
-}
-
-/* 覆盖Element UI分页组件样式 */
-.pagination-section >>> .el-pagination .el-pager li {
-  background: white !important;
-  border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
-  margin: 0 2px !important;
-}
-
-.pagination-section >>> .el-pagination .el-pager li:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
-
-.pagination-section >>> .el-pagination .el-pager li.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
-  border-color: #3b82f6 !important;
-  color: white !important;
-  font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-}
-
-.pagination-section >>> .el-pagination button {
-  background: white !important;
-  border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
-  transition: all 0.3s ease !important;
-  border-radius: 6px !important;
-  margin: 0 2px !important;
-}
-
-.pagination-section >>> .el-pagination button:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
-
-/* 更强的Element UI样式覆盖 */
-.pagination-section >>> .el-pagination .el-pager li.number {
-  background-color: white !important;
-  border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
-}
-
-.pagination-section >>> .el-pagination .el-pager li.number:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
-
-.pagination-section >>> .el-pagination .el-pager li.number.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
-  border-color: #3b82f6 !important;
-  color: white !important;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-}
-
-.pagination-section >>> .el-pagination .btn-prev,
-.pagination-section >>> .el-pagination .btn-next {
-  background-color: white !important;
-  border: 1px solid #dcdfe6 !important;
-  color: #606266 !important;
-}
-
-.pagination-section >>> .el-pagination .btn-prev:hover,
-.pagination-section >>> .el-pagination .btn-next:hover {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #3b82f6 !important;
-  color: #1e40af !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-}
-
-.pagination-section >>> .el-pagination .el-select .el-input .el-input__inner {
-  border-color: #dcdfe6 !important;
-  color: #606266 !important;
-  border-radius: 6px !important;
-}
-
-.pagination-section >>> .el-pagination .el-select .el-input .el-input__inner:hover {
-  border-color: #3b82f6 !important;
-}
-
-.pagination-section >>> .el-pagination .el-input__inner {
-  border-radius: 6px !important;
-}
-
-.pagination-section >>> .el-pagination__jump {
-  color: #606266 !important;
-}
-
-.pagination-section >>> .el-pagination__total {
-  color: #606266 !important;
-  font-weight: 500 !important;
-}
-
-/* 归档对话框中的 select 下拉框层级控制 */
-.archive-select-dropdown {
-  z-index: 9999 !important;
-}
-
-/* 归档对话框层级控制 */
-.page-container >>> .el-dialog__wrapper {
-  z-index: 3000 !important;
-}
-</style>
+<style scoped src="./styles/warningManagement.scoped.css"></style>

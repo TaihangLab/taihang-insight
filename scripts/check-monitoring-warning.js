@@ -55,6 +55,8 @@ vueFiles.forEach(checkVueFile)
 
 const serviceFile = path.join(projectRoot, 'src', 'components', 'service', 'VisionAIService.js')
 const realtimeMonitoringFile = path.join(monitoringRoot, 'realTimeMonitoring.vue')
+const warningManagementFile = path.join(monitoringRoot, 'warningManagement.vue')
+const warningArchivesFile = path.join(monitoringRoot, 'warningArchives.vue')
 const formattingFile = path.join(monitoringRoot, 'utils', 'alertFormatting.js')
 const processHistoryFile = path.join(monitoringRoot, 'utils', 'alertProcessHistory.js')
 ;[serviceFile, formattingFile, processHistoryFile].forEach(checkJavaScriptFile)
@@ -62,6 +64,16 @@ const processHistoryFile = path.join(monitoringRoot, 'utils', 'alertProcessHisto
 const realtimeMonitoringSource = fs.readFileSync(realtimeMonitoringFile, 'utf8')
 assert.strictEqual(realtimeMonitoringSource.includes('saveToReviewRecords'), false)
 assert.strictEqual(realtimeMonitoringSource.includes('intelligentReviewRecords'), false)
+
+const warningManagementSource = fs.readFileSync(warningManagementFile, 'utf8')
+assert.strictEqual(warningManagementSource.includes('saveToReviewRecords'), false)
+assert.strictEqual(warningManagementSource.includes('intelligentReviewRecords'), false)
+
+;[realtimeMonitoringFile, warningManagementFile, warningArchivesFile].forEach(file => {
+  const source = fs.readFileSync(file, 'utf8')
+  assert.strictEqual(source.includes('console.log('), false, `${file}: production debug log found`)
+  assert(/<style(?: scoped)? src="\.\/styles\//.test(source), `${file}: styles must stay external`)
+})
 
 const formatting = loadEsModule(formattingFile)
 const processHistory = loadEsModule(processHistoryFile)
@@ -130,4 +142,4 @@ const falseAlarmHistory = processHistory.buildAlertProcessHistory({
 })
 assert.strictEqual(falseAlarmHistory[0].description, '现场确认为误报')
 
-console.log(`monitoring-warning checks passed: ${vueFiles.length} Vue files, 19 assertions`)
+console.log(`monitoring-warning checks passed: ${vueFiles.length} Vue files`)
