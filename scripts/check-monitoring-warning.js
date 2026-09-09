@@ -77,6 +77,24 @@ assert(
   warningManagementSource.includes('@change="toggleSelect(item.id)"'),
   'warningManagement.vue: checkbox change must toggle selection'
 )
+assert.strictEqual(
+  warningManagementSource.includes('selectAllFilters'),
+  false,
+  'warningManagement.vue: select-all must not defer destructive operations with filters'
+)
+assert(
+  warningManagementSource.includes('createAlertSelectionSnapshot(filters)'),
+  'warningManagement.vue: select-all must capture server-side IDs and statuses immediately'
+)
+assert.strictEqual(
+  warningManagementSource.includes('batchUpdateAlertStatusByFilter'),
+  false,
+  'warningManagement.vue: batch updates must use frozen alert IDs'
+)
+assert(
+  warningManagementSource.includes('expected_statuses: selectionSnapshot.expectedStatuses'),
+  'warningManagement.vue: batch deletion must carry the frozen status snapshot'
+)
 
 ;[realtimeMonitoringFile, warningManagementFile, warningArchivesFile].forEach(file => {
   const source = fs.readFileSync(file, 'utf8')

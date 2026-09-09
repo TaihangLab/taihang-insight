@@ -1960,23 +1960,16 @@ export const alertAPI = {
   },
 
   /**
-   * 按当前筛选条件批量更新全部匹配预警。
+   * 创建当前筛选结果的不可变选择快照。
    * @param {Object} filters - 与预警列表一致的筛选条件
-   * @param {Object} updateData - 目标状态和处理意见
+   * @returns {Promise} 固定的预警 ID 和期望状态
    */
-  batchUpdateAlertStatusByFilter(filters, updateData) {
+  createAlertSelectionSnapshot(filters) {
     if (!filters || (filters.skill_class_id == null && !filters.alert_type)) {
-      return Promise.reject(new Error('按筛选条件批量处理前必须筛选预警技能'));
-    }
-    if (!updateData || updateData.status == null) {
-      return Promise.reject(new Error('缺少目标状态'));
+      return Promise.reject(new Error('创建全选快照前必须筛选预警技能'));
     }
 
-    console.log('按筛选条件批量更新预警状态:', filters, updateData);
-    return visionAIAxios.put('/api/v1/alerts/batch-update', {
-      filters,
-      ...updateData
-    });
+    return visionAIAxios.post('/api/v1/alerts/selection-snapshot', { filters });
   },
 
   /**
@@ -1997,7 +1990,7 @@ export const alertAPI = {
 
   /**
    * 批量删除预警
-   * @param {Array|Object} alertIdsOrBody - 预警ID数组，或 { alert_ids } / { skill_class_id, ...filters }
+   * @param {Array|Object} alertIdsOrBody - 预警ID数组，或包含状态快照的请求体
    * @returns {Promise} 包含批量删除结果的Promise对象
    */
   batchDeleteAlerts(alertIdsOrBody) {
@@ -2005,9 +1998,9 @@ export const alertAPI = {
       ? { alert_ids: alertIdsOrBody }
       : (alertIdsOrBody || {})
     const hasIds = Array.isArray(body.alert_ids) && body.alert_ids.length > 0
-    if (!hasIds && body.skill_class_id == null && !body.alert_type) {
-      console.error('批量删除预警失败: 缺少预警ID或筛选条件');
-      return Promise.reject(new Error('缺少预警ID或筛选条件'));
+    if (!hasIds) {
+      console.error('批量删除预警失败: 缺少预警ID');
+      return Promise.reject(new Error('缺少预警ID'));
     }
 
     console.log('批量删除预警:', body);

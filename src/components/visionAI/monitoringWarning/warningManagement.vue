@@ -48,8 +48,8 @@ export default {
       selectedWarningExpectedStatuses: {},
       // 筛选了预警技能后可「全选」当前筛选结果
       selectAllFiltered: false,
-      // 点击全选时固化筛选条件，避免确认前编辑表单导致选择范围漂移
-      selectAllFilters: null,
+      selectionSnapshotLoading: false,
+      selectionSnapshotRequestId: 0,
       
       // 日期范围
       dateRange: null,
@@ -140,9 +140,6 @@ export default {
       return !!this.searchForm.warningSkill
     },
     exportSelectedCount() {
-      if (this.selectAllFiltered) {
-        return this.totalCount
-      }
       return this.selectedWarnings.length
     }
   },
@@ -168,6 +165,7 @@ export default {
   },
   beforeDestroy() {
     this.warningListRequestId += 1
+    this.selectionSnapshotRequestId += 1
     if (this.warningListRequestController) {
       this.warningListRequestController.abort()
       this.warningListRequestController = null
@@ -342,7 +340,7 @@ export default {
     },
 
     async handleSkillChange() {
-      this.selectAllFiltered = false
+      this.clearWarningSelection()
       await this.loadCameraOptions()
       this.handleSearch()
     },
@@ -477,14 +475,15 @@ export default {
     },
 
     isWarningSelected(id) {
-      return this.selectAllFiltered || this.selectedWarnings.includes(id)
+      return this.selectedWarnings.includes(id)
     },
 
     clearWarningSelection() {
+      this.selectionSnapshotRequestId += 1
+      this.selectionSnapshotLoading = false
       this.selectedWarnings = []
       this.selectedWarningExpectedStatuses = {}
       this.selectAllFiltered = false
-      this.selectAllFilters = null
     },
 
     rememberWarningExpectedStatus(warning) {
@@ -777,8 +776,9 @@ export default {
     
     // 选择当前页
     handleSelectPage() {
-      this.selectAllFiltered = false
-      this.selectAllFilters = null
+      if (this.selectAllFiltered) {
+        this.clearWarningSelection()
+      }
       const currentPageIds = this.warningList.map(item => item.id)
       if (currentPageIds.length === 0) {
         this.$message.warning('当前页没有可选择的预警')
@@ -811,7 +811,7 @@ export default {
     },
 
     // 全选当前筛选结果（需先筛选预警技能）
-    handleSelectAll() {
+    async handleSelectAll() {
       if (!this.canSelectAll) {
         this.$message.warning('请先筛选预警技能后再全选')
         return
@@ -825,16 +825,67 @@ export default {
         this.$message.info('已取消全选')
         return
       }
-      this.selectAllFiltered = true
-      this.selectedWarnings = []
-      this.selectedWarningExpectedStatuses = {}
-      this.selectAllFilters = { ...this.buildCurrentFilterBody() }
-      this.$message.success(`已全选当前筛选结果共 ${this.totalCount} 项预警`)
+
+      const filters = { ...this.buildCurrentFilterBody() }
+      const requestId = ++this.selectionSnapshotRequestId
+      this.selectionSnapshotLoading = true
+      try {
+        const response = await alertAPI.createAlertSelectionSnapshot(filters)
+        if (requestId !== this.selectionSnapshotRequestId) return
+
+        if (JSON.stringify(filters) !== JSON.stringify(this.buildCurrentFilterBody())) {
+          this.$message.info('筛选条件已变化，请重新全选')
+          return
+        }
+
+        const responseData = response.data || {}
+        const snapshot = responseData.data || {}
+        if (responseData.code !== 0) {
+          throw new Error(responseData.msg || '创建选择快照失败')
+        }
+
+        const alertIds = Array.isArray(snapshot.alert_ids)
+          ? snapshot.alert_ids.map(Number).filter(id => Number.isInteger(id) && id > 0)
+          : []
+        const rawExpectedStatuses = snapshot.expected_statuses || {}
+        const expectedStatuses = {}
+        alertIds.forEach(alertId => {
+          const status = Number(rawExpectedStatuses[String(alertId)])
+          if (Number.isInteger(status) && status > 0) {
+            expectedStatuses[String(alertId)] = status
+          }
+        })
+
+        if (alertIds.length !== Number(snapshot.total || 0) ||
+            Object.keys(expectedStatuses).length !== alertIds.length) {
+          throw new Error('选择快照数据不完整，请刷新后重试')
+        }
+        if (alertIds.length === 0) {
+          this.clearWarningSelection()
+          this.$message.warning('当前筛选结果已无可选择的预警')
+          return
+        }
+
+        this.selectedWarnings = alertIds.map(String)
+        this.selectedWarningExpectedStatuses = expectedStatuses
+        this.selectAllFiltered = true
+        this.$message.success(`已冻结并选中 ${alertIds.length} 项预警`)
+      } catch (error) {
+        if (requestId !== this.selectionSnapshotRequestId) return
+        const detail = error.response && error.response.data && error.response.data.detail
+        this.$message.error(
+          typeof detail === 'string' ? detail : (error.message || '创建选择快照失败')
+        )
+      } finally {
+        if (requestId === this.selectionSnapshotRequestId) {
+          this.selectionSnapshotLoading = false
+        }
+      }
     },
     
     // 批量处理
     async handleBatchProcess() {
-      if (!this.selectAllFiltered && this.selectedWarnings.length === 0) {
+      if (this.selectedWarnings.length === 0) {
         this.$message.warning('请先选择预警项')
         return
       }
@@ -860,38 +911,22 @@ export default {
           processed_by: this.getCurrentUserName()
         }
 
-        const requestedCount = this.exportSelectedCount
-        let response
-        if (this.selectAllFiltered) {
-          const filters = { ...(this.selectAllFilters || this.buildCurrentFilterBody()) }
-          if (filters.skill_class_id == null && !filters.alert_type) {
-            this.$message.warning('请先筛选预警技能后再全选处理')
-            return
-          }
-          response = await alertAPI.batchUpdateAlertStatusByFilter(filters, updateData)
-        } else {
-          const expectedStatuses = {}
-          const apiAlertIds = this.selectedWarnings
-            .map(id => parseInt(id, 10))
-            .filter(id => !isNaN(id))
-
-          apiAlertIds.forEach(alertId => {
-            const expectedStatus = this.selectedWarningExpectedStatuses[String(alertId)]
-            if (expectedStatus != null) {
-              expectedStatuses[String(alertId)] = expectedStatus
-            }
-          })
-
-          const missingExpectedStatus = apiAlertIds.some(
-            alertId => expectedStatuses[String(alertId)] == null
-          )
-          if (missingExpectedStatus) {
-            this.$message.error('部分预警缺少状态快照，请重新选择后重试')
-            return
-          }
-          updateData.expected_statuses = expectedStatuses
-          response = await alertAPI.batchUpdateAlertStatus(apiAlertIds, updateData)
+        const selectionSnapshot = this.getSelectedAlertSnapshot()
+        if (!selectionSnapshot.alertIds.length) {
+          this.$message.error('未解析到有效的预警ID，请重新选择')
+          return
         }
+        if (selectionSnapshot.missingExpectedStatusIds.length) {
+          this.$message.error('部分预警缺少状态快照，请重新选择后重试')
+          return
+        }
+
+        const requestedCount = selectionSnapshot.alertIds.length
+        updateData.expected_statuses = selectionSnapshot.expectedStatuses
+        const response = await alertAPI.batchUpdateAlertStatus(
+          selectionSnapshot.alertIds,
+          updateData
+        )
         
         if (response.data && response.data.code === 0) {
           const resultData = response.data.data || {}
@@ -943,7 +978,7 @@ export default {
     
     // 导出数据
     exportData() {
-      if (!this.selectAllFiltered && this.selectedWarnings.length === 0) {
+      if (this.selectedWarnings.length === 0) {
         this.$message.warning(this.canSelectAll
           ? '请先选择本页或全选后再导出'
           : '请先选择本页预警后再导出')
@@ -956,7 +991,7 @@ export default {
     // 获取导出选择文本
     getExportSelectionText() {
       if (this.selectAllFiltered) {
-        return `将导出当前筛选条件下全部 ${this.totalCount} 条预警的图片`
+        return `将导出全选时冻结的 ${this.selectedWarnings.length} 条预警图片`
       }
       const count = this.selectedWarnings.length
       if (count > 0) {
@@ -987,6 +1022,21 @@ export default {
       }).filter(id => !isNaN(id))
     },
 
+    getSelectedAlertSnapshot() {
+      const alertIds = this.selectedAlertIds()
+      const expectedStatuses = {}
+      const missingExpectedStatusIds = []
+      alertIds.forEach(alertId => {
+        const expectedStatus = this.selectedWarningExpectedStatuses[String(alertId)]
+        if (expectedStatus == null) {
+          missingExpectedStatusIds.push(alertId)
+        } else {
+          expectedStatuses[String(alertId)] = expectedStatus
+        }
+      })
+      return { alertIds, expectedStatuses, missingExpectedStatusIds }
+    },
+
     buildCurrentFilterBody() {
       const body = {}
       const skillClassId = this.parseSelectedSkillClassId()
@@ -1011,15 +1061,10 @@ export default {
     },
 
     buildAlertImageExportBody() {
-      const body = {
-        image_type: this.exportImageType
+      return {
+        image_type: this.exportImageType,
+        alert_ids: this.selectedAlertIds()
       }
-      if (this.selectAllFiltered) {
-        Object.assign(body, this.selectAllFilters || this.buildCurrentFilterBody())
-      } else {
-        body.alert_ids = this.selectedAlertIds()
-      }
-      return body
     },
 
     stopDownloadPoll() {
@@ -1151,7 +1196,7 @@ export default {
     
     // 确认导出图片压缩包
     async confirmExport() {
-      if (!this.selectAllFiltered && this.selectedWarnings.length === 0) {
+      if (this.selectedWarnings.length === 0) {
         this.$message.warning('请先选择要导出的预警')
         return
       }
@@ -1162,7 +1207,7 @@ export default {
       try {
         this.exportLoading = true
         const body = this.buildAlertImageExportBody()
-        if (!this.selectAllFiltered && (!body.alert_ids || body.alert_ids.length === 0)) {
+        if (!body.alert_ids || body.alert_ids.length === 0) {
           throw new Error('未解析到有效的预警ID')
         }
 
@@ -1209,7 +1254,6 @@ export default {
       if (this.selectAllFiltered) {
         // 退出全选，改为仅勾选本页其余项
         this.selectAllFiltered = false
-        this.selectAllFilters = null
         this.selectedWarnings = this.warningList
           .map(item => item.id)
           .filter(itemId => itemId !== id)
@@ -1946,7 +1990,7 @@ export default {
     
     // 显示删除确认对话框
     showDeleteDialog() {
-      if (!this.selectAllFiltered && this.selectedWarnings.length === 0) {
+      if (this.selectedWarnings.length === 0) {
         this.$message.warning('请先选择要删除的预警项')
         return
       }
@@ -1955,25 +1999,23 @@ export default {
     
     // 确认删除选中的预警
     async confirmDelete() {
-      if (!this.selectAllFiltered && this.selectedWarnings.length === 0) {
+      if (this.selectedWarnings.length === 0) {
         this.$message.warning('请先选择要删除的预警项')
         return
       }
 
-      let body
-      if (this.selectAllFiltered) {
-        body = { ...(this.selectAllFilters || this.buildCurrentFilterBody()) }
-        if (body.skill_class_id == null && !body.alert_type) {
-          this.$message.warning('请先筛选预警技能后再全选删除')
-          return
-        }
-      } else {
-        const apiAlertIds = this.selectedAlertIds()
-        if (!apiAlertIds.length) {
-          this.$message.warning('未解析到有效的预警ID')
-          return
-        }
-        body = { alert_ids: apiAlertIds }
+      const selectionSnapshot = this.getSelectedAlertSnapshot()
+      if (!selectionSnapshot.alertIds.length) {
+        this.$message.warning('未解析到有效的预警ID')
+        return
+      }
+      if (selectionSnapshot.missingExpectedStatusIds.length) {
+        this.$message.error('部分预警缺少状态快照，请重新选择后重试')
+        return
+      }
+      const body = {
+        alert_ids: selectionSnapshot.alertIds,
+        expected_statuses: selectionSnapshot.expectedStatuses
       }
 
       try {
@@ -1982,8 +2024,10 @@ export default {
         const response = await alertAPI.batchDeleteAlerts(body)
 
         if (response.data && response.data.code === 0) {
-          const deleted = (response.data.data && response.data.data.deleted_count)
-            || this.exportSelectedCount
+          const responseData = response.data.data || {}
+          const deleted = responseData.deleted_count != null
+            ? responseData.deleted_count
+            : selectionSnapshot.alertIds.length
           this.$message.success(`已成功删除 ${deleted} 项预警`)
           this.clearWarningSelection()
           this.closeDeleteDialog()
@@ -1997,7 +2041,18 @@ export default {
       } catch (error) {
         console.error('删除失败:', error)
         const detail = error.response && error.response.data && error.response.data.detail
-        this.$message.error('删除失败：' + (detail || error.message || '网络错误'))
+        if (error.response && error.response.status === 409 &&
+            detail && detail.code === 'SELECTION_SNAPSHOT_STALE') {
+          this.$message.warning(detail.message)
+          this.clearWarningSelection()
+          this.closeDeleteDialog()
+          await this.getWarningList()
+        } else {
+          const detailMessage = typeof detail === 'string'
+            ? detail
+            : (detail && detail.message)
+          this.$message.error('删除失败：' + (detailMessage || error.message || '网络错误'))
+        }
       } finally {
         this.deleteLoading = false
       }
@@ -2193,6 +2248,7 @@ export default {
           <div class="filter-buttons">
             <el-button 
               size="small" 
+              :disabled="selectionSnapshotLoading"
               @click="handleSelectPage"
             >选择本页</el-button>
             <el-button
@@ -2200,6 +2256,8 @@ export default {
               size="small"
               type="primary"
               plain
+              :loading="selectionSnapshotLoading"
+              :disabled="loading"
               @click="handleSelectAll"
             >{{ selectAllFiltered ? '取消全选' : '全选' }}</el-button>
             <span v-if="exportSelectedCount > 0" class="selection-count-tip">
