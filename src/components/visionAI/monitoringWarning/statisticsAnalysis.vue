@@ -15,6 +15,7 @@ export default {
 
       timeRange: "today",
       customDateRange: [],
+      customDateRangeDraft: [],
       datePickerDialogVisible: false,
 
       exportLoading: false,
@@ -536,7 +537,7 @@ export default {
     handleTimeRangeChange(value) {
       this.timeRange = value;
       if (value === "custom") {
-        this.datePickerDialogVisible = true;
+        this.openCustomDatePicker();
       } else {
         this.fetchStatistics().catch(() => {});
       }
@@ -544,12 +545,20 @@ export default {
 
     onCustomClick() {
       if (this.timeRange === "custom") {
-        this.datePickerDialogVisible = true;
+        this.openCustomDatePicker();
       }
     },
 
+    openCustomDatePicker() {
+      this.customDateRangeDraft = Array.isArray(this.customDateRange)
+        ? [...this.customDateRange]
+        : [];
+      this.datePickerDialogVisible = true;
+    },
+
     handleCustomDateChange() {
-      if (this.customDateRange && this.customDateRange.length === 2) {
+      if (this.customDateRangeDraft && this.customDateRangeDraft.length === 2) {
+        this.customDateRange = [...this.customDateRangeDraft];
         this.datePickerDialogVisible = false;
         this.fetchStatistics().catch(() => {});
       }
@@ -557,6 +566,13 @@ export default {
 
     cancelDatePicker() {
       this.datePickerDialogVisible = false;
+      this.restoreCustomDateDraft();
+    },
+
+    restoreCustomDateDraft() {
+      this.customDateRangeDraft = Array.isArray(this.customDateRange)
+        ? [...this.customDateRange]
+        : [];
       if (!this.customDateRange || this.customDateRange.length !== 2) {
         this.timeRange = "today";
       }
@@ -740,9 +756,10 @@ export default {
       :append-to-body="true"
       :close-on-click-modal="false"
       :modal-append-to-body="false"
+      @closed="restoreCustomDateDraft"
     >
       <el-date-picker
-        v-model="customDateRange"
+        v-model="customDateRangeDraft"
         type="daterange"
         value-format="yyyy-MM-dd"
         range-separator="至"
