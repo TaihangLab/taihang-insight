@@ -59,7 +59,7 @@
                 </div>
 
             <div class="video-content" :ref="'videoContent'+(index-1)">
-              
+
               <div class="video-placeholder" :data-timestamp="currentDateTime" :data-camera="formatCameraName(index)">
                     <div v-if="!videoUrl[index-1]" class="no-signal">
                       <i :class="videoTip[index-1] ? 'el-icon-loading' : 'el-icon-video-camera-solid'"></i>
@@ -79,13 +79,13 @@
                         fluent autoplay
                         @screenshot="shot"
                         @destroy="destroy(index - 1)"/>
-                      
+
                       <!-- 🆕 AI任务选择下拉框 - 移到video-player-wrapper内部 -->
-                      <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
+                      <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0"
                            class="ai-task-selector">
-                        <el-select 
-                          v-model="selectedAITasks[index-1]" 
-                          size="mini" 
+                        <el-select
+                          v-model="selectedAITasks[index-1]"
+                          size="mini"
                           placeholder="选择AI任务"
                           @change="onTaskSelectionChange(index-1)"
                           clearable>
@@ -99,7 +99,7 @@
                           </el-option>
                         </el-select>
                       </div>
-                      
+
                       <!-- 调试信息（紧凑，避免遮挡画面） -->
                       <div v-if="selectedAITasks[index-1]" class="detection-debug-info" :title="getDetectionDebugTitle(index-1)">
                         <div class="debug-line">
@@ -121,7 +121,7 @@
                           <span class="debug-value debug-ellipsis">{{ detectionUpdateTime[index-1] || '无数据' }}</span>
                         </div>
                       </div>
-                      
+
                       <!-- 🆕 检测框OSD叠加层 -->
                       <detection-overlay
                         v-if="selectedAITasks[index-1] && detectionResults[index-1]"
@@ -156,7 +156,7 @@
             </div>
 
             <div class="video-content" :ref="'videoContentFs'+(index-1)">
-              
+
               <div class="video-placeholder" :data-timestamp="currentDateTime" :data-camera="formatCameraName(index)">
                     <div v-if="!videoUrl[index-1]" class="no-signal">
                       <i :class="videoTip[index-1] ? 'el-icon-loading' : 'el-icon-video-camera-solid'"></i>
@@ -176,13 +176,13 @@
                         fluent autoplay
                         @screenshot="shot"
                         @destroy="destroy(index - 1)"/>
-                      
+
                       <!-- 🆕 AI任务选择下拉框（全屏模式） -->
-                      <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
+                      <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0"
                            class="ai-task-selector">
-                        <el-select 
-                          v-model="selectedAITasks[index-1]" 
-                          size="mini" 
+                        <el-select
+                          v-model="selectedAITasks[index-1]"
+                          size="mini"
                           placeholder="选择AI任务"
                           @change="onTaskSelectionChange(index-1)"
                           clearable>
@@ -196,7 +196,7 @@
                           </el-option>
                         </el-select>
                       </div>
-                      
+
                       <!-- 调试信息（全屏，紧凑） -->
                       <div v-if="selectedAITasks[index-1]" class="detection-debug-info" :title="getDetectionDebugTitle(index-1)">
                         <div class="debug-line">
@@ -1024,7 +1024,7 @@ export default {
         // 🆕 保存摄像头名称
         const idx = this.playerIdx
         this.$set(this.cameraNames, idx, data.name || `摄像头 ${idx+1}`)
-        
+
         this.sendDevicePush(data.id);
       }
     },
@@ -1048,19 +1048,19 @@ export default {
       this.$set(this.flvFallbackUrl, idxTmp, '');
       this.$set(this.rtcFailed, idxTmp, false);
       this.$set(this.videoTip, idxTmp, "正在拉流...");
-      
+
       // 🆕 保存摄像头ID映射
       this.$set(this.cameraIdMapping, idxTmp, channelId);
-      
+
       // 注意：拉流只在对应视频格子里显示"正在拉流..."提示，
       // 不再使用整页 v-loading 遮罩，避免通道离线/不存在时整页转圈卡死
 
       try {
         console.log('🎬 开始播放通道 - 通道ID:', channelId, '播放器索引:', idxTmp);
-        
+
         // 使用新的专用API播放通道
         const response = await realtimeMonitorAPI.playChannel(channelId);
-        
+
         if (response.data && response.data.code === 0 && response.data.data) {
           const streamData = response.data.data;
           const lease = streamData.viewer_lease;
@@ -1286,8 +1286,8 @@ export default {
         console.log('✅ 处理意见保存成功:', response);
 
         // 🔧 从后端响应中获取实际的操作人名字
-        const operatorName = (response.data && response.data.data && response.data.data.updated_alert && response.data.data.updated_alert.processed_by) || 
-                            (response.data && response.data.data && response.data.data.processing_record && response.data.data.processing_record.operator) || 
+        const operatorName = (response.data && response.data.data && response.data.data.updated_alert && response.data.data.updated_alert.processed_by) ||
+                            (response.data && response.data.data && response.data.data.processing_record && response.data.data.processing_record.operator) ||
                             this.getCurrentUserName();
 
         // 更新本地数据状态 - 添加新的处理记录
@@ -1417,9 +1417,9 @@ export default {
     // 从对话框处理预警 - 也使用处理意见流程
     async handleWarningFromDialog(eventData) {
       if (!eventData || !eventData.alert_id) return;
-      
+
       const alertId = eventData.alert_id;
-      const index = this.warningList.findIndex(item => 
+      const index = this.warningList.findIndex(item =>
         String(item.id) === String(alertId) ||
         (item._apiData && String(item._apiData.alert_id) === String(alertId))
       );
@@ -1600,7 +1600,7 @@ export default {
         }
 
         const alertId = warningInfo._apiData ? warningInfo._apiData.alert_id : parseInt(this.archiveWarningId);
-        
+
         // 🔧 修复：使用 archive_id 字段查找档案（不是 id）
         const selectedArchive = this.availableArchivesList.find(archive => archive.archive_id === this.selectedArchiveId);
         const archiveName = selectedArchive ? selectedArchive.name : '未知档案';
@@ -1822,8 +1822,8 @@ export default {
 
         if (response.data && response.data.code === 0) {
           // 🔧 从后端响应中获取实际的操作人名字
-          const operatorName = (response.data && response.data.data && response.data.data.reviewed_by) || 
-                              (response.data && response.data.data && response.data.data.processed_by) || 
+          const operatorName = (response.data && response.data.data && response.data.data.reviewed_by) ||
+                              (response.data && response.data.data && response.data.data.processed_by) ||
                               this.getCurrentUserName();
 
           // 添加误报记录到操作历史
@@ -1848,10 +1848,6 @@ export default {
 
           // 状态提交成功后立即移出实时列表，再从后端重新拉取活动预警。
           await this.removeWarningAndReload(alertId);
-
-          // 保存到智能复判记录
-          await this.saveToReviewRecords(warningInfo);
-          console.log('📝 实时监控页面-误报记录已保存到智能复判');
 
           // 如果选择了归档，调用归档API
           if (this.falseAlarmForm.needArchive && this.falseAlarmForm.archiveId) {
@@ -1897,53 +1893,6 @@ export default {
         }
       } finally {
         this.loading = false;
-      }
-    },
-
-    // 保存到智能复判记录 - 与预警管理页面保持完全一致
-    async saveToReviewRecords(warningInfo) {
-      try {
-        // 创建复判记录数据
-        const reviewRecord = {
-          id: `review_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          originalWarningId: warningInfo.id,
-          warningType: warningInfo.type || warningInfo.deviceName,
-          deviceName: warningInfo.device || (warningInfo.deviceInfo && warningInfo.deviceInfo.name),
-          location: warningInfo.location || (warningInfo.deviceInfo && warningInfo.deviceInfo.position),
-          originalTime: warningInfo.time,
-          imageUrl: warningInfo.imageUrl,
-          level: warningInfo.level,
-          description: warningInfo.description,
-          reviewResult: 'false_alarm', // 复判结果：误报
-          reviewTime: this.getCurrentTime(),
-          reviewer: this.getCurrentUserName(),
-          reviewReason: '人工标记为误报',
-          confidence: 100, // 人工复判置信度100%
-          aiReviewResult: null, // AI复判结果（如果有的话）
-          aiConfidence: null,
-          status: 'completed',
-          createTime: this.getCurrentTime()
-        };
-
-        // 保存到本地存储（实际项目中应该调用API保存到数据库）
-        let reviewRecords = JSON.parse(localStorage.getItem('intelligentReviewRecords') || '[]');
-        reviewRecords.unshift(reviewRecord);
-
-        // 限制记录数量，避免本地存储过大
-        if (reviewRecords.length > 1000) {
-          reviewRecords = reviewRecords.slice(0, 1000);
-        }
-
-        localStorage.setItem('intelligentReviewRecords', JSON.stringify(reviewRecords));
-
-        // 这里是本地存储操作，不需要额外的API调用
-        console.log('📝 智能复判记录已保存到本地存储');
-
-        console.log('误报记录已保存到智能复判:', reviewRecord);
-
-      } catch (error) {
-        console.error('保存到智能复判记录失败:', error);
-        throw error;
       }
     },
 
@@ -3039,7 +2988,7 @@ export default {
     },
 
     // 🆕 ========== OSD检测框叠加功能 ==========
-    
+
     getDetectionCount(index) {
       const dets = this.detectionResults[index] && this.detectionResults[index].detections
       return dets ? `${dets.length} 个` : '0 个'
@@ -3130,7 +3079,7 @@ export default {
         }
       }
     },
-    
+
     /**
      * AI任务选择变化处理
      */
@@ -3143,16 +3092,16 @@ export default {
       if (this.wsConnections[index]) {
         delete this.wsConnections[index]
       }
-      
+
       // 清空检测结果
       this.$set(this.detectionResults, index, null)
-      
+
       // 如果选择了任务，建立WebSocket连接
       if (taskId) {
         this.connectDetectionWebSocket(index, taskId)
       }
     },
-    
+
     /**
      * 连接检测结果WebSocket
      */
@@ -3195,7 +3144,7 @@ export default {
       })
       this.$set(this.wsConnections, index, ws)
     },
-    
+
     /**
      * 获取视频窗口宽度
      */
@@ -3211,7 +3160,7 @@ export default {
           }
         }
       }
-      
+
       // 降级方案：使用容器尺寸
       const ref = this.$refs[`videoContent${index}`]
       if (ref && ref[0]) {
@@ -3219,7 +3168,7 @@ export default {
       }
       return 640
     },
-    
+
     /**
      * 获取视频窗口高度
      */
@@ -3235,7 +3184,7 @@ export default {
           }
         }
       }
-      
+
       // 降级方案：使用容器尺寸
       const ref = this.$refs[`videoContent${index}`]
       if (ref && ref[0]) {
@@ -3243,7 +3192,7 @@ export default {
       }
       return 480
     },
-    
+
     /**
      * 清理指定索引的OSD资源
      */
@@ -3253,21 +3202,21 @@ export default {
       if (this.wsConnections[index]) {
         delete this.wsConnections[index]
       }
-      
+
       // 清空数据
       this.$set(this.selectedAITasks, index, null)
       this.$set(this.detectionResults, index, null)
       this.$set(this.videoResolutions, index, null)
       this.$set(this.detectionUpdateTime, index, null)
     },
-    
+
     /**
      * 清理所有OSD资源
      */
     cleanupAllOSDResources() {
       const { closeWebSocket } = require('./utils/detectionWebSocket')
       Object.values(this.wsConnections).forEach(ws => closeWebSocket(ws))
-      
+
       // 清空所有数据
       this.wsConnections = {}
       this.selectedAITasks = {}
