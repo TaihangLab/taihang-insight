@@ -2271,7 +2271,7 @@ export default {
               <div 
                 v-show="cardHoverStates[item.id] || isWarningSelected(item.id)" 
                 class="select-checkbox" 
-                @click.stop="toggleSelect(item.id)"
+                @click.stop
               >
                 <el-checkbox 
                   :value="isWarningSelected(item.id)"

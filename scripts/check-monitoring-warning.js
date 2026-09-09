@@ -68,6 +68,15 @@ assert.strictEqual(realtimeMonitoringSource.includes('intelligentReviewRecords')
 const warningManagementSource = fs.readFileSync(warningManagementFile, 'utf8')
 assert.strictEqual(warningManagementSource.includes('saveToReviewRecords'), false)
 assert.strictEqual(warningManagementSource.includes('intelligentReviewRecords'), false)
+assert.strictEqual(
+  warningManagementSource.includes('@click.stop="toggleSelect(item.id)"'),
+  false,
+  'warningManagement.vue: checkbox wrapper must not toggle selection'
+)
+assert(
+  warningManagementSource.includes('@change="toggleSelect(item.id)"'),
+  'warningManagement.vue: checkbox change must toggle selection'
+)
 
 ;[realtimeMonitoringFile, warningManagementFile, warningArchivesFile].forEach(file => {
   const source = fs.readFileSync(file, 'utf8')
