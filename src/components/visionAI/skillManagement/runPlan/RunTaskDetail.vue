@@ -6,8 +6,8 @@
         <i class="el-icon-arrow-left back-btn" @click="goBack"></i>
         <span class="page-header__title">运行任务详情（{{ taskId }}）</span>
         <span v-if="task" class="status-pill" :class="task.status ? 'is-running' : 'is-stopped'">
-          <span class="status-dot"></span>
-          {{ task.status ? '运行中' : '已停止' }}
+          <el-switch v-model="task.status" @change="toggleEnabled"></el-switch>
+          <span>{{ task.status ? '运行中' : '已停止' }}</span>
         </span>
       </div>
       <div class="page-header__right">
@@ -34,8 +34,8 @@
               <div class="info-item">
                 <span class="info-label">任务状态</span>
                 <span class="info-value">
-                  <span class="status-dot-inline" :class="task.status ? 'is-running' : 'is-stopped'"></span>
-                  {{ task.status ? '运行中' : '已停止' }}
+                  <el-switch v-model="task.status" @change="toggleEnabled"></el-switch>
+                  <span class="status-text">{{ task.status ? '运行中' : '已停止' }}</span>
                 </span>
               </div>
               <div class="info-item">
@@ -231,7 +231,7 @@
 </template>
 
 <script>
-import { runPlanAPI } from '@/components/service/VisionAIService.js';
+import { runPlanAPI, formatApiError } from '@/components/service/VisionAIService.js';
 import { formatFrameExtraction, fenceDrawn } from './runPlanFormat.js';
 import FencePreview from './FencePreview.vue';
 
@@ -592,6 +592,16 @@ export default {
     snapshotUrl(cameraId) {
       return runPlanAPI.getCameraSnapshotUrl(cameraId);
     },
+    async toggleEnabled(val) {
+      try {
+        await runPlanAPI.setRunTaskEnabled(this.taskId, val);
+        this.$message.success(val ? '已启用' : '已停用');
+        if (this.logsLoaded) this.loadLogs();
+      } catch (e) {
+        this.task.status = !val;
+        this.$message.error(formatApiError(e, '操作失败'));
+      }
+    },
     async deleteTask() {
       try {
         await this.$confirm(`确认删除任务「${this.taskId}」？`, '删除确认', { type: 'warning' });
@@ -649,6 +659,9 @@ export default {
 .status-pill.is-running .status-dot { background: #67c23a; }
 .status-pill.is-stopped { color: #909399; background: #f5f7fa; }
 .status-pill.is-stopped .status-dot { background: #c0c4cc; }
+.status-pill >>> .el-switch { margin-right: 2px; }
+.status-text { margin-left: 8px; }
+.info-value >>> .el-switch { vertical-align: middle; }
 
 /* 卡片 */
 .detail-card { border-radius: 10px; border: none; }

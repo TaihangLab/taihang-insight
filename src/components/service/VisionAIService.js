@@ -4172,6 +4172,14 @@ export const runPlanAPI = {
   deleteRunTask(taskId) {
     return visionAIAxios.delete(`/api/v1/skill-run-plans/run-tasks/${taskId}`, { timeout: PLAN_MUTATION_TIMEOUT });
   },
+  // 启停单条运行任务
+  setRunTaskEnabled(taskId, enabled) {
+    return visionAIAxios.patch(`/api/v1/skill-run-plans/run-tasks/${taskId}/enabled`, { enabled }, { timeout: PLAN_MUTATION_TIMEOUT });
+  },
+  // 批量启停运行任务
+  batchEnableRunTasks(taskIds, enabled) {
+    return visionAIAxios.post('/api/v1/skill-run-plans/run-tasks/batch-enable', { task_ids: taskIds, enabled }, { timeout: PLAN_MUTATION_TIMEOUT });
+  },
   // 批量删除运行任务
   batchDeleteRunTasks(taskIds) {
     return visionAIAxios.post('/api/v1/skill-run-plans/run-tasks/batch-delete', { task_ids: taskIds }, { timeout: LONG_RUNNING_TIMEOUT });
