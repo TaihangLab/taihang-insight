@@ -294,7 +294,22 @@ export default {
     },
 
     async reloadArchivesList(params = {}) {
-      const list = await this.fetchArchivesList(params);
+      let list = await this.fetchArchivesList(params);
+
+      // 删除当前页最后一条档案后，原页码可能已经超出新的总页数。
+      // 此时回退到最后一个有效页并重新请求，避免误显示“暂无档案”。
+      if (list.length === 0 && this.archivesPagination.total > 0) {
+        const lastPage = Math.max(
+          1,
+          Math.ceil(this.archivesPagination.total / this.archivesPagination.pageSize)
+        );
+
+        if (this.archivesPagination.currentPage > lastPage) {
+          this.archivesPagination.currentPage = lastPage;
+          list = await this.fetchArchivesList({ ...params, page: lastPage });
+        }
+      }
+
       this.archivesList = list;
 
       if (list.length > 0) {
