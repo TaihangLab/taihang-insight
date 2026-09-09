@@ -590,42 +590,26 @@ export default {
             this.$message.success('该预警已移出档案');
           }
         } else {
-          // 批量移出 - 提取ID数组并逐个解除关联
-          const recordIds = this.selectedRows.map(row => row.id);
+          const recordIds = [...new Set(this.selectedRows.map(row => row.id))];
 
-
-          // 验证ID是否有效
-          if (recordIds.some(id => id === null || id === undefined)) {
+          if (recordIds.some(id => !Number.isInteger(Number(id)) || Number(id) <= 0)) {
             console.error('检测到无效的记录ID:', recordIds);
             this.$message.error('选中的记录包含无效ID，请刷新页面后重试');
             return;
           }
 
-          // 批量解除关联
-
-          let successCount = 0;
-          let failCount = 0;
-
-          for (const alertId of recordIds) {
-            try {
-              const response = await archiveAPI.unlinkAlertFromArchive(this.currentArchiveId, alertId);
-              if (!response.data || response.data.code === 0) {
-                successCount++;
-              } else {
-                failCount++;
-              }
-            } catch (error) {
-              console.error(`移除预警 ${alertId} 失败:`, error);
-              failCount++;
-            }
+          const response = await archiveAPI.unlinkAlertsFromArchive(
+            this.currentArchiveId,
+            recordIds.map(Number)
+          );
+          if (response.data && response.data.code !== undefined && response.data.code !== 0) {
+            throw new Error(response.data.message || response.data.msg || '批量移出失败');
           }
 
-          if (failCount > 0) {
-            this.$message.warning(`已成功移出 ${successCount} 条，失败 ${failCount} 条`);
-          } else {
-            this.$message.success(`已成功将 ${successCount} 条预警移出档案`);
-          }
-
+          const unlinkedCount = response.data && response.data.data
+            ? response.data.data.unlinked_count
+            : recordIds.length;
+          this.$message.success(`已成功将 ${unlinkedCount} 条预警移出档案`);
           this.selectedRows = [];
         }
 
@@ -633,7 +617,9 @@ export default {
         this.deleteConfirmVisible = false;
       } catch (error) {
         console.error('移出档案操作失败:', error);
-        this.$message.error('移出档案失败: ' + error.message);
+        const serverMessage = error.response && error.response.data &&
+          (error.response.data.detail || error.response.data.message);
+        this.$message.error('移出档案失败: ' + (serverMessage || error.message));
       }
     },
     // 编辑档案
@@ -810,7 +796,9 @@ export default {
           const params = {
             page: this.availableAlertsPagination.currentPage,
             limit: this.availableAlertsPagination.pageSize,
-            exclude_archived: true,
+            // 查询与归档资格分离：五种状态都允许检索和查看详情，
+            // 是否能勾选归档由后端返回的 can_archive 决定。
+            exclude_archived: false,
             ...this.alertFilters
           };
 
@@ -874,7 +862,16 @@ export default {
 
       // 处理预警选择变化
       handleAlertSelectionChange(selection) {
-        this.selectedAlerts = selection;
+        this.selectedAlerts = selection.filter(this.isAlertArchivable);
+      },
+
+      // 只有已处理（状态3）且尚未归档的预警允许加入档案。
+      isAlertArchivable(alert) {
+        if (!alert) return false;
+        if (typeof alert.can_archive === 'boolean') {
+          return alert.can_archive;
+        }
+        return Number(alert.status) === 3 && !alert.is_already_archived;
       },
 
       // 可用预警分页变化
@@ -894,6 +891,11 @@ export default {
       async confirmAddSelectedAlerts() {
         if (this.selectedAlerts.length === 0) {
           this.$message.warning('请至少选择一个预警');
+          return;
+        }
+
+        if (this.selectedAlerts.some(alert => !this.isAlertArchivable(alert))) {
+          this.$message.warning('只有已处理状态的预警才能归档，请重新选择');
           return;
         }
 
@@ -942,7 +944,9 @@ export default {
 
         } catch (error) {
           console.error('批量添加预警失败:', error);
-          this.$message.error('添加预警失败: ' + error.message);
+          const serverMessage = error.response && error.response.data &&
+            (error.response.data.detail || error.response.data.message);
+          this.$message.error('添加预警失败: ' + (serverMessage || error.message));
         } finally {
           this.availableAlertsLoading = false;
         }
@@ -1619,7 +1623,12 @@ export default {
         @selection-change="handleAlertSelectionChange"
         style="width: 100%; margin-top: 16px;"
         max-height="450">
-        <el-table-column type="selection" width="55" align="center"></el-table-column>
+        <el-table-column
+          type="selection"
+          width="55"
+          align="center"
+          :selectable="isAlertArchivable">
+        </el-table-column>
         <el-table-column label="预警ID" prop="alert_id" width="80" align="center"></el-table-column>
         <el-table-column label="预警名称" prop="alert_name" min-width="140" align="center" show-overflow-tooltip></el-table-column>
         <el-table-column label="摄像头名称" prop="camera_name" min-width="150" align="center" show-overflow-tooltip></el-table-column>
@@ -1677,7 +1686,7 @@ export default {
             已选择 {{ selectedAlerts.length }} 个预警
           </span>
           <span v-else class="no-selection">
-            请选择要添加到档案的预警
+            仅“已处理”状态可勾选归档，其他状态可查看详情
           </span>
         </div>
         <div class="dialog-buttons">

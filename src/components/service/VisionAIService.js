@@ -3312,6 +3312,18 @@ export const archiveAPI = {
   },
 
   /**
+   * 批量移除档案中的预警关联（单次请求、事务性处理）
+   * @param {number} archiveId - 档案ID
+   * @param {Array<number>} alertIds - 预警ID列表
+   * @returns {Promise} 包含批量移除结果的Promise对象
+   */
+  unlinkAlertsFromArchive(archiveId, alertIds) {
+    return visionAIAxios.post(`/api/v1/alert-archives/unlink-alerts/${archiveId}`, {
+      alert_ids: alertIds
+    });
+  },
+
+  /**
    * 获取档案关联的预警列表
    * @param {number} archiveId - 档案ID
    * @param {Object} params - 查询参数

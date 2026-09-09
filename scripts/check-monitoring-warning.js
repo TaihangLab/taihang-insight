@@ -57,6 +57,7 @@ const serviceFile = path.join(projectRoot, 'src', 'components', 'service', 'Visi
 const realtimeMonitoringFile = path.join(monitoringRoot, 'realTimeMonitoring.vue')
 const warningManagementFile = path.join(monitoringRoot, 'warningManagement.vue')
 const warningArchivesFile = path.join(monitoringRoot, 'warningArchives.vue')
+const warningDetailFile = path.join(monitoringRoot, 'warningDetail.vue')
 const formattingFile = path.join(monitoringRoot, 'utils', 'alertFormatting.js')
 const processHistoryFile = path.join(monitoringRoot, 'utils', 'alertProcessHistory.js')
 ;[serviceFile, formattingFile, processHistoryFile].forEach(checkJavaScriptFile)
@@ -94,6 +95,37 @@ assert.strictEqual(
 assert(
   warningManagementSource.includes('expected_statuses: selectionSnapshot.expectedStatuses'),
   'warningManagement.vue: batch deletion must carry the frozen status snapshot'
+)
+
+const warningArchivesSource = fs.readFileSync(warningArchivesFile, 'utf8')
+assert(
+  warningArchivesSource.includes(':selectable="isAlertArchivable"'),
+  'warningArchives.vue: only archivable alerts may be selected'
+)
+assert(
+  warningArchivesSource.includes('exclude_archived: false'),
+  'warningArchives.vue: all five statuses must remain searchable'
+)
+assert(
+  warningArchivesSource.includes('archiveAPI.unlinkAlertsFromArchive('),
+  'warningArchives.vue: batch unlink must use one transactional API request'
+)
+assert.strictEqual(
+  warningArchivesSource.includes('for (const alertId of recordIds)'),
+  false,
+  'warningArchives.vue: batch unlink must not issue sequential DELETE requests'
+)
+
+const serviceSource = fs.readFileSync(serviceFile, 'utf8')
+assert(
+  serviceSource.includes('unlinkAlertsFromArchive(archiveId, alertIds)'),
+  'VisionAIService.js: batch unlink API method is missing'
+)
+
+const warningDetailSource = fs.readFileSync(warningDetailFile, 'utf8')
+assert(
+  warningDetailSource.includes('return Number(this.detail.status) !== 3'),
+  'warningDetail.vue: archive action must be enabled only for resolved alerts'
 )
 
 ;[realtimeMonitoringFile, warningManagementFile, warningArchivesFile].forEach(file => {

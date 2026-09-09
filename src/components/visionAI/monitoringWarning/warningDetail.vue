@@ -1536,8 +1536,8 @@ export default {
 
     isArchiveDisabled() {
       if (!this.detail) return true;
-      // 与预警管理列表一致：已归档/误报禁用，未处理完点击后给出明确提示。
-      return [4, 5].includes(Number(this.detail.status));
+      // 查看详情对所有状态开放，但只有已处理（状态3）允许进入归档流程。
+      return Number(this.detail.status) !== 3;
     },
 
     // 格式化时间
