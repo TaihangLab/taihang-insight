@@ -65,8 +65,33 @@ const processHistoryFile = path.join(monitoringRoot, 'utils', 'alertProcessHisto
 const realtimeMonitoringSource = fs.readFileSync(realtimeMonitoringFile, 'utf8')
 assert.strictEqual(realtimeMonitoringSource.includes('saveToReviewRecords'), false)
 assert.strictEqual(realtimeMonitoringSource.includes('intelligentReviewRecords'), false)
+assert(
+  realtimeMonitoringSource.includes("const processingRemark = String(this.remarkForm.remark || '').trim()"),
+  'realTimeMonitoring.vue: finishProcessing must normalize the required processing remark'
+)
+assert(
+  realtimeMonitoringSource.includes('if (!processingRemark)'),
+  'realTimeMonitoring.vue: finishProcessing must reject an empty processing remark'
+)
+assert.strictEqual(
+  realtimeMonitoringSource.includes('未填写处理意见'),
+  false,
+  'realTimeMonitoring.vue: completed records must not fall back to an empty remark'
+)
+assert(
+  realtimeMonitoringSource.includes("formatApiError(error, '结束处理失败')"),
+  'realTimeMonitoring.vue: finishProcessing must display the API business error'
+)
 
 const warningManagementSource = fs.readFileSync(warningManagementFile, 'utf8')
+assert(
+  warningManagementSource.includes('if (!processingRemark)'),
+  'warningManagement.vue: finishProcessing must reject an empty processing remark'
+)
+assert(
+  warningManagementSource.includes("formatApiError(error, '结束处理失败')"),
+  'warningManagement.vue: finishProcessing must display the API business error'
+)
 assert.strictEqual(warningManagementSource.includes('saveToReviewRecords'), false)
 assert.strictEqual(warningManagementSource.includes('intelligentReviewRecords'), false)
 assert.strictEqual(
@@ -123,6 +148,14 @@ assert(
 )
 
 const warningDetailSource = fs.readFileSync(warningDetailFile, 'utf8')
+assert(
+  warningDetailSource.includes('if (!processingRemark)'),
+  'warningDetail.vue: finishProcessing must reject an empty processing remark'
+)
+assert(
+  warningDetailSource.includes("formatApiError(error, '结束处理失败')"),
+  'warningDetail.vue: finishProcessing must display the API business error'
+)
 assert(
   warningDetailSource.includes('return Number(this.detail.status) !== 3'),
   'warningDetail.vue: archive action must be enabled only for resolved alerts'

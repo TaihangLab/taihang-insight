@@ -1,6 +1,6 @@
 <script>
 import WarningDetail from './warningDetail.vue'
-import { alertAPI, archiveAPI } from '@/components/service/VisionAIService.js'
+import { alertAPI, archiveAPI, formatApiError } from '@/components/service/VisionAIService.js'
 import userService from '@/components/service/UserService.js'
 import {
   ALERT_LEVEL_CODE_BY_KEY,
@@ -1696,6 +1696,12 @@ export default {
 
     // 结束处理 - 与预警详情对话框保持一致
     async finishProcessing() {
+      const processingRemark = String(this.remarkForm.remark || '').trim()
+      if (!processingRemark) {
+        this.$message.warning('请输入处理意见')
+        return
+      }
+
       try {
         this.loading = true
         
@@ -1723,7 +1729,7 @@ export default {
         const updateData = {
           status: 3, // 已处理状态
           expected_status: expectedStatus,
-          processing_notes: this.remarkForm.remark.trim() || null,
+          processing_notes: processingRemark,
           processed_by: this.getCurrentUserName()
         }
 
@@ -1737,7 +1743,7 @@ export default {
           const processingRecord = result.processing_record || {}
           const processingNotes = updatedAlert.processing_notes != null
             ? updatedAlert.processing_notes
-            : updateData.processing_notes
+            : processingRemark
           const operatorName = processingRecord.operator || updatedAlert.processed_by || '未知操作人'
 
           // API调用成功，更新本地数据状态
@@ -1764,7 +1770,7 @@ export default {
               status: 'completed',
               statusText: '已处理',
               time: processingRecord.created_at ? formatAlertDateTime(processingRecord.created_at) : getCurrentAlertTime(),
-              description: processingNotes || '未填写处理意见',
+              description: processingNotes || processingRemark,
               operationType: 'completed',
               operator: operatorName
             }
@@ -1785,7 +1791,12 @@ export default {
         this.closeRemarkDialog()
       } catch (error) {
         console.error('结束处理失败:', error)
-        this.$message.error('结束处理失败：' + (error.message || '网络错误'))
+        const errorMessage = formatApiError(error, '结束处理失败')
+        if (error.response && error.response.status === 400) {
+          this.$message.warning(errorMessage)
+        } else {
+          this.$message.error(errorMessage)
+        }
       } finally {
         this.loading = false
       }

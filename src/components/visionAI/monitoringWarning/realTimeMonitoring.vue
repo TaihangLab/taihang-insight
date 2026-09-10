@@ -515,7 +515,7 @@ import WarningDetail from './warningDetail.vue'
 // 🆕 导入OSD检测框组件
 import DetectionOverlay from './components/DetectionOverlay.vue'
 import screenfull from "screenfull";
-import { alertAPI, realtimeMonitorAPI, realtimeDetectionAPI } from '../../service/VisionAIService.js';
+import { alertAPI, formatApiError, realtimeMonitorAPI, realtimeDetectionAPI } from '../../service/VisionAIService.js';
 import userService from '../../service/UserService.js';
 import {
   formatAlertDateTime,
@@ -1266,6 +1266,12 @@ export default {
 
     // 结束处理
     async finishProcessing() {
+      const processingRemark = String(this.remarkForm.remark || '').trim();
+      if (!processingRemark) {
+        this.$message.warning('请输入处理意见');
+        return;
+      }
+
       try {
         this.loading = true;
 
@@ -1286,7 +1292,7 @@ export default {
         const updateData = {
           status: 3, // 已处理状态
           expected_status: expectedStatus,
-          processing_notes: this.remarkForm.remark.trim() || null,
+          processing_notes: processingRemark,
           processed_by: this.getCurrentUserName(),
           operation_type: 'complete_processing'
         };
@@ -1298,7 +1304,7 @@ export default {
         const processingRecord = result.processing_record || {};
         const processingNotes = updatedAlert.processing_notes != null
           ? updatedAlert.processing_notes
-          : updateData.processing_notes;
+          : processingRemark;
         const operatorName = processingRecord.operator || updatedAlert.processed_by || '未知操作人';
 
         // 更新本地数据状态
@@ -1314,7 +1320,7 @@ export default {
             status: 'completed',
             statusText: '已处理',
             time: processingRecord.created_at ? formatAlertDateTime(processingRecord.created_at) : getCurrentAlertTime(),
-            description: processingNotes || '未填写处理意见',
+            description: processingNotes || processingRemark,
             operationType: 'completed',
             operator: operatorName
           };
@@ -1338,7 +1344,12 @@ export default {
 
       } catch (error) {
         console.error('❌ 结束处理失败:', error);
-        this.$message.error('结束处理失败: ' + (error.message || (error.response && error.response.data && error.response.data.message) || '未知错误'));
+        const errorMessage = formatApiError(error, '结束处理失败');
+        if (error.response && error.response.status === 400) {
+          this.$message.warning(errorMessage);
+        } else {
+          this.$message.error(errorMessage);
+        }
       } finally {
         this.loading = false;
       }

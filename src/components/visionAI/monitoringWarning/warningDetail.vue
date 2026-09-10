@@ -652,7 +652,7 @@
 </template>
 
 <script>
-import { alertAPI, reviewRecordAPI } from '@/components/service/VisionAIService.js'
+import { alertAPI, formatApiError, reviewRecordAPI } from '@/components/service/VisionAIService.js'
 import userService from '@/components/service/UserService.js'
 import {
   normalizeAlertSkillSource,
@@ -1029,12 +1029,18 @@ export default {
     },
 
     async finishProcessing() {
+      const processingRemark = String(this.remarkForm.remark || '').trim();
+      if (!processingRemark) {
+        this.$message.warning('请输入处理意见');
+        return;
+      }
+
       try {
         this.loading = true;
         const updateData = {
           status: 3,
           expected_status: Number(this.detail.status),
-          processing_notes: this.remarkForm.remark.trim() || null,
+          processing_notes: processingRemark,
           processed_by: this.getCurrentUserName()
         };
 
@@ -1046,14 +1052,14 @@ export default {
           const processingRecord = result.processing_record || {};
           const processingNotes = updatedAlert.processing_notes != null
             ? updatedAlert.processing_notes
-            : updateData.processing_notes;
+            : processingRemark;
           const operatorName = processingRecord.operator || updatedAlert.processed_by || '未知操作人';
 
           this.addOperationRecord({
             status: 'completed',
             statusText: '已处理',
             time: processingRecord.created_at ? this.formatTime(processingRecord.created_at) : this.getCurrentTime(),
-            description: processingNotes || '未填写处理意见',
+            description: processingNotes || processingRemark,
             operationType: 'completed',
             operator: operatorName
           });
@@ -1072,7 +1078,12 @@ export default {
           throw new Error(response.data ? response.data.msg : '更新失败');
         }
       } catch (error) {
-        this.$message.error(`结束处理失败: ${error.message || error}`);
+        const errorMessage = formatApiError(error, '结束处理失败');
+        if (error.response && error.response.status === 400) {
+          this.$message.warning(errorMessage);
+        } else {
+          this.$message.error(errorMessage);
+        }
       } finally {
         this.loading = false;
       }
