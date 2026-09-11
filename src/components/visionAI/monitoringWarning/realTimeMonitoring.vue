@@ -619,6 +619,7 @@ export default {
       // API数据加载相关
       apiDataLoading: false,
       warningRequestId: 0,
+      warningSyncTimer: null,
       currentPage: 1,
       pageSize: 10, // 只显示最新的10条预警数据
     }
@@ -628,6 +629,7 @@ export default {
     this.updateDateTime();
     this.timer = setInterval(this.updateDateTime, 1000);
     this.aiTaskPollTimer = setInterval(this.refreshPlayingCameraAITasks, 5000);
+    this.warningSyncTimer = setInterval(this.syncWarningSnapshot, 30000);
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
 
     // 添加键盘事件监听器，用于ESC键退出全屏
@@ -670,6 +672,8 @@ export default {
     this.exitFullscreen();
     document.body.classList.remove('camera-fullscreen-mode');
     clearInterval(this.timer);
+    clearInterval(this.warningSyncTimer);
+    this.warningSyncTimer = null;
     if (this.aiTaskPollTimer) {
       clearInterval(this.aiTaskPollTimer);
       this.aiTaskPollTimer = null;
@@ -2227,6 +2231,11 @@ export default {
     },
 
     // 加载预警数据。请求期间到达的SSE事件优先，避免旧快照覆盖实时消息。
+    syncWarningSnapshot() {
+      if (this.componentDestroyed || document.hidden || this.apiDataLoading) return;
+      return this.loadWarningData({ showError: false });
+    },
+
     async loadWarningData(options = {}) {
       const requestId = ++this.warningRequestId;
       const sseSequenceAtStart = this.sseMessageSequence;
@@ -2563,6 +2572,7 @@ export default {
       if (this.componentDestroyed) return;
       this.sseStatus.connected = true;
       this.sseStatus.reconnecting = false;
+      this.syncWarningSnapshot();
     },
 
     // 处理SSE错误（EventSource断线后会自动重连，此时readyState为CONNECTING）
@@ -2667,6 +2677,7 @@ export default {
     handleVisibilityChange() {
       if (!document.hidden) {
         this.refreshPlayingCameraAITasks()
+        this.syncWarningSnapshot()
       }
     },
 

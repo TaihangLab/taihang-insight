@@ -234,4 +234,5 @@ const falseAlarmHistory = processHistory.buildAlertProcessHistory({
 })
 assert.strictEqual(falseAlarmHistory[0].description, '现场确认为误报')
 
+require('./check-alert-snapshot-recovery')
 console.log(`monitoring-warning checks passed: ${vueFiles.length} Vue files`)
