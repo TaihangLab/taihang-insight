@@ -535,10 +535,10 @@ export default {
     // ──────────────────────────── 交互处理 ──────────────────────────────────
 
     handleTimeRangeChange(value) {
-      this.timeRange = value;
       if (value === "custom") {
         this.openCustomDatePicker();
       } else {
+        this.timeRange = value;
         this.fetchStatistics().catch(() => {});
       }
     },
@@ -550,6 +550,7 @@ export default {
     },
 
     openCustomDatePicker() {
+      if (this.datePickerDialogVisible) return;
       this.customDateRangeDraft = Array.isArray(this.customDateRange)
         ? [...this.customDateRange]
         : [];
@@ -559,6 +560,7 @@ export default {
     handleCustomDateChange() {
       if (this.customDateRangeDraft && this.customDateRangeDraft.length === 2) {
         this.customDateRange = [...this.customDateRangeDraft];
+        this.timeRange = "custom";
         this.datePickerDialogVisible = false;
         this.fetchStatistics().catch(() => {});
       }
@@ -573,9 +575,6 @@ export default {
       this.customDateRangeDraft = Array.isArray(this.customDateRange)
         ? [...this.customDateRange]
         : [];
-      if (!this.customDateRange || this.customDateRange.length !== 2) {
-        this.timeRange = "today";
-      }
     },
 
     async refreshData() {
@@ -717,7 +716,7 @@ export default {
     <div class="header-bar">
       <div class="time-filter">
         <el-radio-group
-          v-model="timeRange"
+          :value="timeRange"
           size="small"
           @change="handleTimeRangeChange"
         >
