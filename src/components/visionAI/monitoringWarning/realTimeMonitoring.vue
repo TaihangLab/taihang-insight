@@ -62,12 +62,23 @@
               
               <div class="video-placeholder" :data-timestamp="currentDateTime" :data-camera="formatCameraName(index)">
                     <div v-if="!videoUrl[index-1]" class="no-signal">
-                      <i class="el-icon-video-camera-solid"></i>
+                      <i :class="videoTip[index-1] ? 'el-icon-loading' : 'el-icon-video-camera-solid'"></i>
                       <div>{{ videoTip[index-1] ? videoTip[index-1] : "无信号" }}</div>
                     </div>
                     <div v-else class="video-player-wrapper">
-                      <player :ref="'player'+(index-1)" :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
-                              @destroy="destroy"/>
+                      <zlm-rtc-player
+                        v-if="playProtocol[index-1] === 'webrtc'"
+                        :ref="'player'+(index-1)"
+                        :videoUrl="videoUrl[index-1]"
+                        @error="onRtcError(index-1)"
+                        @screenshot="shot"/>
+                      <player
+                        v-else
+                        :ref="'player'+(index-1)"
+                        :videoUrl="videoUrl[index-1]"
+                        fluent autoplay
+                        @screenshot="shot"
+                        @destroy="destroy"/>
                       
                       <!-- 🆕 AI任务选择下拉框 - 移到video-player-wrapper内部 -->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
@@ -148,12 +159,23 @@
               
               <div class="video-placeholder" :data-timestamp="currentDateTime" :data-camera="formatCameraName(index)">
                     <div v-if="!videoUrl[index-1]" class="no-signal">
-                      <i class="el-icon-video-camera-solid"></i>
+                      <i :class="videoTip[index-1] ? 'el-icon-loading' : 'el-icon-video-camera-solid'"></i>
                       <div>{{ videoTip[index-1] ? videoTip[index-1] : "无信号" }}</div>
                     </div>
                     <div v-else class="video-player-wrapper">
-                      <player :ref="'player'+(index-1)" :videoUrl="videoUrl[index-1]" fluent autoplay @screenshot="shot"
-                              @destroy="destroy"/>
+                      <zlm-rtc-player
+                        v-if="playProtocol[index-1] === 'webrtc'"
+                        :ref="'player'+(index-1)"
+                        :videoUrl="videoUrl[index-1]"
+                        @error="onRtcError(index-1)"
+                        @screenshot="shot"/>
+                      <player
+                        v-else
+                        :ref="'player'+(index-1)"
+                        :videoUrl="videoUrl[index-1]"
+                        fluent autoplay
+                        @screenshot="shot"
+                        @destroy="destroy"/>
                       
                       <!-- 🆕 AI任务选择下拉框（全屏模式） -->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
@@ -486,6 +508,7 @@
 
 <script>
 import player from '../../common/jessibuca.vue'
+import zlmRtcPlayer from '../../common/zlmRtcPlayer.vue'
 // 使用本地专用组件（改造后的实时监控专用API）
 import OrgPointTree from './components/OrgPointTree.vue'
 import WarningDetail from './warningDetail.vue'
@@ -497,7 +520,7 @@ import { alertAPI, realtimeMonitorAPI, realtimeDetectionAPI } from '../../servic
 export default {
   name: "RealTimeMonitoring",
   components: {
-    player, OrgPointTree, WarningDetail, DetectionOverlay
+    player, zlmRtcPlayer, OrgPointTree, WarningDetail, DetectionOverlay
   },
   data() {
     return {
@@ -514,6 +537,9 @@ export default {
       aiTaskPollTimer: null,
       // 视频URL数组
       videoUrl: [],
+      playProtocol: {},
+      flvFallbackUrl: {},
+      rtcFailed: {},
       // 视频提示信息
       videoTip: [],
       // 播放器索引
@@ -568,7 +594,8 @@ export default {
             // SSE连接相关
       sseConnection: null,
       sseStatus: {
-        connected: false
+        connected: false,
+        reconnecting: false
       },
 
       // API数据加载相关
@@ -895,8 +922,23 @@ export default {
     clear(idx) {
       this.$set(this.videoUrl, idx - 1, '');
       this.$set(this.videoTip, idx - 1, '');
+      this.$set(this.playProtocol, idx - 1, '');
+      this.$set(this.flvFallbackUrl, idx - 1, '');
+      this.$set(this.rtcFailed, idx - 1, false);
     },
-    // 设置播放URL
+    onRtcError(idx) {
+      if (this.rtcFailed[idx] || this.playProtocol[idx] !== 'webrtc') return
+      const flv = this.flvFallbackUrl[idx]
+      this.$set(this.rtcFailed, idx, true)
+      if (!flv) {
+        this.$set(this.videoTip, idx, "播放失败: WebRTC 不可用")
+        this.setPlayUrl("", idx)
+        return
+      }
+      console.warn('WebRTC 播放失败，回退 HTTP-FLV', idx)
+      this.$set(this.playProtocol, idx, 'flv')
+      this.setPlayUrl(flv, idx)
+    },
     setPlayUrl(url, idx) {
       this.$set(this.videoUrl, idx, url);
     },
@@ -923,6 +965,9 @@ export default {
         this.cleanupOSDResources(idxTmp)
       }
       this.setPlayUrl("", idxTmp);
+      this.$set(this.playProtocol, idxTmp, '');
+      this.$set(this.flvFallbackUrl, idxTmp, '');
+      this.$set(this.rtcFailed, idxTmp, false);
       this.$set(this.videoTip, idxTmp, "正在拉流...");
       
       // 🆕 保存摄像头ID映射
@@ -939,17 +984,20 @@ export default {
         
         if (response.data && response.data.code === 0 && response.data.data) {
           const streamData = response.data.data;
-          let videoUrl;
-          
-          // HTTP-FLV 优先（jessibuca 拉 http flv 更稳）
-          if (location.protocol === "https:") {
-            videoUrl = streamData.https_flv || streamData.wss_flv;
-          } else {
-            videoUrl = streamData.http_flv || streamData.ws_flv;
+          const flvUrl = location.protocol === "https:"
+            ? (streamData.https_flv || streamData.wss_flv)
+            : (streamData.http_flv || streamData.ws_flv);
+          const config = require('../../../../config/index.js')
+          let rtcUrl = streamData.webrtc || ''
+          if (rtcUrl.startsWith('/')) {
+            rtcUrl = String(config.API_BASE_URL || '').replace(/\/$/, '') + rtcUrl
           }
-          
+          const videoUrl = rtcUrl || flvUrl;
+
           if (videoUrl) {
-            console.log('✅ 获取播放地址成功:', videoUrl);
+            this.$set(this.playProtocol, idxTmp, rtcUrl ? 'webrtc' : 'flv');
+            this.$set(this.flvFallbackUrl, idxTmp, flvUrl || '');
+            console.log('✅ 获取播放地址成功:', rtcUrl ? 'webrtc' : 'flv', videoUrl);
             this.setPlayUrl(videoUrl, idxTmp);
 
             // 🆕 加载该摄像头的AI任务列表
@@ -2569,6 +2617,9 @@ export default {
 
     // 处理SSE消息
     handleSSEMessage(messageData) {
+      if (!messageData || messageData.event === 'heartbeat' || messageData.event === 'connected') {
+        return;
+      }
       // 如果是AI预警消息
       if (messageData.alert_id || messageData.id) {
         this.handleNewAlert(messageData);
@@ -2914,18 +2965,26 @@ export default {
     handleSSEOpen() {
       console.log('SSE连接已建立（含重连成功），更新状态为已连接');
       this.sseStatus.connected = true;
+      this.sseStatus.reconnecting = false;
     },
 
     // 处理SSE错误（EventSource断线后会自动重连，此时readyState为CONNECTING）
-    handleSSEError(error) {
-      console.log('SSE连接错误，等待自动重连...');
+    handleSSEError() {
+      const es = this.sseConnection;
+      if (es && es.readyState === EventSource.CONNECTING) {
+        this.sseStatus.connected = false;
+        this.sseStatus.reconnecting = true;
+        return;
+      }
       this.sseStatus.connected = false;
+      this.sseStatus.reconnecting = false;
     },
 
     // 处理SSE连接关闭
     handleSSEClose() {
       console.log('SSE连接已关闭');
       this.sseStatus.connected = false;
+      this.sseStatus.reconnecting = false;
     },
 
     // 清理SSE连接
@@ -2938,6 +2997,7 @@ export default {
       }
 
       this.sseStatus.connected = false;
+      this.sseStatus.reconnecting = false;
     },
 
     // 手动重连SSE
@@ -2952,12 +3012,16 @@ export default {
 
     // 获取SSE状态样式类
     getSSEStatusClass() {
-      return this.sseStatus.connected ? 'status-connected' : 'status-disconnected';
+      if (this.sseStatus.connected) return 'status-connected';
+      if (this.sseStatus.reconnecting) return 'status-reconnecting';
+      return 'status-disconnected';
     },
 
     // 获取SSE状态文本
     getSSEStatusText() {
-      return this.sseStatus.connected ? '已连接' : '未连接';
+      if (this.sseStatus.connected) return '已连接';
+      if (this.sseStatus.reconnecting) return '重连中';
+      return '未连接';
     },
 
     // 🆕 ========== OSD检测框叠加功能 ==========
@@ -3009,6 +3073,7 @@ export default {
           this.$set(this.availableAITasks, cameraId, response.data.data || [])
         }
       } catch (error) {
+        // Worker 重启/503 时保留上次列表，避免下拉框被空数据冲掉
         console.error(`❌ 获取摄像头AI任务列表失败:`, error)
       }
     },
@@ -3072,6 +3137,14 @@ export default {
         onClose: (closedWs) => {
           if (this.wsConnections[index] === closedWs) {
             delete this.wsConnections[index]
+            const keepTaskId = this.selectedAITasks[index]
+            if (keepTaskId) {
+              setTimeout(() => {
+                if (this.selectedAITasks[index] === keepTaskId && !this.wsConnections[index]) {
+                  this.connectDetectionWebSocket(index, keepTaskId)
+                }
+              }, 1500)
+            }
           }
         }
       })

@@ -104,6 +104,8 @@
             <el-button type="primary" size="small" icon="el-icon-plus" @click="openCreate">批量创建运行计划</el-button>
           </template>
           <template v-else>
+            <el-button size="small" :disabled="!taskSelection.length" @click="batchEnableTasks(false)">批量停用</el-button>
+            <el-button size="small" :disabled="!taskSelection.length" @click="batchEnableTasks(true)">批量启用</el-button>
             <el-button size="small" :disabled="!taskSelection.length" @click="batchDeleteTasks">批量删除</el-button>
           </template>
         </div>
@@ -478,10 +480,11 @@
           <el-table-column prop="camera_name" label="点位名称" min-width="150" show-overflow-tooltip>
             <template slot-scope="{ row }">{{ row.camera_name || '-' }}</template>
           </el-table-column>
-          <el-table-column label="任务状态" width="110" align="center">
+          <el-table-column label="任务状态" width="120" align="center">
             <template slot-scope="{ row }">
-              <span class="status-dot" :class="row.status ? 'is-running' : 'is-stopped'"></span>
-              {{ row.status ? '运行中' : '已停止' }}
+              <el-tooltip content="单独启停该点位任务，不影响计划里其他点位；整份计划再次启用时会全部拉起" placement="top">
+                <el-switch v-model="row.status" @change="(v) => toggleTaskEnabled(row, v)"></el-switch>
+              </el-tooltip>
             </template>
           </el-table-column>
           <el-table-column label="智能复判" width="120" align="center">
@@ -1229,6 +1232,31 @@ export default {
       }
     },
     // ---------- 任务操作 ----------
+    async toggleTaskEnabled(row, val) {
+      try {
+        await runPlanAPI.setRunTaskEnabled(row.task_id, val);
+        this.$message.success(val ? '已启用' : '已停用');
+        this.loadAllTasks();
+      } catch (e) {
+        row.status = !val;
+        this.$message.error(formatApiError(e, '操作失败'));
+      }
+    },
+    async batchEnableTasks(enabled) {
+      const ids = this.taskSelection.map(r => r.task_id).filter(Boolean);
+      if (!ids.length) return;
+      try {
+        await this.$confirm(
+          `确认${enabled ? '启用' : '停用'}选中的 ${ids.length} 条任务？`,
+          '操作确认', { type: 'warning' }
+        );
+        await runPlanAPI.batchEnableRunTasks(ids, enabled);
+        this.$message.success('操作成功');
+        this.loadData();
+      } catch (e) {
+        if (e !== 'cancel') this.$message.error(formatApiError(e, '操作失败'));
+      }
+    },
     async deleteTask(row) {
       try {
         await this.$confirm(`确认删除任务「${row.task_id}」？`, '删除确认', { type: 'warning' });
