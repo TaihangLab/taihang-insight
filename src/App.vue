@@ -23,8 +23,9 @@ export default {
   created() {
     // 已移除强制登录检查 - 允许访客访问所有页面
     console.log('系统启动 - 无需登录即可访问');
-    if (userService.getToken() != null) {
-      console.log('检测到已登录用户:', userService.getUser().username);
+    if (userService.getToken() != null || userService.getAdminToken()) {
+      console.log('检测到已登录用户:', userService.getUserDisplayName());
+      userService.syncLsCookieFromCurrentUser();
     } else {
       console.log('当前为访客模式');
     }

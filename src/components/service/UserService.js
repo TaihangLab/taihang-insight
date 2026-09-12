@@ -102,5 +102,21 @@ export default {
   clearToken() {
     this.clearLoginStatus();
     this.clearUserInfo();
+    this.clearLsCookie();
+  },
+
+  setLsCookie(username) {
+    if (!username) return;
+    document.cookie = "myapp_username=" + encodeURIComponent(username) + "; path=/; SameSite=Lax";
+  },
+
+  clearLsCookie() {
+    document.cookie = "myapp_username=; path=/; max-age=0";
+  },
+
+  syncLsCookieFromCurrentUser() {
+    const user = this.getCurrentUser() || {};
+    const login = user.userName || user.username || user.email;
+    this.setLsCookie(login);
   }
 }

@@ -16,7 +16,16 @@ module.exports = {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {},  // 不再使用代理，前端直接通过 baseURL 访问 API；播放地址由后端拼完整 URL
+    proxyTable: {
+      // API 仍走 API_BASE_URL；这里只反代同源标注 /labelstudio
+      '/labelstudio': {
+        target: 'http://127.0.0.1:' + (process.env.LABEL_STUDIO_PORT || '8888'),
+        changeOrigin: true,
+        ws: true,
+        secure: false,
+        pathRewrite: { '^/labelstudio': '' }
+      }
+    },
 
     // Various Dev Server settings
     host:"0.0.0.0",

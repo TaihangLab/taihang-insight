@@ -169,6 +169,7 @@ export default {
           
           userService.setUser(userInfo);
           userService.setToken('mock-login-token');
+          userService.setLsCookie(userInfo.username);
           
           this.$message({
             showClose: true,
