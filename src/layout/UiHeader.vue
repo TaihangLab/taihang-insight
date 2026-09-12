@@ -47,6 +47,7 @@
         <el-menu-item index="/deviceManage/organizations">组织管理</el-menu-item>
         <el-menu-item index="/deviceManage/devices">设备接入</el-menu-item>
         <el-menu-item index="/deviceManage/points">点位管理</el-menu-item>
+        <el-menu-item index="/deviceManage/recordPlan">点位录像计划</el-menu-item>
         <el-menu-item index="/deviceManage/camera">AI 摄像头</el-menu-item>
       </el-submenu>
 

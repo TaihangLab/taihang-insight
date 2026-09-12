@@ -90,8 +90,15 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="角色权限">
+                  <el-form-item label="平台角色">
                     <el-input v-model="userInfo.role" disabled></el-input>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item label="标注角色">
+                    <el-input v-model="userInfo.labelRole" disabled></el-input>
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -131,7 +138,8 @@ export default {
         email: 'admin@example.com',
         phone: '138****8888',
         department: '系统管理部',
-        role: '系统管理员',
+        role: '',
+        labelRole: '',
         status: '正常',
         createTime: '2024-01-01 10:00:00',
         lastLoginTime: '2024-12-26 09:30:15',
@@ -144,11 +152,13 @@ export default {
   },
   methods: {
     loadUserInfo() {
-      // 从userService获取用户信息
-      const user = userService.getUser();
-      if (user) {
+      const user = userService.getUser() || {};
+      if (user.username) {
         this.userInfo.username = user.username;
-        // 其他信息可以通过API获取
+        this.userInfo.email = user.email || '';
+        this.userInfo.role = user.platform_role_label || user.role_label || '';
+        this.userInfo.labelRole = user.label_role_label || '不参与标注';
+        this.userInfo.lastLoginTime = user.last_login_at || '';
       }
     },
     saveProfile() {

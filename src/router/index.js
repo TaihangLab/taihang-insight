@@ -18,6 +18,8 @@ const reviewRecords = () => import('../components/visionAI/monitoringWarning/rev
 const camera = () => import('../components/visionAI/deviceManagement/camera.vue')
 const deviceManage = () => import('../components/visionAI/deviceManagement/deviceManage.vue')
 const pointManage = () => import('../components/visionAI/deviceManagement/pointManage.vue')
+const pointRecordPlan = () => import('../components/visionAI/deviceManagement/PointRecordPlan.vue')
+const pointRecordPlanDetail = () => import('../components/visionAI/deviceManagement/PointRecordPlanDetail.vue')
 const orgManage = () => import('../components/visionAI/deviceManagement/orgManage.vue')
 const modelList = () => import('../components/visionAI/modelManagement/modelList.vue')
 const skillList = () => import('../components/visionAI/skillManagement/SkillList.vue')
@@ -103,6 +105,16 @@ export default new VueRouter({
           path: '/deviceManage/points',
           name: 'pointManage',
           component: pointManage,
+        },
+        {
+          path: '/deviceManage/recordPlan',
+          name: 'pointRecordPlan',
+          component: pointRecordPlan,
+        },
+        {
+          path: '/deviceManage/recordPlan/detail/:pointId',
+          name: 'pointRecordPlanDetail',
+          component: pointRecordPlanDetail,
         },
         {
           path: '/deviceManage/organizations',

@@ -57,7 +57,7 @@ visionAIAxios.defaults.paramsSerializer = function (params) {
 visionAIAxios.interceptors.request.use(
   config => {
     // 这里可以添加token等通用请求头
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || localStorage.getItem('taihang-login-status');
     if (token) {
       config.headers['access-token'] = token;
     }

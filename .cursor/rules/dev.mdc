@@ -16,4 +16,6 @@ npm run dev    # http://localhost:8080
 
 API 地址：`config/index.js` → `API_BASE_URL = 'http://127.0.0.1:8000'`（后端由 smart_engine compose 提供）
 
+标注：`http://localhost:8080/labelstudio/`（devServer 反代到 Label Studio）
+
 改 `.vue` / `.js` 后 dev 服务器自动热重载，无需 restart。

@@ -2,14 +2,7 @@
   <div class="model-factory">
     <!-- ===== 顶部状态栏 ===== -->
     <div class="top-bar">
-      <div class="top-left">
-        <span class="ls-status">
-          <span :class="['ls-dot', lsConnected ? 'connected' : 'disconnected']"></span>
-          <span v-if="lsConnected" class="ls-text">Label Studio 已连接</span>
-          <span v-else class="ls-text ls-text-warn">Label Studio 未连接</span>
-          <span v-if="lsUrl" class="ls-url">{{ lsUrl }}</span>
-        </span>
-      </div>
+      <div class="top-left"></div>
       <div class="top-right">
         <el-button icon="el-icon-refresh-left" size="mini" @click="refreshAll" :loading="refreshing">刷新</el-button>
       </div>
@@ -75,9 +68,11 @@
           <!-- LS 项目已删除 / 未关联警告 -->
           <el-alert
             v-if="lsProjectWarning || (selectedDataset && !selectedDataset.ls_project_id)"
-            :title="lsProjectWarning || '此数据集未关联 Label Studio 项目'"
+            :title="lsProjectWarning || '此数据集尚未关联标注项目'"
             type="warning"
-            description="可点击「重建 Label Studio 项目」恢复关联，无需删除数据集。若原 LS 项目已删，旧图可能无法找回，需重新上传。"
+            :description="lsProjectCleared
+              ? '可点「重建标注项目」恢复。若原项目确实已删，旧图可能无法找回，需重新上传。'
+              : '可点「重建标注项目」创建或接回已有项目，本地数据集不用删。'"
             show-icon
             :closable="false"
             style="margin-bottom: 10px;"
@@ -97,9 +92,9 @@
                 icon="el-icon-refresh"
                 :loading="rebuildingLs"
                 @click="handleRebuildLsProject">
-                重建 LS 项目
+                重建标注项目
               </el-button>
-              <el-popconfirm title="确定删除此数据集？关联的 Label Studio 项目也会被删除。" @confirm="handleDeleteDataset">
+              <el-popconfirm title="确定删除此数据集？关联的标注项目也会被删除。" @confirm="handleDeleteDataset">
                 <el-button slot="reference" type="danger" size="mini" icon="el-icon-delete" plain>删除数据集</el-button>
               </el-popconfirm>
             </div>
@@ -323,74 +318,60 @@
             <el-tab-pane name="annotation">
               <span slot="label"><i class="el-icon-edit-outline"></i> 标注 & 同步</span>
               <div class="annotation-panel">
-                <!-- Label Studio 入口 -->
-                <div class="anno-section">
-                  <h4>前往 Label Studio 标注</h4>
-                  <p class="anno-hint">在 Label Studio 中设置标注类型、标注类别并完成标注后，回到此处点击「同步」拉取结果。</p>
-                  <el-button
-                    v-if="selectedDataset.ls_project_id"
-                    type="primary"
-                    size="medium"
-                    icon="el-icon-link"
-                    @click="openLabelStudio">
-                    打开 Label Studio 标注项目
-                  </el-button>
-                  <el-button
-                    v-else
-                    type="warning"
-                    size="medium"
-                    icon="el-icon-refresh"
-                    :loading="rebuildingLs"
-                    @click="handleRebuildLsProject">
-                    重建 Label Studio 项目
-                  </el-button>
-                  <p v-if="selectedDataset.ls_project_id" class="anno-hint" style="margin-top: 6px;">
-                    登录账号：<b>admin@admin.com</b> &nbsp; 密码：<b>admin123456</b>
-                  </p>
-                  <el-alert
-                    v-else
-                    title="此数据集未关联 Label Studio 项目（可能创建时 LS 未连接，或项目已被手动删除）。点击上方按钮即可重建，无需删除数据集。"
-                    type="warning"
-                    :closable="false"
-                    show-icon
-                    style="margin-top: 8px;">
-                  </el-alert>
-                </div>
-
-                <!-- 标注进度 -->
-                <div class="anno-section">
-                  <h4>标注进度</h4>
-                  <div class="anno-progress">
-                    <el-progress
-                      type="circle"
-                      :percentage="annoPercentage"
-                      :width="120"
-                      :stroke-width="8">
-                    </el-progress>
-                    <div class="anno-stats">
-                      <div class="stat-row"><span class="stat-label">图片总数</span><span class="stat-value">{{ selectedDataset.image_count || 0 }}</span></div>
-                      <div class="stat-row"><span class="stat-label">已标注</span><span class="stat-value success-text">{{ selectedDataset.labeled_count || 0 }}</span></div>
-                      <div class="stat-row"><span class="stat-label">未标注</span><span class="stat-value">{{ (selectedDataset.image_count || 0) - (selectedDataset.labeled_count || 0) }}</span></div>
+                <div class="anno-layout">
+                  <div class="anno-card">
+                    <h4>标注进度</h4>
+                    <div class="anno-progress">
+                      <el-progress
+                        type="circle"
+                        :percentage="annoPercentage"
+                        :width="120"
+                        :stroke-width="8">
+                      </el-progress>
+                      <div class="anno-stats">
+                        <div class="stat-row"><span class="stat-label">图片总数</span><span class="stat-value">{{ selectedDataset.image_count || 0 }}</span></div>
+                        <div class="stat-row"><span class="stat-label">已标注</span><span class="stat-value success-text">{{ selectedDataset.labeled_count || 0 }}</span></div>
+                        <div class="stat-row"><span class="stat-label">未标注</span><span class="stat-value">{{ (selectedDataset.image_count || 0) - (selectedDataset.labeled_count || 0) }}</span></div>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                <!-- 同步按钮 -->
-                <div class="anno-section">
-                  <h4>同步标注结果</h4>
-                  <p class="anno-hint">从 Label Studio 拉取最新标注数据到本地。</p>
-                  <el-button
-                    type="warning"
-                    size="medium"
-                    icon="el-icon-download"
-                    :loading="syncing"
-                    :disabled="!selectedDataset.ls_project_url"
-                    @click="handleSync">
-                    同步标注结果
-                  </el-button>
-                  <span v-if="syncResult" class="sync-result">
-                    {{ syncResult }}
-                  </span>
+                  <div class="anno-card anno-card--actions">
+                    <div class="anno-action">
+                      <h4>去标注</h4>
+                      <p class="anno-hint">用当前账号打开。审核时点进已保存的图，编辑器上有「通过 / 驳回」。</p>
+                      <el-button
+                        v-if="selectedDataset.ls_project_id"
+                        type="primary"
+                        size="medium"
+                        icon="el-icon-edit"
+                        @click="openLabelStudio">
+                        去标注
+                      </el-button>
+                      <el-button
+                        v-else
+                        type="warning"
+                        size="medium"
+                        icon="el-icon-refresh"
+                        :loading="rebuildingLs"
+                        @click="handleRebuildLsProject">
+                        重建标注项目
+                      </el-button>
+                    </div>
+                    <div class="anno-action">
+                      <h4>同步结果</h4>
+                      <p class="anno-hint">把最新标注拉回本页。</p>
+                      <el-button
+                        type="warning"
+                        size="medium"
+                        icon="el-icon-download"
+                        :loading="syncing"
+                        :disabled="!selectedDataset.ls_project_url"
+                        @click="handleSync">
+                        同步标注结果
+                      </el-button>
+                      <span v-if="syncResult" class="sync-result">{{ syncResult }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </el-tab-pane>
@@ -522,7 +503,7 @@
         </el-form-item>
       </el-form>
       <div class="form-tip" style="padding: 0 20px; color: #909399; font-size: 12px;">
-        创建后请在 Label Studio 中设置标注类型和标注类别，然后上传图片开始标注。
+        创建后请先去标注里设置类型和类别，再上传图片。
       </div>
       <div slot="footer">
         <el-button size="small" @click="createDialogVisible = false">取消</el-button>
@@ -1306,6 +1287,7 @@
 
 <script>
 import { mlPipelineAPI, modelAPI, skillGraphAPI, runPlanAPI } from '../../service/VisionAIService.js';
+import userService from '../../service/UserService';
 import ChannelTreePanel from '../skillManagement/runPlan/ChannelTreePanel.vue';
 import FenceDrawer from '../skillManagement/runPlan/FenceDrawer.vue';
 import FencePreview from '../skillManagement/runPlan/FencePreview.vue';
@@ -1383,6 +1365,7 @@ export default {
 
       // LS 项目状态
       lsProjectWarning: '',
+      lsProjectCleared: false,
       rebuildingLs: false,
 
       // 图片
@@ -1778,9 +1761,13 @@ export default {
     },
     openLabelStudio() {
       if (!this.selectedDataset || !this.selectedDataset.ls_project_id) return;
-      const projectPath = `/projects/${this.selectedDataset.ls_project_id}/`;
-      const lsBase = this.lsUrl || this.selectedDataset.ls_project_url.replace(/\/projects\/\d+\/?$/, '');
-      window.open(`${lsBase}${projectPath}`, '_blank');
+      const user = userService.getUser() || {};
+      const login = user.username || user.email;
+      const projectPath = `/labelstudio/projects/${this.selectedDataset.ls_project_id}/`;
+      const qs = login
+        ? `?username=${encodeURIComponent(login)}&next=${encodeURIComponent(projectPath)}`
+        : '';
+      window.open(`/labelstudio/user/login/${qs}`, '_blank');
     },
     async handleRebuildLsProject() {
       if (!this.selectedDataset) return;
@@ -1794,27 +1781,28 @@ export default {
           await this.loadDatasets();
         }
         this.lsProjectWarning = '';
+        this.lsProjectCleared = false;
         await this.loadDatasets();
         if (data.already_exists) {
-          this.$message.success('Label Studio 项目已存在，无需重建');
+          this.$message.success('标注项目已存在，无需重建');
         } else {
           const failed = data.failed || 0;
           const reimported = data.reimported || 0;
           if (failed > 0) {
             this.$message.warning(
-              `LS 项目已重建。成功重新导入 ${reimported} 张，${failed} 张原图已随旧项目丢失，请重新上传。`
+              `标注项目已重建。成功重新导入 ${reimported} 张，${failed} 张原图已丢失，请重新上传。`
             );
           } else {
             this.$message.success(
               reimported > 0
-                ? `LS 项目已重建，并重新导入 ${reimported} 张图片`
-                : 'LS 项目已重建，可以继续上传图片并标注'
+                ? `标注项目已重建，并重新导入 ${reimported} 张图片`
+                : '标注项目已重建，可以继续上传图片并标注'
             );
           }
         }
       } catch (e) {
         const msg = (e.response && e.response.data && e.response.data.detail) || e.message || '重建失败';
-        this.$message.error(typeof msg === 'string' ? msg : '重建 Label Studio 项目失败');
+        this.$message.error(typeof msg === 'string' ? msg : '重建标注项目失败');
       } finally {
         this.rebuildingLs = false;
       }
@@ -1867,23 +1855,29 @@ export default {
       this.syncResult = '';
       this.exportResult = null;
       this.lsProjectWarning = '';
+      this.lsProjectCleared = false;
       this.selectedImageIds = [];
       this.imageCameraFilter = '';
       this.imagePage = 1;
       this.loadImages();
       this.loadCollectionTasks();
-      if (ds.ls_project_id) {
-        try {
-          const res = await mlPipelineAPI.checkLsProject(ds.id);
-          const data = res.data.data;
-          if (!data.exists) {
-            this.lsProjectWarning = data.reason || 'Label Studio 项目已被删除';
-            this.$message.warning(this.lsProjectWarning);
-            this.loadDatasets();
-          }
-        } catch (e) {
-          // 检查失败不阻塞
+      try {
+        const res = await mlPipelineAPI.checkLsProject(ds.id);
+        const data = (res.data && res.data.data) || {};
+        if (data.dataset) {
+          this.selectedDataset = data.dataset;
+          const idx = this.datasets.findIndex(item => item.id === data.dataset.id);
+          if (idx >= 0) this.$set(this.datasets, idx, data.dataset);
         }
+        if (data.exists) {
+          this.lsProjectWarning = '';
+          this.lsProjectCleared = false;
+        } else {
+            this.lsProjectWarning = data.reason || '未关联标注项目';
+          this.lsProjectCleared = !!data.cleared;
+        }
+      } catch (e) {
+        // 检查失败不阻塞
       }
     },
 
@@ -2486,9 +2480,9 @@ export default {
       const total = Number(job.total) || 0;
       const done = (Number(job.ls_deleted) || 0) + (Number(job.failed) || 0);
       this.deleteProgressPercent = Math.min(100, Number(job.percent) || 0);
-      this.deleteProgressTitle = job.message || '正在清理 Label Studio…';
+      this.deleteProgressTitle = job.message || '正在清理标注任务…';
       this.deleteProgressMeta = total
-        ? `本地已删 ${job.deleted || 0} 张；Label Studio ${done}/${total}`
+        ? `本地已删 ${job.deleted || 0} 张；标注服务 ${done}/${total}`
         : `本地已删 ${job.deleted || 0} 张`;
     },
     async pollDeleteJob() {
@@ -2513,7 +2507,7 @@ export default {
           this.stopDeletePoll();
           this.deleteProgressPhase = 'error';
           this.deleteProgressStatus = 'exception';
-          this.deleteProgressTitle = 'Label Studio 清理失败';
+          this.deleteProgressTitle = '标注清理失败';
           this.deleteProgressError = job.error || job.message || '清理失败（本地图片已删除）';
           this.deletingImages = false;
           this.$message.warning(this.deleteProgressError);
@@ -2570,7 +2564,7 @@ export default {
           this.deletingImages = false;
           return;
         }
-        this.deleteProgressTitle = job.message || '本地已删除，正在清理 Label Studio…';
+        this.deleteProgressTitle = job.message || '本地已删除，正在清理标注任务…';
         this.deletePollTimer = setInterval(() => this.pollDeleteJob(), 800);
       } catch (e) {
         this.deleteProgressPhase = 'error';
@@ -2969,7 +2963,7 @@ export default {
       try {
         const res = await mlPipelineAPI.uploadImages(this.selectedDataset.id, this.uploadFileList);
         const d = res.data.data;
-        const msg = `上传 ${d.added} 张图片，推送 ${d.ls_imported} 张到 Label Studio`;
+        const msg = `上传 ${d.added} 张图片，已加入标注 ${d.ls_imported} 张`;
         if (d.errors && d.errors.length) {
           this.$message.warning(msg + `（${d.errors.length} 张失败）`);
         } else {
@@ -3457,16 +3451,42 @@ export default {
 
 /* ---- 标注面板 ---- */
 .annotation-panel { padding: 4px 0; }
+.anno-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(280px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.anno-card {
+  background: #fafafa;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 16px 20px;
+}
+.anno-card h4 { margin: 0 0 10px 0; font-size: 15px; color: #303133; }
+.anno-card--actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+}
+.anno-action + .anno-action {
+  padding-top: 16px;
+  border-top: 1px solid #ebeef5;
+}
 .anno-section { margin-bottom: 24px; }
 .anno-section h4 { margin: 0 0 6px 0; font-size: 15px; color: #303133; }
-.anno-hint { font-size: 13px; color: #909399; margin: 0 0 10px 0; }
-.anno-progress { display: flex; align-items: center; gap: 32px; margin-top: 12px; }
-.anno-stats { display: flex; flex-direction: column; gap: 8px; }
+.anno-hint { font-size: 13px; color: #909399; margin: 0 0 10px 0; line-height: 1.5; }
+.anno-progress { display: flex; align-items: center; gap: 28px; margin-top: 8px; }
+.anno-stats { display: flex; flex-direction: column; gap: 10px; }
 .stat-row { display: flex; gap: 12px; font-size: 14px; }
 .stat-label { color: #909399; min-width: 60px; }
 .stat-value { font-weight: 600; color: #303133; }
 .success-text { color: #67c23a; }
 .sync-result { margin-left: 12px; font-size: 13px; color: #67c23a; }
+@media (max-width: 1100px) {
+  .anno-layout { grid-template-columns: 1fr; }
+}
 
 /* ---- 训练面板 ---- */
 .training-panel { padding: 4px 0; }

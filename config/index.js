@@ -14,7 +14,16 @@ module.exports = {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {},  // 不再使用代理，前端直接通过 baseURL 访问 API；播放地址由后端拼完整 URL
+    proxyTable: {
+      '/labelstudio': {
+        target: 'http://127.0.0.1:' + (process.env.LABEL_STUDIO_PORT || '8888'),
+        changeOrigin: true,
+        ws: true,
+        secure: false,
+        // LS 当前是 Django runserver，前缀由 LABEL_STUDIO_HOST 只用于反解 URL
+        pathRewrite: { '^/labelstudio': '' }
+      }
+    },
 
     // Various Dev Server settings
     host:"0.0.0.0",

@@ -109,6 +109,7 @@
 
 <script>
 import userService from './service/UserService'
+const config = require('../../config/index.js')
 
 export default {
   name: 'Login',
@@ -153,31 +154,36 @@ export default {
       }
     },
 
-    //登录逻辑 - 模拟登录并保持登录状态
+    //登录
     login(){
       if(this.username!='' && this.password!=''){
         this.isLoging = true;
-        
-        // 模拟登录延迟
-        setTimeout(() => {
-          // 保存用户信息和登录状态
-          const userInfo = {
-            username: this.username,
-            loginTime: new Date().toISOString()
-          };
-          
-          userService.setUser(userInfo);
-          userService.setToken('mock-login-token');
-          
+        const axios = require('axios');
+        axios.post(config.API_BASE_URL + '/api/v1/auth/login', {
+          username: this.username,
+          password: this.password
+        }, { timeout: 15000 }).then((res) => {
+          const data = res.data || {};
+          const user = data.user || { username: this.username };
+          userService.setUser(user);
+          userService.setToken(data.access_token);
+          userService.setLsCookie(user.username);
           this.$message({
             showClose: true,
             message: '登录成功',
             type: 'success'
           });
-          
           this.isLoging = false;
           this.$router.push('/');
-        }, 800);
+        }).catch((e) => {
+          this.isLoging = false;
+          const detail = e.response && e.response.data && e.response.data.detail;
+          this.$message({
+            showClose: true,
+            message: detail || '登录失败，请检查用户名和密码',
+            type: 'error'
+          });
+        });
       } else {
         this.$message({
           showClose: true,
