@@ -33,6 +33,7 @@
           <span>监控预警</span>
         </template>
         <el-menu-item index="/monitoring/realtime">实时监控</el-menu-item>
+        <el-menu-item index="/monitoring/playback">录像回放</el-menu-item>
         <el-menu-item index="/monitoring/statistics">统计分析</el-menu-item>
         <el-menu-item index="/monitoring/warningArchive">预警档案</el-menu-item>
         <el-menu-item index="/monitoring/warningManage">预警管理</el-menu-item>
