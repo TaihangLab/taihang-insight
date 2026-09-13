@@ -33,13 +33,11 @@ export default {
   },
 
   getToken(){
-    return localStorage.getItem("token") || localStorage.getItem("taihang-login-status");
+    return localStorage.getItem("token") || null;
   },
 
   setToken(token) {
-    const value = token || "";
-    localStorage.setItem("taihang-login-status", value);
-    localStorage.setItem("token", value);
+    localStorage.setItem("token", token || "");
   },
 
   applyAuthResult(data) {
@@ -52,8 +50,8 @@ export default {
   },
 
   clearLoginStatus(){
-    localStorage.removeItem("taihang-login-status");
     localStorage.removeItem("token");
+    localStorage.removeItem("taihang-login-status");
     this.clearLsCookie();
   },
 

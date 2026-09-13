@@ -161,7 +161,7 @@ export default {
       if (!user || !user.username) return;
       this.userInfo.username = user.username;
       this.userInfo.email = user.email || '';
-      this.userInfo.role = user.platform_role_label || user.role_label || '';
+      this.userInfo.role = user.platform_role_label || '';
       this.userInfo.labelRole = user.label_role_label || '不参与标注';
       this.userInfo.status = user.is_active === false ? '停用' : '正常';
       this.userInfo.createTime = this.formatTime(user.created_at);

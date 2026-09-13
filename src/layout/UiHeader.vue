@@ -124,7 +124,6 @@ export default {
       username: (user.username != null ? user.username : '') || '未登录',
       isAdmin: !!user.is_admin,
       activeIndex,
-      editUser: !!(user.role && user.role.id === 1)
     };
   },
   created() {
