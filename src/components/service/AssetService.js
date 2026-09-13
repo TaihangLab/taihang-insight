@@ -213,6 +213,21 @@ export const assetAPI = {
   deletePoint(id) {
     return assetAxios.delete(`/asset/points/${id}`).then(unwrap);
   },
+  fetchRecordPlans() {
+    return assetAxios.get('/asset/record-plans').then(unwrap);
+  },
+  saveRecordPlans(pointIds, plan) {
+    return assetAxios.put('/asset/record-plans', { pointIds, plan }).then(unwrap);
+  },
+  setRecordPlansEnabled(pointIds, enabled) {
+    return assetAxios.put('/asset/record-plans/enabled', { pointIds, enabled }).then(unwrap);
+  },
+  fetchRecordings(params) {
+    return assetAxios.get('/asset/recordings', { params }).then(unwrap);
+  },
+  deleteRecordings(ids) {
+    return assetAxios.post('/asset/recordings/delete', { ids }).then(unwrap);
+  },
   fetchOrganizations() {
     return assetAxios.get('/asset/organizations').then(unwrap);
   },

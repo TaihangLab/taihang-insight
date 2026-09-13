@@ -63,6 +63,7 @@ export default {
       const routeMap = {
         '/monitoring': { menu: '监控预警', page: '' },
         '/monitoring/realtime': { menu: '监控预警', page: '实时监控' },
+        '/monitoring/playback': { menu: '监控预警', page: '录像回放' },
         '/monitoring/statistics': { menu: '监控预警', page: '统计分析' },
         '/monitoring/warningArchive': { menu: '监控预警', page: '预警档案' },
         '/monitoring/warningManage': { menu: '监控预警', page: '预警管理' },
@@ -70,6 +71,7 @@ export default {
         '/deviceManage/organizations': { menu: '设备配置', page: '组织管理' },
         '/deviceManage/devices': { menu: '设备配置', page: '设备接入' },
         '/deviceManage/points': { menu: '设备配置', page: '点位管理' },
+        '/deviceManage/recordPlan': { menu: '设备配置', page: '点位录像计划' },
         '/deviceManage/camera': { menu: '设备配置', page: 'AI 摄像头' },
         '/modelManage/modelList': { menu: '模型管理', page: '模型列表' },
         '/modelManage/modelFactory': { menu: '模型管理', page: '模型工厂' },
@@ -90,7 +92,10 @@ export default {
         '/algorithmInference': { menu: '可视中心', page: 'AI智算中心' }
       };
 
-      const route = routeMap[path];
+      let route = routeMap[path];
+      if (!route && path.startsWith('/deviceManage/recordPlan/detail/')) {
+        route = { menu: '设备配置', page: '点位录像计划' };
+      }
       if (route) {
         this.currentMenuName = route.menu;
         this.currentPageName = route.page;

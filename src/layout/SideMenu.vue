@@ -37,6 +37,9 @@
         <el-menu-item index="/monitoring/realtime">
           <span slot="title">实时监控</span>
         </el-menu-item>
+        <el-menu-item index="/monitoring/playback">
+          <span slot="title">录像回放</span>
+        </el-menu-item>
         <el-menu-item index="/monitoring/statistics">
           <span slot="title">统计分析</span>
         </el-menu-item>
@@ -62,6 +65,9 @@
         </el-menu-item>
         <el-menu-item index="/deviceManage/points">
           <span slot="title">点位管理</span>
+        </el-menu-item>
+        <el-menu-item index="/deviceManage/recordPlan">
+          <span slot="title">点位录像计划</span>
         </el-menu-item>
         <el-menu-item index="/deviceManage/camera">
           <span slot="title">AI 摄像头</span>
@@ -123,14 +129,19 @@
 export default {
   name: "SideMenu",
   data() {
+    const path = this.$route.path;
     return {
       isCollapsed: false,
-      activeMenu: this.$route.path
+      activeMenu: path.startsWith('/deviceManage/recordPlan/detail/')
+        ? '/deviceManage/recordPlan'
+        : path
     };
   },
   watch: {
     $route(to) {
-      this.activeMenu = to.path;
+      this.activeMenu = to.path.startsWith('/deviceManage/recordPlan/detail/')
+        ? '/deviceManage/recordPlan'
+        : to.path;
     }
   },
   methods: {
