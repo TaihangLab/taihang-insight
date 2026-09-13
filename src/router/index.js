@@ -35,6 +35,7 @@ const logRecords = () => import('../components/visionAI/smartControl/logRecords.
 const edgeServer = () => import('../components/visionAI/edgeManagement/edgeServer.vue')
 const edgeBox = () => import('../components/visionAI/edgeManagement/edgeBox.vue')
 const profile = () => import('../components/visionAI/systemManagement/profile.vue')
+const userManage = () => import('../components/visionAI/systemManagement/userManage.vue')
 const modelFactory = () => import('../components/visionAI/mlPipeline/modelFactory.vue')
 
 const originalPush = VueRouter.prototype.push
@@ -212,6 +213,11 @@ export default new VueRouter({
           path: '/systemManage/profile',
           name: 'profile',
           component: profile,
+        },
+        {
+          path: '/systemManage/users',
+          name: 'userManage',
+          component: userManage,
         },
 
 

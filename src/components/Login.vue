@@ -40,7 +40,6 @@
 
         <!-- 登录表单 -->
         <div class="login-form">
-          <!-- 用户名输入框 -->
           <div class="input-group">
             <div class="input-wrapper">
               <i class="input-icon fa fa-user"></i>
@@ -56,7 +55,6 @@
             </div>
           </div>
 
-          <!-- 密码输入框 -->
           <div class="input-group">
             <div class="input-wrapper">
               <i class="input-icon fa fa-lock"></i>
@@ -76,7 +74,6 @@
             </div>
           </div>
 
-          <!-- 登录按钮 -->
           <div class="login-btn-container">
             <button 
               class="tech-login-btn" 
@@ -109,7 +106,6 @@
 
 <script>
 import userService from './service/UserService'
-const config = require('../../config/index.js')
 
 export default {
   name: 'Login',
@@ -117,7 +113,6 @@ export default {
     return {
       isLoging: false,
       showPassword: false,
-      loginLoading: false,
       username: '',
       password: ''
     }
@@ -130,6 +125,9 @@ export default {
         that.login();
       }
     }
+  },
+  beforeDestroy() {
+    document.onkeydown = null;
   },
   methods:{
     // 获取粒子样式
@@ -154,33 +152,23 @@ export default {
       }
     },
 
-    //登录
+    apiError(e, fallback) {
+      const detail = e && e.response && e.response.data && e.response.data.detail;
+      return (typeof detail === 'string' && detail) ? detail : fallback;
+    },
+
     login(){
       if(this.username!='' && this.password!=''){
         this.isLoging = true;
-        const axios = require('axios');
-        axios.post(config.API_BASE_URL + '/api/v1/auth/login', {
-          username: this.username,
-          password: this.password
-        }, { timeout: 15000 }).then((res) => {
-          const data = res.data || {};
-          const user = data.user || { username: this.username };
-          userService.setUser(user);
-          userService.setToken(data.access_token);
-          userService.setLsCookie(user.username);
-          this.$message({
-            showClose: true,
-            message: '登录成功',
-            type: 'success'
-          });
+        userService.login(this.username, this.password).then(() => {
+          this.$message({ showClose: true, message: '登录成功', type: 'success' });
           this.isLoging = false;
           this.$router.push('/');
         }).catch((e) => {
           this.isLoging = false;
-          const detail = e.response && e.response.data && e.response.data.detail;
           this.$message({
             showClose: true,
-            message: detail || '登录失败，请检查用户名和密码',
+            message: this.apiError(e, '登录失败，请检查用户名和密码'),
             type: 'error'
           });
         });
@@ -260,7 +248,8 @@ export default {
   display: flex;
   width: 90%;
   max-width: 1200px;
-  height: 600px;
+  min-height: 600px;
+  height: auto;
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px);
   border-radius: 20px;

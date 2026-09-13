@@ -95,9 +95,9 @@
           <i class="el-icon-user-solid"></i>
           <span>个人中心</span>
         </el-menu-item>
-        <el-menu-item @click="changePassword">
-          <i class="el-icon-key"></i>
-          <span>修改密码</span>
+        <el-menu-item v-if="isAdmin" @click="goToUserManage">
+          <i class="el-icon-s-custom"></i>
+          <span>用户管理</span>
         </el-menu-item>
         <el-menu-item @click="loginout">
           <i class="el-icon-switch-button"></i>
@@ -105,18 +105,16 @@
         </el-menu-item>
       </el-submenu>
     </el-menu>
-    <changePasswordDialog ref="changePasswordDialog"></changePasswordDialog>
   </div>
 </template>
 
 <script>
-import changePasswordDialog from '../components/dialog/changePassword.vue'
 import userService from '../components/service/UserService'
 import {Notification} from 'element-ui';
 
 export default {
   name: "UiHeader",
-  components: {Notification, changePasswordDialog},
+  components: {Notification},
   data() {
     const user = userService.getUser() || {};
     const path = (this.$route && this.$route.path) || '/';
@@ -124,6 +122,7 @@ export default {
     const activeIndex = secondSlash > 0 ? path.substring(0, secondSlash) : path;
     return {
       username: (user.username != null ? user.username : '') || '未登录',
+      isAdmin: !!user.is_admin,
       activeIndex,
       editUser: !!(user.role && user.role.id === 1)
     };
@@ -134,6 +133,10 @@ export default {
     }
   },
   mounted() {
+    userService.fetchMe().then((user) => {
+      this.username = user.username || this.username;
+      this.isAdmin = !!user.is_admin;
+    }).catch(() => {});
     // 添加通道管理菜单的特殊处理
     this.$nextTick(() => {
       // 获取到通道管理的菜单项
@@ -167,11 +170,11 @@ export default {
         window.location.reload();
       }, 100);
     },
-    changePassword() {
-      this.$refs.changePasswordDialog.openDialog()
-    },
     goToProfile() {
       this.$router.push('/systemManage/profile');
+    },
+    goToUserManage() {
+      this.$router.push('/systemManage/users');
     },
     openDoc() {
       console.log(process.env.BASE_API)

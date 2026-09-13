@@ -58,6 +58,7 @@
 .asset-page-icon--point { background: linear-gradient(135deg, #67c23a 0%, #3d9e40 100%); }
 .asset-page-icon--video { background: linear-gradient(135deg, #e6a23c 0%, #d48806 100%); }
 .asset-page-icon--camera { background: linear-gradient(135deg, #001f3f 0%, #003566 100%); }
+.asset-page-icon--user { background: linear-gradient(135deg, #13c2c2 0%, #08979c 100%); }
 
 .asset-page-title {
   margin: 0;

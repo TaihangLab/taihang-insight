@@ -28,7 +28,6 @@
             </div>
           </el-card>
 
-          <!-- 安全设置卡片 -->
           <el-card class="security-card">
             <div slot="header" class="card-header">
               <span>安全设置</span>
@@ -122,28 +121,31 @@
         </el-col>
       </el-row>
     </div>
+    <changePasswordDialog ref="changePasswordDialog"></changePasswordDialog>
   </div>
 </template>
 
 <script>
 import userService from '../../service/UserService'
+import changePasswordDialog from '../../dialog/changePassword.vue'
 
 export default {
   name: 'Profile',
+  components: { changePasswordDialog },
   data() {
     return {
       editMode: false,
       userInfo: {
-        username: 'admin',
-        email: 'admin@example.com',
-        phone: '138****8888',
-        department: '系统管理部',
+        username: '',
+        email: '',
+        phone: '',
+        department: '',
         role: '',
         labelRole: '',
         status: '正常',
-        createTime: '2024-01-01 10:00:00',
-        lastLoginTime: '2024-12-26 09:30:15',
-        description: '系统管理员，负责平台的日常维护和用户管理工作。'
+        createTime: '',
+        lastLoginTime: '',
+        description: ''
       }
     }
   },
@@ -151,24 +153,32 @@ export default {
     this.loadUserInfo();
   },
   methods: {
+    formatTime(value) {
+      if (!value) return '';
+      return String(value).replace('T', ' ').slice(0, 19);
+    },
+    applyUser(user) {
+      if (!user || !user.username) return;
+      this.userInfo.username = user.username;
+      this.userInfo.email = user.email || '';
+      this.userInfo.role = user.platform_role_label || user.role_label || '';
+      this.userInfo.labelRole = user.label_role_label || '不参与标注';
+      this.userInfo.status = user.is_active === false ? '停用' : '正常';
+      this.userInfo.createTime = this.formatTime(user.created_at);
+      this.userInfo.lastLoginTime = this.formatTime(user.last_login_at);
+    },
     loadUserInfo() {
-      const user = userService.getUser() || {};
-      if (user.username) {
-        this.userInfo.username = user.username;
-        this.userInfo.email = user.email || '';
-        this.userInfo.role = user.platform_role_label || user.role_label || '';
-        this.userInfo.labelRole = user.label_role_label || '不参与标注';
-        this.userInfo.lastLoginTime = user.last_login_at || '';
-      }
+      this.applyUser(userService.getUser() || {});
+      userService.fetchMe().then((user) => {
+        this.applyUser(user);
+      }).catch(() => {});
     },
     saveProfile() {
-      // 保存用户信息的逻辑
-      this.$message.success('个人信息保存成功');
+      this.$message.info('基本信息暂不支持在线修改，请联系管理员');
       this.editMode = false;
     },
     changePassword() {
-      // 跳转到修改密码功能
-      this.$message.info('请在用户菜单中选择修改密码');
+      this.$refs.changePasswordDialog.openDialog();
     }
   }
 }

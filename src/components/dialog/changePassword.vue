@@ -30,7 +30,6 @@
 
 <script>
 import userService from '../service/UserService'
-const config = require('../../../config/index.js')
 
 export default {
   name: "changePassword",
@@ -75,15 +74,7 @@ export default {
       this.$refs.form.validate((ok) => {
         if (!ok) return;
         this.saving = true;
-        const axios = require('axios');
-        const token = userService.getToken();
-        axios.post(config.API_BASE_URL + '/api/v1/auth/change-password', {
-          old_password: this.form.old_password,
-          new_password: this.form.new_password
-        }, {
-          timeout: 15000,
-          headers: token ? { 'access-token': token } : {}
-        }).then(() => {
+        userService.changePassword(this.form.old_password, this.form.new_password).then(() => {
           this.$message.success('密码已修改，请重新登录');
           this.saving = false;
           this.close();
