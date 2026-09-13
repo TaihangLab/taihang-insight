@@ -8,10 +8,6 @@
         <span class="status-text">{{ pointName || '请从左侧选择点位' }}</span>
       </div>
       <div class="header-right">
-        <el-select :value="storageType" size="mini" class="type-select" @change="$emit('type-change', $event)">
-          <el-option label="云存储录像" value="cloud" />
-          <el-option label="本地存储录像" value="local" />
-        </el-select>
         <button class="icon-btn" type="button" title="后退10秒" @click="$emit('rewind')">
           <i class="el-icon-d-arrow-left" />
         </button>
@@ -82,7 +78,6 @@ export default {
     date: { type: String, default: '' },
     time: { type: String, default: '00:00:00' },
     mode: { type: String, default: 'day' },
-    storageType: { type: String, default: 'cloud' },
     playing: { type: Boolean, default: false },
     pointName: { type: String, default: '' },
     currentMs: { type: Number, default: 0 },
@@ -263,7 +258,6 @@ export default {
   font-size: 13px;
   color: #909399;
 }
-.type-select { width: 128px; }
 .mode-select { width: 88px; }
 .timeline-track {
   position: relative;

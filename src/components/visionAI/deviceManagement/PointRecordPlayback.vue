@@ -72,7 +72,7 @@
                     @click="togglePlay"
                   />
                   <div v-if="activeClip" class="player-tag" @click.stop="muted = !muted">
-                    {{ storageLabel }} · {{ muted ? '静音' : '有声' }}
+                    {{ muted ? '静音' : '有声' }}
                   </div>
                 </div>
               </div>
@@ -82,7 +82,6 @@
               :date="date"
               :time="timeText"
               :mode="mode"
-              :storage-type="storageType"
               :playing="playing"
               :point-name="pointName"
               :current-ms="currentMs"
@@ -93,7 +92,6 @@
               @rewind="nudge(-10)"
               @forward="nudge(10)"
               @mode-change="onModeChange"
-              @type-change="onTypeChange"
               @date-change="onDateChange"
               @time-change="onTimeChange"
               @seek="onSeek"
@@ -128,7 +126,6 @@ export default {
       date: formatYmd(new Date()),
       currentMs: 0,
       mode: 'day',
-      storageType: 'cloud',
       playing: false,
       muted: true,
       loading: false,
@@ -158,12 +155,9 @@ export default {
       if (this.mode !== 'hour') return dayEndMs(this.date);
       return this.viewStartMs + 60 * 60 * 1000;
     },
-    storageLabel() {
-      return this.storageType === 'local' ? '本地存储录像' : '云存储录像';
-    },
     emptyText() {
       if (!this.clips.length) {
-        return '当前日期此点位暂无' + this.storageLabel;
+        return '当前日期此点位暂无录像';
       }
       return '该时刻暂无录像，请拖到蓝色时段';
     },
@@ -181,7 +175,6 @@ export default {
     bootFromQuery() {
       const q = this.$route.query || {};
       if (q.date) this.date = q.date;
-      if (q.type) this.storageType = q.type;
       if (q.pointId) {
         this.pointId = q.pointId;
         this.pointName = q.pointName || q.pointId;
@@ -252,15 +245,6 @@ export default {
     },
     onModeChange(val) {
       this.mode = val;
-    },
-    onTypeChange(val) {
-      this.storageType = val;
-      this.activeClip = null;
-      this.playing = false;
-      this.loading = true;
-      setTimeout(() => {
-        this.loadClips().then(this.jumpToFirstClip);
-      }, 400);
     },
     onTimeChange(val) {
       if (!val) return;
