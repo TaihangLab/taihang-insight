@@ -162,6 +162,8 @@ export const modelAPI = {
               usage_status: model.usage_status ? 'using' : 'unused',
               // 检测类别（模型标签）
               classes: model.classes || [],
+              // 是否已发布为开放 API
+              is_published: !!model.is_published,
               created_at: model.created_at,
               updated_at: model.updated_at
             };
@@ -392,6 +394,16 @@ export const modelAPI = {
         console.error('卸载模型失败:', error);
         throw error;
       });
+  },
+
+  // 发布模型为开放 API（需先加载到推理服务）
+  publishModel(modelId) {
+    return visionAIAxios.post(`/api/v1/models/${modelId}/publish`);
+  },
+
+  // 取消模型的开放 API 发布
+  unpublishModel(modelId) {
+    return visionAIAxios.post(`/api/v1/models/${modelId}/unpublish`);
   },
 
   // 导入模型
@@ -4409,9 +4421,50 @@ export const runPlanAPI = {
   }
 };
 
+// ==================== 开放 API（API Key / 调用日志 / 资源目录 / Portainer） ====================
+export const openApiAPI = {
+  // 总览：Key 数、已发布资源数、调用统计
+  getOverview() {
+    return visionAIAxios.get('/api/v1/api-keys/overview');
+  },
+  // Key 列表（不含明文）
+  listKeys() {
+    return visionAIAxios.get('/api/v1/api-keys');
+  },
+  // 创建 Key；响应 data.plain_key 只返回这一次
+  createKey(payload) {
+    return visionAIAxios.post('/api/v1/api-keys', payload);
+  },
+  // 更新 Key（备注 / 授权资源 / 限流 / 有效期 / 启停）
+  updateKey(keyId, payload) {
+    return visionAIAxios.put(`/api/v1/api-keys/${keyId}`, payload);
+  },
+  // 删除 Key
+  deleteKey(keyId) {
+    return visionAIAxios.delete(`/api/v1/api-keys/${keyId}`);
+  },
+  // 某 Key 的调用统计 + 最近调用
+  getKeyStats(keyId, recent = 20) {
+    return visionAIAxios.get(`/api/v1/api-keys/${keyId}/stats`, { params: { recent } });
+  },
+  // 调用日志分页
+  listLogs(params) {
+    return visionAIAxios.get('/api/v1/api-keys/logs', { params });
+  },
+  // 可对外发布的资源目录（含 curl / python 调用示例）
+  listResources() {
+    return visionAIAxios.get('/api/v1/api-keys/resources');
+  },
+  // Portainer 入口信息：跳转地址 + 是否可达
+  getPortainerInfo() {
+    return visionAIAxios.get('/api/v1/system/portainer');
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
+  openApiAPI,
   cameraAPI,
   alertAPI,
   reviewSkillAPI,

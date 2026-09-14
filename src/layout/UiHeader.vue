@@ -86,6 +86,7 @@ export default {
         '/systemManage/departmentManagement': { menu: '系统管理', page: '部门管理' },
         '/systemManage/positionManagement': { menu: '系统管理', page: '岗位管理' },
         '/systemManage/knowledgeBase': { menu: '系统管理', page: '知识库' },
+        '/systemManage/apiKeys': { menu: '系统管理', page: '开放 API' },
         '/mlPipeline': { menu: '模型工厂', page: '' },
         '/visualCenter': { menu: '可视中心', page: '可视中心首页' },
         '/visualBigScreen': { menu: '可视中心', page: '大屏' },

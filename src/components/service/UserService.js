@@ -99,6 +99,19 @@ export default {
     return localStorage.getItem("Admin-Token");
   },
 
+  /**
+   * nacos 没有慧眼自管 is_admin。
+   * 若 JWT/本地用户带 is_admin 则沿用；否则已登录（上游 Token 或模拟登录）即可进入管理页，
+   * 后端仍会按 AUTH_LABEL_ADMIN_USERS 白名单拦截开放 API 写操作。
+   */
+  isAdmin() {
+    const user = this.getCurrentUser() || {};
+    if (typeof user.is_admin === 'boolean') {
+      return user.is_admin;
+    }
+    return !!(this.getAdminToken() || this.getToken());
+  },
+
   clearToken() {
     this.clearLoginStatus();
     this.clearUserInfo();

@@ -256,6 +256,14 @@
             </el-tag>
           </template>
         </el-table-column>
+        <!-- 开放 API 发布状态：已发布的模型可被外部系统凭 API Key 调用 -->
+        <el-table-column label="开放 API" width="100" align="center" header-align="center">
+          <template slot-scope="{ row }">
+            <el-tag :type="row.is_published ? 'success' : 'info'" class="tech-status-tag">
+              {{ row.is_published ? '已发布' : '未发布' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="版本" width="100" align="center" header-align="center">
           <template slot-scope="{ row }">
             <div class="version-badge">
@@ -277,7 +285,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="200" align="center" header-align="center" />
-        <el-table-column label="操作" width="200" fixed="right" align="center" header-align="center">
+        <el-table-column label="操作" width="260" fixed="right" align="center" header-align="center">
           <template slot-scope="{ row }">
             <div class="operation-buttons">
               <!-- 卸载/加载按钮 -->
@@ -293,6 +301,14 @@
                   加载
                 </el-button>
               </template>
+
+              <!-- 开放 API 发布 / 取消发布（未加载的模型不能发布） -->
+              <el-button type="text" size="small" @click="handleTogglePublish(row)" :loading="row.isPublishing"
+                :disabled="!row.is_published && row.model_status !== 'loaded'"
+                class="operation-text-btn"
+                :class="row.is_published ? 'unload-text-btn' : 'load-text-btn'">
+                {{ row.is_published ? '取消发布' : '发布API' }}
+              </el-button>
 
               <el-button type="text" size="small" @click="handleDetail(row)"
                 class="operation-text-btn detail-text-btn">详情</el-button>
@@ -1260,6 +1276,38 @@ export default {
         // 重置加载状态
         if (index !== -1) {
           this.$set(this.tableData[index], 'isLoading', false)
+        }
+      })
+    },
+
+    // 发布 / 取消发布 开放 API；发布成功后提示外部调用地址，示例见「系统管理 → 开放 API」
+    handleTogglePublish(row) {
+      const index = this.tableData.findIndex(item => item.id === row.id)
+      if (index !== -1) {
+        this.$set(this.tableData[index], 'isPublishing', true)
+      }
+      const req = row.is_published ? modelAPI.unpublishModel(row.id) : modelAPI.publishModel(row.id)
+      req.then((res) => {
+        const d = res.data || {}
+        if (index !== -1) {
+          this.$set(this.tableData[index], 'is_published', !!d.is_published)
+        }
+        if (d.is_published) {
+          this.$notify({
+            title: `${row.name} 已发布为开放 API`,
+            message: `外部系统可凭 API Key 调用：${d.endpoint}。调用示例见「系统管理 → 开放 API」。`,
+            type: 'success',
+            duration: 8000
+          })
+        } else {
+          this.$message.success(`${row.name} 已取消发布`)
+        }
+      }).catch((error) => {
+        const detail = error && error.response && error.response.data && error.response.data.detail
+        this.$message.error((typeof detail === 'string' && detail) || ('操作失败: ' + (error.message || '未知错误')))
+      }).finally(() => {
+        if (index !== -1) {
+          this.$set(this.tableData[index], 'isPublishing', false)
         }
       })
     },

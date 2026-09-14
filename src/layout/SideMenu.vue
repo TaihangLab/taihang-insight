@@ -26,7 +26,7 @@
       background-color="#10233F"
       text-color="#FFFFFF"
       active-text-color="#FFFFFF"
-      router
+      @select="onMenuSelect"
     >
       <!-- 监控预警 -->
       <el-submenu index="/monitoring">
@@ -121,11 +121,27 @@
           <span slot="title">算法推理平台</span>
         </el-menu-item>
       </el-submenu>
+
+      <!-- 系统管理 -->
+      <el-submenu index="/systemManage">
+        <template slot="title">
+          <i class="el-icon-setting menu-icon"></i>
+          <span slot="title">系统管理</span>
+        </template>
+        <el-menu-item index="/systemManage/apiKeys">
+          <span slot="title">开放 API</span>
+        </el-menu-item>
+        <el-menu-item index="portainer">
+          <span slot="title">容器管理</span>
+        </el-menu-item>
+      </el-submenu>
     </el-menu>
   </div>
 </template>
 
 <script>
+import { openApiAPI } from '../components/service/VisionAIService'
+
 export default {
   name: "SideMenu",
   data() {
@@ -148,6 +164,36 @@ export default {
     toggleCollapse() {
       this.isCollapsed = !this.isCollapsed;
       this.$emit('collapse-change', this.isCollapsed);
+    },
+    onMenuSelect(index) {
+      if (index === 'portainer') {
+        this.openPortainer();
+        this.$nextTick(() => {
+          this.activeMenu = this.$route.path.startsWith('/deviceManage/recordPlan/detail/')
+            ? '/deviceManage/recordPlan'
+            : this.$route.path;
+        });
+        return;
+      }
+      this.activeMenu = index;
+      if (index && index !== this.$route.path) {
+        this.$router.push(index);
+      }
+    },
+    openPortainer() {
+      openApiAPI.getPortainerInfo().then((res) => {
+        const info = res.data || {};
+        if (!info.url) {
+          this.$message.warning('未配置 Portainer 地址（PORTAINER_URL）');
+          return;
+        }
+        if (!info.reachable) {
+          this.$message.warning('Portainer 暂不可达，请确认已执行 docker compose up -d portainer');
+        }
+        window.open(info.url, '_blank');
+      }).catch(() => {
+        this.$message.error('获取 Portainer 信息失败');
+      });
     }
   }
 };

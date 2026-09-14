@@ -43,6 +43,7 @@ const departmentManagement = () => import('../components/visionAI/systemManageme
 const positionManagement = () => import('../components/visionAI/systemManagement/positionManagement.vue')
 const knowledgeBase = () => import('../components/visionAI/systemManagement/knowledgeBase.vue')
 const knowledgeBaseDetail = () => import('../components/visionAI/systemManagement/knowledgeBaseDetail.vue')
+const apiKeyManage = () => import('../components/visionAI/systemManagement/apiKeyManage.vue')
 const modelFactory = () => import('../components/visionAI/mlPipeline/modelFactory.vue')
 
 const originalPush = VueRouter.prototype.push
@@ -266,11 +267,11 @@ export default new VueRouter({
           name: 'knowledgeBaseDetail',
           component: knowledgeBaseDetail,
         },
-
-
-
-
-
+        {
+          path: '/systemManage/apiKeys',
+          name: 'apiKeyManage',
+          component: apiKeyManage,
+        },
 
 
 
