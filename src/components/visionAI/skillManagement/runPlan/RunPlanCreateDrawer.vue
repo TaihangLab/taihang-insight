@@ -639,9 +639,9 @@ function normalizeImmediateLevels(val) {
 function defaultAlertConfig() {
   return {
     merge_enabled: true,
-    merge_window_seconds: 10,
+    merge_window_seconds: 30,
     merge_base_delay_seconds: 4,
-    merge_max_duration_seconds: 30,
+    merge_max_duration_seconds: 60,
     merge_immediate_levels: [],
     merge_quick_send_threshold: 10,
     merge_level_delay_factor: 0.5,
