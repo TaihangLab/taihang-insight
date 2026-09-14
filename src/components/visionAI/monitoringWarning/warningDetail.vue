@@ -147,7 +147,7 @@
                       size="mini"
                       plain
                       class="merge-view-btn"
-                      @click.stop="showMergedDialog = true"
+                      @click.native.stop="openMergedDialog"
                     >
                       <i class="el-icon-folder-opened"></i>
                       合并 ({{ detail.alert_count }})
@@ -171,8 +171,24 @@
 
               <div class="warning-video-clip">
                 <h4 class="media-title">
-                  <i class="el-icon-video-camera"></i>
-                  视频片段
+                  <span class="media-title-left">
+                    <i class="el-icon-video-camera"></i>
+                    视频片段
+                  </span>
+                  <span class="media-title-actions">
+                    <!-- 没有预警视频时（低抽帧无长连接、刚重连、录像异常等）引导去看通道录像 -->
+                    <el-button
+                      v-if="!detail.minio_video_url"
+                      type="primary"
+                      size="mini"
+                      plain
+                      class="playback-jump-btn"
+                      @click.stop="goRecordPlayback"
+                    >
+                      <i class="el-icon-video-camera-solid"></i>
+                      查看该时段录像
+                    </el-button>
+                  </span>
                 </h4>
                 <div class="video-container" @click="openVideoViewer">
                   <div v-if="detail.minio_video_url" class="real-video">
@@ -186,12 +202,13 @@
                       <span>点击播放视频</span>
                     </div>
                   </div>
+                  <!-- 无视频时用预警原图占位并压暗，避免空框被当成功能缺陷；点击解释原因 -->
                   <div v-else class="placeholder-video">
-                    <i class="el-icon-video-camera"></i>
-                    <span>视频片段</span>
-                    <div class="media-overlay">
-                      <i class="el-icon-video-play"></i>
-                      <span>点击播放视频</span>
+                    <img v-if="placeholderFrameUrl" :src="placeholderFrameUrl" class="placeholder-frame" />
+                    <i v-else class="el-icon-video-camera"></i>
+                    <div class="placeholder-note">
+                      <i class="el-icon-info"></i>
+                      <span>未录制视频，点击查看原因</span>
                     </div>
                   </div>
                 </div>
@@ -489,14 +506,15 @@
       </span>
     </el-dialog>
 
-    <!-- 合并预警详情弹窗 -->
+    <!-- 合并预警详情：不挂到 body。预警管理页把父弹窗强制 3000，挂到 body 后只有默认 ~2000，会打开但被挡住 -->
     <el-dialog
       title="合并预警详情"
       :visible.sync="showMergedDialog"
       width="700px"
+      custom-class="merged-dialog-box"
       class="merged-dialog"
-      append-to-body
-      :modal-append-to-body="true"
+      :modal-append-to-body="false"
+      :close-on-click-modal="true"
     >
       <div v-if="detail && detail.is_merged" class="merged-content">
         <!-- 合并统计信息 -->
@@ -540,7 +558,7 @@
               <div class="image-info">
                 <span class="image-index">#{{ index + 1 }}</span>
                 <span v-if="index === getMergedMiddleIndex()" class="primary-tag">主图</span>
-                <span class="image-time">+{{ img.relative_time.toFixed(1) }}s</span>
+                <span class="image-time">+{{ formatRelativeTime(img) }}s</span>
               </div>
             </div>
           </div>
@@ -557,7 +575,7 @@
       <div class="merged-image-viewer-container" @click.stop>
         <div class="viewer-header">
           <span>{{ currentMergedImageIndex + 1 }} / {{ detail.alert_images.length }}</span>
-          <span class="viewer-time">+{{ detail.alert_images[currentMergedImageIndex].relative_time.toFixed(1) }}s</span>
+          <span class="viewer-time">+{{ formatRelativeTime(detail.alert_images[currentMergedImageIndex]) }}s</span>
           <i class="el-icon-close" @click="closeMergedImageViewer"></i>
         </div>
         <div class="viewer-body">
@@ -774,10 +792,26 @@ export default {
         return this.detail.minio_raw_frame_url
       }
       return this.detail.minio_frame_url || this.detail.minio_raw_frame_url || ''
+    },
+    // 无预警视频时给视频框占位用的图：优先原图，没有则退回标注图
+    placeholderFrameUrl() {
+      if (!this.detail) return ''
+      return this.detail.minio_raw_frame_url || this.detail.minio_frame_url || ''
     }
   },
   methods: {
     // ==================== 合并预警相关方法 ====================
+    // 打开合并预警弹窗（stop 避免点穿到父弹窗遮罩）
+    openMergedDialog() {
+      this.showMergedDialog = true
+    },
+
+    // 合并组相对时间：接口里可能是 number 或 string，直接 toFixed 会把弹窗渲染打挂
+    formatRelativeTime(img) {
+      const n = Number(img && img.relative_time)
+      return Number.isFinite(n) ? n.toFixed(1) : '0.0'
+    },
+
     // 格式化合并持续时间
     formatMergeDuration(seconds) {
       if (!seconds) return '0秒'
@@ -1645,11 +1679,71 @@ export default {
 
     // ==================== 视频播放器相关方法 ====================
 
+    // 点无视频占位图时说明成因并引导去看通道录像，避免用户当成功能缺陷
+    explainNoVideo() {
+      const h = this.$createElement;
+      this.$confirm(
+        h('div', null, [
+          h('p', null, '该预警没有视频片段，通常是以下原因，不是功能异常：'),
+          // MessageBox 挂在 body 上，scoped 样式选不中，这里直接内联
+          h('ul', { style: 'margin:8px 0;padding-left:20px;line-height:1.7;' }, [
+            h('li', null, '任务抽帧间隔较大（≥30 秒），采集侧不维持长连接，没有可裁剪的码流'),
+            h('li', null, '该通道未开启录像计划，事后也没有可回溯的录像'),
+            h('li', null, '摄像头刚重连或任务刚启动，码流分片还没覆盖到预警时刻')
+          ]),
+          h('p', null, '当前显示的是本次预警的原始画面，违规截图可在左侧查看。')
+        ]),
+        '本次预警未录制视频',
+        {
+          confirmButtonText: '查看该时段录像',
+          cancelButtonText: '知道了',
+          type: 'info'
+        }
+      ).then(() => {
+        this.goRecordPlayback();
+      }).catch(() => {
+        // 点“知道了”或关闭时 MessageBox 会 reject，这里吞掉避免控制台报未捕获异常
+      });
+    },
+
+    // 跳到该通道的录像回放页并定位到预警时刻：没有预警视频时的兜底查看方式
+    // （通道录像切片写完才入库，刚发生的预警可能还查不到，但事后回看没问题）
+    goRecordPlayback() {
+      if (!this.detail || !this.detail.camera_id) {
+        this.$message.warning('该预警缺少摄像头信息，无法定位录像');
+        return;
+      }
+      // 合并预警用首条时刻，更贴近事件真正开始的位置
+      const alertTime = this.detail.first_alert_time || this.detail.alert_time;
+      const ts = alertTime ? new Date(alertTime).getTime() : 0;
+      if (!ts) {
+        this.$message.warning('该预警缺少时间信息，无法定位录像');
+        return;
+      }
+
+      const d = new Date(ts);
+      const pad = (n) => String(n).padStart(2, '0');
+      this.closeDialog();
+      this.$router.push({
+        name: 'pointRecordPlayback',
+        query: {
+          // 回放页的 pointId 兼容通道 ID，后端 _resolve_point 会做映射
+          pointId: this.detail.camera_id,
+          pointName: this.detail.camera_name || '',
+          // date 必须一起传：回放页缺 date 时默认加载当天，看历史预警会拉错日期
+          date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+          t: String(ts)
+        }
+      });
+    },
+
           // 打开视频播放器
       openVideoViewer() {
-        console.log('打开视频播放器');
-        console.log('预警数据:', this.detail);
-        console.log('视频URL:', this.detail ? this.detail.minio_video_url : 'null');
+        // 无视频时解释原因，不弹空播放器，避免被误认为功能缺陷
+        if (!this.detail || !this.detail.minio_video_url) {
+          this.explainNoVideo();
+          return;
+        }
 
         this.resetVideoPlayer();
         // 重置视频显示模式为默认的cover模式（无黑边）
@@ -2151,11 +2245,6 @@ export default {
   margin-left: auto;
 }
 
-.media-title > i {
-  margin-right: 6px;
-  color: #409EFF;
-}
-
 .image-container,
 .video-container {
   position: relative;
@@ -2225,6 +2314,40 @@ export default {
 
 .placeholder-video i {
   color: #409EFF;
+}
+
+/* 无视频时占位的预警原图：灰度压暗，一眼区别于真实视频首帧 */
+.placeholder-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(0.6) brightness(0.55);
+}
+
+/* 压在占位图底部的说明条 */
+.placeholder-note {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  z-index: 1;
+}
+
+.placeholder-note i {
+  font-size: 13px;
+  margin: 0;
+  color: #fff;
 }
 
 /* 媒体覆盖层样式 */
@@ -3192,7 +3315,8 @@ export default {
 }
 
 /* ==================== 合并预警相关样式 ==================== */
-.merge-view-btn {
+.merge-view-btn,
+.playback-jump-btn {
   margin-left: 0;
   padding: 4px 8px;
   font-size: 12px;
@@ -3462,5 +3586,12 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+</style>
+
+<!-- 非 scoped：压过预警管理页 .page-container .el-dialog__wrapper { z-index: 3000 } -->
+<style>
+.el-dialog__wrapper.merged-dialog {
+  z-index: 4100 !important;
 }
 </style>

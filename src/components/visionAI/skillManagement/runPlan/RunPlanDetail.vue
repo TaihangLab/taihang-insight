@@ -275,7 +275,7 @@ export default {
     },
     mergeWindowSeconds() {
       const ac = (this.plan && this.plan.alert_config) || {};
-      return ac.merge_window_seconds != null ? ac.merge_window_seconds : 10;
+      return ac.merge_window_seconds != null ? ac.merge_window_seconds : 30;
     },
     videoGenerateText() {
       const ac = (this.plan && this.plan.alert_config) || {};
