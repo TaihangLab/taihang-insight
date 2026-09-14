@@ -465,6 +465,10 @@
               <div class="stat-label">检测次数</div>
             </div>
             <div class="stat-item">
+              <div class="stat-value">{{ mergedCapturedCount }}</div>
+              <div class="stat-label">截图张数</div>
+            </div>
+            <div class="stat-item">
               <div class="stat-value">{{ formatMergeDuration(detail.alert_duration) }}</div>
               <div class="stat-label">持续时长</div>
             </div>
@@ -482,21 +486,35 @@
           </div>
         </div>
 
-        <!-- 合并图片列表 -->
+        <!-- 合并检测列表：有图显示截图，节流未留图的显示占位，条数与检测次数对齐 -->
         <div class="merged-images-section">
-          <div class="section-title">全部截图</div>
+          <div class="section-title">
+            检测记录
+            <span class="section-title-hint">截图 {{ mergedCapturedCount }} / {{ detail.alert_count }} 次检测</span>
+          </div>
+          <p v-if="mergedMissingCount > 0" class="merged-throttle-hint">
+            另有 {{ mergedMissingCount }} 次检测因截图间隔限制未留图
+          </p>
           <div class="merged-images-grid">
             <div
-              v-for="(img, index) in detail.alert_images"
+              v-for="(img, index) in mergedDisplayList"
               :key="index"
               class="merged-image-item"
-              :class="{ 'is-primary': index === getMergedMiddleIndex() }"
+              :class="{
+                'is-primary': hasMergedImageFile(img) && index === getMergedMiddleIndex(),
+                'is-empty': !hasMergedImageFile(img)
+              }"
               @click="openMergedImage(index)"
             >
-              <img :src="getMergedImageUrl(img)" />
+              <img v-if="hasMergedImageFile(img)" :src="getMergedImageUrl(img)" />
+              <div v-else class="empty-image-placeholder">
+                <i class="el-icon-picture-outline"></i>
+                <span>未留图</span>
+              </div>
               <div class="image-info">
                 <span class="image-index">#{{ index + 1 }}</span>
-                <span v-if="index === getMergedMiddleIndex()" class="primary-tag">主图</span>
+                <span v-if="hasMergedImageFile(img) && index === getMergedMiddleIndex()" class="primary-tag">主图</span>
+                <span v-else-if="!hasMergedImageFile(img)" class="empty-tag">未留图</span>
                 <span class="image-time">+{{ formatRelativeTime(img) }}s</span>
               </div>
             </div>
@@ -513,24 +531,35 @@
     >
       <div class="merged-image-viewer-container" @click.stop>
         <div class="viewer-header">
-          <span>{{ currentMergedImageIndex + 1 }} / {{ detail.alert_images.length }}</span>
-          <span class="viewer-time">+{{ formatRelativeTime(detail.alert_images[currentMergedImageIndex]) }}s</span>
+          <span>{{ currentMergedImageIndex + 1 }} / {{ mergedDisplayList.length }}</span>
+          <span class="viewer-time">+{{ formatRelativeTime(mergedDisplayList[currentMergedImageIndex]) }}s</span>
           <i class="el-icon-close" @click="closeMergedImageViewer"></i>
         </div>
         <div class="viewer-body">
           <i class="el-icon-arrow-left nav-btn" @click="prevMergedImage"></i>
-          <img :src="getMergedImageUrl(detail.alert_images[currentMergedImageIndex])" />
+          <img
+            v-if="hasMergedImageFile(mergedDisplayList[currentMergedImageIndex])"
+            :src="getMergedImageUrl(mergedDisplayList[currentMergedImageIndex])"
+          />
+          <div v-else class="empty-image-placeholder viewer-empty">
+            <i class="el-icon-picture-outline"></i>
+            <span>该次检测未留图</span>
+          </div>
           <i class="el-icon-arrow-right nav-btn" @click="nextMergedImage"></i>
         </div>
         <div class="viewer-thumbnails">
           <div
-            v-for="(img, index) in detail.alert_images"
+            v-for="(img, index) in mergedDisplayList"
             :key="index"
             class="viewer-thumb"
-            :class="{ active: index === currentMergedImageIndex }"
+            :class="{
+              active: index === currentMergedImageIndex,
+              'is-empty': !hasMergedImageFile(img)
+            }"
             @click="currentMergedImageIndex = index"
           >
-            <img :src="getMergedImageUrl(img)" />
+            <img v-if="hasMergedImageFile(img)" :src="getMergedImageUrl(img)" />
+            <div v-else class="empty-thumb">未留图</div>
           </div>
         </div>
       </div>
@@ -738,6 +767,19 @@ export default {
     placeholderFrameUrl() {
       if (!this.detail) return ''
       return this.detail.minio_raw_frame_url || this.detail.minio_frame_url || ''
+    },
+    // 合并弹窗列表：新数据含未留图占位，旧数据只有实际上传的截图
+    mergedDisplayList() {
+      return (this.detail && this.detail.alert_images) || []
+    },
+    // 实际有文件的截图张数
+    mergedCapturedCount() {
+      return this.mergedDisplayList.filter(img => this.hasMergedImageFile(img)).length
+    },
+    // 检测次数与截图张数的差额（截图节流未上传）
+    mergedMissingCount() {
+      const total = Number(this.detail && this.detail.alert_count) || this.mergedDisplayList.length
+      return Math.max(0, total - this.mergedCapturedCount)
     }
   },
   methods: {
@@ -749,6 +791,7 @@ export default {
 
     // 合并组相对时间：接口里可能是 number 或 string，直接 toFixed 会把弹窗渲染打挂
     formatRelativeTime(img) {
+      if (img && img.placeholder) return '—'
       const n = Number(img && img.relative_time)
       return Number.isFinite(n) ? n.toFixed(1) : '0.0'
     },
@@ -760,10 +803,23 @@ export default {
       return `${(seconds / 60).toFixed(1)}分钟`
     },
 
-    // 获取合并图片的中间索引
+    // 该条合并记录是否真有截图（节流未上传则为空）
+    hasMergedImageFile(imageData) {
+      if (!imageData) return false
+      if (typeof imageData === 'object') {
+        return !!(imageData.image_url || imageData.object_name)
+      }
+      return !!imageData
+    },
+
+    // 主图下标：只在有截图的记录里取中间，与后端 get_main_image_pair 一致
     getMergedMiddleIndex() {
-      if (!this.detail || !this.detail.alert_images) return 0
-      return Math.floor(this.detail.alert_images.length / 2)
+      const withImg = []
+      this.mergedDisplayList.forEach((img, i) => {
+        if (this.hasMergedImageFile(img)) withImg.push(i)
+      })
+      if (!withImg.length) return 0
+      return withImg[Math.floor(withImg.length / 2)]
     },
 
     // 获取合并图片URL
@@ -790,8 +846,10 @@ export default {
       return `${window.baseUrl || ''}/api/v1/alerts/image/${taskId}/${imageData}`
     },
 
-    // 打开合并图片大图
+    // 打开合并图片大图（未留图的占位不打开）
     openMergedImage(index) {
+      const img = this.mergedDisplayList[index]
+      if (!this.hasMergedImageFile(img)) return
       this.currentMergedImageIndex = index
       this.mergedImageViewerVisible = true
     },
@@ -801,17 +859,23 @@ export default {
       this.mergedImageViewerVisible = false
     },
 
-    // 上一张合并图片
+    // 上一张合并图片（跳过未留图占位）
     prevMergedImage() {
-      if (this.currentMergedImageIndex > 0) {
-        this.currentMergedImageIndex--
+      for (let i = this.currentMergedImageIndex - 1; i >= 0; i--) {
+        if (this.hasMergedImageFile(this.mergedDisplayList[i])) {
+          this.currentMergedImageIndex = i
+          return
+        }
       }
     },
 
-    // 下一张合并图片
+    // 下一张合并图片（跳过未留图占位）
     nextMergedImage() {
-      if (this.currentMergedImageIndex < this.detail.alert_images.length - 1) {
-        this.currentMergedImageIndex++
+      for (let i = this.currentMergedImageIndex + 1; i < this.mergedDisplayList.length; i++) {
+        if (this.hasMergedImageFile(this.mergedDisplayList[i])) {
+          this.currentMergedImageIndex = i
+          return
+        }
       }
     },
 
@@ -3258,7 +3322,7 @@ export default {
 }
 
 .merged-stats-row.stats-numbers {
-  gap: 60px;
+  gap: 40px;
   margin-bottom: 12px;
   padding-bottom: 12px;
   border-bottom: 1px dashed rgba(230, 162, 60, 0.3);
@@ -3305,9 +3369,22 @@ export default {
   font-size: 14px;
   font-weight: 500;
   color: #303133;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   padding-left: 8px;
   border-left: 3px solid #e6a23c;
+}
+
+.merged-images-section .section-title-hint {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #909399;
+}
+
+.merged-throttle-hint {
+  margin: 0 0 10px 11px;
+  font-size: 12px;
+  color: #e6a23c;
 }
 
 .merged-images-grid {
@@ -3337,6 +3414,42 @@ export default {
 
 .merged-image-item.is-primary {
   border-color: #e6a23c;
+}
+
+.merged-image-item.is-empty {
+  cursor: default;
+  background: #f5f7fa;
+  border: 1px dashed #dcdfe6;
+}
+
+.merged-image-item.is-empty:hover {
+  border-color: #dcdfe6;
+  transform: none;
+  box-shadow: none;
+}
+
+.merged-image-item .empty-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #c0c4cc;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.merged-image-item .empty-image-placeholder i {
+  font-size: 22px;
+}
+
+.merged-image-item .empty-tag {
+  background: #909399;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .merged-image-item img {
@@ -3490,6 +3603,32 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.merged-image-viewer-container .viewer-thumb.is-empty {
+  cursor: default;
+  background: #303133;
+}
+
+.merged-image-viewer-container .viewer-thumb .empty-thumb {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #909399;
+  font-size: 10px;
+}
+
+.merged-image-viewer-container .viewer-empty {
+  min-height: 200px;
+  color: #c0c4cc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
 }
 </style>
 
