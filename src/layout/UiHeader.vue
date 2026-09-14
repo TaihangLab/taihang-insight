@@ -99,6 +99,14 @@
           <i class="el-icon-s-custom"></i>
           <span>用户管理</span>
         </el-menu-item>
+        <el-menu-item v-if="isAdmin" @click="goToApiKeys">
+          <i class="el-icon-key"></i>
+          <span>开放 API</span>
+        </el-menu-item>
+        <el-menu-item v-if="isAdmin" @click="openPortainer">
+          <i class="el-icon-box"></i>
+          <span>容器管理</span>
+        </el-menu-item>
         <el-menu-item @click="loginout">
           <i class="el-icon-switch-button"></i>
           <span>注销</span>
@@ -110,6 +118,7 @@
 
 <script>
 import userService from '../components/service/UserService'
+import { openApiAPI } from '../components/service/VisionAIService'
 import {Notification} from 'element-ui';
 
 export default {
@@ -174,6 +183,25 @@ export default {
     },
     goToUserManage() {
       this.$router.push('/systemManage/users');
+    },
+    goToApiKeys() {
+      this.$router.push('/systemManage/apiKeys');
+    },
+    // 新窗口打开 Portainer（地址由后端配置 PORTAINER_URL 提供；不可达时提示但仍可打开）
+    openPortainer() {
+      openApiAPI.getPortainerInfo().then((res) => {
+        const info = res.data || {};
+        if (!info.url) {
+          this.$message.warning('未配置 Portainer 地址（PORTAINER_URL）');
+          return;
+        }
+        if (!info.reachable) {
+          this.$message.warning('Portainer 暂不可达，请确认已执行 docker compose up -d portainer');
+        }
+        window.open(info.url, '_blank');
+      }).catch(() => {
+        this.$message.error('获取 Portainer 信息失败');
+      });
     },
     openDoc() {
       console.log(process.env.BASE_API)

@@ -36,6 +36,7 @@ const edgeServer = () => import('../components/visionAI/edgeManagement/edgeServe
 const edgeBox = () => import('../components/visionAI/edgeManagement/edgeBox.vue')
 const profile = () => import('../components/visionAI/systemManagement/profile.vue')
 const userManage = () => import('../components/visionAI/systemManagement/userManage.vue')
+const apiKeyManage = () => import('../components/visionAI/systemManagement/apiKeyManage.vue')
 const modelFactory = () => import('../components/visionAI/mlPipeline/modelFactory.vue')
 
 const originalPush = VueRouter.prototype.push
@@ -218,6 +219,11 @@ export default new VueRouter({
           path: '/systemManage/users',
           name: 'userManage',
           component: userManage,
+        },
+        {
+          path: '/systemManage/apiKeys',
+          name: 'apiKeyManage',
+          component: apiKeyManage,
         },
 
 
