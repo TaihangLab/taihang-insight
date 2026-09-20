@@ -551,7 +551,7 @@ export default {
           name: this.normalizeRegionName(t.name, idx),
           direction: t.direction || 'ab',
           visible: t.visible !== false,
-          line: t.line || t.points || []
+          line: t.line || []
         }));
       } else {
         this.tripwires = [];

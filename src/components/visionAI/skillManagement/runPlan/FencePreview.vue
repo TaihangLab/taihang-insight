@@ -43,7 +43,7 @@ export default {
     },
     hasFence() {
       return this.regions.some(r => (r.points || []).length >= 3)
-        || this.tripwires.some(t => (t.line || t.points || []).length >= 2);
+        || this.tripwires.some(t => (t.line || []).length >= 2);
     }
   },
   watch: {
@@ -109,7 +109,7 @@ export default {
       });
       this.tripwires.forEach(t => {
         if (t.visible === false) return;
-        const line = t.line || t.points || [];
+        const line = t.line || [];
         if (line.length < 2) return;
         this.drawTripwire(ctx, t, line, W, H, k);
       });
