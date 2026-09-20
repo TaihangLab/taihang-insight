@@ -1238,11 +1238,6 @@ export default {
       const cfg = startNode.config || (startNode.properties && startNode.properties.config) || {};
       return cfg.input_params || [];
     },
-    startNodeInputTypes(detail) {
-      const params = this.startNodeInputParams(detail);
-      if (params === null) return null;
-      return params.map(p => String((p && p.type) || '').toLowerCase());
-    },
     // 收集"在画布上绘制"的入参名（电子围栏 ROI / Array<ROI> / 绊线 Tripwire），
     // 这些由"区域绘制"提供，需从"技能参数"填写表里剔除。
     collectDrawnParamKeys(detail) {
@@ -1348,9 +1343,13 @@ export default {
     },
     computeSkillNeedsTripwire(detail) {
       try {
-        const types = this.startNodeInputTypes(detail);
-        if (types === null) return false;
-        return types.includes('tripwire');
+        const params = this.startNodeInputParams(detail);
+        if (params === null) return false;
+        return params.some(p => {
+          const type = String((p && p.type) || '').toLowerCase();
+          const itemType = String((p && p.item_type) || '').toLowerCase();
+          return type === 'tripwire' || (type === 'array' && itemType === 'tripwire');
+        });
       } catch (e) {
         return false;
       }
@@ -1358,7 +1357,9 @@ export default {
     fenceDrawn(cam) {
       if (!cam || !cam.fence) return false;
       const hasRegions = cam.fence.regions && cam.fence.regions.length > 0;
-      const hasTripwires = cam.fence.tripwires && cam.fence.tripwires.length > 0;
+      const hasTripwires = (cam.fence.tripwires || []).some(
+        t => t && t.visible !== false && Array.isArray(t.line) && t.line.length >= 2
+      );
       return hasRegions || hasTripwires;
     },
     snapshotUrl(cameraId) {
