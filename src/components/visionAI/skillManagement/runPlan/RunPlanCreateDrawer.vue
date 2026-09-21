@@ -583,6 +583,7 @@
       :allow-polygon="skillNeedsFence"
       :allow-tripwire="skillNeedsTripwire"
       :max-regions="fenceMaxRegions"
+      :max-tripwires="fenceMaxTripwires"
       :extra-hint="fenceExtraHint"
       :bindable-nodes="fenceBindableNodes"
       :default-ratio="fenceDefaultRatio"
@@ -706,6 +707,8 @@ export default {
       fenceRequired: false,
       // 仅 Array<ROI> 允许多块围栏；单个 ROI 固定 1 块，不因「用于节点」数量放开
       fenceMultipleRoi: true,
+      // 仅 Array<Tripwire> 允许多条绊线；单个 Tripwire 固定 1 条
+      fenceMultipleTripwire: false,
       fenceBindableNodes: [],
       fenceDefaultRatio: null,
       fenceNodeDefaultRatios: {},
@@ -817,6 +820,10 @@ export default {
       // 0 不限制（仅 Array<ROI>）；单个 ROI 固定 1
       return this.fenceMultipleRoi ? 0 : 1;
     },
+    fenceMaxTripwires() {
+      // 0 不限制（仅 Array<Tripwire>）；单个 Tripwire 固定 1
+      return this.fenceMultipleTripwire ? 0 : 1;
+    },
     fenceExtraHint() {
       if ((this.fenceBindableNodes || []).length < 2) return '';
       return '本技能有多个节点接到了电子围栏。要么都不选「用于节点」（大家共用），要么每个接到的节点都指定一块；只指定其中一个时，其他接到的节点会拿不到围栏。';
@@ -925,6 +932,7 @@ export default {
         this.skillNeedsTripwire = false;
         this.fenceRequired = false;
         this.fenceMultipleRoi = true;
+        this.fenceMultipleTripwire = false;
         this.fenceBindableNodes = [];
         this.fenceDefaultRatio = null;
         this.fenceNodeDefaultRatios = {};
@@ -1074,6 +1082,7 @@ export default {
         this.skillNeedsTripwire = false;
         this.fenceRequired = false;
         this.fenceMultipleRoi = true;
+        this.fenceMultipleTripwire = false;
         this.fenceBindableNodes = [];
         this.fenceDefaultRatio = null;
         this.fenceNodeDefaultRatios = {};
@@ -1096,6 +1105,7 @@ export default {
         this.skillNeedsTripwire = false;
         this.fenceRequired = false;
         this.fenceMultipleRoi = true;
+        this.fenceMultipleTripwire = false;
         this.fenceBindableNodes = [];
         this.fenceDefaultRatio = null;
         this.fenceNodeDefaultRatios = {};
@@ -1166,6 +1176,9 @@ export default {
         const roiInfo = this.computeRoiInfo(detail);
         this.skillNeedsFence = roiInfo.needsFence;
         this.fenceMultipleRoi = roiInfo.multiple;
+        const twInfo = this.computeTripwireInfo(detail);
+        this.skillNeedsTripwire = twInfo.needsTripwire;
+        this.fenceMultipleTripwire = twInfo.multiple;
         this.fenceRequired = this.computeFenceRequired(detail);
         this.fenceBindableNodes = this.extractRoiBindableNodes(detail);
         this.fenceDefaultRatio = null;
@@ -1184,7 +1197,6 @@ export default {
             } catch (ge) { /* ignore */ }
           }
         }
-        this.skillNeedsTripwire = this.computeSkillNeedsTripwire(detail);
       } catch (e) {
         console.warn('加载技能参数失败', e);
         this.skillParamFields = [];
@@ -1193,6 +1205,7 @@ export default {
         this.skillNeedsTripwire = false;
         this.fenceRequired = false;
         this.fenceMultipleRoi = true;
+        this.fenceMultipleTripwire = false;
         this.fenceBindableNodes = [];
         this.fenceDefaultRatio = null;
         this.fenceNodeDefaultRatios = {};
@@ -1341,17 +1354,25 @@ export default {
         name: n.name || (n.config && n.config.name_zh) || TYPE_ZH[n.type] || n.id
       }));
     },
-    computeSkillNeedsTripwire(detail) {
+    computeTripwireInfo(detail) {
       try {
         const params = this.startNodeInputParams(detail);
-        if (params === null) return false;
-        return params.some(p => {
+        if (params === null) return { needsTripwire: false, multiple: false };
+        let needsTripwire = false;
+        let multiple = false;
+        params.forEach(p => {
           const type = String((p && p.type) || '').toLowerCase();
           const itemType = String((p && p.item_type) || '').toLowerCase();
-          return type === 'tripwire' || (type === 'array' && itemType === 'tripwire');
+          if (type === 'tripwire') {
+            needsTripwire = true;
+          } else if (type === 'array' && itemType === 'tripwire') {
+            needsTripwire = true;
+            multiple = true;
+          }
         });
+        return { needsTripwire, multiple };
       } catch (e) {
-        return false;
+        return { needsTripwire: false, multiple: false };
       }
     },
     fenceDrawn(cam) {

@@ -131,7 +131,8 @@
                         :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
                         :frame-timestamp="detectionResults[index-1].frame_timestamp || 0"
                         :detections="detectionResults[index-1].detections || []"
-                        :status-tags="detectionResults[index-1].status_tags || []">
+                        :status-tags="detectionResults[index-1].status_tags || []"
+                        :traffic="detectionResults[index-1].traffic || null">
                       </detection-overlay>
                     </div>
               </div>
@@ -227,7 +228,8 @@
                         :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
                         :frame-timestamp="detectionResults[index-1].frame_timestamp || 0"
                         :detections="detectionResults[index-1].detections || []"
-                        :status-tags="detectionResults[index-1].status_tags || []">
+                        :status-tags="detectionResults[index-1].status_tags || []"
+                        :traffic="detectionResults[index-1].traffic || null">
                       </detection-overlay>
                     </div>
               </div>
@@ -3123,6 +3125,7 @@ export default {
           this.$set(this.detectionResults, index, {
             detections: parsed.detections,
             status_tags: parsed.statusTags || [],
+            traffic: parsed.traffic || null,
             frame_size: parsed.frameSize,
             frame_timestamp: parsed.frameTimestamp
           })

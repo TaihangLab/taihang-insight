@@ -219,7 +219,7 @@
           <svg viewBox="0 0 48 48" width="48" height="48" class="fence-empty__icon">
             <path fill="#dcdfe6" d="M8 40l32-32 4 4-32 32H8v-4zm28-28l4-4 4 4-4 4-4-4zM12 12h8v8h-8V12z"/>
           </svg>
-          <p>{{ allowPolygon ? '请点击画布区域开始绘制' : '请在画布上点两个点绘制绊线' }}</p>
+          <p>{{ allowPolygon ? '请点击画布区域开始绘制' : tripwireEmptyHint }}</p>
         </div>
       </div>
 
@@ -314,6 +314,8 @@ export default {
     allowTripwire: { type: Boolean, default: false },
     // 多边形电子围栏数量上限：0 不限制（仅 Array<ROI>）；单个 ROI 为 1
     maxRegions: { type: Number, default: 0 },
+    // 绊线数量上限：0 不限制（仅 Array<Tripwire>）；单个 Tripwire 为 1
+    maxTripwires: { type: Number, default: 0 },
     extraHint: { type: String, default: '' },
     bindableNodes: { type: Array, default: () => [] },
     // 技能配置的默认占比；不传则用系统默认 1.0
@@ -353,7 +355,7 @@ export default {
         {
           key: 'tripwire',
           title: '绊线',
-          tip: '绊线用于跨线方向检测；技能输入声明了绊线(Tripwire)类型才可绘制',
+          tip: '未声明 Array 时只能画一条。A→B 计进、B→A 计出；多个闸机把开始节点改成 Array<Tripwire>',
           icon: ICON_TRIPWIRE,
           disabled: true,
           dividerBefore: false
@@ -401,6 +403,11 @@ export default {
       if (this.tool === 'pan') return this.panning ? 'grabbing' : 'grab';
       if (this.tool === 'polygon' || this.tool === 'tripwire') return 'crosshair';
       return 'default';
+    },
+    tripwireEmptyHint() {
+      return this.maxTripwires === 1
+        ? '点两个点画一条绊线（A→B 为进）'
+        : '每个闸机点两个点画一条绊线（A→B 为进）';
     },
     currentGuideExample() {
       return this.guideExamples[this.guideExampleIndex] || this.guideExamples[0];
@@ -673,6 +680,10 @@ export default {
     addTripwirePoint(coords) {
       const norm = this.toNormalized(coords.px, coords.py);
       if (!this.drawing) {
+        if (this.reachedTripwireLimit()) {
+          this.notifyTripwireLimit();
+          return;
+        }
         this.drawing = true;
         this.currentPoints = [norm];
         this.selectedIndex = -1;
@@ -940,6 +951,15 @@ export default {
       this.$message({
         type: 'warning',
         message: `绘制失败！当前类型最多添加${this.maxRegions}个电子围栏，当前已达到上限；请删除后再进行绘制`
+      });
+    },
+    reachedTripwireLimit() {
+      return this.maxTripwires > 0 && this.tripwires.length >= this.maxTripwires;
+    },
+    notifyTripwireLimit() {
+      this.$message({
+        type: 'warning',
+        message: `绘制失败！当前类型最多添加${this.maxTripwires}条绊线，当前已达到上限；多个闸机请把开始节点改成 Array<Tripwire>`
       });
     },
     removeRegion(i) {
