@@ -1601,6 +1601,14 @@
                   <span class="sg-io-dot" style="--c:#7c5cff"></span>跨线目标
                   <i class="el-icon-aim sg-io-type-ic"></i>
                 </div>
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#7c5cff"></span>A→B
+                  <i class="el-icon-aim sg-io-type-ic"></i>
+                </div>
+                <div class="sg-io-item">
+                  <span class="sg-io-dot" style="--c:#7c5cff"></span>B→A
+                  <i class="el-icon-aim sg-io-type-ic"></i>
+                </div>
               </div>
             </template>
 
@@ -2599,7 +2607,7 @@ const PORT_LABELS = {
   result1: '匹配目标1', result2: '匹配目标2',
   unmatched1: '未匹配目标1', unmatched2: '未匹配目标2',
   target1: '距离目标1', target2: '距离目标2',
-  tripwire: '绊线', crossed: '跨线目标',
+  tripwire: '绊线', crossed: '跨线目标', crossed_ab: 'A→B', crossed_ba: 'B→A',
   matched1: '满足相交的目标1', matched2: '满足相交的目标2',
   period: '位移计算周期(s)',
   h_min: '水平距离/位移下限(px)', h_max: '水平距离/位移上限(px)', h_direction: '水平方向',
@@ -3782,7 +3790,11 @@ class SGNode extends HtmlNode {
         chipHtml('targets', 'Detection', '跨线目标（追踪）', !ttBoundIn.has('targets')),
         chipHtml('tripwire', 'Tripwire', '绊线', !ttBoundIn.has('tripwire'))
       ]
-      const outs = [chipHtml('crossed', 'Detection', '跨线目标')]
+      const outs = [
+        chipHtml('crossed', 'Detection', '跨线目标'),
+        chipHtml('crossed_ab', 'Detection', 'A→B'),
+        chipHtml('crossed_ba', 'Detection', 'B→A')
+      ]
       body = row('输入', ins) + row('输出', outs)
     } else if (p.nodeType === 'distance') {
       const distBoundIn = boundInputPorts(m)

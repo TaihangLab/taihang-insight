@@ -12,6 +12,16 @@
         <span class="status-tag-text">{{ tag.text }}</span>
       </div>
     </div>
+    <div v-if="traffic" class="traffic-hud">
+      <div class="traffic-hud__item">
+        <span class="traffic-hud__label">进</span>
+        <span class="traffic-hud__num">{{ traffic.in_total }}</span>
+      </div>
+      <div class="traffic-hud__item">
+        <span class="traffic-hud__label">出</span>
+        <span class="traffic-hud__num">{{ traffic.out_total }}</span>
+      </div>
+    </div>
     <!-- Canvas层用于绘制检测框（尺寸/位置由 syncToVideoElement 贴合真实 video 元素） -->
     <canvas
       ref="overlayCanvas"
@@ -40,6 +50,11 @@ export default {
     statusTags: {
       type: Array,
       default: () => []
+    },
+    // 结束节点透出的进/出人次；没有则为 null，不画 HUD
+    traffic: {
+      type: Object,
+      default: null
     },
     // 原始视频分辨率（bbox 坐标所参照的检测帧分辨率，由后端 frame_size 提供）
     videoWidth: {
@@ -492,5 +507,41 @@ export default {
 
 .status-tag-text {
   font-weight: 600;
+}
+
+/* 右上角是 AI 任务下拉（约 44px 高），人数条必须让开，否则会被完全挡住 */
+.traffic-hud {
+  position: absolute;
+  top: 58px;
+  right: 10px;
+  z-index: 12;
+  display: flex;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.traffic-hud__item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  color: #fff;
+  background: rgba(8, 47, 73, 0.82);
+  border: 1px solid rgba(56, 189, 248, 0.7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.traffic-hud__label {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.traffic-hud__num {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 1.2em;
+  line-height: 1.2;
 }
 </style>

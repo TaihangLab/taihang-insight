@@ -19,13 +19,14 @@ function buildDetectionWsUrl (taskId) {
 
 /**
  * 解析检测 WebSocket 消息
- * @returns {{ detections: Array, statusTags: Array, frameSize: {width: number, height: number}, frameTimestamp: number }}
+ * @returns {{ detections: Array, statusTags: Array, traffic: Object|null, frameSize: {width: number, height: number}, frameTimestamp: number }}
  */
 function parseDetectionMessage (event) {
   const data = JSON.parse(event.data)
   return {
     detections: data.detections || [],
     statusTags: data.status_tags || [],
+    traffic: data.traffic || null,
     frameSize: data.frame_size || { width: 1920, height: 1080 },
     // 采集帧时间戳(epoch ms)，用于前端去重(后端按~30fps重复推同一结果)与时间戳对齐；缺失为0
     frameTimestamp: data.frame_timestamp || 0
