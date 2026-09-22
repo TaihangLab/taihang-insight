@@ -170,7 +170,7 @@
                 <button 
                   class="slider-btn next-btn"
                   @click="slideNext"
-                  :disabled="currentImageIndex === warningImages.length - 1"
+                  :disabled="warningImages.length === 0 || currentImageIndex === warningImages.length - 1"
                 >
                   <i class="el-icon-arrow-right"></i>
                 </button>
@@ -284,7 +284,7 @@
 
 <script>
 import * as echarts from 'echarts';
-import { alertAPI, cameraAPI, systemMonitorAPI } from '../../service/VisionAIService.js';
+import { alertAPI, archiveAPI, cameraAPI, systemMonitorAPI } from '../../service/VisionAIService.js';
 // 预警等级映射
 const LEVEL_MAP = { 1: 'urgent', 2: 'high', 3: 'medium', 4: 'low' };
 const LEVEL_TEXT_MAP = { 1: '一级', 2: '二级', 3: '三级', 4: '四级' };
@@ -460,6 +460,7 @@ export default {
         this.fetchStatusStats().catch(e => console.error('fetchStatusStats:', e)),
         this.fetchDeviceTop10().catch(e => console.error('fetchDeviceTop10:', e)),
         this.fetchRecentAlerts().catch(e => console.error('fetchRecentAlerts:', e)),
+        this.fetchArchiveImages().catch(e => console.error('fetchArchiveImages:', e)),
         this.fetchCameraCount().catch(e => console.error('fetchCameraCount:', e)),
       ]);
     },
@@ -612,7 +613,7 @@ export default {
       }
     },
 
-    // ── 最近预警记录 + 图片查看器 ────────────────────────────────────────────
+    // ── 最近预警记录与档案图片查看器 ────────────────────────────────────────────
 
     async fetchRecentAlerts() {
       try {
@@ -627,8 +628,15 @@ export default {
           statusText: STATUS_TEXT_MAP[a.status] || '待处理',
         }));
 
-        // 图片查看器 - 取有图片的条目
-        const withImages = alerts.filter(a => a.minio_frame_url);
+      } catch (e) {
+        console.error('获取预警记录失败:', e);
+      }
+    },
+
+    async fetchArchiveImages() {
+      try {
+        const res = await archiveAPI.getLatestArchiveImages({ limit: 15 });
+        const withImages = res.data.data.items.filter(a => a.minio_frame_url);
         this.warningImages = withImages.map(a => ({
           image: a.minio_frame_url,
           event: a.alert_name || a.skill_name_zh || a.alert_type || '未知预警',
@@ -639,14 +647,14 @@ export default {
         }));
 
         // 重置到第一张
+        this.currentImageIndex = 0;
         if (this.warningImages.length > 0) {
-          this.currentImageIndex = 0;
           this.currentWarningImage = this.warningImages[0];
         } else {
-          this.currentWarningImage = { image: '', event: '暂无预警图片', time: '--', level: '', levelText: '--', location: '--' };
+          this.currentWarningImage = { image: '', event: '暂无档案预警图片', time: '--', level: '', levelText: '--', location: '--' };
         }
       } catch (e) {
-        console.error('获取预警记录失败:', e);
+        console.error('获取档案预警图片失败:', e);
       }
     },
 

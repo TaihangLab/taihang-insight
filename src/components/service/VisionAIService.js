@@ -3095,6 +3095,13 @@ const chatAssistantAPI = {
 
 // 预警档案管理API
 export const archiveAPI = {
+  // 跨档案按预警时间倒序获取有图片的记录。
+  getLatestArchiveImages(params = {}) {
+    return visionAIAxios.get('/api/v1/alert-archives/latest-images', {
+      params: { limit: 15, ...params }
+    });
+  },
+
   /**
    * 获取预警档案列表
    * @param {Object} params - 查询参数
