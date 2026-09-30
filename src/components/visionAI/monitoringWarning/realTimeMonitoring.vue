@@ -104,8 +104,8 @@
                       <div v-if="selectedAITasks[index-1]" class="detection-debug-info" :title="getDetectionDebugTitle(index-1)">
                         <div class="debug-line">
                           <span class="debug-label">WS</span>
-                          <span :class="['debug-value', wsConnections[index-1] ? 'connected' : 'disconnected']">
-                            {{ wsConnections[index-1] ? '已连接' : '未连接' }}
+                          <span :class="['debug-value', getWsStatusClass(index-1)]">
+                            {{ getWsStatusText(index-1) }}
                           </span>
                         </div>
                         <div class="debug-line">
@@ -131,7 +131,10 @@
                         :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
                         :frame-timestamp="detectionResults[index-1].frame_timestamp || 0"
                         :detections="detectionResults[index-1].detections || []"
-                        :status-tags="detectionResults[index-1].status_tags || []">
+                        :status-tags="detectionResults[index-1].status_tags || []"
+                        :dashboard="detectionResults[index-1].dashboard || []"
+                        :frame-index="detectionResults[index-1].frame_index || 0"
+                        :debug-info="detectionResults[index-1].debug || null">
                       </detection-overlay>
                     </div>
               </div>
@@ -177,7 +180,7 @@
                         @screenshot="shot"
                         @destroy="destroy"/>
                       
-                      <!-- 🆕 AI任务选择下拉框（全屏模式） -->
+                      <!-- 🆕 AI任务选择下拉框（全屏模式）-->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
                            class="ai-task-selector">
                         <el-select 
@@ -201,8 +204,8 @@
                       <div v-if="selectedAITasks[index-1]" class="detection-debug-info" :title="getDetectionDebugTitle(index-1)">
                         <div class="debug-line">
                           <span class="debug-label">WS</span>
-                          <span :class="['debug-value', wsConnections[index-1] ? 'connected' : 'disconnected']">
-                            {{ wsConnections[index-1] ? '已连接' : '未连接' }}
+                          <span :class="['debug-value', getWsStatusClass(index-1)]">
+                            {{ getWsStatusText(index-1) }}
                           </span>
                         </div>
                         <div class="debug-line">
@@ -227,7 +230,10 @@
                         :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
                         :frame-timestamp="detectionResults[index-1].frame_timestamp || 0"
                         :detections="detectionResults[index-1].detections || []"
-                        :status-tags="detectionResults[index-1].status_tags || []">
+                        :status-tags="detectionResults[index-1].status_tags || []"
+                        :dashboard="detectionResults[index-1].dashboard || []"
+                        :frame-index="detectionResults[index-1].frame_index || 0"
+                        :debug-info="detectionResults[index-1].debug || null">
                       </detection-overlay>
                     </div>
               </div>
@@ -514,8 +520,10 @@ import OrgPointTree from './components/OrgPointTree.vue'
 import WarningDetail from './warningDetail.vue'
 // 🆕 导入OSD检测框组件
 import DetectionOverlay from './components/DetectionOverlay.vue'
+import detectionWs from './utils/detectionWebSocket'
 import screenfull from "screenfull";
-import { alertAPI, realtimeMonitorAPI, realtimeDetectionAPI } from '../../service/VisionAIService.js';
+const { createDetectionWebSocket, closeWebSocket, parseDetectionMessage } = detectionWs
+import { alertAPI, cameraAPI, realtimeMonitorAPI, realtimeDetectionAPI } from '../../service/VisionAIService.js';
 
 export default {
   name: "RealTimeMonitoring",
@@ -559,7 +567,11 @@ export default {
       // 🆕 OSD检测框叠加相关
       selectedAITasks: {},  // 每个视频窗口的AI任务选择 {index: task_id}
       availableAITasks: {},  // 每个摄像头的可用AI任务列表 {camera_id: []}
+      aiTasksLoading: {},  // {camera_id: boolean} 任务列表加载中
+      aiTasksLoadToken: {},  // {camera_id: number} 取消过期重试
+      aiTasksEmptyConfirmed: {},  // {camera_id: boolean} 重试耗尽后确认无任务
       wsConnections: {},  // WebSocket连接池 {index: WebSocket}
+      wsReadyState: {},  // {index: 0|1|2|3} 用于左下角显示，避免只判断对象是否存在
       detectionResults: {},  // 检测结果数据 {index: {detections: [], frame_size: {}}}
       cameraIdMapping: {},  // 摄像头ID映射 {index: camera_id}
       cameraNames: {},  // 摄像头名称映射 {index: camera_name}
@@ -692,6 +704,11 @@ export default {
         this.refreshFourScreenLayout();
       }, 200);
     });
+
+    // 仅开发：?shaft_dev_mock=1 或 localStorage.SHAFT_DEV_MOCK=1，不走生产 WS
+    if (process.env.NODE_ENV !== 'production') {
+      this.maybeStartShaftDevMock()
+    }
   },
   beforeDestroy() {
     this.exitFullscreen();
@@ -700,6 +717,10 @@ export default {
     if (this.aiTaskPollTimer) {
       clearInterval(this.aiTaskPollTimer);
       this.aiTaskPollTimer = null;
+    }
+    if (this.shaftDevMockTimer) {
+      clearInterval(this.shaftDevMockTimer)
+      this.shaftDevMockTimer = null
     }
 
     this.cleanupSSEConnection();
@@ -959,10 +980,19 @@ export default {
     // 向设备发送推流请求
     async sendDevicePush(channelId) {
       let idxTmp = this.playerIdx;
-      // 切摄像头时关掉该格子上旧的检测 WS / 已选任务，避免「视频已换、WS 还在」
+      // 切摄像头时关掉该格子上旧的检测 WS / 已选任务，并取消旧 camera 的任务加载重试
       const prevCameraId = this.cameraIdMapping[idxTmp]
       if (prevCameraId != null && String(prevCameraId) !== String(channelId)) {
         this.cleanupOSDResources(idxTmp)
+        this.cancelAITasksLoad(prevCameraId)
+        // 若无其他格子仍映射到旧 camera，清掉旧任务缓存，避免串点位
+        const stillUsed = Object.keys(this.cameraIdMapping).some(k => {
+          return Number(k) !== Number(idxTmp) && String(this.cameraIdMapping[k]) === String(prevCameraId)
+        })
+        if (!stillUsed) {
+          this.$delete(this.availableAITasks, String(prevCameraId))
+          this.$delete(this.aiTasksEmptyConfirmed, String(prevCameraId))
+        }
       }
       this.setPlayUrl("", idxTmp);
       this.$set(this.playProtocol, idxTmp, '');
@@ -970,8 +1000,9 @@ export default {
       this.$set(this.rtcFailed, idxTmp, false);
       this.$set(this.videoTip, idxTmp, "正在拉流...");
       
-      // 🆕 保存摄像头ID映射
+      // 保存摄像头ID映射（data.id / channelId，不是显示名称「7」）
       this.$set(this.cameraIdMapping, idxTmp, channelId);
+      console.log('[AITasks] playChannel camera_id=', channelId, 'index=', idxTmp, 'camera_name=', this.cameraNames[idxTmp]);
       
       // 注意：拉流只在对应视频格子里显示"正在拉流..."提示，
       // 不再使用整页 v-loading 遮罩，避免通道离线/不存在时整页转圈卡死
@@ -1000,8 +1031,10 @@ export default {
             console.log('✅ 获取播放地址成功:', rtcUrl ? 'webrtc' : 'flv', videoUrl);
             this.setPlayUrl(videoUrl, idxTmp);
 
-            // 🆕 加载该摄像头的AI任务列表
-            await this.loadAvailableAITasks(channelId);
+            // 先标记加载中，避免首帧渲染成「暂无运行任务」；force 开启完整 8s 重试
+            this.$set(this.aiTasksLoading, String(channelId), true)
+            this.$set(this.aiTasksEmptyConfirmed, String(channelId), false)
+            this.loadAvailableAITasks(channelId, { force: true });
 
             // 视频加载后刷新布局
             setTimeout(() => {
@@ -3041,8 +3074,19 @@ export default {
       return `${labels.slice(0, 3).join(', ')} 等${labels.length}个`
     },
 
+    getWsStatusText(index) {
+      const state = this.wsReadyState[index]
+      if (state === 0) return '连接中'
+      if (state === 1) return '已连接'
+      if (state === 2) return '关闭中'
+      return '未连接'
+    },
+    getWsStatusClass(index) {
+      return this.wsReadyState[index] === 1 ? 'connected' : 'disconnected'
+    },
+
     getDetectionDebugTitle(index) {
-      const ws = this.wsConnections[index] ? '已连接' : '未连接'
+      const ws = this.getWsStatusText(index)
       const count = this.getDetectionCount(index)
       const dets = this.detectionResults[index] && this.detectionResults[index].detections
       const labels = dets && dets.length
@@ -3066,15 +3110,264 @@ export default {
       return ''
     },
 
-    async loadAvailableAITasks(cameraId) {
+    getCameraIdForIndex(index) {
+      const id = this.cameraIdMapping[index]
+      return id == null || id === '' ? null : id
+    },
+
+    getAvailableTasksForIndex(index) {
+      const cameraId = this.getCameraIdForIndex(index)
+      if (cameraId == null) return []
+      const list = this.availableAITasks[cameraId] || this.availableAITasks[String(cameraId)]
+      return Array.isArray(list) ? list : []
+    },
+
+    isAITasksLoading(index) {
+      const cameraId = this.getCameraIdForIndex(index)
+      if (cameraId == null) return false
+      if (this.getAvailableTasksForIndex(index).length > 0) return false
+      const key = String(cameraId)
+      // 重试耗尽后不再转圈，显示「暂无运行任务」
+      if (this.aiTasksEmptyConfirmed[key] || this.aiTasksEmptyConfirmed[cameraId]) {
+        return false
+      }
+      return !!(this.aiTasksLoading[cameraId] || this.aiTasksLoading[key])
+    },
+
+    cancelAITasksLoad(cameraId) {
+      if (cameraId == null || cameraId === '') return
+      const key = String(cameraId)
+      const next = (this.aiTasksLoadToken[key] || 0) + 1
+      this.$set(this.aiTasksLoadToken, key, next)
+      this.$set(this.aiTasksLoading, key, false)
+    },
+
+    sleepMs(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms))
+    },
+
+    applyAITasksList(cameraId, list) {
+      const key = String(cameraId)
+      this.$set(this.availableAITasks, key, list)
+      // 同步写入原始 key，兼容模板 availableAITasks[cameraIdMapping[index]]
+      if (cameraId !== key) {
+        this.$set(this.availableAITasks, cameraId, list)
+      }
+    },
+
+    /**
+     * 运行中任务接口为空时，回退到 DB 中该 camera 下 status=true 的任务，
+     * 让右上角恢复原本的「选择AI任务」下拉框（不显示加载中/暂无文案）。
+     */
+    async fetchDbEnabledTasksFallback(cameraId) {
+      const key = String(cameraId)
       try {
-        const response = await realtimeDetectionAPI.getTasksByCamera(cameraId)
+        console.log('[AITasks] DB fallback camera_id=', key)
+        const response = await cameraAPI.getCameraAITasks(key)
+        const payload = response && response.data
+        const raw = (payload && (payload.tasks || (payload.data && payload.data.tasks))) || []
+        const list = (Array.isArray(raw) ? raw : [])
+          .filter(t => t && (t.status === true || t.status === 1 || t.status === 'true'))
+          .map(t => ({
+            task_id: t.id,
+            task_name: t.name || '',
+            skill_name: t.skill_class_name || t.name || '',
+            alert_name: (t.config && t.config.alert_name) || '',
+            is_running: false
+          }))
+        console.log('[AITasks] DB fallback parsed camera_id=', key, 'count=', list.length, 'tasks=', list)
+        return list
+      } catch (error) {
+        console.error('[AITasks] DB fallback failed camera_id=', key, error)
+        return []
+      }
+    },
+
+    /**
+     * 加载指定摄像头的可用AI任务列表（带重试）。
+     * 立即 / 500ms / 1s / 2s / 3s；总等待不少于 8 秒。
+     * 空数组不覆盖已有列表；按 camera_id 存，不写死任务号。
+     * 运行中列表最终仍空时，回退 DB 启用任务以恢复选择框。
+     * @param {string|number} cameraId
+     * @param {{force?: boolean}} [options] force=true 时即使已在加载也重新开一轮（切点位用）
+     */
+    async loadAvailableAITasks(cameraId, options = {}) {
+      if (cameraId == null || cameraId === '') {
+        console.warn('[AITasks] skip load: empty camera_id')
+        return
+      }
+      const key = String(cameraId)
+      const force = !!(options && options.force)
+
+      // 避免 5s 轮询打断正在进行的 8s 重试 → 永久「正在加载」
+      if (!force && this.aiTasksLoading[key]) {
+        console.log('[AITasks] skip: already loading camera_id=', key)
+        return
+      }
+
+      const token = (this.aiTasksLoadToken[key] || 0) + 1
+      this.$set(this.aiTasksLoadToken, key, token)
+      this.$set(this.aiTasksLoading, key, true)
+      this.$set(this.aiTasksEmptyConfirmed, key, false)
+
+      // 各次请求前的间隔（相对上一次结束）：第1次立即
+      const gapsMs = [0, 500, 1000, 2000, 3000]
+      const startedAt = Date.now()
+      let gotTasks = false
+
+      console.log('[AITasks] start load camera_id=', key, 'token=', token,
+        'prev_list_len=', (this.availableAITasks[key] || []).length)
+
+      for (let i = 0; i < gapsMs.length; i++) {
+        if (this.aiTasksLoadToken[key] !== token) {
+          console.log('[AITasks] cancelled camera_id=', key, 'token=', token)
+          return
+        }
+        if (gapsMs[i] > 0) {
+          await this.sleepMs(gapsMs[i])
+        }
+        if (this.aiTasksLoadToken[key] !== token) return
+
+        try {
+          console.log(`[AITasks] request#${i + 1} camera_id=`, key)
+          const response = await realtimeDetectionAPI.getTasksByCamera(key)
+          console.log(`[AITasks] response#${i + 1} camera_id=`, key,
+            'raw=', response && response.data)
+
+          if (this.aiTasksLoadToken[key] !== token) return
+
+          if (response.data && response.data.code === 0) {
+            const list = Array.isArray(response.data.data) ? response.data.data : []
+            console.log(`[AITasks] parsed#${i + 1} camera_id=`, key,
+              'count=', list.length, 'tasks=', list)
+
+            if (list.length > 0) {
+              this.applyAITasksList(cameraId, list)
+              gotTasks = true
+              break
+            }
+
+            // 空数组：保留旧列表，不冲掉
+            const prev = this.availableAITasks[key]
+            if (Array.isArray(prev) && prev.length > 0) {
+              console.warn(`[AITasks] empty#${i + 1}, keep previous list camera_id=`, key,
+                'prev_len=', prev.length)
+              gotTasks = true
+              break
+            }
+
+            // 首次空响应：立刻用 DB 启用任务恢复选择框，同时继续重试运行中接口
+            if (i === 0) {
+              const dbList = await this.fetchDbEnabledTasksFallback(key)
+              if (this.aiTasksLoadToken[key] !== token) return
+              if (dbList.length > 0) {
+                this.applyAITasksList(cameraId, dbList)
+                gotTasks = true
+                // 不 break：继续重试，优先换成真正 running 列表
+                this.$set(this.aiTasksLoading, key, false)
+              } else {
+                console.warn(`[AITasks] empty#${i + 1} camera_id=`, key, 'will retry')
+              }
+            } else {
+              console.warn(`[AITasks] empty#${i + 1} camera_id=`, key, 'will retry')
+            }
+          } else {
+            console.warn(`[AITasks] non-zero code#${i + 1} camera_id=`, key,
+              response && response.data)
+          }
+        } catch (error) {
+          // 保留上次列表，避免下拉框被空数据冲掉
+          console.error(`[AITasks] request#${i + 1} failed camera_id=`, key, error)
+        }
+      }
+
+      // 总重试窗口不少于 8 秒：若仍无任务，补一次请求
+      if (!gotTasks && !(this.availableAITasks[key] || []).length) {
+        const elapsed = Date.now() - startedAt
+        if (elapsed < 8000 && this.aiTasksLoadToken[key] === token) {
+          await this.sleepMs(8000 - elapsed)
+          if (this.aiTasksLoadToken[key] !== token) return
+          try {
+            console.log('[AITasks] request#final(8s) camera_id=', key)
+            const response = await realtimeDetectionAPI.getTasksByCamera(key)
+            console.log('[AITasks] response#final camera_id=', key, 'raw=', response && response.data)
+            if (this.aiTasksLoadToken[key] !== token) return
+            if (response.data && response.data.code === 0) {
+              const list = Array.isArray(response.data.data) ? response.data.data : []
+              if (list.length > 0) {
+                this.applyAITasksList(cameraId, list)
+                gotTasks = true
+              }
+            }
+          } catch (error) {
+            console.error('[AITasks] request#final failed camera_id=', key, error)
+          }
+        }
+      }
+
+      // 运行中接口仍空：回退 DB 启用任务，恢复原本选择框
+      if (!gotTasks && !(this.availableAITasks[key] || []).length && this.aiTasksLoadToken[key] === token) {
+        const dbList = await this.fetchDbEnabledTasksFallback(key)
+        if (this.aiTasksLoadToken[key] !== token) return
+        if (dbList.length > 0) {
+          this.applyAITasksList(cameraId, dbList)
+          gotTasks = true
+        }
+      }
+
+      if (this.aiTasksLoadToken[key] !== token) return
+
+      this.$set(this.aiTasksLoading, key, false)
+      const finalList = this.availableAITasks[key] || []
+      if (!finalList.length) {
+        this.$set(this.aiTasksEmptyConfirmed, key, true)
+        if (!Object.prototype.hasOwnProperty.call(this.availableAITasks, key)) {
+          this.$set(this.availableAITasks, key, [])
+        }
+      } else {
+        this.$set(this.aiTasksEmptyConfirmed, key, false)
+      }
+      console.log('[AITasks] done camera_id=', key,
+        'gotTasks=', gotTasks,
+        'final_len=', finalList.length,
+        'availableAITasks[camera_id]=', finalList)
+    },
+
+    /**
+     * 后台轻量刷新：单次请求，不打断加载态，空响应不清空已有列表。
+     * 用于 5s 轮询；任务稍后在 worker 启动后可无感出现在下拉框。
+     */
+    async softRefreshAITasks(cameraId) {
+      if (cameraId == null || cameraId === '') return
+      const key = String(cameraId)
+      if (this.aiTasksLoading[key]) return
+      try {
+        console.log('[AITasks] soft refresh camera_id=', key)
+        const response = await realtimeDetectionAPI.getTasksByCamera(key)
+        console.log('[AITasks] soft response camera_id=', key, 'raw=', response && response.data)
         if (response.data && response.data.code === 0) {
-          this.$set(this.availableAITasks, cameraId, response.data.data || [])
+          const list = Array.isArray(response.data.data) ? response.data.data : []
+          if (list.length > 0) {
+            this.applyAITasksList(cameraId, list)
+            this.$set(this.aiTasksEmptyConfirmed, key, false)
+            return
+          }
+          const prev = this.availableAITasks[key]
+          if (Array.isArray(prev) && prev.length > 0) {
+            console.warn('[AITasks] soft empty, keep previous camera_id=', key)
+            return
+          }
+        }
+        // 仍无运行中任务时，尝试 DB 回退（仅当本地还没有列表）
+        if (!(this.availableAITasks[key] || []).length) {
+          const dbList = await this.fetchDbEnabledTasksFallback(key)
+          if (dbList.length > 0) {
+            this.applyAITasksList(cameraId, dbList)
+            this.$set(this.aiTasksEmptyConfirmed, key, false)
+          }
         }
       } catch (error) {
-        // Worker 重启/503 时保留上次列表，避免下拉框被空数据冲掉
-        console.error(`❌ 获取摄像头AI任务列表失败:`, error)
+        console.error('[AITasks] soft refresh failed camera_id=', key, error)
       }
     },
 
@@ -3083,16 +3376,14 @@ export default {
         id => id != null && id !== ''
       )
       const unique = [...new Set(ids.map(id => String(id)))]
-      unique.forEach(id => this.loadAvailableAITasks(id))
+      // 绝不能再调用带 8s 重试的 loadAvailableAITasks，否则会互相 cancel 导致永久加载中
+      unique.forEach(id => this.softRefreshAITasks(id))
     },
-    
     /**
      * AI任务选择变化处理
      */
     onTaskSelectionChange(index) {
       const taskId = this.selectedAITasks[index]
-      const { closeWebSocket } = require('./utils/detectionWebSocket')
-
       // 断开旧连接（含 CONNECTING，避免泄漏）
       closeWebSocket(this.wsConnections[index])
       if (this.wsConnections[index]) {
@@ -3112,43 +3403,140 @@ export default {
      * 连接检测结果WebSocket
      */
     connectDetectionWebSocket(index, taskId) {
-      const { createDetectionWebSocket, closeWebSocket } = require('./utils/detectionWebSocket')
       // 先关掉该格子上可能残留的连接
       closeWebSocket(this.wsConnections[index])
 
       // 立刻挂上引用（不要等 onOpen），否则切摄像头时 cleanup 关不到 CONNECTING 的 socket
       const ws = createDetectionWebSocket(taskId, {
+        onOpen: (openedWs) => {
+          if (this.wsConnections[index] !== openedWs) return
+          this.$set(this.wsReadyState, index, WebSocket.OPEN)
+          console.log('[WS] onopen task_id=', taskId, 'index=', index)
+        },
         onMessage: (parsed) => {
           if (this.wsConnections[index] !== ws) return
-          this.$set(this.detectionResults, index, {
-            detections: parsed.detections,
-            status_tags: parsed.statusTags || [],
-            frame_size: parsed.frameSize,
-            frame_timestamp: parsed.frameTimestamp
-          })
-          const now = new Date()
-          this.$set(this.detectionUpdateTime, index,
-            `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`)
-          this.$set(this.videoResolutions, index, {
-            width: parsed.frameSize.width,
-            height: parsed.frameSize.height
-          })
+          this.applyParsedDetectionResult(index, parsed)
         },
         onClose: (closedWs) => {
-          if (this.wsConnections[index] === closedWs) {
-            delete this.wsConnections[index]
-            const keepTaskId = this.selectedAITasks[index]
-            if (keepTaskId) {
-              setTimeout(() => {
-                if (this.selectedAITasks[index] === keepTaskId && !this.wsConnections[index]) {
-                  this.connectDetectionWebSocket(index, keepTaskId)
-                }
-              }, 1500)
+          if (this.wsConnections[index] !== closedWs) return
+          this.$set(this.wsReadyState, index, WebSocket.CLOSED)
+          delete this.wsConnections[index]
+          const keepTaskId = this.selectedAITasks[index]
+          if (!keepTaskId) return
+          // 任务尚未真正跑起来时服务端会立刻拒连；退避重连，避免看起来像 WS 抖动
+          const delay = 2000
+          console.warn('[WS] onclose task_id=', keepTaskId, 'index=', index, 'retry in', delay, 'ms')
+          setTimeout(() => {
+            if (this.selectedAITasks[index] === keepTaskId && !this.wsConnections[index]) {
+              this.connectDetectionWebSocket(index, keepTaskId)
             }
-          }
+          }, delay)
         }
       })
       this.$set(this.wsConnections, index, ws)
+      this.$set(this.wsReadyState, index, ws.readyState)
+    },
+
+    /**
+     * 应用解析后的检测结果（真实 WS 与开发 mock 共用，保留 generation/sessionRestart）
+     */
+    applyParsedDetectionResult(index, parsed) {
+      const previous = this.detectionResults[index] || {}
+      const previousGeneration = Number(
+        (previous.debug && previous.debug.generation) || previous.generation || 0
+      )
+      const nextGeneration = Number(parsed.generation || (parsed.debug && parsed.debug.generation) || 0)
+      const previousFrameIndex = Number(previous.frame_index || 0)
+      const nextFrameIndex = Number(parsed.frameIndex || 0)
+      const previousTs = Number(previous.frame_timestamp || 0)
+      const nextTs = Number(parsed.frameTimestamp || 0)
+      const staleGeneration = (
+        previousGeneration > 0
+        && nextGeneration > 0
+        && nextGeneration < previousGeneration
+      )
+      if (staleGeneration) return false
+
+      const sessionRestart = !!(
+        parsed.stageReset
+        || (previousGeneration > 0 && nextGeneration > previousGeneration)
+        || (previousFrameIndex > 0 && nextFrameIndex > 0 && nextFrameIndex < previousFrameIndex)
+        || (previousTs > 0 && nextTs > 0 && nextTs + 50 < previousTs)
+      )
+      if (sessionRestart) {
+        this.$set(this.detectionResults, index, {
+          detections: [],
+          status_tags: [],
+          dashboard: [],
+          debug: parsed.debug || null,
+          generation: nextGeneration,
+          frame_size: parsed.frameSize,
+          frame_index: nextFrameIndex,
+          frame_timestamp: nextTs
+        })
+      }
+      this.$set(this.detectionResults, index, {
+        detections: parsed.detections,
+        status_tags: parsed.statusTags || [],
+        dashboard: parsed.dashboard != null ? parsed.dashboard : [],
+        debug: parsed.debug || null,
+        generation: nextGeneration,
+        frame_size: parsed.frameSize,
+        frame_index: nextFrameIndex,
+        frame_timestamp: nextTs
+      })
+      const now = new Date()
+      this.$set(this.detectionUpdateTime, index,
+        `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`)
+      if (parsed.frameSize) {
+        this.$set(this.videoResolutions, index, {
+          width: parsed.frameSize.width,
+          height: parsed.frameSize.height
+        })
+      }
+      return true
+    },
+
+    /**
+     * 开发专用斜井 mock：不连正式 WS，仅 NODE_ENV!=production 且显式开启时生效。
+     */
+    maybeStartShaftDevMock() {
+      let enabled = false
+      try {
+        enabled = (
+          (typeof location !== 'undefined' && /(?:\?|&|#).*shaft_dev_mock=1/.test(location.href)) ||
+          (typeof localStorage !== 'undefined' && localStorage.getItem('SHAFT_DEV_MOCK') === '1')
+        )
+      } catch (e) {
+        enabled = false
+      }
+      if (!enabled) return
+
+      const {
+        buildShaftMockPayload,
+        buildShaftMockGenerationBump,
+        buildShaftMockStaleGeneration,
+        buildShaftMockEmpty2s
+      } = require('./utils/shaftMockPayload')
+
+      const index = 0
+      const sequence = [
+        () => buildShaftMockPayload({ dashboardMode: 'array', generation: 1, frame_index: 150 }),
+        () => buildShaftMockPayload({ dashboardMode: 'object', generation: 1, frame_index: 180 }),
+        () => buildShaftMockGenerationBump(),
+        () => buildShaftMockStaleGeneration(),
+        () => buildShaftMockEmpty2s()
+      ]
+      let step = 0
+      console.warn('[SHAFT_DEV_MOCK] 已启用开发模拟 payload，不走生产推理')
+      const tick = () => {
+        const raw = sequence[step % sequence.length]()
+        step += 1
+        const parsed = parseDetectionMessage({ data: JSON.stringify(raw) })
+        this.applyParsedDetectionResult(index, parsed)
+      }
+      tick()
+      this.shaftDevMockTimer = setInterval(tick, 2500)
     },
     
     /**
@@ -3203,7 +3591,6 @@ export default {
      * 清理指定索引的OSD资源
      */
     cleanupOSDResources(index) {
-      const { closeWebSocket } = require('./utils/detectionWebSocket')
       closeWebSocket(this.wsConnections[index])
       if (this.wsConnections[index]) {
         delete this.wsConnections[index]
@@ -3214,20 +3601,24 @@ export default {
       this.$set(this.detectionResults, index, null)
       this.$set(this.videoResolutions, index, null)
       this.$set(this.detectionUpdateTime, index, null)
+      this.$set(this.wsReadyState, index, null)
     },
     
     /**
      * 清理所有OSD资源
      */
     cleanupAllOSDResources() {
-      const { closeWebSocket } = require('./utils/detectionWebSocket')
       Object.values(this.wsConnections).forEach(ws => closeWebSocket(ws))
       
       // 清空所有数据
       this.wsConnections = {}
+      this.wsReadyState = {}
       this.selectedAITasks = {}
       this.detectionResults = {}
       this.availableAITasks = {}
+      this.aiTasksLoading = {}
+      this.aiTasksLoadToken = {}
+      this.aiTasksEmptyConfirmed = {}
       this.cameraIdMapping = {}
       this.cameraNames = {}
       this.videoResolutions = {}

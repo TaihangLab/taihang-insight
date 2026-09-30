@@ -69,6 +69,11 @@ export default {
   // },
   mounted(){
     this.updatePlayerDomSize();
+    const parent = this.$refs.container && this.$refs.container.parentNode
+    if (window.ResizeObserver && parent) {
+      this._resizeObserver = new ResizeObserver(() => this.updatePlayerDomSize())
+      this._resizeObserver.observe(parent)
+    }
   },
   watch: {
     videoUrl: {
@@ -83,21 +88,23 @@ export default {
   methods: {
     updatePlayerDomSize() {
       let dom = this.$refs.container;
-      let width = dom.parentNode.clientWidth
+      if (!dom || !dom.parentNode) return
+      const parent = dom.parentNode
+      let width = parent.clientWidth
       let height = (9 / 16) * width
-      console.log(height)
-
-      console.log(dom.clientHeight)
-      if (height > dom.clientHeight) {
-        height = dom.clientHeight
+      const parentHeight = parent.clientHeight
+      if (parentHeight > 0 && height > parentHeight) {
+        height = parentHeight
         width = (16 / 9) * height
       }
       if (width > 0 && height > 0) {
         dom.style.width = width + 'px';
         dom.style.height = height + "px";
         dom.style.paddingTop = 0;
-        console.log(width)
-        console.log(height)
+        const player = jessibucaPlayer[this._uid]
+        if (player && typeof player.resize === 'function') {
+          player.resize()
+        }
       }
     },
     create() {
@@ -267,6 +274,10 @@ export default {
     }
   },
   destroyed() {
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect()
+      this._resizeObserver = null
+    }
     if (jessibucaPlayer[this._uid]) {
       jessibucaPlayer[this._uid].destroy();
     }

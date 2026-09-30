@@ -1,15 +1,49 @@
 /**
  * 实时检测 WebSocket 统一连接工具
  *
- * 集中管理 WebSocket URL 构建、连接生命周期和消息解析，
- * 供 realTimeMonitoring / EnhancedVideoCell 等复用。
+ * 使用 default export，避免 vue2/babel/webpack3 下 named export 互操作失败。
  */
 
 const config = require('../../../../../config/index.js')
 
-/**
- * 构建检测 WebSocket URL（统一路径，使用后端配置地址）
- */
+function normalizeDashboardLocal (dashboard) {
+  if (!dashboard) {
+    return { title: '', lines: [] }
+  }
+  if (Array.isArray(dashboard)) {
+    return {
+      title: '',
+      lines: dashboard
+        .map(line => {
+          if (typeof line === 'string') return line
+          if (line && line.text != null) return String(line.text)
+          if (line && line.label != null) {
+            return `${line.label}${line.value == null ? '' : String(line.value)}`
+          }
+          return line == null ? '' : String(line)
+        })
+        .filter(Boolean)
+    }
+  }
+  if (typeof dashboard === 'object') {
+    const rawLines = Array.isArray(dashboard.lines) ? dashboard.lines : []
+    return {
+      title: dashboard.title ? String(dashboard.title) : '',
+      lines: rawLines
+        .map(line => {
+          if (typeof line === 'string') return line
+          if (line && line.text != null) return String(line.text)
+          if (line && line.label != null) {
+            return `${line.label}${line.value == null ? '' : String(line.value)}`
+          }
+          return line == null ? '' : String(line)
+        })
+        .filter(Boolean)
+    }
+  }
+  return { title: '', lines: [] }
+}
+
 function buildDetectionWsUrl (taskId) {
   const backendUrl = config.API_BASE_URL
   const wsProtocol = backendUrl.startsWith('https') ? 'wss:' : 'ws:'
@@ -17,32 +51,29 @@ function buildDetectionWsUrl (taskId) {
   return `${wsProtocol}//${wsHost}/api/v1/realtime-detection/ws/detection/${taskId}`
 }
 
-/**
- * 解析检测 WebSocket 消息
- * @returns {{ detections: Array, statusTags: Array, frameSize: {width: number, height: number}, frameTimestamp: number }}
- */
 function parseDetectionMessage (event) {
-  const data = JSON.parse(event.data)
+  const data = typeof event === 'string'
+    ? JSON.parse(event)
+    : (event && event.data != null ? JSON.parse(event.data) : event)
+
+  const rawDashboard = data.dashboard != null ? data.dashboard : []
+  const normalized = normalizeDashboardLocal(rawDashboard)
+
   return {
     detections: data.detections || [],
     statusTags: data.status_tags || [],
+    dashboard: rawDashboard,
+    dashboardLines: normalized.lines,
+    dashboardTitle: normalized.title,
+    debug: data.debug || null,
+    generation: data.generation || (data.debug && data.debug.generation) || 0,
+    stageReset: !!(data.stage_reset || (data.debug && data.debug.stage_reset)),
     frameSize: data.frame_size || { width: 1920, height: 1080 },
-    // 采集帧时间戳(epoch ms)，用于前端去重(后端按~30fps重复推同一结果)与时间戳对齐；缺失为0
+    frameIndex: data.frame_index || 0,
     frameTimestamp: data.frame_timestamp || 0
   }
 }
 
-/**
- * 创建检测 WebSocket 连接
- *
- * @param {number|string} taskId  AI任务ID
- * @param {Object} callbacks
- * @param {Function} callbacks.onOpen
- * @param {Function} callbacks.onMessage  - 接收 parseDetectionMessage 的结果
- * @param {Function} callbacks.onClose
- * @param {Function} callbacks.onError
- * @returns {WebSocket}
- */
 function createDetectionWebSocket (taskId, { onOpen, onMessage, onClose, onError } = {}) {
   const url = buildDetectionWsUrl(taskId)
   const ws = new WebSocket(url)
@@ -72,16 +103,13 @@ function createDetectionWebSocket (taskId, { onOpen, onMessage, onClose, onError
   return ws
 }
 
-/**
- * 安全关闭 WebSocket（可传 null）
- */
 function closeWebSocket (ws) {
   if (ws && ws.readyState <= WebSocket.OPEN) {
     ws.close()
   }
 }
 
-module.exports = {
+export default {
   buildDetectionWsUrl,
   parseDetectionMessage,
   createDetectionWebSocket,

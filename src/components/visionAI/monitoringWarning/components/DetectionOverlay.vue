@@ -1,6 +1,14 @@
 <template>
-  <div class="detection-overlay-container">
-    <div v-if="currentStatusTags.length" class="status-tags">
+  <div class="detection-overlay-container" :class="{ 'shaft-mode': dashboardLines.length }">
+    <div v-if="dashboardLines.length" class="shaft-dashboard">
+      <div v-if="dashboardTitle" class="shaft-dashboard-title">{{ dashboardTitle }}</div>
+      <div
+        v-for="(line, index) in dashboardLines"
+        :key="'dash-' + index"
+        class="shaft-dashboard-line"
+      >{{ line }}</div>
+    </div>
+    <div v-if="currentStatusTags.length" class="status-tags" :class="{ 'status-tags-side': dashboardLines.length }">
       <div
         v-for="tag in currentStatusTags"
         :key="tag.id || tag.label"
@@ -41,6 +49,19 @@ export default {
       type: Array,
       default: () => []
     },
+    // 兼容 string[] 与 { title, lines }
+    dashboard: {
+      type: [Array, Object],
+      default: null
+    },
+    frameIndex: {
+      type: Number,
+      default: 0
+    },
+    debugInfo: {
+      type: Object,
+      default: null
+    },
     // 原始视频分辨率（bbox 坐标所参照的检测帧分辨率，由后端 frame_size 提供）
     videoWidth: {
       type: Number,
@@ -58,9 +79,10 @@ export default {
     },
     // 检测框全亮保持时长(ms)。调小可减少旧框"钉在原地"的时间；
     // 若检测帧率很低(如1fps)出现闪烁，可适当调大。
+    // 前端旧框最多保留约 1 秒（保持 + 淡出），与后端 1 秒消失对齐。
     holdDuration: {
       type: Number,
-      default: 300
+      default: 800
     },
     // 检测框淡出时长(ms)
     fadeDuration: {
@@ -85,7 +107,45 @@ export default {
       // 待显示/正在淡出的检测批次队列：{ detections, startAt }
       batches: [],
       lastFrameTimestamp: 0,
-      lastSignature: ''
+      lastSignature: '',
+      lastGeneration: 0,
+      lastFrameIndex: 0
+    }
+  },
+  computed: {
+    normalizedDashboard() {
+      const dashboard = this.dashboard
+      if (!dashboard) return { title: '', lines: [] }
+      if (Array.isArray(dashboard)) {
+        return {
+          title: '',
+          lines: dashboard.map(line => {
+            if (typeof line === 'string') return line
+            if (line && line.text != null) return String(line.text)
+            if (line && line.label != null) return String(line.label) + (line.value == null ? '' : String(line.value))
+            return line == null ? '' : String(line)
+          }).filter(Boolean)
+        }
+      }
+      if (typeof dashboard === 'object') {
+        const rawLines = Array.isArray(dashboard.lines) ? dashboard.lines : []
+        return {
+          title: dashboard.title ? String(dashboard.title) : '',
+          lines: rawLines.map(line => {
+            if (typeof line === 'string') return line
+            if (line && line.text != null) return String(line.text)
+            if (line && line.label != null) return String(line.label) + (line.value == null ? '' : String(line.value))
+            return line == null ? '' : String(line)
+          }).filter(Boolean)
+        }
+      }
+      return { title: '', lines: [] }
+    },
+    dashboardTitle() {
+      return this.normalizedDashboard.title || ''
+    },
+    dashboardLines() {
+      return this.normalizedDashboard.lines
     }
   },
   watch: {
@@ -99,6 +159,21 @@ export default {
       deep: true
     },
     statusTags: {
+      handler() {
+        this.onNewData()
+      },
+      deep: true
+    },
+    frameIndex() {
+      this.onNewData()
+    },
+    debugInfo: {
+      handler() {
+        this.onNewData()
+      },
+      deep: true
+    },
+    dashboard: {
       handler() {
         this.onNewData()
       },
@@ -169,11 +244,18 @@ export default {
           if (cs[i] !== canvas) { videoEl = cs[i]; break }
         }
       }
-      if (!videoEl) return false
+      let mediaRect = videoEl ? videoEl.getBoundingClientRect() : null
+      if (!mediaRect || mediaRect.width < 8 || mediaRect.height < 8) {
+        videoEl = this.$el
+        mediaRect = videoEl.getBoundingClientRect()
+      }
+      if (!mediaRect || mediaRect.width < 8 || mediaRect.height < 8) return false
 
-      const vRect = videoEl.getBoundingClientRect()
+      const vRect = mediaRect
       const cRect = this.$el.getBoundingClientRect()
-      const box = this.visibleMediaBox(videoEl, vRect)
+      const box = videoEl === this.$el
+        ? { left: 0, top: 0, width: vRect.width, height: vRect.height }
+        : this.visibleMediaBox(videoEl, vRect)
       const w = Math.round(box.width)
       const h = Math.round(box.height)
       if (w <= 0 || h <= 0) return false
@@ -197,11 +279,35 @@ export default {
       return true
     },
 
+    shouldResetSession() {
+      const debug = this.debugInfo || {}
+      const generation = Number(debug.generation || 0)
+      const frameIndex = Number(this.frameIndex || 0)
+      const frameTimestamp = Number(this.frameTimestamp || 0)
+      if (generation > 0 && this.lastGeneration > 0 && generation !== this.lastGeneration) return true
+      if (debug.stage_reset && generation > 0 && generation === this.lastGeneration && this.lastGeneration > 0) {
+        // 同一代里重复收到 stage_reset 标记时不再反复清空，避免刚入队的新框被冲掉
+        return false
+      }
+      if (debug.stage_reset && (this.lastGeneration === 0 || generation !== this.lastGeneration)) return true
+      if (this.lastFrameIndex > 0 && frameIndex > 0 && frameIndex < this.lastFrameIndex) return true
+      if (this.lastFrameTimestamp > 0 && frameTimestamp > 0 && frameTimestamp + 50 < this.lastFrameTimestamp) return true
+      return false
+    },
+
     /**
      * 收到新数据：去重后决定是否作为“新的一帧检测”入队。
      * 后端按~30fps重复推送同一结果，必须去重，否则批次被反复重置、永不淡出。
      */
     onNewData() {
+      const debug = this.debugInfo || {}
+      const generation = Number(debug.generation || 0)
+      if (this.shouldResetSession()) {
+        this.clear()
+      }
+      if (generation > 0) this.lastGeneration = generation
+      if (this.frameIndex) this.lastFrameIndex = Number(this.frameIndex)
+
       this.currentStatusTags = this.statusTags ? this.statusTags.slice() : []
 
       const ft = this.frameTimestamp || 0
@@ -251,7 +357,7 @@ export default {
       const dPart = (!dets || !dets.length)
         ? 'empty'
         : dets
-          .map(d => (d.bbox || []).map(v => Math.round(v)).join(',') + ':' + (d.label || d.class_name || ''))
+          .map(d => (d.bbox || []).map(v => Math.round(v)).join(',') + ':' + (d.track_id || d.trackId || d.label || d.class_name || ''))
           .join('|')
       const tPart = (!tags || !tags.length)
         ? ''
@@ -353,7 +459,7 @@ export default {
     },
 
     drawSingleDetection(detection, scaleX, scaleY) {
-      const { bbox, label, confidence, color } = detection
+      const { bbox, color } = detection
 
       if (!bbox || bbox.length < 4) return
 
@@ -379,10 +485,10 @@ export default {
 
       const rgbColor = color ? `rgb(${color[2]}, ${color[1]}, ${color[0]})` : 'rgb(0, 255, 0)'
       const drawScale = (scaleX + scaleY) / 2
-      const inFence = detection.in_fence !== false
+      const isInFence = detection.in_fence !== false
       const prevAlpha = this.ctx.globalAlpha
 
-      if (!inFence) {
+      if (!isInFence) {
         this.ctx.globalAlpha = prevAlpha * 0.55
         this.ctx.setLineDash([Math.max(4, 7 * drawScale), Math.max(3, 5 * drawScale)])
       } else {
@@ -394,10 +500,17 @@ export default {
       this.ctx.strokeRect(x1, y1, width, height)
       this.ctx.setLineDash([])
 
-      const suffix = inFence ? '' : ' 栏外'
-      const labelText = `${label || 'Object'}${suffix}: ${(confidence != null ? confidence : 0).toFixed(2)}`
+      const trackId = detection && (detection.track_id || detection.trackId) ? String(detection.track_id || detection.trackId) : ''
+      const raw = String((detection && (detection.label || detection.class_name)) || 'Object')
+      const conf = detection && detection.confidence != null ? Number(detection.confidence) : 0
+      const suffix = isInFence ? '' : ' 栏外'
+      let name = raw
+      if (trackId) {
+        name = raw.replace(new RegExp('\\b' + trackId + '\\b', 'ig'), '').replace(/\s+/g, ' ').trim() || raw
+      }
+      const labelText = trackId ? (trackId + ' ' + name + suffix + ': ' + conf.toFixed(2)) : (name + suffix + ': ' + conf.toFixed(2))
       const fontPx = Math.max(9, Math.round(22 * 0.5 * drawScale))
-      this.ctx.font = `${fontPx}px Arial`
+      this.ctx.font = `${fontPx}px "Microsoft YaHei", "PingFang SC", Arial`
       const textMetrics = this.ctx.measureText(labelText)
       const textWidth = textMetrics.width
       const padX = Math.max(2, Math.round(2 * drawScale))
@@ -415,6 +528,8 @@ export default {
     clear() {
       this.batches = []
       this.currentStatusTags = []
+      this.lastSignature = ''
+      this.lastFrameTimestamp = 0
       this.stopRaf()
       this.clearCanvas()
     }
@@ -492,5 +607,51 @@ export default {
 
 .status-tag-text {
   font-weight: 600;
+}
+
+.shaft-dashboard {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 14;
+  width: 410px;
+  max-width: calc(100% - 24px);
+  padding: 13px 16px;
+  color: #fff;
+  background: rgba(4, 8, 15, 0.86);
+  border: 1px solid rgba(255, 214, 76, 0.8);
+  border-radius: 6px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  font: 14px/1.55 "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+  white-space: normal;
+  pointer-events: none;
+}
+
+.shaft-dashboard-title {
+  margin-bottom: 6px;
+  color: #ffd84d;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.shaft-dashboard-line {
+  color: #fff;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.shaft-dashboard-line:nth-child(3n) {
+  color: #ffe66d;
+}
+
+.status-tags-side {
+  left: auto;
+  right: 12px;
+  align-items: flex-end;
+}
+
+.detection-overlay-container.shaft-mode .status-tags-side {
+  left: auto;
+  right: 12px;
 }
 </style>
