@@ -459,6 +459,11 @@ export default {
     },
 
     drawSingleDetection(detection, scaleX, scaleY) {
+      // 斜井车辆子区域(zone/auxiliary)不在 OSD 再画一层，避免与主目标框叠成“双框”；
+      // 其他技能通常不下发 class_name=zone，不受影响。
+      if (!detection) return
+      if (detection.auxiliary === true || detection.class_name === 'zone') return
+
       const { bbox, color } = detection
 
       if (!bbox || bbox.length < 4) return
