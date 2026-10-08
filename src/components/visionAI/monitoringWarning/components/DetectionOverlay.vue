@@ -1,13 +1,5 @@
 <template>
   <div class="detection-overlay-container" :class="{ 'shaft-mode': dashboardLines.length }">
-    <div v-if="dashboardLines.length" class="shaft-dashboard">
-      <div v-if="dashboardTitle" class="shaft-dashboard-title">{{ dashboardTitle }}</div>
-      <div
-        v-for="(line, index) in dashboardLines"
-        :key="'dash-' + index"
-        class="shaft-dashboard-line"
-      >{{ line }}</div>
-    </div>
     <div v-if="currentStatusTags.length" class="status-tags" :class="{ 'status-tags-side': dashboardLines.length }">
       <div
         v-for="tag in currentStatusTags"
@@ -459,6 +451,18 @@ export default {
     },
 
     drawSingleDetection(detection, scaleX, scaleY) {
+      // 静态场景区域：停车区、固定乘车点、固定下车点。
+      // 它不是人员/车辆框，因此单独绘制多边形；上下车统计仍由右侧状态标签显示。
+      if (detection && detection.is_region === true && Array.isArray(detection.points)) {
+        this.drawRegion(detection, scaleX, scaleY)
+        return
+      }
+
+      // 斜井车辆子区域(zone/auxiliary)不在 OSD 再画一层，避免与主目标框叠成“双框”；
+      // 其他技能通常不下发 class_name=zone，不受影响。
+      if (!detection) return
+      if (detection.auxiliary === true || detection.class_name === 'zone') return
+
       const { bbox, color } = detection
 
       if (!bbox || bbox.length < 4) return
@@ -522,6 +526,45 @@ export default {
       this.ctx.textBaseline = 'alphabetic'
       this.ctx.fillStyle = '#FFFFFF'
       this.ctx.fillText(labelText, x1 + padX, y1 - padX)
+      this.ctx.globalAlpha = prevAlpha
+    },
+
+    drawRegion(region, scaleX, scaleY) {
+      const points = Array.isArray(region.points) ? region.points : []
+      if (points.length < 3) return
+
+      const rgbColor = region.color
+        ? `rgb(${region.color[2]}, ${region.color[1]}, ${region.color[0]})`
+        : 'rgb(255, 190, 0)'
+      const scaled = points.map(point => [
+        Math.max(0, Math.min(this.canvasWidth, Number(point[0]) * scaleX)),
+        Math.max(0, Math.min(this.canvasHeight, Number(point[1]) * scaleY))
+      ])
+
+      const prevAlpha = this.ctx.globalAlpha
+      this.ctx.strokeStyle = rgbColor
+      this.ctx.lineWidth = Math.max(2, 2.5 * ((scaleX + scaleY) / 2))
+      this.ctx.setLineDash([10, 6])
+      this.ctx.beginPath()
+      this.ctx.moveTo(scaled[0][0], scaled[0][1])
+      for (let i = 1; i < scaled.length; i++) {
+        this.ctx.lineTo(scaled[i][0], scaled[i][1])
+      }
+      this.ctx.closePath()
+      this.ctx.stroke()
+      this.ctx.setLineDash([])
+
+      const first = scaled[0]
+      const label = String(region.label || '区域')
+      const fontPx = Math.max(12, Math.round(16 * ((scaleX + scaleY) / 2)))
+      this.ctx.font = `${fontPx}px "Microsoft YaHei", Arial`
+      const pad = 4
+      const textWidth = this.ctx.measureText(label).width
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.68)'
+      this.ctx.fillRect(first[0], Math.max(0, first[1] - fontPx - pad * 2), textWidth + pad * 2, fontPx + pad * 2)
+      this.ctx.fillStyle = '#FFFFFF'
+      this.ctx.textBaseline = 'alphabetic'
+      this.ctx.fillText(label, first[0] + pad, Math.max(fontPx, first[1] - pad))
       this.ctx.globalAlpha = prevAlpha
     },
 
