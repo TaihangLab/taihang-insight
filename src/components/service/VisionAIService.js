@@ -4205,6 +4205,29 @@ export const runPlanAPI = {
   // 点位实时画面快照URL（供电子围栏绘制底图）
   getCameraSnapshotUrl(cameraId) {
     return `${config.API_BASE_URL}/api/v1/cameras/${cameraId}/snapshot?t=${Date.now()}`;
+  },
+  uploadReferenceImage(file) {
+    const form = new FormData();
+    form.append('file', file);
+    return visionAIAxios.post('/api/v1/skill-run-plans/reference-image', form, {
+      timeout: LONG_RUNNING_TIMEOUT
+    });
+  },
+  captureReferenceImage(cameraId) {
+    return visionAIAxios.post('/api/v1/skill-run-plans/reference-image/from-camera', {
+      camera_id: cameraId
+    }, { timeout: LONG_RUNNING_TIMEOUT });
+  },
+  getReferenceImageUrl(objectKey) {
+    if (!objectKey) return '';
+    return `${config.API_BASE_URL}/api/v1/skill-run-plans/reference-image?object=${encodeURIComponent(objectKey)}`;
+  },
+  getReferenceImageBlob(objectKey) {
+    return visionAIAxios.get('/api/v1/skill-run-plans/reference-image', {
+      params: { object: objectKey },
+      responseType: 'blob',
+      timeout: 30000
+    });
   }
 };
 

@@ -463,34 +463,19 @@ export default {
       if (!detection) return
       if (detection.auxiliary === true || detection.class_name === 'zone') return
 
-      const { bbox, color } = detection
-
-      if (!bbox || bbox.length < 4) return
-
-      let x1 = bbox[0] * scaleX
-      let y1 = bbox[1] * scaleY
-      let x2 = bbox[2] * scaleX
-      let y2 = bbox[3] * scaleY
-
-      x1 = Math.max(0, Math.min(x1, this.canvasWidth))
-      y1 = Math.max(0, Math.min(y1, this.canvasHeight))
-      x2 = Math.max(0, Math.min(x2, this.canvasWidth))
-      y2 = Math.max(0, Math.min(y2, this.canvasHeight))
-
-      x1 = Math.floor(x1) + 0.5
-      y1 = Math.floor(y1) + 0.5
-      x2 = Math.floor(x2) + 0.5
-      y2 = Math.floor(y2) + 0.5
-
-      const width = x2 - x1
-      const height = y2 - y1
-
-      if (width <= 0 || height <= 0) return
-
+      const { bbox, label, confidence, color, points } = detection
       const rgbColor = color ? `rgb(${color[2]}, ${color[1]}, ${color[0]})` : 'rgb(0, 255, 0)'
       const drawScale = (scaleX + scaleY) / 2
       const isInFence = detection.in_fence !== false
       const prevAlpha = this.ctx.globalAlpha
+      const poly = Array.isArray(points) && points.length >= 3
+        ? points.map(p => ({
+          x: Math.floor((Array.isArray(p) ? p[0] : p.x) * scaleX) + 0.5,
+          y: Math.floor((Array.isArray(p) ? p[1] : p.y) * scaleY) + 0.5
+        }))
+        : null
+
+      if (!poly && (!bbox || bbox.length < 4)) return
 
       if (!isInFence) {
         this.ctx.globalAlpha = prevAlpha * 0.55
@@ -501,7 +486,44 @@ export default {
 
       this.ctx.strokeStyle = rgbColor
       this.ctx.lineWidth = Math.max(1, 2 * drawScale)
-      this.ctx.strokeRect(x1, y1, width, height)
+
+      let x1
+      let y1
+      if (poly) {
+        this.ctx.beginPath()
+        poly.forEach((pt, i) => {
+          if (i === 0) this.ctx.moveTo(pt.x, pt.y)
+          else this.ctx.lineTo(pt.x, pt.y)
+        })
+        this.ctx.closePath()
+        this.ctx.stroke()
+        x1 = Math.min.apply(null, poly.map(p => p.x))
+        y1 = Math.min.apply(null, poly.map(p => p.y))
+      } else {
+        x1 = bbox[0] * scaleX
+        y1 = bbox[1] * scaleY
+        let x2 = bbox[2] * scaleX
+        let y2 = bbox[3] * scaleY
+
+        x1 = Math.max(0, Math.min(x1, this.canvasWidth))
+        y1 = Math.max(0, Math.min(y1, this.canvasHeight))
+        x2 = Math.max(0, Math.min(x2, this.canvasWidth))
+        y2 = Math.max(0, Math.min(y2, this.canvasHeight))
+
+        x1 = Math.floor(x1) + 0.5
+        y1 = Math.floor(y1) + 0.5
+        x2 = Math.floor(x2) + 0.5
+        y2 = Math.floor(y2) + 0.5
+
+        const width = x2 - x1
+        const height = y2 - y1
+        if (width <= 0 || height <= 0) {
+          this.ctx.setLineDash([])
+          this.ctx.globalAlpha = prevAlpha
+          return
+        }
+        this.ctx.strokeRect(x1, y1, width, height)
+      }
       this.ctx.setLineDash([])
 
       const trackId = detection && (detection.track_id || detection.trackId) ? String(detection.track_id || detection.trackId) : ''
@@ -522,7 +544,6 @@ export default {
 
       this.ctx.fillStyle = rgbColor
       this.ctx.fillRect(x1, y1 - textHeight, textWidth + padX * 2, textHeight)
-
       this.ctx.textBaseline = 'alphabetic'
       this.ctx.fillStyle = '#FFFFFF'
       this.ctx.fillText(labelText, x1 + padX, y1 - padX)
