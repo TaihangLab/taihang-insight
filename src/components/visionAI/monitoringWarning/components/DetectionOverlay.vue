@@ -5,7 +5,7 @@
         v-for="tag in currentStatusTags"
         :key="tag.id || tag.label"
         class="status-tag"
-        :class="{ active: tag.active }"
+        :class="{ active: tag.active && tag.kind !== 'alert', 'alert-active': tag.kind === 'alert' && tag.active }"
       >
         <span class="status-tag-dot"></span>
         <span class="status-tag-label">{{ tag.label }}</span>
@@ -36,7 +36,7 @@ export default {
       type: Array,
       default: () => []
     },
-    // 光流「运动状态」节点下发的运行/停止徽标；没配光流则为空
+    // 左上角标签：运动状态徽标，以及技能图结束节点的画面提示（如疑似尾随）
     statusTags: {
       type: Array,
       default: () => []
@@ -81,12 +81,11 @@ export default {
       type: Number,
       default: 200
     },
-    // 时间戳对齐偏移(ms)：视频画面相对"最快到达的检测结果"的延迟估计。
-    // 检测框会按 (alignOffset - 本批次相对最快路径的额外延迟) 延后显示，
-    // 使框与它对应的画面帧尽量同时出现。框比人超前则调大，落后则调小。
+    // 播放器是 WebRTC/FLV 直播，没有和检测帧共用的帧号。
+    // 这里不再额外推迟画框；检测结果晚到时立即画，避免把旧框再拖后。
     alignOffset: {
       type: Number,
-      default: 300
+      default: 0
     }
   },
   data() {
@@ -490,9 +489,14 @@ export default {
       const rgbColor = color ? `rgb(${color[2]}, ${color[1]}, ${color[0]})` : 'rgb(0, 255, 0)'
       const drawScale = (scaleX + scaleY) / 2
       const isInFence = detection.in_fence !== false
+      const stateText = String((detection && detection.state) || '')
+      const held = detection.observed === false || stateText.indexOf('保持') >= 0 || stateText.indexOf('遮挡') >= 0 || stateText.indexOf('待确认') >= 0
       const prevAlpha = this.ctx.globalAlpha
 
-      if (!isInFence) {
+      if (held) {
+        this.ctx.globalAlpha = prevAlpha * 0.75
+        this.ctx.setLineDash([Math.max(4, 7 * drawScale), Math.max(3, 5 * drawScale)])
+      } else if (!isInFence) {
         this.ctx.globalAlpha = prevAlpha * 0.55
         this.ctx.setLineDash([Math.max(4, 7 * drawScale), Math.max(3, 5 * drawScale)])
       } else {
@@ -507,7 +511,7 @@ export default {
       const trackId = detection && (detection.track_id || detection.trackId) ? String(detection.track_id || detection.trackId) : ''
       const raw = String((detection && (detection.label || detection.class_name)) || 'Object')
       const conf = detection && detection.confidence != null ? Number(detection.confidence) : 0
-      const suffix = isInFence ? '' : ' 栏外'
+      const suffix = (isInFence ? '' : ' 栏外') + (stateText.indexOf('保持') >= 0 || stateText.indexOf('待确认') >= 0 ? '' : (held ? ' 遮挡保持' : ''))
       let name = raw
       if (trackId) {
         name = raw.replace(new RegExp('\\b' + trackId + '\\b', 'ig'), '').replace(/\s+/g, ' ').trim() || raw
@@ -642,6 +646,16 @@ export default {
 .status-tag.active .status-tag-dot {
   background: #34d399;
   box-shadow: 0 0 8px #34d399;
+}
+
+.status-tag.alert-active {
+  background: rgba(127, 29, 29, 0.86);
+  border-color: rgba(248, 113, 113, 0.85);
+}
+
+.status-tag.alert-active .status-tag-dot {
+  background: #f87171;
+  box-shadow: 0 0 8px #f87171;
 }
 
 .status-tag-label {

@@ -103,6 +103,10 @@
           <i class="el-icon-key"></i>
           <span>开放 API</span>
         </el-menu-item>
+        <el-menu-item v-if="isAdmin" @click="goToMineIntegration">
+          <i class="el-icon-connection"></i>
+          <span>煤矿平台对接</span>
+        </el-menu-item>
         <el-menu-item v-if="isAdmin" @click="openPortainer">
           <i class="el-icon-box"></i>
           <span>容器管理</span>
@@ -186,6 +190,9 @@ export default {
     },
     goToApiKeys() {
       this.$router.push('/systemManage/apiKeys');
+    },
+    goToMineIntegration() {
+      this.$router.push('/systemManage/mineIntegration');
     },
     // 新窗口打开 Portainer（地址由后端配置 PORTAINER_URL 提供；不可达时提示但仍可打开）
     openPortainer() {

@@ -4248,10 +4248,39 @@ export const openApiAPI = {
   }
 };
 
+// 煤矿 AI 平台对接配置（客户端密钥仅通过本平台后端保存和使用）
+export const mineIntegrationAPI = {
+  getConfig() {
+    return visionAIAxios.get('/api/v1/mine-integration/config');
+  },
+  saveConfig(payload) {
+    return visionAIAxios.put('/api/v1/mine-integration/config', payload);
+  },
+  testConnection() {
+    return visionAIAxios.post('/api/v1/mine-integration/test');
+  },
+  listCameraMappings() {
+    return visionAIAxios.get('/api/v1/mine-integration/camera-mappings');
+  },
+  saveCameraMapping(payload) {
+    return visionAIAxios.put('/api/v1/mine-integration/camera-mappings', payload);
+  },
+  deleteCameraMapping(localCameraId) {
+    return visionAIAxios.delete(`/api/v1/mine-integration/camera-mappings/${encodeURIComponent(localCameraId)}`);
+  },
+  listOutbound(params) {
+    return visionAIAxios.get('/api/v1/mine-integration/outbound', { params });
+  },
+  retryOutbound(recordId) {
+    return visionAIAxios.post(`/api/v1/mine-integration/outbound/${recordId}/retry`);
+  }
+};
+
 export default {
   modelAPI,
   skillAPI,
   openApiAPI,
+  mineIntegrationAPI,
   cameraAPI,
   alertAPI,
   reviewSkillAPI,
