@@ -190,6 +190,43 @@
               <template v-else-if="p.type === 'object'">
                 <pre class="param-readonly-json">{{ formatParamValue(form.skill_params[p.key]) }}</pre>
               </template>
+              <template v-else-if="p.type === 'image'">
+                <div class="ref-image-panel">
+                  <div v-if="p.hint" class="ref-image-hint">{{ p.hint }}</div>
+                  <div v-if="!form.cameras.length" class="ref-image-empty">请先在上一步选择点位</div>
+                  <div v-for="c in form.cameras" :key="c.camera_id" class="ref-image-row">
+                    <div class="ref-image-meta">
+                      <span class="ref-image-cam">{{ c.camera_name }}</span>
+                      <span class="ref-image-state" :class="cameraRefObject(c.camera_id) ? 'is-ok' : 'is-miss'">
+                        {{ cameraRefObject(c.camera_id) ? '已设置' : '未设置' }}
+                      </span>
+                    </div>
+                    <div class="ref-image-preview">
+                      <img v-if="refPreviewBlobs[c.camera_id]" :src="refPreviewBlobs[c.camera_id]" alt="校准模板">
+                      <span v-else class="ref-image-ph"><i class="el-icon-picture-outline"></i></span>
+                    </div>
+                    <div class="ref-image-actions" v-if="!isView">
+                      <el-button
+                        type="primary"
+                        size="mini"
+                        plain
+                        icon="el-icon-camera"
+                        :loading="!!capturingRef[c.camera_id]"
+                        @click="captureRefFromCamera(c)">
+                        从点位截图
+                      </el-button>
+                      <el-upload
+                        action="#"
+                        :show-file-list="false"
+                        :disabled="!!uploadingRef[c.camera_id]"
+                        accept="image/jpeg,image/png,image/bmp,image/webp,.jpg,.jpeg,.png,.bmp,.webp"
+                        :http-request="opt => uploadRefForCamera(c, opt)">
+                        <el-button size="mini" icon="el-icon-upload2" :loading="!!uploadingRef[c.camera_id]">上传图片</el-button>
+                      </el-upload>
+                    </div>
+                  </div>
+                </div>
+              </template>
               <template v-else>
                 <el-input v-model="form.skill_params[p.key]" class="skill-param-input"></el-input>
               </template>
@@ -699,8 +736,12 @@ export default {
       form: defaultForm(),
       skillOptions: [],
       skillParamFields: [],
+      skillDefaultParamKeys: [],
       skillParamsReady: false,
       skillParamsLoading: false,
+      capturingRef: {},
+      uploadingRef: {},
+      refPreviewBlobs: {},
       skillNeedsFence: true,
       skillNeedsTripwire: false,
       fenceRequired: false,
@@ -830,6 +871,9 @@ export default {
         this.ensureRtspStreamingConfig();
         this.$set(this.form.frame_extraction.rtsp_streaming, 'enabled', !!val);
       }
+    },
+    hasImageSkillParam() {
+      return (this.skillParamFields || []).some(p => p && p.type === 'image');
     }
   },
   watch: {
@@ -1137,6 +1181,7 @@ export default {
         const payload = res.data || {};
         const detail = payload.data !== undefined ? payload.data : payload;
         const params = (detail.default_config && detail.default_config.params) || {};
+        const formFields = (detail.default_config && detail.default_config.form_fields) || [];
         // 画布上绘制的输入（电子围栏 ROI / Array<ROI> / 绊线 Tripwire）由"区域绘制"提供，
         // 不应出现在"技能参数"填写表里。
         const drawnKeys = this.collectDrawnParamKeys(detail);
@@ -1145,22 +1190,49 @@ export default {
         startParams.forEach(p => {
           if (p && p.name) metaByName[p.name] = p;
         });
+        const hiddenKeys = new Set(['enable_default_sort_tracking', 'enable_timing_log', 'reference_images']);
         const fields = [];
-        Object.keys(params).forEach(key => {
-          if (drawnKeys.has(key)) return;
-          const val = params[key];
-          const meta = metaByName[key] || {};
-          fields.push({
-            key,
-            default: val,
-            type: this.getSkillParamType(val),
-            label: meta.display_name || key
+        if (Array.isArray(formFields) && formFields.length) {
+          formFields.forEach(f => {
+            if (!f || !f.key || drawnKeys.has(f.key)) return;
+            const val = params[f.key] !== undefined ? params[f.key] : f.default;
+            fields.push({
+              key: f.key,
+              default: val,
+              type: f.type || this.getSkillParamType(val),
+              label: f.label || (metaByName[f.key] && metaByName[f.key].display_name) || f.key,
+              hint: f.hint || '',
+              required: !!f.required
+            });
+            if (!keepValues || this.form.skill_params[f.key] === undefined) {
+              this.$set(this.form.skill_params, f.key, val === undefined ? '' : JSON.parse(JSON.stringify(val)));
+            }
           });
+        } else {
+          Object.keys(params).forEach(key => {
+            if (drawnKeys.has(key) || hiddenKeys.has(key)) return;
+            const val = params[key];
+            const meta = metaByName[key] || {};
+            fields.push({
+              key,
+              default: val,
+              type: key === 'reference_image_url' ? 'image' : this.getSkillParamType(val),
+              label: key === 'reference_image_url' ? '校准模板图' : (meta.display_name || key),
+              hint: key === 'reference_image_url' ? '可上传图片，或从已选点位截一张当前画面作为模板' : ''
+            });
+            if (!keepValues || this.form.skill_params[key] === undefined) {
+              this.$set(this.form.skill_params, key, JSON.parse(JSON.stringify(val)));
+            }
+          });
+        }
+        Object.keys(params).forEach(key => {
           if (!keepValues || this.form.skill_params[key] === undefined) {
-            this.$set(this.form.skill_params, key, JSON.parse(JSON.stringify(val)));
+            this.$set(this.form.skill_params, key, JSON.parse(JSON.stringify(params[key])));
           }
         });
+        this.skillDefaultParamKeys = Object.keys(params);
         this.skillParamFields = fields;
+        this.syncRefPreviews();
         this.skillParamsReady = true;
         this.pruneSkillParamsToCurrentFields();
         const roiInfo = this.computeRoiInfo(detail);
@@ -1202,11 +1274,12 @@ export default {
     },
     pruneSkillParamsToCurrentFields() {
       const keep = {};
-      (this.skillParamFields || []).forEach(p => {
-        if (!p || !p.key) return;
-        if (Object.prototype.hasOwnProperty.call(this.form.skill_params || {}, p.key)) {
-          keep[p.key] = this.form.skill_params[p.key];
-        }
+      const allowed = new Set(this.skillDefaultParamKeys || []);
+      (this.skillParamFields || []).forEach(p => { if (p && p.key) allowed.add(p.key); });
+      allowed.add('reference_images');
+      allowed.add('reference_image_url');
+      Object.keys(this.form.skill_params || {}).forEach(key => {
+        if (allowed.has(key)) keep[key] = this.form.skill_params[key];
       });
       this.form.skill_params = keep;
     },
@@ -1216,13 +1289,117 @@ export default {
       }
       const src = this.form.skill_params || {};
       const out = {};
-      (this.skillParamFields || []).forEach(p => {
-        if (!p || !p.key) return;
-        if (Object.prototype.hasOwnProperty.call(src, p.key)) {
-          out[p.key] = src[p.key];
-        }
+      const allowed = new Set(this.skillDefaultParamKeys || []);
+      (this.skillParamFields || []).forEach(p => { if (p && p.key) allowed.add(p.key); });
+      allowed.add('reference_images');
+      allowed.add('reference_image_url');
+      allowed.forEach(key => {
+        if (Object.prototype.hasOwnProperty.call(src, key)) out[key] = src[key];
       });
       return out;
+    },
+    ensureRefImagesMap() {
+      if (!this.form.skill_params.reference_images || typeof this.form.skill_params.reference_images !== 'object') {
+        this.$set(this.form.skill_params, 'reference_images', {});
+      }
+      return this.form.skill_params.reference_images;
+    },
+    cameraRefObject(cameraId) {
+      const map = (this.form.skill_params && this.form.skill_params.reference_images) || {};
+      return (map && map[cameraId]) || (this.form.cameras.length === 1 ? this.form.skill_params.reference_image_url : '') || '';
+    },
+    setCameraRefObject(cameraId, objectKey) {
+      const map = this.ensureRefImagesMap();
+      this.$set(map, cameraId, objectKey);
+      const first = this.form.cameras[0];
+      if (first && String(first.camera_id) === String(cameraId)) {
+        this.$set(this.form.skill_params, 'reference_image_url', objectKey);
+      } else if (!this.form.skill_params.reference_image_url) {
+        this.$set(this.form.skill_params, 'reference_image_url', objectKey);
+      }
+    },
+    unwrapRefPayload(res) {
+      const payload = (res && res.data) || {};
+      return payload.data !== undefined ? payload.data : payload;
+    },
+    async refreshRefPreview(cameraId, objectKey) {
+      if (!objectKey) return;
+      try {
+        const res = await runPlanAPI.getReferenceImageBlob(objectKey);
+        const blob = res && res.data;
+        if (!blob) return;
+        const old = this.refPreviewBlobs[cameraId];
+        if (old) URL.revokeObjectURL(old);
+        this.$set(this.refPreviewBlobs, cameraId, URL.createObjectURL(blob));
+      } catch (e) {
+        console.warn('加载校准模板预览失败', e);
+      }
+    },
+    syncRefPreviews() {
+      (this.form.cameras || []).forEach(c => {
+        const key = this.cameraRefObject(c.camera_id);
+        if (key) this.refreshRefPreview(c.camera_id, key);
+      });
+    },
+    revokeRefPreviews() {
+      Object.keys(this.refPreviewBlobs || {}).forEach(id => {
+        const url = this.refPreviewBlobs[id];
+        if (url) URL.revokeObjectURL(url);
+      });
+      this.refPreviewBlobs = {};
+    },
+    async captureRefFromCamera(cam) {
+      if (!cam || !cam.camera_id) return;
+      this.$set(this.capturingRef, cam.camera_id, true);
+      try {
+        const res = await runPlanAPI.captureReferenceImage(cam.camera_id);
+        const data = this.unwrapRefPayload(res);
+        const objectKey = (data && (data.url || data.object)) || '';
+        if (!objectKey) throw new Error('截图未返回模板图');
+        this.setCameraRefObject(cam.camera_id, objectKey);
+        await this.refreshRefPreview(cam.camera_id, objectKey);
+        this.$message.success('已从点位截取校准模板');
+      } catch (e) {
+        this.$message.error(formatApiError(e, '从点位截图失败'));
+      } finally {
+        this.$set(this.capturingRef, cam.camera_id, false);
+      }
+    },
+    async uploadRefForCamera(cam, opt) {
+      const file = opt && opt.file;
+      if (!cam || !file) return;
+      this.$set(this.uploadingRef, cam.camera_id, true);
+      try {
+        const res = await runPlanAPI.uploadReferenceImage(file);
+        const data = this.unwrapRefPayload(res);
+        const objectKey = (data && (data.url || data.object)) || '';
+        if (!objectKey) throw new Error('上传未返回模板图');
+        this.setCameraRefObject(cam.camera_id, objectKey);
+        await this.refreshRefPreview(cam.camera_id, objectKey);
+        this.$message.success('校准模板已上传');
+        if (opt.onSuccess) opt.onSuccess();
+      } catch (e) {
+        this.$message.error(formatApiError(e, '上传模板图失败'));
+        if (opt.onError) opt.onError(e);
+      } finally {
+        this.$set(this.uploadingRef, cam.camera_id, false);
+      }
+    },
+    async autoCaptureMissingRefs() {
+      if (this.isView || !this.hasImageSkillParam) return;
+      const missing = (this.form.cameras || []).filter(c => !this.cameraRefObject(c.camera_id));
+      if (!missing.length) return;
+      for (let i = 0; i < missing.length; i++) {
+        await this.captureRefFromCamera(missing[i]);
+      }
+    },
+    validateImageParams() {
+      if (!this.hasImageSkillParam) return true;
+      const miss = (this.form.cameras || []).filter(c => !this.cameraRefObject(c.camera_id));
+      if (!miss.length) return true;
+      const names = miss.map(c => c.camera_name).join('、');
+      this.$message.warning('请为点位设置校准模板图：' + names);
+      return false;
     },
     // 技能输入声明了什么就绘制什么：开始节点声明 ROI → 多边形围栏；声明 Tripwire → 绊线。
     // 非技能图（传统视觉技能）无法判断，保持显示围栏配置（仅多边形）。
@@ -1374,13 +1551,17 @@ export default {
         this.$set(this.currentFenceCam, 'fence', fence);
       }
     },
-    nextStep() {
+    async nextStep() {
       if (this.step === 0) {
         if (!this.form.skill_ref) { this.$message.warning('请选择 AI 技能'); return; }
         if (!this.form.cameras.length) { this.$message.warning('请至少选择一个点位'); return; }
         if (!this.form.run_cycle.weekdays.length) { this.$message.warning('请选择运行频率'); return; }
+        this.step += 1;
+        await this.autoCaptureMissingRefs();
+        return;
       }
       if (this.step === 1) {
+        if (!this.validateImageParams()) return;
         this.ensureAlertNameDefault();
       }
       if (this.step < 2) this.step += 1;
@@ -1622,8 +1803,12 @@ export default {
       this.step = 0;
       this.form = defaultForm();
       this.skillParamFields = [];
+      this.skillDefaultParamKeys = [];
       this.skillParamsReady = false;
       this.skillParamsLoading = false;
+      this.revokeRefPreviews();
+      this.capturingRef = {};
+      this.uploadingRef = {};
       this.alertNameTouched = false;
       this.mergeAdvancedOpen = false;
       this.pointStatusMap = {};
@@ -1774,6 +1959,69 @@ export default {
 .skill-params-form >>> .el-input-number .el-input__inner {
   padding-right: 42px;
   text-align: left;
+}
+.ref-image-panel {
+  width: 100%;
+  max-width: 520px;
+}
+.ref-image-hint {
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.ref-image-empty {
+  font-size: 12px;
+  color: #c0c4cc;
+}
+.ref-image-row {
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #fafbfc;
+}
+.ref-image-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.ref-image-cam {
+  font-size: 13px;
+  color: #303133;
+  font-weight: 600;
+}
+.ref-image-state {
+  font-size: 12px;
+}
+.ref-image-state.is-ok { color: #67c23a; }
+.ref-image-state.is-miss { color: #e6a23c; }
+.ref-image-preview {
+  width: 100%;
+  height: 120px;
+  border-radius: 6px;
+  background: #0f1724;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.ref-image-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.ref-image-ph {
+  color: #5b6474;
+  font-size: 22px;
+}
+.ref-image-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .param-readonly-tags {
   display: flex;
