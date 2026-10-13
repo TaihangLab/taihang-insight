@@ -55,7 +55,9 @@ export function fenceDrawn(fence) {
   const hasRegions = fence.regions && fence.regions.length > 0;
   const hasTripwires = fence.tripwires && fence.tripwires.length > 0;
   const hasPoints = fence.points && fence.points.length > 0;
-  return !!(hasRegions || hasTripwires || hasPoints);
+  const hasCount = fence.count_line && fence.count_line.lines && fence.count_line.lines.length > 0;
+  const hasBypass = fence.bypass_line && fence.bypass_line.lines && fence.bypass_line.lines.length > 0;
+  return !!(hasRegions || hasTripwires || hasPoints || hasCount || hasBypass);
 }
 
 export function skillKindLabel(kind) {
