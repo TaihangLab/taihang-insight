@@ -81,6 +81,14 @@ export default {
       type: Number,
       default: 200
     },
+    overlayLines: {
+      type: Array,
+      default: () => []
+    },
+    hideTrackId: {
+      type: Boolean,
+      default: false
+    },
     // 播放器是 WebRTC/FLV 直播，没有和检测帧共用的帧号。
     // 这里不再额外推迟画框；检测结果晚到时立即画，避免把旧框再拖后。
     alignOffset: {
@@ -165,6 +173,12 @@ export default {
       deep: true
     },
     dashboard: {
+      handler() {
+        this.onNewData()
+      },
+      deep: true
+    },
+    overlayLines: {
       handler() {
         this.onNewData()
       },
@@ -318,6 +332,9 @@ export default {
       if (isNew && this.detections && this.detections.length) {
         this.pushBatch(this.detections)
       }
+      if (this.hasOverlayLines()) {
+        this.ensureRaf()
+      }
     },
 
     /**
@@ -402,6 +419,11 @@ export default {
       }
 
       if (!current) {
+        if (this.hasOverlayLines()) {
+          this.clearCanvas()
+          this.drawOverlayLines()
+          return
+        }
         this.clearCanvas()
         if (!this.batches.length) {
           this.stopRaf()
@@ -421,8 +443,13 @@ export default {
       }
 
       if (alpha <= 0) {
-        this.clearCanvas()
         this.batches.shift()
+        if (this.hasOverlayLines()) {
+          this.clearCanvas()
+          this.drawOverlayLines()
+          return
+        }
+        this.clearCanvas()
         if (!this.batches.length) {
           this.stopRaf()
         }
@@ -430,6 +457,48 @@ export default {
       }
 
       this.renderBatch(current.detections, alpha)
+      this.drawOverlayLines()
+    },
+
+    hasOverlayLines() {
+      return Array.isArray(this.overlayLines) && this.overlayLines.length > 0
+    },
+
+    drawOverlayLines() {
+      if (!this.ctx || !this.hasOverlayLines() || !this.videoWidth || !this.videoHeight) return
+      const scaleX = this.canvasWidth / this.videoWidth
+      const scaleY = this.canvasHeight / this.videoHeight
+      const prevAlpha = this.ctx.globalAlpha
+      this.ctx.globalAlpha = 1
+      this.ctx.setLineDash([])
+      this.overlayLines.forEach(item => {
+        const line = item && item.line
+        if (!Array.isArray(line) || line.length < 2) return
+        const color = item.kind === 'bypass' ? '#f56c6c' : '#e6a23c'
+        const ax = line[0].x * scaleX
+        const ay = line[0].y * scaleY
+        const bx = line[1].x * scaleX
+        const by = line[1].y * scaleY
+        this.ctx.beginPath()
+        this.ctx.moveTo(ax, ay)
+        this.ctx.lineTo(bx, by)
+        this.ctx.strokeStyle = color
+        this.ctx.lineWidth = Math.max(2, 3 * ((scaleX + scaleY) / 2))
+        this.ctx.stroke()
+        ;[line[0], line[1], item.side].forEach(p => {
+          if (!p || typeof p.x !== 'number') return
+          this.ctx.beginPath()
+          this.ctx.arc(p.x * scaleX, p.y * scaleY, 4, 0, Math.PI * 2)
+          this.ctx.fillStyle = color
+          this.ctx.fill()
+        })
+        if (item.label) {
+          this.ctx.font = '12px sans-serif'
+          this.ctx.fillStyle = '#fff'
+          this.ctx.fillText(String(item.label), ax + 6, ay - 6)
+        }
+      })
+      this.ctx.globalAlpha = prevAlpha
     },
 
     renderBatch(detections, alpha) {
@@ -443,6 +512,9 @@ export default {
 
       const prevAlpha = this.ctx.globalAlpha
       this.ctx.globalAlpha = alpha
+      detections.forEach(detection => {
+        this.drawTrackHistory(detection, scaleX, scaleY)
+      })
       detections.forEach(detection => {
         this.drawSingleDetection(detection, scaleX, scaleY)
       })
@@ -538,7 +610,8 @@ export default {
       if (trackId) {
         name = raw.replace(new RegExp('\\b' + trackId + '\\b', 'ig'), '').replace(/\s+/g, ' ').trim() || raw
       }
-      const labelText = trackId ? (trackId + ' ' + name + suffix + ': ' + conf.toFixed(2)) : (name + suffix + ': ' + conf.toFixed(2))
+      const showId = trackId && !this.hideTrackId
+      const labelText = showId ? (trackId + ' ' + name + suffix + ': ' + conf.toFixed(2)) : (name + suffix + ': ' + conf.toFixed(2))
       const fontPx = Math.max(9, Math.round(22 * 0.5 * drawScale))
       this.ctx.font = `${fontPx}px "Microsoft YaHei", "PingFang SC", Arial`
       const textMetrics = this.ctx.measureText(labelText)
@@ -551,6 +624,34 @@ export default {
       this.ctx.textBaseline = 'alphabetic'
       this.ctx.fillStyle = '#FFFFFF'
       this.ctx.fillText(labelText, x1 + padX, y1 - padX)
+      this.ctx.globalAlpha = prevAlpha
+    },
+
+    drawTrackHistory(detection, scaleX, scaleY) {
+      const history = detection && detection.track_history
+      if (!Array.isArray(history) || history.length < 2) return
+      const color = detection.color
+        ? `rgb(${detection.color[2]}, ${detection.color[1]}, ${detection.color[0]})`
+        : 'rgb(0, 220, 255)'
+      const pts = history.map(p => {
+        const x = Array.isArray(p) ? p[0] : p && p.x
+        const y = Array.isArray(p) ? p[1] : p && p.y
+        if (typeof x !== 'number' || typeof y !== 'number') return null
+        return { x: x * scaleX, y: y * scaleY }
+      }).filter(Boolean)
+      if (pts.length < 2) return
+      const prevAlpha = this.ctx.globalAlpha
+      this.ctx.beginPath()
+      this.ctx.moveTo(pts[0].x, pts[0].y)
+      for (let i = 1; i < pts.length; i++) {
+        this.ctx.lineTo(pts[i].x, pts[i].y)
+      }
+      this.ctx.strokeStyle = color
+      this.ctx.lineWidth = Math.max(2, 2 * ((scaleX + scaleY) / 2))
+      this.ctx.lineJoin = 'round'
+      this.ctx.lineCap = 'round'
+      this.ctx.setLineDash([])
+      this.ctx.stroke()
       this.ctx.globalAlpha = prevAlpha
     },
 

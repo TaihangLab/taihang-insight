@@ -182,6 +182,16 @@
               <template v-else-if="p.type === 'boolean'">
                 <el-switch v-model="form.skill_params[p.key]"></el-switch>
               </template>
+              <template v-else-if="p.type === 'select'">
+                <el-select v-model="form.skill_params[p.key]" style="width: 220px;">
+                  <el-option
+                    v-for="opt in p.options"
+                    :key="opt.value"
+                    :label="opt.label"
+                    :value="opt.value">
+                  </el-option>
+                </el-select>
+              </template>
               <template v-else-if="p.type === 'array'">
                 <div class="param-readonly-tags">
                   <el-tag v-for="(item, idx) in form.skill_params[p.key]" :key="idx" size="mini" type="info">{{ item }}</el-tag>
@@ -232,6 +242,50 @@
               </template>
             </el-form-item>
           </el-form>
+        </div>
+
+        <div class="form-section" v-if="lineDrawFields.length">
+          <div class="section-head"><i class="el-icon-share"></i> 计数线绘制</div>
+          <div class="region-required-hint">先点两个端点画出线段，再点第三下标出参考侧。过线计数线为必填，未绘制的点位不会统计人流。</div>
+          <div class="region-draw">
+            <div class="region-list">
+              <div
+                v-for="c in form.cameras"
+                :key="'line-' + c.camera_id"
+                class="region-cam"
+                :class="{ active: currentFenceCam && currentFenceCam.camera_id === c.camera_id }"
+                @click="currentFenceCam = c">
+                <i class="el-icon-video-camera"></i>
+                <span class="region-cam__name">{{ c.camera_name }}</span>
+                <span class="region-cam__badge" :class="lineDrawn(c) ? 'drawn' : 'skip'">
+                  {{ lineDrawn(c) ? '已绘制' : '未绘制' }}
+                </span>
+              </div>
+              <div v-if="!form.cameras.length" class="empty-tip-sm">请先选择点位</div>
+            </div>
+            <div class="region-canvas" v-if="currentFenceCam">
+              <div class="region-toolbar">
+                <span class="region-status__label">计数线</span>
+                <el-button v-if="!isView" type="primary" size="mini" plain icon="el-icon-edit-outline" @click="openLineDrawer(currentFenceCam)">
+                  {{ lineDrawn(currentFenceCam) ? '重新绘制' : '开始绘制' }}
+                </el-button>
+              </div>
+              <div class="region-preview">
+                <fence-preview
+                  :key="'line-preview-' + currentFenceCam.camera_id"
+                  :src="snapshotUrl(currentFenceCam.camera_id)"
+                  :fence="currentFenceCam.fence">
+                </fence-preview>
+                <div class="region-preview__ph">
+                  <i class="el-icon-picture-outline"></i>
+                  <span>点位画面预览</span>
+                </div>
+              </div>
+            </div>
+            <div class="region-canvas region-canvas--empty" v-else>
+              <div class="empty-tip-sm"><i class="el-icon-video-camera"></i><br>请选择左侧点位</div>
+            </div>
+          </div>
         </div>
 
         <div class="form-section" v-if="skillNeedsFence || skillNeedsTripwire">
@@ -627,6 +681,15 @@
       @confirm="onFenceConfirm">
     </fence-drawer>
 
+    <line-drawer
+      :visible.sync="lineVisible"
+      :camera-id="currentFenceCam ? currentFenceCam.camera_id : null"
+      :fields="lineDrawFields"
+      :init-fence="fenceEditing"
+      :readonly="isView"
+      @confirm="onFenceConfirm">
+    </line-drawer>
+
     <el-dialog
       :title="saveProgressTitle"
       :visible.sync="saveProgressVisible"
@@ -665,6 +728,7 @@ import { pullPointStatusText, categorizeRowStatus } from '../../deviceManagement
 import { saveActiveSaveJob } from './runPlanSaveJob.js';
 import FenceDrawer from './FenceDrawer.vue';
 import FencePreview from './FencePreview.vue';
+import LineDrawer from './LineDrawer.vue';
 import ChannelTreePanel from './ChannelTreePanel.vue';
 
 function normalizeImmediateLevels(val) {
@@ -721,7 +785,7 @@ function defaultForm() {
 
 export default {
   name: 'RunPlanCreateDrawer',
-  components: { FenceDrawer, FencePreview, ChannelTreePanel },
+  components: { FenceDrawer, FencePreview, LineDrawer, ChannelTreePanel },
   props: {
     visible: { type: Boolean, default: false },
     editPlan: { type: Object, default: null },
@@ -744,6 +808,8 @@ export default {
       refPreviewBlobs: {},
       skillNeedsFence: true,
       skillNeedsTripwire: false,
+      lineDrawFields: [],
+      lineVisible: false,
       fenceRequired: false,
       // 仅 Array<ROI> 允许多块围栏；单个 ROI 固定 1 块，不因「用于节点」数量放开
       fenceMultipleRoi: true,
@@ -1116,6 +1182,7 @@ export default {
         this.form.skill_name = '';
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
+        this.lineDrawFields = [];
         this.fenceRequired = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
@@ -1138,6 +1205,7 @@ export default {
         this.skillParamsLoading = false;
         this.skillNeedsFence = false;
         this.skillNeedsTripwire = false;
+        this.lineDrawFields = [];
         this.fenceRequired = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
@@ -1182,6 +1250,14 @@ export default {
         const detail = payload.data !== undefined ? payload.data : payload;
         const params = (detail.default_config && detail.default_config.params) || {};
         const formFields = (detail.default_config && detail.default_config.form_fields) || [];
+        const lineFields = (Array.isArray(formFields) ? formFields : []).filter(f => f && f.type === 'line_draw' && f.key);
+        this.lineDrawFields = lineFields.map(f => ({
+          key: f.key,
+          label: f.label || f.key,
+          hint: f.hint || '',
+          required: !!f.required,
+          sideKey: f.key === 'bypass_line' ? 'bypass_point' : 'enter_point'
+        }));
         // 画布上绘制的输入（电子围栏 ROI / Array<ROI> / 绊线 Tripwire）由"区域绘制"提供，
         // 不应出现在"技能参数"填写表里。
         const drawnKeys = this.collectDrawnParamKeys(detail);
@@ -1194,7 +1270,7 @@ export default {
         const fields = [];
         if (Array.isArray(formFields) && formFields.length) {
           formFields.forEach(f => {
-            if (!f || !f.key || drawnKeys.has(f.key)) return;
+            if (!f || !f.key || drawnKeys.has(f.key) || f.type === 'line_draw') return;
             const val = params[f.key] !== undefined ? params[f.key] : f.default;
             fields.push({
               key: f.key,
@@ -1202,7 +1278,8 @@ export default {
               type: f.type || this.getSkillParamType(val),
               label: f.label || (metaByName[f.key] && metaByName[f.key].display_name) || f.key,
               hint: f.hint || '',
-              required: !!f.required
+              required: !!f.required,
+              options: Array.isArray(f.options) ? f.options : []
             });
             if (!keepValues || this.form.skill_params[f.key] === undefined) {
               this.$set(this.form.skill_params, f.key, val === undefined ? '' : JSON.parse(JSON.stringify(val)));
@@ -1257,12 +1334,16 @@ export default {
           }
         }
         this.skillNeedsTripwire = this.computeSkillNeedsTripwire(detail);
+        if (this.lineDrawFields.length && this.startNodeInputParams(detail) === null) {
+          this.skillNeedsFence = false;
+        }
       } catch (e) {
         console.warn('加载技能参数失败', e);
         this.skillParamFields = [];
         this.skillParamsReady = false;
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
+        this.lineDrawFields = [];
         this.fenceRequired = false;
         this.fenceMultipleRoi = true;
         this.fenceBindableNodes = [];
@@ -1546,6 +1627,29 @@ export default {
       this.fenceEditing = cam.fence ? JSON.parse(JSON.stringify(cam.fence)) : null;
       this.fenceVisible = true;
     },
+    lineDrawn(cam) {
+      if (!cam || !cam.fence) return false;
+      return (this.lineDrawFields || []).some(f => {
+        const cfg = cam.fence[f.key];
+        return cfg && Array.isArray(cfg.lines) && cfg.lines.length > 0;
+      });
+    },
+    openLineDrawer(cam) {
+      this.currentFenceCam = cam;
+      this.fenceEditing = cam.fence ? JSON.parse(JSON.stringify(cam.fence)) : null;
+      this.lineVisible = true;
+    },
+    validateCountLines() {
+      const required = (this.lineDrawFields || []).filter(f => f.required);
+      if (!required.length) return true;
+      const missing = this.form.cameras.filter(c => required.some(f => {
+        const cfg = c.fence && c.fence[f.key];
+        return !(cfg && Array.isArray(cfg.lines) && cfg.lines.length);
+      }));
+      if (!missing.length) return true;
+      this.$message.warning('请为点位绘制过线计数线：' + missing.map(c => c.camera_name).join('、'));
+      return false;
+    },
     onFenceConfirm(fence) {
       if (this.currentFenceCam) {
         this.$set(this.currentFenceCam, 'fence', fence);
@@ -1562,6 +1666,7 @@ export default {
       }
       if (this.step === 1) {
         if (!this.validateImageParams()) return;
+        if (!this.validateCountLines()) return;
         this.ensureAlertNameDefault();
       }
       if (this.step < 2) this.step += 1;
@@ -1604,7 +1709,11 @@ export default {
     toBackendFence(fence) {
       const regions = (fence && fence.regions) || [];
       const tripwires = (fence && fence.tripwires) || [];
-      if (!regions.length && !tripwires.length) {
+      const countLine = fence && fence.count_line;
+      const bypassLine = fence && fence.bypass_line;
+      const hasCount = countLine && Array.isArray(countLine.lines) && countLine.lines.length > 0;
+      const hasBypass = bypassLine && Array.isArray(bypassLine.lines) && bypassLine.lines.length > 0;
+      if (!regions.length && !tripwires.length && !hasCount && !hasBypass) {
         return { enabled: false, points: [] };
       }
       const out = {
@@ -1614,6 +1723,8 @@ export default {
         show_outside_fence: this.form.show_outside_fence !== false
       };
       if (tripwires.length) out.tripwires = tripwires;
+      if (hasCount) out.count_line = countLine;
+      if (hasBypass) out.bypass_line = bypassLine;
       return out;
     },
     formatSaveError(e) {

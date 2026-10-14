@@ -109,10 +109,10 @@
                           </span>
                         </div>
                         <div class="debug-line">
-                          <span class="debug-label">目标</span>
-                          <span class="debug-value">{{ getDetectionCount(index-1) }}</span>
+                          <span class="debug-label">{{ isPeopleCount(index-1) ? getPeopleCountLabel(index-1) : '目标' }}</span>
+                          <span class="debug-value">{{ isPeopleCount(index-1) ? getPeopleCountText(index-1) : getDetectionCount(index-1) }}</span>
                         </div>
-                        <div class="debug-line" v-if="getDetectionLabels(index-1)">
+                        <div class="debug-line" v-if="!isPeopleCount(index-1) && getDetectionLabels(index-1)">
                           <span class="debug-label">列表</span>
                           <span class="debug-value debug-ellipsis">{{ getDetectionLabels(index-1) }}</span>
                         </div>
@@ -133,6 +133,8 @@
                         :detections="detectionResults[index-1].detections || []"
                         :status-tags="detectionResults[index-1].status_tags || []"
                         :dashboard="detectionResults[index-1].dashboard || []"
+                        :overlay-lines="detectionResults[index-1].overlay_lines || []"
+                        :hide-track-id="isPeopleCount(index-1)"
                         :frame-index="detectionResults[index-1].frame_index || 0"
                         :debug-info="detectionResults[index-1].debug || null">
                       </detection-overlay>
@@ -209,10 +211,10 @@
                           </span>
                         </div>
                         <div class="debug-line">
-                          <span class="debug-label">目标</span>
-                          <span class="debug-value">{{ getDetectionCount(index-1) }}</span>
+                          <span class="debug-label">{{ isPeopleCount(index-1) ? getPeopleCountLabel(index-1) : '目标' }}</span>
+                          <span class="debug-value">{{ isPeopleCount(index-1) ? getPeopleCountText(index-1) : getDetectionCount(index-1) }}</span>
                         </div>
-                        <div class="debug-line" v-if="getDetectionLabels(index-1)">
+                        <div class="debug-line" v-if="!isPeopleCount(index-1) && getDetectionLabels(index-1)">
                           <span class="debug-label">列表</span>
                           <span class="debug-value debug-ellipsis">{{ getDetectionLabels(index-1) }}</span>
                         </div>
@@ -232,6 +234,8 @@
                         :detections="detectionResults[index-1].detections || []"
                         :status-tags="detectionResults[index-1].status_tags || []"
                         :dashboard="detectionResults[index-1].dashboard || []"
+                        :overlay-lines="detectionResults[index-1].overlay_lines || []"
+                        :hide-track-id="isPeopleCount(index-1)"
                         :frame-index="detectionResults[index-1].frame_index || 0"
                         :debug-info="detectionResults[index-1].debug || null">
                       </detection-overlay>
@@ -3064,6 +3068,23 @@ export default {
       return dets ? `${dets.length} 个` : '0 个'
     },
 
+    isPeopleCount(index) {
+      const result = this.detectionResults[index]
+      return !!(result && result.enter_count !== undefined && result.enter_count !== null && result.enter_count !== '')
+    },
+
+    getPeopleCountLabel(index) {
+      const dir = String((this.detectionResults[index] && this.detectionResults[index].gate_direction) || '').toUpperCase()
+      if (dir === 'OUT') return '出井人数'
+      if (dir === 'IN') return '入井人数'
+      return '人数'
+    },
+
+    getPeopleCountText(index) {
+      const result = this.detectionResults[index] || {}
+      return `${result.enter_count} 人`
+    },
+
     getDetectionLabels(index) {
       const dets = this.detectionResults[index] && this.detectionResults[index].detections
       if (!dets || !dets.length) return ''
@@ -3093,7 +3114,9 @@ export default {
         ? dets.map(d => d.label || d.class_name).filter(Boolean).join(', ')
         : ''
       const updated = this.detectionUpdateTime[index] || '无数据'
-      return `WS: ${ws}\n目标: ${count}${labels ? `\n列表: ${labels}` : ''}\n更新: ${updated}`
+      const countLabel = this.isPeopleCount(index) ? this.getPeopleCountLabel(index) : '目标'
+      const countText = this.isPeopleCount(index) ? this.getPeopleCountText(index) : count
+      return `WS: ${ws}\n${countLabel}: ${countText}${!this.isPeopleCount(index) && labels ? `\n列表: ${labels}` : ''}\n更新: ${updated}`
     },
 
     /**
@@ -3468,6 +3491,9 @@ export default {
           detections: [],
           status_tags: [],
           dashboard: [],
+          overlay_lines: parsed.overlayLines || [],
+          enter_count: parsed.enterCount,
+          gate_direction: parsed.gateDirection,
           debug: parsed.debug || null,
           generation: nextGeneration,
           frame_size: parsed.frameSize,
@@ -3479,6 +3505,9 @@ export default {
         detections: parsed.detections,
         status_tags: parsed.statusTags || [],
         dashboard: parsed.dashboard != null ? parsed.dashboard : [],
+        overlay_lines: parsed.overlayLines || [],
+        enter_count: parsed.enterCount,
+        gate_direction: parsed.gateDirection,
         debug: parsed.debug || null,
         generation: nextGeneration,
         frame_size: parsed.frameSize,

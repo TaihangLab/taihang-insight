@@ -70,7 +70,10 @@ function parseDetectionMessage (event) {
     stageReset: !!(data.stage_reset || (data.debug && data.debug.stage_reset)),
     frameSize: data.frame_size || { width: 1920, height: 1080 },
     frameIndex: data.frame_index || 0,
-    frameTimestamp: data.frame_timestamp || 0
+    frameTimestamp: data.frame_timestamp || 0,
+    overlayLines: data.overlay_lines || [],
+    enterCount: data.enter_count,
+    gateDirection: data.gate_direction
   }
 }
 

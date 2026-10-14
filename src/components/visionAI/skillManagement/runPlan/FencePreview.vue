@@ -41,9 +41,26 @@ export default {
       const f = this.fence || {};
       return Array.isArray(f.tripwires) ? f.tripwires : [];
     },
+    pixelLineGroups() {
+      const f = this.fence || {};
+      const specs = [
+        { key: 'count_line', side: 'enter_point', color: '#3d9b6e', label: '过线' },
+        { key: 'bypass_line', side: 'bypass_point', color: '#e6a23c', label: '绕行' }
+      ];
+      return specs.map(spec => {
+        const cfg = f[spec.key] || {};
+        const lines = Array.isArray(cfg.lines) ? cfg.lines : [];
+        return Object.assign({}, spec, {
+          lines,
+          iw: Number(cfg.image_width) || 0,
+          ih: Number(cfg.image_height) || 0
+        });
+      }).filter(g => g.lines.length);
+    },
     hasFence() {
       return this.regions.some(r => (r.points || []).length >= 3)
-        || this.tripwires.some(t => (t.line || t.points || []).length >= 2);
+        || this.tripwires.some(t => (t.line || t.points || []).length >= 2)
+        || this.pixelLineGroups.length > 0;
     }
   },
   watch: {
@@ -112,6 +129,35 @@ export default {
         const line = t.line || t.points || [];
         if (line.length < 2) return;
         this.drawTripwire(ctx, t, line, W, H, k);
+      });
+      this.pixelLineGroups.forEach(g => this.drawPixelLines(ctx, g, W, H, k));
+    },
+    drawPixelLines(ctx, group, W, H, k) {
+      const sx = group.iw ? W / group.iw : 1;
+      const sy = group.ih ? H / group.ih : 1;
+      group.lines.forEach((it, idx) => {
+        const line = it && it.line;
+        if (!Array.isArray(line) || line.length < 2) return;
+        const ax = line[0].x * sx;
+        const ay = line[0].y * sy;
+        const bx = line[1].x * sx;
+        const by = line[1].y * sy;
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
+        ctx.lineWidth = 3 * k;
+        ctx.strokeStyle = group.color;
+        ctx.stroke();
+        [line[0], line[1], it[group.side]].forEach(p => {
+          if (!p || typeof p.x !== 'number') return;
+          ctx.beginPath();
+          ctx.arc(p.x * sx, p.y * sy, 4 * k, 0, Math.PI * 2);
+          ctx.fillStyle = group.color;
+          ctx.fill();
+        });
+        ctx.font = `${12 * k}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.fillText(`${group.label}#${idx + 1}`, ax + 8 * k, ay - 8 * k);
       });
     },
     drawRegion(ctx, r, points, W, H, k, index) {
