@@ -576,6 +576,10 @@ export default {
       aiTasksEmptyConfirmed: {},  // {camera_id: boolean} 重试耗尽后确认无任务
       wsConnections: {},  // WebSocket连接池 {index: WebSocket}
       wsReadyState: {},  // {index: 0|1|2|3} 用于左下角显示，避免只判断对象是否存在
+      wsStatusReason: {},
+      wsReconnectTimers: {},
+      wsCheckTokens: {},
+      wsHasDetection: {},
       detectionResults: {},  // 检测结果数据 {index: {detections: [], frame_size: {}}}
       cameraIdMapping: {},  // 摄像头ID映射 {index: camera_id}
       cameraNames: {},  // 摄像头名称映射 {index: camera_name}
@@ -3096,9 +3100,10 @@ export default {
     },
 
     getWsStatusText(index) {
+      if (this.wsStatusReason[index]) return this.wsStatusReason[index]
       const state = this.wsReadyState[index]
       if (state === 0) return '连接中'
-      if (state === 1) return '已连接'
+      if (state === 1) return this.wsHasDetection[index] ? '已连接' : '已连接，等待检测数据'
       if (state === 2) return '关闭中'
       return '未连接'
     },
@@ -3182,7 +3187,7 @@ export default {
      * 运行中任务接口为空时，回退到 DB 中该 camera 下 status=true 的任务，
      * 让右上角恢复原本的「选择AI任务」下拉框（不显示加载中/暂无文案）。
      */
-    async fetchDbEnabledTasksFallback(cameraId) {
+    async fetchDbEnabledTasksFallback(cameraId, strict = false) {
       const key = String(cameraId)
       try {
         console.log('[AITasks] DB fallback camera_id=', key)
@@ -3201,6 +3206,7 @@ export default {
         console.log('[AITasks] DB fallback parsed camera_id=', key, 'count=', list.length, 'tasks=', list)
         return list
       } catch (error) {
+        if (strict) throw error
         console.error('[AITasks] DB fallback failed camera_id=', key, error)
         return []
       }
@@ -3370,16 +3376,45 @@ export default {
         console.log('[AITasks] soft response camera_id=', key, 'raw=', response && response.data)
         if (response.data && response.data.code === 0) {
           const list = Array.isArray(response.data.data) ? response.data.data : []
+          const previousList = this.availableAITasks[key] || []
           if (list.length > 0) {
             this.applyAITasksList(cameraId, list)
             this.$set(this.aiTasksEmptyConfirmed, key, false)
+            Object.keys(this.cameraIdMapping).forEach(index => {
+              if (String(this.cameraIdMapping[index]) !== key) return
+              const taskId = this.selectedAITasks[index]
+              const active = list.filter(t => t.is_running === true)
+              let selected = active.find(t => String(t.task_id) === String(taskId))
+              if (!selected) {
+                const previous = previousList.find(t => String(t.task_id) === String(taskId))
+                const sameSkill = previous && previous.skill_name
+                  ? active.filter(t => t.skill_name === previous.skill_name) : []
+                selected = sameSkill.length === 1 ? sameSkill[0] : (active.length === 1 ? active[0] : null)
+                this.disconnectDetectionWebSocket(index)
+                this.$set(this.selectedAITasks, index, selected ? selected.task_id : null)
+                this.$set(this.wsReadyState, index, WebSocket.CLOSED)
+                this.$set(this.wsStatusReason, index, active.length ? '请选择运行任务' : '任务未运行')
+              }
+              if (selected && !this.wsConnections[index]) {
+                this.connectDetectionWebSocket(index, selected.task_id)
+              }
+            })
             return
           }
-          const prev = this.availableAITasks[key]
-          if (Array.isArray(prev) && prev.length > 0) {
-            console.warn('[AITasks] soft empty, keep previous camera_id=', key)
-            return
-          }
+          const dbList = await this.fetchDbEnabledTasksFallback(key, true)
+          this.applyAITasksList(cameraId, dbList)
+          this.$set(this.aiTasksEmptyConfirmed, key, dbList.length === 0)
+          Object.keys(this.cameraIdMapping).forEach(index => {
+            if (String(this.cameraIdMapping[index]) !== key || !this.selectedAITasks[index]) return
+            this.disconnectDetectionWebSocket(index)
+            this.$set(this.wsReadyState, index, WebSocket.CLOSED)
+            this.$set(this.wsStatusReason, index, '任务未运行')
+            if (!dbList.some(t => String(t.task_id) === String(this.selectedAITasks[index]))) {
+              this.$set(this.selectedAITasks, index, null)
+              this.$set(this.wsStatusReason, index, '暂无运行任务')
+            }
+          })
+          return
         }
         // 仍无运行中任务时，尝试 DB 回退（仅当本地还没有列表）
         if (!(this.availableAITasks[key] || []).length) {
@@ -3408,10 +3443,9 @@ export default {
     onTaskSelectionChange(index) {
       const taskId = this.selectedAITasks[index]
       // 断开旧连接（含 CONNECTING，避免泄漏）
-      closeWebSocket(this.wsConnections[index])
-      if (this.wsConnections[index]) {
-        delete this.wsConnections[index]
-      }
+      this.disconnectDetectionWebSocket(index)
+      this.$set(this.wsStatusReason, index, '')
+      this.$set(this.wsReadyState, index, null)
       
       // 清空检测结果
       this.$set(this.detectionResults, index, null)
@@ -3425,9 +3459,47 @@ export default {
     /**
      * 连接检测结果WebSocket
      */
-    connectDetectionWebSocket(index, taskId) {
-      // 先关掉该格子上可能残留的连接
-      closeWebSocket(this.wsConnections[index])
+    disconnectDetectionWebSocket(index) {
+      clearTimeout(this.wsReconnectTimers[index])
+      delete this.wsReconnectTimers[index]
+      this.$set(this.wsCheckTokens, index, (this.wsCheckTokens[index] || 0) + 1)
+      const old = this.wsConnections[index]
+      delete this.wsConnections[index]
+      closeWebSocket(old)
+      this.$set(this.wsHasDetection, index, false)
+      this.$set(this.detectionResults, index, null)
+    },
+
+    async connectDetectionWebSocket(index, taskId) {
+      const current = this.wsConnections[index]
+      if (current && current.readyState <= WebSocket.OPEN) return
+      clearTimeout(this.wsReconnectTimers[index])
+      delete this.wsReconnectTimers[index]
+      const token = (this.wsCheckTokens[index] || 0) + 1
+      this.$set(this.wsCheckTokens, index, token)
+      this.$set(this.wsStatusReason, index, '检查任务状态')
+      const cameraId = this.getCameraIdForIndex(index)
+      try {
+        const response = await realtimeDetectionAPI.getTasksByCamera(cameraId)
+        if (token !== this.wsCheckTokens[index] || String(this.selectedAITasks[index]) !== String(taskId)) return
+        if (!response.data || response.data.code !== 0) throw new Error('任务状态查询失败')
+        const running = (response.data.data || []).some(t => String(t.task_id) === String(taskId) && t.is_running === true)
+        if (!running) {
+          this.$set(this.wsReadyState, index, WebSocket.CLOSED)
+          this.$set(this.wsStatusReason, index, '任务未运行')
+          this.$set(this.detectionResults, index, null)
+          return
+        }
+      } catch (error) {
+        if (token !== this.wsCheckTokens[index]) return
+        const status = error.response && error.response.status
+        this.$set(this.wsReadyState, index, WebSocket.CLOSED)
+        this.$set(this.wsStatusReason, index, status === 401 || status === 403 ? '登录或权限异常' : '任务状态服务不可用')
+        this.scheduleDetectionReconnect(index, taskId)
+        return
+      }
+      this.$set(this.wsStatusReason, index, '')
+      this.$set(this.wsHasDetection, index, false)
 
       // 立刻挂上引用（不要等 onOpen），否则切摄像头时 cleanup 关不到 CONNECTING 的 socket
       const ws = createDetectionWebSocket(taskId, {
@@ -3438,26 +3510,35 @@ export default {
         },
         onMessage: (parsed) => {
           if (this.wsConnections[index] !== ws) return
+          if (!parsed.hasDetectionData || String(parsed.taskId) !== String(taskId)) return
+          this.$set(this.wsHasDetection, index, true)
           this.applyParsedDetectionResult(index, parsed)
         },
-        onClose: (closedWs) => {
+        onClose: (closedWs, event) => {
           if (this.wsConnections[index] !== closedWs) return
           this.$set(this.wsReadyState, index, WebSocket.CLOSED)
           delete this.wsConnections[index]
+          this.$set(this.wsHasDetection, index, false)
+          this.$set(this.wsStatusReason, index, event && event.code === 1008 ? '任务停止或尚未就绪' : '连接中断，正在重连')
           const keepTaskId = this.selectedAITasks[index]
           if (!keepTaskId) return
           // 任务尚未真正跑起来时服务端会立刻拒连；退避重连，避免看起来像 WS 抖动
-          const delay = 2000
-          console.warn('[WS] onclose task_id=', keepTaskId, 'index=', index, 'retry in', delay, 'ms')
-          setTimeout(() => {
-            if (this.selectedAITasks[index] === keepTaskId && !this.wsConnections[index]) {
-              this.connectDetectionWebSocket(index, keepTaskId)
-            }
-          }, delay)
+          console.warn('[WS] onclose task_id=', keepTaskId, 'code=', event && event.code)
+          this.scheduleDetectionReconnect(index, keepTaskId)
         }
       })
       this.$set(this.wsConnections, index, ws)
       this.$set(this.wsReadyState, index, ws.readyState)
+    },
+
+    scheduleDetectionReconnect(index, taskId) {
+      clearTimeout(this.wsReconnectTimers[index])
+      this.wsReconnectTimers[index] = setTimeout(() => {
+        delete this.wsReconnectTimers[index]
+        if (String(this.selectedAITasks[index]) === String(taskId) && !this.wsConnections[index]) {
+          this.connectDetectionWebSocket(index, taskId)
+        }
+      }, 2000)
     },
 
     /**
@@ -3479,6 +3560,11 @@ export default {
         && nextGeneration < previousGeneration
       )
       if (staleGeneration) return false
+      const newSession = parsed.stageReset || (previousGeneration > 0 && nextGeneration > previousGeneration)
+      if (!newSession && previousGeneration === nextGeneration && (
+        (previousTs > 0 && nextTs > 0 && nextTs < previousTs)
+        || (previousFrameIndex > 0 && nextFrameIndex > 0 && nextFrameIndex < previousFrameIndex)
+      )) return false
 
       const sessionRestart = !!(
         parsed.stageReset
@@ -3508,6 +3594,8 @@ export default {
         overlay_lines: parsed.overlayLines || [],
         enter_count: parsed.enterCount,
         gate_direction: parsed.gateDirection,
+        person_statistics: parsed.personStatistics || {},
+        timing: parsed.timing || {},
         debug: parsed.debug || null,
         generation: nextGeneration,
         frame_size: parsed.frameSize,
@@ -3620,10 +3708,8 @@ export default {
      * 清理指定索引的OSD资源
      */
     cleanupOSDResources(index) {
-      closeWebSocket(this.wsConnections[index])
-      if (this.wsConnections[index]) {
-        delete this.wsConnections[index]
-      }
+      this.disconnectDetectionWebSocket(index)
+      this.$set(this.wsStatusReason, index, '')
       
       // 清空数据
       this.$set(this.selectedAITasks, index, null)
@@ -3637,11 +3723,15 @@ export default {
      * 清理所有OSD资源
      */
     cleanupAllOSDResources() {
-      Object.values(this.wsConnections).forEach(ws => closeWebSocket(ws))
+      Object.keys(this.wsConnections).concat(Object.keys(this.wsCheckTokens)).forEach(index => this.disconnectDetectionWebSocket(index))
+      Object.values(this.wsReconnectTimers).forEach(timer => clearTimeout(timer))
+      this.wsReconnectTimers = {}
       
       // 清空所有数据
       this.wsConnections = {}
       this.wsReadyState = {}
+      this.wsStatusReason = {}
+      this.wsHasDetection = {}
       this.selectedAITasks = {}
       this.detectionResults = {}
       this.availableAITasks = {}

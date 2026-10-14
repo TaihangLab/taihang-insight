@@ -71,7 +71,7 @@ export default {
     },
     // 检测框全亮保持时长(ms)。调小可减少旧框"钉在原地"的时间；
     // 若检测帧率很低(如1fps)出现闪烁，可适当调大。
-    // 前端旧框最多保留约 1 秒（保持 + 淡出），与后端 1 秒消失对齐。
+    // 仅为无新消息时的显示期限；业务清理由后端3个有效分析帧决定。
     holdDuration: {
       type: Number,
       default: 800
@@ -329,8 +329,8 @@ export default {
           this.lastSignature = sig
         }
       }
-      if (isNew && this.detections && this.detections.length) {
-        this.pushBatch(this.detections)
+      if (isNew) {
+        this.pushBatch(this.detections || [])
       }
       if (this.hasOverlayLines()) {
         this.ensureRaf()
@@ -354,10 +354,11 @@ export default {
           delay = Math.max(0, this.alignOffset - age)
         }
       }
-      this.batches.push({
+      this.batches = [{
         detections: detections ? detections.slice() : [],
         startAt: now + delay
-      })
+      }]
+      if (!detections || !detections.length) this.clearCanvas()
       this.ensureRaf()
     },
 
@@ -607,8 +608,11 @@ export default {
       const conf = detection && detection.confidence != null ? Number(detection.confidence) : 0
       const suffix = (isInFence ? '' : ' 栏外') + (stateText.indexOf('保持') >= 0 || stateText.indexOf('待确认') >= 0 ? '' : (held ? ' 遮挡保持' : ''))
       let name = raw
+      if (detection.class_name === 'person' && detection.progress != null) {
+        name += ' 面积交叠' + Math.round(Number(detection.progress) * 100) + '%'
+      }
       if (trackId) {
-        name = raw.replace(new RegExp('\\b' + trackId + '\\b', 'ig'), '').replace(/\s+/g, ' ').trim() || raw
+        name = name.replace(new RegExp('\\b' + trackId + '\\b', 'ig'), '').replace(/\s+/g, ' ').trim() || raw
       }
       const showId = trackId && !this.hideTrackId
       const labelText = showId ? (trackId + ' ' + name + suffix + ': ' + conf.toFixed(2)) : (name + suffix + ': ' + conf.toFixed(2))

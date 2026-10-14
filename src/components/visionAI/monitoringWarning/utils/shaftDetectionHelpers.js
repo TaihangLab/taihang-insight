@@ -115,6 +115,11 @@ function applyDetectionSession (previous, parsed) {
   if (staleGeneration) {
     return { accept: false, sessionRestart: false, state: previous || {} }
   }
+  const newSession = parsed.stageReset || (previousGeneration > 0 && nextGeneration > previousGeneration)
+  if (!newSession && previousGeneration === nextGeneration && (
+    (previousTs > 0 && nextTs > 0 && nextTs < previousTs) ||
+    (previousFrameIndex > 0 && nextFrameIndex > 0 && nextFrameIndex < previousFrameIndex)
+  )) return { accept: false, sessionRestart: false, state: previous || {} }
 
   const sessionRestart = !!(
     parsed.stageReset ||
@@ -127,6 +132,8 @@ function applyDetectionSession (previous, parsed) {
     detections: parsed.detections || [],
     status_tags: parsed.statusTags || [],
     dashboard: parsed.dashboard != null ? parsed.dashboard : [],
+    person_statistics: parsed.personStatistics || {},
+    timing: parsed.timing || {},
     debug: parsed.debug || null,
     generation: nextGeneration,
     frame_size: parsed.frameSize,

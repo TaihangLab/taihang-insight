@@ -15,12 +15,15 @@ const mock = require(path.join(
   __dirname,
   '../src/components/visionAI/monitoringWarning/utils/shaftMockPayload.js'
 ))
-const {
-  parseDetectionMessage
-} = require(path.join(
-  __dirname,
-  '../src/components/visionAI/monitoringWarning/utils/detectionWebSocket.js'
-))
+// This browser module uses default export; transpile for the Node-only harness.
+const fs = require('fs')
+const Module = require('module')
+const wsPath = path.join(__dirname, '../src/components/visionAI/monitoringWarning/utils/detectionWebSocket.js')
+const wsModule = new Module(wsPath, module)
+wsModule.filename = wsPath
+wsModule.paths = Module._nodeModulePaths(path.dirname(wsPath))
+wsModule._compile(fs.readFileSync(wsPath, 'utf8').replace('export default {', 'module.exports = {'), wsPath)
+const { parseDetectionMessage } = wsModule.exports
 
 const {
   normalizeDashboard,
@@ -137,7 +140,7 @@ function ok (name, cond, detail) {
   ok('state untouched after stale', state.generation === 2 && state.detections[0].track_id === 'V001')
 }
 
-// 5) empty_2s
+// 5) 第3个有效未匹配分析帧，只清理当前状态，不重置阶段累计
 {
   let state = applyDetectionSession({}, parseDetectionMessage({
     data: JSON.stringify(mock.buildShaftMockPayload({ generation: 2, frame_index: 40 }))
@@ -147,9 +150,15 @@ function ok (name, cond, detail) {
   })
   const r = applyDetectionSession(state, empty)
   ok('empty_2s accepted', r.accept)
-  ok('empty_2s stageReset', empty.stageReset === true)
+  ok('third miss does not reset session totals', empty.stageReset === false)
   ok('empty_2s no detections', r.state.detections.length === 0)
-  ok('empty_1s dashboard reset text', /1秒无检测/.test(normalizeDashboard(r.state.dashboard).lines.join('|')))
+  ok('third analysis frame contract', /3个分析帧/.test(normalizeDashboard(r.state.dashboard).lines.join('|')))
+  const late = parseDetectionMessage({data:JSON.stringify(mock.buildShaftMockPayload({
+    generation:2,frame_index:47,frame_timestamp:empty.frameTimestamp-50
+  }))})
+  const rejected=applyDetectionSession(r.state,late)
+  ok('same-generation stale result cannot restore old people', rejected.accept===false)
+  ok('cleared state remains empty', rejected.state.detections.length===0)
 }
 
 // 6) 动态 task_id URL（不建真实连接）
@@ -163,3 +172,26 @@ function ok (name, cond, detail) {
 }
 
 console.log(`\nALL_PASS count=${passed}`)
+
+// Exercise actual Overlay methods, including empty-frame replacement and letterboxing.
+{
+  const overlayPath=path.join(__dirname,'../src/components/visionAI/monitoringWarning/components/DetectionOverlay.vue')
+  const source=fs.readFileSync(overlayPath,'utf8').match(/<script>([\s\S]*?)<\/script>/)[1]
+  const overlayModule=new Module(overlayPath,module)
+  overlayModule._compile(source.replace('export default {','module.exports = {'),overlayPath)
+  const component=overlayModule.exports
+  let clears=0
+  const instance=Object.assign(component.data(),component.methods,{
+    ctx:{clearRect:()=>clears++},statusTags:[],detections:[],debugInfo:{generation:1},
+    frameIndex:3,frameTimestamp:3000,alignOffset:0,ensureRaf:()=>{}
+  })
+  instance.batches=[{detections:[{track_id:'P001'}],startAt:0}]
+  instance.onNewData()
+  ok('actual overlay empty frame replaces old box immediately',clears>0 && instance.batches.length===1 && instance.batches[0].detections.length===0)
+  const oldWindow=global.window
+  global.window={getComputedStyle:()=>({objectFit:'contain'})}
+  const box=instance.visibleMediaBox({videoWidth:1280,videoHeight:784},{width:640,height:480})
+  global.window=oldWindow
+  ok('1280x784 contained in 640x480 has correct black-bar offset',box.width===640 && box.height===392 && box.top===44 && box.left===0)
+}
+console.log(`OVERLAY_CHECKS_PASS total=${passed}`)

@@ -123,15 +123,15 @@ function buildShaftMockStaleGeneration () {
   })
 }
 
-/** 连续空检 / empty_1s 清理 */
+/** 连续3个有效分析帧未匹配，当前状态清理；不是1秒阶段重置。 */
 function buildShaftMockEmpty2s () {
   return buildShaftMockPayload({
     generation: 2,
     frame_index: 48,
-    stage_reset: true,
-    reason: 'empty_1s',
+    stage_reset: false,
+    reason: 'third_unmatched_analysis_frame',
     detections: [],
-    dashboard: ['模式：无固定乘车点｜1秒无检测目标，阶段统计已重置'],
+    dashboard: ['模式：无固定乘车点｜连续3个分析帧未匹配，当前人数0；累计保持'],
     status_tags: []
   })
 }

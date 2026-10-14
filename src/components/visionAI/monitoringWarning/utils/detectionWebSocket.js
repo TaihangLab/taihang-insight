@@ -60,12 +60,16 @@ function parseDetectionMessage (event) {
   const normalized = normalizeDashboardLocal(rawDashboard)
 
   return {
+    taskId: data.task_id,
+    hasDetectionData: data.task_id != null && Array.isArray(data.detections) && data.frame_index != null,
     detections: data.detections || [],
     statusTags: data.status_tags || [],
     dashboard: rawDashboard,
     dashboardLines: normalized.lines,
     dashboardTitle: normalized.title,
     debug: data.debug || null,
+    personStatistics: data.person_statistics || {},
+    timing: data.timing || {},
     generation: data.generation || (data.debug && data.debug.generation) || 0,
     stageReset: !!(data.stage_reset || (data.debug && data.debug.stage_reset)),
     frameSize: data.frame_size || { width: 1920, height: 1080 },
@@ -99,8 +103,8 @@ function createDetectionWebSocket (taskId, { onOpen, onMessage, onClose, onError
     if (onError) onError(error, ws)
   }
 
-  ws.onclose = () => {
-    if (onClose) onClose(ws)
+  ws.onclose = (event) => {
+    if (onClose) onClose(ws, event)
   }
 
   return ws
