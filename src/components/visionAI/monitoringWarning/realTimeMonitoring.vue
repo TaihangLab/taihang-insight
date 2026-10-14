@@ -122,21 +122,22 @@
                         </div>
                       </div>
                       
-                      <!-- 🆕 检测框OSD叠加层 -->
+                      <!-- 检测框 + 运行计划围栏 OSD（选中任务即显示围栏，不依赖检出） -->
                       <detection-overlay
-                        v-if="selectedAITasks[index-1] && detectionResults[index-1]"
+                        v-if="selectedAITasks[index-1]"
                         :container-width="getVideoWidth(index-1)"
                         :container-height="getVideoHeight(index-1)"
                         :video-width="videoResolutions[index-1] ? videoResolutions[index-1].width : 1920"
                         :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
-                        :frame-timestamp="detectionResults[index-1].frame_timestamp || 0"
-                        :detections="detectionResults[index-1].detections || []"
-                        :status-tags="detectionResults[index-1].status_tags || []"
-                        :dashboard="detectionResults[index-1].dashboard || []"
-                        :overlay-lines="detectionResults[index-1].overlay_lines || []"
+                        :frame-timestamp="(detectionResults[index-1] && detectionResults[index-1].frame_timestamp) || 0"
+                        :detections="(detectionResults[index-1] && detectionResults[index-1].detections) || []"
+                        :status-tags="(detectionResults[index-1] && detectionResults[index-1].status_tags) || []"
+                        :dashboard="(detectionResults[index-1] && detectionResults[index-1].dashboard) || []"
+                        :overlay-lines="(detectionResults[index-1] && detectionResults[index-1].overlay_lines) || []"
+                        :fence="getSelectedTaskFence(index-1)"
                         :hide-track-id="isPeopleCount(index-1)"
-                        :frame-index="detectionResults[index-1].frame_index || 0"
-                        :debug-info="detectionResults[index-1].debug || null">
+                        :frame-index="(detectionResults[index-1] && detectionResults[index-1].frame_index) || 0"
+                        :debug-info="(detectionResults[index-1] && detectionResults[index-1].debug) || null">
                       </detection-overlay>
                     </div>
               </div>
@@ -223,21 +224,22 @@
                           <span class="debug-value debug-ellipsis">{{ detectionUpdateTime[index-1] || '无数据' }}</span>
                         </div>
                       </div>
-                      <!-- 🆕 检测框OSD叠加层（全屏模式） -->
+                      <!-- 检测框 + 运行计划围栏 OSD（全屏模式） -->
                       <detection-overlay
-                        v-if="selectedAITasks[index-1] && detectionResults[index-1]"
+                        v-if="selectedAITasks[index-1]"
                         :container-width="getVideoWidth(index-1)"
                         :container-height="getVideoHeight(index-1)"
                         :video-width="videoResolutions[index-1] ? videoResolutions[index-1].width : 1920"
                         :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
-                        :frame-timestamp="detectionResults[index-1].frame_timestamp || 0"
-                        :detections="detectionResults[index-1].detections || []"
-                        :status-tags="detectionResults[index-1].status_tags || []"
-                        :dashboard="detectionResults[index-1].dashboard || []"
-                        :overlay-lines="detectionResults[index-1].overlay_lines || []"
+                        :frame-timestamp="(detectionResults[index-1] && detectionResults[index-1].frame_timestamp) || 0"
+                        :detections="(detectionResults[index-1] && detectionResults[index-1].detections) || []"
+                        :status-tags="(detectionResults[index-1] && detectionResults[index-1].status_tags) || []"
+                        :dashboard="(detectionResults[index-1] && detectionResults[index-1].dashboard) || []"
+                        :overlay-lines="(detectionResults[index-1] && detectionResults[index-1].overlay_lines) || []"
+                        :fence="getSelectedTaskFence(index-1)"
                         :hide-track-id="isPeopleCount(index-1)"
-                        :frame-index="detectionResults[index-1].frame_index || 0"
-                        :debug-info="detectionResults[index-1].debug || null">
+                        :frame-index="(detectionResults[index-1] && detectionResults[index-1].frame_index) || 0"
+                        :debug-info="(detectionResults[index-1] && detectionResults[index-1].debug) || null">
                       </detection-overlay>
                     </div>
               </div>
@@ -3130,6 +3132,21 @@ export default {
     aiTaskOptionLabel(task) {
       return (task && (task.skill_name || task.task_name)) || ''
     },
+    /** 当前窗口选中 AI 任务的运行计划围栏（区域/绊线/过线），供 OSD 常驻绘制 */
+    getSelectedTaskFence(index) {
+      const taskId = this.selectedAITasks[index]
+      if (taskId == null || taskId === '') return null
+      const cameraId = this.cameraIdMapping[index]
+      const list = this.availableAITasks[cameraId]
+        || this.availableAITasks[String(cameraId)]
+        || []
+      const task = list.find(t =>
+        t && (String(t.task_id) === String(taskId) || String(t.id) === String(taskId))
+      )
+      if (!task) return null
+      const fence = task.electronic_fence || task.fence || null
+      return (fence && typeof fence === 'object') ? fence : null
+    },
     aiTaskOptionHint(task) {
       if (!task) return ''
       const skill = String(task.skill_name || '').trim()
@@ -3201,6 +3218,9 @@ export default {
             task_name: t.name || '',
             skill_name: t.skill_class_name || t.name || '',
             alert_name: (t.config && t.config.alert_name) || '',
+            electronic_fence: (t.electronic_fence && typeof t.electronic_fence === 'object')
+              ? t.electronic_fence
+              : null,
             is_running: false
           }))
         console.log('[AITasks] DB fallback parsed camera_id=', key, 'count=', list.length, 'tasks=', list)

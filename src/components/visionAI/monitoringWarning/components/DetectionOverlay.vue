@@ -85,6 +85,11 @@ export default {
       type: Array,
       default: () => []
     },
+    // 运行计划区域绘制结果（电子围栏）：选中 AI 任务后常驻显示，不随检测批次淡出
+    fence: {
+      type: Object,
+      default: null
+    },
     hideTrackId: {
       type: Boolean,
       default: false
@@ -179,6 +184,12 @@ export default {
       deep: true
     },
     overlayLines: {
+      handler() {
+        this.onNewData()
+      },
+      deep: true
+    },
+    fence: {
       handler() {
         this.onNewData()
       },
@@ -332,8 +343,10 @@ export default {
       if (isNew) {
         this.pushBatch(this.detections || [])
       }
-      if (this.hasOverlayLines()) {
+      if (this.hasOverlayLines() || this.hasFenceGeometry()) {
         this.ensureRaf()
+      } else if (!this.batches.length) {
+        this.clearCanvas()
       }
     },
 
@@ -420,9 +433,9 @@ export default {
       }
 
       if (!current) {
-        if (this.hasOverlayLines()) {
+        if (this.hasPersistentOverlay()) {
           this.clearCanvas()
-          this.drawOverlayLines()
+          this.drawPersistentOverlay()
           return
         }
         this.clearCanvas()
@@ -445,9 +458,9 @@ export default {
 
       if (alpha <= 0) {
         this.batches.shift()
-        if (this.hasOverlayLines()) {
+        if (this.hasPersistentOverlay()) {
           this.clearCanvas()
-          this.drawOverlayLines()
+          this.drawPersistentOverlay()
           return
         }
         this.clearCanvas()
@@ -463,6 +476,52 @@ export default {
 
     hasOverlayLines() {
       return Array.isArray(this.overlayLines) && this.overlayLines.length > 0
+    },
+
+    fenceRegions() {
+      const f = this.fence || {}
+      if (Array.isArray(f.regions) && f.regions.length) return f.regions
+      if (Array.isArray(f.points) && f.points.length >= 3) {
+        return [{ name: '', points: f.points }]
+      }
+      return []
+    },
+
+    fenceTripwires() {
+      const f = this.fence || {}
+      return Array.isArray(f.tripwires) ? f.tripwires : []
+    },
+
+    fencePixelLineGroups() {
+      const f = this.fence || {}
+      const specs = [
+        { key: 'count_line', side: 'enter_point', color: '#3d9b6e', label: '过线' },
+        { key: 'bypass_line', side: 'bypass_point', color: '#e6a23c', label: '绕行' }
+      ]
+      return specs.map(spec => {
+        const cfg = f[spec.key] || {}
+        const lines = Array.isArray(cfg.lines) ? cfg.lines : []
+        return Object.assign({}, spec, {
+          lines,
+          iw: Number(cfg.image_width) || 0,
+          ih: Number(cfg.image_height) || 0
+        })
+      }).filter(g => g.lines.length)
+    },
+
+    hasFenceGeometry() {
+      return this.fenceRegions().some(r => (r.points || []).length >= 3)
+        || this.fenceTripwires().some(t => (t.line || t.points || []).length >= 2)
+        || this.fencePixelLineGroups().length > 0
+    },
+
+    hasPersistentOverlay() {
+      return this.hasOverlayLines() || this.hasFenceGeometry()
+    },
+
+    drawPersistentOverlay() {
+      this.drawFenceGeometry()
+      this.drawOverlayLines()
     },
 
     drawOverlayLines() {
@@ -502,8 +561,203 @@ export default {
       this.ctx.globalAlpha = prevAlpha
     },
 
+    /** 运行计划区域绘制：归一化坐标 → 贴合视频的 canvas（与 FencePreview 样式一致） */
+    drawFenceGeometry() {
+      if (!this.ctx || !this.hasFenceGeometry()) return
+      const W = this.canvasWidth
+      const H = this.canvasHeight
+      if (!W || !H) return
+      const k = Math.max(1, Math.min(W, H) / 480)
+      const prevAlpha = this.ctx.globalAlpha
+      this.ctx.globalAlpha = 1
+      this.fenceRegions().forEach((r, i) => {
+        if (r.visible === false) return
+        const points = r.points || []
+        if (points.length < 3) return
+        this.drawFenceRegion(r, points, W, H, k, i)
+      })
+      this.fenceTripwires().forEach(t => {
+        if (t.visible === false) return
+        const line = t.line || t.points || []
+        if (line.length < 2) return
+        this.drawFenceTripwire(t, line, W, H, k)
+      })
+      this.fencePixelLineGroups().forEach(g => this.drawFencePixelLines(g, W, H, k))
+      this.ctx.globalAlpha = prevAlpha
+    },
+
+    drawFenceRegion(r, points, W, H, k, index) {
+      const invert = !!r.invert
+      const bound = !!(r.bind_node || r.bind_node_name)
+      const stroke = invert ? '#e6a23c' : (bound ? '#3370ff' : '#ff4d4f')
+      const fill = invert ? 'rgba(250,140,22,0.24)' : (bound ? 'rgba(51,112,255,0.22)' : 'rgba(255,77,79,0.22)')
+      const tag = invert ? '#fa8c16' : (bound ? '#3370ff' : '#ff4d4f')
+      const ctx = this.ctx
+
+      ctx.beginPath()
+      points.forEach((p, i) => {
+        const x = Number(p.x) * W
+        const y = Number(p.y) * H
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      })
+      ctx.closePath()
+      ctx.fillStyle = fill
+      ctx.fill()
+      ctx.lineWidth = 2 * k
+      ctx.strokeStyle = stroke
+      ctx.setLineDash(invert ? [7 * k, 5 * k] : [])
+      ctx.stroke()
+      ctx.setLineDash([])
+
+      points.forEach(p => {
+        ctx.beginPath()
+        ctx.arc(Number(p.x) * W, Number(p.y) * H, 4 * k, 0, Math.PI * 2)
+        ctx.fillStyle = '#fff'
+        ctx.fill()
+        ctx.lineWidth = 2 * k
+        ctx.strokeStyle = stroke
+        ctx.stroke()
+      })
+
+      const name = (r.name || '').trim()
+      const bits = []
+      if (name) bits.push(name)
+      if (r.bind_node_name) bits.push(r.bind_node_name)
+      if (invert) bits.push('反选')
+      const text = bits.length > 1 && name ? `${name}（${bits.slice(1).join('·')}）` : (bits[0] || '')
+      if (!text) return
+      let anchor = points[0]
+      points.forEach(p => { if (Number(p.y) > Number(anchor.y)) anchor = p })
+      const fontSize = 11 * k
+      const padX = 6 * k
+      const padY = 3 * k
+      const x = Number(anchor.x) * W + 6 * k
+      const y = Number(anchor.y) * H - 6 * k
+      ctx.font = `${fontSize}px "Microsoft YaHei", "PingFang SC", sans-serif`
+      const tw = ctx.measureText(text).width
+      ctx.fillStyle = tag
+      ctx.fillRect(x - padX, y - fontSize - padY, tw + padX * 2, fontSize + 3 * k + padY * 2)
+      ctx.fillStyle = '#fff'
+      ctx.textBaseline = 'alphabetic'
+      ctx.fillText(text, x, y)
+    },
+
+    drawFenceTripwire(t, line, W, H, k) {
+      const ctx = this.ctx
+      const ax = Number(line[0].x) * W
+      const ay = Number(line[0].y) * H
+      const bx = Number(line[1].x) * W
+      const by = Number(line[1].y) * H
+      const color = '#52c41a'
+
+      ctx.beginPath()
+      ctx.moveTo(ax, ay)
+      ctx.lineTo(bx, by)
+      ctx.lineWidth = 2 * k
+      ctx.strokeStyle = color
+      ctx.setLineDash([])
+      ctx.stroke()
+
+      const mx = (ax + bx) / 2
+      const my = (ay + by) / 2
+      const len = Math.hypot(bx - ax, by - ay) || 1
+      let nx = -(by - ay) / len
+      let ny = (bx - ax) / len
+      if (t.direction === 'ba') { nx = -nx; ny = -ny }
+      const drawArrow = (dirx, diry) => {
+        const alen = 16 * k
+        const tipx = mx + dirx * alen
+        const tipy = my + diry * alen
+        ctx.beginPath()
+        ctx.moveTo(mx, my)
+        ctx.lineTo(tipx, tipy)
+        ctx.lineWidth = 1.6 * k
+        ctx.strokeStyle = color
+        ctx.stroke()
+        const head = 5 * k
+        ctx.beginPath()
+        ctx.moveTo(tipx, tipy)
+        ctx.lineTo(tipx - dirx * head - diry * head * 0.6, tipy - diry * head + dirx * head * 0.6)
+        ctx.lineTo(tipx - dirx * head + diry * head * 0.6, tipy - diry * head - dirx * head * 0.6)
+        ctx.closePath()
+        ctx.fillStyle = color
+        ctx.fill()
+      }
+      drawArrow(nx, ny)
+      if (t.direction === 'both') drawArrow(-nx, -ny)
+
+      const drawEndpoint = (x, y, label) => {
+        ctx.beginPath()
+        ctx.arc(x, y, 4.5 * k, 0, Math.PI * 2)
+        ctx.fillStyle = '#fff'
+        ctx.fill()
+        ctx.lineWidth = 2 * k
+        ctx.strokeStyle = color
+        ctx.stroke()
+        const fs = 10 * k
+        ctx.font = `bold ${fs}px sans-serif`
+        const tw = ctx.measureText(label).width
+        const pad = 3 * k
+        ctx.fillStyle = '#1f2937'
+        ctx.fillRect(x + 6 * k, y - fs - pad, tw + pad * 2, fs + pad * 2)
+        ctx.fillStyle = '#fff'
+        ctx.textBaseline = 'alphabetic'
+        ctx.fillText(label, x + 6 * k + pad, y - pad)
+      }
+      drawEndpoint(ax, ay, 'A')
+      drawEndpoint(bx, by, 'B')
+
+      const name = (t.name || '').trim()
+      if (name) {
+        const fs = 11 * k
+        ctx.font = `${fs}px "Microsoft YaHei", "PingFang SC", sans-serif`
+        const tw = ctx.measureText(name).width
+        const pad = 4 * k
+        ctx.fillStyle = color
+        ctx.fillRect(mx + 8 * k, my + 6 * k, tw + pad * 2, fs + pad * 2)
+        ctx.fillStyle = '#fff'
+        ctx.textBaseline = 'alphabetic'
+        ctx.fillText(name, mx + 8 * k + pad, my + 6 * k + fs + pad / 2)
+      }
+    },
+
+    drawFencePixelLines(group, W, H, k) {
+      const ctx = this.ctx
+      const sx = group.iw ? W / group.iw : 1
+      const sy = group.ih ? H / group.ih : 1
+      group.lines.forEach((it, idx) => {
+        const line = it && it.line
+        if (!Array.isArray(line) || line.length < 2) return
+        const ax = line[0].x * sx
+        const ay = line[0].y * sy
+        const bx = line[1].x * sx
+        const by = line[1].y * sy
+        ctx.beginPath()
+        ctx.moveTo(ax, ay)
+        ctx.lineTo(bx, by)
+        ctx.lineWidth = 3 * k
+        ctx.strokeStyle = group.color
+        ctx.setLineDash([])
+        ctx.stroke()
+        ;[line[0], line[1], it[group.side]].forEach(p => {
+          if (!p || typeof p.x !== 'number') return
+          ctx.beginPath()
+          ctx.arc(p.x * sx, p.y * sy, 4 * k, 0, Math.PI * 2)
+          ctx.fillStyle = group.color
+          ctx.fill()
+        })
+        ctx.font = `${12 * k}px "Microsoft YaHei", "PingFang SC", sans-serif`
+        ctx.fillStyle = '#fff'
+        ctx.textBaseline = 'alphabetic'
+        ctx.fillText(`${group.label}#${idx + 1}`, ax + 8 * k, ay - 8 * k)
+      })
+    },
+
     renderBatch(detections, alpha) {
       this.clearCanvas()
+      // 围栏常驻层画在检测框之下
+      this.drawFenceGeometry()
       if (!detections || detections.length === 0) {
         return
       }
