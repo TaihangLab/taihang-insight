@@ -729,6 +729,14 @@ export default {
     visualParams() {
       const dc = this.visualDetail && this.visualDetail.default_config
       const params = dc && dc.params
+      const fields = dc && Array.isArray(dc.form_fields) ? dc.form_fields.filter(f => f && f.key) : []
+      if (fields.length) {
+        const bag = (params && typeof params === 'object' && !Array.isArray(params)) ? params : {}
+        return fields.map(f => ({
+          label: f.label || f.key,
+          value: bag[f.key] !== undefined ? bag[f.key] : (f.default !== undefined ? f.default : '')
+        }))
+      }
       if (!params) return []
       if (Array.isArray(params)) {
         return params.map(p => ({
@@ -746,7 +754,10 @@ export default {
       const defs = dc && dc.alert_definitions
       if (!defs) return []
       if (Array.isArray(defs)) {
-        return defs.map(a => (typeof a === 'string') ? a : (a.name || a.label || a.type || JSON.stringify(a)))
+        return defs.map(a => {
+          if (typeof a === 'string') return a
+          return a.description || a.name || a.label || a.key || a.type || ''
+        }).filter(Boolean)
       }
       if (typeof defs === 'object') return Object.keys(defs)
       return []
