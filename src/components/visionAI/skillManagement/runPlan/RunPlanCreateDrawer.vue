@@ -258,7 +258,7 @@
             </span>
           </div>
           <div v-if="fenceRequired" class="region-required-hint">该技能把电子围栏设为必填：未绘制框的点位不会启动任务。</div>
-          <div v-if="requiredLineFields.length" class="region-required-hint">该技能要求绘制点线（{{ requiredLineFields.map(f => f.label).join('、') }}）：未绘制的点位无法完成配置。请在绘制页选择「仅绘制点线」或「框与点线」。</div>
+          <div v-if="requiredLineFields.length" class="region-required-hint">该技能要求绘制点线（{{ requiredLineFields.map(f => f.label).join('、') }}）：未绘制的点位无法完成配置。</div>
           <div class="region-draw">
             <div class="region-list">
               <div

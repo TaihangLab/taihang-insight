@@ -20,18 +20,7 @@
     <div class="fence-body">
       <!-- 画布区 -->
       <div class="canvas-section">
-        <div class="canvas-toolbar canvas-toolbar--modes">
-          <el-radio-group v-model="drawMode" size="mini" class="draw-mode-group" @change="onDrawModeChange">
-            <el-radio-button label="none">不绘制</el-radio-button>
-            <el-radio-button label="region">仅绘制框</el-radio-button>
-            <el-radio-button label="line">仅绘制点线</el-radio-button>
-            <el-radio-button label="both">框与点线</el-radio-button>
-          </el-radio-group>
-          <button type="button" class="refresh-btn" @click="refreshImage">
-            <i class="el-icon-refresh"></i> 刷新图片
-          </button>
-        </div>
-        <div class="canvas-toolbar" v-if="drawMode !== 'none'">
+        <div class="canvas-toolbar">
           <div class="canvas-toolbar__left">
             <span v-for="t in tools" :key="t.key" class="tool-item">
               <span v-if="t.dividerBefore" class="tool-divider"></span>
@@ -49,6 +38,9 @@
               </span>
             </span>
           </div>
+          <button type="button" class="refresh-btn" @click="refreshImage">
+            <i class="el-icon-refresh"></i> 刷新图片
+          </button>
         </div>
 
         <div
@@ -77,6 +69,7 @@
           </canvas>
           <div v-if="drawing && tool === 'countline'" class="canvas-tip">{{ countLineHint }}</div>
           <div v-else-if="drawing && tool === 'tripwire'" class="canvas-tip">已落下 A 点，再单击落下 B 点完成绊线；双击取消</div>
+          <div v-else-if="drawing && tool === 'rect'" class="canvas-tip">已落下对角点 A，再单击对角点 B 完成四边形；双击取消</div>
           <div v-else-if="drawing" class="canvas-tip">单击添加顶点，双击或靠近起点闭合；不足 3 点双击将取消</div>
           <div v-else-if="selectedIndex >= 0 && tool !== 'pan'" class="canvas-tip canvas-tip--muted">单击空白区域取消选中</div>
         </div>
@@ -103,7 +96,7 @@
             @click="selectRegion(i)">
             <div class="fence-item__head">
               <el-checkbox v-model="r.visible" @change="redraw" @click.native.stop>
-                <span class="fence-item__type">多边形电子围栏</span>
+                <span class="fence-item__type">{{ (r.points || []).length === 4 ? '四边形电子围栏' : '多边形电子围栏' }}</span>
               </el-checkbox>
               <div class="fence-item__ops">
                 <i class="el-icon-view" :class="{ off: !r.visible }" @click.stop="toggleVisible(i)"></i>
@@ -329,6 +322,7 @@ const RATIO_TIP_TEXT = '目标占比：指目标在电子围栏中的部分占�
 const MOTION_RATIO_TIP_TEXT = '光流只看围栏画在哪一块，按区域内像素算运动；不看检测框占比。绑给运动状态时填多少都不影响是否判定在转。';
 
 const ICON_POLYGON = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2l8 6v8l-8 6-8-6V8l8-6z" fill-opacity="0.15" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>';
+const ICON_RECT = '<svg viewBox="0 0 24 24" width="18" height="18"><rect x="4" y="5" width="16" height="14" rx="1" fill="currentColor" fill-opacity="0.15" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>';
 const ICON_TRIPWIRE = '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="5" cy="19" r="2" fill="currentColor"/><circle cx="19" cy="5" r="2" fill="currentColor"/><line x1="6.5" y1="17.5" x2="17.5" y2="6.5" stroke="currentColor" stroke-width="1.8"/></svg>';
 const ICON_COUNTLINE = '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="4" cy="12" r="2.2" fill="currentColor"/><circle cx="20" cy="12" r="2.2" fill="currentColor"/><circle cx="12" cy="5" r="2" fill="currentColor"/><line x1="5.8" y1="12" x2="18.2" y2="12" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="7" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/></svg>';
 const ICON_PAN = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2l1.5 4.5H18l-3.7 2.7 1.4 4.3L12 12.8 8.3 13.5l1.4-4.3L6 6.5h4.5L12 2zm-7 14h2v6H5v-6zm12 0h2v6h-2v-6zm-6 0h2v6h-2v-6z"/></svg>';
@@ -409,7 +403,6 @@ export default {
       activeLineKey: '',
       selectedCountLineIndex: -1,
       countLineDraft: [],
-      drawMode: 'both',
       tool: 'polygon',
       selectedIndex: -1,
       drawing: false,
@@ -428,6 +421,7 @@ export default {
       _lastPolyDown: 0,
       tools: [
         { key: 'polygon', title: '多边形', tip: '绘制多边形电子围栏', icon: ICON_POLYGON, disabled: false },
+        { key: 'rect', title: '四边形', tip: '单击两个对角点完成四边形围栏', icon: ICON_RECT, disabled: false },
         {
           key: 'tripwire',
           title: '绊线',
@@ -502,24 +496,23 @@ export default {
       return `点击参考侧（${side}）；双击取消`;
     },
     effectiveAllowPolygon() {
-      return !!this.allowPolygon && (this.drawMode === 'region' || this.drawMode === 'both');
+      return !!this.allowPolygon;
     },
     effectiveAllowCountLine() {
-      return !!this.allowCountLine && (this.drawMode === 'line' || this.drawMode === 'both');
+      return !!this.allowCountLine;
     },
     effectiveAllowTripwire() {
-      return !!this.allowTripwire && this.drawMode !== 'none' && this.drawMode !== 'line';
+      return !!this.allowTripwire;
     },
     roiBadgeLabel() {
       const parts = [];
       if (this.effectiveAllowPolygon) parts.push('roi');
       if (this.effectiveAllowTripwire) parts.push('trip');
       if (this.effectiveAllowCountLine) parts.push('point');
-      return parts.length ? parts.join('+') : 'none';
+      return parts.length ? parts.join('+') : 'draw';
     },
     emptyDrawHint() {
-      if (this.drawMode === 'none') return '当前为「不绘制」，提交将保留或清空取决于已有数据；可切换上方模式开始绘制';
-      if (this.effectiveAllowPolygon) return '请点击画布区域开始绘制';
+      if (this.effectiveAllowPolygon) return '请点击画布区域开始绘制，或切换工具绘制点线/绊线';
       if (this.effectiveAllowCountLine) return '请选择「点线」工具：两点成线，第三点标参考侧';
       if (this.effectiveAllowTripwire) return '请在画布上点两个点绘制绊线';
       return '当前未启用任何绘制工具';
@@ -539,7 +532,7 @@ export default {
     },
     canvasCursor() {
       if (this.tool === 'pan') return this.panning ? 'grabbing' : 'grab';
-      if (this.tool === 'polygon' || this.tool === 'tripwire' || this.tool === 'countline') return 'crosshair';
+      if (this.tool === 'polygon' || this.tool === 'rect' || this.tool === 'tripwire' || this.tool === 'countline') return 'crosshair';
       return 'default';
     },
     currentGuideExample() {
@@ -707,45 +700,26 @@ export default {
       });
       this.countLineItems = items;
       this.activeLineKey = (this.resolvedLineFields[0] && this.resolvedLineFields[0].key) || '';
-      this.drawMode = this.inferDrawModeFromContent();
       this.applyToolAvailability();
       this.$nextTick(this.redraw);
     },
-    inferDrawModeFromContent() {
-      const hasRegion = this.regions.some(r => r.points && r.points.length >= 3)
-        || this.tripwires.some(t => t.line && t.line.length >= 2);
-      const hasLine = this.countLineTotal > 0;
-      if (hasRegion && hasLine) return 'both';
-      if (hasRegion) return 'region';
-      if (hasLine) return 'line';
-      return 'both';
-    },
     applyToolAvailability() {
       const polyTool = this.tools.find(t => t.key === 'polygon');
+      const rectTool = this.tools.find(t => t.key === 'rect');
       const tripTool = this.tools.find(t => t.key === 'tripwire');
       const countTool = this.tools.find(t => t.key === 'countline');
       if (polyTool) polyTool.disabled = !this.effectiveAllowPolygon;
+      if (rectTool) rectTool.disabled = !this.effectiveAllowPolygon;
       if (tripTool) tripTool.disabled = !this.effectiveAllowTripwire;
       if (countTool) countTool.disabled = !this.effectiveAllowCountLine;
-      if (this.drawMode === 'none') {
-        this.tool = 'pan';
-      } else if (this.effectiveAllowPolygon) {
-        this.tool = 'polygon';
-      } else if (this.effectiveAllowCountLine) {
-        this.tool = 'countline';
-      } else if (this.effectiveAllowTripwire) {
-        this.tool = 'tripwire';
-      } else {
-        this.tool = 'pan';
-      }
+      if (this.effectiveAllowPolygon) this.tool = 'polygon';
+      else if (this.effectiveAllowCountLine) this.tool = 'countline';
+      else if (this.effectiveAllowTripwire) this.tool = 'tripwire';
+      else this.tool = 'pan';
       this.drawing = false;
       this.currentPoints = [];
       this.countLineDraft = [];
       this.hoverPoint = null;
-    },
-    onDrawModeChange() {
-      this.applyToolAvailability();
-      this.redraw();
     },
     onToolClick(t) {
       if (t.disabled) return;
@@ -753,7 +727,7 @@ export default {
       if (t.key === 'zoomOut') { this.zoomAt(0.8); return; }
       if (t.key === 'resetView') { this.resetView(); return; }
       if (t.key === 'fullscreen') { this.toggleFullscreen(); return; }
-      if (t.key === 'polygon' || t.key === 'tripwire' || t.key === 'countline') {
+      if (t.key === 'polygon' || t.key === 'rect' || t.key === 'tripwire' || t.key === 'countline') {
         this.tool = t.key;
         this.drawing = false;
         this.currentPoints = [];
@@ -914,6 +888,17 @@ export default {
         return;
       }
 
+      if (this.tool === 'rect') {
+        const nowR = Date.now();
+        if (nowR - this._lastPolyDown < 320) {
+          this._lastPolyDown = nowR;
+          return;
+        }
+        this._lastPolyDown = nowR;
+        this.addRectPoint(coords);
+        return;
+      }
+
       if (this.tool !== 'polygon') {
         if (this.selectedIndex >= 0 && !this.drawing) {
           this.selectedIndex = -1;
@@ -929,6 +914,60 @@ export default {
       }
       this._lastPolyDown = now;
       this.addPolygonPoint(coords);
+    },
+    rectPointsFromCorners(a, b) {
+      const x1 = Math.min(a.x, b.x);
+      const x2 = Math.max(a.x, b.x);
+      const y1 = Math.min(a.y, b.y);
+      const y2 = Math.max(a.y, b.y);
+      return [
+        { x: +x1.toFixed(4), y: +y1.toFixed(4) },
+        { x: +x2.toFixed(4), y: +y1.toFixed(4) },
+        { x: +x2.toFixed(4), y: +y2.toFixed(4) },
+        { x: +x1.toFixed(4), y: +y2.toFixed(4) }
+      ];
+    },
+    addRectPoint(coords) {
+      if (!this.drawing && this.selectedIndex >= 0) {
+        this.selectedIndex = -1;
+        this.redraw();
+        return;
+      }
+      if (!this.drawing && this.reachedRegionLimit()) {
+        this.notifyRegionLimit();
+        return;
+      }
+      const norm = this.toNormalized(coords.px, coords.py);
+      if (!this.drawing) {
+        this.drawing = true;
+        this.currentPoints = [norm];
+        this.selectedIndex = -1;
+        this.redraw();
+        return;
+      }
+      const pts = this.rectPointsFromCorners(this.currentPoints[0], norm);
+      const w = Math.abs(pts[1].x - pts[0].x) * this.canvasW;
+      const h = Math.abs(pts[2].y - pts[0].y) * this.canvasH;
+      if (w < 4 || h < 4) {
+        this.$message.warning('四边形过小，请重新绘制');
+        this.cancelDrawing();
+        return;
+      }
+      const idx = this.regions.length;
+      this.regions.push({
+        name: this.nextName(),
+        ratio: this.resolvedDefaultRatio,
+        invert: false,
+        bind_node: '',
+        bind_node_name: '',
+        visible: true,
+        points: pts
+      });
+      this.selectedIndex = idx;
+      this.drawing = false;
+      this.currentPoints = [];
+      this.hoverPoint = null;
+      this.redraw();
     },
     addTripwirePoint(coords) {
       const norm = this.toNormalized(coords.px, coords.py);
@@ -1038,7 +1077,7 @@ export default {
       e.preventDefault();
       this._lastPolyDown = 0;
       if (!this.drawing) return;
-      if (this.tool === 'tripwire' || this.tool === 'countline') {
+      if (this.tool === 'tripwire' || this.tool === 'countline' || this.tool === 'rect') {
         this.cancelDrawing();
         return;
       }
@@ -1278,6 +1317,12 @@ export default {
             line: [this.currentPoints[0], this.hoverPoint || this.currentPoints[0]]
           };
           this.drawTripwire(ctx, preview, true, true);
+        } else if (this.tool === 'rect') {
+          const a = this.currentPoints[0];
+          const b = this.hoverPoint || a;
+          const pts = this.rectPointsFromCorners(a, b);
+          this.drawPolygon(ctx, pts, 'rgba(64,158,255,0.16)', '#409eff', false);
+          this.drawVertexHandles(ctx, [a, b], true, '#409eff');
         } else {
           const pts = this.currentPoints.slice();
           const preview = this.hoverPoint ? pts.concat([this.hoverPoint]) : pts;
@@ -1484,13 +1529,7 @@ export default {
     },
     confirm() {
       if (this.drawing && this.tool === 'polygon') this.finishPolygon();
-      if (this.drawing && (this.tool === 'tripwire' || this.tool === 'countline')) this.cancelDrawing();
-      // 「不绘制」提交：清空本点位几何
-      if (this.drawMode === 'none') {
-        this.$emit('confirm', { regions: [] });
-        this.innerVisible = false;
-        return;
-      }
+      if (this.drawing && (this.tool === 'tripwire' || this.tool === 'countline' || this.tool === 'rect')) this.cancelDrawing();
       const fence = {
         regions: this.regions.map((r, i) => ({
           name: this.regionBaseName(r, i),
@@ -1597,15 +1636,6 @@ export default {
   box-shadow: 0 1px 2px rgba(31, 35, 41, 0.04);
 }
 
-.canvas-toolbar--modes {
-  justify-content: space-between;
-  gap: 12px;
-}
-.canvas-toolbar--modes .draw-mode-group {
-  flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-}
 .canvas-toolbar {
   display: flex;
   align-items: center;
