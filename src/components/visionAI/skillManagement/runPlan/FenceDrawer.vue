@@ -10,7 +10,7 @@
     @opened="onOpened"
     @closed="onClosed">
     <div slot="title" class="fence-header">
-      <span class="fence-header__title">电子围栏绘制</span>
+      <span class="fence-header__title">区域绘制</span>
       <button type="button" class="fence-header__guide" @click="showGuide = !showGuide">
         <i class="el-icon-question"></i> 绘制说明
       </button>
@@ -20,7 +20,18 @@
     <div class="fence-body">
       <!-- 画布区 -->
       <div class="canvas-section">
-        <div class="canvas-toolbar">
+        <div class="canvas-toolbar canvas-toolbar--modes">
+          <el-radio-group v-model="drawMode" size="mini" class="draw-mode-group" @change="onDrawModeChange">
+            <el-radio-button label="none">不绘制</el-radio-button>
+            <el-radio-button label="region">仅绘制框</el-radio-button>
+            <el-radio-button label="line">仅绘制点线</el-radio-button>
+            <el-radio-button label="both">框与点线</el-radio-button>
+          </el-radio-group>
+          <button type="button" class="refresh-btn" @click="refreshImage">
+            <i class="el-icon-refresh"></i> 刷新图片
+          </button>
+        </div>
+        <div class="canvas-toolbar" v-if="drawMode !== 'none'">
           <div class="canvas-toolbar__left">
             <span v-for="t in tools" :key="t.key" class="tool-item">
               <span v-if="t.dividerBefore" class="tool-divider"></span>
@@ -38,9 +49,6 @@
               </span>
             </span>
           </div>
-          <button type="button" class="refresh-btn" @click="refreshImage">
-            <i class="el-icon-refresh"></i> 刷新图片
-          </button>
         </div>
 
         <div
@@ -56,7 +64,7 @@
             <svg class="roi-badge__icon" viewBox="0 0 24 24" width="14" height="14">
               <path fill="currentColor" d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/>
             </svg>
-            <span class="roi-badge__label">{{ allowPolygon ? (allowTripwire ? 'roi+line' : 'roi') : 'line' }}</span>
+            <span class="roi-badge__label">{{ roiBadgeLabel }}</span>
             <span class="roi-badge__dot" :class="hasDrawn ? 'is-drawn' : ''"></span>
             <span class="roi-badge__status">{{ hasDrawn ? '已绘制' : '未绘制' }}</span>
           </div>
@@ -67,7 +75,8 @@
             class="fence-canvas"
             :style="{ cursor: canvasCursor }">
           </canvas>
-          <div v-if="drawing && tool === 'tripwire'" class="canvas-tip">已落下 A 点，再单击落下 B 点完成绊线；双击取消</div>
+          <div v-if="drawing && tool === 'countline'" class="canvas-tip">{{ countLineHint }}</div>
+          <div v-else-if="drawing && tool === 'tripwire'" class="canvas-tip">已落下 A 点，再单击落下 B 点完成绊线；双击取消</div>
           <div v-else-if="drawing" class="canvas-tip">单击添加顶点，双击或靠近起点闭合；不足 3 点双击将取消</div>
           <div v-else-if="selectedIndex >= 0 && tool !== 'pan'" class="canvas-tip canvas-tip--muted">单击空白区域取消选中</div>
         </div>
@@ -76,16 +85,16 @@
       <!-- 围栏列表 -->
       <div class="fence-list">
         <div class="fence-list__head">
-          电子围栏列表 ({{ visibleRegionCount }}/{{ totalItemCount }})
+          绘制列表 ({{ visibleRegionCount }}/{{ totalItemCount }})
         </div>
         <div class="fence-list__desc">
-          {{ extraHint || '说明：绘制的电子围栏区域为识别区域，技能使用后作为预置信息生效' }}
+          {{ extraHint || '说明：绘制的框/点线将作为技能预置信息生效；点线为两端点加参考侧' }}
         </div>
         <div v-if="unboundFenceNodeNames.length" class="fence-list__warn">
           已指定「用于节点」，但这些接到围栏的节点还没有对应围栏：{{ unboundFenceNodeNames.join('、') }}。它们会拿不到围栏。
         </div>
 
-        <div v-if="regions.length" class="fence-items">
+        <div v-if="effectiveAllowPolygon && regions.length" class="fence-items">
           <div
             v-for="(r, i) in regions"
             :key="i"
@@ -169,7 +178,7 @@
           </div>
         </div>
 
-        <div v-if="tripwires.length" class="fence-items">
+        <div v-if="effectiveAllowTripwire && tripwires.length" class="fence-items">
           <div
             v-for="(t, i) in tripwires"
             :key="'tw-' + i"
@@ -215,11 +224,36 @@
           </div>
         </div>
 
-        <div v-if="!regions.length && !tripwires.length" class="fence-empty">
+        <div v-if="effectiveAllowCountLine && resolvedLineFields.length" class="fence-items">
+          <div class="fence-line-tabs" v-if="resolvedLineFields.length > 1">
+            <button
+              v-for="f in resolvedLineFields"
+              :key="f.key"
+              type="button"
+              class="fence-line-tab"
+              :class="{ active: activeLineKey === f.key }"
+              @click="selectLineField(f.key)">
+              {{ f.label }}（{{ (countLineItems[f.key] || []).length }}）
+            </button>
+          </div>
+          <div v-for="(it, i) in activeCountLineItems" :key="'cl-' + activeLineKey + '-' + i"
+            class="fence-item"
+            :class="{ active: selectedCountLineIndex === i }"
+            @click="selectCountLine(i)">
+            <div class="fence-item__head">
+              <span class="fence-item__type">{{ activeLineFieldLabel }} #{{ i + 1 }}</span>
+              <div class="fence-item__ops">
+                <i class="el-icon-delete" @click.stop="removeCountLine(i)"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="!regions.length && !tripwires.length && !countLineTotal" class="fence-empty">
           <svg viewBox="0 0 48 48" width="48" height="48" class="fence-empty__icon">
             <path fill="#dcdfe6" d="M8 40l32-32 4 4-32 32H8v-4zm28-28l4-4 4 4-4 4-4-4zM12 12h8v8h-8V12z"/>
           </svg>
-          <p>{{ allowPolygon ? '请点击画布区域开始绘制' : '请在画布上点两个点绘制绊线' }}</p>
+          <p>{{ emptyDrawHint }}</p>
         </div>
       </div>
 
@@ -296,6 +330,7 @@ const MOTION_RATIO_TIP_TEXT = '光流只看围栏画在哪一块，按区域内�
 
 const ICON_POLYGON = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2l8 6v8l-8 6-8-6V8l8-6z" fill-opacity="0.15" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>';
 const ICON_TRIPWIRE = '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="5" cy="19" r="2" fill="currentColor"/><circle cx="19" cy="5" r="2" fill="currentColor"/><line x1="6.5" y1="17.5" x2="17.5" y2="6.5" stroke="currentColor" stroke-width="1.8"/></svg>';
+const ICON_COUNTLINE = '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="4" cy="12" r="2.2" fill="currentColor"/><circle cx="20" cy="12" r="2.2" fill="currentColor"/><circle cx="12" cy="5" r="2" fill="currentColor"/><line x1="5.8" y1="12" x2="18.2" y2="12" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="7" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/></svg>';
 const ICON_PAN = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2l1.5 4.5H18l-3.7 2.7 1.4 4.3L12 12.8 8.3 13.5l1.4-4.3L6 6.5h4.5L12 2zm-7 14h2v6H5v-6zm12 0h2v6h-2v-6zm-6 0h2v6h-2v-6z"/></svg>';
 const ICON_ZOOM_IN = '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="15" y1="15" x2="20" y2="20" stroke="currentColor" stroke-width="1.8"/><line x1="7.5" y1="10" x2="12.5" y2="10" stroke="currentColor" stroke-width="1.8"/><line x1="10" y1="7.5" x2="10" y2="12.5" stroke="currentColor" stroke-width="1.8"/></svg>';
 const ICON_ZOOM_OUT = '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="15" y1="15" x2="20" y2="20" stroke="currentColor" stroke-width="1.8"/><line x1="7.5" y1="10" x2="12.5" y2="10" stroke="currentColor" stroke-width="1.8"/></svg>';
@@ -303,15 +338,53 @@ const ICON_RESET = '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="
 const ICON_FULLSCREEN = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>';
 const ICON_FULLSCREEN_EXIT = '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M9 4H4v5M20 9V4h-5M4 15v5h5M15 20h5v-5"/></svg>';
 
+const COUNT_LINE_COLORS = {
+  count_line: '#3d9b6e',
+  bypass_line: '#e6a23c'
+};
+
+const DEFAULT_LINE_FIELDS = [
+  { key: 'count_line', label: '过线计数线', hint: '先点两个端点，再点第三下标出参考侧', required: false, sideKey: 'enter_point' },
+  { key: 'bypass_line', label: '绕行线', hint: '可选', required: false, sideKey: 'bypass_point' }
+];
+
+function sideKeyOfLineField(field) {
+  if (field && field.sideKey) return field.sideKey;
+  return field && field.key === 'bypass_line' ? 'bypass_point' : 'enter_point';
+}
+
+function parseCountLines(cfg, sideKey) {
+  const lines = cfg && Array.isArray(cfg.lines) ? cfg.lines : [];
+  const out = [];
+  lines.forEach(it => {
+    const line = it && it.line;
+    const side = it && it[sideKey];
+    if (!Array.isArray(line) || line.length < 2 || !side) return;
+    const a = line[0];
+    const b = line[1];
+    if ([a && a.x, a && a.y, b && b.x, b && b.y, side.x, side.y].some(v => typeof v !== 'number')) return;
+    out.push({
+      line: [
+        { x: Math.round(a.x), y: Math.round(a.y) },
+        { x: Math.round(b.x), y: Math.round(b.y) }
+      ],
+      side: { x: Math.round(side.x), y: Math.round(side.y) }
+    });
+  });
+  return out;
+}
+
 export default {
   name: 'FenceDrawer',
   props: {
     visible: { type: Boolean, default: false },
     initFence: { type: Object, default: null },
     cameraId: { type: [Number, String], default: null },
-    // 技能声明的输入决定可绘制内容：声明 ROI → 多边形围栏；声明 Tripwire → 绊线
+    // 可绘制内容：多边形围栏 / 绊线 / 点线（两端点+参考侧）
     allowPolygon: { type: Boolean, default: true },
     allowTripwire: { type: Boolean, default: false },
+    allowCountLine: { type: Boolean, default: false },
+    lineFields: { type: Array, default: () => [] },
     // 多边形电子围栏数量上限：0 不限制（仅 Array<ROI>）；单个 ROI 为 1
     maxRegions: { type: Number, default: 0 },
     extraHint: { type: String, default: '' },
@@ -320,7 +393,7 @@ export default {
     defaultRatio: { type: Number, default: null },
     // 各节点自己的默认占比 { nodeId: number }
     nodeDefaultRatios: { type: Object, default: () => ({}) },
-    // 「占比」是检测框与区域的重叠阈值，仅对目标检测类场景有意义；
+    // 「占比」是检测框与区域的重叠比值，仅对目标检测类场景有意义；
     // 按像素统计的场景（如采集的画面变化）用不到，可隐藏以免误导
     showRatio: { type: Boolean, default: true }
   },
@@ -332,6 +405,11 @@ export default {
       regions: [],
       tripwires: [],
       selectedTripwireIndex: -1,
+      countLineItems: {},
+      activeLineKey: '',
+      selectedCountLineIndex: -1,
+      countLineDraft: [],
+      drawMode: 'both',
       tool: 'polygon',
       selectedIndex: -1,
       drawing: false,
@@ -355,6 +433,14 @@ export default {
           title: '绊线',
           tip: '绊线用于跨线方向检测；技能输入声明了绊线(Tripwire)类型才可绘制',
           icon: ICON_TRIPWIRE,
+          disabled: true,
+          dividerBefore: false
+        },
+        {
+          key: 'countline',
+          title: '点线',
+          tip: '先点两个端点画出线段，再点第三下标出参考侧（过线计数/绕行）',
+          icon: ICON_COUNTLINE,
           disabled: true,
           dividerBefore: false
         },
@@ -387,19 +473,73 @@ export default {
     dialogClass() {
       return this.isFullscreen ? 'fence-dialog is-dialog-fullscreen' : 'fence-dialog';
     },
+    resolvedLineFields() {
+      const raw = (this.lineFields && this.lineFields.length) ? this.lineFields : DEFAULT_LINE_FIELDS;
+      return raw.filter(f => f && f.key).map(f => ({
+        key: f.key,
+        label: f.label || f.key,
+        hint: f.hint || '',
+        required: !!f.required,
+        sideKey: sideKeyOfLineField(f)
+      }));
+    },
+    countLineTotal() {
+      return this.resolvedLineFields.reduce((n, f) => n + ((this.countLineItems[f.key] || []).length), 0);
+    },
+    activeCountLineItems() {
+      return this.countLineItems[this.activeLineKey] || [];
+    },
+    activeLineField() {
+      return this.resolvedLineFields.find(f => f.key === this.activeLineKey) || this.resolvedLineFields[0] || null;
+    },
+    activeLineFieldLabel() {
+      return (this.activeLineField && this.activeLineField.label) || '点线';
+    },
+    countLineHint() {
+      const side = (this.activeLineField && this.activeLineField.sideKey) || 'enter_point';
+      if (this.countLineDraft.length === 0) return '点击第 1 个端点';
+      if (this.countLineDraft.length === 1) return '点击第 2 个端点完成线段';
+      return `点击参考侧（${side}）；双击取消`;
+    },
+    effectiveAllowPolygon() {
+      return !!this.allowPolygon && (this.drawMode === 'region' || this.drawMode === 'both');
+    },
+    effectiveAllowCountLine() {
+      return !!this.allowCountLine && (this.drawMode === 'line' || this.drawMode === 'both');
+    },
+    effectiveAllowTripwire() {
+      return !!this.allowTripwire && this.drawMode !== 'none' && this.drawMode !== 'line';
+    },
+    roiBadgeLabel() {
+      const parts = [];
+      if (this.effectiveAllowPolygon) parts.push('roi');
+      if (this.effectiveAllowTripwire) parts.push('trip');
+      if (this.effectiveAllowCountLine) parts.push('point');
+      return parts.length ? parts.join('+') : 'none';
+    },
+    emptyDrawHint() {
+      if (this.drawMode === 'none') return '当前为「不绘制」，提交将保留或清空取决于已有数据；可切换上方模式开始绘制';
+      if (this.effectiveAllowPolygon) return '请点击画布区域开始绘制';
+      if (this.effectiveAllowCountLine) return '请选择「点线」工具：两点成线，第三点标参考侧';
+      if (this.effectiveAllowTripwire) return '请在画布上点两个点绘制绊线';
+      return '当前未启用任何绘制工具';
+    },
     hasDrawn() {
       return this.regions.some(r => r.points && r.points.length >= 3)
-        || this.tripwires.some(t => t.line && t.line.length >= 2);
+        || this.tripwires.some(t => t.line && t.line.length >= 2)
+        || this.countLineTotal > 0;
     },
     visibleRegionCount() {
-      return this.regions.filter(r => r.visible).length + this.tripwires.filter(t => t.visible).length;
+      return this.regions.filter(r => r.visible).length
+        + this.tripwires.filter(t => t.visible).length
+        + this.countLineTotal;
     },
     totalItemCount() {
-      return this.regions.length + this.tripwires.length;
+      return this.regions.length + this.tripwires.length + this.countLineTotal;
     },
     canvasCursor() {
       if (this.tool === 'pan') return this.panning ? 'grabbing' : 'grab';
-      if (this.tool === 'polygon' || this.tool === 'tripwire') return 'crosshair';
+      if (this.tool === 'polygon' || this.tool === 'tripwire' || this.tool === 'countline') return 'crosshair';
       return 'default';
     },
     currentGuideExample() {
@@ -423,6 +563,13 @@ export default {
       if (v == null || v === '' || Number.isNaN(Number(v))) return GLOBAL_RATIO_DEFAULT
       const n = Number(v)
       return Math.max(0, Math.min(1, n))
+    },
+    naturalSize() {
+      const img = this.bgImage;
+      return {
+        w: (img && (img.naturalWidth || img.width)) || 0,
+        h: (img && (img.naturalHeight || img.height)) || 0
+      };
     }
   },
   watch: {
@@ -492,8 +639,10 @@ export default {
       this.guideExampleIndex = 0;
       this.drawing = false;
       this.currentPoints = [];
+      this.countLineDraft = [];
       this.hoverPoint = null;
       this.selectedIndex = -1;
+      this.selectedCountLineIndex = -1;
       this._lastPolyDown = 0;
       this.resetViewState();
       if (this.isFullscreen) {
@@ -521,16 +670,12 @@ export default {
       this.loadSnapshot();
     },
     initFromProp() {
-      // 按技能输入声明启用工具：声明 ROI → 多边形；声明 Tripwire → 绊线
-      const polyTool = this.tools.find(t => t.key === 'polygon');
-      const tripTool = this.tools.find(t => t.key === 'tripwire');
-      if (polyTool) polyTool.disabled = !this.allowPolygon;
-      if (tripTool) tripTool.disabled = !this.allowTripwire;
-      this.tool = this.allowPolygon ? 'polygon' : (this.allowTripwire ? 'tripwire' : 'pan');
       this.drawing = false;
       this.currentPoints = [];
+      this.countLineDraft = [];
       this.selectedIndex = -1;
       this.selectedTripwireIndex = -1;
+      this.selectedCountLineIndex = -1;
       this.resetViewState();
       if (this.initFence && this.initFence.regions) {
         this.regions = JSON.parse(JSON.stringify(this.initFence.regions)).map((r, idx) => ({
@@ -556,7 +701,51 @@ export default {
       } else {
         this.tripwires = [];
       }
+      const items = {};
+      this.resolvedLineFields.forEach(f => {
+        items[f.key] = parseCountLines(this.initFence && this.initFence[f.key], f.sideKey);
+      });
+      this.countLineItems = items;
+      this.activeLineKey = (this.resolvedLineFields[0] && this.resolvedLineFields[0].key) || '';
+      this.drawMode = this.inferDrawModeFromContent();
+      this.applyToolAvailability();
       this.$nextTick(this.redraw);
+    },
+    inferDrawModeFromContent() {
+      const hasRegion = this.regions.some(r => r.points && r.points.length >= 3)
+        || this.tripwires.some(t => t.line && t.line.length >= 2);
+      const hasLine = this.countLineTotal > 0;
+      if (hasRegion && hasLine) return 'both';
+      if (hasRegion) return 'region';
+      if (hasLine) return 'line';
+      return 'both';
+    },
+    applyToolAvailability() {
+      const polyTool = this.tools.find(t => t.key === 'polygon');
+      const tripTool = this.tools.find(t => t.key === 'tripwire');
+      const countTool = this.tools.find(t => t.key === 'countline');
+      if (polyTool) polyTool.disabled = !this.effectiveAllowPolygon;
+      if (tripTool) tripTool.disabled = !this.effectiveAllowTripwire;
+      if (countTool) countTool.disabled = !this.effectiveAllowCountLine;
+      if (this.drawMode === 'none') {
+        this.tool = 'pan';
+      } else if (this.effectiveAllowPolygon) {
+        this.tool = 'polygon';
+      } else if (this.effectiveAllowCountLine) {
+        this.tool = 'countline';
+      } else if (this.effectiveAllowTripwire) {
+        this.tool = 'tripwire';
+      } else {
+        this.tool = 'pan';
+      }
+      this.drawing = false;
+      this.currentPoints = [];
+      this.countLineDraft = [];
+      this.hoverPoint = null;
+    },
+    onDrawModeChange() {
+      this.applyToolAvailability();
+      this.redraw();
     },
     onToolClick(t) {
       if (t.disabled) return;
@@ -564,10 +753,11 @@ export default {
       if (t.key === 'zoomOut') { this.zoomAt(0.8); return; }
       if (t.key === 'resetView') { this.resetView(); return; }
       if (t.key === 'fullscreen') { this.toggleFullscreen(); return; }
-      if (t.key === 'polygon' || t.key === 'tripwire') {
+      if (t.key === 'polygon' || t.key === 'tripwire' || t.key === 'countline') {
         this.tool = t.key;
         this.drawing = false;
         this.currentPoints = [];
+        this.countLineDraft = [];
         this.hoverPoint = null;
         this.redraw();
         return;
@@ -576,9 +766,74 @@ export default {
         this.tool = 'pan';
         this.drawing = false;
         this.currentPoints = [];
+        this.countLineDraft = [];
         this.hoverPoint = null;
         this.redraw();
       }
+    },
+    selectLineField(key) {
+      this.activeLineKey = key;
+      this.countLineDraft = [];
+      this.drawing = false;
+      this.selectedCountLineIndex = -1;
+      this.redraw();
+    },
+    selectCountLine(i) {
+      this.selectedCountLineIndex = i;
+      this.selectedIndex = -1;
+      this.selectedTripwireIndex = -1;
+      this.redraw();
+    },
+    removeCountLine(i) {
+      const list = (this.countLineItems[this.activeLineKey] || []).slice();
+      list.splice(i, 1);
+      this.$set(this.countLineItems, this.activeLineKey, list);
+      if (this.selectedCountLineIndex === i) this.selectedCountLineIndex = -1;
+      else if (this.selectedCountLineIndex > i) this.selectedCountLineIndex -= 1;
+      this.redraw();
+    },
+    toPixelPoint(norm) {
+      const { w, h } = this.naturalSize;
+      const iw = w || this.canvasW;
+      const ih = h || this.canvasH;
+      return {
+        x: Math.round(norm.x * iw),
+        y: Math.round(norm.y * ih)
+      };
+    },
+    pixelToCanvas(p) {
+      const { w, h } = this.naturalSize;
+      const iw = w || this.canvasW;
+      const ih = h || this.canvasH;
+      return {
+        x: (p.x / iw) * this.canvasW,
+        y: (p.y / ih) * this.canvasH
+      };
+    },
+    addCountLinePoint(coords) {
+      if (!this.activeLineKey) return;
+      const norm = this.toNormalized(coords.px, coords.py);
+      const pixel = this.toPixelPoint(norm);
+      const next = this.countLineDraft.concat([pixel]);
+      this.drawing = true;
+      this.selectedIndex = -1;
+      this.selectedTripwireIndex = -1;
+      this.selectedCountLineIndex = -1;
+      if (next.length < 3) {
+        this.countLineDraft = next;
+        this.redraw();
+        return;
+      }
+      const list = (this.countLineItems[this.activeLineKey] || []).concat([{
+        line: [next[0], next[1]],
+        side: next[2]
+      }]);
+      this.$set(this.countLineItems, this.activeLineKey, list);
+      this.countLineDraft = [];
+      this.drawing = false;
+      this.hoverPoint = null;
+      this.selectedCountLineIndex = list.length - 1;
+      this.redraw();
     },
     zoomAt(factor) {
       const W = this.canvasW;
@@ -651,6 +906,11 @@ export default {
 
       if (this.tool === 'tripwire') {
         this.addTripwirePoint(coords);
+        return;
+      }
+
+      if (this.tool === 'countline') {
+        this.addCountLinePoint(coords);
         return;
       }
 
@@ -765,7 +1025,7 @@ export default {
         return;
       }
 
-      if (this.drawing && this.currentPoints.length) {
+      if (this.drawing && (this.currentPoints.length || this.countLineDraft.length)) {
         this.hoverPoint = this.toNormalized(coords.px, coords.py);
         this.redraw();
       }
@@ -778,7 +1038,7 @@ export default {
       e.preventDefault();
       this._lastPolyDown = 0;
       if (!this.drawing) return;
-      if (this.tool === 'tripwire') {
+      if (this.tool === 'tripwire' || this.tool === 'countline') {
         this.cancelDrawing();
         return;
       }
@@ -792,6 +1052,7 @@ export default {
     cancelDrawing() {
       this.drawing = false;
       this.currentPoints = [];
+      this.countLineDraft = [];
       this.hoverPoint = null;
       this.redraw();
     },
@@ -999,7 +1260,17 @@ export default {
         this.drawTripwire(ctx, t, i === this.selectedTripwireIndex);
       });
 
-      if (this.drawing && this.currentPoints.length) {
+      this.resolvedLineFields.forEach(f => {
+        const color = COUNT_LINE_COLORS[f.key] || '#3d9b6e';
+        (this.countLineItems[f.key] || []).forEach((it, idx) => {
+          const selected = f.key === this.activeLineKey && idx === this.selectedCountLineIndex;
+          this.drawCountLineSeg(ctx, it, color, selected, `${f.label}#${idx + 1}`);
+        });
+      });
+
+      if (this.drawing && this.tool === 'countline' && this.countLineDraft.length) {
+        this.drawCountLineDraft(ctx);
+      } else if (this.drawing && this.currentPoints.length) {
         if (this.tool === 'tripwire') {
           const preview = {
             name: '',
@@ -1016,6 +1287,60 @@ export default {
       }
 
       ctx.restore();
+    },
+    drawCountLineSeg(ctx, it, color, selected, label) {
+      if (!it || !it.line || it.line.length < 2) return;
+      const a = this.pixelToCanvas(it.line[0]);
+      const b = this.pixelToCanvas(it.line[1]);
+      const side = it.side ? this.pixelToCanvas(it.side) : null;
+      const lw = (selected ? 3.2 : 2.6) / this.viewScale;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lw;
+      ctx.stroke();
+      this.drawCountLinePt(ctx, a, color, 4);
+      this.drawCountLinePt(ctx, b, color, 4);
+      if (side) this.drawCountLinePt(ctx, side, color, 6);
+      if (label) {
+        ctx.fillStyle = '#fff';
+        ctx.font = `${12 / this.viewScale}px sans-serif`;
+        ctx.fillText(label, a.x + 8 / this.viewScale, a.y - 8 / this.viewScale);
+      }
+    },
+    drawCountLinePt(ctx, p, color, r) {
+      const radius = r / this.viewScale;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1 / this.viewScale;
+      ctx.stroke();
+    },
+    drawCountLineDraft(ctx) {
+      const draft = this.countLineDraft || [];
+      const pts = draft.map(p => this.pixelToCanvas(p));
+      if (this.hoverPoint) {
+        pts.push({
+          x: this.hoverPoint.x * this.canvasW,
+          y: this.hoverPoint.y * this.canvasH
+        });
+      }
+      pts.forEach((p, i) => {
+        this.drawCountLinePt(ctx, p, '#fff', 4);
+        if (i > 0) {
+          ctx.beginPath();
+          ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
+          ctx.lineTo(p.x, p.y);
+          ctx.setLineDash([6 / this.viewScale, 4 / this.viewScale]);
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2 / this.viewScale;
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      });
     },
     drawTripwire(ctx, t, selected, isPreview) {
       const line = t.line || [];
@@ -1159,7 +1484,13 @@ export default {
     },
     confirm() {
       if (this.drawing && this.tool === 'polygon') this.finishPolygon();
-      if (this.drawing && this.tool === 'tripwire') this.cancelDrawing();
+      if (this.drawing && (this.tool === 'tripwire' || this.tool === 'countline')) this.cancelDrawing();
+      // 「不绘制」提交：清空本点位几何
+      if (this.drawMode === 'none') {
+        this.$emit('confirm', { regions: [] });
+        this.innerVisible = false;
+        return;
+      }
       const fence = {
         regions: this.regions.map((r, i) => ({
           name: this.regionBaseName(r, i),
@@ -1179,6 +1510,28 @@ export default {
           line: t.line
         }));
       }
+      // 点线：当前会话里有的都写回（模式只限制工具，不丢另一侧已有数据）
+      const { w, h } = this.naturalSize;
+      let iw = w;
+      let ih = h;
+      if (!iw || !ih) {
+        const sample = this.initFence && (this.initFence.count_line || this.initFence.bypass_line);
+        iw = iw || (sample && sample.image_width) || 0;
+        ih = ih || (sample && sample.image_height) || 0;
+      }
+      this.resolvedLineFields.forEach(f => {
+        const sideKey = f.sideKey;
+        const lines = (this.countLineItems[f.key] || []).map(it => ({
+          line: it.line,
+          [sideKey]: it.side
+        }));
+        if (!lines.length) return;
+        fence[f.key] = {
+          lines,
+          image_width: iw || undefined,
+          image_height: ih || undefined
+        };
+      });
       this.$emit('confirm', fence);
       this.innerVisible = false;
     }
@@ -1244,6 +1597,15 @@ export default {
   box-shadow: 0 1px 2px rgba(31, 35, 41, 0.04);
 }
 
+.canvas-toolbar--modes {
+  justify-content: space-between;
+  gap: 12px;
+}
+.canvas-toolbar--modes .draw-mode-group {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+}
 .canvas-toolbar {
   display: flex;
   align-items: center;
@@ -1544,6 +1906,27 @@ export default {
 }
 .field-help:hover { color: #3370ff; }
 
+.fence-line-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.fence-line-tab {
+  border: 1px solid #dcdfe6;
+  background: #fff;
+  color: #606266;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.fence-line-tab.active {
+  border-color: #3370ff;
+  color: #3370ff;
+  background: #eef3ff;
+}
 .fence-empty {
   flex: 1;
   display: flex;

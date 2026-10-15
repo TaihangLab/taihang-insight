@@ -228,6 +228,25 @@
                 <span class="mono-text">{{ row.channelId || '-' }}</span>
               </template>
             </el-table-column>
+            <el-table-column label="视频流地址" min-width="260">
+              <template slot-scope="{ row }">
+                <div v-if="row.rtmpUrl || row.rtspUrl" class="stream-url-cell">
+                  <div
+                    v-if="row.rtmpUrl"
+                    class="mono-text stream-url-text"
+                    :title="'点击复制 RTMP：' + row.rtmpUrl"
+                    @click="copyStreamUrl(row.rtmpUrl)"
+                  >{{ row.rtmpUrl }}</div>
+                  <div
+                    v-if="row.rtspUrl"
+                    class="mono-text stream-url-text"
+                    :title="'点击复制 RTSP：' + row.rtspUrl"
+                    @click="copyStreamUrl(row.rtspUrl)"
+                  >{{ row.rtspUrl }}</div>
+                </div>
+                <span v-else class="cell-muted">-</span>
+              </template>
+            </el-table-column>
             <el-table-column label="推流" width="90" align="center">
               <template slot-scope="{ row }">
                 <template v-if="row.pointType === 'virtual' && row.virtualMode === 'file'">
@@ -843,6 +862,30 @@ export default {
         this.submitting = false;
       }
     },
+    copyStreamUrl(url) {
+      if (!url) return;
+      const done = () => this.$message.success('已复制');
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(url).then(done).catch(() => this.fallbackCopyUrl(url, done));
+      } else {
+        this.fallbackCopyUrl(url, done);
+      }
+    },
+    fallbackCopyUrl(text, done) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        done();
+      } catch (e) {
+        this.$message.error('复制失败，请手动复制');
+      }
+      document.body.removeChild(ta);
+    },
     handleDelete(row) {
       this.$confirm(
         `删除点位「${row.name}」将同步删除关联的 AI 任务绑定，且无法恢复，确定继续？`,
@@ -865,6 +908,23 @@ export default {
   font-family: Consolas, Monaco, monospace;
   font-size: 12px;
   color: #909399;
+}
+.stream-url-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.4;
+  padding: 4px 0;
+}
+.stream-url-text {
+  color: #409eff;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stream-url-text:hover {
+  text-decoration: underline;
 }
 .cell-muted { color: #c0c4cc; }
 .probe-result {
