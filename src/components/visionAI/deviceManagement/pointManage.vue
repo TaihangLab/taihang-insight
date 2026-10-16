@@ -178,6 +178,11 @@
               </asset-empty-state>
             </template>
             <el-table-column prop="name" label="点位名称" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="cameraCode" label="摄像仪编码" min-width="180" show-overflow-tooltip>
+              <template slot-scope="{ row }">
+                <span class="mono-text">{{ row.cameraCode || '-' }}</span>
+              </template>
+            </el-table-column>
             <el-table-column prop="status" label="状态" width="100" align="center">
               <template slot-scope="{ row }">
                 <span
@@ -256,9 +261,10 @@
                 <span v-else class="cell-muted">-</span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="240" fixed="right" align="center">
+            <el-table-column label="操作" width="300" fixed="right" align="center">
               <template slot-scope="{ row }">
                 <div class="asset-op-cell">
+                  <el-button type="text" @click="openEditCameraCode(row)">编辑编码</el-button>
                   <el-button
                     v-if="row.pointType === 'virtual' && row.virtualMode === 'stream'"
                     type="text"
@@ -328,10 +334,14 @@
       </span>
     </el-dialog>
 
-    <el-dialog title="拉流建虚拟点位" :visible.sync="showStream" width="520px">
+    <el-dialog title="拉流建虚拟点位" :visible.sync="showStream" width="520px" @open="prefetchCameraCode('stream')" @closed="streamForm.cameraCode = ''">
       <el-form :model="streamForm" label-width="100px">
         <el-form-item label="点位名称" required>
           <el-input v-model="streamForm.name" placeholder="请输入点位名称" />
+        </el-form-item>
+        <el-form-item label="摄像仪编码" required>
+          <el-input v-model.trim="streamForm.cameraCode" placeholder="例如 34020000001320000001" />
+          <div class="asset-dialog-tip">参照 MT/T 1201.6-2023，人工填写；已预填建议值可改</div>
         </el-form-item>
         <el-form-item label="流地址" required>
           <el-input v-model="streamForm.streamUrl" placeholder="rtsp:// 或 rtmp://" @input="probeResult = null">
@@ -354,11 +364,15 @@
       </span>
     </el-dialog>
 
-    <el-dialog title="RTMP 推流建点" :visible.sync="showFile" width="520px" @closed="resetFileForm">
+    <el-dialog title="RTMP 推流建点" :visible.sync="showFile" width="520px" @open="prefetchCameraCode('file')" @closed="resetFileForm">
       <p class="asset-dialog-tip">上传 mp4/mov 等文件，创建 RTMP 推流虚拟点位（ffmpeg 推至 GoWVP）；创建后可在列表中启动/停止推流</p>
       <el-form label-width="100px">
         <el-form-item label="点位名称">
           <el-input v-model="fileForm.name" placeholder="可选，默认取文件名" />
+        </el-form-item>
+        <el-form-item label="摄像仪编码" required>
+          <el-input v-model.trim="fileForm.cameraCode" placeholder="例如 34020000001320000001" />
+          <div class="asset-dialog-tip">参照 MT/T 1201.6-2023，人工填写；已预填建议值可改</div>
         </el-form-item>
         <el-form-item label="所属组织" required>
           <el-select v-model="fileForm.orgId" style="width:100%">
@@ -426,6 +440,22 @@
         <el-button type="primary" :loading="submitting" @click="submitChangeOrg">确定</el-button>
       </span>
     </el-dialog>
+
+    <el-dialog title="编辑摄像仪编码" :visible.sync="showEditCameraCode" width="480px">
+      <el-form label-width="110px">
+        <el-form-item label="点位名称">
+          <span>{{ cameraCodeForm.name }}</span>
+        </el-form-item>
+        <el-form-item label="摄像仪编码" required>
+          <el-input v-model.trim="cameraCodeForm.cameraCode" placeholder="例如 34020000001320000001" />
+          <div class="asset-dialog-tip">参照 MT/T 1201.6-2023，人工填写；全局唯一</div>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="showEditCameraCode = false">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="submitCameraCode">确定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -469,10 +499,12 @@ export default {
       showFile: false,
       showChangeOrg: false,
       showEditStream: false,
+      showEditCameraCode: false,
       editForm: { id: '', name: '', streamUrl: '' },
       editProbing: false,
       editProbeResult: null,
       changeOrgForm: { id: '', name: '', currentOrgName: '', orgId: '' },
+      cameraCodeForm: { id: '', name: '', cameraCode: '' },
       channels: [],
       selected: [],
       orgTree: [],
@@ -480,8 +512,8 @@ export default {
       selectedOrgId: '',
       includeSubOrg: true,
       batchForm: { inheritOrg: true, orgId: 'org-root' },
-      streamForm: { name: '', streamUrl: '', orgId: 'org-root' },
-      fileForm: { name: '', orgId: 'org-root', file: null },
+      streamForm: { name: '', streamUrl: '', orgId: 'org-root', cameraCode: '' },
+      fileForm: { name: '', orgId: 'org-root', cameraCode: '', file: null },
       probing: false,
       probeResult: null,
       rowProbing: {},
@@ -694,9 +726,52 @@ export default {
         this.$set(this.rowProbing, row.id, false);
       }
     },
+    async prefetchCameraCode(target) {
+      try {
+        const data = await assetAPI.fetchNextCameraCode();
+        const code = (data && data.cameraCode) || '';
+        if (target === 'stream' && !this.streamForm.cameraCode) {
+          this.streamForm.cameraCode = code;
+        }
+        if (target === 'file' && !this.fileForm.cameraCode) {
+          this.fileForm.cameraCode = code;
+        }
+      } catch (e) {
+        /* 预填失败不阻断建点 */
+      }
+    },
+    openEditCameraCode(row) {
+      this.cameraCodeForm = {
+        id: row.id,
+        name: row.name || '',
+        cameraCode: row.cameraCode || '',
+      };
+      this.showEditCameraCode = true;
+    },
+    async submitCameraCode() {
+      if (!this.cameraCodeForm.cameraCode) {
+        this.$message.warning('请填写摄像仪编码');
+        return;
+      }
+      this.submitting = true;
+      try {
+        await assetAPI.updatePointCameraCode(this.cameraCodeForm.id, this.cameraCodeForm.cameraCode);
+        this.$message.success('摄像仪编码已保存');
+        this.showEditCameraCode = false;
+        this.load();
+      } catch (e) {
+        this.$message.error(e.message || '保存失败');
+      } finally {
+        this.submitting = false;
+      }
+    },
     async submitStream() {
       if (!this.streamForm.name || !this.streamForm.streamUrl) {
         this.$message.warning('请填写名称和流地址');
+        return;
+      }
+      if (!this.streamForm.cameraCode) {
+        this.$message.warning('请填写摄像仪编码');
         return;
       }
       this.submitting = true;
@@ -705,6 +780,7 @@ export default {
           name: this.streamForm.name,
           streamUrl: this.streamForm.streamUrl,
           orgId: this.streamForm.orgId,
+          cameraCode: this.streamForm.cameraCode,
         });
         if (row && (row.sourceStatus === 'ok' || row.sourceStatus === 'streaming')) {
           this.$message.success('虚拟点位已创建，源地址检测正常');
@@ -734,6 +810,7 @@ export default {
       this.fileForm = {
         name: '',
         orgId: this.selectedOrgId || (this.orgOptions[0] && this.orgOptions[0].value) || 'org-root',
+        cameraCode: '',
         file: null,
       };
     },
@@ -746,12 +823,17 @@ export default {
         this.$message.warning('请选择所属组织');
         return;
       }
+      if (!this.fileForm.cameraCode) {
+        this.$message.warning('请填写摄像仪编码');
+        return;
+      }
       this.submitting = true;
       try {
         await assetAPI.createVirtualPointFile(
           this.fileForm.file,
           (this.fileForm.name || '').trim(),
-          this.fileForm.orgId
+          this.fileForm.orgId,
+          this.fileForm.cameraCode
         );
         this.$message.success('虚拟点位已创建，可在列表中管理推流');
         this.showFile = false;

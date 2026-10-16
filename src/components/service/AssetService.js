@@ -141,7 +141,20 @@ export const assetAPI = {
     return assetAxios.post('/asset/points/batch', data).then(unwrap);
   },
   createVirtualPointStream(data) {
-    return assetAxios.post('/asset/points/virtual/stream', data).then(unwrap);
+    return assetAxios.post('/asset/points/virtual/stream', {
+      name: data.name,
+      streamUrl: data.streamUrl,
+      orgId: data.orgId || '',
+      cameraCode: data.cameraCode || '',
+      tags: data.tags || [],
+    }).then(unwrap);
+  },
+  /** 建议的下一个摄像仪编码（人工可改） */
+  fetchNextCameraCode() {
+    return assetAxios.get('/asset/points/next-camera-code').then(unwrap);
+  },
+  updatePointCameraCode(pointId, cameraCode) {
+    return assetAxios.put(`/asset/points/${pointId}/camera-code`, { cameraCode }).then(unwrap);
   },
   /** 导出拉流虚拟点位 CSV（或空模板） */
   exportStreamPoints(template = false) {
@@ -171,11 +184,12 @@ export const assetAPI = {
       timeout: 600000,
     }).then(unwrap);
   },
-  createVirtualPointFile(file, name, orgId) {
+  createVirtualPointFile(file, name, orgId, cameraCode) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('name', name || '');
     formData.append('orgId', orgId || '');
+    formData.append('cameraCode', cameraCode || '');
     formData.append('tags', '[]');
     return assetAxios.post('/asset/points/virtual/file', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

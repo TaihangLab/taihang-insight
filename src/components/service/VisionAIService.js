@@ -4282,15 +4282,6 @@ export const mineIntegrationAPI = {
   testConnection() {
     return visionAIAxios.post('/api/v1/mine-integration/test');
   },
-  listCameraMappings() {
-    return visionAIAxios.get('/api/v1/mine-integration/camera-mappings');
-  },
-  saveCameraMapping(payload) {
-    return visionAIAxios.put('/api/v1/mine-integration/camera-mappings', payload);
-  },
-  deleteCameraMapping(localCameraId) {
-    return visionAIAxios.delete(`/api/v1/mine-integration/camera-mappings/${encodeURIComponent(localCameraId)}`);
-  },
   listOutbound(params) {
     return visionAIAxios.get('/api/v1/mine-integration/outbound', { params });
   },

@@ -16,7 +16,7 @@
         type="info"
         :closable="false"
         show-icon
-        description="连接测试只获取 OAuth 令牌，不会向对方写入摄像仪或算法业务数据。上下车人数只有在下方开关打开、并且摄像机已配置对方编码时才会入队。"
+        description="连接测试只获取 OAuth 令牌，不会向对方写入摄像仪或算法业务数据。上下车人数只有在下方开关打开时才会入队。"
       />
 
       <el-form ref="form" :model="config" :rules="rules" label-width="170px" class="config-form">
@@ -49,7 +49,7 @@
         </el-form-item>
         <el-form-item label="启用对接配置">
           <el-switch v-model="config.enabled" active-text="启用" inactive-text="关闭" />
-          <div class="field-help">关闭时不向煤矿平台发送数据。打开后，只发送已配置摄像仪编码的上车/下车人数；认证测试不受此开关影响。尾随不向对方发送。</div>
+          <div class="field-help">关闭时不向煤矿平台发送数据。打开后发送上车/下车人数；认证测试不受此开关影响。尾随不向对方发送。</div>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="el-icon-check" :loading="saving" @click="saveConfig">保存配置</el-button>
@@ -65,38 +65,6 @@
         show-icon
         class="test-result"
       />
-    </el-card>
-
-    <el-card shadow="never" class="config-card section-card">
-      <div slot="header">摄像仪编码映射</div>
-      <el-alert
-        title="未配置对方摄像仪编码时不会发送，也不会使用 camera_01 等默认值。"
-        type="warning"
-        :closable="false"
-        show-icon
-      />
-      <el-form :inline="true" class="mapping-form" @submit.native.prevent>
-        <el-form-item label="本平台摄像机">
-          <el-select v-model="mapping.local_camera_id" filterable allow-create default-first-option placeholder="选择或输入摄像机 ID" style="width: 280px">
-            <el-option v-for="camera in cameras" :key="camera.id" :label="cameraLabel(camera)" :value="String(camera.id)" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="对方 cameraCode">
-          <el-input v-model.trim="mapping.camera_code" placeholder="矿下安装后提供的编码" style="width: 260px" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :loading="mappingSaving" @click="saveMapping">保存映射</el-button>
-        </el-form-item>
-      </el-form>
-      <el-table :data="mappings" size="small" empty-text="尚未配置摄像仪编码">
-        <el-table-column prop="local_camera_id" label="本平台摄像机" min-width="180" />
-        <el-table-column prop="camera_code" label="对方 cameraCode" min-width="180" />
-        <el-table-column label="操作" width="100">
-          <template slot-scope="scope">
-            <el-button type="text" @click="removeMapping(scope.row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
     </el-card>
 
     <el-card shadow="never" class="config-card section-card">
@@ -142,7 +110,7 @@
 </template>
 
 <script>
-import { cameraAPI, mineIntegrationAPI, formatApiError } from '../../service/VisionAIService'
+import { mineIntegrationAPI, formatApiError } from '../../service/VisionAIService'
 
 const emptyConfig = () => ({
   base_url: 'http://172.16.201.80:8000/coal',
@@ -163,10 +131,6 @@ export default {
       saving: false,
       testing: false,
       testResult: { success: false, message: '' },
-      cameras: [],
-      mappings: [],
-      mapping: { local_camera_id: '', camera_code: '' },
-      mappingSaving: false,
       records: [],
       recordStatus: '',
       rules: {
@@ -181,8 +145,6 @@ export default {
   },
   created() {
     this.loadConfig()
-    this.loadCameras()
-    this.loadMappings()
     this.loadRecords()
   },
   methods: {
@@ -238,9 +200,6 @@ export default {
         this.testing = false
       }
     },
-    cameraLabel(camera) {
-      return `${camera.name || '未命名'}（${camera.id}）`
-    },
     sideText(side) {
       if (side === 'boarding') return '上车（仅本平台）'
       if (side === 'alighting') return '下车（仅本平台）'
@@ -256,53 +215,6 @@ export default {
         invalid: '计数无效',
         blocked: '已拦截'
       }[status] || status
-    },
-    async loadCameras() {
-      try {
-        const res = await cameraAPI.getCameraList({ page: 1, limit: 100 })
-        const body = res.data || {}
-        this.cameras = body.data || body.cameras || []
-      } catch (error) {
-        this.cameras = []
-      }
-    },
-    async loadMappings() {
-      try {
-        const res = await mineIntegrationAPI.listCameraMappings()
-        this.mappings = (res.data && res.data.items) || []
-      } catch (error) {
-        this.$message.error(formatApiError(error, '读取摄像仪编码映射失败'))
-      }
-    },
-    async saveMapping() {
-      if (!this.mapping.local_camera_id || !this.mapping.camera_code) {
-        this.$message.warning('请填写本平台摄像机和对方摄像仪编码')
-        return
-      }
-      this.mappingSaving = true
-      try {
-        await mineIntegrationAPI.saveCameraMapping({
-          local_camera_id: this.mapping.local_camera_id,
-          camera_code: this.mapping.camera_code
-        })
-        this.mapping.camera_code = ''
-        this.$message.success('摄像仪编码已保存')
-        await this.loadMappings()
-        await this.loadRecords()
-      } catch (error) {
-        this.$message.error(formatApiError(error, '保存摄像仪编码失败'))
-      } finally {
-        this.mappingSaving = false
-      }
-    },
-    async removeMapping(row) {
-      try {
-        await mineIntegrationAPI.deleteCameraMapping(row.local_camera_id)
-        this.$message.success('映射已删除')
-        await this.loadMappings()
-      } catch (error) {
-        this.$message.error(formatApiError(error, '删除摄像仪编码失败'))
-      }
     },
     async loadRecords() {
       try {
@@ -338,7 +250,6 @@ export default {
 .unit { margin-left: 10px; color: #606c7a; }
 .test-result { margin: 12px auto 0; max-width: 780px; }
 .section-card { margin-top: 16px; }
-.mapping-form { margin-top: 16px; }
 .record-header { display: flex; align-items: center; justify-content: space-between; }
 .record-note { margin-bottom: 12px; }
 .record-table { margin-top: 12px; }
