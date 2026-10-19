@@ -47,9 +47,13 @@
           <el-input-number v-model="config.timeout_seconds" :min="3" :max="120" />
           <span class="unit">秒</span>
         </el-form-item>
-        <el-form-item label="启用对接配置">
+        <el-form-item label="业务自动外发">
           <el-switch v-model="config.enabled" active-text="启用" inactive-text="关闭" />
-          <div class="field-help">关闭时不向煤矿平台发送数据。打开后发送上车/下车人数；认证测试不受此开关影响。尾随不向对方发送。</div>
+          <div class="field-help">控制已配置的03、04—08及人数业务事件；认证测试不受此开关影响。尾随始终不向对方发送。</div>
+        </el-form-item>
+        <el-form-item label="摄像仪自动同步">
+          <el-switch v-model="config.camera_sync_enabled" active-text="启用" inactive-text="关闭" />
+          <div class="field-help">打开后，视频点位在取得真实首帧后自动登记，并按真实推流状态同步在线/离线。业务事件外发仍由上方开关独立控制。</div>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="el-icon-check" :loading="saving" @click="saveConfig">保存配置</el-button>
@@ -119,6 +123,7 @@ const emptyConfig = () => ({
   scope: 'mine',
   mine_code: '',
   enabled: false,
+  camera_sync_enabled: false,
   timeout_seconds: 15
 })
 
@@ -171,6 +176,7 @@ export default {
           scope: this.config.scope,
           mine_code: this.config.mine_code || null,
           enabled: this.config.enabled,
+          camera_sync_enabled: this.config.camera_sync_enabled,
           timeout_seconds: this.config.timeout_seconds
         }
         const res = await mineIntegrationAPI.saveConfig(payload)
