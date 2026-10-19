@@ -277,8 +277,7 @@
             <el-table-column label="操作" width="360" fixed="right" align="center">
               <template slot-scope="{ row }">
                 <div class="asset-op-cell">
-                  <el-button type="text" @click="openEditCameraCode(row)">编辑编码</el-button>
-                  <el-button type="text" @click="openMineSync(row)">煤矿同步</el-button>
+                  <el-button type="text" @click="openEditCameraCode(row)">编辑煤矿对接信息</el-button>
                   <el-button
                     v-if="row.pointType === 'virtual' && row.virtualMode === 'stream'"
                     type="text"
@@ -363,8 +362,12 @@
         <template v-if="streamForm.mineSyncEnabled">
           <el-form-item label="位置类型" required><el-input v-model.trim="streamForm.minePositionType" maxlength="4" placeholder="4位协议编码" /></el-form-item>
           <el-form-item label="位置描述" required><el-input v-model.trim="streamForm.minePositionDesc" placeholder="对方摄像仪列表显示的位置" /></el-form-item>
-          <el-form-item label="主要识别类型" required><el-input v-model.trim="streamForm.mineAnalysisType" maxlength="2" placeholder="例如08" /></el-form-item>
+          <el-form-item label="主要识别类型" required><el-input v-model.trim="streamForm.mineAnalysisType" maxlength="2" placeholder="例如03、08" /></el-form-item>
         </template>
+        <el-divider content-position="left">运输设备实时人数（可选）</el-divider>
+        <el-form-item label="运输位置编码"><el-input v-model.trim="streamForm.minePositionCode" maxlength="14" placeholder="14位数字，整组可选" /></el-form-item>
+        <el-form-item label="运输位置名称"><el-select v-model="streamForm.minePositionName" clearable style="width:100%"><el-option v-for="name in minePositionNames" :key="name" :label="name" :value="name" /></el-select></el-form-item>
+        <el-form-item label="方向"><el-select v-model="streamForm.mineDirection" clearable style="width:100%"><el-option label="01：入井" value="01" /><el-option label="02：出井" value="02" /></el-select></el-form-item>
         <el-form-item label="流地址" required>
           <el-input v-model="streamForm.streamUrl" placeholder="rtsp:// 或 rtmp://" @input="probeResult = null">
             <el-button slot="append" :loading="probing" @click="handleProbeUrl">测试连接</el-button>
@@ -402,8 +405,12 @@
         <template v-if="fileForm.mineSyncEnabled">
           <el-form-item label="位置类型" required><el-input v-model.trim="fileForm.minePositionType" maxlength="4" placeholder="4位协议编码" /></el-form-item>
           <el-form-item label="位置描述" required><el-input v-model.trim="fileForm.minePositionDesc" placeholder="对方摄像仪列表显示的位置" /></el-form-item>
-          <el-form-item label="主要识别类型" required><el-input v-model.trim="fileForm.mineAnalysisType" maxlength="2" placeholder="例如08" /></el-form-item>
+          <el-form-item label="主要识别类型" required><el-input v-model.trim="fileForm.mineAnalysisType" maxlength="2" placeholder="例如03、08" /></el-form-item>
         </template>
+        <el-divider content-position="left">运输设备实时人数（可选）</el-divider>
+        <el-form-item label="运输位置编码"><el-input v-model.trim="fileForm.minePositionCode" maxlength="14" placeholder="14位数字，整组可选" /></el-form-item>
+        <el-form-item label="运输位置名称"><el-select v-model="fileForm.minePositionName" clearable style="width:100%"><el-option v-for="name in minePositionNames" :key="name" :label="name" :value="name" /></el-select></el-form-item>
+        <el-form-item label="方向"><el-select v-model="fileForm.mineDirection" clearable style="width:100%"><el-option label="01：入井" value="01" /><el-option label="02：出井" value="02" /></el-select></el-form-item>
         <el-form-item label="所属组织" required>
           <el-select v-model="fileForm.orgId" style="width:100%">
             <el-option v-for="o in orgOptions" :key="o.value" :label="o.label" :value="o.value" />
@@ -480,15 +487,22 @@
           <el-input v-model.trim="cameraCodeForm.cameraCode" placeholder="例如 34020000001320000001" />
           <div class="asset-dialog-tip">参照 MT/T 1201.6-2023，人工填写；全局唯一</div>
         </el-form-item>
-        <el-form-item label="运输位置编码" required>
+        <el-form-item label="煤矿自动同步"><el-switch v-model="cameraCodeForm.mineSyncEnabled" /></el-form-item>
+        <template v-if="cameraCodeForm.mineSyncEnabled">
+          <el-form-item label="位置类型" required><el-input v-model.trim="cameraCodeForm.minePositionType" maxlength="4" placeholder="4位协议编码" /></el-form-item>
+          <el-form-item label="位置描述" required><el-input v-model.trim="cameraCodeForm.minePositionDesc" /></el-form-item>
+          <el-form-item label="主要识别类型" required><el-input v-model.trim="cameraCodeForm.mineAnalysisType" maxlength="2" placeholder="例如03、08" /></el-form-item>
+        </template>
+        <el-divider content-position="left">运输设备实时人数（可选）</el-divider>
+        <el-form-item label="运输位置编码">
           <el-input v-model.trim="cameraCodeForm.mine_position_code" maxlength="14" placeholder="例如 20261018000003" />
-          <div class="asset-dialog-tip">用于重要运输设备实时人数接口，全局唯一</div>
+          <div class="asset-dialog-tip">与方向组合唯一；三项全空时不生成实时人数快照</div>
         </el-form-item>
-        <el-form-item label="运输位置名称" required>
-          <el-input v-model.trim="cameraCodeForm.mine_position_name" placeholder="例如 固定停车测试点" />
+        <el-form-item label="运输位置名称">
+          <el-select v-model="cameraCodeForm.mine_position_name" clearable style="width:100%"><el-option v-for="name in minePositionNames" :key="name" :label="name" :value="name" /></el-select>
         </el-form-item>
-        <el-form-item label="方向" required>
-          <el-select v-model="cameraCodeForm.mine_direction" placeholder="请选择方向" style="width:100%">
+        <el-form-item label="方向">
+          <el-select v-model="cameraCodeForm.mine_direction" clearable placeholder="请选择方向" style="width:100%">
             <el-option label="01：入井" value="01" />
             <el-option label="02：出井" value="02" />
           </el-select>
@@ -500,43 +514,6 @@
       </span>
     </el-dialog>
 
-    <el-dialog title="煤矿摄像仪同步" :visible.sync="showMineSync" width="520px">
-      <el-form label-width="120px">
-        <el-form-item label="点位名称">
-          <span>{{ mineSyncForm.name }}</span>
-        </el-form-item>
-        <el-form-item label="自动同步">
-          <el-switch v-model="mineSyncForm.enabled" />
-          <div class="asset-dialog-tip">关闭后该点位明确排除；不会影响全局自动外发开关</div>
-        </el-form-item>
-        <el-form-item label="位置类型" :required="mineSyncForm.enabled">
-          <el-input v-model.trim="mineSyncForm.positionType" maxlength="4" placeholder="4位数字" />
-        </el-form-item>
-        <el-form-item label="位置描述" :required="mineSyncForm.enabled">
-          <el-input v-model.trim="mineSyncForm.positionDesc" placeholder="煤矿平台显示的位置说明" />
-        </el-form-item>
-        <el-form-item label="主要识别类型" :required="mineSyncForm.enabled">
-          <el-input v-model.trim="mineSyncForm.analysisType" maxlength="2" placeholder="2位数字，例如08" />
-        </el-form-item>
-        <el-divider content-position="left">固定/无固定停车实时人数</el-divider>
-        <el-form-item label="14位位置编码">
-          <el-input v-model.trim="mineSyncForm.positionCode" maxlength="14" placeholder="配置后才生成实时人数快照" />
-        </el-form-item>
-        <el-form-item label="位置名称">
-          <el-input v-model.trim="mineSyncForm.positionName" placeholder="运输设备或统计位置名称" />
-        </el-form-item>
-        <el-form-item label="方向">
-          <el-select v-model="mineSyncForm.direction" clearable placeholder="请选择">
-            <el-option label="01 入井" value="01" />
-            <el-option label="02 出井" value="02" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <span slot="footer">
-        <el-button @click="showMineSync = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="submitMineSync">确定</el-button>
-      </span>
-    </el-dialog>
   </div>
 </template>
 
@@ -581,13 +558,12 @@ export default {
       showChangeOrg: false,
       showEditStream: false,
       showEditCameraCode: false,
-      showMineSync: false,
       editForm: { id: '', name: '', streamUrl: '' },
       editProbing: false,
       editProbeResult: null,
       changeOrgForm: { id: '', name: '', currentOrgName: '', orgId: '' },
-      cameraCodeForm: { id: '', name: '', cameraCode: '', mine_position_code: '', mine_position_name: '', mine_direction: '' },
-      mineSyncForm: { id: '', name: '', enabled: true, positionType: '', positionDesc: '', analysisType: '', positionCode: '', positionName: '', direction: '' },
+      cameraCodeForm: { id: '', name: '', cameraCode: '', mineSyncEnabled: true, minePositionType: '', minePositionDesc: '', mineAnalysisType: '', mine_position_code: '', mine_position_name: '', mine_direction: '' },
+      minePositionNames: ['斜井（架空乘人）', '平硐（架空乘人）', '副立井（罐笼）', '斜井/平硐（无轨胶轮车）', '斜井/平硐（电机车）', '斜井/平硐（单轨吊）'],
       channels: [],
       selected: [],
       orgTree: [],
@@ -595,8 +571,8 @@ export default {
       selectedOrgId: '',
       includeSubOrg: true,
       batchForm: { inheritOrg: true, orgId: 'org-root' },
-      streamForm: { name: '', streamUrl: '', orgId: 'org-root', cameraCode: '', mineSyncEnabled: true, minePositionType: '', minePositionDesc: '', mineAnalysisType: '' },
-      fileForm: { name: '', orgId: 'org-root', cameraCode: '', file: null, mineSyncEnabled: true, minePositionType: '', minePositionDesc: '', mineAnalysisType: '' },
+      streamForm: { name: '', streamUrl: '', orgId: 'org-root', cameraCode: '', mineSyncEnabled: true, minePositionType: '', minePositionDesc: '', mineAnalysisType: '', minePositionCode: '', minePositionName: '', mineDirection: '' },
+      fileForm: { name: '', orgId: 'org-root', cameraCode: '', file: null, mineSyncEnabled: true, minePositionType: '', minePositionDesc: '', mineAnalysisType: '', minePositionCode: '', minePositionName: '', mineDirection: '' },
       probing: false,
       probeResult: null,
       rowProbing: {},
@@ -828,8 +804,12 @@ export default {
         id: row.id,
         name: row.name || '',
         cameraCode: row.cameraCode || '',
+        mineSyncEnabled: row.mineSyncEnabled !== false,
+        minePositionType: row.minePositionType || '',
+        minePositionDesc: row.minePositionDesc || row.name || '',
+        mineAnalysisType: row.mineAnalysisType || '',
         mine_position_code: row.minePositionCode || '',
-        mine_position_name: row.minePositionName || row.name || '',
+        mine_position_name: row.minePositionName || '',
         mine_direction: row.mineDirection || '',
       };
       this.showEditCameraCode = true;
@@ -839,16 +819,11 @@ export default {
         this.$message.warning('请填写摄像仪编码');
         return;
       }
-      if (!/^\d{14}$/.test(this.cameraCodeForm.mine_position_code)) {
-        this.$message.warning('运输位置编码必须为14位数字');
+      if (this.cameraCodeForm.mineSyncEnabled && (!/^\d{4}$/.test(this.cameraCodeForm.minePositionType) || !this.cameraCodeForm.minePositionDesc || !/^\d{2}$/.test((this.cameraCodeForm.mineAnalysisType || '').trim()))) {
+        this.$message.warning('请完整填写4位位置类型、位置描述和两位数字主要识别类型');
         return;
       }
-      if (!this.cameraCodeForm.mine_position_name) {
-        this.$message.warning('请填写运输位置名称');
-        return;
-      }
-      if (!['01', '02'].includes(this.cameraCodeForm.mine_direction)) {
-        this.$message.warning('请选择入井或出井方向');
+      if (!this.validateTransportGroup(this.cameraCodeForm.mine_position_code, this.cameraCodeForm.mine_position_name, this.cameraCodeForm.mine_direction)) {
         return;
       }
       this.submitting = true;
@@ -864,53 +839,27 @@ export default {
       }
     },
     mineTransportComplete(row) {
-      return !!(row.cameraCode && /^\d{14}$/.test(row.minePositionCode || '') &&
-        row.minePositionName && ['01', '02'].includes(row.mineDirection));
+      const transport = [row.minePositionCode, row.minePositionName, row.mineDirection];
+      const transportValid = !transport.some(Boolean) || (
+        /^\d{14}$/.test(row.minePositionCode || '') &&
+        this.minePositionNames.includes(row.minePositionName) &&
+        ['01', '02'].includes(row.mineDirection)
+      );
+      const syncValid = row.mineSyncEnabled === false || (
+        /^\d{4}$/.test(row.minePositionType || '') &&
+        !!row.minePositionDesc &&
+        /^\d{2}$/.test((row.mineAnalysisType || '').trim())
+      );
+      return !!row.cameraCode && transportValid && syncValid;
     },
-    openMineSync(row) {
-      this.mineSyncForm = {
-        id: row.id,
-        name: row.name || '',
-        enabled: row.mineSyncEnabled !== false,
-        positionType: row.minePositionType || '',
-        positionDesc: row.minePositionDesc || row.name || '',
-        analysisType: row.mineAnalysisType || '',
-        positionCode: row.minePositionCode || '',
-        positionName: row.minePositionName || '',
-        direction: row.mineDirection || '',
-      };
-      this.showMineSync = true;
-    },
-    async submitMineSync() {
-      const form = this.mineSyncForm;
-      if (form.enabled && (!/^\d{4}$/.test(form.positionType) || !form.positionDesc || !/^\d{2}$/.test(form.analysisType))) {
-        this.$message.warning('请完整填写4位位置类型、位置描述和2位主要识别类型');
-        return;
+    validateTransportGroup(positionCode, positionName, direction) {
+      const values = [positionCode, positionName, direction];
+      if (!values.some(Boolean)) return true;
+      if (!/^\d{14}$/.test(positionCode || '') || !positionName || !['01', '02'].includes(direction)) {
+        this.$message.warning('运输人数配置必须完整填写14位位置编码、固定位置名称和方向');
+        return false;
       }
-      const transportFields = [form.positionCode, form.positionName, form.direction];
-      if (transportFields.some(Boolean) && (!/^\d{14}$/.test(form.positionCode) || !form.positionName || !['01', '02'].includes(form.direction))) {
-        this.$message.warning('实时人数配置必须完整填写14位位置编码、位置名称和方向');
-        return;
-      }
-      this.submitting = true;
-      try {
-        await assetAPI.updatePointMineSync(form.id, {
-          enabled: form.enabled,
-          positionType: form.positionType,
-          positionDesc: form.positionDesc,
-          analysisType: form.analysisType,
-          positionCode: form.positionCode,
-          positionName: form.positionName,
-          direction: form.direction,
-        });
-        this.$message.success('煤矿同步配置已保存');
-        this.showMineSync = false;
-        this.load();
-      } catch (e) {
-        this.$message.error(e.message || '保存失败');
-      } finally {
-        this.submitting = false;
-      }
+      return true;
     },
     async submitStream() {
       if (!this.streamForm.name || !this.streamForm.streamUrl) {
@@ -921,8 +870,11 @@ export default {
         this.$message.warning('请填写摄像仪编码');
         return;
       }
-      if (this.streamForm.mineSyncEnabled && (!/^\d{4}$/.test(this.streamForm.minePositionType) || !this.streamForm.minePositionDesc || !/^\d{2}$/.test(this.streamForm.mineAnalysisType))) {
-        this.$message.warning('请完整填写4位位置类型、位置描述和2位主要识别类型');
+      if (this.streamForm.mineSyncEnabled && (!/^\d{4}$/.test(this.streamForm.minePositionType) || !this.streamForm.minePositionDesc || !/^\d{2}$/.test((this.streamForm.mineAnalysisType || '').trim()))) {
+        this.$message.warning('请完整填写4位位置类型、位置描述和两位数字主要识别类型');
+        return;
+      }
+      if (!this.validateTransportGroup(this.streamForm.minePositionCode, this.streamForm.minePositionName, this.streamForm.mineDirection)) {
         return;
       }
       this.submitting = true;
@@ -936,6 +888,9 @@ export default {
           minePositionType: this.streamForm.minePositionType,
           minePositionDesc: this.streamForm.minePositionDesc,
           mineAnalysisType: this.streamForm.mineAnalysisType,
+          minePositionCode: this.streamForm.minePositionCode,
+          minePositionName: this.streamForm.minePositionName,
+          mineDirection: this.streamForm.mineDirection,
         });
         if (row && (row.sourceStatus === 'ok' || row.sourceStatus === 'streaming')) {
           this.$message.success('虚拟点位已创建，源地址检测正常');
@@ -970,6 +925,9 @@ export default {
         minePositionType: '',
         minePositionDesc: '',
         mineAnalysisType: '',
+        minePositionCode: '',
+        minePositionName: '',
+        mineDirection: '',
         file: null,
       };
     },
@@ -986,8 +944,11 @@ export default {
         this.$message.warning('请填写摄像仪编码');
         return;
       }
-      if (this.fileForm.mineSyncEnabled && (!/^\d{4}$/.test(this.fileForm.minePositionType) || !this.fileForm.minePositionDesc || !/^\d{2}$/.test(this.fileForm.mineAnalysisType))) {
-        this.$message.warning('请完整填写4位位置类型、位置描述和2位主要识别类型');
+      if (this.fileForm.mineSyncEnabled && (!/^\d{4}$/.test(this.fileForm.minePositionType) || !this.fileForm.minePositionDesc || !/^\d{2}$/.test((this.fileForm.mineAnalysisType || '').trim()))) {
+        this.$message.warning('请完整填写4位位置类型、位置描述和两位数字主要识别类型');
+        return;
+      }
+      if (!this.validateTransportGroup(this.fileForm.minePositionCode, this.fileForm.minePositionName, this.fileForm.mineDirection)) {
         return;
       }
       this.submitting = true;

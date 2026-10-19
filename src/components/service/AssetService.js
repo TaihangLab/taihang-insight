@@ -149,7 +149,7 @@ export const assetAPI = {
       mineSyncEnabled: data.mineSyncEnabled !== false,
       minePositionType: data.minePositionType || '',
       minePositionDesc: data.minePositionDesc || '',
-      mineAnalysisType: data.mineAnalysisType || '',
+      mineAnalysisType: (data.mineAnalysisType || '').trim(),
       minePositionCode: data.minePositionCode || '',
       minePositionName: data.minePositionName || '',
       mineDirection: data.mineDirection || '',
@@ -163,6 +163,10 @@ export const assetAPI = {
   updatePointCameraCode(pointId, data) {
     return assetAxios.put(`/asset/points/${pointId}/camera-code`, {
       cameraCode: data.cameraCode || '',
+      mineSyncEnabled: data.mineSyncEnabled !== false,
+      minePositionType: data.minePositionType || '',
+      minePositionDesc: data.minePositionDesc || '',
+      mineAnalysisType: (data.mineAnalysisType || '').trim(),
       mine_position_code: data.mine_position_code || '',
       mine_position_name: data.mine_position_name || '',
       mine_direction: data.mine_direction || '',
@@ -208,7 +212,7 @@ export const assetAPI = {
     formData.append('mineSyncEnabled', mine.mineSyncEnabled !== false ? 'true' : 'false');
     formData.append('minePositionType', mine.minePositionType || '');
     formData.append('minePositionDesc', mine.minePositionDesc || '');
-    formData.append('mineAnalysisType', mine.mineAnalysisType || '');
+    formData.append('mineAnalysisType', (mine.mineAnalysisType || '').trim());
     formData.append('minePositionCode', mine.minePositionCode || '');
     formData.append('minePositionName', mine.minePositionName || '');
     formData.append('mineDirection', mine.mineDirection || '');
