@@ -287,7 +287,7 @@
               <div class="warning-status-badge" :class="getCurrentWarningStatus(warning).class">{{ getCurrentWarningStatus(warning).text }}</div>
             </div>
             <div v-if="warning.imageUrl" class="warning-image">
-              <img :src="warning.imageUrl" :alt="warning.type" />
+              <img :src="warning.imageUrl" :alt="warning.type" @error="clearWarningImage(warning)" />
             </div>
             <div v-else class="video-placeholder">
               <i :class="getWarningIcon(warning.level)"></i>
@@ -2514,10 +2514,20 @@ export default {
       }
     },
 
-    // 获取预警图片URL
+    clearWarningImage(warning) {
+      this.$set(warning, 'imageUrl', '');
+    },
+
+    // 获取预警图片URL。预签名地址在 Atlas 上常指向容器内的 minio，浏览器打不开。
     getWarningImageUrl(apiWarning) {
       try {
-        // 优先使用常见的图片字段
+        const alertId = apiWarning && (apiWarning.alert_id || apiWarning.id);
+        if (alertId && /^\d+$/.test(String(alertId))) {
+          const config = require('../../../../config/index.js');
+          const base = String(config.API_BASE_URL || '').replace(/\/$/, '');
+          return `${base}/api/v1/alerts/${alertId}/frame`;
+        }
+
         const imageFields = [
           'minio_frame_url',
           'alert_image_url',
@@ -2530,11 +2540,20 @@ export default {
         for (const field of imageFields) {
           if (apiWarning[field]) {
             const imageUrl = apiWarning[field];
-            // 如果是相对路径，拼接基础URL
             if (imageUrl.startsWith('/')) {
               return `${window.baseUrl || ''}${imageUrl}`;
             }
             return imageUrl;
+          }
+        }
+
+        const images = apiWarning && apiWarning.alert_images;
+        if (Array.isArray(images)) {
+          for (const item of images) {
+            const imageUrl = item && (item.image_url || item.url);
+            if (imageUrl) {
+              return imageUrl;
+            }
           }
         }
 
