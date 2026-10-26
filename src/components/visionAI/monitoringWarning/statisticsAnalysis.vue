@@ -14,6 +14,8 @@ export default {
       },
 
       timeRange: "today",
+      // 选择器即时响应输入，自定义日期确认后才提交到查询条件 timeRange。
+      timeRangeSelection: "today",
       customDateRange: [],
       customDateRangeDraft: [],
       datePickerDialogVisible: false,
@@ -572,6 +574,7 @@ export default {
     },
 
     restoreCustomDateDraft() {
+      this.timeRangeSelection = this.timeRange;
       this.customDateRangeDraft = Array.isArray(this.customDateRange)
         ? [...this.customDateRange]
         : [];
@@ -716,9 +719,9 @@ export default {
     <div class="header-bar">
       <div class="time-filter">
         <el-radio-group
-          :value="timeRange"
+          v-model="timeRangeSelection"
           size="small"
-          @change="handleTimeRangeChange"
+          @input="handleTimeRangeChange"
         >
           <el-radio-button label="today">日</el-radio-button>
           <el-radio-button label="week">周</el-radio-button>
@@ -755,7 +758,7 @@ export default {
       :append-to-body="true"
       :close-on-click-modal="false"
       :modal-append-to-body="false"
-      @closed="restoreCustomDateDraft"
+      @close="restoreCustomDateDraft"
     >
       <el-date-picker
         v-model="customDateRangeDraft"
