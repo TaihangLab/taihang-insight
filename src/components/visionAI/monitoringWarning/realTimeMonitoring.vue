@@ -2515,6 +2515,16 @@ export default {
     },
 
     clearWarningImage(warning) {
+      const id = warning && warning.id;
+      if (id && /^\d+$/.test(String(id))) {
+        const config = require('../../../../config/index.js');
+        const base = String(config.API_BASE_URL || '').replace(/\/$/, '');
+        const frameUrl = `${base}/api/v1/alerts/${id}/frame`;
+        if (warning.imageUrl !== frameUrl) {
+          this.$set(warning, 'imageUrl', frameUrl);
+          return;
+        }
+      }
       this.$set(warning, 'imageUrl', '');
     },
 
