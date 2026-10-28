@@ -51,6 +51,32 @@
               </el-select>
             </el-form-item>
 
+            <el-form-item v-if="showModelSelect" label="推理模型">
+              <el-select
+                v-model="form.selected_model_name"
+                filterable
+                remote
+                clearable
+                :remote-method="searchModels"
+                :loading="modelOptionsLoading"
+                placeholder="默认使用技能配置的模型"
+                :disabled="isView"
+                style="width: 100%; max-width: 480px;"
+                @focus="ensureModelOptions"
+                @change="syncRequiredModelsFromSelection"
+                @clear="onModelClear">
+                <el-option
+                  v-for="m in modelSelectOptions"
+                  :key="m.name"
+                  :label="modelOptionLabel(m)"
+                  :value="m.name">
+                </el-option>
+              </el-select>
+              <div class="hint" v-if="skillDefaultModelName">
+                技能默认：{{ skillDefaultModelName }}；不选或清空则沿用默认模型
+              </div>
+            </el-form-item>
+
             <el-form-item label="计划启停" required>
               <el-switch v-model="form.enabled" active-text="开启" inactive-text="关闭"></el-switch>
             </el-form-item>
@@ -690,7 +716,7 @@
 </template>
 
 <script>
-import { runPlanAPI, skillAPI, taskReviewAPI, formatApiError } from '@/components/service/VisionAIService.js';
+import { runPlanAPI, skillAPI, modelAPI, taskReviewAPI, formatApiError } from '@/components/service/VisionAIService.js';
 import { assetAPI } from '@/components/service/AssetService.js';
 import { pullPointStatusText, categorizeRowStatus } from '../../deviceManagement/assetStreamStatus.js';
 import { saveActiveSaveJob } from './runPlanSaveJob.js';
@@ -745,6 +771,8 @@ function defaultForm() {
       rtsp_streaming: { enabled: false }
     },
     skill_params: {},
+    selected_model_name: '',
+    required_models: [],
     alert_name: '',
     alert_level: '',
     alert_config: defaultAlertConfig(),
@@ -776,6 +804,10 @@ export default {
       skillDefaultParamKeys: [],
       skillParamsReady: false,
       skillParamsLoading: false,
+      skillDefaultModelName: '',
+      skillDefaultModels: [],
+      modelOptions: [],
+      modelOptionsLoading: false,
       capturingRef: {},
       uploadingRef: {},
       refPreviewBlobs: {},
@@ -887,6 +919,21 @@ export default {
     },
     isView() {
       return this.mode === 'view';
+    },
+    showModelSelect() {
+      return this.form.skill_kind !== 'llm' && !!(this.form.skill_class_id || this.form.skill_ref);
+    },
+    modelSelectOptions() {
+      const map = {};
+      (this.modelOptions || []).forEach(m => {
+        if (m && m.name) map[m.name] = m;
+      });
+      (this.skillDefaultModels || []).forEach(name => {
+        if (name && !map[name]) map[name] = { name, version: '' };
+      });
+      const selected = this.form.selected_model_name;
+      if (selected && !map[selected]) map[selected] = { name: selected, version: '' };
+      return Object.keys(map).sort().map(k => map[k]);
     },
     drawerTitle() {
       if (this.isView) return '查看运行计划';
@@ -1019,6 +1066,10 @@ export default {
           run_cycle: Object.assign(defaultForm().run_cycle, p.run_cycle || {}),
           frame_extraction: Object.assign(defaultForm().frame_extraction, p.frame_extraction || {}),
           skill_params: Object.assign({}, p.skill_params || {}),
+          selected_model_name: Array.isArray(p.required_models) && p.required_models.length
+            ? String(p.required_models[0] || '')
+            : '',
+          required_models: Array.isArray(p.required_models) ? p.required_models.slice() : [],
           alert_name: p.alert_name || '',
           alert_level: p.alert_level || '',
           alert_config: alertConfig,
@@ -1029,6 +1080,7 @@ export default {
         });
         this.alertNameTouched = true;
         if (kind !== 'llm' && p.skill_class_id) this.loadSkillParams(p.skill_class_id, true);
+        else this.resetModelSelection();
       } else {
         this.resultStreams = [];
         this.form = defaultForm();
@@ -1189,6 +1241,7 @@ export default {
       const s = this.skillOptions.find(o => o.ref === ref);
       if (!s) {
         this.form.skill_name = '';
+        this.resetModelSelection();
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
         this.lineDrawFields = DEFAULT_LINE_DRAW_FIELDS.map(f => Object.assign({}, f));
@@ -1210,6 +1263,7 @@ export default {
         this.form.llm_skill_id = s.llm_skill_id;
         this.form.skill_class_id = '';
         this.form.skill_params = {};
+        this.resetModelSelection();
         this.skillParamFields = [];
         this.skillParamsReady = true;
         this.skillParamsLoading = false;
@@ -1225,8 +1279,92 @@ export default {
       } else {
         this.form.skill_class_id = s.skill_class_id;
         this.form.llm_skill_id = '';
+        this.form.selected_model_name = '';
+        this.form.required_models = [];
         this.loadSkillParams(s.skill_class_id, false);
       }
+    },
+    resetModelSelection() {
+      this.skillDefaultModelName = '';
+      this.skillDefaultModels = [];
+      this.form.selected_model_name = '';
+      this.form.required_models = [];
+    },
+    modelOptionLabel(m) {
+      if (!m || !m.name) return '';
+      const ver = m.version != null && m.version !== '' ? String(m.version) : '';
+      return ver ? `${m.name}/V${ver}` : m.name;
+    },
+    onModelClear() {
+      this.form.selected_model_name = this.skillDefaultModelName || '';
+      this.syncRequiredModelsFromSelection();
+    },
+    syncRequiredModelsFromSelection() {
+      const name = String(this.form.selected_model_name || '').trim();
+      if (!name || name === this.skillDefaultModelName) {
+        // 选默认模型时不写覆盖，子任务沿用技能 DEFAULT_CONFIG
+        this.form.required_models = [];
+        return;
+      }
+      this.form.required_models = [name];
+    },
+    async ensureModelOptions() {
+      if ((this.modelOptions || []).length) return;
+      await this.loadModelOptions();
+    },
+    searchModels(query) {
+      this.loadModelOptions(query);
+    },
+    async loadModelOptions(query) {
+      this.modelOptionsLoading = true;
+      try {
+        const q = String(query || '').trim();
+        const pageSize = 100; // 后端 /models/list 的 limit 上限
+        const collected = [];
+        let page = 1;
+        let total = Infinity;
+        while (collected.length < total) {
+          const params = { page, limit: pageSize };
+          if (q) params.name = q;
+          const res = await modelAPI.getModelList(params);
+          const payload = (res && res.data) || {};
+          const list = Array.isArray(payload.data) ? payload.data : [];
+          list.forEach(m => {
+            if (m && m.name) collected.push({ id: m.id, name: m.name, version: m.version });
+          });
+          const reported = Number(payload.total);
+          total = Number.isFinite(reported) && reported >= 0 ? reported : collected.length;
+          if (!list.length || list.length < pageSize) break;
+          page += 1;
+          if (page > 200) break;
+        }
+        this.modelOptions = collected;
+      } catch (e) {
+        console.warn('加载模型列表失败', e);
+      } finally {
+        this.modelOptionsLoading = false;
+      }
+    },
+    applySkillDefaultModels(detail, keepSelection) {
+      const cfg = (detail && detail.default_config) || {};
+      const fromCfg = Array.isArray(cfg.required_models)
+        ? cfg.required_models.map(n => String(n || '').trim()).filter(Boolean)
+        : [];
+      const fromInfo = Array.isArray(detail && detail.model_info)
+        ? detail.model_info.map(pair => {
+          if (Array.isArray(pair) && pair.length >= 2) return String(pair[1] || '').trim();
+          if (pair && typeof pair === 'object') return String(pair.name || '').trim();
+          return '';
+        }).filter(Boolean)
+        : [];
+      const names = fromCfg.length ? fromCfg : fromInfo;
+      this.skillDefaultModels = names;
+      this.skillDefaultModelName = names[0] || '';
+      if (!keepSelection || !this.form.selected_model_name) {
+        this.form.selected_model_name = this.skillDefaultModelName;
+      }
+      this.syncRequiredModelsFromSelection();
+      this.ensureModelOptions();
     },
     getSkillParamType(value) {
       if (Array.isArray(value)) return 'array';
@@ -1327,6 +1465,7 @@ export default {
         this.syncRefPreviews();
         this.skillParamsReady = true;
         this.pruneSkillParamsToCurrentFields();
+        this.applySkillDefaultModels(detail, !!keepValues);
         const roiInfo = this.computeRoiInfo(detail);
         this.skillNeedsFence = roiInfo.needsFence;
         this.fenceMultipleRoi = roiInfo.multiple;
@@ -1353,6 +1492,7 @@ export default {
         console.warn('加载技能参数失败', e);
         this.skillParamFields = [];
         this.skillParamsReady = false;
+        this.resetModelSelection();
         this.skillNeedsFence = true;
         this.skillNeedsTripwire = false;
         this.lineDrawFields = DEFAULT_LINE_DRAW_FIELDS.map(f => Object.assign({}, f));
@@ -1709,6 +1849,7 @@ export default {
         review_enabled: reviewEnabled,
         review_skill_class_id: reviewEnabled ? (this.form.review_skill_class_id || null) : null
       });
+      this.syncRequiredModelsFromSelection();
       const payload = {
         analysis_resource: this.form.analysis_resource,
         skill_kind: this.form.skill_kind,
@@ -1717,6 +1858,9 @@ export default {
         run_cycle: this.form.run_cycle,
         frame_extraction: this.form.frame_extraction,
         skill_params: this.pickCurrentSkillParams(),
+        required_models: this.form.skill_kind === 'llm'
+          ? []
+          : (Array.isArray(this.form.required_models) ? this.form.required_models.slice() : []),
         alert_name: this.form.alert_name,
         alert_level: this.form.alert_level === '' ? 0 : this.form.alert_level,
         alert_config: alertConfig,
@@ -1941,6 +2085,10 @@ export default {
       this.skillDefaultParamKeys = [];
       this.skillParamsReady = false;
       this.skillParamsLoading = false;
+      this.skillDefaultModelName = '';
+      this.skillDefaultModels = [];
+      this.modelOptions = [];
+      this.modelOptionsLoading = false;
       this.revokeRefPreviews();
       this.capturingRef = {};
       this.uploadingRef = {};
