@@ -79,6 +79,7 @@
                         fluent autoplay
                         @screenshot="shot"
                         @destroy="destroy"/>
+                      <div v-if="enterCountText[index-1]" class="enter-count-badge">{{ enterCountText[index-1] }}</div>
                       
                       <!-- 🆕 AI任务选择下拉框 - 移到video-player-wrapper内部 -->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
@@ -142,6 +143,7 @@
                         fluent autoplay
                         @screenshot="shot"
                         @destroy="destroy"/>
+                      <div v-if="enterCountText[index-1]" class="enter-count-badge">{{ enterCountText[index-1] }}</div>
                       
                       <!-- 🆕 AI任务选择下拉框（全屏模式）-->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
@@ -466,6 +468,8 @@ export default {
       // 定时更新器
       timer: null,
       aiTaskPollTimer: null,
+      enterCountPollTimer: null,
+      enterCountText: {},
       // 视频URL数组
       videoUrl: [],
       playProtocol: {},
@@ -593,6 +597,8 @@ export default {
     this.updateDateTime();
     this.timer = setInterval(this.updateDateTime, 1000);
     this.aiTaskPollTimer = setInterval(this.refreshPlayingCameraAITasks, 5000);
+    this.refreshEnterCounts();
+    this.enterCountPollTimer = setInterval(this.refreshEnterCounts, 1000);
 
     // 添加键盘事件监听器，用于ESC键退出全屏
     document.addEventListener('keydown', this.handleKeyDown);
@@ -634,6 +640,10 @@ export default {
     if (this.aiTaskPollTimer) {
       clearInterval(this.aiTaskPollTimer);
       this.aiTaskPollTimer = null;
+    }
+    if (this.enterCountPollTimer) {
+      clearInterval(this.enterCountPollTimer);
+      this.enterCountPollTimer = null;
     }
     this.cleanupSSEConnection();
 
@@ -3014,6 +3024,32 @@ export default {
     aiTaskOptionLabel(task) {
       return (task && (task.skill_name || task.task_name)) || ''
     },
+    isPersonCountTask(task) {
+      return !!(task && task.skill_code === 'person_count_detector26')
+    },
+    async refreshEnterCounts() {
+      const updates = {}
+      const jobs = []
+      for (let index = 0; index < 9; index += 1) {
+        const task = this.getSelectedTask(index)
+        if (!this.isPersonCountTask(task)) continue
+        const taskId = task.task_id
+        jobs.push(
+          realtimeDetectionAPI.getDetectionResult(taskId).then(response => {
+            const data = response && response.data && response.data.data
+            if (!data || data.enter_count == null || data.enter_count === '') return
+            const outbound = String(data.gate_direction || '').toUpperCase() === 'OUT'
+            updates[index] = (outbound ? '出井人数：' : '入井人数：') + data.enter_count
+          }).catch(() => {})
+        )
+      }
+      if (!jobs.length) {
+        if (Object.keys(this.enterCountText).length) this.enterCountText = {}
+        return
+      }
+      await Promise.all(jobs)
+      this.enterCountText = updates
+    },
     /** 当前窗口选中的 AI 任务 */
     getSelectedTask(index) {
       const taskId = this.selectedAITasks[index]
@@ -5080,6 +5116,20 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
   position: relative;
   width: 100%;
   height: 100%;
+}
+
+.enter-count-badge {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 6;
+  padding: 4px 10px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffe14a;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 4px;
+  pointer-events: none;
 }
 
 </style>
