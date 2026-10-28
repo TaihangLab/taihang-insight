@@ -99,46 +99,6 @@
                           </el-option>
                         </el-select>
                       </div>
-                      
-                      <!-- 调试信息（紧凑，避免遮挡画面） -->
-                      <div v-if="selectedAITasks[index-1]" class="detection-debug-info" :title="getDetectionDebugTitle(index-1)">
-                        <div class="debug-line">
-                          <span class="debug-label">WS</span>
-                          <span :class="['debug-value', getWsStatusClass(index-1)]">
-                            {{ getWsStatusText(index-1) }}
-                          </span>
-                        </div>
-                        <div class="debug-line">
-                          <span class="debug-label">{{ isPeopleCount(index-1) ? getPeopleCountLabel(index-1) : '目标' }}</span>
-                          <span class="debug-value">{{ isPeopleCount(index-1) ? getPeopleCountText(index-1) : getDetectionCount(index-1) }}</span>
-                        </div>
-                        <div class="debug-line" v-if="!isPeopleCount(index-1) && getDetectionLabels(index-1)">
-                          <span class="debug-label">列表</span>
-                          <span class="debug-value debug-ellipsis">{{ getDetectionLabels(index-1) }}</span>
-                        </div>
-                        <div class="debug-line">
-                          <span class="debug-label">更新</span>
-                          <span class="debug-value debug-ellipsis">{{ detectionUpdateTime[index-1] || '无数据' }}</span>
-                        </div>
-                      </div>
-                      
-                      <!-- 检测框 + 运行计划围栏 OSD（选中任务即显示围栏，不依赖检出） -->
-                      <detection-overlay
-                        v-if="selectedAITasks[index-1]"
-                        :container-width="getVideoWidth(index-1)"
-                        :container-height="getVideoHeight(index-1)"
-                        :video-width="videoResolutions[index-1] ? videoResolutions[index-1].width : 1920"
-                        :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
-                        :frame-timestamp="(detectionResults[index-1] && detectionResults[index-1].frame_timestamp) || 0"
-                        :detections="(detectionResults[index-1] && detectionResults[index-1].detections) || []"
-                        :status-tags="(detectionResults[index-1] && detectionResults[index-1].status_tags) || []"
-                        :dashboard="(detectionResults[index-1] && detectionResults[index-1].dashboard) || []"
-                        :overlay-lines="(detectionResults[index-1] && detectionResults[index-1].overlay_lines) || []"
-                        :fence="getSelectedTaskFence(index-1)"
-                        :hide-track-id="isPeopleCount(index-1)"
-                        :frame-index="(detectionResults[index-1] && detectionResults[index-1].frame_index) || 0"
-                        :debug-info="(detectionResults[index-1] && detectionResults[index-1].debug) || null">
-                      </detection-overlay>
                     </div>
               </div>
             </div>
@@ -202,45 +162,6 @@
                           </el-option>
                         </el-select>
                       </div>
-                      
-                      <!-- 调试信息（全屏，紧凑） -->
-                      <div v-if="selectedAITasks[index-1]" class="detection-debug-info" :title="getDetectionDebugTitle(index-1)">
-                        <div class="debug-line">
-                          <span class="debug-label">WS</span>
-                          <span :class="['debug-value', getWsStatusClass(index-1)]">
-                            {{ getWsStatusText(index-1) }}
-                          </span>
-                        </div>
-                        <div class="debug-line">
-                          <span class="debug-label">{{ isPeopleCount(index-1) ? getPeopleCountLabel(index-1) : '目标' }}</span>
-                          <span class="debug-value">{{ isPeopleCount(index-1) ? getPeopleCountText(index-1) : getDetectionCount(index-1) }}</span>
-                        </div>
-                        <div class="debug-line" v-if="!isPeopleCount(index-1) && getDetectionLabels(index-1)">
-                          <span class="debug-label">列表</span>
-                          <span class="debug-value debug-ellipsis">{{ getDetectionLabels(index-1) }}</span>
-                        </div>
-                        <div class="debug-line">
-                          <span class="debug-label">更新</span>
-                          <span class="debug-value debug-ellipsis">{{ detectionUpdateTime[index-1] || '无数据' }}</span>
-                        </div>
-                      </div>
-                      <!-- 检测框 + 运行计划围栏 OSD（全屏模式） -->
-                      <detection-overlay
-                        v-if="selectedAITasks[index-1]"
-                        :container-width="getVideoWidth(index-1)"
-                        :container-height="getVideoHeight(index-1)"
-                        :video-width="videoResolutions[index-1] ? videoResolutions[index-1].width : 1920"
-                        :video-height="videoResolutions[index-1] ? videoResolutions[index-1].height : 1080"
-                        :frame-timestamp="(detectionResults[index-1] && detectionResults[index-1].frame_timestamp) || 0"
-                        :detections="(detectionResults[index-1] && detectionResults[index-1].detections) || []"
-                        :status-tags="(detectionResults[index-1] && detectionResults[index-1].status_tags) || []"
-                        :dashboard="(detectionResults[index-1] && detectionResults[index-1].dashboard) || []"
-                        :overlay-lines="(detectionResults[index-1] && detectionResults[index-1].overlay_lines) || []"
-                        :fence="getSelectedTaskFence(index-1)"
-                        :hide-track-id="isPeopleCount(index-1)"
-                        :frame-index="(detectionResults[index-1] && detectionResults[index-1].frame_index) || 0"
-                        :debug-info="(detectionResults[index-1] && detectionResults[index-1].debug) || null">
-                      </detection-overlay>
                     </div>
               </div>
             </div>
@@ -524,17 +445,13 @@ import zlmRtcPlayer from '../../common/zlmRtcPlayer.vue'
 // 使用本地专用组件（改造后的实时监控专用API）
 import OrgPointTree from './components/OrgPointTree.vue'
 import WarningDetail from './warningDetail.vue'
-// 🆕 导入OSD检测框组件
-import DetectionOverlay from './components/DetectionOverlay.vue'
-import detectionWs from './utils/detectionWebSocket'
 import screenfull from "screenfull";
-const { createDetectionWebSocket, closeWebSocket, parseDetectionMessage } = detectionWs
 import { alertAPI, cameraAPI, realtimeMonitorAPI, realtimeDetectionAPI } from '../../service/VisionAIService.js';
 
 export default {
   name: "RealTimeMonitoring",
   components: {
-    player, zlmRtcPlayer, OrgPointTree, WarningDetail, DetectionOverlay
+    player, zlmRtcPlayer, OrgPointTree, WarningDetail
   },
   data() {
     return {
@@ -570,23 +487,17 @@ export default {
       // archivesList: [],  // 已废弃，使用 availableArchivesList
       currentCameraId: '',
       
-      // 🆕 OSD检测框叠加相关
       selectedAITasks: {},  // 每个视频窗口的AI任务选择 {index: task_id}
+      taskPickCleared: {},  // 用户主动清空任务后，不再自动选中
+      rawVideoUrl: {},  // 原始摄像头播放地址，没有检测结果流时恢复
+      rawPlayProtocol: {},
+      rawFlvFallbackUrl: {},
       availableAITasks: {},  // 每个摄像头的可用AI任务列表 {camera_id: []}
       aiTasksLoading: {},  // {camera_id: boolean} 任务列表加载中
       aiTasksLoadToken: {},  // {camera_id: number} 取消过期重试
       aiTasksEmptyConfirmed: {},  // {camera_id: boolean} 重试耗尽后确认无任务
-      wsConnections: {},  // WebSocket连接池 {index: WebSocket}
-      wsReadyState: {},  // {index: 0|1|2|3} 用于左下角显示，避免只判断对象是否存在
-      wsStatusReason: {},
-      wsReconnectTimers: {},
-      wsCheckTokens: {},
-      wsHasDetection: {},
-      detectionResults: {},  // 检测结果数据 {index: {detections: [], frame_size: {}}}
       cameraIdMapping: {},  // 摄像头ID映射 {index: camera_id}
       cameraNames: {},  // 摄像头名称映射 {index: camera_name}
-      videoResolutions: {},  // 视频分辨率 {index: {width, height}}
-      detectionUpdateTime: {},  // 检测结果更新时间 {index: time_string}
       archiveWarningId: '',
       reportWarningId: '',
 
@@ -715,10 +626,6 @@ export default {
       }, 200);
     });
 
-    // 仅开发：?shaft_dev_mock=1 或 localStorage.SHAFT_DEV_MOCK=1，不走生产 WS
-    if (process.env.NODE_ENV !== 'production') {
-      this.maybeStartShaftDevMock()
-    }
   },
   beforeDestroy() {
     this.exitFullscreen();
@@ -728,11 +635,6 @@ export default {
       clearInterval(this.aiTaskPollTimer);
       this.aiTaskPollTimer = null;
     }
-    if (this.shaftDevMockTimer) {
-      clearInterval(this.shaftDevMockTimer)
-      this.shaftDevMockTimer = null
-    }
-
     this.cleanupSSEConnection();
 
     document.removeEventListener('keydown', this.handleKeyDown);
@@ -951,11 +853,15 @@ export default {
     },
     // 清除播放数据
     clear(idx) {
-      this.$set(this.videoUrl, idx - 1, '');
-      this.$set(this.videoTip, idx - 1, '');
-      this.$set(this.playProtocol, idx - 1, '');
-      this.$set(this.flvFallbackUrl, idx - 1, '');
-      this.$set(this.rtcFailed, idx - 1, false);
+      const cell = idx - 1
+      this.$set(this.videoUrl, cell, '');
+      this.$set(this.videoTip, cell, '');
+      this.$set(this.playProtocol, cell, '');
+      this.$set(this.flvFallbackUrl, cell, '');
+      this.$set(this.rtcFailed, cell, false);
+      this.$set(this.rawVideoUrl, cell, '');
+      this.$set(this.rawPlayProtocol, cell, '');
+      this.$set(this.rawFlvFallbackUrl, cell, '');
     },
     onRtcError(idx) {
       if (this.rtcFailed[idx] || this.playProtocol[idx] !== 'webrtc') return
@@ -1036,8 +942,13 @@ export default {
           const videoUrl = rtcUrl || flvUrl;
 
           if (videoUrl) {
+            this.$set(this.taskPickCleared, idxTmp, false);
+            this.$set(this.rawPlayProtocol, idxTmp, rtcUrl ? 'webrtc' : 'flv');
+            this.$set(this.rawVideoUrl, idxTmp, videoUrl);
+            this.$set(this.rawFlvFallbackUrl, idxTmp, flvUrl || '');
             this.$set(this.playProtocol, idxTmp, rtcUrl ? 'webrtc' : 'flv');
             this.$set(this.flvFallbackUrl, idxTmp, flvUrl || '');
+            this.$set(this.rtcFailed, idxTmp, false);
             console.log('✅ 获取播放地址成功:', rtcUrl ? 'webrtc' : 'flv', videoUrl);
             this.setPlayUrl(videoUrl, idxTmp);
 
@@ -3096,64 +3007,6 @@ export default {
       return '未连接';
     },
 
-    // 🆕 ========== OSD检测框叠加功能 ==========
-    
-    getDetectionCount(index) {
-      const dets = this.detectionResults[index] && this.detectionResults[index].detections
-      return dets ? `${dets.length} 个` : '0 个'
-    },
-
-    isPeopleCount(index) {
-      const result = this.detectionResults[index]
-      return !!(result && result.enter_count !== undefined && result.enter_count !== null && result.enter_count !== '')
-    },
-
-    getPeopleCountLabel(index) {
-      const dir = String((this.detectionResults[index] && this.detectionResults[index].gate_direction) || '').toUpperCase()
-      if (dir === 'OUT') return '出井人数'
-      if (dir === 'IN') return '入井人数'
-      return '人数'
-    },
-
-    getPeopleCountText(index) {
-      const result = this.detectionResults[index] || {}
-      return `${result.enter_count} 人`
-    },
-
-    getDetectionLabels(index) {
-      const dets = this.detectionResults[index] && this.detectionResults[index].detections
-      if (!dets || !dets.length) return ''
-      const labels = dets.map(d => d.label || d.class_name).filter(Boolean)
-      if (!labels.length) return ''
-      // 最多展示前 3 个标签，其余用数量概括，避免撑大浮层
-      if (labels.length <= 3) return labels.join(', ')
-      return `${labels.slice(0, 3).join(', ')} 等${labels.length}个`
-    },
-
-    getWsStatusText(index) {
-      if (this.wsStatusReason[index]) return this.wsStatusReason[index]
-      const state = this.wsReadyState[index]
-      if (state === 0) return '连接中'
-      if (state === 1) return this.wsHasDetection[index] ? '已连接' : '已连接，等待检测数据'
-      if (state === 2) return '关闭中'
-      return '未连接'
-    },
-    getWsStatusClass(index) {
-      return this.wsReadyState[index] === 1 ? 'connected' : 'disconnected'
-    },
-
-    getDetectionDebugTitle(index) {
-      const ws = this.getWsStatusText(index)
-      const count = this.getDetectionCount(index)
-      const dets = this.detectionResults[index] && this.detectionResults[index].detections
-      const labels = dets && dets.length
-        ? dets.map(d => d.label || d.class_name).filter(Boolean).join(', ')
-        : ''
-      const updated = this.detectionUpdateTime[index] || '无数据'
-      const countLabel = this.isPeopleCount(index) ? this.getPeopleCountLabel(index) : '目标'
-      const countText = this.isPeopleCount(index) ? this.getPeopleCountText(index) : count
-      return `WS: ${ws}\n${countLabel}: ${countText}${!this.isPeopleCount(index) && labels ? `\n列表: ${labels}` : ''}\n更新: ${updated}`
-    },
 
     /**
      * 加载指定摄像头的可用AI任务列表
@@ -3161,20 +3014,72 @@ export default {
     aiTaskOptionLabel(task) {
       return (task && (task.skill_name || task.task_name)) || ''
     },
-    /** 当前窗口选中 AI 任务的运行计划围栏（区域/绊线/过线），供 OSD 常驻绘制 */
-    getSelectedTaskFence(index) {
+    /** 当前窗口选中的 AI 任务 */
+    getSelectedTask(index) {
       const taskId = this.selectedAITasks[index]
       if (taskId == null || taskId === '') return null
       const cameraId = this.cameraIdMapping[index]
       const list = this.availableAITasks[cameraId]
         || this.availableAITasks[String(cameraId)]
         || []
-      const task = list.find(t =>
+      return list.find(t =>
         t && (String(t.task_id) === String(taskId) || String(t.id) === String(taskId))
-      )
-      if (!task) return null
-      const fence = task.electronic_fence || task.fence || null
-      return (fence && typeof fence === 'object') ? fence : null
+      ) || null
+    },
+    applyCameraPlay(index) {
+      const url = this.rawVideoUrl[index]
+      if (!url) return
+      this.$set(this.rtcFailed, index, false)
+      this.$set(this.playProtocol, index, this.rawPlayProtocol[index] || 'webrtc')
+      this.$set(this.flvFallbackUrl, index, this.rawFlvFallbackUrl[index] || '')
+      this.setPlayUrl(url, index)
+    },
+    applyResultStreamPlay(index) {
+      const task = this.getSelectedTask(index)
+      const play = task && task.result_stream
+      const flvUrl = play && (play.http_flv || '')
+      if (!play || !play.enabled || !flvUrl) return
+      this.$set(this.rtcFailed, index, false)
+      this.$set(this.playProtocol, index, 'flv')
+      this.$set(this.flvFallbackUrl, index, flvUrl)
+      this.setPlayUrl(flvUrl, index)
+    },
+    playSelectedResultStream(index) {
+      const task = this.getSelectedTask(index)
+      const play = task && task.result_stream
+      const flvUrl = play && play.enabled ? (play.http_flv || '') : ''
+      if (flvUrl) {
+        if (this.videoUrl[index] === flvUrl && this.playProtocol[index] === 'flv') return
+        this.applyResultStreamPlay(index)
+        return
+      }
+      const raw = this.rawVideoUrl[index]
+      const rawProtocol = this.rawPlayProtocol[index] || 'webrtc'
+      if (raw && this.videoUrl[index] === raw && this.playProtocol[index] === rawProtocol) return
+      this.applyCameraPlay(index)
+    },
+    syncCellResultStream(index, list, previousList) {
+      if (this.taskPickCleared[index]) {
+        this.playSelectedResultStream(index)
+        return
+      }
+      const taskId = this.selectedAITasks[index]
+      const running = (list || []).filter(t => t && t.is_running === true)
+      let selected = running.find(t => String(t.task_id) === String(taskId))
+      if (!selected) {
+        const previous = (previousList || []).find(t => String(t.task_id) === String(taskId))
+        const sameSkill = previous && previous.skill_name
+          ? running.filter(t => t.skill_name === previous.skill_name)
+          : []
+        if (sameSkill.length === 1) {
+          selected = sameSkill[0]
+        } else {
+          const withFlv = running.filter(t => t.result_stream && t.result_stream.enabled && t.result_stream.http_flv)
+          selected = withFlv[0] || (running.length === 1 ? running[0] : null)
+        }
+      }
+      this.$set(this.selectedAITasks, index, selected ? selected.task_id : null)
+      this.playSelectedResultStream(index)
     },
     aiTaskOptionHint(task) {
       if (!task) return ''
@@ -3409,6 +3314,10 @@ export default {
         'gotTasks=', gotTasks,
         'final_len=', finalList.length,
         'availableAITasks[camera_id]=', finalList)
+      Object.keys(this.cameraIdMapping).forEach(index => {
+        if (String(this.cameraIdMapping[index]) !== key) return
+        this.syncCellResultStream(index, finalList, [])
+      })
     },
 
     /**
@@ -3431,22 +3340,7 @@ export default {
             this.$set(this.aiTasksEmptyConfirmed, key, false)
             Object.keys(this.cameraIdMapping).forEach(index => {
               if (String(this.cameraIdMapping[index]) !== key) return
-              const taskId = this.selectedAITasks[index]
-              const active = list.filter(t => t.is_running === true)
-              let selected = active.find(t => String(t.task_id) === String(taskId))
-              if (!selected) {
-                const previous = previousList.find(t => String(t.task_id) === String(taskId))
-                const sameSkill = previous && previous.skill_name
-                  ? active.filter(t => t.skill_name === previous.skill_name) : []
-                selected = sameSkill.length === 1 ? sameSkill[0] : (active.length === 1 ? active[0] : null)
-                this.disconnectDetectionWebSocket(index)
-                this.$set(this.selectedAITasks, index, selected ? selected.task_id : null)
-                this.$set(this.wsReadyState, index, WebSocket.CLOSED)
-                this.$set(this.wsStatusReason, index, active.length ? '请选择运行任务' : '任务未运行')
-              }
-              if (selected && !this.wsConnections[index]) {
-                this.connectDetectionWebSocket(index, selected.task_id)
-              }
+              this.syncCellResultStream(index, list, previousList)
             })
             return
           }
@@ -3454,14 +3348,11 @@ export default {
           this.applyAITasksList(cameraId, dbList)
           this.$set(this.aiTasksEmptyConfirmed, key, dbList.length === 0)
           Object.keys(this.cameraIdMapping).forEach(index => {
-            if (String(this.cameraIdMapping[index]) !== key || !this.selectedAITasks[index]) return
-            this.disconnectDetectionWebSocket(index)
-            this.$set(this.wsReadyState, index, WebSocket.CLOSED)
-            this.$set(this.wsStatusReason, index, '任务未运行')
-            if (!dbList.some(t => String(t.task_id) === String(this.selectedAITasks[index]))) {
+            if (String(this.cameraIdMapping[index]) !== key) return
+            if (this.selectedAITasks[index] && !dbList.some(t => String(t.task_id) === String(this.selectedAITasks[index]))) {
               this.$set(this.selectedAITasks, index, null)
-              this.$set(this.wsStatusReason, index, '暂无运行任务')
             }
+            this.applyCameraPlay(index)
           })
           return
         }
@@ -3491,308 +3382,28 @@ export default {
      */
     onTaskSelectionChange(index) {
       const taskId = this.selectedAITasks[index]
-      // 断开旧连接（含 CONNECTING，避免泄漏）
-      this.disconnectDetectionWebSocket(index)
-      this.$set(this.wsStatusReason, index, '')
-      this.$set(this.wsReadyState, index, null)
-      
-      // 清空检测结果
-      this.$set(this.detectionResults, index, null)
-      
-      // 如果选择了任务，建立WebSocket连接
-      if (taskId) {
-        this.connectDetectionWebSocket(index, taskId)
-      }
-    },
-    
-    /**
-     * 连接检测结果WebSocket
-     */
-    disconnectDetectionWebSocket(index) {
-      clearTimeout(this.wsReconnectTimers[index])
-      delete this.wsReconnectTimers[index]
-      this.$set(this.wsCheckTokens, index, (this.wsCheckTokens[index] || 0) + 1)
-      const old = this.wsConnections[index]
-      delete this.wsConnections[index]
-      closeWebSocket(old)
-      this.$set(this.wsHasDetection, index, false)
-      this.$set(this.detectionResults, index, null)
+      this.$set(this.taskPickCleared, index, !taskId)
+      this.playSelectedResultStream(index)
     },
 
-    async connectDetectionWebSocket(index, taskId) {
-      const current = this.wsConnections[index]
-      if (current && current.readyState <= WebSocket.OPEN) return
-      clearTimeout(this.wsReconnectTimers[index])
-      delete this.wsReconnectTimers[index]
-      const token = (this.wsCheckTokens[index] || 0) + 1
-      this.$set(this.wsCheckTokens, index, token)
-      this.$set(this.wsStatusReason, index, '检查任务状态')
-      const cameraId = this.getCameraIdForIndex(index)
-      try {
-        const response = await realtimeDetectionAPI.getTasksByCamera(cameraId)
-        if (token !== this.wsCheckTokens[index] || String(this.selectedAITasks[index]) !== String(taskId)) return
-        if (!response.data || response.data.code !== 0) throw new Error('任务状态查询失败')
-        const running = (response.data.data || []).some(t => String(t.task_id) === String(taskId) && t.is_running === true)
-        if (!running) {
-          this.$set(this.wsReadyState, index, WebSocket.CLOSED)
-          this.$set(this.wsStatusReason, index, '任务未运行')
-          this.$set(this.detectionResults, index, null)
-          return
-        }
-      } catch (error) {
-        if (token !== this.wsCheckTokens[index]) return
-        const status = error.response && error.response.status
-        this.$set(this.wsReadyState, index, WebSocket.CLOSED)
-        this.$set(this.wsStatusReason, index, status === 401 || status === 403 ? '登录或权限异常' : '任务状态服务不可用')
-        this.scheduleDetectionReconnect(index, taskId)
-        return
-      }
-      this.$set(this.wsStatusReason, index, '')
-      this.$set(this.wsHasDetection, index, false)
-
-      // 立刻挂上引用（不要等 onOpen），否则切摄像头时 cleanup 关不到 CONNECTING 的 socket
-      const ws = createDetectionWebSocket(taskId, {
-        onOpen: (openedWs) => {
-          if (this.wsConnections[index] !== openedWs) return
-          this.$set(this.wsReadyState, index, WebSocket.OPEN)
-          console.log('[WS] onopen task_id=', taskId, 'index=', index)
-        },
-        onMessage: (parsed) => {
-          if (this.wsConnections[index] !== ws) return
-          if (!parsed.hasDetectionData || String(parsed.taskId) !== String(taskId)) return
-          this.$set(this.wsHasDetection, index, true)
-          this.applyParsedDetectionResult(index, parsed)
-        },
-        onClose: (closedWs, event) => {
-          if (this.wsConnections[index] !== closedWs) return
-          this.$set(this.wsReadyState, index, WebSocket.CLOSED)
-          delete this.wsConnections[index]
-          this.$set(this.wsHasDetection, index, false)
-          this.$set(this.wsStatusReason, index, event && event.code === 1008 ? '任务停止或尚未就绪' : '连接中断，正在重连')
-          const keepTaskId = this.selectedAITasks[index]
-          if (!keepTaskId) return
-          // 任务尚未真正跑起来时服务端会立刻拒连；退避重连，避免看起来像 WS 抖动
-          console.warn('[WS] onclose task_id=', keepTaskId, 'code=', event && event.code)
-          this.scheduleDetectionReconnect(index, keepTaskId)
-        }
-      })
-      this.$set(this.wsConnections, index, ws)
-      this.$set(this.wsReadyState, index, ws.readyState)
-    },
-
-    scheduleDetectionReconnect(index, taskId) {
-      clearTimeout(this.wsReconnectTimers[index])
-      this.wsReconnectTimers[index] = setTimeout(() => {
-        delete this.wsReconnectTimers[index]
-        if (String(this.selectedAITasks[index]) === String(taskId) && !this.wsConnections[index]) {
-          this.connectDetectionWebSocket(index, taskId)
-        }
-      }, 2000)
-    },
-
-    /**
-     * 应用解析后的检测结果（真实 WS 与开发 mock 共用，保留 generation/sessionRestart）
-     */
-    applyParsedDetectionResult(index, parsed) {
-      const previous = this.detectionResults[index] || {}
-      const previousGeneration = Number(
-        (previous.debug && previous.debug.generation) || previous.generation || 0
-      )
-      const nextGeneration = Number(parsed.generation || (parsed.debug && parsed.debug.generation) || 0)
-      const previousFrameIndex = Number(previous.frame_index || 0)
-      const nextFrameIndex = Number(parsed.frameIndex || 0)
-      const previousTs = Number(previous.frame_timestamp || 0)
-      const nextTs = Number(parsed.frameTimestamp || 0)
-      const staleGeneration = (
-        previousGeneration > 0
-        && nextGeneration > 0
-        && nextGeneration < previousGeneration
-      )
-      if (staleGeneration) return false
-      const newSession = parsed.stageReset || (previousGeneration > 0 && nextGeneration > previousGeneration)
-      if (!newSession && previousGeneration === nextGeneration && (
-        (previousTs > 0 && nextTs > 0 && nextTs < previousTs)
-        || (previousFrameIndex > 0 && nextFrameIndex > 0 && nextFrameIndex < previousFrameIndex)
-      )) return false
-
-      const sessionRestart = !!(
-        parsed.stageReset
-        || (previousGeneration > 0 && nextGeneration > previousGeneration)
-        || (previousFrameIndex > 0 && nextFrameIndex > 0 && nextFrameIndex < previousFrameIndex)
-        || (previousTs > 0 && nextTs > 0 && nextTs + 50 < previousTs)
-      )
-      if (sessionRestart) {
-        this.$set(this.detectionResults, index, {
-          detections: [],
-          status_tags: [],
-          dashboard: [],
-          overlay_lines: parsed.overlayLines || [],
-          enter_count: parsed.enterCount,
-          gate_direction: parsed.gateDirection,
-          debug: parsed.debug || null,
-          generation: nextGeneration,
-          frame_size: parsed.frameSize,
-          frame_index: nextFrameIndex,
-          frame_timestamp: nextTs
-        })
-      }
-      this.$set(this.detectionResults, index, {
-        detections: parsed.detections,
-        status_tags: parsed.statusTags || [],
-        dashboard: parsed.dashboard != null ? parsed.dashboard : [],
-        overlay_lines: parsed.overlayLines || [],
-        enter_count: parsed.enterCount,
-        gate_direction: parsed.gateDirection,
-        person_statistics: parsed.personStatistics || {},
-        timing: parsed.timing || {},
-        debug: parsed.debug || null,
-        generation: nextGeneration,
-        frame_size: parsed.frameSize,
-        frame_index: nextFrameIndex,
-        frame_timestamp: nextTs
-      })
-      const now = new Date()
-      this.$set(this.detectionUpdateTime, index,
-        `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`)
-      if (parsed.frameSize) {
-        this.$set(this.videoResolutions, index, {
-          width: parsed.frameSize.width,
-          height: parsed.frameSize.height
-        })
-      }
-      return true
-    },
-
-    /**
-     * 开发专用斜井 mock：不连正式 WS，仅 NODE_ENV!=production 且显式开启时生效。
-     */
-    maybeStartShaftDevMock() {
-      let enabled = false
-      try {
-        enabled = (
-          (typeof location !== 'undefined' && /(?:\?|&|#).*shaft_dev_mock=1/.test(location.href)) ||
-          (typeof localStorage !== 'undefined' && localStorage.getItem('SHAFT_DEV_MOCK') === '1')
-        )
-      } catch (e) {
-        enabled = false
-      }
-      if (!enabled) return
-
-      const {
-        buildShaftMockPayload,
-        buildShaftMockGenerationBump,
-        buildShaftMockStaleGeneration,
-        buildShaftMockEmpty2s
-      } = require('./utils/shaftMockPayload')
-
-      const index = 0
-      const sequence = [
-        () => buildShaftMockPayload({ dashboardMode: 'array', generation: 1, frame_index: 150 }),
-        () => buildShaftMockPayload({ dashboardMode: 'object', generation: 1, frame_index: 180 }),
-        () => buildShaftMockGenerationBump(),
-        () => buildShaftMockStaleGeneration(),
-        () => buildShaftMockEmpty2s()
-      ]
-      let step = 0
-      console.warn('[SHAFT_DEV_MOCK] 已启用开发模拟 payload，不走生产推理')
-      const tick = () => {
-        const raw = sequence[step % sequence.length]()
-        step += 1
-        const parsed = parseDetectionMessage({ data: JSON.stringify(raw) })
-        this.applyParsedDetectionResult(index, parsed)
-      }
-      tick()
-      this.shaftDevMockTimer = setInterval(tick, 2500)
-    },
-    
-    /**
-     * 获取视频窗口宽度
-     */
-    getVideoWidth(index) {
-      // 尝试获取实际的video/canvas元素
-      const playerRef = this.$refs[`player${index}`]
-      if (playerRef && playerRef[0]) {
-        const playerEl = playerRef[0].$el
-        if (playerEl) {
-          const videoEl = playerEl.querySelector('video') || playerEl.querySelector('canvas')
-          if (videoEl) {
-            return videoEl.clientWidth || 640
-          }
-        }
-      }
-      
-      // 降级方案：使用容器尺寸
-      const ref = this.$refs[`videoContent${index}`]
-      if (ref && ref[0]) {
-        return ref[0].clientWidth || 640
-      }
-      return 640
-    },
-    
-    /**
-     * 获取视频窗口高度
-     */
-    getVideoHeight(index) {
-      // 尝试获取实际的video/canvas元素
-      const playerRef = this.$refs[`player${index}`]
-      if (playerRef && playerRef[0]) {
-        const playerEl = playerRef[0].$el
-        if (playerEl) {
-          const videoEl = playerEl.querySelector('video') || playerEl.querySelector('canvas')
-          if (videoEl) {
-            return videoEl.clientHeight || 480
-          }
-        }
-      }
-      
-      // 降级方案：使用容器尺寸
-      const ref = this.$refs[`videoContent${index}`]
-      if (ref && ref[0]) {
-        return ref[0].clientHeight || 480
-      }
-      return 480
-    },
-    
-    /**
-     * 清理指定索引的OSD资源
-     */
     cleanupOSDResources(index) {
-      this.disconnectDetectionWebSocket(index)
-      this.$set(this.wsStatusReason, index, '')
-      
-      // 清空数据
       this.$set(this.selectedAITasks, index, null)
-      this.$set(this.detectionResults, index, null)
-      this.$set(this.videoResolutions, index, null)
-      this.$set(this.detectionUpdateTime, index, null)
-      this.$set(this.wsReadyState, index, null)
+      this.$set(this.taskPickCleared, index, false)
     },
-    
-    /**
-     * 清理所有OSD资源
-     */
+
     cleanupAllOSDResources() {
-      Object.keys(this.wsConnections).concat(Object.keys(this.wsCheckTokens)).forEach(index => this.disconnectDetectionWebSocket(index))
-      Object.values(this.wsReconnectTimers).forEach(timer => clearTimeout(timer))
-      this.wsReconnectTimers = {}
-      
-      // 清空所有数据
-      this.wsConnections = {}
-      this.wsReadyState = {}
-      this.wsStatusReason = {}
-      this.wsHasDetection = {}
       this.selectedAITasks = {}
-      this.detectionResults = {}
+      this.taskPickCleared = {}
       this.availableAITasks = {}
       this.aiTasksLoading = {}
       this.aiTasksLoadToken = {}
       this.aiTasksEmptyConfirmed = {}
       this.cameraIdMapping = {}
       this.cameraNames = {}
-      this.videoResolutions = {}
-      this.detectionUpdateTime = {}
+      this.rawVideoUrl = {}
+      this.rawPlayProtocol = {}
+      this.rawFlvFallbackUrl = {}
     }
-    // 🆕 ========== OSD检测框叠加功能结束 ==========
 
   }
 }
@@ -5470,65 +5081,6 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
   width: 100%;
   height: 100%;
 }
-
-/* 调试信息：紧凑展示，限制尺寸避免遮挡画面 */
-.detection-debug-info {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  background: rgba(0, 0, 0, 0.72);
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  line-height: 1.35;
-  color: #fff;
-  z-index: 20;
-  max-width: min(160px, 36%);
-  max-height: 42%;
-  overflow: hidden;
-  pointer-events: none;
-  border: 1px solid rgba(59, 130, 246, 0.25);
-}
-
-.detection-debug-info .debug-line {
-  margin-bottom: 2px;
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.detection-debug-info .debug-line:last-child {
-  margin-bottom: 0;
-}
-
-.detection-debug-info .debug-label {
-  color: #8492a6;
-  margin-right: 6px;
-  flex-shrink: 0;
-  min-width: 28px;
-}
-
-.detection-debug-info .debug-value {
-  color: #fff;
-  font-weight: 500;
-  min-width: 0;
-}
-
-.detection-debug-info .debug-ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.detection-debug-info .debug-value.connected {
-  color: #10b981;
-}
-
-.detection-debug-info .debug-value.disconnected {
-  color: #f56c6c;
-}
-
-/* 🆕 OSD样式结束 */
 
 </style>
 

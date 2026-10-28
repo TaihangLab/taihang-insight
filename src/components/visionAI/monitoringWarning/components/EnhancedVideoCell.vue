@@ -41,25 +41,8 @@
           <div>{{ tip || "无信号" }}</div>
         </div>
         
-        <!-- 视频播放器 + OSD叠加 -->
         <div v-else class="video-player-wrapper">
-          <!-- 视频播放器 -->
           <slot name="player"></slot>
-          
-          <!-- 检测框OSD叠加层 -->
-          <detection-overlay
-            v-if="selectedTaskId"
-            :container-width="containerWidth"
-            :container-height="containerHeight"
-            :video-width="videoWidth"
-            :video-height="videoHeight"
-            :frame-timestamp="frameTimestamp"
-            :detections="detections"
-            :status-tags="statusTags"
-            :dashboard="dashboard"
-            :frame-index="frameIndex"
-            :debug-info="debugInfo">
-          </detection-overlay>
         </div>
       </div>
     </div>
@@ -67,15 +50,8 @@
 </template>
 
 <script>
-import DetectionOverlay from './DetectionOverlay.vue'
-import detectionWs from '../utils/detectionWebSocket'
-const { createDetectionWebSocket, closeWebSocket } = detectionWs
-
 export default {
   name: 'EnhancedVideoCell',
-  components: {
-    DetectionOverlay
-  },
   props: {
     // 摄像头名称
     cameraName: {
@@ -179,69 +155,7 @@ export default {
      * 任务选择变化
      */
     onTaskChange(taskId) {
-      // 断开旧连接
-      this.disconnectWebSocket()
-      
-      // 清空检测结果
-      this.detections = []
-      this.statusTags = []
-      this.dashboard = []
-      this.frameIndex = 0
-      this.debugInfo = null
-      this.generation = 0
-      this.frameTimestamp = 0
-      
-      // 如果选择了任务，建立新连接
-      if (taskId) {
-        this.connectWebSocket(taskId)
-      }
-      
-      // 触发事件
       this.$emit('task-change', taskId)
-    },
-    
-    connectWebSocket(taskId) {
-      this.wsConnection = createDetectionWebSocket(taskId, {
-        onMessage: (parsed) => {
-          const previousGeneration = Number(
-            (this.debugInfo && this.debugInfo.generation) || this.generation || 0
-          )
-          const nextGeneration = Number(parsed.generation || (parsed.debug && parsed.debug.generation) || 0)
-          if (previousGeneration > 0 && nextGeneration > 0 && nextGeneration < previousGeneration) {
-            return
-          }
-          const sessionRestart = !!(
-            parsed.stageReset
-            || (previousGeneration > 0 && nextGeneration > previousGeneration)
-            || (this.frameIndex > 0 && parsed.frameIndex > 0 && parsed.frameIndex < this.frameIndex)
-            || (this.frameTimestamp > 0 && parsed.frameTimestamp > 0 && parsed.frameTimestamp + 50 < this.frameTimestamp)
-          )
-          if (sessionRestart) {
-            this.detections = []
-            this.statusTags = []
-            this.dashboard = []
-            this.frameIndex = 0
-            this.frameTimestamp = 0
-          }
-          this.detections = parsed.detections
-          this.statusTags = parsed.statusTags || []
-          this.dashboard = parsed.dashboard || []
-          this.frameIndex = parsed.frameIndex || 0
-          this.debugInfo = parsed.debug || null
-          this.generation = nextGeneration
-          this.frameTimestamp = parsed.frameTimestamp
-          this.videoWidth = parsed.frameSize.width
-          this.videoHeight = parsed.frameSize.height
-        },
-        onClose: () => {
-          this.wsConnection = null
-        }
-      })
-    },
-    
-    disconnectWebSocket() {
-      closeWebSocket(this.wsConnection)
-      this.wsConnection = null
     },
     
     /**
@@ -273,14 +187,6 @@ export default {
      * 清理资源
      */
     cleanup() {
-      this.disconnectWebSocket()
-      this.detections = []
-      this.statusTags = []
-      this.dashboard = []
-      this.frameIndex = 0
-      this.debugInfo = null
-      this.generation = 0
-      this.frameTimestamp = 0
       this.selectedTaskId = null
     }
   }

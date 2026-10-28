@@ -158,6 +158,24 @@
                 :closable="false"
                 show-icon>
               </el-alert>
+              <div v-if="rtspStreamingEnabled" class="rtsp-stream-urls">
+                <div v-if="!resultStreams.length" class="hint">保存计划并生成子任务后，这里显示每个点位的 OSD 视频流地址</div>
+                <div v-for="item in resultStreams" :key="item.task_id" class="rtsp-stream-url">
+                  <div v-if="item.camera_name || item.camera_id" class="rtsp-stream-url__name">
+                    {{ item.camera_name || item.camera_id }}
+                  </div>
+                  <div class="rtsp-stream-url__line">
+                    <span class="rtsp-stream-url__proto">RTSP</span>
+                    <span class="rtsp-stream-url__value" :title="item.rtsp">{{ item.rtsp }}</span>
+                    <span class="rtsp-stream-url__copy" @click.stop="copyStreamUrl(item.rtsp)">复制</span>
+                  </div>
+                  <div class="rtsp-stream-url__line">
+                    <span class="rtsp-stream-url__proto">RTMP</span>
+                    <span class="rtsp-stream-url__value" :title="item.rtmp">{{ item.rtmp }}</span>
+                    <span class="rtsp-stream-url__copy" @click.stop="copyStreamUrl(item.rtmp)">复制</span>
+                  </div>
+                </div>
+              </div>
             </el-form-item>
           </el-form>
         </div>
@@ -752,6 +770,7 @@ export default {
       stepLabels: ['基本信息', '运行参数', '预警规则'],
       submitting: false,
       form: defaultForm(),
+      resultStreams: [],
       skillOptions: [],
       skillParamFields: [],
       skillDefaultParamKeys: [],
@@ -941,6 +960,32 @@ export default {
         this.$set(this.form.frame_extraction, 'rtsp_streaming', { enabled: false });
       }
     },
+    copyStreamUrl(text) {
+      const value = String(text || '');
+      if (!value) return;
+      const done = () => this.$message.success('已复制');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(value).then(done).catch(() => this.copyStreamUrlFallback(value, done));
+        return;
+      }
+      this.copyStreamUrlFallback(value, done);
+    },
+    copyStreamUrlFallback(value, done) {
+      const input = document.createElement('textarea');
+      input.value = value;
+      input.setAttribute('readonly', 'readonly');
+      input.style.position = 'fixed';
+      input.style.left = '-9999px';
+      document.body.appendChild(input);
+      input.select();
+      try {
+        document.execCommand('copy');
+        done();
+      } catch (e) {
+        this.$message.warning('复制失败，请手动选择地址');
+      }
+      document.body.removeChild(input);
+    },
     async init() {
       this.step = 0;
       this.alertNameTouched = false;
@@ -956,6 +1001,7 @@ export default {
       const baseAlertConfig = this.alertConfigDefaults || defaultAlertConfig();
       if (this.isEdit || this.isView) {
         const p = this.editPlan;
+        this.resultStreams = Array.isArray(p.result_streams) ? p.result_streams : [];
         const kind = p.skill_kind || 'visual';
         const skillRef = kind === 'llm'
           ? (p.llm_skill_id ? 'llm:' + p.llm_skill_id : '')
@@ -984,6 +1030,7 @@ export default {
         this.alertNameTouched = true;
         if (kind !== 'llm' && p.skill_class_id) this.loadSkillParams(p.skill_class_id, true);
       } else {
+        this.resultStreams = [];
         this.form = defaultForm();
         const alertConfig = Object.assign({}, baseAlertConfig);
         alertConfig.merge_immediate_levels = normalizeImmediateLevels(alertConfig.merge_immediate_levels);
@@ -1889,6 +1936,7 @@ export default {
       this.stopSaveProgressPoll();
       this.step = 0;
       this.form = defaultForm();
+      this.resultStreams = [];
       this.skillParamFields = [];
       this.skillDefaultParamKeys = [];
       this.skillParamsReady = false;
@@ -2013,6 +2061,46 @@ export default {
 }
 .rtsp-streaming-row__status.is-on {
   color: #67C23A;
+}
+.rtsp-stream-urls {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+.rtsp-stream-url + .rtsp-stream-url {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e4e7ed;
+}
+.rtsp-stream-url__name {
+  font-size: 12px;
+  color: #303133;
+  margin-bottom: 4px;
+}
+.rtsp-stream-url__line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 22px;
+}
+.rtsp-stream-url__proto {
+  flex: 0 0 42px;
+  font-size: 12px;
+  color: #909399;
+}
+.rtsp-stream-url__value {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: #606266;
+  word-break: break-all;
+}
+.rtsp-stream-url__copy {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: #409eff;
+  cursor: pointer;
 }
 .rtsp-streaming-row__help {
   color: #909399;
