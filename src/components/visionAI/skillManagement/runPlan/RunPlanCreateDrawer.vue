@@ -161,7 +161,34 @@
               </div>
               <div class="hint">固定频率抽帧，支持 1 秒多帧或多秒 1 帧</div>
             </el-form-item>
-            <el-form-item v-if="form.skill_kind !== 'llm'" label="实时推流">
+            <el-form-item v-if="isPersonCountSkill" label="显示检测框">
+              <div class="rtsp-streaming-row">
+                <span class="rtsp-streaming-row__label">后端绘制检测框：</span>
+                <el-switch
+                  v-model="showDetectionBoxes"
+                  active-color="#67C23A"
+                  inactive-color="#909399">
+                </el-switch>
+                <span class="rtsp-streaming-row__status" :class="{ 'is-on': showDetectionBoxes }">
+                  {{ showDetectionBoxes ? '已开启' : '已关闭' }}
+                </span>
+              </div>
+              <div class="hint">开启后检测框由后端画在同一帧上，实时监控改为播放这路画面。关闭后只显示人数。保存计划后生效。</div>
+              <div v-if="showDetectionBoxes" class="rtsp-stream-urls">
+                <div v-if="!resultStreams.length" class="hint">保存计划并生成子任务后，这里显示每个点位的画面地址</div>
+                <div v-for="item in resultStreams" :key="'box-' + item.task_id" class="rtsp-stream-url">
+                  <div v-if="item.camera_name || item.camera_id" class="rtsp-stream-url__name">
+                    {{ item.camera_name || item.camera_id }}
+                  </div>
+                  <div class="rtsp-stream-url__line">
+                    <span class="rtsp-stream-url__proto">RTSP</span>
+                    <span class="rtsp-stream-url__value" :title="item.rtsp">{{ item.rtsp }}</span>
+                    <span class="rtsp-stream-url__copy" @click.stop="copyStreamUrl(item.rtsp)">复制</span>
+                  </div>
+                </div>
+              </div>
+            </el-form-item>
+            <el-form-item v-if="form.skill_kind !== 'llm' && !isPersonCountSkill" label="实时推流">
               <div class="rtsp-streaming-row">
                 <span class="rtsp-streaming-row__label">检测结果实时推流：</span>
                 <el-switch
@@ -956,6 +983,20 @@ export default {
       set(val) {
         this.ensureRtspStreamingConfig();
         this.$set(this.form.frame_extraction.rtsp_streaming, 'enabled', !!val);
+      }
+    },
+    isPersonCountSkill() {
+      const selected = (this.skillOptions || []).find(item => item.ref === this.form.skill_ref);
+      if (selected && selected.name) return selected.name === 'person_count_detector26';
+      return String(this.form.skill_name || '').indexOf('人流量检测') >= 0;
+    },
+    showDetectionBoxes: {
+      get() {
+        return !!(this.form.frame_extraction && this.form.frame_extraction.show_detection_boxes);
+      },
+      set(val) {
+        if (!this.form.frame_extraction) this.$set(this.form, 'frame_extraction', {});
+        this.$set(this.form.frame_extraction, 'show_detection_boxes', !!val);
       }
     },
     hasImageSkillParam() {

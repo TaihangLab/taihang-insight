@@ -5122,7 +5122,7 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
   position: absolute;
   left: 12px;
   top: 12px;
-  z-index: 6;
+  z-index: 12;
   padding: 4px 10px;
   background: rgba(0, 0, 0, 0.55);
   color: #ffe14a;
