@@ -3027,6 +3027,12 @@ export default {
     isPersonCountTask(task) {
       return !!(task && task.skill_code === 'person_count_detector26')
     },
+    isTailgatingTask(task) {
+      if (!task) return false
+      const code = String(task.skill_code || '')
+      const name = `${task.skill_name || ''}${task.task_name || ''}`
+      return /tailgat/i.test(code) || name.indexOf('尾随') >= 0
+    },
     isPersonCountResultStream(task) {
       const play = task && task.result_stream
       return !!(play && play.enabled && play.http_flv)
@@ -3036,19 +3042,29 @@ export default {
       const jobs = []
       for (let index = 0; index < 9; index += 1) {
         const task = this.getSelectedTask(index)
-        if (!this.isPersonCountTask(task)) continue
-        // 后端已把人数画进推流画面时，不再盖前端角标，避免两个入井人数叠在一起。
-        if (this.isPersonCountResultStream(task)) continue
-        const taskId = task.task_id
-        jobs.push(
-          realtimeDetectionAPI.getDetectionResult(taskId).then(response => {
-            const data = response && response.data && response.data.data
-            if (!data) return
-            if (data.enter_count == null || data.enter_count === '') return
-            const outbound = String(data.gate_direction || '').toUpperCase() === 'OUT'
-            updates[index] = (outbound ? '出井人数：' : '入井人数：') + data.enter_count
-          }).catch(() => {})
-        )
+        const taskId = task && task.task_id
+        if (taskId == null || taskId === '') continue
+        if (this.isPersonCountTask(task)) {
+          // 后端已把人数画进推流画面时，不再盖前端角标，避免两个入井人数叠在一起。
+          if (this.isPersonCountResultStream(task)) continue
+          jobs.push(
+            realtimeDetectionAPI.getDetectionResult(taskId).then(response => {
+              const data = response && response.data && response.data.data
+              if (!data) return
+              if (data.enter_count == null || data.enter_count === '') return
+              const outbound = String(data.gate_direction || '').toUpperCase() === 'OUT'
+              updates[index] = (outbound ? '出井人数：' : '入井人数：') + data.enter_count
+            }).catch(() => {})
+          )
+        } else if (this.isTailgatingTask(task)) {
+          jobs.push(
+            realtimeDetectionAPI.getDetectionResult(taskId).then(response => {
+              const data = response && response.data && response.data.data
+              if (!data || data.tailgate_count == null || data.tailgate_count === '') return
+              updates[index] = '尾随次数：' + data.tailgate_count
+            }).catch(() => {})
+          )
+        }
       }
       if (!jobs.length) {
         if (Object.keys(this.enterCountText).length) this.enterCountText = {}
