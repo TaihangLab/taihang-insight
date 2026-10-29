@@ -79,7 +79,7 @@
                         fluent autoplay
                         @screenshot="shot"
                         @destroy="destroy"/>
-                      <div v-if="enterCountText[index-1]" class="enter-count-badge">{{ enterCountText[index-1] }}</div>
+                      <div v-if="enterCountText[index-1]" class="enter-count-badge" v-html="enterCountText[index-1]"></div>
                       
                       <!-- 🆕 AI任务选择下拉框 - 移到video-player-wrapper内部 -->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
@@ -143,7 +143,7 @@
                         fluent autoplay
                         @screenshot="shot"
                         @destroy="destroy"/>
-                      <div v-if="enterCountText[index-1]" class="enter-count-badge">{{ enterCountText[index-1] }}</div>
+                      <div v-if="enterCountText[index-1]" class="enter-count-badge" v-html="enterCountText[index-1]"></div>
                       
                       <!-- 🆕 AI任务选择下拉框（全屏模式）-->
                       <div v-if="availableAITasks[cameraIdMapping[index-1]] && availableAITasks[cameraIdMapping[index-1]].length > 0" 
@@ -3027,17 +3027,24 @@ export default {
     isPersonCountTask(task) {
       return !!(task && task.skill_code === 'person_count_detector26')
     },
+    isPersonCountResultStream(task) {
+      const play = task && task.result_stream
+      return !!(play && play.enabled && play.http_flv)
+    },
     async refreshEnterCounts() {
       const updates = {}
       const jobs = []
       for (let index = 0; index < 9; index += 1) {
         const task = this.getSelectedTask(index)
         if (!this.isPersonCountTask(task)) continue
+        // 后端已把人数画进推流画面时，不再盖前端角标，避免两个入井人数叠在一起。
+        if (this.isPersonCountResultStream(task)) continue
         const taskId = task.task_id
         jobs.push(
           realtimeDetectionAPI.getDetectionResult(taskId).then(response => {
             const data = response && response.data && response.data.data
-            if (!data || data.enter_count == null || data.enter_count === '') return
+            if (!data) return
+            if (data.enter_count == null || data.enter_count === '') return
             const outbound = String(data.gate_direction || '').toUpperCase() === 'OUT'
             updates[index] = (outbound ? '出井人数：' : '入井人数：') + data.enter_count
           }).catch(() => {})
@@ -5130,6 +5137,8 @@ body.camera-fullscreen-mode .video-cell .video-content .video-placeholder i.el-i
   font-weight: 600;
   border-radius: 4px;
   pointer-events: none;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 </style>
