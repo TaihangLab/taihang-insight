@@ -51,29 +51,84 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item v-if="showModelSelect" label="推理模型">
-              <el-select
-                v-model="form.selected_model_name"
-                filterable
-                remote
-                clearable
-                :remote-method="searchModels"
-                :loading="modelOptionsLoading"
-                placeholder="默认使用技能配置的模型"
-                :disabled="isView"
-                style="width: 100%; max-width: 480px;"
-                @focus="ensureModelOptions"
-                @change="syncRequiredModelsFromSelection"
-                @clear="onModelClear">
-                <el-option
-                  v-for="m in modelSelectOptions"
-                  :key="m.name"
-                  :label="modelOptionLabel(m)"
-                  :value="m.name">
-                </el-option>
-              </el-select>
-              <div class="hint" v-if="skillDefaultModelName">
-                技能默认：{{ skillDefaultModelName }}；不选或清空则沿用默认模型
+            <el-form-item v-if="showModelSelect" label="推理模型" class="model-select-item">
+              <div class="model-tip">
+                <i class="el-icon-info"></i>
+                按添加顺序生效（第 1 个、第 2 个…），须与技能约定一致；例如车牌识别先检测后识别。清空则沿用技能默认模型。
+              </div>
+              <div v-if="skillDefaultModels.length" class="hint model-default-hint">
+                技能默认（按顺序）：{{ skillDefaultModels.join(' → ') }}
+                <span v-if="modelCountHint" class="model-count-hint">{{ modelCountHint }}</span>
+              </div>
+              <div class="model-selector">
+                <div class="ms-available">
+                  <div class="ps-head">可选模型</div>
+                  <el-input
+                    v-model="modelFilterQuery"
+                    size="mini"
+                    clearable
+                    prefix-icon="el-icon-search"
+                    placeholder="搜索模型名称"
+                    :disabled="isView"
+                    @focus="ensureModelOptions"
+                    @clear="loadModelOptions('')"
+                    @input="onModelFilterInput">
+                  </el-input>
+                  <div class="ps-list" v-loading="modelOptionsLoading">
+                    <div
+                      v-for="m in availableModelOptions"
+                      :key="m.name"
+                      class="ps-item org-item"
+                      :class="{ disabled: isView || isModelSelected(m.name) }"
+                      @click="!isView && !isModelSelected(m.name) && addRequiredModel(m.name)">
+                      <i class="el-icon-cpu"></i>
+                      <span class="org-name" :title="modelOptionLabel(m)">{{ modelOptionLabel(m) }}</span>
+                      <span v-if="isModelSelected(m.name)" class="org-count">已选</span>
+                    </div>
+                    <div v-if="!modelOptionsLoading && !availableModelOptions.length" class="empty-tip-sm">
+                      {{ modelFilterQuery ? '无匹配模型' : '暂无可用模型' }}
+                    </div>
+                  </div>
+                  <div v-if="!isView" class="ps-tree-tip">点击左侧模型按顺序加入右侧</div>
+                </div>
+                <div class="ms-selected">
+                  <div class="ps-head">
+                    已选模型 ({{ form.required_models.length }})
+                    <a v-if="!isView && form.required_models.length" class="clear-link" @click="clearRequiredModels">清空</a>
+                  </div>
+                  <div class="ps-list">
+                    <div
+                      v-for="(name, idx) in form.required_models"
+                      :key="name + '-' + idx"
+                      class="ps-item selected-item model-selected-item">
+                      <div class="selected-item__main">
+                        <span class="selected-item__name">
+                          <span class="model-order-badge">{{ idx + 1 }}</span>
+                          {{ name }}
+                        </span>
+                        <span v-if="skillDefaultModels[idx]" class="selected-item__status">
+                          对应默认：{{ skillDefaultModels[idx] }}
+                        </span>
+                      </div>
+                      <div v-if="!isView" class="model-item-actions">
+                        <i
+                          class="el-icon-top"
+                          :class="{ disabled: idx === 0 }"
+                          title="上移"
+                          @click="moveRequiredModel(idx, -1)"></i>
+                        <i
+                          class="el-icon-bottom"
+                          :class="{ disabled: idx >= form.required_models.length - 1 }"
+                          title="下移"
+                          @click="moveRequiredModel(idx, 1)"></i>
+                        <i class="el-icon-close" title="移除" @click="removeRequiredModel(idx)"></i>
+                      </div>
+                    </div>
+                    <div v-if="!form.required_models.length" class="empty-tip-sm">
+                      请从左侧选择模型；不选则使用技能默认
+                    </div>
+                  </div>
+                </div>
               </div>
             </el-form-item>
 
@@ -798,7 +853,6 @@ function defaultForm() {
       rtsp_streaming: { enabled: false }
     },
     skill_params: {},
-    selected_model_name: '',
     required_models: [],
     alert_name: '',
     alert_level: '',
@@ -835,6 +889,8 @@ export default {
       skillDefaultModels: [],
       modelOptions: [],
       modelOptionsLoading: false,
+      modelFilterQuery: '',
+      modelFilterTimer: null,
       capturingRef: {},
       uploadingRef: {},
       refPreviewBlobs: {},
@@ -888,6 +944,7 @@ export default {
     };
   },
   beforeDestroy() {
+    if (this.modelFilterTimer) clearTimeout(this.modelFilterTimer);
     this.stopSaveProgressPoll();
   },
   computed: {
@@ -950,7 +1007,7 @@ export default {
     showModelSelect() {
       return this.form.skill_kind !== 'llm' && !!(this.form.skill_class_id || this.form.skill_ref);
     },
-    modelSelectOptions() {
+    availableModelOptions() {
       const map = {};
       (this.modelOptions || []).forEach(m => {
         if (m && m.name) map[m.name] = m;
@@ -958,9 +1015,18 @@ export default {
       (this.skillDefaultModels || []).forEach(name => {
         if (name && !map[name]) map[name] = { name, version: '' };
       });
-      const selected = this.form.selected_model_name;
-      if (selected && !map[selected]) map[selected] = { name: selected, version: '' };
+      (this.form.required_models || []).forEach(name => {
+        if (name && !map[name]) map[name] = { name, version: '' };
+      });
       return Object.keys(map).sort().map(k => map[k]);
+    },
+    modelCountHint() {
+      const need = (this.skillDefaultModels || []).length;
+      const got = (this.form.required_models || []).length;
+      if (!need) return '';
+      if (!got) return `（本技能默认需要 ${need} 个模型）`;
+      if (got !== need) return `（默认 ${need} 个，当前 ${got} 个）`;
+      return '';
     },
     drawerTitle() {
       if (this.isView) return '查看运行计划';
@@ -1107,10 +1173,9 @@ export default {
           run_cycle: Object.assign(defaultForm().run_cycle, p.run_cycle || {}),
           frame_extraction: Object.assign(defaultForm().frame_extraction, p.frame_extraction || {}),
           skill_params: Object.assign({}, p.skill_params || {}),
-          selected_model_name: Array.isArray(p.required_models) && p.required_models.length
-            ? String(p.required_models[0] || '')
-            : '',
-          required_models: Array.isArray(p.required_models) ? p.required_models.slice() : [],
+          required_models: Array.isArray(p.required_models)
+            ? p.required_models.map(n => String(n || '').trim()).filter(Boolean)
+            : [],
           alert_name: p.alert_name || '',
           alert_level: p.alert_level || '',
           alert_config: alertConfig,
@@ -1320,7 +1385,6 @@ export default {
       } else {
         this.form.skill_class_id = s.skill_class_id;
         this.form.llm_skill_id = '';
-        this.form.selected_model_name = '';
         this.form.required_models = [];
         this.loadSkillParams(s.skill_class_id, false);
       }
@@ -1328,38 +1392,75 @@ export default {
     resetModelSelection() {
       this.skillDefaultModelName = '';
       this.skillDefaultModels = [];
-      this.form.selected_model_name = '';
       this.form.required_models = [];
+      this.modelFilterQuery = '';
     },
     modelOptionLabel(m) {
       if (!m || !m.name) return '';
       const ver = m.version != null && m.version !== '' ? String(m.version) : '';
       return ver ? `${m.name}/V${ver}` : m.name;
     },
-    onModelClear() {
-      this.form.selected_model_name = this.skillDefaultModelName || '';
-      this.syncRequiredModelsFromSelection();
+    isModelSelected(name) {
+      const n = String(name || '').trim();
+      return !!(n && (this.form.required_models || []).includes(n));
     },
-    syncRequiredModelsFromSelection() {
-      const name = String(this.form.selected_model_name || '').trim();
-      if (!name || name === this.skillDefaultModelName) {
-        // 选默认模型时不写覆盖，子任务沿用技能 DEFAULT_CONFIG
-        this.form.required_models = [];
+    addRequiredModel(name) {
+      const n = String(name || '').trim();
+      if (!n || this.isView) return;
+      if (this.isModelSelected(n)) {
+        this.$message.info('该模型已在已选列表中，请调整顺序或先移除');
         return;
       }
-      this.form.required_models = [name];
+      this.form.required_models.push(n);
+    },
+    removeRequiredModel(index) {
+      if (this.isView) return;
+      if (index < 0 || index >= this.form.required_models.length) return;
+      this.form.required_models.splice(index, 1);
+    },
+    moveRequiredModel(index, delta) {
+      if (this.isView) return;
+      const list = this.form.required_models;
+      const target = index + delta;
+      if (index < 0 || index >= list.length || target < 0 || target >= list.length) return;
+      const tmp = list[index];
+      this.$set(list, index, list[target]);
+      this.$set(list, target, tmp);
+    },
+    clearRequiredModels() {
+      if (this.isView) return;
+      this.form.required_models = [];
+    },
+    /** 与技能默认完全一致时不写覆盖，子任务沿用 DEFAULT_CONFIG */
+    normalizeRequiredModelsForSave() {
+      const selected = (this.form.required_models || [])
+        .map(n => String(n || '').trim())
+        .filter(Boolean);
+      if (!selected.length) return [];
+      const defaults = this.skillDefaultModels || [];
+      if (
+        defaults.length
+        && selected.length === defaults.length
+        && selected.every((n, i) => n === defaults[i])
+      ) {
+        return [];
+      }
+      return selected;
+    },
+    onModelFilterInput(query) {
+      if (this.modelFilterTimer) clearTimeout(this.modelFilterTimer);
+      this.modelFilterTimer = setTimeout(() => {
+        this.loadModelOptions(query);
+      }, 280);
     },
     async ensureModelOptions() {
       if ((this.modelOptions || []).length) return;
-      await this.loadModelOptions();
-    },
-    searchModels(query) {
-      this.loadModelOptions(query);
+      await this.loadModelOptions(this.modelFilterQuery);
     },
     async loadModelOptions(query) {
       this.modelOptionsLoading = true;
       try {
-        const q = String(query || '').trim();
+        const q = String(query != null ? query : this.modelFilterQuery || '').trim();
         const pageSize = 100; // 后端 /models/list 的 limit 上限
         const collected = [];
         let page = 1;
@@ -1401,10 +1502,10 @@ export default {
       const names = fromCfg.length ? fromCfg : fromInfo;
       this.skillDefaultModels = names;
       this.skillDefaultModelName = names[0] || '';
-      if (!keepSelection || !this.form.selected_model_name) {
-        this.form.selected_model_name = this.skillDefaultModelName;
+      // 编辑回填已有覆盖时保留；新建或无覆盖时用技能默认顺序预填展示
+      if (!keepSelection || !(this.form.required_models || []).length) {
+        this.form.required_models = names.slice();
       }
-      this.syncRequiredModelsFromSelection();
       this.ensureModelOptions();
     },
     getSkillParamType(value) {
@@ -1890,7 +1991,6 @@ export default {
         review_enabled: reviewEnabled,
         review_skill_class_id: reviewEnabled ? (this.form.review_skill_class_id || null) : null
       });
-      this.syncRequiredModelsFromSelection();
       const payload = {
         analysis_resource: this.form.analysis_resource,
         skill_kind: this.form.skill_kind,
@@ -1899,9 +1999,7 @@ export default {
         run_cycle: this.form.run_cycle,
         frame_extraction: this.form.frame_extraction,
         skill_params: this.pickCurrentSkillParams(),
-        required_models: this.form.skill_kind === 'llm'
-          ? []
-          : (Array.isArray(this.form.required_models) ? this.form.required_models.slice() : []),
+        required_models: this.form.skill_kind === 'llm' ? [] : this.normalizeRequiredModelsForSave(),
         alert_name: this.form.alert_name,
         alert_level: this.form.alert_level === '' ? 0 : this.form.alert_level,
         alert_config: alertConfig,
@@ -2447,6 +2545,50 @@ export default {
   background: #ecf5ff; color: #409eff; font-size: 12px;
   padding: 8px 12px; border-radius: 6px; margin-bottom: 12px;
   display: flex; align-items: center; gap: 6px;
+}
+.model-select-item { margin-bottom: 18px; }
+.model-select-item >>> .el-form-item__content { line-height: normal; }
+.model-tip {
+  background: #ecf5ff; color: #409eff; font-size: 12px;
+  padding: 8px 12px; border-radius: 6px; margin-bottom: 8px;
+  display: flex; align-items: flex-start; gap: 6px; line-height: 1.5;
+  max-width: 100%;
+}
+.model-default-hint { margin: 0 0 8px; max-width: 100%; }
+.model-count-hint { color: #e6a23c; margin-left: 4px; }
+.model-selector {
+  display: flex; border: 1px solid #ebeef5; border-radius: 8px;
+  height: 280px; overflow: hidden; width: 100%; max-width: 640px;
+}
+.ms-available {
+  flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column;
+  border-right: 1px solid #ebeef5; padding: 10px; background: #fafbfc; gap: 8px;
+}
+.ms-selected {
+  width: 260px; flex-shrink: 0; padding: 12px;
+  display: flex; flex-direction: column; background: #fff;
+}
+.ms-available .ps-list, .ms-selected .ps-list { margin-top: 0; }
+.ps-item.org-item.disabled {
+  opacity: 0.55; cursor: not-allowed;
+}
+.model-selected-item { align-items: flex-start; gap: 4px; }
+.model-order-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 4px; margin-right: 4px;
+  border-radius: 9px; background: #409eff; color: #fff;
+  font-size: 11px; font-weight: 600; vertical-align: middle;
+}
+.model-item-actions {
+  display: flex; align-items: center; gap: 2px; flex-shrink: 0; margin-top: 2px;
+}
+.model-item-actions i {
+  cursor: pointer; color: #c0c4cc; padding: 3px; font-size: 13px;
+}
+.model-item-actions i:hover { color: #409eff; }
+.model-item-actions .el-icon-close:hover { color: #f56c6c; }
+.model-item-actions i.disabled {
+  opacity: 0.35; cursor: not-allowed; pointer-events: none;
 }
 .point-selector { display: flex; border: 1px solid #ebeef5; border-radius: 8px; height: 360px; overflow: hidden; }
 .ps-tree {
