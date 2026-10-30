@@ -4,8 +4,17 @@
 
 const path = require('path')
 
-// 后端API基础地址配置
-const API_BASE_URL = 'http://127.0.0.1:8000'
+// 页面用局域网 IP 打开时，写死 127.0.0.1 会请求浏览者自己的电脑。
+// 后端收不到这些请求，页面上就是 Network Error。
+// 浏览器里改走当前页面的源，开发服务器再把 /api 转到本机 8000。
+function resolveApiBaseUrl() {
+  if (typeof window !== 'undefined' && window.location && window.location.origin) {
+    return window.location.origin
+  }
+  return 'http://127.0.0.1:8000'
+}
+
+const API_BASE_URL = resolveApiBaseUrl()
 
 module.exports = {
   // 导出API配置供前端使用
@@ -15,6 +24,13 @@ module.exports = {
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
     proxyTable: {
+      '/api': {
+        // 前端和 Atlas 在同一台机器时用 127.0.0.1。前端在别的电脑上时：
+        // API_PROXY_TARGET=http://<Atlas的IP>:8000 npm run dev
+        target: process.env.API_PROXY_TARGET || ('http://127.0.0.1:' + (process.env.REST_PORT || '8000')),
+        changeOrigin: true,
+        ws: true
+      },
       '/labelstudio': {
         target: 'http://127.0.0.1:' + (process.env.LABEL_STUDIO_PORT || '8888'),
         changeOrigin: true,
@@ -52,10 +68,10 @@ module.exports = {
 
   build: {
     // Template for index.html
-    index: path.resolve(__dirname, '../../src/main/resources/static/index.html'),
+    index: path.resolve(__dirname, '../dist/index.html'),
 
     // Paths
-    assetsRoot: path.resolve(__dirname, '../../src/main/resources/static/'),
+    assetsRoot: path.resolve(__dirname, '../dist'),
     assetsSubDirectory: './static',
     assetsPublicPath: '/',
 
@@ -71,7 +87,7 @@ module.exports = {
     // Surge or Netlify already gzip all static assets for you.
     // Before setting to `true`, make sure to:
     // npm install --save-dev compression-webpack-plugin
-    productionGzip: true,
+    productionGzip: false,
     productionGzipExtensions: ['js', 'css'],
 
     // Run the build command with an extra argument to
