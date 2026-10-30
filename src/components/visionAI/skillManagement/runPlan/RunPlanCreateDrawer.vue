@@ -132,6 +132,27 @@
               </div>
             </el-form-item>
 
+            <el-form-item v-if="showTrackingSelect" label="跟踪算法">
+              <el-select
+                v-model="form.tracking_algorithm"
+                clearable
+                filterable
+                placeholder="默认使用技能配置的跟踪算法"
+                :disabled="isView"
+                style="width: 100%; max-width: 480px;"
+                @clear="onTrackingAlgorithmClear">
+                <el-option
+                  v-for="opt in trackingAlgorithmOptions"
+                  :key="opt.value"
+                  :label="opt.label"
+                  :value="opt.value">
+                </el-option>
+              </el-select>
+              <div class="hint">
+                技能默认：{{ trackingAlgorithmLabel(skillDefaultTrackingAlgorithm) }}；不选或清空则沿用默认算法
+              </div>
+            </el-form-item>
+
             <el-form-item label="计划启停" required>
               <el-switch v-model="form.enabled" active-text="开启" inactive-text="关闭"></el-switch>
             </el-form-item>
@@ -811,6 +832,17 @@ const DEFAULT_LINE_DRAW_FIELDS = [
   { key: 'bypass_line', label: '绕行线', hint: '可选', required: false, sideKey: 'bypass_point' }
 ];
 
+/** 与后端 TrackerService.TRACKING_ALGORITHMS 保持一致 */
+const TRACKING_ALGORITHM_OPTIONS = [
+  { value: 'sort', label: 'SORT' },
+  { value: 'bytetrack', label: 'ByteTrack' },
+  { value: 'botsort', label: 'BoT-SORT' },
+  { value: 'ocsort', label: 'OC-SORT' },
+  { value: 'fasttrack', label: 'FastTracker' },
+  { value: 'deepocsort', label: 'Deep OC-SORT' },
+  { value: 'tracktrack', label: 'TrackTrack' }
+];
+
 function normalizeImmediateLevels(val) {
   if (!val) return [];
   if (Array.isArray(val)) return val.map(Number).filter(n => !isNaN(n));
@@ -854,6 +886,7 @@ function defaultForm() {
     },
     skill_params: {},
     required_models: [],
+    tracking_algorithm: '',
     alert_name: '',
     alert_level: '',
     alert_config: defaultAlertConfig(),
@@ -887,6 +920,9 @@ export default {
       skillParamsLoading: false,
       skillDefaultModelName: '',
       skillDefaultModels: [],
+      skillSupportsTracking: false,
+      skillDefaultTrackingAlgorithm: 'sort',
+      trackingAlgorithmOptions: TRACKING_ALGORITHM_OPTIONS,
       modelOptions: [],
       modelOptionsLoading: false,
       modelFilterQuery: '',
@@ -1006,6 +1042,9 @@ export default {
     },
     showModelSelect() {
       return this.form.skill_kind !== 'llm' && !!(this.form.skill_class_id || this.form.skill_ref);
+    },
+    showTrackingSelect() {
+      return this.showModelSelect && !!this.skillSupportsTracking;
     },
     availableModelOptions() {
       const map = {};
@@ -1176,6 +1215,9 @@ export default {
           required_models: Array.isArray(p.required_models)
             ? p.required_models.map(n => String(n || '').trim()).filter(Boolean)
             : [],
+          tracking_algorithm: (p.skill_params && p.skill_params.tracking_algorithm)
+            ? String(p.skill_params.tracking_algorithm)
+            : '',
           alert_name: p.alert_name || '',
           alert_level: p.alert_level || '',
           alert_config: alertConfig,
@@ -1386,14 +1428,42 @@ export default {
         this.form.skill_class_id = s.skill_class_id;
         this.form.llm_skill_id = '';
         this.form.required_models = [];
+        this.form.tracking_algorithm = '';
         this.loadSkillParams(s.skill_class_id, false);
       }
     },
     resetModelSelection() {
       this.skillDefaultModelName = '';
       this.skillDefaultModels = [];
+      this.skillSupportsTracking = false;
+      this.skillDefaultTrackingAlgorithm = 'sort';
       this.form.required_models = [];
+      this.form.tracking_algorithm = '';
       this.modelFilterQuery = '';
+    },
+    trackingAlgorithmLabel(value) {
+      const v = String(value || '').trim().toLowerCase();
+      const hit = (this.trackingAlgorithmOptions || []).find(o => o.value === v);
+      return hit ? hit.label : (v || 'SORT');
+    },
+    onTrackingAlgorithmClear() {
+      this.form.tracking_algorithm = '';
+    },
+    applySkillTrackingConfig(detail, keepSelection) {
+      const params = (detail && detail.default_config && detail.default_config.params) || {};
+      this.skillSupportsTracking = Object.prototype.hasOwnProperty.call(params, 'enable_default_sort_tracking')
+        && !!params.enable_default_sort_tracking;
+      const raw = String(params.tracking_algorithm || 'sort').trim().toLowerCase();
+      const known = (this.trackingAlgorithmOptions || []).some(o => o.value === raw);
+      this.skillDefaultTrackingAlgorithm = known ? raw : 'sort';
+      if (!keepSelection) {
+        this.form.tracking_algorithm = '';
+      } else if (this.form.tracking_algorithm) {
+        const selected = String(this.form.tracking_algorithm).trim().toLowerCase();
+        this.form.tracking_algorithm = (this.trackingAlgorithmOptions || []).some(o => o.value === selected)
+          ? selected
+          : '';
+      }
     },
     modelOptionLabel(m) {
       if (!m || !m.name) return '';
@@ -1507,6 +1577,7 @@ export default {
         this.form.required_models = names.slice();
       }
       this.ensureModelOptions();
+      this.applySkillTrackingConfig(detail, !!keepSelection);
     },
     getSkillParamType(value) {
       if (Array.isArray(value)) return 'array';
@@ -1561,7 +1632,12 @@ export default {
         startParams.forEach(p => {
           if (p && p.name) metaByName[p.name] = p;
         });
-        const hiddenKeys = new Set(['enable_default_sort_tracking', 'enable_timing_log', 'reference_images']);
+        const hiddenKeys = new Set([
+          'enable_default_sort_tracking',
+          'tracking_algorithm',
+          'enable_timing_log',
+          'reference_images'
+        ]);
         const fields = [];
         if (Array.isArray(formFields) && formFields.length) {
           formFields.forEach(f => {
@@ -1669,9 +1745,21 @@ export default {
       (this.skillParamFields || []).forEach(p => { if (p && p.key) allowed.add(p.key); });
       allowed.add('reference_images');
       allowed.add('reference_image_url');
+      allowed.add('tracking_algorithm');
       allowed.forEach(key => {
         if (Object.prototype.hasOwnProperty.call(src, key)) out[key] = src[key];
       });
+      // 跟踪算法：仅当用户显式选择且不同于技能默认时写入覆盖
+      if (this.skillSupportsTracking) {
+        const selected = String(this.form.tracking_algorithm || '').trim().toLowerCase();
+        if (selected && selected !== String(this.skillDefaultTrackingAlgorithm || '').toLowerCase()) {
+          out.tracking_algorithm = selected;
+        } else {
+          delete out.tracking_algorithm;
+        }
+      } else {
+        delete out.tracking_algorithm;
+      }
       return out;
     },
     ensureRefImagesMap() {
