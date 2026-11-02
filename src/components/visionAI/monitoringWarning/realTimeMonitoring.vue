@@ -3031,6 +3031,12 @@ export default {
     isPersonCountTask(task) {
       return !!(task && task.skill_code === 'person_count_detector26')
     },
+    isPresenceCountTask(task) {
+      if (!task) return false
+      if (task.skill_code === 'person_presence_detector26') return true
+      const name = `${task.skill_name || ''}${task.task_name || ''}`
+      return name.indexOf('画面人数') >= 0
+    },
     isTailgatingTask(task) {
       if (!task) return false
       const code = String(task.skill_code || '')
@@ -3052,6 +3058,14 @@ export default {
               if (data.enter_count == null || data.enter_count === '') return
               const outbound = String(data.gate_direction || '').toUpperCase() === 'OUT'
               updates[index] = (outbound ? '出井人数：' : '入井人数：') + data.enter_count
+            }).catch(() => {})
+          )
+        } else if (this.isPresenceCountTask(task)) {
+          jobs.push(
+            realtimeDetectionAPI.getDetectionResult(taskId).then(response => {
+              const data = response && response.data && response.data.data
+              if (!data || data.current_person_count == null || data.current_person_count === '') return
+              updates[index] = '当前画面人数：' + data.current_person_count
             }).catch(() => {})
           )
         } else if (this.isTailgatingTask(task)) {
