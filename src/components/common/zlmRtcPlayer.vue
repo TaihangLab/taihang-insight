@@ -69,7 +69,8 @@ export default {
         zlmsdpUrl: url,
         simulcast: false,
         useCamera: false,
-        audioEnable: true,
+        // 画框流没有音轨。这里要音频时，浏览器解出第一帧后就停住，人数角标仍会变。
+        audioEnable: false,
         videoEnable: true,
         recvOnly: true,
         usedatachannel: false

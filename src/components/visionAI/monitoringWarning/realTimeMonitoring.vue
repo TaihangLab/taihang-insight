@@ -68,12 +68,14 @@
                     <div v-else class="video-player-wrapper">
                       <zlm-rtc-player
                         v-if="playProtocol[index-1] === 'webrtc'"
+                        :key="videoUrl[index-1]"
                         :ref="'player'+(index-1)"
                         :videoUrl="videoUrl[index-1]"
                         @error="onRtcError(index-1)"
                         @screenshot="shot"/>
                       <player
                         v-else
+                        :key="videoUrl[index-1]"
                         :ref="'player'+(index-1)"
                         :videoUrl="videoUrl[index-1]"
                         fluent autoplay
@@ -132,12 +134,14 @@
                     <div v-else class="video-player-wrapper">
                       <zlm-rtc-player
                         v-if="playProtocol[index-1] === 'webrtc'"
+                        :key="videoUrl[index-1]"
                         :ref="'player'+(index-1)"
                         :videoUrl="videoUrl[index-1]"
                         @error="onRtcError(index-1)"
                         @screenshot="shot"/>
                       <player
                         v-else
+                        :key="videoUrl[index-1]"
                         :ref="'player'+(index-1)"
                         :videoUrl="videoUrl[index-1]"
                         fluent autoplay
@@ -3033,10 +3037,6 @@ export default {
       const name = `${task.skill_name || ''}${task.task_name || ''}`
       return /tailgat/i.test(code) || name.indexOf('尾随') >= 0
     },
-    isPersonCountResultStream(task) {
-      const play = task && task.result_stream
-      return !!(play && play.enabled && play.http_flv)
-    },
     async refreshEnterCounts() {
       const updates = {}
       const jobs = []
@@ -3045,8 +3045,6 @@ export default {
         const taskId = task && task.task_id
         if (taskId == null || taskId === '') continue
         if (this.isPersonCountTask(task)) {
-          // 后端已把人数画进推流画面时，不再盖前端角标，避免两个入井人数叠在一起。
-          if (this.isPersonCountResultStream(task)) continue
           jobs.push(
             realtimeDetectionAPI.getDetectionResult(taskId).then(response => {
               const data = response && response.data && response.data.data
@@ -3093,24 +3091,48 @@ export default {
       this.$set(this.flvFallbackUrl, index, this.rawFlvFallbackUrl[index] || '')
       this.setPlayUrl(url, index)
     },
+    resultStreamUrls(play) {
+      // 画框流若直接用 http://127.0.0.1:18080 的 FLV，局域网打开页面时会打到浏览者自己的电脑，
+      // Jessibuca 就停在「请稍等，视频加载中」且 0 kb/s。和原画面一样走同源 WebRTC。
+      const config = require('../../../../config/index.js')
+      let rtcUrl = (play && play.webrtc) || ''
+      if (rtcUrl.startsWith('/')) {
+        rtcUrl = String(config.API_BASE_URL || '').replace(/\/$/, '') + rtcUrl
+      }
+      const flvUrl = (play && (play.http_flv || play.ws_flv)) || ''
+      return { rtcUrl, flvUrl }
+    },
     applyResultStreamPlay(index) {
       const task = this.getSelectedTask(index)
       const play = task && task.result_stream
-      const flvUrl = play && (play.http_flv || '')
-      if (!play || !play.enabled || !flvUrl) return
+      if (!play || !play.enabled) return
+      const { rtcUrl, flvUrl } = this.resultStreamUrls(play)
+      const url = rtcUrl || flvUrl
+      if (!url) return
       this.$set(this.rtcFailed, index, false)
-      this.$set(this.playProtocol, index, 'flv')
+      this.$set(this.playProtocol, index, rtcUrl ? 'webrtc' : 'flv')
       this.$set(this.flvFallbackUrl, index, flvUrl)
-      this.setPlayUrl(flvUrl, index)
+      this.setPlayUrl(url, index)
     },
     playSelectedResultStream(index) {
       const task = this.getSelectedTask(index)
       const play = task && task.result_stream
-      const flvUrl = play && play.enabled ? (play.http_flv || '') : ''
-      if (flvUrl) {
-        if (this.videoUrl[index] === flvUrl && this.playProtocol[index] === 'flv') return
-        this.applyResultStreamPlay(index)
-        return
+      if (play && play.enabled) {
+        const { rtcUrl, flvUrl } = this.resultStreamUrls(play)
+        // 同一路 WebRTC 失败后留在 FLV，避免轮询又把播放器拉回失败的地址。换任务会重新走 WebRTC。
+        if (this.rtcFailed[index] && flvUrl && this.flvFallbackUrl[index] === flvUrl) {
+          if (this.videoUrl[index] === flvUrl && this.playProtocol[index] === 'flv') return
+          this.$set(this.playProtocol, index, 'flv')
+          this.setPlayUrl(flvUrl, index)
+          return
+        }
+        const url = rtcUrl || flvUrl
+        const protocol = rtcUrl ? 'webrtc' : 'flv'
+        if (url) {
+          if (this.videoUrl[index] === url && this.playProtocol[index] === protocol) return
+          this.applyResultStreamPlay(index)
+          return
+        }
       }
       const raw = this.rawVideoUrl[index]
       const rawProtocol = this.rawPlayProtocol[index] || 'webrtc'
