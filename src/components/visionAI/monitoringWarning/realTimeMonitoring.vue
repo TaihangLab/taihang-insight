@@ -479,6 +479,7 @@ export default {
       playProtocol: {},
       flvFallbackUrl: {},
       rtcFailed: {},
+      resultRetryAt: {},
       // 视频提示信息
       videoTip: [],
       // 播放器索引
@@ -873,12 +874,22 @@ export default {
       this.$set(this.playProtocol, cell, '');
       this.$set(this.flvFallbackUrl, cell, '');
       this.$set(this.rtcFailed, cell, false);
+      this.$set(this.resultRetryAt, cell, 0);
       this.$set(this.rawVideoUrl, cell, '');
       this.$set(this.rawPlayProtocol, cell, '');
       this.$set(this.rawFlvFallbackUrl, cell, '');
     },
     onRtcError(idx) {
-      if (this.rtcFailed[idx] || this.playProtocol[idx] !== 'webrtc') return
+      if (this.playProtocol[idx] !== 'webrtc') return
+      const raw = this.rawVideoUrl[idx]
+      const current = this.videoUrl[idx]
+      // 画框流还没就绪时回到原画面，过几秒再试。不要改播 18080 的 FLV，否则 Jessibuca 停在 0 kb/s 黑屏。
+      if (raw && current && current !== raw) {
+        this.$set(this.resultRetryAt, idx, Date.now() + 4000)
+        this.applyCameraPlay(idx)
+        return
+      }
+      if (this.rtcFailed[idx]) return
       const flv = this.flvFallbackUrl[idx]
       this.$set(this.rtcFailed, idx, true)
       if (!flv) {
@@ -928,6 +939,7 @@ export default {
       this.$set(this.playProtocol, idxTmp, '');
       this.$set(this.flvFallbackUrl, idxTmp, '');
       this.$set(this.rtcFailed, idxTmp, false);
+      this.$set(this.resultRetryAt, idxTmp, 0);
       this.$set(this.videoTip, idxTmp, "正在拉流...");
       
       // 保存摄像头ID映射（data.id / channelId，不是显示名称「7」）
@@ -963,6 +975,7 @@ export default {
             this.$set(this.playProtocol, idxTmp, rtcUrl ? 'webrtc' : 'flv');
             this.$set(this.flvFallbackUrl, idxTmp, flvUrl || '');
             this.$set(this.rtcFailed, idxTmp, false);
+            this.$set(this.resultRetryAt, idxTmp, 0);
             console.log('✅ 获取播放地址成功:', rtcUrl ? 'webrtc' : 'flv', videoUrl);
             this.setPlayUrl(videoUrl, idxTmp);
 
@@ -3123,30 +3136,29 @@ export default {
       const task = this.getSelectedTask(index)
       const play = task && task.result_stream
       if (!play || !play.enabled) return
-      const { rtcUrl, flvUrl } = this.resultStreamUrls(play)
-      const url = rtcUrl || flvUrl
-      if (!url) return
+      const { rtcUrl } = this.resultStreamUrls(play)
+      if (!rtcUrl) return
       this.$set(this.rtcFailed, index, false)
-      this.$set(this.playProtocol, index, rtcUrl ? 'webrtc' : 'flv')
-      this.$set(this.flvFallbackUrl, index, flvUrl)
-      this.setPlayUrl(url, index)
+      this.$set(this.resultRetryAt, index, 0)
+      this.$set(this.playProtocol, index, 'webrtc')
+      this.$set(this.flvFallbackUrl, index, this.rawFlvFallbackUrl[index] || '')
+      this.setPlayUrl(rtcUrl, index)
     },
     playSelectedResultStream(index) {
       const task = this.getSelectedTask(index)
       const play = task && task.result_stream
       if (play && play.enabled) {
-        const { rtcUrl, flvUrl } = this.resultStreamUrls(play)
-        // 同一路 WebRTC 失败后留在 FLV，避免轮询又把播放器拉回失败的地址。换任务会重新走 WebRTC。
-        if (this.rtcFailed[index] && flvUrl && this.flvFallbackUrl[index] === flvUrl) {
-          if (this.videoUrl[index] === flvUrl && this.playProtocol[index] === 'flv') return
-          this.$set(this.playProtocol, index, 'flv')
-          this.setPlayUrl(flvUrl, index)
-          return
-        }
-        const url = rtcUrl || flvUrl
-        const protocol = rtcUrl ? 'webrtc' : 'flv'
-        if (url) {
-          if (this.videoUrl[index] === url && this.playProtocol[index] === protocol) return
+        const { rtcUrl } = this.resultStreamUrls(play)
+        if (rtcUrl) {
+          const waitUntil = this.resultRetryAt[index] || 0
+          if (Date.now() < waitUntil) {
+            const raw = this.rawVideoUrl[index]
+            const rawProtocol = this.rawPlayProtocol[index] || 'webrtc'
+            if (raw && this.videoUrl[index] === raw && this.playProtocol[index] === rawProtocol) return
+            this.applyCameraPlay(index)
+            return
+          }
+          if (this.videoUrl[index] === rtcUrl && this.playProtocol[index] === 'webrtc') return
           this.applyResultStreamPlay(index)
           return
         }
