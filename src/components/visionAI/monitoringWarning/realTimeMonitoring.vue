@@ -3029,7 +3029,10 @@ export default {
       return (task && (task.skill_name || task.task_name)) || ''
     },
     isPersonCountTask(task) {
-      return !!(task && task.skill_code === 'person_count_detector26')
+      if (!task) return false
+      if (task.skill_code === 'person_count_detector26') return true
+      const name = `${task.skill_name || ''}${task.task_name || ''}`
+      return name.indexOf('人流量') >= 0
     },
     isPresenceCountTask(task) {
       if (!task) return false
