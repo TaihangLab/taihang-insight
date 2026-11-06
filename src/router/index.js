@@ -31,6 +31,7 @@ const skillGraphEditor = () => import('../components/visionAI/skillManagement/sk
 const runPlanList = () => import('../components/visionAI/skillManagement/runPlan/RunPlanList.vue')
 const runPlanDetail = () => import('../components/visionAI/skillManagement/runPlan/RunPlanDetail.vue')
 const runTaskDetail = () => import('../components/visionAI/skillManagement/runPlan/RunTaskDetail.vue')
+const faceGallery = () => import('../components/visionAI/skillManagement/faceGallery.vue')
 const logRecords = () => import('../components/visionAI/smartControl/logRecords.vue')
 const edgeServer = () => import('../components/visionAI/edgeManagement/edgeServer.vue')
 const edgeBox = () => import('../components/visionAI/edgeManagement/edgeBox.vue')
@@ -195,6 +196,11 @@ export default new VueRouter({
           path: '/skillManage/skillGraphEditor',
           name: 'skillGraphEditor',
           component: skillGraphEditor,
+        },
+        {
+          path: '/skillManage/faceGallery',
+          name: 'faceGallery',
+          component: faceGallery,
         },
         {
           path: '/intelligentControl/logRecord',

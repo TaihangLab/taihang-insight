@@ -61,6 +61,7 @@
         <el-menu-item index="/skillManage/skillList">技能列表</el-menu-item>
         <el-menu-item index="/skillManage/multimodalReview">多模态大模型复判</el-menu-item>
         <el-menu-item index="/skillManage/runPlan">技能运行计划</el-menu-item>
+        <el-menu-item index="/skillManage/faceGallery">人脸底库</el-menu-item>
       </el-submenu>
 
       <!-- 模型管理（含模型列表与模型工厂） -->

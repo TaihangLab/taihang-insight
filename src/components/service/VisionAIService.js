@@ -4271,6 +4271,187 @@ export const openApiAPI = {
   }
 };
 
+// 人脸底库管理
+export const faceGalleryAPI = {
+  listPersons(params = {}) {
+    return visionAIAxios.get('/api/v1/face-gallery/persons', { params });
+  },
+  listLogs(params = {}) {
+    return visionAIAxios.get('/api/v1/face-gallery/logs', { params });
+  },
+  getSettings() {
+    return visionAIAxios.get('/api/v1/face-gallery/settings');
+  },
+  updateSettings(data) {
+    return visionAIAxios.put('/api/v1/face-gallery/settings', data);
+  },
+  getPerson(personCode) {
+    return visionAIAxios.get(`/api/v1/face-gallery/persons/${encodeURIComponent(personCode)}`);
+  },
+  createPerson(formData) {
+    return visionAIAxios.post('/api/v1/face-gallery/persons', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: LONG_RUNNING_TIMEOUT
+    });
+  },
+  updatePerson(personCode, data) {
+    return visionAIAxios.put(`/api/v1/face-gallery/persons/${encodeURIComponent(personCode)}`, data);
+  },
+  addTemplate(personCode, formData) {
+    return visionAIAxios.post(
+      `/api/v1/face-gallery/persons/${encodeURIComponent(personCode)}/templates`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: LONG_RUNNING_TIMEOUT
+      }
+    );
+  },
+  deletePerson(personCode) {
+    return visionAIAxios.delete(`/api/v1/face-gallery/persons/${encodeURIComponent(personCode)}`);
+  },
+  batchDeletePersons(personCodes) {
+    return visionAIAxios.post('/api/v1/face-gallery/persons/batch-delete', {
+      person_codes: personCodes || []
+    });
+  },
+  exportZip(personCodes) {
+    return visionAIAxios.post('/api/v1/face-gallery/export', {
+      person_codes: personCodes || []
+    }, {
+      responseType: 'blob',
+      timeout: 600000
+    });
+  },
+  deleteTemplate(templateId) {
+    return visionAIAxios.delete(`/api/v1/face-gallery/templates/${templateId}`);
+  },
+  getImageBlob(objectKey) {
+    return visionAIAxios.get('/api/v1/face-gallery/images', {
+      params: { object: objectKey },
+      responseType: 'blob',
+      timeout: 30000
+    });
+  },
+  compare(formData) {
+    return visionAIAxios.post('/api/v1/face-gallery/compare', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: LONG_RUNNING_TIMEOUT
+    });
+  },
+  search(formData) {
+    return visionAIAxios.post('/api/v1/face-gallery/search', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: LONG_RUNNING_TIMEOUT
+    });
+  },
+  getBatchOptions() {
+    return visionAIAxios.get('/api/v1/face-gallery/batch-options');
+  },
+  batchEnroll(formData) {
+    return visionAIAxios.post('/api/v1/face-gallery/batch', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      // 100 人 × 多图检测入库可能很慢，给足 30 分钟
+      timeout: 1800000
+    });
+  },
+  /**
+   * 流式批量录入：按 NDJSON 推送 start/progress/done/error，进度与真实入库同步。
+   * onEvent(evt) 可选。
+   */
+  async batchEnrollStream(formData, onEvent) {
+    const headers = {};
+    const token = localStorage.getItem('token');
+    if (token) headers['access-token'] = token;
+    formData.append('stream', 'true');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1800000);
+    try {
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/face-gallery/batch`, {
+        method: 'POST',
+        body: formData,
+        headers,
+        signal: controller.signal
+      });
+      const contentType = (res.headers.get('content-type') || '').toLowerCase();
+      if (!res.ok) {
+        let detail = `批量录入失败（HTTP ${res.status}）`;
+        try {
+          const errBody = await res.json();
+          if (errBody && errBody.detail) {
+            detail = typeof errBody.detail === 'string' ? errBody.detail : JSON.stringify(errBody.detail);
+          } else if (errBody && errBody.msg) {
+            detail = errBody.msg;
+          }
+        } catch (e) {
+          // ignore parse error
+        }
+        throw new Error(detail);
+      }
+      // 非流式回退（兼容旧后端）
+      if (!contentType.includes('ndjson') && !contentType.includes('octet-stream') && !contentType.includes('text/plain')) {
+        const body = await res.json();
+        if (body && body.code !== 0) throw new Error(body.msg || '批量录入失败');
+        if (typeof onEvent === 'function') {
+          onEvent({ event: 'done', data: (body && body.data) || null });
+        }
+        return (body && body.data) || null;
+      }
+      if (!res.body || !res.body.getReader) {
+        throw new Error('当前浏览器不支持流式读取');
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+      let finalData = null;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let nl = buffer.indexOf('\n');
+        while (nl >= 0) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          nl = buffer.indexOf('\n');
+          if (!line) continue;
+          let evt;
+          try {
+            evt = JSON.parse(line);
+          } catch (e) {
+            continue;
+          }
+          if (typeof onEvent === 'function') onEvent(evt);
+          if (evt.event === 'done') finalData = evt.data || null;
+          if (evt.event === 'error') throw new Error(evt.error || '批量录入失败');
+        }
+      }
+      const tail = buffer.trim();
+      if (tail) {
+        try {
+          const evt = JSON.parse(tail);
+          if (typeof onEvent === 'function') onEvent(evt);
+          if (evt.event === 'done') finalData = evt.data || null;
+          if (evt.event === 'error') throw new Error(evt.error || '批量录入失败');
+        } catch (e) {
+          if (e && e.message && e.message !== '批量录入失败') {
+            // JSON 残片忽略；业务 error 已抛出
+            if (e instanceof SyntaxError) {
+              // ignore
+            } else {
+              throw e;
+            }
+          } else if (!(e instanceof SyntaxError)) {
+            throw e;
+          }
+        }
+      }
+      return finalData;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+};
+
 // 煤矿 AI 平台对接配置（客户端密钥仅通过本平台后端保存和使用）
 export const mineIntegrationAPI = {
   getConfig() {
@@ -4295,6 +4476,7 @@ export default {
   skillAPI,
   openApiAPI,
   mineIntegrationAPI,
+  faceGalleryAPI,
   cameraAPI,
   alertAPI,
   reviewSkillAPI,

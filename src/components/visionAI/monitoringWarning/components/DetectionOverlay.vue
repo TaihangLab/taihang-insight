@@ -869,7 +869,16 @@ export default {
         name = name.replace(new RegExp('\\b' + trackId + '\\b', 'ig'), '').replace(/\s+/g, ' ').trim() || raw
       }
       const showId = trackId && !this.hideTrackId
-      const labelText = showId ? (trackId + ' ' + name + suffix + ': ' + conf.toFixed(2)) : (name + suffix + ': ' + conf.toFixed(2))
+      let labelText = showId ? (trackId + ' ' + name + suffix + ': ' + conf.toFixed(2)) : (name + suffix + ': ' + conf.toFixed(2))
+      if (detection && detection.target_type === 'face') {
+        const who = detection.matched
+          ? (detection.person_name || '未命名')
+          : '未登记'
+        const score = detection.distance != null && detection.distance !== ''
+          ? (' ' + Number(detection.distance).toFixed(3))
+          : ''
+        labelText = who + score + suffix
+      }
       const fontPx = Math.max(9, Math.round(22 * 0.5 * drawScale))
       this.ctx.font = `${fontPx}px "Microsoft YaHei", "PingFang SC", Arial`
       const textMetrics = this.ctx.measureText(labelText)
