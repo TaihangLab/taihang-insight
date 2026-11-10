@@ -2103,11 +2103,16 @@ export default {
     toBackendFence(fence) {
       const regions = (fence && fence.regions) || [];
       const tripwires = (fence && fence.tripwires) || [];
-      const countLine = fence && fence.count_line;
-      const bypassLine = fence && fence.bypass_line;
-      const hasCount = countLine && Array.isArray(countLine.lines) && countLine.lines.length > 0;
-      const hasBypass = bypassLine && Array.isArray(bypassLine.lines) && bypassLine.lines.length > 0;
-      if (!regions.length && !tripwires.length && !hasCount && !hasBypass) {
+      const lineEntries = [];
+      if (fence && typeof fence === 'object') {
+        Object.keys(fence).forEach(key => {
+          const cfg = fence[key];
+          if (cfg && Array.isArray(cfg.lines) && cfg.lines.length) {
+            lineEntries.push([key, cfg]);
+          }
+        });
+      }
+      if (!regions.length && !tripwires.length && !lineEntries.length) {
         return { enabled: false, points: [] };
       }
       const out = {
@@ -2117,8 +2122,7 @@ export default {
         show_outside_fence: this.form.show_outside_fence !== false
       };
       if (tripwires.length) out.tripwires = tripwires;
-      if (hasCount) out.count_line = countLine;
-      if (hasBypass) out.bypass_line = bypassLine;
+      lineEntries.forEach(([key, cfg]) => { out[key] = cfg; });
       return out;
     },
     formatSaveError(e) {

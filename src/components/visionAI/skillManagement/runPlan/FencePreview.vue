@@ -45,8 +45,16 @@ export default {
       const f = this.fence || {};
       const specs = [
         { key: 'count_line', side: 'enter_point', color: '#3d9b6e', label: '过线' },
-        { key: 'bypass_line', side: 'bypass_point', color: '#e6a23c', label: '绕行' }
+        { key: 'bypass_line', side: 'bypass_point', color: '#e6a23c', label: '绕行' },
+        { key: 'gate_line', side: 'enter_point', color: '#e6a23c', label: '中线' }
       ];
+      Object.keys(f).forEach(key => {
+        if (specs.some(spec => spec.key === key)) return;
+        const cfg = f[key];
+        if (cfg && Array.isArray(cfg.lines) && cfg.lines.length) {
+          specs.push({ key, side: 'enter_point', color: '#e6a23c', label: '线段' });
+        }
+      });
       return specs.map(spec => {
         const cfg = f[spec.key] || {};
         const lines = Array.isArray(cfg.lines) ? cfg.lines : [];
