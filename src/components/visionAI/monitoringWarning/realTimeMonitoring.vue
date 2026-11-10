@@ -3047,6 +3047,12 @@ export default {
       const name = `${task.skill_name || ''}${task.task_name || ''}`
       return name.indexOf('人流量') >= 0
     },
+    isKuangCountTask(task) {
+      if (!task) return false
+      if (task.skill_code === 'person_count_kuang_detect') return true
+      const name = `${task.skill_name || ''}${task.task_name || ''}`
+      return name.indexOf('罐笼四边形') >= 0
+    },
     isPresenceCountTask(task) {
       if (!task) return false
       if (task.skill_code === 'person_presence_detector26') return true
@@ -3066,7 +3072,18 @@ export default {
         const task = this.getSelectedTask(index)
         const taskId = task && task.task_id
         if (taskId == null || taskId === '') continue
-        if (this.isPersonCountTask(task)) {
+        if (this.isKuangCountTask(task)) {
+          jobs.push(
+            realtimeDetectionAPI.getDetectionResult(taskId).then(response => {
+              const data = response && response.data && response.data.data
+              if (!data) return
+              if ((data.enter_count == null || data.enter_count === '') && (data.leave_count == null || data.leave_count === '')) return
+              const enter = data.enter_count == null || data.enter_count === '' ? 0 : data.enter_count
+              const leave = data.leave_count == null || data.leave_count === '' ? 0 : data.leave_count
+              updates[index] = '进入人数：' + enter + '<br>离开人数：' + leave
+            }).catch(() => {})
+          )
+        } else if (this.isPersonCountTask(task)) {
           jobs.push(
             realtimeDetectionAPI.getDetectionResult(taskId).then(response => {
               const data = response && response.data && response.data.data
