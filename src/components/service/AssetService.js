@@ -7,6 +7,17 @@ const assetAxios = axios.create({
   withCredentials: false,
 });
 
+assetAxios.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    const detail = error.response && error.response.data && error.response.data.detail;
+    if (typeof detail === 'string' && detail) {
+      error.message = detail;
+    }
+    return Promise.reject(error);
+  }
+);
+
 function unwrap(res) {
   const body = res.data || {};
   if (body.code !== 0 && body.code !== undefined) {
@@ -141,39 +152,7 @@ export const assetAPI = {
     return assetAxios.post('/asset/points/batch', data).then(unwrap);
   },
   createVirtualPointStream(data) {
-    return assetAxios.post('/asset/points/virtual/stream', {
-      name: data.name,
-      streamUrl: data.streamUrl,
-      orgId: data.orgId || '',
-      cameraCode: data.cameraCode || '',
-      mineSyncEnabled: data.mineSyncEnabled !== false,
-      minePositionType: data.minePositionType || '',
-      minePositionDesc: data.minePositionDesc || '',
-      mineAnalysisType: (data.mineAnalysisType || '').trim(),
-      minePositionCode: data.minePositionCode || '',
-      minePositionName: data.minePositionName || '',
-      mineDirection: data.mineDirection || '',
-      tags: data.tags || [],
-    }).then(unwrap);
-  },
-  /** 建议的下一个摄像仪编码（人工可改） */
-  fetchNextCameraCode() {
-    return assetAxios.get('/asset/points/next-camera-code').then(unwrap);
-  },
-  updatePointCameraCode(pointId, data) {
-    return assetAxios.put(`/asset/points/${pointId}/camera-code`, {
-      cameraCode: data.cameraCode || '',
-      mineSyncEnabled: data.mineSyncEnabled !== false,
-      minePositionType: data.minePositionType || '',
-      minePositionDesc: data.minePositionDesc || '',
-      mineAnalysisType: (data.mineAnalysisType || '').trim(),
-      mine_position_code: data.mine_position_code || '',
-      mine_position_name: data.mine_position_name || '',
-      mine_direction: data.mine_direction || '',
-    }).then(unwrap);
-  },
-  updatePointMineSync(pointId, data) {
-    return assetAxios.put(`/asset/points/${pointId}/mine-sync`, data).then(unwrap);
+    return assetAxios.post('/asset/points/virtual/stream', data).then(unwrap);
   },
   /** 导出拉流虚拟点位 CSV（或空模板） */
   exportStreamPoints(template = false) {
@@ -203,22 +182,13 @@ export const assetAPI = {
       timeout: 600000,
     }).then(unwrap);
   },
-  createVirtualPointFile(file, name, orgId, cameraCode, mine = {}) {
+  createVirtualPointFile(file, name, orgId) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('name', name || '');
     formData.append('orgId', orgId || '');
-    formData.append('cameraCode', cameraCode || '');
-    formData.append('mineSyncEnabled', mine.mineSyncEnabled !== false ? 'true' : 'false');
-    formData.append('minePositionType', mine.minePositionType || '');
-    formData.append('minePositionDesc', mine.minePositionDesc || '');
-    formData.append('mineAnalysisType', (mine.mineAnalysisType || '').trim());
-    formData.append('minePositionCode', mine.minePositionCode || '');
-    formData.append('minePositionName', mine.minePositionName || '');
-    formData.append('mineDirection', mine.mineDirection || '');
     formData.append('tags', '[]');
     return assetAxios.post('/asset/points/virtual/file', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 600000,
     }).then(unwrap);
   },
