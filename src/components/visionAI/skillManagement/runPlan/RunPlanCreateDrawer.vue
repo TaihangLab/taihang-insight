@@ -1092,8 +1092,11 @@ export default {
     },
     isPersonCountSkill() {
       const selected = (this.skillOptions || []).find(item => item.ref === this.form.skill_ref);
-      if (selected && selected.name) return selected.name === 'person_count_detector26';
-      return String(this.form.skill_name || '').indexOf('人流量检测') >= 0;
+      const code = selected && selected.name ? selected.name : '';
+      const title = String((selected && (selected.name_zh || selected.label)) || this.form.skill_name || '');
+      if (code === 'person_count_guanlong' || code === 'person_count_guanlong_double' || title.indexOf('罐笼') >= 0) return false;
+      if (code) return code === 'person_count_detector26';
+      return title.indexOf('人流量检测') >= 0;
     },
     showDetectionBoxes: {
       get() {

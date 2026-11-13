@@ -3041,6 +3041,12 @@ export default {
     aiTaskOptionLabel(task) {
       return (task && (task.skill_name || task.task_name)) || ''
     },
+    isGuanlongCountTask(task) {
+      if (!task) return false
+      if (task.skill_code === 'person_count_guanlong' || task.skill_code === 'person_count_guanlong_double') return true
+      const name = `${task.skill_name || ''}${task.task_name || ''}`
+      return name.indexOf('罐笼人流量') >= 0 || name.indexOf('罐笼双线') >= 0
+    },
     isPersonCountTask(task) {
       if (!task) return false
       if (task.skill_code === 'person_count_detector26') return true
@@ -3072,7 +3078,7 @@ export default {
         const task = this.getSelectedTask(index)
         const taskId = task && task.task_id
         if (taskId == null || taskId === '') continue
-        if (this.isKuangCountTask(task)) {
+        if (this.isKuangCountTask(task) || this.isGuanlongCountTask(task)) {
           jobs.push(
             realtimeDetectionAPI.getDetectionResult(taskId).then(response => {
               const data = response && response.data && response.data.data
