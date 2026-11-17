@@ -15,12 +15,10 @@
         <img src="static/logo.png" alt="Logo" class="logo-image"/>
         <div class="logo-text-container">
           <div class="logo-brand-name">
-            <span class="brand-group">太行</span>
-            <span class="brand-dot">·</span>
             <span class="brand-group">慧眼</span>
           </div>
           <div class="logo-text-right">
-            <span class="logo-text">太行视觉AI平台</span>
+            <span class="logo-text">AI视觉分析平台</span>
             <span class="logo-subtitle"><span class="logo-subtitle-highlight">洞察万象，识图于微</span></span>
           </div>
         </div>

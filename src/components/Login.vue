@@ -26,13 +26,11 @@
         <div class="login-header">
           <div class="title-container">
             <div class="brand-name">
-              <img src="/static/logo.png" alt="太行logo" class="brand-logo">
-              <span class="brand-group">太行</span>
-              <span class="brand-dot">·</span>
+              <img src="/static/logo.png" alt="logo" class="brand-logo">
               <span class="brand-group">慧眼</span>
             </div>
             <div class="title-right">
-              <h1 class="platform-title">太行视觉AI平台</h1>
+              <h1 class="platform-title">AI视觉分析平台</h1>
               <p class="platform-subtitle"><span class="subtitle-highlight">洞察万象，识图于微</span></p>
             </div>
           </div>

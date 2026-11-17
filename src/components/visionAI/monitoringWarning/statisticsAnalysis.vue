@@ -524,7 +524,7 @@ export default {
       </div>
 
       <div class="page-title">
-        <span>太行视觉AI预警统计分析</span>
+        <span>AI视觉分析预警统计分析</span>
       </div>
 
       <div class="action-buttons">
